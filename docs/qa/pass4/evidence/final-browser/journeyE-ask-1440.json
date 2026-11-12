@@ -1,0 +1,85 @@
+{
+ "part": "ask",
+ "vp": 1440,
+ "started": "2026-11-12T10:52:14.938Z",
+ "steps": [
+  {
+   "name": "ask-en",
+   "q": "Which zone needs attention now?",
+   "answer": "Which zone needs attention now? | Tondiarpet leads with 35 open incidents | From the data | Highest open incidents: Tondiarpet (35), Teynampet (30), Adyar (26), Royapuram (25), Kodambakkam (23). | Last 7 days · District-wide · all departments · as of 12 Nov, 4:22 PM | Grievance portal last collected 6 days ago; this answer may be incomplete. | Filter the console to Tondiarpet | Sources and how this was calculated | Helpful? | Show on screen with Jarvis | Answers come from the console's live data · Enter to send · ↑ edits the last question",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "ask-en",
+   "q": "Why did the Chembarambakkam lake level rise this week?",
+   "answer": "Why did the Chembarambakkam lake level rise this week? | Incidents fell to 267, mostly garbage & solid waste | From the data | Reported incidents fell to 267 from 1,277 against the period before. | Mostly from: Garbage & solid waste (127 → 22), Theft, snatching & fraud (120 → 17), Flooding & waterlogging (149 → 47) | Where: Raman Nagar (garbage & solid waste, 0 → 2); Ambattur (garbage & solid waste, 0 → 1) | Rain: 107 of the 267 were linked to rain | Past deadline: Greater Chennai Police (62), Storm Water Drain (29) | Act first on: Ice House: uprooted tree blocks road at Ice House. | Last 7 days · District-wide · all departments · as of 12 Nov, 4:22 PM | A rain link means the incident was re",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "ask-ta",
+   "q": "எந்த மண்டலத்திற்கு இப்போது கவனம் தேவை?",
+   "answer": "எந்த மண்டலத்திற்கு இப்போது கவனம் தேவை? | தரவு விவரம்: Zones by open incidents | தரவிலிருந்து | அதிக Open incidents: Tondiarpet (35), Teynampet (30), Adyar (26), Royapuram (25), Kodambakkam (23). | கடந்த 7 நாட்கள் · மாவட்டம் முழுவதும் · அனைத்துத் துறைகளும் · தரவு நேரம் நவ. 12, 4:23 PM | Grievance portal last collected 6 days ago; this answer may be incomplete. | கன்சோலை Tondiarpet மண்டலத்திற்கு வடிகட்டு | மூலங்களும் கணக்கிட்ட முறையும் | பயனுள்ளதா? | ஜார்விஸ் திரையில் காட்டு | கன்சோலின் நேரடித் தரவிலிருந்து பதில்கள் · அனுப்ப Enter · ↑ கடைசிக் கேள்வி",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "ask-ta",
+   "q": "இந்த வாரம் அடையாறில் ஏன் வெள்ளம் வந்தது?",
+   "answer": "இந்த வாரம் அடையாறில் ஏன் வெள்ளம் வந்தது? | Flooding, by category | தரவிலிருந்து | Flooding: 7 reported (16 the period before), 6 still open, 1 severe; most at Guindy. | Flooding & waterlogging: 7 (14 before), 6 open | WATERBODY_INFRA: 0 (2 before), 0 open | FLOOD_RELIEF: 0 (0 before), 0 open | கடந்த 7 நாட்கள் · அடையாறு (மண்டலம் 13) · அனைத்துத் துறைகளும் · தரவு நேரம் நவ. 12, 4:24 PM | Flooding (3 categories). | News last collected 6 days ago; this answer may be incomplete. | மூலங்களும் கணக்கிட்ட முறையும் | பயனுள்ளதா? | ஜார்விஸ் திரையில் காட்டு | கன்சோலின் நேரடித் தரவிலிருந்து பதில்கள் · அனுப்ப Enter · ↑ கடைசிக் கேள்வி",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "ask-tanglish",
+   "q": "Entha zone ku ippo attention venum?",
+   "answer": "Entha zone ku ippo attention venum? | Idho figures: Zones by open incidents | Data-la irundhu | Adhigamana open incidents: Tondiarpet (35), Teynampet (30), Adyar (26), Royapuram (25), Kodambakkam (23). | Last 7 days · District muzhukka · ella departments · as of 12 Nov, 4:25 PM | News last collected 6 days ago; this answer may be incomplete. | Console-a Tondiarpet ku filter pannu | Sources, epdi calculate pannom | Useful-a? | ஜார்விஸ் திரையில் காட்டு | Console-oda live data-la irundhu answers · Enter send · ↑ last question",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "ask-tanglish",
+   "q": "Adyar la flood ku enna reason nu sollunga",
+   "answer": "Adyar la flood ku enna reason nu sollunga | 8 flooding incidents · kadandha 90 naal-la | Data-la irundhu | kadandha 90 naal-la report aana pudhu 8 flooding incidents (motham 137): | Knee-deep water stagnation in our area; vehicles cannot pass (Arulayammanpet Cross Street, Arulyammanpet, Guindy, Adyar) | Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan (Adambakkam, Adyar) | காலை முதல். Guindy Industrial Estate Sathya Nagar 2nd St தாழ்வான பகுதியில் தண்ணீர் வடியவில்லை (Guindy Industrial Estate (Guindy Industrial Estate Storm Water Channel), Adyar) | Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது (Guindy, Adyar) | Cal",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  }
+ ]
+}

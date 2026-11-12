@@ -1,0 +1,833 @@
+{
+ "when": "2026-11-12T11:25:14.334Z",
+ "rows": [
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_en_1440.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_search_and_commands_en_1440.png"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_alerts_en_1440.png"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_en_1440.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_search_and_commands_en_1440.png"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_alerts_en_1440.png"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: completion report",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "skipped": "no In-action row with a Complete button",
+   "axe": {},
+   "axeRules": [],
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 5
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_en_360.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 5
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_en_360.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: completion report",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "skipped": "no In-action row with a Complete button",
+   "axe": {},
+   "axeRules": [],
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_search_and_commands_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_alerts_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_search_and_commands_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 10
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.ok.sm :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_alerts_ta_1440.png"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: completion report",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "skipped": "no In-action row with a Complete button",
+   "axe": {},
+   "axeRules": [],
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 5
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerA",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_ta_360.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerA"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: completion report dialog",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 5
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6",
+      "tr:nth-child(2) > td:nth-child(4) > .ok.sm.btn :: Element has insufficient color contrast of 3.38 (foreground color: #ffffff, background color: #0e9f6"
+     ]
+    }
+   ],
+   "officer": "officerB",
+   "shot": "ovl-fail-officer_officer_overlay_completion_report_dialog_ta_360.png"
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerB"
+  },
+  {
+   "page": "officer overlay: case drawer",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: completion report",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "skipped": "no In-action row with a Complete button",
+   "axe": {},
+   "axeRules": [],
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "page": "officer overlay: search and commands",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  },
+  {
+   "page": "officer overlay: alerts",
+   "role": "officer",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "officer": "officerC"
+  }
+ ]
+}

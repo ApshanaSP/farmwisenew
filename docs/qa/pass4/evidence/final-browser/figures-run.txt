@@ -1,0 +1,30 @@
+{
+ "jarvis sentence (daily screen)": {
+  "http": 200,
+  "recipe": "cases",
+  "title": "Severe cases · this week",
+  "say": "7 severe cases this week. 7 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 5 of them. Say \"read them\", or \"open\" and a number.",
+  "total": 7,
+  "rows": 7,
+  "overdue": 5,
+  "sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+ },
+ "jarvis sentence (weekly screen)": {
+  "http": 200,
+  "recipe": "cases",
+  "title": "Severe cases · this week",
+  "say": "7 severe cases this week. 7 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 5 of them. Say \"read them\", or \"open\" and a number.",
+  "total": 7,
+  "rows": 7,
+  "overdue": 5,
+  "sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+ },
+ "jarvis severe, weekly, sev=severe": {
+  "http": 400
+ }
+}
+{"text":"what is the rainfall in Adyar","http":200,"lane":"quick","recipe":"readings","title":"Rainfall in the last 24 hours","slots":{"period":null,"zones":[13],"dept":null,"depts":[],"cat":null,"taluk":null,"sev":null,"status":null,"q":null,"metric":"rain","measure":null,"by":null,"order":"top","n":null,"id":null,"name":null,"what":null,"sort":null},"say":"4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."}
+{"text":"அடையாறு பகுதியில் மழை நிலவரம் என்ன","http":200,"lane":"quick","recipe":"readings","title":"Rainfall in the last 24 hours","slots":{"period":null,"zones":[13],"dept":null,"depts":[],"cat":null,"taluk":null,"sev":null,"status":null,"q":null,"metric":"rain","measure":null,"by":null,"order":"top","n":null,"id":null,"name":null,"what":null,"sort":null},"say":"4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."}
+{"text":"Adyar la mazhai nilavaram enna","http":200,"lane":"quick","recipe":"readings","title":"Rainfall in the last 24 hours","slots":{"period":null,"zones":[13],"dept":null,"depts":[],"cat":null,"taluk":null,"sev":null,"status":null,"q":null,"metric":"rain","measure":null,"by":null,"order":"top","n":null,"id":null,"name":null,"what":null,"sort":null},"say":"4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."}
+{"text":"Adyar la maze nilavaram enna","http":200,"lane":"resolve","recipe":"brief","title":"Briefing · today","slots":{"period":"daily","zones":[13],"dept":null,"depts":[],"cat":null,"taluk":null,"sev":null,"status":null,"q":null,"metric":null,"measure":null,"by":null,"order":"top","n":null,"id":null,"name":null,"what":null,"sort":null,"fresh":true},"say":"2 points in the brief for today. 0 incidents were reported in Adyar (last 24 hours)."}
+2026-11-12T21:10:03+05:30

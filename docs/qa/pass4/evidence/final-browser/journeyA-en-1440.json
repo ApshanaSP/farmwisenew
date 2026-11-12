@@ -1,0 +1,98 @@
+{
+ "lang": "en",
+ "vp": 1440,
+ "steps": [
+  {
+   "name": "home",
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments ",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "briefing",
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | CO | Collected 6 Nov, 06:10 PM | 5 feeds behind | Briefing | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Bridges | Buildings (GCC) | Chennai Metrowater | Council | District Disaster Management | Education | Family Welfare | Financial Management Unit | General Administration | Government Hospitals | Greater Chennai Police | Land & Estate | Me"
+  },
+  {
+   "name": "find-severe",
+   "picked": {
+    "period": "Weekly",
+    "dept": "",
+    "rows": 8
+   },
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | 6 | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapor"
+  },
+  {
+   "name": "detail",
+   "label": "Take action on Pls send pumpset to Bajanai Koil St, Pallikaranai",
+   "draftHead": "Dear Officer, PWD Water Resources,\n\nWaterlogging at Pallikaranai (Pallikaranai Marsh Outlet Drain), Sholinganallur. This is a severe incident and needs your imm",
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | 6 | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | A"
+  },
+  {
+   "name": "approved",
+   "text": "Confirm it's you | SEND EMAIL | Send the instruction on incident INC-20261105-6D03C9: \"Urgent: Flooding & waterlogging at Pallikaranai (Pallikaranai Marsh Outlet Drain), Sholing\" | Your account password | Cancel | Confirm | Email me a code | Being signed in is not enough for this. It is checked on the server for exactly this action, and recorded in the audit log. | Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | 6 | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adya",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "sent",
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | 6 | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Greater Chennai Police (69 open) | Storm Water Drain (51 open) | PWD Water Resources (33 open) | Street Lighting & Electrical (24 open) | Roads & Building Permissions (20 open) | Public Health (",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "list-after",
+   "needYou": "9",
+   "stillListed": true,
+   "row": "Still open at more than twice its 6-hour deadlineSholinganallur · PWD Water Resources · 7 days ago · 2 merged"
+  },
+  {
+   "name": "row-same-session-3s",
+   "row": {
+    "aria": "Take action on Pls send pumpset to Bajan",
+    "text": "Act"
+   }
+  },
+  {
+   "name": "row-same-session-18s",
+   "row": {
+    "aria": "Take action on Pls send pumpset to Bajan",
+    "text": "Act"
+   }
+  },
+  {
+   "name": "row-after-reload",
+   "row": {
+    "aria": "Action taken on Pls send pumpset to Baja",
+    "text": "Sent"
+   }
+  },
+  {
+   "name": "my-tasks",
+   "has": false,
+   "text": " | 0 | See all | Severe work only · | 63 | other closures verified by departments | All caught up. Nothing needs your check right now. | Latest news | See more | News 36 | Differ 0 | Next door 32 | Added 58 | Traffic curbs, special teams to tackle festive rush in Chennai | Thanthi TV, The New Indian Express · Kodambakkam · 6 days ago | High-severity incident · no citizen complaint yet | School stu"
+  },
+  {
+   "name": "bell",
+   "has": false,
+   "text": ""
+  },
+  {
+   "name": "briefing-after",
+   "mentions": true,
+   "text": "llur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Greater Chennai Police (69 open) | Storm Water Drain (51 open) | PWD Water Resources (32 open) | Street Lighting & Electrical (24 open) | Roads & Building Permissions (20 open) | Public Health (GCC) (19 open) | Solid Waste Management (19 open) | District Disaster Management (11 open) | General Administration (7 open) | Parks & Play Fields (6 open) | Revenue (Tax & Licence) (4 open) | Bridges (1 open) | Land & Estate (1 open) | Bui"
+  }
+ ],
+ "started": "2026-11-12T10:47:31.785Z",
+ "incidentLabel": "Take action on Pls send pumpset to Bajanai Koil St, Pallikaranai",
+ "title": "Good afternoon, Collector",
+ "incTitle": "Pls send pumpset to Bajanai Koil St, Pallikaranai",
+ "w": {
+  "console": [],
+  "http": [],
+  "failed": []
+ }
+}

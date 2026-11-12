@@ -1,0 +1,719 @@
+{
+ "when": "2026-11-12T11:15:05.958Z",
+ "rows": [
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenA",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_en_1440.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 4",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 1440,
+   "skipped": "Next: Details not found",
+   "axe": {},
+   "axeRules": [],
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenA",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_en_360.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenB",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_en_360.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenA",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_ta_1440.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenB",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_ta_1440.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenA",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_ta_360.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenA"
+  },
+  {
+   "page": "citizen wizard: step 1 details",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 2 location with a pin",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 type",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  },
+  {
+   "page": "citizen wizard: step 3 sub types",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 15
+   },
+   "axeRules": [
+    {
+     "id": "nested-interactive",
+     "impact": "serious",
+     "nodes": 15,
+     "sample": [
+      "li[role=\"option\"]:nth-child(1) :: Element has focusable descendants. Move them outside of the element, or remove them.",
+      "li[role=\"option\"]:nth-child(2) :: Element has focusable descendants. Move them outside of the element, or remove them."
+     ]
+    }
+   ],
+   "citizen": "citizenB",
+   "shot": "ovl-fail-citizen_citizen_wizard_step_3_sub_types_ta_360.png"
+  },
+  {
+   "page": "citizen wizard: step 4 details with photo",
+   "role": "citizen",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": [],
+   "citizen": "citizenB"
+  }
+ ]
+}

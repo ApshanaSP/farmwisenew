@@ -1,0 +1,169 @@
+{
+ "part": "jarvis",
+ "vp": 1440,
+ "started": "2026-11-12T10:43:56.051Z",
+ "steps": [
+  {
+   "name": "jarvis-en",
+   "q": "how many severe incidents this week",
+   "round": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Severe cases · this week",
+    "say": "9 severe cases this week. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 7 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "said": "9 severe cases this week. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 7 of them. Say \"read them\", or \"open\" and a number.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "jarvis-en",
+   "q": "show the overdue complaints for solid waste",
+   "round": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Cases · Garbage & solid waste · this week",
+    "say": "22 cases this week; here are the 12 that matter most. 22 are past their deadline and need you first: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar, and uncleared garbage at Thiruvalluvar Salai, Ponniammanmedu Main Road, Madhavaram in Manali. Say \"read them\", or \"open\" and a number."
+   },
+   "said": "22 cases this week; here are the 12 that matter most. 22 are past their deadline and need you first: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar, and uncleared garbage at Thiruvalluvar Salai, Ponniammanmedu Main Road, Madhavaram in Manali. Say \"read them\", or \"open\" and a number.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "jarvis-ta",
+   "q": "இந்த வாரம் எத்தனை தீவிர சம்பவங்கள் உள்ளன",
+   "round": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "கடுமையான சம்பவங்கள் · இந்த வாரம்",
+    "say": "9 severe cases this week. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 7 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "said": "இந்த வாரம் 9 கடுமையான சம்பவங்கள். 10 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை; தண்ணீர் தேக்கம், Pallikaranai (Pallikaranai Marsh Outlet Drain), சோழிங்கநல்லூர். PWD Water Resources வசம் 7. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ]
+  },
+  {
+   "name": "jarvis-ta",
+   "q": "அடையாறு பகுதியில் மழை நிலவரம் என்ன",
+   "round": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "readings",
+    "title": "Rainfall in the last 24 hours",
+    "say": "4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."
+   },
+   "said": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 மி.மீ, 6 நவ., முற்பகல் 8:30 நிலவரப்படி.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ]
+  },
+  {
+   "name": "jarvis-tanglish",
+   "q": "indha vaaram evvalavu severe incidents irukku",
+   "round": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Severe cases · this week",
+    "say": "9 severe cases this week. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 7 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "said": "இந்த வாரம் 9 கடுமையான சம்பவங்கள். 10 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை; தண்ணீர் தேக்கம், Pallikaranai (Pallikaranai Marsh Outlet Drain), சோழிங்கநல்லூர். PWD Water Resources வசம் 7. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ]
+  },
+  {
+   "name": "jarvis-tanglish",
+   "q": "Adyar la maze nilavaram enna",
+   "round": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Briefing · today",
+    "say": "2 points in the brief for today. 0 incidents were reported in Adyar (last 24 hours)."
+   },
+   "said": "இன்று சுருக்கத்தில் 2 குறிப்புகள். இன்று அடையாறு பகுதியில் 0 சம்பவங்கள் பதிவாகின. 0 இன்னும் நிலுவையில்; 0 கடுமையானவை.",
+   "cards": "",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ]
+  }
+ ]
+}

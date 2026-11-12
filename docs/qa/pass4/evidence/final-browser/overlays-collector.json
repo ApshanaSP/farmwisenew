@@ -1,0 +1,1450 @@
+{
+ "when": "2026-11-12T11:34:51.331Z",
+ "rows": [
+  {
+   "page": "collector overlay: Rain / Flooding",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Traffic",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Power",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Metro",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask the map",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask District IQ (empty)",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "minor": 1,
+    "moderate": 2
+   },
+   "axeRules": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside :: ARIA role dialog is not allowed for given element"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ]
+  },
+  {
+   "page": "collector overlay: Jarvis bar",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Jarvis answer on the stage",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1,
+    "moderate": 4
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".app > main :: Document has more than one main landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha",
+      ".app > main :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Jarvis_answer_on_the_stage_en_14.png"
+  },
+  {
+   "page": "collector overlay: Alerts (bell)",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Alerts_bell__en_1440.png"
+  },
+  {
+   "page": "collector overlay: Menu",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "critical": 1,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "sample": [
+      ".pop :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Menu_en_1440.png"
+  },
+  {
+   "page": "collector overlay: Search and commands",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Search_and_commands_en_1440.png"
+  },
+  {
+   "page": "collector overlay: Incident detail + Take action",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 12
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".att-row.need:nth-child(1) > .done.att-act :: Text inside the element is not included in the accessible name",
+      ".att-row.need:nth-child(2) > .done.att-act :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".iv-col:nth-child(1) :: Element should have focusable content",
+      ".iv-col:nth-child(2) :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Incident_detail_Take_action_en_1.png"
+  },
+  {
+   "page": "collector overlay: Taluks map",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Taluks_map_en_1440.png"
+  },
+  {
+   "page": "collector overlay: My tasks",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_My_tasks_en_1440.png"
+  },
+  {
+   "page": "collector overlay: News tab",
+   "role": "collector",
+   "lang": "en",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 3
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".nb-lv.prepare :: Element has insufficient color contrast of 3.93 (foreground color: #e0364a, background color: #ffeff",
+      ".nb-lv.watch :: Element has insufficient color contrast of 2.84 (foreground color: #e5720f, background color: #fff3e"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_News_tab_en_1440.png"
+  },
+  {
+   "page": "collector overlay: Rain / Flooding",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Traffic",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Power",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Metro",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask the map",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask District IQ (empty)",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "minor": 1,
+    "moderate": 2,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside :: ARIA role dialog is not allowed for given element"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".aq-scopebar :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Ask_District_IQ_empty__en_360.png"
+  },
+  {
+   "page": "collector overlay: Jarvis bar",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Jarvis answer on the stage",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "moderate": 4
+   },
+   "axeRules": [
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".app > main :: Document has more than one main landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha",
+      ".app > main :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ]
+  },
+  {
+   "page": "collector overlay: Alerts (bell)",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Alerts_bell__en_360.png"
+  },
+  {
+   "page": "collector overlay: Menu",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "critical": 1,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "sample": [
+      ".pop :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Menu_en_360.png"
+  },
+  {
+   "page": "collector overlay: Search and commands",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Search_and_commands_en_360.png"
+  },
+  {
+   "page": "collector overlay: Incident detail + Take action",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 9
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 7,
+     "sample": [
+      ".att-row.need:nth-child(1) > .done.att-act :: Text inside the element is not included in the accessible name",
+      ".att-row.need:nth-child(2) > .done.att-act :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".iv-col:nth-child(1) :: Element should have focusable content",
+      ".iv-col:nth-child(2) :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Incident_detail_Take_action_en_3.png"
+  },
+  {
+   "page": "collector overlay: Taluks map",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Taluks_map_en_360.png"
+  },
+  {
+   "page": "collector overlay: My tasks",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_My_tasks_en_360.png"
+  },
+  {
+   "page": "collector overlay: News tab",
+   "role": "collector",
+   "lang": "en",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 11
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".leaflet-marker-icon.leaflet-zoom-animated:nth-child(10) > .zlbl.tlbl :: Element has insufficient color contrast of 3.42 between the foreground and shadow color (foreground ",
+      ".leaflet-marker-icon.leaflet-zoom-animated:nth-child(11) > .zlbl.tlbl :: Element has insufficient color contrast of 3.42 between the foreground and shadow color (foreground "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_News_tab_en_360.png"
+  },
+  {
+   "page": "collector overlay: Rain / Flooding",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Traffic",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Power",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Metro",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask the map",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask District IQ (empty)",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "minor": 1,
+    "moderate": 2
+   },
+   "axeRules": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside :: ARIA role dialog is not allowed for given element"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ]
+  },
+  {
+   "page": "collector overlay: Jarvis bar",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Jarvis answer on the stage",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1,
+    "moderate": 4
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".app > main :: Document has more than one main landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha",
+      ".app > main :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Jarvis_answer_on_the_stage_ta_14.png"
+  },
+  {
+   "page": "collector overlay: Alerts (bell)",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Alerts_bell__ta_1440.png"
+  },
+  {
+   "page": "collector overlay: Menu",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "critical": 1,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "sample": [
+      ".pop :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Menu_ta_1440.png"
+  },
+  {
+   "page": "collector overlay: Search and commands",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Search_and_commands_ta_1440.png"
+  },
+  {
+   "page": "collector overlay: Incident detail + Take action",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 7
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".att-row.need:nth-child(1) > .done.att-act :: Text inside the element is not included in the accessible name",
+      ".att-row.need:nth-child(2) > .done.att-act :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".iv-col:nth-child(1) :: Element should have focusable content",
+      ".iv-col:nth-child(2) :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Incident_detail_Take_action_ta_1.png"
+  },
+  {
+   "page": "collector overlay: Taluks map",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Taluks_map_ta_1440.png"
+  },
+  {
+   "page": "collector overlay: My tasks",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_My_tasks_ta_1440.png"
+  },
+  {
+   "page": "collector overlay: News tab",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 1440,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 3
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".nb-lv.prepare :: Element has insufficient color contrast of 3.93 (foreground color: #e0364a, background color: #ffeff",
+      ".nb-lv.watch :: Element has insufficient color contrast of 2.84 (foreground color: #e5720f, background color: #fff3e"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_News_tab_ta_1440.png"
+  },
+  {
+   "page": "collector overlay: Rain / Flooding",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Traffic",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Power",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Rain / Metro",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask the map",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Ask District IQ (empty)",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "minor": 1,
+    "moderate": 2,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside :: ARIA role dialog is not allowed for given element"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".aq-scopebar :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Ask_District_IQ_empty__ta_360.png"
+  },
+  {
+   "page": "collector overlay: Jarvis bar",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {},
+   "axeRules": []
+  },
+  {
+   "page": "collector overlay: Jarvis answer on the stage",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "http": [
+    "503 POST /api/jarvis/say",
+    "503 POST /api/jarvis/say"
+   ],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "moderate": 4
+   },
+   "axeRules": [
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top :: Document has more than one banner landmark"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".app > main :: Document has more than one main landmark"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      ".top :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha",
+      ".app > main :: The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguisha"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Jarvis_answer_on_the_stage_ta_36.png"
+  },
+  {
+   "page": "collector overlay: Alerts (bell)",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Alerts_bell__ta_360.png"
+  },
+  {
+   "page": "collector overlay: Menu",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "critical": 1,
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "sample": [
+      ".pop :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Menu_ta_360.png"
+  },
+  {
+   "page": "collector overlay: Search and commands",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Search_and_commands_ta_360.png"
+  },
+  {
+   "page": "collector overlay: Incident detail + Take action",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 7
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".att-row.need:nth-child(1) > .done.att-act :: Text inside the element is not included in the accessible name",
+      ".att-row.need:nth-child(2) > .done.att-act :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".iv-col:nth-child(1) :: Element should have focusable content",
+      ".iv-col:nth-child(2) :: Element should have focusable content"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Incident_detail_Take_action_ta_3.png"
+  },
+  {
+   "page": "collector overlay: Taluks map",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_Taluks_map_ta_360.png"
+  },
+  {
+   "page": "collector overlay: My tasks",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 1
+   },
+   "axeRules": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_My_tasks_ta_360.png"
+  },
+  {
+   "page": "collector overlay: News tab",
+   "role": "collector",
+   "lang": "ta",
+   "vp": 360,
+   "console": [],
+   "http": [],
+   "failed": [],
+   "sideways": false,
+   "axe": {
+    "serious": 9
+   },
+   "axeRules": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".leaflet-marker-icon.leaflet-zoom-animated:nth-child(10) > .zlbl.tlbl :: Element has insufficient color contrast of 3.42 between the foreground and shadow color (foreground ",
+      ".leaflet-marker-icon.leaflet-zoom-animated:nth-child(11) > .zlbl.tlbl :: Element has insufficient color contrast of 3.42 between the foreground and shadow color (foreground "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".jvf-q :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "shot": "ovl-fail-collector_collector_overlay_News_tab_ta_360.png"
+  }
+ ]
+}

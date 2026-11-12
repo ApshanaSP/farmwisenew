@@ -1,0 +1,161 @@
+{
+ "part": "rain",
+ "vp": 360,
+ "started": "2026-11-12T15:48:00.373Z",
+ "steps": [
+  {
+   "name": "rain-open-en",
+   "tabs": [
+    {
+     "label": "Flooding …",
+     "sel": "true"
+    },
+    {
+     "label": "Traffic …",
+     "sel": "false"
+    },
+    {
+     "label": "Power …",
+     "sel": "false"
+    },
+    {
+     "label": "Metro …",
+     "sel": "false"
+    }
+   ],
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-en-Flooding",
+   "text": " Flooding | Close | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 9 | heavy rains since 19 May | 786 | flooding reports in them | 84 | streets that flood in 3 or more rains | Most flooding is in Royapuram, Adyar, Tondiarpet (30 % of reports). 21 % of reports came from streets that had already flooded in an earlier rain: the same places, again. | ALSO IN THESE RAINS | 114 roads jammed | 150 wards lost power | 6 of 6 lines late | PAST HEAVY RAINS | ne",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-en-Traffic",
+   "text": " Traffic | Close | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 36 | roads jam in a typical heavy rain | 39 | roads jam in 3 or more rains | 1.3× | as many traffic reports on a rain day | In a heavy rain, traffic jams on about 36 roads; on 41 % of them, water on the road is the reason. | The roads that jam in the most rains: Chennai - Ennore Road (9 of 9), EVR Periyar Salai (9 of 9) and Anna Salai (Mount Road) (8 of 9). | 7 underpasses fill with wa",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-en-Power",
+   "text": " Power | Close | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 39 | wards lose power in a typical heavy rain | 3.8 h | without power, on average | 56 | wards lose power in 3 or more rains | In a heavy rain, power goes off in about 39 wards, for about 3.8 hours. | The wards that lose power in the most rains: Ward 141 · CIT Nagar (6 of 9), Ward 145 · Nerkundram, Balakrishna Nagar (6 of 9) and Ward 127 · Koyambedu, Arumbakkam (5 of 9). | Named most oft",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-en-Metro",
+   "text": " Metro | Close | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 5 of 6 | lines run late in a typical heavy rain | 12 min | late, on average | 13 | station closures in past rains | In a heavy rain, trains run about 12 min late on 5 of the 6 lines. | Hit in the most rains: Blue Line (9 of 9) and Green Line (9 of 9). | Stations closed most often: St. Thomas Mount (4), use Palavantangal, St. Thomas Mount Metro (3), use Alandur and Egmore Metro (2), use N",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-watchers-en",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "rain-open-ta",
+   "tabs": [
+    {
+     "label": "Flooding 786",
+     "sel": "true"
+    },
+    {
+     "label": "Traffic 114",
+     "sel": "false"
+    },
+    {
+     "label": "Power 150",
+     "sel": "false"
+    },
+    {
+     "label": "Metro 6",
+     "sel": "false"
+    }
+   ],
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-ta-Flooding",
+   "text": " Flooding | மூடு | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 9 | heavy rains since 19 May | 786 | flooding reports in them | 84 | streets that flood in 3 or more rains | Most flooding is in Royapuram, Adyar, Tondiarpet (30 % of reports). 21 % of reports came from streets that had already flooded in an earlier rain: the same places, again. | ALSO IN THESE RAINS | 114 roads jammed | 150 wards lost power | 6 of 6 lines late | PAST HEAVY RAINS | new",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-ta-Traffic",
+   "text": " Traffic | மூடு | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 36 | roads jam in a typical heavy rain | 39 | roads jam in 3 or more rains | 1.3× | as many traffic reports on a rain day | In a heavy rain, traffic jams on about 36 roads; on 41 % of them, water on the road is the reason. | The roads that jam in the most rains: Chennai - Ennore Road (9 of 9), EVR Periyar Salai (9 of 9) and Anna Salai (Mount Road) (8 of 9). | 7 underpasses fill with wat",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-ta-Power",
+   "text": " Power | மூடு | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 39 | wards lose power in a typical heavy rain | 3.8 h | without power, on average | 56 | wards lose power in 3 or more rains | In a heavy rain, power goes off in about 39 wards, for about 3.8 hours. | The wards that lose power in the most rains: Ward 141 · CIT Nagar (6 of 9), Ward 145 · Nerkundram, Balakrishna Nagar (6 of 9) and Ward 127 · Koyambedu, Arumbakkam (5 of 9). | Named most ofte",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-tab-ta-Metro",
+   "text": " Metro | மூடு | Flooding | 786 | Traffic | 114 | Power | 150 | Metro | 6 | No heavy-rain warning now | 0 mm today · Karapakkam | 5 of 6 | lines run late in a typical heavy rain | 12 min | late, on average | 13 | station closures in past rains | In a heavy rain, trains run about 12 min late on 5 of the 6 lines. | Hit in the most rains: Blue Line (9 of 9) and Green Line (9 of 9). | Stations closed most often: St. Thomas Mount (4), use Palavantangal, St. Thomas Mount Metro (3), use Alandur and Egmore Metro (2), use Ne",
+   "loading": false,
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "rain-watchers-ta",
+   "console": [],
+   "http": [],
+   "failed": []
+  }
+ ]
+}

@@ -1,0 +1,126 @@
+{
+ "lang": "ta",
+ "vp": 360,
+ "who": "officerB",
+ "steps": [
+  {
+   "name": "home",
+   "counts": {
+    "toApprove": "37",
+    "inAction": "49"
+   },
+   "text": "மேலோட்டம் | Work & insights | EL | · | Good afternoon | மேலோட்டம் | தினசரி | வாராந்திர | மாதாந்திர | காலாண்டு | அனைத்து 15 மண்டலங்கள் | திருவோட்டியூர் | மணாலி | மதவாரம் | தொண்டியர்பேட் | ராயாப்புரம் | திரு-வி-கா-நகர் | அம்பட்டூர் | அண்ணா நகர் | தேய்னம்பேட் | கோடம்பாக்கம் | வலசராவாக்கம் | அலண்டூர் | அடையாறு | பெருங்குடி | சொலிங்கனல்லூர் | அனைத்து வட்டங்கள் | அலண்டூர் | அம்பட்டூர் | அமின்ஜிகரை | அயனவரம் | எக்மோர் | குயின்டி | கொலத்தூர் | மதவாரம் | மதுரவாயல் | மம்பலம் | மயிலாப்பூர் | பெரம்பூர் | பு",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "approve-buttons",
+   "n": 1
+  },
+  {
+   "name": "approved",
+   "row": "People are getting electric shock from the street light pole in our street | அதிகம்Perungudi · 7 days ago · 1 complaint | Approve",
+   "counts": {
+    "toApprove": "37",
+    "inAction": "49"
+   },
+   "toast": " ",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "in-action",
+   "hasComplete": 1,
+   "counts": {
+    "toApprove": "36",
+    "inAction": "50"
+   },
+   "buttons": [
+    "மேலோட்டம்",
+    "Work & insights",
+    "Collected 6 Nov, 06:10 PM6 / 8 ஊட்டங்கள் நடப்பில் · 2/8 நேரலை",
+    "EL",
+    "தினசரி",
+    "வாராந்திர",
+    "மாதாந்திர",
+    "காலாண்டு",
+    "கடுமையான நிகழ்வுகள் 3 1 அதிகம் than the previous month",
+    "திறந்த நிகழ்வுகள்· 107 citizen complaints 98 94 அதிகம் than the previous month",
+    "WAITING FOR YOUR APPROVAL 36 4 severe or high",
+    "இந்த மாதம் தீர்க்கப்பட்டவை 282 44 குறைவு than the previous month",
+    "+",
+    "−",
+    "வரைபடத்திடம் கேளுங்கள்",
+    "கடுமை 3",
+    "புகார்கள் 320",
+    "மற்றவை 4",
+    "All contacts",
+    "SEVERE OR HIGH, STILL OPEN 16",
+    "PAST DEADLINE, STILL OPEN 98",
+    "DUE IN 24 HOURS 0",
+    "MOST OPEN WORK IN Royapuram · 17",
+    "தீவிரம் 89",
+    "My work 86",
+    "அனைத்தும்",
+    "36 To approve",
+    "50 In action",
+    "Street light problem near Post Office: damage to the electric pole அதிகம்Perungudi · 19 days ago · 4 complaints",
+    "Complete & close"
+   ]
+  },
+  {
+   "name": "report-open",
+   "text": "Completion report · close as done | Street light problem near Post Office: damage to the electric pole | INC-20261024-C62618 · பெருங்குடி · reported 24 Oct, 09:35 PM · 4 complaints | அதிகம் | REMARKS · WHAT WAS DONE | 0/2000 | PHOTOS OF COMPLETED WORK (0/8) | Upload site photos | JPG or PNG · you can pick several, or drop them here | ரத்து | High severity: your department verifies and closes it; only Severe cases go to the Collector. | Close as done"
+  },
+  {
+   "name": "confirm-asked",
+   "text": "Completion report · close as done | Street light problem near Post Office: damage to the electric pole | INC-20261024-C62618 · பெருங்குடி · reported 24 Oct, 09:35 PM · 4 complaints | அதிகம் | REMARKS · WHAT WAS DONE | 80/2000 | PHOTOS OF COMPLETED WORK (1/8) | Upload site photos | JPG or PNG · you c"
+  },
+  {
+   "name": "closed",
+   "counts": {
+    "toApprove": "36",
+    "inAction": "49"
+   },
+   "toast": " ",
+   "text": "INC-20261024-C62618 | அதிகம் | Verified | Street light problem near Post Office: damage to the electric pole | Sainadan Street, Sainadan Street, Madipakkam, Perungudi, Ward 189 · தெரு விளக்கு & மின்சாரம் | Received | In action | Sent to Collector | Verified | 4 reports (Grievance portal) about stree",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "reload-after",
+   "counts": {
+    "toApprove": "36",
+    "inAction": "49"
+   }
+  },
+  {
+   "name": "collector-search",
+   "id": "INC-20261024-C62618",
+   "found": 1,
+   "text": "Esc | INCIDENTS | Street light problem near Post Office: damage to the electric pole | Perungudi · 19 days ago | கேள் | Ask the map: “INC-20261024-C62618” | Answers on the Overview's map | Ask District IQ: “INC-20261024-C62618” | Opens the chat with this question | ↑ | ↓ | move | Enter | திற | / | search anywhere"
+  },
+  {
+   "name": "collector-incident",
+   "text": "மேலோட்டம் | சுருக்கம் | போக்குகள் | சுற்றுச்சூழல் | தரவு அரங்கம் | CO | திருவோட்டியூர் | மதவாரம் | தொண்டியர்பேட் | ராயாப்புரம் | திரு-வி-கா-நகர் | அம்பட்டூர் | தேய்னம்பேட் | வலசராவாக்கம் | அலண்டூர் | அடையாறு | பெருங்குடி | சொலிங்கனல்லூர் | மதவாரம் | 0 open · 0 severe · 0 complaints | Click to filter to this zone | Ward 27 | 5 km | படங்கள் © Esri, Maxar, Earthstar Geographics | + | − | வரைபடத்திடம் கேளுங்கள் | New chat | Back to overview | INC-20261024-C62618 | I can answer these kinds of map questions without AI: | waterlogging within 300 m of schools | open complaints near Adyar | flooding in Zone 13 this week | thefts along Anna Salai this month | garbage complaints by ward | where are roa"
+  }
+ ],
+ "started": "2026-11-12T11:17:29.880Z",
+ "approved": "People are getting electric shock from the street light pole in our street | அதிகம்Perungudi · 7 days ago · 1 complaint | Approve",
+ "closed": "Street light problem near Post Office: damage to the electric pole | அதிகம்Perungudi · 19 days ago · 4 complaints | Complete & close",
+ "incidentId": "INC-20261024-C62618",
+ "collectorWatchers": {
+  "console": [],
+  "http": [],
+  "failed": []
+ },
+ "watchers": {
+  "console": [],
+  "http": [],
+  "failed": []
+ }
+}

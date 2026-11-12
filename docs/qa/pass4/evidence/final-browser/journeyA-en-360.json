@@ -1,0 +1,102 @@
+{
+ "lang": "en",
+ "vp": 360,
+ "steps": [
+  {
+   "name": "home",
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | CO | Thursday 12 November | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Bridges | Buildings (GCC) | Chennai Metrowater | Council | District Disaster Management | Edu",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "briefing",
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | CO | Briefing | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Bridges | Buildings (GCC) | Chennai Metrowater | Council | District Disaster Management | Education | Family Welfare | Financial Management Unit | General Administration | Government Hospitals | Greater Chennai Police | Land & Estate | Mechanical Engineering | Parks & Play Fields | Pollution Control Board | Public Health (GCC) | PW"
+  },
+  {
+   "name": "find-severe",
+   "picked": {
+    "period": "Weekly",
+    "dept": "",
+    "rows": 6
+   },
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | 6 | CO | Thursday 12 November | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All dep"
+  },
+  {
+   "name": "detail",
+   "label": "Take action on Cooum River - Chetpet stretch spilling over bank at Chetpet (MGR St)",
+   "draftHead": "Dear Officer, PWD Water Resources,\n\nCanal overflow at Chetpet (Cooum River - Chetpet stretch), Royapuram. This is a severe incident and needs your immediate att",
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | 6 | CO | Thursday 12 November | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | My"
+  },
+  {
+   "name": "approved",
+   "text": "Confirm it's you | SEND EMAIL | Send the instruction on incident INC-20261105-6B3555: \"Urgent: Flooding & waterlogging at Chetpet (Cooum River - Chetpet stretch), Royapuram (INC\" | Your account password | Cancel | Confirm | Email me a code | Being signed in is not enough for this. It is checked on the server for exactly this action, and recorded in the audit log. | Overview | Briefing | Trends | Environment | Data Studio | 6 | CO | Thursday 12 November | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | E",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "sent",
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | 6 | CO | Thursday 12 November | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Greater Chennai Police (68 open) | Storm Water Drain (51 open) | PWD Water Resources (32 open) | Street Lighting & Electrical (24 open) | Roads & Building Permissions (20 open) | Public Health (GCC) (19 open) | Solid Waste Management (19 open) | District Disaster Management (11 open) | Ge",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "list-after",
+   "needYou": "9",
+   "stillListed": true,
+   "row": "Still open at more than twice its 6-hour deadlineRoyapuram · PWD Water Resources · 7 days ago"
+  },
+  {
+   "name": "row-same-session-3s",
+   "row": {
+    "aria": "Take action on Cooum River - Chetpet str",
+    "text": "Act"
+   }
+  },
+  {
+   "name": "row-same-session-18s",
+   "row": {
+    "aria": "Take action on Cooum River - Chetpet str",
+    "text": "Act"
+   }
+  },
+  {
+   "name": "row-after-reload",
+   "row": {
+    "aria": "Action taken on Cooum River - Chetpet st",
+    "text": "Sent"
+   }
+  },
+  {
+   "name": "my-tasks",
+   "has": false,
+   "text": " | 0 | See all | Severe work only · | 62 | other closures verified by departments | All caught up. Nothing needs your check right now. | Latest news | See more | News 36 | Differ 0 | Next door 32 | Added 58 | Traffic curbs, special teams to tackle festive rush in Chennai | Thanthi TV, The New Indian Express · Kodambakkam · 6 days ago | High-severity incident · no citizen complaint yet | School stu"
+  },
+  {
+   "name": "bell",
+   "has": false,
+   "text": ""
+  },
+  {
+   "name": "briefing-after",
+   "mentions": true,
+   "text": "en) | Storm Water Drain (51 open) | PWD Water Resources (32 open) | Street Lighting & Electrical (24 open) | Roads & Building Permissions (20 open) | Public Health (GCC) (19 open) | Solid Waste Management (19 open) | District Disaster Management (11 open) | General Administration (7 open) | Parks & Play Fields (6 open) | Revenue (Tax & Licence) (4 open) | Bridges (1 open) | Land & Estate (1 open) | Buildings (GCC) | Chennai Metrowater | Council | Education | Family Welfare | Financial Management"
+  }
+ ],
+ "started": "2026-11-12T11:01:26.873Z",
+ "incidentLabel": "Take action on Cooum River - Chetpet stretch spilling over bank at Chetpet (MGR St)",
+ "title": "Good afternoon, Collector",
+ "incTitle": "Cooum River - Chetpet stretch spilling over bank at Chetpet (MGR St)",
+ "w": {
+  "console": [],
+  "http": [],
+  "failed": [
+   "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/18/121490/189497",
+   "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/18/121490/1",
+   "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/18/1"
+  ]
+ }
+}

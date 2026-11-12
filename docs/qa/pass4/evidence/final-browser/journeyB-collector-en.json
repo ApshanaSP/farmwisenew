@@ -1,0 +1,25 @@
+{
+ "id": "INC-20261102-8EC358",
+ "lang": "en",
+ "steps": [
+  {
+   "name": "search",
+   "dlg": "Esc | INCIDENTS | Garbage at the dumping ground is burning since last Monday | Teynampet · 10 days ago | ASK | Ask the map: “INC-20261102-8EC358” | Answers on the Overview's map | Ask District IQ: “INC-20261102-8EC358” | Opens the chat with this question | ↑ | ↓ | move | Enter | open | / | search anywhere"
+  },
+  {
+   "name": "incident",
+   "text": "Chennai · Collector | Overview | Briefing | Trends | Environment | Data Studio | Search | / | தமிழ் | Menu | CO | Thursday 12 November | Collected 6 Nov, 06:10 PM | 5 feeds behind | Good afternoon, Collector | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | Thiruvottiyur | Tondiarpet | Velachery | All departments | Bridges | Buildings (GCC) | Chennai Metrowater | Council | District Disaster Management | Education | Family Welfare | Financial Management Unit | General Administration | Government Hospitals | Gre"
+  },
+  {
+   "name": "jarvis",
+   "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+   "console": [],
+   "http": []
+  }
+ ],
+ "w": {
+  "console": [],
+  "http": [],
+  "failed": []
+ }
+}
