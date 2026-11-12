@@ -141,7 +141,8 @@ export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: stri
  * inflated in memory before the desk refused the file (QA pass 6, P5-028).
  */
 export interface PdfImageOptions { bitmaps?: boolean; maxBitmapBytes?: number }
-export const PDF_BITMAP_BUDGET = 150_000_000;
+// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB)
+export const PDF_BITMAP_BUDGET = 600_000_000;
 
 export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET }: PdfImageOptions = {}): { images: Buffer[]; skipped: number } {
   const src = buf.toString("latin1");
@@ -154,7 +155,12 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     const dict = m[1];
     const start = m.index + m[0].length;
     const len = Number(dict.match(/\/Length\s+(\d+)(?!\s+\d+\s+R)/)?.[1] ?? -1);
-    const end = len > 0 ? start + len : src.indexOf("endstream", start);
+    const end = len > 0 && start + len <= buf.length ? start + len : src.indexOf("endstream", start);
+    // a stream with no end in the file holds the rest of it, so nothing after it can be an image: each later image dictionary searched to
+    // the end again and copied the rest of the file (time growing with the square of the size; a 5 MB file copied 20 times: P6-007)
+    if (end < 0) break;
+    // every path below moves past this stream, so no stream is read from inside another
+    re.lastIndex = Math.max(re.lastIndex, end);
     const data = buf.subarray(start, end);
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
     if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));

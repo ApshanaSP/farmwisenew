@@ -8,7 +8,7 @@ import path from "path";
 import zlib from "zlib";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { savePages } from "@/lib/manu/files";
-import { pdfImages } from "@/lib/studio/ocr";
+import { PDF_BITMAP_BUDGET, pdfImages } from "@/lib/studio/ocr";
 
 /** A PDF of `images` Flate-packed RGB bitmaps of w x h, all zero bytes: a few hundred KB that inflate to w*h*3 bytes each. */
 function bitmapPdf(images: number, w: number, h: number): Buffer {
@@ -62,7 +62,7 @@ describe("QA pass 6, P5-028: every caller of pdfImages has a total budget for in
     const inflate = vi.spyOn(zlib, "inflateSync");
     const out = pdfImages(pdf);
     const inflated = inflate.mock.results.reduce((s, r) => s + (r.type === "return" ? (r.value as Buffer).length : 0), 0);
-    expect(inflated).toBeLessThanOrEqual(200_000_000);
+    expect(inflated).toBeLessThanOrEqual(PDF_BITMAP_BUDGET); // 600 MB since P6-007: a real 20-page 300 dpi scan needs about 520 MB
     expect(out.images.length).toBeLessThan(20);
   });
 });

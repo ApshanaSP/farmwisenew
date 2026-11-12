@@ -550,6 +550,8 @@ export async function parseAllAsync(buf: Buffer, name: string, contentType = "",
     const mean = words ? Math.round(conf / words) : 0;
     return [{ ...t, sheet: null, sheets: [], format: e.kind === "image" ? "html" : "pdf", part: e.kind === "image" ? "read from a picture" : `read from ${pages.images.length} scanned ${pages.images.length === 1 ? "page" : "pages"}`,
       notes: [`Read by OCR (English and Tamil), ${mean}% average confidence: check the numbers against the original.`,
+        // a page left out (a picture OCR cannot open, or past the memory budget) is said, not dropped in silence (QA pass 6, P6-007)
+        ...(pages.skipped ? [`${pages.skipped} ${pages.skipped === 1 ? "picture" : "pictures"} in this file could not be read and ${pages.skipped === 1 ? "was" : "were"} left out: check the table against the original.`] : []),
         ...(low.length ? [`${low.length} ${low.length === 1 ? "cell was" : "cells were"} read with low confidence: ${low.slice(0, 8).join(", ")}${low.length > 8 ? "…" : ""}`] : [])] }];
   }
 }
