@@ -5,7 +5,7 @@
  "frozen_now": "2026-11-06T06:30:00.000Z",
  "build_id": "2026-11-06 18:21:19|76734f481810",
  "dist": ".next-qa",
- "next_build_id": "88_b9r6ne78zz3dAXcRPV",
+ "next_build_id": "LJjD6jd77TLtf60jW9tLi",
  "fixtures": {
   "aibrief.json": "460271773273ffe3",
   "analysis.json": null,
@@ -28,7 +28,7 @@
  "gaps": [],
  "problems": [],
  "five_xx": 0,
- "seconds": 79,
+ "seconds": 83,
  "sessions": [
   {
    "name": "reads",
@@ -43,14 +43,14 @@
     "www.newindianexpress.com",
     "www.thanthitv.com"
    ],
-   "seconds": 74
+   "seconds": 75
   },
   {
    "name": "reads2",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 78
+   "seconds": 81
   },
   {
    "name": "ask",
@@ -64,7 +64,7 @@
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 28
+   "seconds": 27
   }
  ]
 },
