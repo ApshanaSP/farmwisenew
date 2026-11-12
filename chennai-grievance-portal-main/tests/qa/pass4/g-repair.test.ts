@@ -24,6 +24,14 @@ async function talk(...said: string[]) {
 const askChat = async (message: string) => (await ask({ user: "qa.grepair@example.test", sessionId: null, message, inputMode: "text", language: "auto",
   scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null } as never, replyTo: null, pinId: null, insightKey: null, lockDept: null, stage: () => undefined } as never)).card;
 
+describe("a month said after 'by' in the past is not a forecast", () => {
+  it("'how many complaints were filed by October' is counted, while 'by december how many complaints will there be' is refused", async () => {
+    const past = await askChat("how many complaints were filed by october");
+    expect(past.kind, past.headline).toBe("answer");
+    expect((await askChat("by december how many complaints will there be")).kind).toBe("refusal");
+  });
+});
+
 describe("g-review 5: a share counts incidents and says incidents", () => {
   it("'what percentage of complaints are resolved' is a share of incidents, in the headline and the answer", async () => {
     const c = await askChat("what percentage of complaints are resolved");
