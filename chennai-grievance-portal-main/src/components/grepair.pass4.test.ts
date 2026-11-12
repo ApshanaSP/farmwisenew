@@ -38,6 +38,11 @@ describe("pages and drawers a keyboard can use (SK2-15, SK2-16)", () => {
   it("the 404 page puts its text in a main landmark", () => {
     expect(read("app/not-found.tsx")).toMatch(/<main[ >]/);
   });
+  it("the drawer is a dialog on a div: an aside may not take the role dialog (axe aria-allowed-role)", () => {
+    const s = read("components/officer/Drawer.tsx");
+    expect(s).not.toMatch(/<aside[^>]*role="dialog"/);
+    expect([...s.matchAll(/<div className="odrawer" role="dialog"/g)].length).toBe(3);
+  });
   it("every scrolling case-drawer body can take focus, so the keyboard can scroll it", () => {
     const s = read("components/officer/Drawer.tsx");
     const bodies = [...s.matchAll(/<div className="odrawer-b"[^>]*>/g)];
