@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { Http, EVIDENCE_DIR } from "./same-number.mjs";
 import { loadOracle, fmtWall, wallMs } from "../oracle/pinned.mjs";
 
-const PORT = 3141;
+const PORT = Number(process.env.QA_TT_PORT || 3141);
 const MOMENTS = [
   ["before-asof", "2026-11-05T18:31:00.000Z", "clock earlier than the store's as-of: the console must use the as-of"],
   ["just-before-ist-midnight", "2026-11-06T18:29:30.000Z", "23:59:30 IST on 6 Nov"],
@@ -86,18 +86,25 @@ for (const [name, iso, why] of MOMENTS) for (const tz of TZS) {
     const exp = {
       yesterday: { cal: sumC(dayStart - 86400000 - 1, dayStart - 1), roll: sumC(nowMs - 48 * 3600e3, nowMs - 24 * 3600e3) },
       "this week": { roll7: o.value("complaints_all", { period: "weekly" }) },
-      "last month": { roll30: o.value("complaints_all", { period: "monthly" }) }
+      // "last month" is the calendar month before the console's now, IST (the headline names it: "last month (October 2026)"); no other window is accepted for it
+      "last month": { cal: sumC(Date.UTC(new Date(nowMs).getUTCFullYear(), new Date(nowMs).getUTCMonth() - 1, 1) - 1, Date.UTC(new Date(nowMs).getUTCFullYear(), new Date(nowMs).getUTCMonth(), 1) - 1) }
     };
     for (const w of ["yesterday", "this week", "last month"]) {
       const a = await chat(h, `how many complaints ${w}`);
       const n = typeof a.n === "number" ? a.n : Number(String(a.n).replace(/,/g, ""));
       const matches = Object.entries(exp[w]).filter(([, v]) => v === n).map(([k]) => k);
       rec.checks.push({ surface: `chat:${w}`, headline: a.headline, n, expected: exp[w], matches, ok: matches.length > 0 });
+      if (w === "last month" && a.headline) {
+        const pm = new Date(Date.UTC(new Date(nowMs).getUTCFullYear(), new Date(nowMs).getUTCMonth() - 1, 1));
+        const want = `${pm.toLocaleString("en-GB", { month: "long", timeZone: "UTC" })} ${pm.getUTCFullYear()}`;
+        rec.checks.push({ surface: "chat:last month names the month", headline: a.headline, want, ok: a.headline.includes(want) });
+        if (!a.headline.includes(want)) note(name, tz, "Jarvis \"last month\" names another month", { headline: a.headline, want });
+      }
       if (!a.headline) note(name, tz, `Jarvis "${w}" gave no answer`, { status: a.status, raw: a.raw });
       else if (!matches.length) note(name, tz, `Jarvis "${w}" number matches no window`, { headline: a.headline, n, expected: exp[w] });
       if (bad(a.md ?? "")) note(name, tz, `Jarvis "${w}" text has NaN/undefined`, { md: a.md?.slice(0, 200) });
     }
-    const log = fs.readFileSync(path.resolve("data/aws-cache/qa/run/srv-3141.log"), "utf8");
+    const log = fs.readFileSync(path.resolve(`data/aws-cache/qa/run/srv-${PORT}.log`), "utf8");
     const errs = log.split("\n").filter((x) => /error|exception|unhandled/i.test(x)).slice(0, 5);
     if (errs.length) note(name, tz, "server log has errors", { errs });
   } catch (e) { note(name, tz, "run crashed", { error: String(e).slice(0, 300) }); }

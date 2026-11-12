@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Http, EVIDENCE_DIR } from "./same-number.mjs";
 
-const PORT = 3142;
+const PORT = Number(process.env.QA_CONC_PORT || 3142);
 const h = new Http(PORT);
 const out = { ran_at: new Date().toISOString(), cases: [], problems: [] };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -131,7 +131,7 @@ for (const f of [complaints, officers, decisions, answers]) {
   try { await f(); } catch (e) { log(`${f.name}: ran to the end`, false, { error: String(e).slice(0, 300) }); }
   save();
 }
-const logTxt = fs.existsSync(path.resolve("data/aws-cache/qa/run/srv-3142.log")) ? fs.readFileSync(path.resolve("data/aws-cache/qa/run/srv-3142.log"), "utf8") : "";
+const logTxt = fs.existsSync(path.resolve(`data/aws-cache/qa/run/srv-${PORT}.log`)) ? fs.readFileSync(path.resolve(`data/aws-cache/qa/run/srv-${PORT}.log`), "utf8") : "";
 const errs = logTxt.split("\n").filter((x) => /error|exception|unhandled|failed/i.test(x)).slice(0, 8);
 out.serverLogErrors = errs; save();
 console.log(`done: ${out.cases.length} cases, ${out.problems.length} problem(s); server log error lines: ${errs.length}`);

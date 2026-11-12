@@ -134,7 +134,8 @@ export class Book {
 
 /** Every kind of difference seen, first match wins: [surface, figure, class, finding id or null, why in words]. A difference not listed here is UNEXPLAINED. */
 export const KNOWN = [
-  [/^(collector\/insights\?part=briefing|thunai\/round:brief)$/, /^(stats|kpi)\.newsOnly$/, "by-design", "RC-29", "The Briefing hides headlines about another district (newsrel.elsewhere) once, up front, so its line, its list and its figure are one number; the oracle counts every news-only incident that is not lapsed."],
+  [/^collector\/assistant\/export$/, /^csv\.rows$/, "bug", "gate-oracle-1", "The assistant's CSV is cut at 1,000 rows (LIMITS.exportRows) with no word in the file or the headers, so a period with more rows (quarterly, whole district: 1,077) is a short list that reads as whole."],
+  [/^(collector\/insights\?part=briefing|thunai\/round:brief|assistant\/briefing)$/, /^(stats|kpi|facts)\.newsOnly$/, "by-design", "RC-29", "The Briefing hides headlines about another district (newsrel.elsewhere) once, up front, so its line, its list and its figure are one number; the oracle counts every news-only incident that is not lapsed."],
   [/^thunai\/round:dashboard$/, /first row's severity rank/, "bug", "same-number-1", "Jarvis asks the list for severity order with the default direction, which puts Low first; the block is headed 'most serious first'."],
   [/^thunai\/round:advise$/, /severity rank/, "bug", "same-number-1", "The same list order: 'First: ...' comes from the page of the least serious cases."],
   [/^thunai\/round:cases\(overdue\)$/, /^total$/, "bug", "same-number-1", "The past-deadline list filters only the first page of 12, and that page is the least serious cases, so it finds none and says there are none."],

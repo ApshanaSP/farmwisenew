@@ -47,8 +47,11 @@ const { cases, pairs } = pairwise();
 const o = loadOracle({ durableFile: path.resolve(`data/aws-cache/qa/srv/${INSTANCE}/durable.sqlite`) });
 const h = new Http(PORT);
 const qs = (c) => Object.entries(c).filter(([, v]) => v != null).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
-const oracleRows = (c) => o.rows({ period: c.period, zone: c.zone, dept: c.dept, taluk: c.taluk, cat: c.cat })
-  .filter((r) => (c.sev == null || r.sev === c.sev) && (c.status == null || (c.status === "open" ? r.open : r.effStatus === c.status)));
+// Resolved is closed in the window by its closing time, as the Resolved tile counts it (PB-214, RC-29; the oracle's resolvedByClose). Every other status keeps the reported-in-window rule.
+const oracleRows = (c) => (c.status === "Resolved"
+  ? o.resolvedByClose({ period: c.period, zone: c.zone, dept: c.dept }).filter((r) => (c.taluk == null || r.taluk === c.taluk) && (c.cat == null || r.cat === c.cat))
+  : o.rows({ period: c.period, zone: c.zone, dept: c.dept, taluk: c.taluk, cat: c.cat }).filter((r) => c.status == null || (c.status === "open" ? r.open : r.effStatus === c.status)))
+  .filter((r) => c.sev == null || r.sev === c.sev);
 const out = { ran_at: new Date().toISOString(), oracleNow: o.now, pairs, cases: cases.length, results: [], problems: [], notReached: ["map layers/ask/export (the plan format was not driven in this run)"] };
 const label = (c) => names.map((n) => `${n}=${c[n] ?? "any"}`).join(" ");
 

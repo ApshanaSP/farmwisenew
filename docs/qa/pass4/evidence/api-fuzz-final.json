@@ -1,0 +1,22 @@
+{
+ "generated": "2026-11-12T10:14:01.339Z",
+ "port": 3227,
+ "seed": 4,
+ "bigMb": 20,
+ "minutes": 3.2,
+ "routesTotal": 116,
+ "budgetStopped": false,
+ "noisyTablesIgnored": [],
+ "summary": {
+  "requests": 4669,
+  "status5xx": 0,
+  "stack": 0,
+  "partialWrite": 0,
+  "crash": 0,
+  "hang": 0,
+  "skippedForBudget": 0
+ },
+ "crashes": [],
+ "groups": [],
+ "problemRows": []
+}

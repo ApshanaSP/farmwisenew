@@ -1,0 +1,54 @@
+[
+  {
+    "id": "gate-oracle-1",
+    "area": "Ask District IQ: the CSV the assistant gives",
+    "severity": "P2",
+    "title": "The assistant's CSV holds 1,000 rows of a 1,077-row quarter and says nothing about the cut",
+    "what_happens": "GET /api/collector/assistant/export?period=quarterly (whole district) gives exactly 1,000 data rows. The same scope read from the raw rows, and from the console's own export (collector/export, 95 readings that agree), holds 1,077. The file has no line, no header and no column saying it stops at LIMITS.exportRows (src/lib/assistant/limits.ts, exportRows: 1000). The seven other readings of this route (other periods and scopes) are under the cap and agree with the oracle. A Collector who opens the file reads 1,000 as the quarter's total.",
+    "what_should_happen": "The file is whole, or it says it is cut: a first line such as '# cut at 1,000 of 1,077 rows', or a response header (X-Rows-Total and X-Rows-Given), so the figure on the file and the figure on the tile can be reconciled. The tile and the console export already give 1,077.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/gate-oracle.test.ts (it.fails gate-oracle-1, real store on the pinned snapshot, no model). On a server: node tests/qa/pass4/same-number.mjs, row 'quarterly · district / collector/assistant/export / csv.rows: app 1000, oracle 1077'.",
+    "evidence": "docs/qa/pass4/evidence/same-number-final.json (differences, class bug, id gate-oracle-1), docs/qa/pass4/evidence/oracles-final.md, chennai-grievance-portal-main/tests/qa/pass4/gate-oracle.test.ts",
+    "root_cause_guess": "src/lib/assistant/limits.ts (exportRows: 1000) applied in src/app/api/collector/assistant/export/route.ts with no word in the output",
+    "class": "a cap that is not said",
+    "lang": "all"
+  },
+  {
+    "id": "gate-oracle-2",
+    "area": "Jarvis: compare two departments",
+    "severity": "P1",
+    "title": "With one department chosen on the console, Jarvis compares two departments and reads 0 past-deadline for the other one",
+    "what_happens": "Scope: weekly, console filtered to GCC-SWM. Jarvis answers a comparison of two departments (thunai/round compare(depts)). The chosen department is right. The other (GCC-ELE) shows 0 past deadline where the oracle counts 38 (monthly 0 against 53, quarterly 0 against 56). The follow-ups tool takes the console filter, so the other department is read inside the first one and is empty. 10 readings over 8 scopes. This is the rest of same-number-3: its it() (Solid Waste performance) passes now, and this variant was not covered.",
+    "what_should_happen": "Each department in a comparison is read for its own scope: the console's department filter is not applied to the department that is being compared. GCC-ELE past deadline is 38 this week.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/gate-oracle-figures.test.ts (it.fails gate-oracle-2). Or: node tests/qa/pass4/same-number.mjs, the rows with finding same-number-3.",
+    "evidence": "docs/qa/pass4/evidence/same-number-final.json (differences, finding same-number-3, surface thunai/round:compare(depts)), docs/qa/pass4/evidence/oracles-final.md",
+    "root_cause_guess": "the compare(depts) stage in src/lib/thunai (the follow-ups tool is called with the console scope for every department); file not located in this pass",
+    "class": "a filter applied to one tile and not the next",
+    "lang": "all"
+  },
+  {
+    "id": "gate-oracle-3",
+    "area": "Jarvis: zone performance",
+    "severity": "P1",
+    "title": "Zone performance says 1,116 open for the whole district where every other screen says 1,167",
+    "what_happens": "Scope: weekly, whole district. Jarvis zone performance (thunai/round performance(zone)) now shows Reported right (it matches the trend beside it), but Open and Severe still add up the 15 zones only, so incidents with no zone drop out: open 1,116 against 1,167 (daily 229 against 236; monthly severe 249 against 251). 21 readings over 17 scopes. This is the rest of same-number-11: its it() covers Reported only.",
+    "what_should_happen": "The whole-district figures on this screen include the incidents with no zone, as the tile, the list and the Briefing do (1,167 open this week), or the screen says the figure is for zoned incidents only.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/gate-oracle-figures.test.ts (it.fails gate-oracle-3). Or: node tests/qa/pass4/same-number.mjs, the rows with finding same-number-11.",
+    "evidence": "docs/qa/pass4/evidence/same-number-final.json (differences, finding same-number-11, surface thunai/round:performance(zone)), docs/qa/pass4/evidence/oracles-final.md",
+    "root_cause_guess": "the performance(zone) stage in src/lib/thunai sums the zone rows for the Open and Severe tiles; file not located in this pass",
+    "class": "a sum of parts that leaves a part out",
+    "lang": "all"
+  },
+  {
+    "id": "gate-oracle-4",
+    "area": "test factory: same-number-19 and the news-media hook",
+    "severity": "P2",
+    "title": "The test same-number-19 passes without testing: it names the hook news-media-only@1, which RC-38 renamed to @2, and the hook still takes out 3 incidents with 6 deaths",
+    "what_happens": "tests/qa/pass4/same-number.test.ts same-number-19 says no news-only incident with a recorded death is left out as 'not news media', and filters the oracle's list of taken-out rows on the hook name news-media-only@1. src/lib/collector/derive.ts now registers news-media-only@2, so the filter matches nothing and the test passes. On the final build the hook (now @2) takes out 144 incidents, and 3 of them hold deaths: INC-20260924-C6A723 (4), INC-20261009-749A06 (1), INC-20261021-C1FFE1 (1), 6 deaths in all. With the committed hooks file (written on the 6 Nov build, hook name @1) the test fails with those three ids. The comment above the test says RC-29 stopped this; the final build does not.",
+    "what_should_happen": "The test names the hook by its present name (a pattern such as /^news-media-only@/), so it tests the build. Whether the hook may take out these incidents is the owner's decision (same-number-19): the patch is to keep an incident with a recorded death in the build, whatever the site.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/gate-oracle-figures.test.ts (it.fails gate-oracle-4, real hooks written by same-number-hooks.test.ts on this build). Rows: docs/qa/pass4/evidence/same-number-hooks.json, removed, hook news-media-only@2.",
+    "evidence": "docs/qa/pass4/evidence/same-number-hooks-final.json, docs/qa/pass4/evidence/oracles-final.md, chennai-grievance-portal-main/tests/qa/pass4/gate-oracle-figures.test.ts",
+    "root_cause_guess": "derive.ts:548 onBuild(\"news-media-only@2\", newsMedia) against same-number.test.ts line 192 (hook === \"news-media-only@1\")",
+    "class": "a test that tests nothing",
+    "lang": "all"
+  }
+]

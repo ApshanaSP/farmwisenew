@@ -1,0 +1,113 @@
+{
+ "revs": "--all",
+ "commits": 438,
+ "blobsScanned": 8692,
+ "bytesScanned": 2023875276,
+ "blobsSkippedOver400MB": 0,
+ "compressedFilesOpened": 51,
+ "compressedFilesNotOpened": [],
+ "gitLfsPointersContentNotHere": [
+  "chennai-grievance-portal-main/.cache/models/Xenova/multilingual-e5-base/onnx/model_quantized.onnx",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-24.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-24.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-27.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-27.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-28.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-28.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-29.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-29.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-30.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-09-30.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-01.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-01.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-02.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-02.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-03.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-03.json",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-04.csv",
+  "chennai_news_pipeline/data/raw/raw_news_2026-10-04.json",
+  "district_intel/output/district_intel.db"
+ ],
+ "variablesChecked": [
+  "AADHAAR_ENCRYPTION_KEY",
+  "AI_BEDROCK_MODEL",
+  "AI_CHAT_PROVIDER",
+  "AI_FALLBACK_PROVIDER",
+  "ANTHROPIC_API_KEY",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_BEARER_TOKEN_BEDROCK",
+  "AWS_REGION",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_SESSION_TOKEN",
+  "DB_HOST",
+  "DB_NAME",
+  "GEMINI_API_KEY",
+  "GROQ_API_KEY",
+  "GROQ_API_KEY_2",
+  "GROQ_API_KEY_3",
+  "INTEL_DB_NAME",
+  "INTEL_OPS_DB_NAME",
+  "JWT_SECRET",
+  "NODE_ENV",
+  "REFRESH_API_KEY",
+  "SMTP_FROM",
+  "SMTP_HOST",
+  "SMTP_PASS",
+  "SMTP_USER"
+ ],
+ "hits": [
+  {
+   "kind": "env",
+   "name": "SMTP_USER",
+   "class": "identity",
+   "path": "chennai-grievance-portal-main/.env.example",
+   "versions": 10,
+   "firstCommit": "6d3b34d 2026-09-26"
+  },
+  {
+   "kind": "env",
+   "name": "SMTP_PASS",
+   "class": "secret",
+   "path": "chennai-grievance-portal-main/.env.example",
+   "versions": 10,
+   "firstCommit": "6d3b34d 2026-09-26"
+  },
+  {
+   "kind": "pattern",
+   "name": "database-url-with-password",
+   "class": "key-shape",
+   "path": "chennai-grievance-portal-main/DEPLOYMENT.md",
+   "versions": 2,
+   "firstCommit": "6d3b34d 2026-09-26"
+  },
+  {
+   "kind": "pattern",
+   "name": "database-url-with-password",
+   "class": "key-shape",
+   "path": "chennai-grievance-portal-main/README.md",
+   "versions": 5,
+   "firstCommit": "6d3b34d 2026-09-26"
+  },
+  {
+   "kind": "pattern",
+   "name": "database-url-with-password",
+   "class": "key-shape",
+   "path": "chennai-grievance-portal-main/scripts/db-config.js",
+   "versions": 2,
+   "firstCommit": "6d3b34d 2026-09-26"
+  }
+ ],
+ "plainSettingsSeen": {
+  "INTEL_DB_NAME": 416,
+  "DB_HOST": 210,
+  "NODE_ENV": 196,
+  "AWS_REGION": 48,
+  "AI_BEDROCK_MODEL": 18,
+  "DB_NAME": 94,
+  "INTEL_OPS_DB_NAME": 266,
+  "SMTP_HOST": 12,
+  "SMTP_FROM": 10,
+  "AI_FALLBACK_PROVIDER": 1,
+  "AI_CHAT_PROVIDER": 1
+ }
+}
