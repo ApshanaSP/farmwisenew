@@ -215,3 +215,31 @@ describe("P5-012: who may send, and what a retry sends", () => {
     expect(msg91().filter((c) => c.body.template_id === "t-ct")).toHaveLength(0);
   });
 });
+
+describe("P5-012, after review: a send cut off half way, and messages that wait", () => {
+  it("a message left 'sending' for over an hour is tried again, once", async () => {
+    live();
+    const r = await filePetition(await uploaded(), fields(), "x");
+    h.db.exec(`UPDATE petition_sms SET status = 'sending', attempts = 1, tried_at = '2026-01-01 00:00:00'`);
+    calls = [];
+    await sms.retryFailedSms();
+    expect(msg91()).toHaveLength(1);
+    expect(one("SELECT status FROM petition_sms WHERE complaint_code = ?", r.code).status).toBe("sent");
+  });
+
+  it("twenty closing messages waiting on reopened complaints do not hold up a newer failed message", async () => {
+    live();
+    for (let i = 0; i < 20; i++) {
+      const code = `2026-9${String(i).padStart(2, "0")}WAI`;
+      h.db.prepare(`INSERT INTO petitions (status, pages, mobile, language, dept_code, complaint_code) VALUES ('filed', '[]', '9000011111', 'ta', 'CMWSSB', ?)`).run(code);
+      h.db.prepare(`INSERT INTO complaints (id, complaint_code, first_name, gender, street_address, zone_id, ward_number, department_id, title, description, is_anonymous, needs_manual_review, status) VALUES (?, ?, 'x', 'x', 'x', 6, 70, 1, 'x', 'x', 0, 0, 'In Progress')`).run(9000 + i, code);
+      oldFailed(code, "closed", "done");
+    }
+    const r = await filePetition(await uploaded(), fields(), "x");
+    h.db.exec(`UPDATE petition_sms SET status = 'failed', tried_at = '2026-01-01 00:00:00' WHERE complaint_code = '${r.code}'`);
+    calls = [];
+    await sms.retryFailedSms();
+    expect(msg91().filter((c) => c.body.template_id === "t-rt")).toHaveLength(1);
+    expect(msg91().filter((c) => c.body.template_id === "t-ct")).toHaveLength(0);
+  });
+});

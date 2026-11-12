@@ -126,10 +126,15 @@ export async function retryFailedSms(): Promise<void> {
   retrying = true;
   try {
     const due = addHours(istNow(), -RETRY_AFTER_HOURS);
+    // a send cut off half way (the process stopped) is left 'sending'; after an hour it is due again, since a send gives up after 8 s
+    const stuck = addHours(istNow(), -1);
+    const CLOSED = ["Rejected", ...RESOLVED_STATUSES];
+    // a closing message for a complaint that is open again is not picked at all, so twenty of them cannot hold up every newer message (the reviewer)
     const [rows] = await pool.query<Row[]>(
       `SELECT s.complaint_code, s.kind, s.result, p.mobile, p.language, p.dept_code, c.status AS complaint_status FROM petition_sms s JOIN petitions p ON p.complaint_code = s.complaint_code
         LEFT JOIN complaints c ON c.complaint_code = s.complaint_code
-        WHERE s.status IN ('failed', 'waiting') AND s.attempts < ? AND s.tried_at <= ? ORDER BY s.id LIMIT 20`, [MAX_TRIES, due]);
+        WHERE (s.status IN ('failed', 'waiting') AND s.tried_at <= ? OR s.status = 'sending' AND s.tried_at <= ?) AND s.attempts < ?
+          AND (s.kind <> 'closed' OR c.status IN (?, ?, ?)) ORDER BY s.id LIMIT 20`, [due, stuck, MAX_TRIES, ...CLOSED]);
     for (const r of rows) {
       const kind = r.kind as SmsKind;
       // a closing message says what the complaint is NOW: a failed "could not be taken up" retried after the case was reopened and done
@@ -143,8 +148,9 @@ export async function retryFailedSms(): Promise<void> {
       // claim the row first: two server processes (or two copies on one store) each ran this sweep and both sent the same message, since
       // the in-memory flag only holds inside one process (QA pass 5, P5-012)
       const [claim] = await pool.query<ResultSetHeader>(
-        `UPDATE petition_sms SET status = 'sending', result = ?, tried_at = ? WHERE complaint_code = ? AND kind = ? AND status IN ('failed', 'waiting') AND attempts < ? AND tried_at <= ?`,
-        [kind === "closed" ? result : r.result ?? null, istNow(), r.complaint_code, kind, MAX_TRIES, due]);
+        `UPDATE petition_sms SET status = 'sending', result = ?, tried_at = ? WHERE complaint_code = ? AND kind = ? AND attempts < ?
+           AND (status IN ('failed', 'waiting') AND tried_at <= ? OR status = 'sending' AND tried_at <= ?)`,
+        [kind === "closed" ? result : r.result ?? null, istNow(), r.complaint_code, kind, MAX_TRIES, due, stuck]);
       if (!claim.affectedRows) continue;
       await deliver(String(r.complaint_code), kind, r, result);
     }
