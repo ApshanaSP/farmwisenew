@@ -449,10 +449,12 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   const used = new Set<string>(["incidents"]);
   for (const s of plan.steps) if (s.op === "take") used.add(s.layer);
   if (plan.steps.some((s) => s.op === "along")) used.add(r.context.lines[0]?.feat.layer ?? "roads");
+  // the incidents layer has no meta entry: count it over what this user may see (an officer's department only, reviewer3-11)
+  const incidentsSeen = ctx.lockDept ? w.incidents.filter((i) => i.dept === ctx.lockDept).length : w.incidents.length;
   out.asOf = {
     now: w.now, data: w.dataAsOf,
     layers: [...used].map((id) => w.meta[id] ? { id, en: w.meta[id].name_en, ta: w.meta[id].name_ta, source: w.meta[id].source, as_of: w.meta[id].as_of, count: w.meta[id].count }
-      : { id, en: "Incidents", ta: "சம்பவங்கள்", source: "District store", as_of: w.dataAsOf || w.now, count: w.incidents.length })
+      : { id, en: "Incidents", ta: "சம்பவங்கள்", source: "District store", as_of: w.dataAsOf || w.now, count: incidentsSeen })
   };
   void data;
   return out;
