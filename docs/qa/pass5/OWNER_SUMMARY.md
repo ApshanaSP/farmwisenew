@@ -2,6 +2,9 @@
 
 This is the short version. The numbers are in `FINAL_REPORT.md` (made by a script, not typed). Nothing was pushed, merged into main, or opened as a pull request.
 
+## In numbers (from FINAL_REPORT.md)
+38 bugs recorded: 5 serious (P0), 10 major (P1), 20 medium (P2), 3 minor (P3). Fixed: 20, each with a test that fails without the fix. Open: 15. Yours to decide: 3. On the final commit the type check, lint (no errors), production build and all 3,315 unit tests (4 runs, two time zones) pass.
+
 ## What happened
 - Pass 4's fixes were joined onto the newest main on the branch `claude/qa-pass5-05abfd`. Four files clashed; each kept both sides.
 - Six problems came from the join itself: things that worked on each branch alone but broke together. All six are fixed.
@@ -25,6 +28,9 @@ This is the short version. The numbers are in `FINAL_REPORT.md` (made by a scrip
 - Rate limits are shared by every visitor unless `TRUST_PROXY_HOPS` is set (P5-027).
 - A small PDF can expand to a very large size in memory before it is refused (P5-028).
 - Ten of pass 4's own tests fail on the joined branch and were not traced (P5-034).
+- Petitions to Metrowater, TANGEDCO, Police and five other desk departments never match the same person's online complaint (P5-037).
+- Two citizen pages have text with too little contrast on a phone (P5-038).
+- A desk upload that is not a file form gets a server error instead of a clear message (P3).
 
 ## Top 10 things to do next (effort)
 1. Decide on the desk password (P5-006) and apply the ready patch, then change the password once (15 min).

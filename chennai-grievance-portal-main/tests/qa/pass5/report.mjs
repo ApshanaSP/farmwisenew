@@ -66,6 +66,19 @@ for (const f of fs.readdirSync(path.join(P5, "results")).filter((f) => /^access-
 }
 w();
 
+w("## Browser drive (gate)");
+w();
+if (has("results/drive-gate.json")) {
+  const d = json("results/drive-gate.json");
+  const bad = d.pages.filter((p) => p.status >= 400 || p.status === 0 || p.consoleErrors.length || p.hScroll || (p.axe && (p.axe.critical.length || p.axe.serious.length)));
+  const axed = d.pages.filter((p) => p.axe);
+  w(`- \`results/drive-gate.json\` (port ${d.port}, ${d.generated}): ${d.pages.length} page loads (5 roles, 360 and 1280 wide), ${bad.length} with a problem; axe on ${axed.length} loads: ${axed.reduce((a, p) => a + p.axe.critical.length, 0)} critical, ${axed.reduce((a, p) => a + p.axe.serious.length, 0)} serious.`);
+  for (const p of bad) w(`  - ${p.role} ${p.page} at ${p.width}: status ${p.status}${p.hScroll ? ", sideways scroll" : ""}${p.consoleErrors.length ? `, ${p.consoleErrors.length} console errors` : ""}${p.axe ? `, axe serious: ${p.axe.serious.join(", ") || "none"}` : ""}`);
+  const j = d.journey;
+  w(`- Petition journey: upload ${j.upload}, reading ${j.readStatus}, approval ${j.approve}, slip number ${j.code ?? "none"}, SMS ${j.sms?.state ?? "?"}; tracking at 360 px shows the status: ${j.trackShowsStatus}, shows personal data: ${j.trackShowsPersonal}, console errors: ${(j.trackConsoleErrors ?? []).length}, wrong last 4 digits answer: ${j.trackWrongLast4}.`);
+} else w("- not run");
+w();
+
 w("## Gate logs");
 w();
 for (const [f, label] of [["evidence/tsc-gate.log", "Type check"], ["evidence/lint-gate.log", "Lint"], ["evidence/build-gate.log", "Production build"]]) {
@@ -79,7 +92,9 @@ w();
 
 w("## Review");
 w();
-for (const f of ["findings/reviewer.json", "findings/skeptic.json"]) {
+w("A fix a reviewer broke went back to step 1; the BUGS.json `reviewer` column says how each break was fixed and revert-checked.");
+w();
+for (const f of ["findings/reviewer.json", "findings/reviewer2.json", "findings/skeptic.json"]) {
   if (!has(f)) { w(`- \`${f}\`: not present.`); continue; }
   const r = json(f);
   w(`- \`${f}\`: ${r.length} rows.`);

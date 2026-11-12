@@ -5,9 +5,12 @@
 **Clock.** Start 09:23 IST. Between about 10:02 and 12:40 the machine was saturated (pass 4's real-path suite took 2 h 41 min while two test servers, the access matrix and the golden recorder ran), and the lead did not check the clock in that stretch. The timetable slipped: wave 2 was not run, and the gate started at 12:58 instead of 13:13.
 
 **Done.**
-- Wave 1, all six hunters (manu-logic, manu-sec, sms-ocr, seam, click-layer; the click-layer hunter stalled after its axe run) and the merge-seam review.
+- Wave 1: five blind hunters (manu-logic, manu-sec, sms-ocr, click-layer, and the merge-seam reviewer `seam`); the click-layer hunter stalled after its axe run.
 - The unit suite in the baseline (3 shuffled runs under Asia/Kolkata and one under UTC), pass 4's real-path suite once, the access matrix extended to all 120 routes with a desk identity, two fresh reviewers on the fixes.
-- Every fix: a failing test first, the root cause in the commit, a sweep in `sweeps/`, and a revert check.
+- Every fix has a test that fails without it (revert-checked), its root cause in the commit message, and a sweep in `sweeps/` where the class could recur. For P5-001 and P5-002 (the build-breaking seams) the guard test was written just after the fix and then revert-checked against the merge commit; every other fix had its failing test first.
+- Two fresh reviewers read the fixes: they broke P5-007, P5-016 and P5-018 and found gaps in P5-012 and P5-019. Each break went back to step 1 and was fixed and revert-checked before the gate.
+- The final gate ran on `4dad870` (the code of `174cd6c`): type check, lint, production build, the unit suite 3 times shuffled under Asia/Kolkata and once under UTC, the access matrix and the browser drive with the petition journey. Of the matrix's 2 failing cells, one is an open P3 (a non-multipart upload to the desk answers 500, not 400: P5-033) and one is the desk account reading its own sign-in records (`/api/auth/security`), which is its own account page and allowed by design: the matrix's rule for the desk is stricter than the design there.
+- The pass-4 real-path suite's 9694 seconds is the wall time of that one run on a saturated machine.
 
 **Not done or not verified (read these before trusting a "works").**
 - **Wave 2 was not run:** pass 4's open list (RC-43, RC-44, RC-35, RC-15, RC-36, RC-46, RC-38, RC-37, PB-316, the citizen date bug on two pages, the 7 open-set rows), `hunt-redsec2`, the second blind hunt, and the journeys (Collector's morning in English and Tamil, an officer's day). The petition journey ran only as the scripted gate drive.
