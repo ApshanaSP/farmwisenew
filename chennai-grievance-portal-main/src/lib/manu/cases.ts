@@ -10,6 +10,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { effectiveSql } from "@/lib/collector/effective";
+import { maskAadhaar } from "./clean";
 
 type Row = Record<string, any>;
 export interface Db { all(sql: string, params?: unknown[]): Promise<Row[]>; run(sql: string, params?: unknown[]): Promise<void> }
@@ -161,8 +162,10 @@ export function onlineCase(c: Row, deptName: string | null): CaseInput {
   const at = String(c.created_at).replace("T", " ").slice(0, 19);
   const due = new Date(Date.parse(`${at.replace(" ", "T")}Z`) + ONLINE_HOURS * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
   return {
-    code: String(c.complaint_code), filedAt: at, dueAt: due, hoursToAct: ONLINE_HOURS, dept, category: ONLINE_CATEGORY[dept] ?? "ADMIN_SERVICES", title: String(c.title), text: String(c.description ?? c.title),
-    lang: /[஀-௿]/.test(String(c.description ?? "")) ? "ta" : "en", ward: Number(c.ward_number), place: String(c.specific_location || c.street_address || `Ward ${c.ward_number}`).slice(0, 200), urgent: false,
+    // the citizen's own words go on the consoles masked, as the desk masks a petition's: a whole Aadhaar number written in a complaint
+    // reached the Collector's case title, text and place (QA pass 6, P6-027)
+    code: String(c.complaint_code), filedAt: at, dueAt: due, hoursToAct: ONLINE_HOURS, dept, category: ONLINE_CATEGORY[dept] ?? "ADMIN_SERVICES", title: maskAadhaar(String(c.title)), text: maskAadhaar(String(c.description ?? c.title)),
+    lang: /[஀-௿]/.test(String(c.description ?? "")) ? "ta" : "en", ward: Number(c.ward_number), place: maskAadhaar(String(c.specific_location || c.street_address || `Ward ${c.ward_number}`)).slice(0, 200), urgent: false,
     reporter: reporterHash(c.mobile_number || c.user_id), channel: "citizen_grievance", recurrence: 0
   };
 }
