@@ -7,7 +7,7 @@
  * The route says what the action is and exactly what it touches (`scope`: recipients, text, case ids). Without a grant
  * it answers 428 with a plain summary and the scope's hash; the browser asks for the account's password (or a code sent
  * by email), api/auth/confirm checks it and returns a grant bound to this account, this session, this action and this
- * exact scope, for 5 minutes. The browser repeats the request with the grant (header x-diq-grant). Change a word of the
+ * exact scope, for 5 minutes, and good for one use. The browser repeats the request with the grant (header x-diq-grant). Change a word of the
  * email after confirming and the hash no longer matches: it must be confirmed again. Enforced here on the server, not
  * only on the screen.
  */
@@ -43,6 +43,20 @@ export async function issueGrant(s: JwtPayload, act: ActionKind, scope: string, 
   return signTicket("grant", { uid: s.userId, tv: Number(s.tv) || 0, act, scope, fac }, GRANT_TTL_S);
 }
 
+/**
+ * A grant does its one action once (officer-day-14): replaying the same request with it inside the 5 minutes, say the same report after
+ * the Collector sent the case back, must ask for the password again. The ids of the grants used, kept until they expire (a grant past
+ * its expiry is refused by its signature anyway). In memory: the server is one Node process.
+ */
+const spent = new Map<string, number>();
+function spend(jti: string, exp: number): boolean {
+  const now = Math.floor(Date.now() / 1000);
+  for (const [k, e] of spent) if (e < now) spent.delete(k);
+  if (!jti || spent.has(jti)) return false;
+  spent.set(jti, exp || now + GRANT_TTL_S);
+  return true;
+}
+
 /** tests of the whole loop (loop.sqlite.test.ts) run the routes without a person to confirm */
 const off = () => process.env.NODE_ENV === "test" && process.env.STEP_UP === "off";
 
@@ -56,9 +70,11 @@ export async function requireConfirm(req: NextRequest | Request, s: { userId: nu
   const hash = scopeHash(scope);
   const g = await readTicket<Grant & Record<string, unknown>>("grant", req.headers.get(GRANT_HEADER));
   // the session's token version too, where the route has it: a grant from a session signed out since does not count
-  if (g && g.uid === s.userId && (s.tv === undefined || g.tv === (Number(s.tv) || 0)) && g.act === act && g.scope === hash) return { ok: true, grant: g };
+  const fits = Boolean(g && g.uid === s.userId && (s.tv === undefined || g.tv === (Number(s.tv) || 0)) && g.act === act && g.scope === hash);
+  if (g && fits && spend(String(g.jti ?? ""), Number(g.exp) || 0)) return { ok: true, grant: g };
   const body = {
-    error: g ? "The confirmation was for something else (the text or the cases changed). Confirm again." : "Confirm it's you first.",
+    error: fits ? "That confirmation was already used: each one is good for one action. Confirm again."
+      : g ? "The confirmation was for something else (the text or the cases changed). Confirm again." : "Confirm it's you first.",
     confirm: { action: act, title: ACTION_WORD[act], summary, scope: hash }
   };
   // The console's own fetch says it reads the answer ("x-diq-confirm: json") and gets it as a 200 with a header: the browser logs every
