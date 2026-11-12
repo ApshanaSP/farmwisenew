@@ -11,7 +11,7 @@ import { audit } from "@/lib/collector/sources";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
 import { addCaseLive, petitionCase } from "./cases";
-import { addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
+import { MOBILE_RE, MOBILE_TYPED_MAX, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
 import { mediaTypeOf, readPhoto, removePhoto } from "./files";
 import { readPetition } from "./read";
@@ -105,9 +105,13 @@ export interface DeskItem {
 /** What waits to be read or checked, and the last week's approved petitions. Also restarts any left unread by a restart. */
 export async function deskList(): Promise<DeskItem[]> {
   const since = addHours(istNow(), -24 * 7);
-  const [rows] = await pool.query<Row[]>(
-    `SELECT id, status, pages, reading, name, problem, dept_code, urgent, read_error, complaint_code, created_at, filed_at, updated_at FROM petitions
-      WHERE status IN ('reading', 'needs_check', 'read_failed') OR (status = 'filed' AND updated_at >= ?) ORDER BY created_at DESC LIMIT 300`, [since]);
+  const COLS = `id, status, pages, reading, name, problem, dept_code, urgent, read_error, complaint_code, created_at, filed_at, updated_at`;
+  // what still waits is the desk's work and is never cut: it shared one LIMIT 300 with the week's approved petitions, newest first, so a
+  // busy grievance day pushed older waiting petitions off the desk and out of the restart below (QA pass 6, hunt2-desk-13). Only the
+  // approved ones, kept for a week to show, are capped.
+  const [waiting] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status IN ('reading', 'needs_check', 'read_failed') ORDER BY created_at DESC`);
+  const [approved] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status = 'filed' AND updated_at >= ? ORDER BY created_at DESC LIMIT 300`, [since]);
+  const rows = [...waiting, ...approved].sort((a, b) => stamp(b.created_at).localeCompare(stamp(a.created_at)) || Number(b.id) - Number(a.id));
   const old = addHours(istNow(), -0.08);
   for (const r of rows)
     if (r.status === "reading" && stamp(r.updated_at) < old && !queue.running.has(r.id)) enqueueRead(r.id);
@@ -176,7 +180,10 @@ const approvedNote = async (p: Row): Promise<Approved> => ({ code: String(p.comp
 
 export const fileSchema = z.object({
   name: z.string().trim().min(2, "Enter the petitioner's name.").max(120),
-  mobile: z.string().trim().regex(/^(\d{10})?$/, "A mobile number has 10 digits."),
+  // read as a number first (+91, 0091 and a leading 0 dropped, any script's digits), then it must be a mobile: 10 digits starting 6 to 9.
+  // Ten digits of any kind were accepted, so "0984001234" (a 0-prefixed number cut short) was stored and an SMS would go to it (hunt2-desk-04)
+  mobile: z.string().trim().max(MOBILE_TYPED_MAX).transform(tenDigits)
+    .refine((m) => m === "" || MOBILE_RE.test(m), "A mobile number has 10 digits and starts with 6, 7, 8 or 9 (+91 or a 0 in front is fine)."),
   door: z.string().trim().max(40),
   street: z.string().trim().max(200),
   area: z.string().trim().max(120),

@@ -32,13 +32,25 @@ export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b
 
 export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
 
-/** A mobile number as its 10 digits: +91 and a leading 0 are dropped. */
+/** A mobile number as its 10 digits: +91, 0091 and a leading 0 are dropped. */
 export function tenDigits(s: string | null | undefined): string {
   const d = digits(s);
+  if (d.length === 14 && d.startsWith("0091")) return d.slice(4);
   if (d.length === 12 && d.startsWith("91")) return d.slice(2);
   if (d.length === 11 && d.startsWith("0")) return d.slice(1);
   return d;
 }
+
+/** An Indian mobile number: ten digits starting 6, 7, 8 or 9. */
+export const MOBILE_RE = /^[6-9]\d{9}$/;
+
+/**
+ * What a person typed or pasted into a mobile box, as it was written: digits of any script, spaces, "+", "-", brackets. The desk's box
+ * used to keep only ASCII digits and cut the value at 10 characters before anything read it, so "+91 98400 12345" became "9198400123", a
+ * valid-looking number of somebody else (QA pass 6, hunt2-desk-04). The value is read as a number by tenDigits() on the server.
+ */
+export const MOBILE_TYPED_MAX = 24;
+export const typedMobile = (s: string): string => s.replace(/[^\p{Nd}+\s()-]/gu, "").slice(0, MOBILE_TYPED_MAX);
 
 const realDate = (d: number, mo: number, y: number): string | null => {
   const t = new Date(Date.UTC(y, mo - 1, d));
