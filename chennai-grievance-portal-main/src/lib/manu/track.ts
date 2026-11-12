@@ -31,6 +31,22 @@ export interface TrackView { code: string; status: string; filedAt: string; depa
 
 const str = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 19).replace("T", " ") : String(v ?? ""));
 
+/**
+ * What the public page says for each step: fixed words per status, never a note someone typed. Officers' send and close notes, the
+ * Collector's rejection note and status-history remarks are free text that can name people, numbers and places, and this page opens
+ * with a slip number and 4 digits (QA pass 5, P5-009). The person's own signed-in pages keep the full notes.
+ */
+const PUBLIC_NOTE: Record<string, string> = {
+  "Complaint Filed": "Received at the Collector's office and sent to the department.",
+  "Pending Approval": "Waiting for the department to accept it.",
+  "Approved by Department Officer": "Accepted by the department; work will be scheduled.",
+  "In Progress": "The department is working on it.",
+  "Completed - Pending Collector Verification": "Work done; sent to the Collector's office to check.",
+  "Resolved by Department": "Work done and checked by the department.",
+  "Verified by Collector": "The Collector's office checked the work and closed the complaint.",
+  "Rejected": "It could not be taken up. The Collector's office can tell you why."
+};
+
 export async function complaintForTrack(code: string): Promise<RowDataPacket | null> {
   const [r] = await pool.query<RowDataPacket[]>(
     `SELECT c.id, c.complaint_code, c.status, c.created_at, c.mobile_number, d.name AS department_name FROM complaints c LEFT JOIN departments d ON d.id = c.department_id WHERE c.complaint_code = ? LIMIT 1`, [code]);
@@ -51,6 +67,6 @@ export async function trackView(c: RowDataPacket): Promise<TrackView> {
   const merged = withProgress(hist as { status: string; stage: string; remarks: string | null; created_at: string }[], p);
   return {
     code, status: p?.status ?? String(c.status), filedAt: str(c.created_at), department, dueBy,
-    steps: merged.map((h) => ({ status: h.status, stage: String((h as { stage?: string }).stage ?? ""), note: (h as { remarks?: string | null }).remarks ?? null, at: str(h.created_at) }))
+    steps: merged.map((h) => ({ status: h.status, stage: String((h as { stage?: string }).stage ?? ""), note: PUBLIC_NOTE[h.status] ?? null, at: str(h.created_at) }))
   };
 }

@@ -237,6 +237,15 @@ describe("the public tracker", () => {
     h.db.prepare("INSERT INTO officer_steps VALUES (?, 'approve', NULL, NULL, datetime('now', '+1 day'))").run(caseIdFor(r.code));
     expect((await (await trackAs({ code: r.code, key: trackKey(r.code) })).json()).status).toBe("Approved by Department Officer");
   });
+  // QA pass 5, P5-009: the public answer carries the standard words for each step, never what staff typed (an officer's send or close note,
+  // the Collector's rejection note, a remark in the status history), which can name people and numbers
+  it("never shows what staff typed", async () => {
+    const r = await filePetition(await uploaded(), fields(), "x");
+    h.db.prepare("INSERT INTO officer_steps VALUES (?, 'send', ?, NULL, datetime('now', '+1 day'))").run(caseIdFor(r.code), "Spoke to Parvathi on 9000041873 at 27 Jawahar St; she confirmed");
+    const j = await (await trackAs({ code: r.code, key: trackKey(r.code) })).json();
+    expect(JSON.stringify(j)).not.toMatch(/9000041873|Parvathi|27 Jawahar/);
+    expect(j.steps.at(-1)).toMatchObject({ status: "Completed - Pending Collector Verification", note: expect.stringMatching(/sent to the Collector's office/) });
+  });
 });
 
 describe("a new build", () => {

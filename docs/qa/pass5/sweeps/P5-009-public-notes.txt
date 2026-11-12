@@ -1,0 +1,25 @@
+# P5-009 sweep: routes that answer without sign-in (rule 'public' in the access matrix), and whether they return case history or remarks
+/api/auth/forgot-password/request-otp
+/api/auth/forgot-password/reset-password
+/api/auth/forgot-password/verify-otp
+/api/auth/login
+/api/auth/logout
+/api/auth/register
+/api/auth/tab
+/api/complaint-taxonomy
+/api/complaint-types
+/api/departments
+/api/i18n
+/api/locations/areas
+/api/locations/gcc-localities
+/api/locations/gcc-streets
+/api/locations/localities
+/api/locations/resolve-ward
+/api/locations/streets
+/api/locations/wards
+/api/locations/zones
+/api/track
+
+$ grep -l "remarks\|status_history\|officer_steps" over those route files
+src/app/api/track/route.ts
+Only api/track returns case history; it now uses fixed words per status.
