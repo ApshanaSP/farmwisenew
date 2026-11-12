@@ -6,9 +6,10 @@
  */
 import type { DatabaseSync } from "node:sqlite";
 import { createHash } from "crypto";
-import intelPool from "@/lib/collector/db";
+import intelPool, { ops } from "@/lib/collector/db";
 import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { effectiveSql } from "@/lib/collector/effective";
 
 type Row = Record<string, any>;
 export interface Db { all(sql: string, params?: unknown[]): Promise<Row[]>; run(sql: string, params?: unknown[]): Promise<void> }
@@ -135,8 +136,10 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   try {
     // a new or bigger case changes the figures: the caches that hold a read start again (pass 4's RC-35; QA pass 5, P5-015)
     // a case that is already closed is not joined: the filing would be counted there and acted on by nobody (QA pass 5, P5-016)
-    const open = attachTo ? (await live.all(`SELECT is_open FROM incidents WHERE incident_id = ?`, [attachTo]))[0] : null;
-    if (attachTo && open && Number(open.is_open) !== 0 && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
+    // open as every console reads it: the Collector's latest decision first, else the pipeline's flag (pass 4's effective status). The raw
+    // is_open alone joined a case the Collector had resolved and refused one the Collector had reopened (the second reviewer)
+    const open = attachTo ? (await live.all(`SELECT ${effectiveSql(ops("collector_decisions")).open} AS o FROM incidents i WHERE i.incident_id = ?`, [attachTo]))[0] : null;
+    if (attachTo && open && Number(open.o) !== 0 && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
     await addCase(live, c);
     bumpDataEpoch();
     return caseIdFor(c.code);

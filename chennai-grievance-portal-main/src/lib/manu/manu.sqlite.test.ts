@@ -79,7 +79,7 @@ beforeEach(() => {
     CREATE TABLE petition_sms (id INTEGER PRIMARY KEY AUTOINCREMENT, complaint_code TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'waiting', result TEXT, detail TEXT, attempts INTEGER NOT NULL DEFAULT 0, tried_at TEXT, sent_at TEXT, created_at TEXT);
     CREATE UNIQUE INDEX petition_sms__one ON petition_sms (complaint_code, kind);
     CREATE TABLE officer_steps (incident_id TEXT, step TEXT, note TEXT, report_id INT, at TEXT);
-    CREATE TABLE collector_decisions (incident_id TEXT, decision TEXT, note TEXT, decided_role TEXT, decided_at TEXT);
+    CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY AUTOINCREMENT, incident_id TEXT, decision TEXT, note TEXT, decided_role TEXT, decided_at TEXT);
     CREATE TABLE officer_reports (report_id INT, incident_id TEXT, photo_dir TEXT, photos TEXT);`);
   buildTables(db);
   h.db = db;
@@ -272,6 +272,34 @@ describe("the same person's online complaint on the same problem", () => {
     const r = await findRepeats({ mobile: "9000041873", name: "Selvi", street: "Jawahar St", ward: 70, dept: "GCC-ELE", problem: "Street light not working on our street" });
     expect(r.matches.find((m) => m.code === "2026-402FFF")).toMatchObject({ sameProblem: true });
     expect(r.headline ?? "").not.toContain("on other problems");
+  });
+});
+
+// QA pass 5, after the second review: "closed" is the effective status (the Collector's latest decision, else the pipeline's flag)
+describe("a petition approved into a case the Collector decided on", () => {
+  it("does not join a case the Collector resolved", async () => {
+    h.db.exec(`INSERT INTO incidents (incident_id, lead_dept, ward_no, is_open, status_std, member_count, citizen_complaints, channels, title) VALUES ('INC-CMW-1', 'CMWSSB', 70, 1, 'Open', 1, 1, 'citizen_grievance', 'Sewage')`);
+    h.db.exec(`INSERT INTO collector_decisions (incident_id, decision, decided_at) VALUES ('INC-CMW-1', 'resolve', '2026-11-11 09:00:00')`);
+    const r = await filePetition(await uploaded(), fields({ attachTo: "INC-CMW-1" }), "x");
+    expect(r.attached).toBe(false);
+  });
+  it("joins a case the Collector reopened, even with the pipeline's flag still closed", async () => {
+    h.db.exec(`INSERT INTO incidents (incident_id, lead_dept, ward_no, is_open, status_std, member_count, citizen_complaints, channels, title) VALUES ('INC-CMW-2', 'CMWSSB', 70, 0, 'Closed', 1, 1, 'citizen_grievance', 'Sewage')`);
+    h.db.exec(`INSERT INTO collector_decisions (incident_id, decision, decided_at) VALUES ('INC-CMW-2', 'resolve', '2026-11-01 09:00:00'), ('INC-CMW-2', 'reopen', '2026-11-10 09:00:00')`);
+    const r = await filePetition(await uploaded(), fields({ attachTo: "INC-CMW-2" }), "x");
+    expect(r.attached).toBe(true);
+  });
+});
+
+// QA pass 5, after the second review: with no ward read, a busy department's newer petitions never push the same mobile's earlier one out
+describe("the same mobile in a busy department", () => {
+  it("is still found with 200 newer petitions in the department", async () => {
+    const { findRepeats } = await import("./repeat");
+    const first = await filePetition(await uploaded(), fields(), "x");
+    const ins = h.db.prepare(`INSERT INTO petitions (status, pages, mobile, name, dept_code, ward_number, problem, complaint_code, filed_at) VALUES ('filed', '[]', ?, ?, 'CMWSSB', 12, 'Water', ?, '2027-01-01 10:00:00')`);
+    for (let i = 0; i < 205; i++) ins.run(`9111${String(i).padStart(6, "0")}`, `Other ${i}`, `2027-${String(i).padStart(3, "0")}XYZ`);
+    const r = await findRepeats({ mobile: "9000041873", name: "x", street: null, ward: null, dept: "CMWSSB", problem: "Sewage overflowing on the street" });
+    expect(r.matches.map((m) => m.code)).toContain(first.code);
   });
 });
 
