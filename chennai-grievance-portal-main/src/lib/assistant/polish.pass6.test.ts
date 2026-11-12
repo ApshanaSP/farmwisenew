@@ -15,6 +15,8 @@ const card = {
   answerMarkdown: `- 41 open, 9 past their deadline.\n- Worst: ${TITLE}, Besant Nagar (Severe).`,
   scopeLine: "Adyar zone, this week",
   caveats: [],
+  // QA pass 7 (reviewer5-06): the code's figures as a card carries them, typed: the writer's figures come from these only
+  kpis: [{ label: "Still open", value: 41 }, { label: "Past deadline", value: 9 }],
   incidents: [
     { title: TITLE, location: "Besant Nagar", zone: "Adyar", severity: "Severe", status: "Open", department: "GCC-SWM", priorityReasons: ["past deadline"] },
     { title: "Overflowing bin near bus stop 12", location: "Thiruvanmiyur", zone: "Adyar", severity: "High", status: "Open", department: "GCC-SWM", priorityReasons: [] }
@@ -54,7 +56,7 @@ describe("QA pass 6, P6-009: a record's own text cannot steer the writer", () =>
 // QA pass 6, P6-019 (reviewer 3 on bd1e802): cases from tests/qa/pass6/probes/reviewer3/p9-polish.test.ts
 const inc = (title: string, location = "Besant Nagar") => ({ title, location, zone: "Adyar", severity: "Severe", status: "Open", department: "GCC-SWM", priorityReasons: [] });
 const mk = (titles: string[]) => ({ headline: "41 open garbage cases in Adyar this week", answerMarkdown: `- 41 open, 9 past their deadline.\n${titles.map((t) => `- ${t} (Severe)`).join("\n")}`,
-  scopeLine: "Adyar zone, this week", caveats: [], incidents: titles.map((t) => inc(t)) }) as unknown as AnswerCard;
+  scopeLine: "Adyar zone, this week", caveats: [], kpis: [{ label: "Still open", value: 41 }, { label: "Past deadline", value: 9 }], incidents: titles.map((t) => inc(t)) }) as unknown as AnswerCard;
 const say = (s: string) => ({ headline: s, answerMarkdown: `${s} No action is needed.`, voiceSummary: s });
 
 describe("QA pass 6, P6-019: a title's figure is never the answer's figure, even copied whole", () => {
