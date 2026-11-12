@@ -1166,9 +1166,13 @@ async function districtSnapshot(s: Scope, now: string) {
       w.params
     ),
     q(`SELECT COUNT(DISTINCT i.lead_dept) AS n FROM incidents i WHERE ${w.sql} AND ${EFF.open} = 1`, w.params),
+    // any date (as the list it opens, scope "all"), but the console's other filters as the list applies them: the tile counted the whole
+    // district whatever the category or taluk (20 against a list of 6, or of 0: QA pass 6, P6-028)
     q(
       `SELECT COUNT(*) AS n FROM incidents i WHERE ${EFF.open} = 1 AND i.severity_level = 'Severe'
-       AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`
+       AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}
+       ${s.zone ? "AND i.zone_no = ?" : ""} ${s.dept ? "AND i.lead_dept = ?" : ""} ${s.cat ? "AND i.category_code = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`,
+      [s.zone, s.dept, s.cat, s.taluk].filter((v) => v != null && v !== "")
     ),
     q(`SELECT COUNT(DISTINCT zone_no) AS n FROM ref_wards`),
     snapCommon(s, now),
