@@ -69,7 +69,16 @@ async function newContext(browser: Browser, session: string | null | undefined):
   type State = Exclude<NonNullable<Parameters<Browser["newContext"]>[0]>["storageState"], string | undefined>;
   let storageState: State | undefined;
   try { storageState = session ? (JSON.parse(session) as State) : undefined; } catch { storageState = undefined; }
-  const ctx = await browser.newContext({ storageState, locale: "en-IN", timezoneId: "Asia/Kolkata", viewport: { width: 1366, height: 900 }, acceptDownloads: false });
+  // Service Workers off: their fetches pass by context.route (QA pass 6, P6-017)
+  const ctx = await browser.newContext({ storageState, locale: "en-IN", timezoneId: "Asia/Kolkata", viewport: { width: 1366, height: 900 }, acceptDownloads: false, serviceWorkers: "block" });
+  // a WebSocket is not a request, so context.route never sees it: a page reached a private address over one and its reply landed in the
+  // page the Studio reads (P6-017). Each passes the same public-address check, or is closed.
+  await ctx.routeWebSocket(/.*/, async (ws) => {
+    let u: URL;
+    try { u = new URL(ws.url().replace(/^ws(s?):/i, "http$1:")); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
+    try { await checkHost(u); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
+    ws.connectToServer();
+  });
   // every request passes the public-address check; pictures, fonts and media are not needed to read data
   await ctx.route("**/*", async (route) => {
     const req = route.request();
