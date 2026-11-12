@@ -1,0 +1,35 @@
+[
+  {
+    "id": "click-layer-01",
+    "severity": "P2",
+    "area": "activity layer / screen readers",
+    "title": "The aria-live notice is rewritten every second while a request runs, so screen readers can re-announce the same words over and over",
+    "where": "chennai-grievance-portal-main/src/lib/activity/install.ts:106 (setInterval -> draw) and :89-92 (main/sub textContent reassigned on every draw)",
+    "repro": "node tests/qa/pass5/probes/click-layer/02-public.js (T2 login-hang): /login, page.route hangs POST /api/auth/login, MutationObserver on #diq-notice (role=status, aria-live=polite) counts childList/characterData records",
+    "evidence": "12 mutation records in about 9 s of one hung sign-in (2 for a request that ended at once). The text never changed except once (the 'taking longer than usual' line at 7 s); each draw() replaces the text nodes of .diq-m and .diq-s with identical strings.",
+    "cause": "draw() is called by a 1 s interval whenever a notice is open and unconditionally sets main.textContent, sub.textContent and sub.hidden. Replacing a text node inside a live region is an 'addition' to assistive tech; it should only write when the text changes.",
+    "confidence": "medium"
+  },
+  {
+    "id": "click-layer-02",
+    "severity": "P2",
+    "area": "activity layer / wording",
+    "title": "Forgot-password says 'The one-time password has been sent.' when the server deliberately does not say that (unknown email, or cooldown with no OTP sent)",
+    "where": "chennai-grievance-portal-main/src/lib/activity/messages.ts:53 (and :146 for mobile-otp/request); server: src/app/api/auth/forgot-password/request-otp/route.ts:10-11,41-45,56",
+    "repro": "node tests/qa/pass5/probes/click-layer/02-public.js (T5 /forgot-password-200): any 2xx answer to request-otp makes the layer flash the done text",
+    "evidence": "Layer showed busy 'Sending the one-time password. Please wait.' then ok 'The one-time password has been sent.' The route answers 200 with 'If an account exists with this email, an OTP has been sent to it.' for unknown emails, and 200 with cooldownRemaining (no mail sent) during the cooldown.",
+    "cause": "install.ts:215 shows n.done on any r.ok without reading the body; the done text for request-otp is a definite claim, contradicting the route's enumeration-safe wording and the cooldown branch.",
+    "confidence": "high"
+  },
+  {
+    "id": "click-layer-03",
+    "severity": "P3",
+    "area": "activity layer / double click",
+    "title": "The second click of a fast double click passes through the busy button to whatever is underneath",
+    "where": "chennai-grievance-portal-main/src/components/activity/activity.css:34 ([data-diq-busy] { pointer-events: none })",
+    "repro": "node tests/qa/pass5/probes/click-layer/02-public.js (T3): /login, route delays POST /api/auth/login 1.5 s, dblclick 'Sign in', capture-phase click log",
+    "evidence": "Click targets: BUTTON.auth-submit, then FORM.mt-2 (the second click hit the form behind the button). Only 1 POST (the page's own submitting guard held). Harmless on /login, but a busy button inside a clickable row/card or over a modal backdrop hands the second click to that row/backdrop.",
+    "cause": "pointer-events:none makes the hit test skip the button instead of swallowing the click on it; a guard that keeps the hit (e.g. capture-phase click preventDefault/stopPropagation on [data-diq-busy]) would not leak.",
+    "confidence": "high"
+  }
+]

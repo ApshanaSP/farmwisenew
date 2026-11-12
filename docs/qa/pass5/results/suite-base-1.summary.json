@@ -1,0 +1,18 @@
+{
+  "tag": "base-1",
+  "tz": "Asia/Kolkata",
+  "seed": "5101",
+  "config": "vitest.config.ts",
+  "exit": 1,
+  "secs": 109,
+  "numTotalTests": 3236,
+  "numPassedTests": 3220,
+  "numFailedTests": 3,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 6,
+  "failed": [
+    "src\\lib\\manu\\manu.sqlite.test.ts :: the SMS to the person who wrote it tells the writer once when it is approved, in the petition's language",
+    "src\\lib\\thunai\\lane-a.pass4.test.ts :: RC-01: an outside place or body is never answered with ours, in any lane every Chennai locality of the Corporation's own list in front of an agency word is ours",
+    "src\\app\\api\\collector\\jobs\\route-news\\route.test.ts :: news routing job (BE-001) routes with the key, auditing each assignment added and withdrawn"
+  ]
+}

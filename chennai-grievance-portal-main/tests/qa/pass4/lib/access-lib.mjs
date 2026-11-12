@@ -7,7 +7,8 @@ import { APP_ROOT } from "./env.mjs";
 import { inventory } from "./golden-inventory.mjs";
 import { accounts } from "../../seed-local-users.mjs";
 
-export const IDS = ["anonymous", "citizenA", "officerA", "officerB", "collector"];
+// QA pass 5: "manu" is the petition desk account (an officer login of the department COL-PET)
+export const IDS = ["anonymous", "citizenA", "officerA", "officerB", "collector", "manu"];
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function login(base, key) {
@@ -28,6 +29,11 @@ export function ruleFor(route, methods) {
   const s = fs.readFileSync(f, "utf8");
   const has = (re) => re.test(s);
   if (route === "/api/auth/logout") return { rule: "public", guard: "none (signing out when not signed in is harmless)" };
+  // QA pass 5: the Manu Desk. manuStaff() = the desk account only; seesEveryPetition() = the desk or the Collector, else the officer of the
+  // petition's department (scope checked in code); /api/track is the public petition tracker (slip number + last 4 digits, rate limited).
+  if (has(/manuStaff\(/)) return { rule: "manu", guard: "manuStaff (the petition desk account only)" };
+  if (has(/seesEveryPetition\(/)) return { rule: "petition-viewers", guard: "seesEveryPetition, else the officer of the petition's department" };
+  if (route === "/api/track") return { rule: "public", guard: "none (public petition tracker: slip number and last 4 digits, rate limited)" };
   if (route === "/api/auth/confirm" || route === "/api/auth/security") return { rule: "staff", guard: "getSessionFromCookies + isStaff (staff only)" };
   if (has(/collectorSession\(/) && !has(/officerSession\(/) && !has(/assistantSession\(/)) return { rule: "collector", guard: "collectorSession" };
   if (has(/officerSession\(/) && !has(/collectorSession\(/)) return { rule: "officer", guard: "officerSession (dept from DB, never from request)" };

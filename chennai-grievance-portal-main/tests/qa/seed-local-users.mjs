@@ -25,6 +25,8 @@ const WANT = [
   { key: "officerC", id: 1000000004, email: "qa.officer.cmw@example.test", role: "department_officer", dept_code: "CMWSSB" },
   { key: "citizenA", id: 1000000005, email: "qa.citizen.a@example.test", role: "citizen", first: "Qa", last: "CitizenA", mobile: "9000000001" },
   { key: "citizenB", id: 1000000006, email: "qa.citizen.b@example.test", role: "citizen", first: "Qa", last: "CitizenB", mobile: "9000000002" },
+  // QA pass 5: a Manu Desk (petition counter) account. The desk is the officer portal with the department COL-PET (src/lib/manu/guard.ts).
+  { key: "manu", id: 1000000007, email: "qa.manu@example.test", role: "department_officer", dept_code: "COL-PET" },
 ];
 
 /** The test accounts, creating a password for any that has none. */

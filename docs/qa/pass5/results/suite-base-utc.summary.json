@@ -1,0 +1,14 @@
+{
+  "tag": "base-utc",
+  "tz": "UTC",
+  "seed": "5404",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 113,
+  "numTotalTests": 3237,
+  "numPassedTests": 3224,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}

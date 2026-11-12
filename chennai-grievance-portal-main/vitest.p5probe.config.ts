@@ -8,7 +8,7 @@ const blank = ["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "GROQ_AP
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
   test: {
-    include: ["tests/qa/pass5/probes/**/*.test.ts"], environment: "node", testTimeout: 60_000,
+    include: ["tests/qa/pass5/probes/**/*.test.ts", "tests/qa/pass5/known-failures/**/*.test.ts"], environment: "node", testTimeout: 60_000,
     env: { ...Object.fromEntries(blank.map((k) => [k, ""])), AWS_STORE_DRY_RUN: "1", SMTP_HOST: "127.0.0.1", SMTP_PORT: "1", EMAIL_MODE: "sandbox", SMS_MODE: "off",
       MANU_PADDLE_URL: "http://127.0.0.1:1" }
   }

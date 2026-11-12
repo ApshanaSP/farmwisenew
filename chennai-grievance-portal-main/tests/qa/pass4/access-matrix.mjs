@@ -9,14 +9,17 @@ import { IDS, allRoutes, concrete, login, loginAll, req, ruleFor } from "./lib/a
 
 const pi = process.argv.indexOf("--port"); const port = pi > 0 ? Number(process.argv[pi + 1]) : 3140;
 const base = `http://127.0.0.1:${port}`;
-const OUT = path.resolve(APP_ROOT, "..", "docs/qa/pass4/evidence/access-matrix.json");
+const OUT = process.env.QA_ACCESS_OUT ? path.resolve(process.env.QA_ACCESS_OUT) : path.resolve(APP_ROOT, "..", "docs/qa/pass4/evidence/access-matrix.json");
 const SESSION_KILLERS = new Set(["/api/auth/logout", "/api/auth/security", "/api/profile/change-password"]);
 
 const ALLOW = {
   collector: ["collector"], officer: ["officerA", "officerB"], staff: ["collector", "officerA", "officerB"], citizen: ["citizenA"],
   anyauth: ["citizenA", "officerA", "officerB", "collector"], public: IDS, jobkey: [], dev: [],
   "staff-or-owner": ["collector", "officerA", "officerB", "citizenA"], mixed: ["collector", "officerA", "officerB"],
+  // QA pass 5: the desk account "opens the Manu Desk and nothing else" (lib/manu/constants.ts), so it is in no other rule's list
+  manu: ["manu"], "petition-viewers": ["manu", "collector", "officerA", "officerB"],
 };
+ALLOW.anyauth = [...ALLOW.anyauth, "manu"];
 const rename = (cookie, to) => cookie.replace(/^[^=]+/, to);
 
 let cookies = await loginAll(base);
@@ -49,7 +52,7 @@ for (const r of list) {
       let verdict;
       if (res.status === 503 && /no-stt|no-tts/.test(res.text)) verdict = "pass"; // the test server has no speech key: designed answer
       else if (res.status === 0 || res.status >= 500) verdict = "fail"; // a guard must never answer with a crash or a hang
-      else if (methodRule === "staff-or-owner" || methodRule === "mixed") verdict = expectAllow ? "pass" : denied ? "pass" : ok2 ? "fail" : "pass";
+      else if (methodRule === "staff-or-owner" || methodRule === "mixed" || methodRule === "petition-viewers") verdict = expectAllow ? "pass" : denied ? "pass" : ok2 ? "fail" : "pass";
       else if (methodRule === "public") verdict = "pass";
       else if (expectAllow) verdict = denied && !/not linked/i.test(res.text) ? "fail" : "pass"; // a signed-in allowed role must get past the guard (400, 404, 429 are fine)
       else verdict = ok2 ? "fail" : "pass"; // a role that is not allowed must not get a 2xx or 3xx

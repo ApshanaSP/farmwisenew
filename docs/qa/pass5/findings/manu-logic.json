@@ -1,0 +1,189 @@
+[
+  {
+    "id": "manu-logic-01",
+    "severity": "P1",
+    "area": "manu/clean: dates",
+    "title": "An ISO date (2026-03-15) is cleaned into a different valid date (26.03.2015) with no mark; a 3-digit year becomes 2020 with no mark",
+    "where": "src/lib/manu/clean.ts:27",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t ML-01",
+    "evidence": "normalDate('2026-03-15') = '26.03.2015'; cleanReading date '2026-03-15' -> '26.03.2015', unsure_fields has no 'date' (past date, valid). '15.03.202' -> '15.03.2020', unmarked. '10:30, 15.03.2026' -> null (time read as day.month).",
+    "cause": "The unanchored /(\\d{1,2})\\D+(\\d{1,2})\\D+(\\d{4}|\\d{2})/ takes the first day-month-year-looking run: in YYYY-MM-DD it starts at the year's last two digits and takes the day's two digits as a 2-digit year; (\\d{4}|\\d{2}) falls back to 2 digits of a 3-digit year. The future-date check cannot catch either because the result is in the past.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-02",
+    "severity": "P1",
+    "area": "manu/clean: wards",
+    "title": "Every digit in the ward text is joined into one number: 'Ward 7 (Zone 6)' becomes ward 76, 'Ward 12, Zone 3' ward 123, both unmarked",
+    "where": "src/lib/manu/clean.ts:52",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t ML-02",
+    "evidence": "cleanReading ward 'Ward 12, Zone 3' -> 123, '12/3' -> 123, 'Ward 7 (Zone 6)' -> 76; none adds 'ward' to unsure_fields. Only joins that land above 200 are caught.",
+    "cause": "const wd = digits(r.ward); Number(wd) strips all non-digits and concatenates; it should take the first number (or mark the field when there is more than one). A wrong ward files the petition to the wrong zone and case.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-03",
+    "severity": "P2",
+    "area": "manu/clean: digits",
+    "title": "Tamil digits (௯௦…) and full-width digits are silently dropped: the mobile, pincode or ward becomes empty with no doubt mark",
+    "where": "src/lib/manu/clean.ts:15",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t ML-03",
+    "evidence": "mobile '௯௦௦௦௦௧௨௩௪௫' -> null, no 'mobile' mark; '９０００１２３４５' -> null, no mark; pincode '௬௦௦௦௧௧' -> null, no mark; ward 'வார்டு ௭௦' -> null, no mark. Same digits() is used by track.ts mayTrack, so a last4 typed in Tamil digits never matches.",
+    "cause": "digits() is replace(/\\D/g, '') without the u flag and without mapping U+0BE6-0BEF / U+FF10-FF19 to 0-9, and the 'mark it' branches only run when some ASCII digits survive.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-04",
+    "severity": "P0",
+    "area": "manu/clean: Aadhaar",
+    "title": "A whole Aadhaar number read into the mobile field is kept in full (stored in petitions.reading and shown on the check screen)",
+    "where": "src/lib/manu/clean.ts:45",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t 'mobile field'",
+    "evidence": "cleanReading mobile '2345 6789 0123' -> mobile '234567890123' (whole number, marked unsure but kept). mobile '9123 4567 8901' -> '2345678901' (10 of 12 digits, after +91 stripping). The file header promises 'A whole Aadhaar number never leaves this file'.",
+    "cause": "mobile goes through tenDigits() only; every text field goes through maskAadhaar but the mobile does not, and a 12-digit value is shown and stored rather than masked or dropped. readOne writes JSON.stringify(r.reading) to petitions.reading.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-05",
+    "severity": "P1",
+    "area": "manu/clean: Aadhaar",
+    "title": "maskAadhaar misses common written forms: '9999 - 4512 - 7731', '9999/4512/7731', double spaces, zero-width space, Tamil or full-width digits",
+    "where": "src/lib/manu/clean.ts:10",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t ML-04",
+    "evidence": "All six forms pass through cleanReading full_text unmasked. The same regex guards filePetition (officer-typed fullText/problem/subject) and paddle.ts, so the officer path and the PaddleOCR backup path leak the same way.",
+    "cause": "AADHAAR = /(?<!\\d)(\\d{4})[\\s.-]?(\\d{4})[\\s.-]?(\\d{4})(?!\\d)/g allows at most one separator from [\\s.-], ASCII digits only, no / and no format characters (U+200B is not \\s).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-06",
+    "severity": "P3",
+    "area": "manu/clean: Aadhaar",
+    "title": "A mobile written as +919000012345 in the petition text is masked as if it were an Aadhaar number",
+    "where": "src/lib/manu/clean.ts:13",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/clean.probe.test.ts -t ML-05",
+    "evidence": "maskAadhaar('Cell: +919000012345') = 'Cell: +XXXX XXXX 2345'. The full text the department reads loses the petitioner's number.",
+    "cause": "Any 12 contiguous digits match; a leading + or '91' followed by [6-9] is not excluded.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-07",
+    "severity": "P1",
+    "area": "manu/repeat: online complaints",
+    "title": "The same person's online complaint on the same problem is reported as 'an earlier petition on other problems' and can never be offered as the case to join",
+    "where": "src/lib/manu/repeat.ts:89",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-07",
+    "evidence": "judgeRepeats with an online match (dept: null, same mobile, same 'Sewage overflowing' line) -> headline 'This person has written 1 earlier petition on other problems.', sameProblem false, attachTo null.",
+    "cause": "findRepeats maps every online complaint with dept: null (it even selects d.name AS dept_name and drops it); judgeRepeats requires sameDept for sameTopic, so online matches are never sameProblem, and the headline wording calls them petitions.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-08",
+    "severity": "P2",
+    "area": "manu/repeat: same person",
+    "title": "With no street read, any earlier petition with the same name is 'this person': a stranger in another ward gets 'this person's second petition' and their case is offered",
+    "where": "src/lib/manu/repeat.ts:45",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-08",
+    "evidence": "Candidate R. Kumar, no mobile, no street, ward 70; earlier R. Kumar, other mobile, '5, Anna Salai, Adyar', ward 176 -> headline 'This is this person's second petition on this problem...', attachTo the Adyar case.",
+    "cause": "sameName = same squashed name && (!street || ...): an empty street skips the address test, and a different mobile on both sides does not count against it.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-09",
+    "severity": "P2",
+    "area": "manu/repeat: headline",
+    "title": "'N other people have written' counts petitions, not people: one neighbour who wrote three times is '3 other people'",
+    "where": "src/lib/manu/repeat.ts:60",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-09",
+    "evidence": "Three earlier petitions from one mobile 9000099999 -> '3 other people have written about this in the same ward.'",
+    "cause": "others.length is used as the person count; matches are not grouped by mobile or name.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-10",
+    "severity": "P2",
+    "area": "manu/repeat: same person",
+    "title": "The fuzzy street match compares the street with the end of the stored address, which is the area, so a one-letter street misspelling only matches when no area was entered",
+    "where": "src/lib/manu/repeat.ts:45",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-10",
+    "evidence": "Street 'Jawahar Steet' vs address '27, Jawahar Street' -> samePerson true; vs '27, Jawahar Street, Perambur' -> false.",
+    "cause": "similarity(street, squash(e.address).slice(-street.length)) assumes the address ends with the street, but filePetition stores address as [door, street, area].join(', ').",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-11",
+    "severity": "P2",
+    "area": "manu/repeat: Tamil",
+    "title": "A problem line in Tamil script never shares a topic, even with itself, so Tamil-written repeats are not caught",
+    "where": "src/lib/manu/repeat.ts:18",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-11",
+    "evidence": "sameTopic('சாக்கடை நீர் தெருவில் ஓடுகிறது', same line, samePerson=true) = false; Tanglish works. The officer can edit the problem line, and online complaint titles are often Tamil.",
+    "cause": "words() keeps only [a-z0-9 ] and turns every Tamil letter into a space, so the word set is empty.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-12",
+    "severity": "P1",
+    "area": "manu/repeat: store query",
+    "title": "The came-before check fetches earlier petitions by exact name, so the same person written 'R. Kumar' vs 'R.Kumar', in NFD Tamil, or with a zero-width joiner is missed when there is no mobile",
+    "where": "src/lib/manu/repeat.ts:75",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-12",
+    "evidence": "On the SQLite store: judgeRepeats on the stored row says 'second petition on this problem' for all three spellings; findRepeats returns headline null for all three.",
+    "cause": "WHERE ... p.name = ? uses the raw trimmed name; the squash/NFC matching in judgeRepeats only runs on rows the SQL already returned. Names are also stored un-normalised by filePetition.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-13",
+    "severity": "P2",
+    "area": "manu/cases: rebuild",
+    "title": "A new build loses what the live case had: 'written about 1 time before' and its priority drop to 0 and 45, and a petition added to an online complaint's case is split into its own case",
+    "where": "src/lib/manu/cases.ts:167",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-13",
+    "evidence": "Live: recurrence_90d 1, priority_score 53; after websiteCases: recurrence_90d 0. Petition attached to INC-W-2026-300CCC (online) -> after rebuild its event is in INC-W-<its own code>, 2 incidents.",
+    "cause": "petitionCase hard-codes recurrence: 0 (filePetition passes the count only to addCaseLive). websiteCases adds petitions before online complaints, so attachToCase finds no online case yet and addCase opens a new one.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-14",
+    "severity": "P1",
+    "area": "manu/petitions: attach",
+    "title": "Approval adds a petition to any case id it is given: a closed case, or another department's case (the existing test even attaches a Metrowater sewage petition to an Electrical case)",
+    "where": "src/lib/manu/petitions.ts:243",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-14",
+    "evidence": "CMWSSB petition with attachTo 'INC-ELE-1' (lead_dept GCC-ELE, is_open 0, Closed) -> attached: true, member_count 2, case stays closed and Electrical. The complaint row goes to Metrowater; the case nobody opens. ManuDesk keeps a chosen attach while the match is still listed as same-person only, e.g. after the officer changes the department (ManuDesk.tsx:170).",
+    "cause": "fileSchema checks attachTo only by regex; attachToCase checks only that the incident exists, not is_open, lead_dept or ward.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-15",
+    "severity": "P2",
+    "area": "manu/track: privacy",
+    "title": "The public tracker returns the officer's free-text notes, so a note naming the petitioner and her mobile is shown to anyone with the slip number and last 4 digits",
+    "where": "src/lib/manu/track.ts:54",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-15",
+    "evidence": "officer_steps 'send' note 'Spoke to Parvathi on 9000041873 at 27 Jawahar St' -> /api/track answer contains it ('Work done: ...'). track.ts header: 'The answer holds the status only, no personal detail.'",
+    "cause": "trackView maps every history row's remarks to note, and withProgress builds those remarks from officer_steps.note and Collector reject notes verbatim.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-16",
+    "severity": "P2",
+    "area": "manu/petitions: Aadhaar",
+    "title": "An Aadhaar number typed into the door or street field is masked in petitions.address but stored whole in complaints.street_address, specific_location, petitions.area and the case's place_text",
+    "where": "src/lib/manu/petitions.ts:229",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-17",
+    "evidence": "fields door '9999 4512 7731', street 'Aadhaar 9999 4512 7731, Jawahar St' -> '9999 4512 7731' found in the stored rows. The reader's own fields are masked by cleanReading, so this needs a person to type it; f.date (20 chars, unmasked) is a second such path.",
+    "cause": "Only maskAadhaar(address) goes to petitions.address; the raw address and place go to complaints, petitions.area and (via petitionCase) the case.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-logic-17",
+    "severity": "P3",
+    "area": "manu: tests",
+    "title": "The Manu tests check real behaviour, but only on well-formed input, and one enshrines a wrong attach",
+    "where": "src/lib/manu/manu.sqlite.test.ts:309",
+    "repro": "Read clean.test.ts, repeat.test.ts, manu.sqlite.test.ts; compare with probes in tests/qa/pass5/probes/manu-logic/",
+    "evidence": "clean.test.ts: only DD.MM / D/M/YY dates, single-number wards, ASCII digits, the three tidy Aadhaar forms; no ISO date, no Tamil digits, no Aadhaar in the mobile. repeat.test.ts tests judgeRepeats alone (db mocked), so the exact-name SQL prefilter (manu-logic-12) and the online mapping (manu-logic-07) are never exercised. manu.sqlite.test.ts:307-312 attaches a CMWSSB sewage petition to an Electrical street-light case and asserts it as correct; its Aadhaar test checks only fullText and problem.",
+    "cause": "Tests were written from the happy path of the reading-test samples; edge input and the store query path are untested.",
+    "confidence": "high"
+  }
+]

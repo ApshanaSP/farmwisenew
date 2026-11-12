@@ -1,0 +1,156 @@
+[
+  {
+    "id": "sms-ocr-01",
+    "severity": "P1",
+    "area": "Petition SMS: closing message",
+    "title": "The closing SMS fires on the department's own close and can never be corrected: after a Collector reopen and reject the writer's only message still says 'the work is completed'",
+    "where": "src/lib/manu/sms.ts:108-110; src/lib/complaint-progress.ts:173-174; src/lib/constants.ts:53",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/sms-ocr  (test 'the closing SMS is frozen at the first close')",
+    "evidence": "Officer 'close' -> SMS var2 'பணி முடிக்கப்பட்டது' (work completed). Collector 'reopen' then 'reject': complaint ends 'Rejected', closing SMS sent: 1 (the 'completed' one). No message for the reject.",
+    "cause": "'Resolved by Department' is in RESOLVED_STATUSES, so the closing SMS goes before the Collector checks the work. INSERT IGNORE on the unique key (complaint_code, 'closed') then swallows every later closing status (reject, a second resolve after a reopen).",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-02",
+    "severity": "P1",
+    "area": "Petition SMS: retry",
+    "title": "A failed 'rejected' closing SMS retried after the case was reopened and completed tells the writer it 'could not be taken up'",
+    "where": "src/lib/manu/sms.ts:123-126 (retry sends the stored s.result); sms.ts:108 (result frozen at first insert)",
+    "repro": "same probe file, test 'a failed rejected closing SMS retried after the case was reopened and completed'",
+    "evidence": "Collector reject -> SMS fails (gateway down). Reopen + department close -> complaint 'Resolved by Department'. Next sweep delivers var2 'ஏற்றுக்கொள்ள இயலவில்லை' (could not be taken up).",
+    "cause": "The retry sweep re-sends petition_sms.result chosen at the first attempt, never the complaint's current status; the resolve's own sendPetitionSms is ignored by the unique key.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-03",
+    "severity": "P1",
+    "area": "Petition SMS: duplicates",
+    "title": "Two server processes (or two copies of the site on the same store) each retry the same failed row: the writer gets the SMS twice",
+    "where": "src/lib/manu/sms.ts:116-126",
+    "repro": "same probe file, test 'two server processes (two module instances) retry the same failed row'",
+    "evidence": "Two module instances of sms.ts run retryFailedSms together: 2 msg91 posts for one message, row ends status 'sent', attempts 3. Within one instance the flag holds (1 post).",
+    "cause": "The only guard is the in-memory `retrying` flag. Rows are not claimed (no UPDATE ... SET status='sending' WHERE status IN ('failed','waiting') before the send), and tried_at is written only after the send, so any other process selects the same rows. The unique key stops a second row, not a second send.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-04",
+    "severity": "P1",
+    "area": "Petition SMS: which copies send",
+    "title": "Copies of the site that do not save (AWS_STORE_SAVE unset, the teammate default) are not test copies for SMS: with SMS settings they send real SMS for complaint numbers that are never saved, and retry rows loaded from AWS",
+    "where": "src/lib/manu/sms.ts:47 vs src/lib/aws/store.ts:294; .env.aws.example:16-19",
+    "repro": "Read: smsMode() is 'off' only for AWS_STORE_DRY_RUN === '1'. store.ts: DRY_RUN = AWS_STORE_SAVE !== '1' || AWS_STORE_DRY_RUN === '1'. A clone set up from .env.aws.example plus the owner's MANU DESK lines (SMS_MODE=live, MSG91 keys) passes smsMode() === 'live'.",
+    "evidence": "Code paths quoted above; the README 'On another PC' steps do not mention AWS_STORE_DRY_RUN. The jobs sweep (scheduler.ts:25) runs retryFailedSms on every copy, over petition_sms rows reloaded from AWS every few minutes.",
+    "cause": "The SMS gate and the store's save gate use different rules. A non-saving copy keeps its petitions only until restart, yet texts the writer a complaint number; and every copy with SMS set retries the saving PC's failed rows (see sms-ocr-03).",
+    "confidence": "medium"
+  },
+  {
+    "id": "sms-ocr-05",
+    "severity": "P2",
+    "area": "Petition SMS: delivery outcome",
+    "title": "A send the provider may have accepted (8 s timeout, HTTP 200 that is not JSON, or the DB update failing after the send) is marked failed and sent again",
+    "where": "src/lib/manu/sms.ts:67-70 and 78-84",
+    "repro": "same probe file, test 'a provider that accepted but answered late (timeout) or not in JSON'",
+    "evidence": "Timeout -> 'failed'; retry gets HTTP 200 '<html>OK</html>' -> 'failed', detail 'HTTP 200'; next retry -> 'sent'. The same message was posted 3 times.",
+    "cause": "Every outcome that is not a parsed {type:'success'} goes to the catch and becomes 'failed', and the catch also runs when the UPDATE to 'sent' throws after a good send. There is no idempotency key (MSG91 request id) or 'unknown' state, so the sweep re-sends up to 4 times.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-06",
+    "severity": "P2",
+    "area": "Petition SMS: approval latency",
+    "title": "Approval (and an officer's close) waits inline for the SMS: in test mode the mail has no time limit of its own, so a stuck SMTP server keeps the approve request hanging and the petition locked; the desk meanwhile calls the in-flight SMS 'failed'",
+    "where": "src/lib/manu/petitions.ts:200,246; src/lib/complaint-progress.ts:173-174; src/lib/mailer.ts:30-36 (no timeouts); src/lib/manu/sms.ts:94",
+    "repro": "same probe file, test 'in test mode an approval waits on the mail with no time limit'",
+    "evidence": "Mailer that never answers: filePetition still pending after 3 s while the petition row is already 'filed'; smsNote() for the code returns {state:'failed'} for the 'waiting' row.",
+    "cause": "sendPetitionSms is awaited inside oneAtATime(petition:id) and inside syncComplaints' loop; nodemailer's defaults allow minutes (connection 2 min, socket 10 min). smsNote maps 'waiting' to 'failed'. Live mode is capped at 8 s per SMS, still inline.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-07",
+    "severity": "P2",
+    "area": "Petition SMS: settings",
+    "title": "SMS_MODE=off is not a setting: any value but 'live' means sandbox, so with an email account and EMAIL_SANDBOX_TO each approval mails the team inbox",
+    "where": "src/lib/manu/sms.ts:48-49",
+    "repro": "same probe file, test 'SMS_MODE=off does not turn SMS off'",
+    "evidence": "AWS_STORE_DRY_RUN unset, SMS_MODE=off, SMTP user/pass and EMAIL_SANDBOX_TO set: smsMode() === 'test'; one mail '[Test SMS] to 9000041873'.",
+    "cause": "smsMode() checks only for 'live'; the type SmsMode has 'off' and the QA env files (tests/qa/pass4/lib/env.mjs:41, pass5 suite.mjs, vitest.p5probe.config.ts) set SMS_MODE=off believing it switches SMS off. Today it is AWS_STORE_DRY_RUN=1 and the blank SMTP user that keep it off.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-08",
+    "severity": "P2",
+    "area": "Petition SMS: desk wording",
+    "title": "With SMS_TEST_NUMBER set, the desk says the SMS was sent to the petitioner (their last 4 digits) and the check screen says 'an SMS goes to <petitioner's number>', though it went to the test number",
+    "where": "src/lib/manu/sms.ts:79,81,94; src/components/manu/ManuDesk.tsx:247",
+    "repro": "same probe file, test 'with SMS_TEST_NUMBER the desk says sent'",
+    "evidence": "approval returns sms {state:'sent', last4:'1873'}; the msg91 post went to 919876500000.",
+    "cause": "deliver() swaps the number but records plain 'sent'; smsNote and the desk text read the petition's mobile and know nothing of the test number.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-09",
+    "severity": "P2",
+    "area": "Petition SMS: content",
+    "title": "Tamil SMS name the department in English; each Tamil message is 2 UCS-2 segments",
+    "where": "src/lib/manu/sms.ts:75; src/lib/manu/constants.ts:25-49 (labels English only)",
+    "repro": "same probe file (testnum test logs var2 'Metrowater' on template t-rt); segment count: node script over SMS_WORDING with code '2026-000AAA' and the longest label",
+    "evidence": "Tamil received: 'அனுப்பப்பட்ட துறை Metrowater.' Lengths: received ta 133 chars UCS-2 = 2 segments, closed ta 87 = 2; en 121 and 93 GSM-7 = 1. Every variable fits DLT's 30: longest label 'Corporation Storm Water Drain' 29, Tamil results 19 and 22.",
+    "cause": "manuDeptLabel() has no Tamil label, so a Tamil-only reader gets an English department name; the Tamil templates are past 70 chars, doubling the cost of every Tamil SMS.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-10",
+    "severity": "P2",
+    "area": "PaddleOCR: reading order",
+    "title": "PaddleOCR runs before the AI OCR, not beside it: a PaddleOCR that accepts connections but does not answer (loading or first-run model download, a long queue) holds every petition up to 90 s a page, 300 s at most, before the AI OCR starts",
+    "where": "src/lib/manu/read.ts:69; src/lib/manu/paddle.ts:20-27; manu_paddle_ocr/server.py:94-105",
+    "repro": "Read: readPetition awaits paddleRead (timeout min(300 s, 90 s x pages)) before claudeJson. server.py opens the port, then imports and loads PaddleOCR (first run downloads ~200 MB) before serve_forever, so connections queue and hang instead of being refused.",
+    "evidence": "read.ts:69 `const first = await paddleRead(...)` then line 74 claudeJson; server.py comment line 94 'a petition that arrives during loading waits rather than being turned away'. With 3 reads at once (AT_ONCE) and one page at a time on the server, the desk shows 'reading' for minutes.",
+    "cause": "The second-opinion step is sequential and its timeout is sized for a working server; a hung but open port costs the full timeout on every petition.",
+    "confidence": "medium"
+  },
+  {
+    "id": "sms-ocr-11",
+    "severity": "P3",
+    "area": "PaddleOCR: server.py limits",
+    "title": "Pixel cap is checked after cv2.imdecode has already decoded the whole picture, and the single-threaded server has only a per-recv timeout",
+    "where": "manu_paddle_ocr/server.py:26,58-70,81-84",
+    "repro": "Read only (Python server not started). A ~3 MB PNG of 30000x30000 of one colour passes the 6 MB and magic-byte checks; imdecode allocates ~2.7 GB (OpenCV's own cap is 2^30 pixels) before `> MAX_PIXELS` rejects it. The site's savePages checks bytes, not pixels (src/lib/manu/files.ts:25-48).",
+    "evidence": "Line 66 imdecode, then line 69 the 40 MP check. HTTPServer (not ThreadingHTTPServer) with `timeout = 30` per socket read: a local client sending a byte every 29 s holds the only reader; requests the app abandoned at its timeout are still read in turn.",
+    "cause": "Size checks happen in the wrong order and on bytes only; one thread, no total-request deadline. Bind is 127.0.0.1 and POST refuses any Origin, so only local processes and the site can do this.",
+    "confidence": "medium"
+  },
+  {
+    "id": "sms-ocr-12",
+    "severity": "P3",
+    "area": "PaddleOCR: app side",
+    "title": "A PaddleOCR answer of any size is taken whole; when the AI OCR is off its text becomes full_text past the 30 000 the approval accepts, and approve then fails with zod's generic message",
+    "where": "src/lib/manu/paddle.ts:34-38,88-98; src/lib/manu/petitions.ts:191; src/app/api/manu/petitions/[id]/route.ts:38",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/sms-ocr/paddle.probe.test.ts (test 'a huge PaddleOCR answer')",
+    "evidence": "readPetition -> model 'paddle', full_text 66 059 chars; fileSchema rejects: 'String must contain at most 30000 character(s)', which names no field.",
+    "cause": "No cap on lines or text read from the service, and fullText has no custom message.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-13",
+    "severity": "P3",
+    "area": "PaddleOCR: app side",
+    "title": "MANU_PADDLE_URL is not held to this computer: any host is accepted and the petition photos (names, phones, Aadhaar) are posted to it over plain http",
+    "where": "src/lib/manu/paddle.ts:13-17,32",
+    "repro": "same probe file, test 'MANU_PADDLE_URL may name any host'",
+    "evidence": "MANU_PADDLE_URL=http://ocr.example.org:8867 -> fetch to http://ocr.example.org:8867/read with the photo bytes (stubbed, nothing left the process).",
+    "cause": "baseUrl() only checks for 'off'; the 'local only' promise (README, server.py docstring) is enforced on the server, not the client.",
+    "confidence": "high"
+  },
+  {
+    "id": "sms-ocr-14",
+    "severity": "P3",
+    "area": "PaddleOCR: start script",
+    "title": "start-paddle.cjs reads .env for MANU_PADDLE_URL=off but not for AWS_STORE_DRY_RUN, and checks port 8867 whatever MANU_PADDLE_URL or MANU_PADDLE_PORT say",
+    "where": "scripts/start-paddle.cjs:11,14-21,34-36; manu_paddle_ocr/server.py:18",
+    "repro": "Read: main() tests process.env.AWS_STORE_DRY_RUN only; `npm run dev` does not load .env into this script's env, so a test copy whose .env says AWS_STORE_DRY_RUN=1 still opens PaddleOCR (README says test copies do not). alreadyRunning() treats anything listening on 8867 as PaddleOCR.",
+    "evidence": "switchedOff() reads ../.env with a regex; no such read for AWS_STORE_DRY_RUN. PORT = 8867 constant.",
+    "cause": "Two settings read two different ways; port not derived from the app's setting.",
+    "confidence": "high"
+  }
+]

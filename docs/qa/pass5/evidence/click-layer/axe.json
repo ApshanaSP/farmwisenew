@@ -1,0 +1,550 @@
+{
+ "when": "2026-11-12T04:32:25.556Z",
+ "server": "http://127.0.0.1:3105",
+ "signins": {
+  "citizenA": 200,
+  "officerA": 200,
+  "manu": 200,
+  "collector": 200
+ },
+ "results": [
+  {
+   "who": "anon",
+   "page": "/",
+   "vp": "1280",
+   "url": "/login",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/login",
+   "vp": "1280",
+   "url": "/login",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/register",
+   "vp": "1280",
+   "url": "/register",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/forgot-password",
+   "vp": "1280",
+   "url": "/forgot-password",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/track",
+   "vp": "1280",
+   "url": "/track",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/",
+   "vp": "360",
+   "url": "/login",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/login",
+   "vp": "360",
+   "url": "/login",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/register",
+   "vp": "360",
+   "url": "/register",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/forgot-password",
+   "vp": "360",
+   "url": "/forgot-password",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "anon",
+   "page": "/track",
+   "vp": "360",
+   "url": "/track",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen",
+   "vp": "1280",
+   "url": "/citizen",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen/file-complaint",
+   "vp": "1280",
+   "url": "/citizen/file-complaint",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen/track-complaints",
+   "vp": "1280",
+   "url": "/citizen/track-complaints",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/profile",
+   "vp": "1280",
+   "url": "/profile",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen",
+   "vp": "360",
+   "url": "/citizen",
+   "bad": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "n": 1,
+     "layer": false,
+     "targets": [
+      ".min-h-\\[44px\\].text-navy-500[aria-current=\"page\"]"
+     ]
+    }
+   ],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen/file-complaint",
+   "vp": "360",
+   "url": "/citizen/file-complaint",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/citizen/track-complaints",
+   "vp": "360",
+   "url": "/citizen/track-complaints",
+   "bad": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "n": 1,
+     "layer": false,
+     "targets": [
+      ".min-h-\\[44px\\].text-navy-500[aria-current=\"page\"]"
+     ]
+    }
+   ],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "citizenA",
+   "page": "/profile",
+   "vp": "360",
+   "url": "/profile",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "officerA",
+   "page": "/officer",
+   "vp": "1280",
+   "url": "/officer",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "officerA",
+   "page": "/profile",
+   "vp": "1280",
+   "url": "/profile",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "officerA",
+   "page": "/officer",
+   "vp": "360",
+   "url": "/officer",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "officerA",
+   "page": "/profile",
+   "vp": "360",
+   "url": "/profile",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "manu",
+   "page": "/officer",
+   "vp": "1280",
+   "url": "/officer",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "manu",
+   "page": "/officer",
+   "vp": "360",
+   "url": "/officer",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "collector",
+   "page": "/collector",
+   "vp": "1280",
+   "url": "/collector",
+   "bad": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "n": 1,
+     "layer": false,
+     "targets": [
+      ".map-wrap > div:nth-child(1)"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "n": 2,
+     "layer": false,
+     "targets": [
+      ".off",
+      ".off > b"
+     ]
+    }
+   ],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  },
+  {
+   "who": "collector",
+   "page": "/collector",
+   "vp": "360",
+   "url": "/collector",
+   "bad": [],
+   "layerAny": [],
+   "layer": {
+    "state": null,
+    "text": "",
+    "sub": "",
+    "veil": false,
+    "line": false,
+    "working": false,
+    "busy": [],
+    "count": 1
+   },
+   "errs": []
+  }
+ ]
+}

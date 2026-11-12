@@ -1,0 +1,90 @@
+[
+  {
+    "id": "seam-01",
+    "severity": "P1",
+    "area": "console / step-up confirm x activity layer (merge seam)",
+    "title": "The click-feedback layer announces a guarded action as done ('Your decision has been recorded.') while the password box is still open, and keeps saying so when the user cancels and nothing was done",
+    "where": "src/lib/activity/install.ts:210-215 (if (!r.ok) ... else { if (n.done) it.done = n.done; settle(); }) x src/lib/security/stepup.ts:70 (soft answer: status 200 + x-diq-confirm: required) and src/components/security/Confirm.tsx:44-47",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/seam/activity-confirm.test.ts",
+    "evidence": "ActivityLayer installed first, ConfirmHost wrapping it (the order after sign-in: login does router.replace, so the layout's ActivityLayer is already installed when the console mounts ConfirmHost). POST /api/collector/decisions needing the step-up: notice state 'ok', text 'Your decision has been recorded.' while the confirm box asks for the password; after Cancel the final answer is 428 {cancelled:true}, the server never got a grant, and the notice still says recorded. Same mechanism for every guarded route with a done text: incident action ('The action has been recorded and the department informed.'), map/send ('The work has been forwarded to the departments.'), officer report ('The completion report has been submitted.'), the exports.",
+    "cause": "Pass 4 (da94e35, RC-48/PB-316) changed the confirm answer for the console's own fetch from 428 to 200 + x-diq-confirm header. Main's activity layer, written against the 428 answer, treats any r.ok as success and flashes the rule's 'done' text; it never looks at the x-diq-confirm header. Before the merge the same click showed a red 'could not be completed' instead. The real request sent after the password usually falls outside the 1.2 s gesture window, so it is not announced at all.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-02",
+    "severity": "P2",
+    "area": "security / body cap (RC-17 class) and pass-4 class guard",
+    "title": "Main's new public /api/track reads its JSON body with no cap, and pass 4's RC-17 class guard (lane-c.guards.test.ts) fails on the merged tree for three of main's routes",
+    "where": "src/app/api/track/route.ts:15 (await req.json().catch(() => null)); src/app/api/manu/petitions/route.ts:22-24; src/app/api/manu/petitions/[id]/route.ts:38; guard at tests/qa/pass4/lane-c.guards.test.ts:18-26",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/seam/guards-replay.test.ts",
+    "evidence": "Replaying the guard's exact rule lists ['src/app/api/manu/petitions/route.ts', 'src/app/api/manu/petitions/[id]/route.ts', 'src/app/api/track/route.ts'] (guard expects []). POST /api/track with a 3 MB chunked JSON body (no Content-Length) is read whole and answered 404, not refused with 413 as readJsonCapped does. The petitions upload checks only the Content-Length header, so a chunked upload skips its size limit too (staff only).",
+    "cause": "Main's routes were written before pass 4 added lib/body-cap.ts (readJsonCapped) and the guard. The Manu routes sign in through manuStaff()/seesEveryPetition(), names the guard's SIGNED regex does not know, so they also trip it as false positives; track is genuinely unsigned and uncapped.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-03",
+    "severity": "P2",
+    "area": "tests / access matrix coverage",
+    "title": "Pass 4's access matrix and API fuzz (tests/qa/pass4/lib/access-lib.mjs ruleFor) read every Manu route as 'public', so nothing checks that a citizen or another department's officer is refused by the Manu Desk routes",
+    "where": "tests/qa/pass4/lib/access-lib.mjs:26-47 (ruleFor) vs src/lib/manu/guard.ts:10-21 (manuStaff, seesEveryPetition) used by src/app/api/manu/**/route.ts",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/seam/guards-replay.test.ts (test 'pass-4 access matrix on main's new routes')",
+    "evidence": "ruleFor gives 'public (none found in route file)' for /api/manu/petitions, /api/manu/petitions/[id], /api/manu/case/[incident], /api/manu/photos/[name]. The routes actually require the petition officer (or the Collector / the receiving department's officer). The matrix would expect anonymous access to succeed and cannot express 'only PETITION_DEPT'.",
+    "cause": "ruleFor recognises guards by function name (collectorSession, officerSession, getSessionFromCookies...). Main's new guard functions and getActivePortalSession('officer') are not in its list, so the merged routes fall through to the public default.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-04",
+    "severity": "P2",
+    "area": "caches (RC-35 class)",
+    "title": "A filed complaint or approved Manu petition changes the live store's incidents, but does not empty the caches pass 4 tied to the data epoch, so Jarvis, Ask District IQ, insight cards and developing stories keep the pre-filing figures (up to 30 s to 10 min)",
+    "where": "src/lib/manu/cases.ts:122-139 (addCaseLive / attachToCase write incidents, events, incident_members, incident_timeline via intelPool.query) x src/lib/aws/store.ts:695 (bumpDataEpoch only when the SQL names collector_decisions or officer_steps); callers src/app/api/complaints/route.ts:287, src/lib/manu/petitions.ts filePetition",
+    "repro": "Code path: on DATA_BACKEND=aws, POST /api/complaints (or approve a Manu with urgent=true, which sets attention_flag=1 and priority 90 on attach) then ask Jarvis/Ask District IQ 'what needs my attention' within the cache window; the store's run() sees INSERT INTO incidents / UPDATE incidents, which the epoch regex does not match, and no caller calls bumpDataEpoch().",
+    "evidence": "store.ts:695 `if (/\\b(collector_decisions|officer_steps)\\b/i.test(expanded)) bumpDataEpoch();`; cases.ts has no bumpDataEpoch import. Caches that wait on the epoch: thunai/round.ts:75 (30 s), assistant/tools.ts:149 (60 s), assistant/insightcards.ts:39 and pipeline.ts:2173 (10 min), collector/storyai.ts:199, threads.ts:359, map/ask.ts:286.",
+    "cause": "Pass 4's RC-35 rule is 'a writer calls bumpDataEpoch() after its commit', enforced only for the two decision tables. Main added a new writer of the incident tables (live cases) that predates the rule.",
+    "confidence": "medium"
+  },
+  {
+    "id": "seam-05",
+    "severity": "P3",
+    "area": "citizen / honesty of the queue note (RC-47)",
+    "title": "The citizen is still told the officer will see the complaint 'at the next update, which runs every hour', although main now puts it in the officer queue at once on the AWS store",
+    "where": "src/app/api/complaints/route.ts:287-291 (addCaseLive) and :300 (queueNote: QUEUE_DELAY_NOTE); src/lib/officer/queue-note.ts:5-8",
+    "repro": "DATA_BACKEND=aws: file a complaint as a citizen; the success screen (file-complaint/page.tsx:1117) shows the queue note while /officer already lists INC-W-<code>.",
+    "evidence": "Pass 4's RC-47 fix assumed the queue is built only from the pipeline's incidents; main's addCaseLive (cases.ts:131-139) inserts the case into the served build immediately when DATA_BACKEND=aws (it returns early on mysql, where the note is still right).",
+    "cause": "Both sides fixed PB-315 independently: pass 4 by telling people about the delay, main by removing the delay on the AWS store. The merge kept both, so on AWS the note describes a delay that no longer exists.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-06",
+    "severity": "P3",
+    "area": "layout / phone (RC-46)",
+    "title": "Pass 4's phone placement of Jarvis's earlier-questions list no longer applies: main portals the list to <body>, outside .dic, so `.dic:not(.fit) .jq` never matches",
+    "where": "src/components/collector/app/thunai/jarvisswitch.css:70 (inside @media (max-width: 480px)) x src/components/collector/app/thunai/JarvisFab.tsx:32 (createPortal(<JarvisQuestions/>, document.body))",
+    "repro": "Open the Collector console at 375 px wide (not fit mode), press Jarvis's questions button: the list sits at bottom 194 px (.jq.jq-tall) instead of the 132 px pass 4 set to sit just above the moved 76 px button row.",
+    "evidence": "Main rewrote the .jq rules as top-level `.jq` / `.jq.jq-tall` (the list is drawn on the page itself); pass 4's added phone rule still uses the old `.dic:not(.fit) .jq` descendant selector.",
+    "cause": "Pass 4 moved the phone buttons (PB-319) assuming the list lives inside the console's .dic root; main moved the list out of it in the same release.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-07",
+    "severity": "P3",
+    "area": "robustness (RC-23 class)",
+    "title": "Main's petition upload answers a request that is not multipart with a 500 ('Could not save the petition.'), where pass 4 made such requests a 400",
+    "where": "src/app/api/manu/petitions/route.ts:23-31 (req.formData() throws a TypeError, which is not an UploadError, so manuFailed returns 500)",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/seam/manu-upload-body.test.ts",
+    "evidence": "POST /api/manu/petitions as the petition officer with content-type application/json and body {} -> 500 {error:'Could not save the petition.'}; cause 'Content-Type was not one of multipart/form-data...'. Pass 4's guard only checks that formData() sits behind a try, so it passes this route.",
+    "cause": "Written before pass 4's RC-23 fix (profile photo route: non-multipart is 400). Staff only, so low impact; it also logs a server error for a client mistake.",
+    "confidence": "high"
+  },
+  {
+    "id": "seam-08",
+    "severity": "P3",
+    "area": "accessibility (RC-49 class)",
+    "title": "Main's Manu Desk console has no h1 and jumps from h2 to h4; pass 4's heading and landmark guard (a11y.pass4.test.ts) checks only the Collector and Officer consoles, so it does not see the new console",
+    "where": "src/components/manu/ManuDesk.tsx:105, 387-390 (h2, then h4 lists with no h3); src/components/manu/ManuCounter.tsx:9-11 (band title is a <b>, not a heading); guard src/components/a11y.pass4.test.ts:44-48",
+    "repro": "Sign in as the petition officer, open /officer, run axe (tests/qa/pass4/axe.mjs rules): page-has-heading-one and heading-order are expected to fire.",
+    "evidence": "grep: ManuDesk has <h2>Reading the petition</h2> ... <h4>Being read</h4>, <h4>Awaiting verification</h4>; no <h1> in ManuCounter/ManuDesk. Not run in a browser.",
+    "cause": "Pass 4's RC-49 rule (one h1 then h2 for card titles) was applied to the consoles that existed; main's new console arrived in the same merge.",
+    "confidence": "medium"
+  }
+]

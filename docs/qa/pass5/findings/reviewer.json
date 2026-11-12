@@ -1,0 +1,3 @@
+[
+  { "id": "reviewer-00", "severity": "P3", "area": "review:77ae11a P5-005", "title": "verdict: holds", "where": "src/lib/manu/login.ts:23-27", "repro": "read diff; login route checks is_active after ensurePetitionLogin (src/app/api/auth/login/route.ts:41-56); emailSchema lower-cases so the email match is exact; no DELETE FROM users anywhere in src so the INSERT branch cannot re-create a removed account", "evidence": "UPDATE no longer sets is_active; no other UPDATE sets is_active = 1 (git grep)", "cause": "n/a", "confidence": "high" }
+]

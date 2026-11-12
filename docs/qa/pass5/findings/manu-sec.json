@@ -1,0 +1,134 @@
+[
+  {
+    "id": "manu-sec-01",
+    "severity": "P0",
+    "area": "auth / Manu Desk login",
+    "title": "Any sign-in attempt for petition@chennai.gov.in (anonymous, wrong password) puts the fixed shared password back and re-grants COL-PET, so the desk password can never be rotated or revoked",
+    "where": "src/lib/manu/login.ts:23-26, src/app/api/auth/login/route.ts:41",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t login",
+    "evidence": "admin sets a new hash and dept_code='NONE'; one anonymous POST /api/auth/login {email: petition@..., password: 'definitely-wrong'} -> 401, and afterwards dept_code=COL-PET, hash is no longer the admin's, token_version not bumped; the admin's new password then -> 401. On a store without the row, an anonymous attempt creates the account (department_officer, COL-PET, verified, exempt). Re-activation was fixed meanwhile by 77ae11a (P5-005) and holds (is_active stays 0).",
+    "cause": "ensurePetitionLogin runs before the password check and rewrites password_hash and dept_code whenever the stored hash differs from FIXED_HASH. The shared password's bcrypt hash (cost 10) is committed in source (login.ts:11), so it is also open to offline guessing, and /api/profile/change-password for this account is silently undone by the next attempt from anyone.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-02",
+    "severity": "P1",
+    "area": "access control / Manu account reach",
+    "title": "The petition-desk login, said to open 'the Manu Desk and nothing else', passes the Jarvis/assistant and map guards and the rehearsal route guard",
+    "where": "src/lib/assistant/access.ts:21-31; src/app/api/rehearsal/route/route.ts:15-16; claim at src/lib/manu/constants.ts:6",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"assistant\"",
+    "evidence": "signed in as petition@chennai.gov.in: assistantSession() returns {role:'department_officer', lockDept:'COL-PET'} (not 401/403), while officerSession() gives 403. assistantSession guards /api/collector/assistant/{chat,export,feedback,insights,pins,sessions,status}, /api/map/{ask,export,insight,layers,suggest}, /api/rehearsal/traffic/*; /api/rehearsal/route takes any department_officer.",
+    "cause": "assistantSession only requires role department_officer plus any non-null dept code; nothing excludes PETITION_DEPT. Incident tools are locked to 'COL-PET' (likely empty), but status, suggestions, map layers, live layers and model spend are open to a shared fixed-password counter account (see manu-sec-01).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-03",
+    "severity": "P1",
+    "area": "privacy / public tracking",
+    "title": "Public tracker returns the officer's 'send'/'close' notes and the Collector's rejection note verbatim to anyone with the slip number and the mobile's last 4 digits",
+    "where": "src/lib/manu/track.ts:51-54 (note: remarks), src/lib/complaint-progress.ts:66-68,81",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"free-text notes\"",
+    "evidence": "officer_steps 'send' note 'Met petitioner K. Parvathi at door 27, she gave alt no 9840012345; neighbour Ravi (door 29)...' and collector reject note 'Internal: AE Murugan did not attend...' both appear in POST /api/track {code, last4:'1873'} as steps[].note ('Work done: Met petitioner...').",
+    "cause": "trackView maps every history/journey row's remarks to note with no filtering; progressOf copies the free-text step and decision notes into the journey. The route promises 'no personal detail' (route.ts:11, track.ts:3), but that depends on what staff type in a field they write for the Collector's check. Works for every complaint, online ones too.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-04",
+    "severity": "P1",
+    "area": "privacy / Manu repeats check",
+    "title": "The desk's 'repeats' action is a free phone-number lookup into citizens' online complaints, anonymous ones included; with the number the public tracker then opens them",
+    "where": "src/lib/manu/repeat.ts:79-85, src/app/api/manu/petitions/[id]/route.ts:27,45-47",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"phone-number lookup\"",
+    "evidence": "as the desk, POST /api/manu/petitions/424242 (no such petition) {action:'repeats', mobile:'9876543210', ...} -> 200 with match {code:'2026-555ONL', problem:'Harassment by neighbour', status, open:true} for an online complaint with user_id=30 and is_anonymous=1; then anonymous POST /api/track {code:'2026-555ONL', last4:'3210'} -> 200.",
+    "cause": "the repeats query takes any mobile/name from the request body (not the petition's own reading), does not need the petition id to exist, and does not skip is_anonymous complaints. The counter account has a shared fixed password (manu-sec-01).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-05",
+    "severity": "P1",
+    "area": "uploads / body size",
+    "title": "Uploads over 10 MB are truncated by Next 15.5 before the route sees them (middleware matches /api/*), so a scanned PDF the desk allows (under 20 MB) or a 42 MB batch fails with a generic 500",
+    "where": "src/middleware.ts:125-127 (matcher /api/:path*), src/app/api/manu/petitions/route.ts:22-24, src/lib/manu/constants.ts:14-18; node_modules/next/dist/server/body-streams.js:84-96, next-server.js:1247-1262",
+    "repro": "code reading (no server allowed): with middleware on the path, Next clones the body with middlewareClientMaxBodySize (default 10485760, config-shared.js:219) and, past it, ends both streams; finalize() hands the truncated stream to the route. Start the app, sign in as the desk, upload a 12 MB scanned PDF.",
+    "evidence": "body-streams.js: 'if (bytesRead > bodySizeLimit) { ... p1.push(null); p2.push(null); return; }' and the warning 'Only the first 10MB will be available'; next.config.js sets no middlewareClientMaxBodySize. A truncated multipart body makes req.formData() throw, which is not an UploadError -> manuFailed -> 500 'Could not save the petition.'",
+    "cause": "MANU_LIMITS (maxPdfBytes 20 MB, maxRequestBytes 42 MB) were set without the Next 15.5 middleware body clone limit. The client shrinks photos, but PDFs go up as they are (ManuDesk.tsx:311).",
+    "confidence": "medium"
+  },
+  {
+    "id": "manu-sec-06",
+    "severity": "P2",
+    "area": "rate limit / availability",
+    "title": "Without TRUST_PROXY_HOPS (the default) every client shares one 'direct' bucket: one script shuts public tracking for all citizens (and sign-in the same way)",
+    "where": "src/lib/rate-limit.ts:71-85, src/app/api/track/route.ts:13-14, src/app/api/auth/login/route.ts:31",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"one bucket\"",
+    "evidence": "280 junk tracks with 250 different spoofed X-Forwarded-For values hit 429 (XFF is correctly ignored); a different citizen with a valid QR key then -> 429. Same design gives login 200 tries / 15 min for everyone together.",
+    "cause": "getClientIp returns 'direct' for all clients when TRUST_PROXY_HOPS is unset; ipLimit only multiplies the shared limit by 10. Spoofing XFF does not help an attacker, but is not needed.",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-07",
+    "severity": "P2",
+    "area": "uploads / decompression bomb",
+    "title": "A small Flate-image PDF is inflated in full (up to 20 x 120 MB) before it is refused; a 140 KB PDF became 144 MB in memory",
+    "where": "src/lib/studio/ocr.ts:144-159, src/lib/manu/files.ts:30-33",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"decompression bomb\"",
+    "evidence": "PDF 140550 bytes -> 144000051 bytes inflated (1025x) in 454 ms; savePages then throws 'No scanned pages' because PNM images are not JPG/PNG. 20 images of 40 Mpx (the caps) is ~2.4 GB from a ~2.8 MB upload, plus Buffer.concat copies.",
+    "cause": "pdfImages inflates every 8-bit Flate image (maxOutputLength W*H*3, W*H up to 40M) and keeps them all; savePages discards the PNMs only afterwards. Needs the desk login, which is a shared fixed password (manu-sec-01).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-08",
+    "severity": "P2",
+    "area": "privacy / logs",
+    "title": "A store error while approving a petition logs the petitioner's name, mobile, address and letter text",
+    "where": "src/lib/manu/guard.ts:23-24 (console.error with the whole err), src/app/api/manu/petitions/[id]/route.ts:52; node_modules/mysql2/lib/commands/command.js:30, lib/base/connection.js:712-718",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t logs",
+    "evidence": "with the INSERT INTO complaints failing the way mysql2 fails (err.sql = the SQL with values filled in), POST action:'file' -> 500 and the console.error output contains 9000041873, the Tamil name and '27, ஜவஹர் தெரு'.",
+    "cause": "mysql2 formats values into the SQL client-side and puts it on err.sql; manuFailed (and the reader's console.error) print the whole error object. The probe builds the error with mysql2's own format(); not seen on a live MySQL.",
+    "confidence": "medium"
+  },
+  {
+    "id": "manu-sec-09",
+    "severity": "P3",
+    "area": "rate limit / public tracking",
+    "title": "Twelve junk tries on someone's slip number lock its real holder out for 10 minutes, even with the QR key",
+    "where": "src/app/api/track/route.ts:18",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t \"twelve junk\"",
+    "evidence": "12 POSTs {code, last4: wrong} then {code, key: trackKey(code)} -> 429.",
+    "cause": "the per-code bucket counts every attempt (failures and the valid key alike) and is checked before the key. It does keep last-4 guessing slow (about 1,700 guesses a day per code).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-10",
+    "severity": "P3",
+    "area": "uploads / request cap",
+    "title": "The 42 MB upload pre-check reads only Content-Length; a chunked body skips it and is buffered whole by formData()",
+    "where": "src/app/api/manu/petitions/route.ts:22-27",
+    "repro": "code reading: Number(null) is 0, so a request without Content-Length passes line 22; all files are read into memory (line 27) before any per-file or page-count check.",
+    "evidence": "`if (Number(req.headers.get(\"content-length\")) > MANU_LIMITS.maxRequestBytes)`; in practice bounded by Next's 10 MB truncation (manu-sec-05).",
+    "cause": "size enforced on the declared length instead of while reading the stream (lib/body-cap.ts already does it right for JSON).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-11",
+    "severity": "P3",
+    "area": "access control / photos",
+    "title": "Photo route asks the store before it asks who is calling: anonymous callers get 403 for a real photo name and 404 otherwise, and a store error is an unhandled 500",
+    "where": "src/app/api/manu/photos/[name]/route.ts:14-23",
+    "repro": "access matrix in tests/qa/pass5/probes/manu-sec/manu-sec.test.ts (anon row: 403 for existing photos; 404 for unknown names in the traversal test)",
+    "evidence": "anon GET photo (existing) -> 403; crafted/unknown names -> 404. No try/catch around pool.query.",
+    "cause": "lookup first, then seesEveryPetition/officer check. Names are 128-bit random, so the oracle is of little use; traversal, NUL, %, _ and case tricks are all stopped by PHOTO_NAME (15 names tried, all 404).",
+    "confidence": "high"
+  },
+  {
+    "id": "manu-sec-12",
+    "severity": "P3",
+    "area": "CSRF",
+    "title": "CSRF defence lives only in middleware; the Manu POST routes parse JSON whatever the Content-Type, and the Origin check ignores the scheme",
+    "where": "src/middleware.ts:69-80, src/app/api/manu/petitions/[id]/route.ts:38",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-sec -t CSRF",
+    "evidence": "crossSite: cross-origin true, Sec-Fetch-Site cross-site true, sibling same-site true, Origin null true, same origin false, https://same-host on an http server false, no Origin/no Sec-Fetch-Site false. Cookies are SameSite=Lax (session-cookies.ts:48). Today a cross-site text/plain form post is stopped twice; it would parse as JSON if the matcher ever left /api out.",
+    "cause": "req.json() does not require application/json; host comparison only. No live hole found.",
+    "confidence": "high"
+  }
+]
