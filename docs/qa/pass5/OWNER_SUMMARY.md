@@ -3,7 +3,7 @@
 This is the short version. The numbers are in `FINAL_REPORT.md` (made by a script, not typed). Nothing was pushed, merged into main, or opened as a pull request.
 
 ## In numbers (from FINAL_REPORT.md)
-38 bugs recorded: 5 serious (P0), 10 major (P1), 20 medium (P2), 3 minor (P3). Fixed: 20; 19 of them with a test that fails without the fix, and one test-tooling fix checked by reading. Open: 15. Yours to decide: 3. On the final commit the type check, lint (no errors), production build and all 3,315 unit tests (4 runs, two time zones) pass.
+38 bugs recorded: 5 serious (P0), 10 major (P1), 20 medium (P2), 3 minor (P3). Fixed: 20; 19 of them with a test that fails without the fix, and one test-tooling fix checked by reading. Open: 15. Yours to decide: 3. On the final commit the type check, lint (no errors), production build pass, and the unit suite passes in 4 runs over two time zones: 3,302 of its 3,315 tests pass in each run, 13 are skipped (as before this pass), none fail.
 
 ## What happened
 - Pass 4's fixes were joined onto the newest main on the branch `claude/qa-pass5-05abfd`. Four files clashed; each kept both sides.

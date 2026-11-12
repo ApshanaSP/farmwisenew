@@ -32,3 +32,9 @@
 **Incident during this run.** At 09:37, listing `.env` key names printed two `.env` lines that are bare Groq key strings (no `NAME=` in front). They appeared only in this session's terminal output: not in any file, log or commit. Rotate those two Groq keys and delete the two bare lines from `.env`.
 
 **Other worktrees.** Nothing was written to `qa-pass4-ecfcb9`, the `p4-lane-*` worktrees, `qa-full-pass` or `E:\farm`. Pass 4's pinned API (port 3199) and a pass 4 Next server were found running from the pass 4 worktree and left alone; this run used its own pinned API on 3198.
+
+**The skeptic's verdict, word for word** (`findings/skeptic.json`, row S-verdict, on the files as of `9b8921b`):
+
+> Every count in FINAL_REPORT.md recomputes exactly, all 10 sampled fixes have passing tests that reach the fix, and 9 of the 10 works claims I checked live or by test hold. The corrected files are sound except that OWNER_SUMMARY still says all 3,315 unit tests pass (13 are skipped) and P5-014 still runs its repeat check for an already-filed petition (no open row tracks it).
+
+Both points were then corrected: OWNER_SUMMARY now says 3,302 of 3,315 pass and 13 are skipped, and the repeat check on a filed petition is open row P5-039. The skeptic did not re-check after these two edits.
