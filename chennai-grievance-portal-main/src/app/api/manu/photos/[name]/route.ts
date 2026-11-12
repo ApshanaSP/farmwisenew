@@ -9,7 +9,8 @@ import { officerDeptCode } from "@/lib/officer/guard";
 export const dynamic = "force-dynamic";
 
 /** A petition's photo: for the petition officer, the Collector, and the officer of the department it went to. */
-export async function GET(_req: NextRequest, { params }: { params: { name: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ name: string }> }) {
+  const params = await ctx.params;
   if (!PHOTO_NAME.test(params.name)) return new NextResponse("Not found", { status: 404 });
   const [rows] = await pool.query<RowDataPacket[]>(`SELECT dept_code, status FROM petitions WHERE pages LIKE ? LIMIT 1`, [`%"${params.name}"%`]);
   const p = rows[0];

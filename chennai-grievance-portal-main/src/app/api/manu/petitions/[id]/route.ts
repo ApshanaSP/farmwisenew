@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 const idOf = (p: { id: string }) => { const n = Number(p.id); return Number.isInteger(n) && n > 0 ? n : null; };
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await manuStaff();
   if (s instanceof NextResponse) return s;
   const id = idOf(params);
@@ -28,7 +29,8 @@ const actionSchema = z.discriminatedUnion("action", [
 ]);
 
 /** Everything done to one petition: read it again, check it for repeats, delete it or one of its pages, or approve it. */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await manuStaff();
   if (s instanceof NextResponse) return s;
   const id = idOf(params);

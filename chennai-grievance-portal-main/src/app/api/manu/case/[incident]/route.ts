@@ -8,7 +8,8 @@ import { officerDeptCode } from "@/lib/officer/guard";
 export const dynamic = "force-dynamic";
 
 /** The paper petitions behind a case, for the case screens: nothing when the case came from somewhere else. */
-export async function GET(_req: NextRequest, { params }: { params: { incident: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ incident: string }> }) {
+  const params = await ctx.params;
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(params.incident)) return NextResponse.json({ items: [] });
   const staff = await seesEveryPetition();
   let dept: string | null = null;
