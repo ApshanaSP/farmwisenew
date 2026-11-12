@@ -54,10 +54,13 @@ export function zonesIn(t: string, w: World): number[] {
       if (at >= 0) { hits.push({ n: Number(k), at }); break; }
     }
     // a Tamil name with a case ending changes its last letter: அடையாறு, அடையாறில்; அம்பத்தூர், அம்பத்தூரில்
+    // a name that ends in ம் takes த்த before its ending (மாதவரம், மாதவரத்தில்; வளசரவாக்கம், வளசரவாக்கத்தில்), and a name written with dots (திரு.வி.க. நகர்)
+    // is read as the sentence is, without them: in Tamil these zones were dropped and the district's figures given (QA pass 7, pass4-open-18: m18, m23, m27)
     if (!hits.some((h) => h.n === Number(k))) for (const word of z.ta) {
-      const stem = word.replace(/[்ுூ]$/, "");
-      const at = stem.length >= 4 ? t.indexOf(stem) : -1;
-      if (at >= 0) { hits.push({ n: Number(k), at }); break; }
+      const plain = norm(word).trim();
+      const stems = [plain.replace(/[்ுூ]$/, ""), /ம்$/.test(plain) ? plain.slice(0, -2) : ""].filter((x) => x.length >= 4);
+      const at = Math.min(...stems.map((x) => { const i = t.indexOf(x); return i < 0 ? Infinity : i; }));
+      if (Number.isFinite(at)) { hits.push({ n: Number(k), at }); break; }
     }
   }
   for (const z of w.zones) {
@@ -378,6 +381,9 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   return null;
 }
 
+/** the word for a zone or an area, in either language, with a Tamil case ending too ("மண்டலத்தில்": "which zone has the most", in Tamil, QA pass 7 m03) */
+const ZONE_WORDS = ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "மண்டலத்", "மண்டலங்களி", "பகுதி", "பகுதிகள்"];
+
 /** The fast lane's reading of one sentence, before the time it named is put on it. */
 function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: PeriodSpec): Quick | null {
   const t = norm(text);
@@ -437,9 +443,12 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
-  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // a ranking by a status ("by open complaints", "திறந்த புகார்கள் அதிகம்") is not the attention score this screen ranks by: handed on in every language, as the English
+  // "open" already is (QA pass 7: once the status words stopped counting as unknown, the Tamil form got the attention ranking while the English was handed on)
+  if (has(t, RANK) && !cat && statusIn(t) != null && has(t, ZONE_WORDS)) return null;
+  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
-  if (has(t, RANK) && cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return null;
+  if (has(t, RANK) && cat && has(t, ZONE_WORDS)) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
