@@ -57,3 +57,48 @@ describe("QA pass 6, P6-007: the bitmap budget holds a real scan", () => {
     expect(r.images.map((x) => x.length)).toEqual([jpg.length, jpg.length, jpg.length]);
   });
 });
+
+// QA pass 6, P6-013 (reviewer 2 on a3937ca; both predate it): the image-dictionary pattern was quadratic in one crafted dictionary, and an
+// indirect /Length with a two-digit object number ("/Length 12 0 R") was read as /Length 1. Cases copied from
+// tests/qa/pass6/probes/reviewer2/pdfimages.probe.test.ts.
+const B = (s: string) => Buffer.from(s, "latin1");
+// a small but real JPEG header (SOI + APP0 + EOI is enough for the length check)
+const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]), B("JFIF\0"), Buffer.alloc(300, 0x11), Buffer.from([0xff, 0xd9])]);
+const dct = (len: string, data = JPEG) => Buffer.concat([B(`<< /Type /XObject /Subtype /Image /Width 10 /Height 10 /BitsPerComponent 8 /ColorSpace /DeviceRGB /Filter /DCTDecode /Length ${len} >>\nstream\n`), data, B("\nendstream\nendobj\n")]);
+
+describe("QA pass 6, P6-013: the image dictionary pattern", () => {
+  const time = (k: number) => {
+    const buf = B("%PDF-1.4\n<< " + "/Subtype/Image ".repeat(k) + ">>\nendobj\n");
+    const t = performance.now(); pdfImages(buf); return { bytes: buf.length, ms: Math.round(performance.now() - t) };
+  };
+  it("is linear in the size of one dictionary (one dict repeating /Subtype /Image, no stream)", () => {
+    const a = time(2000), b = time(4000), c = time(8000);
+    console.log("[reviewer2] regex", JSON.stringify({ a, b, c }));
+    // linear: doubling the input about doubles the time. Quadratic: x4.
+    expect(c.ms, JSON.stringify({ a, b, c })).toBeLessThan(Math.max(50, b.ms * 2.6));
+  });
+});
+
+describe("QA pass 6, P6-013: /Length", () => {
+  it("an indirect /Length with a 2-digit object number (/Length 12 0 R) keeps the whole JPEG", () => {
+    const r = pdfImages(Buffer.concat([B("%PDF-1.4\n"), dct("12 0 R"), B("12 0 obj\n" + JPEG.length + "\nendobj\n")]));
+    expect(r.images[0]?.length).toBe(JPEG.length);
+  });
+  it("an indirect /Length with a 1-digit object number (/Length 5 0 R) keeps the whole JPEG (control)", () => {
+    const r = pdfImages(Buffer.concat([B("%PDF-1.4\n"), dct("5 0 R")]));
+    expect(r.images[0]?.length).toBe(JPEG.length);
+  });
+  it("a Flate grey page with /Length 12 0 R is read, not skipped", () => {
+    const px = zlib.deflateSync(Buffer.alloc(100 * 100, 200));
+    const buf = Buffer.concat([B("%PDF-1.4\n<< /Subtype /Image /Width 100 /Height 100 /BitsPerComponent 8 /ColorSpace /DeviceGray /Filter /FlateDecode /Length 12 0 R >>\nstream\n"), px, B("\nendstream\n")]);
+    const r = pdfImages(buf);
+    expect({ images: r.images.length, skipped: r.skipped }).toEqual({ images: 1, skipped: 0 });
+  });
+  it("a /Length too large (but inside the file) on page 1 does not swallow page 2", () => {
+    const p2 = dct(String(JPEG.length));
+    const p1 = dct(String(JPEG.length + p2.length + 20));
+    const r = pdfImages(Buffer.concat([B("%PDF-1.4\n"), p1, p2, B("trailer\n<< /Root 1 0 R >>\n%%EOF\n")]));
+    expect(r.images.length).toBe(2);
+  });
+});
+

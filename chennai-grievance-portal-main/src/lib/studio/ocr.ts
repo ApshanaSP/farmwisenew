@@ -149,19 +149,27 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
   const images: Buffer[] = [];
   let skipped = 0;
   let bitmapBytes = 0;
-  const re = /<<((?:[^<>]|<<[^<>]*>>)*?\/Subtype\s*\/Image(?:[^<>]|<<[^<>]*>>)*?)>>\s*stream\r?\n/g;
+  // every dictionary that opens a stream, read whole (greedy, so a failed match costs its length once); whether it is an image is asked after.
+  // "/Subtype /Image" inside the pattern, with a lazy part on each side, tried every occurrence of it in one dictionary as the anchor: time
+  // grew with the square of a crafted dictionary (120 KB, 1.6 s; P6-013)
+  const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
     const start = m.index + m[0].length;
-    const len = Number(dict.match(/\/Length\s+(\d+)(?!\s+\d+\s+R)/)?.[1] ?? -1);
-    const end = len > 0 && start + len <= buf.length ? start + len : src.indexOf("endstream", start);
+    // a direct /Length, the whole number: "/Length 12 0 R" (an indirect length) was read as /Length 1 (P6-013)
+    const len = Number(dict.match(/\/Length\s+(\d+)(?!\d)(?!\s+\d+\s+R)/)?.[1] ?? -1);
+    // a /Length is trusted when "endstream" follows it; else the stream ends at the next "endstream", less the end-of-line before it
+    // (a /Length too large swallowed the next page: P6-013)
+    let end = len > 0 && start + len <= buf.length && /^\s*endstream/.test(src.slice(start + len, start + len + 32)) ? start + len : src.indexOf("endstream", start);
     // a stream with no end in the file holds the rest of it, so nothing after it can be an image: each later image dictionary searched to
     // the end again and copied the rest of the file (time growing with the square of the size; a 5 MB file copied 20 times: P6-007)
     if (end < 0) break;
     // every path below moves past this stream, so no stream is read from inside another
     re.lastIndex = Math.max(re.lastIndex, end);
-    const data = buf.subarray(start, end);
+    if (end !== start + len) { if (src[end - 1] === "\n") end--; if (src[end - 1] === "\r") end--; }
+    if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    const data = buf.subarray(start, Math.max(start, end));
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
     if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
