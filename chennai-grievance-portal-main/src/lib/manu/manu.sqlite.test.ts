@@ -210,6 +210,20 @@ describe("the same person again", () => {
   });
 });
 
+// QA pass 5, P5-014: the check looks for the same mobile among online complaints, but a citizen who filed anonymously is never shown to the desk
+describe("an anonymous online complaint", () => {
+  it("is not offered as the same person's earlier complaint", async () => {
+    const { findRepeats } = await import("./repeat");
+    h.db.exec(`INSERT INTO complaints (complaint_code, user_id, first_name, gender, street_address, mobile_number, zone_id, ward_number, department_id, title, description, is_anonymous, needs_manual_review, status, is_synthetic, created_at)
+      VALUES ('2026-400DDD', 7, 'Hidden Name', 'Female', '9 Secret Lane', '9000041873', 6, 70, 3, 'Harassment near home', 'Please keep my name out', 1, 0, 'Complaint Filed', 0, '2026-11-08 10:00:00'),
+             ('2026-401EEE', 8, 'Open Name', 'Female', '1 Main Road', '9000041873', 6, 70, 3, 'Street light broken', 'Dark', 0, 0, 'Complaint Filed', 0, '2026-11-08 10:00:00')`);
+    const r = await findRepeats({ mobile: "9000041873", name: "x", street: "y", ward: 70, dept: "GCC-ELE", problem: "light" });
+    const all = JSON.stringify(r);
+    expect(all).not.toMatch(/2026-400DDD|Hidden Name|Secret Lane|Harassment/);
+    expect(all).toContain("2026-401EEE");
+  });
+});
+
 describe("the public tracker", () => {
   it("opens with the slip's key or the mobile's last 4 digits, and shows no personal detail", async () => {
     const r = await filePetition(await uploaded(), fields(), "x");

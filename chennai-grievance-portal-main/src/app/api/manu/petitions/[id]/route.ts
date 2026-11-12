@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { manuFailed, manuStaff } from "@/lib/manu/guard";
-import { FileError, deletePage, deletePetition, fileSchema, filePetition, petitionDetail, readAgain, wardName } from "@/lib/manu/petitions";
+import { FileError, deletePage, deletePetition, fileSchema, filePetition, getPetition, petitionDetail, readAgain, wardName } from "@/lib/manu/petitions";
 import { findRepeats } from "@/lib/manu/repeat";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +43,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     if (a.action === "delete") return (await deletePetition(id, s.session.email)) ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "This petition cannot be deleted. Once approved, it is a complaint with the department." }, { status: 409 });
     if (a.action === "delete_page") return (await deletePage(id, a.page, s.session.email)) ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "That page cannot be deleted just now." }, { status: 409 });
     if (a.action === "repeats") {
+      // only for a petition on the desk: not a free number lookup with any id (QA pass 5, P5-014)
+      if (!(await getPetition(id))) return NextResponse.json({ error: "Petition not found." }, { status: 404 });
       const repeats = await findRepeats({ mobile: a.mobile, name: a.name, street: a.street, ward: a.ward, dept: a.dept, problem: a.problem, excludeId: id });
       return NextResponse.json({ repeats, zone: await wardName(a.ward) });
     }

@@ -1,0 +1,5 @@
+$ git grep -n "mobile_number = ?" -- src ":!*.test.ts"
+src/app/api/profile/mobile-otp/request/route.ts:23:    "SELECT id FROM user_profiles WHERE mobile_number = ? AND user_id != ?",
+src/app/api/profile/mobile-otp/verify/route.ts:48:      "UPDATE user_profiles SET mobile_number = ?, mobile_verified = TRUE WHERE user_id = ?",
+src/lib/manu/repeat.ts:83:      WHERE COALESCE(c.is_synthetic, 0) = 0 AND COALESCE(c.is_anonymous, 0) = 0 AND c.mobile_number = ?
+The other two hits are the signed-in citizen's own profile (no staff lookup). repeat.ts is the only staff lookup of complaints by mobile.

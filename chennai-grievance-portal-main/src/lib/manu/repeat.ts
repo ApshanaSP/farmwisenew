@@ -76,10 +76,11 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
       ORDER BY p.filed_at DESC LIMIT 200`,
     [c.excludeId ?? 0, mobile, name, c.ward ?? -1, c.dept ?? "__none__"]
   );
+  // a citizen who filed anonymously is never shown to the desk, whatever number it types (QA pass 5, P5-014)
   const [online] = await pool.query<RowDataPacket[]>(
     `SELECT c.complaint_code AS code, DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') AS filed_at, c.status, c.title AS problem, c.mobile_number, c.first_name, c.street_address, c.ward_number, d.name AS dept_name
        FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
-      WHERE COALESCE(c.is_synthetic, 0) = 0 AND c.mobile_number = ?
+      WHERE COALESCE(c.is_synthetic, 0) = 0 AND COALESCE(c.is_anonymous, 0) = 0 AND c.mobile_number = ?
         AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL) ORDER BY c.created_at DESC LIMIT 50`,
     [mobile]
   );
