@@ -172,7 +172,9 @@ export function petitionCase(p: Row): CaseInput {
     code: String(p.complaint_code), filedAt: String(p.filed_at).replace("T", " ").slice(0, 19), dueAt: String(p.due_at).replace("T", " ").slice(0, 19),
     hoursToAct: Math.max(1, Math.round((Date.parse(`${String(p.due_at).replace(" ", "T")}Z`) - Date.parse(`${String(p.filed_at).replace(" ", "T")}Z`)) / 3_600_000)),
     dept: String(p.dept_code), category: String(p.category_code || "OTHER"), title: String(p.problem), text: [p.problem, p.request].filter(Boolean).join(" "), lang: String(p.language || "en"),
-    ward: Number(p.ward_number), place: String(p.area || `Ward ${p.ward_number}`).slice(0, 200), urgent: Number(p.urgent) === 1, reporter: reporterHash(p.mobile), channel: "manu", recurrence: 0
+    ward: Number(p.ward_number), place: String(p.area || `Ward ${p.ward_number}`).slice(0, 200), urgent: Number(p.urgent) === 1, reporter: reporterHash(p.mobile), channel: "manu",
+    // what the repeat check found when it was approved (filePetition keeps it): a rebuild used to reset it to 0 (QA pass 6, P5-031)
+    recurrence: Math.max(0, Math.floor(Number(p.recurrence) || 0))
   };
 }
 
@@ -185,18 +187,21 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
   const has = async (t: string) => (await wrap.all(`SELECT name FROM pragma_table_info('${t}')`)).length > 0;
   if (!(await has("incidents")) || !(await has("events")) || !(await has("ref_wards"))) return;
   let added = 0;
+  // online complaints first: a petition may have joined an online complaint's case, and that case must be in the build before the
+  // petition looks for it (the petitions went first, so such a petition got a case of its own: QA pass 6, P5-031). An online
+  // complaint never joins another case, so it needs nothing from the petitions.
+  if (await has("complaints")) {
+    const petition = (await has("petitions")) ? "AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL)" : "";
+    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
+        WHERE COALESCE(c.is_synthetic, 0) = 0 AND c.user_id IS NOT NULL ${petition} ORDER BY c.created_at`))
+      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null))) added++;
+  }
   if (await has("petitions")) {
     for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY filed_at, id`)) {
       const c = petitionCase(p);
       if (Number(p.attached) === 1 && p.incident_id && (await attachToCase(wrap, String(p.incident_id), c))) { added++; continue; }
       if (await addCase(wrap, c)) added++;
     }
-  }
-  if (await has("complaints")) {
-    const petition = (await has("petitions")) ? "AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL)" : "";
-    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
-        WHERE COALESCE(c.is_synthetic, 0) = 0 AND c.user_id IS NOT NULL ${petition} ORDER BY c.created_at`))
-      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null))) added++;
   }
   if (added) console.log(`[manu] ${added} website filings added to this build`);
 }

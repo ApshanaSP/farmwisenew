@@ -326,7 +326,8 @@ const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k)
 
 /** Durable columns added by the website itself, created on every load so the queries that use them always work. */
 // users.token_version: raised on sign-out / password change, so old tokens are refused (lib/auth.ts, migration 013).
-const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"] };
+// petitions.recurrence: how many times the writer came before, found at approval, so a new build's case keeps it (QA pass 6, P5-031; migration 017).
+const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"], petitions: ["recurrence"] };
 
 /**
  * Durable tables the website added after the migration (the matching MySQL migration is in migrations/). Created on load when
@@ -373,11 +374,17 @@ function ensureSiteTables(d: Durable): void {
   d.siteTables = true;
   try {
     let made = false;
+    // the website's own added columns (DURABLE_ADDED) on its own tables too, not only on tables a snapshot brought (QA pass 6, P5-031)
+    const addColumns = (t: string) => {
+      const have = new Set((d.conn.prepare(`SELECT name FROM pragma_table_info(${lit(t)})`).all() as { name: string }[]).map((c) => c.name.toLowerCase()));
+      for (const c of DURABLE_ADDED[t] ?? []) if (!have.has(c)) d.conn.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} TEXT`);
+    };
     for (const [t, s] of Object.entries(WEBSITE_TABLES)) {
-      if (d.conn.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t)) continue;
+      if (d.conn.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t)) { addColumns(t); continue; }
       d.conn.exec("BEGIN");
       try {
         for (const ddl of s.ddl) d.conn.exec(ddl);
+        addColumns(t);
         trackChanges(d.conn, t, s.key);
         d.conn.prepare("INSERT OR REPLACE INTO _keys VALUES (?, ?)").run(t, JSON.stringify(s.key));
         d.conn.exec("COMMIT");
