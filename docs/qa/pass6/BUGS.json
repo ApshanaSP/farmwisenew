@@ -585,15 +585,15 @@
     "title": "\"Resolving\" cases that were already resolved months ago counts them again as resolved today: GCC-SWM daily Resolved tile 1 -> 10 with nothing new closed",
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e15.mjs (bulk POST /api/collector/decisions {decision:resolve} with the password step on 9 GCC-SWM incidents of 12-13 May whose status is already Resolved)",
-    "failing_test": null,
-    "root_cause": "The route records any decision on any case; the effective closed time is the latest closing decision time, so a resolve or verify on a closed case re-dates its closure into the current window.",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/collector/effective.redate.sqlite.test.ts; tests/qa/pass7/collector-ops/resolved-redate.real.test.ts",
+    "root_cause": "effectiveSql().closedAt was the time of the LATEST closing decision, so a resolve/verify on a case already closed (by the pipeline in May, or by an earlier decision) re-dated its closure to now and every resolved-in-window count (Resolved tile and series, briefing book, Ask District IQ) counted it again. Fix: the closed time is the open->closed transition: the first closing decision after the latest reopen; never reopened, the first closing decision while the pipeline has it open, else LEAST(pipeline closed_at, that decision). The decision is still recorded (officer-day-03 owner decision untouched).",
+    "fix_commit": "94e134b",
+    "revert_check": "pass 7: with the old effective.ts, effective.redate.sqlite.test.ts fails 4 of 6 (closedAt 2026-11-13 09:00 instead of 2026-05-13 10:00, etc.) and the real test shows daily GCC-SWM Resolved 0 -> 9 after resolving 9 cases closed in May; with the fix both pass (tile unchanged).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/app/api/collector/decisions/route.ts:62-79 (no check that the case is open); src/lib/collector/effective.ts:56 (closedAt = latest closing decision time); src/lib/collector/intel.ts:741-756 (Resolved = closed in the window by EFF.closedAt)",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-ops-08",
@@ -670,15 +670,15 @@
     "title": "The briefing opening says \"This week recorded more incidents than the previous period\" (and the same in Tamil) under \"Written by AI from today's figures; every number is checked\", while the same response's live figures say 286 reported, 78% fewer than the previous period",
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e25.mjs (GET /api/collector/insights?part=briefing&period=weekly as collector)",
-    "failing_test": null,
-    "root_cause": "The opening is the pipeline's stored summary of its own window (to 6 Nov), picked by period only, with no check of its as_of against the console's rolling window and no comparison with the live stats.",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/collector/opening.test.ts; tests/qa/pass7/collector-ops/briefing-opening.real.test.ts",
+    "root_cause": "insights() showed the pipeline latest stored briefings.ai_summary for the period (any age) under \"Written by AI from today's figures; every number is checked\", never comparing its window (to the build as_of) with the console rolling window or its words with the live figures. Fix: src/lib/collector/opening.ts checkOpening(): shown only when as_of is the console now within 1/20 of the period, every comparison with the previous period agrees with the live change, and every stated figure is a live figure; Tamil kept only when its figures are the English ones; else the rule-based headline.",
+    "fix_commit": "0d9b333",
+    "revert_check": "pass 7: with the old insights.ts the real test fails 4 of 4 on the pinned snapshot (weekly \"more incidents\" beside -89%, monthly \"more\" beside -8%, daily and quarterly shown for a window that ended 6 Nov); with the fix all pass and the reason is logged.",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/insights.ts:230-235 (opening = latest pipeline briefings.ai_summary for the period, any age); src/components/collector/app/Insights.tsx:86,106-107 (shown instead of the headline, with the today's-figures note)",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-sec-01",
