@@ -40,15 +40,15 @@
     "title": "CSV 'Closed work to check' ignores the period: it lists every undecided severe closure of any date, while My Tasks (tile, list, PDF, Briefing) counts only those updated in the period",
     "found_by": "console-sync",
     "repro": "GET /api/collector/overview?period=daily -> tasks.count; GET /api/collector/export?period=daily (confirmed) -> count the CSV lines starting 'Closed work to check'",
-    "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "exportRows' checks query has no periodWindow(..., 'i.last_update_at') and is per incident (not per CLUSTER) with LIMIT 100, unlike awaitingCheck",
+    "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts (with work waiting)",
+    "root_cause": "exportRows had its own copy of the My Tasks rule with no period, per incident, LIMIT 100. Fix: one awaitingRule() in intel.ts for My Tasks, the list, the CSV (period, one row per CLUSTER, no cap) and the departments table.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with intel.ts from 65f46d8, the seeded case (two closures of one group today, one updated 60 days ago) gives a daily CSV of 3 rows against 1 task; with the fix 1 = 1. The plain count cases are vacuous on the pinned snapshot (no pipeline-awaiting severe closures).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/intel.ts:1533-1536 (exportRows checks) vs :771-783 (awaitingCheck) and :1377-1384 (list awaiting)",
     "confidence": "medium",
-    "verified": false
+    "verified": true
   },
   {
     "id": "console-sync-04",
@@ -75,14 +75,14 @@
     "found_by": "console-sync",
     "repro": "Open Severe incident in /api/collector/list?status=critical&scope=all; POST /api/collector/decisions resolve (confirmed), then reopen: it is open again (status Open) but absent from the critical list and count. Not run: the 3106 server was not reached before the time box ended; read from code only.",
     "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "critical uses 'ever decided' instead of the effective latest decision.",
+    "root_cause": "critical used NOT DECIDED(verify, reject, resolve) over all time. Fix: one NOT_YET_CHECKED on the effective open and verified flags for the tile and the list.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with the pre-fix sources the tile/list after resolve + reopen is 19 against 20 before; with the fix back to 20 = 20.",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/intel.ts:1166-1169 and :1413-1414 (NOT DECIDED('verify','reject','resolve') over all time)",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "console-sync-07",
@@ -92,14 +92,14 @@
     "found_by": "console-sync",
     "repro": "Sum deptNav[].unverified from GET /api/collector/overview?period=daily and compare with tasks.count; per dept compare with overview?dept=X tasks.count. Not run: the 3106 server was not reached before the time box ended; read from code only.",
     "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "deptNav kept the pipeline's awaiting_collector flag after My Tasks moved to metrics.ts awaiting_check.",
+    "root_cause": "deptNav counted the pipeline awaiting_collector flag on any severity. Fix: each department's My Tasks from awaitingRule(), one per group, departments with waiting work listed even with nothing reported in the period.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with the pre-fix sources the quarterly departments column says GCC-SWD 19 against its own My Tasks 0; with the fix equal for every sampled department.",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/intel.ts:913-919 (deptNav unverified = EFF.open=1 AND awaiting_collector=1, first_reported_at window, any severity, per incident) vs :771-783 (awaitingCheck); Overlays.tsx:25, :154-158",
     "confidence": "medium",
-    "verified": false
+    "verified": true
   },
   {
     "id": "console-sync-08",
@@ -109,14 +109,14 @@
     "found_by": "console-sync",
     "repro": "Task row with grouped > 1 in overview.tasks.rows; POST decisions reopen for its id; tasks.count (COUNT DISTINCT CLUSTER) unchanged, another member becomes the row. Not run: the 3106 server was not reached before the time box ended; read from code only.",
     "failing_test": "src/components/collector/app/attention.group.test.ts",
-    "root_cause": "Group handling added to Verify but not to Send back.",
+    "root_cause": "Send back sent [row] while Verify sent every member. Fix: Attention.taskGroup/taskActions, both buttons act on the whole group; sendBack takes rows.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with Attention.tsx/CollectorApp.tsx from 65f46d8, attention.group.test.ts fails 3 of 3 (no group action, the button sends one row).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/components/collector/app/CollectorApp.tsx:661 (sendBack: decide([row], 'reopen')); Attention.tsx:99-101 (verify uses i.members), :128",
     "confidence": "medium",
-    "verified": false
+    "verified": true
   },
   {
     "id": "console-sync-09",
@@ -501,14 +501,14 @@
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e1pre.mjs INC-20261019-41B602 then node tests/qa/pass6/known-failures/hunt2-ops/e1.mjs INC-20261019-41B602 (POST /api/collector/decisions {incidentIds:[id], decision:'reopen'} as collector, on a Low case in officerA's New tab that nobody approved or reported)",
     "failing_test": "src/lib/collector/decision-words.test.ts",
-    "root_cause": "Part fixed (coordinator: option A): reopen was exempt from requireConfirm; now confirmed like verify/reject. LEFT FOR THE OWNER (officer-day-03): whether a reopen of open, never-reported work should be recorded without moving the stage (officer/data.ts STAGE_SQL) or telling the citizen it was returned (complaint-progress.ts).",
+    "root_cause": "Part fixed (coordinator: option A): reopen was exempt from requireConfirm; now confirmed like verify/reject/resolve/escalate. LEFT FOR THE OWNER (officer-day-03, option B in the p7-collector-ops note): whether a reopen of open, never-reported work should be recorded without moving the stage past the officer approval (officer/data.ts STAGE_SQL, returned flag) and without telling the citizen it was returned for more work (complaint-progress.ts).",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with route.ts from 65f46d8 the reopen case gets past the confirm step (now fails on the mocked DB pool).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/app/api/collector/decisions/route.ts:57 (reopen skips requireConfirm) and :62-79 (no check of the case state before any decision); src/lib/officer/data.ts:81 (STAGE_SQL: latest reopen -> stage action); src/lib/complaint-progress.ts:76-81",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-ops-02",
@@ -518,14 +518,14 @@
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e8.mjs (428 summaries, nothing recorded); node tests/qa/pass6/known-failures/hunt2-ops/e2.mjs INC-20261030-158A1B (reject with the password step, then officer and Collector views)",
     "failing_test": "src/lib/collector/decision-words.test.ts",
-    "root_cause": "The verb map labels reject with the words of a send-back; the effect table (effective.ts DECISION_EFFECT reject -> open 0 Rejected) and STAGE_SQL treat it as a final close, and the officer list has no tab for stage closed.",
+    "root_cause": "the route verb map worded a reject (a final close as Rejected) as a return. Fix: DECISION_WORDS next to DECISION_EFFECT in effective.ts; reject = \"Reject and close (the department can no longer act on it)\".",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with route.ts/effective.ts from 65f46d8, decision-words.test.ts fails (summary \"Return to the department 1 case\").",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/app/api/collector/decisions/route.ts:58 (verb map: reject -> \"Return to the department\"); src/lib/officer/data.ts:81 (reject -> stage closed) and :128-131 (windowWhere drops stage closed); src/lib/complaint-progress.ts:82-85",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-ops-03",
@@ -569,14 +569,14 @@
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e11.mjs INC-20260511-7798C7 (POST reopen as collector on a GCC-SWM case reported 2026-05-11 and Resolved)",
     "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "Both consoles scope every queue and tile by first_reported_at inside the period; a reopen makes an old incident open without bringing it into any window, and the officer returned count reads the same window.",
+    "root_cause": "windowWhere scoped every officer list, count and search by first_reported_at. Fix: work the Collector sent back and the department has not re-sent (w.returned = 1) is in every window; the owner's reporting windows stay for everything else (officer-day-01).",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with data.ts from 65f46d8 a reopened May case is in no daily tab; with the fix it is in In action, the returned count and search in every period.",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts:128-131 (windowWhere: queue = reported in the period, max 90 days); officer search = last 90 days; src/lib/collector/intel.ts:134-140 (tiles window on first_reported_at)",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-ops-07",
@@ -654,14 +654,14 @@
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e20.mjs (GET /api/collector/overview?period=weekly|monthly|quarterly&zone=4, compare map.layerCounts with map.pins)",
     "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "The pin query is capped at 150 (open first, then severity), the legend counts are uncapped, and nothing on the map says it is a sample.",
+    "root_cause": "pins capped at 150, legend counted every locatable incident. Fix: overview returns map.drawn per layer and map.pinLimit; the legend shows drawn of N and a not-drawn (pin limit) link to the full list.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with intel.ts from 65f46d8 the legend has no per-layer drawn count (test fails on map.drawn for weekly/monthly/quarterly, zone 4).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/intel.ts:828-834 (pins query, ORDER BY open first, LIMIT 150) vs :836-844 (layerCounts over the whole scope); src/components/collector/app/Overview.tsx:131-134,167-186 (legend numbers; tooltip says only the unlocated are not drawn)",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "hunt2-ops-12",
@@ -2919,14 +2919,14 @@
     "found_by": "reviewer4",
     "repro": "Same zz-reviewer4 run: sendBatchAction({dept:'GCC-SWM', ids: 30 open SWM cases, ...}) then grievanceDetail(SWM, id) and actionEmails([id]) for each id.",
     "failing_test": "tests/qa/pass7/collector-ops/p1.real.test.ts",
-    "root_cause": "The fix finds batch emails through followups.email_id, but sendBatchAction writes a follow-up row only for the first BATCH_MAX (25) cases; every case after that has no link to the email, so the instruction (and the 'Action taken' mark from actedOn) is still missing on them.",
+    "root_cause": "sendBatchAction wrote follow-ups (the only link from a case to the email) for the first BATCH_MAX cases. Fix: one for every case of the batch, multi-row inserts in chunks of 200.",
     "fix_commit": "b4ea9c1",
-    "revert_check": "NOT RUN (usage limit): fix committed, test passes with the fix; revert check and a second reviewer still to do",
-    "status": "open",
+    "revert_check": "pass 7 (fb2076a): with actionmail.ts from 65f46d8 a 30-case batch writes 25 follow-ups (test expects 30 and the instruction on cases 26-30).",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/collector/actionmail.ts:354-356 (followups only for cases.slice(0, BATCH_MAX)); readers src/lib/officer/data.ts:474-476, src/lib/collector/intel.ts:378-381, 392",
     "confidence": "high",
-    "verified": false
+    "verified": true
   },
   {
     "id": "reviewer4-03",
