@@ -1,0 +1,219 @@
+{
+ "note": "Final-gate flaky hunt on commit 6bb5423 code (src unchanged since). Two hunts, 10 shuffled full default runs per zone each. Hunt 1 (before): found two test defects and three load-only failures. Hunt 2 (after the test fixes in commit ee36e1a): 0 failures.",
+ "hunt_2_after_fixes": {
+  "file": "docs/qa/pass4/evidence/flaky/final2.json",
+  "runs": 20,
+  "failures_total": 0,
+  "failures_by_zone": {
+   "UTC": 0,
+   "Asia/Kolkata": 0
+  },
+  "runs_by_zone": {
+   "UTC": 10,
+   "Asia/Kolkata": 10
+  },
+  "tests_per_run": [
+   3148
+  ],
+  "skipped_in_every_run": 13,
+  "seeds": {
+   "UTC": [
+    1609774663,
+    468392617,
+    1783051454,
+    511798020,
+    594998538,
+    578610337,
+    18994688,
+    25747488,
+    3153075,
+    1546767284
+   ],
+   "Asia/Kolkata": [
+    737916431,
+    1214017956,
+    1655511772,
+    135126841,
+    1542609819,
+    884653111,
+    1084796008,
+    923963827,
+    1338917678,
+    258444339
+   ]
+  },
+  "started": "2026-11-12T16:24:54.036Z",
+  "finished": "2026-11-12T16:39:50.264Z",
+  "complete": true,
+  "failures": []
+ },
+ "hunt_1_before_fixes": {
+  "file": "docs/qa/pass4/evidence/flaky/final.json",
+  "runs": 20,
+  "failures_by_zone": {
+   "UTC": 18,
+   "Asia/Kolkata": 4
+  },
+  "failures": [
+   {
+    "test": "G-REPAIR 2: the five-tries lock holds against a burst a right password clears the count (one wrong, then the right one, then four more wrong ones are all checked)",
+    "file": "src/lib/security/grepair.pass4.test.ts",
+    "times_failed": 10,
+    "by_time_zone": {
+     "UTC": 8,
+     "Asia/Kolkata": 2
+    },
+    "runs": [
+     1,
+     3,
+     5,
+     9,
+     12,
+     13,
+     15,
+     17,
+     18,
+     19
+    ],
+    "seeds": [
+     1031918770,
+     732958914,
+     193236308,
+     1479721868,
+     628181176,
+     1815819761,
+     19994948,
+     1325244174,
+     1552738641,
+     99936489
+    ],
+    "zones": [
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "Asia/Kolkata",
+     "UTC",
+     "UTC",
+     "UTC",
+     "Asia/Kolkata",
+     "UTC"
+    ],
+    "kind": "TEST DEFECT, order-dependent",
+    "why": "The second test used a bcrypt hash that only the first test made, so it failed whenever the shuffled order ran it first. Fixed in ee36e1a (hash in beforeAll, count reset in beforeEach). Not a product bug.",
+    "first_message": "AssertionError: expected false to be true // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\security\\grepair.pass4.test.ts:26:68\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runn"
+   },
+   {
+    "test": "Thunai understanding: the rules that must always hold sets a reminder for tomorrow 10 am",
+    "file": "src/lib/thunai/golden.test.ts",
+    "times_failed": 10,
+    "by_time_zone": {
+     "UTC": 10,
+     "Asia/Kolkata": 0
+    },
+    "runs": [
+     1,
+     3,
+     5,
+     7,
+     9,
+     11,
+     13,
+     15,
+     17,
+     19
+    ],
+    "seeds": [
+     1031918770,
+     732958914,
+     193236308,
+     466847362,
+     1479721868,
+     1788069132,
+     1815819761,
+     19994948,
+     1325244174,
+     99936489
+    ],
+    "zones": [
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC",
+     "UTC"
+    ],
+    "kind": "TEST DEFECT, zone-dependent",
+    "why": "The reminder is set for 10 am Chennai on any server zone (documented in understand.ts); the test read the hour in the machine's zone, so it failed in every UTC run and passed in every Asia/Kolkata run. Fixed in ee36e1a (reads Asia/Kolkata). Not a product bug.",
+    "first_message": "AssertionError: expected [ 30, 4 ] to deeply equal [ 30, 10 ]\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\golden.test.ts:254:43\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/ch"
+   },
+   {
+    "test": "(the file failed before its tests ran)",
+    "file": "src/lib/collector/alerts.test.ts",
+    "times_failed": 1,
+    "by_time_zone": {
+     "UTC": 0,
+     "Asia/Kolkata": 1
+    },
+    "runs": [
+     2
+    ],
+    "seeds": [
+     395299091
+    ],
+    "zones": [
+     "Asia/Kolkata"
+    ],
+    "kind": "LOAD ONLY",
+    "why": "'UNKNOWN: unknown error, read' while the file loaded, once, in a 178 s run (the slowest of the hunt). Not seen in the 20 runs of hunt 2 (35-55 s each).",
+    "first_message": "UNKNOWN: unknown error, read"
+   },
+   {
+    "test": "a line copied from what the model read is not said (BUG-034) through a real round the digest the browser sends counts as the screen",
+    "file": "src/lib/thunai/pass3.test.ts",
+    "times_failed": 1,
+    "by_time_zone": {
+     "UTC": 0,
+     "Asia/Kolkata": 1
+    },
+    "runs": [
+     2
+    ],
+    "seeds": [
+     395299091
+    ],
+    "zones": [
+     "Asia/Kolkata"
+    ],
+    "kind": "LOAD ONLY",
+    "why": "STACK_TRACE_ERROR in a beforeEach hook, once, in the same 178 s run. Not seen again.",
+    "first_message": "Error: STACK_TRACE_ERROR\n    at beforeEach (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:2165:26)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\pass3.test.ts:153:5\n    a"
+   },
+   {
+    "test": "resolver (property) stays inside a 20 ms budget at p95, alone",
+    "file": "src/lib/thunai/resolver.pass4.test.ts",
+    "times_failed": 1,
+    "by_time_zone": {
+     "UTC": 0,
+     "Asia/Kolkata": 1
+    },
+    "runs": [
+     2
+    ],
+    "seeds": [
+     395299091
+    ],
+    "zones": [
+     "Asia/Kolkata"
+    ],
+    "kind": "LOAD ONLY",
+    "why": "a 20 ms p95 budget missed once at 21.5 ms in the same 178 s run; the test is built to run alone and passes in the 20 later runs.",
+    "first_message": "AssertionError: p95 21.52 ms: expected 21.5211 to be less than 20\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\resolver.pass4.test.ts:38:45\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/run"
+   }
+  ]
+ }
+}
