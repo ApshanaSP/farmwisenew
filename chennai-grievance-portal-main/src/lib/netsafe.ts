@@ -62,6 +62,12 @@ export function isPrivateIp(ip: string): boolean {
   if (zero(5) && g[5] === 0xffff) return v4Private(v4(g[6], g[7]));
   if (zero(6) && (g[6] !== 0 || g[7] > 1)) return v4Private(v4(g[6], g[7]));
   if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return v4Private(v4(g[6], g[7]));
+  // more ways to carry an IPv4 address (QA4 gate, redteam-final-8): SIIT ::ffff:0:a.b.c.d, the local-use NAT64 prefix 64:ff9b:1::/48 (the address sits
+  // at a spot that depends on the prefix, so the whole prefix counts as private), 6to4 2002:a.b.c.d::/16, and Teredo 2001:0::/32 (obfuscated client address)
+  if (zero(4) && g[4] === 0xffff && g[5] === 0) return v4Private(v4(g[6], g[7]));
+  if (g[0] === 0x64 && g[1] === 0xff9b && g[2] === 1) return true;
+  if (g[0] === 0x2002) return v4Private(v4(g[1], g[2]));
+  if (g[0] === 0x2001 && g[1] === 0) return true;
   if (zero(8)) return true; // ::
   if (zero(7) && g[7] === 1) return true; // ::1
   const top = g[0];
