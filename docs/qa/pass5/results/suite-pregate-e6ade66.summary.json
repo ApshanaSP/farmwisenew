@@ -1,0 +1,16 @@
+{
+  "tag": "pregate-e6ade66 (stopped after run 1: RC-13 guard)",
+  "tz": "Asia/Kolkata",
+  "seed": "6101",
+  "config": "vitest.config.ts",
+  "exit": 1,
+  "secs": 53,
+  "numTotalTests": 3312,
+  "numPassedTests": 3298,
+  "numFailedTests": 1,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 2,
+  "failed": [
+    "src\\lib\\thunai\\numbergate.pass4.test.ts :: RC-13 class guard: no code reads digits of one script only no source file has a Tamil-only digit class (use digits.ts: asciiDigits, digitValue, or the Nd property)"
+  ]
+}

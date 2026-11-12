@@ -67,7 +67,7 @@
     "fix_commit": "77ae11a",
     "revert_check": "pass: fails before the fix (is_active 1), passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: holds (nothing else sets is_active = 1; no route deletes users)"
   },
   {
     "id": "P5-006",
@@ -92,10 +92,10 @@
     "repro": "npx vitest run src/lib/manu/clean.pass5.test.ts (on 77ae11a)",
     "failing_test": "src/lib/manu/clean.pass5.test.ts; manu.sqlite.test.ts > an Aadhaar number typed into the address",
     "root_cause": "Number fields read as all the ASCII digits in a string; Aadhaar mask too narrow; address masked in one table only",
-    "fix_commit": "814ab59",
+    "fix_commit": "814ab59, c832d8b, f26d834",
     "revert_check": "pass: 21 fail without the fix, all pass with it",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: broken (16 cases: separators, date box, 91 mobile, zone as ward, time as date); fixed in c832d8b, revert-checked (16 fail without)"
   },
   {
     "id": "P5-008",
@@ -123,7 +123,7 @@
     "fix_commit": "f52bb6b",
     "revert_check": "pass: failed before the fix, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: holds"
   },
   {
     "id": "P5-010",
@@ -137,7 +137,7 @@
     "fix_commit": "025f2fa",
     "revert_check": "pass: fails without the fix, passes with it",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer2: holds"
   },
   {
     "id": "P5-011",
@@ -151,7 +151,7 @@
     "fix_commit": "e130640",
     "revert_check": "pass: fails without the fix, passes with it",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: holds; the officer-console routes refuse the desk only because COL-PET has no ref_departments row (incidental, not a guard)"
   },
   {
     "id": "P5-012",
@@ -162,10 +162,10 @@
     "repro": "npx vitest run src/lib/manu/sms.pass5.test.ts",
     "failing_test": "src/lib/manu/sms.pass5.test.ts > P5-012 (4 tests)",
     "root_cause": "retry guarded by an in-memory flag only; closing result frozen at first try; smsMode() checked only AWS_STORE_DRY_RUN",
-    "fix_commit": "0b77506",
+    "fix_commit": "0b77506, e6ade66",
     "revert_check": "pass: the 4 new tests fail without the fix, pass with it",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: holds for its claims; 2 new gaps (stuck sending, waiting closings block the sweep) fixed in e6ade66, revert-checked"
   },
   {
     "id": "P5-013",
@@ -179,7 +179,7 @@
     "fix_commit": "207a1b4",
     "revert_check": "pass: guard lists track before, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer2: holds"
   },
   {
     "id": "P5-014",
@@ -193,7 +193,7 @@
     "fix_commit": "69fbdff",
     "revert_check": "pass: fails before, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer: holds; the 404 check only requires the petition to exist (a filed one still runs the lookup)"
   },
   {
     "id": "P5-015",
@@ -207,7 +207,7 @@
     "fix_commit": "c5da7fb",
     "revert_check": "pass: fails before, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer2: holds"
   },
   {
     "id": "P5-016",
@@ -218,10 +218,10 @@
     "repro": "npx vitest run src/lib/manu/manu.sqlite.test.ts -t \"closed case\"",
     "failing_test": "src/lib/manu/manu.sqlite.test.ts > a petition approved into a closed case",
     "root_cause": "addCaseLive() joined any case id, open or closed",
-    "fix_commit": "762205e",
+    "fix_commit": "762205e, e364c24",
     "revert_check": "pass: fails before, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer2: broken (raw is_open: a Collector-resolved case joined, a reopened one refused); fixed with the effective status, revert-checked"
   },
   {
     "id": "P5-017",
@@ -235,7 +235,7 @@
     "fix_commit": "3934608",
     "revert_check": "pass: fails before, passes after",
     "status": "fixed",
-    "reviewer": null
+    "reviewer": "reviewer2: holds"
   },
   {
     "id": "P5-018",
@@ -244,12 +244,12 @@
     "title": "The came-before check finds earlier petitions by exact name: 'R. Kumar' vs 'R.Kumar', NFD Tamil or a zero-width joiner is missed when there is no mobile",
     "found_by": "hunter manu-logic (ML-12)",
     "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/store.probe.test.ts -t ML-12",
-    "failing_test": "tests/qa/pass5/known-failures/manu-logic-store.probe.test.ts (ML-12)",
+    "failing_test": "src/lib/manu/manu.sqlite.test.ts > the same person, written a little differently (3)",
     "root_cause": "repeat.ts:75 SQL p.name = ? with the raw name",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null
+    "fix_commit": "3e6c393, 174cd6c",
+    "revert_check": "pass: the 3 tests fail before the fix, pass after",
+    "status": "fixed",
+    "reviewer": "reviewer2: broken (shared LIMIT pushed out the mobile match); fixed with a separate query, revert-checked. Same-name stranger with no mobile/ward/street remains (P5-030)"
   },
   {
     "id": "P5-019",
@@ -258,12 +258,12 @@
     "title": "The same person's online complaint on the same problem is called 'an earlier petition on other problems' and is never offered as the case to join",
     "found_by": "hunter manu-logic (ML-07)",
     "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/probes/manu-logic/repeat.probe.test.ts -t ML-07",
-    "failing_test": "tests/qa/pass5/known-failures/manu-logic-repeat.probe.test.ts (ML-07)",
+    "failing_test": "src/lib/manu/manu.sqlite.test.ts > the same person's online complaint on the same problem",
     "root_cause": "online rows carry dept null, so the same-problem test never matches",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null
+    "fix_commit": "d42025a",
+    "revert_check": "pass: fails before the fix, passes after",
+    "status": "fixed",
+    "reviewer": "reviewer2: partial: 8 desk departments (CMWSSB, TANGEDCO, POL-GCP, ...) have no portal department, so their petitions never match an online complaint (P5-037)"
   },
   {
     "id": "P5-020",
@@ -369,7 +369,7 @@
     "area": "rate limiting (deployment)",
     "title": "Without TRUST_PROXY_HOPS every client shares one bucket: one script can shut public tracking and sign-in for everyone",
     "found_by": "hunter manu-sec (manu-sec-06)",
-    "repro": "tests/qa/pass5/probes/manu-sec/manu-sec.test.ts",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/known-failures/manu-sec.probe.test.ts -t X-Forwarded-For (documents the bug: passes while it is there)",
     "failing_test": null,
     "root_cause": "rate-limit keys fall back to a shared 'direct' bucket when the proxy hop count is unset",
     "fix_commit": null,
@@ -383,7 +383,7 @@
     "area": "Manu Desk: uploads",
     "title": "A 140 KB Flate-image PDF is inflated to 144 MB in memory before it is refused",
     "found_by": "hunter manu-sec (manu-sec-07)",
-    "repro": "tests/qa/pass5/probes/manu-sec/manu-sec.test.ts",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/known-failures/manu-sec.probe.test.ts -t \"Flate PDF\" (documents the bug)",
     "failing_test": null,
     "root_cause": "studio/ocr.ts inflates every image stream before checking size",
     "fix_commit": null,
@@ -398,12 +398,12 @@
     "title": "A store error while approving a petition logs the petitioner's name, mobile, address and letter (MySQL backend)",
     "found_by": "hunter manu-sec (manu-sec-08)",
     "repro": "read src/lib/manu/guard.ts:23-24 (console.error with the whole err; mysql2 err.sql carries values)",
-    "failing_test": null,
+    "failing_test": "src/lib/manu/guard.pass5.test.ts",
     "root_cause": "manuFailed logs the whole error object",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null
+    "fix_commit": "6728c22",
+    "revert_check": "pass: fails before the fix, passes after",
+    "status": "fixed",
+    "reviewer": "reviewer2: holds"
   },
   {
     "id": "P5-030",
@@ -501,6 +501,20 @@
     "fix_commit": "(this branch, tests/qa/pass4/lib/access-lib.mjs, committed with the report)",
     "revert_check": null,
     "status": "fixed",
+    "reviewer": null
+  },
+  {
+    "id": "P5-037",
+    "severity": "P2",
+    "area": "Manu Desk: repeat detection",
+    "title": "8 desk departments (Metrowater, TANGEDCO, Police and others) have no portal department, so their petitions never match the same person's online complaint on the same problem",
+    "found_by": "reviewer2 (P5-019 partial)",
+    "repro": "npx vitest run --config vitest.p5probe.config.ts tests/qa/pass5/known-failures/reviewer2-p5-019-sewage.test.ts (documents the bug)",
+    "failing_test": "tests/qa/pass5/known-failures/reviewer2-p5-019-sewage.test.ts",
+    "root_cause": "DEPT_CONFIG has no portalName for these desk codes; petitions to them are filed under General Administration",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
     "reviewer": null
   }
 ]
