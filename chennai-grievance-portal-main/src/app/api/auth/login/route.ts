@@ -59,7 +59,9 @@ export async function POST(req: NextRequest) {
     // The password first: "deactivated" is said only to someone who knows the password, never to anyone who types the e-mail.
     const passwordMatches = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatches) {
-      if (user.role !== "citizen") await securityLog(user.email, "auth:password_wrong", String(user.id), { ip });
+      // Not awaited: on the AWS store that saves, this write waits for a network call, so a staff e-mail with a wrong password
+      // answered one round trip slower than an unknown e-mail (reviewerA-04). securityLog catches its own errors.
+      if (user.role !== "citizen") void securityLog(user.email, "auth:password_wrong", String(user.id), { ip });
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
 

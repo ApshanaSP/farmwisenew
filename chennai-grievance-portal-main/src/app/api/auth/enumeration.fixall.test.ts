@@ -12,7 +12,8 @@ const H = vi.hoisted(() => ({ compare: 0, hash: 0, mailPending: 0, otpRows: new 
 vi.mock("@/lib/db", () => {
   const users: Record<string, Record<string, unknown>> = {
     "real@example.test": { id: 1, email: "real@example.test", role: "citizen", is_active: 1, password_hash: "$2a$10$real", department_id: null, token_version: 0 },
-    "gone@example.test": { id: 2, email: "gone@example.test", role: "citizen", is_active: 0, password_hash: "$2a$10$gone", department_id: null, token_version: 0 }
+    "gone@example.test": { id: 2, email: "gone@example.test", role: "citizen", is_active: 0, password_hash: "$2a$10$gone", department_id: null, token_version: 0 },
+    "fresh@example.test": { id: 3, email: "fresh@example.test", role: "citizen", is_active: 1, password_hash: "$2a$10$fresh", department_id: null, token_version: 0 }
   };
   return {
     default: {
@@ -36,7 +37,8 @@ vi.mock("@/lib/otp", () => ({
     H.otpRows.set(email, Date.now());
     return { otp: "123456" };
   },
-  devOtpForResponse: () => undefined
+  devOtpForResponse: () => undefined,
+  devOtpShown: () => false
 }));
 // a mail server that never answers: the route must not wait for it
 vi.mock("@/lib/mailer", () => ({ sendMail: () => { H.mailPending++; return new Promise(() => {}); }, otpEmailHtml: () => "<p>code</p>" }));
@@ -93,16 +95,19 @@ describe("hunt2-sec-06: forgot-password answers an unknown e-mail like a registe
     expect(shapes[3]).toEqual(shapes[1]);
   });
 
-  it("an unknown e-mail does the OTP hashing work too, and a real one does not wait for the mail server", async () => {
+  // Changed by reviewerA-03/04: the first fix gave an unknown e-mail a dummy hash to match a real account's work before the answer.
+  // Now neither does any per-account work before the answer: a real account's OTP (its hashing and writes) and mail come after it.
+  it("neither an unknown nor a real e-mail does the OTP work before the answer; a real one gets its OTP and mail after", async () => {
     const unknown = `nobody.work.${Date.now()}@example.test`;
     await requestOtp(post({ email: unknown }));
-    expect(H.hash).toBe(1);
-    H.otpRows.clear();
+    expect(H.hash).toBe(0);
     const r = await Promise.race([
-      requestOtp(post({ email: "real@example.test" })).then((x) => x.status),
+      requestOtp(post({ email: "fresh@example.test" })).then((x) => x.status),
       new Promise((res) => setTimeout(() => res("waited for the mail"), 2000))
     ]);
     expect(r).toBe(200);
+    await new Promise((res) => setTimeout(res, 20));
+    expect(H.hash).toBe(1);
     expect(H.mailPending).toBe(1);
   });
 });

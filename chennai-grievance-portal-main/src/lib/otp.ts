@@ -240,9 +240,14 @@ export async function consumeOtp(identifier: string, purpose: OtpPurpose): Promi
  * Every route that might echo a code back must go through this helper.
  */
 export function devOtpForResponse(otp: string, headers: { get(name: string): string | null }): string | undefined {
-  if (process.env.NODE_ENV === "production") return undefined;
-  if (process.env.NEXT_PUBLIC_DEV_SHOW_OTP !== "true") return undefined;
-  // and only to a request made on this PC: a dev server that a tunnel forwards to must not give a reset code to the internet (SCAN-4)
-  if (!localOnly(headers)) return undefined;
+  if (!devOtpShown(headers)) return undefined;
   return otp || undefined;
+}
+
+/** True when this request may be shown its OTP: a dev server with NEXT_PUBLIC_DEV_SHOW_OTP, asked from this PC. */
+export function devOtpShown(headers: { get(name: string): string | null }): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.NEXT_PUBLIC_DEV_SHOW_OTP !== "true") return false;
+  // and only to a request made on this PC: a dev server that a tunnel forwards to must not give a reset code to the internet (SCAN-4)
+  return localOnly(headers);
 }
