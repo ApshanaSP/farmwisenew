@@ -6,7 +6,7 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
-import { similarity, squash, tenDigits } from "./clean";
+import { asciiDigits, similarity, squash, tenDigits } from "./clean";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 
 export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; excludeId?: number }
@@ -30,22 +30,42 @@ const FILLER = new Set(("please kindly take action immediately immediate urgent 
   "first second third many several வரவில்லை வருவதில்லை வரவே இரண்டு மூன்று நான்கு ஐந்து எங்களுடைய எங்களின் வார்டில் வார்டு வார்டின் " +
   "செய்யவில்லை எடுக்கவில்லை சரிசெய்ய சரிசெய்யவில்லை வேலை செய்யவில்லை தயவுசெய்து " +
   "rendu moonu naalu anju naala naalaa varala varalai varalae podunga edunga pannunga panunga seyyala seiyala irukku").split(" "));
-const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase()
+/** The content words of a line, in order. */
+const tokens = (s: string | null | undefined): string[] => String(s ?? "").normalize("NFC").toLowerCase()
   // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
   .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
-  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w)));
+  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w));
+const words = (s: string | null | undefined) => new Set(tokens(s));
+/**
+ * What a problem line is about: the first content word of each of its clauses. A petition names the thing first and what is wrong with it
+ * after, in Tamil and Tanglish (subject, then verb: "\u0B93\u0BAF\u0BCD\u0BB5\u0BC2\u0BA4\u0BBF\u0BAF\u0BAE\u0BCD \u0B95\u0BBF\u0B9F\u0BC8\u0B95\u0BCD\u0B95\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8", "thanni varla") and in a petition's English ("Pension not
+ * received", "Drain blocked"). What is wrong ("pending", "broken", "\u0BA8\u0BBF\u0BB2\u0BC1\u0BB5\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD", "kedaikala", "\u0BB5\u0BBE\u0BB0\u0B99\u0BCD\u0B95\u0BB3\u0BBE\u0B95") is open-ended and any two problems
+ * can share it, so no word list can hold it; the thing a line names first is its topic (fix-all, reviewer5-07).
+ */
+const heads = (s: string | null | undefined): string[] =>
+  String(s ?? "").split(/[,.;:!?|()\n\r\u0964]+/).map((c) => tokens(c)[0]).filter((w): w is string => !!w);
+/** One word in two forms: a plural or a case ending (\u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1 / \u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1\u0B95\u0BB3\u0BCD, \u0B9A\u0BBE\u0BB2\u0BC8 / \u0B9A\u0BBE\u0BB2\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD, light / lights, collect / collection). */
+const alike = (x: string, y: string): boolean => {
+  if (x === y) return true;
+  const [s, l] = x.length <= y.length ? [x, y] : [y, x];
+  return [...s].length >= 4 && l.startsWith(s) && [...l].length - [...s].length <= 4;
+};
 
 /**
- * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
- * ("sewage"), however long the lines; different people in a ward need more, so that two unrelated road complaints are not joined. It only
- * brings the earlier petition to the staff's attention: a person decides.
+ * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared word, however
+ * long the lines, and it must be what one of the lines is about (its topic: heads()), not only what is wrong with both ("pending"); different
+ * people in a ward need more, so that two unrelated road complaints are not joined. It only brings the earlier petition to the staff's
+ * attention: a person decides.
  */
 export function sameTopic(a: string | null | undefined, b: string | null | undefined, samePerson = false): boolean {
   const A = words(a), B = words(b);
   if (!A.size || !B.size) return false;
+  if (samePerson) {
+    const about = (h: string[], other: Set<string>) => h.some((x) => [...other].some((w) => alike(x, w)));
+    return about(heads(a), B) || about(heads(b), A);
+  }
   let both = 0;
   for (const w of A) if (B.has(w)) both++;
-  if (samePerson) return both >= 1;
   return both >= 2 || (both >= 1 && both / new Set([...A, ...B]).size >= 0.3);
 }
 
@@ -54,24 +74,47 @@ const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
-/** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
-/** "First Cross Street" as "1 Cross Street", so "First" and "Fifth" differ by their numbers, not by a letter or two (P6-020). */
-const ORDINAL: Record<string, string> = { first: "1", second: "2", third: "3", fourth: "4", fifth: "5", sixth: "6", seventh: "7", eighth: "8", ninth: "9", tenth: "10" };
-export const ordinals = (s: string | null | undefined): string => String(s ?? "").replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b/gi, (w) => ORDINAL[w.toLowerCase()]);
+// A street's own number, written as an ordinal: "2nd", "Second", "2வது", "இரண்டாவது". "First" and "Fifth" differ by their numbers, not by a
+// letter or two (P6-020); "Eleventh" is "11th" and "இரண்டாவது தெரு" is "2வது தெரு" (fix-all, reviewer5-08).
+const EN_ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+  "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"];
+const EN_TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40 };
+const TA_ORD = ["", "முதல", "இரண்ட", "மூன்ற", "நான்க", "ஐந்த", "ஆற", "ஏழ", "எட்ட", "ஒன்பத", "பத்த"]; // + ாவது / ாம் (முதல் alone is "first" too)
+const ORD_WORD = new RegExp(String.raw`(?<![\p{L}\p{M}])(?:(twenty|thirty|forty)[\s-]*)?(${EN_ORD.slice(1).join("|")})(?![\p{L}\p{M}])` +
+  String.raw`|(?<![\p{L}\p{M}])(${TA_ORD.slice(1).join("|")})(?:ாவது|ாம்)(?![\p{L}\p{M}])|(?<![\p{L}\p{M}])முதல்(?![\p{L}\p{M}])`, "giu");
+const ORD_DIGITS = /(?<![\p{L}\p{M}\p{Nd}])(\d+)(?:st|nd|rd|th|\s*[-‐–]?\s*(?:வது|ஆவது|ஆம்|ம்))(?![\p{L}\p{M}])/giu;
 
-function streetIn(street: string, address: string | null): boolean {
-  const all = squash(address);
-  if (all.includes(street)) return true;
-  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011). When the typed
-  // street has no number, the part's number is the door number ("12 Gandhi Street"), and the letters are compared (P6-020)
-  const num = (x: string) => x.replace(/\D/g, "");
-  return String(address ?? "").split(/[,\n;]/).map((p) => squash(ordinals(p))).filter(Boolean)
-    .some((part) => (num(street) ? num(part) === num(street) && similarity(street, part) >= 0.7 : similarity(street, part.replace(/\d/g, "")) >= 0.7));
+/** A street as its number (an ordinal; "" when none) and its words. A bare number is the door number ("12 Gandhi Street"), not the street's. */
+export function streetKey(s: string | null | undefined): { num: string; words: string[] } {
+  const v = asciiDigits(String(s ?? "").normalize("NFC")).replace(/[​-‍⁠﻿]/g, "")
+    .replace(ORD_WORD, (_m, tens?: string, en?: string, ta?: string) =>
+      ` #${ta ? TA_ORD.indexOf(ta) : en ? (tens ? EN_TENS[tens.toLowerCase()] : 0) + EN_ORD.indexOf(en.toLowerCase()) : 1} `)
+    .replace(ORD_DIGITS, (_m, n: string) => ` #${Number(n)} `);
+  const nums = v.match(/#\d+/g) ?? [];
+  const words = v.replace(/#\d+/g, " ").replace(/\p{Nd}+/gu, " ").split(/[^\p{L}\p{M}]+/u).map((w) => w.toLowerCase()).filter(Boolean);
+  return { num: nums[0]?.slice(1) ?? "", words };
+}
+
+/**
+ * Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030).
+ * The street's number must agree ("3rd Street" is not "2nd Street", and "Gandhi Street" is not "2nd Gandhi Street": reviewer5-08); then the
+ * same words, the typed street inside a part with no comma before the area, or a spelling slip ("Gandhi Stret": P6-020).
+ */
+function streetIn(typed: string | null, address: string | null): boolean {
+  const t = streetKey(typed);
+  if (!t.words.length) return false;
+  const tn = t.words.join("");
+  const within = (p: string[]) => p.some((_, i) => t.words.every((w, k) => p[i + k] === w));
+  return String(address ?? "").split(/[,\n;]/).map(streetKey).some((p) => {
+    if (!p.words.length || p.num !== t.num) return false;
+    const pn = p.words.join("");
+    return pn === tn || (t.words.length >= 2 && within(p.words)) || similarity(tn, pn) >= 0.7;
+  });
 }
 
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
-  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(ordinals(c.street));
+  const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
   const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
