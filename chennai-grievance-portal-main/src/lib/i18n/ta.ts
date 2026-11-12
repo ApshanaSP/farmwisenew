@@ -109,7 +109,55 @@ export const TA: Record<string, string> = {
   "No department received a report in this period.": "இந்தக் காலத்தில் எந்தத் துறைக்கும் புகார் வரவில்லை.", "No story developed further in this period.": "இந்தக் காலத்தில் எந்தச் செய்தியும் மேலும் வளரவில்லை.",
   "Every incident in the news has a department record.": "செய்தியில் உள்ள ஒவ்வொரு சம்பவத்துக்கும் துறைப் பதிவு உள்ளது.",
    "what each received · last 7 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 7 நாட்கள்",
-  "what each received · last 30 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 30 நாட்கள்", "what each received · last 90 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 90 நாட்கள்"
+  "what each received · last 30 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 30 நாட்கள்", "what each received · last 90 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 90 நாட்கள்",
+
+  // ---- the workflow's own words (QA pass 6, officer-day-11): with no model key they stayed English. The officer console's stages and
+  // report form (lib/officer/stages.ts, components/officer), the citizen's tracker and journey (StatusTracker, track-complaints,
+  // lib/complaint-progress.ts) and the "Confirm it's you" box (components/security/Confirm.tsx, lib/security/stepup.ts ACTION_WORD).
+  // officer console: stages, tabs and buttons
+  "New": "புதியது", "In action": "நடவடிக்கையில்", "Sent to Collector": "ஆட்சியருக்கு அனுப்பப்பட்டது", "Verified": "சரிபார்க்கப்பட்டது",
+  "Closed": "மூடப்பட்டது", "Received": "பெறப்பட்டது", "Returned": "திருப்பி அனுப்பப்பட்டது", "Approve": "ஒப்புதல் அளி",
+  "Waiting for your approval": "உங்கள் ஒப்புதலுக்குக் காத்திருக்கிறது", "Collector Feedback": "ஆட்சியரின் கருத்து",
+  "Verified by Collector": "ஆட்சியரால் சரிபார்க்கப்பட்டது", "Verified by Collector ·": "ஆட்சியரால் சரிபார்க்கப்பட்டது ·",
+  "Closed by your department": "உங்கள் துறையால் மூடப்பட்டது", "Returned by Collector": "ஆட்சியர் திருப்பி அனுப்பினார்",
+  "Returned for rework": "மீண்டும் பணி செய்யத் திருப்பி அனுப்பப்பட்டது", "Returned by the Collector for rework.": "மீண்டும் பணி செய்ய ஆட்சியர் திருப்பி அனுப்பினார்.",
+  "Returned by the Collector: redo the work and send a fresh completion report": "ஆட்சியர் திருப்பி அனுப்பினார்: பணியை மீண்டும் செய்து, புதிய பணி நிறைவு அறிக்கையை அனுப்பவும்",
+  "Waiting for the Collector's verification": "ஆட்சியரின் சரிபார்ப்புக்குக் காத்திருக்கிறது",
+  "Approving moves it to In action and assigns it to": "ஒப்புதல் அளித்தால், இது “நடவடிக்கையில்” நிலைக்கு மாறி, இவரிடம் ஒப்படைக்கப்படும்:",
+  "Approving moves it to In action and assigns it to the field officer.": "ஒப்புதல் அளித்தால், இது “நடவடிக்கையில்” நிலைக்கு மாறி, கள அலுவலரிடம் ஒப்படைக்கப்படும்.",
+  "Complete & send to Collector": "பணியை முடித்து ஆட்சியருக்கு அனுப்பு", "Complete & close": "பணியை முடித்து மூடு",
+  "Severe: the Collector verifies it. Remarks and photos go to the Collector.": "கடுமையானது: இதை ஆட்சியர் சரிபார்ப்பார். குறிப்புகளும் புகைப்படங்களும் ஆட்சியருக்குச் செல்லும்.",
+  "You verify this one: your remarks and photos are kept as the record.": "இதை நீங்களே சரிபார்க்கிறீர்கள்: உங்கள் குறிப்புகளும் புகைப்படங்களும் பதிவாக வைக்கப்படும்.",
+  // officer console: the completion report
+  "Remarks · what was done": "குறிப்புகள் · செய்யப்பட்ட பணி", "Photos of completed work": "முடிந்த பணியின் புகைப்படங்கள்",
+  "Photos of completed work (": "முடிந்த பணியின் புகைப்படங்கள் (", "Upload site photos": "இடத்தின் புகைப்படங்களைப் பதிவேற்று",
+  "JPG or PNG · you can pick several, or drop them here": "JPG அல்லது PNG · பலவற்றைத் தேர்ந்தெடுக்கலாம், அல்லது இங்கே இழுத்து விடலாம்",
+  "Attach at least one photo of the completed work.": "முடிந்த பணியின் ஒரு புகைப்படமாவது இணைக்கவும்.",
+  "Write remarks describing the work done.": "செய்த பணியை விவரிக்கும் குறிப்புகளை எழுதவும்.",
+  ": your department verifies and closes it; only Severe cases go to the Collector.": ": உங்கள் துறையே சரிபார்த்து மூடும்; கடுமையான வழக்குகள் மட்டுமே ஆட்சியருக்குச் செல்லும்.",
+  "Send to Collector": "ஆட்சியருக்கு அனுப்பு", "Close as done": "முடிந்ததாக மூடு", "Sending…": "அனுப்புகிறது…", "Closing…": "மூடுகிறது…",
+  // the citizen's tracker and journey
+  "Complaint Filed": "புகார் பதிவானது", "Pending Approval": "ஒப்புதலுக்குக் காத்திருக்கிறது", "Approved by Department Officer": "துறை அலுவலர் ஒப்புதல் அளித்தார்",
+  "Completed – pending Collector verification": "பணி முடிந்தது – ஆட்சியரின் சரிபார்ப்புக்குக் காத்திருக்கிறது",
+  "Resolved – checked by the department": "தீர்க்கப்பட்டது – துறையால் சரிபார்க்கப்பட்டது",
+  "Filed": "பதிவானது", "Approved": "ஒப்புதல் அளிக்கப்பட்டது", "Awaiting Collector": "ஆட்சியருக்காகக் காத்திருக்கிறது", "Rejected": "நிராகரிக்கப்பட்டது",
+  "Journey": "புகாரின் பயணம்", "Photos of the work done": "செய்த பணியின் புகைப்படங்கள்",
+  "Accepted by the department; work will be scheduled.": "துறை ஏற்றுக்கொண்டது; பணி திட்டமிடப்படும்.",
+  "Work has started.": "பணி தொடங்கியது.", "Work done; sent to the Collector's office to check.": "பணி முடிந்தது; சரிபார்க்க ஆட்சியர் அலுவலகத்துக்கு அனுப்பப்பட்டது.",
+  "Work done and checked by the department.": "பணி முடிந்து, துறையால் சரிபார்க்கப்பட்டது.",
+  "The department checked the finished work and closed the complaint.": "முடிந்த பணியைத் துறை சரிபார்த்து, புகாரை மூடியது.",
+  "The Collector's office checked the work and closed the complaint.": "ஆட்சியர் அலுவலகம் பணியைச் சரிபார்த்து, புகாரை மூடியது.",
+  "The Collector's office returned it to the department for more work.": "கூடுதல் பணிக்காக ஆட்சியர் அலுவலகம் இதைத் துறைக்குத் திருப்பி அனுப்பியது.",
+  "Rejected by the Collector's office.": "ஆட்சியர் அலுவலகம் நிராகரித்தது.",
+  // the "Confirm it's you" box and the actions it confirms
+  "Confirm it's you": "இது நீங்கள்தான் என்பதை உறுதிசெய்யுங்கள்", "Your account password": "உங்கள் கணக்கின் கடவுச்சொல்",
+  "The #-digit code from the email": "மின்னஞ்சலில் வந்த #-இலக்கக் குறியீடு", "Confirm": "உறுதிசெய்", "Checking…": "சரிபார்க்கிறது…",
+  "Use my password": "என் கடவுச்சொல்லைப் பயன்படுத்து", "Send another code": "இன்னொரு குறியீட்டை அனுப்பு", "Email me a code": "குறியீட்டை எனக்கு மின்னஞ்சலில் அனுப்பு",
+  "Being signed in is not enough for this. It is checked on the server for exactly this action, and recorded in the audit log.":
+    "இதற்கு உள்நுழைந்திருப்பது மட்டும் போதாது. இந்தச் செயலுக்கென்றே சர்வரில் சரிபார்க்கப்பட்டு, தணிக்கைப் பதிவில் பதிவாகும்.",
+  "Send email": "மின்னஞ்சல் அனுப்பு", "Record a decision": "முடிவைப் பதிவு செய்", "Send the completion report": "பணி நிறைவு அறிக்கையை அனுப்பு",
+  "Delete a dataset": "தரவுத்தொகுப்பை நீக்கு", "Approve a new data source": "புதிய தரவு மூலத்துக்கு ஒப்புதல் அளி", "Export data": "தரவைப் பதிவிறக்கு",
+  "Sign out every other device": "மற்ற எல்லாச் சாதனங்களிலிருந்தும் வெளியேறு"
 };
 
 /**
