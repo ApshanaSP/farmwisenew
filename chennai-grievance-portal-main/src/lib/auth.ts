@@ -142,6 +142,15 @@ export async function clearAuthCookie(res: NextResponse, portal: Portal) {
 }
 
 /**
+ * A copied session cookie lasts as long as the token in it, not the citizen's default 7 days: a staff token ends at 12 hours, and its
+ * copy for a new tab (or the move of a pre-per-tab cookie) used to linger a week after it (reviewer4-06). Undefined: the default.
+ */
+function cookieAgeOf(session: JwtPayload | null): number | undefined {
+  const exp = Number((session as (JwtPayload & { exp?: number }) | null)?.exp);
+  return Number.isFinite(exp) && exp > 0 ? Math.max(1, exp - Math.floor(Date.now() / 1000)) : undefined;
+}
+
+/**
  * Give tab `to` its own copy of the sign-ins of `from` (another tab's slot, or null for the unslotted cookies), for a
  * new or duplicated tab: it starts signed in as the tab it came from, and from then on signs in and out on its own.
  * Copying from the unslotted cookies moves them (they belonged to a tab from before per-tab sessions).
@@ -155,7 +164,8 @@ export async function copySlot(res: NextResponse, from: string | null, to: strin
       const session = legacy ? await verifyToken(legacy) : null;
       if (legacy && session && roleToPortal(session.role) === portal) token = legacy;
     }
-    if (token && (await verifyToken(token))) setSessionCookie(res, portalCookieName(portal, to), token);
+    const copied = token ? await verifyToken(token) : null;
+    if (token && copied) setSessionCookie(res, portalCookieName(portal, to), token, cookieAgeOf(copied));
     if (!from) clearCookie(res, portalCookieName(portal, null));
   }
   if (!from && jar.get(LEGACY_COOKIE_NAME)) clearCookie(res, LEGACY_COOKIE_NAME);
@@ -173,7 +183,7 @@ export async function migrateLegacyCookie(res: NextResponse) {
   const session = await verifyToken(token);
   const portal = session ? roleToPortal(session.role) : null;
   if (portal && !jar.get(portalCookieName(portal, null))?.value) {
-    setSessionCookie(res, portalCookieName(portal, null), token);
+    setSessionCookie(res, portalCookieName(portal, null), token, cookieAgeOf(session));
   }
   clearCookie(res, LEGACY_COOKIE_NAME);
 }
