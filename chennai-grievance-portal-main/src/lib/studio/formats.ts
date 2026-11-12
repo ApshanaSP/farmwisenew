@@ -23,6 +23,20 @@ export interface ZipEntry { name: string; data: Buffer }
 const ZIP_TOTAL = 60 * 1024 * 1024;
 const ZIP_FILES = 200;
 
+/**
+ * Is this ZIP whole: its end record is there, and the table of contents it points to lies inside the file and starts where it says?
+ * A cut-off workbook made SheetJS run forever on the server's thread (QA pass 6, P6-008), so a workbook is checked with this first.
+ */
+export function zipIntact(buf: Buffer): boolean {
+  if (buf.length < 22) return false;
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) return false;
+  const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), at = buf.readUInt32LE(eocd + 16);
+  if (at + size > eocd) return false;
+  return count === 0 || (at + 4 <= buf.length && buf.readUInt32LE(at) === 0x02014b50);
+}
+
 /** The files in a ZIP (folders and the macOS __MACOSX shadows left out). */
 export function unzip(buf: Buffer): ZipEntry[] {
   // the end-of-central-directory record: the last 22..65 557 bytes

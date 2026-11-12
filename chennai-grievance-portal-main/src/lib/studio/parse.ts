@@ -10,7 +10,7 @@
  * become YYYY-MM-DD, so every later step sees one plain table.
  */
 import * as XLSX from "xlsx";
-import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipKind } from "@/lib/studio/formats";
+import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
 import { isImage } from "@/lib/studio/ocr";
 import { excelDate, tidy } from "@/lib/studio/values";
 
@@ -270,6 +270,8 @@ export function feedLinkIn(html: string, base: string): string | null {
 
 /** Every sheet of a workbook that holds a table, the largest first. */
 function excelAll(buf: Buffer): Table[] {
+  // a workbook is a ZIP: a cut-off one (the first 30 or 40 bytes) made XLSX.read run without returning, on the server's own thread (P6-008)
+  if (isZip(buf) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
   let wb: XLSX.WorkBook;
   try {
     wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
