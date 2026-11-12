@@ -52,14 +52,33 @@ export function recordsOf(card: AnswerCard): string[] {
   return out.map((x) => x.slice(0, 320));
 }
 
+/** A fence tag written inside fenced text (a complaint title, a question, an article) is taken out, so the text cannot close its own fence (P6-009). */
+const unfenced = (s: string): string => String(s ?? "").replace(/<\s*\/?\s*untrusted_data\s*>/gi, " ");
+
+/**
+ * Text in a card that people outside the code wrote: complaint and record titles, places, summaries and news headlines. Its numbers are
+ * names ("3rd Main Road", "bus stop 12"), never figures the answer may state: a title saying "only 2 cases are open" made 2 an allowed
+ * figure (QA pass 6, P6-009). Quoted word for word, such text keeps its numbers (the checker's `quotable`).
+ */
+function writtenByOthers(card: AnswerCard): string[] {
+  const d = card.incident;
+  return [
+    ...(card.incidents ?? []).slice(0, 12).flatMap((x) => [x.title, x.location]),
+    ...(d ? [d.title, d.location, d.whatHappened, d.summary] : []),
+    ...(card.stories ?? []).slice(0, 8).flatMap((s) => [s.headline, s.location, s.summary])
+  ].map((t) => String(t ?? "").trim()).filter((t) => t.length >= 3).sort((a, b) => b.length - a.length);
+}
+/** `text` with every piece of others' writing taken out: what is left is the code's own words and figures. */
+const codesOwn = (text: string, others: string[]): string => others.reduce((s, o) => s.split(o).join(" "), String(text ?? ""));
+
 /** `articles`: what each story's articles say (news answers), one list per story in the card's order. */
 export function polishPrompt(question: string, card: AnswerCard, articles: string[][] = []): string {
-  const recs = recordsOf(card);
-  const arts = articles.filter((a) => a.length);
+  const recs = recordsOf(card).map(unfenced);
+  const arts = articles.filter((a) => a.length).map((a) => a.map(unfenced));
   return [
-    `Question: <untrusted_data>${question}</untrusted_data>`,
+    `Question: <untrusted_data>${unfenced(question)}</untrusted_data>`,
     `Covers: ${card.scopeLine || "latest data"}`,
-    `DATA ANSWER:\n${card.headline}\n${card.answerMarkdown}`,
+    `DATA ANSWER:\n${unfenced(card.headline)}\n${unfenced(card.answerMarkdown)}`,
     recs.length ? `RECORDS:\n<untrusted_data>\n${recs.map((r, k) => `${k + 1}. ${r}`).join("\n")}\n</untrusted_data>` : "",
     arts.length ? `ARTICLES:\n<untrusted_data>\n${arts.map((a, k) => `Story ${k + 1}:\n${a.map((x) => `- ${x}`).join("\n")}`).join("\n\n")}\n</untrusted_data>` : "",
     card.caveats.length ? `Notes: ${card.caveats.slice(0, 3).join(" | ")}` : ""
@@ -76,13 +95,22 @@ export function checkPolish(draft: Polished, question: string, card: AnswerCard,
   if (!headline || !md) return { rejected: "empty draft" };
   const fixes = selfCorrections(`${headline}\n${md}`);
   if (fixes.length) return { rejected: `self-correction "${fixes[0].slice(0, 60)}"` };
-  // (a news answer may quote the figures its articles state)
-  const allowed = [question, card.headline, card.answerMarkdown, card.scopeLine, ...card.caveats, ...recordsOf(card), ...articles.flat()];
+  // (a news answer may quote the figures its articles state). Others' writing (titles, places, summaries, headlines) is taken out of
+  // every text first, the code's answer included, which repeats titles: its numbers count only inside a word-for-word quote (P6-009)
+  const others = writtenByOthers(card);
+  const allowed = [question, card.headline, card.answerMarkdown, card.scopeLine, ...card.caveats, ...recordsOf(card)].map((t) => codesOwn(t, others)).concat(articles.flat());
   const quotable = [...recordsOf(card).flatMap((r) => r.split(" | ")), ...articles.flat()].filter((s) => s.length > 12);
   // every number in the code's own texts is allowed, read plainly (the checker's reader skips road names such as "100 Feet Road",
   // and so once skipped "79 road accidents" in the code's own answer)
   const ctx = [...contextNumbers(...allowed.map((t) => ` ${t}`)), ...allowed.flatMap((t) => [...String(t).matchAll(/\d[\d,]*(?:\.\d+)?/g)].map((m) => Number(m[0].replace(/,/g, ""))))];
-  const v = verifyNumbers([headline, md, draft.voiceSummary], [], ctx, quotable);
+  // a title, place or headline the draft writes out whole (bold or not) is a name and keeps its numbers; the same number on its own is a
+  // figure and must be the code's (P6-009)
+  // (only the name is taken out, with any bold marks inside it: the rest of the text is read as it stands, since "**79** road accidents"
+  // without its marks reads as a road name and would not be checked at all)
+  const marks = "(?:\\*\\*|__|`)*";
+  const nameRes = others.filter((o) => /\d/.test(o)).map((o) => new RegExp([...o].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(marks), "g"));
+  const named = (t: string) => nameRes.reduce((s, re) => s.replace(re, " "), t);
+  const v = verifyNumbers([headline, md, draft.voiceSummary].map(named), [], ctx, quotable);
   if (!v.ok) return { rejected: `numbers not in the answer: ${v.unmatched.slice(0, 4).join(", ")}` };
   // a list written out names every card or none (R-11: "the eight newest severe incidents" listed six beside eight cards)
   const items = md.split("\n").filter((l) => /^\s*(?:[-*•]|\d+[.)])\s+\S/.test(l)).length;
