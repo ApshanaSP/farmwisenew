@@ -6,8 +6,9 @@ import { withoutEchoedNumbers } from "@/lib/assistant/verify";
 const card = {
   headline: "79 road accidents · last 7 days",
   answerMarkdown: "79 road accidents were reported in the last 7 days (81 in the period before): 6 severe, 75 still open, 7 deaths.",
-  // QA pass 7 (reviewer5-06): the KPIs the count card carries (fastpath.ts INCIDENT_COUNT); the writer's figures come only from such typed values
-  scopeLine: "Last 7 days · District-wide · all departments", caveats: [], datasets: [],
+  // QA pass 7 (reviewer5-06): the KPIs and scope the count card carries (fastpath.ts INCIDENT_COUNT); the writer's figures come only from such
+  // typed values, and "the last 7 days" is the window only on a card whose period is weekly
+  scopeLine: "Last 7 days · District-wide · all departments", caveats: [], datasets: [], scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null },
   kpis: [{ label: "Reported", value: 79, prev: 81 }, { label: "Severe", value: 6 }, { label: "Still open", value: 75 }, { label: "Deaths", value: 7 }],
   incidents: [{ incidentId: "INC-1", title: "Heavy vehicle crash reported in Jafferkhanpet", summary: "", aiWritten: false, category: "Road accident",
     location: "Jafferkhanpet", ward: 140, zone: "Adyar", taluk: null, occurredAt: null, severity: "Severe", priorityScore: 92, priorityReasons: ["1 death"],

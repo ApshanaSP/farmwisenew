@@ -7,7 +7,7 @@
 import { z } from "zod";
 import type { AnswerCard } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
-import { askedFigures, cardFigures, fits, readFigures } from "@/lib/assistant/figures";
+import { askedFigures, cardContext, cardFigures, fits, readFigures } from "@/lib/assistant/figures";
 import { overclaims, selfCorrections, withoutEchoedNumbers } from "@/lib/assistant/verify";
 
 export const PolishSchema = z.object({ headline: z.string(), answerMarkdown: z.string(), voiceSummary: z.string() });
@@ -99,14 +99,17 @@ export function polishPrompt(question: string, card: AnswerCard, articles: strin
  * body: the headline and the spoken summary carry no quote, since a quote is not heard.
  */
 export function checkPolish(draft: Polished, question: string, card: AnswerCard, articles: string[][] = []): { text: Polished; checked: number } | { rejected: string } {
-  const headline = draft.headline.trim(), md = withoutEchoedNumbers(draft.answerMarkdown.trim());
+  // what is checked is what is shown and said (a 140-character cut once turned a checked "41" into a shown "4")
+  const headline = draft.headline.trim().slice(0, 140), md = withoutEchoedNumbers(draft.answerMarkdown.trim()).slice(0, 1800);
+  const voice = draft.voiceSummary.trim().slice(0, 400) || headline;
   if (!headline || !md) return { rejected: "empty draft" };
   const fixes = selfCorrections(`${headline}\n${md}`);
   if (fixes.length) return { rejected: `self-correction "${fixes[0].slice(0, 60)}"` };
   // the card's typed figures, and the question's own numbers (the Collector's words: "top 5", "last 3 days"), which may be repeated
   const typed = [...cardFigures(card), ...askedFigures(question)];
   const quotable = [...writtenByOthers(card), ...articles.flat()];
-  const read = [...readFigures(headline, null), ...readFigures(md, quotable), ...readFigures(draft.voiceSummary, null)];
+  const ctx = cardContext(card);
+  const read = [...readFigures(headline, { card: ctx }), ...readFigures(md, { quotable, card: ctx, list: true }), ...readFigures(voice, { card: ctx })];
   const unmatched = [...new Set(read.filter((r) => !fits(r, typed)).map((r) => r.raw))];
   if (unmatched.length) return { rejected: `numbers not in the answer: ${unmatched.slice(0, 4).join(", ")}` };
   // a list written out names every card or none (R-11: "the eight newest severe incidents" listed six beside eight cards)
@@ -116,5 +119,5 @@ export function checkPolish(draft: Polished, question: string, card: AnswerCard,
   // no incident ids in the prose, no rain as the cause beside a "timing, not cause" caveat (R-12)
   const over = overclaims(`${headline}\n${md}`, card.caveats, md);
   if (over.length) return { rejected: over[0] };
-  return { text: { headline: headline.slice(0, 140), answerMarkdown: md.slice(0, 1800), voiceSummary: draft.voiceSummary.trim().slice(0, 400) || headline }, checked: read.length };
+  return { text: { headline, answerMarkdown: md, voiceSummary: voice }, checked: read.length };
 }

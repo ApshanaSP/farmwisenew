@@ -104,11 +104,19 @@ const SCOPE_COLUMNS: [keyof Scope, string[]][] = [
 ];
 
 /**
- * Tables that hold no department's data: geography and reference lists every department shares. An officer reads them whole, except a
- * column the catalog marks as derived from incidents (`test`: open incidents per ward), which counts every department's cases.
- * Default deny: a table not named here, with no department column and no incident_id, is not read from a department console.
+ * Tables that hold no department's data, and the columns of each an officer may read: geography and reference lists every department
+ * shares. Default deny, by table and by column: a column not named here is derived from records of every department (a ward's open
+ * incidents, its low_lying_index from all sources' flood reports, the calendar's rain_intensity from grievance, police and PWD flood
+ * records) and is not read from a department console; a table not named here, with no department column and no incident_id, is refused.
  */
-const SHARED_TABLES = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar"]);
+const SHARED_TABLES: Record<string, ReadonlySet<string>> = {
+  ref_zones: new Set(["zone_no", "zone_name"]),
+  ref_wards: new Set(["ward_no", "zone_no", "zone_name", "taluk_code", "area_km2", "centroid_lat", "centroid_lon"]),
+  ref_taluks: new Set(["taluk_code", "name", "name_ta", "in_district", "lat", "lon", "note"]),
+  ref_departments: new Set(["code", "name", "org", "head", "route", "action_owner"]),
+  ref_facilities: new Set(["facility_id", "type", "name", "lat", "lon", "taluk_code", "capacity", "relevance", "specialties", "in_district", "basin"]),
+  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"])
+};
 const DEPT_COLUMNS = SCOPE_COLUMNS.find(([k]) => k === "dept")![1];
 
 /** How a table is held to an officer's department: by its department column, through its incidents, or not at all (shared reference). */
@@ -117,7 +125,7 @@ function holdOf(t: CatalogTable, cat: Catalog): Hold | null {
   const col = DEPT_COLUMNS.find((c) => t.columns.has(c));
   if (col) return { by: "column", col };
   if (t.columns.has("incident_id") && cat.tables.has("incidents")) return { by: "incident" };
-  return SHARED_TABLES.has(t.name) ? { by: "shared" } : null;
+  return t.name in SHARED_TABLES ? { by: "shared" } : null;
 }
 
 /**
@@ -158,12 +166,12 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
     return ({ is_open: e.open, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
   };
 
-  /** a field of the base table ("zone_no") or of a table joined along a declared key ("ref_departments.name") */
-  /** under the lock, a shared reference table's columns derived from incidents count every department's cases */
+  /** under the lock, only a shared reference table's own reference columns (the rest are derived from every department's records) */
   const sharedOnly = (t: CatalogTable, h: Hold | null, col: CatalogColumn) => {
-    if (h?.by === "shared" && col.test)
-      throw new CompileError(`${t.name}.${col.name} counts every department's incidents, so it cannot be asked from a department console.`);
+    if (h?.by === "shared" && !SHARED_TABLES[t.name]?.has(col.name))
+      throw new CompileError(`${t.name}.${col.name} is worked out from every department's records, so it cannot be asked from a department console.`);
   };
+  /** a field of the base table ("zone_no") or of a table joined along a declared key ("ref_departments.name") */
   const ref = (name: string, purpose: string): Ref => {
     const [t, c] = name.includes(".") ? name.split(".", 2) : [base.name, name];
     if (t === base.name) {

@@ -34,7 +34,7 @@ const countCard = {
   headline: "41 open garbage cases · last 7 days", answerMarkdown: "**41** garbage cases reported in the last 7 days in Adyar zone are still open, 6 of them severe.",
   scopeLine: "Last 7 days · Adyar zone", caveats: [], responseType: "kpi", datasets: [],
   kpis: [{ label: "Open", value: 41, prev: 38, tone: "info" }, { label: "Severe", value: 6, tone: "sev" }, { label: "Still open", value: 41 }, { label: "Past deadline", value: 9 }],
-  context: { activeFilters: { openOnly: true } }
+  context: { activeFilters: { openOnly: true, period: "weekly" } }
 } as unknown as AnswerCard;
 
 describe("QA pass 7, reviewer5-06: the code's changed copies of others' writing lend no figure", () => {
@@ -146,7 +146,7 @@ describe("QA pass 7, reviewer5-06: honest answers still pass", () => {
   it("a share: the percentage and the counts it comes from", () => {
     const card = { headline: "23.4% resolved", answerMarkdown: "**23.4%** of the garbage cases reported in the last 7 days are resolved: 12 of 51.", scopeLine: "", caveats: [], datasets: [],
       kpis: [{ label: "Share resolved", value: 23.4 }, { label: "Reported", value: 51 }, { label: "Resolved", value: 12 }, { label: "Still open", value: 39 }], context: { activeFilters: {} } } as unknown as AnswerCard;
-    expect(checkPolish({ headline: "23.4% of garbage cases resolved", answerMarkdown: "About 23% of the 51 garbage cases reported this week are resolved (12); 39 are still open.", voiceSummary: "23.4% are resolved." },
+    expect(checkPolish({ headline: "23.4% of garbage cases resolved", answerMarkdown: "About 23% of the 51 garbage cases reported this week are resolved, 12 resolved in all; 39 are still open.", voiceSummary: "23.4% are resolved." },
       "what share of garbage complaints is resolved", card)).toHaveProperty("text");
     expect(checkPolish(say("51% of garbage cases are resolved"), "what share is resolved", card)).toHaveProperty("rejected");
   });
