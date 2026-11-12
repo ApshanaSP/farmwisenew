@@ -55,7 +55,8 @@ export function nearestMiss(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answe
 // the executor is pure, so re-running the prefix of a plan is cheap and gives the same rows
 function runPrefixHits(plan: Plan, upTo: string, w: World, ctx: Ctx): Hit[] {
   const i = plan.steps.findIndex((s) => s.as === upTo);
-  return runMapPlan({ steps: plan.steps.slice(0, i + 1), show: upTo, language: plan.language }, w, ctx).hits;
+  // with the officer's lock: the nearest miss of an empty answer named another department's incident, its id and place (P6-021)
+  return runMapPlan({ steps: plan.steps.slice(0, i + 1), show: upTo, language: plan.language }, w, ctx, ctx.lockDept ?? null).hits;
 }
 
 function deptsOf(hits: Hit[], w: World) {

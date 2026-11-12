@@ -189,7 +189,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   const resolve = resolverFor(data);
   const lang: Lang = input.plan?.language ?? (input.text ? mapLang(input.text, resolve(input.text, null)) : input.prev?.language ?? "en");
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
-  const ctx: Ctx = { place: placeLookup(w, data, lock), lang };
+  const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
   const names = await refNames().catch(() => null);
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang };
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
@@ -530,7 +530,8 @@ export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ 
   const c = checkPlan(plan);
   if (!c.ok) throw new PlanError(c.problems[0]);
   const { world: w, resolver: data } = await world();
-  const ctx: Ctx = { place: placeLookup(w, data, user.role === "department_officer" ? user.lockDept : null), lang: c.plan.language };
+  const lockDept = user.role === "department_officer" ? user.lockDept : null;
+  const ctx: Ctx = { place: placeLookup(w, data, lockDept), lang: c.plan.language, lockDept };
   const r = runMapPlan(c.plan, w, ctx, user.role === "department_officer" ? user.lockDept : null);
   const deptName = (d: string) => w.depts.get(d)?.name ?? d;
   const rows: Row[] = r.hits.map((h) => ({
