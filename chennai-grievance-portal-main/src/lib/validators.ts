@@ -6,9 +6,9 @@ import { isComplaintMediaPath } from "@/lib/complaint-media-path";
 // ---------------------------------------------------------------------
 // trim() keeps the format characters that print nothing (zero-width space and joiners, word joiner, BOM, direction marks, soft
 // hyphen, tags), the variation selectors, the combining grapheme joiner and the blank letters (Hangul fillers, Braille blank), so a
-// field of only "​" passed min(1) and filed a blank complaint (hunt2-desk-17). The value is kept as typed: a joiner inside a
+// field of only "\u200B" passed min(1) and filed a blank complaint (hunt2-desk-17). The value is kept as typed: a joiner inside a
 // Tamil word is part of the word. Only the "is anything there" check ignores them.
-const INVISIBLE = /[\p{Cf}͏ᅟᅠ⠀ㅤ︀-️ﾠ\u{E0100}-\u{E01EF}]|\s/gu;
+const INVISIBLE = /[\p{Cf}\u034F\u115F\u1160\u2800\u3164\uFE00-\uFE0F\uFFA0\u{E0100}-\u{E01EF}]|\s/gu;
 
 /** The text with every invisible character and every space removed: what a reader would actually see. */
 export function visibleText(value: string | null | undefined): string {
