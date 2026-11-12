@@ -374,8 +374,11 @@ export async function newsDoc(id: string) {
 async function actedOn(ids: string[]): Promise<Record<string, { t: string; n: number }>> {
   if (!ids.length) return {};
   const r = await q(
-    `SELECT incident_id AS id, DATE_FORMAT(MAX(created_at), '%Y-%m-%d %H:%i:%s') AS t, COUNT(*) AS n
-     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) GROUP BY incident_id`, [ids]
+    // a batch email is stored under its first case; the other cases it lists are found through their follow-up rows (QA pass 6, P6-015)
+    `SELECT x.id, DATE_FORMAT(MAX(x.created_at), '%Y-%m-%d %H:%i:%s') AS t, COUNT(DISTINCT x.email_id) AS n FROM (
+       SELECT incident_id AS id, email_id, created_at FROM ${ops("outbound_emails")} WHERE incident_id IN (?)
+       UNION SELECT f.incident_id AS id, e.email_id, e.created_at FROM ${ops("followups")} f JOIN ${ops("outbound_emails")} e ON e.email_id = f.email_id WHERE f.incident_id IN (?)
+     ) x GROUP BY x.id`, [ids, ids]
   ).catch(orEmpty("intel:354"));
   return Object.fromEntries(r.map((x) => [x.id, { t: String(x.t), n: Number(x.n) }]));
 }
@@ -386,7 +389,8 @@ export async function actionEmails(ids: string[]): Promise<Row[]> {
   const rows = await q(
     `SELECT email_id AS id, incident_id, subject, body, mode, status, delivered_to, owner, to_contact_ids AS rcpt,
             DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS t
-     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) ORDER BY created_at DESC, email_id DESC LIMIT 20`, [ids]
+     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) OR email_id IN (SELECT f.email_id FROM ${ops("followups")} f WHERE f.incident_id IN (?) AND f.email_id IS NOT NULL)
+     ORDER BY created_at DESC, email_id DESC LIMIT 20`, [ids, ids]
   ).catch(orEmpty("intel:365")); // a store without the table: nothing sent yet
   return rows.map(({ rcpt, ...x }) => {
     let to = null;
