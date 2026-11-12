@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getSessionFromCookies, revokeSessions, setAuthCookie } from "@/lib/auth";
 import { signToken } from "@/lib/jwt";
 import { roleToPortal } from "@/lib/session-cookies";
-import { getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isStaff } from "@/lib/security/factors";
 import { staffHours } from "@/lib/security/session";
 import { recentEvents, securityLog } from "@/lib/security/audit";
@@ -42,6 +42,12 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   if (b.data.action === "check_ref") {
+    // a person checks the odd email; a script checking thousands is refused (each check reads the newest 20,000 emails: hunt2-sec-11)
+    const rl = checkRateLimit(`check-ref:${s.userId}`, 20, 15 * 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many checks. Wait a few minutes and try again." },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds ?? 60) } });
+    }
     const r = await checkRef(b.data.ref);
     await securityLog(s.email, "email:check_ref", null, { ref: b.data.ref.toUpperCase(), genuine: r.genuine, ip });
     return NextResponse.json(r);
