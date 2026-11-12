@@ -25,3 +25,6 @@ Branch: `claude/qa-pass5-05abfd`, worktree `E:\farm\.claude\worktrees\qa-pass5-0
 - 13:00 Reviewer broke P5-007 (16 cases) and found 2 gaps in P5-012: gate build on 6728c22 stopped; fixed in c832d8b and e6ade66 (revert-checked).
 - 13:03 Final gate restarted on `e6ade66`. Reviewer2 (later fixes) still running.
 - 13:05 Gate on `e6ade66`: tsc exit 0, lint 0 errors (13 warnings), build exit 0. Suites running (3 shuffled Kolkata + UTC). Next: server 3105 on the gate build, access matrix, browser drive, skeptic, report.
+- 13:05–13:10 Gate run 1 on e6ade66 failed pass 4's RC-13 guard (my Tamil-only digit class in clean.ts); reviewer2 broke P5-016 (raw is_open) and P5-018 (shared LIMIT) and found P5-019 partial (P5-037 open). Fixed in f26d834, e364c24, 174cd6c (revert-checked). Probes removed; two kept in known-failures.
+- 13:10 Final gate on `4dad870`: tsc exit 0, lint 0 errors / 13 warnings; build and suites running. Next: server 3105, access matrix, drive, skeptic, report.
+- 13:12–13:18 Gate on `4dad870`: build exit 0; suites gate-1/2/3 (Kolkata, shuffled) and gate-utc all 3315 tests, 0 failed, 13 skipped; access matrix 1168/1170 (2 explained), scope 41/41; drive 28 page loads, 2 with a serious contrast issue (P5-038), petition journey passed. Skeptic launched 13:18.

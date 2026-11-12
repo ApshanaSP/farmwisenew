@@ -66,7 +66,8 @@ for (const [role, pages] of Object.entries(ROLES)) for (const width of [360, 128
 // ---- the petition journey: photo in, the check, approval, then the citizen tracks it on a phone-sized screen (SMS is off: dry run) ----
 const J = out.journey;
 try {
-  const jpg = fs.readFileSync(path.join(APP, "public", fs.readdirSync(path.join(APP, "public")).find((f) => /\.jpe?g$/i.test(f)) ?? ""));
+  // the same minimal JPEG the Manu tests upload: the type is read from its first bytes, and no reader is set up in a QA run
+  const jpg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(40, 1)]);
   const fd = new FormData(); fd.append("pages", new Blob([jpg], { type: "image/jpeg" }), "petition.jpg");
   const up = await call(port, "manu", "POST", "/api/manu/petitions", { body: fd, raw: true });
   J.upload = up.status;
