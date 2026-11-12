@@ -74,16 +74,16 @@ describe("SK2 parseWhen", () => {
     return seen;
   };
   // "-2026" at the end of a day-month-year text looks like a zone offset (-20:26) to the check for a named zone, so the text is read in the server's own zone.
-  it.fails("SK2-6: '02-Oct-2026' is Chennai midnight on a server in any zone", async () => {
+  it("SK2-6: '02-Oct-2026' is Chennai midnight on a server in any zone", async () => {
     const seen = await inEveryZone("02-Oct-2026");
     for (const z of zones) expect(seen[z], z).toBe("2026-10-01T18:30:00.000Z");
   });
-  it.fails("SK2-7: 'Oct-02-2026' is Chennai midnight on a server in any zone", async () => {
+  it("SK2-7: 'Oct-02-2026' is Chennai midnight on a server in any zone", async () => {
     const seen = await inEveryZone("Oct-02-2026");
     for (const z of zones) expect(seen[z], z).toBe("2026-10-01T18:30:00.000Z");
   });
   // IST is on the list of zones a text may name, but Date cannot read the word, so the date is lost (null) instead of read as Chennai time.
-  it.fails("SK2-8: a source date that ends in 'IST' is read, not dropped", async () => {
+  it("SK2-8: a source date that ends in 'IST' is read, not dropped", async () => {
     const { parseWhen } = await import("@/lib/collector/sourcemap");
     expect(parseWhen("Oct 2, 2026 10:00 AM IST")?.toISOString()).toBe("2026-10-02T04:30:00.000Z");
     expect(parseWhen("2026-10-02 23:30 IST")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");

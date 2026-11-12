@@ -5,7 +5,7 @@
  */
 import { DatabaseSync } from "node:sqlite";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ db: null as any, writes: [] as string[] }));
 
@@ -61,11 +61,16 @@ async function seed() {
 }
 
 describe("news routing job (BE-001)", () => {
+  // The job reads a 30-day window back from the console clock and the fixture sits at 12 Oct 2026: with the real clock this test failed once the date moved on
+  // (QA4 g-repair, reviewer problem 8). The clock is held at the fixture's own time (10:00 IST), Date only, so the result no longer depends on the day it runs.
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T04:30:00Z"));
     h.db = await seed();
     h.writes = [];
     process.env.REFRESH_API_KEY = KEY;
   });
+  afterEach(() => { vi.useRealTimers(); });
 
   it("refuses a missing or wrong key and writes nothing", async () => {
     for (const k of [undefined, "", "wrong", KEY + "x"]) expect((await post(k)).status).toBe(401);

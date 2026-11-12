@@ -104,7 +104,7 @@ describe("SKG1 RC-13: a figure spelled out in a model-written line is refused (n
 describe("SKG1 RC-16: a time is read as Chennai time on a server in any zone", () => {
   const saved = process.env.TZ;
   const restore = () => { if (saved === undefined) delete process.env.TZ; else process.env.TZ = saved; };
-  it.fails("SKG1-14 'remind me tomorrow at 5 pm' (understand.ts parseWhen, run by the server's plan.ts) is 17:00 IST on a UTC server and on a Los Angeles server", () => {
+  it("SKG1-14 'remind me tomorrow at 5 pm' (understand.ts parseWhen, run by the server's plan.ts) is 17:00 IST on a UTC server and on a Los Angeles server", () => {
     const now = Date.parse("2026-11-06T06:30:00Z");
     try {
       for (const tz of ["UTC", "America/Los_Angeles"]) {
@@ -113,27 +113,27 @@ describe("SKG1 RC-16: a time is read as Chennai time on a server in any zone", (
       }
     } finally { restore(); }
   });
-  it.fails("SKG1-15 through the browser's real path on a UTC server, the reminder card says 5:00 pm for 'tomorrow at 5 pm', not 10:30 pm", async () => {
+  it("SKG1-15 through the browser's real path on a UTC server, the reminder card says 5:00 pm for 'tomorrow at 5 pm', not 10:30 pm", async () => {
     try {
       process.env.TZ = "UTC";
       const { outs } = await talk("remind me tomorrow at 5 pm to call the zonal officer");
       expect(outs[0].said).toMatch(/5:00 pm/i);
     } finally { restore(); }
   });
-  it.fails("SKG1-16 a source date '02-Oct-2026' is Chennai midnight on every server zone (it is 2 Oct 00:00 UTC on a UTC server)", () => {
+  it("SKG1-16 a source date '02-Oct-2026' is Chennai midnight on every server zone (it is 2 Oct 00:00 UTC on a UTC server)", () => {
     try {
       for (const tz of ["Asia/Kolkata", "UTC", "America/Los_Angeles"]) { process.env.TZ = tz; expect(parseSourceDate("02-Oct-2026", "auto")?.toISOString(), tz).toBe("2026-10-01T18:30:00.000Z"); }
     } finally { restore(); }
   });
-  it.fails("SKG1-17 a source date that names IST keeps its clock: '02 Oct 2026 23:30 IST' is 18:00 UTC, and 'Oct 2, 2026 11:30 PM IST' and '2026-10-02T23:30:00 IST' are not unread", () => {
+  it("SKG1-17 a source date that names IST keeps its clock: '02 Oct 2026 23:30 IST' is 18:00 UTC, and 'Oct 2, 2026 11:30 PM IST' and '2026-10-02T23:30:00 IST' are not unread", () => {
     expect(parseSourceDate("02 Oct 2026 23:30 IST", "auto")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");
     expect(parseSourceDate("Oct 2, 2026 11:30 PM IST", "auto")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");
     expect(parseSourceDate("2026-10-02T23:30:00 IST", "auto")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");
   });
-  it.fails("SKG1-18 a day that is not on the calendar is not a date: '31/02/2026', '2026-02-31' and '29/02/2027' are null, not 2 March or 1 March", () => {
+  it("SKG1-18 a day that is not on the calendar is not a date: '31/02/2026', '2026-02-31' and '29/02/2027' are null, not 2 March or 1 March", () => {
     for (const t of ["31/02/2026", "2026-02-31", "29/02/2027", "31 Feb 2026"]) expect(parseSourceDate(t, "auto"), t).toBeNull();
   });
-  it.fails("SKG1-19 a date with no year ('12 Oct', 'Oct 12') is not the year 2001", () => {
+  it("SKG1-19 a date with no year ('12 Oct', 'Oct 12') is not the year 2001", () => {
     for (const t of ["12 Oct", "Oct 12"]) { const d = parseSourceDate(t, "auto"); expect(d == null || d.getUTCFullYear() >= 2025, `${t} -> ${d?.toISOString()}`).toBe(true); }
   });
 });

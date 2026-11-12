@@ -344,26 +344,53 @@ export function parseWhen(v: string | null | undefined, fmt: DateFormat = "auto"
     let [a, b] = [Number(num[1]), Number(num[2])];
     if (fmt === "mdy" || (fmt === "auto" && b > 12 && a <= 12)) [a, b] = [b, a];
     const y = Number(num[3]) < 100 ? 2000 + Number(num[3]) : Number(num[3]);
-    let h = Number(num[4] ?? 0);
-    if (num[7]?.toLowerCase() === "p" && h < 12) h += 12;
-    if (num[7]?.toLowerCase() === "a" && h === 12) h = 0;
-    const iso = `${y}-${String(b).padStart(2, "0")}-${String(a).padStart(2, "0")}T${String(h).padStart(2, "0")}:${num[5] ?? "00"}:${num[6] ?? "00"}+05:30`;
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) || b > 12 ? null : d;
+    return b > 12 ? null : instant(y, b - 1, a, [num[4], num[5], num[6], num[7]]);
   }
-  // a date with no time zone is Chennai time
-  const plain = s.match(/^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?))?$/);
-  if (plain) { const d = new Date(`${plain[1]}T${plain[2] ?? "00:00"}${plain[2]?.length === 5 ? ":00" : ""}+05:30`); return Number.isNaN(d.getTime()) ? null : d; }
-  // any other form ("02 Oct 2026", "Fri, 02 Oct 2026 23:30:00", "October 2, 2026 11:30 PM"): the zone the text names wins; a text that names
-  // none is Chennai time, read the same on every machine (RC-16). Date.parse reads a zone-less text in the server's zone, so the
-  // wall clock is read as UTC (a zone appended) and moved back by Chennai's offset, which no server zone can change.
-  const named = /(?:\dZ|[+-]\d{2}:?\d{2}|\b(?:GMT|UTC|UT|IST|[ECMP][SD]T)\b)\s*(?:\([^)]*\))?\s*$/i.test(s);
-  const d = named ? new Date(s) : new Date(Date.parse(`${s.replace(/^(\d{4}-\d{2}-\d{2})T/, "$1 ")} UTC`) - CHENNAI_OFFSET_MS);
-  if (!Number.isNaN(d.getTime())) return d;
-  const w = s.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})/);
-  if (!w) return null;
-  const m = MONTHS[w[2].slice(0, 4).toLowerCase()] ?? MONTHS[w[2].slice(0, 3).toLowerCase()];
-  return m == null ? null : new Date(`${w[3]}-${String(m + 1).padStart(2, "0")}-${w[1].padStart(2, "0")}T00:00:00+05:30`);
+  // Every other form is read here, by hand, never by Date.parse: V8's legacy parser reads some shapes in the server's zone ("02-Oct-2026"), cannot read "IST", and moves a day
+  // that is not on the calendar into the next month. A text that names a zone gets that zone; one that names none is Chennai time on every machine (RC-16, g-repair).
+  return parseNamed(s);
+}
+
+const MONTH_NAME = "[A-Za-z]{3,9}";
+/** the clock and the zone after a date: "23:30", "11:30 PM", "23:30:00.000 GMT+0530 (India Standard Time)", "IST" */
+const TAIL = String.raw`(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?\s*([ap])?\.?(?:m\.?)?)?\s*(Z|(?:GMT|UTC|UT)?\s*[+-]\d{2}:?\d{2}|GMT|UTC|UT|IST|[ECMP][SD]T)?\s*(?:\([^)]*\))?`;
+const ZONE_MIN: Record<string, number> = { Z: 0, GMT: 0, UTC: 0, UT: 0, IST: 330, EST: -300, EDT: -240, CST: -360, CDT: -300, MST: -420, MDT: -360, PST: -480, PDT: -420 };
+const DMY_NAME = new RegExp(String.raw`^(?:${MONTH_NAME}\.?,?\s+)?(\d{1,2})(?:st|nd|rd|th)?[\s-]+(${MONTH_NAME})\.?,?[\s-]+(\d{4})${TAIL}$`, "i");
+const MDY_NAME = new RegExp(String.raw`^(?:${MONTH_NAME}\.?,?\s+)?(${MONTH_NAME})\.?[\s-]+(\d{1,2})(?:st|nd|rd|th)?,?[\s-]+(\d{4})${TAIL}$`, "i");
+const YMD = new RegExp(String.raw`^(\d{4})[-/](\d{1,2})[-/](\d{1,2})${TAIL.replace("[ ,T]+", "[ T]+")}$`, "i");
+
+function monthOf(name: string): number | null {
+  const k = name.toLowerCase();
+  return MONTHS[k.slice(0, 4)] ?? MONTHS[k.slice(0, 3)] ?? null;
+}
+
+/** y, m (0-11), d and a clock to an instant: null when the day is not on the calendar, the clock is not a clock, or a zone is unknown */
+function instant(y: number, m: number, d: number, tail: (string | undefined)[], defaultMin = 330): Date | null {
+  const [hh, mm, ss, ap, zone] = tail;
+  let h = Number(hh ?? 0);
+  const mi = Number(mm ?? 0), se = Number(ss ?? 0);
+  if (ap) { if (h < 1 || h > 12) return null; h = ap.toLowerCase() === "p" ? (h % 12) + 12 : h % 12; }
+  if (m < 0 || m > 11 || d < 1 || h > 23 || mi > 59 || se > 59) return null;
+  if (d > new Date(Date.UTC(y, m + 1, 0)).getUTCDate()) return null;
+  let off = defaultMin;
+  if (zone) {
+    const z = zone.replace(/\s+/g, "").toUpperCase();
+    const num = /^(?:GMT|UTC|UT)?([+-])(\d{2}):?(\d{2})$/.exec(z);
+    if (num) off = (num[1] === "-" ? -1 : 1) * (Number(num[2]) * 60 + Number(num[3]));
+    else if (z in ZONE_MIN) off = ZONE_MIN[z];
+    else return null;
+  }
+  return new Date(Date.UTC(y, m, d, h, mi, se) - off * 60_000);
+}
+
+function parseNamed(s: string): Date | null {
+  let x = DMY_NAME.exec(s);
+  if (x) { const m = monthOf(x[2]); return m == null ? null : instant(Number(x[3]), m, Number(x[1]), x.slice(4)); }
+  x = MDY_NAME.exec(s);
+  if (x) { const m = monthOf(x[1]); return m == null ? null : instant(Number(x[3]), m, Number(x[2]), x.slice(4)); }
+  x = YMD.exec(s);
+  if (x) return instant(Number(x[1]), Number(x[2]) - 1, Number(x[3]), x.slice(4));
+  return null;
 }
 
 /** Inside Chennai district and its neighbours: a source's own coordinates outside this box are not used for the map. */

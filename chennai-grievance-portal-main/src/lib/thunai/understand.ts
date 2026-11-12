@@ -177,10 +177,14 @@ function stateZoneName(world: World, n: number, lang: Lang = "en"): string {
   return (lang === "ta" ? z?.ta ?? ZONES[n]?.ta[0] : z?.name) ?? z?.name ?? `Zone ${n}`;
 }
 
-/** "remind me friday at 10 to …": a local time from words, else null. */
+/**
+ * "remind me friday at 10 to …": a Chennai time from words, else null. The day and the clock are Chennai's whatever zone the server runs in (it runs on the server, in plan.ts):
+ * the date is held as Chennai's wall time in UTC fields, so no getDay, setDate or setHours reads the machine's zone (RC-16; QA4 SKG1-14, SKG1-15).
+ */
 export function parseWhen(text: string, now: number): Date | null {
   const t = text.toLowerCase();
-  const d = new Date(now);
+  const IST_MS = 330 * 60_000;
+  const wall = new Date(now + IST_MS);
   let set = false;
   const rel = /\bin (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)\b/.exec(t);
   if (rel) return new Date(now + Number(rel[1]) * (rel[2].startsWith("h") ? 3_600_000 : 60_000));
@@ -189,8 +193,8 @@ export function parseWhen(text: string, now: number): Date | null {
   const wd = days.findIndex((x) => t.includes(x));
   const wdTa = daysTa.findIndex((x) => text.includes(x));
   const w = wd >= 0 ? wd : wdTa;
-  if (/\btomorrow\b|நாளை|naalaikku|nalaikku/.test(t)) { d.setDate(d.getDate() + 1); set = true; }
-  else if (w >= 0) { const add = (w - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + add); set = true; }
+  if (/\btomorrow\b|நாளை|naalaikku|nalaikku/.test(t)) { wall.setUTCDate(wall.getUTCDate() + 1); set = true; }
+  else if (w >= 0) { const add = (w - wall.getUTCDay() + 7) % 7 || 7; wall.setUTCDate(wall.getUTCDate() + add); set = true; }
   else if (/\btoday\b|இன்று|innaiku/.test(t)) set = true;
   const hm = /\bat (\d{1,2})(?::(\d{2}))? ?(am|pm)?\b|(\d{1,2})(?::(\d{2}))? ?(am|pm)\b|(\d{1,2}) மணிக்கு/.exec(t);
   let h = 10, m = 0;
@@ -204,9 +208,9 @@ export function parseWhen(text: string, now: number): Date | null {
     set = true;
   }
   if (!set) return null;
-  d.setHours(h, m, 0, 0);
-  if (d.getTime() <= now) d.setDate(d.getDate() + 1);
-  return d;
+  wall.setUTCHours(h, m, 0, 0);
+  if (wall.getTime() - IST_MS <= now) wall.setUTCDate(wall.getUTCDate() + 1);
+  return new Date(wall.getTime() - IST_MS);
 }
 
 /** The text after a leading command phrase, from the original words (keeps the Collector's own casing). */
