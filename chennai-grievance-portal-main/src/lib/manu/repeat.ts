@@ -77,16 +77,25 @@ function deptCodeFor(portalName: unknown, prefer: string | null | undefined): st
 export async function findRepeats(c: Candidate): Promise<Repeats> {
   const mobile = tenDigits(c.mobile) || "__none__";
   const name = c.name?.trim() || "__none__";
-  const [pet] = await pool.query<RowDataPacket[]>(
-    `SELECT p.complaint_code AS code, p.incident_id AS incident_id, DATE_FORMAT(p.filed_at, '%Y-%m-%d %H:%i:%s') AS filed_at, COALESCE(c.status, 'Complaint Filed') AS status, p.problem, p.dept_code,
-            p.mobile, p.name, p.address, p.ward_number
-       FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
-      WHERE p.status = 'filed' AND p.id <> ? AND (p.mobile = ? OR p.name = ? OR (${c.ward != null ? "p.ward_number = ? AND " : ""}p.dept_code = ?))
+  const COLS = `p.complaint_code AS code, p.incident_id AS incident_id, DATE_FORMAT(p.filed_at, '%Y-%m-%d %H:%i:%s') AS filed_at, COALESCE(c.status, 'Complaint Filed') AS status, p.problem, p.dept_code,
+            p.mobile, p.name, p.address, p.ward_number`;
+  // the same mobile or name, and the same ward and department, as before; in a query of their own, so a busy department can never push them
+  // out of the limit (the second reviewer)
+  const [byPerson] = await pool.query<RowDataPacket[]>(
+    `SELECT ${COLS} FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
+      WHERE p.status = 'filed' AND p.id <> ? AND (p.mobile = ? OR p.name = ? OR (p.ward_number = ? AND p.dept_code = ?))
       ORDER BY p.filed_at DESC LIMIT 200`,
-    // with no ward read, the department's recent petitions are fetched, so the matcher (which compares names by their letters: squash())
-    // sees "R.Kumar" for "R. Kumar", decomposed Tamil and a name with a zero-width joiner; a byte-exact name was all it got before (P5-018)
-    [c.excludeId ?? 0, mobile, name, ...(c.ward != null ? [c.ward] : []), c.dept ?? "__none__"]
+    [c.excludeId ?? 0, mobile, name, c.ward ?? -1, c.dept ?? "__none__"]
   );
+  // with no ward read, also the department's recent petitions, so the matcher (which compares names by their letters: squash()) sees
+  // "R.Kumar" for "R. Kumar", decomposed Tamil and a name with a zero-width joiner; a byte-exact name was all it got before (P5-018)
+  const [byDept] = c.ward == null && c.dept
+    ? await pool.query<RowDataPacket[]>(
+      `SELECT ${COLS} FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
+        WHERE p.status = 'filed' AND p.id <> ? AND p.dept_code = ? ORDER BY p.filed_at DESC LIMIT 200`, [c.excludeId ?? 0, c.dept])
+    : [[] as RowDataPacket[]];
+  const seen = new Set<string>();
+  const pet = [...byPerson, ...byDept].filter((r) => { const k = String(r.code); if (seen.has(k)) return false; seen.add(k); return true; });
   // a citizen who filed anonymously is never shown to the desk, whatever number it types (QA pass 5, P5-014)
   const [online] = await pool.query<RowDataPacket[]>(
     `SELECT c.complaint_code AS code, DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') AS filed_at, c.status, c.title AS problem, c.mobile_number, c.first_name, c.street_address, c.ward_number, d.name AS dept_name
