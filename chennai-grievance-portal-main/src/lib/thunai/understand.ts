@@ -23,6 +23,7 @@ import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normal
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
 import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
+import { heldPeriod, windowIn } from "@/lib/windowspan";
 
 const TA = /[஀-௿]/;
 
@@ -419,7 +420,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // pages
   const pageM = lastStanding(mentions(tk, PAGE_WORDS, taken), tk);
   // periods (words like "last month" carry the comparison: the console shows the change against the previous period)
-  const perM = lastStanding(mentions(tk, PERIOD_WORDS, taken), tk);
+  let perM = lastStanding(mentions(tk, PERIOD_WORDS, taken), tk);
+  // a count of time says its own window (windowspan.ts): "pona 3 maasam" is the quarter, not the month inside it, and "pona 2 vaaram" is no window the console holds (otherTime asks)
+  const counted = windowIn(s) ?? windowIn(heard.toLowerCase());
+  if (counted) perM = counted.kind === "span" && heldPeriod(counted.hours) ? { value: heldPeriod(counted.hours) as PeriodKey, start: 0, end: 0, score: 1 } : null;
   // zones by number: "zone 7", "7th zone", "மண்டலம் 7", "ஏழாவது மண்டலம்"
   const zoneNumMentions: Mention<number>[] = [];
   tk.forEach((tok, i) => {
@@ -570,7 +574,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const hasView = Object.keys(view).length > 0;
   // a status ("open cases", "pending", "unresolved", "past the deadline") is a filter the console's view cannot hold: a view step with only the place would drop it without a word, so the rules hand the
   // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
-  if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  if ((hasView || perM) && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // a kind of complaint nothing here reads ("GH bed doctor prachanai complaints"): a window or a place alone would answer about something else (RC-05)
   if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && (unknownTopicIn(` ${s} `, world) || unreadClauseIn(` ${s} `, world))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });

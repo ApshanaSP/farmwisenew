@@ -22,6 +22,7 @@ import { resolveSides } from "@/lib/assistant/compare";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
 import { orNull } from "@/lib/fallback";
+import { englishMonths, heldPeriod, windowIn } from "@/lib/windowspan";
 
 type Period = Scope["period"];
 const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -54,7 +55,10 @@ export { YESTERDAY, SINCE_YESTERDAY };
 export function periodNamed(text: string): Period | null {
   // "open for more than 7 days": how long something has been open, not the period asked about
   const t = text.toLowerCase().replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/g, " ");
-  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|இன்றைய/.test(t) || YESTERDAY.test(t)) return "daily";
+  // a count of time ("last 7d", "pona 3 maasam", "கடந்த 90 நாட்களில்") is read by the one window reader: the console's own windows are periods, any other count is customWindow's (SKG1-20..22)
+  const counted = windowIn(t);
+  if (counted) return counted.kind === "span" ? heldPeriod(counted.hours) : null;
+  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku|innaiku|inniki|innikku|innaikki)\b|இன்று|இன்றைய|இன்னைக்கு/.test(t) || YESTERDAY.test(t)) return "daily";
   if (/\b(this|last|past|indha|intha|pona) week\b|\b7 days\b|\bweekly\b|vaaram|வாரம்/.test(t)) return "weekly";
   if (/\b(this|last|past) month\b|\b30 days\b|\bmonthly\b|maasam|மாதம்/.test(t)) return "monthly";
   if (/\b(this|last|past) quarter\b|\b90 days\b|\bquarterly\b/.test(t)) return "quarterly";
@@ -751,6 +755,7 @@ const MAX_HOURS = 180 * 24;
  * (IST, from inclusive, to exclusive), for windows that are not "the last N hours". `now` is the store's as-of time (IST).
  */
 export function customWindow(text: string, now?: string): { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string } | null {
+  text = englishMonths(text); // a month in Tamil letters is the month, as in English (SKG1-26)
   // yesterday: the day before the last 24 hours (the previous day's window, compared with the day before it)
   const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
   if (YESTERDAY.test(text) && !SINCE_YESTERDAY.test(text)) {
@@ -805,6 +810,9 @@ export function customWindow(text: string, now?: string): { hours: number; label
       if (nowMs - (a - 330 * 60_000) <= MAX_HOURS * 3600_000 + 31 * 864e5)
         return { hours, label, period: periodOf(hours), range: { from: iso(a), to: iso(b) } };
     }
+    // "on 15 Oct", "15 October", "between 1 Oct and 15 Oct": those calendar days (IST), never the whole month (SKG1-25)
+    const days = dayRange(text, nowMs);
+    if (days) return days;
     // "since 1 October", "since Oct 1", "since Diwali": from that day to now
     const since = text.match(/\b(?:since|from)\s+(?:(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})|([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?)\b/i);
     const holiday = /\b(since|from|after)\b/i.test(text) ? HOLIDAYS.find(([re]) => re.test(text)) : undefined;
@@ -844,17 +852,48 @@ export function customWindow(text: string, now?: string): { hours: number; label
       }
     }
   }
-  const m = text.match(/\b(?:last|past|previous|kadandha|kadaisi)\s+(\d{1,3})\s*(hours?|hrs?|days?|weeks?|months?|naal|naatkal)\b/i)
-    ?? text.match(/(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்கள்|நாள்|வாரங்கள்|வாரம்|மாதங்கள்|மாதம்)/);
-  if (!m) return null;
-  const n = Number(m[1]), u = m[2].toLowerCase();
-  const per = /^(h|மணி)/.test(u) ? 1 : /^(w|வார)/.test(u) ? 168 : /^(mo|மாத)/.test(u) ? 720 : 24;
-  const hours = Math.min(n * per, 180 * 24);
-  if (!n || [24, 168, 720, 2160].includes(hours)) return null;
-  const unit = per === 1 ? "hour" : per === 168 ? "week" : per === 720 ? "month" : "day";
+  // "last 10 days" in the words of any of the three languages, with a number word or a short form ("last ten days", "pona 2 vaaram", "கடந்த 10 நாட்களில்"): one reader (windowspan.ts).
+  // A count that cannot be applied (0, -5, 3.5, more than the records hold) is not a window here: unresolved.ts says so, in the language of the question.
+  const win = windowIn(text);
+  if (!win || win.kind !== "span") return null;
+  const n = win.n, hours = win.hours;
+  if (heldPeriod(hours)) return null; // the console's own windows (24 hours, 7, 30, 90 days) are periods
+  const unit = win.unit === "year" ? "month" : win.unit;
   // the console period that holds the window: for the previous-period comparison's label and the card's period chip
   const period: Period = hours <= 24 ? "daily" : hours <= 168 ? "weekly" : hours <= 720 ? "monthly" : "quarterly";
   return { hours, label: `last ${n} ${unit}${n === 1 ? "" : "s"}`, period };
+}
+
+/** The calendar days a question names: "on 15 Oct", "15 October 2026", "Oct 15", "between 1 Oct and 15 Oct", "from 1 Oct to 15 Oct". From midnight (IST) of the first to midnight of the day after the last. */
+function dayRange(text: string, nowMs: number): { hours: number; label: string; period: Period; range: { from: string; to: string } } | null {
+  const MON = "(january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)";
+  const D = String.raw`(\d{1,2})(?:st|nd|rd|th)?`;
+  const YR = String.raw`(?:\s+(20\d{2}))?`;
+  const t = text.toLowerCase().replace(new RegExp(String.raw`\b${MON}\s+(\d{1,2})(?:st|nd|rd|th)?\b`, "g"), "$2 $1"); // "Oct 15" is "15 Oct"
+  const one = (d: string, m: string, y: string | undefined) => {
+    const mi = MONTHS.indexOf(m.slice(0, 3)), day = Number(d), cur = new Date(nowMs + 330 * 60_000);
+    let yr = y ? Number(y) : cur.getUTCFullYear();
+    const valid = (yy: number) => mi >= 0 && day >= 1 && day <= new Date(Date.UTC(yy, mi + 1, 0)).getUTCDate();
+    const at = (yy: number) => Date.parse(`${yy}-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00+05:30`);
+    if (!valid(yr)) return null;
+    let ms = at(yr);
+    if (!y && ms > nowMs) { yr -= 1; if (!valid(yr)) return null; ms = at(yr); }
+    return { ms, yr };
+  };
+  const range = new RegExp(String.raw`\b(?:between|from)\s+${D}\s*(?:of\s+)?${MON}${YR}\s*(?:and|to|till|until|-|–)\s*${D}\s*(?:of\s+)?${MON}?${YR}\b`).exec(t);
+  const single = range ? null : new RegExp(String.raw`\b(?:on\s+)?${D}\s*(?:of\s+)?${MON}${YR}\b`).exec(t);
+  let a: { ms: number; yr: number } | null, b: { ms: number; yr: number } | null;
+  if (range) { a = one(range[1], range[2], range[3]); b = one(range[4], range[5] ?? range[2], range[6] ?? range[3]); }
+  else if (single && !/\b(?:since|from|after)\s*$/.test(t.slice(0, single.index))) { a = one(single[1], single[2], single[3]); b = a; }
+  else return null;
+  if (!a || !b || b.ms < a.ms) return null;
+  const from = a.ms, to = Math.min(b.ms + 864e5, nowMs + 1000);
+  if (from >= nowMs || nowMs - from > MAX_HOURS * 3600_000) return null;
+  const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const show = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const hours = Math.max(1, Math.round((to - from) / 3600_000));
+  const label = a.ms === b.ms ? show(a.ms) : `${show(a.ms)} to ${show(b.ms)}`;
+  return { hours, label, period: hours <= 24 ? "daily" : hours <= 168 ? "weekly" : hours <= 720 ? "monthly" : "quarterly", range: { from: ist(from), to: ist(to) } };
 }
 
 function scopeWords(s: Scope, n: RefNames): string {

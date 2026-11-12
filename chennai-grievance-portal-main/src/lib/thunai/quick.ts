@@ -15,6 +15,7 @@ import { normalise } from "./normalise";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { asksForbidden } from "./privacy";
+import { heldPeriod, unheldPhraseIn, windowIn } from "@/lib/windowspan";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -162,9 +163,17 @@ const UNIT = "(?:days?|weeks?|months?|quarters?|years?)";
 const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3}|couple of|few|several|many) ${UNIT} (?:ago|back|before|earlier|prior)\b|\b(?:week|month|quarter|year) before last\b|\blast year\b|\bnext (?:week|month|quarter|year)s?\b`);
 const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaaram|maasam|maatham|varusham) (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham)\b|\bpona (?:varusham|varudam)\b/;
 const AGO_TA = /(?:நாள்|நாட்கள்|வாரம்|வாரங்கள்|வாரத்துக்கு|மாதம்|மாதங்கள்|மாசம்|மாசத்துக்கு|ஆண்டு|வருடம்|வருஷம்)(?:த்துக்கு|க்கு|கள்)?\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)/;
-export const unheldWindowIn = (t: string, raw = t): boolean => AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(raw);
+/**
+ * A count of time that is not one of the console's windows (3 days, 2 weeks, 14 days, "last -5 days"), or a time that names no count and is not held ("since monday", "this year"): read by the one window
+ * reader (windowspan.ts) in the three languages, so "pona 2 vaaram" is never one week and "last 3 days" is never today (RC-06, SKG1-31, SKG1-32, g-review 3).
+ */
+const countedUnheld = (t: string): boolean => { const w = windowIn(t); return !!w && (w.kind === "bad" || heldPeriod(w.hours) === null); };
+export const unheldWindowIn = (t: string, raw = t): boolean => AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(raw) || countedUnheld(raw) || countedUnheld(t) || unheldPhraseIn(raw) || unheldPhraseIn(t);
 export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0) || unheldWindowIn(t);
 export function periodIn(t: string): PeriodKey | null {
+  // a count of time says its own window: 3 months is the quarter, not the month inside it; any count the console does not hold is no period (and calendarWindowIn hands the sentence on)
+  const counted = windowIn(t);
+  if (counted) return counted.kind === "span" ? heldPeriod(counted.hours) : null;
   // the one table of period words (lexicon.ts PERIOD_TABLE); "now" and "ippo" are daily only in this lane (a spoken "now" is no window in the rules lane's token reader)
   if (has(t, [...PERIOD_TABLE.daily, "now", "ippo"])) return "daily";
   // the quarter first: "மூன்று மாதம்" (three months) holds the word for a month, and was read as the last 30 days

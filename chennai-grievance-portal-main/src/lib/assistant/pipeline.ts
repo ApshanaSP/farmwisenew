@@ -48,6 +48,7 @@ import { contextForRouter, filtersOf, lastContext, type ConversationContext } fr
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { knownWord, unresolvedInput } from "@/lib/assistant/unresolved";
+import { heldPeriod, windowIn } from "@/lib/windowspan";
 import { notDone, shareAsked } from "@/lib/assistant/cannot";
 import { LIST_DATASETS, datasetAnswerCard, datasetNamed, datasetsListCard } from "@/lib/assistant/studiolink";
 import { ask as studioAsk } from "@/lib/studio/pipeline";
@@ -280,6 +281,9 @@ export function periodFromWords(m: string): Scope["period"] | null {
   m = m.replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi, " ");
   // "what changed since yesterday": the last day against the day before
   if (/\bsince (yesterday|last night)\b/i.test(m)) return "daily";
+  // a count of time in any of the three languages is read by the one window reader: the console's own windows are periods, any other count is customWindow's (SKG1-20..22)
+  const counted = windowIn(m);
+  if (counted) return counted.kind === "span" ? heldPeriod(counted.hours) : null;
   if (/\b(today'?s?|24 ?h(ou)?rs?|last day)\b|இன்று|இன்றைய|innaiki/i.test(m)) return "daily";
   if (/\b(this week|last week|weekly|7 days|seven days|indha week|intha week|pona week)\b|இந்த வாரம்|indha vaaram/i.test(m)) return "weekly";
   if (/\b(this month|last month|monthly|30 days|thirty days)\b|இந்த மாதம்|maasam/i.test(m)) return "monthly";

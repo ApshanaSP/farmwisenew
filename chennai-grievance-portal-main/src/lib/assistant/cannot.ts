@@ -8,10 +8,10 @@
  */
 import type { Lang } from "@/lib/assistant/lang";
 
-export type NotDone = "workspace" | "sources" | "forecast" | "letter" | "deptComplaints";
+export type NotDone = "workspace" | "sources" | "forecast" | "letter" | "deptComplaints" | "order";
 const L = (en: string, ta: string, tanglish: string): Record<Lang, string> => ({ en, ta, tanglish });
 
-const SAY: Record<Exclude<NotDone, "deptComplaints">, Record<Lang, string>> & { deptComplaints?: Record<Lang, string> } = {
+const SAY: Record<Exclude<NotDone, "deptComplaints" | "order">, Record<Lang, string>> & { deptComplaints?: Record<Lang, string>; order?: Record<Lang, string> } = {
   workspace: L("Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there.",
     "அரட்டையில் பணியிடத்தைச் சேமிக்கவோ மீண்டும் திறக்கவோ முடியாது, எதுவும் சேமிக்கப்படவில்லை. கன்சோலின் மேல் மெனுவில் Workspaces என்பதைத் தேர்ந்தெடுத்து அங்கே சேமிக்கவும் அல்லது திறக்கவும்.",
     "Chat-la workspace-a save panna illa reopen panna mudiyaadhu, adhanaala edhuvum save aagala. Console-oda top menu-la Workspaces select pannitu, angaye Save illa Open pannunga."),
@@ -29,6 +29,16 @@ const SAY: Record<Exclude<NotDone, "deptComplaints">, Record<Lang, string>> & { 
 SAY.deptComplaints = L("The department list counts incidents, not citizens' complaints, so I cannot split complaints by department without giving you figures about something else. Ask for incidents by department, or for the complaints of one department.",
   "துறைப் பட்டியல் சம்பவங்களை எண்ணுகிறது, குடிமக்களின் புகார்களை அல்ல; அதனால் புகார்களைத் துறை வாரியாகப் பிரித்துத் தர முடியாது. துறை வாரியாகச் சம்பவங்களை, அல்லது ஒரு துறையின் புகார்களைக் கேளுங்கள்.",
   "Department list incidents-a thaan ennudhu, citizens complaints-a illa; adhanaala complaints-a department-wise pirichu tharamudiyaadhu. Department-wise incidents-a, illa oru department-oda complaints-a kelunga.");
+
+/** An order that changes or exports records (SKG1-30): chat only reads them, so nothing was done, and the sentence says where it is done. */
+SAY.order = L("Chat only reads the records: it cannot close, reopen or export cases, so nothing was changed or exported. An officer closes or reopens a case on the officer console, and the top menu's Export report button gives the file.",
+  "அரட்டை பதிவுகளை மட்டுமே படிக்கும்: வழக்குகளை மூடவோ மீண்டும் திறக்கவோ பதிவிறக்கவோ முடியாது, எதுவும் மாற்றப்படவில்லை, பதிவிறக்கப்படவில்லை. வழக்கை அலுவலர் தன் கன்சோலில் மூடுவார் அல்லது மீண்டும் திறப்பார்; கோப்பு வேண்டுமெனில் மேல் மெனுவில் உள்ள அறிக்கையைப் பதிவிறக்கு பொத்தானைப் பயன்படுத்துங்கள்.",
+  "Chat records-a padikka mattum dhaan seiyum: case-a close, reopen illa export panna mudiyaadhu, adhanaala edhuvum maaralaa, export aagalaa. Case-a officer avanga console-la close illa reopen pannuvaanga; file vennumna top menu-la Export report button use pannunga.");
+const ORDER_QUESTION = /^\s*(?:(?:how|what|which|who|when|why|where|is|are|were|was|did|does|do|has|have|evlo|enna|eppo)\b|எத்தனை|எந்த|என்ன|ஏன்|யார்)/i;
+const ORDER_EN = /^\s*(?:(?:please|pls|kindly|can you|could you|would you)\s+)*(?:close|reopen|re-open|resolve|export|download|reassign|assign|escalate)\b.{0,60}\b(?:complaints?|cases?|incidents?|grievances?|tickets?|them|all|everything|excel|csv|pdf|xlsx?|spreadsheet)\b|\bexport\b.{0,50}\b(?:excel|csv|pdf|xlsx?|spreadsheet)\b/i;
+const ORDER_TG = /\b(?:export|close|reopen|re-open|download|resolve)\b.{0,40}\b(?:pannu|pannunga|panni|pannidu|pannidunga|podu|seiyu)\b/i;
+const ORDER_TA = /(?<![஀-௿])(?:ஏற்றுமதி|பதிவிறக்கம்?|பதிவிறக்கு|மூடு|மூடுங்கள்|மூடிவிடு|மீண்டும் திற|மீண்டும் திறக்க|தீர்த்துவிடு)(?![஀-௿])/u;
+const FUTURE_MORE = /\bwill there\b|\b(?:in|over|for) the (?:coming|upcoming|next) (?:days?|weeks?|months?|quarters?|years?)\b|\b(?:coming|upcoming) (?:days?|weeks?|months?|quarters?|years?)\b|\boutlook\b|\bby (?:january|february|march|april|may|june|july|august|september|october|november|december|next year|year end|the end)\b|\b(?:expected|projected|estimated) (?:number|count|total|rise|increase|volume)\b|\b(?:future|forthcoming)\b|\b(?:edhirkaalam|ethirkaalam|kanippu|munkanippu|munnarivippu|varumaa)\b|\bnext (?:few )?(?:days|weeks|months)\b|எதிர்காலத்தில்|எதிர்காலம்|முன்கணிப்பு|முன்னறிவிப்பு|கணிப்பு|கணிக்க|அடுத்த (?:காலாண்டு|வருடம்|ஆண்டு|சில நாட்கள்)|வரும் (?:நாட்களில்|வாரங்களில்|மாதங்களில்|காலாண்டு|வருடம்|ஆண்டு)|\bevlo\b.{0,40}\bvarum\b/i;
 
 const DEPT_SPLIT = /\b(by|per|each|across)\s+(the\s+)?(department|dept)s?\b|\b(department|dept)[- ]?wise\b|துறை(?:கள்)? ?வாரியா|thurai ?(vaariya|wise)/i;
 const PAST_DEADLINE = /\b(overdue|past (the |their )?(deadline|due)|missed (the |their )?deadline|beyond (the )?deadline|late)\b|கெடு|காலக்கெடு|தாண்டிய|\bdeadline\b/i;
@@ -50,9 +60,11 @@ export function notDone(message: string, rulesOnly: boolean): { kind: NotDone; s
   if ((ALL_SOURCES.test(t) || SOURCES_TA.test(t) || SOURCES_TG.test(t)) && /\b(briefing|brief|report|answer|summary)\b|சுருக்க|அறிக்கை/i.test(t)) return { kind: "sources", say: SAY.sources };
   // a measure the department list does not hold: complaints split by department (the rules ranked open incidents under a question about complaints, same-number-20)
   // (the past-deadline count IS held per department, so "past deadline by department" is answered by the department list: RC-11, e-routes)
+  // an order to close, reopen or export records is never done from chat, with or without a model (Ask has no tool that writes)
+  if (!ORDER_QUESTION.test(t) && (ORDER_EN.test(t) || ((ORDER_TG.test(t) || ORDER_TA.test(t)) && THINGS.test(t)))) return { kind: "order", say: SAY.order! };
   if (rulesOnly && /\bcomplaints?\b|புகார்/i.test(t) && !/\bincidents?\b|சம்பவ/i.test(t) && !PAST_DEADLINE.test(t) && DEPT_SPLIT.test(t)) return { kind: "deptComplaints", say: SAY.deptComplaints! };
   if (rulesOnly && WRITE.test(t)) return { kind: "letter", say: SAY.letter };
-  if (rulesOnly && FUTURE.test(t) && THINGS.test(t) && !WEATHER.test(t)) return { kind: "forecast", say: SAY.forecast };
+  if (rulesOnly && (FUTURE.test(t) || FUTURE_MORE.test(t)) && THINGS.test(t) && !WEATHER.test(t)) return { kind: "forecast", say: SAY.forecast };
   return null;
 }
 
