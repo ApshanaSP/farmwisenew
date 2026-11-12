@@ -44,7 +44,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     if (a.action === "delete_page") return (await deletePage(id, a.page, s.session.email)) ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "That page cannot be deleted just now." }, { status: 409 });
     if (a.action === "repeats") {
       // only for a petition on the desk: not a free number lookup with any id (QA pass 5, P5-014)
-      if (!(await getPetition(id))) return NextResponse.json({ error: "Petition not found." }, { status: 404 });
+      const p = await getPetition(id);
+      if (!p) return NextResponse.json({ error: "Petition not found." }, { status: 404 });
+      // and only while it is being checked: an approved petition needs no repeat check, and the check is a lookup by any mobile typed
+      // into the request (QA pass 6, P5-039)
+      if (!["needs_check", "read_failed", "reading"].includes(String(p.status))) return NextResponse.json({ error: "This petition is already approved." }, { status: 409 });
       const repeats = await findRepeats({ mobile: a.mobile, name: a.name, street: a.street, ward: a.ward, dept: a.dept, problem: a.problem, excludeId: id });
       return NextResponse.json({ repeats, zone: await wardName(a.ward) });
     }

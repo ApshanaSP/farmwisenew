@@ -16,7 +16,9 @@ export interface Earlier {
 }
 
 const STOP = new Set("the a an of in on at to for from and or is are was were not has have had no my our her his their this that with by be been it its days day week weeks month months year years street area near problem issue since still now more over very after before about".split(" "));
-const words = (s: string | null | undefined) => new Set(String(s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)));
+// letters of any script: Tamil was stripped to nothing by [^a-z0-9], so a problem written in Tamil never shared a topic (QA pass 6, P5-030)
+const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase().replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
+  .filter((w) => [...w].length > 2 && !STOP.has(w)));
 
 /**
  * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
@@ -37,19 +39,33 @@ const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
+/** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
+function streetIn(street: string, address: string | null): boolean {
+  const all = squash(address);
+  if (all.includes(street)) return true;
+  return String(address ?? "").split(/[,\n;]/).map(squash).filter(Boolean).some((part) => similarity(street, part) >= 0.7);
+}
+
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(c.street);
-  const out: RepeatMatch[] = [];
+  const out: (RepeatMatch & { sameDept: boolean; who: string })[] = [];
   for (const e of earlier) {
-    const sameMobile = !!mobile && tenDigits(e.mobile) === mobile;
-    const sameName = !!name && squash(e.name) === name && (!street || similarity(street, squash(e.address).slice(-street.length)) >= 0.7 || squash(e.address).includes(street));
+    const theirs = tenDigits(e.mobile);
+    const sameMobile = !!mobile && theirs === mobile;
+    // a name alone is weak: with no street to compare, the same name with another mobile on both sides, or in another ward, is somebody
+    // else ("R. Kumar" in Adyar is not "R. Kumar" in Perambur: QA pass 6, P5-030)
+    const contradicts = (!!mobile && !!theirs && theirs !== mobile) || (c.ward != null && e.ward != null && e.ward !== c.ward);
+    const sameName = !!name && squash(e.name) === name && (street ? streetIn(street, e.address) : !contradicts);
     const samePerson = sameMobile || sameName;
     const sameDept = !!c.dept && e.dept === c.dept;
-    const topic = sameDept && sameTopic(c.problem, e.problem, samePerson);
+    // an online complaint is filed under the portal's departments, which the desk's do not all map to (eight have none: P5-037), so for
+    // the same person the topic decides; between different people the department must agree as well
+    const topic = (sameDept || (samePerson && e.reporterKind === "online")) && sameTopic(c.problem, e.problem, samePerson);
     const sameProblem = topic && (samePerson || (c.ward != null && e.ward === c.ward));
     if (!samePerson && !sameProblem) continue;
-    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status) });
+    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
+      sameDept, who: theirs || squash(e.name) || e.code });
   }
   out.sort((a, b) => b.filedAt.localeCompare(a.filedAt));
   const mine = out.filter((m) => m.samePerson && m.sameProblem), person = out.filter((m) => m.samePerson), others = out.filter((m) => !m.samePerson && m.sameProblem);
@@ -58,12 +74,15 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     const last = mine[0];
     headline = `This is this person's ${nth(mine.length + 1)} petition on this problem. The last one was filed on ${day(last.filedAt)} and is ${last.open ? "still open" : `marked "${last.status}"`}.`;
   } else if (others.length) {
-    headline = `${others.length} other ${others.length === 1 ? "person has" : "people have"} written about this in the same ward.`;
+    // people, not petitions: one neighbour who wrote three times is one person (P5-030)
+    const people = new Set(others.map((m) => m.who)).size;
+    headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
   } else if (person.length) {
     headline = `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
   }
-  const target = [...mine, ...others].find((m) => m.open && m.incidentId);
-  return { headline, matches: out.slice(0, 8), attachTo: target?.incidentId ?? null };
+  // only a case of the same department is offered: joining another department's case is the owner's decision (P5-021)
+  const target = [...mine, ...others].find((m) => m.open && m.incidentId && m.sameDept);
+  return { headline, matches: out.slice(0, 8).map(({ sameDept: _d, who: _w, ...m }) => m), attachTo: target?.incidentId ?? null };
 }
 
 /** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */
