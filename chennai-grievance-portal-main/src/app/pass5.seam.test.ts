@@ -40,3 +40,15 @@ describe("P5-001: no page links Google Fonts (fonts come from next/font in app/l
     expect(bad).toEqual([]);
   });
 });
+
+describe("P5-008: middleware passes on every body a route is allowed to take (Next 15.5 cuts it at 10 MB by default)", () => {
+  it("experimental.middlewareClientMaxBodySize covers the Manu Desk's request limit and a full-size complaint video with its form", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cfg = require(path.resolve(APP, "..", "..", "next.config.js")) as { experimental?: { middlewareClientMaxBodySize?: number } };
+    const { MANU_LIMITS } = await import("@/lib/manu/constants");
+    const { MAX_MEDIA_BYTES } = await import("@/lib/complaint-media");
+    const limit = Number(cfg.experimental?.middlewareClientMaxBodySize ?? 10 * 1024 * 1024);
+    expect(limit).toBeGreaterThanOrEqual(MANU_LIMITS.maxRequestBytes + 1024 * 1024);
+    expect(limit).toBeGreaterThanOrEqual(MAX_MEDIA_BYTES + 1024 * 1024);
+  });
+});

@@ -48,6 +48,10 @@ const nextConfig = {
   // LanceDB (Ask District IQ's search index) ships native binaries: Node loads it as is, the bundler leaves it out
   // (Next 15: this key left "experimental"; src/instrumentation.ts, where the AWS store starts loading, needs no flag any more)
   serverExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core", "tesseract.js", "tesseract.js-core"],
+  // Next 15.5: middleware (which matches every /api route) keeps only the first 10 MB of a request body unless told otherwise, so a scanned
+  // petition PDF (the Manu Desk takes up to 42 MB a request, lib/manu/constants.ts) or a 10 MB complaint video reached its route cut off and
+  // failed with a 500 (QA pass 5, P5-008). Each route still checks its own limit.
+  experimental: { middlewareClientMaxBodySize: 48 * 1024 * 1024 },
   eslint: {
     ignoreDuringBuilds: true
   }

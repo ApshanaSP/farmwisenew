@@ -1,0 +1,6 @@
+# P5-008 live evidence
+before (3105, built 2eb8548 config):
+{"port":3105,"mb":12,"status":500,"body":"{\"error\":\"Could not save the petition.\"}"}
+21:Request body exceeded 10MB for /api/manu/petitions. Only the first 10MB will be available unless configured. See https://nextjs.org/docs/app/api-reference/config/next-config-js/middlewareClientMaxB
+after (3106, same build, new next.config.js):
+{"port":3106,"mb":12,"status":400,"body":"No scanned pages could be taken from that PDF..."} (the answer a 1 MB blank PDF gets)
