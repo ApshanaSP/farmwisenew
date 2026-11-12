@@ -2,6 +2,30 @@ import { z } from "zod";
 import { isComplaintMediaPath } from "@/lib/complaint-media-path";
 
 // ---------------------------------------------------------------------
+// Required text: at least one character a reader can see
+// ---------------------------------------------------------------------
+// trim() keeps the format characters that print nothing (zero-width space and joiners, word joiner, BOM, direction marks, soft
+// hyphen, tags), the variation selectors, the combining grapheme joiner and the blank letters (Hangul fillers, Braille blank), so a
+// field of only "​" passed min(1) and filed a blank complaint (hunt2-desk-17). The value is kept as typed: a joiner inside a
+// Tamil word is part of the word. Only the "is anything there" check ignores them.
+const INVISIBLE = /[\p{Cf}͏ᅟᅠ⠀ㅤ︀-️ﾠ\u{E0100}-\u{E01EF}]|\s/gu;
+
+/** The text with every invisible character and every space removed: what a reader would actually see. */
+export function visibleText(value: string | null | undefined): string {
+  return String(value ?? "").replace(INVISIBLE, "");
+}
+
+/** True when the text has at least `min` characters a reader can see. */
+export function hasVisibleText(value: string | null | undefined, min = 1): boolean {
+  return Array.from(visibleText(value)).length >= min;
+}
+
+/** A required text field: trimmed, at most `max` characters, and at least `min` visible characters. The shared rule for every form. */
+export function requiredText(message: string, max: number, min = 1) {
+  return z.string({ required_error: message }).trim().min(1, message).max(max).refine((v) => hasVisibleText(v, min), message);
+}
+
+// ---------------------------------------------------------------------
 // Password: min 8 chars, 1 upper, 1 lower, 1 number, 1 special, no spaces
 // ---------------------------------------------------------------------
 export const passwordSchema = z
@@ -60,11 +84,7 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string(),
     // Captured once here so the complaint form never has to ask again.
-    firstName: z
-      .string({ required_error: "First name is required" })
-      .trim()
-      .min(1, "First name is required")
-      .max(100),
+    firstName: requiredText("First name is required", 100),
     lastName: z.string().trim().max(100).optional().default("")
     // No role or department here: self-registration is for citizens only.
     // Collector and officer accounts are issued by the Collector's office
@@ -106,7 +126,7 @@ export const forgotPasswordResetSchema = z
 // Profile
 // ---------------------------------------------------------------------
 export const profileUpdateSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required").max(100),
+  firstName: requiredText("First name is required", 100),
   lastName: z.string().trim().max(100).optional().default(""),
   gender: z.enum(["Male", "Female", "Transgender"]).optional().nullable(),
   dateOfBirth: z.string().optional().nullable(),
@@ -139,10 +159,10 @@ export const complaintSubmitSchema = z
   .object({
     // --- complainant's own details -------------------------------------
     initials: z.string().trim().max(10).optional().default(""),
-    firstName: z.string().trim().min(1, "First name is required").max(100),
+    firstName: requiredText("First name is required", 100),
     lastName: z.string().trim().max(100).optional().default(""),
     gender: z.enum(["Male", "Female", "Transgender"]),
-    streetAddress: z.string().trim().min(1, "Your address is required").max(255),
+    streetAddress: requiredText("Your address is required", 255),
     // Mandatory: the department needs a way to reach the complainant.
     mobileNumber: mobileSchema,
     pincode: z.union([pincodeSchema, z.literal("")]).optional().nullable(),
@@ -172,8 +192,8 @@ export const complaintSubmitSchema = z
     // Free text for the "Other" type; the classifier routes it to a department.
     otherDescription: z.string().trim().max(400).nullable().optional(),
 
-    title: z.string().trim().min(1, "Title is required").max(200),
-    description: z.string().trim().min(1, "Details are required").max(400),
+    title: requiredText("Title is required", 200),
+    description: requiredText("Details are required", 400),
     // only a path the upload route returned: a private upload, or an older public one; never a URL or a file path
     mediaPath: z.string().trim().max(200)
       .refine((p) => p === "" || isComplaintMediaPath(p), "The attached file was not recognised. Please attach it again.")
@@ -181,7 +201,7 @@ export const complaintSubmitSchema = z
     isAnonymous: z.boolean().optional().default(false)
   })
   .refine(
-    (d) => Boolean(d.gccStreetId) || Boolean(d.manualStreetName && d.manualStreetName.length > 0),
+    (d) => Boolean(d.gccStreetId) || hasVisibleText(d.manualStreetName),
     {
       message: "Select a street from the list, or enter one manually",
       path: ["gccStreetId"]
