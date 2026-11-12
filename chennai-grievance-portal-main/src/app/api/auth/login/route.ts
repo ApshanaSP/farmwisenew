@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { loginSchema } from "@/lib/validators";
 import { roleToPortal } from "@/lib/session-cookies";
-import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
+import { addFailure, checkRateLimit, clearFailures, failuresOver, getClientIp, ipLimit } from "@/lib/rate-limit";
 import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
 import { startSession } from "@/lib/security/session";
@@ -25,17 +25,22 @@ export async function POST(req: NextRequest) {
     const { email, password } = parsed.data;
     const ip = getClientIp(req.headers);
 
-    // Rate limit by IP and by email to slow down brute force / credential
-    // stuffing without letting one IP lock out a legitimate user forever.
+    // Rate limit to slow down brute force and credential stuffing without letting one visitor lock an account for good.
+    // Per address: every try counts. Per account: only WRONG passwords count (QA4 gate, redteam-final-3: right ones counted too, so
+    // anyone could keep any account locked out); 8 wrong from one address, or 40 wrong from all addresses together, in 15 minutes.
+    // A try is counted before the slow password check, so a parallel burst cannot read the same count (see lib/security/factors.ts).
+    // A right password clears both counts. Without TRUST_PROXY_HOPS every client shares one address, as before.
     const ipCheck = checkRateLimit(`login-ip:${ip}`, ipLimit(ip, 20), 60 * 15);
-    const emailLimit = checkRateLimit(`login-email:${email}`, 8, 60 * 15);
-
-    if (!ipCheck.allowed || !emailLimit.allowed) {
+    const pairKey = `login-fail:${email}|${ip}`;
+    const emailKey = `login-fail:${email}`;
+    if (!ipCheck.allowed || !failuresOver(pairKey, 8).allowed || !failuresOver(emailKey, 40).allowed) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait a few minutes and try again." },
         { status: 429 }
       );
     }
+    addFailure(pairKey, 60 * 15);
+    addFailure(emailKey, 60 * 15);
 
     const [rows] = await pool.query<RowDataPacket[]>(
       "SELECT * FROM users WHERE email = ? LIMIT 1",
@@ -58,6 +63,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
 
+    clearFailures(pairKey);
+    clearFailures(emailKey);
     const tv = Number((user as UserRow & { token_version?: unknown }).token_version) || 0;
     const how = { ip, ua: req.headers.get("user-agent") };
     if (!roleToPortal(user.role)) {
