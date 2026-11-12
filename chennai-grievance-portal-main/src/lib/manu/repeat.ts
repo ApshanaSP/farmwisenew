@@ -6,7 +6,7 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
-import { similarity, squash, tenDigits } from "./clean";
+import { maskAadhaar, similarity, squash, tenDigits } from "./clean";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 
 export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; excludeId?: number }
@@ -30,23 +30,71 @@ const FILLER = new Set(("please kindly take action immediately immediate urgent 
   "first second third many several வரவில்லை வருவதில்லை வரவே இரண்டு மூன்று நான்கு ஐந்து எங்களுடைய எங்களின் வார்டில் வார்டு வார்டின் " +
   "செய்யவில்லை எடுக்கவில்லை சரிசெய்ய சரிசெய்யவில்லை வேலை செய்யவில்லை தயவுசெய்து " +
   "rendu moonu naalu anju naala naalaa varala varalai varalae podunga edunga pannunga panunga seyyala seiyala irukku").split(" "));
-const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase()
+/**
+ * Words that say what is wrong with a thing, how long, or where, not what the thing is: predicates, durations and place words. One
+ * writer's two different problems share them all the time ("Patta transfer pending" / "Building plan approval pending", "\u0BA4\u0BC6\u0BB0\u0BC1 \u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1
+ * \u0B87\u0BAF\u0B99\u0BCD\u0B95\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8" / "\u0B95\u0BC1\u0B9F\u0BBF\u0BA8\u0BC0\u0BB0\u0BCD \u0BAE\u0BCB\u0B9F\u0BCD\u0B9F\u0BBE\u0BB0\u0BCD \u0B87\u0BAF\u0B99\u0BCD\u0B95\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8", "Thanni varla" / "Current varla"), so they never make a topic on their own (QA pass 6,
+ * reviewer5-07). The FILLER list could not keep up with them (P6-011 and P6-020 each added words, and the next reviewer found more), so
+ * the open classes are read by their endings; only the closed ones are listed: English irregular participles and a few state words.
+ */
+const PARTICIPLE = new Set(("broken fallen stolen taken given gone torn worn shown thrown grown blown drawn sunk stuck burnt burst built bent lost left kept laid paid " +
+  "sold told heard held found made sent spent lit hung shut split swept dug struck eaten frozen hidden beaten shaken written ridden driven risen bitten chosen " +
+  "forgotten spoken swollen woken rotten overgrown cut").split(" "));
+const STATE = new Set("open full empty loose dirty unsafe dangerous dark low poor bad slow late weak stagnant pending".split(" "));
+export function predicateWord(w: string): boolean {
+  if (/^[a-z]+$/.test(w)) {
+    if (PARTICIPLE.has(w) || STATE.has(w)) return true;
+    // English participles and gerunds: received, damaged, blocked, leaking, overflowing ("speed", "need" are not -ed)
+    if (w.length >= 5 && /(?:(?<!e)ed|ing)$/.test(w)) return true;
+    // Tanglish verb forms: the negative (varla, varala, kedaikala, aagala, seyyala, ...lai, ...lae), the present (aagudhu, odudhu), the
+    // past (aachu, odanjuchu); -la is also the locative ("therula", "roadla"), a place and not a problem
+    return w.length >= 4 && /(?:la|lai|lae|udhu|uthu|idhu|ithu|chu)$/.test(w);
+  }
+  // Tamil: the negative (-\u0B87\u0BB2\u0BCD\u0BB2\u0BC8: \u0BB5\u0BB0\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8, \u0B87\u0BAF\u0B99\u0BCD\u0B95\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8, \u0B9A\u0BB0\u0BBF\u0B9A\u0BC6\u0BAF\u0BCD\u0BAF\u0BAA\u0BCD\u0BAA\u0B9F\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8, \u0BB5\u0BB0\u0BC1\u0BB5\u0BA4\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8), the adverb of time or manner (-\u0B86\u0B95: \u0BA8\u0BBE\u0B9F\u0BCD\u0B95\u0BB3\u0BBE\u0B95,
+  // \u0BB5\u0BBE\u0BB0\u0B99\u0BCD\u0B95\u0BB3\u0BBE\u0B95, \u0BA4\u0BBE\u0BAE\u0BA4\u0BAE\u0BBE\u0B95), the locative (-\u0B87\u0BB2\u0BCD: \u0BA8\u0BBF\u0BB2\u0BC1\u0BB5\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD, \u0B9A\u0BBE\u0BB2\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD), "without" (-\u0B86\u0BAE\u0BB2\u0BCD) and the finite verb (-\u0B95\u0BBF\u0BB1\u0BA4\u0BC1, -\u0B95\u0BBF\u0BA9\u0BCD\u0BB1\u0BA9, -\u0BB3\u0BCD\u0BB3\u0BA4\u0BC1,
+  // -\u0BA8\u0BCD\u0BA4\u0BA4\u0BC1, -\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1, ...)
+  return /(?:\u0BB2\u0BCD\u0BB2\u0BC8|\u0BBE\u0B95|\u0B86\u0B95|\u0BBF\u0BB2\u0BCD|\u0B87\u0BB2\u0BCD|\u0BBE\u0BAE\u0BB2\u0BCD|\u0B95\u0BBF\u0BB1\u0BA4\u0BC1|\u0B95\u0BBF\u0BA9\u0BCD\u0BB1\u0BA4\u0BC1|\u0B95\u0BBF\u0BA9\u0BCD\u0BB1\u0BA9|\u0B95\u0BBF\u0BB1\u0BBE\u0BB0\u0BCD\u0B95\u0BB3\u0BCD|\u0BB3\u0BCD\u0BB3\u0BA4\u0BC1|\u0BB3\u0BCD\u0BB3\u0BA9|\u0BA8\u0BCD\u0BA4\u0BA4\u0BC1|\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1|\u0BA4\u0BCD\u0BA4\u0BA4\u0BC1|\u0BB1\u0BCD\u0BB1\u0BA4\u0BC1|\u0BA9\u0BA4\u0BC1)$/u.test(w);
+}
+
+/** One word, its plural taken off: "lights" is "light", "supplies" "supply", "\u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1\u0B95\u0BB3\u0BCD" "\u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1". */
+const stem = (w: string): string => {
+  if (/^[a-z]+$/.test(w)) return w.length > 4 && /ies$/.test(w) ? `${w.slice(0, -3)}y` : w.length > 4 && /[^sui]s$/.test(w) ? w.slice(0, -1) : w;
+  return [...w].length > 4 && w.endsWith("\u0B95\u0BB3\u0BCD") ? w.slice(0, -"\u0B95\u0BB3\u0BCD".length) : w;
+};
+const listed = (w: string) => STOP.has(w) || TA_STOP.has(w) || FILLER.has(w);
+
+/** A problem line's content words, and those of them that name what the problem is about (not a predicate, a duration or a place). */
+function wordsOf(s: string | null | undefined): { all: Set<string>; subject: Set<string> } {
+  const all = new Set<string>(), subject = new Set<string>();
   // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
-  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
-  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w)));
+  for (const w of String(s ?? "").normalize("NFC").toLowerCase().replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)) {
+    if ([...w].length <= 2 || listed(w)) continue;
+    const st = stem(w);
+    if (listed(st)) continue;
+    all.add(st);
+    if (!predicateWord(w)) subject.add(st);
+  }
+  return { all, subject };
+}
 
 /**
- * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
- * ("sewage"), however long the lines; different people in a ward need more, so that two unrelated road complaints are not joined. It only
- * brings the earlier petition to the staff's attention: a person decides.
+ * Do two problem lines, both to one department, share what they are about? They must share a word that names the thing ("sewage",
+ * "pension", "\u0BB5\u0BBF\u0BB3\u0B95\u0BCD\u0B95\u0BC1"): a shared predicate ("pending", "not received", "varla") is not a topic. A line with no such word ("Flooding again")
+ * is compared on all its words. The same person writing twice needs one shared subject word, however long the lines; different people in a
+ * ward need more, so that two unrelated road complaints are not joined. It only brings the earlier petition to the staff's attention: a
+ * person decides.
  */
 export function sameTopic(a: string | null | undefined, b: string | null | undefined, samePerson = false): boolean {
-  const A = words(a), B = words(b);
-  if (!A.size || !B.size) return false;
+  const A = wordsOf(a), B = wordsOf(b);
+  if (!A.all.size || !B.all.size) return false;
+  const [x, y] = A.subject.size && B.subject.size ? [A.subject, B.subject] : [A.all, B.all];
+  let subject = 0;
+  for (const w of x) if (y.has(w)) subject++;
+  if (!subject) return false;
+  if (samePerson) return true;
   let both = 0;
-  for (const w of A) if (B.has(w)) both++;
-  if (samePerson) return both >= 1;
-  return both >= 2 || (both >= 1 && both / new Set([...A, ...B]).size >= 0.3);
+  for (const w of A.all) if (B.all.has(w)) both++;
+  return both >= 2 || both / new Set([...A.all, ...B.all]).size >= 0.3;
 }
 
 const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
@@ -91,7 +139,9 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     const topic = sameDept ? sameTopic(c.problem, e.problem, samePerson) : samePerson && e.reporterKind === "online" && sameTopic(c.problem, e.problem, false);
     const sameProblem = topic && (samePerson || (c.ward != null && e.ward === c.ward));
     if (!samePerson && !sameProblem) continue;
-    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
+    // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
+    // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
+    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
       sameDept, who: squash(e.name) || theirs || e.code, phone: theirs });
   }
   // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
