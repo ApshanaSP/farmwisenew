@@ -50,6 +50,7 @@ import type { StudioContext } from "../studio/Dataset";
 import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import { confirmLine } from "@/lib/thunai/say";
+import { isDangerButton } from "@/lib/thunai/skeleton";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
   // a Tamil line with no Tamil voice on this device is shown, not read out by an English voice
@@ -117,7 +118,6 @@ interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] 
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
-const DANGER_BUTTON = /send|approve|confirm|delete|remove|discard|reject|submit|verify|close it|work is done|accept|அனுப்பு|நீக்கு|உறுதி|ஒப்புதல்|ஏற்க|நிராகரி/i;
 /** A line the model wrote beside a plan is said only if it holds no figure: the figures come from code. */
 const noFigure = (t?: string | null) => (t && !figuresIn(t).length ? t : undefined);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -672,7 +672,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (!t) return line("notUnderstood", lang, { heard: heardText, examples: "show numbers, click 3" });
         // Jarvis never presses send, approve or delete, by number or by name
         // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never)
-        if (t.el.closest("[data-jarvis-never]") || DANGER_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
+        if (t.el.closest("[data-jarvis-never]") || isDangerButton(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
         // saving, pinning or a bare "Yes" keeps something (level B): a spoken click never presses it, the Collector's tap does (BUG-014)
         if (keepsSomething(t.name, t.el.textContent)) return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
         press(t.el);

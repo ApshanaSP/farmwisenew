@@ -3,6 +3,7 @@
  * them is refused here, with no model involved, and every tool result is redacted on its way out (so neither the model nor
  * the Stage ever sees them). Also: Jarvis never sends, approves or deletes, whatever it is told. Pure and tested.
  */
+import { skeleton } from "./skeleton";
 export const PRIVACY_REPLY = {
   en: "I can't share a citizen's name, phone number, Aadhaar or their own words. I can show the case, its place, its department and how long it has been open.",
   ta: "குடிமக்களின் பெயர், தொலைபேசி எண், ஆதார் அல்லது அவர்கள் சொன்ன வார்த்தைகளை என்னால் தர முடியாது. சம்பவம், இடம், துறை, எவ்வளவு காலமாகத் திறந்துள்ளது என்பதைக் காட்டலாம்."
@@ -71,7 +72,7 @@ export function normaliseNumbers(s: string): string {
 
 /** Asks for a private fact about a citizen: refused in code. An officer's contact is a different thing (contacts tool). */
 export function asksPrivate(text: string): boolean {
-  const t = stripFormat(text).trim();
+  const t = skeleton(stripFormat(text)).trim();
   if (/\bwhose\b.{0,40}(complaint|grievance|petition|inc-)|யாருடைய\s*புகார்|\byaar\w*\s+(kuduth|pannin|koduth)/i.test(t)) return true;
   if (/(புகார்தாரர்|புகார்\s*கொடுத்தவர்|மனுதாரர்).{0,20}(பேர்|பெயர்|எண்|நம்பர்|முகவரி)/.test(t)) return true;
   // "how many people", "the people's complaints": people as a count or a subject is not a request for a person's details
@@ -126,7 +127,7 @@ const REVEAL_RULES = /\b(?:print|show|reveal|repeat|tell|read|output|display|sha
 export function asksForbidden(text: string): boolean {
   // The rules (ignore them, show them, do what a record says, move money) are read on the whole sentence: a marker after them ("ignore all your rules aachu") does not make them
   // a statement about the past. Only the order verbs below read the sentence with the done phrase taken out (QA4 g-repair 1, reviewer problem 1).
-  const whole = stripFormat(text).trim();
+  const whole = skeleton(stripFormat(text)).trim();
   if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(whole)) return true;
   if (OBEY_RECORD.test(whole) || REVEAL_RULES.test(whole) || MONEY_VERB.test(whole)) return true;
   const t = whole.replace(DONE_PHRASE, " ");
