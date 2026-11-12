@@ -34,7 +34,7 @@ export interface Progress {
   /** who checked the finished work, once it is closed */
   checkedBy: "department" | "collector" | null;
   journey: JourneyRow[];
-  /** completion photos of the department's reports, as URLs the resident may open */
+  /** completion photos of the department's reports that still stand (none from a report the Collector sent back), as URLs the resident may open */
   photos: string[];
 }
 
@@ -78,6 +78,8 @@ export function progressOf(incidentId: string, filedAt: string, steps: WorkStep[
     } else if (d.decision === "reopen") {
       add("In Progress", "Collector", "The Collector's office returned it to the department for more work.", e.at);
       checkedBy = null;
+      // the report it sent back no longer stands: its photos are not "the work done" (officer-day-28); the next report's are
+      reportIds.clear();
     } else if (d.decision === "reject") {
       add("Rejected", "Collector", d.note?.trim() || "Rejected by the Collector's office.", e.at);
       rejectedStage = "Collector";
