@@ -312,6 +312,15 @@ describe("the petition officer's login", () => {
   });
 });
 
+// QA pass 5, P5-007: what the officer types on the check screen is masked wherever it is stored, not only in petitions.address
+describe("an Aadhaar number typed into the address", () => {
+  it("is masked in the complaint, the petition and the case", async () => {
+    const r = await filePetition(await uploaded(), fields({ door: "9999 4512 7731", street: "Aadhaar 9999 4512 7731, Jawahar St" }), "x");
+    const all = JSON.stringify([one("SELECT * FROM petitions WHERE complaint_code = ?", r.code), one("SELECT * FROM complaints WHERE complaint_code = ?", r.code), one("SELECT * FROM incidents"), one("SELECT * FROM events")]);
+    expect(all).not.toMatch(/9999\s?4512/);
+  });
+});
+
 describe("a Manu among the other complaints", () => {
   it("added to an online complaint's case, the case shows both ways it came in", async () => {
     await addCaseLive(onlineCase({ complaint_code: "2026-300CCC", created_at: "2026-11-09 10:00:00", title: "Street light broken", description: "Dark", ward_number: 70, street_address: "Main Road", user_id: 7 }, "Electrical Department"));

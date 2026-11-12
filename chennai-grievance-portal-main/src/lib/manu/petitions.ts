@@ -213,8 +213,9 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
 
     const now = istNow();
     const g = readingOf(p);
-    const address = [f.door, f.street, f.area].filter(Boolean).join(", ") || `Ward ${f.ward}`;
-    const place = [f.street, f.area].filter(Boolean).join(", ") || `Ward ${f.ward}`;
+    // every field the officer typed is masked before it is stored anywhere: the complaint, the petition and the case (P5-007)
+    const address = maskAadhaar([f.door, f.street, f.area].filter(Boolean).join(", ") || `Ward ${f.ward}`);
+    const place = maskAadhaar([f.street, f.area].filter(Boolean).join(", ") || `Ward ${f.ward}`);
     const mobile = tenDigits(f.mobile) || null;
     const subject = maskAadhaar(f.subject || f.problem), problem = maskAadhaar(f.problem), request = maskAadhaar(f.request), fullText = maskAadhaar(f.fullText);
     const dueAt = addHours(now, 24 * (f.urgent ? URGENT_DAYS() : DAYS_TO_ACT()));

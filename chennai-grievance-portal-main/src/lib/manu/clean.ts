@@ -7,12 +7,26 @@ import { MANU_DEPTS, READ_FIELDS, type ReadField, type Reading } from "./constan
 
 export type RawReading = Omit<Reading, "ward" | "unsure_fields"> & { ward: string | null; unsure_fields: string[] };
 
-const AADHAAR = /(?<!\d)(\d{4})[\s.-]?(\d{4})[\s.-]?(\d{4})(?!\d)/g;
+// QA pass 5 (P5-007): a petition's numbers come from a reader of handwriting and print, in Tamil and English. JavaScript's \d is ASCII only,
+// so Tamil digits (௦-௯) and full-width digits (０-９) were dropped as "not a digit", and every number field joined all the digits it held.
+// Every number below is read through asciiDigits() first, and taken as one number with clear edges.
+const DIGIT = "0-9௦-௯０-９";
+const SEP = String.raw`[\s./\-​-‍⁠﻿]`;
+const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])([${DIGIT}]{4})${SEP}{0,3}([${DIGIT}]{4})${SEP}{0,3}([${DIGIT}]{4})(?![${DIGIT}])`, "gu");
+/** Written in Aadhaar's 4-4-4 groups (spaces, dots, dashes or slashes between), as a reader returns one it was not asked for. */
+const AADHAAR_SHAPED = new RegExp(String.raw`^\s*[${DIGIT}]{4}${SEP}{1,3}[${DIGIT}]{4}${SEP}{1,3}[${DIGIT}]{4}\s*$`, "u");
 
-/** Any 12-digit number in the text, written with its first 8 digits hidden. */
-export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${c}`);
+/** Tamil and full-width digits as ASCII digits; nothing else changes. */
+export const asciiDigits = (s: string): string =>
+  s.replace(/[௦-௯]/g, (c) => String(c.charCodeAt(0) - 0x0be6)).replace(/[０-９]/g, (c) => String(c.charCodeAt(0) - 0xff10));
 
-export const digits = (s: string | null | undefined): string => String(s ?? "").replace(/\D/g, "");
+/**
+ * Any 12-digit number in the text, written with its first 8 digits hidden: in any of the digit forms above, with up to three spaces, dots,
+ * dashes, slashes or zero-width characters between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
+ */
+export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`);
+
+export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
 
 /** A mobile number as its 10 digits: +91 and a leading 0 are dropped. */
 export function tenDigits(s: string | null | undefined): string {
@@ -22,14 +36,42 @@ export function tenDigits(s: string | null | undefined): string {
   return d;
 }
 
-/** DD.MM.YYYY when the date can exist, else null. Two-digit years are this century. */
-export function normalDate(s: string | null | undefined): string | null {
-  const m = String(s ?? "").match(/(\d{1,2})\D+(\d{1,2})\D+(\d{4}|\d{2})/);
-  if (!m) return null;
-  const d = Number(m[1]), mo = Number(m[2]), y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+const realDate = (d: number, mo: number, y: number): string | null => {
   const t = new Date(Date.UTC(y, mo - 1, d));
   if (t.getUTCFullYear() !== y || t.getUTCMonth() !== mo - 1 || t.getUTCDate() !== d) return null;
   return `${String(d).padStart(2, "0")}.${String(mo).padStart(2, "0")}.${y}`;
+};
+
+/**
+ * DD.MM.YYYY when the date can exist, else null. Two-digit years are this century. A year-first date (2026-03-15, as a form or a machine
+ * writes it) is read year first, and each number must stand on its own: "2026-03-15" was read as 26.03.2015, "15.03.202" (a dropped digit)
+ * as 15.03.2020, and "10:30, 15.03.2026" as no date at all (P5-007). The first date that can exist wins.
+ */
+export function normalDate(s: string | null | undefined): string | null {
+  const v = asciiDigits(String(s ?? ""));
+  for (const m of v.matchAll(/(?<!\d)(\d{4})[-./](\d{1,2})[-./](\d{1,2})(?!\d)/g)) {
+    const r = realDate(Number(m[3]), Number(m[2]), Number(m[1]));
+    if (r) return r;
+  }
+  for (const m of v.matchAll(/(?<![\d:])(\d{1,2})[^\d:]+(\d{1,2})[^\d:]+(\d{4}|\d{2})(?![\d:])/g)) {
+    const r = realDate(Number(m[1]), Number(m[2]), Number(m[3].length === 2 ? `20${m[3]}` : m[3]));
+    if (r) return r;
+  }
+  return null;
+}
+
+/**
+ * The ward number in what was read: the number after "ward" (or வார்டு / வட்டம்) when the words say so, else the only number there.
+ * Two numbers and no word to tell them apart ("12/3") is null, for the check: before, every digit was joined, so "Ward 7 (Zone 6)"
+ * became ward 76 (P5-007).
+ */
+export function wardNumber(s: string | null | undefined): number | null | "unclear" {
+  const v = asciiDigits(String(s ?? ""));
+  const named = v.match(/(?:ward|வார்டு|வட்டம்)\s*(?:no\.?|number|எண்)?\s*[:.\-#]?\s*(\d{1,4})(?!\d)/iu);
+  if (named) return Number(named[1]);
+  const all = v.match(/\d+/g) ?? [];
+  if (!all.length) return null;
+  return all.length === 1 ? Number(all[0]) : "unclear";
 }
 
 const blank = (s: string | null | undefined): string | null => {
@@ -45,12 +87,15 @@ export function cleanReading(r: RawReading, today: string): Reading {
   const m = tenDigits(r.mobile);
   let mobile: string | null = m || null;
   if (m && !/^[6-9]\d{9}$/.test(m)) unsure.add("mobile"); // too short, too long or not a mobile number: shown, and marked
+  // twelve digits or more, or written in Aadhaar's 4-4-4 groups, can be an Aadhaar number the reader put in the wrong box: never kept (P5-007)
+  if (m && (m.length >= 12 || AADHAAR_SHAPED.test(String(r.mobile ?? "")))) { mobile = null; unsure.add("mobile"); }
 
   let pincode: string | null = digits(r.pincode) || null;
   if (pincode && pincode.length !== 6) { pincode = null; unsure.add("pincode"); }
 
-  const wd = digits(r.ward);
-  let ward: number | null = wd ? Number(wd) : null;
+  const wn = wardNumber(r.ward);
+  let ward: number | null = typeof wn === "number" ? wn : null;
+  if (wn === "unclear") unsure.add("ward");
   if (ward !== null && (ward < 1 || ward > 200)) { ward = null; unsure.add("ward"); }
 
   let date = normalDate(r.date);

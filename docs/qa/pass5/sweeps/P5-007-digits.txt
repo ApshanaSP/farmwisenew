@@ -1,0 +1,20 @@
+$ git grep -n -F "replace(/\D/g" -- src
+src/app/citizen/file-complaint/page.tsx:731:                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))} />
+src/app/citizen/file-complaint/page.tsx:737:                        value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))} aria-invalid={pincode ? !/^\d{6}$/.test(pincode) : undefined} />
+src/app/citizen/file-complaint/page.tsx:898:                      onChange={(e) => { markEdited("locationPincode"); setLocationPincode(e.target.value.replace(/\D/g, "")); }} />
+src/app/profile/page.tsx:437:                              <input id="pincode" maxLength={6} className="form-input font-mono" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "") })} />
+src/app/profile/page.tsx:469:                                className="form-input font-mono" value={form.aadhaarNumber} onChange={(e) => setForm({ ...form, aadhaarNumber: e.target.value.replace(/\D/g, "") })} />
+src/app/profile/page.tsx:500:                            <input id="newMobile" maxLength={10} inputMode="numeric" className="form-input font-mono" value={newMobile} onChange={(e) => setNewMobile(e.target.value.replace(/\D/g, ""))} />
+src/app/profile/page.tsx:567:  const last4 = masked ? masked.replace(/\D/g, "").slice(-4) : "";
+src/app/track/page.tsx:40:          <label>Last 4 digits of your mobile<input value={last4} onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} autoComplete="off" /></label>
+src/components/manu/ManuDesk.tsx:220:        <Field label="Mobile" flag={flag("mobile")} hint={saw("mobile") ?? "Always compare the digits with the paper."}><input inputMode="numeric" maxLength={10} value={f.mobile} onChange={(e) => set("mobile", e.target.value.replace(/\D/g, ""))} /></Field>
+src/components/manu/ManuDesk.tsx:225:        <Field label="Pincode" flag={flag("pincode")} hint={saw("pincode")}><input inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, ""))} /></Field>
+src/components/manu/ManuDesk.tsx:227:          <input inputMode="numeric" maxLength={3} value={f.ward} onChange={(e) => set("ward", e.target.value.replace(/\D/g, ""))} />
+src/components/security/Confirm.tsx:119:          onChange={(e) => setCode(digits ? e.target.value.replace(/\D/g, "") : e.target.value)} />
+src/components/ui/index.tsx:642:            const v = e.target.value.replace(/\D/g, "");
+src/components/ui/index.tsx:653:            const p = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+src/lib/manu/clean.ts:29:export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
+src/lib/manu/paddle.ts:62:      const d = m.replace(/\D/g, "");
+src/lib/thunai/privacy.ts:204:  const d = m.replace(/\D/g, "");
+
+Note: the remaining hits are input boxes that drop a non-ASCII digit as it is typed (visible to the person typing, so not silent corruption): P3, not changed. paddle.ts:62 runs on text already masked; privacy.ts:204 runs after normaliseNumbers().
