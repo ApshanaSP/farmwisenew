@@ -5,7 +5,7 @@
  */
 import { DatabaseSync } from "node:sqlite";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ db: null as any, writes: [] as string[] }));
 
@@ -61,6 +61,11 @@ async function seed() {
 }
 
 describe("news routing job (BE-001)", () => {
+  // The job's "now" is the later of the store's as_of and the real clock (asOf() in lib/collector/intel.ts). The seeded rows are
+  // dated against as_of 2026-10-12, so the clock is held there: without this the test turned red on 10 Nov 2026, when the real
+  // clock passed as_of + 29 days and INC-1 fell out of the 30-day window (QA pass 5, P5-003).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-12T04:30:00.000Z")); });
+  afterEach(() => { vi.useRealTimers(); });
   beforeEach(async () => {
     h.db = await seed();
     h.writes = [];
