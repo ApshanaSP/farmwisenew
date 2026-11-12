@@ -55,8 +55,14 @@ export async function verifySmtp(): Promise<{ ok: true } | { ok: false; detail: 
  * mail the recipient is a citizen, and the server log is not the place for a citizen's address (redsec2-13). The SMTP server's own
  * error text can name the recipient too, so the whole line is scrubbed, not just the "to".
  */
+// A log line keeps no one's address or number (redsec2-13, reviewerA-05): an e-mail address keeps only its domain and, for a name of
+// 4 or more letters, its first letter (two letters kept a 1- or 2-letter name whole); a run of 6 or more digits, spaces or dashes
+// allowed between them, keeps only its last two digits. An SMS test copy's subject is "[Test SMS] to <citizen mobile>"
+// (manu/sms.ts), so the subject is scrubbed too.
 export const scrubEmails = (text: string): string =>
-  String(text).replace(/([A-Za-z0-9._%+-]{1,64})@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, (_m, user: string, domain: string) => `${user.slice(0, 2)}*****@${domain}`);
+  String(text)
+    .replace(/([A-Za-z0-9._%+-]{1,64})@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, (_m, user: string, domain: string) => `${user.length >= 4 ? user[0] : ""}*****@${domain}`)
+    .replace(/\+?\d(?:[\s-]?\d){5,}/g, (m) => `******${m.replace(/\D/g, "").slice(-2)}`);
 
 export type MailResult =
   /** The SMTP server accepted the message for delivery. */

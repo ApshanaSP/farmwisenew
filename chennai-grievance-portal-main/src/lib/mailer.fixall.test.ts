@@ -17,7 +17,7 @@ describe("redsec2-13: the mailer's log lines do not carry the recipient's addres
     const { sendMail } = await import("./mailer");
     expect(await sendMail(TO, "Your password reset OTP", "<p>x</p>")).toEqual({ ok: false, reason: "not_configured" });
     expect(logged()).not.toContain(TO);
-    expect(logged()).toContain("ra*****@gmail.com");
+    expect(logged()).toContain("r*****@gmail.com"); // one letter since reviewerA-05 (two kept a 2-letter name whole)
   });
 
   it("a failed send, and the SMTP server's own error naming the recipient", async () => {
