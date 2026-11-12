@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getActivePortalSession } from "@/lib/auth";
+import { assistantSession } from "@/lib/assistant/access";
 import { failed } from "@/lib/collector/guard";
 import { RehearsalUnavailable, routeBetween } from "@/lib/rehearsal/engine";
 
@@ -12,8 +12,9 @@ const Body = z.object({ from: Pt, to: Pt, state: z.enum(["normal", "rehearsal"])
 
 /** A drive route between two points on normal or rehearsal roads (the Collector or a department officer). */
 export async function POST(req: NextRequest) {
-  const s = (await getActivePortalSession("collector")) ?? (await getActivePortalSession("officer"));
-  if (!s || (s.role !== "collector" && s.role !== "department_officer")) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  // the Collector or a department officer, the same guard as the map and traffic routes (the petition desk login is refused: P5-011)
+  const s = await assistantSession();
+  if (s instanceof NextResponse) return s;
   const b = Body.safeParse(await req.json().catch(() => null));
   if (!b.success) return NextResponse.json({ error: "Give two places in Chennai." }, { status: 400 });
   try {

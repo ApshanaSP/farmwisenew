@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { getActivePortalSession, resolvePortal } from "@/lib/auth";
 import { officerDeptCode } from "@/lib/officer/guard";
+import { PETITION_DEPT } from "@/lib/manu/constants";
 
 export interface AssistantUser {
   email: string;
@@ -28,5 +29,7 @@ export async function assistantSession(): Promise<AssistantUser | NextResponse> 
   if (s.role === "collector") return { email: s.email, userId: s.userId, role: "collector", lockDept: null };
   const dept = await officerDeptCode(s.userId);
   if (!dept) return NextResponse.json({ error: "Your account is not linked to a department." }, { status: 403 });
+  // the petition desk's login is an officer login of COL-PET that opens the Manu Desk and nothing else (QA pass 5, P5-011)
+  if (dept === PETITION_DEPT) return NextResponse.json({ error: "The petition desk login opens the Manu Desk only." }, { status: 403 });
   return { email: s.email, userId: s.userId, role: "department_officer", lockDept: dept };
 }

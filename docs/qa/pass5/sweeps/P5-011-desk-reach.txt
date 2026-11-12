@@ -1,0 +1,3 @@
+$ git grep -l "getActivePortalSession(\"officer\")" -- src/app/api   (then: does the file also check the department?)
+src/app/api/manu/case/[incident]/route.ts  dept-aware-guard-calls=4
+src/app/api/manu/photos/[name]/route.ts  dept-aware-guard-calls=4
