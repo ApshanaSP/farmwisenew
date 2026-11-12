@@ -33,6 +33,8 @@ export function zipIntact(buf: Buffer): boolean {
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
   if (eocd < 0) return false;
   const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), cd = buf.readUInt32LE(eocd + 16);
+  // the entries on this disk and in all must agree: SheetJS reads the first, this check read the second (reviewer 5 on P6-018, P6-030)
+  if (buf.readUInt16LE(eocd + 8) !== count) return false;
   if (cd + size > eocd) return false;
   // every entry the table of contents lists: its local header is where it says, and its data lies whole before the table of contents. An
   // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008)

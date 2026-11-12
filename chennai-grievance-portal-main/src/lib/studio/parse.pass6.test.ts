@@ -79,3 +79,19 @@ describe("QA pass 6, P6-008 after review (reviewer 3): an intact table of conten
     });
   }
 });
+
+describe("QA pass 6, P6-030 (reviewer 5 on P6-018): an end record whose two entry counts disagree", () => {
+  it("1 entry on this disk and 0 in all, over the cut-off 40 bytes: not whole, refused at once", () => {
+    const loc = started().subarray(0, 40);
+    const NAME = "[Content_Types].xml";
+    const cd = Buffer.alloc(46 + NAME.length);
+    cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(8, 10); cd.writeUInt32LE(30, 20); cd.writeUInt32LE(100, 24); cd.writeUInt16LE(NAME.length, 28); cd.write(NAME, 46);
+    const end = Buffer.alloc(22);
+    end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(1, 8); end.writeUInt16LE(0, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(loc.length, 16);
+    const buf = Buffer.concat([Buffer.from(loc), cd, end]);
+    expect(zipIntact(buf)).toBe(false);
+    const t0 = performance.now();
+    expect(() => parseFile(buf, "register.xlsx")).toThrow();
+    expect(performance.now() - t0).toBeLessThan(1000);
+  });
+});
