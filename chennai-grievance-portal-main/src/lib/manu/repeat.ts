@@ -23,10 +23,17 @@ const TA_STOP = new Set(("எங்கள் எங்களது எங்க 
   "மிகவும் இல்லை வீடு வீட்டு வீட்டில் வீடுகள் கடந்த நாட்களாக மாதமாக வாரமாக வருடமாக நாள் நாட்கள் இருந்து மீது பற்றி தயவு செய்து செய்ய வேண்டும் வேண்டுகிறேன் " +
   "கோரிக்கை மனு ஐயா அவர்களே உடனடியாக நடவடிக்கை எடுக்க பிரச்சனை புகார் சரி இங்கு அங்கு மிக " +
   "engal enga engaluku theru therula therulla area pakkathula romba illa illai vendum seyya seyyunga pannunga ayya sir naal naalaa maasama").split(" "));
+// predicates, number words and requests that any problem can share: "not working", "not coming", "two days", "please take action" (one of them
+// made two different problems from one writer "the same problem", with an attach offered: reviewer 3 on P6-011, P6-020)
+const FILLER = new Set(("please kindly take action immediately immediate urgent urgently working work functioning coming come required request requested " +
+  "need needed sir madam again repeatedly cleared clear repaired repair fixed attended done one two three four five six seven eight nine ten " +
+  "first second third many several வரவில்லை வருவதில்லை வரவே இரண்டு மூன்று நான்கு ஐந்து எங்களுடைய எங்களின் வார்டில் வார்டு வார்டின் " +
+  "செய்யவில்லை எடுக்கவில்லை சரிசெய்ய சரிசெய்யவில்லை வேலை செய்யவில்லை தயவுசெய்து " +
+  "rendu moonu naalu anju naala naalaa varala varalai varalae podunga edunga pannunga panunga seyyala seiyala irukku").split(" "));
 const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase()
   // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
-  .replace(/[​-‍⁠﻿]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
-  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w)));
+  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
+  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w)));
 
 /**
  * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
@@ -48,17 +55,23 @@ const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
 /** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
+/** "First Cross Street" as "1 Cross Street", so "First" and "Fifth" differ by their numbers, not by a letter or two (P6-020). */
+const ORDINAL: Record<string, string> = { first: "1", second: "2", third: "3", fourth: "4", fifth: "5", sixth: "6", seventh: "7", eighth: "8", ninth: "9", tenth: "10" };
+export const ordinals = (s: string | null | undefined): string => String(s ?? "").replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b/gi, (w) => ORDINAL[w.toLowerCase()]);
+
 function streetIn(street: string, address: string | null): boolean {
   const all = squash(address);
   if (all.includes(street)) return true;
-  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011)
+  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011). When the typed
+  // street has no number, the part's number is the door number ("12 Gandhi Street"), and the letters are compared (P6-020)
   const num = (x: string) => x.replace(/\D/g, "");
-  return String(address ?? "").split(/[,\n;]/).map(squash).filter(Boolean).some((part) => num(part) === num(street) && similarity(street, part) >= 0.7);
+  return String(address ?? "").split(/[,\n;]/).map((p) => squash(ordinals(p))).filter(Boolean)
+    .some((part) => (num(street) ? num(part) === num(street) && similarity(street, part) >= 0.7 : similarity(street, part.replace(/\d/g, "")) >= 0.7));
 }
 
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
-  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(c.street);
+  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(ordinals(c.street));
   const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
