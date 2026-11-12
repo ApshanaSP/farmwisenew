@@ -5,8 +5,7 @@ import { getSessionFromCookies, resolvePortal, revokeSessions, setAuthCookie } f
 import { signToken } from "@/lib/jwt";
 import { roleToPortal } from "@/lib/session-cookies";
 import { changePasswordSchema } from "@/lib/validators";
-import { RowDataPacket } from "mysql2";
-import { UserRow } from "@/types";
+import { verifyFactor } from "@/lib/security/factors";
 
 export async function POST(req: NextRequest) {
   const session = await getSessionFromCookies();
@@ -21,14 +20,12 @@ export async function POST(req: NextRequest) {
   }
   const { currentPassword, newPassword } = parsed.data;
 
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE id = ?", [session.userId]);
-  if (rows.length === 0) {
-    return NextResponse.json({ error: "User not found." }, { status: 404 });
-  }
-  const user = rows[0] as UserRow;
-
-  const matches = await bcrypt.compare(currentPassword, user.password_hash);
-  if (!matches) {
+  // The current password is checked through the same five-tries lock as "Confirm it's you" (lib/security/factors.ts), so a copied
+  // cookie cannot be used to guess it without limit (QA4 gate, redteam-final-2). A try is counted before the slow check.
+  const check = await verifyFactor(session.userId, "password", currentPassword);
+  if (!check.ok) {
+    if (check.status === 429) return NextResponse.json({ error: check.error }, { status: 429 });
+    if (/not found/i.test(check.error)) return NextResponse.json({ error: "User not found." }, { status: 404 });
     return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
   }
 
