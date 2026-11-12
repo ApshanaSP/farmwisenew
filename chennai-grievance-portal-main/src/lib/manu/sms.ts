@@ -38,6 +38,26 @@ export const SMS_RESULT: Record<SmsResult, Record<Lang, string>> = {
 const MOBILE = /^[6-9]\d{9}$/;
 const MAX_TRIES = 4;
 const RETRY_AFTER_HOURS = 0.25;
+
+/**
+ * How long an approval or a closing waits for its message before it answers (the send goes on behind it), and how long one send may take
+ * before it is given up. An approval used to wait on the mail with no limit at all (QA pass 6, P5-023).
+ */
+export const SMS_LIMITS = { inlineWaitMs: 5_000, sendMs: 20_000 };
+
+/**
+ * The provider may already have taken the message: the request went out and no answer came in time, the connection broke while it
+ * answered, or it said 200 in a form we cannot read. Such a message is not sent again by the sweep, since the writer would get it twice
+ * (QA pass 6, P5-022); the desk shows it as not confirmed.
+ */
+class MaybeSent extends Error {}
+const AFTER_SENDING = new Set(["ECONNRESET", "UND_ERR_SOCKET", "EPIPE"]);
+
+function withLimit<T>(work: Promise<T>, ms: number, why: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(why)), ms); });
+  return Promise.race([work, late]).finally(() => clearTimeout(timer));
+}
 const env = (name: string) => (process.env[name] ?? "").trim();
 const templateOf = (kind: SmsKind, lang: Lang) => env(`MSG91_TEMPLATE_${kind.toUpperCase()}_${lang.toUpperCase()}`);
 
@@ -59,20 +79,31 @@ const htmlSafe = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 /** Test mode: the exact message, to the team inbox. */
 async function viaTeamInbox(mobile: string, text: string): Promise<void> {
   const html = `<p><b>Test SMS. Nothing was sent to this phone.</b> In live mode this goes to ${mobile}.</p><p style="font-size:16px;padding:12px;background:#f2f4f3;border-radius:8px">${htmlSafe(text)}</p>`;
-  const r = await sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html);
+  const r = await withLimit(sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html), SMS_LIMITS.sendMs, "The team inbox did not answer in time.");
   if (!r.ok) throw new Error(r.reason === "send_failed" ? r.detail : "Email is not set up.");
 }
 
 async function viaMsg91(mobile: string, template: string, vars: [string, string]): Promise<void> {
-  const r = await fetch("https://control.msg91.com/api/v5/flow/", {
-    method: "POST",
-    headers: { authkey: env("MSG91_AUTH_KEY"), "Content-Type": "application/json" },
-    // MSG91's current pages call this template_id and its older API page flow_id, so both are sent
-    body: JSON.stringify({ template_id: template, flow_id: template, sender: env("MSG91_SENDER"), short_url: "0", recipients: [{ mobiles: `91${mobile}`, var1: vars[0], var2: vars[1] }] }),
-    signal: AbortSignal.timeout(8_000)
-  });
+  let r: Response;
+  try {
+    r = await fetch("https://control.msg91.com/api/v5/flow/", {
+      method: "POST",
+      headers: { authkey: env("MSG91_AUTH_KEY"), "Content-Type": "application/json" },
+      // MSG91's current pages call this template_id and its older API page flow_id, so both are sent
+      body: JSON.stringify({ template_id: template, flow_id: template, sender: env("MSG91_SENDER"), short_url: "0", recipients: [{ mobiles: `91${mobile}`, var1: vars[0], var2: vars[1] }] }),
+      signal: AbortSignal.timeout(Math.min(8_000, SMS_LIMITS.sendMs))
+    });
+  } catch (e) {
+    const err = e as Error & { cause?: { code?: unknown } };
+    // no answer in time, or the line broke after the request went out: the provider may have it. A refused or unknown host never got it.
+    if (err.name === "TimeoutError" || err.name === "AbortError" || AFTER_SENDING.has(String(err.cause?.code ?? ""))) throw new MaybeSent(`No answer from the SMS service: ${err.message}`);
+    throw err;
+  }
   const j = (await r.json().catch(() => null)) as { type?: string; message?: string } | null;
-  if (!r.ok || j?.type !== "success") throw new Error(String(j?.message ?? `HTTP ${r.status}`));
+  if (r.ok && j?.type === "success") return;
+  // a 2xx we cannot read is not a refusal: only the provider's own error answer, or an error status, says it was not taken
+  if (r.ok && j?.type !== "error") throw new MaybeSent(`HTTP ${r.status}, an answer the SMS service does not normally give`);
+  throw new Error(String(j?.message ?? `HTTP ${r.status}`));
 }
 
 async function deliver(code: string, kind: SmsKind, p: Row, result: SmsResult | null): Promise<void> {
@@ -80,29 +111,40 @@ async function deliver(code: string, kind: SmsKind, p: Row, result: SmsResult | 
   const second = kind === "received" ? manuDeptLabel(p.dept_code) : SMS_RESULT[result ?? "done"][lang];
   const now = istNow();
   const live = smsMode() === "live";
+  // the number a live send really went to is recorded with it, so the desk never names the petitioner's phone for a test number (P5-024)
+  const testNumber = live ? env("SMS_TEST_NUMBER") : "";
   try {
-    if (live) await viaMsg91(env("SMS_TEST_NUMBER") || String(p.mobile), templateOf(kind, lang), [code, second]);
+    if (live) await viaMsg91(testNumber || String(p.mobile), templateOf(kind, lang), [code, second]);
     else await viaTeamInbox(String(p.mobile), SMS_WORDING[kind][lang].replace("{#var#}", () => code).replace("{#var#}", () => second));
-    await pool.query(`UPDATE petition_sms SET status = ?, detail = NULL, attempts = attempts + 1, tried_at = ?, sent_at = ? WHERE complaint_code = ? AND kind = ?`, [live ? "sent" : "test", now, now, code, kind]);
+    const status = !live ? "test" : testNumber ? "testnumber" : "sent";
+    await pool.query(`UPDATE petition_sms SET status = ?, detail = ?, attempts = attempts + 1, tried_at = ?, sent_at = ? WHERE complaint_code = ? AND kind = ?`,
+      [status, testNumber ? `Sent to the test number ending ${testNumber.slice(-4)}` : null, now, now, code, kind]);
   } catch (e) {
-    await pool.query(`UPDATE petition_sms SET status = 'failed', detail = ?, attempts = attempts + 1, tried_at = ? WHERE complaint_code = ? AND kind = ?`, [(e as Error).message.slice(0, 200), now, code, kind]);
+    await pool.query(`UPDATE petition_sms SET status = ?, detail = ?, attempts = attempts + 1, tried_at = ? WHERE complaint_code = ? AND kind = ?`,
+      [e instanceof MaybeSent ? "unsure" : "failed", (e as Error).message.slice(0, 200), now, code, kind]);
   }
 }
 
 /** What happened to a petition's first message, for the desk. */
 export async function smsNote(code: string): Promise<SmsNote> {
   try {
-    const [rows] = await pool.query<Row[]>(`SELECT p.mobile, s.status FROM petitions p LEFT JOIN petition_sms s ON s.complaint_code = p.complaint_code AND s.kind = 'received' WHERE p.complaint_code = ? LIMIT 1`, [code]);
+    const [rows] = await pool.query<Row[]>(`SELECT p.mobile, s.status, s.detail FROM petitions p LEFT JOIN petition_sms s ON s.complaint_code = p.complaint_code AND s.kind = 'received' WHERE p.complaint_code = ? LIMIT 1`, [code]);
     const mobile = String(rows[0]?.mobile ?? "");
     if (!MOBILE.test(mobile)) return { state: "none", last4: null };
-    const status = rows[0].status;
-    return { state: status === "sent" ? "sent" : status === "test" ? "test" : status === "failed" || status === "waiting" || status === "sending" ? "failed" : "off", last4: mobile.slice(-4) };
+    const status = String(rows[0].status ?? "");
+    if (status === "testnumber") return { state: "testnumber", last4: String(rows[0].detail ?? "").match(/(\d{4})\s*$/)?.[1] ?? null };
+    // a message on its way is "sending", not "failed": the approval no longer waits for it (P5-023)
+    const state = ({ sent: "sent", test: "test", unsure: "unsure", failed: "failed", waiting: "sending", sending: "sending" } as const)[status as "sent"] ?? "off";
+    return { state, last4: mobile.slice(-4) };
   } catch {
     return { state: "off", last4: null };
   }
 }
 
-/** Sends one of a petition's two messages, once. Never throws. Does nothing for a complaint that did not come from a Manu. */
+/**
+ * Sends one of a petition's two messages, once. Never throws. Does nothing for a complaint that did not come from a Manu. Waits at most
+ * SMS_LIMITS.inlineWaitMs for the send; a slower send goes on behind the caller and records its own outcome.
+ */
 export async function sendPetitionSms(code: string, kind: SmsKind, result: SmsResult | null = null): Promise<void> {
   try {
     const [rows] = await pool.query<Row[]>(`SELECT mobile, language, dept_code FROM petitions WHERE complaint_code = ? LIMIT 1`, [code]);
@@ -110,9 +152,13 @@ export async function sendPetitionSms(code: string, kind: SmsKind, result: SmsRe
     if (!p || !MOBILE.test(String(p.mobile ?? ""))) return;
     const now = istNow();
     const ready = smsMode() !== "off";
+    // 'sending' from the start: a fresh send in flight is never picked up by another process's sweep (that waits an hour for 'sending')
     const [ins] = await pool.query<ResultSetHeader>(`INSERT IGNORE INTO petition_sms (complaint_code, kind, status, result, detail, tried_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [code, kind, ready ? "waiting" : "off", result, ready ? null : "The SMS service is not set up.", now, now]);
-    if (ready && ins.affectedRows) await deliver(code, kind, p, result);
+      [code, kind, ready ? "sending" : "off", result, ready ? null : "The SMS service is not set up.", now, now]);
+    if (!ready || !ins.affectedRows) return;
+    const sending = deliver(code, kind, p, result).catch((e) => console.warn(`[manu] SMS for ${code} not recorded: ${(e as Error).message}`));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([sending, new Promise<void>((done) => { timer = setTimeout(done, SMS_LIMITS.inlineWaitMs); })]).finally(() => clearTimeout(timer));
   } catch (e) {
     console.warn(`[manu] SMS for ${code} not sent: ${(e as Error).message}`);
   }
