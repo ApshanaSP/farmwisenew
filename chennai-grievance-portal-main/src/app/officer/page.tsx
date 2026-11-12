@@ -37,8 +37,6 @@ export default async function OfficerPage() {
     if (code === PETITION_DEPT) {
       return (
         <>
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-          <link rel="stylesheet" href={FONTS} />
           <ManuCounter user={session.email} />
         </>
       );
