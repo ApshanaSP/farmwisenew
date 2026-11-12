@@ -2175,14 +2175,14 @@
     "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-218",
     "failing_test": "src/lib/dataset/status.fixall.test.ts::syncComplaints hands each complaint whose history grew to the dataset append, and only those",
     "root_cause": "appendStatusChangeToDataset had no production caller and appended only the newest row; syncComplaints (lib/complaint-progress.ts) now calls it for each complaint whose history grew, and it appends every row not yet in the file.",
-    "fix_commit": "6cf2c01",
+    "fix_commit": "6cf2c01, d3ccb82",
     "revert_check": "fails without (2 of 2) / passes with (2 of 2)",
     "status": "fixed",
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/lib/dataset/append.ts:154",
     "confidence": "high",
     "verified": false,
-    "note": "Not an owner row: the dataset is live-appended on filing by design (dataset:export only repairs drift). datasetWriteAllowed() still keeps a dry-run server from writing.",
+    "note": "Not an owner row: the dataset is live-appended on filing by design (dataset:export only repairs drift). datasetWriteAllowed() still keeps a dry-run server from writing. d3ccb82 starts the append after syncComplaints finishes (its first read parses the 13 MB grievances.csv and held up sms.pass6's timed decision). Tests that call syncComplaints with saving on now log the append's failed query on their minimal schemas; nothing is written.",
     "closed_in": "fixall"
   },
   {
