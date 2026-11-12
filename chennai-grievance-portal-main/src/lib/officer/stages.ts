@@ -28,6 +28,23 @@ export const STAGE_CLASS: Record<Stage, string> = {
 export const STEP_LABELS = ["Received", "In action", "Sent to Collector", "Verified"] as const;
 export const STAGE_INDEX: Record<Stage, number> = { new: 0, approved: 1, action: 1, sent: 2, verified: 3, closed: 3 };
 
+/** The stages each recorded step starts from (the same table as recordStep's in lib/officer/data.ts, which checks again under its lock). */
+export const STEP_FROM: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"], send: ["approved", "action"], close: ["approved", "action", "sent"] };
+
+/**
+ * Why this step cannot be taken on a grievance at this stage and severity, or null if it can. The report route asks this before it asks
+ * for the password, so nobody types a password for a step that would be refused anyway (officer-day-16). Same words as recordStep's.
+ */
+export function stepRefusal(step: "approve" | "send" | "close", stage: string, severity: string | null | undefined): string | null {
+  if (!(STEP_FROM[step] as string[]).includes(stage)) {
+    return `This grievance is already at “${STAGE_LABEL[stage as Stage] ?? stage}”. Refresh to see its latest stage.`;
+  }
+  const severe = severity === "Severe";
+  if (step === "send" && !severe) return "Only severe grievances go to the Collector. Close this one as done yourself.";
+  if (step === "close" && severe) return "A severe grievance is verified by the Collector: send it with your completion report.";
+  return null;
+}
+
 /** The one step an officer can take from each stage. */
 export const NEXT_STEP: Partial<Record<Stage, "approve" | "send">> = { new: "approve", approved: "send", action: "send" };
 

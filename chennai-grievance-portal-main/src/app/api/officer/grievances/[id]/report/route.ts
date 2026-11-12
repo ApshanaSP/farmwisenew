@@ -2,9 +2,10 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { requireConfirm } from "@/lib/security/stepup";
 import { ID_RE, officerSession } from "@/lib/officer/guard";
-import { WorkflowError, recordStep } from "@/lib/officer/data";
+import { WorkflowError, grievanceDetail, recordStep } from "@/lib/officer/data";
 import { OFFICER } from "@/lib/officer/departments";
 import { newPhotoDir, removePhotoDir, savePhotos, sniff, type PhotoExt } from "@/lib/officer/photos";
+import { stepRefusal } from "@/lib/officer/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,11 @@ export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: s
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
   if (!ID_RE.test(params.id)) return NextResponse.json({ error: "Invalid grievance id." }, { status: 400 });
+  // the case first: another department's case, or one at the wrong stage or severity, is refused before anything is read or any
+  // password is asked (officer-day-16). recordStep checks again under its lock.
+  const detail = await grievanceDetail(ctx.dept, params.id).catch((err) => { console.error("officer report: case check failed", err); return undefined; });
+  if (detail === undefined) return NextResponse.json({ error: "Could not send the report." }, { status: 500 });
+  if (!detail) return NextResponse.json({ error: "Grievance not found in your department." }, { status: 404 });
 
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "Send the report as a form with remarks and photos." }, { status: 400 });
@@ -38,6 +44,8 @@ export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: s
   }
 
   const step = form.get("step") === "close" ? "close" : "send";
+  const refusal = stepRefusal(step, String(detail.grievance.stage), detail.grievance.sev as string | null);
+  if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
   // closing a case, or sending it to the Collector, is confirmed for exactly these remarks and photos
   const c = await requireConfirm(req, ctx.session, "officer_report", step === "close" ? `Close case ${params.id} with your report` : `Send case ${params.id} to the Collector for verification`,
     { id: params.id, step, remarks, photos: photos.map((x) => createHash("sha256").update(x.buf).digest("hex")) });
