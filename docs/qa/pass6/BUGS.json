@@ -3249,5 +3249,22 @@
     "reviewer": null,
     "closed_in": "fixall",
     "verified": true
+  },
+  {
+    "id": "reviewerA-06",
+    "severity": "P3",
+    "area": "Grievance dataset (pass4-open-01 fix review)",
+    "title": "The first dataset append after a server start parsed the 13 MB grievances file while every request waited (about 1 s)",
+    "found_by": "reviewerA (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/dataset/warm.fixall.test.ts",
+    "root_cause": "lazy synchronous parse of the key sets on the first append",
+    "fix_commit": "a0cfb544",
+    "revert_check": "2 fail without, 2 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "closed_in": "fixall",
+    "verified": true,
+    "note": "The freeze now happens 4.5 s after start, before traffic, not on a request; not timed live."
   }
 ]
