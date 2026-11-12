@@ -12,3 +12,4 @@
   - The desk fixer was stopped. Its one commit (`d474842`, reviewer5-07/08 in `manu/repeat.ts`) was moved off this branch to `claude/fixall-repeat-reviewer5` for the p7 session that owns reviewer5-07.
   - New ports: pinned API 3190, Next 3110–3113.
   - Re-sorted: 32 P2/P3 rows are fixable outside their files (`mine-*.json`). 71 wait for their branches (`later.json`).
+- 03:23: batch A (16 rows) done by the fixer before the usage limit: 15 fixed, 1 duplicate. Lead check on 91395eb: tsc exit 0; the 14 new test files 89/89 pass; existing tests in every changed folder 3364 pass, 13 skipped, 0 failed. Batch B started.
