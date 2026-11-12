@@ -134,7 +134,9 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   if (process.env.DATA_BACKEND !== "aws") return id;
   try {
     // a new or bigger case changes the figures: the caches that hold a read start again (pass 4's RC-35; QA pass 5, P5-015)
-    if (attachTo && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
+    // a case that is already closed is not joined: the filing would be counted there and acted on by nobody (QA pass 5, P5-016)
+    const open = attachTo ? (await live.all(`SELECT is_open FROM incidents WHERE incident_id = ?`, [attachTo]))[0] : null;
+    if (attachTo && open && Number(open.is_open) !== 0 && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
     await addCase(live, c);
     bumpDataEpoch();
     return caseIdFor(c.code);

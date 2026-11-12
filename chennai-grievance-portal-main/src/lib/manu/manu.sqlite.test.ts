@@ -238,6 +238,17 @@ describe("a filing and the caches", () => {
   });
 });
 
+// QA pass 5, P5-016: approving a petition "into" a case that is already closed hid it there: filed, counted, and acted on by nobody
+describe("a petition approved into a closed case", () => {
+  it("gets a case of its own instead", async () => {
+    h.db.exec(`INSERT INTO incidents (incident_id, lead_dept, ward_no, is_open, status_std, member_count, citizen_complaints, channels, title) VALUES ('INC-ELE-1', 'GCC-ELE', 70, 0, 'Closed', 1, 1, 'citizen_grievance', 'Street light broken')`);
+    const r = await filePetition(await uploaded(), fields({ attachTo: "INC-ELE-1" }), "x");
+    expect(r.attached).toBe(false);
+    expect(one("SELECT incident_id FROM events WHERE source_record_id = ?", r.code).incident_id).toBe(caseIdFor(r.code));
+    expect(one("SELECT member_count FROM incidents WHERE incident_id = 'INC-ELE-1'").member_count).toBe(1);
+  });
+});
+
 describe("the public tracker", () => {
   it("opens with the slip's key or the mobile's last 4 digits, and shows no personal detail", async () => {
     const r = await filePetition(await uploaded(), fields(), "x");
