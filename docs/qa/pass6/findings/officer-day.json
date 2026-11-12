@@ -5,7 +5,7 @@
     "area": "officer queue / period window",
     "title": "Open work drops out of the officer's queue once it was first reported before the period: a 31-day-old unapproved or reopened grievance is not in New / In action / overdue under the default Monthly view, and one older than 90 days is in no view or search at all",
     "where": "src/lib/officer/data.ts:128-133 (windowWhere filters every list and count on w.first_reported_at), src/lib/officer/data.ts:426-429 (search = quarterly only)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p1b-window.mjs (overdue/open lists, monthly vs quarterly); cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p4-collector.mjs reopen INC-20260914-8A0C40 \"...\" officerB && node p6b-vis.mjs INC-20260914-8A0C40 officerB",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1b-window.mjs (overdue/open lists, monthly vs quarterly); cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p4-collector.mjs reopen INC-20260914-8A0C40 \"...\" officerB && node p6b-vis.mjs INC-20260914-8A0C40 officerB",
     "evidence": "officerA, flag=overdue: monthly total 88, quarterly 96; the 8 hidden are open and a month late, e.g. INC-20261012-4BEF94 stage new (never approved) due 2026-10-14, INC-20260930-74928B sent due 2026-10-02, INC-20261008-497CC5 in action. officerB: after the Collector sent back INC-20260914-8A0C40 (reported 14 Sep), Monthly view: not in the In action tab, returned count 0, not in the work queue; only Quarterly shows it (returned 1). Nothing shows a case reported more than 90 days ago.",
     "cause": "the officer's work queue reuses the Collector's reporting windows (reported in the last N days) instead of 'still open'",
     "confidence": "high"
@@ -16,7 +16,7 @@
     "area": "deadline maths",
     "title": "Every online complaint is graded Medium with a flat 120-hour deadline, whatever it reports: an 'EB wire cut / spark seen' complaint describing a hazard (the pipeline's rules: High, due in 24 h, in the officer's 'Severe or high' tile) is Medium and due in 5 days online; a garbage complaint (pipeline: Low, 72 h by categories.yaml) is due in 120 h. The officer's overdue / due-within-24-h / serious counts are wrong for every website filing",
     "where": "src/lib/manu/cases.ts:93 (sev = c.urgent ? High : Medium; online complaints are never urgent), :156-165 (ONLINE_HOURS = 120; category from the department, not the complaint type), district_intel/dintel/severity.py:21-42 (grievance severity: sub-type, hazard text, vulnerable places), district_intel/reference/categories.yaml:3,161,187 (sla_h by severity: SOLID_WASTE [12,24,48,72], STREETLIGHT_ELECTRICAL [4,24,48,96])",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"spark|EB wire|electric shock\" Electrical hazard hazard  (and p1b-window.mjs for pipeline deadlines)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"spark|EB wire|electric shock\" Electrical hazard hazard  (and p1b-window.mjs for pipeline deadlines)",
     "evidence": "online 'Electric shock due to street light' with text 'Live EB wire snapped and sparking ... near the school gate; children ... Danger of electric shock' -> sev Medium, filed 2026-11-12 14:31:54, due 2026-11-17 14:31:54 (120 h). The pipeline's rules give 35 (high-risk sub-type) + 15 (hazard text) + 8 (school) = 58 = High, and STREETLIGHT_ELECTRICAL High sla_h = 24 h. Garbage complaint 2026-807AIC: Medium, due +120 h; pipeline SWM grievances in the same list are due +48 h (Medium, e.g. INC-20261012-4BEF94 12 Oct 21:21 -> 14 Oct 21:21) or +72 h (Low).",
     "cause": "the live case for a website filing (addCaseLive, DATA_BACKEND=aws) does not apply the pipeline's grievance severity and SLA rules",
     "confidence": "high"
@@ -27,7 +27,7 @@
     "area": "Collector decisions / stale page",
     "title": "The Collector's verify / resolve / reject are accepted at any stage: a severe case nobody approved, or one the Collector sent back that the officer has not re-sent, can be verified and closed, and the citizen is told 'The Collector's office checked the work'. A stale Collector page therefore overwrites a newer send-back",
     "where": "src/app/api/collector/decisions/route.ts:57-121 (only a severity check for verify; no stage check, no lock), src/lib/complaint-progress.ts:74-76",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p6-severe.mjs INC-20260914-8A0C40 officerB (after p4 reopen); cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p4-collector.mjs resolve <fresh complaint code>",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p6-severe.mjs INC-20260914-8A0C40 officerB (after p4 reopen); cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p4-collector.mjs resolve <fresh complaint code>",
     "evidence": "Severe INC-20260914-8A0C40: officer sent it (201, stage sent), Collector sent it back (stage action, report shows Returned), then a Verify from a page that still showed it awaiting verification: 201, stage verified, the same report now carries both Returned by Collector and Verified by Collector at 14:28:59. Complaint 2026-285DWD (stage new, never approved): Collector 'resolve' -> 201, officer stage verified, citizen 'Verified by Collector | The Collector's office checked the work and closed the complaint.'",
     "cause": "the stage machine is enforced for officer steps but not for Collector decisions",
     "confidence": "high"
@@ -38,7 +38,7 @@
     "area": "Collector reopen / officer queue / citizen tracker",
     "title": "The Collector can send back (reopen) a grievance the officer never approved (no step-up, no stage check): it jumps from New to In action with a 'Returned for rework' banner, and the citizen is told it was returned to the department for more work although no work was done",
     "where": "src/app/api/collector/decisions/route.ts:57 (reopen skips the confirm and every stage check), src/lib/officer/data.ts:79-81,115, src/lib/complaint-progress.ts:77-79",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" reopen-new double && node p4-collector.mjs reopen 2026-052EEQ \"...\"",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" reopen-new double && node p4-collector.mjs reopen 2026-052EEQ \"...\"",
     "evidence": "2026-052EEQ stage new -> Collector reopen (no confirm) 201 -> officer stage action, returned true, 'Returned by Collector' in the timeline; officer Approve now 409 'already at In action'; citizen 'In Progress | The Collector's office returned it to the department for more work.'; the citizen's tracker then ticks 'Approved by Department Officer' as done (chain index of In Progress is 3) though it was never approved",
     "cause": "no stage rule for Collector decisions",
     "confidence": "high"
@@ -49,7 +49,7 @@
     "area": "officer drawer / Collector reject",
     "title": "A grievance the Collector rejected shows in the officer drawer with a green 'Verified by Collector' chip (or 'Closed by your department'), and the Collector Feedback card lists it as 'Returned' with a rework icon, though it is closed and the officer can do nothing; the Collector's confirm box calls a reject 'Return to the department'",
     "where": "src/components/officer/Drawer.tsx:199-201 (else branch also covers stage closed), src/components/officer/Cards.tsx:261-264, src/lib/officer/data.ts:81 (reject -> closed), src/app/api/collector/decisions/route.ts:58",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p4-collector.mjs reject 2026-670DUN \"officer-day probe: duplicate of an earlier complaint\"",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p4-collector.mjs reject 2026-670DUN \"officer-day probe: duplicate of an earlier complaint\"",
     "evidence": "confirm box summary 'Return to the department 1 case' for decision reject; after it the officer API gives stage 'closed', closedByDept false (the drawer footer then renders 'Verified by Collector', Drawer.tsx:200), feedback item decision reject ok false (FeedbackCard renders 'Returned · <note>' with the rework icon); the officer can do nothing (approve 409 'already at Closed'); the citizen sees Rejected",
     "cause": "the drawer has no branch for the closed (rejected) stage",
     "confidence": "high"
@@ -60,7 +60,7 @@
     "area": "citizen tracker",
     "title": "The citizen tracker shows every online complaint 'Completed - pending Collector verification' and 'Verified by Collector' as its next steps, though online complaints are always Medium and the department closes them itself; the chain only changes once it is 'Resolved by Department'",
     "where": "src/components/StatusTracker.tsx:17-36 (chainFor depends on the status only), src/lib/manu/cases.ts:95 (sev = urgent ? High : Medium; online complaints are never urgent)",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/officer-day/labels.test.ts (first test fails: the chain contains Verified by Collector); evidence/officer-day/unit-probes.log",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/officer-day/labels.test.ts (first test fails: the chain contains Verified by Collector); evidence/officer-day/unit-probes.log",
     "evidence": "probe: chainFor('Approved by Department Officer') = [Complaint Filed, Pending Approval, Approved by Department Officer, In Progress, Completed - Pending Collector Verification, Verified by Collector]; online complaints are Medium (cases.ts:93) and are closed with the 'close' step, never sent",
     "cause": "the tracker is not told who will check the work (the severity)",
     "confidence": "high"
@@ -71,7 +71,7 @@
     "area": "routing / officer workflow",
     "title": "Complaints filed under 'Other' (or an assumed mapping) are told 'Department routing pending officer review', but no officer ever sees a review flag or can re-route: the case goes straight into the classifier's department queue and the officer has no transfer / not-ours step",
     "where": "src/app/api/complaints/route.ts:265-271 (history remark), :289-292 (addCaseLive into the chosen department), src/lib/officer/data.ts:538 (steps are approve/send/close only); needs_manual_review is read nowhere in the officer console",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p7-other.mjs",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p7-other.mjs",
     "evidence": "240 of 328 complaint sub-types are 'assumed' mappings (needs_manual_review = 1) plus 'Other'. Complaint 2026-078CPN (Other, 'street light not working'): citizen history 'Complaint registered. Department routing pending officer review.', needs_manual_review 1; the live case went straight to GCC-ELE with needs_review 0, review_reason ''; officerB's detail has no review or routing word",
     "cause": "the officer review the citizen is promised was never built",
     "confidence": "high"
@@ -93,7 +93,7 @@
     "area": "evidence / citizen to officer",
     "title": "The photo or video a citizen attaches to a complaint never reaches the department officer (or the Collector): the officer's grievance detail carries no link to it, though the media route says only the department and the Collector may open it",
     "where": "src/lib/manu/cases.ts:159-167 (onlineCase drops media_path), src/lib/officer/data.ts:454-523 (grievanceDetail has no complaint media), src/app/api/complaints/media/[name]/route.ts (the access rule for officers that nothing links to)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" flow media long",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" flow media long",
     "evidence": "complaint 2026-807AIC filed with mediaPath /api/complaints/media/c-20261112-5bca5190055e1e1a.jpg: officerA's grievance detail does not contain it (mediaPathInOfficerDetail false) although officerA may open the URL (200)",
     "cause": "the live case and the officer detail were built from the incident store, which never received the complaint's media",
     "confidence": "high"
@@ -115,7 +115,7 @@
     "area": "Tamil labels",
     "title": "The workflow's own words have no Tamil unless a model translates them live: 20 of 22 checked strings (citizen tracker statuses and journey remarks such as 'Resolved – checked by the department', 'Awaiting Collector', 'Accepted by the department; work will be scheduled.'; the officer's 'Complete & close', 'Close as done', 'Returned by the Collector for rework.'; the confirm box 'Confirm it's you', 'Your account password') are neither in the hand-checked list nor in the cached data/i18n/ta.json, so with no model key (this server) a Tamil reader sees them in English",
     "where": "src/lib/i18n/ta.ts (TA), data/i18n/ta.json, src/components/StatusTracker.tsx:25-28, src/lib/complaint-progress.ts:64-81, src/components/officer/Report.tsx:95-123, src/components/security/Confirm.tsx:109-124, src/lib/officer/stages.ts:16-28 (TAB_LABEL, STAGE_LABEL, STEP_LABELS)",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/officer-day/labels.test.ts (third test lists them); npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/officer-day/officer-words.test.ts",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/officer-day/labels.test.ts (third test lists them); npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/officer-day/officer-words.test.ts",
     "evidence": "no Tamil without a model: Approved, Awaiting Collector, Completed – pending Collector verification, Resolved – checked by the department, Verified by Collector, Accepted by the department; work will be scheduled., The Collector's office returned it ..., The department checked the finished work ..., Photos of the work done, Journey, Complete & close, Close as done, Complete & send to Collector, Remarks · what was done, Upload site photos, Returned by the Collector for rework., Waiting for the Collector's verification, Confirm it's you, Your account password, Confirm. Officer console (officer-words.test.ts): the stage and button words In action, Closed, Returned, Approve, Received, Verified by Collector, Closed by your department and the report form hints have no Tamil either (New, Sent to Collector, Verified, Waiting for your approval, Collector Feedback do)",
     "cause": "the hand-checked list covers the Collector console's words; the citizen tracker, the officer's report form and the confirm box were left to the live AI translation",
     "confidence": "high"
@@ -126,7 +126,7 @@
     "area": "IST / citizen tracker",
     "title": "The citizen's tracker shows every step time shifted by the browser's offset from IST: a step stored at 2:20 pm IST shows as 7:50 pm in a UTC browser, 3:50 pm in Dubai and '13 Nov, 12:50 am' in New York, while the officer console shows 02:20 PM everywhere",
     "where": "src/lib/ist-dates.ts:8-12 (toDate: new Date(v) on a zone-less 'YYYY-MM-DD HH:MM:SS' reads it in the browser's zone), src/components/StatusTracker.tsx:38-39; compare src/components/collector/app/lib.ts ms() which appends +05:30; same pattern on the server: src/app/citizen/page.tsx:50 (createdAt: new Date(c.created_at).toISOString() reads the IST wall-clock in the server zone, so a UTC host shifts the citizen home dates by 5.5 h)",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/officer-day/tz.test.ts",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/officer-day/tz.test.ts",
     "evidence": "Asia/Kolkata 12 Nov, 2:20 pm; UTC 12 Nov, 7:50 pm; Asia/Dubai 12 Nov, 3:50 pm; America/New_York 13 Nov, 12:50 am (officer: 12 Nov, 02:20 PM in all four)",
     "cause": "stored times are IST wall-clock strings (dateStrings) but ist-dates parses them as local time; the file's own comment promises 'whatever time zone the server or the browser runs in'",
     "confidence": "high"
@@ -137,7 +137,7 @@
     "area": "officer board / counts",
     "title": "The officer board's 'Resolved this month' tile says 445 but opens a list titled 'Verified by the Collector' that holds 362: the tile is the Collector overview's figure, the list is the officer's Verified tab (which also holds the cases the department closed itself, so the list title is wrong too)",
     "where": "src/components/officer/Board.tsx:56-59 (KPI resolved = d.kpi.cur.resolved, onClick openList('Verified by the Collector', tab verified))",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p1-scope.mjs (monthlyTiles vs listsTheyOpen)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1-scope.mjs (monthlyTiles vs listsTheyOpen)",
     "evidence": "officerA Monthly: board.kpi.cur.resolved 445, /api/officer/grievances?tab=verified&period=monthly total 362; the other tiles matched (open 93/93, serious 2/2, overdue 88/88)",
     "cause": "the tile counts the Collector overview's resolved incidents, the list counts the officer stage 'verified' by report date",
     "confidence": "high"
@@ -148,7 +148,7 @@
     "area": "step-up password",
     "title": "A confirm-it's-you grant is reusable for 5 minutes: after the Collector sent a closed case back, the same report (same remarks, same photo the Collector had just turned down) was replayed with the old grant and closed the case again without the password",
     "where": "src/lib/security/stepup.ts:53-59 (any grant with the same uid/action/scope hash passes; nothing marks it used), src/app/api/officer/grievances/[id]/report/route.ts:41-44",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p3-work.mjs 2026-807AIC (reCloseWithOldGrant)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p3-work.mjs 2026-807AIC (reCloseWithOldGrant)",
     "evidence": "close with grant G: 201 (14:27:17); Collector reopen 201 (14:27:18); POST the identical form with the same G: 201 stage verified (14:27:19); citizen back to 'Resolved by Department' with the old remarks",
     "cause": "grants are bound to the scope but not single-use, and the scope (id, step, remarks, photo hashes) does not include the case's state",
     "confidence": "high"
@@ -159,7 +159,7 @@
     "area": "stage overlay",
     "title": "A send-back recorded in the same second as the officer's send moves the case to In action without the Returned flag: the stage uses decided_at >= sent_at but 'returned' needs sent_at < decided_at",
     "where": "src/lib/officer/data.ts:80 (cd.decided_at >= os.at) vs :115 (ls.at < cd.decided_at)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p6-severe.mjs INC-20260914-8A0C40 officerB (tag 'returned')",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p6-severe.mjs INC-20260914-8A0C40 officerB (tag 'returned')",
     "evidence": "send at 14:28:59, reopen at 14:28:59: stage action, returned false (no Returned chip, banner or count) although the report shows returned",
     "cause": "different tie rules for the same two timestamps (one-second resolution)",
     "confidence": "high"
@@ -170,7 +170,7 @@
     "area": "step-up password",
     "title": "The completion report asks for the password before checking the case: officerB is asked to confirm 'Close case INC-W-2026-575RMP with your report' for officerA's case, and an officer is asked to confirm 'Send case ... to the Collector for verification' for a Medium case; both are refused only after the password is typed",
     "where": "src/app/api/officer/grievances/[id]/report/route.ts:40-44 (requireConfirm before recordStep's department, stage and severity checks)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p1-scope.mjs (bReport); cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p5-upload.mjs INC-W-2026-052EEQ (step=other)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1-scope.mjs (bReport); cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p5-upload.mjs INC-W-2026-052EEQ (step=other)",
     "evidence": "officerB POST report on officerA's case: 428 with summary 'Close case INC-W-2026-575RMP with your report'; step=verify on Medium INC-W-2026-052EEQ: 428 'Send case INC-W-2026-052EEQ to the Collector for verification' (recordStep then answers 409 'Only severe grievances go to the Collector')",
     "cause": "order of checks",
     "confidence": "high"
@@ -181,7 +181,7 @@
     "area": "what the officer is told",
     "title": "The officer sees only the first 280 characters of the citizen's complaint (the form allows 400) and nowhere the rest",
     "where": "src/lib/officer/data.ts:464 (LEFT(e.text, 280)), src/lib/validators.ts:176 (description max 400)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" flow media long",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" flow media long",
     "evidence": "400-character description ending 'END-OF-TEXT': officer detail source note length 280, END-OF-TEXT absent",
     "cause": "the source preview length is the only copy of the text",
     "confidence": "high"
@@ -192,7 +192,7 @@
     "area": "what the officer is told / category",
     "title": "An online complaint's category is set from its department, not from what it is about: a 'dustbins in public toilets' complaint reaches the Health officer as 'Vector- & water-borne disease'; every Engineering complaint becomes 'Roads, footpaths & bridges', every Revenue one 'Tax, certificates & electoral services'",
     "where": "src/lib/manu/cases.ts:153-155,164 (ONLINE_CATEGORY by department code)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"Broken sinks\" Health category",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"Broken sinks\" Health category",
     "evidence": "sub-type 'Availability or cleanliness of dustbins in public toilets' (Health Department): incident type 'Vector- & water-borne disease', GCC-HLT; the pipeline has SANITATION_TOILETS ('Public toilets & open defecation', lead GCC-HLT) for it",
     "cause": "one category per department for website filings",
     "confidence": "high"
@@ -203,7 +203,7 @@
     "area": "queue timing",
     "title": "For up to 30 seconds after a complaint is filed the officer gets 404 'Grievance not found in your department' for it and it is not in the New list; meanwhile the citizen is told the officer sees it 'at the next update, which runs every hour', which is also wrong on this store (it arrives within 30 s)",
     "where": "src/lib/collector/intel.ts:83-90 (asOf cached 30 s), src/lib/officer/data.ts:122 (first_reported_at <= now), src/lib/officer/queue-note.ts:5-8",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs (try 0)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs (try 0)",
     "evidence": "filed 14:26:55; officer detail 404 and not in the list while listNow = 14:26:26; at 14:27:07 it is there",
     "cause": "the cached as-of time is earlier than the filing",
     "confidence": "high"
@@ -214,7 +214,7 @@
     "area": "citizen tracker",
     "title": "A complaint the Collector rejects before anyone worked on it is drawn on the citizen's tracker with 'Approved by Department Officer', 'In Progress' and 'Completed – pending Collector verification' all ticked as done, then 'Rejected at the Collector stage'",
     "where": "src/components/StatusTracker.tsx:47-58 (rejected: stopAt = 4 for the Collector and every step up to it gets state 'done')",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/officer-day/tracker-reject.test.ts (history of live complaint 2026-670DUN: Complaint Filed, Rejected)",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/officer-day/tracker-reject.test.ts (history of live complaint 2026-670DUN: Complaint Filed, Rejected)",
     "evidence": "tracker items: done Complaint Filed, done Pending Approval, done Approved by Department Officer, done In Progress, done Completed – pending Collector verification, bad Rejected at the Collector stage",
     "cause": "the rejection stage, not the history, decides which steps are ticked",
     "confidence": "high"
@@ -225,7 +225,7 @@
     "area": "Collector instructions to the officer",
     "title": "The Collector's 'Send to department' email about several cases reaches the officer's console on the first case only: the other cases' drawers show no instruction, although with mail off (or in sandbox) the console is the officer's only copy",
     "where": "src/lib/collector/actionmail.ts:345-350 (outbound_emails.incident_id = String(cases[0].id)), src/lib/officer/data.ts:471-473 (drawer reads instructions by incident_id)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p8-batch.mjs GCC-SWM INC-W-2026-052EEQ INC-W-2026-807AIC",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p8-batch.mjs GCC-SWM INC-W-2026-052EEQ INC-W-2026-807AIC",
     "evidence": "map send 201 {status: console_only, followups: 2, note: 'goes to the officer's console only'}; officerA detail INC-W-2026-052EEQ: 1 instruction; INC-W-2026-807AIC: none",
     "cause": "one email row per batch, keyed to the first case",
     "confidence": "high"
@@ -236,7 +236,7 @@
     "area": "officer search",
     "title": "The officer's search and list filter find nothing when the text has '_' or '%' (e.g. 'bin_50', '50% full'): the backslash escapes are sent without an ESCAPE clause, which SQLite (the AWS store) does not honour",
     "where": "src/lib/officer/data.ts:408-411 (like = '%' + q with \\\\ before % _ \\\\; 'LIKE ?' without ESCAPE), src/lib/aws/dialect.ts (no LIKE/ESCAPE handling)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" \"bin_50% full\" && node p9-search.mjs 2026-954FHS",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" \"bin_50% full\" && node p9-search.mjs 2026-954FHS",
     "evidence": "complaint titled 'QA officer-day ... bin_50% full': q=bin and q=full find it; q=bin_50, q='50% full', q='bin_50% full' give 0 in search and list",
     "cause": "MySQL's default LIKE escape is backslash, SQLite has none",
     "confidence": "high"
@@ -258,7 +258,7 @@
     "area": "two actors at once / stage overlay",
     "title": "When the officer closes a case in the same second the Collector sends it back, the consoles disagree for good: the officer (and the Collector's effective status) show it Verified and closed with nothing to do, while the citizen is told 'In Progress: the Collector's office returned it to the department for more work'",
     "where": "src/lib/officer/data.ts:79-82,104-109 (latest decision by decided_at then decision_id: the officer's own close 'resolve' outranks the reopen), src/lib/complaint-progress.ts:49-53 (officer 'resolve' decisions skipped; on a tie the step sorts before the decision, so the reopen is last)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p10-race.mjs <code1> <code2> (part 2: officer close and Collector reopen sent together); node p10b.mjs INC-W-2026-153CHY",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p10-race.mjs <code1> <code2> (part 2: officer close and Collector reopen sent together); node p10b.mjs INC-W-2026-153CHY",
     "evidence": "INC-W-2026-153CHY: close 201 and reopen 201, both 14:38:12; officer stage verified, returned false, timeline ends 'Closed by department', 'Returned by Collector'; citizen status 'In Progress'; Collector incident view: status Resolved, open 0, verified 1 (decisions: reopen by the Collector, then the officer resolve, same second): the Collector got 201 for a send-back that has no effect",
     "cause": "the officer view and the citizen view break a same-second tie differently, and the officer's close is stored as a decision that outranks the Collector's",
     "confidence": "high"
@@ -269,7 +269,7 @@
     "area": "uploads / size",
     "title": "The completion-report route (and the citizen's media upload) read the whole multipart body into memory before any size check, and nothing limits the request size: a 30 MB single 'photo' was read in full and only then refused; one large upload from any signed-in officer or citizen can exhaust the server's memory",
     "where": "src/app/api/officer/grievances/[id]/report/route.ts:22 (await req.formData() before the count and 5 MB checks), src/app/api/complaints/media/route.ts (formData() before the 10 MB check), src/middleware.ts / next.config.js (no body-size limit)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p11-bigbody.mjs INC-W-2026-052EEQ 30   (one request; not repeated, and not tried larger on the shared server)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p11-bigbody.mjs INC-W-2026-052EEQ 30   (one request; not repeated, and not tried larger on the shared server)",
     "evidence": "30 MB body: 400 'Each photo must be 5 MB or smaller.' after 1634 ms, i.e. after the whole body was received and parsed",
     "cause": "the limits are per file after parsing, not on the request",
     "confidence": "medium"
@@ -280,7 +280,7 @@
     "area": "officer drawer / API labels",
     "title": "For a case the department closes itself the officer's step bar still ticks 'Sent to Collector', and the API's 'next' says 'send' for every non-severe case in action (the action is 'close')",
     "where": "src/lib/officer/stages.ts:28-32 (STEP_LABELS always includes Sent to Collector; NEXT_STEP approved/action = send), src/components/officer/Drawer.tsx:15-26",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p3-work.mjs <code> (next: 'send' at stage approved for a Medium case; after the close the stage index is 3, so all four steps are drawn done)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p3-work.mjs <code> (next: 'send' at stage approved for a Medium case; after the close the stage index is 3, so all four steps are drawn done)",
     "evidence": "2026-807AIC (Medium): after approve, API next = 'send'; after the department's close, stage verified -> Steps draws Received, In action, Sent to Collector, Verified all done",
     "cause": "the workflow labels predate the department's own close",
     "confidence": "high"
@@ -291,7 +291,7 @@
     "area": "who may file",
     "title": "(Already fixed in source as P6-003 by e65ac51 at 14:24; the running 3106 build predates it) A department officer and the Collector can file 'citizen' complaints: POST /api/complaints takes any signed-in session (the page that calls it decides which), so officerA filed a complaint into its own queue (counted as a citizen complaint) that it can then approve and close itself, and the Collector can too; neither can then track it (GET is citizen-only)",
     "where": "src/app/api/complaints/route.ts in the running build (getActiveSession(), no role check); the source now uses getActivePortalSession(\"citizen\") at :39",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && MSYS_NO_PATHCONV=1 node p12-roles.mjs /api/complaints/media/<name>",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && MSYS_NO_PATHCONV=1 node p12-roles.mjs /api/complaints/media/<name>",
     "evidence": "officerA (Referer /officer): 200 complaintCode 2026-985WWV, department Solid Waste Management; collector: 200 complaintCode 2026-668VTG",
     "cause": "the POST handler checks only that someone is signed in",
     "confidence": "high"
@@ -302,7 +302,7 @@
     "area": "citizen tracker",
     "title": "After the Collector sends the work back, the citizen still sees the rejected report's pictures under 'Photos of the work done' next to 'In Progress: returned to the department for more work'",
     "where": "src/lib/complaint-progress.ts:90 (photos of every report since filing, whatever happened after), src/app/citizen/track-complaints/page.tsx:277-279",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p3-work.mjs <fresh code> (tag reopened)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p3-work.mjs <fresh code> (tag reopened)",
     "evidence": "2026-807AIC after the send-back: citizen status In Progress, progress.photos = [/api/officer/photos/20261112-45c61d0e380403ed/1.jpg] (the report the Collector turned down)",
     "cause": "photos are not tied to whether their report still stands",
     "confidence": "high"
@@ -313,7 +313,7 @@
     "area": "officer queue labels",
     "title": "The officer's 'Sent to Collector' tab (17 for GCC-SWM) is mostly non-severe pipeline cases the Collector will never verify (verify is refused for anything not Severe); they wait there under a label that says the Collector has them until the officer happens to press 'Close as done'",
     "where": "src/lib/officer/data.ts:89 (status Awaiting verification -> stage sent, any severity), src/app/api/collector/decisions/route.ts:74-76 (verify only for Severe), src/lib/officer/stages.ts:16 (TAB_LABEL sent = Sent to Collector)",
-    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/probes/officer-day && node p1-scope.mjs (aQuarterlyStages)",
+    "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1-scope.mjs (aQuarterlyStages)",
     "evidence": "officerA quarterly stages: sent:Low 6, sent:Medium 8, sent:High 1 (no Severe at all in GCC-SWM); counts.sent monthly 17",
     "cause": "pipeline status Awaiting verification is mapped to the Collector stage whatever the severity",
     "confidence": "high"

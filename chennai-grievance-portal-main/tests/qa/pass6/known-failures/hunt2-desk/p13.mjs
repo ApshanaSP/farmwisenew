@@ -1,0 +1,22 @@
+import { call, P, j, upload, file, base, mob } from "./h.mjs";
+const out = {};
+const cit = { headers: { referer: "http://127.0.0.1:3106/citizen" } };
+const g = async (who, url, o = {}) => { const r = await call(P, who, "GET", url, o); return `${r.status} ${r.text.slice(0, 160)}`; };
+out.citA_getB = await g("citizenA", "/api/complaints/2026-482UHM", cit);
+out.citA_getPetition = await g("citizenA", "/api/complaints/2026-766XJA", cit);
+out.citB_own = await g("citizenB", "/api/complaints/2026-482UHM", cit);
+out.citA_case = await g("citizenA", "/api/manu/case/INC-W-2026-766XJA", cit);
+out.anon_case = await g(null, "/api/manu/case/INC-W-2026-766XJA");
+out.anon_photo = await g(null, "/api/manu/photos/1a473c53191bfa9a76de0ff83e37917d.jpg");
+out.citA_photo = await g("citizenA", "/api/manu/photos/1a473c53191bfa9a76de0ff83e37917d.jpg", cit);
+out.officerA_photo_otherdept = await g("officerA", "/api/manu/photos/1a473c53191bfa9a76de0ff83e37917d.jpg");
+out.officerA_petition = await g("officerA", "/api/manu/petitions/1000000001");
+out.collector_desk = await g("collector", "/api/manu/petitions");
+// officer detail right after a filing
+const A = await upload();
+const f = await file(A.id, base({ name: "Fresh Case", mobile: mob(), problem: "Sewage block in front of the ration shop", dept: "CMWSSB" }));
+const code = f.body.approved?.code;
+out.detailNow = await g("officerC", `/api/officer/grievances/INC-W-${code}`);
+const l = await call(P, "officerC", "GET", `/api/officer/grievances?tab=all&q=${code}&per=5`); out.listNow = j(l).rows?.length;
+out.detailAgain = await g("officerC", `/api/officer/grievances/INC-W-${code}`);
+console.log(JSON.stringify(out, null, 1));

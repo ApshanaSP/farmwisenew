@@ -1,0 +1,24 @@
+period=weekly | book.stats undefined | critical list 4 | briefing keys headline,opening,conditions,market,attention,emerging,fromSources,ranking,stats,env,addedCount,addedDays,md,method
+   tiles: reported 286 ongoing 282 overdue 184 resolved 204 severe 10 severe_open 8 urgent 58 complaints 180 critical 19
+period=weekly&taluk=TLK-TDP | book.stats undefined | critical list 0 | briefing keys headline,opening,conditions,market,attention,emerging,fromSources,ranking,stats,env,addedCount,addedDays,md,method
+   tiles: reported 30 ongoing 30 overdue 22 resolved 15 severe 0 severe_open 0 urgent 7 complaints 22 critical 19
+period=monthly&cat=FLOOD_WATERLOGGING | book.stats undefined | critical list 4 | briefing keys headline,opening,conditions,market,attention,emerging,fromSources,ranking,stats,env,addedCount,addedDays,md,method
+   tiles: reported 538 ongoing 223 overdue 223 resolved 411 severe 87 severe_open 34 urgent 137 complaints 251 critical 19
+period=weekly | briefing.stats {"reported":286,"change":-78,"open":282,"overdue":184,"severe":10,"multi":3,"newsOnly":11,"handledByDepts":216}
+   headline: 286 incidents were reported in Chennai district (last 7 days), 78% fewer than the previous period.,282 incidents are still open, 184 of them past the deadline; 10 severe events.,3 incidents came from more than one source, and 11 incidents appear only
+   opening: {"en":"This week recorded more incidents than the previous period. We must focus on the severe flooding and waterlogging reported at Pulianthope in Anna Nagar and Ice House in Teynampet. We must also watch the IMD warning level 2 issued for 06 Nov and 5 unrecorded items appearing in the news.","ta":"இந்த வாரம் முந்தைய காலகட்டத்தை விட அதிகமான சம்பவங்கள் பதிவாகியுள்ளன. அண்ணா நகர் புளியந்தோப்பு மற்று
+period=weekly&taluk=TLK-TDP | briefing.stats {"reported":30,"change":-77,"open":30,"overdue":22,"severe":0,"multi":0,"newsOnly":3,"handledByDepts":22}
+   headline: 30 incidents were reported in Tondiarpet taluk (last 7 days), 77% fewer than the previous period.,30 incidents are still open, 22 of them past the deadline; 0 severe events.
+   opening: null
+period=monthly&cat=FLOOD_WATERLOGGING | briefing.stats {"reported":538,"change":42,"open":223,"overdue":223,"severe":87,"multi":114,"newsOnly":6,"handledByDepts":55}
+   headline: 538 incidents were reported in Flooding & waterlogging (last 30 days), 42% more than the previous period.,223 incidents are still open, 223 of them past the deadline; 87 severe events.,114 incidents came from more than one source, and 6 incidents app
+   opening: null
+period=daily | stats {"reported":19,"change":null,"open":19,"overdue":0,"severe":0,"multi":0,"newsOnly":0,"handledByDepts":19}
+   headline: ["19 incidents were reported in Chennai district (last 24 hours).","19 incidents are still open; 0 severe events."]
+   opening.en: Today saw about the same number of incidents as the previous period. Immediate attention is required for severe flooding and waterlogging at Pulianthope in Anna Nagar and Ice House in Teynampet. We must also watch the rising categories of street lights and electrical hazards, garbage and solid waste
+period=monthly | stats {"reported":4622,"change":-6,"open":1987,"overdue":1681,"severe":206,"multi":136,"newsOnly":74,"handledByDepts":1197}
+   headline: ["4,622 incidents were reported in Chennai district (last 30 days), 6% fewer than the previous period.","1,987 incidents are still open, 1681 of them past the deadline; 206 severe events.","136 incide
+   opening.en: This month saw more incidents compared with the previous period. Particular attention is required in Pulianthope for flooding and waterlogging, and in Ice House for similar severe waterlogging. We must closely watch the IMD warning level 2 for 06 Nov.
+period=quarterly | stats {"reported":14143,"change":9,"open":2409,"overdue":2103,"severe":548,"multi":287,"newsOnly":74,"handledByDepts":1342}
+   headline: ["14,143 incidents were reported in Chennai district (last 90 days), 9% more than the previous period.","2,409 incidents are still open, 2103 of them past the deadline; 548 severe events.","287 incide
+   opening.en: This quarter recorded more incidents compared with the previous period. Immediate attention is required for severe flooding and waterlogging in Pulianthope and Ice House. Authorities must watch for IMD warning level 2 for 06 Nov and rising categories like garbage and solid waste.

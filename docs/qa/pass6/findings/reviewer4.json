@@ -28,7 +28,7 @@
     "title": "A batch instruction to one department now shows in another department's drawer when any listed case later moves department (before the fix only the first case could)",
     "where": "src/lib/officer/data.ts:474-476 (no department check on the email); src/lib/collector/derive.ts:473-475 (lead_dept rewritten on re-categorisation)",
     "repro": "zz-reviewer4 run: send a GCC-SWM batch, then UPDATE incidents SET lead_dept='GCC-ELE' for the 2nd listed case (as derive.ts does on re-categorisation), then grievanceDetail(GCC-ELE profile, that case).",
-    "evidence": "'moved INC-20261104-EA19E3 to GCC-ELE: ELE drawer=found shows SWM batch=true'. The real draft body (draftBatchAction line()) lists up to 25 other SWM cases with title, id, place and severity, so the ELE officer reads SWM's case list and an instruction not addressed to them.",
+    "evidence": "'moved INC-20261104-EA19E3 to GCC-ELE: ELE drawer=found shows SWM batch=true'. The real draft body (draftBatchAction line()) lists up to 25 other SWM cases with title, id, place and severity, so the ELE officer reads SWM's case list and an instruction not addressed to them. Same path, not run: rehearsal emails (src/lib/rehearsal/tasks.ts:148-155) write a follow-up per job incident, so a drill email now shows on every job's real incident (and turns its 'Action taken' mark on), where before only the first job's incident showed it.",
     "cause": "The email is matched to the case through followups.incident_id only; neither the email's department nor the case's department at send time is checked. The move is simulated in the per-process dry-run store.",
     "confidence": "medium"
   },
@@ -37,10 +37,10 @@
     "severity": "P2",
     "area": "Studio OCR / pdfImages (P6-013 fix)",
     "title": "P6-013 regression: the new fall-back end strips a data byte 0x0D as if it were end-of-line, so a page with no direct /Length whose data ends in 0x0D is dropped (worked before the fix)",
-    "where": "src/lib/studio/ocr.ts:171 (if (end !== start + len) { ...\n... ; if (src[end - 1] === \"\r\") end--; })",
-    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer4/pdfimages.probe.test.ts (and pdfimages-old.probe.test.ts for the pre-fix code)",
+    "where": "src/lib/studio/ocr.ts:171",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/reviewer4/pdfimages.probe.test.ts (and pdfimages-old.probe.test.ts for the pre-fix code)",
     "evidence": "Flate grey page with '/Length 7 0 R', deflate data ending in 0x0D, EOL \n: new {images:0, skipped:1}, old {images:1, skipped:0}. Unfiltered grey bitmap, no /Length, last pixel 13: new {images:0, skipped:1}, old kept. Control (data ending 0x41) kept by both.",
-    "cause": "After the LF before 'endstream' is removed, a CR is removed too even when the EOL was a lone LF, so the stream's own last byte goes when it is 0x0D: Flate fails its adler-32 (inflate throws), an unfiltered bitmap is one byte short of W*H. Hits about 1 in 256 Flate pages whose /Length is indirect or wrong. Strip CR only when it is directly before the LF that was removed AND the EOL was CRLF is the same test; the safe form is: strip '\r\n' or '\n' as one unit, never a lone '\r' after an '\n' removal.",
+    "cause": "When /Length is not trusted, the fix removes the LF before 'endstream' and then, separately, a CR before it, even when the EOL was a lone LF; a stream whose own last byte is 0x0D loses it. Flate then fails its adler-32 (inflate throws, page counted as skipped); an unfiltered bitmap is one byte short of W*H. Affects about 1 in 256 Flate pages whose /Length is indirect or wrong; reached by the Data Studio (src/lib/studio/parse.ts:534, bitmaps on). The petition desk (manu/files.ts:33, JPEG only) is not hit since a JPEG ends FF D9. Removing CR only as part of a CRLF pair has the same flaw; only the EOL the writer added should go, and a lone LF is the whole EOL.",
     "confidence": "high"
   },
   {

@@ -1,0 +1,12 @@
+import { call } from "../../lib/live.mjs";
+import { snap, CH } from "./snap.mjs";
+import { confirmed } from "./confirm.mjs";
+const id = process.argv[2];
+const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+const mk = () => { const f = new FormData(); f.set("remarks", "QA hunt2: area swept and waste removed, checked on site."); f.set("step", "close"); f.append("photos", new Blob([png], { type: "image/png" }), "done.png"); return f; };
+console.log(JSON.stringify(await snap(id, "pre-close")));
+const res = await confirmed("officerA", "POST", `/api/officer/grievances/${id}/report`, mk(), {}, true);
+console.log("close", res.first, res.confirm, res.r.status, res.r.text.slice(0, 300));
+console.log(JSON.stringify(await snap(id, "after close")));
+const ci = JSON.parse((await call(3106, "collector", "GET", `/api/collector/incidents/${id}`, CH)).text);
+console.log("collector decisions", JSON.stringify(ci.decisions), "deptReports", JSON.stringify(ci.deptReports).slice(0, 300), "status", ci.incident.status, "closed_at", ci.incident.closed_at ?? ci.incident.closed);

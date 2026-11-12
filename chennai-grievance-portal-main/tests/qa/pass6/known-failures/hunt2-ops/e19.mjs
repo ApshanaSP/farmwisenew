@@ -1,0 +1,12 @@
+import { call } from "../../lib/live.mjs";
+import { snap, CH } from "./snap.mjs";
+const id = process.argv[2];
+console.log(JSON.stringify(await snap(id, "pre")));
+const st = async (s) => JSON.parse((await call(3106, "collector", "GET", `/api/collector/list?scope=all&dept=GCC-SWM&status=${encodeURIComponent(s)}&q=${id}`, CH)).text).incidents;
+console.log("Collector status chips containing it before:", JSON.stringify({ "Under review": await st("Under review"), Assigned: await st("Assigned"), "In progress": await st("In progress") }));
+const ap = await call(3106, "officerA", "POST", `/api/officer/grievances/${id}`, { body: { step: "approve" } });
+console.log("approve", ap.status, ap.text.slice(0, 120));
+console.log(JSON.stringify(await snap(id, "after approve")));
+console.log("Collector status chips containing it after:", JSON.stringify({ "Under review": await st("Under review"), Assigned: await st("Assigned"), "In progress": await st("In progress") }));
+const d = JSON.parse((await call(3106, "collector", "GET", `/api/collector/incidents/${id}`, CH)).text);
+console.log("Collector detail decisions", JSON.stringify(d.decisions), "deptReports", (d.deptReports || []).length, "status", d.incident.status, "assigned", JSON.stringify(d.assigned)?.slice(0, 120));

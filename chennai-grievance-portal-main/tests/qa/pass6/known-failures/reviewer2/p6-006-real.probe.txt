@@ -1,0 +1,99 @@
+// reviewer2 (QA pass 6) TEMPORARY probe of P6-006: other ways an officer's Ask District IQ reaches another department's incident.
+// Deleted before the report. Copy kept in tests/qa/pass6/probes/reviewer2/p6-006-real.probe.txt
+import fs from "fs";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import pool, { ops } from "@/lib/collector/db";
+import { asOf } from "@/lib/collector/intel";
+import { ask } from "@/lib/assistant/pipeline";
+import { clearCaches } from "@/lib/thunai/round";
+import { askMap } from "@/lib/map/ask";
+
+const USER = "qa.p6.rev2@example.test";
+const OUT = "../docs/qa/pass6/evidence/reviewer2/p6-006-map.json";
+type Out = Awaited<ReturnType<typeof ask>>;
+const askAs = async (lockDept: string | null, message: string, sessionId: string | null = null): Promise<Out> => (await ask({ user: `${USER}.${lockDept ?? "collector"}`, sessionId, message, inputMode: "text",
+  language: "auto", scope: { period: "monthly", zone: null, dept: null, cat: null, taluk: null } as never, replyTo: null, pinId: null, insightKey: null, lockDept,
+  stage: () => undefined } as never));
+
+let swm = "", swmTitle = "", ele = "";
+const log: Record<string, unknown>[] = [];
+const deptOf = async (ids: string[]) => {
+  if (!ids.length) return {} as Record<string, string>;
+  const [r] = await pool.query(`SELECT incident_id, lead_dept FROM incidents WHERE incident_id IN (?)`, [ids]) as unknown as [{ incident_id: string; lead_dept: string }[]];
+  return Object.fromEntries(r.map((x) => [x.incident_id, x.lead_dept]));
+};
+const idsIn = (c: unknown) => [...new Set(JSON.stringify(c).match(/INC-[A-Z0-9-]{4,40}/g) ?? [])];
+async function foreign(c: unknown, lock: string) { const d = await deptOf(idsIn(c)); return Object.entries(d).filter(([, v]) => v !== lock); }
+
+beforeAll(async () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-06T06:30:00.000Z") });
+  clearCaches();
+  await asOf();
+  void ops;
+  const [a] = await pool.query(`SELECT incident_id, title FROM incidents WHERE lead_dept = 'GCC-SWM' AND title IS NOT NULL AND title <> '' ORDER BY first_reported_at DESC LIMIT 1`) as unknown as [{ incident_id: string; title: string }[]];
+  const [b] = await pool.query(`SELECT incident_id FROM incidents WHERE lead_dept = 'GCC-ELE' ORDER BY first_reported_at DESC LIMIT 1`) as unknown as [{ incident_id: string }[]];
+  swm = a[0].incident_id; swmTitle = a[0].title; ele = b[0].incident_id;
+}, 300_000);
+afterAll(() => { vi.useRealTimers(); fs.mkdirSync("../docs/qa/pass6/evidence/reviewer2", { recursive: true }); fs.writeFileSync(OUT, JSON.stringify({ swm, ele, log }, null, 1)); });
+
+const one = async (name: string, msg: string, sid: string | null = null) => {
+  const o = await askAs("GCC-ELE", msg, sid);
+  const c = o.card as unknown as Record<string, unknown>;
+  const f = await foreign(c, "GCC-ELE");
+  const titleLeak = swmTitle.length > 12 && JSON.stringify(c).includes(swmTitle);
+  log.push({ name, msg, kind: c.kind, responseType: c.responseType, headline: c.headline, foreign: f, titleLeak, answer: String(c.answerMarkdown ?? "").slice(0, 300) });
+  return { o, c, f, titleLeak };
+};
+
+describe("reviewer2: P6-006 other doors", () => {
+  it.skip("phrasings of another dept's id", async () => {
+    const msgs = [`tell me about ${swm.toLowerCase()}`, `${swm} இந்த சம்பவம் எங்கே நடந்தது?`, `who is responsible for ${swm}`, `where is ${swm}`, `show ${swm} on the map`,
+      `compare ${ele} and ${swm}`, `what to do about ${ele} and ${swm}`, `${swm} timeline kaattu`, `status of ${swm}`, `officials for ${swm}`, `tell me about ${ele}, ${swm}`, `${ele} and ${swm} details`];
+    const bad: string[] = [];
+    for (const m of msgs) { const r = await one("id", m); if (r.f.length || r.titleLeak) bad.push(`${m} -> ${r.c.responseType}: ${JSON.stringify(r.f)} title=${r.titleLeak}`); }
+    expect(bad).toEqual([]);
+  });
+  it.skip("news: stories matched to other departments' incidents", async () => {
+    const r = await one("news", "top news this week");
+    const r2 = await one("news-gaps", "news with no department record");
+    const st = ((r.c.stories ?? []) as Record<string, unknown>[]).filter((x) => x.matchedIncidentId);
+    const d = await deptOf(st.map((x) => String(x.matchedIncidentId)));
+    const [ai] = await pool.query(`SELECT incident_id, ai_summary, place_text FROM incidents WHERE incident_id IN (?)`, [st.map((x) => String(x.matchedIncidentId))]) as unknown as [{ incident_id: string; ai_summary: string; place_text: string }[]];
+    log.push({ name: "news-stories", stories: st.map((x) => ({ id: x.matchedIncidentId, dept: d[String(x.matchedIncidentId)], department: x.department, location: x.location, why: x.whyRelevant, summary: String(x.summary).slice(0, 200),
+      summaryIsIncidentAi: ai.some((a) => a.incident_id === x.matchedIncidentId && !!a.ai_summary && String(a.ai_summary) === String(x.summary)), locIsIncidentPlace: ai.some((a) => a.incident_id === x.matchedIncidentId && a.place_text === x.location) })) });
+    expect({ news: r.f, gaps: r2.f }).toEqual({ news: [], gaps: [] });
+  });
+  it.skip("follow-ups after news: tell me more / where / who / what to do / incidents like it", async () => {
+    const first = await one("news-detail", "top news this week");
+    const sid = first.o.sessionId;
+    const bad: string[] = [];
+    for (const m of ["tell me more about the first one", "where is it", "who is responsible", "what should be done about it", "incidents like it", "show it on the map", "timeline"]) {
+      const r = await one(`follow:${m}`, m, sid);
+      if (r.f.length) bad.push(`${m} -> ${r.c.responseType}: ${JSON.stringify(r.f)}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it.skip("follow-ups after a list", async () => {
+    const first = await one("list", "top open incidents this month");
+    const sid = first.o.sessionId;
+    const bad: string[] = [];
+    for (const m of ["which one is most serious?", "show them on a map", "tell me more about the second one", "who is responsible for the first one"]) {
+      const r = await one(`listfollow:${m}`, m, sid);
+      if (r.f.length) bad.push(`${m} -> ${r.c.responseType}: ${JSON.stringify(r.f)}`);
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe("reviewer2: Ask the Map, another department's incident as context", () => {
+  it("officer GCC-ELE, map context incidentId = a GCC-SWM incident", async () => {
+    const [p] = await pool.query(`SELECT incident_id, title, lat, lon FROM incidents WHERE lead_dept = 'GCC-SWM' AND lat IS NOT NULL AND title IS NOT NULL ORDER BY first_reported_at DESC LIMIT 1`) as unknown as [{ incident_id: string; title: string; lat: number; lon: number }[]];
+    const x = p[0];
+    const r = await askMap({ text: null, plan: null, prev: null, user: { email: `${USER}.map`, role: "department_officer", lockDept: "GCC-ELE" },
+      context: { zone: null, taluk: null, incidentId: x.incident_id, ward: null, drawn: null }, reword: false } as never);
+    const t = JSON.stringify(r);
+    const lat = String(x.lat).slice(0, 7), lon = String(x.lon).slice(0, 7);
+    log.push({ name: "map-ctx", id: x.incident_id, title: x.title, titleLeak: t.includes(x.title), coordLeak: t.includes(lat) && t.includes(lon), say: JSON.stringify((r as { say?: unknown }).say ?? null).slice(0, 400), camera: JSON.stringify((r as { camera?: unknown }).camera ?? null).slice(0, 400) });
+    expect({ title: t.includes(x.title), coords: t.includes(lat) && t.includes(lon) }).toEqual({ title: false, coords: false });
+  });
+});

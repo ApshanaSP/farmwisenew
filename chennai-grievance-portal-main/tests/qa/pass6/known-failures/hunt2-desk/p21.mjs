@@ -1,0 +1,10 @@
+import { call, P, j, upload, file, base, mob, track } from "./h.mjs";
+const M = mob();
+const inc = process.argv[2] || "INC-W-2026-674LOD";
+const A = await upload();
+const f = await file(A.id, base({ name: "Urgent Joiner", mobile: M, problem: "Live wire hanging from the street light pole, children nearby", dept: "GCC-ELE", urgent: true, ward: 70, attachTo: inc }));
+const code = f.body.approved?.code;
+const t = (await track(code, M.slice(-4))).body;
+await new Promise((r) => setTimeout(r, 1500));
+const c = j(await call(P, "collector", "GET", `/api/collector/incidents/${inc}`)).incident ?? {};
+console.log(JSON.stringify({ code, attached: f.body.approved?.attached, trackDueBy: t.dueBy, trackStatus: t.status, caseSlaDue: c.sla_due, caseSev: c.sev, casePriority: c.priority, attention: c.attention_reason }));

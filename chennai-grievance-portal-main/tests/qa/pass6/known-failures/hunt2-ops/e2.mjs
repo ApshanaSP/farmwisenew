@@ -1,0 +1,15 @@
+import { call } from "../../lib/live.mjs";
+import { snap, CH } from "./snap.mjs";
+import { confirmed } from "./confirm.mjs";
+const id = process.argv[2];
+console.log(JSON.stringify(await snap(id, "pre"), null, 0));
+const res = await confirmed("collector", "POST", "/api/collector/decisions", { incidentIds: [id], decision: "reject", note: "QA hunt2: not a civic issue" }, CH.headers);
+console.log("reject", res.first, res.confirm, res.r.status, res.r.text.slice(0, 200));
+console.log(JSON.stringify(await snap(id, "after reject"), null, 0));
+const od = await call(3106, "officerA", "GET", `/api/officer/grievances/${id}`);
+const j = JSON.parse(od.text);
+console.log("officer next", j.next, "stage", j.grievance.stage, "timeline tail", JSON.stringify(j.timeline.slice(-2)));
+const ap = await call(3106, "officerA", "POST", `/api/officer/grievances/${id}`, { body: { step: "approve" } });
+console.log("officer approve", ap.status, ap.text.slice(0, 200));
+const ov = await call(3106, "officerA", "GET", `/api/officer/overview?period=quarterly`);
+console.log("officer overview", ov.status, ov.text.slice(0, 600));

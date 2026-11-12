@@ -5,7 +5,7 @@
     "area": "Grievance dataset (pass 4 RC-37, PB-218)",
     "title": "Status changes still never reach the live dataset files: appendStatusChangeToDataset has no production caller",
     "where": "chennai-grievance-portal-main/src/lib/dataset/append.ts:154",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/static.test.ts -t PB-218",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-218",
     "evidence": "Probe fails: 'no production file calls appendStatusChangeToDataset'. The only caller in src is src/lib/dataset/append.pass4.test.ts; appendComplaintToDataset is called from api/complaints/route.ts. Pass 4 lane u2 marked PB-218 fixed, but its note is about dropVault (studio/connectors.ts), a different function.",
     "cause": "The status-change writer was never wired into the officer/Collector status paths; pass 4's fix row looked at the wrong dead name.",
     "confidence": "high"
@@ -16,7 +16,7 @@
     "area": "Test infrastructure (pass 4 RC-36, PB-332)",
     "title": "data-testid=\"state\" is still used twice, so the voice e2e specs that call getByTestId(\"state\") on /dev/thunai match two elements",
     "where": "chennai-grievance-portal-main/src/app/dev/thunai/Harness.tsx:112 and src/components/collector/app/thunai/Hud.tsx:162",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/static.test.ts -t PB-332; the e2e specs tests/e2e/hold.spec.ts:19,25,50 and mode.spec.ts:43,117,121,137 use page.getByTestId(\"state\")",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-332; the e2e specs tests/e2e/hold.spec.ts:19,25,50 and mode.spec.ts:43,117,121,137 use page.getByTestId(\"state\")",
     "evidence": "Probe fails: 'app/dev/thunai/Harness.tsx, components/collector/app/thunai/Hud.tsx: expected 2 to be <= 1'. Harness.tsx renders <pre data-testid=\"state\"> and <Thunai/>, and Thunai renders <Hud> (Thunai.tsx:1856). Pass 4 g1 marked PB-332 fixed under a blanket RC-36 row; git log -S finds no commit that changed either testid.",
     "cause": "Two components use the same test id; Playwright strict mode refuses a locator that matches two elements. The Playwright specs were not run here (they need a server).",
     "confidence": "medium"
@@ -27,7 +27,7 @@
     "area": "Collector console, My Tasks (pass 4 RC-15, PB-302 sibling)",
     "title": "My Tasks still says 'With you because: Severe severity'; pass 4's sevLabel fix covered the home cards but not this reason list",
     "where": "chennai-grievance-portal-main/src/lib/collector/intel.ts:170 (shown by src/components/collector/app/Attention.tsx:141)",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/static.test.ts -t PB-302",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-302",
     "evidence": "Probe fails: the only 'Severe severity' literal left in production code is intel.ts:170 (the other hit is the comment in sev-label.ts). taskBecause() starts its list with it; Attention.tsx joins it after 'With you because:'.",
     "cause": "The wording rule lives in sev-label.ts, but taskBecause builds its own literal.",
     "confidence": "high"
@@ -38,7 +38,7 @@
     "area": "Data Studio uploads (found while re-checking pass 4 PB-265, RC-43)",
     "title": "A 30 to 40 byte cut-off .xlsx makes SheetJS XLSX.read run without returning, and uploads are parsed on the server's own thread, so one small upload can stall the whole server",
     "where": "chennai-grievance-portal-main/src/lib/studio/parse.ts:275 (excelAll: XLSX.read), reached from src/app/api/collector/studio/route.ts:77 ingest -> src/lib/studio/pipeline.ts:123 parseFileAsync -> parseAll; also src/lib/studio/connect/index.ts:72 for fetched links",
-    "repro": "cd chennai-grievance-portal-main; timeout 25 node C:/Users/arjun/AppData/Local/Temp/claude/86ab7bcd7f3fc2bb/20a1546c-175e-487f-85fd-dbc6ea4005f9/scratchpad/xlsx-trunc.cjs 40 (the first 40 bytes of a 166-byte zip, read with excelAll's options). Probe: npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/studio-parse.test.ts -t \"cut off after 40 bytes\" (runs the same XLSX.read in a worker thread: 'no answer after 10 s'). Calling parseAll directly in the test never finished (killed by timeout 70).",
+    "repro": "cd chennai-grievance-portal-main; timeout 25 node C:/Users/arjun/AppData/Local/Temp/claude/86ab7bcd7f3fc2bb/20a1546c-175e-487f-85fd-dbc6ea4005f9/scratchpad/xlsx-trunc.cjs 40 (the first 40 bytes of a 166-byte zip, read with excelAll's options). Probe: npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/studio-parse.test.ts -t \"cut off after 40 bytes\" (runs the same XLSX.read in a worker thread: 'no answer after 10 s'). Calling parseAll directly in the test never finished (killed by timeout 70).",
     "evidence": "n=30 and n=40 bytes: no return in 25 s (exit 124), and n=40 again: no return in 90 s; n=22: threw after 1.9 s; n=60: threw after 3 ms. The vitest worker on the same case used 200 s of CPU before it was killed. Deliberately not sent to the shared server on 3106 (it would stall it for every hunter).",
     "cause": "isZip() looks only at the PK header, so a cut-off zip named .xlsx goes to XLSX.read (xlsx 0.20.3), which does not return on the damaged archive; the parser runs synchronously inside the route, with no worker or time limit.",
     "confidence": "high"
@@ -49,7 +49,7 @@
     "area": "Data Studio uploads (pass 4 PB-265 variant)",
     "title": "A .xls file that holds plain words is read as a workbook with one empty table, not called unreadable",
     "where": "chennai-grievance-portal-main/src/lib/studio/parse.ts:91 (ole false and ext xls still go to excelAll)",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/studio-parse.test.ts -t \"plain words\"",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/studio-parse.test.ts -t \"plain words\"",
     "evidence": "parseAll(Buffer.from(\"this is not a spreadsheet at all, just words\"), \"old.xls\") returned 'parsed 1 table(s), 0 rows' instead of the 'could not be opened as an Excel workbook' error that .xlsx/.xlsm/.ods/.xlsb now get. Pass 4's own inputs (a.xlsx text, b.csv binary) and a zip of a text file named .xlsx are now called unreadable.",
     "cause": "Pass 4's PB-265 rule lists xlsx, xlsm, ods, xlsb but not xls; SheetJS reads any text as a sheet.",
     "confidence": "high"
@@ -60,7 +60,7 @@
     "area": "Collector console API (pass 4 RC-43 sibling)",
     "title": "/api/collector/conflicts?period=<unknown> is still read as another period: the one route that reads ?period= without refuseBadFilter",
     "where": "chennai-grievance-portal-main/src/app/api/collector/conflicts/route.ts:24",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/static.test.ts -t \"RC-43 class\"",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t \"RC-43 class\"",
     "evidence": "Live on 3106: GET /api/collector/conflicts?period=yearly -> 200 with exactly the body of period=daily. Static scan fails with one route: conflicts/route.ts reads get(\"period\") through parsePeriod and never calls refuseBadFilter. Pass 4's sweep (sweeps/RC-43.txt section 1) lists it as guarded; the class guard in tests/qa/pass4/g2-routes.test.ts only looks for parseZone/parseTaluk/parseScope, so parsePeriod alone slips through.",
     "cause": "The RC-43 class guard keys on the wrong helper names.",
     "confidence": "high"
@@ -71,7 +71,7 @@
     "area": "Officer console search (pass 4 RC-38, PB-314)",
     "title": "The officer search still cannot find a case by a complaint number: it matches title, place, incident id, category and zone only",
     "where": "chennai-grievance-portal-main/src/lib/officer/data.ts:408-411",
-    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/pass4-open/static.test.ts -t PB-314 (real-data and live checks in p6-rc38-15 and live-3106)",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-314 (real-data and live checks in p6-rc38-15 and live-3106)",
     "evidence": "Real data (p6-rc38-15, pinned snapshot): 5 of 5 citizen complaint numbers already linked into an incident of the department (e.g. 2026-752MBN in INC-20261106-896A64, GCC-SWM) are not found by the officer search, while the incident id is. On 3106 a search for 2026-153CHY did find INC-W-2026-153CHY, only because that incident's id contains the code. The q clause is (w.title LIKE ? OR w.place_text LIKE ? OR w.incident_id LIKE ? OR w.category_label LIKE ? OR w.zone_name LIKE ?): no events.source_record_id or complaint_code. Pass 4 lane u1 left PB-314 not_fixed (needs the RC-47 decision).",
     "cause": "Complaint numbers live on events (source_record_id) and complaints, which the officer list query does not join for search.",
     "confidence": "high"
@@ -82,7 +82,7 @@
     "area": "Ask District IQ rules lane (pass 4 RC-43, PB-259 and PB-260 class)",
     "title": "Pass 4's exact sentences are fixed, but close variants still get the whole district or the last 90 days with no word that the place or period was not applied",
     "where": "chennai-grievance-portal-main/src/lib/assistant/unresolved.ts:63 (zone needs digits), :71 (zero needs the digit 0), :104-110 (a place needs a capital letter, and any word in NOT_PLACES such as City clears it); no rule for a future month or day",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-ask",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-ask",
     "evidence": "'how many complaints in atlantis' -> '9,113 citizen complaints · last 90 days', scope District-wide; 'open complaints in Gotham City' -> district open incidents (2,411); 'complaints in zone twenty' -> 15,115 incidents district-wide; 'complaints in December 2026' (a month to come), 'incidents on 25 December', 'complaints in the last zero days' -> 'Incidents · last 90 days', District-wide. The originals (zone 99, Atlantis, 2030, last 0 days) and ward 450, Springfield now get a plain 'I did not find' line. Evidence: docs/qa/pass6/evidence/pass4-open/p6-ask.json.",
     "cause": "The fix is a list of regular expressions for the shapes pass 4 tested; anything outside them falls through to the old default.",
     "confidence": "high"
@@ -93,7 +93,7 @@
     "area": "Ask District IQ rules lane (pass 4 RC-43 class)",
     "title": "'how many complaints in the last 500 days' is answered and labelled 'last 500 days', although the console says it holds about 180 days of records",
     "where": "chennai-grievance-portal-main/src/lib/assistant/fastpath.ts:753 customWindow (no check against the held window); unresolved.ts:59 days default 180",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-ask -t \"beyond held\"",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-ask -t \"beyond held\"",
     "evidence": "headline '16,949 citizen complaints · last 500 days', scope line 'Last 500 days · District-wide'; the same lane's year refusal says 'The console holds about 180 days of records'.",
     "cause": "A custom window longer than the data is applied as asked and labelled as asked, with no note that only the held days were counted.",
     "confidence": "medium"
@@ -104,7 +104,7 @@
     "area": "Ask District IQ rules lane (pass 4 RC-44, PB-330 class)",
     "title": "Requests the rules cannot do, phrased a little differently from pass 4's tests, still get an incident list or figures about something else",
     "where": "chennai-grievance-portal-main/src/lib/assistant/cannot.ts:31-34 (FUTURE and WRITE word lists) and guard.ts:172 (the default overview/incident answer)",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-ask -t \"RC-44\"",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-ask -t \"RC-44\"",
     "evidence": "'what will the backlog look like at the end of the month' -> 'Open incidents · last 90 days' with 8 incidents; 'draft a reply to the citizen who complained about garbage in Adyar' -> 'Garbage incidents · last 90 days' (Adyar, 8 incidents); 'prepare a note for the Chief Secretary on flooding' -> 'Flooding, by category' with counts. Pass 4's own sentences (save workspace, every source, predict, draft a letter) and 'save this dashboard', 'which datasets did you use', 'send these figures by email' are now refused plainly.",
     "cause": "notDone() is a closed list of words ('letter', 'email', 'predict', 'will be/get/...'); 'reply', 'note', 'look like' are not in it, so the question falls to the default lane.",
     "confidence": "high"
@@ -115,7 +115,7 @@
     "area": "Ask District IQ rules lane (pass 4 RC-44, PB-262 class)",
     "title": "'What percentage of complaints were resolved within the deadline' is answered with the share resolved at all (78%), a confident answer about another measure",
     "where": "chennai-grievance-portal-main/src/lib/assistant/cannot.ts:62-70 shareAsked (no on-time share; 'resolved' wins)",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-ask -t \"on time\"",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-ask -t \"on time\"",
     "evidence": "headline '78% of incidents are resolved · last 90 days'; markdown '**78%** of the incidents reported in the last 90 days are resolved: 11,784 of 15,115.' Nothing says the deadline part was not applied. ('ratio of open to closed incidents this week' likewise gets '13.4% ... are resolved'.)",
     "cause": "shareAsked maps any sentence with 'resolved' to the resolved share; the deadline clause is dropped without a word.",
     "confidence": "high"
@@ -126,7 +126,7 @@
     "area": "Jarvis Tamil lines (pass 4 RC-15, PB-161 and PB-174 class)",
     "title": "A Tamil case-list answer still names the department in English: 'PWD Water Resources வசம் 2'",
     "where": "chennai-grievance-portal-main/src/lib/thunai/screens.ts:546-553 (byDept keyed by r.deptName; Tamil label `${lead[0]} வசம்`)",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-rc38-15 -t \"ta count\" (see said in docs/qa/pass6/evidence/pass4-open/p6-rc38-15.json)",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-rc38-15 -t \"ta count\" (see said in docs/qa/pass6/evidence/pass4-open/p6-rc38-15.json)",
     "evidence": "'அடையாறு மண்டலத்தில் இந்த வாரம் கடுமையான சம்பவங்கள் எத்தனை?' -> '... PWD Water Resources வசம் 2.'; 'Royapuram la indha vaaram evlo severe cases irukku' -> '... PWD Water Resources வசம் 5.' DEPT_TA already has PWD-WRD = பொதுப்பணித்துறை நீர்வளம் (lexicon.ts:64), the 'Held by' tile does not use it.",
     "cause": "The Kpis tile is built from the row's English deptName in both languages; pass 4's RC-15 sweep did not reach this label.",
     "confidence": "high"
@@ -137,7 +137,7 @@
     "area": "Jarvis Tamil lines (pass 4 RC-15, PB-224 class)",
     "title": "A Tamil zone brief says '1 கடுமையானவை' (a plural with one), the same agreement slip PB-224 reported as '1 கடுமையான சம்பவங்கள்'",
     "where": "chennai-grievance-portal-main/src/lib/thunai/screens.ts:1408 (standLineTa: `${spoken(severe)} கடுமையானவை`, also `கெடு தாண்டியவை`)",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-rc38-15 -t \"brief zone\"",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-rc38-15 -t \"brief zone\"",
     "evidence": "'தேனாம்பேட்டை நிலைமை சுருக்கமா சொல்லு' -> '... 28 இன்னும் நிலுவையில், 3 கெடு தாண்டியவை; 1 கடுமையானவை.'",
     "cause": "The line uses the plural form whatever the count; no singular for 1.",
     "confidence": "high"
@@ -148,7 +148,7 @@
     "area": "Jarvis rules lane, periods and filters (pass 4 RC-06/RC-05; pass 4's own g2-real test now fails)",
     "title": "'Last week's overdue complaints' works in English only: in Tamil Jarvis gives up without the model, in Tanglish it drops the overdue filter and shows every case of the last 7 days",
     "where": "chennai-grievance-portal-main/src/lib/thunai (rules lane); test chennai-grievance-portal-main/tests/qa/pass4/g2-real.test.ts:145-153",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-regress -t \"last week\"; also QA_PIN_PORT=3197 npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/g2-real.test.ts (fails: [weekly, daily, weekly])",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-regress -t \"last week\"; also QA_PIN_PORT=3197 npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/g2-real.test.ts (fails: [weekly, daily, weekly])",
     "evidence": "'show overdue cases last week' -> quick lane, 'Cases · this week', 505 past deadline. 'கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள்' (with or without காட்டு) -> no-model: 'இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை...'. 'pona vaaram deadline thaandiya cases kaattu' -> steps [{period: weekly}] only, said 'கடந்த 7 நாட்கள்': the overdue filter is gone without a word. Evidence: docs/qa/pass6/evidence/pass4-open/p6-regress.json. Pass 4 lane g2 recorded this g2-real test as passing at 3b4a771; later Jarvis commits (a519f7f, 66f8ab4, fd6c275, 15e8bf3) changed the rules lane.",
     "cause": "Likely a519f7f ('the rules lane does not act on a window alone when the rest names a complaint it cannot read'): the Tamil overdue words are not read, so the lane now refuses; the Tanglish 'deadline thaandiya' is not read as overdue either but the window alone is still acted on. Not bisected (git checkout is not allowed here).",
     "confidence": "medium"
@@ -159,7 +159,7 @@
     "area": "Jarvis Tamil brief (pass 4 RC-15, PB-207; pass 4's own g2-real test now fails)",
     "title": "The Tamil and Tanglish district brief says the same line twice, so two different cases cannot be told apart, and names the body in English",
     "where": "chennai-grievance-portal-main/src/lib/thunai/screens.ts brief points (Tamil line built from body + place since fd6c275); test chennai-grievance-portal-main/tests/qa/pass4/g2-real.test.ts:46",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-regress -t \"same line\"",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-regress -t \"same line\"",
     "evidence": "'indha vaaram brief sollu' and 'இந்த வாரம் சுருக்கம் சொல்லு': 8 Tamil lines, of which 'PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது' appears twice; the English brief ('this week's brief') has 10 distinct lines. g2-real 'Tanglish, the district' fails with 'expected 7 to be 8' (distinct lines).",
     "cause": "fd6c275 (11 Nov) replaced the record's English headline in a Tamil point with the body and place; two cases of the same body and place with the same reason now read identically. The body name is the English one (see pass4-open-12).",
     "confidence": "high"
@@ -170,7 +170,7 @@
     "area": "Jarvis briefs (pass 4 PB-043, RC-06, P0, still open)",
     "title": "'Tondiarpet report. Last month.' is answered for the last 30 days, confidently, not for last month",
     "where": "chennai-grievance-portal-main/src/lib/thunai (period reading of 'last month'); open-set row en-brief-09",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-p0rows; pass 4's tests/qa/pass4/grader/open-baseline.findings.test.ts open-baseline-8 is still it.fails and still fails",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-p0rows; pass 4's tests/qa/pass4/grader/open-baseline.findings.test.ts open-baseline-8 is still it.fails and still fails",
     "evidence": "said: '9 points in the brief for the last 30 days. 417 incidents were reported in Tondiarpet (last 30 days), 6% more than the previous period.' Grade wrong, confident (3_period_words, 3_figures, 3_screen_figures failed). docs/qa/pass6/evidence/pass4-open/p0-rows.json",
     "cause": "'last month' is read as the rolling 30-day window, not the calendar month (pass 4's own sweep for RC-44 also notes the taluk tool's 'last month' is Last 30 days).",
     "confidence": "high"
@@ -181,7 +181,7 @@
     "area": "Jarvis comparisons (pass 4 PB-049, RC-06, P0, still open)",
     "title": "'Garbage complaints, up or down from last month?' gets a list of 616 cases, not a comparison",
     "where": "chennai-grievance-portal-main/src/lib/thunai (up-or-down questions); open-set row en-numbers-06",
-    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/probes/pass4-open p6-p0rows; open-baseline-14 in tests/qa/pass4/grader/open-baseline.findings.test.ts is still it.fails and still fails",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts --dir tests/qa/pass6/known-failures/pass4-open p6-p0rows; open-baseline-14 in tests/qa/pass4/grader/open-baseline.findings.test.ts is still it.fails and still fails",
     "evidence": "said: '616 cases in the last 30 days; here are the 12 that matter most. 66 are past their deadline ...'. Grade wrong, confident (7_action, 3_figures failed).",
     "cause": "The up-or-down question is not read as a comparison; the list lane answers it.",
     "confidence": "high"
