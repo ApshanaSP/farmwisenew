@@ -100,7 +100,7 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
   const withNotes = (x: Table): Table[] => [notes.length ? { ...x, notes: [...(x.notes ?? []), ...notes] } : x];
   if (ext === "json" || ext === "geojson" || /json/i.test(contentType) || t.startsWith("{") || t.startsWith("[")) return withNotes(json(text));
   // a news feed (RSS or Atom): one row per article
-  if (/^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i.test(t) || (/xml/i.test(contentType) && /<(item|entry)\b/i.test(t) && !/<Placemark\b/i.test(t))) return withNotes(feed(text));
+  if (feedRoot(t) || (/xml/i.test(contentType) && /<(item|entry)\b/i.test(t) && !/<Placemark\b/i.test(t))) return withNotes(feed(text));
   if (ext === "kml" || /<kml\b/i.test(t.slice(0, 2000))) return withNotes({ ...shape(kmlGrid(text), 0), sheet: null, sheets: [], format: "geo" });
   // a web page: its largest table, else the headlines it lists
   if (/^<(!doctype|html|head|body|div|meta)/i.test(t) || /html/i.test(contentType)) return withNotes(htmlPage(text, base));
@@ -131,6 +131,35 @@ function pdf(buf: Buffer): Table[] {
 }
 
 // -------------------------------------------------------------------- feed --
+
+/**
+ * Is the document's root element a feed (rss, Atom's feed, RSS 1.0's rdf:RDF), after its prolog: the XML declaration and other
+ * processing instructions, comments, a DOCTYPE, white space. Scanned by hand, each part found with indexOf, so the time is linear. The
+ * pattern it replaces, /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i, let a comment's lazy body run on across "-->"
+ * into the next comment, so n comments split 2^(n-1) ways and a root that was not a feed made it try them all: 24 comments (337 bytes)
+ * held the server's thread 8 s, 30 a few minutes (reviewer5-09).
+ */
+export function feedRoot(t: string): boolean {
+  const after = (from: number, close: string) => { const e = t.indexOf(close, from); return e < 0 ? -1 : e + close.length; };
+  let i = 0;
+  while (i < t.length) {
+    // white space between the parts
+    if (/\s/.test(t[i])) { i++; continue; }
+    let end: number;
+    if (t.startsWith("<?", i)) end = after(i + 2, "?>");
+    else if (t.startsWith("<!--", i)) end = after(i + 4, "-->");
+    else if (t.slice(i, i + 9).toUpperCase() === "<!DOCTYPE") {
+      // a DOCTYPE ends at the ">" after its internal subset ([...]) when it has one
+      const gt = t.indexOf(">", i), sub = t.indexOf("[", i);
+      const close = sub >= 0 && (gt < 0 || sub < gt) ? t.indexOf("]", sub) : -2;
+      end = close === -1 ? -1 : after(close >= 0 ? close : i, ">");
+    } else break;
+    // a part that never ends: the root is never reached
+    if (end < 0) return false;
+    i = end;
+  }
+  return /^<(rss|feed|rdf:RDF)\b/i.test(t.slice(i, i + 12));
+}
 
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s: string): string {
@@ -521,45 +550,55 @@ function shapeFrom(headerCells: string[], body: Cell[][], caption: string | null
   return { headers, rows, caption, truncated: Math.max(0, body.length - MAX_ROWS) };
 }
 
+/** How a file is read off the server's thread. `ocr: false` leaves a picture or a scan unread (a NeedsOcr ParseError), as parseAll does. */
+export interface ReadOptions { ocr?: boolean }
+
 /**
- * Every table a file holds, reading pictures too: an image, or a scanned PDF page by page, through OCR (ocr.ts,
- * English and Tamil). The cells OCR was unsure of are listed in the table's notes for the Collector to check.
+ * Every table a file holds, read in the Studio's file reader: its own process, with a time and a memory limit, so no file can hold the
+ * web server (parse-pool.ts; QA pass 7). Pictures are read too: an image, or a scanned PDF page by page, through OCR (ocr.ts, English and
+ * Tamil). The cells OCR was unsure of are listed in the table's notes for the Collector to check.
  */
-export async function parseAllAsync(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Promise<Table[]> {
-  try {
-    return parseAll(buf, name, contentType, base);
-  } catch (e) {
-    if (!(e instanceof NeedsOcr)) throw e;
-    const { ocrImage, pdfImages } = await import("@/lib/studio/ocr");
-    const pages = e.kind === "image" ? { images: [buf], skipped: 0 } : pdfImages(buf);
-    if (!pages.images.length) throw new ParseError(`This PDF is a scan whose pictures the Studio cannot open (${pages.skipped} in a format OCR does not read). Ask the department for the Excel or CSV file.`);
-    const grid: Cell[][] = [];
-    const low: string[] = [];
-    let conf = 0, words = 0, head: string | null = null;
-    for (const img of pages.images) {
-      const r = await ocrImage(img);
-      conf += r.conf * r.words; words += r.words;
-      low.push(...r.low);
-      // a table that runs over pages repeats its header: kept once
-      for (const row of r.grid) {
-        const k = row.map((c) => String(c ?? "").toLowerCase()).join("|");
-        if (grid.length && k === head) continue;
-        if (!grid.length) head = k;
-        grid.push(row);
-      }
-    }
-    if (grid.length < 2) throw new ParseError(`OCR read ${words.toLocaleString("en-IN")} words in this ${e.kind === "image" ? "picture" : "scan"} but no table in them.`);
-    const t = shape(grid);
-    const mean = words ? Math.round(conf / words) : 0;
-    return [{ ...t, sheet: null, sheets: [], format: e.kind === "image" ? "html" : "pdf", part: e.kind === "image" ? "read from a picture" : `read from ${pages.images.length} scanned ${pages.images.length === 1 ? "page" : "pages"}`,
-      notes: [`Read by OCR (English and Tamil), ${mean}% average confidence: check the numbers against the original.`,
-        // a page left out (a picture OCR cannot open, or past the memory budget) is said, not dropped in silence (QA pass 6, P6-007)
-        ...(pages.skipped ? [`${pages.skipped} ${pages.skipped === 1 ? "picture" : "pictures"} in this file could not be read and ${pages.skipped === 1 ? "was" : "were"} left out: check the table against the original.`] : []),
-        ...(low.length ? [`${low.length} ${low.length === 1 ? "cell was" : "cells were"} read with low confidence: ${low.slice(0, 8).join(", ")}${low.length > 8 ? "…" : ""}`] : [])] }];
-  }
+export async function parseAllAsync(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/", opts: ReadOptions = {}): Promise<Table[]> {
+  return readAsync(buf, name, contentType, base, opts.ocr !== false, false);
 }
 
+/** A file's main table (the largest), read like parseAllAsync: only that table comes back from the reader. */
 export async function parseFileAsync(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Promise<Table> {
-  const all = await parseAllAsync(buf, name, contentType, base);
+  const all = await readAsync(buf, name, contentType, base, true, true);
   return all.length === 1 ? all[0] : [...all].sort((a, b) => b.rows.length * b.headers.length - a.rows.length * a.headers.length)[0];
+}
+
+async function readAsync(buf: Buffer, name: string, contentType: string, base: string, ocr: boolean, main: boolean): Promise<Table[]> {
+  // loaded when used: the reader's own bundle (scripts/studio-parse-worker.mjs) holds this file but never the pool
+  const { readInReader } = await import("@/lib/studio/parse-pool");
+  const r = await readInReader(buf, name, contentType, base, { ocr, main });
+  if ("tables" in r) return r.tables;
+  const kind = r.ocr.kind;
+  const { ocrImage } = await import("@/lib/studio/ocr");
+  // a picture is read as it is; a scan's page images were taken out in the reader (pdfImages)
+  const pages = kind === "image" ? { images: [buf], skipped: 0 } : r.ocr;
+  if (!pages.images.length) throw new ParseError(`This PDF is a scan whose pictures the Studio cannot open (${pages.skipped} in a format OCR does not read). Ask the department for the Excel or CSV file.`);
+  const grid: Cell[][] = [];
+  const low: string[] = [];
+  let conf = 0, words = 0, head: string | null = null;
+  for (const img of pages.images) {
+    const r = await ocrImage(img);
+    conf += r.conf * r.words; words += r.words;
+    low.push(...r.low);
+    // a table that runs over pages repeats its header: kept once
+    for (const row of r.grid) {
+      const k = row.map((c) => String(c ?? "").toLowerCase()).join("|");
+      if (grid.length && k === head) continue;
+      if (!grid.length) head = k;
+      grid.push(row);
+    }
+  }
+  if (grid.length < 2) throw new ParseError(`OCR read ${words.toLocaleString("en-IN")} words in this ${kind === "image" ? "picture" : "scan"} but no table in them.`);
+  const t = shape(grid);
+  const mean = words ? Math.round(conf / words) : 0;
+  return [{ ...t, sheet: null, sheets: [], format: kind === "image" ? "html" : "pdf", part: kind === "image" ? "read from a picture" : `read from ${pages.images.length} scanned ${pages.images.length === 1 ? "page" : "pages"}`,
+    notes: [`Read by OCR (English and Tamil), ${mean}% average confidence: check the numbers against the original.`,
+      // a page left out (a picture OCR cannot open, or past the memory budget) is said, not dropped in silence (QA pass 6, P6-007)
+      ...(pages.skipped ? [`${pages.skipped} ${pages.skipped === 1 ? "picture" : "pictures"} in this file could not be read and ${pages.skipped === 1 ? "was" : "were"} left out: check the table against the original.`] : []),
+      ...(low.length ? [`${low.length} ${low.length === 1 ? "cell was" : "cells were"} read with low confidence: ${low.slice(0, 8).join(", ")}${low.length > 8 ? "…" : ""}`] : [])] }];
 }
