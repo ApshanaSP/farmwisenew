@@ -1,0 +1,205 @@
+{
+ "tried": 42,
+ "bad": [],
+ "out": [
+  {
+   "name": "officerA reads officerB's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerA approves officerB's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerA list with ?dept= of officerB",
+   "status": 200,
+   "foreignRows": 0
+  },
+  {
+   "name": "officerB reads officerC's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerB approves officerC's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerB list with ?dept= of officerC",
+   "status": 200,
+   "foreignRows": 0
+  },
+  {
+   "name": "officerC reads officerA's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerC approves officerA's grievance",
+   "status": 404
+  },
+  {
+   "name": "officerC list with ?dept= of officerA",
+   "status": 200,
+   "foreignRows": 0
+  },
+  {
+   "name": "officerA asks list open incidents of GCC-ELE",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks how many open cases does GCC-ELE have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks show GCC-ELE incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks list open incidents of CMWSSB",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks how many open cases does CMWSSB have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks show CMWSSB incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks list open incidents of TNPCB",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks how many open cases does TNPCB have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA asks show TNPCB incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks list open incidents of CMWSSB",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks how many open cases does CMWSSB have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks show CMWSSB incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks list open incidents of TNPCB",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks how many open cases does TNPCB have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks show TNPCB incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks list open incidents of GCC-SWM",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks how many open cases does GCC-SWM have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerB asks show GCC-SWM incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks list open incidents of GCC-ELE",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks how many open cases does GCC-ELE have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks show GCC-ELE incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks list open incidents of TNPCB",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks how many open cases does TNPCB have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks show TNPCB incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks list open incidents of GCC-SWM",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks how many open cases does GCC-SWM have",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerC asks show GCC-SWM incidents in zone 4",
+   "status": 200,
+   "foreignIds": 0
+  },
+  {
+   "name": "officerA reads the Collector's conversation",
+   "status": 404
+  },
+  {
+   "name": "officerA pins the Collector's answer",
+   "status": 404
+  },
+  {
+   "name": "officerA feedback on the Collector's answer",
+   "status": 400
+  },
+  {
+   "name": "officerA deletes the Collector's pin",
+   "status": 200,
+   "body": "{\"ok\":false}"
+  },
+  {
+   "name": "Collector's pin still there",
+   "there": true
+  },
+  {
+   "name": "citizenB reads a guessed media name",
+   "status": 404
+  }
+ ]
+}

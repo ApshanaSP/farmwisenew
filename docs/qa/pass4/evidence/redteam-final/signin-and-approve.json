@@ -1,0 +1,70 @@
+{
+ "base": "http://127.0.0.1:3231",
+ "account": "officerC (right password every time)",
+ "at": "2026-11-12T10:44:29.566Z",
+ "signins": [
+  {
+   "attempt": 1,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 2,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 3,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 4,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 5,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 6,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 7,
+   "right": true,
+   "status": 200
+  },
+  {
+   "attempt": 8,
+   "right": true,
+   "status": 429
+  },
+  {
+   "attempt": 9,
+   "right": true,
+   "status": 429
+  },
+  {
+   "attempt": 10,
+   "right": true,
+   "status": 429
+  }
+ ],
+ "approve": [
+  {
+   "soft": false,
+   "status": 428,
+   "head": "{\"error\":\"Confirm it's you first.\",\"confirm\":{\"action\":\"approve_source\",\"title\":\"Approve a new data source\",\"summary\":\"A"
+  },
+  {
+   "soft": true,
+   "status": 200,
+   "confirmHeader": "required",
+   "head": "{\"error\":\"Confirm it's you first.\",\"confirm\":{\"action\":\"approve_source\",\"title\":\"Approve a new data source\",\"summary\":\"A"
+  }
+ ]
+}
