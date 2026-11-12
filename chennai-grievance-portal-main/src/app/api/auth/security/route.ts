@@ -8,6 +8,7 @@ import { isStaff } from "@/lib/security/factors";
 import { staffHours } from "@/lib/security/session";
 import { recentEvents, securityLog } from "@/lib/security/audit";
 import { checkRef } from "@/lib/security/stamp";
+import { requireConfirm } from "@/lib/security/stepup";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,7 +17,9 @@ export const runtime = "nodejs";
  * The console's Security page (components/security/SecurityPanel.tsx), for the signed-in staff account:
  *   GET               when this session ends, recent sign-ins and confirmations
  *   check_ref         is "DIQ-7F3A-K2QZ" an email District IQ really sent (lib/security/stamp.ts)
- *   signout_others    ends every other session of the account; this tab gets a fresh one
+ *   signout_others    ends every other session of the account; this tab gets a fresh one. Confirmed with the password (or an
+ *                     e-mailed code) first: it is the recovery from a copied cookie, so the cookie alone must not be able to do it
+ *                     and keep a fresh session for itself (hunt2-sec-10).
  */
 export async function GET() {
   const s = await getSessionFromCookies();
@@ -44,6 +47,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(r);
   }
 
+  const c = await requireConfirm(req, s, "signout_others", "Sign out every other device and browser signed in to this account. This tab stays signed in.",
+    { uid: s.userId, tv: Number(s.tv) || 0 });
+  if (!c.ok) return c.res;
   const tv = await revokeSessions(s.userId);
   const portal = roleToPortal(s.role)!;
   const res = NextResponse.json({ ok: true });

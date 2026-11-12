@@ -17,7 +17,7 @@ import type { JwtPayload } from "@/types";
 import { readTicket, signTicket } from "./tickets";
 import type { Factor } from "./factors";
 
-export type ActionKind = "send_email" | "decide" | "officer_report" | "delete_dataset" | "approve_source" | "export";
+export type ActionKind = "send_email" | "decide" | "officer_report" | "delete_dataset" | "approve_source" | "export" | "signout_others";
 
 export const GRANT_HEADER = "x-diq-grant";
 /** a request header: "the caller reads a confirm answer as a 200 with SOFT_ANSWER set" (PB-316); the grant check does not depend on it */
@@ -27,7 +27,7 @@ export const GRANT_TTL_S = 5 * 60;
 
 export const ACTION_WORD: Record<ActionKind, string> = {
   send_email: "Send email", decide: "Record a decision", officer_report: "Send the completion report", delete_dataset: "Delete a dataset",
-  approve_source: "Approve a new data source", export: "Export data"
+  approve_source: "Approve a new data source", export: "Export data", signout_others: "Sign out every other device"
 };
 
 export interface Grant { uid: number; tv: number; act: ActionKind; scope: string; fac: Factor }
