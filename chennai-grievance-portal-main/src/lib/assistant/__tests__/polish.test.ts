@@ -71,7 +71,9 @@ describe("a list written out names every card (R-11)", () => {
   const inc = (k: number) => ({ ...(card.incidents as any[])[0], incidentId: `INC-${k}`, title: `Severe incident ${k} in Royapuram` });
   const eight = { ...card, headline: "Severe incidents · last 7 days", answerMarkdown: "The 8 newest severe incidents in Royapuram zone.",
     incidents: Array.from({ length: 8 }, (_, k) => inc(k + 1)) } as unknown as AnswerCard;
-  const bullets = (n: number) => Array.from({ length: n }, (_, k) => `- **Severe incident ${k + 1}** in Royapuram`).join("\n");
+  // QA pass 6, P6-019: a number in an incident's title counts only inside a word-for-word quote of it (a title can be a false claim), so
+  // the list names each title in quotes; the list rule (R-11) is what this test is about
+  const bullets = (n: number) => Array.from({ length: n }, (_, k) => `- "Severe incident ${k + 1} in Royapuram"`).join("\n");
   it("six bullets beside eight cards is rejected; all eight, or none, pass", () => {
     expect(checkPolish({ headline: "Severe incidents in Royapuram", answerMarkdown: `The 8 newest:\n${bullets(6)}`, voiceSummary: "Severe incidents." }, "what are those severe ones", eight))
       .toEqual({ rejected: "lists 6 of the 8 incidents shown" });
