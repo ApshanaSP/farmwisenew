@@ -17,6 +17,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { photoUrl } from "@/lib/officer/photos";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { sendPetitionSms } from "@/lib/manu/sms";
+import { appendStatusChangeToDataset } from "@/lib/dataset/append";
 import type { ComplaintStatus } from "@/types";
 
 export interface WorkStep { step: string; at: string; note: string | null; reportId: number | null }
@@ -163,9 +164,14 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
       if (!p) continue;
       const [had] = await pool.query<RowDataPacket[]>(`SELECT status, ${fmt("created_at")} AS at FROM complaint_status_history WHERE complaint_id = ?`, [r.id]);
       const seen = new Set(had.map((h) => `${h.status}|${str(h.at)}`));
-      for (const j of p.journey.filter((x) => !seen.has(`${x.status}|${x.created_at}`)))
+      const added = p.journey.filter((x) => !seen.has(`${x.status}|${x.created_at}`));
+      for (const j of added)
         await pool.query(`INSERT INTO complaint_status_history (complaint_id, status, stage, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
           [r.id, j.status, j.stage, j.remarks, actorUserId, j.created_at]);
+      // the grievance dataset gets the new history rows too, as a filing gets its line (PB-218, pass4-open-01). Fire-and-forget, like the
+      // filing's: a dataset problem must never fail or slow down an officer's step or a Collector's decision.
+      if (added.length)
+        appendStatusChangeToDataset(String(r.complaint_code)).catch((err) => console.error(`[dataset] could not append ${r.complaint_code}:`, err));
       if (r.status !== p.status) {
         await pool.query(`UPDATE complaints SET status = ?, rejected_stage = ?, remarks = COALESCE(?, remarks) WHERE id = ?`,
           [p.status, p.rejectedStage, p.remarks, r.id]);

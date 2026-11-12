@@ -91,11 +91,12 @@ const historyKeyOf = (h: DatasetRow) =>
 const minus = (filedOn: string, hours: number) =>
   new Date(parseTs(filedOn) - hours * HOUR).toISOString().slice(0, 19).replace("T", " ");
 
-async function appendHistory(paths: ReturnType<typeof files.datasetPaths>, code: string, newestOnly: boolean) {
+/** Every history row of the complaint not in the file yet (the file is keyed, so a row is never written twice). */
+async function appendHistory(paths: ReturnType<typeof files.datasetPaths>, code: string) {
   const [history] = await pool.query<RowDataPacket[]>(
     historySql({
       where: "c.complaint_code = ?",
-      orderBy: newestOnly ? "h.created_at DESC, h.id DESC LIMIT 1" : "h.created_at, h.id",
+      orderBy: "h.created_at, h.id",
       extra: [IS_SYNTHETIC]
     }),
     [code]
@@ -134,7 +135,7 @@ async function appendComplaint(code: string) {
 
   appendLines(paths.grievances, GRIEVANCE_COLUMNS, [row]);
   codes.add(code);
-  await appendHistory(paths, code, false);
+  await appendHistory(paths, code);
 }
 
 /**
@@ -147,9 +148,11 @@ export function appendComplaintToDataset(complaintCode: string): Promise<void> {
 }
 
 /**
- * Appends the newest status-history row of a complaint. Call after every
- * status update (Officer / Collector APIs). If the complaint itself is not in
- * grievances.csv yet, it is appended with its full history instead.
+ * Appends the status-history rows of a complaint that are not in the file yet
+ * (an officer's step or a Collector's decision can write several at once).
+ * Called after every status update (lib/complaint-progress.ts syncComplaints).
+ * If the complaint itself is not in grievances.csv yet, it is appended with
+ * its full history instead.
  */
 export function appendStatusChangeToDataset(complaintCode: string): Promise<void> {
   if (!datasetWriteAllowed()) return Promise.resolve();
@@ -159,6 +162,6 @@ export function appendStatusChangeToDataset(complaintCode: string): Promise<void
       await appendComplaint(complaintCode);
       return;
     }
-    await appendHistory(paths, complaintCode, true);
+    await appendHistory(paths, complaintCode);
   });
 }
