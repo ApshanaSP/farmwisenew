@@ -95,7 +95,8 @@ const ta = (alts: string) => new RegExp(`${TA_EDGE}(?:${alts})`);
  */
 const YESTERDAY = /\b(yesterday|yesterday'?s|nethu|netru|neththu|nethaiki|nethikku|nethaiya|netraiya|nethiku|netraikku|netrikku|nethaikku)\b|நேற்று|நேற்றைய|நேத்து|நேத்தைய|நேத்திக்கு|நேற்றைக்கு|நேத்தைக்கு/i;
 const DAY_BEFORE = /\b(day before yesterday|munthaa naal|munthanaal|mundhaa naal|mundhanaal|mundhanaaal)\b|முந்தா ?நாள்|முந்தாநாள்|நேற்று முன்தினம்|நேற்று முந்தைய நாள்/i;
-const SINCE_YESTERDAY = /\b(since|from) yesterday\b|நேற்றிலிருந்து|nethu(la)? irundhu/i;
+/** "since yesterday", "from yesterday onwards": the stretch up to now (rolling); "the fires from yesterday" names yesterday itself */
+const SINCE_YESTERDAY = /\bsince yesterday\b|\bfrom yesterday (?:to|till|until|up to|onwards?)\b|நேற்றிலிருந்து|nethu(la)? irundhu/i;
 const TODAY = /\b(today'?s?|todays|tonight|this (morning|afternoon|evening)|so far today|innaiku|innaikku|inniki|innaiki|innikku|innikki|indru|inaiku)\b|இன்று|இன்றைய|இன்னைக்கு|இன்னிக்கு|இன்றிரவு|இன்று காலை/i;
 /** the current state: what is open now. "now" on its own counts ("show severe cases now"); "now" as a sequence word at the start ("now show Adyar") does not */
 const NOW = /\b(right now|just now|as of now|as on now|at (the|this) moment|at present|presently|currently|current(?:ly)? open|open now|now open|still open now)\b|(?<!^\s*)\bnow\b|\b(ippo|ippodhu|ippothu|ipo|ippa|ippove|ipodhu|ipothaikku|ippothaikku|ippa varaikkum)\b|இப்போது|இப்போ(?![஀-௿])|இப்ப(?![஀-௿])|தற்போது|தற்சமயம்|தற்போதைய|இந்த நேரத்தில்/i;

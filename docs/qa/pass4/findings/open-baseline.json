@@ -127,6 +127,7 @@
   },
   {
     "id": "open-baseline-8",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P0",
     "title": "en-brief-09: yesterday, last week and last month are not periods the lanes know: the window said is the current one",
@@ -144,6 +145,7 @@
   },
   {
     "id": "open-baseline-9",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P0",
     "title": "en-list-13: yesterday, last week and last month are not periods the lanes know: the window said is the current one",
@@ -179,6 +181,7 @@
   },
   {
     "id": "open-baseline-11",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P0",
     "title": "ta-followup-06: yesterday, last week and last month are not periods the lanes know: the window said is the current one",
@@ -196,6 +199,7 @@
   },
   {
     "id": "open-baseline-12",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P0",
     "title": "ta-list-20: yesterday, last week and last month are not periods the lanes know: the window said is the current one",
@@ -230,6 +234,7 @@
   },
   {
     "id": "open-baseline-14",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P0",
     "title": "en-numbers-06: up-or-down and which-zone-most questions lose what they ask: a list instead of a comparison, a ranking on all case types instead of the topic",
@@ -814,6 +819,7 @@
   },
   {
     "id": "open-baseline-46",
+    "fixed": true,
     "area": "jarvis, real path",
     "severity": "P2",
     "title": "the reply is in the wrong language: the brief's own lines are English, and detectLang misses Tanglish",

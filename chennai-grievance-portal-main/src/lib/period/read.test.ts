@@ -24,6 +24,8 @@ describe("one meaning per phrase, in three languages", () => {
     ["நேற்று எத்தனை புகார்கள்", { kind: "day", back: 1 }],
     ["nethu evlo complaints", { kind: "day", back: 1 }],
     ["complaints the day before yesterday", { kind: "day", back: 2 }],
+    ["Let me see the fire incidents from yesterday", { kind: "day", back: 1 }],
+    ["complaints from yesterday onwards", { kind: "window", key: "daily" }],
     // the previous calendar unit
     ["Tondiarpet report. Last month.", { kind: "last", unit: "month" }],
     ["தண்டையார்பேட்டை அறிக்கை. கடந்த மாதம்.", { kind: "last", unit: "month" }],
