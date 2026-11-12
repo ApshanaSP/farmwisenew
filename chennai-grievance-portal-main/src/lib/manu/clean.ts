@@ -11,18 +11,21 @@ export type RawReading = Omit<Reading, "ward" | "unsure_fields"> & { ward: strin
 // so Tamil digits (௦-௯) and full-width digits (０-９) were dropped as "not a digit", and every number field joined all the digits it held.
 // Every number below is read through asciiDigits() first, and taken as one number with clear edges.
 const DIGIT = "0-9௦-௯０-９";
-const SEP = String.raw`[\s./\-​-‍⁠﻿]`;
-const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])([${DIGIT}]{4})${SEP}{0,3}([${DIGIT}]{4})${SEP}{0,3}([${DIGIT}]{4})(?![${DIGIT}])`, "gu");
-/** Written in Aadhaar's 4-4-4 groups (spaces, dots, dashes or slashes between), as a reader returns one it was not asked for. */
-const AADHAAR_SHAPED = new RegExp(String.raw`^\s*[${DIGIT}]{4}${SEP}{1,3}[${DIGIT}]{4}${SEP}{1,3}[${DIGIT}]{4}\s*$`, "u");
+// Between the groups: anything that is not a letter, a mark or a digit (spaces, line breaks, dots, commas, slashes, underscores, every kind of
+// dash and minus, full-width punctuation, zero-width characters), up to 8 of them. The first version took only space, dot, slash and the ASCII
+// hyphen, so an en dash, a minus sign, a comma or a number split over two indented lines got through whole (P5-007, found by the reviewer).
+const SEP = String.raw`[^\p{L}\p{M}${DIGIT}]`;
+const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])([${DIGIT}]{4})${SEP}{0,8}([${DIGIT}]{4})${SEP}{0,8}([${DIGIT}]{4})(?![${DIGIT}])`, "gu");
+/** Written in Aadhaar's 4-4-4 groups (any separators between), as a reader returns one it was not asked for. */
+const AADHAAR_SHAPED = new RegExp(String.raw`^\s*[${DIGIT}]{4}${SEP}{1,8}[${DIGIT}]{4}${SEP}{1,8}[${DIGIT}]{4}\s*$`, "u");
 
 /** Tamil and full-width digits as ASCII digits; nothing else changes. */
 export const asciiDigits = (s: string): string =>
   s.replace(/[௦-௯]/g, (c) => String(c.charCodeAt(0) - 0x0be6)).replace(/[０-９]/g, (c) => String(c.charCodeAt(0) - 0xff10));
 
 /**
- * Any 12-digit number in the text, written with its first 8 digits hidden: in any of the digit forms above, with up to three spaces, dots,
- * dashes, slashes or zero-width characters between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
+ * Any 12-digit number in the text, written with its first 8 digits hidden: in any of the digit forms above, with up to eight separators of
+ * any kind between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
  */
 export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`);
 
@@ -53,7 +56,8 @@ export function normalDate(s: string | null | undefined): string | null {
     const r = realDate(Number(m[3]), Number(m[2]), Number(m[1]));
     if (r) return r;
   }
-  for (const m of v.matchAll(/(?<![\d:])(\d{1,2})[^\d:]+(\d{1,2})[^\d:]+(\d{4}|\d{2})(?![\d:])/g)) {
+  // day, month and year joined only by a date's own separators (. / - or spaces): "9.10 am, 20.3.2026" was read as 09.10.2020 (the reviewer)
+  for (const m of v.matchAll(/(?<![\d:.])(\d{1,2})(?:\s*[./-]\s*|\s+)(\d{1,2})(?:\s*[./-]\s*|\s+)(\d{4}|\d{2})(?![\d:])/g)) {
     const r = realDate(Number(m[1]), Number(m[2]), Number(m[3].length === 2 ? `20${m[3]}` : m[3]));
     if (r) return r;
   }
@@ -69,6 +73,8 @@ export function wardNumber(s: string | null | undefined): number | null | "uncle
   const v = asciiDigits(String(s ?? ""));
   const named = v.match(/(?:ward|வார்டு|வட்டம்)\s*(?:no\.?|number|எண்)?\s*[:.\-#]?\s*(\d{1,4})(?!\d)/iu);
   if (named) return Number(named[1]);
+  // a zone's number is not the ward: "Zone 6, Ward Seven" has no ward number written in digits (the reviewer)
+  if (/\bzone\b|மண்டலம்/i.test(v)) return "unclear";
   const all = v.match(/\d+/g) ?? [];
   if (!all.length) return null;
   return all.length === 1 ? Number(all[0]) : "unclear";
@@ -88,7 +94,9 @@ export function cleanReading(r: RawReading, today: string): Reading {
   let mobile: string | null = m || null;
   if (m && !/^[6-9]\d{9}$/.test(m)) unsure.add("mobile"); // too short, too long or not a mobile number: shown, and marked
   // twelve digits or more, or written in Aadhaar's 4-4-4 groups, can be an Aadhaar number the reader put in the wrong box: never kept (P5-007)
-  if (m && (m.length >= 12 || AADHAAR_SHAPED.test(String(r.mobile ?? "")))) { mobile = null; unsure.add("mobile"); }
+  // twelve digits starting 91 are a +91 mobile only when the rest is one; else they can be an Aadhaar number (the reviewer: 912345678901)
+  const all12 = digits(r.mobile);
+  if (m && (m.length >= 12 || AADHAAR_SHAPED.test(String(r.mobile ?? "")) || (all12.length === 12 && !/^[6-9]\d{9}$/.test(m)))) { mobile = null; unsure.add("mobile"); }
 
   let pincode: string | null = digits(r.pincode) || null;
   if (pincode && pincode.length !== 6) { pincode = null; unsure.add("pincode"); }

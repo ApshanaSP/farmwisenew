@@ -234,7 +234,7 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
       await conn.query(
         `UPDATE petitions SET status = 'filed', name = ?, mobile = ?, address = ?, area = ?, ward_number = ?, dept_code = ?, category_code = ?, urgent = ?, subject = ?, problem = ?, request = ?, full_text = ?, petition_date = ?, language = ?,
            complaint_code = ?, complaint_id = ?, incident_id = ?, attached = ?, filed_by = ?, filed_at = ?, due_at = ?, updated_at = ? WHERE id = ?`,
-        [maskAadhaar(f.name), mobile, maskAadhaar(address), place, f.ward, f.dept, category, f.urgent ? 1 : 0, subject, problem, request, fullText, f.date || null, language,
+        [maskAadhaar(f.name), mobile, maskAadhaar(address), place, f.ward, f.dept, category, f.urgent ? 1 : 0, subject, problem, request, fullText, f.date ? maskAadhaar(f.date) : null, language,
           code, ins.insertId, f.attachTo || `INC-W-${code}`, f.attachTo ? 1 : 0, by, now, dueAt, now, id]
       );
     });
