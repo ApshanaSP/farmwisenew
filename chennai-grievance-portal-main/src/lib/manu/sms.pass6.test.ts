@@ -237,3 +237,41 @@ describe("QA pass 6: with SMS_TEST_NUMBER the desk names the test number, not th
     expect(r.sms).toEqual({ state: "sent", last4: "1873" });
   });
 });
+
+describe("QA pass 6, P6-010 (reviewer 1 on the P5-022/P5-023 fix): closing many petitions, and a send cut off by a restart", () => {
+  it("one decision that closes three petition cases waits the inline limit once, not once per petition", async () => {
+    testMode();
+    const saved = { ...sms.SMS_LIMITS };
+    sms.SMS_LIMITS.inlineWaitMs = 300;
+    sms.SMS_LIMITS.sendMs = 60_000;
+    try {
+      const codes: string[] = [];
+      for (const m of ["9000041873", "9000041874", "9000041875"]) codes.push((await filePetition(await uploaded(), fields({ mobile: m }), "x")).code);
+      h.mailImpl = () => new Promise(() => undefined); // the team inbox stops answering before the cases close
+      for (const c of codes) step(c, "close", 1);
+      const t0 = Date.now();
+      await syncComplaints(codes.map(caseIdFor), 1);
+      expect(Date.now() - t0).toBeLessThan(sms.SMS_LIMITS.inlineWaitMs + 250);
+    } finally {
+      Object.assign(sms.SMS_LIMITS, saved);
+    }
+  });
+
+  it("a row left 'sending' by a server that stopped mid-send is not sent again an hour later: it is 'unsure'", async () => {
+    live();
+    h.db.prepare(`INSERT INTO petitions (status, pages, mobile, language, dept_code, complaint_code) VALUES ('filed', '[]', '9000011111', 'en', 'CMWSSB', '2026-777AAA')`).run();
+    h.db.prepare(`INSERT INTO petition_sms (complaint_code, kind, status, attempts, tried_at, created_at) VALUES ('2026-777AAA', 'received', 'sending', 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00')`).run();
+    await sms.retryFailedSms();
+    expect(msg91()).toHaveLength(0);
+    expect(rowOf("2026-777AAA").status).toBe("unsure");
+  });
+
+  it("a fresh 'sending' row (a send in flight) is left alone", async () => {
+    live();
+    h.db.prepare(`INSERT INTO petitions (status, pages, mobile, language, dept_code, complaint_code) VALUES ('filed', '[]', '9000011112', 'en', 'CMWSSB', '2026-778AAA')`).run();
+    h.db.prepare(`INSERT INTO petition_sms (complaint_code, kind, status, attempts, tried_at, created_at) VALUES ('2026-778AAA', 'received', 'sending', 0, datetime('now', '+330 minutes'), datetime('now', '+330 minutes'))`).run();
+    await sms.retryFailedSms();
+    expect(msg91()).toHaveLength(0);
+    expect(rowOf("2026-778AAA").status).toBe("sending");
+  });
+});

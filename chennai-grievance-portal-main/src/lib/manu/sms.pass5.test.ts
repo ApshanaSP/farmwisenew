@@ -217,14 +217,17 @@ describe("P5-012: who may send, and what a retry sends", () => {
 });
 
 describe("P5-012, after review: a send cut off half way, and messages that wait", () => {
-  it("a message left 'sending' for over an hour is tried again, once", async () => {
+  // QA pass 6, P6-010: changed from "tried again, once". A send cut off by a stopped server may already be with the provider, and the
+  // provider takes no key that would drop a repeat, so like any send whose outcome is not known (P5-022) it is 'unsure' and not resent:
+  // the desk shows it, and the petitioner holds the printed slip.
+  it("a message left 'sending' for over an hour is not sent again: it is 'unsure'", async () => {
     live();
     const r = await filePetition(await uploaded(), fields(), "x");
     h.db.exec(`UPDATE petition_sms SET status = 'sending', attempts = 1, tried_at = '2026-01-01 00:00:00'`);
     calls = [];
     await sms.retryFailedSms();
-    expect(msg91()).toHaveLength(1);
-    expect(one("SELECT status FROM petition_sms WHERE complaint_code = ?", r.code).status).toBe("sent");
+    expect(msg91()).toHaveLength(0);
+    expect(one("SELECT status FROM petition_sms WHERE complaint_code = ?", r.code).status).toBe("unsure");
   });
 
   it("twenty closing messages waiting on reopened complaints do not hold up a newer failed message", async () => {

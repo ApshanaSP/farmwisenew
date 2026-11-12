@@ -172,8 +172,11 @@ export async function retryFailedSms(): Promise<void> {
   retrying = true;
   try {
     const due = addHours(istNow(), -RETRY_AFTER_HOURS);
-    // a send cut off half way (the process stopped) is left 'sending'; after an hour it is due again, since a send gives up after 8 s
+    // a send cut off half way (the process stopped) is left 'sending'. An hour on (a send gives up after SMS_LIMITS.sendMs) it is
+    // 'unsure', not sent again: the request may have reached the provider before the stop, and the writer would get it twice (P6-010)
     const stuck = addHours(istNow(), -1);
+    await pool.query(`UPDATE petition_sms SET status = 'unsure', detail = 'The server stopped while this SMS was being sent; it may have gone. It is not sent again.'
+      WHERE status = 'sending' AND tried_at <= ?`, [stuck]);
     const CLOSED = ["Rejected", ...RESOLVED_STATUSES];
     // a closing message for a complaint that is open again is not picked at all, so twenty of them cannot hold up every newer message (the reviewer)
     const [rows] = await pool.query<Row[]>(
