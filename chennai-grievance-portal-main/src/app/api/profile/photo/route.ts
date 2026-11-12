@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       photoPath,
       session.userId
     ]);
-    await removePhoto(existing[0].profile_photo);
+    await removePhoto(existing[0].profile_photo, session.userId);
   }
 
   return NextResponse.json({ message: "Photo updated.", profilePhoto: photoPath });

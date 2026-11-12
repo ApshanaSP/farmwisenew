@@ -41,8 +41,33 @@ export async function readPhoto(name: string): Promise<{ buf: Buffer; type: stri
   }
 }
 
-/** Removes a replaced photo; an old public path or a missing file is left alone. */
-export async function removePhoto(stored: string | null | undefined): Promise<void> {
+/** A photo the old route wrote under public/ for this account: public/uploads/profile/user-<id>-<ms>.<ext>, or null. */
+const LEGACY_RE = /^\/uploads\/profile\/user-(\d+)-\d+\.(png|jpg)$/;
+function legacyFile(stored: string | null | undefined, userId: number): { file: string; ext: "png" | "jpg" } | null {
+  const m = LEGACY_RE.exec(String(stored ?? ""));
+  if (!m || Number(m[1]) !== Number(userId)) return null;
+  return { file: path.join(process.cwd(), "public", String(stored).slice(1)), ext: m[2] as "png" | "jpg" };
+}
+
+/** Removes a replaced photo: a private one, or this account's old file under public/ (pass 7 reviewer 3). A missing file is fine. */
+export async function removePhoto(stored: string | null | undefined, userId?: number): Promise<void> {
   const name = photoName(stored);
   if (name) await unlink(path.join(photoRoot(), name)).catch(() => undefined);
+  const old = userId != null ? legacyFile(stored, userId) : null;
+  if (old) await unlink(old.file).catch(() => undefined);
+}
+
+/**
+ * This account's photo still under public/ (written by the old route), moved into the private store: the new URL to store, or null when
+ * there is none to move. Old photos stayed public under their guessable names (pass 7 reviewer 3 on hunt2-sec-07); each moves the next time
+ * its account reads its profile. Files of accounts that never come back stay where they are (an owner's clean-up, in the pass 7 note).
+ */
+export async function moveLegacyPhoto(stored: string | null | undefined, userId: number): Promise<string | null> {
+  const old = legacyFile(stored, userId);
+  if (!old) return null;
+  const buf = await readFile(old.file).catch(() => null);
+  if (!buf) return null;
+  const url = await savePhoto(buf, old.ext);
+  await unlink(old.file).catch(() => undefined);
+  return url;
 }

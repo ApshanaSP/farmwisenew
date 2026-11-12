@@ -5,6 +5,7 @@ import { profileUpdateSchema } from "@/lib/validators";
 import { RowDataPacket } from "mysql2";
 import { maskAadhaar } from "@/lib/crypto";
 import { mobileTry, onAnotherAccount } from "@/lib/profile-mobile";
+import { moveLegacyPhoto } from "@/lib/profile-photo";
 
 const OPTIONAL_COMPLETENESS_FIELDS = [
   "last_name",
@@ -51,6 +52,14 @@ export async function GET() {
     [session.userId]
   );
   const profile = profileRows.length > 0 ? profileRows[0] : null;
+  // a photo the old route left under public/ (guessable name, open to anyone) moves to the private store now (pass 7 reviewer 3, hunt2-sec-07)
+  if (profile?.profile_photo) {
+    const moved = await moveLegacyPhoto(profile.profile_photo, session.userId).catch(() => null);
+    if (moved) {
+      await pool.query("UPDATE user_profiles SET profile_photo = ? WHERE user_id = ?", [moved, session.userId]);
+      profile.profile_photo = moved;
+    }
+  }
 
   let zoneName: string | null = null;
   if (profile?.zone_id) {

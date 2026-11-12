@@ -5,6 +5,7 @@
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { addFailure, clearFailures, failuresOver } from "@/lib/rate-limit";
+import { oneAtATime } from "@/lib/serial";
 import { createOtp, discardOtp, verifyAndConsumeOtp } from "@/lib/otp";
 import { isSmtpConfigured, otpEmailHtml, sendMail } from "@/lib/mailer";
 import type { RowDataPacket } from "mysql2";
@@ -25,11 +26,19 @@ export type FactorCheck = { ok: true; factor: Factor } | { ok: false; error: str
 /** One check for an account. `kind` says which the person gave: the password, or the code that was emailed. */
 export async function verifyFactor(userId: number, kind: Factor, value: string): Promise<FactorCheck> {
   const key = `confirm-fail:${userId}`;
-  const gate = failuresOver(key, 5);
-  if (!gate.allowed) return { ok: false, status: 429, error: `Too many wrong tries. Wait ${Math.ceil((gate.retryAfterSeconds ?? 900) / 60)} minutes and try again.` };
-  const res = await checkOne(userId, kind, value);
-  if (res.ok) clearFailures(key); else if (res.status === 401) addFailure(key, 15 * 60);
-  return res;
+  // one check at a time per account: the count is read, the check awaited, and the failure added, so tries sent together all read the
+  // count before any was added and every one was checked (30 parallel guesses at change-password, and the right password among 24 wrong
+  // ones changed it: QA pass 7 reviewer 3 on hunt2-sec-09)
+  const release = await oneAtATime(key);
+  try {
+    const gate = failuresOver(key, 5);
+    if (!gate.allowed) return { ok: false, status: 429, error: `Too many wrong tries. Wait ${Math.ceil((gate.retryAfterSeconds ?? 900) / 60)} minutes and try again.` };
+    const res = await checkOne(userId, kind, value);
+    if (res.ok) clearFailures(key); else if (res.status === 401) addFailure(key, 15 * 60);
+    return res;
+  } finally {
+    release();
+  }
 }
 
 async function checkOne(userId: number, kind: Factor, value: string): Promise<FactorCheck> {

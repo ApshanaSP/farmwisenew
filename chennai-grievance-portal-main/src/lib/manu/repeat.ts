@@ -39,10 +39,11 @@ const DURATION = new Set(("time times long last past yet ago today yesterday tom
   "thadava thadavai vaaram maasam varusham neram").split(" "));
 // where, not what (a closed class): the landmark two different problems of one street share ("near the Ganesh temple", "opposite the school")
 const PLACE = new Set(("temple kovil koil church mosque masjid school college hospital market station junction signal colony nagar layout stop stand opposite " +
-  "behind beside front corner main cross lane avenue extension office " +
+  "behind beside front corner main cross lane avenue extension office house houses home taluk veetu veedu munnadi pakkam pakkathula kitta " +
   "கோயில் கோவில் பள்ளி பள்ளிக்கூடம் மருத்துவமனை சந்தை நிலையம் சந்திப்பு நகர் காலனி எதிரில் எதிரே பின்புறம் முன்பு அலுவலகம்").split(" "));
 // words for "a problem" that any problem is ("menace", "nuisance", "no response"): a closed class
-const GENERIC = new Set("menace nuisance trouble hazard danger shortage response reply complaint complaints ஆபத்து தொல்லை".split(" "));
+const GENERIC = new Set(("menace nuisance trouble hazard danger shortage response reply complaint complaints due official officials officer officers vao rdo " +
+  "tahsildar staff authority authorities ஆபத்து தொல்லை அதிகாரி அதிகாரிகள்").split(" "));
 
 /**
  * Words that say what is wrong with a thing, not what the thing is: predicates and state words. One writer's two different problems share
@@ -58,7 +59,7 @@ const STATE = new Set(("open full empty loose dirty unsafe dangerous dark low po
   "illegal unauthorized unauthorised improper irregular defective faulty insufficient inadequate incomplete heavy huge severe serious constant frequent " +
   "பழுது பழுதான சேதம் சேதமடைந்த மோசம் மோசமான ஆபத்தான sariya olunga").split(" "));
 /** -ing words that are things, not doings ("building", "parking"): a closed list of the exceptions to the -ing rule */
-const ING_NOUN = new Set("building ceiling parking flooding crossing railing housing lighting wiring plumbing fencing paving painting wedding clothing swimming".split(" "));
+const ING_NOUN = new Set("building ceiling parking flooding crossing railing housing lighting wiring plumbing fencing paving painting wedding clothing swimming waterlogging logging sweeping".split(" "));
 /** -ly words that are things ("family"), the exceptions to the -ly rule */
 const LY_NOUN = new Set("family assembly anomaly italy".split(" "));
 export function predicateWord(w: string): boolean {
@@ -80,22 +81,35 @@ export function predicateWord(w: string): boolean {
   return /(?:ல்லை|ாக|ஆக|ில்|இல்|ாமல்|கிறது|கின்றது|கின்றன|கிறார்கள்|ள்ளது|ள்ளன|ந்தது|ட்டது|த்தது|ற்றது|னது|டைந்து|ழுந்து)$/u.test(w);
 }
 
-/** One word, its plural taken off: "lights" is "light", "supplies" "supply", "mosquitoes" "mosquito", "விளக்குகள்" "விளக்கு", "பள்ளங்கள்" "பள்ளம்". */
+/**
+ * One word as the key it is compared by: plurals taken off ("lights" "light", "supplies" "supply", "mosquitoes" "mosquito", "விளக்குகள்"
+ * "விளக்கு", "பள்ளங்கள்" "பள்ளம்"), an English -age or -ing noun as its root ("drainage" "drain", "lighting" "light"), and a Tamil word
+ * without its last vowel, so the object case meets the plain word ("குப்பையை" and "குப்பை", "விளக்கை" and "விளக்கு": pass 7 reviewer 3).
+ */
+const ROOT: Record<string, string> = { lighting: "light", wiring: "wire", waterlogging: "waterlog", logging: "log" };
 const stem = (w: string): string => {
   if (/^[a-z]+$/.test(w)) {
+    if (ROOT[w]) return ROOT[w];
     if (w.length <= 4) return w;
     if (/ies$/.test(w)) return `${w.slice(0, -3)}y`;
     if (/(?:ss|x|z|ch|sh|o)es$/.test(w)) return w.slice(0, -2);
+    if (w.length >= 7 && /age$/.test(w)) return w.slice(0, -3);
     return /[^sui]s$/.test(w) ? w.slice(0, -1) : w;
   }
-  if ([...w].length > 5 && w.endsWith("ங்கள்")) return `${w.slice(0, -"ங்கள்".length)}ம்`;
-  return [...w].length > 4 && w.endsWith("கள்") ? w.slice(0, -"கள்".length) : w;
+  let t = w;
+  if ([...t].length > 5 && t.endsWith("ங்கள்")) t = `${t.slice(0, -"ங்கள்".length)}ம்`;
+  else if ([...t].length > 4 && t.endsWith("கள்")) t = t.slice(0, -"கள்".length);
+  if ([...t].length > 4 && /[யவ]ை$/u.test(t)) t = t.slice(0, -2); // the object case after a vowel: குப்பையை -> குப்பை
+  return [...t].length > 2 ? t.replace(/[ுை]$/u, "") : t;
 };
 const listed = (w: string) => STOP.has(w) || TA_STOP.has(w) || FILLER.has(w) || DURATION.has(w) || PLACE.has(w) || GENERIC.has(w);
 
-const rawWords = (s: string | null | undefined): string[] =>
+/** A line's clauses ("Dangerous building, wall cracks, please demolish" has three), each as its words. */
+const clausesOf = (s: string | null | undefined): string[][] =>
   // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
-  String(s ?? "").normalize("NFC").toLowerCase().replace(/[​-‍⁠﻿]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean);
+  String(s ?? "").normalize("NFC").toLowerCase().replace(/[​-‍⁠﻿]/g, "")
+    .split(/[,.;:!?\n()/]+|\s(?:and|but|also)\s|\sமற்றும்\s/u)
+    .map((c) => c.replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean)).filter((c) => c.length);
 
 /** Two words written as one in the other line ("street light" / "streetlight", "தெரு விளக்கு" / "தெருவிளக்கு") are taken as that one word. */
 function joinCompounds(words: string[], other: Set<string>): string[] {
@@ -106,44 +120,58 @@ function joinCompounds(words: string[], other: Set<string>): string[] {
   return out;
 }
 
-/** A problem line's content words, and those of them that name what the problem is about (not a predicate, a state, a time or a place). */
-function wordsOf(words: string[]): { all: Set<string>; subject: Set<string> } {
-  const all = new Set<string>(), subject = new Set<string>();
-  for (const w of words) {
-    if ([...w].length <= 2 || listed(w)) continue;
-    const st = stem(w);
-    if (listed(st)) continue;
-    all.add(st);
-    if (!predicateWord(w)) subject.add(st);
+/**
+ * A problem line's content words; those that name a thing (not a predicate, a state, a time, a place or a "problem" word); and its topics,
+ * the first such word of each clause: a petition names the thing first, in Tamil and Tanglish word order and in petition English ("Patta
+ * transfer application pending": patta). The idea of the clause's first word is d474842's (the pass 6 session's fix-all run).
+ */
+function wordsOf(clauses: string[][], other: Set<string>): { all: Set<string>; subject: Set<string>; topic: Set<string> } {
+  const all = new Set<string>(), subject = new Set<string>(), topic = new Set<string>();
+  for (const clause of clauses) {
+    let first = true;
+    for (const w of joinCompounds(clause, other)) {
+      if ([...w].length <= 2 || listed(w)) continue;
+      const st = stem(w);
+      if (listed(st)) continue;
+      all.add(st);
+      if (predicateWord(w)) continue;
+      subject.add(st);
+      if (first) { topic.add(st); first = false; }
+    }
   }
-  return { all, subject };
+  return { all, subject, topic };
 }
 
 /** a kind of problem that says something: OTHER (or none) does not */
 const kindOf = (k: string | null | undefined): string | null => (k && k !== "OTHER" ? k : null);
 
 /**
- * Do two problem lines, both to one department, share what they are about? They must share a word that names the thing ("sewage",
- * "pension", "விளக்கு"): a shared predicate, state, time, place or "problem" word ("pending", "not received", "varla", "for a long time",
- * "near the temple", "menace") is not a topic. Predicates are read by their endings, so new ones need no list (reviewer5-07: the one-word rule
- * counted any predicate the FILLER list did not hold); the closed classes are listed. A line with no subject word ("Flooding again") is
- * compared on all its words when the other has none either. With the kind of each problem known (`kinds`: the reader's category for a
- * petition, the complaint type's for an online complaint), two kinds are two problems, whatever words they share.
+ * Do two problem lines, both to one department, share what they are about? They must share the word that names the thing: a word that is
+ * the topic (the first thing-word of a clause) of at least one of them ("sewage", "pension", "விளக்கு"). A shared predicate, state, time,
+ * place or "problem" word ("pending", "not received", "varla", "for a long time", "near my house", "menace") never is one; nor is a word
+ * that only qualifies the thing in both ("Patta transfer application" and "Community certificate application": the topics are patta and
+ * community). Predicates are read by their endings, so new ones need no list (reviewer5-07: the one-word rule counted any predicate the
+ * FILLER list did not hold, and the pass 7 reviewers found generic words in every list); the closed classes are listed. A line with no
+ * thing-word ("Flooding again") is compared on all its words when the other has none either. With the kind of each problem known (`kinds`:
+ * the reader's category for a petition, the complaint type's for an online complaint), two kinds are two problems, whatever words they share.
  *
- * The same person writing twice needs one shared subject word, however long the lines; different people in a ward need more, so that two
+ * The same person writing twice needs that one shared topic word, however long the lines; different people in a ward need more, so that two
  * unrelated road complaints are not joined. It only brings the earlier petition to the staff's attention: a person decides.
  */
 export function sameTopic(a: string | null | undefined, b: string | null | undefined, samePerson = false, kinds: { a?: string | null; b?: string | null } = {}): boolean {
   const ka = kindOf(kinds.a), kb = kindOf(kinds.b);
   if (ka && kb && ka !== kb) return false;
-  const ra = rawWords(a), rb = rawWords(b);
-  const A = wordsOf(joinCompounds(ra, new Set(rb))), B = wordsOf(joinCompounds(rb, new Set(ra)));
+  const ca = clausesOf(a), cb = clausesOf(b);
+  const A = wordsOf(ca, new Set(cb.flat())), B = wordsOf(cb, new Set(ca.flat()));
   if (!A.all.size || !B.all.size) return false;
-  // both lines name their thing: those names must meet. Neither does: all their words. Only one does: the other's words are only a
-  // predicate ("Street not swept, complained many times"), which says nothing about the first line's thing
-  const [x, y] = A.subject.size && B.subject.size ? [A.subject, B.subject] : !A.subject.size && !B.subject.size ? [A.all, B.all] : [A.subject, B.subject];
   let shared = 0;
-  for (const w of x) if (y.has(w)) shared++;
+  if (A.subject.size && B.subject.size) {
+    // both lines name their thing: a shared word must be a topic of one of them
+    for (const w of A.subject) if (B.subject.has(w) && (A.topic.has(w) || B.topic.has(w))) shared++;
+  } else if (!A.subject.size && !B.subject.size) {
+    for (const w of A.all) if (B.all.has(w)) shared++;
+  }
+  // only one names a thing: the other's words are only a predicate ("Street not swept, complained many times"), saying nothing of it
   if (!shared) return false;
   if (samePerson) return true;
   let both = 0;
