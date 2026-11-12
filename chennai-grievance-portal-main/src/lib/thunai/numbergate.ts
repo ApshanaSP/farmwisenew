@@ -10,8 +10,12 @@ const EN_WORDS: Record<string, number> = {
   zero: 0, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
   sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
   hundred: 100, thousand: 1000, lakh: 100_000, lakhs: 100_000, crore: 10_000_000, crores: 10_000_000, million: 1_000_000, billion: 1_000_000_000, dozen: 12, dozens: 12,
-  hundreds: 100, thousands: 1000, millions: 1_000_000, billions: 1_000_000_000, half: 0.5, twice: 2, thrice: 3, double: 2, triple: 3
+  hundreds: 100, thousands: 1000, millions: 1_000_000, billions: 1_000_000_000, half: 0.5, twice: 2, thrice: 3, double: 2, triple: 3,
+  // multiples said as a verb or an adjective are figures too (SKG1-13)
+  doubled: 2, tripled: 3, trebled: 3, treble: 3, quadruple: 4, quadrupled: 4, quintupled: 5, halved: 0.5
 };
+/** "threefold", "tenfold": a number word and "fold" */
+const FOLD = /^(two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|fifty|hundred|thousand)-?fold$/;
 /** "one moment", "the first one" and "the second one" are not figures: "one" and the ordinals are left out on purpose, here and in Tamil */
 const EN_PARTS: Record<string, number> = { third: 1 / 3, quarter: 0.25, fifth: 0.2, tenth: 0.1 };
 /** Tamil number words by stem, so case endings, 11 to 19 and "-க்கணக்கான" count. Each stem stops short of the ordinary words beside it (நான், எண்ணிக்கை, பத்திரிகை, எட்டப்பட்டது). */
@@ -19,8 +23,8 @@ const TA_STEMS: [RegExp, number][] = [
   [/^பதினொ/, 11], [/^பன்னிர/, 12], [/^பதி(ன்)?மூ/, 13], [/^பதினான்|^பதினாலு/, 14], [/^பதினை|^பதினஞ்/, 15], [/^பதினாற/, 16], [/^பதினே/, 17], [/^பதினெ/, 18], [/^பத்தொன்ப/, 19],
   [/^இருநூற/, 200], [/^மு(ந்ந|ன்ன)ூற/, 300], [/^நானூற/, 400], [/^ஐ(ந்ந|ன்ன|ந)ூற/, 500], [/^அறுநூற/, 600], [/^எழுநூற/, 700], [/^எண்ணூற/, 800], [/^தொள்ளாயிர/, 900],
   [/^நூறு|^நூற்(று|றி|றை)/, 100], [/^ஆயிர/, 1000], [/^மூவாயிர/, 3000], [/^ஐயாயிர/, 5000], [/^இ?லட்ச(ம்|க்|த்|ங்|$)/, 100_000], [/^கோடி(க்|கள்|யே|$)/, 10_000_000],
-  [/^இரண்ட|^ரெண்ட/, 2], [/^மூன்ற|^மூணு/, 3], [/^நான்க[ுிைா]|^நாலு/, 4], [/^ஐந்த|^அஞ்சு(க்கு|க்கும்)?$/, 5], [/^ஆறு(ம்|க்கு|க்கும்)?$|^ஆறில்$/, 6], [/^ஏழு(ம்|க்கு|க்கும்)?$|^ஏழில்$/, 7],
-  [/^எட்டு(க்கு|க்கும்)?$|^எட்டில்$/, 8], [/^ஒன்பத/, 9], [/^பத்து|^பத்தில்$/, 10],
+  [/^இரண்ட|^ரெண்ட/, 2], [/^மூன்ற|^மூணு/, 3], [/^நான்க[ுிைா]|^நாலு/, 4], [/^ஐந்த|^அஞ்சு(க்கு|க்கும்)?$/, 5], [/^ஆறு(ப்|பேர்|பேரும்|ம்|க்கு|க்கும்)?$|^ஆறில்$/, 6], [/^ஏழு(ப்|பேர்|பேரும்|ம்|க்கு|க்கும்)?$|^ஏழில்$/, 7],
+  [/^எட்டு(ப்|பேர்|பேரும்|க்கு|க்கும்)?$|^எட்டில்$/, 8], [/^ஈராயிர/, 2000], [/^தொள்ளாயிர/, 900], [/^ஒன்பத/, 9], [/^பத்து|^பத்தில்$/, 10],
   [/^பாதி(யளவு|யும்)?$/, 0.5], [/^இரட்டிப்|^இருமடங்/, 2], [/^மும்மடங்/, 3]
 ];
 const TA_TENS: [RegExp, number][] = [[/^இருபத/, 20], [/^முப்பத/, 30], [/^நாற்பத/, 40], [/^ஐம்பத/, 50], [/^அறுபத/, 60], [/^எழுபத/, 70], [/^எண்பத/, 80], [/^தொண்ணூ/, 90]];
@@ -32,6 +36,21 @@ const TG_WORDS: Record<string, number> = {
   irubadhu: 20, irupadhu: 20, muppadhu: 30, nalpadhu: 40, naarpadhu: 40, naarpathu: 40, aimbadhu: 50, aimbathu: 50, arubadhu: 60, ezhubadhu: 70, enbadhu: 80, thonnooru: 90, thonnuru: 90,
   nooru: 100, irunooru: 200, aayiram: 1000, laksham: 100_000, latcham: 100_000, kodi: 10_000_000
 };
+/**
+ * Tanglish numbers are one word in many spellings (irupathu, irubadhu, irupadhu), so the table is read through a fold of the spelling: dh and th are t, b is p, d is t, zh is l, a double letter is one, aa is a, oo is u, ee is i.
+ * The table lists each number once in any spelling; a spelling nobody listed still folds to the same key (SKG1-11, SKG1-12).
+ */
+const tgFold = (w: string): string => w.toLowerCase().replace(/zh/g, "l").replace(/dh|th/g, "t").replace(/[bp]+/g, "p").replace(/d/g, "t").replace(/aa/g, "a").replace(/oo/g, "u").replace(/ee/g, "i").replace(/([a-z])\1+/g, "$1");
+const TG_MORE: Record<string, number> = {
+  randu: 2, irendu: 2, moonru: 3, munru: 3, moonrru: 3, nalu: 4, nangu: 4, anchu: 5, aindhu: 5, aintu: 5, ayndhu: 5, aru: 6, elu: 7, yettu: 8, onpathu: 9, ombathu: 9, patthu: 10,
+  padhinonnu: 11, pathinondru: 11, panniranda: 12, pathinmoonu: 13, pathinaindhu: 15, irubathu: 20, muppathu: 30, nalpathu: 40, nalupathu: 40, aimpathu: 50, ambathu: 50, ainpathu: 50,
+  arupathu: 60, elupathu: 70, enpathu: 80, thonpathu: 90, thombathu: 90, thombadhu: 90, thonpadhu: 90,
+  munnooru: 300, moonooru: 300, naanooru: 400, naannooru: 400, ainooru: 500, ainnooru: 500, aarunooru: 600, ezhunooru: 700, ettunooru: 800, thollaayiram: 900,
+  irandaayiram: 2000, irandayiram: 2000, moonaayiram: 3000, munaayiram: 3000, moonraayiram: 3000, naalaayiram: 4000, naangaayiram: 4000, ainthaayiram: 5000, ainthayiram: 5000, aindhaayiram: 5000,
+  aaraayiram: 6000, ezhaayiram: 7000, ettaayiram: 8000, onbathaayiram: 9000
+};
+const TG_FOLDED = new Map<string, number>();
+for (const [k, v] of [...Object.entries(TG_WORDS), ...Object.entries(TG_MORE)]) if (!TG_FOLDED.has(tgFold(k))) TG_FOLDED.set(tgFold(k), v);
 /** "ஆறு" is also a river and a place-name ending: only a whole word that stands as a number counts */
 const TA_RIVER = /(அடையாறு|பாலாறு|கூவம் ஆறு|ஆறு கரை|ஆற்று)/g;
 
@@ -53,11 +72,17 @@ export interface Figure { raw: string; value: number; words?: boolean }
  */
 const invisible = (c: number) => (c >= 0x200b && c <= 0x200f) || (c >= 0x202a && c <= 0x202e) || c === 0x2060 || c === 0xfeff || c === 0xad;
 const ARABIC_DECIMAL = String.fromCharCode(0x66b), ARABIC_THOUSANDS = String.fromCharCode(0x66c);
+/** the Tamil number signs for ten, a hundred and a thousand: not decimal digits, so digits.ts does not read them (SKG1-10) */
+const TA_SIGNS: Record<string, string> = { "௰": " 10 ", "௱": " 100 ", "௲": " 1000 " };
 export const forGate = (text: string): string =>
-  asciiDigits(Array.from(text).filter((ch) => !invisible(ch.codePointAt(0) as number)).join("").normalize("NFKC")).split(ARABIC_DECIMAL).join(".").split(ARABIC_THOUSANDS).join(",");
+  asciiDigits(Array.from(text).filter((ch) => !invisible(ch.codePointAt(0) as number)).map((ch) => TA_SIGNS[ch] ?? ch).join("").normalize("NFKC")).split(ARABIC_DECIMAL).join(".").split(ARABIC_THOUSANDS).join(",");
 
 /** A Tamil word's value, or null: tens with their units (இருபத்தைந்து), thousands with their head (இரண்டாயிரம்). Ordinals (இரண்டாவது) and "both" (இரண்டையும்) are not figures. */
+/** People counted in one word: இருவர் (two people), மூவர், நால்வர், ஐவர், அறுவர், எழுவர், with their endings (SKG1-08) */
+const TA_PEOPLE: [RegExp, number][] = [[/^இருவ/, 2], [/^மூவ/, 3], [/^நால்வ/, 4], [/^ஐவ/, 5], [/^அறுவ/, 6], [/^எழுவ/, 7], [/^எண்மர/, 8]];
+const TA_PEOPLE_END = /^(?:ர்|ரும்|ரை|ரைத்|ருக்கு|ருக்கும்|ரில்|ரின்|ரிடம்|ருமே)$/;
 function taNumber(w: string): number | null {
+  for (const [re, v] of TA_PEOPLE) { const m = re.exec(w); if (m && TA_PEOPLE_END.test(w.slice(m[0].length))) return v; }
   if (/ாம்$|ாவத/.test(w) || /^(இரண்|ரெண்)(டும்|டையும்|டிலும்)$/.test(w)) return null;
   const k = w.indexOf("ாயிர");
   if (k > 0) { const head = taNumber(`${w.slice(0, k)}ு`); if (head) return head * 1000; }
@@ -96,8 +121,16 @@ export function figuresIn(text: string): Figure[] {
     if (w === "double" && /^[\s-]*(check|click|tap)/i.test(en.slice((m.index ?? 0) + w.length))) continue;
     // a word like constructor or toString is a property of every object, not a number word (scans-code-2, the same class as RC-14)
     if (Object.hasOwn(EN_WORDS, w)) out.push({ raw: m[1], value: EN_WORDS[w], words: true });
-    else if (Object.hasOwn(TG_WORDS, w)) out.push({ raw: m[1], value: TG_WORDS[w], words: true });
+    else if (TG_FOLDED.has(tgFold(w))) out.push({ raw: m[1], value: TG_FOLDED.get(tgFold(w)) as number, words: true });
+    else if (FOLD.test(w)) out.push({ raw: m[1], value: EN_WORDS[(FOLD.exec(w) as RegExpExecArray)[1]], words: true });
   }
+  // a fraction of a unit of time, said as one word before the unit: "அரை மணி நேரம்" (half an hour), "ஒன்றரை மணி நேரம்", "arai manineram" (SKG1-10)
+  for (const m of t.matchAll(/(?<![\p{L}\p{M}])(ஒன்றரை|இரண்டரை|மூன்றரை|அரை|முக்கால்|கால்)\s*(?=மணி|நாள்|நாட்|வாரம்|வாரத்|மாதம்|மாதத்|வருட|ஆண்டு|கிலோ)/gu))
+    out.push({ raw: m[1], value: { ஒன்றரை: 1.5, இரண்டரை: 2.5, மூன்றரை: 3.5, அரை: 0.5, முக்கால்: 0.75, கால்: 0.25 }[m[1]] as number, words: true });
+  for (const m of en.matchAll(/(?<![\p{L}])(arai|onnarai|oonrarai|irandarai|mukkaal|kaal|kal)\s+(?=mani|naal|vaaram|maasam|varusham|kilo)/giu))
+    out.push({ raw: m[1], value: { arai: 0.5, onnarai: 1.5, oonrarai: 1.5, irandarai: 2.5, mukkaal: 0.75, kaal: 0.25, kal: 0.25 }[m[1].toLowerCase()] as number, words: true });
+  // "இரு" (two) before a thing counted: "இரு புகார்கள்". On its own it is a verb (stay), so it is a figure only beside one of the counted nouns
+  for (const m of t.matchAll(new RegExp(String.raw`(?<![\p{L}\p{M}])இரு\s+(?:${TA_COUNTED})`, "gu"))) out.push({ raw: "இரு", value: 2, words: true });
   for (const m of en.matchAll(/(?<![\p{L}])(?:a|one)\s+(third|quarter|fifth|tenth)\s+of(?![\p{L}])/giu)) out.push({ raw: m[0], value: EN_PARTS[m[1].toLowerCase()], words: true });
   // "one" as a count (BUG-017, RC-13): a figure unless it stands for a thing already named ("the second one", "which one", "no one") or is a set phrase ("one moment", "one by one")
   for (const m of en.matchAll(/(?<![\p{L}])one(?![\p{L}])/giu)) {
