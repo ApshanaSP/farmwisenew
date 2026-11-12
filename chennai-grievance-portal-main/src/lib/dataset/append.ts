@@ -139,6 +139,20 @@ async function appendComplaint(code: string) {
 }
 
 /**
+ * Loads the two files' keys (grievances.csv is about 13 MB, parsed in one go) a few seconds after the server starts
+ * (instrumentation-node.ts), so the first filing or officer step after a start does not parse them while every request waits
+ * (reviewerA-06: about 1 s). It runs on the append queue, so it never overlaps an append.
+ */
+export function warmDatasetKeys(): Promise<void> {
+  if (!datasetWriteAllowed()) return Promise.resolve();
+  return enqueue(async () => {
+    const paths = files.datasetPaths(process.cwd());
+    keysOf(paths.grievances, (r) => r[0]);
+    keysOf(paths.history, historyKey);
+  });
+}
+
+/**
  * Appends a newly filed complaint (one line in grievances.csv) and its status
  * history. Safe to call more than once for the same code.
  */

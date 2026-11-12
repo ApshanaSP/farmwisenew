@@ -36,6 +36,14 @@ if (process.env.NEXT_PHASE !== "phase-production-build") {
   }, 3000);
 }
 
+// The grievance dataset's keys are read here, not by the first filing or officer step after a start: grievances.csv (about 13 MB)
+// is parsed in one go, which held every request for about a second (reviewerA-06)
+if (process.env.NEXT_PHASE !== "phase-production-build") {
+  setTimeout(() => {
+    import("@/lib/dataset/append").then((m) => m.warmDatasetKeys()).catch((e) => console.warn("[dataset] warm-up skipped:", (e as Error).message));
+  }, 4500);
+}
+
 /** the routes the dev server opens itself after start (Jarvis and the console's data) */
 const WARM_ROUTES: ["GET" | "POST", string][] = [
   ["POST", "/api/jarvis/hear"], ["POST", "/api/jarvis/say"], ["POST", "/api/collector/thunai/agent"], ["GET", "/api/collector/thunai/world"],
