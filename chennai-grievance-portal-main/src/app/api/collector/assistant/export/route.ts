@@ -34,7 +34,10 @@ export async function GET(req: NextRequest) {
     const cell = (v: unknown) => csvCell(v);
     const csv = "﻿" + [cols.join(","), ...rows.map((r) => cols.map((c) => cell((r as Record<string, unknown>)[c])).join(","))].join("\n");
     await audit(s.email, "assistant:export", "incidents", null, null, { period, zone, dept, rows: rows.length, of: all.length });
+    // the file stops at the row cap: it says so in headers (the answer card reads them), never by a stray line in the CSV (QA4 gate, gate-oracle-1)
     return new NextResponse(csv, { headers: { "Content-Type": "text/csv; charset=utf-8",
+      "X-Export-Rows": String(rows.length), "X-Export-Total": String(all.length), "X-Export-Truncated": rows.length < all.length ? "true" : "false",
+      "Access-Control-Expose-Headers": "X-Export-Rows, X-Export-Total, X-Export-Truncated",
       "Content-Disposition": `attachment; filename="district-iq-${period}${zone ? `-zone${zone}` : ""}${dept ? `-${dept.toLowerCase()}` : ""}.csv"` } });
   } catch (err) {
     return failed(err, "the export");

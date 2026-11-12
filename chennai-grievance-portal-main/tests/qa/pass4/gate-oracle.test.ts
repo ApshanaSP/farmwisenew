@@ -36,7 +36,7 @@ beforeAll(async () => {
 afterAll(() => { vi.useRealTimers(); });
 
 describe("gate-oracle: the assistant's CSV against the figure it came from", () => {
-  it.fails("gate-oracle-1 the assistant's CSV is whole, or says it is cut at its row cap (quarterly, whole district: 1,077 rows asked, 1,000 given)", async () => {
+  it("gate-oracle-1 the assistant's CSV is whole, or says it is cut at its row cap (quarterly, whole district: 1,077 rows asked, 1,000 given)", async () => {
     const all = await intel.exportRows("quarterly", null, null);
     // the case only means something when the period holds more rows than the cap: today it does (1,077 against 1,000)
     expect(all.length).toBeGreaterThan(limits.LIMITS.exportRows);
