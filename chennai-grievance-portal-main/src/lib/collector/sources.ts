@@ -635,9 +635,9 @@ const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "
  */
 async function collectMandiWeekly() {
   let seen = 0, added = 0, calls = 0;
-  const today = new Date();
+  const today = new Date(Date.now() + 330 * 60_000); // Chennai's calendar day, read as UTC fields (RC-16 getters)
   const slots: { year: number; month: number; week: number }[] = [];
-  let y = today.getFullYear(), m = today.getMonth() + 1, wk = Math.min(4, Math.ceil(today.getDate() / 7));
+  let y = today.getUTCFullYear(), m = today.getUTCMonth() + 1, wk = Math.min(4, Math.ceil(today.getUTCDate() / 7));
   while (slots.length < 8) {
     slots.push({ year: y, month: m, week: wk });
     wk--;

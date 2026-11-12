@@ -23,10 +23,20 @@ describe("zoneNoIn", () => {
   });
   it("class guard: no reader of a zone number in the assistant or the console lanes takes digits only", () => {
     const root = path.resolve(__dirname, "..", "..");
+    // g-review (smaller point): this used to scan five named files. It now scans every file of src, and a digit-only reader of a zone number is allowed only in a file that also reads the number through zone-no.ts
+    // (zoneNoIn, zoneNosIn or withZoneDigits), so a new reader in a new file is found.
     const bad: string[] = [];
-    for (const f of ["src/lib/assistant/compare.ts", "src/lib/assistant/guard.ts", "src/lib/assistant/pipeline.ts", "src/lib/assistant/tools.ts", "src/lib/thunai/quick.ts"]) {
-      fs.readFileSync(path.join(root, f), "utf8").split("\n").forEach((l, i) => { if (/(?:zone|மண்டலம்)\s\*[^`\n]{0,30}\(\d\{1,2\}\)/.test(l) && !/normalise|zoneNoIn/.test(l)) bad.push(`${f}:${i + 1}`); });
-    }
-    expect(bad, "use zoneNoIn() (src/lib/zone-no.ts)").toEqual([]);
+    const walk = (d: string) => {
+      for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+        const p = path.join(d, e.name);
+        if (e.isDirectory()) { walk(p); continue; }
+        if (!/\.tsx?$/.test(e.name) || /\.(test|live)\.tsx?$/.test(e.name) || /\.pass4\./.test(e.name)) continue;
+        const s = fs.readFileSync(p, "utf8");
+        if (/from "@\/lib\/zone-no"|from "\.\/zone-no"/.test(s)) continue; // the file reads the number through the one reader as well
+        s.split("\n").forEach((l, i) => { if (/(?:zone|zones|மண்டலம்)(?:\s|\[ -\])[*+?]?[^`\n]{0,40}\(-?\d\{1,[234]\}\)/.test(l) && !/normalise|zoneNoIn/.test(l)) bad.push(`${path.relative(root, p)}:${i + 1}`); });
+      }
+    };
+    walk(path.join(root, "src"));
+    expect(bad, "use zoneNoIn() / zoneNosIn() (src/lib/zone-no.ts)").toEqual([]);
   });
 });

@@ -4,6 +4,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { asOf } from "@/lib/collector/intel";
 import { clearCaches } from "@/lib/thunai/round";
+import { ask } from "@/lib/assistant/pipeline";
 import { browserWorld, ClientSim } from "./grader/client-sim";
 
 const NOW = new Date("2026-11-06T06:30:00.000Z");
@@ -19,6 +20,39 @@ async function talk(...said: string[]) {
   for (const s of said) outs.push(await sim.handle(s));
   return { sim, outs };
 }
+
+const askChat = async (message: string) => (await ask({ user: "qa.grepair@example.test", sessionId: null, message, inputMode: "text", language: "auto",
+  scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null } as never, replyTo: null, pinId: null, insightKey: null, lockDept: null, stage: () => undefined } as never)).card;
+
+describe("g-review 5: a share counts incidents and says incidents", () => {
+  it("'what percentage of complaints are resolved' is a share of incidents, in the headline and the answer", async () => {
+    const c = await askChat("what percentage of complaints are resolved");
+    expect(c.kind).toBe("answer");
+    expect(c.headline).toMatch(/^\d[\d.,]*% of incidents are resolved/);
+    expect(c.headline).not.toMatch(/complaint/i);
+    expect(c.answerMarkdown).toMatch(/of the incidents reported/);
+  });
+  it("a share of a topic keeps the topic and says incidents ('what share of road complaints are overdue')", async () => {
+    const c = await askChat("what share of road complaints are overdue");
+    expect(c.headline).not.toMatch(/complaint/i);
+    expect(c.headline).toMatch(/incident/);
+  });
+});
+
+describe("g-review 4: a status said in the sentence is applied by the lane that reads it", () => {
+  it("'open' as a status ('open cases in Adyar', 'cases open now') is not the verb of a follow-up, so the fast lane answers with the status in the slots", async () => {
+    for (const p of ["show open cases in Adyar", "Drainage cases open in Kodambakkam", "complaints that are open in Adyar"]) {
+      const { outs } = await talk(p);
+      expect(String(outs[0].stage?.slots?.status ?? ""), `${p}: ${outs[0].said}`).toBe("open");
+    }
+  });
+  it("'open the first case' and 'open 3' are still the verb (a follow-up on the open screen, not a status)", async () => {
+    for (const p of ["open the first case", "open 3"]) {
+      const { outs } = await talk(p);
+      expect(String(outs[0].stage?.slots?.status ?? ""), `${p}: ${outs[0].said}`).not.toBe("open");
+    }
+  });
+});
 
 describe("g-review 3: a status or a window that is read is applied, or the sentence is handed on, never dropped", () => {
   // The rules lane has a view step and a period step and no status step, so a sentence with a status and a window is not answered by either alone.

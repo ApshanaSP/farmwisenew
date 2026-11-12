@@ -365,7 +365,11 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
   if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"])) return null;
+  // "open" is the verb of a follow-up ("open 3", "open the first one") unless it is the status of the cases ("open cases in Adyar", "cases open now": OPEN_RE), and "that" and "those" point back at
+  // an earlier answer unless they open a relative clause ("complaints that are open"): a status said in the sentence is applied in the slots, not handed on (g-review 4)
+  const openIsStatus = OPEN_RE.test(t) && !/ open (the|this|that|it|its|them|these|those|case|\d|number|no|first|second|third|last|next|previous) /.test(t);
+  const pointsBack = / (that|those) (?!(are|is|were|was|have|has|had) )/.test(t);
+  if (!o.noBail && (has(t, ["same", "also", "only", "instead", "draft", "send", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"]) || (has(t, ["open"]) && !openIsStatus) || pointsBack)) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;

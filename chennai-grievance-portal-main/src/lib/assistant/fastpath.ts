@@ -333,7 +333,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         const pct = r.n ? Math.round((have / r.n) * 1000) / 10 : 0;
         const word = { resolved: { en: "resolved", ta: "தீர்க்கப்பட்டவை", tanglish: "resolve aanavai" }, open: { en: "still open", ta: "இன்னும் திறந்திருப்பவை", tanglish: "innum open-la irukkiravai" },
           severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" } }[d.share];
-        const kindS = countNoun(what, r.n);
+        // the share counts incidents (the pipeline's records), as the Tamil and Tanglish lines already say: "complaints" would name another unit than the one counted, and the department list refuses "complaints by department" for the same reason (g-review 5)
+        const kindS = countNoun(what.replace(/\b(?:citizen )?(?:complaint|grievance)s?\b/gi, "incident"), r.n);
         const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
         const whenTa = custom ? null : { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
           monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[inc.period as Period];

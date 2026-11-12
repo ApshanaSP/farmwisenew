@@ -1426,11 +1426,12 @@ async function brief(c: Ctx): Promise<Part> {
   const sourcesTa = `${spoken(Number(st.multi ?? 0))} சம்பவங்கள் ஒன்றுக்கு மேற்பட்ட மூலங்களிலிருந்து வந்தன; ${spoken(Number(st.newsOnly ?? 0))} செய்தியில் மட்டும் உள்ளன.`;
   // the reasons the briefing tool writes are fixed English templates (reasons.ts holds the Tamil of each); a story or a reason the pipeline AI wrote has no Tamil line ("" here): shown as it is, left out of a Tamil reading
   const attTa = att.map((a) => {
-    const r = a.why?.attention?.[0] ? reasonTa(String(a.why.attention[0])) : null;
+    // up to two of the record's reasons: two cases of one body in one zone with the same first reason are told apart by the second (g-review: smaller point, RC-15)
+    const r = (a.why?.attention ?? []).slice(0, 2).map((x: unknown) => reasonTa(String(x))).filter(Boolean).join("; ") || null;
     const zt = a.zone ? c.w.zones.find((x) => x.name === a.zone)?.ta ?? a.zone : null;
     // a record's own title is a headline in the data's language (English), with no Tamil of it: the Tamil line names the body and the place in Tamil and gives the reason, and the point still opens the record (RC-15, tanglish-brief-04, -07, -10, ta-followup-01)
     return safeText(`${deptTaNamed(c.w, a.dept ?? null) ?? "சம்பவம்"}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
-  });
+  }).map((line, i, all) => { const before = all.slice(0, i).filter((x) => x === line).length; return before ? `${line} (${before + 1}-வது)` : line; }); // a line still the same as an earlier one is numbered: no two points say the same thing
   const condTa = d.conditions && !(c.s.zone || c.s.taluk || c.s.dept || c.s.cat) ? conditionsTa(String(d.conditions)) : null;
   const pointsTa = points.map((p, i): { text: string; ta?: string; incidentId: string | null } => {
     if (i < nHead) return i === 0 ? { ...p, ta: leadHeadTa } : i === 1 && st.open != null ? { ...p, ta: standLineTa } : i === 2 && Number(st.multi) ? { ...p, ta: sourcesTa } : { ...p, ta: "" };

@@ -19,7 +19,7 @@ async function say(...turns: string[]) {
   let c = await runConversation(sim, [], turns[0]);
   for (const t of turns.slice(1)) c = await runConversation(sim, [], t);
   const slots = (c.last.stage?.slots ?? {}) as { zones?: number[]; cat?: string | null; period?: string | null };
-  return { said: c.last.said ?? "", kind: c.last.kind, steps: c.last.steps ?? [], stage: c.last.stage, sim, zone: sim.zone ?? slots.zones?.[0] ?? null, cat: sim.cat ?? slots.cat ?? null, slots };
+  return { said: c.last.said ?? "", kind: c.last.kind, steps: c.last.steps ?? [], stage: c.last.stage, sim, zone: sim.zone ?? slots.zones?.[0] ?? null, cat: sim.cat ?? slots.cat ?? null, slots, path: (c.last.path ?? []) as string[] };
 }
 const LATIN = /[A-Za-z]{3,}/;
 
@@ -33,7 +33,8 @@ describe("RC-15 the Tamil brief carries Tamil lines (PB-207)", () => {
     const r = await say(text);
     expect(r.stage, r.said).toBeTruthy();
     const brief = r.stage!.blocks.find((b) => b.kind === "Brief");
-    if (!brief || brief.kind !== "Brief") return; // a brief of a body or a screen that is not the brief recipe: covered by its own tests
+    expect(brief?.kind, `${text}: this sentence asks for a brief, so a Brief block must be there (g-review 4: the test used to return here and check nothing)`).toBe("Brief");
+    if (!brief || brief.kind !== "Brief") return;
     // every point the code builds has a Tamil line; the reasons are the Tamil of the templates; only the record's own title (before the colon) may stay as the record has it
     const lines = narrationOf(r.stage!, "ta");
     expect(lines.length).toBeGreaterThan(2);
@@ -144,12 +145,24 @@ describe("last week and last month mean the same window in all three languages (
   });
   it.each([
     ["weekly", "show severe cases last week", "கடந்த வாரம் கடுமையான புகார்கள் காட்டு", "pona vaaram severe cases kaattu"],
-    ["monthly", "show severe cases last month", "போன மாசம் கடுமையான புகார்கள் காட்டு", "kadantha maasam severe cases kaattu"],
-    ["weekly", "show overdue cases last week", "கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள்", "pona vaaram deadline thaandiya cases kaattu"]
+    ["monthly", "show severe cases last month", "போன மாசம் கடுமையான புகார்கள் காட்டு", "kadantha maasam severe cases kaattu"]
   ])("%s: the same window whatever the language", async (period, en, ta, tg) => {
     const got: string[] = [];
     for (const text of [en, ta, tg]) { const r = await say(text); got.push(String(r.slots.period ?? r.sim.period)); }
     expect(got, `${en} | ${ta} | ${tg}`).toEqual([period, period, period]);
+  });
+  // A status beside the window (g-review 3): the rules lane has a period step and no status step, so it used to answer the Tamil and Tanglish sentence with the window alone and drop "overdue", while English
+  // answered weekly AND overdue. Now each language either applies both (the status in the slots) or hands the whole sentence on: never the window with the status dropped. This row used to expect "weekly" from all three.
+  it.each([
+    ["English", "show overdue cases last week"], ["Tamil letters", "கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள்"], ["Tanglish", "pona vaaram deadline thaandiya cases kaattu"],
+    ["Tamil letters, last month resolved", "கடந்த மாதம் தீர்க்கப்பட்ட புகார்கள்"], ["Tanglish, last month resolved", "pona maasam resolved cases"]
+  ])("a status beside last week or last month is applied with it or handed on whole: %s", async (_n, text) => {
+    const r = await say(text);
+    const slots = r.slots as { period?: string | null; status?: string | null };
+    const both = !!slots.period && !!slots.status;
+    const handedOn = r.steps.length === 0 && r.path.includes("agent") && !r.stage;
+    expect(both || handedOn, `${text}: steps ${JSON.stringify(r.steps)} slots ${JSON.stringify(slots)} said ${r.said}`).toBe(true);
+    expect(r.steps.some((s) => s.a === "period"), `${text}: a window alone, with the status dropped`).toBe(false);
   });
   it.each([
     "show severe cases two weeks ago", "cases a month ago", "severe cases last year", "cases next week",
@@ -243,6 +256,9 @@ describe("the rules lane does not act on what it read and drop what it could not
   ])("an unread kind of complaint is not answered with a bare window: %s", async (_n, text) => {
     const r = await say(text);
     expect(r.steps.some((s) => s.a === "period" || s.a === "view"), r.said).toBe(false);
+    // handed on whole: no console move of any kind, and the sentence reached the agent (with a model it is read there; with none the line says so), never a reading of part of it
+    expect(r.steps, r.said).toEqual([]);
+    expect(r.path, r.said).toContain("agent");
   });
   it.each([
     ["English", "Manali zone this week fire accident how many"],
@@ -256,6 +272,9 @@ describe("the rules lane does not act on what it read and drop what it could not
     for (const text of ["garbage complaints this week", "Adyar la kuppai complaints kaattu", "நாய் புகார்கள் இந்த வாரம்"]) {
       const r = await say(text);
       expect(r.kind, `${text}: ${r.said}`).not.toBe("none");
+      // answered, not refused: the screen holds the kind of complaint and the window
+      expect(r.slots.cat, `${text}: ${r.said}`).toBeTruthy();
+      expect(r.slots.period, `${text}: ${r.said}`).toBe("weekly");
     }
   });
 });
@@ -304,6 +323,8 @@ describe("a status said after the noun is a status", () => {
   it.each(["Drainage cases open in Kodambakkam", "Show Adyar road complaints open now", "complaints that are open in Adyar"])("%s", async (text) => {
     const r = await say(text);
     expect((r.steps ?? []).some((x: { a: string }) => x.a === "view"), `${text}: ${JSON.stringify(r.steps)} ${r.said}`).toBe(false);
+    // the answer holds the status: a list by status, not the place alone (g-review 4: it used to pass on a refusal, and on any answer with no view step)
+    expect(String((r.slots as { status?: string | null }).status ?? ""), `${text}: ${r.said}`).toBe("open");
   });
 });
 
@@ -311,7 +332,7 @@ describe("a status said after the noun is a status", () => {
 describe("a move's confirmation holds no English body or category name in Tamil or Tanglish", () => {
   it.each([["Tanglish", "theru vilakku dept.. Corporation electrical.. adha pathi chinna note sollu"], ["Tamil letters", "மின் விளக்கு துறை காட்டு"]])("%s", async (_n, text) => {
     const r = await say(text);
-    if (!(r.steps ?? []).some((x: { a: string }) => x.a === "view")) return; // handed on: the planner answers in Tamil
+    // whichever lane answered (a console move or a screen), the line is in Tamil letters and names no body or category in English (g-review 4: it used to return when there was no view step)
     expect(r.said, text).toMatch(/[஀-௿]/);
     expect(r.said, text).not.toMatch(/Street Lighting|Electrical|Roads, footpaths|Drainage & sewage/);
   });

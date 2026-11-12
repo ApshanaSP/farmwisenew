@@ -294,7 +294,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
     const what = (m?.[2] ?? rest(heard, /^\s*remind me\s*/i)).trim();
     const whenText = `${m?.[1] ?? ""} ${m?.[3] ?? ""} ${heard}`;
     const at = parseWhen(whenText, state.now);
-    const when = at ?? (() => { const d = new Date(state.now); d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0); return d; })();
+    // no time heard: tomorrow at 10:00 Chennai time on any server (RC-16 getters: setDate and setHours read the server's zone)
+    const when = at ?? (() => { const IST_MS = 330 * 60_000, d = new Date(new Date(state.now).getTime() + IST_MS); d.setUTCDate(d.getUTCDate() + 1); d.setUTCHours(10, 0, 0, 0); return new Date(d.getTime() - IST_MS); })();
     return done([{ a: "remind", text: what, at: when.toISOString() }], 1, at ? 1 : 0.8, 1,
       at ? undefined : b("No time heard: set for tomorrow at 10:00.", "நேரம் கேட்கவில்லை: நாளை காலை 10 மணிக்கு வைத்தேன்."));
   }
@@ -567,7 +568,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (!itemStep && ordinal) itemStep = { a: "item", which: Number(ordinal[1] ?? ordinal[3]) };
   const draft = /\bdraft\b|take action|\binstruction\b|உத்தரவு|நடவடிக்கை/.test(s);
   const closeAllM = /^close (all|everything)$|close all (panels|windows)|எல்லாவற்றையும் மூடு|ellaam close/.test(s);
-  const closeOne = /^(close|close it|close this|close that|close the panel|close pannu|மூடு|இதை மூடு)$/.test(s);
+  // close is about a panel, not a record: "close" with it, this or that, or with the name of a panel (panel, window, card, drawer, dialog, view, tab, screen, map), never with the name of a case
+  // ("close the case", "close this complaint" are orders to change a record, refused above); not an exact list of phrases (g-review, smaller point)
+  const closeOne = /^(?:please )?(?:close|shut|dismiss)(?: (?:it|this|that|this one))?(?: pannu| please)?$|^(?:please )?(?:close|shut|dismiss) (?:the |this |that |my )?(?:[a-z]+ ){0,2}(?:panel|window|popup|pop-up|drawer|dialog|card|view|tab|screen|map)(?: pannu| please)?$|^(?:மூடு|இதை மூடு)$/.test(s);
   if (closeAllM || closeOne) return done([{ a: "close", all: closeAllM }]);
 
   // assemble: page first, then the filters as one transaction, then period, map, panel, item

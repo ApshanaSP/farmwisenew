@@ -9,6 +9,7 @@ import type { Lang } from "@/lib/assistant/lang";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import type { RefNames } from "@/lib/assistant/scope";
 import { unheldPhrase, windowIn, type BadRead } from "@/lib/windowspan";
+import { zoneNosIn } from "@/lib/zone-no";
 
 export interface Unresolved { kind: "zone" | "ward" | "place" | "period" | "date" | "year"; asked: string; say: Record<Lang, string> }
 const L = (en: string, ta: string, tanglish: string): Record<Lang, string> => ({ en, ta, tanglish });
@@ -70,8 +71,10 @@ export function unresolvedInput(message: string, w: UnresolvedWorld): Unresolved
   const days = w.days ?? 180;
   // ---- a zone number the district does not have (zone 99, zone 0, zone -1, மண்டலம் 99)
   const z = /\bzone(?:-|\s+)?(?:no\.?|number|#)?\s*(-?\s?\d{1,4})\b/i.exec(message) ?? /மண்டலம்\s*(-?\d{1,4})/.exec(message) ?? /\bmandalam\s*(-?\d{1,4})\b/i.exec(message);
-  if (z) {
-    const n = Number(z[1].replace(/\s/g, ""));
+  // a zone said in words or in another script ("zone ninety nine", "mandalam ٩٩") is read as well (zone-no.ts); the digit patterns above keep "zone -1"
+  const zw = z ? null : zoneNosIn(message).find((n) => !w.zones.includes(n));
+  if (z || zw !== undefined && zw !== null) {
+    const n = z ? Number(z[1].replace(/\s/g, "")) : (zw as number);
     if (!w.zones.includes(n)) {
       const max = Math.max(...w.zones);
       return { kind: "zone", asked: `zone ${n}`, say: L(`I did not find zone ${n}: the district has zones 1 to ${max}. Tell me which zone you mean, or ask for the whole district.`,

@@ -44,7 +44,7 @@ export function canSpeak(s: Signal, mem: WatchMemory, now: number, ctx: { quiet:
   const life = b === "interrupt";
   if (ctx.quiet && !life) return false;
   if (ctx.lastUserSpeech != null && now - ctx.lastUserSpeech < 30_000 && !life) return false;
-  const h = new Date(now).getHours();
+  const h = new Date(now + 330 * 60_000).getUTCHours(); // the Collector's night is Chennai's night, in any browser zone
   if ((h >= 22 || h < 6) && !life) return false;
   const prev = mem.last[s.key];
   if (prev && now - prev.at < 2 * 3_600_000 && s.level <= prev.level) return false;

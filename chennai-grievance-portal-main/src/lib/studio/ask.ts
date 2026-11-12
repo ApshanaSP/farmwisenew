@@ -4,6 +4,7 @@
  * name, "last 30 days") and alerts ("tell me when ... more than 10"). Also checks the Collector's standing alerts.
  */
 import type { AskOut } from "@/lib/studio/ai";
+import { zoneNoIn } from "@/lib/zone-no";
 import type { DRow } from "@/lib/studio/clean";
 import { runPlan, type Names } from "@/lib/studio/engine";
 import type { ColumnProfile, Rule, RuleStatus, Spec } from "@/lib/studio/types";
@@ -74,7 +75,7 @@ export function rulesAsk(question: string, spec: Spec, profile: ColumnProfile[],
     if (hit.length && !(out.by === "col" && out.by_col === c.key)) out.filters.push({ col: c.key, op: "in", values: hit });
   }
   const zs = zoneNames.filter((z) => q.includes(z.toLowerCase()) || normKey(q).includes(normKey(z)));
-  const zn = q.match(/\bzone\s*(\d{1,2})\b/)?.[1];
+  const zn = zoneNoIn(q) != null ? String(zoneNoIn(q)) : undefined; // any script and language (zone-no.ts)
   if (zs.length) out.filters.push({ col: "_z", op: "in", values: zs });
   else if (zn) out.filters.push({ col: "_z", op: "in", values: [zn] });
   const recent = q.match(/\b(?:last|past|previous)\s+(\d{1,3})\s*(day|week|month)s?\b/);
