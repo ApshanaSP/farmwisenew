@@ -8,10 +8,10 @@
  */
 import type { Lang } from "@/lib/assistant/lang";
 
-export type NotDone = "workspace" | "sources" | "forecast" | "letter" | "deptComplaints" | "order";
+export type NotDone = "workspace" | "sources" | "forecast" | "letter" | "deptComplaints" | "order" | "lakeCause";
 const L = (en: string, ta: string, tanglish: string): Record<Lang, string> => ({ en, ta, tanglish });
 
-const SAY: Record<Exclude<NotDone, "deptComplaints" | "order">, Record<Lang, string>> & { deptComplaints?: Record<Lang, string>; order?: Record<Lang, string> } = {
+const SAY: Record<Exclude<NotDone, "deptComplaints" | "order" | "lakeCause">, Record<Lang, string>> & { deptComplaints?: Record<Lang, string>; order?: Record<Lang, string>; lakeCause?: Record<Lang, string> } = {
   workspace: L("Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there.",
     "அரட்டையில் பணியிடத்தைச் சேமிக்கவோ மீண்டும் திறக்கவோ முடியாது, எதுவும் சேமிக்கப்படவில்லை. கன்சோலின் மேல் மெனுவில் Workspaces என்பதைத் தேர்ந்தெடுத்து அங்கே சேமிக்கவும் அல்லது திறக்கவும்.",
     "Chat-la workspace-a save panna illa reopen panna mudiyaadhu, adhanaala edhuvum save aagala. Console-oda top menu-la Workspaces select pannitu, angaye Save illa Open pannunga."),
@@ -34,6 +34,12 @@ SAY.deptComplaints = L("The department list counts incidents, not citizens' comp
 SAY.order = L("Chat only reads the records: it cannot close, reopen or export cases, so nothing was changed or exported. An officer closes or reopens a case on the officer console, and the top menu's Export report button gives the file.",
   "அரட்டை பதிவுகளை மட்டுமே படிக்கும்: வழக்குகளை மூடவோ மீண்டும் திறக்கவோ பதிவிறக்கவோ முடியாது, எதுவும் மாற்றப்படவில்லை, பதிவிறக்கப்படவில்லை. வழக்கை அலுவலர் தன் கன்சோலில் மூடுவார் அல்லது மீண்டும் திறப்பார்; கோப்பு வேண்டுமெனில் மேல் மெனுவில் உள்ள அறிக்கையைப் பதிவிறக்கு பொத்தானைப் பயன்படுத்துங்கள்.",
   "Chat records-a padikka mattum dhaan seiyum: case-a close, reopen illa export panna mudiyaadhu, adhanaala edhuvum maaralaa, export aagalaa. Case-a officer avanga console-la close illa reopen pannuvaanga; file vennumna top menu-la Export report button use pannunga.");
+/** Why a lake or reservoir level moved (QA4 gate, FB-3: answered with incident counts, and never said it had no lake data). The data holds each reservoir's latest level and its 28-day average, not what moved it. */
+SAY.lakeCause = L("I do not have the reason a lake or reservoir level rose or fell: the data holds the latest level of each reservoir and its average over the last four weeks, not what changed it. Ask for the level itself, for example the Chembarambakkam lake level, and I will give the reading.",
+  "ஏரி அல்லது நீர்த்தேக்க மட்டம் ஏன் உயர்ந்தது அல்லது குறைந்தது என்பதற்கான காரணம் என்னிடம் இல்லை: தரவில் ஒவ்வொரு நீர்த்தேக்கத்தின் சமீபத்திய மட்டமும் நான்கு வார சராசரியும் மட்டுமே உள்ளன. மட்டத்தையே கேளுங்கள், எடுத்துக்காட்டாக செம்பரம்பாக்கம் ஏரி மட்டம், அளவீட்டைத் தருகிறேன்.",
+  "Lake illa reservoir level yen yeriyadhu illa kuraindhadhu-nu reason-a ennidam illa: data-la ovvoru reservoir-oda latest level-um naalu vaara average-um mattum dhaan irukku, edhu maatthichu-nu illa. Level-a kelunga, udhaaranathukku Chembarambakkam lake level, reading-a tharaen.");
+const LAKE_WORD = /\b(lakes?|reservoirs?|tanks?|chembarambakkam|chembarapakkam|poondi|puzhal|red ?hills|cholavaram|kannankottai|thervoy|veeranam|water ?levels?|storage)\b|ஏரி|நீர்த்தேக்க|நீர் மட்டம்|செம்பரம்பாக்க|பூண்டி|புழல்|சோழவரம்/i;
+const WHY_WORD = /\bwhy\b|\breasons?\b|\bcaus(?:e|ed|es)\b|\bwhat made\b|\bwhat is behind\b|ஏன்|காரணம்|\byen\b|\bandha reason\b/i;
 const ORDER_QUESTION = /^\s*(?:(?:how|what|which|who|when|why|where|is|are|were|was|did|does|do|has|have|evlo|enna|eppo)\b|எத்தனை|எந்த|என்ன|ஏன்|யார்)/i;
 const ORDER_EN = /^\s*(?:(?:please|pls|kindly|can you|could you|would you)\s+)*(?:close|reopen|re-open|resolve|export|download|reassign|assign|escalate)\b.{0,60}\b(?:complaints?|cases?|incidents?|grievances?|tickets?|them|all|everything|excel|csv|pdf|xlsx?|spreadsheet)\b|\bexport\b.{0,50}\b(?:excel|csv|pdf|xlsx?|spreadsheet)\b/i;
 const ORDER_TG = /\b(?:export|close|reopen|re-open|download|resolve)\b.{0,40}\b(?:pannu|pannunga|panni|pannidu|pannidunga|podu|seiyu)\b/i;
@@ -63,6 +69,7 @@ export function notDone(message: string, rulesOnly: boolean): { kind: NotDone; s
   // an order to close, reopen or export records is never done from chat, with or without a model (Ask has no tool that writes)
   if (!ORDER_QUESTION.test(t) && (ORDER_EN.test(t) || ((ORDER_TG.test(t) || ORDER_TA.test(t)) && THINGS.test(t)))) return { kind: "order", say: SAY.order! };
   if (rulesOnly && /\bcomplaints?\b|புகார்/i.test(t) && !/\bincidents?\b|சம்பவ/i.test(t) && !PAST_DEADLINE.test(t) && DEPT_SPLIT.test(t)) return { kind: "deptComplaints", say: SAY.deptComplaints! };
+  if (rulesOnly && LAKE_WORD.test(t) && WHY_WORD.test(t)) return { kind: "lakeCause", say: SAY.lakeCause! };
   if (rulesOnly && WRITE.test(t)) return { kind: "letter", say: SAY.letter };
   if (rulesOnly && (FUTURE.test(t) || FUTURE_MORE.test(t)) && THINGS.test(t) && !WEATHER.test(t)) return { kind: "forecast", say: SAY.forecast };
   return null;
