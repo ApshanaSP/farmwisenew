@@ -8,6 +8,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { createHash } from "crypto";
 import intelPool from "@/lib/collector/db";
 import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, any>;
 export interface Db { all(sql: string, params?: unknown[]): Promise<Row[]>; run(sql: string, params?: unknown[]): Promise<void> }
@@ -132,8 +133,10 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   const id = attachTo ?? caseIdFor(c.code);
   if (process.env.DATA_BACKEND !== "aws") return id;
   try {
-    if (attachTo && (await attachToCase(live, attachTo, c))) return attachTo;
+    // a new or bigger case changes the figures: the caches that hold a read start again (pass 4's RC-35; QA pass 5, P5-015)
+    if (attachTo && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
     await addCase(live, c);
+    bumpDataEpoch();
     return caseIdFor(c.code);
   } catch (e) {
     console.warn(`[manu] case for ${c.code} not added to the current build: ${(e as Error).message}`);

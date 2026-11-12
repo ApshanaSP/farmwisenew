@@ -224,6 +224,20 @@ describe("an anonymous online complaint", () => {
   });
 });
 
+// QA pass 5, P5-015: a case added or grown by a filing changes the figures, so the caches that hold a read (Jarvis, the assistant, the insight
+// cards, stories: pass 4's RC-35) must start again, as they do after a Collector decision or an officer step
+describe("a filing and the caches", () => {
+  it("moves the data epoch when it adds a case and when it joins one", async () => {
+    const { dataEpoch } = await import("@/lib/collector/epoch");
+    const e0 = dataEpoch();
+    const first = await filePetition(await uploaded(), fields(), "x");
+    const e1 = dataEpoch();
+    expect(e1).toBeGreaterThan(e0);
+    await filePetition(await uploaded(), fields({ attachTo: caseIdFor(first.code) }), "x");
+    expect(dataEpoch()).toBeGreaterThan(e1);
+  });
+});
+
 describe("the public tracker", () => {
   it("opens with the slip's key or the mobile's last 4 digits, and shows no personal detail", async () => {
     const r = await filePetition(await uploaded(), fields(), "x");
