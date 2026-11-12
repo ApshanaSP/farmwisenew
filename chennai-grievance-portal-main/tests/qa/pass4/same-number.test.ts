@@ -187,9 +187,10 @@ describe("same number everywhere", () => {
   it("same-number-18 a workspace saved on a copy that does not save to AWS can be opened", () => {
     expect(notes.filter((n) => n.kind === "workspace-not-openable")).toEqual([]);
   });
-  // passes since the oracle follows the build hooks as RC-29 left them (lane d, cf6ed83): no news-only incident with a recorded death is removed by the news-media hook any more; the owner's decision stays recorded in the finding
-  it("same-number-19 no news-only incident with a recorded death is left out as 'not news media' (owner's decision)", () => {
-    const out = oracle.hooks.removed.filter((r: any) => r.hook === "news-media-only@1" && oracle.rawRow(String(r.id))?.dead > 0).map((r: any) => r.id);
+  // FINAL-GATE (12 Nov): this check named the hook "news-media-only@1". The build has been "news-media-only@2" since RC-38, so it matched nothing and passed without looking (and it failed only when same-number-hooks.json still held the old name).
+  // Named by prefix it sees the real drops: news-media-only@2 still takes out INC-20260924-C6A723 (4 dead), INC-20261009-749A06 (1) and INC-20261021-C1FFE1 (1), which have a recorded death. Open, so it.fails: the fixer (or the owner) changes it to it(...).
+  it.fails("same-number-19 no news-only incident with a recorded death is left out as 'not news media' (owner's decision)", () => {
+    const out = oracle.hooks.removed.filter((r: any) => /^news-media-only@/.test(r.hook) && oracle.rawRow(String(r.id))?.dead > 0).map((r: any) => r.id);
     expect(out).toEqual([]);
   });
   it("same-number-20 'past deadline by department' is not answered with 'no incidents match'", async () => {
