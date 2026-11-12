@@ -3185,6 +3185,23 @@
     "verified": true
   },
   {
+    "id": "reviewerA-02",
+    "severity": "P2",
+    "area": "Uploads (officer-day-25 fix review)",
+    "title": "Other routes still read a whole upload into memory before any size check (profile photo for any citizen; rehearsal tasks; petitions; studio)",
+    "found_by": "reviewerA (fixall)",
+    "repro": null,
+    "failing_test": "src/app/api/rehearsal/upload-cap.fixall.test.ts",
+    "root_cause": "each route calls req.formData() itself; only two used readFormCapped",
+    "fix_commit": "423daeff (rehearsal routes only)",
+    "revert_check": "2 fail without, 3 pass with",
+    "status": "open",
+    "reviewer": null,
+    "closed_in": null,
+    "verified": true,
+    "note": "Fixed: /api/rehearsal/tasks and /api/rehearsal/dev. Left: /api/profile/photo (needs src/app/api/profile, a p7 session's file), /api/manu/petitions (api/manu, p7), /api/collector/studio (studio-parse session's area). Each needs readFormCapped(req, <its largest valid body>) before formData; the probe is scratchpad reviewA/officer-day-25.probe.fixall.test.ts."
+  },
+  {
     "id": "reviewerA-03",
     "severity": "P2",
     "area": "Account enumeration (hunt2-sec-06 fix review)",
@@ -3216,5 +3233,21 @@
     "closed_in": "fixall",
     "verified": true,
     "note": "Timing not measured on the live AWS store; the test stands in a 150 ms write."
+  },
+  {
+    "id": "reviewerA-05",
+    "severity": "P3",
+    "area": "Logs (redsec2-13 fix review)",
+    "title": "A failed SMS test copy logged the citizen's mobile in its subject; a 1-2 letter e-mail name was logged whole",
+    "found_by": "reviewerA (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/mailer.scrub.fixall.test.ts",
+    "root_cause": "the scrubber masked e-mail addresses only, keeping two letters",
+    "fix_commit": "70f327a7",
+    "revert_check": "2 fail without, 2 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "closed_in": "fixall",
+    "verified": true
   }
 ]
