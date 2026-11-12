@@ -10,6 +10,7 @@ import { PERIODS, PLACE_FILTERS, asOf, attentionRows, explain, periodSince, peri
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
+import { checkOpening } from "@/lib/collector/opening";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
@@ -230,9 +231,20 @@ export async function insights(period: Period, zone: number | null, dept: string
   // the opening of the pipeline's briefing for this period, written by its LLM from the briefing's facts (numbers checked);
   // only for the whole district: a zone or department view has its own figures
   const whole = !zone && !dept && !s.cat && !s.taluk;
-  const [brief] = whole && B ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
-    .catch(orEmpty("insights:204")) : [];
-  const opening = brief?.ai_summary ? { en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null } : null;
+  const [brief] = whole && B ? await q(`SELECT ai_summary, ai_summary_ta, DATE_FORMAT(as_of, '%Y-%m-%d %H:%i:%s') AS as_of FROM briefings WHERE period = ?
+      ORDER BY as_of DESC LIMIT 1`, [period]).catch(orEmpty("insights:204")) : [];
+  const K = k[0] ?? {}, P = kp[0] ?? {};
+  const n = Number(K.n ?? 0), sev = Number(K.severe ?? 0), open = Number(K.open ?? 0), overdue = Number(K.overdue ?? 0);
+  const ch = pct(n, Number(P.n ?? 0));
+  // hunt2-ops-12: the stored summary is shown as today's only when it is the summary of this window and says what the live figures
+  // beside it say (opening.ts); a summary of an older window ("more incidents" beside a live "78% fewer") is not shown
+  const checked = brief?.ai_summary
+    ? checkOpening({ asOf: brief.as_of ? String(brief.as_of) : null, en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null },
+      { now, hours: PERIODS[period].hours, change: ch,
+        figures: [n, Number(P.n ?? 0), sev, Number(P.severe ?? 0), open, overdue, Number(K.multi ?? 0), gaps.length, Number(K.complaints ?? 0)] })
+    : { opening: null, why: null };
+  if (checked.why) console.info(`[insights] AI opening not shown (${period}): ${checked.why}`);
+  const opening = checked.opening;
   // how "most urgent first" is ordered: hand-set priority weights, or weights learned from the Collector's decisions
   const [pl] = B ? await q(`SELECT value FROM metrics WHERE metric = 'priority_learning'`).catch(orEmpty("insights:207")) : [];
   const ranking = rankingOf(pl?.value);
@@ -240,10 +252,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const book = B ? await briefingBook(s, now, opening) : null;
 
   // ---------------------------------------------------------- briefing --
-  const K = k[0] ?? {}, P = kp[0] ?? {};
-  const n = Number(K.n ?? 0), sev = Number(K.severe ?? 0), open = Number(K.open ?? 0), overdue = Number(K.overdue ?? 0);
-  const ch = pct(n, Number(P.n ?? 0));
-  const scope = [zone ? zn.get(zone) : null, dept ? deptRows.find((d) => d.code === dept)?.name ?? dept : null, s.cat ? catLabel.get(s.cat) : null,
+  const scope =[zone ? zn.get(zone) : null, dept ? deptRows.find((d) => d.code === dept)?.name ?? dept : null, s.cat ? catLabel.get(s.cat) : null,
     s.taluk ? taluks.find((t) => t.code === s.taluk)?.name + " taluk" : null].filter(Boolean).join(", ") || "Chennai district";
   const headline = [
     `${plural(n, "incident")} ${n === 1 ? "was" : "were"} reported in ${scope} (${PERIODS[period].label.toLowerCase()})` +
