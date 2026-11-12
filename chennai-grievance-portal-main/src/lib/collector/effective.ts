@@ -47,8 +47,16 @@ export function effectiveSql(decisionsTable: string, alias = "i") {
   const i = alias; // the incidents table's alias in the caller's query
   const latest = `(SELECT d.decision FROM ${decisionsTable} d WHERE d.incident_id = ${i}.incident_id AND d.decision IN (${EFFECT_KEYS})
     ORDER BY d.decision_id DESC LIMIT 1)`;
-  const latestAt = latest.replace("SELECT d.decision FROM", "SELECT d.decided_at FROM");
   const closing = Object.entries(DECISION_EFFECT).filter(([, e]) => e.open === 0).map(([k]) => `'${k}'`).join(", ");
+  // hunt2-ops-07: the time a case closed is when it went from open to closed, never the latest closing decision. A resolve or a verify
+  // on a case that is already closed (by the pipeline, or by an earlier decision) is still recorded but leaves its closed time alone;
+  // only a reopen starts a new closing. So "resolved in the window" counts a case's first closing after it was last opened.
+  const reopenedAt = `(SELECT MAX(r.decision_id) FROM ${decisionsTable} r WHERE r.incident_id = ${i}.incident_id AND r.decision = 'reopen')`;
+  const firstClosingAfter = (id: string) => `(SELECT c.decided_at FROM ${decisionsTable} c WHERE c.incident_id = ${i}.incident_id
+    AND c.decision IN (${closing}) AND c.decision_id > ${id} ORDER BY c.decision_id ASC LIMIT 1)`;
+  const closedByDecisions = `(CASE WHEN ${reopenedAt} IS NOT NULL THEN ${firstClosingAfter(reopenedAt)}
+    WHEN ${i}.is_open = 1 THEN ${firstClosingAfter("0")}
+    ELSE LEAST(${i}.closed_at, ${firstClosingAfter("0")}) END)`;
   const cases = (pick: (e: Effect) => string) =>
     Object.entries(DECISION_EFFECT).map(([k, e]) => `WHEN '${k}' THEN ${pick(e)}`).join(" ");
   return {
@@ -57,8 +65,12 @@ export function effectiveSql(decisionsTable: string, alias = "i") {
     pipelineOpen: `${i}.is_open`,
     open: `(CASE ${latest} ${cases((e) => String(e.open))} ELSE ${i}.is_open END)`,
     status: `(CASE ${latest} ${cases((e) => `'${e.status}'`)} ELSE ${i}.status_std END)`,
-    /** when it closed: the Collector's closing decision's time (nothing once reopened), else the pipeline's closed_at */
-    closedAt: `(CASE WHEN ${latest} IN (${closing}) THEN ${latestAt} WHEN ${latest} = 'reopen' THEN NULL ELSE ${i}.closed_at END)`,
+    /**
+     * when it closed: the first closing decision since it was last open (after the latest reopen; or, never reopened, the first one while
+     * the pipeline has it open, else the earlier of the pipeline's closed_at and that decision); nothing once reopened; else the
+     * pipeline's closed_at. A closing decision on a closed case is a no-op for this time (hunt2-ops-07).
+     */
+    closedAt: `(CASE WHEN ${latest} IN (${closing}) THEN ${closedByDecisions} WHEN ${latest} = 'reopen' THEN NULL ELSE ${i}.closed_at END)`,
     /** the effective verified flag (0/1): a resolve and a verify leave it checked */
     verified: `(CASE WHEN ${latest} IN (${VERIFYING.map((k) => `'${k}'`).join(", ")}) THEN 1 ELSE ${i}.verified END)`
   };
