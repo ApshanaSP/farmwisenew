@@ -12,7 +12,7 @@ import { nextSteps } from "./next";
 import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { UNIT_TA, hoursBetween } from "./stagelocal";
-import { DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
+import { DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 import { conditionsTa, reasonTa } from "./reasons";
 import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho } from "./narrate";
 
@@ -97,6 +97,20 @@ const catLabel = (w: World, c: string | null) => (c ? w.cats.find((x) => x.code 
 const deptName = (w: World, d: string | null) => (d ? w.depts.find((x) => x.code === d)?.name ?? d : null);
 // the Tamil line says the department and the category in Tamil: DEPT_TA and CAT_LABEL_TA are complete tables (a test checks every code)
 const deptTa = (w: World, d: string | null) => (d ? DEPT_TA[d] ?? deptName(w, d) : null);
+/**
+ * The Tamil of a body the briefing tool names by its ENGLISH NAME ("PWD Water Resources", "Greater Chennai Police", "Street Lighting"), not by its code: the code by the console's own name for it, or
+ * by the longest alias of the body in the name. A Tamil brief point must not hold a Latin body name (SKG1-36).
+ */
+const deptTaNamed = (w: World, d: string | null): string | null => {
+  if (!d) return null;
+  if (DEPT_TA[d]) return DEPT_TA[d];
+  const low = d.toLowerCase();
+  const hit = w.depts.find((x) => x.name.toLowerCase() === low || x.code.toLowerCase() === low);
+  if (hit && DEPT_TA[hit.code]) return DEPT_TA[hit.code];
+  let best: [number, string] | null = null;
+  for (const [code, al] of Object.entries(DEPT_ALIASES)) for (const a of al) if (DEPT_TA[code] && /^[a-z]/i.test(a) && a.length >= 3 && low.includes(a.toLowerCase()) && (!best || a.length > best[0])) best = [a.length, DEPT_TA[code]];
+  return best?.[1] ?? deptName(w, d);
+};
 const catTa = (w: World, c: string | null) => (c ? CAT_LABEL_TA[c] ?? catLabel(w, c) : null);
 const MONTH_TA: Record<string, string> = { Jan: "ஜன.", Feb: "பிப்.", Mar: "மார்.", Apr: "ஏப்.", May: "மே", Jun: "ஜூன்", Jul: "ஜூலை", Aug: "ஆக.", Sep: "செப்.", Oct: "அக்.", Nov: "நவ.", Dec: "டிச." };
 /** A chart's time label ("21 Oct", "3 pm") in Tamil, so a Tamil line never says a Latin month or AM/PM (RC-15). */
@@ -778,9 +792,12 @@ async function readings(c: Ctx): Promise<Part> {
   const v = m === "lakes" ? Math.round(top.value) : top.value;
   const unitWord = m === "lakes" ? "% full" : ` ${e.unit}`;
   const at = when(top.t) ?? "the latest reading";
+  // the Tamil line has its own month, clock and unit (a Latin "6 Nov, 8:30 AM" and "mm" in a Tamil line is a break: RC-15, SKG1-37)
+  const atTa = when(top.t) ? labelTa(when(top.t) as string) : "சமீபத்திய அளவீடு";
+  const unitTa = ({ rain: "மி.மீ", aqi: "AQI", lakes: "%", temp: "°C", humidity: "%" } as Record<Metric, string>)[m];
   const say = named
-    ? bi(`${top.name} is at ${spoken(v)}${unitWord}, as of ${at}.`, `${top.name}: ${spoken(v)}${m === "lakes" ? "% நிரம்பியுள்ளது" : ` ${e.unit}`}, ${at} நிலவரப்படி.`)
-    : bi(`${items.length} readings. Highest: ${top.name} at ${spoken(v)}${unitWord}, as of ${at}.`, `${items.length} அளவீடுகள். அதிகம்: ${top.name}, ${spoken(v)}${m === "lakes" ? "%" : ` ${e.unit}`}, ${at} நிலவரப்படி.`);
+    ? bi(`${top.name} is at ${spoken(v)}${unitWord}, as of ${at}.`, `${top.name}: ${spoken(v)}${m === "lakes" ? "% நிரம்பியுள்ளது" : ` ${unitTa}`}, ${atTa} நிலவரப்படி.`)
+    : bi(`${items.length} readings. Highest: ${top.name} at ${spoken(v)}${unitWord}, as of ${at}.`, `${items.length} அளவீடுகள். அதிகம்: ${top.name}, ${spoken(v)}${m === "lakes" ? "%" : ` ${unitTa}`}, ${atTa} நிலவரப்படி.`);
   const vs = top.mean28 != null && top.mean28 > 0 ? change(top.value, top.mean28) : { delta: null, pct: null };
   const takeaway = vs.pct != null && Math.abs(vs.pct) >= 10
     ? bi(`${top.name} is ${spoken(Math.abs(vs.pct))}% ${vs.pct > 0 ? "above" : "below"} its 28-day average.`, `${top.name} அதன் 28 நாள் சராசரியை விட ${spoken(Math.abs(vs.pct))}% ${vs.pct > 0 ? "அதிகம்" : "குறைவு"}.`) : null;
@@ -1412,7 +1429,7 @@ async function brief(c: Ctx): Promise<Part> {
     const r = a.why?.attention?.[0] ? reasonTa(String(a.why.attention[0])) : null;
     const zt = a.zone ? c.w.zones.find((x) => x.name === a.zone)?.ta ?? a.zone : null;
     // a record's own title is a headline in the data's language (English), with no Tamil of it: the Tamil line names the body and the place in Tamil and gives the reason, and the point still opens the record (RC-15, tanglish-brief-04, -07, -10, ta-followup-01)
-    return safeText(`${deptTa(c.w, a.dept ?? null) ?? "சம்பவம்"}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
+    return safeText(`${deptTaNamed(c.w, a.dept ?? null) ?? "சம்பவம்"}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
   });
   const condTa = d.conditions && !(c.s.zone || c.s.taluk || c.s.dept || c.s.cat) ? conditionsTa(String(d.conditions)) : null;
   const pointsTa = points.map((p, i): { text: string; ta?: string; incidentId: string | null } => {

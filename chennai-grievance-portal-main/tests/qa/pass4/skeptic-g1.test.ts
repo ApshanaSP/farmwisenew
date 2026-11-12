@@ -216,28 +216,28 @@ describe("SKG1 Jarvis (client-sim): the window, the zone and the language of the
     }
   });
   const ROYAPURAM = /Royapuram|ராயபுரம்|zone":5|zones":\[5\]|Zone 5|மண்டலம் 5/;
-  it.fails("SKG1-33 a zone said as a Tanglish number ('zone anju', 'zone aindhu') or in digits of another script ('zone ٥', 'zone ５') is that zone, not the district brief", async () => {
+  it("SKG1-33 a zone said as a Tanglish number ('zone anju', 'zone aindhu') or in digits of another script ('zone ٥', 'zone ５') is that zone, not the district brief", async () => {
     for (const p of ["zone anju brief sollu", "zone aindhu brief sollu", "zone ٥ brief", "zone ５ brief"]) {
       const { outs } = await talk(p); expect(JSON.stringify([outs[0].steps, outs[0].stage?.slots, outs[0].said]), p).toMatch(ROYAPURAM);
     }
   });
-  it.fails("SKG1-34 a zone that does not exist ('zone 99 brief', 'zone 0 brief', 'zone fifty brief') is named as not there, not answered with the district brief", async () => {
+  it("SKG1-34 a zone that does not exist ('zone 99 brief', 'zone 0 brief', 'zone fifty brief') is named as not there, not answered with the district brief", async () => {
     for (const p of ["zone 99 brief", "zone 0 brief", "zone fifty brief"]) {
       const { outs } = await talk(p); expect(outs[0].said, p).toMatch(/\b(99|0|50|fifty)\b[^.]*\b(not|no|only|1 to 15)\b|\b(not|no)\b[^.]*\b(99|0|50|fifty)\b|1 to 15/i);
     }
   });
-  it.fails("SKG1-35 two zones named ('zone 5 and 6 brief', 'zone five and six brief', 'zones 5 to 7 brief') are not answered for the first zone alone without a word about the others", async () => {
+  it("SKG1-35 two zones named ('zone 5 and 6 brief', 'zone five and six brief', 'zones 5 to 7 brief') are not answered for the first zone alone without a word about the others", async () => {
     for (const p of ["zone 5 and 6 brief", "zone five and six brief", "zones 5 to 7 brief"]) {
       const { outs } = await talk(p); expect(outs[0].said, p).toMatch(/zone 6|zone 7|zones 5|Thiru|Ambattur|one zone|only one|one at a time|both|ஒரு மண்டல/i);
     }
   });
-  it.fails("SKG1-36 a zone brief in Tamil names the body in Tamil: no Latin body name ('PWD Water Resources', 'Greater Chennai Police') in a Tamil brief point", async () => {
+  it("SKG1-36 a zone brief in Tamil names the body in Tamil: no Latin body name ('PWD Water Resources', 'Greater Chennai Police') in a Tamil brief point", async () => {
     for (const p of ["ராயபுரம் மண்டலத்தின் சுருக்கம் சொல்", "தண்டையார்பேட்டை பற்றிய சுருக்கம் கொடு"]) {
       const { outs } = await talk(p); const all = [outs[0].said, ...outs[0].items].join(" ");
       expect(all, p).not.toMatch(/PWD Water Resources|Greater Chennai Police|Street Lighting|Storm Water Drain/);
     }
   });
-  it.fails("SKG1-37 a rain line in Tamil has no English month, clock or unit ('6 Nov, 8:30 AM', 'mm'), and a taluk line has no Latin name", async () => {
+  it("SKG1-37 a rain line in Tamil has no English month, clock or unit ('6 Nov, 8:30 AM', 'mm'), and a taluk line has no Latin name", async () => {
     const r = await talk("மழை நிலை என்ன"); expect(r.outs[0].said).not.toMatch(/\bNov\b|\bAM\b|\bPM\b|\bmm\b/);
     const t = await talk("கொளத்தூர் நிலை என்ன"); expect(t.outs[0].said).not.toMatch(/[A-Za-z]{4,}/);
   });

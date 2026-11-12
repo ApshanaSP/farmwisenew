@@ -16,10 +16,14 @@ import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { asksForbidden } from "./privacy";
 import { heldPeriod, unheldPhraseIn, windowIn } from "@/lib/windowspan";
+import { zoneNosIn } from "@/lib/zone-no";
+import { asciiDigits } from "./digits";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
-const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
+// the digits of every script are 0-9 first: the filter below drops any other character, so "zone ٥" and "zone ５" would lose their number (SKG1-33); and the text is NFC first, so a letter
+// written decomposed (o + a combining mark) is read as the composed one and the same sentence gets the same answer (resolver.pass4.test.ts, NFC and NFD)
+const norm = (s: string) => ` ${asciiDigits(s.normalize("NFC").toLowerCase()).replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 /** the endings a short Tamil word takes (தீ: தீயில், தீக்கு), so that a short word is a word and not the start of another (தீவிர, "severe", is not தீ, "fire") (RC-03) */
 /** a Tamil word of this many code points or fewer (தீ, "fire") is strict at its right edge; a longer one may be the start of a compound (மழைநீர், தெருவிளக்கு) */
 export const TA_SHORT = 2;
@@ -365,6 +369,8 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
+  // a zone said by a number that is no zone ("zone 99", "zone 0"), or several zones by number: the brief turn says so, the district list would drop them (SKG1-34, SKG1-35)
+  if (!o.noBail) { const nos = zoneNosIn(text); if (nos.some((n) => n < 1 || n > 15) || (nos.length > 1 && !isComparing(t))) return null; }
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
