@@ -1692,7 +1692,7 @@
     "fix_commit": "57670e6",
     "revert_check": "the light-theme case fails at 3.86:1 with navy-500, passes with navy-700",
     "status": "fixed",
-    "reviewer": "gate drive (axe at 360 px)",
+    "reviewer": "gate drive (axe at 360 px); gate red team: holds (contrast checked by hand)",
     "closed_in": "pass6"
   },
   {
@@ -1750,7 +1750,7 @@
     "fix_commit": "e65ac51",
     "revert_check": "3 of 5 fail without the fix, 5 pass with it",
     "status": "fixed",
-    "reviewer": "reviewer 1: holds (six probes on the real session code)"
+    "reviewer": "reviewer 1: holds (six probes on the real session code); gate red team: holds (by reading)"
   },
   {
     "id": "P6-004",
@@ -1792,7 +1792,7 @@
     "fix_commit": "74788d7",
     "revert_check": "8 of 10 fail without the fix, 10 pass with it",
     "status": "fixed",
-    "reviewer": "reviewer 2: holds for the id paths (Ask the Map leak found, fixed as P6-012)"
+    "reviewer": "reviewer 2: holds for the id paths (Ask the Map leak found, fixed as P6-012); gate red team: holds (by reading)"
   },
   {
     "id": "P6-007",
@@ -1848,7 +1848,7 @@
     "fix_commit": "0bc6b9f",
     "revert_check": "2 of 11 fail without the fix, 11 pass with it",
     "status": "fixed",
-    "reviewer": "reviewer 3: holds (by reading); P3 note: with SMS off the sweep returns before marking stale rows"
+    "reviewer": "reviewer 3: holds (by reading); P3 note: with SMS off the sweep returns before marking stale rows; gate red team: holds (by reading)"
   },
   {
     "id": "P6-011",
@@ -1932,7 +1932,7 @@
     "fix_commit": "6508fe2",
     "revert_check": "2 of 3 fail without the fix, 3 pass with it",
     "status": "fixed",
-    "reviewer": "reviewer 4: holds (P3: tab copies re-set a 7-day cookie around a 12-hour token)"
+    "reviewer": "reviewer 4: holds (P3: tab copies re-set a 7-day cookie around a 12-hour token); gate red team: holds (by reading)"
   },
   {
     "id": "P6-017",
@@ -1960,7 +1960,7 @@
     "fix_commit": "56a9ecb",
     "revert_check": "without the fix the run never finishes (timeout 60, exit 124); 14 pass with it",
     "status": "fixed",
-    "reviewer": "reviewer 5: broken (disagreeing entry counts): fixed as P6-030; a whole ZIP with a crafted deflate entry still hangs (open)"
+    "reviewer": "reviewer 5 and the gate red team: broken by whole-ZIP variants (crafted or unended deflate): open; the mechanism fix is a worker with a time limit"
   },
   {
     "id": "P6-019",
@@ -2002,7 +2002,7 @@
     "fix_commit": "9202f3c",
     "revert_check": "fails without the fix, passes with it",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team (see findings); gate red team: holds (by reading)"
   },
   {
     "id": "P6-022",
@@ -2076,7 +2076,7 @@
     "fix_commit": "8b606c4",
     "revert_check": "fails without the fix, passes with it",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team (see findings); gate red team: holds (by reading)"
   },
   {
     "id": "P6-027",
@@ -2090,7 +2090,7 @@
     "fix_commit": "589d22b",
     "revert_check": "2 of 3 fail without the fix, 3 pass with it",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team: partly broken (the desk repeat check still shows an online title with the whole Aadhaar): open as redteam-gate finding"
   },
   {
     "id": "P6-028",
@@ -2104,7 +2104,7 @@
     "fix_commit": "bf50474",
     "revert_check": "3 of 4 fail without the fix, 4 pass with it",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team (see findings); gate red team: holds (by reading)"
   },
   {
     "id": "P6-029",
@@ -2118,7 +2118,7 @@
     "fix_commit": "8c81781",
     "revert_check": "4 cases fail on c614e0d, all pass with the fix",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team: broken (a site that answers the check with 200 and the browser with a 302; a POST answered 307): open as redteam-gate findings"
   },
   {
     "id": "P6-030",
@@ -2132,7 +2132,22 @@
     "fix_commit": "24f534c",
     "revert_check": "fails without the fix, passes with it",
     "status": "fixed",
-    "reviewer": "gate red team (see findings)"
+    "reviewer": "gate red team: broken (a whole ZIP whose deflate data never ends still hangs SheetJS: the named residual, needs a worker with a time limit)"
+  },
+  {
+    "id": "P6-031",
+    "severity": "P2",
+    "area": "accessibility",
+    "title": "axe (serious) on /citizen/track-complaints at 1280 px: definition-list and dlitem (a <dl> holds children other than <dt>/<dd> groups, or <dt>/<dd> outside a <dl>), so screen readers cannot pair the labels and values",
+    "found_by": "lead, gate browser drive (docs/qa/pass6/results/drive-gate.json)",
+    "repro": "node tests/qa/pass6/drive.mjs --port 3106 (page citizenA /citizen/track-complaints at 1280)",
+    "failing_test": null,
+    "root_cause": null,
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "verified": true
   },
   {
     "id": "pass4-open-01",
@@ -2575,6 +2590,91 @@
     "status": "open",
     "reviewer": null,
     "where": "src/app/api/auth/login/route.ts:47-58, src/app/api/auth/register/route.ts:43-45, src/app/api/auth/forgot-password/request-otp/route.ts:38-46",
+    "confidence": "high",
+    "verified": false
+  },
+  {
+    "id": "redteam-gate-01",
+    "severity": "P0",
+    "area": "Data Studio link fetching (SSRF), P6-029 broken",
+    "title": "P6-029 still lets a navigation reach a private address: the site answers the route's own GET check with 200 and the browser's second GET with a 302 to 127.0.0.1, which Chromium follows without the route; visit() returns the private page",
+    "found_by": "redteam-gate",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-029-double-get.test.ts < /dev/null",
+    "failing_test": null,
+    "root_cause": "the redirect check is a separate request (route.fetch maxRedirects 0); when it is not a 3xx, route.continue() lets the browser ask again, and that second answer is never checked: a 3xx to it is followed inside Chromium. The commit names the double GET as a residual but not that it reopens the hole. Fulfilling the browser with the checked response itself for every GET, or a refusing proxy, would close it.",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:101-110",
+    "confidence": "high",
+    "verified": false
+  },
+  {
+    "id": "redteam-gate-02",
+    "severity": "P1",
+    "area": "privacy / Manu Desk, P6-027 partial",
+    "title": "The desk's 'came before' check still shows an online complaint's whole Aadhaar number: findRepeats reads complaints.title raw and returns it as matches[].problem",
+    "found_by": "redteam-gate",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-027-repeat-aadhaar.test.ts < /dev/null",
+    "failing_test": null,
+    "root_cause": "P6-027 masked onlineCase() only; the repeat check's own SELECT of c.title AS problem (and the Earlier row it builds) does not go through maskAadhaar(), and the match is shown to the desk operator whenever the mobile is the same",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/manu/repeat.ts:157,167,94",
+    "confidence": "high",
+    "verified": false
+  },
+  {
+    "id": "redteam-gate-03",
+    "severity": "P2",
+    "area": "privacy, maskAadhaar shapes (P6-027 / P5-007)",
+    "title": "A 12-digit Aadhaar written in groups other than 4-4-4 (5-7, 6-6, 2-4-6, single spaced digits) is not masked on the console case (nor at the desk)",
+    "found_by": "redteam-gate",
+    "repro": "same probe file as redteam-gate-02, describe '12-digit shapes maskAadhaar does not take'",
+    "failing_test": null,
+    "root_cause": "the AADHAAR regex needs three groups of exactly four digits; less common but real ways of writing the number pass whole",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/manu/clean.ts:20,31",
+    "confidence": "high",
+    "verified": false
+  },
+  {
+    "id": "redteam-gate-04",
+    "severity": "P0",
+    "area": "Data Studio link fetching (SSRF), P6-029 broken",
+    "title": "P6-029 checks redirects for GET only: a page that auto-submits a form POST answered 307 to 127.0.0.1 makes the Studio browser POST to the private service, and visit() returns its page",
+    "found_by": "redteam-gate",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-029-post-iframe.test.ts < /dev/null",
+    "failing_test": null,
+    "root_cause": "\"Other methods are not asked twice\": a non-GET goes straight to route.continue(), and Chromium follows its 303/307/308 inside the network stack without the route; a fetch() POST with a 307 is the same",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:101 (if (req.method() === \"GET\"))",
+    "confidence": "high",
+    "verified": false
+  },
+  {
+    "id": "redteam-gate-05",
+    "severity": "P0",
+    "area": "Data Studio uploads, P6-030 / P6-018 / P6-008 broken",
+    "title": "A structurally whole .xlsx ZIP whose deflate stream never ends (an empty non-final stored block, 00 00 00 FF FF) passes zipIntact and XLSX.read never returns: one upload still stalls the server thread",
+    "found_by": "redteam-gate",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-030-unended-deflate.test.ts < /dev/null",
+    "failing_test": null,
+    "root_cause": "zipIntact checks the ZIP structure only. SheetJS's pure-JS inflate() (node_modules/xlsx/xlsx.js) ignores the entry's compressed size and reads blocks until a final one; past the buffer end every read is 0, an empty non-final stored block, so it loops for ever. A structure check cannot close this: SheetJS has to run off the main thread with a time limit, or each entry has to be inflated first with zlib (bounded) before SheetJS sees it.",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/studio/formats.ts:29-52; src/lib/studio/parse.ts:275-277",
     "confidence": "high",
     "verified": false
   },

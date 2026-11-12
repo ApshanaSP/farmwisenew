@@ -22,7 +22,7 @@ done
 
 stamp "guards and pass 6 real-path tests (one file at a time)"
 : > "$EV/guards-gate.log"
-for f in tests/qa/pass4/lane-c.guards.test.ts tests/qa/pass4/g2-cache.test.ts tests/qa/pass4/p6-askiq-dept-lock.guard.test.ts tests/qa/pass4/p6-batch-mail.test.ts tests/qa/pass4/p6-studio-browser-ws.test.ts; do
+for f in tests/qa/pass4/lane-c.guards.test.ts tests/qa/pass4/g2-cache.test.ts tests/qa/pass4/p6-askiq-dept-lock.guard.test.ts tests/qa/pass4/p6-batch-mail.test.ts tests/qa/pass4/p6-studio-browser-ws.test.ts tests/qa/pass4/p6-critical-tile.test.ts tests/qa/pass4/p6-studio-browser-bypass.test.ts tests/qa/pass4/p6-studio-browser-more.test.ts; do
   { echo "== $f"; timeout 600 npx vitest run --config vitest.qa4.config.ts "$f" < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "Tests |Test Files|FAIL|×"; echo "EXIT=${PIPESTATUS[0]}"; } >> "$EV/guards-gate.log"
 done
 { echo "== src guards"; timeout 300 npx vitest run src/lib/thunai/numbergate.pass4.test.ts src/app/pass5.seam.test.ts src/lib/manu/sms.pass5.test.ts < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "Tests |Test Files|FAIL|×"; echo "EXIT=${PIPESTATUS[0]}"; } >> "$EV/guards-gate.log"

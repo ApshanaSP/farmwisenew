@@ -1,0 +1,57 @@
+[
+  {
+    "id": "redteam-gate-01",
+    "severity": "P0",
+    "area": "Data Studio link fetching (SSRF), P6-029 broken",
+    "title": "P6-029 still lets a navigation reach a private address: the site answers the route's own GET check with 200 and the browser's second GET with a 302 to 127.0.0.1, which Chromium follows without the route; visit() returns the private page",
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:101-110",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-029-double-get.test.ts < /dev/null",
+    "evidence": "NAV URL: http://127.0.0.1:<private>/admin ; HITS: [\"http GET /admin\"] ; SEEN: {\"/flip\":2}; AssertionError: expected [ 'http GET /admin' ] to deeply equal []. Run twice, same result.",
+    "cause": "the redirect check is a separate request (route.fetch maxRedirects 0); when it is not a 3xx, route.continue() lets the browser ask again, and that second answer is never checked: a 3xx to it is followed inside Chromium. The commit names the double GET as a residual but not that it reopens the hole. Fulfilling the browser with the checked response itself for every GET, or a refusing proxy, would close it.",
+    "confidence": "high"
+  },
+  {
+    "id": "redteam-gate-02",
+    "severity": "P1",
+    "area": "privacy / Manu Desk, P6-027 partial",
+    "title": "The desk's 'came before' check still shows an online complaint's whole Aadhaar number: findRepeats reads complaints.title raw and returns it as matches[].problem",
+    "where": "chennai-grievance-portal-main/src/lib/manu/repeat.ts:157,167,94",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-027-repeat-aadhaar.test.ts < /dev/null",
+    "evidence": "AssertionError: expected 'Garbage not cleared, my Aadhaar 2345 …' not to match /(?:\\d[\\s-]?){12}/ (matches[0].problem for the same mobile)",
+    "cause": "P6-027 masked onlineCase() only; the repeat check's own SELECT of c.title AS problem (and the Earlier row it builds) does not go through maskAadhaar(), and the match is shown to the desk operator whenever the mobile is the same",
+    "confidence": "high"
+  },
+  {
+    "id": "redteam-gate-03",
+    "severity": "P2",
+    "area": "privacy, maskAadhaar shapes (P6-027 / P5-007)",
+    "title": "A 12-digit Aadhaar written in groups other than 4-4-4 (5-7, 6-6, 2-4-6, single spaced digits) is not masked on the console case (nor at the desk)",
+    "where": "chennai-grievance-portal-main/src/lib/manu/clean.ts:20,31",
+    "repro": "same probe file as redteam-gate-02, describe '12-digit shapes maskAadhaar does not take'",
+    "evidence": "onlineCase titles 'Aadhaar 23456 7891234', 'Aadhaar 234567 891234', 'Aadhaar 2 3 4 5 6 7 8 9 1 2 3 4', 'Aadhaar 23-4567-891234' come back unchanged (4 failures)",
+    "cause": "the AADHAAR regex needs three groups of exactly four digits; less common but real ways of writing the number pass whole",
+    "confidence": "high"
+  },
+  {
+    "id": "redteam-gate-04",
+    "severity": "P0",
+    "area": "Data Studio link fetching (SSRF), P6-029 broken",
+    "title": "P6-029 checks redirects for GET only: a page that auto-submits a form POST answered 307 to 127.0.0.1 makes the Studio browser POST to the private service, and visit() returns its page",
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:101 (if (req.method() === \"GET\"))",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-029-post-iframe.test.ts < /dev/null",
+    "evidence": "POST NAV URL: http://127.0.0.1:<private>/post-admin ; POST HITS: [\"http POST /post-admin\"] ; SECRET IN PAGE: true ; AssertionError: expected [ 'http POST /post-admin' ] to deeply equal []. (Same file: Worker and RTCPeerConnection taken from a blank iframe are undefined: that part holds.)",
+    "cause": "\"Other methods are not asked twice\": a non-GET goes straight to route.continue(), and Chromium follows its 303/307/308 inside the network stack without the route; a fetch() POST with a 307 is the same",
+    "confidence": "high"
+  },
+  {
+    "id": "redteam-gate-05",
+    "severity": "P0",
+    "area": "Data Studio uploads, P6-030 / P6-018 / P6-008 broken",
+    "title": "A structurally whole .xlsx ZIP whose deflate stream never ends (an empty non-final stored block, 00 00 00 FF FF) passes zipIntact and XLSX.read never returns: one upload still stalls the server thread",
+    "where": "chennai-grievance-portal-main/src/lib/studio/formats.ts:29-52; src/lib/studio/parse.ts:275-277",
+    "repro": "cd chennai-grievance-portal-main && timeout 60 npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/redteam-gate/p6-030-unended-deflate.test.ts < /dev/null",
+    "evidence": "zipIntact(buf) === true; XLSX.read of the same bytes in a child process: spawnSync ETIMEDOUT after 8 s (killed). AssertionError: XLSX.read did not return within 8 s. Control in the same file: the same ZIP with the final bit set (01 00 00 FF FF) also passes zipIntact and the child returns (throws) in 357 ms.",
+    "cause": "zipIntact checks the ZIP structure only. SheetJS's pure-JS inflate() (node_modules/xlsx/xlsx.js) ignores the entry's compressed size and reads blocks until a final one; past the buffer end every read is 0, an empty non-final stored block, so it loops for ever. A structure check cannot close this: SheetJS has to run off the main thread with a time limit, or each entry has to be inflated first with zlib (bounded) before SheetJS sees it.",
+    "confidence": "high"
+  }
+]
