@@ -135,10 +135,19 @@ export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: stri
  * The page images of a scanned PDF, as files Tesseract reads: a JPEG stream (DCTDecode) as it is; an 8-bit grey or
  * RGB bitmap (FlateDecode) as a PNM. At most 20 pages; other encodings are skipped and counted.
  */
-export function pdfImages(buf: Buffer): { images: Buffer[]; skipped: number } {
+/**
+ * `bitmaps: false` leaves out 8-bit bitmaps (a caller that keeps only JPEG and PNG pages would throw them away), and `maxBitmapBytes` caps
+ * what all bitmaps together may inflate to: a few hundred KB of Flate data can hold 40 Mpx images, 2.4 GB for twenty of them, all
+ * inflated in memory before the desk refused the file (QA pass 6, P5-028).
+ */
+export interface PdfImageOptions { bitmaps?: boolean; maxBitmapBytes?: number }
+export const PDF_BITMAP_BUDGET = 150_000_000;
+
+export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET }: PdfImageOptions = {}): { images: Buffer[]; skipped: number } {
   const src = buf.toString("latin1");
   const images: Buffer[] = [];
   let skipped = 0;
+  let bitmapBytes = 0;
   const re = /<<((?:[^<>]|<<[^<>]*>>)*?\/Subtype\s*\/Image(?:[^<>]|<<[^<>]*>>)*?)>>\s*stream\r?\n/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
@@ -153,10 +162,14 @@ export function pdfImages(buf: Buffer): { images: Buffer[]; skipped: number } {
       // an 8-bit bitmap, Flate-packed or stored as it is
       const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
       if (!rgb && !grey) { skipped++; continue; }
+      const need = W * H * (rgb ? 3 : 1);
+      // decided before anything is inflated: a bitmap the caller does not want, or one past the budget, costs nothing
+      if (!bitmaps || bitmapBytes + need > maxBitmapBytes) { skipped++; re.lastIndex = Math.max(re.lastIndex, end); continue; }
+      bitmapBytes += need;
       try {
-        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: W * H * (rgb ? 3 : 1) + 1024 }) : data;
-        if (px.length < W * H * (rgb ? 3 : 1)) { skipped++; continue; }
-        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, W * H * (rgb ? 3 : 1))]));
+        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+        if (px.length < need) { skipped++; continue; }
+        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, need)]));
       } catch { skipped++; }
     } else skipped++;
     re.lastIndex = Math.max(re.lastIndex, end);

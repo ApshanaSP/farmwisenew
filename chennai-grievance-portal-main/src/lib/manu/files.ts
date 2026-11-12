@@ -29,7 +29,8 @@ export async function savePages(files: Buffer[]): Promise<string[]> {
     const k = kindOf(b);
     if (k === "pdf") {
       if (b.length > MANU_LIMITS.maxPdfBytes) throw new UploadError("That PDF is too large. Please keep it under 20 MB.");
-      const found = pdfImages(b).images.flatMap((x) => { const e = kindOf(x); return e === "jpg" || e === "png" ? [{ b: x, ext: e }] : []; });
+      // only JPEG and PNG pages are kept, so bitmaps are never inflated (a 140 KB PDF used to cost 144 MB here: QA pass 6, P5-028)
+      const found = pdfImages(b, { bitmaps: false }).images.flatMap((x) => { const e = kindOf(x); return e === "jpg" || e === "png" ? [{ b: x, ext: e }] : []; });
       if (!found.length) throw new UploadError("No scanned pages could be taken from that PDF. Please upload photos of the petition instead.");
       images.push(...found);
     } else if (k) images.push({ b, ext: k });
