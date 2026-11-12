@@ -1,0 +1,5 @@
+login 200
+cookie names dcd_session_citizen
+before sign-out: me 200 complaints 200 items 0
+logout 200 set-cookie clears dcd_session_citizen(cleared)
+same cookie after sign-out: me 200 complaints 200 items 0

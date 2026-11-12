@@ -1,0 +1,14 @@
+{
+  "tag": "gate-2",
+  "tz": "Asia/Kolkata",
+  "seed": "6202",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 89,
+  "numTotalTests": 3441,
+  "numPassedTests": 3428,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}

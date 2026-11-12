@@ -5,7 +5,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { APP_ROOT } from "./lib/env.mjs";
+import { pathToFileURL } from "node:url";
 import { IDS, allRoutes, concrete, login, loginAll, req, ruleFor } from "./lib/access-lib.mjs";
+const BODIES = process.env.QA_ACCESS_BODIES ? (await import(pathToFileURL(path.resolve(process.env.QA_ACCESS_BODIES)).href)).default : {};
 
 const pi = process.argv.indexOf("--port"); const port = pi > 0 ? Number(process.argv[pi + 1]) : 3140;
 const base = `http://127.0.0.1:${port}`;
@@ -45,7 +47,13 @@ for (const r of list) {
       let cookie = idName === "anonymous" ? "" : confused[idName] ?? cookies[idName];
       if (SESSION_KILLERS.has(r.route) && cookie && !confused[idName]) { cookie = (await login(base, idName)).cookie; if (!cookie) { cells.push({ route: r.route, method: m, identity: idName, rule: methodRule, guard, expected: "allow", status: 0, verdict: "skip", body: "sign-in was rate limited (429): re-run on a fresh server" }); continue; } }
       const bodyless = m === "GET" || m === "HEAD";
-      const res = await req(base, m, url, { cookie, headers: bodyless ? {} : { "content-type": "application/json" }, body: bodyless ? undefined : "{}", timeout: 60000 });
+      // QA pass 6: a deny cell that gets a 400 on "{}" proves nothing about the guard, so each method is sent a valid body when one is known
+      // (QA_ACCESS_BODIES: a module whose default export maps "METHOD /api/route" to a JSON body, or to { raw, type } for another content type)
+      const vbRaw = BODIES[`${m} ${r.route}`];
+      const vb = typeof vbRaw === "function" ? vbRaw(idName) : vbRaw; // a function gets the identity (e.g. its own password for a step-up)
+      const bodyHeaders = vb && typeof vb === "object" && "raw" in vb ? { "content-type": vb.type } : { "content-type": "application/json" };
+      const bodyText = vb === undefined ? "{}" : typeof vb === "object" && "raw" in vb ? vb.raw : JSON.stringify(vb);
+      const res = await req(base, m, url, { cookie, headers: bodyless ? {} : bodyHeaders, body: bodyless ? undefined : bodyText, timeout: 60000 });
       const expectAllow = confused[idName] ? methodRule === "public" || methodRule === "anyauth" : allowed.includes(idName);
       const denied = res.status === 401 || res.status === 403 || (methodRule === "dev" && res.status === 404);
       const ok2 = res.status >= 200 && res.status < 400;
@@ -56,7 +64,9 @@ for (const r of list) {
       else if (methodRule === "public") verdict = "pass";
       else if (expectAllow) verdict = denied && !/not linked/i.test(res.text) ? "fail" : "pass"; // a signed-in allowed role must get past the guard (400, 404, 429 are fine)
       else verdict = ok2 ? "fail" : "pass"; // a role that is not allowed must not get a 2xx or 3xx
-      cells.push({ route: r.route, method: m, identity: idName, rule: methodRule, guard, expected: expectAllow ? "allow" : "deny", status: res.status, verdict, ...(verdict === "fail" ? { body: res.text.slice(0, 160), err: res.error } : {}) });
+      // QA pass 6: a passing deny cell is "guard" only when the guard itself answered (401, 403, or 404 for a dev route); any other 4xx is "unproven"
+      const proof = expectAllow || verdict !== "pass" ? undefined : denied ? "guard" : "unproven";
+      cells.push({ route: r.route, method: m, identity: idName, rule: methodRule, guard, expected: expectAllow ? "allow" : "deny", status: res.status, verdict, ...(proof ? { proof } : {}), ...(bodyless ? {} : { body: vb === undefined ? "{}" : "valid" }), ...(verdict === "fail" || proof === "unproven" ? { text: res.text.slice(0, 160), err: res.error } : {}) });
     }
   }
 }
@@ -122,9 +132,13 @@ const os = await J("officerA", "/api/collector/assistant/sessions"); rec("office
 
 await runRoutes(routes.filter((r) => SESSION_KILLERS.has(r.route))); // sign-out style routes last: they end sessions
 const sum = (a) => ({ pass: a.filter((x) => x.verdict === "pass").length, skip: a.filter((x) => x.verdict === "skip").length, fail: a.filter((x) => x.verdict === "fail").length });
-const out = { generated: new Date().toISOString(), port, routes: routes.length, methods: cells.filter((c) => c.identity === "anonymous").length, cells: cells.length, summary: sum(cells), scopeSummary: sum(scope), scope, cellList: cells };
+const denyPass = cells.filter((c) => c.expected === "deny" && c.verdict === "pass");
+const unproven = denyPass.filter((c) => c.proof === "unproven");
+const denyProof = { denyPassing: denyPass.length, guard: denyPass.length - unproven.length, unproven: unproven.length,
+  unprovenMethods: [...new Set(unproven.map((c) => `${c.method} ${c.route}`))].sort() };
+const out = { generated: new Date().toISOString(), port, routes: routes.length, methods: cells.filter((c) => c.identity === "anonymous").length, cells: cells.length, summary: sum(cells), denyProof, scopeSummary: sum(scope), scope, cellList: cells };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
-console.log(JSON.stringify({ routes: out.routes, methods: out.methods, cells: out.cells, summary: out.summary, scope: out.scopeSummary }));
+console.log(JSON.stringify({ routes: out.routes, methods: out.methods, cells: out.cells, summary: out.summary, denyProof: { ...denyProof, unprovenMethods: denyProof.unprovenMethods.length }, scope: out.scopeSummary }));
 for (const c of cells.filter((c) => c.verdict === "fail")) console.log("FAIL", c.method, c.route, c.identity, "expected", c.expected, "got", c.status, c.rule, (c.body || "").slice(0, 80).replace(/\n/g, " "));
 for (const c of scope.filter((c) => c.verdict === "fail")) console.log("SCOPE FAIL", c.check, JSON.stringify(c.detail));

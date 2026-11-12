@@ -1,0 +1,117 @@
+{
+ "period en overdue": {
+  "text": "show overdue cases last week",
+  "said": "505 cases this week; here are the 12 that matter most. 505 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number.",
+  "kind": "do",
+  "lane": "quick",
+  "period": "weekly",
+  "title": "Cases · this week",
+  "steps": []
+ },
+ "period ta overdue": {
+  "text": "கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள்",
+  "said": "இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட்டு, போக்குகள் பக்கத்துக்குப் போ போன்ற எளிய கோரிக்கைகள் வேலை செய்யும்.",
+  "kind": "none",
+  "lane": "no-model",
+  "period": "daily",
+  "title": null,
+  "steps": []
+ },
+ "period ta overdue, with a verb": {
+  "text": "கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள் காட்டு",
+  "said": "இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட்டு, போக்குகள் பக்கத்துக்குப் போ போன்ற எளிய கோரிக்கைகள் வேலை செய்யும்.",
+  "kind": "none",
+  "lane": "no-model",
+  "period": "daily",
+  "title": null,
+  "steps": []
+ },
+ "period tanglish overdue": {
+  "text": "pona vaaram deadline thaandiya cases kaattu",
+  "said": "கடந்த 7 நாட்கள்",
+  "kind": "do",
+  "lane": "no-model",
+  "period": "weekly",
+  "title": null,
+  "steps": [
+   {
+    "a": "period",
+    "period": "weekly"
+   }
+  ]
+ },
+ "period ta severe": {
+  "text": "கடந்த வாரம் கடுமையான புகார்கள் காட்டு",
+  "said": "கடுமையானவை · கடந்த 7 நாட்கள்",
+  "kind": "do",
+  "lane": "no-model",
+  "period": "weekly",
+  "title": null,
+  "steps": [
+   {
+    "a": "view",
+    "view": {
+     "sev": "Severe"
+    }
+   },
+   {
+    "a": "period",
+    "period": "weekly"
+   }
+  ]
+ },
+ "brief tanglish": {
+  "text": "indha vaaram brief sollu",
+  "lane": "quick",
+  "title": "Briefing · this week",
+  "lines": [
+   "இந்த வாரம் சென்னை மாவட்டத்தில் 1357 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 6% அதிகம்.",
+   "1167 இன்னும் நிலுவையில், 505 கெடு தாண்டியவை; 65 கடுமையானவை.",
+   "46 சம்பவங்கள் ஒன்றுக்கு மேற்பட்ட மூலங்களிலிருந்து வந்தன; 73 செய்தியில் மட்டும் உள்ளன.",
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, தேனாம்பேட்டை: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, அம்பத்தூர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "நிலைமைகள்: 24 மணி நேரத்தில் 5.1 மி.மீ மழை, காற்றின் தரக் குறியீடு 100, ஏரிகள் 44.1% நிரம்பியுள்ளன"
+  ],
+  "dup": [
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது"
+  ]
+ },
+ "brief ta": {
+  "text": "இந்த வாரம் சுருக்கம் சொல்லு",
+  "lane": "quick",
+  "title": "Briefing · this week",
+  "lines": [
+   "இந்த வாரம் சென்னை மாவட்டத்தில் 1357 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 6% அதிகம்.",
+   "1167 இன்னும் நிலுவையில், 505 கெடு தாண்டியவை; 65 கடுமையானவை.",
+   "46 சம்பவங்கள் ஒன்றுக்கு மேற்பட்ட மூலங்களிலிருந்து வந்தன; 73 செய்தியில் மட்டும் உள்ளன.",
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, தேனாம்பேட்டை: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "PWD Water Resources, அம்பத்தூர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது",
+   "நிலைமைகள்: 24 மணி நேரத்தில் 5.1 மி.மீ மழை, காற்றின் தரக் குறியீடு 100, ஏரிகள் 44.1% நிரம்பியுள்ளன"
+  ],
+  "dup": [
+   "PWD Water Resources, அண்ணா நகர்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது"
+  ]
+ },
+ "brief en": {
+  "text": "this week's brief",
+  "lane": "quick",
+  "title": "Briefing · this week",
+  "lines": [
+   "1,357 incidents were reported in Chennai district (last 7 days), 6% more than the previous period.",
+   "1,167 incidents are still open, 505 of them past the deadline; 65 severe events.",
+   "46 incidents came from more than one source, and 73 incidents appear only in the news.",
+   "Canal overflow at Pulianthope (Buckingham Canal - Basin Bridge stretch), Anna Nagar., Anna Nagar: Still open at more than twice its 6-hour deadline",
+   "Canal overflow at Ice House, Teynampet., Teynampet: Still open at more than twice its 6-hour deadline",
+   "Canal overflow at Kilpauk, Anna Nagar., Anna Nagar: Still open at more than twice its 6-hour deadline",
+   "Canal overflow at Gangai Nagar, Ambattur., Ambattur: Still open at more than twice its 6-hour deadline",
+   "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+   "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+   "Conditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 44.1% full"
+  ],
+  "dup": []
+ }
+}

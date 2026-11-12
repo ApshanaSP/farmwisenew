@@ -69,7 +69,22 @@ async function newContext(browser: Browser, session: string | null | undefined):
   type State = Exclude<NonNullable<Parameters<Browser["newContext"]>[0]>["storageState"], string | undefined>;
   let storageState: State | undefined;
   try { storageState = session ? (JSON.parse(session) as State) : undefined; } catch { storageState = undefined; }
-  const ctx = await browser.newContext({ storageState, locale: "en-IN", timezoneId: "Asia/Kolkata", viewport: { width: 1366, height: 900 }, acceptDownloads: false });
+  // Service Workers off: their fetches pass by context.route (QA pass 6, P6-017)
+  const ctx = await browser.newContext({ storageState, locale: "en-IN", timezoneId: "Asia/Kolkata", viewport: { width: 1366, height: 900 }, acceptDownloads: false, serviceWorkers: "block" });
+  // a WebSocket is not a request, so context.route never sees it: a page reached a private address over one and its reply landed in the
+  // page the Studio reads (P6-017). Each passes the same public-address check, or is closed.
+  await ctx.routeWebSocket(/.*/, async (ws) => {
+    let u: URL;
+    try { u = new URL(ws.url().replace(/^ws(s?):/i, "http$1:")); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
+    try { await checkHost(u); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
+    ws.connectToServer();
+  });
+  // Workers, SharedWorkers and WebRTC are taken away before a page's own scripts run: a Worker's WebSocket passes by routeWebSocket, and
+  // WebRTC's STUN/TURN reach any address (QA pass 6, P6-029, reviewer 5). Reading a data page needs none of them.
+  await ctx.addInitScript(() => {
+    for (const k of ["Worker", "SharedWorker", "RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel"])
+      try { Object.defineProperty(globalThis, k, { value: undefined, configurable: false, writable: false }); } catch { /* not there */ }
+  });
   // every request passes the public-address check; pictures, fonts and media are not needed to read data
   await ctx.route("**/*", async (route) => {
     const req = route.request();
@@ -79,6 +94,19 @@ async function newContext(browser: Browser, session: string | null | undefined):
     try { u = new URL(req.url()); } catch { return route.abort(); }
     if (u.protocol === "data:" || u.protocol === "blob:") return route.continue();
     try { await checkHost(u); } catch { return route.abort("blockedbyclient"); }
+    // a redirect is followed inside the browser without coming back here, so a public page's 302 to 127.0.0.1 was fetched and read (P6-029):
+    // a GET is first asked here without following redirects; a redirect's target passes the same check and the 3xx goes to the browser, whose
+    // next request comes back through this route. Anything else the browser loads itself, as before (a page fulfilled from here lost its
+    // own WebSockets). Other methods are not asked twice.
+    if (req.method() === "GET") {
+      const head = await route.fetch({ maxRedirects: 0 }).catch(() => null);
+      if (!head) return route.abort("failed");
+      const loc = head.status() >= 300 && head.status() < 400 ? head.headers()["location"] : null;
+      if (loc) {
+        try { await checkHost(new URL(loc, u)); } catch { return route.abort("blockedbyclient"); }
+        return route.fulfill({ response: head });
+      }
+    }
     return route.continue();
   });
   return ctx;

@@ -1,0 +1,19 @@
+# P6-003 sweep: API routes that check only 'signed in' (getActiveSession / getSessionFromCookies) with no role check (run Thu Nov 12 14:24:47 IST 2026)
+$ for f in $(grep -rln "getActiveSession()\|getSessionFromCookies()" src/app/api --include=route.ts); do echo "$(grep -c role $f) $f"; done
+0 src/app/api/profile/mobile-otp/request/route.ts
+0 src/app/api/profile/mobile-otp/verify/route.ts
+0 src/app/api/profile/photo/route.ts
+1 src/app/api/auth/confirm/route.ts
+1 src/app/api/auth/me/route.ts
+1 src/app/api/complaints/[code]/route.ts
+1 src/app/api/complaints/media/route.ts
+2 src/app/api/auth/logout/route.ts
+2 src/app/api/complaints/route.ts
+2 src/app/api/profile/route.ts
+4 src/app/api/profile/change-password/route.ts
+6 src/app/api/auth/security/route.ts
+
+Reading (pass 6 lead):
+- complaints/route.ts POST: any signed-in account could file a citizen complaint. Fixed (P6-003): citizen portal session and role citizen.
+- complaints/route.ts GET, complaints/[code] GET, complaints/media POST: already require role citizen.
+- profile/*, auth/me, auth/logout, auth/confirm, auth/security, profile/change-password: any signed-in account by design (own account).

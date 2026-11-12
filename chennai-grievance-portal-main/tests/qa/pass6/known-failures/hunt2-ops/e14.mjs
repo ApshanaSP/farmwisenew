@@ -1,0 +1,14 @@
+import { call } from "../../lib/live.mjs";
+import { CH } from "./snap.mjs";
+import { confirmed } from "./confirm.mjs";
+const l = JSON.parse((await call(3106, "collector", "GET", "/api/collector/list?status=critical&scope=all", CH)).text);
+const row = l.rows.find((r) => Number(r.complaints) > 0) ?? l.rows[0];
+const id = row.id;
+const d0 = JSON.parse((await call(3106, "collector", "GET", `/api/collector/incidents/${id}`, CH)).text);
+console.log("case", id, row.sev, row.status, row.dept, "complaints", row.complaints, "dept reports before", (d0.deptReports || []).length, "officer reports", (d0.reports || []).length, "awaiting tasks?", d0.incident.awaiting_collector);
+const before = JSON.parse((await call(3106, "collector", "GET", "/api/collector/overview?period=quarterly", CH)).text);
+const res = await confirmed("collector", "POST", "/api/collector/decisions", { incidentIds: [id], decision: "verify" }, CH.headers);
+console.log("verify", res.first, res.confirm, res.r.status, res.r.text.slice(0, 200));
+const d1 = JSON.parse((await call(3106, "collector", "GET", `/api/collector/incidents/${id}`, CH)).text);
+const after = JSON.parse((await call(3106, "collector", "GET", "/api/collector/overview?period=quarterly", CH)).text);
+console.log("after: status", d1.incident.status, "open", d1.incident.open, "| Severe-not-checked tile", before.snapshot.critical, "->", after.snapshot.critical, "| quarterly resolved", before.kpi.cur.resolved, "->", after.kpi.cur.resolved);

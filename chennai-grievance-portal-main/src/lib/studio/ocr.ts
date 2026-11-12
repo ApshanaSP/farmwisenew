@@ -135,28 +135,55 @@ export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: stri
  * The page images of a scanned PDF, as files Tesseract reads: a JPEG stream (DCTDecode) as it is; an 8-bit grey or
  * RGB bitmap (FlateDecode) as a PNM. At most 20 pages; other encodings are skipped and counted.
  */
-export function pdfImages(buf: Buffer): { images: Buffer[]; skipped: number } {
+/**
+ * `bitmaps: false` leaves out 8-bit bitmaps (a caller that keeps only JPEG and PNG pages would throw them away), and `maxBitmapBytes` caps
+ * what all bitmaps together may inflate to: a few hundred KB of Flate data can hold 40 Mpx images, 2.4 GB for twenty of them, all
+ * inflated in memory before the desk refused the file (QA pass 6, P5-028).
+ */
+export interface PdfImageOptions { bitmaps?: boolean; maxBitmapBytes?: number }
+// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB)
+export const PDF_BITMAP_BUDGET = 600_000_000;
+
+export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET }: PdfImageOptions = {}): { images: Buffer[]; skipped: number } {
   const src = buf.toString("latin1");
   const images: Buffer[] = [];
   let skipped = 0;
-  const re = /<<((?:[^<>]|<<[^<>]*>>)*?\/Subtype\s*\/Image(?:[^<>]|<<[^<>]*>>)*?)>>\s*stream\r?\n/g;
+  let bitmapBytes = 0;
+  // every dictionary that opens a stream, read whole (greedy, so a failed match costs its length once); whether it is an image is asked after.
+  // "/Subtype /Image" inside the pattern, with a lazy part on each side, tried every occurrence of it in one dictionary as the anchor: time
+  // grew with the square of a crafted dictionary (120 KB, 1.6 s; P6-013)
+  const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
     const start = m.index + m[0].length;
-    const len = Number(dict.match(/\/Length\s+(\d+)(?!\s+\d+\s+R)/)?.[1] ?? -1);
-    const end = len > 0 ? start + len : src.indexOf("endstream", start);
-    const data = buf.subarray(start, end);
+    // a direct /Length, the whole number: "/Length 12 0 R" (an indirect length) was read as /Length 1 (P6-013)
+    const len = Number(dict.match(/\/Length\s+(\d+)(?!\d)(?!\s+\d+\s+R)/)?.[1] ?? -1);
+    // a /Length is trusted when "endstream" follows it; else the stream ends at the next "endstream", less the end-of-line before it
+    // (a /Length too large swallowed the next page: P6-013)
+    let end = len > 0 && start + len <= buf.length && /^\s*endstream/.test(src.slice(start + len, start + len + 32)) ? start + len : src.indexOf("endstream", start);
+    // a stream with no end in the file holds the rest of it, so nothing after it can be an image: each later image dictionary searched to
+    // the end again and copied the rest of the file (time growing with the square of the size; a 5 MB file copied 20 times: P6-007)
+    if (end < 0) break;
+    // every path below moves past this stream, so no stream is read from inside another
+    re.lastIndex = Math.max(re.lastIndex, end);
+    if (end !== start + len) { if (src[end - 1] === "\n") end--; if (src[end - 1] === "\r") end--; }
+    if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    const data = buf.subarray(start, Math.max(start, end));
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
     if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
       // an 8-bit bitmap, Flate-packed or stored as it is
       const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
       if (!rgb && !grey) { skipped++; continue; }
+      const need = W * H * (rgb ? 3 : 1);
+      // decided before anything is inflated: a bitmap the caller does not want, or one past the budget, costs nothing
+      if (!bitmaps || bitmapBytes + need > maxBitmapBytes) { skipped++; re.lastIndex = Math.max(re.lastIndex, end); continue; }
+      bitmapBytes += need;
       try {
-        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: W * H * (rgb ? 3 : 1) + 1024 }) : data;
-        if (px.length < W * H * (rgb ? 3 : 1)) { skipped++; continue; }
-        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, W * H * (rgb ? 3 : 1))]));
+        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+        if (px.length < need) { skipped++; continue; }
+        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, need)]));
       } catch { skipped++; }
     } else skipped++;
     re.lastIndex = Math.max(re.lastIndex, end);

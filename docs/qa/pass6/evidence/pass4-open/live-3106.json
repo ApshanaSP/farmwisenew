@@ -1,0 +1,172 @@
+{
+ "PB-259 zone 99": {
+  "status": 200,
+  "kind": "clarify",
+  "headline": "I did not find zone 99: the district has zones 1 to 15. Tell me which zone you mean, or ask for the whole district.",
+  "md": "I did not find zone 99: the district has zones 1 to 15. Tell me which zone you mean, or ask for the whole district.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-259 Atlantis": {
+  "status": 200,
+  "kind": "clarify",
+  "headline": "I did not find \"Atlantis\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district.",
+  "md": "I did not find \"Atlantis\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-260 2030": {
+  "status": 200,
+  "kind": "clarify",
+  "headline": "2030 has not happened yet (the console's records run to 2026-11-12), so there is nothing to count for it. Ask for the last 7, 30 or 90 days.",
+  "md": "2030 has not happened yet (the console's records run to 2026-11-12), so there is nothing to count for it. Ask for the last 7, 30 or 90 days.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-260 last 0 days": {
+  "status": 200,
+  "kind": "clarify",
+  "headline": "\"last 0 days\" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1.",
+  "md": "\"last 0 days\" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-305 save": {
+  "status": 200,
+  "kind": "refusal",
+  "headline": "Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there.",
+  "md": "Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-306 sources": {
+  "status": 200,
+  "kind": "refusal",
+  "headline": "Chat does not list every record behind a briefing. Each answer card has a Sources section with the tables and checks behind its figures, and one incident opens with its own records.",
+  "md": "Chat does not list every record behind a briefing. Each answer card has a Sources section with the tables and checks behind its figures, and one incident opens with its own records.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-330 forecast": {
+  "status": 200,
+  "kind": "refusal",
+  "headline": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week.",
+  "md": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-330 letter": {
+  "status": 200,
+  "kind": "refusal",
+  "headline": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period.",
+  "md": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-307 taluks": {
+  "status": 200,
+  "kind": "answer",
+  "headline": "Tondiarpet leads with 190 open incidents",
+  "md": "Highest open incidents: Tondiarpet (190), Mambalam (166), Mylapore (159), Thiruvottiyur (136), Sholinganallur (128).",
+  "scopeLine": "Last 30 days · District-wide · all departments · as of 12 Nov, 2:38 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-261 severe": {
+  "status": 200,
+  "kind": "answer",
+  "headline": "Severe: 126 open incidents (Low leads with 884)",
+  "md": "Highest open incidents: Low (884), Medium (780), High (505), Severe (126).",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 12 Nov, 2:39 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "error": null
+ },
+ "PB-262 percentage": {
+  "status": 200,
+  "kind": "answer",
+  "headline": "76.8% of incidents are resolved · last 90 days",
+  "md": "**76.8%** of the incidents reported in the last 90 days are resolved: 10,867 of 14,152.\n\n- 10,867 resolved, 2,403 still open, 548 severe, 2,103 open past their deadline",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 12 Nov, 2:39 PM",
+  "kpis": 4,
+  "incidents": 0,
+  "error": null
+ },
+ "pb269": {
+  "status": 400,
+  "body": "{\"error\":\"Zone \\\"99\\\" is not one of the 15 GCC zones (1 to 15).\"}"
+ },
+ "pb270": {
+  "status": 400,
+  "body": "{\"error\":\"Tab \\\"returned\\\" is not one of new, action, sent, verified, all.\"}"
+ },
+ "conflicts_period": {
+  "bad": {
+   "status": 200,
+   "body": "{\"stories\":[],\"checked\":0,\"ai\":false}"
+  },
+  "daily": {
+   "status": 200,
+   "same": true
+  }
+ },
+ "pb316": {
+  "id": "INC-20261104-EA19E3",
+  "soft": {
+   "status": 200,
+   "header": "required",
+   "body": "{\"error\":\"Confirm it's you first.\",\"confirm\":{\"action\":\"officer_report\",\"title\":\"Send the completion report\",\"summary\":\"Send case INC-20261104-EA19E3 to the Collector for verification\",\"scope\":\"zjoTv0"
+  },
+  "hard": {
+   "status": 428,
+   "body": "{\"error\":\"Confirm it's you first.\",\"confirm\":{\"action\":\"officer_report\",\"title\":\"Send the completion report\",\"summary\":\"Send case INC-20261104-EA19E3 to the Collector for verification\",\"scope\":\"zjoTv0"
+  }
+ },
+ "pb314": [
+  {
+   "id": "INC-W-2026-153CHY",
+   "code": "2026-153CHY",
+   "status": 200,
+   "found": true
+  },
+  {
+   "id": "INC-W-2026-093WIA",
+   "code": "2026-093WIA",
+   "status": 200,
+   "found": true
+  },
+  {
+   "id": "INC-W-2026-954FHS",
+   "code": "2026-954FHS",
+   "status": 200,
+   "found": true
+  }
+ ],
+ "citizen_created_at": {
+  "status": 401,
+  "n": 0,
+  "created": []
+ },
+ "citizen_home_date": {
+  "status": 200,
+  "shown": "Thursday, 12 November",
+  "today": "Thursday, 12 November"
+ }
+}

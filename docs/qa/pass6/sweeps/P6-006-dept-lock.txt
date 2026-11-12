@@ -1,0 +1,24 @@
+# P6-006 sweep: places that open an incident by an id from the question or the context, and whether a department console's lock applies (run Thu Nov 12 14:58:47 IST 2026)
+$ grep -rn "incidentDetail(\|incidentsByIds(\|relatedIncidents(\|actionsFor(\|incidentFull(\|incidentStory(" src --include=*.ts | grep -v "\.test\."
+src/lib/assistant/fastpath.ts:240:        ? [...await incidentsByIds(i.ctx.resultIds)].sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0)).slice(0, n) : null;
+src/lib/assistant/fastpath.ts:535:      const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus);
+src/lib/assistant/fastpath.ts:556:      const r = await relatedIncidents(id, d.n ?? 5);
+src/lib/assistant/fastpath.ts:635:      const groups = (await Promise.all(ids.map(async (id) => ({ id, a: await actionsFor(id) })))).filter((g) => g.a).map((g) => ({ incidentId: g.id, title: g.a!.titl
+src/lib/assistant/fastpath.ts:686:    return { items: await incidentsByIds(r.ids), total: r.total, period: inc.period, widened: false };
+src/lib/assistant/fastpath.ts:690:  const all = await incidentsByIds(await currentIncidentIds(keep));
+src/lib/assistant/fastpath.ts:710:  const items = await incidentsByIds(own ? ids.filter((x) => own.has(x)) : ids);
+src/lib/assistant/incidents.ts:213:export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
+src/lib/assistant/incidents.ts:327:export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all"): Promise<IncidentDetail | null> {
+src/lib/assistant/incidents.ts:330:    incidentFull(id),
+src/lib/assistant/incidents.ts:368:export async function relatedIncidents(id: string, n = 5) {
+src/lib/assistant/incidents.ts:392:export async function actionsFor(id: string): Promise<{ title: string; items: ActionItem[] } | null> {
+src/lib/assistant/queries.ts:207:export async function incidentsByIds(ids: string[]): Promise<Row[]> {
+src/lib/assistant/tools.ts:754:      const others = await incidentsByIds(found.slice(1, 6).map((f) => f.id));
+
+Reading (pass 6 lead):
+- fastpath.ts 535 (detail, timeline), 556 (related), 635 (actions for a named incident): fixed, refusal card for another department's id.
+- fastpath.ts 240 (pick the most serious from the last list) and 710 (the last list as a map or table): ids from the server-side conversation,
+  which locked answers produced; now also filtered by the lock (defence in depth).
+- fastpath.ts 686, 690: search results under inc.dept (the lock): already scoped.
+- tools.ts 754 (incident_story's "others"): findIncidents(text, scope) with the locked scope; the main incident is refused by otherDeptsIncident.
+- Not in Ask District IQ: map/ask.ts "near this incident" context is not department-checked (redsec2-09, open P2).

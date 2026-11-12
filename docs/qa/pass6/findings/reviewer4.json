@@ -1,0 +1,68 @@
+[
+  {
+    "id": "reviewer4-01",
+    "severity": "P0",
+    "area": "Ask District IQ / officer lock (P6-014 fix)",
+    "title": "P6-014 broken: an officer's planned query on ref_categories joined to incidents lists another department's incidents (titles) - the lock holds only the base table, not a table joined back to it",
+    "where": "src/lib/assistant/compile.ts:287-291 (lock on b.* only) and :146-153 (back join along any declared key)",
+    "repro": "QA_PIN_PORT=3197 timeout 600 npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/zz-reviewer4.test.ts (probe deleted after the run; log docs/qa/pass6/evidence/reviewer4/zz-run1.log). compileQuery(lockQuery({table:'ref_categories', dimensions:['incidents.incident_id','incidents.title']}), cat, asOf, {dept:'GCC-SWM'}, 'GCC-SWM') then runCompiled.",
+    "evidence": "SQL: FROM ref_categories b LEFT JOIN incidents j1 ON j1.category_code = b.category_code WHERE b.lead_dept = ? AND b.lead_dept = ?. GCC-SWM officer: count_distinct incidents.incident_id through ref_categories = 3604, own incidents = 3291 (313 from GCC-HLT/GCC-ENG, titles readable, e.g. INC-20260511-124BF7 GCC-HLT 'Garbage & solid waste - Thirumalai Priya Nagar Velmurugan St'); GCC-ELE officer: 2664 vs own 2086. Snapshot-wide, 1179 PWD-WRD incidents sit under GCC-SWD categories, 305 GCC-HLT under HLT-DMS, etc. ref_categories also bridges to events (3926 rows). documents/actions/events/gaps/dept_assignments as base showed 0 other-department incidents on this snapshot (zz-run1.log, zz-run2.log).",
+    "cause": "The lock is applied to the base table's department column; a one-hop join along a declared key (here incidents.category_code -> ref_categories) brings in every row of the joined table matching the key, whatever its own lead_dept. ref_categories has lead_dept, so it passes the lock check and becomes a bridge. lockQuery strips 'incidents.lead_dept' from filters but nothing adds the lock to joined tables. The same shape applies to any locked base joined back by a non-department key (ref_offices -> actions/pwd_works via office_id, documents -> incidents via linked_incident_id, actions -> incidents).",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer4-02",
+    "severity": "P1",
+    "area": "Collector batch email / officer drawer (P6-015 fix)",
+    "title": "P6-015 broken past 25 cases: in a 30-case 'Send to department' batch, cases 26-30 show no instruction in the officer's drawer or the Collector's case email list",
+    "where": "src/lib/collector/actionmail.ts:354-356 (followups only for cases.slice(0, BATCH_MAX)); readers src/lib/officer/data.ts:474-476, src/lib/collector/intel.ts:378-381, 392",
+    "repro": "Same zz-reviewer4 run: sendBatchAction({dept:'GCC-SWM', ids: 30 open SWM cases, ...}) then grievanceDetail(SWM, id) and actionEmails([id]) for each id.",
+    "evidence": "send status=201 followups=25; cases=30 missing=5: INC-20261029-9ABBA7, INC-20261019-F554FB, INC-20260926-CA8783, INC-20261006-A551C7, INC-20261018-AA72D5 -> drawer:false, collector:false. The template body tells the officer these are 'and N more, listed in the District IQ officer console'.",
+    "cause": "The fix finds batch emails through followups.email_id, but sendBatchAction writes a follow-up row only for the first BATCH_MAX (25) cases; every case after that has no link to the email, so the instruction (and the 'Action taken' mark from actedOn) is still missing on them.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer4-03",
+    "severity": "P2",
+    "area": "Collector batch email / officer drawer (P6-015 fix)",
+    "title": "A batch instruction to one department now shows in another department's drawer when any listed case later moves department (before the fix only the first case could)",
+    "where": "src/lib/officer/data.ts:474-476 (no department check on the email); src/lib/collector/derive.ts:473-475 (lead_dept rewritten on re-categorisation)",
+    "repro": "zz-reviewer4 run: send a GCC-SWM batch, then UPDATE incidents SET lead_dept='GCC-ELE' for the 2nd listed case (as derive.ts does on re-categorisation), then grievanceDetail(GCC-ELE profile, that case).",
+    "evidence": "'moved INC-20261104-EA19E3 to GCC-ELE: ELE drawer=found shows SWM batch=true'. The real draft body (draftBatchAction line()) lists up to 25 other SWM cases with title, id, place and severity, so the ELE officer reads SWM's case list and an instruction not addressed to them. Same path, not run: rehearsal emails (src/lib/rehearsal/tasks.ts:148-155) write a follow-up per job incident, so a drill email now shows on every job's real incident (and turns its 'Action taken' mark on), where before only the first job's incident showed it.",
+    "cause": "The email is matched to the case through followups.incident_id only; neither the email's department nor the case's department at send time is checked. The move is simulated in the per-process dry-run store.",
+    "confidence": "medium"
+  },
+  {
+    "id": "reviewer4-04",
+    "severity": "P2",
+    "area": "Studio OCR / pdfImages (P6-013 fix)",
+    "title": "P6-013 regression: the new fall-back end strips a data byte 0x0D as if it were end-of-line, so a page with no direct /Length whose data ends in 0x0D is dropped (worked before the fix)",
+    "where": "src/lib/studio/ocr.ts:171",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/reviewer4/pdfimages.probe.test.ts (and pdfimages-old.probe.test.ts for the pre-fix code)",
+    "evidence": "Flate grey page with '/Length 7 0 R', deflate data ending in 0x0D, EOL \n: new {images:0, skipped:1}, old {images:1, skipped:0}. Unfiltered grey bitmap, no /Length, last pixel 13: new {images:0, skipped:1}, old kept. Control (data ending 0x41) kept by both.",
+    "cause": "When /Length is not trusted, the fix removes the LF before 'endstream' and then, separately, a CR before it, even when the EOL was a lone LF; a stream whose own last byte is 0x0D loses it. Flate then fails its adler-32 (inflate throws, page counted as skipped); an unfiltered bitmap is one byte short of W*H. Affects about 1 in 256 Flate pages whose /Length is indirect or wrong; reached by the Data Studio (src/lib/studio/parse.ts:534, bitmaps on). The petition desk (manu/files.ts:33, JPEG only) is not hit since a JPEG ends FF D9. Removing CR only as part of a CRLF pair has the same flaw; only the EOL the writer added should go, and a lone LF is the whole EOL.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer4-05",
+    "severity": "P2",
+    "area": "Ask District IQ / officer lock (P6-014 fix)",
+    "title": "The officer lock now refuses 22 catalog tables that hold no department data (weather observations, rain calendar, wards, zones, taluks, mandi prices, PWD works, zone summary), so an officer's planned question on them fails where it worked before",
+    "where": "src/lib/assistant/compile.ts:117-118",
+    "repro": "zz-reviewer4 run 2: for every catalog table compileQuery(count(*), ..., lockDept 'GCC-SWM') vs the Collector (null).",
+    "evidence": "refused for an officer only: observations, observation_signals, daily_counts, anomalies, hotspots, alerts, review_queue, source_health, data_quality, pwd_works, world_calendar, ref_wards, ref_zones, ref_taluks, ref_departments, ref_facilities, v_zone_summary, v_taluk_unresolved, mandi_market_prices, mandi_prices, mandi_weekly, sources. The planner is still shown these tables for an officer (pipeline.ts:2347 renderCatalog(cat, tablesFor(...)), no lock), so it plans on them and gets 'is not kept by department' as its repair text.",
+    "cause": "The fix sorts tables into department column / incident_id / refused, with no class for district-wide reference or environment tables that are not another department's data. Some refusals are right (alerts, hotspots, review_queue carry other departments' cases); weather, calendar, geography and prices are not.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer4-06",
+    "severity": "P3",
+    "area": "Sessions (P6-016 fix, adjacent)",
+    "title": "A tab copy (/api/auth/tab) and the legacy-cookie move re-set a staff session cookie with the citizen's 7-day Max-Age; the JWT inside still ends at 12 h, so the session does not outlive it, but the cookie lingers",
+    "where": "src/lib/auth.ts:158 and :176 (setSessionCookie(..., token) with the default SESSION_MAX_AGE, src/lib/session-cookies.ts:43)",
+    "repro": "Code path: copySlot -> setSessionCookie(res, name, token) with no maxAge for any portal, staff included.",
+    "evidence": "P6-016 itself holds: change-password, startSession and /api/auth/security are the only signToken callers and all use staffHours() for collector/department_officer; the petition desk account is role department_officer (src/lib/manu/login.ts:20) so it counts as staff.",
+    "cause": "The tab copy keeps the token but not its length; harmless for access (exp is checked) but the cookie's Max-Age disagrees with the session.",
+    "confidence": "high"
+  }
+]

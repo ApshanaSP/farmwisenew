@@ -1,0 +1,356 @@
+{
+ "generated": "2026-11-12T15:54:50.015Z",
+ "port": 3106,
+ "pages": [
+  {
+   "role": "anon",
+   "page": "/",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/login",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "anon",
+   "page": "/login",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/login",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "anon",
+   "page": "/register",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/register",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "anon",
+   "page": "/forgot-password",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/forgot-password",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "anon",
+   "page": "/track",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/track",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "anon",
+   "page": "/",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/login",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "anon",
+   "page": "/login",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/login",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "anon",
+   "page": "/register",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/register",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "anon",
+   "page": "/forgot-password",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/forgot-password",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "anon",
+   "page": "/track",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/track",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/citizen",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen/file-complaint",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/citizen/file-complaint",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen/track-complaints",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/citizen/track-complaints",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "citizenA",
+   "page": "/profile",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/citizen",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen/file-complaint",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/citizen/file-complaint",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "citizenA",
+   "page": "/citizen/track-complaints",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/citizen/track-complaints",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": [
+     "definition-list",
+     "dlitem"
+    ]
+   }
+  },
+  {
+   "role": "citizenA",
+   "page": "/profile",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "officerA",
+   "page": "/officer",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/officer",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "officerA",
+   "page": "/profile",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "officerA",
+   "page": "/officer",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/officer",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "officerA",
+   "page": "/profile",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "manu",
+   "page": "/officer",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/officer",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "manu",
+   "page": "/officer",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/officer",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "collector",
+   "page": "/collector",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/collector",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "collector",
+   "page": "/profile",
+   "width": 360,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  },
+  {
+   "role": "collector",
+   "page": "/collector",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/collector",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": {
+    "critical": [],
+    "serious": []
+   }
+  },
+  {
+   "role": "collector",
+   "page": "/profile",
+   "width": 1280,
+   "status": 200,
+   "finalUrl": "/profile",
+   "hScroll": false,
+   "consoleErrors": [],
+   "axe": null
+  }
+ ],
+ "journey": {
+  "upload": 200,
+  "readStatus": "read_failed",
+  "approve": 200,
+  "code": "issued",
+  "sms": {
+   "state": "off",
+   "last4": "1873"
+  },
+  "trackShowsStatus": true,
+  "trackShowsPersonal": false,
+  "trackConsoleErrors": [],
+  "trackHScroll": false,
+  "trackWrongLast4": 404
+ },
+ "summary": {
+  "pages": 28,
+  "withProblems": 1
+ }
+}

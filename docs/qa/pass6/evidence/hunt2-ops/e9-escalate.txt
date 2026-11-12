@@ -1,0 +1,8 @@
+escalate 428 200 201 {"saved":[{"incident_id":"INC-20261106-0B725B","decision_id":1000000004,"escalated_to_level":null}]}
+{"label":"after escalate to GCC-ELE","officer":{"st":200,"stage":"new","keys":"now,grievance,next,timeline,sources,reports,instructions,closedByDept,firstSource"},"officerTabs":{"new":1,"action":0,"sent":0,"verified":0,"all":1},"collectorList":{"total":1,"status":"Under review","open":1,"decision":"escalate","acted":null},"collectorDetail":{"st":200,"status":"Under review","open":1,"keys":"incident,group,reports,emails,contacts,assigned,decisions,deptReports"}}
+officerB (GCC-ELE) detail 404 {"error":"Grievance not found in your department."}
+officerB queue all tab total 0
+officerB search 200 {"rows":[]}
+officerA timeline tail [{"t":"2026-11-12 16:10:36","label":"Escalated by Collector","note":"QA hunt2: this is a street-light issue, send to Electrical","kind":"esc"}] stage new
+collector list dept GCC-SWM Solid Waste Management status Under review
+Collector weekly ongoing GCC-ELE 25 GCC-SWM 22

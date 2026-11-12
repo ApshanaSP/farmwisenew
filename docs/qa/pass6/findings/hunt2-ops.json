@@ -1,0 +1,134 @@
+[
+  {
+    "id": "hunt2-ops-01",
+    "severity": "P1",
+    "area": "Collector decisions / officer workflow / citizen tracker",
+    "title": "The Collector can 'reopen' (send back) a case nobody has closed or reported: it skips the officer's approval, says the Collector rejected a report that was never sent, and the citizen is told the work was returned for more work",
+    "where": "src/app/api/collector/decisions/route.ts:57 (reopen skips requireConfirm) and :62-79 (no check of the case state before any decision); src/lib/officer/data.ts:81 (STAGE_SQL: latest reopen -> stage action); src/lib/complaint-progress.ts:76-81",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e1pre.mjs INC-20261019-41B602 then node tests/qa/pass6/known-failures/hunt2-ops/e1.mjs INC-20261019-41B602 (POST /api/collector/decisions {incidentIds:[id], decision:'reopen'} as collector, on a Low case in officerA's New tab that nobody approved or reported)",
+    "evidence": "Before: officer stage 'new' (New tab 1, In action 0), Collector status 'Under review'. POST reopen -> 201 with no password step. After: officer stage 'action' (New 0, In action 1) without the officer approving, returned=true, timeline 'Returned by Collector: ... did not accept the reported action' though no report exists (reports: none); Collector list/detail status 'Open'. complaint-progress maps any reopen to citizen status 'In Progress' / 'The Collector's office returned it to the department for more work.' Evidence: docs/qa/pass6/evidence/hunt2-ops/e1-reopen-new.txt Same missing state check for verify: node tests/qa/pass6/known-failures/hunt2-ops/e14.mjs verified INC-20261105-5C94BB (Severe, status In progress, 0 department completion reports, not awaiting) -> 201, status Resolved, Severe-not-checked 20 -> 19, quarterly Resolved 12738 -> 12739; a citizen on it would read \"The Collector's office checked the work and closed the complaint\" (complaint-progress.ts:76-78). Evidence: e14-verify-unsent.txt",
+    "cause": "The decisions route validates only the incident ids and the decision name; nothing checks that the case was closed or sent before a reopen (or open before a resolve/reject). Reopen is also exempt from requireConfirm. STAGE_SQL turns the latest reopen into stage 'action' whatever stage it was.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-02",
+    "severity": "P1",
+    "area": "Collector decisions / confirm step / officer queue",
+    "title": "The confirm box for a Collector \"reject\" says \"Return to the department 1 case\", but a reject closes the case as Rejected: it leaves every tab of the officer queue (even All), the officer can no longer act on it, and the citizen is told Rejected",
+    "where": "src/app/api/collector/decisions/route.ts:58 (verb map: reject -> \"Return to the department\"); src/lib/officer/data.ts:81 (reject -> stage closed) and :128-131 (windowWhere drops stage closed); src/lib/complaint-progress.ts:82-85",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e8.mjs (428 summaries, nothing recorded); node tests/qa/pass6/known-failures/hunt2-ops/e2.mjs INC-20261030-158A1B (reject with the password step, then officer and Collector views)",
+    "evidence": "428 confirm.summary for decision reject = \"Return to the department 1 case\". After confirming: Collector list/detail status Rejected open 0; officerA stage \"closed\", tab counts new 0 action 0 sent 0 verified 0 all 0 (before: action 1, all 1); officer next=null; officer approve -> 409 \"already at Closed\". complaint-progress turns reject into citizen status \"Rejected\". The decision that really returns work (reopen) has no confirm at all (route.ts:58). Evidence: docs/qa/pass6/evidence/hunt2-ops/e2-reject.txt",
+    "cause": "The verb map labels reject with the words of a send-back; the effect table (effective.ts DECISION_EFFECT reject -> open 0 Rejected) and STAGE_SQL treat it as a final close, and the officer list has no tab for stage closed.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-03",
+    "severity": "P2",
+    "area": "Collector decisions (escalate / send to another department)",
+    "title": "An escalate with escalateTo another department is accepted (201, confirmed, audited) but the case never reaches that department: its officer gets 404, it is in none of its tabs or search, and the Collector still files it under the old department",
+    "where": "src/app/api/collector/decisions/route.ts:74-77 and :106-110 (escalate_to stored only); src/lib/officer/data.ts:108-109 (cd ignores escalate) and :123 (queue is WHERE i.lead_dept = ?)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e9.mjs INC-20261106-0B725B (Collector escalates a GCC-SWM case with escalateTo GCC-ELE, password step done)",
+    "evidence": "escalate -> 201 saved decision_id 1000000004. officerB (GCC-ELE): GET /api/officer/grievances/INC-20261106-0B725B -> 404 \"Grievance not found in your department\"; tab=all q=id total 0; search rows []. officerA (GCC-SWM) still has it in New with a timeline line \"Escalated by Collector: ... send to Electrical\". Collector list dept GCC-SWM; weekly ongoing GCC-ELE 25 / GCC-SWM 22 unchanged. Confirm summary says only \"Escalate 1 case\" (not to whom). Evidence: docs/qa/pass6/evidence/hunt2-ops/e9-escalate.txt",
+    "cause": "escalate_to is written to collector_decisions but no reader (officer queue, effective status, Collector department filters) uses it; lead_dept stays the pipeline value.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-04",
+    "severity": "P2",
+    "area": "Collector list / officer queue filters",
+    "title": "An unknown severity, status, scope or flag value is silently dropped: sev=severe or status=Overdue returns the whole list as if filtered",
+    "where": "src/app/api/collector/list/route.ts:26-37 (sev, status, scope fall back to no filter); src/app/api/officer/grievances/route.ts:30-35 (flag, sev); against the rule in src/lib/collector/filters.ts:1-5",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e10.mjs",
+    "evidence": "/api/collector/list?period=weekly -> 280 incidents; &sev=Severe -> 12; &sev=severe -> 200 with 280; &status=overdue -> 187; &status=Overdue -> 200 with 280; &scope=al -> 280; officer tab=all weekly 22, flag=overdue 19, flag=Overdue 22, sev=Low 11, sev=low 22. All 200 with no error. Evidence: docs/qa/pass6/evidence/hunt2-ops/e10-dropped-filters.txt",
+    "cause": "refuseBadFilter() checks zone, period, dept, cat and taluk only; the routes map other unknown values to null (no filter).",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-05",
+    "severity": "P1",
+    "area": "Collector send-back / officer queue",
+    "title": "A case the Collector sends back that was first reported more than 90 days ago is open again but in no officer tab, count or search: the department has no queue entry to act on (only a feedback card), and the Collector quarterly tile does not count it either",
+    "where": "src/lib/officer/data.ts:128-131 (windowWhere: queue = reported in the period, max 90 days); officer search = last 90 days; src/lib/collector/intel.ts:134-140 (tiles window on first_reported_at)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e11.mjs INC-20260511-7798C7 (POST reopen as collector on a GCC-SWM case reported 2026-05-11 and Resolved)",
+    "evidence": "After reopen (201): officerA detail stage \"action\" (open, needs work) but tabs new/action/sent/verified/all (quarterly) = 0/0/0/0/0; officer counts unchanged {new 39, action 40, returned 0}; officer search for the id -> rows []; only overview.feedback lists it. Collector: quarterly GCC-SWM ongoing tile 97 -> 97, all-time open list 97 -> 98, case status Open. Evidence: docs/qa/pass6/evidence/hunt2-ops/e11-reopen-old.txt",
+    "cause": "Both consoles scope every queue and tile by first_reported_at inside the period; a reopen makes an old incident open without bringing it into any window, and the officer returned count reads the same window.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-06",
+    "severity": "P0",
+    "area": "Collector tiles vs list (filters)",
+    "title": "\"Severe, not yet checked\" tile ignores the category and taluk filters: with taluk TLK-TDP it says 20, the list it opens has 0; with category FLOOD_WATERLOGGING it says 20, the list has 6",
+    "where": "src/lib/collector/intel.ts:1169-1172 (districtSnapshot critical COUNT has no scope WHERE); src/components/collector/app/Overview.tsx:298-300; the list it opens carries cat/taluk: CollectorApp.tsx:624, Overlays.tsx:41-44",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e12.mjs (GET /api/collector/overview?period=weekly&taluk=TLK-TDP -> snapshot.critical, and /api/collector/list?status=critical&scope=all&period=weekly&taluk=TLK-TDP)",
+    "evidence": "period=weekly: tile 20, list 20 (agree). &cat=FLOOD_WATERLOGGING: tile 20, list 6. &taluk=TLK-TDP: tile 20, list 0. The console toasts \"Showing <taluk> taluk. All panels filtered.\" Evidence: docs/qa/pass6/evidence/hunt2-ops/e12-critical-tile.txt",
+    "cause": "The critical COUNT in districtSnapshot is written without w.sql/w.params (deliberately any date) and so also drops cat and taluk, while the list it opens applies them.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-07",
+    "severity": "P0",
+    "area": "Collector decisions / Resolved tile",
+    "title": "\"Resolving\" cases that were already resolved months ago counts them again as resolved today: GCC-SWM daily Resolved tile 1 -> 10 with nothing new closed",
+    "where": "src/app/api/collector/decisions/route.ts:62-79 (no check that the case is open); src/lib/collector/effective.ts:56 (closedAt = latest closing decision time); src/lib/collector/intel.ts:741-756 (Resolved = closed in the window by EFF.closedAt)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e15.mjs (bulk POST /api/collector/decisions {decision:resolve} with the password step on 9 GCC-SWM incidents of 12-13 May whose status is already Resolved)",
+    "evidence": "Before: overview?period=daily&dept=GCC-SWM kpi.cur.resolved 1, list status=Resolved 1, reported 3. After 201: resolved 10, list 10, reported 3. The 9 cases were Resolved before and after; only their closed time moved to now. Evidence: docs/qa/pass6/evidence/hunt2-ops/e15-reresolve.txt",
+    "cause": "The route records any decision on any case; the effective closed time is the latest closing decision time, so a resolve or verify on a closed case re-dates its closure into the current window.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-08",
+    "severity": "P2",
+    "area": "Officer overview feedback / officer PDF briefing",
+    "title": "The officer console feedback (and the PDF sentence \"The Collector verified N reports and returned M for rework in this period\") is built from only the 8 newest decisions, counts a reject as rework and a bare resolve as a verified report",
+    "where": "src/lib/officer/data.ts:247 (collectorFeedback limit OFFICER.feedbackItems = 8, departments.ts:83); src/components/officer/format.ts:37,55 (ok/back from ov.feedback)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e15.mjs then GET /api/officer/overview?period=daily as officerA",
+    "evidence": "GCC-SWM had 12 Collector decisions in the last 24 h (9 resolve, 2 reopen, 1 reject); officer overview.feedback has 8 items, all ok, so the briefing reads \"verified 8 reports and returned 0 for rework\". Before the bulk resolve it read verified 0 / returned 3, one of the 3 being the reject that closed the case. None of the 9 resolves had a report. Evidence: e15-reresolve.txt",
+    "cause": "The briefing derives counts from a display list capped at 8 instead of a COUNT; reject is grouped with reopen as returned.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-09",
+    "severity": "P2",
+    "area": "Officer step -> Collector console",
+    "title": "An officer approve never reaches the Collector console: the case stays \"Under review\" (in that status chip, not Assigned or In progress) and its case page shows no step, while the officer shows In action and the citizen is told it was approved",
+    "where": "src/lib/collector/effective.ts:47-50 (status = pipeline status unless a Collector decision); src/lib/collector/intel.ts incident() has no officer_steps; src/lib/complaint-progress.ts:69",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e19.mjs INC-20261106-707839 (POST /api/officer/grievances/<id> {step:approve} as officerA)",
+    "evidence": "approve -> 201 stage approved; officer tabs New 1 -> 0, In action 0 -> 1. Collector list/detail status \"Under review\" before and after; list status=Under review 1 -> 1, Assigned 0 -> 0, In progress 0 -> 0; detail decisions [], assigned null, no step. Same seen on INC-W-2026-482UHM (officer stage approved, Collector \"Open\"). Evidence: docs/qa/pass6/evidence/hunt2-ops/e19-approve.txt",
+    "cause": "The Collector effective status overlays only collector_decisions (and the officer close, stored as a resolve decision); approve and send live only in officer_steps, which the Collector status, chips and case page never read.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-10",
+    "severity": "P2",
+    "area": "Collector KPI labels / period edges (English and Tamil)",
+    "title": "\"Resolved today\" (Tamil \"இன்று தீர்க்கப்பட்டவை\") counts the last 24 hours, not today in IST; \"Resolved this week/month/quarter\" count rolling 7/30/90 days",
+    "where": "src/components/collector/app/Overview.tsx:69 (label); src/lib/collector/intel.ts:741-756 with :123-125 (periodSinceWindow: closedAt > now - 24 h); src/lib/i18n/ta.ts:32-33",
+    "repro": "Read the tile at 09:00 IST: it includes closures from 09:00 to 23:59 the day before. GET /api/collector/overview?period=daily returns periodInfo.label \"Last 24 hours\" while the tile reads \"Resolved today\".",
+    "evidence": "PERIODS.daily = {hours: 24, label: \"Last 24 hours\"} (intel.ts:37) and the resolved count is closedAt > now - INTERVAL 24 HOUR; the label is \"Resolved today\" for daily and \"Resolved this <unit>\" otherwise, the same in the Tamil dictionary.",
+    "cause": "The label uses calendar words for a rolling window.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-11",
+    "severity": "P1",
+    "area": "Collector map (pins vs legend)",
+    "title": "The map draws at most 150 pins but its legend counts every locatable incident and says only the unlocated are left off: monthly legend Severe 205 / Complaints 2,339 / Other 1,808, pins drawn 98 / 52 / 0; even weekly drops 2 of 10 severe pins",
+    "where": "src/lib/collector/intel.ts:828-834 (pins query, ORDER BY open first, LIMIT 150) vs :836-844 (layerCounts over the whole scope); src/components/collector/app/Overview.tsx:131-134,167-186 (legend numbers; tooltip says only the unlocated are not drawn)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e20.mjs (GET /api/collector/overview?period=weekly|monthly|quarterly&zone=4, compare map.layerCounts with map.pins)",
+    "evidence": "daily: legend 17, drawn 17 (ok). weekly: legend 10/167/91 = 268, drawn 150 = 8/85/57, unlocated 16. monthly: legend 205/2339/1808 = 4352, drawn 150 = 98/52/0, unlocated 268, tooltip \"268 of 4,620 incidents ... are not drawn as pins\". quarterly zone 4: legend 34/700/345, drawn 8/87/55. Turning the Other layer on in monthly shows 0 pins under a legend of 1,808. Evidence: docs/qa/pass6/evidence/hunt2-ops/e20-map-pins.txt",
+    "cause": "The pin query is capped at 150 (open first, then severity), the legend counts are uncapped, and nothing on the map says it is a sample.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-ops-12",
+    "severity": "P0",
+    "area": "Collector briefing (English and Tamil)",
+    "title": "The briefing opening says \"This week recorded more incidents than the previous period\" (and the same in Tamil) under \"Written by AI from today's figures; every number is checked\", while the same response's live figures say 286 reported, 78% fewer than the previous period",
+    "where": "src/lib/collector/insights.ts:230-235 (opening = latest pipeline briefings.ai_summary for the period, any age); src/components/collector/app/Insights.tsx:86,106-107 (shown instead of the headline, with the today's-figures note)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e25.mjs (GET /api/collector/insights?part=briefing&period=weekly as collector)",
+    "evidence": "briefing.stats {reported 286, change -78, open 282, overdue 184}; headline \"286 incidents were reported in Chennai district (last 7 days), 78% fewer than the previous period\"; opening.en \"This week recorded more incidents than the previous period. ... watch the IMD warning level 2 issued for 06 Nov\"; opening.ta says the same in Tamil. The store was exported 2026-11-06 18:22; now is 2026-11-12. The page shows the opening in place of the headline. Evidence: docs/qa/pass6/evidence/hunt2-ops/e24-briefing-vs-tiles.txt Same for other periods (node tests/qa/pass6/known-failures/hunt2-ops/e26.mjs): daily stats 19 reported, 0 severe, but the opening says \"Immediate attention is required for severe flooding and waterlogging at Pulianthope ... and Ice House\"; monthly stats -6% (fewer) but the opening says \"This month saw more incidents compared with the previous period\".",
+    "cause": "The opening is the pipeline's stored summary of its own window (to 6 Nov), picked by period only, with no check of its as_of against the console's rolling window and no comparison with the live stats.",
+    "confidence": "high"
+  }
+]

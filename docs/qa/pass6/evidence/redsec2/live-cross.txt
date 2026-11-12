@@ -1,0 +1,32 @@
+citizenA complaint dept_id 4 has media true /api/complaints/media/c-20261112-<hex>.jpg
+citizenA GET <citizenA media> -> 200 image/jpeg
+citizenB GET <citizenA media> -> 404 application/json
+officerA GET <citizenA media> -> 200 image/jpeg
+officerB GET <citizenA media> -> 404 application/json
+officerC GET <citizenA media> -> 404 application/json
+manu GET <citizenA media> -> 404 application/json
+collector GET <citizenA media> -> 200 image/jpeg
+officerB map ask around SWM incident -> 200 mentions the SWM id: true SWM ids in answer: 1 bytes 24374
+  map kind answer hits 0 camera focus null say ""
+officerB chat "tell me about INC-20261106-896A64" -> 200 SWM ids in reply: 1 | event: status data: {"stage":"understanding","requestId":"d6d76f30-645b-4c29-8890-8594945ef00d"} event: status data: {"
+officerB chat "INC-20261106-896A64" -> 200 SWM ids in reply: 1 | event: status data: {"stage":"understanding","requestId":"e9ba9353-14b0-47ec-8d95-16dee01ee687"} event: status data: {"
+officerB chat "show the collector's queue" -> 200 SWM ids in reply: 0 | event: status data: {"stage":"understanding","requestId":"d7a9794d-b432-4188-b7fd-09eea3ec00c4"} event: status data: {"
+officerB chat "list all open incidents in every department" -> 200 SWM ids in reply: 0 | event: status data: {"stage":"understanding","requestId":"ac725296-f458-4ab2-b1b2-f7f35a1fa801"} event: status data: {"
+map: paths holding the SWM id or its title words: [".plan.steps.1.area.ref",".chips.4.en",".chips.4.ta",".answer.headline",".trace.1.note_en",".trace.1.note_ta",".context.areas.0.key",".context.areas.0.ref.ref",".context.areas.0.en",".context.areas.0.ta",".context.places.0.ref",".context.places.0.name",".context.places.0.name_ta",".camera.areas.0.id",".camera.areas.0.label",".camera.areas.0.label_ta",".shots.0.id",".shots.0.caption_en",".shots.0.caption_ta"]
+chat events status,status,status,answer,done | final paths with SWM id/title: []
+chat headline: "" | incident card title present: false | title words found: true
+INC-20261106…: officerA sees title 56ch place 0ch | officerB map headline: 10 incidents within 500 m of "<SWM-TITLE>" (last 30 days) · map layer ready. | area label: within 500 m of "<SWM-TITLE>" | box: yes | place name: "<SWM-TITLE>"
+answer paths with SWM title/id: [".headline",".sources.tools.0.args.id",".sources.incidentIds.0",".incident.incidentId",".incident.title",".context.selectedTitle",".context.selectedIncidentId"] | headline: "<SWM-TITLE>"
+done paths with SWM title/id: [] | headline: ""
+tool: ["incident_detail"] | route/lane: "answer"
+incident card fields: incidentId:19ch title:56ch summary:124ch aiWritten:boolean category:21ch location:73ch ward:number zone:10ch taluk:10ch occurredAt:19ch severity:3ch priorityScore:number priorityReasons:[1] status:4ch department:22ch sourceCount:number newsOutletCount:number citizenComplaintCount:number dead:number injured:number lat:number lon:number evidence:[1] whatHappened:308ch facts:[0] attention:[0] timeline:[1] deadline:19ch deadlineMissed:boolean closedAt:object officials:[3] focus:3ch
+department on the card: "Solid Waste Management" | answerMarkdown length: 308
+officerB "incidents like <SWM-ID>" -> 200 type=incident_list tools=["recent_incidents"] incidents=8 actions=0 card=false depts=["Street Lighting & Electrical"] officials=0 md=98ch
+officerB "what should be done about <SWM-ID>" -> 200 type=undefined tools=[] incidents=0 actions=0 card=false depts=[] officials=0 md=108ch
+officerB "who is responsible for <SWM-ID>" -> 200 type=undefined tools=[] incidents=0 actions=0 card=false depts=[] officials=0 md=108ch
+officerB "where did <SWM-ID> happen" -> 200 type=undefined tools=["zones"] incidents=0 actions=0 card=false depts=[] officials=0 md=103ch
+officerB "next steps for <SWM-ID>" -> 200 type=actions tools=["actions"] card=false dept=null actions=[6,6,6] officials=0
+officerB "actions for <SWM-ID>" -> 200 type=undefined tools=[] card=false dept=null actions=[] officials=0
+officerB "timeline of <SWM-ID>" -> 200 type=undefined tools=[] card=false dept=null actions=[] officials=0
+officerB "status of <SWM-ID>" -> 200 type=undefined tools=["overview_kpis"] card=false dept=null actions=[] officials=0
+officerB "who are the officials on <SWM-ID>" -> 200 type=undefined tools=[] card=false dept=null actions=[] officials=0

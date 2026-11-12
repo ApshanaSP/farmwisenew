@@ -1,0 +1,6 @@
+period=weekly                            snapshot.kind district tile 'Severe, not yet checked' 20 | list it opens: groups 20 incidents 20
+period=weekly&dept=GCC-SWD               snapshot.kind dept tile 'Severe, not yet checked' undefined | list it opens: groups 0 incidents 0
+period=weekly&cat=FLOOD_WATERLOGGING     snapshot.kind district tile 'Severe, not yet checked' 20 | list it opens: groups 6 incidents 6
+period=weekly&taluk=TLK-TDP              snapshot.kind district tile 'Severe, not yet checked' 20 | list it opens: groups 0 incidents 0
+period=weekly&dept=POL-GCP               snapshot.kind dept tile 'Severe, not yet checked' undefined | list it opens: groups 0 incidents 0
+period=weekly&zone=4                     snapshot.kind area tile 'Severe, not yet checked' undefined | list it opens: groups 0 incidents 0

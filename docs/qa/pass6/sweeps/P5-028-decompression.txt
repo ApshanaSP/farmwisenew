@@ -1,0 +1,24 @@
+# P5-028 sweep: decompression without an output cap (run Thu Nov 12 14:18:33 IST 2026)
+$ grep -rnE "inflateSync|inflateRawSync|gunzipSync|unzipSync|brotliDecompressSync|createInflate|createGunzip|createUnzip|JSZip|loadAsync|xlsx|read\(.*type:" src --include=*.ts --include=*.tsx | grep -v "\.test\."
+src/lib/assistant/__tests__/golden/harness.ts:37:    JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(STORE, "tables", `${name}-${t.sha}.json.gz`))).toString("utf8")), durable);
+src/lib/aws/store.ts:139:  return JSON.parse(zlib.gunzipSync(fs.readFileSync(await download(name, t))).toString("utf8")) as Snapshot;
+src/lib/aws/store.ts:314:  return JSON.parse(zlib.gunzipSync(Buffer.from(await r.arrayBuffer())).toString("utf8")) as T;
+src/lib/aws/store.ts:471:    if (!DRY_RUN) return JSON.parse(zlib.gunzipSync(gz).toString("utf8")) as Doc;
+src/lib/aws/store.ts:474:  return JSON.parse(zlib.gunzipSync(g.reference!.gz).toString("utf8")) as Doc;
+src/lib/rehearsal/realdata.ts:16:  const j = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(CACHE(), f))).toString("utf8"));
+src/lib/rehearsal/rehearsal.golden.ts:21:  const j = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(CACHE, f))).toString("utf8"));
+src/lib/studio/connectors.ts:111:export function getTable(id: string): Table | null { try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(file(id, ".table.json.gz"))).toString("utf8")); } catch { return null; } }
+src/lib/studio/connectors.ts:113:function getHeld(id: string): Incoming[] { try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(file(id, ".held.json.gz"))).toString("utf8")); } catch { return []; } }
+src/lib/studio/formats.ts:53:      try { data = zlib.inflateRawSync(raw, { maxOutputLength: Math.min(ZIP_TOTAL, Math.max(usize, 1) + 1024) }); } catch { throw new FormatError(`"${name}" inside the ZIP could not be unpacked.`); }
+src/lib/studio/formats.ts:207:      try { data = zlib.inflateSync(data, { maxOutputLength: PDF_MAX }); } catch { try { data = zlib.inflateRawSync(data.subarray(2), { maxOutputLength: PDF_MAX }); } catch { continue; } }
+src/lib/studio/ocr.ts:170:        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+src/lib/studio/parse.ts:275:    wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
+src/lib/studio/store.ts:99:  const rows = JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".rows.json.gz"))).toString("utf8")) as DRow[];
+src/lib/studio/store.ts:110:  try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".cand.json.gz"))).toString("utf8")); } catch { return []; }
+src/lib/studio/store.ts:155:  try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".pick.json.gz"))).toString("utf8")); } catch { return null; }
+
+Reading (pass 6 lead):
+- store.ts, connectors.ts, studio/store.ts, rehearsal/*: gunzip files this app wrote itself or the store's own snapshot; not input from a user. Left.
+- studio/formats.ts:53 and :207 already cap each inflate (ZIP_TOTAL, PDF_MAX). Left.
+- studio/ocr.ts pdfImages: fixed (bitmaps option, PDF_BITMAP_BUDGET total). Callers: manu/files.ts (bitmaps: false), studio/parse.ts (default 150 MB budget).
+- studio/parse.ts:275 XLSX.read on an uploaded workbook: SheetJS unzips the workbook itself; sheetRows caps rows, not the inflated size. Not tested in this pass: listed as a lead (Studio uploads are staff-only).

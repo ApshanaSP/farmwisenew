@@ -105,7 +105,11 @@ export interface RepeatMatch {
 export interface Repeats { headline: string | null; matches: RepeatMatch[]; attachTo: string | null }
 
 /** What became of the SMS to the petitioner: sent, test (a copy went to the team inbox, not the phone), failed (tried again later), off (not set up), none (no valid mobile number). */
-export interface SmsNote { state: "sent" | "test" | "failed" | "off" | "none"; last4: string | null }
+/**
+ * What the desk is told about a petition's first SMS. "sending": still on its way. "unsure": the SMS service may have it but did not confirm,
+ * so it is not sent again. "testnumber": a live send that went to SMS_TEST_NUMBER (last4 is that number's), not to the petitioner (QA pass 6).
+ */
+export interface SmsNote { state: "sent" | "test" | "testnumber" | "sending" | "unsure" | "failed" | "off" | "none"; last4: string | null }
 
 /** What the desk shows once a petition has been approved and sent. */
 export interface Approved {

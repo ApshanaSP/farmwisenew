@@ -1,0 +1,23 @@
+# P5-030 sweep: ASCII-only word or letter patterns applied to text that may be Tamil (run Thu Nov 12 14:37:24 IST 2026)
+$ grep -rnE "\[\^a-z0-9 ?\]|\[\^a-z0-9\\s\]|\[\^a-zA-Z0-9 ?\]|\[\^\\w ?\]" chennai-grievance-portal-main/src --include=*.ts --include=*.tsx | grep -v "\.test\."
+chennai-grievance-portal-main/src/components/collector/app/assistant/Brand.tsx:25:  const g = `dq${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+chennai-grievance-portal-main/src/components/collector/app/assistant/Figure.tsx:200:const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "data";
+chennai-grievance-portal-main/src/components/collector/app/lib.tsx:286:  const id = `c${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+chennai-grievance-portal-main/src/components/Combobox.tsx:59:  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+chennai-grievance-portal-main/src/components/ui/index.tsx:289:  const id = `sp${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+chennai-grievance-portal-main/src/lib/assistant/embed.ts:26:const FILE = path.join(DIR, `incidents-${MODEL.replace(/[^a-z0-9]+/gi, "_")}`);
+chennai-grievance-portal-main/src/lib/assistant/lance.ts:27:const LEGACY = path.join(process.cwd(), "data", "embeddings", `incidents-${MODEL.replace(/[^a-z0-9]+/gi, "_")}`);
+chennai-grievance-portal-main/src/lib/assistant/pipeline.ts:228:    const words = `${d.name ?? ""} ${code}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !skip.has(w));
+chennai-grievance-portal-main/src/lib/assistant/pipeline.ts:245:    .map(([code, c]) => ({ code, score: `${c.portalName ?? ""} ${c.short}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !skip.test(w))
+chennai-grievance-portal-main/src/lib/assistant/pipeline.ts:563:    const words = `${d?.name ?? ""} ${scope.dept}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !["and", "the", "department", "dept", "g
+chennai-grievance-portal-main/src/lib/assistant/tools.ts:1155:      const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+chennai-grievance-portal-main/src/lib/manu/repeat.ts:19:// letters of any script: Tamil was stripped to nothing by [^a-z0-9], so a problem written in Tamil never shared a topic (QA pass 6, P5-030)
+chennai-grievance-portal-main/src/lib/studio/ask.ts:60:  const rowThings = new Set([...cols.filter((c) => c.role !== "measure").flatMap((c) => c.label.toLowerCase().split(/[^a-z0-9]+/)), ...String(spec.entityPlural ?? ""
+
+Reading (pass 6 lead):
+- repeat.ts words(): fixed (P5-030), letters of any script, NFC.
+- Brand.tsx, lib.tsx, ui/index.tsx: React ids. Figure.tsx, tools.ts: file-name slugs. embed.ts, lance.ts: model names. Not text matching.
+- assistant/pipeline.ts 228/245/563: department names and codes, which are English in this app. Left.
+- Lead, not fixed: Combobox.tsx:59 normalises the typed filter with [^a-z0-9]: a filter typed in Tamil becomes "" (every option shown). The lists it
+  filters (streets, localities) are English, so a Tamil filter finds nothing useful either way; listed for the owner.
+- Lead, not fixed: studio/ask.ts:60 splits column labels with [^a-z0-9]: a Tamil column label gives no words. Studio uploads with Tamil headers not tested.

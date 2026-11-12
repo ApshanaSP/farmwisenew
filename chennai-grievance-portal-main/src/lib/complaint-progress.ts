@@ -157,6 +157,7 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
     const [rows] = await pool.query<RowDataPacket[]>(`SELECT id, complaint_code, status, remarks, created_at FROM complaints WHERE complaint_code IN (?)`, [codes]);
     const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at })));
     let changed = 0;
+    const closing: Promise<void>[] = [];
     for (const r of rows) {
       const p = prog.get(String(r.complaint_code));
       if (!p) continue;
@@ -169,11 +170,13 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
         await pool.query(`UPDATE complaints SET status = ?, rejected_stage = ?, remarks = COALESCE(?, remarks) WHERE id = ?`,
           [p.status, p.rejectedStage, p.remarks, r.id]);
         changed++;
-        // a Manu's writer is told when the work on it ends; for any other complaint this does nothing
-        if (p.status === "Rejected") await sendPetitionSms(String(r.complaint_code), "closed", "rejected");
-        else if ((RESOLVED_STATUSES as readonly string[]).includes(p.status)) await sendPetitionSms(String(r.complaint_code), "closed", "done");
+        // a Manu's writer is told when the work on it ends; for any other complaint this does nothing. Side by side, not one after another:
+        // each waits up to its inline limit, so a decision over several petitions waited that limit once per petition (QA pass 6, P6-010)
+        if (p.status === "Rejected") closing.push(sendPetitionSms(String(r.complaint_code), "closed", "rejected"));
+        else if ((RESOLVED_STATUSES as readonly string[]).includes(p.status)) closing.push(sendPetitionSms(String(r.complaint_code), "closed", "done"));
       }
     }
+    await Promise.all(closing);
     return changed;
   } catch (e) {
     console.warn(`[complaints] progress not written for ${incidentIds.join(", ")}: ${(e as Error).message}`);

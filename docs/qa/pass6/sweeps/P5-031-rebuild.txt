@@ -1,0 +1,30 @@
+# P5-031 sweep: build steps that read website rows in an order that matters, and live-only facts a rebuild loses (run Thu Nov 12 14:33:16 IST 2026)
+$ grep -rn "websiteCases\|addCaseLive\|recurrence" chennai-grievance-portal-main/src --include=*.ts | grep -v test
+chennai-grievance-portal-main/src/app/api/collector/decisions/route.ts:29:  "sla_basis", "sla_hours", "verified", "growth_24h", "vulnerable", "outlet_count", "media_only", "rain_coupled", "recurrence_
+chennai-grievance-portal-main/src/app/api/complaints/route.ts:15:import { addCaseLive, onlineCase } from "@/lib/manu/cases";
+chennai-grievance-portal-main/src/app/api/complaints/route.ts:289:    await addCaseLive(onlineCase({
+chennai-grievance-portal-main/src/lib/assistant/catalog.ts:80:      growth_24h: ["measure", "new reports in the last 24 hours"], recurrence_90d: ["measure", "similar incidents here in 90 days"],
+chennai-grievance-portal-main/src/lib/aws/store.ts:329:// petitions.recurrence: how many times the writer came before, found at approval, so a new build's case keeps it (QA pass 6, P5-031; migration 0
+chennai-grievance-portal-main/src/lib/aws/store.ts:330:const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"], petitions: ["recurrence"] };
+chennai-grievance-portal-main/src/lib/collector/derive.ts:36:import { websiteCases } from "@/lib/manu/cases";
+chennai-grievance-portal-main/src/lib/collector/derive.ts:552:onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group
+chennai-grievance-portal-main/src/lib/manu/cases.ts:4: * filing reaches nobody. A case is added at once when it is filed (addCaseLive), and again to each new build as it loads (websiteCases),
+chennai-grievance-portal-main/src/lib/manu/cases.ts:34:  recurrence: number;
+chennai-grievance-portal-main/src/lib/manu/cases.ts:103:    sla_ratio: 0, sla_breached: 0, growth_24h: 0, recurrence_90d: c.recurrence, rain_coupled: 0, priority_score: c.urgent ? 90 : 45 + Math.min(c
+chennai-grievance-portal-main/src/lib/manu/cases.ts:104:    priority_reasons: [c.urgent ? "Urgent" : channelWord, c.recurrence ? `written about ${c.recurrence} time${c.recurrence === 1 ? "" : "s"} bef
+chennai-grievance-portal-main/src/lib/manu/cases.ts:120:    recurrence_90d = COALESCE(recurrence_90d, 0) + 1 ${c.urgent ? ", attention_flag = 1, attention_reason = 'Urgent petition given at the Collec
+chennai-grievance-portal-main/src/lib/manu/cases.ts:133:export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promise<string> {
+chennai-grievance-portal-main/src/lib/manu/cases.ts:166:    reporter: reporterHash(c.mobile_number || c.user_id), channel: "citizen_grievance", recurrence: 0
+chennai-grievance-portal-main/src/lib/manu/cases.ts:177:    recurrence: Math.max(0, Math.floor(Number(p.recurrence) || 0))
+chennai-grievance-portal-main/src/lib/manu/cases.ts:182:export async function websiteCases(db: DatabaseSync): Promise<void> {
+chennai-grievance-portal-main/src/lib/manu/petitions.ts:13:import { addCaseLive, petitionCase } from "./cases";
+chennai-grievance-portal-main/src/lib/manu/petitions.ts:246:    await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
+chennai-grievance-portal-main/src/lib/manu/petitions.ts:247:    const incidentId = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
+
+Reading (pass 6 lead):
+- addCaseLive callers: filePetition (petitions.ts) and the online complaint route (complaints/route.ts). Online complaints are never attached
+  and carry recurrence 0 live and on rebuild: same both ways.
+- The only live-only facts in a petition's case were recurrence (now kept on the petition) and the attach target (kept in petitions.incident_id,
+  now found on rebuild because online complaints are rebuilt first). Status and decisions come from officer_steps/collector_decisions, which
+  live in the durable store and are read by every build.
+- Not covered: a petition attached to a pipeline incident that a new build no longer has gets a case of its own (by design: attachToCase false).

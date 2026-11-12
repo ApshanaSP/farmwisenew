@@ -1,0 +1,812 @@
+{
+ "hunter": "pass4-open",
+ "tree": "claude/qa-pass6-a84a72 at 5c082b7",
+ "written": "2026-11-12T09:20:22.291Z",
+ "tally": {
+  "still-fails": 17,
+  "fixed": 58,
+  "cannot-reproduce": 5
+ },
+ "rows": [
+  {
+   "item": "PB-259",
+   "cluster": "RC-43",
+   "description": "Ask District IQ answers an unknown zone or place with the whole district, no warning",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts (RC-43 orig + variants); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts (orig, production build)",
+   "verdict": "still-fails",
+   "fixed_by": "f89dc8a (originals)",
+   "note": "Pass 4's sentences ('zone 99 complaints', 'complaints in Atlantis') now get 'I did not find ...' in-process and on 3106. Variants still answered district-wide with no word: 'how many complaints in atlantis' (lower case), 'open complaints in Gotham City', 'complaints in zone twenty'. 'ward 450' and 'Springfield' are caught.",
+   "finding": "pass4-open-08"
+  },
+  {
+   "item": "PB-260",
+   "cluster": "RC-43",
+   "description": "A date in 2030 or 'last 0 days' is silently answered as the last 90 days",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": "f89dc8a (originals)",
+   "note": "'complaints from 2030' and 'last 0 days' are refused plainly (in-process and on 3106). Still the last 90 days, district-wide, with no word: 'complaints in December 2026', 'incidents on 25 December', 'complaints in the last zero days'. 'last 500 days' is answered and labelled 500 days though the console holds about 180.",
+   "finding": "pass4-open-08, pass4-open-09"
+  },
+  {
+   "item": "PB-265",
+   "cluster": "RC-43",
+   "description": "A corrupt or renamed .xlsx/.csv is called empty, not unreadable",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/studio-parse.test.ts; chennai-grievance-portal-main/tests/qa/pass4/g2-routes.test.ts (re-run: 135 of 135 pass)",
+   "verdict": "still-fails",
+   "fixed_by": "f89dc8a (originals)",
+   "note": "Pass 4's inputs (text named .xlsx, binary named .csv) and a zip of a text file named .xlsx are now called unreadable. A .xls of plain words is still read as one empty table (P3), and a cut-off 40-byte .xlsx makes SheetJS run without returning (90 s and more) on the server's thread (P0).",
+   "finding": "pass4-open-04, pass4-open-05"
+  },
+  {
+   "item": "PB-269",
+   "cluster": "RC-43",
+   "description": "Console: an unknown zone (99, -1, abc) is ignored and the whole city shown",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts (overview?zone=99 -> 400); chennai-grievance-portal-main/tests/qa/pass4/g2-routes.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "Sibling still open: /api/collector/conflicts?period=yearly answers 200 with the daily body (the one route that reads ?period= with no refuseBadFilter).",
+   "finding": "pass4-open-06"
+  },
+  {
+   "item": "PB-270",
+   "cluster": "RC-43",
+   "description": "Officer list: an unknown tab (returned) shows the New tab",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts (tab=returned -> 400 'Tab \"returned\" is not one of ...'); chennai-grievance-portal-main/tests/qa/pass4/g2-routes.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-261",
+   "cluster": "RC-44",
+   "description": "'how many severe' gets a headline led by Low",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "3106: 'Severe: 126 open incidents (Low leads with 884)'. 'how many critical incidents this week' also leads with the level asked.",
+   "finding": null
+  },
+  {
+   "item": "PB-262",
+   "cluster": "RC-44",
+   "description": "A percentage question gets an incident list",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": "f89dc8a (original)",
+   "note": "'percentage of resolved complaints' -> '76.8% of incidents are resolved' (3106). Variant: 'what percentage of complaints were resolved within the deadline' -> '78% ... are resolved', the deadline part dropped silently; 'ratio of open to closed incidents' -> the resolved share.",
+   "finding": "pass4-open-11"
+  },
+  {
+   "item": "PB-305",
+   "cluster": "RC-44",
+   "description": "'Save this workspace ... and reopen last week's version' saves nothing and shows counts",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "Refused with where to do it; 'save this dashboard as my Monday view' and 'keep this layout for tomorrow's meeting' give no figures either.",
+   "finding": null
+  },
+  {
+   "item": "PB-306",
+   "cluster": "RC-44",
+   "description": "'Show every source and application record used to create this briefing' returns KPIs",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "'which datasets did you use to make this answer?' gives no figures either.",
+   "finding": null
+  },
+  {
+   "item": "PB-307",
+   "cluster": "RC-44",
+   "description": "'List the taluks with the highest number of unresolved incidents last month' returns one total",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "3106: 'Tondiarpet (190), Mambalam (166), Mylapore (159), Thiruvottiyur (136), Sholinganallur (128)'. The scope line says 'Last 30 days' for 'last month' (pass 4's sweep left this open).",
+   "finding": null
+  },
+  {
+   "item": "PB-330",
+   "cluster": "RC-44",
+   "description": "With no model key, a forecast or a letter to draft gets an unrelated confident answer",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-ask.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": "f89dc8a (originals)",
+   "note": "'predict next week's complaints' and 'draft a letter to the commissioner' are refused (3106). Variants still get incident lists or counts: 'what will the backlog look like at the end of the month', 'draft a reply to the citizen who complained about garbage in Adyar', 'prepare a note for the Chief Secretary on flooding'.",
+   "finding": "pass4-open-10"
+  },
+  {
+   "item": "PB-179",
+   "cluster": "RC-35",
+   "description": "Figures on Ask District IQ, Jarvis and the console lag a decision",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-cache.test.ts (real decisions route, no time passes: tool 1167->1164, Jarvis 1167->1164, console 1167->1164, card 1,167->1,164); chennai-grievance-portal-main/tests/qa/pass4/decision-matrix.test.ts DECISIONS-12",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": "In-process only (one Node process). Not checked on 3106: a decision there needs the step-up password and would change shared data.",
+   "finding": null
+  },
+  {
+   "item": "PB-157",
+   "cluster": "RC-35",
+   "description": "(duplicate of PB-179) a decision does not reach Jarvis's case screen or a developing story at once",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-10 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "f89dc8a",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-158",
+   "cluster": "RC-15",
+   "description": "Two complaints are called 'hitting a lot of residents'",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-11 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "bfcc57a",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-161",
+   "cluster": "RC-15",
+   "description": "A Tamil answer about a list says English sentences",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-17 (pass); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts (8 Tamil/Tanglish questions: no English sentence)",
+   "verdict": "fixed",
+   "fixed_by": "bfcc57a, 02fab5d",
+   "note": "The one flagged line was a record's own address, which stays as written (owner's decision OPEN-12). An English department name remains in the 'Held by' tile, see PB-223.",
+   "finding": null
+  },
+  {
+   "item": "PB-174",
+   "cluster": "RC-15",
+   "description": "(duplicate of PB-207) a Tamil answer carries an English sentence or a made-up spelling",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-understanding.test.ts audit-understanding-17 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8, bfcc57a",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-207",
+   "cluster": "RC-15",
+   "description": "The reply is in the wrong language: the brief's own lines are English; detectLang misses Tanglish",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/grader/open-baseline.findings.test.ts open-baseline-46; chennai-grievance-portal-main/tests/qa/pass4/g2-real.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-regress.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": "02fab5d, 66f8ab4, fd6c275 (the open-set rows)",
+   "note": "The 9 open-set rows of open-baseline-46 now pass (its it.fails marker is stale: 'Expect test to fail'), and 7 of 8 new Tamil/Tanglish questions carry no English sentence. But pass 4's own g2-real test 'Tanglish, the district' fails on this tree: the Tamil district brief says 'PWD Water Resources, அண்ணா நகர்: ...' twice (two cases read the same) with the body in English.",
+   "finding": "pass4-open-15, pass4-open-12"
+  },
+  {
+   "item": "PB-223",
+   "cluster": "RC-15",
+   "description": "A department with no Tamil name gets the Tamil suffix glued on",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-7 (pass); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts (ta count, tanglish count)",
+   "verdict": "still-fails",
+   "fixed_by": "bfcc57a (DIST-DM, TNPCB)",
+   "note": "Variant: the case list's 'Held by' tile builds its Tamil label from the English department name: 'PWD Water Resources வசம் 2' (DEPT_TA has the Tamil name).",
+   "finding": "pass4-open-12"
+  },
+  {
+   "item": "PB-224",
+   "cluster": "RC-15",
+   "description": "'59 severe cases the last 30 days', '1 கடுமையான சம்பவங்கள்'",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-16 (pass); chennai-grievance-portal-main/tests/qa/pass4/audit-understanding.test.ts audit-understanding-20 (pass); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": "bfcc57a (the reported lines)",
+   "note": "Variant: a Tamil zone brief says '... 3 கெடு தாண்டியவை; 1 கடுமையானவை' (plural with one).",
+   "finding": "pass4-open-13"
+  },
+  {
+   "item": "PB-230",
+   "cluster": "RC-15",
+   "description": "Lines that do not read as English",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-understanding.test.ts audit-understanding-20 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "bfcc57a",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-250",
+   "cluster": "RC-15",
+   "description": "'1357 incidents reports this week', '112 incidents of incidents'",
+   "probe": "code read: src/lib/thunai/screens.ts:990 (generic subject); same-number-21 starts its own server and was not run",
+   "verdict": "fixed",
+   "fixed_by": "bfcc57a",
+   "note": "Not run: tests/qa/pass4/same-number.test.ts starts a server (server.mjs) - for the lead.",
+   "finding": null
+  },
+  {
+   "item": "PB-281",
+   "cluster": "RC-15",
+   "description": "The reminder card shows a raw UTC string",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts JARVIS1-6 (re-run: pass); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts (3 reminders: '6 Nov, 5:00 pm', '7 Nov, 9:30 am', Tamil 'நவ. 7, 9:00 முற்பகல்')",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-282",
+   "cluster": "RC-15",
+   "description": "The Tamil 'forget' confirmation is the fragment 'மற'",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts JARVIS1-7 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-299",
+   "cluster": "RC-15",
+   "description": "Status 'Open' shows as the verb 'திற' in Tamil",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts (TA_CTX.status.Open = திறந்துள்ளது; status chips carry data-i18n-ctx)",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": "Code read only; the Tamil Take action dialog was not opened in a browser (needs sign-in).",
+   "finding": null
+  },
+  {
+   "item": "PB-300",
+   "cluster": "RC-15",
+   "description": "Fixed labels on the Tamil Briefing stay English",
+   "probe": "code read: src/lib/i18n/ta.ts Briefing labels",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": "Not seen in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-302",
+   "cluster": "RC-15",
+   "description": "'Severe severity' wording",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-302",
+   "verdict": "still-fails",
+   "fixed_by": "02fab5d (home cards, sevIncident)",
+   "note": "The home 'Severe incident' card is fixed; My Tasks still says 'With you because: Severe severity' (intel.ts:170).",
+   "finding": "pass4-open-03"
+  },
+  {
+   "item": "PB-303",
+   "cluster": "RC-15",
+   "description": "Raw ISO date '2026-11-07' in the cyclone popover",
+   "probe": "code read: AlertBar.tsx:56,130 whenOrDay (lib.tsx:80)",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": "Not seen in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-317",
+   "cluster": "RC-15",
+   "description": "A High case says 'Not severe' in the close box",
+   "probe": "code read: src/components/officer/Report.tsx:121 sevLabel; no 'Not severe' literal in src",
+   "verdict": "fixed",
+   "fixed_by": "02fab5d",
+   "note": "Not seen in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-327",
+   "cluster": "RC-15",
+   "description": "Tamil mode is largely English on citizen and officer pages",
+   "probe": "none",
+   "verdict": "cannot-reproduce",
+   "fixed_by": null,
+   "note": "Needs the AI translator key (absent by rule in QA) and signed-in pages in a browser; pass 4 called it partly the environment.",
+   "finding": null
+  },
+  {
+   "item": "PB-181..PB-195",
+   "cluster": "RC-36",
+   "description": "Unit tests with shared state, order dependence or wall-clock limits (decide, briefturn, connectors, stt, connect, photo and sources routes)",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts RC-36 (read from the files)",
+   "verdict": "fixed",
+   "fixed_by": "2b2e188",
+   "note": "Static reading only: each connectors test builds its own connector (connectorThrough), stt.test.ts resets the ledger in beforeEach, the route tests empty h.written / h.calls. PB-182 is mitigated, not removed: briefturn still asserts a wall-clock p95 < 20 ms, now the best of five rounds. Rule 3 forbids running the unit suite here: a shuffled run of these files is for the lead.",
+   "finding": null
+  },
+  {
+   "item": "PB-253",
+   "cluster": "RC-36",
+   "description": "Green tests guard a copy of the code (followUpMoves)",
+   "probe": "code read: useMapAsk.ts:15 imports followUpMoves from lib/map/camera",
+   "verdict": "fixed",
+   "fixed_by": "2b2e188",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-332",
+   "cluster": "RC-36",
+   "description": "data-testid=\"state\" used twice, 11 voice e2e specs fail on the dev console",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-332",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "Harness.tsx:112 and Hud.tsx:162 both still carry it; Playwright specs not run (need a server).",
+   "finding": "pass4-open-02"
+  },
+  {
+   "item": "PB-301",
+   "cluster": "RC-46",
+   "description": "Cyclone banner popover stays open over the Take action dialog",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts RC-46 (outside press and Escape close it)",
+   "verdict": "fixed",
+   "fixed_by": "6473d65",
+   "note": "Source rule only; not opened in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-313",
+   "cluster": "RC-46",
+   "description": "Details step wider than a 360 px screen after a photo and text",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts RC-46 (grid base columns)",
+   "verdict": "fixed",
+   "fixed_by": "6473d65",
+   "note": "Source rule only; the signed-in page was not opened.",
+   "finding": null
+  },
+  {
+   "item": "PB-318",
+   "cluster": "RC-46",
+   "description": "Citizen header overflows at 768 and 1280",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts RC-46; browser: docs/qa/pass6/evidence/pass4-open/rc46-public-pages.json",
+   "verdict": "fixed",
+   "fixed_by": "6473d65",
+   "note": "/login, /register, /forgot-password: scrollWidth equals the width at 360, 768, 1280 on 3106. The signed-in pages (file-complaint, track, profile) were not opened (sign-in needs a password).",
+   "finding": null
+  },
+  {
+   "item": "PB-319",
+   "cluster": "RC-46",
+   "description": "At 360 the floating chat button covers the last tab; the Jarvis pill covers the map controls",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts RC-46 (ask-fab 76 px)",
+   "verdict": "fixed",
+   "fixed_by": "6473d65",
+   "note": "Merge note: main moved the earlier-questions panel (.jq) out of .dic, so pass 4's phone rule '.dic:not(.fit) .jq { bottom: 132px }' (jarvisswitch.css:70) no longer matches; the panel uses .jq.jq-tall (194 px) at 360. Not seen in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-328",
+   "cluster": "RC-46",
+   "description": "Officer at 360 in Tamil: hero title cut; period labels clip at 768",
+   "probe": "code read: officer.css (6473d65)",
+   "verdict": "fixed",
+   "fixed_by": "6473d65",
+   "note": "Not seen in a browser.",
+   "finding": null
+  },
+  {
+   "item": "PB-198",
+   "cluster": "RC-38",
+   "description": "A news result in the search box opens an incident the build took out",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/invariants-app.test.ts INV-1 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "713f8d3",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-199",
+   "cluster": "RC-38",
+   "description": "The search box shows a private person's address and mobile as a news headline",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/invariants-app.test.ts INV-2 and chennai-grievance-portal-main/tests/qa/pass4/rc38-news-privacy.test.ts (re-run: 7 of 7 pass)",
+   "verdict": "fixed",
+   "fixed_by": "713f8d3",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-200",
+   "cluster": "RC-38",
+   "description": "The profile form accepts a ward of another zone",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/invariants-app.test.ts INV-6 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "713f8d3",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-234",
+   "cluster": "RC-38",
+   "description": "A forecast stored as an incident is 'open for -1 hours'",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/invariants-app.test.ts INV-5 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "713f8d3",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-314",
+   "cluster": "RC-38",
+   "description": "The officer search cannot find a complaint by its number",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-rc38-15.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts; chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "5 of 5 complaint numbers linked into a department's incident are not found (the incident id is). On 3106 a code was found only where the incident id contains it (INC-W-2026-153CHY).",
+   "finding": "pass4-open-07"
+  },
+  {
+   "item": "PB-218",
+   "cluster": "RC-37",
+   "description": "Status changes never reach the dataset files: appendStatusChangeToDataset has no caller",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-218",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "Pass 4 u2's row says fixed but talks about dropVault, another function. c9e4f5e did not wire this one.",
+   "finding": "pass4-open-01"
+  },
+  {
+   "item": "PB-251",
+   "cluster": "RC-37",
+   "description": "npm run lint never worked: no ESLint config",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-251 (.eslintrc.json present); pass 6 STATE: next lint 0 errors",
+   "verdict": "fixed",
+   "fixed_by": "c9e4f5e",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-252",
+   "cluster": "RC-37",
+   "description": "One dead file and 87 dead names",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-252 (AuthHeroPanel.tsx gone)",
+   "verdict": "fixed",
+   "fixed_by": "c9e4f5e",
+   "note": "Only the dead file was checked, not the 87 names.",
+   "finding": null
+  },
+  {
+   "item": "PB-254",
+   "cluster": "RC-37",
+   "description": "animejs unused; scripts rely on packages not listed",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts PB-254",
+   "verdict": "fixed",
+   "fixed_by": "c9e4f5e",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-304, PB-312",
+   "cluster": "RC-37",
+   "description": "The --frozen QA server rejects staff sign-in in a browser (harness)",
+   "probe": "none",
+   "verdict": "cannot-reproduce",
+   "fixed_by": null,
+   "note": "Harness only (freeze-clock.cjs and edge middleware); needs a --frozen server, which this hunter may not start.",
+   "finding": null
+  },
+  {
+   "item": "PB-316",
+   "cluster": "RC-48",
+   "description": "Closing a case logs an HTTP 428 in the browser console before the password step",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/live-3106.test.ts (officer report: with x-diq-confirm: json -> 200 + x-diq-confirm: required; without -> 428; nothing saved); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "da94e35",
+   "note": "Server side seen on the production build. The browser console itself was not watched (needs sign-in); pass 5's P5-010 made the click-feedback layer read the soft answer.",
+   "finding": null
+  },
+  {
+   "item": "citizen date: track-complaints/page.tsx:38",
+   "cluster": "RC-16 (handed on)",
+   "description": "fmtDate printed with the runtime zone (server and browser disagree)",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts (istDate import; istDate on a UTC process prints 7 Nov for 20:00Z); class guard over all of src: 0 unzoned date prints",
+   "verdict": "fixed",
+   "fixed_by": "86e3668",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "citizen date: ComplaintTypeSelector.tsx:284",
+   "cluster": "RC-16 (handed on)",
+   "description": "The complaint-type source note's date printed with the runtime zone",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/static.test.ts",
+   "verdict": "fixed",
+   "fixed_by": "86e3668",
+   "note": "Also re-run: tests/qa/pass4/hunt-citizen.test.ts (CitizenHome under UTC) and flaky-parsewhen-tz.test.ts pass; 3106's citizen home shows today's Chennai date ('Thursday, 12 November'). The citizen complaint list on 3106 answered 401 to the QA citizen cookie, so its created_at format was not read.",
+   "finding": null
+  },
+  {
+   "item": "open-set row ta-brief-20",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not wrong.",
+   "finding": null
+  },
+  {
+   "item": "open-set row ta-explain-14",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not right: it answers 'I do not hold yesterday alone. What should I show?' though the data has yesterday.",
+   "finding": null
+  },
+  {
+   "item": "open-set row ta-explain-16",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not wrong.",
+   "finding": null
+  },
+  {
+   "item": "open-set row ta-noisy-07",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not right: it answers 'I do not hold yesterday alone. What should I show?' though the data has yesterday.",
+   "finding": null
+  },
+  {
+   "item": "open-set row tanglish-explain-08",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not wrong.",
+   "finding": null
+  },
+  {
+   "item": "open-set row tanglish-explain-20",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not wrong.",
+   "finding": null
+  },
+  {
+   "item": "open-set row tanglish-numbers-11",
+   "cluster": "7 rows safe->wrong",
+   "description": "Open-set row that fell from safe to wrong after pass 4 lane a",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-seven.test.ts (pass 4 grader, real path, frozen clock; docs/qa/pass6/evidence/pass4-open/seven-rows.json)",
+   "verdict": "fixed",
+   "fixed_by": "8d32fa8",
+   "note": "Graded safe, not wrong.",
+   "finding": null
+  },
+  {
+   "item": "PB-003",
+   "cluster": "RC-10 (P0)",
+   "description": "'yesterday (5 Nov)' gives 4 Nov's figures",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-2 (re-run: pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 lane e RC-10 (480e147, 09a4a32)",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-005",
+   "cluster": "RC-29 (P0)",
+   "description": "The case that 'matters most' is the least severe",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-4 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 lane d RC-29 (a635952)",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-006",
+   "cluster": "RC-07 (P0)",
+   "description": "A place named in 'explain' is dropped when a topic was heard",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-5 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 lanes a/g2 RC-07 (a776e52, 8c6d934)",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-007",
+   "cluster": "RC-10 (P0)",
+   "description": "In Tanglish and Tamil an overdue or open count is said as every incident reported",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts AUD-NF-22 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 lane e RC-10 (480e147)",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-022",
+   "cluster": "RC-07 (P0)",
+   "description": "With a body's brief open, other words re-scope the brief",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/audit-understanding.test.ts audit-understanding-7 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-07",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-027",
+   "cluster": "RC-28 (P0)",
+   "description": "An officer's own close is shown as 'Collector verified'",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/decision-matrix.test.ts DECISIONS-5 (re-run: 50 of 50 pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 lane d RC-28 (5d04c42)",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-032",
+   "cluster": "RC-05 (P0)",
+   "description": "The same question gives different facts in another language or order",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/metamorphic.test.ts (KNOWN pairs still fail)",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "meta-words-2: m03:ta, m03:tanglish, m08:ta, m18:ta, m23:ta, m27:ta still differ.",
+   "finding": "pass4-open-18"
+  },
+  {
+   "item": "PB-033",
+   "cluster": "RC-05 (P0)",
+   "description": "'Breached their deadline in Adyar' gives the zone total",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/metamorphic.test.ts meta-words-4 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-05",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-034",
+   "cluster": "RC-05 (P0)",
+   "description": "Ward 172 is ignored: the district severe list is given",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/metamorphic.test.ts meta-words-5 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-05",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-035",
+   "cluster": "RC-05 (P0)",
+   "description": "Stray animal complaints in Valasaravakkam answer 66 drainage cases",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/metamorphic.test.ts meta-words-7 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-05",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-042",
+   "cluster": "RC-04 (P0)",
+   "description": "An order to change a record gets a brief on that body",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/grader/open-baseline.findings.test.ts open-baseline-7 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-04",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-043",
+   "cluster": "RC-06 (P0)",
+   "description": "en-brief-09: 'last month' is answered as the current window",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-p0rows.test.ts; open-baseline-8 (still it.fails, still fails)",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "'Tondiarpet report. Last month.' -> 'last 30 days', graded wrong and confident.",
+   "finding": "pass4-open-16"
+  },
+  {
+   "item": "PB-049",
+   "cluster": "RC-06 (P0)",
+   "description": "en-numbers-06: an up-or-down question gets a list",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-p0rows.test.ts; open-baseline-14 (still it.fails, still fails)",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "'Garbage complaints, up or down from last month?' -> a list of 616 cases.",
+   "finding": "pass4-open-17"
+  },
+  {
+   "item": "PB-050",
+   "cluster": "RC-06 (P0)",
+   "description": "tanglish-numbers-03: an up-or-down question loses what it asks",
+   "probe": "open-baseline-15 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-06",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-052",
+   "cluster": "RC-05 (P0)",
+   "description": "tanglish-list-01: an open-only list comes with closed cases",
+   "probe": "open-baseline-17 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-05",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-053",
+   "cluster": "RC-05 (P0)",
+   "description": "en-list-18: 'unresolved' goes to the fill-in-the-blanks screen",
+   "probe": "open-baseline-18 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "pass 4 RC-05",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-288",
+   "cluster": "RC-05 (P0)",
+   "description": "Tamil 'மண்டலம் 5' is ignored",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts jarvis2-1 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "8c6d934",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-289",
+   "cluster": "RC-05 (P0)",
+   "description": "'zone five' is ignored",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts jarvis2-2 (pass)",
+   "verdict": "fixed",
+   "fixed_by": "8c6d934",
+   "note": null,
+   "finding": null
+  },
+  {
+   "item": "PB-061..PB-066",
+   "cluster": "RC-29 (P0)",
+   "description": "Briefing, PDF/CSV and tile counts disagree (same-number-4, -6, -7, -8, -9, -10)",
+   "probe": "none run",
+   "verdict": "cannot-reproduce",
+   "fixed_by": null,
+   "note": "Not run: tests/qa/pass4/same-number.test.ts and same-number-brief start their own server (server.mjs). For the lead.",
+   "finding": null
+  },
+  {
+   "item": "PB-009..PB-011",
+   "cluster": "RC-19 (P0)",
+   "description": "'read them' speaks a record's title or place field ungated",
+   "probe": "none run",
+   "verdict": "cannot-reproduce",
+   "fixed_by": null,
+   "note": "Not run: tests/qa/pass4/audit-privacy_injection.realgate.test.ts writes into docs/qa/pass4/evidence in afterAll (rule 1). For the lead.",
+   "finding": null
+  },
+  {
+   "item": "PB-013, PB-014",
+   "cluster": "RC-28, RC-11 (P0)",
+   "description": "Officer console feed counts disagree; 'are the feeds live' answered with other figures",
+   "probe": "none run",
+   "verdict": "cannot-reproduce",
+   "fixed_by": null,
+   "note": "Not run: tests/qa/pass4/audit-ui_honesty.test.ts starts its own server. For the lead.",
+   "finding": null
+  },
+  {
+   "item": "g2-real 'last week' in three languages (PB-043..PB-050 class, pass 4's own test)",
+   "cluster": "RC-06/RC-05",
+   "description": "Pass 4's g2-real test 'weekly: the same window whatever the language' (overdue cases last week)",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/g2-real.test.ts (re-run: 81 pass, 2 fail); chennai-grievance-portal-main/tests/qa/pass6/probes/pass4-open/tests/qa/pass4/p6-regress.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "Regressed after pass 4's lane g2 recorded it green: Tamil gives up without the model, Tanglish drops the overdue filter. The other g2-real failure is the Tamil brief's repeated line (PB-207).",
+   "finding": "pass4-open-14"
+  },
+  {
+   "item": "other open-baseline it.fails",
+   "cluster": "RC-01..RC-07",
+   "description": "open-baseline-1..6, 9..11, 13, 16, 19..45 (pass 4 P1/P2 rows) are still it.fails and still fail",
+   "probe": "chennai-grievance-portal-main/tests/qa/pass4/grader/open-baseline.findings.test.ts",
+   "verdict": "still-fails",
+   "fixed_by": null,
+   "note": "Not mapped one by one (outside this list). open-baseline-12 (ta-list-20) and -46 now pass: their it.fails markers are stale.",
+   "finding": null
+  }
+ ]
+}

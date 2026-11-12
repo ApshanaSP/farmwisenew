@@ -39,6 +39,9 @@ const clock = (t: string) => {
 function smsLine(s: SmsNote): string {
   if (s.state === "sent") return `An SMS was sent to the number ending ${s.last4}.`;
   if (s.state === "test") return `Test SMS sent to the team inbox, for the number ending ${s.last4}. Nothing went to the phone.`;
+  if (s.state === "testnumber") return `Test SMS sent to the test number ending ${s.last4}. Nothing went to the petitioner's phone.`;
+  if (s.state === "sending") return "The SMS is on its way. Open this petition again in a minute to see if it went.";
+  if (s.state === "unsure") return "The SMS service did not confirm this SMS. It is not sent again on its own, so the petitioner is not texted twice.";
   if (s.state === "failed") return "The SMS could not be sent just now. It will be tried again.";
   if (s.state === "none") return "No SMS was sent because this petition has no valid mobile number.";
   return "No SMS was sent because the SMS service is not set up yet.";

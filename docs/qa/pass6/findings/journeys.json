@@ -1,0 +1,24 @@
+[
+  {
+    "id": "journeys-01",
+    "severity": "P2",
+    "area": "officer console / case workflow",
+    "title": "An officer cannot add a note to a case: the only text they can write is the completion remarks when they close it",
+    "where": "chennai-grievance-portal-main/src/components/officer/Drawer.tsx:188; chennai-grievance-portal-main/src/app/api/officer/grievances/[id]/route.ts:23",
+    "repro": "Not run in the browser (the journeys never ran, see the report). Read the code: the drawer footer (Drawer.tsx:188 onward) offers only Approve, Complete & close or Complete & send. The step route accepts only `z.object({ step: z.literal(\"approve\") })` (route.ts:23).",
+    "evidence": "No note or comment control in the officer components (grep for note/addNote finds nothing outside reportPdf.ts). Between approving and closing, an officer has no way to record progress such as a site visit or a part on order.",
+    "cause": "The workflow has only approve and report steps. There is no step for a note.",
+    "confidence": "medium"
+  },
+  {
+    "id": "journeys-02",
+    "severity": "P3",
+    "area": "public /track page",
+    "title": "Once /track shows a status, the page has no way to check another number or go back to the form",
+    "where": "chennai-grievance-portal-main/src/app/track/page.tsx:37",
+    "repro": "Not run in the browser. Read the code: the form renders only when `!view` (line 37). The result card (line 45 onward) has no button that clears `view`, so checking a second slip means reloading the page.",
+    "evidence": "Both the form and the result card are in the code shown above. Nothing in the result card calls setView(null).",
+    "cause": "The page has no reset or 'check another' control.",
+    "confidence": "medium"
+  }
+]

@@ -1,0 +1,25 @@
+onboard http://127.0.0.1:3151/a -> 200 last=stop  | listener hits so far: 0
+onboard http://[::1]:3151/b -> 200 last=stop  | listener hits so far: 0
+onboard http://0x7f000001:3151/c -> 200 last=stop  | listener hits so far: 0
+onboard http://2130706433:3151/d -> 200 last=stop  | listener hits so far: 0
+onboard http://0177.0.0.1:3151/e -> 200 last=stop  | listener hits so far: 0
+onboard http://127.1:3151/f -> 200 last=stop  | listener hits so far: 0
+onboard http://[::ffff:7f00:1]:3151/g -> 200 last=stop  | listener hits so far: 0
+onboard http://[::ffff:127.0.0.1]:3151/h -> 200 last=stop  | listener hits so far: 0
+onboard http://0.0.0.0:3151/i -> 200 last=stop  | listener hits so far: 0
+onboard http://[::]:3151/j -> 200 last=stop  | listener hits so far: 0
+onboard http://LOCALHOST:3151/l -> 200 last=stop  | listener hits so far: 0
+onboard http://[0:0:0:0:0:ffff:7f00:1]:3151/m -> 200 last=stop  | listener hits so far: 0
+onboard http://[::127.0.0.1]:3151/n -> 200 last=stop  | listener hits so far: 0
+onboard http://[64:ff9b::7f00:1]:3151/o -> 200 last=stop  | listener hits so far: 0
+onboard 127.0.0.1:3151/q -> 200 last=stop  | listener hits so far: 0
+listener hits: []
+citizenA GET /api/complaints/media/..%2F..%2F..%2Fpackage.json -> 404 {"error":"Not found"}
+citizenA GET /api/complaints/media/%2e%2e%5c%2e%2e%5cpackage.json -> 404 {"error":"Not found"}
+collector GET /api/manu/photos/..%2F..%2F..%2Fpackage.json -> 404 Not found
+collector GET /api/officer/photos/..%2F..%2F/package.json -> 404 {"error":"Not found"}
+collector GET /api/officer/photos/20261101-0123456789abcdef/..%2F..%2F..%2Fpackage.json -> 404 {"error":"Not found"}
+collector GET /api/rehearsal/photo/..%5C..%5C/package.json -> 404 {"error":"Not found"}
+manu GET /api/manu/photos/%25.jpg -> 404 Not found
+anon GET /dev/assistant -> 200 bytes=15190 incidentIds=0 refsChunk=false
+anon GET /_next/static/chunks/app/dev/assistant/page-68e0345483d7b658.js -> 200 bytes=59279 incidentIds=11 refsChunk=false

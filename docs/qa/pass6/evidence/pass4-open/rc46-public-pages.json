@@ -1,0 +1,14 @@
+{
+  "what": "RC-46 (PB-318) re-check limited to pages that need no sign-in: document.documentElement.scrollWidth against innerWidth, Claude's built-in browser pane, viewport emulation, production build on 127.0.0.1:3106, 12 Nov 2026 about 14:45 IST. The signed-in citizen pages (file-complaint, track, profile), the Collector console at 360 (PB-319), the officer pages (PB-328) and the cyclone popover (PB-301) were not opened: signing in through the browser would mean typing a password, which this hunter does not do.",
+  "results": [
+    { "page": "/login", "width": 360, "scrollWidth": 360 },
+    { "page": "/register", "width": 360, "scrollWidth": 360 },
+    { "page": "/login", "width": 768, "scrollWidth": 768 },
+    { "page": "/register", "width": 768, "scrollWidth": 768 },
+    { "page": "/forgot-password", "width": 768, "scrollWidth": 768 },
+    { "page": "/ (redirects to /login)", "width": 768, "scrollWidth": 768 },
+    { "page": "/login", "width": 1280, "scrollWidth": 1280 },
+    { "page": "/register", "width": 1280, "scrollWidth": 1280 }
+  ],
+  "console_errors": "only six from this hunter's own first attempt to load the pages in hidden iframes, which the app's CSP (frame-src 'none') blocked, as it should; none from the pages themselves"
+}

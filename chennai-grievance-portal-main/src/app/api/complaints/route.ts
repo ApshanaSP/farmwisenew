@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { withTransaction } from "@/lib/db";
-import { getSessionFromCookies, getActiveSession } from "@/lib/auth";
+import { getSessionFromCookies, getActivePortalSession } from "@/lib/auth";
 import { complaintSubmitSchema } from "@/lib/validators";
 import { generateUniqueComplaintCode } from "@/lib/complaint-code";
 import { resolveWard } from "@/lib/wards";
@@ -34,8 +34,10 @@ async function sameComplaintJustFiled(userId: number, title: string, description
 export async function POST(req: NextRequest) {
   let release: (() => void) | null = null;
   try {
-    const session = await getActiveSession();
-    if (!session) {
+    // filing an online complaint is the citizen's, as the pages that file one are citizen-only: the Collector, an officer or the petition
+    // desk used to file one under their own staff account by calling this route directly (QA pass 6, P6-003)
+    const session = await getActivePortalSession("citizen");
+    if (!session || session.role !== "citizen") {
       return NextResponse.json(
         { error: "Please sign in to file a complaint." },
         { status: 401 }

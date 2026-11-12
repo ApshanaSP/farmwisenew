@@ -1,0 +1,8 @@
+period=weekly                            200 book.stats ["now","scope","book","briefing","deptActions","gaps","trends","taluks","talukUnassigned","patterns","review","markets"]
+   tiles: reported 286 ongoing 282 overdue 184 resolved 204 severe 10 complaints 180 tasks 0
+period=weekly&taluk=TLK-TDP              200 book.stats ["now","scope","book","briefing","deptActions","gaps","trends","taluks","talukUnassigned","patterns","review","markets"]
+   tiles: reported 30 ongoing 30 overdue 22 resolved 15 severe 0 complaints 22 tasks 0
+period=monthly&cat=FLOOD_WATERLOGGING    200 book.stats ["now","scope","book","briefing","deptActions","gaps","trends","taluks","talukUnassigned","patterns","review","markets"]
+   tiles: reported 538 ongoing 223 overdue 223 resolved 411 severe 87 complaints 251 tasks 0
+period=monthly&dept=GCC-ELE&zone=9       200 book.stats ["now","scope","book","briefing","deptActions","gaps","trends","taluks","talukUnassigned","patterns","review","markets"]
+   tiles: reported 33 ongoing 8 overdue 8 resolved 34 severe 0 complaints 8 tasks 0

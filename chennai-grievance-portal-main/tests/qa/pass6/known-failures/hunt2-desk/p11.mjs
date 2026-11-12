@@ -1,0 +1,10 @@
+import { call, P, j, track, mob, upload, file, base, repeats } from "./h.mjs";
+const out = {};
+const m = mob();
+const A = await upload();
+out.filed = await file(A.id, base({ name: "Late Joiner", mobile: m, problem: "Sewage overflowing on Jawahar Street, smell", dept: "CMWSSB", attachTo: "INC-W-2026-766XJA" }));
+out.track = await track(out.filed.body.approved?.code, m.slice(-4));
+const ap = await call(P, "officerA", "POST", "/api/officer/grievances/INC-W-2026-482UHM", { body: { step: "approve" } });
+out.approveOnline = { status: ap.status, body: j(ap) };
+out.trackJoinedPet = await track("2026-138SZX", null, undefined);
+console.log(JSON.stringify(out).slice(0, 4000));

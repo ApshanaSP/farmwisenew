@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { getSessionFromCookies, resolvePortal, revokeSessions, setAuthCookie } from "@/lib/auth";
 import { signToken } from "@/lib/jwt";
+import { isStaff } from "@/lib/security/factors";
+import { staffHours } from "@/lib/security/session";
 import { roleToPortal } from "@/lib/session-cookies";
 import { changePasswordSchema } from "@/lib/validators";
 import { RowDataPacket } from "mysql2";
@@ -41,7 +43,9 @@ export async function POST(req: NextRequest) {
   const portal = (await resolvePortal()) ?? roleToPortal(session.role);
   if (portal) {
     const { userId, email, role, departmentId } = session;
-    await setAuthCookie(res, await signToken({ userId, email, role, departmentId, tv }), portal);
+    // the account's own session length: a staff account's new session lasted the citizen's 7 days, not 12 hours (QA pass 6, P6-016)
+    const staff = isStaff(role);
+    await setAuthCookie(res, await signToken({ userId, email, role, departmentId, tv }, staff ? `${staffHours()}h` : undefined), portal, staff ? staffHours() * 3600 : undefined);
   }
   return res;
 }

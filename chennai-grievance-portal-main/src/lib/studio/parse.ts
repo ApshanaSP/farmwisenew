@@ -10,7 +10,7 @@
  * become YYYY-MM-DD, so every later step sees one plain table.
  */
 import * as XLSX from "xlsx";
-import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipKind } from "@/lib/studio/formats";
+import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
 import { isImage } from "@/lib/studio/ocr";
 import { excelDate, tidy } from "@/lib/studio/values";
 
@@ -270,6 +270,9 @@ export function feedLinkIn(html: string, base: string): string | null {
 
 /** Every sheet of a workbook that holds a table, the largest first. */
 function excelAll(buf: Buffer): Table[] {
+  // a workbook is a ZIP: a cut-off one (the first 30 or 40 bytes) made XLSX.read run without returning, on the server's own thread (P6-008)
+  // (any "PK" start is read as a ZIP by SheetJS, not only a local header: a cut-off "PK\x07\x08..." named .xls hung it too: reviewer 3)
+  if ((isZip(buf) || (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b)) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
   let wb: XLSX.WorkBook;
   try {
     wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
@@ -550,6 +553,8 @@ export async function parseAllAsync(buf: Buffer, name: string, contentType = "",
     const mean = words ? Math.round(conf / words) : 0;
     return [{ ...t, sheet: null, sheets: [], format: e.kind === "image" ? "html" : "pdf", part: e.kind === "image" ? "read from a picture" : `read from ${pages.images.length} scanned ${pages.images.length === 1 ? "page" : "pages"}`,
       notes: [`Read by OCR (English and Tamil), ${mean}% average confidence: check the numbers against the original.`,
+        // a page left out (a picture OCR cannot open, or past the memory budget) is said, not dropped in silence (QA pass 6, P6-007)
+        ...(pages.skipped ? [`${pages.skipped} ${pages.skipped === 1 ? "picture" : "pictures"} in this file could not be read and ${pages.skipped === 1 ? "was" : "were"} left out: check the table against the original.`] : []),
         ...(low.length ? [`${low.length} ${low.length === 1 ? "cell was" : "cells were"} read with low confidence: ${low.slice(0, 8).join(", ")}${low.length > 8 ? "…" : ""}`] : [])] }];
   }
 }

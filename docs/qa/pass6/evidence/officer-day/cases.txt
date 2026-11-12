@@ -1,0 +1,12 @@
+2026-11-12T08:56:55.773Z 2026-807AIC INC-W-2026-807AIC Solid Waste Management Department QA officer-day 08:56:55 flow
+2026-11-12T08:57:30.466Z 2026-052EEQ INC-W-2026-052EEQ Solid Waste Management Department QA officer-day 08:57:30 reopen-new
+2026-11-12T08:58:05.605Z 2026-285DWD INC-W-2026-285DWD Solid Waste Management Department QA officer-day 08:58:05 resolve-new
+2026-11-12T08:59:09.348Z 2026-670DUN INC-W-2026-670DUN Solid Waste Management Department QA officer-day 08:59:09 reject-new
+2026-11-12T08:59:38.413Z 2026-078CPN INC-W-2026-078CPN Electrical Department other
+2026-11-12T09:00:18.513Z 2026-024JAD INC-W-2026-024JAD Health Department QA officer-day 09:00:18 category
+2026-11-12T09:01:54.464Z 2026-948PKS INC-W-2026-948PKS Electrical Department QA officer-day 09:01:48 hazard
+2026-11-12T09:06:23.793Z 2026-954FHS INC-W-2026-954FHS Solid Waste Management Department QA officer-day 09:06:23 bin_50% full
+2026-11-12T09:07:10.271Z 2026-093WIA INC-W-2026-093WIA Solid Waste Management Department QA officer-day 09:07:09 race1
+2026-11-12T09:07:35.149Z 2026-153CHY INC-W-2026-153CHY Solid Waste Management Department QA officer-day 09:07:35 race2
+2026-11-12T09:11:14.752Z 2026-985WWV filed-by-officerA
+2026-11-12T09:11:14.790Z 2026-668VTG filed-by-collector

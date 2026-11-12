@@ -1,0 +1,13 @@
+# P6-015 sweep: readers of outbound_emails by incident_id (a batch email is stored under its first case only) (run Thu Nov 12 15:30:40 IST 2026)
+$ grep -rn "outbound_emails" src --include=*.ts | grep -v "\.test\." | grep -i "incident_id"
+src/lib/collector/actionmail.ts:241:    `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
+src/lib/collector/actionmail.ts:347:    `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
+src/lib/collector/intel.ts:378:     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) GROUP BY incident_id`, [ids]
+src/lib/collector/intel.ts:389:     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) ORDER BY created_at DESC, email_id DESC LIMIT 20`, [ids]
+src/lib/rehearsal/tasks.ts:148:    `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status, approved_at, sent_at, delivered_to, body_hash, error)
+src/lib/security/stamp.ts:57:    `SELECT email_id, owner, to_contact_ids, subject, body_hash, approved_at, mode, status, incident_id FROM ${ops("outbound_emails")} ORDER BY email_id DESC LIMIT 20000`);
+
+Reading (pass 6 lead):
+- officer/data.ts grievanceDetail (the officer's drawer): fixed, emails linked through followups.email_id count too.
+- collector/intel.ts actedOn ("Action taken" mark on the Collector's lists) and actionEmails (the case page's sent instructions): same, fixed.
+- actionmail.ts, rehearsal/tasks.ts: writers. stamp.ts: reads all rows (no incident filter). Left.

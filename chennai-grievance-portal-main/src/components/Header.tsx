@@ -148,7 +148,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
                 </Link>
               ) : (
                 <Link key={href} href={href} aria-current={active ? "page" : undefined}
-                  className={`flex min-h-[44px] flex-col items-center justify-center gap-1 text-[11px] font-semibold ${active ? "text-navy-500" : "text-ink-subtle"}`}>
+                  className={`flex min-h-[44px] flex-col items-center justify-center gap-1 text-[11px] font-semibold ${active ? "text-navy-700" : "text-ink-subtle"}`}>
                   <Icon className="h-5 w-5" aria-hidden="true" />
                   {label.replace(" Status", "")}
                 </Link>

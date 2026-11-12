@@ -28,7 +28,7 @@ export async function suggestions(): Promise<string[]> {
   const key = `${w.incidents.length}|${w.dataAsOf}|${w.now.slice(0, 13)}`;
   if (global.__askMapSuggest?.key === key) return global.__askMapSuggest.list;
   const resolve = makeResolver(resolver);
-  const ctx: Ctx = { place: placeLookup(w, resolver), lang: "en" };
+  const ctx: Ctx = { place: placeLookup(w, resolver, null), lang: "en" };
   const count = (q: string): number => {
     const r = rulesRoute(q, null, { resolve, dept: () => null });
     if (r?.kind !== "plan") return 0;

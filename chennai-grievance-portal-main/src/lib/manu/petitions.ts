@@ -241,6 +241,9 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
 
     const filed = (await getPetition(id))!;
     const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
+    // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
+    // migration 017 still approves, and only the next build's count is lost there
+    await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
     const incidentId = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
     if (incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [incidentId, id]);
     await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });

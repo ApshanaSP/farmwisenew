@@ -1,0 +1,15 @@
+import { call } from "../../lib/live.mjs";
+import { CH } from "./snap.mjs";
+const show = async (k, url, h = {}) => { const r = await call(3106, k, "GET", url, h); let j = {}; try { j = JSON.parse(r.text); } catch {} console.log(url, r.status, "total", j.total, "incidents", j.incidents, j.error ?? ""); };
+await show("collector", "/api/collector/list?period=weekly", CH);
+await show("collector", "/api/collector/list?period=weekly&sev=Severe", CH);
+await show("collector", "/api/collector/list?period=weekly&sev=severe", CH);
+await show("collector", "/api/collector/list?period=weekly&status=overdue", CH);
+await show("collector", "/api/collector/list?period=weekly&status=Overdue", CH);
+await show("collector", "/api/collector/list?period=weekly&scope=al", CH);
+await show("collector", "/api/collector/list?period=weekly&zone=4&place=bogus", CH);
+await show("officerA", "/api/officer/grievances?tab=all&period=weekly");
+await show("officerA", "/api/officer/grievances?tab=all&period=weekly&flag=overdue");
+await show("officerA", "/api/officer/grievances?tab=all&period=weekly&flag=Overdue");
+await show("officerA", "/api/officer/grievances?tab=all&period=weekly&sev=low");
+await show("officerA", "/api/officer/grievances?tab=all&period=weekly&sev=Low");

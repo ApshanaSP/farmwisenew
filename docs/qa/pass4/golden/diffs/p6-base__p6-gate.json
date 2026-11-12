@@ -1,0 +1,407 @@
+{
+ "a": "p6-base",
+ "b": "p6-gate",
+ "compared": {
+  "a": 3277,
+  "b": 3277
+ },
+ "changed": 15,
+ "added": 0,
+ "removed": 0,
+ "context": {
+  "next_build_id": {
+   "a": "XQA-AZMih_i3AILtIqwXF",
+   "b": "7W1366w-32VU0Pwhed8Oy"
+  }
+ },
+ "routes": [
+  {
+   "route": "/api/collector/overview",
+   "requests": 10,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.snapshot.critical",
+     "count": 8
+    },
+    {
+     "path": "$.map.pins[*].lat",
+     "count": 2
+    },
+    {
+     "path": "$.map.pins[*].lon",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/report",
+   "requests": 4,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.snapshot.critical",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/search",
+   "requests": 1,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.incidents[*].lat",
+     "count": 1
+    },
+    {
+     "path": "$.incidents[*].lon",
+     "count": 1
+    }
+   ]
+  }
+ ],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": [
+  {
+   "id": "bea1527b406da7fb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?cat=SOLID_WASTE",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 65517,
+    "b": 65516
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "a6c1f11197ff2d7d",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?cat=DARK_SPOT_SAFETY",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 29929,
+    "b": 29928
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "2da516963c159fa5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?cat=FOOD_SAFETY",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 29716,
+    "b": 29715
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "f98e87062fb9c07c",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?cat=PUBLIC_ORDER",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 36885,
+    "b": 36884
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "ee66b8bc8550bfdb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?taluk=TLK-MYL",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 75616,
+    "b": 75615
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "8d15afb2d6fc9841",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?taluk=TLK-SHN",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 50102,
+    "b": 50101
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 1
+    }
+   ]
+  },
+  {
+   "id": "13cfa0f8f9a75092",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?taluk=TLK-MDR",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 61655,
+    "b": 61654
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "e120e15ec8222ac8",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly&taluk=TLK-MYL",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 140772,
+    "b": 140771
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "7847baa6b52a9469",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?cat=SOLID_WASTE",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 65589,
+    "b": 65588
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "8843cab6fdba8ab6",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?cat=DARK_SPOT_SAFETY",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 30000,
+    "b": 29999
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "2af87a096780b60d",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?taluk=TLK-MYL",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 86579,
+    "b": 86578
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 0
+    }
+   ]
+  },
+  {
+   "id": "53ac579dbb8ea3e1",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?taluk=TLK-SHN",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 61522,
+    "b": 61521
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.snapshot.critical",
+     "a": 20,
+     "b": 1
+    }
+   ]
+  },
+  {
+   "id": "cd47878c4defdb30",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/search?q=<new-complaint-code-1>",
+   "route": "/api/collector/search",
+   "fields": {},
+   "bytes": {
+    "a": 1202,
+    "b": 1202
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.incidents[0].lat",
+     "a": 13.018193137254903,
+     "b": 13.016499019607844
+    },
+    {
+     "path": "$.incidents[0].lon",
+     "a": 80.21036896078431,
+     "b": 80.21072974509804
+    }
+   ]
+  },
+  {
+   "id": "ea0ab3f25bc17c26",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 232509,
+    "b": 232509
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.map.pins[72].lat",
+     "a": 13.018193137254903,
+     "b": 13.016499019607844
+    },
+    {
+     "path": "$.map.pins[72].lon",
+     "a": 80.21036896078431,
+     "b": 80.21072974509804
+    }
+   ]
+  },
+  {
+   "id": "3f54c3ecc14de285",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly&zone=13",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 140493,
+    "b": 140493
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.map.pins[23].lat",
+     "a": 13.018193137254903,
+     "b": 13.016499019607844
+    },
+    {
+     "path": "$.map.pins[23].lon",
+     "a": 80.21036896078431,
+     "b": 80.21072974509804
+    }
+   ]
+  }
+ ]
+}

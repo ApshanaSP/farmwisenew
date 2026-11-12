@@ -16,7 +16,24 @@ export interface Earlier {
 }
 
 const STOP = new Set("the a an of in on at to for from and or is are was were not has have had no my our her his their this that with by be been it its days day week weeks month months year years street area near problem issue since still now more over very after before about".split(" "));
-const words = (s: string | null | undefined) => new Set(String(s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)));
+// letters of any script: Tamil was stripped to nothing by [^a-z0-9], so a problem written in Tamil never shared a topic (QA pass 6, P5-030)
+// Tamil and Tanglish filler that says nothing about the problem: "our street", "in our area", "for days", "please act" (one shared filler word
+// made two different problems "the same problem" for one writer: P6-011)
+const TA_STOP = new Set(("எங்கள் எங்களது எங்க நாங்கள் எனது என் எங்களுக்கு தெரு தெருவில் தெருவின் பகுதி பகுதியில் பகுதியின் அருகில் அருகே உள்ள உள்ளது இந்த அந்த ஒரு மற்றும் " +
+  "மிகவும் இல்லை வீடு வீட்டு வீட்டில் வீடுகள் கடந்த நாட்களாக மாதமாக வாரமாக வருடமாக நாள் நாட்கள் இருந்து மீது பற்றி தயவு செய்து செய்ய வேண்டும் வேண்டுகிறேன் " +
+  "கோரிக்கை மனு ஐயா அவர்களே உடனடியாக நடவடிக்கை எடுக்க பிரச்சனை புகார் சரி இங்கு அங்கு மிக " +
+  "engal enga engaluku theru therula therulla area pakkathula romba illa illai vendum seyya seyyunga pannunga ayya sir naal naalaa maasama").split(" "));
+// predicates, number words and requests that any problem can share: "not working", "not coming", "two days", "please take action" (one of them
+// made two different problems from one writer "the same problem", with an attach offered: reviewer 3 on P6-011, P6-020)
+const FILLER = new Set(("please kindly take action immediately immediate urgent urgently working work functioning coming come required request requested " +
+  "need needed sir madam again repeatedly cleared clear repaired repair fixed attended done one two three four five six seven eight nine ten " +
+  "first second third many several வரவில்லை வருவதில்லை வரவே இரண்டு மூன்று நான்கு ஐந்து எங்களுடைய எங்களின் வார்டில் வார்டு வார்டின் " +
+  "செய்யவில்லை எடுக்கவில்லை சரிசெய்ய சரிசெய்யவில்லை வேலை செய்யவில்லை தயவுசெய்து " +
+  "rendu moonu naalu anju naala naalaa varala varalai varalae podunga edunga pannunga panunga seyyala seiyala irukku").split(" "));
+const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase()
+  // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
+  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
+  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w)));
 
 /**
  * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
@@ -37,33 +54,72 @@ const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
+/** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
+/** "First Cross Street" as "1 Cross Street", so "First" and "Fifth" differ by their numbers, not by a letter or two (P6-020). */
+const ORDINAL: Record<string, string> = { first: "1", second: "2", third: "3", fourth: "4", fifth: "5", sixth: "6", seventh: "7", eighth: "8", ninth: "9", tenth: "10" };
+export const ordinals = (s: string | null | undefined): string => String(s ?? "").replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b/gi, (w) => ORDINAL[w.toLowerCase()]);
+
+function streetIn(street: string, address: string | null): boolean {
+  const all = squash(address);
+  if (all.includes(street)) return true;
+  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011). When the typed
+  // street has no number, the part's number is the door number ("12 Gandhi Street"), and the letters are compared (P6-020)
+  const num = (x: string) => x.replace(/\D/g, "");
+  return String(address ?? "").split(/[,\n;]/).map((p) => squash(ordinals(p))).filter(Boolean)
+    .some((part) => (num(street) ? num(part) === num(street) && similarity(street, part) >= 0.7 : similarity(street, part.replace(/\d/g, "")) >= 0.7));
+}
+
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
-  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(c.street);
-  const out: RepeatMatch[] = [];
+  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(ordinals(c.street));
+  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
   for (const e of earlier) {
-    const sameMobile = !!mobile && tenDigits(e.mobile) === mobile;
-    const sameName = !!name && squash(e.name) === name && (!street || similarity(street, squash(e.address).slice(-street.length)) >= 0.7 || squash(e.address).includes(street));
+    const theirs = tenDigits(e.mobile);
+    const sameMobile = !!mobile && theirs === mobile;
+    // a name alone is weak: with no street to compare, the same name with another mobile on both sides, or in another ward, is somebody
+    // else ("R. Kumar" in Adyar is not "R. Kumar" in Perambur: QA pass 6, P5-030)
+    const otherWard = c.ward != null && e.ward != null && e.ward !== c.ward;
+    const contradicts = (!!mobile && !!theirs && theirs !== mobile) || otherWard;
+    // with a street typed, the same name on the same street is the person even with a new mobile, but not in another ward: "Gandhi Street"
+    // is in many wards (P6-011)
+    const sameName = !!name && squash(e.name) === name && (street ? streetIn(street, e.address) && !otherWard : !contradicts);
     const samePerson = sameMobile || sameName;
     const sameDept = !!c.dept && e.dept === c.dept;
-    const topic = sameDept && sameTopic(c.problem, e.problem, samePerson);
+    // an online complaint is filed under the portal's departments, which the desk's do not all map to (eight have none: P5-037), so for
+    // the same person the topic decides; between different people the department must agree as well
+    // across departments the stricter rule for different people applies, so one shared word ("water") is not enough (P6-011)
+    const topic = sameDept ? sameTopic(c.problem, e.problem, samePerson) : samePerson && e.reporterKind === "online" && sameTopic(c.problem, e.problem, false);
     const sameProblem = topic && (samePerson || (c.ward != null && e.ward === c.ward));
     if (!samePerson && !sameProblem) continue;
-    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status) });
+    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
+      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs });
   }
-  out.sort((a, b) => b.filedAt.localeCompare(a.filedAt));
+  // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
+  // others on it, then the person's other petitions; newest first in each (P6-011)
+  const rank = (m: { samePerson: boolean; sameProblem: boolean }) => (m.samePerson && m.sameProblem ? 0 : m.sameProblem ? 1 : 2);
+  out.sort((a, b) => rank(a) - rank(b) || b.filedAt.localeCompare(a.filedAt));
   const mine = out.filter((m) => m.samePerson && m.sameProblem), person = out.filter((m) => m.samePerson), others = out.filter((m) => !m.samePerson && m.sameProblem);
   let headline: string | null = null;
   if (mine.length) {
     const last = mine[0];
     headline = `This is this person's ${nth(mine.length + 1)} petition on this problem. The last one was filed on ${day(last.filedAt)} and is ${last.open ? "still open" : `marked "${last.status}"`}.`;
   } else if (others.length) {
-    headline = `${others.length} other ${others.length === 1 ? "person has" : "people have"} written about this in the same ward.`;
+    // people, not petitions: one neighbour who wrote three times is one person (P5-030)
+    // one person may write once with a mobile and once without: a name or a mobile in common is one person (P6-011)
+    const parent = new Map<string, string>();
+    const root = (k: string): string => { let r = k; while (parent.has(r) && parent.get(r) !== r) r = parent.get(r)!; return r; };
+    const join = (a: string, b: string) => { const x = root(a), y = root(b); if (x !== y) parent.set(y, x); };
+    for (const m of others) { if (!parent.has(m.who)) parent.set(m.who, m.who); if (m.phone) join(m.who, `tel:${m.phone}`); }
+    const people = new Set(others.map((m) => root(m.who))).size;
+    headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
   } else if (person.length) {
     headline = `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
   }
-  const target = [...mine, ...others].find((m) => m.open && m.incidentId);
-  return { headline, matches: out.slice(0, 8), attachTo: target?.incidentId ?? null };
+  // only a case of the same department is offered: joining another department's case is the owner's decision (P5-021)
+  const target = [...mine, ...others].find((m) => m.open && m.incidentId && m.sameDept);
+  // a case of another department is not offered to join: the desk shows "Add to this case" for a match with a case id, so such a match
+  // comes without one (joining another department's case is the owner's decision, P5-021; P6-011)
+  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, ...m }) => (sameDept ? m : { ...m, incidentId: null })), attachTo: target?.incidentId ?? null };
 }
 
 /** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */

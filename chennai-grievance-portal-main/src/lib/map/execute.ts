@@ -54,6 +54,8 @@ export interface RunResult {
 export interface Ctx {
   place(ref: string): Place | null;
   lang: Lang;
+  /** a department officer's department: every re-run of a plan's prefix keeps it (QA pass 6, P6-021) */
+  lockDept?: string | null;
 }
 
 export class PlanError extends Error {}

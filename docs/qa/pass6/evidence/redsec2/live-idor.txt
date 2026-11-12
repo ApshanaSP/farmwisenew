@@ -1,0 +1,31 @@
+citizenA complaints 200 codes 1
+citizenB GET /api/complaints/2026-359CDD -> 401 {"error":"Not authenticated"}
+officerB GET /api/complaints/2026-359CDD -> 401 {"error":"Not authenticated"}
+officerA grievances 200 ids 3
+officerB GET /api/officer/grievances/INC-20261106-896A64 -> 404 {"error":"Grievance not found in your department."}
+manu GET /api/officer/grievances/INC-20261106-896A64 -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+officerB GET /api/manu/case/INC-20261106-896A64 -> 200 {"items":[]}
+citizenB GET /api/manu/case/INC-20261106-896A64 -> 401 {"error":"Not authenticated"}
+officerB POST /api/officer/grievances/INC-20261106-896A64 -> 404 {"error":"Grievance not found in your department."}
+manu GET /api/officer/overview -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/officer/grievances?tab=all -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/officer/search?q=road -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/officer/insights -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/officer/geo -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/rehearsal/tasks -> 403 {"error":"Your account is not linked to a department. Ask the administrator to set it."}
+manu GET /api/collector/assistant/sessions -> 403 {"error":"The petition desk login opens the Manu Desk only."}
+manu GET /api/collector/assistant/pins -> 403 {"error":"The petition desk login opens the Manu Desk only."}
+manu GET /api/collector/overview -> 401 {"error":"Not authenticated"}
+manu GET /api/manu/petitions -> 200 {"items":[]}
+citizenB GET /api/manu/petitions -> 401 {"error":"Not authenticated"}
+officerB GET /api/manu/petitions -> 401 {"error":"Not authenticated"}
+collector GET /api/manu/petitions -> 401 {"error":"Not authenticated"}
+officerB GET /api/manu/petitions/1 -> 401 {"error":"Not authenticated"}
+citizenA GET /api/complaints/2026-359CDD -> 200 (own complaint body, not printed)
+citizenB GET /api/complaints/2026-359CDD -> 404 {"error":"Complaint not found."}
+citizenB POST /api/track wrong last4 -> 404 {"error":"We could not find that. Check the number on your slip and the last 4 d
+anon POST /api/track wrong last4 -> 404 {"error":"We could not find that. Check the number on your slip and the last 4 d
+officerB sessions 200 11
+officerB GET officerB's conversation -> 200 (4704 bytes)
+officerA GET officerB's conversation -> 404 {"error":"Conversation not found."}
+collector GET officerB's conversation -> 404 {"error":"Conversation not found."}

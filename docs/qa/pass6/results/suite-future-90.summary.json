@@ -1,0 +1,21 @@
+{
+  "tag": "future-90",
+  "tz": "Asia/Kolkata",
+  "seed": "6190",
+  "config": "vitest.config.ts",
+  "exit": 1,
+  "secs": 63,
+  "numTotalTests": 3315,
+  "numPassedTests": 3296,
+  "numFailedTests": 6,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 7,
+  "failed": [
+    "src\\lib\\manu\\manu.sqlite.test.ts :: the public tracker follows the officer's work",
+    "src\\lib\\manu\\manu.sqlite.test.ts :: the public tracker never shows what staff typed",
+    "src\\lib\\manu\\manu.sqlite.test.ts :: the SMS to the person who wrote it tells the writer once when the department closes it",
+    "src\\lib\\manu\\manu.sqlite.test.ts :: the SMS to the person who wrote it test mode: the closing message goes to the team inbox too",
+    "src\\lib\\manu\\sms.pass5.test.ts :: P5-012: who may send, and what a retry sends a failed closing message retried after the case was reopened and completed says what is true now",
+    "src\\app\\api\\collector\\decisions\\route.sqlite.test.ts :: Collector decisions records a double-clicked verify once, with one audit row, and answers both with the same decision"
+  ]
+}

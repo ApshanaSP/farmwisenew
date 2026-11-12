@@ -1,0 +1,2 @@
+period=daily | My Tasks tile 0 left 0 | list awaiting groups 0 inc 0 | export status 428 200 200 rows 0 check rows 0 need rows 0 | report attentionTotal 0 routine 7 ongoing 7
+period=weekly | My Tasks tile 0 left 63 | list awaiting groups 0 inc 0 | export status 428 200 200 rows 69 check rows 0 need rows 69 | report attentionTotal 69 routine 204 ongoing 273

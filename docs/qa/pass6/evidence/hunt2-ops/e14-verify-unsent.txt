@@ -1,0 +1,3 @@
+case INC-20261105-5C94BB Severe In progress PWD-WRD complaints 0 dept reports before 0 officer reports 2 awaiting tasks? 0
+verify 428 200 201 {"saved":[{"incident_id":"INC-20261105-5C94BB","decision_id":1000000008,"escalated_to_level":null}]}
+after: status Resolved open 0 | Severe-not-checked tile 20 -> 19 | quarterly resolved 12738 -> 12739

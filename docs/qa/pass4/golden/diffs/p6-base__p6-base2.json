@@ -1,0 +1,132 @@
+{
+ "a": "p6-base",
+ "b": "p6-base2",
+ "compared": {
+  "a": 3277,
+  "b": 3277
+ },
+ "changed": 3,
+ "added": 0,
+ "removed": 0,
+ "context": {},
+ "routes": [
+  {
+   "route": "/api/collector/overview",
+   "requests": 2,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.map.pins[*].lat",
+     "count": 2
+    },
+    {
+     "path": "$.map.pins[*].lon",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/search",
+   "requests": 1,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.incidents[*].lat",
+     "count": 1
+    },
+    {
+     "path": "$.incidents[*].lon",
+     "count": 1
+    }
+   ]
+  }
+ ],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": [
+  {
+   "id": "cd47878c4defdb30",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/search?q=<new-complaint-code-1>",
+   "route": "/api/collector/search",
+   "fields": {},
+   "bytes": {
+    "a": 1202,
+    "b": 1202
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.incidents[0].lat",
+     "a": 13.018193137254903,
+     "b": 13.016326470588236
+    },
+    {
+     "path": "$.incidents[0].lon",
+     "a": 80.21036896078431,
+     "b": 80.21011798039216
+    }
+   ]
+  },
+  {
+   "id": "ea0ab3f25bc17c26",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 232509,
+    "b": 232509
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.map.pins[72].lat",
+     "a": 13.018193137254903,
+     "b": 13.016326470588236
+    },
+    {
+     "path": "$.map.pins[72].lon",
+     "a": 80.21036896078431,
+     "b": 80.21011798039216
+    }
+   ]
+  },
+  {
+   "id": "3f54c3ecc14de285",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly&zone=13",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 140493,
+    "b": 140493
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.map.pins[23].lat",
+     "a": 13.018193137254903,
+     "b": 13.016326470588236
+    },
+    {
+     "path": "$.map.pins[23].lon",
+     "a": 80.21036896078431,
+     "b": 80.21011798039216
+    }
+   ]
+  }
+ ]
+}

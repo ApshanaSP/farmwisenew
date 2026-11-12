@@ -1,0 +1,31 @@
+reopen 201 {"saved":[{"incident_id":"INC-20261019-41B602","decision_id":1000000001,"escalated_to_level":null}]}
+{
+ "label": "after reopen",
+ "officer": {
+  "st": 200,
+  "stage": "action",
+  "keys": "now,grievance,next,timeline,sources,reports,instructions,closedByDept,firstSource"
+ },
+ "officerTabs": {
+  "new": 0,
+  "action": 1,
+  "sent": 0,
+  "verified": 0,
+  "all": 1
+ },
+ "collectorList": {
+  "total": 1,
+  "status": "Open",
+  "open": 1,
+  "decision": "reopen",
+  "acted": null
+ },
+ "collectorDetail": {
+  "st": 200,
+  "status": "Open",
+  "open": 1,
+  "keys": "incident,group,reports,emails,contacts,assigned,decisions,deptReports"
+ }
+}
+officer next "send" timeline [{"t":"2026-10-19 21:25:00","label":"First report","note":"Complaint registered by citizen.","kind":""},{"t":"2026-10-19 21:35:00","label":"Routed to department","note":"Forwarded to Solid Waste Management Department for approval.","kind":""},{"t":"2026-11-12 16:03:45","label":"Returned by Collector","note":"Sent back to the department: the Collector did not accept the reported action.","kind":"esc"}]
+grievance.returned true Sent back to the department: the Collector did not accept the reported action. action

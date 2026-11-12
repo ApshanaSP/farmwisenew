@@ -1,0 +1,130 @@
+{
+ "pb314": [
+  {
+   "code": "2026-752MBN",
+   "id": "INC-20261106-896A64",
+   "dept": "GCC-SWM",
+   "byId": true,
+   "byCode": false
+  },
+  {
+   "code": "2026-504VSO",
+   "id": "INC-20261106-6EAFF2",
+   "dept": "GCC-PRK",
+   "byId": true,
+   "byCode": false
+  },
+  {
+   "code": "2026-913LVW",
+   "id": "INC-20261106-AD9834",
+   "dept": "GCC-SWD",
+   "byId": true,
+   "byCode": false
+  },
+  {
+   "code": "2026-934EYM",
+   "id": "INC-20261106-54AD93",
+   "dept": "GCC-ENG",
+   "byId": true,
+   "byCode": false
+  },
+  {
+   "code": "2026-383XDF",
+   "id": "INC-20261106-5C22B2",
+   "dept": "GCC-SWD",
+   "byId": true,
+   "byCode": false
+  }
+ ],
+ "pb302_because": [],
+ "reminder PB-281 orig": {
+  "text": "remind me at 5 pm to call the zone officer",
+  "said": "Remind you 6 Nov, 5:00 pm: call the zone officer?",
+  "kind": "clarify",
+  "lane": "no-model"
+ },
+ "reminder PB-281 variant tomorrow": {
+  "text": "remind me tomorrow at 9:30 am to call the Adyar officer",
+  "said": "Remind you 7 Nov, 9:30 am: call the Adyar officer?",
+  "kind": "clarify",
+  "lane": "no-model"
+ },
+ "reminder PB-281 variant Tamil": {
+  "text": "நாளை காலை 9 மணிக்கு அடையாறு அதிகாரியை அழைக்க நினைவூட்டு",
+  "said": "நவ. 7, 9:00 முற்பகல் நினைவூட்டவா: நாளை காலை 9 மணிக்கு அடையாறு அதிகாரியை அழைக்க நினைவூட்டு?",
+  "kind": "clarify",
+  "lane": "no-model"
+ },
+ "rc15 ta count": {
+  "text": "அடையாறு மண்டலத்தில் இந்த வாரம் கடுமையான சம்பவங்கள் எத்தனை?",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "இந்த வாரம் 3 கடுமையான சம்பவங்கள். 3 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "spoken_ta": "இந்த வாரம் 3 கடுமையான சம்பவங்கள். 3 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "items": "",
+  "title": "கடுமையான சம்பவங்கள் · அடையாறு · இந்த வாரம்"
+ },
+ "rc15 ta ranking": {
+  "text": "இந்த வாரம் அதிக புகார்கள் உள்ள துறைகள் எவை?",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "அதிகம்: பெருநகர சென்னை காவல்துறை, 405 சம்பவங்கள். அடுத்து மழைநீர் வடிகால் துறை 174, பொதுப்பணித்துறை நீர்வளம் 105.",
+  "spoken_ta": "அதிகம்: பெருநகர சென்னை காவல்துறை, 405 சம்பவங்கள். அடுத்து மழைநீர் வடிகால் துறை 174, பொதுப்பணித்துறை நீர்வளம் 105.",
+  "items": "",
+  "title": "Top 5 · Open incidents · this week"
+ },
+ "rc15 ta overdue": {
+  "text": "காலக்கெடு தாண்டிய வழக்குகள் எத்தனை?",
+  "lang": "ta",
+  "lane": "no-model",
+  "said": "District IQ-இடம் கேள்வி",
+  "spoken_ta": "District IQ-இடம் கேள்வி",
+  "items": "",
+  "title": null
+ },
+ "rc15 ta brief zone": {
+  "text": "தேனாம்பேட்டை நிலைமை சுருக்கமா சொல்லு",
+  "lang": "ta",
+  "lane": "resolve",
+  "said": "இன்று சுருக்கத்தில் 7 குறிப்புகள். இன்று தேனாம்பேட்டை பகுதியில் 28 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 40% அதிகம். 28 இன்னும் நிலுவையில், 3 கெடு தாண்டியவை; 1 கடுமையானவை.",
+  "spoken_ta": "இன்று சுருக்கத்தில் 7 குறிப்புகள். இன்று தேனாம்பேட்டை பகுதியில் 28 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 40% அதிகம். 28 இன்னும் நிலுவையில், 3 கெடு தாண்டியவை; 1 கடுமையானவை.",
+  "items": "இன்று தேனாம்பேட்டை பகுதியில் 28 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 40% அதிகம்.\n28 இன்னும் நிலுவையில், 3 கெடு தாண்டியவை; 1 கடுமையானவை.\n2 சம்பவங்கள் ஒன்றுக்கு மேற்பட்ட மூலங்களிலிருந்து வந்தன; 0 செய்தியில் மட்டும் உள்ளன.\nPWD Water Resources, தேனாம்பேட்டை: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் மேலாகத் திறந்துள்ளது\nStorm Water Drain, தேனாம்பேட்டை: பல துறைகள் சேர்ந்து செயல்பட வேண்டும்\nPWD Water Resources, தேனாம்பேட்டை: களத்தில் எந்த அதிகாரியும் இன்னும் உறுதிப்படுத்தவில்லை\nGreater Chennai Police, தேனாம்பேட்டை: தொடர்ந்து நடக்கிறது: 90 நாட்களில் இங்கு 9 ஒத்த சம்பவங்கள்",
+  "title": "Briefing · today"
+ },
+ "rc15 ta trend": {
+  "text": "இந்த மாதம் புகார்கள் போக்கு எப்படி இருக்கு?",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "கடந்த 30 நாட்களில் 5574 சம்பவங்கள். உச்சம் 21 அக். அளவில் 268. பின்பாதியில் 7% அதிகம்.",
+  "spoken_ta": "கடந்த 30 நாட்களில் 5574 சம்பவங்கள். உச்சம் 21 அக். அளவில் 268. பின்பாதியில் 7% அதிகம்.",
+  "items": "",
+  "title": "Incidents · the last 30 days"
+ },
+ "rc15 tanglish count": {
+  "text": "Royapuram la indha vaaram evlo severe cases irukku",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "இந்த வாரம் 12 கடுமையான சம்பவங்கள். 13 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Seven Wells, ராயபுரம்; தண்ணீர் தேக்கம், Chetpet, ராயபுரம். PWD Water Resources வசம் 5. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "spoken_ta": "இந்த வாரம் 12 கடுமையான சம்பவங்கள். 13 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Seven Wells, ராயபுரம்; தண்ணீர் தேக்கம், Chetpet, ராயபுரம். PWD Water Resources வசம் 5. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "items": "",
+  "title": "Severe cases · Royapuram · this week"
+ },
+ "rc15 tanglish list": {
+  "text": "Adyar la pending complaints ellam kaattu",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "spoken_ta": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "items": "",
+  "title": "Cases · Adyar · this week"
+ },
+ "rc15 tanglish dept": {
+  "text": "garbage department la evlo cases pending",
+  "lang": "ta",
+  "lane": "quick",
+  "said": "இந்த வாரம் 78 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Durgadevi Nagar 5Th Cross St 2Nd Lane, Durga Devi Nagar, Tondiarpet, தண்டையார்பேட்டை; அகற்றப்படாத குப்பை, Thirumalai Street Meenashi Nagar, Thirumalai Nagar, Nerkundram, வளசரவாக்கம். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "spoken_ta": "இந்த வாரம் 78 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Durgadevi Nagar 5Th Cross St 2Nd Lane, Durga Devi Nagar, Tondiarpet, தண்டையார்பேட்டை; அகற்றப்படாத குப்பை, Thirumalai Street Meenashi Nagar, Thirumalai Nagar, Nerkundram, வளசரவாக்கம். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "items": "",
+  "title": "Cases · Garbage & solid waste · this week"
+ }
+}

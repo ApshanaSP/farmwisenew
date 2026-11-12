@@ -1,0 +1,189 @@
+[
+  {
+    "id": "hunt2-desk-01",
+    "severity": "P1",
+    "area": "Manu Desk: joining a case",
+    "title": "The server lets a petition join another department's case. The joined petition then drops out of its own department's queue, and the public tracker shows the other department's progress as its own",
+    "where": "src/lib/manu/petitions.ts:238 and :247; src/lib/manu/cases.ts:141-142 (addCaseLive checks only that the case is open, not its lead_dept)",
+    "repro": "In the desk UI: node tests/qa/pass6/known-failures/hunt2-desk/ui2.mjs. It opens a petition, types a person who has an open Metrowater case, clicks 'Add to this case', changes Department to Corporation Solid Waste, and clicks 'Approve and add to the case' at once. The screen says 'Petition approved and added to the existing complaint', and the API shows 2026-187KLZ {dept:'Corporation Solid Waste', attached:true}; screenshot in evidence/hunt2-desk/desk-attach-other-dept.png. By API: p3.mjs INC-W-<a Metrowater case>, then p4.mjs <code> (officer queues), then p5.mjs (officerC approves; both slips tracked).",
+    "evidence": "SWM petition 2026-555UYE was filed with attachTo=INC-W-2026-766XJA (Metrowater sewage case) and got {attached:true}. officerA (SWM) searching 2026-555UYE or 'Garbage not collected for ten' got 0 rows. The Metrowater case showed complaints:2. After officerC approved the Metrowater case, /api/track for 2026-555UYE said department 'Corporation Solid Waste', status 'Approved by Department Officer', note 'Accepted by the department; work will be scheduled'. Solid Waste never saw it.",
+    "cause": "repeat.ts:119-121 hides other-department cases from the offer ('joining another department's case is the owner's decision, P5-021'), but fileSchema.attachTo is any id and nothing on the server compares the case's lead_dept with f.dept. The desk UI drops 'attach' only when the next debounced repeat check returns (ManuDesk.tsx:173), so changing the department and approving within about a second sends the old attachTo as well.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-02",
+    "severity": "P2",
+    "area": "Manu Desk: filing validation",
+    "title": "A petition is approved with an invisible name (zero-width characters only), and a problem made only of zero-width characters passes the 5-character minimum",
+    "where": "src/lib/manu/petitions.ts:178 and :187 (z.string().trim().min(2) / .min(5): trim() does not remove U+200B)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p1.mjs (files fields.name = '\\u200B\\u200B\\u200B')",
+    "evidence": "POST /api/manu/petitions/1000000001 {action:'file', name:'\\u200B\\u200B\\u200B'} returned 200 and complaint 2026-085FEP. The complaint, case and officer lists then carry a name that shows as blank.",
+    "cause": "String.prototype.trim() treats U+200B, U+200C, U+200D, U+2060 and U+FEFF as text, so the length checks count them. The repeat code strips them (repeat.ts:36), but the filing schema does not.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-03",
+    "severity": "P2",
+    "area": "Repeat check ('came before')",
+    "title": "The same person writing about the same sewage problem, once in Tamil script and once in Tanglish, is told 'written 1 earlier petition on other problems'",
+    "where": "src/lib/manu/repeat.ts:33-52 (words() and sameTopic compare spellings only); headline at repeat.ts:116",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p2.mjs: petition A, CMWSSB ward 70, problem 'கழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்'; repeat check for B with the same mobile, problem 'kazhivu neer theruvil odudhu, smell romba'",
+    "evidence": "headline 'This person has written 1 earlier petition on other problems.', sameProblem:false, attachTo:null. With the same name (NFD and ZWNJ) on 'Jawahar Street' against the stored 'ஜவஹர் தெரு' and no mobile, there was no match at all.",
+    "cause": "There is no transliteration between Tamil script and Tanglish/English, so the words never meet. The headline then says 'other problems' confidently, when it should say 'could not tell'. The same happens against an online complaint (p10.mjs): a Tamil petition 'கோவில் அருகே குப்பை அள்ளப்படவில்லை' against the citizen's 'Garbage not cleared near the temple' from the same mobile gives 'on other problems', with no join offered.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-04",
+    "severity": "P1",
+    "area": "Manu Desk: mobile number",
+    "title": "The desk's mobile box turns '+91 98400 12345', typed as written on the paper, into '9198400123', a valid-looking number that belongs to someone else. '098400 12345' becomes '0984001234', which the server also accepts. The petitioner cannot track with their real last 4 digits, and in live mode the SMS with the complaint number would go to a stranger",
+    "where": "src/lib/manu/petitions.ts:179 (regex /^(\\d{10})?$/ only); src/components/manu/ManuDesk.tsx:223 (maxLength={10} plus replace(/\\D/g,'') cuts a typed or pasted '0' or '+91' number to its first 10 characters)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/ui4.mjs <a waiting petition id> (360 px desk; types '+91 98400 12345' into Mobile; approves nothing); node tests/qa/pass6/known-failures/hunt2-desk/p6.mjs (API filing and tracking)",
+    "evidence": "UI: after typing '+91 98400 12345' the box holds '9198400123' (ui4 mobileAfterTyping). That number passes even /^[6-9]\\d{9}$/, so smsNote would show 'sent to the number ending 0123'. API: filing with mobile '0984001234' returned 200 (2026-365JEJ) with sms.state 'none'. /api/track with last4 '2345' (the real 98400 12345) returned 404 'We could not find that'; with '1234' it returned 200. SMS is off on this server, so the desk's 'no valid mobile number' hint (ManuDesk.tsx:250, shown only when smsMode != off) never appears. Any 10 digits pass, '0000000000' included.",
+    "cause": "The server checks for ten digits, not /^[6-9]\\d{9}$/ after tenDigits(). The box strips non-digits after the browser has already cut the value to 10 characters: '+91 98400 12345' becomes '9198400' and '098400 12345' becomes '0984001234'.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-05",
+    "severity": "P1",
+    "area": "Citizen portal: privacy",
+    "title": "An online complaint keeps a whole Aadhaar number (ASCII or Tamil digits) in the case title, summary and text on the Collector console. The desk masks the same text",
+    "where": "src/app/api/complaints/route.ts:289-291 (onlineCase gets the raw title and description); src/lib/validators.ts:175-176 (no maskAadhaar anywhere on this path)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p8.mjs (citizenA files title 'Garbage not cleared, my Aadhaar 2345 6789 1234', description with '௨௩௪௫ ௬௭௮௯ ௧௨௩௪'); then node tests/qa/pass6/known-failures/hunt2-desk/p9.mjs collector api/collector/incidents/INC-W-2026-467UPC",
+    "evidence": "GET /api/collector/incidents/INC-W-2026-467UPC: title and summary 'Garbage not cleared, my Aadhaar 2345 6789 1234', with the Tamil-digit number in the text and 0 'XXXX'. The same text sent through the desk (p6.mjs, 2026-312MQS) shows officerC 'Aadhaar XXXX XXXX 1234'.",
+    "cause": "maskAadhaar (lib/manu/clean.ts:31) runs only on the petition path (petitions.ts:216-220). The citizen route stores the title and description as typed, and the case built from them appears in every console list.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-06",
+    "severity": "P3",
+    "area": "Public tracking",
+    "title": "/track tells an online complainant 'Received at the Collector's office and sent to the department' (stage 'Citizen'), and the due date is blank",
+    "where": "src/lib/manu/track.ts:40 (one fixed note per status, whatever the channel); track.ts:64-65 (dueBy only from petitions)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p10.mjs; see trackOnline",
+    "evidence": "2026-482UHM, filed online by citizenB, on /api/track: steps[0] {status:'Complaint Filed', stage:'Citizen', note:'Received at the Collector's office and sent to the department.'}, dueBy null, though the case has sla_due 5 days on",
+    "cause": "PUBLIC_NOTE is keyed by status only, and dueBy is read only from the petitions table",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-07",
+    "severity": "P3",
+    "area": "Public tracking / desk: Tamil digits",
+    "title": "The /track page and the desk's mobile, pincode and ward boxes delete Tamil digits as they are typed, though the track API reads them",
+    "where": "src/app/track/page.tsx:40 (replace(/\\D/g,'')); src/components/manu/ManuDesk.tsx:223,228,230; src/lib/manu/petitions.ts:179",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/ui1.mjs (360 px phone: types ௩௫௫௬ into 'Last 4 digits of your mobile'); p2.mjs for the API",
+    "evidence": "In the page the box value after typing ௩௫௫௬ is '' (ui1 tamilLast4Value). The API answers 200 to the same digits (p2 trackA_tamilDigits). The file schema rejects a Tamil-digit mobile with 'A mobile number has 10 digits.' (p1.mjs), while lib/manu/clean.ts converts Tamil digits for the reader.",
+    "cause": "JS \\d and \\D are ASCII only; asciiDigits() is not used in the inputs or in fileSchema",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-08",
+    "severity": "P2",
+    "area": "Public tracking after a Collector decision",
+    "title": "A Collector 'reopen' on a case that was never closed, or even accepted, is saved. The petitioner's /track then says 'In Progress: The department is working on it' two seconds after filing",
+    "where": "src/app/api/collector/decisions/route.ts:57 (reopen needs no confirmation and no closed state); src/lib/complaint-progress.ts:77-79 (reopen always adds 'In Progress')",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p16.mjs (files a GCC-ELE petition, collector POSTs {decision:'reopen'} on its new case, then tracks it)",
+    "evidence": "2026-715VIK: reopen 201. /api/track status 'In Progress', step {stage:'Collector', note:'The department is working on it.', at 16:12:14}, two seconds after 'Complaint Filed', with no officer step at all",
+    "cause": "The decisions route takes 'reopen' for any open case. progressOf turns every reopen into 'In Progress' without checking that there was a close or resolve to undo.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-09",
+    "severity": "P3",
+    "area": "Desk to department hand-off",
+    "title": "For about 15 to 20 seconds after the desk shows 'Petition approved and forwarded', the department's officer gets 'Grievance not found in your department.' for the new case, and the case is missing from their list. The Collector sees it at once",
+    "where": "src/lib/officer/data.ts grievanceList / grievance detail (a cached 'now' or period bound; the list's 'now' stayed fixed across calls)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p14.mjs",
+    "evidence": "2026-419SUW: at 5.0 s and 16.9 s after filing, officerC detail 404 and list 0 while collector incident 200; at 20.4 s detail 200, list 1. Same with 2026-607FTO (p13) and 2026-364JZN (p17).",
+    "cause": "Not traced. The officer list's 'now' field stayed the same across calls seconds apart, which points to a cached clock or snapshot bound used as the upper limit on first_reported_at.",
+    "confidence": "medium"
+  },
+  {
+    "id": "hunt2-desk-10",
+    "severity": "P3",
+    "area": "Repeat check: people count",
+    "title": "Two different people with the same name (different mobiles, different streets) are counted as one: '1 other person has written about this in the same ward'",
+    "where": "src/lib/manu/repeat.ts:95 (who = squash(e.name) || phone) and :109-114 (the union joins by that name)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p19.mjs (two 'R. Kumar' petitions in ward 64 from different mobiles and streets, then a third person's check)",
+    "evidence": "headline '1 other person has written about this in the same ward.' with two matches 2026-276GNP and 2026-466NEQ, which have different mobiles",
+    "cause": "'who' is the squashed name before the phone, so equal names are one root whatever their mobiles. Common Tamil names (Kumar, Lakshmi, Murugan) undercount the people affected.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-11",
+    "severity": "P1",
+    "area": "Joining a case: urgent petition",
+    "title": "An urgent petition (2-day deadline) joined to an existing normal case: the petitioner's /track promises 2 days, while the case the department works keeps its 15-day deadline and Medium severity",
+    "where": "src/lib/manu/petitions.ts:221 (the petition's own due_at) and src/lib/manu/track.ts:64-65 (/track shows it); src/lib/manu/cases.ts:119-120 (attachToCase raises only priority and attention, not sla_due_at or severity)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p21.mjs INC-W-<an open case of GCC-ELE> (files 'Live wire hanging from the street light pole, children nearby', urgent:true, attachTo that case)",
+    "evidence": "2026-905QOK attached:true. /api/track dueBy '2026-11-14 16:15:42'. GET /api/collector/incidents/INC-W-2026-674LOD sla_due '2026-11-27 16:15:13', sev 'Medium', priority 90, attention 'Urgent petition given at the Collector's office'. The officer's due date stays 27 Nov.",
+    "cause": "The petition's deadline is set and shown per petition, but the case's SLA is never brought forward when an urgent report joins it. The public slip then states a deadline that nobody's queue carries.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-12",
+    "severity": "P2",
+    "area": "Public tracking after a Collector decision",
+    "title": "When the Collector uses 'Mark resolved' on a case with no work done or reported, the petitioner reads 'Verified by Collector: The Collector's office checked the work and closed the complaint'",
+    "where": "src/lib/complaint-progress.ts:74-76 (resolve and verify both become 'Verified by Collector'); src/lib/manu/track.ts:46",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p20.mjs (files a GCC-ELE petition; the collector resolves its case two seconds later, step-up confirmed with the test account; then tracks; then reopens and tracks)",
+    "evidence": "2026-674LOD: resolve 201; /api/track status 'Verified by Collector', note 'The Collector's office checked the work and closed the complaint.' at 16:15:15, two seconds after filing, with no officer step or report. After reopen: 'In Progress: The department is working on it.' (the reopen and repeat-check flow is otherwise right: attach is not offered while it is resolved, and is offered again after reopen)",
+    "cause": "progressOf maps 'resolve' to the same public status and wording as 'verify'. The Collector route allows 'verify' only for severe work, but 'resolve' for any case.",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-13",
+    "severity": "P1",
+    "area": "Manu Desk: the waiting list",
+    "title": "In a busy week, petitions waiting for verification drop off the desk. The list is one query of waiting and last-week-approved petitions together, newest first, LIMIT 300, so 300 newer rows push older waiting petitions out of view, and their restart re-read too",
+    "where": "src/lib/manu/petitions.ts:108-113",
+    "repro": "Code reading (not run: it needs more than 300 petitions and would flood the shared server). SELECT ... FROM petitions WHERE status IN ('reading','needs_check','read_failed') OR (status = 'filed' AND updated_at >= ?) ORDER BY created_at DESC LIMIT 300. A collectorate's grievance day takes hundreds of petitions, and every approved one stays in the result for 7 days.",
+    "evidence": "The desk has no paging (GET /api/manu/petitions returns items only; ManuDesk shows 'AWAITING VERIFICATION' from that list). The restart loop at :112-113 re-queues only 'reading' rows that are inside the 300.",
+    "cause": "Waiting and approved rows share one LIMIT. Waiting petitions should be selected without a limit, or before the approved ones.",
+    "confidence": "medium"
+  },
+  {
+    "id": "hunt2-desk-14",
+    "severity": "P2",
+    "area": "Repeat check: busy ward",
+    "title": "In a ward and department with more than 200 approved petitions, a person's own earlier petition (same mobile) is cut by LIMIT 200 and 'came before' misses it, though the comment says the person's rows have 'a query of their own'",
+    "where": "src/lib/manu/repeat.ts:138-144",
+    "repro": "Code reading (not run: flooding). WHERE p.status = 'filed' AND p.id <> ? AND (p.mobile = ? OR p.name = ? OR (p.ward_number = ? AND p.dept_code = ?)) ORDER BY p.filed_at DESC LIMIT 200",
+    "evidence": "The mobile and name rows and the ward-and-department rows are ORed in one query under one LIMIT 200. The 200 newest ward-and-department petitions fill it before an older petition from the same mobile.",
+    "cause": "The 'query of their own' (comment at :138-139) separates them only from the no-ward department query, not from the ward-and-department rows",
+    "confidence": "medium"
+  },
+  {
+    "id": "hunt2-desk-15",
+    "severity": "P2",
+    "area": "Public tracking: language",
+    "title": "/track, where a Tamil petitioner's SMS sends them, is English except the heading: labels, statuses ('Approved by Department Officer') and every note. It has no Tamil switch, and 'Expected by' stays after the case is closed",
+    "where": "src/app/track/page.tsx:35-56; src/lib/manu/track.ts:39-48 (PUBLIC_NOTE English only)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/ui1.mjs (360 px), screenshot evidence/hunt2-desk/track-360.png; p20.mjs for the closed case (dueBy still returned after 'Verified by Collector')",
+    "evidence": "Page text: 'உங்கள் மனுவின் நிலை / Track your petition or complaint / Approved by Department Officer / With: Metrowater / Expected by: 27 November 2026 / Accepted by the department; work will be scheduled.' The citizen portal has a தமிழ் switch; /track has none.",
+    "cause": "The page is hand-written in English, with no language from the petition (petitions.language is known) and no toggle",
+    "confidence": "high"
+  },
+  {
+    "id": "hunt2-desk-16",
+    "severity": "P2",
+    "area": "Petition SMS: closing message",
+    "title": "Only one closing SMS is ever sent per petition. A petition rejected (SMS 'could not be taken up'), then reopened by the Collector and done, never gets the 'done' SMS, so the petitioner's last word is the rejection",
+    "where": "src/lib/manu/sms.ts:155-157 (INSERT IGNORE ... then 'if (!ready || !ins.affectedRows) return'); unique index petition_sms__one (complaint_code, kind) in src/lib/aws/store.ts:356; called from src/lib/complaint-progress.ts:175-176",
+    "repro": "Code reading, with the live flow it rests on: node tests/qa/pass6/known-failures/hunt2-desk/p22.mjs (2026-910AKR: reject 201, /track 'Rejected'; reopen 201, /track 'In Progress'). SMS is off here, so the petition_sms rows are 'off' and cannot be seen; the second 'closed' insert for the same code is ignored by the unique (complaint_code, kind) index.",
+    "evidence": "sendPetitionSms(code, 'closed', 'done') after an earlier sendPetitionSms(code, 'closed', 'rejected') inserts nothing, and returns before delivering. retryFailedSms only retries rows in 'failed' or 'waiting', so a 'sent' rejection is never followed by the outcome.",
+    "cause": "One row per (code, kind) prevents double sends, but it also blocks a second, different closing outcome after a reopen",
+    "confidence": "medium"
+  },
+  {
+    "id": "hunt2-desk-17",
+    "severity": "P2",
+    "area": "Citizen portal: filing validation",
+    "title": "The citizen portal files a complaint whose name, address, street, title and description are only zero-width characters. A blank complaint is routed to a department and becomes a case",
+    "where": "src/lib/validators.ts:142,145,175-176 (z.string().trim().min(1); trim() keeps U+200B and U+200D)",
+    "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p23.mjs (citizenA POSTs /api/complaints with firstName, streetAddress, manualStreetName and title '\\u200B', description '\\u200D')",
+    "evidence": "200 'Your complaint has been registered', complaintCode 2026-907WYW, department 'Revenue Department'",
+    "cause": "As in hunt2-desk-02: required-text checks count invisible format characters",
+    "confidence": "high"
+  }
+]

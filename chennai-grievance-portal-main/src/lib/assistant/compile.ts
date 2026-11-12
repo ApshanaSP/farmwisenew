@@ -103,9 +103,19 @@ const SCOPE_COLUMNS: [keyof Scope, string[]][] = [
   ["zone", ["zone_no"]], ["dept", ["lead_dept", "dept_code", "department"]], ["cat", ["category_code"]], ["taluk", ["taluk_code"]]
 ];
 
-export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: Scope | null): Compiled {
+/**
+ * `lockDept`: a department officer's department, a hard limit (the console scope is a soft filter that adds nothing on a table with no
+ * department column: an officer's planned query on v_collector_queue, alerts, v_media_gaps or hotspots read every department's rows,
+ * QA pass 6, P6-014). A table with a department column is filtered by it; one with an incident_id is held to the department's incidents;
+ * any other is refused.
+ */
+export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: Scope | null, lockDept: string | null = null): Compiled {
   const base = cat.tables.get(pq.table);
   if (!base) throw new CompileError(`Table "${pq.table}" is not in the catalog. Use one of: ${[...cat.tables.keys()].join(", ")}.`);
+  const lockCol = lockDept ? (SCOPE_COLUMNS.find(([k]) => k === "dept")?.[1] ?? []).find((c) => base.columns.has(c)) ?? null : null;
+  const incidentsTable = cat.tables.get("incidents");
+  if (lockDept && !lockCol && !(base.columns.has("incident_id") && incidentsTable))
+    throw new CompileError(`"${pq.table}" is not kept by department, so it cannot be asked from a department console.`);
   if (!ALIAS.test(pq.id.toLowerCase())) throw new CompileError(`Query id "${pq.id}" must be a short lower-case name.`);
   const notes: string[] = [];
   const joins: { table: CatalogTable; alias: string; on: string }[] = [];
@@ -272,6 +282,12 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
       params.push(v);
       notes.push(`Console filter applied: ${key} = ${v}.`);
     }
+  }
+
+  // the officer's department, whatever the plan or the console scope say (P6-014)
+  if (lockDept) {
+    if (lockCol) { where.push(`b.${q(lockCol)} = ?`); params.push(lockDept); }
+    else { where.push(`b.\`incident_id\` IN (SELECT li.\`incident_id\` FROM ${qualified(incidentsTable!)} li WHERE li.\`lead_dept\` = ?)`); params.push(lockDept); }
   }
 
   const from = `${qualified(base)} b ${joins.map((j) => `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on}`).join(" ")}`.trim();

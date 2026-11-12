@@ -1,0 +1,10 @@
+import { call } from "../../lib/live.mjs";
+import { snap, CH } from "./snap.mjs";
+const id = process.argv[2];
+const r = await call(3106, "collector", "POST", "/api/collector/decisions", { ...CH, body: { incidentIds: [id], decision: "reopen", note: "Sent back to the department: the Collector did not accept the reported action." } });
+console.log("reopen", r.status, r.text.slice(0, 300));
+console.log(JSON.stringify(await snap(id, "after reopen"), null, 1));
+const od = await call(3106, "officerA", "GET", `/api/officer/grievances/${id}`);
+const j = JSON.parse(od.text);
+console.log("officer next", JSON.stringify(j.next), "timeline", JSON.stringify(j.timeline).slice(0, 800));
+console.log("grievance.returned", j.grievance.returned, j.grievance.returnNote, j.grievance.stage);
