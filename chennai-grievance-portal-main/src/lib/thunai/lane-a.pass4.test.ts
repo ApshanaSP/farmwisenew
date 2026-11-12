@@ -265,6 +265,7 @@ describe("RC-03: word edges, in every script", () => {
 
 // RC-06: one period table; a window the console does not hold is never answered with the current one.
 import { calendarWindowIn, periodIn } from "./quick";
+import { readPeriod } from "@/lib/period/read";
 describe("RC-06: periods", () => {
   const WINDOWS: [string, string][] = [["today", "daily"], ["this week", "weekly"], ["weekly brief", "weekly"], ["this month", "monthly"], ["monthly", "monthly"], ["quarterly brief", "quarterly"], ["last 90 days", "quarterly"], ["this quarter", "quarterly"],
     ["இன்று", "daily"], ["இந்த வாரம்", "weekly"], ["இந்த வார", "weekly"], ["வாராந்திர", "weekly"], ["இந்த மாத", "monthly"], ["காலாண்டு", "quarterly"], ["innaiku", "daily"], ["vaaram", "weekly"], ["maasam", "monthly"]];
@@ -275,15 +276,26 @@ describe("RC-06: periods", () => {
       if (turn?.kind === "screen") expect((turn.slots as { period?: string }).period, `brief ${w}`).toBe(p);
     }
   });
-  it("yesterday, last week, last month, last quarter and the Tamil and Tanglish words for them are windows the console does not hold", () => {
-    for (const s of ["yesterday", "yesterdays brief", "next week", "the day before yesterday", "நேற்றைய சுருக்கம்", "போன மாசம்", "கடந்த வாரம்", "அடுத்த வாரம்", "nethu severe cases", "pona vaaram"]) expect(calendarWindowIn(` ${s} `), s).toBe(true);
-    for (const s of ["last 24 hours", "last 7 days", "last 30 days", "this week", "இந்த வாரம்"]) expect(calendarWindowIn(` ${s} `), s).toBe(false);
-  });
-  it("no lane answers such a window with the current one", () => {
-    for (const s of ["severe cases yesterday", "yesterdays brief", "நேற்று கடுமையான சம்பவங்கள்", "கடந்த வாரம் நிலவரம்", "pona vaaram brief sollu", "next weeks brief"]) {
-      expect(quickScreen(s, world as never), `quick: ${s}`).toBeNull();
-      expect(briefTurn(s, world as never)?.kind === "screen", `brief: ${s}`).toBe(false);
+  // QA pass 7: yesterday, last week and last month were handed on here (and in English read as the last 7 and 30 days, BUG-003); one shared reader now gives
+  // them their calendar dates (lib/period/read.ts) and the list and the brief count them over those dates. What stays true: never the current window.
+  it("yesterday, last week, last month and the Tamil and Tanglish words for them are calendar spans, not the console's windows; next week no lane can answer", () => {
+    for (const s of ["yesterday", "yesterdays brief", "the day before yesterday", "நேற்றைய சுருக்கம்", "போன மாசம்", "கடந்த வாரம்", "nethu severe cases", "pona vaaram"]) {
+      expect(["day", "last"], s).toContain(readPeriod(s).kind);
+      expect(periodIn(` ${s} `), s).toBeNull();
     }
+    for (const s of ["next week", "அடுத்த வாரம்", "two weeks ago"]) expect(calendarWindowIn(` ${s} `), s).toBe(true);
+    for (const s of ["last 24 hours", "last 7 days", "last 30 days", "this week", "இந்த வாரம்", "yesterday", "pona vaaram"]) expect(calendarWindowIn(` ${s} `), s).toBe(false);
+  });
+  it("no lane answers such a window with the current one: a list or a brief carries the span's own dates, anything else is handed on", () => {
+    const spanOfSlots = (x: { slots?: unknown } | null | undefined) => (x?.slots as { span?: { kind: string } } | undefined)?.span ?? null;
+    for (const s of ["severe cases yesterday", "yesterdays brief", "நேற்று கடுமையான சம்பவங்கள்", "கடந்த வாரம் நிலவரம்", "pona vaaram brief sollu"]) {
+      const q = quickScreen(s, world as never);
+      expect(q === null || ["day", "last"].includes(spanOfSlots(q)?.kind ?? ""), `quick: ${s}`).toBe(true);
+      const b = briefTurn(s, world as never);
+      expect(b?.kind !== "screen" || ["day", "last"].includes(spanOfSlots(b as never)?.kind ?? ""), `brief: ${s}`).toBe(true);
+    }
+    expect(quickScreen("next weeks brief", world as never)).toBeNull();
+    expect(briefTurn("next weeks brief", world as never)?.kind === "screen").toBe(false);
     const u = rules("severe cases yesterday");
     expect(u.kind === "refuse" || !(u.steps ?? []).some((x) => x.a === "view")).toBe(true);
   });

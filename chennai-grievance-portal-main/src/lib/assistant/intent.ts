@@ -7,6 +7,7 @@
  * substrings: தற்கொலை (suicide) does not contain the token கொலை (murder).
  */
 import type { ConversationContext } from "@/lib/assistant/context";
+import { readPeriod } from "@/lib/period/read";
 
 export const INTENTS = [
   "INCIDENT_COUNT", "INCIDENT_LIST", "PRIORITY_INCIDENT_LIST", "INCIDENT_DETAIL", "INCIDENT_RELATED", "INCIDENT_TIMELINE",
@@ -324,7 +325,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   if (BREAKDOWN.test(t)) return mk("GENERAL_DISTRICT_QUERY", "asks for a breakdown by department, zone, taluk or ward");
   if (incidenty && any(toks, RANKING)) return mk("CATEGORY_RANKING", "asks which kinds, not which incidents");
   // "this month vs last month complaints": the period against the one before (a count that states both), not two places
-  if ((incidenty || deaths) && VS_PREVIOUS.test(message)) return mk("INCIDENT_COUNT", "compares the period with the one before", { vsPrevious: true });
+  // (the shared period reader reads the comparison in Tamil and Tanglish too: "கடந்த மாதத்தை விட", "pona maasatha vida"; QA pass 7)
+  if ((incidenty || deaths) && (VS_PREVIOUS.test(message) || readPeriod(message).kind === "compare")) return mk("INCIDENT_COUNT", "compares the period with the one before", { vsPrevious: true });
   // a count word is enough when what is counted is closed work or deaths ("how many were resolved yesterday", "how many deaths yesterday")
   if ((incidenty || resolved || deaths) && any(toks, COUNT)) return mk("INCIDENT_COUNT", resolved && !incidenty ? "asks how many were resolved" : "asks how many");
   // "road deaths today", "gas poisoning deaths this week": how many people died (a list word still lists the incidents)

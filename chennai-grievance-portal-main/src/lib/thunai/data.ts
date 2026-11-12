@@ -9,6 +9,8 @@
 import { overview, asOf, list } from "@/lib/collector/intel";
 import { askMap, type AskResponse } from "@/lib/map/ask";
 import { runTool, incRow } from "@/lib/assistant/tools";
+import { countIncidents, windowRows, type IncidentFilters } from "@/lib/assistant/incidents";
+import { compareOf, prevOf, spanOf, type Comparison, type PeriodKey, type PeriodSpec, type Span, type Words } from "@/lib/period/read";
 import type { ToolResult } from "@/lib/assistant/types";
 import { datasetIds, getMeta, getRows } from "@/lib/studio/store";
 import { loadWardDataset, resolveWard } from "@/lib/wards";
@@ -56,6 +58,37 @@ export async function consoleList(s: ScopeT, f: { sev: string | null; status: st
   return { rows: r.rows.map((i) => incRow(i)) as Row[], total: r.total, incidents: r.incidents, asOf: await asOf() };
 }
 
+/**
+ * A list and its counts over a span the console's four windows do not hold (today since midnight, yesterday, last month, a named month, "right now"),
+ * read with Ask District IQ's own counting (assistant/incidents.ts), so both rules lanes give one number for one question (QA pass 7, P6-022, pass4-open-16).
+ * The span's dates come from the store's now (lib/period/read.ts). `prev`: the calendar span just before it (September before October), when there is one.
+ */
+export interface SpanFilters { sev: string | null; status: "open" | "overdue" | null; n: number }
+export interface SpanOut { span: Span; rows: Row[]; total: number; severe: number; open: number; late: number; dead: number; prev: { n: number; label: Words } | null; asOf: string }
+export async function consoleSpan(spec: PeriodSpec, s: ScopeT, f: SpanFilters, lockDept: string | null = null): Promise<SpanOut | null> {
+  const now = await asOf();
+  const span = spanOf(spec, now);
+  if (!span || (!span.range && span.hours == null)) return null;
+  const inc: IncidentFilters = { period: span.key, zone: s.zone, dept: lockDept ?? s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk,
+    sev: (f.sev as IncidentFilters["sev"]) ?? null, openOnly: f.status === "open" || span.now, overdue: f.status === "overdue", range: span.range, hours: span.range ? null : span.hours };
+  const before = prevOf(spec, now);
+  const [w, c, late, p] = await Promise.all([windowRows(inc, now, Math.min(Math.max(f.n, 1), 30)), countIncidents(inc, now), countIncidents({ ...inc, overdue: true }, now),
+    before?.range ? countIncidents({ ...inc, range: before.range }, now) : Promise.resolve(null)]);
+  return { span, rows: w.rows.map((r) => incRow(r)) as Row[], total: c.n, severe: c.severe, open: c.open, late: late.n, dead: c.dead,
+    prev: p && before ? { n: p.n, label: before.label } : null, asOf: now };
+}
+
+/** "Up or down from last month": the window back from now against the one of the same length just before it, counted as Ask District IQ counts (countIncidents). */
+export interface CompareOut { cmp: Comparison; n: number; prev: number; severe: number; open: number; asOf: string }
+export async function consoleCompare(key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }, lockDept: string | null = null): Promise<CompareOut | null> {
+  const now = await asOf();
+  const cmp = compareOf(key, now);
+  if (!cmp) return null;
+  const c = await countIncidents({ period: key, zone: s.zone, dept: lockDept ?? s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk, sev: (f.sev as IncidentFilters["sev"]) ?? null,
+    openOnly: f.status === "open", overdue: f.status === "overdue" }, now);
+  return { cmp, n: c.n, prev: c.prev, severe: c.severe, open: c.open, asOf: now };
+}
+
 export async function consoleNews(s: ScopeT): Promise<{ rows: Row[]; total: number; asOf: string }> {
   const ov = await consoleOverview(s);
   return { rows: (ov.allNews ?? []) as Row[], total: ov.allNewsTotal ?? 0, asOf: await asOf() };
@@ -73,6 +106,10 @@ export interface Hands {
   map: (q: string) => Promise<AskResponse>;
   dataset?: (name: string) => Promise<{ name: string; rows: InRow[]; total: number } | null>;
   lookups?: (w: World) => Lookups;
+  /** a list and its counts over a span with its own dates (today, last month, right now); absent: the screen says it cannot */
+  span?: (spec: PeriodSpec, s: ScopeT, f: SpanFilters) => Promise<SpanOut | null>;
+  /** a window against the one before it ("up or down from last month") */
+  compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<CompareOut | null>;
 }
 
 /** ward -> zone from the GCC ward boundaries, the point's ward by polygon, the gazetteer, each category's lead department. */
@@ -121,5 +158,6 @@ async function studioDataset(name: string): Promise<{ name: string; rows: InRow[
 }
 
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {
-  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, list: consoleList, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups };
+  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, list: consoleList, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups,
+    span: (spec, s, f) => consoleSpan(spec, s, f, user.lockDept), compare: (key, s, f) => consoleCompare(key, s, f, user.lockDept) };
 }
