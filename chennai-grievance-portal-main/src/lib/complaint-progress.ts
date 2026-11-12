@@ -16,6 +16,7 @@ import pool from "@/lib/db";
 import intelPool, { ops } from "@/lib/collector/db";
 import { photoUrl } from "@/lib/officer/photos";
 import type { ComplaintStatus } from "@/types";
+import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 
 export interface WorkStep { step: string; at: string; note: string | null; reportId: number | null }
 export interface WorkDecision { decision: string; at: string; note: string | null; role: string | null }
@@ -127,8 +128,8 @@ export async function progressFor(complaints: { code: string; createdAt: unknown
     for (const r of rows) (m.get(String(r.incident_id)) ?? m.set(String(r.incident_id), []).get(String(r.incident_id))!).push(map(r));
     return m;
   };
-  const S = by(steps, (r): WorkStep => ({ step: String(r.step), at: str(r.at), note: r.note ?? null, reportId: r.report_id == null ? null : Number(r.report_id) }));
-  const D = by(decisions, (r): WorkDecision => ({ decision: String(r.decision), at: str(r.at), note: r.note ?? null, role: r.decided_role ?? null }));
+  const S = by(steps, (r): WorkStep => ({ step: String(r.step), at: str(r.at), note: r.note == null ? null : scrubCitizenDetails(String(r.note)), reportId: r.report_id == null ? null : Number(r.report_id) }));
+  const D = by(decisions, (r): WorkDecision => ({ decision: String(r.decision), at: str(r.at), note: r.note == null ? null : r.decided_role === "department_officer" || String(r.note).startsWith(CLOSED_BY_DEPARTMENT) ? scrubCitizenDetails(String(r.note)) : r.note, role: r.decided_role ?? null }));
   const R = by(reports, (r): WorkReport => {
     let photos: string[] = [];
     try { photos = Array.isArray(r.photos) ? r.photos : JSON.parse(String(r.photos ?? "[]")); } catch { /* none */ }

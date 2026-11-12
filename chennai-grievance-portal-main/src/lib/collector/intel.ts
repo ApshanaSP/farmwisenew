@@ -21,6 +21,7 @@ import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/
 import { orEmpty, orNull } from "@/lib/fallback";
 import { deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
+import { scrubCitizenDetails, CLOSED_BY_DEPARTMENT } from "@/lib/collector/scrub";
 
 /** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
 const istWall = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -212,7 +213,7 @@ async function officerReports(ids: string[]): Promise<Record<string, Row>> {
   );
   return Object.fromEntries(r.map((x) => {
     const names: string[] = Array.isArray(x.photos) ? x.photos : JSON.parse(String(x.photos || "[]"));
-    return [x.id, { id: x.id, t: x.t, note: x.note, actor: x.actor, step: "Completion report", evidence: true,
+    return [x.id, { id: x.id, t: x.t, note: scrubCitizenDetails(String(x.note ?? "")), actor: x.actor, step: "Completion report", evidence: true,
       photos: names.map((nm) => photoUrl(String(x.photo_dir), nm)) }];
   }));
 }
@@ -229,7 +230,7 @@ async function officerReportsFull(id: string): Promise<Row[]> {
   );
   return r.map((x) => {
     const names: string[] = Array.isArray(x.photos) ? x.photos : JSON.parse(String(x.photos || "[]"));
-    return { id: Number(x.rid), dept: x.dept_name ?? x.dept_code, remarks: String(x.remarks), by: String(x.sent_by), t: String(x.t),
+    return { id: Number(x.rid), dept: x.dept_name ?? x.dept_code, remarks: scrubCitizenDetails(String(x.remarks)), by: String(x.sent_by), t: String(x.t),
       photos: names.map((nm) => photoUrl(String(x.photo_dir), nm)) };
   });
 }
@@ -395,6 +396,9 @@ export async function actionEmails(ids: string[]): Promise<Row[]> {
   });
 }
 
+/** The decision an officer's closing step writes carries the officer's remarks ("Closed by the department: ..."): the same masking as their report (redteam-final-10). */
+const forCollector = <T extends Row>(d: T): T => (typeof d.note === "string" && d.note.startsWith(CLOSED_BY_DEPARTMENT) ? { ...d, note: scrubCitizenDetails(d.note) } : d);
+
 /** Latest Collector decision per incident, to overlay on pipeline status. */
 async function decisionsFor(ids: string[]): Promise<Record<string, Row>> {
   if (!ids.length) return {};
@@ -407,7 +411,7 @@ async function decisionsFor(ids: string[]): Promise<Record<string, Row>> {
   // the latest decision is what the row shows; the latest one with an effect (effective.ts) decides its status, so an
   // escalate after a resolve is shown without reopening it
   const out: Record<string, Row> = {};
-  for (const d of r) out[d.incident_id] = { ...d, eff: decisionEffect(d.decision) ? d : out[d.incident_id]?.eff };
+  for (const d0 of r) { const d = forCollector(d0); out[d.incident_id] = { ...d, eff: decisionEffect(d.decision) ? d : out[d.incident_id]?.eff }; }
   return out;
 }
 
@@ -1285,7 +1289,7 @@ export async function incident(id: string) {
       `SELECT decision, note, decided_by, decided_role, DATE_FORMAT(decided_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM ${ops("collector_decisions")} WHERE incident_id = ? ORDER BY decision_id`,
       [id]
-    ),
+    ).then((rows) => rows.map(forCollector)),
     contactsFor(inc.dept, inc.zone),
     assignmentsFor([id]),
     sourcesFor(ids),
