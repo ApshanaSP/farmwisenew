@@ -325,7 +325,14 @@ describe("the SMS to the person who wrote it", () => {
   };
   const on = () => Object.assign(process.env, SET, { SMS_MODE: "live" });
   const testMode = () => { h.smtp = true; process.env.EMAIL_SANDBOX_TO = "team@x.in"; };
-  afterEach(() => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "SMS_MODE", "EMAIL_SANDBOX_TO"]) delete process.env[k]; vi.unstubAllGlobals(); });
+  // Each test starts from no SMS setting at all, whatever the process was started with (a QA run sets AWS_STORE_DRY_RUN=1) and in
+  // whatever order the tests run (QA pass 5, P5-004: shuffled, the live-mode test ran first under the ambient dry run and failed).
+  const clear = () => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "SMS_MODE", "EMAIL_SANDBOX_TO"]) delete process.env[k]; };
+  const saved: Record<string, string | undefined> = {};
+  beforeAll(() => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "SMS_MODE", "EMAIL_SANDBOX_TO"]) saved[k] = process.env[k]; });
+  afterAll(() => { clear(); for (const [k, v] of Object.entries(saved)) if (v !== undefined) process.env[k] = v; });
+  beforeEach(clear);
+  afterEach(() => { clear(); vi.unstubAllGlobals(); });
 
   it("sends nothing until the service is set up, and says so", async () => {
     const f = gateway();
