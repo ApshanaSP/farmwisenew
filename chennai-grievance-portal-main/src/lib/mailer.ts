@@ -50,6 +50,14 @@ export async function verifySmtp(): Promise<{ ok: true } | { ok: false; detail: 
   }
 }
 
+/**
+ * Every e-mail address in a log line, shortened to its first two letters and its domain ("ra*****@gmail.com"): for OTP and sign-up
+ * mail the recipient is a citizen, and the server log is not the place for a citizen's address (redsec2-13). The SMTP server's own
+ * error text can name the recipient too, so the whole line is scrubbed, not just the "to".
+ */
+export const scrubEmails = (text: string): string =>
+  String(text).replace(/([A-Za-z0-9._%+-]{1,64})@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, (_m, user: string, domain: string) => `${user.slice(0, 2)}*****@${domain}`);
+
 export type MailResult =
   /** The SMTP server accepted the message for delivery. */
   | { ok: true }
@@ -68,7 +76,7 @@ export type MailResult =
 export async function sendMail(to: string, subject: string, html: string): Promise<MailResult> {
   const t = getTransporter();
   if (!t) {
-    console.warn(`[mailer] SMTP is not configured; no email sent to ${to} (${subject})`);
+    console.warn(scrubEmails(`[mailer] SMTP is not configured; no email sent to ${to} (${subject})`));
     return { ok: false, reason: "not_configured" };
   }
   try {
@@ -83,7 +91,7 @@ export async function sendMail(to: string, subject: string, html: string): Promi
     // nodemailer reports per-recipient rejections without throwing.
     if (info.rejected && info.rejected.length > 0) {
       const detail = `recipient rejected by SMTP server: ${info.rejected.join(", ")}`;
-      console.error(`[mailer] ${detail}`);
+      console.error(scrubEmails(`[mailer] ${detail}`));
       return { ok: false, reason: "send_failed", detail };
     }
     if (info.accepted && info.accepted.length === 0) {
@@ -95,7 +103,7 @@ export async function sendMail(to: string, subject: string, html: string): Promi
   } catch (err) {
     // Never log the message body — it carries the verification code.
     const detail = err instanceof Error ? err.message : String(err);
-    console.error(`[mailer] Failed to send "${subject}" to ${to}: ${detail}`);
+    console.error(scrubEmails(`[mailer] Failed to send "${subject}" to ${to}: ${detail}`));
     return { ok: false, reason: "send_failed", detail };
   }
 }
