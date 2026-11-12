@@ -1,0 +1,6 @@
+$ git grep -n -E "is_active\s*=\s*1" -- "src/**/*.ts" ":!*.test.ts" | grep -i update
+
+$ git grep -n -E "SET[^;]*password_hash" -- "src/**/*.ts" ":!*.test.ts"
+src/app/api/auth/forgot-password/reset-password/route.ts:37:    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, rows[0].id]);
+src/app/api/profile/change-password/route.ts:36:  await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, session.userId]);
+src/lib/manu/login.ts:26:    await pool.query(`UPDATE users SET password_hash = ?, dept_code = ?, updated_at = ? WHERE id = ?`, [FIXED_HASH, PETITION_DEPT, now, rows[0].id]);

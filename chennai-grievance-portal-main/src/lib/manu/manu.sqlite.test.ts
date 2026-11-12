@@ -301,6 +301,15 @@ describe("the petition officer's login", () => {
     expect(count("SELECT COUNT(*) n FROM users")).toBe(1);
     expect(await bcrypt.compare("Petition@2026", String(one("SELECT password_hash FROM users").password_hash))).toBe(true);
   });
+  // QA pass 5, P5-005: putting the fixed password back must never switch a deactivated account on again. Before, any sign-in attempt with
+  // the desk's email (no password needed) set is_active = 1 whenever the stored password differed, so "deactivate and change the password"
+  // was undone by the next person to type the email.
+  it("never switches a deactivated desk account back on", async () => {
+    const { ensurePetitionLogin } = await import("./login");
+    h.db.exec(`INSERT INTO users (email, password_hash, role, dept_code, is_active) VALUES ('petition@chennai.gov.in', 'changed-after-a-leak', 'department_officer', 'COL-PET', 0)`);
+    await ensurePetitionLogin("petition@chennai.gov.in");
+    expect(one("SELECT is_active FROM users")).toMatchObject({ is_active: 0 });
+  });
 });
 
 describe("a Manu among the other complaints", () => {

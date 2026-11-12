@@ -21,6 +21,8 @@ export async function ensurePetitionLogin(email: string): Promise<void> {
       [email, FIXED_HASH, PETITION_DEPT, now, now, now]
     );
   } else if (rows[0].password_hash !== FIXED_HASH) {
-    await pool.query(`UPDATE users SET password_hash = ?, dept_code = ?, is_active = 1, updated_at = ? WHERE id = ?`, [FIXED_HASH, PETITION_DEPT, now, rows[0].id]);
+    // the fixed password goes back, but a deactivated account stays deactivated: anyone can type this email, no password needed
+    // (QA pass 5, P5-005), so this must never undo an administrator's "deactivate"
+    await pool.query(`UPDATE users SET password_hash = ?, dept_code = ?, updated_at = ? WHERE id = ?`, [FIXED_HASH, PETITION_DEPT, now, rows[0].id]);
   }
 }
