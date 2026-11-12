@@ -26,7 +26,7 @@ const run = (sql: string, params: unknown[] = []) => {
   return [{ affectedRows: Number(r.changes), insertId: Number(r.lastInsertRowid) }];
 };
 const pool = { query: async (sql: string, params: unknown[] = []) => run(sql, params) };
-vi.mock("@/lib/db", () => ({ default: pool, withTransaction: async (fn: (c: typeof pool) => Promise<unknown>) => fn(pool) }));
+vi.mock("@/lib/db", () => ({ default: pool, connectionSettings: () => ({}), withTransaction: async (fn: (c: typeof pool) => Promise<unknown>) => fn(pool) }));
 vi.mock("@/lib/auth", () => ({
   getSessionFromCookies: async () => h.session, getActiveSessions: async () => (h.session ? [h.session] : []), resolvePortal: async () => "citizen",
   revokeSessions: async () => 1, setAuthCookie: async () => undefined

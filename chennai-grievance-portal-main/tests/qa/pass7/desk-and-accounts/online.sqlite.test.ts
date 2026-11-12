@@ -70,7 +70,7 @@ beforeEach(() => {
     INSERT INTO users VALUES (1, 'c@x', 'collector', NULL, NULL), (2, 'swm@x', 'department_officer', 4, 'GCC-SWM'), (3, 'ele@x', 'department_officer', 3, 'GCC-ELE'), (5, 'a@x', 'citizen', NULL, NULL), (7, 'petition@x', 'department_officer', NULL, 'COL-PET');
     CREATE TABLE complaints (id INTEGER PRIMARY KEY AUTOINCREMENT, complaint_code TEXT, user_id INT, initials TEXT, first_name TEXT, last_name TEXT, gender TEXT, street_address TEXT, pincode TEXT, mobile_number TEXT, phone_number TEXT, email TEXT,
       zone_id INT, ward_number INT, ward_source TEXT, gcc_area_id INT, gcc_locality_id INT, gcc_street_id INT, manual_street_name TEXT, street_type TEXT, location_pincode TEXT, specific_location TEXT, latitude REAL, longitude REAL,
-      department_id INT, complaint_subtype_id INT, title TEXT, description TEXT, media_path TEXT, is_anonymous INT, needs_manual_review INT, status TEXT, is_synthetic INT NOT NULL DEFAULT 0, rejected_stage TEXT, remarks TEXT,
+      department_id INT, complaint_subtype_id INT, complaint_type_id INT, title TEXT, description TEXT, media_path TEXT, is_anonymous INT, needs_manual_review INT, status TEXT, is_synthetic INT NOT NULL DEFAULT 0, rejected_stage TEXT, remarks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')), updated_at TEXT);
     CREATE TABLE complaint_status_history (id INTEGER PRIMARY KEY, complaint_id INT, status TEXT, stage TEXT, remarks TEXT, changed_by INT, created_at TEXT DEFAULT (datetime('now', '+330 minutes')));
     CREATE TABLE petitions (id INTEGER PRIMARY KEY, complaint_code TEXT, subject TEXT, pages TEXT, dept_code TEXT, incident_id TEXT, status TEXT, filed_at TEXT);
@@ -145,7 +145,7 @@ describe("officer-day-07: a department the portal chose is not promised an offic
   });
 
   it("an assumed department (EB wire under Flood, sent to Storm Water Drain) is flagged too; a mapped type is not", async () => {
-    expect(caseOf(await file({ complaintSubtypeId: 11 }))).toMatchObject({ needs_review: 1 });
+    expect(caseOf(await file({ complaintSubtypeId: 11, title: "Spark from EB wire" }))).toMatchObject({ needs_review: 1 });
     expect(caseOf(await file())).toMatchObject({ needs_review: 0 });
   });
 });

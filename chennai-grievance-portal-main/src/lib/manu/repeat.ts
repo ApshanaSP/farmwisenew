@@ -6,7 +6,7 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
-import { maskAadhaar, similarity, squash, tenDigits } from "./clean";
+import { asciiDigits, maskAadhaar, similarity, squash, tenDigits } from "./clean";
 import { grievanceCategory } from "./grade";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 
@@ -156,24 +156,47 @@ const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
-/** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
-/** "First Cross Street" as "1 Cross Street", so "First" and "Fifth" differ by their numbers, not by a letter or two (P6-020). */
-const ORDINAL: Record<string, string> = { first: "1", second: "2", third: "3", fourth: "4", fifth: "5", sixth: "6", seventh: "7", eighth: "8", ninth: "9", tenth: "10" };
-export const ordinals = (s: string | null | undefined): string => String(s ?? "").replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b/gi, (w) => ORDINAL[w.toLowerCase()]);
+// A street's own number, written as an ordinal: "2nd", "Second", "2வது", "இரண்டாவது". "First" and "Fifth" differ by their numbers, not by a
+// letter or two (P6-020); "Eleventh" is "11th" and "இரண்டாவது தெரு" is "2வது தெரு" (fix-all, reviewer5-08).
+const EN_ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+  "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"];
+const EN_TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40 };
+const TA_ORD = ["", "முதல", "இரண்ட", "மூன்ற", "நான்க", "ஐந்த", "ஆற", "ஏழ", "எட்ட", "ஒன்பத", "பத்த"]; // + ாவது / ாம் (முதல் alone is "first" too)
+const ORD_WORD = new RegExp(String.raw`(?<![\p{L}\p{M}])(?:(twenty|thirty|forty)[\s-]*)?(${EN_ORD.slice(1).join("|")})(?![\p{L}\p{M}])` +
+  String.raw`|(?<![\p{L}\p{M}])(${TA_ORD.slice(1).join("|")})(?:ாவது|ாம்)(?![\p{L}\p{M}])|(?<![\p{L}\p{M}])முதல்(?![\p{L}\p{M}])`, "giu");
+const ORD_DIGITS = /(?<![\p{L}\p{M}\p{Nd}])(\d+)(?:st|nd|rd|th|\s*[-‐–]?\s*(?:வது|ஆவது|ஆம்|ம்))(?![\p{L}\p{M}])/giu;
 
-function streetIn(street: string, address: string | null): boolean {
-  const all = squash(address);
-  if (all.includes(street)) return true;
-  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011). When the typed
-  // street has no number, the part's number is the door number ("12 Gandhi Street"), and the letters are compared (P6-020)
-  const num = (x: string) => x.replace(/\D/g, "");
-  return String(address ?? "").split(/[,\n;]/).map((p) => squash(ordinals(p))).filter(Boolean)
-    .some((part) => (num(street) ? num(part) === num(street) && similarity(street, part) >= 0.7 : similarity(street, part.replace(/\d/g, "")) >= 0.7));
+/** A street as its number (an ordinal; "" when none) and its words. A bare number is the door number ("12 Gandhi Street"), not the street's. */
+export function streetKey(s: string | null | undefined): { num: string; words: string[] } {
+  const v = asciiDigits(String(s ?? "").normalize("NFC")).replace(/[​-‍⁠﻿]/g, "")
+    .replace(ORD_WORD, (_m, tens?: string, en?: string, ta?: string) =>
+      ` #${ta ? TA_ORD.indexOf(ta) : en ? (tens ? EN_TENS[tens.toLowerCase()] : 0) + EN_ORD.indexOf(en.toLowerCase()) : 1} `)
+    .replace(ORD_DIGITS, (_m, n: string) => ` #${Number(n)} `);
+  const nums = v.match(/#\d+/g) ?? [];
+  const words = v.replace(/#\d+/g, " ").replace(/\p{Nd}+/gu, " ").split(/[^\p{L}\p{M}]+/u).map((w) => w.toLowerCase()).filter(Boolean);
+  return { num: nums[0]?.slice(1) ?? "", words };
+}
+
+/**
+ * Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030).
+ * The street's number must agree ("3rd Street" is not "2nd Street", and "Gandhi Street" is not "2nd Gandhi Street": reviewer5-08); then the
+ * same words, the typed street inside a part with no comma before the area, or a spelling slip ("Gandhi Stret": P6-020).
+ */
+function streetIn(typed: string | null, address: string | null): boolean {
+  const t = streetKey(typed);
+  if (!t.words.length) return false;
+  const tn = t.words.join("");
+  const within = (p: string[]) => p.some((_, i) => t.words.every((w, k) => p[i + k] === w));
+  return String(address ?? "").split(/[,\n;]/).map(streetKey).some((p) => {
+    if (!p.words.length || p.num !== t.num) return false;
+    const pn = p.words.join("");
+    return pn === tn || (t.words.length >= 2 && within(p.words)) || similarity(tn, pn) >= 0.7;
+  });
 }
 
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
-  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(ordinals(c.street));
+  const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
   const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);

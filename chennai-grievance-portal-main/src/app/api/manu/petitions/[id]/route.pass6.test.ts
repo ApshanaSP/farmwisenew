@@ -12,7 +12,9 @@ vi.mock("@/lib/manu/repeat", () => ({ findRepeats: async () => { h.lookups++; re
 vi.mock("@/lib/manu/petitions", () => ({
   FileError: class extends Error {}, fileSchema: { parse: (x: unknown) => x }, deletePage: async () => false, deletePetition: async () => false, filePetition: async () => ({}),
   petitionDetail: async () => null, readAgain: async () => false, wardName: async () => null,
-  getPetition: async (id: number) => (h.status ? { id, status: h.status } : null)
+  getPetition: async (id: number) => (h.status ? { id, status: h.status } : null),
+  // QA pass 7: the repeats action reads the petition's category from its reading
+  readingOf: () => null
 }));
 
 const { POST } = await import("./route");
