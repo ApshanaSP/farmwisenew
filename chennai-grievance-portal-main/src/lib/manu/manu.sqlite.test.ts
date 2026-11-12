@@ -262,6 +262,19 @@ describe("the same person, written a little differently", () => {
   }
 });
 
+// QA pass 5, P5-019: an online complaint carried no department into the check, so the same person's online complaint on the same problem was
+// "an earlier petition on other problems" and never offered as the case to join
+describe("the same person's online complaint on the same problem", () => {
+  it("is the same problem, and its case is offered", async () => {
+    const { findRepeats } = await import("./repeat");
+    h.db.exec(`INSERT INTO complaints (complaint_code, user_id, first_name, gender, street_address, mobile_number, zone_id, ward_number, department_id, title, description, is_anonymous, needs_manual_review, status, is_synthetic, created_at)
+      VALUES ('2026-402FFF', 8, 'Selvi', 'Female', '27 Jawahar St', '9000041873', 6, 70, 3, 'Street light not working for a week', 'Dark street', 0, 0, 'Complaint Filed', 0, '2026-11-08 10:00:00')`);
+    const r = await findRepeats({ mobile: "9000041873", name: "Selvi", street: "Jawahar St", ward: 70, dept: "GCC-ELE", problem: "Street light not working on our street" });
+    expect(r.matches.find((m) => m.code === "2026-402FFF")).toMatchObject({ sameProblem: true });
+    expect(r.headline ?? "").not.toContain("on other problems");
+  });
+});
+
 describe("the public tracker", () => {
   it("opens with the slip's key or the mobile's last 4 digits, and shows no personal detail", async () => {
     const r = await filePetition(await uploaded(), fields(), "x");

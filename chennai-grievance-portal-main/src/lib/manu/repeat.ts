@@ -7,6 +7,7 @@ import pool from "@/lib/db";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
 import { similarity, squash, tenDigits } from "./clean";
+import { DEPT_CONFIG } from "@/lib/officer/departments";
 
 export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; excludeId?: number }
 export interface Earlier {
@@ -65,6 +66,14 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   return { headline, matches: out.slice(0, 8), attachTo: target?.incidentId ?? null };
 }
 
+/** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */
+function deptCodeFor(portalName: unknown, prefer: string | null | undefined): string | null {
+  const n = String(portalName ?? "");
+  if (!n) return null;
+  if (prefer && DEPT_CONFIG[prefer]?.portalName === n) return prefer;
+  return Object.entries(DEPT_CONFIG).find(([, d]) => d.portalName === n)?.[0] ?? null;
+}
+
 export async function findRepeats(c: Candidate): Promise<Repeats> {
   const mobile = tenDigits(c.mobile) || "__none__";
   const name = c.name?.trim() || "__none__";
@@ -89,7 +98,8 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
   const earlier: Earlier[] = [
     ...pet.map((r): Earlier => ({ code: String(r.code), incidentId: r.incident_id ?? null, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: r.dept_code ?? null,
       mobile: r.mobile ?? null, name: r.name ?? null, address: r.address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "petition" })),
-    ...online.map((r): Earlier => ({ code: String(r.code), incidentId: `INC-W-${r.code}`, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: null,
+    // an online complaint names its department by the portal's name: the desk's code for it, so "the same problem" can match (P5-019)
+    ...online.map((r): Earlier => ({ code: String(r.code), incidentId: `INC-W-${r.code}`, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: deptCodeFor(r.dept_name, c.dept),
       mobile: r.mobile_number ?? null, name: r.first_name ?? null, address: r.street_address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "online" }))
   ];
   return judgeRepeats(c, earlier);
