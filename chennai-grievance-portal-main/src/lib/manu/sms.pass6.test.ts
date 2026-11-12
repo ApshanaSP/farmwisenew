@@ -275,3 +275,15 @@ describe("QA pass 6, P6-010 (reviewer 1 on the P5-022/P5-023 fix): closing many 
     expect(rowOf("2026-778AAA").status).toBe("sending");
   });
 });
+
+describe("QA pass 6, P6-026 (reviewer 3, P3): a stale send is marked even while SMS is off", () => {
+  it("a row left 'sending' an hour ago becomes 'unsure' when the sweep runs with SMS off, so the desk does not say 'sending' for good", async () => {
+    // the QA settings: SMS off
+    h.db.prepare(`INSERT INTO petitions (status, pages, mobile, language, dept_code, complaint_code) VALUES ('filed', '[]', '9000011113', 'en', 'CMWSSB', '2026-779AAA')`).run();
+    h.db.prepare(`INSERT INTO petition_sms (complaint_code, kind, status, attempts, tried_at, created_at) VALUES ('2026-779AAA', 'received', 'sending', 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00')`).run();
+    expect(sms.smsMode()).toBe("off");
+    await sms.retryFailedSms();
+    expect(rowOf("2026-779AAA").status).toBe("unsure");
+    expect(msg91()).toHaveLength(0);
+  });
+});
