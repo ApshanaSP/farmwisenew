@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { readFormCapped } from "@/lib/body-cap";
 import { MAX_MEDIA_BYTES, saveMedia, sniffMedia } from "@/lib/complaint-media";
 
 /**
@@ -21,13 +22,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let file: File | null = null;
-  try {
-    const v = (await req.formData()).get("media");
-    file = v instanceof File ? v : null;
-  } catch {
-    return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
-  }
+  // one file at its limit plus the form's own bytes: a larger request is refused before it is read into memory (officer-day-25)
+  const { form, tooLarge } = await readFormCapped(req, MAX_MEDIA_BYTES + 64 * 1024);
+  if (tooLarge) return NextResponse.json({ error: "File must be 10MB or smaller." }, { status: 413 });
+  const v = form?.get("media");
+  const file: File | null = v instanceof File ? v : null;
   if (!file) {
     return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   }

@@ -66,3 +66,21 @@ describe("officer-day-16: the case is checked before the password is asked", () 
     expect(H.recorded).toBe(0);
   });
 });
+
+// officer-day-25: the report was read in full (req.formData()) before any size check; a request larger than the largest valid one
+// (8 photos of 5 MB plus the remarks) is now refused while it is read.
+describe("officer-day-25: an oversized report is refused before it is read in full", () => {
+  it("a 50 MB chunked report is a 413, and far less than 50 MB is pulled", async () => {
+    let pulled = 0;
+    const total = 50 * 1024 * 1024;
+    const body = new ReadableStream<Uint8Array>({
+      pull(c) { if (pulled >= total) return c.close(); pulled += 1024 * 1024; c.enqueue(new Uint8Array(1024 * 1024)); }
+    });
+    const id = "INC-W-2026-SEV001";
+    const r = await POST(new NextRequest(`http://localhost/api/officer/grievances/${id}/report`,
+      { method: "POST", body, headers: { "content-type": "multipart/form-data; boundary=x" }, duplex: "half" } as never), { params: Promise.resolve({ id }) });
+    expect(r.status).toBe(413);
+    expect(pulled).toBeLessThan(45 * 1024 * 1024);
+    expect(H.recorded).toBe(0);
+  });
+});
