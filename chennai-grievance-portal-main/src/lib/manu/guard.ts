@@ -21,6 +21,11 @@ export async function seesEveryPetition(): Promise<boolean> {
 }
 
 export function manuFailed(err: unknown, what: string) {
-  console.error(`manu ${what} failed`, err);
+  // the code only: a database error carries the statement with the petitioner's name, mobile and address, and quotes values in its message (P5-029)
+  const e = err as { code?: unknown; errno?: unknown; name?: unknown; message?: unknown; sql?: unknown };
+  const fromDb = e?.sql != null || /^(ER_|SQLITE)/.test(String(e?.code ?? ""));
+  console.error(fromDb
+    ? `manu ${what} failed: ${String(e.code ?? "database error")}${e.errno != null ? ` (${String(e.errno)})` : ""}`
+    : `manu ${what} failed: ${String(e?.name ?? "Error")}: ${String(e?.message ?? err).slice(0, 200)}`);
   return NextResponse.json({ error: `Could not ${what}.` }, { status: 500 });
 }
