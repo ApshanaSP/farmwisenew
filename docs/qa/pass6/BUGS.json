@@ -1687,7 +1687,8 @@
     "status": "open",
     "reviewer": null,
     "closed_in": null,
-    "pass6": "carried from pass 5 (slow test under load)"
+    "pass6": "carried from pass 5 (slow test under load)",
+    "note": "needs src/lib/thunai/lane-a.pass4.test.ts, a p7 session's file (src/lib/thunai/**). The slow test (every GCC locality x 2 agency heads through foreignIn, about 16 s under a build) and foreignIn itself both live there. Fix for the lead: give that one it() its own limit (it(name, fn, 60_000)), or build the locality list once and memoise foreignIn's world index; a test change only, no app change. Not changed here."
   },
   {
     "id": "P5-037",
@@ -2084,13 +2085,15 @@
     "title": "The meaning-search model in this worktree's .cache fails to load (\"Protobuf parsing failed\"), so Ask District IQ uses its keyword fallback on this server; not a code bug, but the server log carries the error on every start",
     "found_by": "lead, server log of 3106",
     "repro": "grep embedding data/aws-cache/qa/run/srv-3106.log",
-    "failing_test": null,
-    "root_cause": null,
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/assistant/embed.fixall.test.ts::embed() says the file is an LFS pointer and how to fix it, and starts no worker, however often it is asked",
+    "root_cause": "this worktree's .cache/models/.../model_quantized.onnx is a 134-byte Git LFS pointer (checked out without LFS files; E:\farm has the 278 MB model). The code fell back to keywords but said only Protobuf parsing failed and started a failing worker per question; it now checks the file first, names the pointer (run git lfs pull), says it once and does not retry the same file.",
+    "fix_commit": "18b8ff12",
+    "revert_check": "fails without (3 of 4) / passes with (4 of 4)",
+    "status": "fixed",
     "reviewer": null,
-    "verified": true
+    "verified": true,
+    "note": "The worktree itself still holds the pointer: git lfs pull in it (about 280 MB) gives the server its meaning search back. Not done here.",
+    "closed_in": "fixall"
   },
   {
     "id": "P6-026",
