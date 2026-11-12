@@ -1,6 +1,6 @@
 "use client";
 /** Public: where a petition stands, for anyone holding the slip. The QR code opens this page already filled in. */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@/components/manu/manu.css";
 
 interface Step { status: string; stage: string; note: string | null; at: string }
@@ -23,6 +23,14 @@ export default function TrackPage() {
     } catch (e) { setView(null); setErr((e as Error).message); } finally { setBusy(false); }
   }, []);
 
+  const codeBox = useRef<HTMLInputElement>(null);
+  /** Back to an empty form for another slip (journeys-02). The QR link's number and key leave the address too, or a reload shows the old result. */
+  const checkAnother = useCallback(() => {
+    setView(null); setErr(null); setCode(""); setLast4("");
+    if (window.location.search) window.history.replaceState(window.history.state, "", window.location.pathname);
+    setTimeout(() => codeBox.current?.focus(), 0);
+  }, []);
+
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     const c = q.get("code") ?? "", k = q.get("k") ?? "";
@@ -36,7 +44,7 @@ export default function TrackPage() {
       <p>Track your petition or complaint</p>
       {!view && (
         <form className="trk-card trk-form" onSubmit={(e) => { e.preventDefault(); void ask(code, { last4 }); }}>
-          <label>Number on your slip<input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="2026-123ABC" autoComplete="off" /></label>
+          <label>Number on your slip<input ref={codeBox} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="2026-123ABC" autoComplete="off" /></label>
           <label>Last 4 digits of your mobile<input value={last4} onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} autoComplete="off" /></label>
           <button className="trk-btn" disabled={busy}>{busy ? "Checking…" : "Check status"}</button>
           {err && <p className="trk-err" role="alert">{err}</p>}
@@ -53,6 +61,7 @@ export default function TrackPage() {
           <ol className="trk-steps">
             {view.steps.map((s, k) => <li key={k}><b>{s.status}</b><small>{day(s.at)}</small>{s.note && <p>{s.note}</p>}</li>)}
           </ol>
+          <button type="button" className="trk-btn" style={{ marginTop: 14 }} onClick={checkAnother}>Check another number</button>
         </section>
       )}
     </main>
