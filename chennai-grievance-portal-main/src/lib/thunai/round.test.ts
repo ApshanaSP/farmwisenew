@@ -222,7 +222,9 @@ describe("one round of thinking", () => {
     expect(r.result?.say ?? "").not.toMatch(/Adyar has 9/);
     expect(JSON.stringify(r.result?.stage?.blocks)).not.toMatch(/Adyar has 9/);
   });
-  it("a say with no figure comes through the template unchanged", async () => {
+  // redsec2-07: a data answer states at least one of the results' figures; one with none ("Adyar leads the list."), beside results that
+  // have figures, is not the data speaking and the figures are shown (a record's title had ordered a figure-free false reassurance)
+  it("a say with no figure, beside results that have figures, gives way to the figures", async () => {
     let n = 0;
     const m = model(() => (n++ === 0
       ? { kind: "do", lang: "en", reply: null, options: [], calls: [{ tool: "zones", period: null, zone: null, dept: null, cat: null, taluk: null, place: null, metric: null, text: null }], done: false, say: null, screen: null }
@@ -230,7 +232,8 @@ describe("one round of thinking", () => {
     const h = fakeHands();
     await planRound(body("how many open complaints in total", { turnId: "plain" }), WORLD, h, "u", undefined, undefined, deps(m));
     const r = await planRound(body("how many open complaints in total", { turnId: "plain", round: 1 }), WORLD, h, "u", undefined, undefined, deps(m));
-    expect(r.result?.say).toBe("Adyar leads the list.");
+    expect(r.result?.say).not.toBe("Adyar leads the list.");
+    expect(r.result?.say).toMatch(/^Severe in Adyar: \d+/);
   });
   it("the router's time counts against the turn's 8 s: the planner gets what is left, not a fresh budget", async () => {
     const real = Date.now.bind(Date);

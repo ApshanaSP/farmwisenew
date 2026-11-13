@@ -566,7 +566,12 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   const said = clip(plan.say, 600);
   // the Collector's own numbers are not evidence: an answer's figures must all come from the results; and an answer that repeats
   // a record's wording is that record speaking (an instruction hidden in a title), so the facts are shown instead (BUG-011)
-  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !lineProblem(said, { records: [...recordText(results), ...screen] });
+  const plain = said ? zoneLabelsOut(said, zonesNamed(results)) : "";
+  // an answer from the data states at least one of its figures (the round asks for every figure as a placeholder): a line with none, beside
+  // data that has some, is not the data speaking. A false reassurance ordered by a record's title ("nothing in Adyar needs attention") had no
+  // figure, no spelled number and no six copied words, so every check passed and it was shown and said (redsec2-07)
+  const cites = !facts.length || figuresIn(plain).some((x) => !x.words && allowed.has(String(x.value)));
+  const ok = said && cites && figuresOk(plain, allowed) && !spellsNumber(said) && !lineProblem(said, { records: [...recordText(results), ...screen] });
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");
@@ -574,7 +579,8 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
     v: 1, id: `st-${Date.now().toString(36)}`, recipe: "answer", title: clip(heard, 200), takeaway: null, say: { en: text, ta: text },
     blocks: [{ kind: "Answer", id: "answer", title: "What the data says", text, facts: top.map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ?? null })) }],
     scope: { ...scope, sev: null }, slots: {}, sources: [...new Set(results.map((r) => r.name))].slice(0, 10), asOf: results[0]?.result.asOf ?? null,
-    notes: ok || !said ? [] : ["The model's wording had a figure the data does not hold, so the figures are shown as they are."]
+    notes: ok || !said ? [] : [!cites && figuresOk(plain, allowed) ? "The model's wording stated no figure from the data, so the figures are shown as they are."
+      : "The model's wording had a figure the data does not hold, so the figures are shown as they are."]
   };
   return doc;
 }
