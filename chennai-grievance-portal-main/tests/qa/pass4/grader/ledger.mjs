@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // QA pass 4: the before-and-after ledger of two runs.   node tests/qa/pass4/grader/ledger.mjs <labelA> <labelB>
 // Lists every row that changed grade, right-to-wrong first, with the words each run said on it. Exit code 1 on any right-to-wrong.
 // Also writes docs/qa/pass4/results/ledger-<labelA>--<labelB>.md. QA_P4_RESULTS_DIR moves the folder, for the tool's own test.

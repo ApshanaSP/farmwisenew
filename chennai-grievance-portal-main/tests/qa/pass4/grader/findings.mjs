@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // QA pass 4: turns a graded run into findings, one for each confident wrong row, grouped by the mechanism behind it. Rows that are wrong but not confident get one finding per mechanism.
 //   node tests/qa/pass4/grader/findings.mjs <label> <out-name>     writes docs/qa/pass4/findings/<out-name>.json
 // The mechanisms were read from the code and traced row by row (resolveEntity, quickScreen and understand on each sentence). This file names rows, since a finding is about a row; it decides no grade.
