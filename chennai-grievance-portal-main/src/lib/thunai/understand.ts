@@ -172,7 +172,14 @@ function reservoirDict(world: World): [string, string][] {
 const b = (en: string, ta: string): Bilingual => ({ en, ta });
 const QUESTION = /^(how many|how much|which|why|what is|whats|what are|who|when|where|is there|are there|did|does|do we|has|have)\b|எத்தனை|ஏன்|யார்|எப்போது|evlo|evvalavu|ethana|yen\b|\?\s*$/;
 const SPATIAL = /\b(within|near|nearest|nearby|around|km|kilometres?|kilometers?|metres?|meters?|along|hotspots?|on the map|map la|radius|distance|closest|close to|next to)\b|அருகில்|அருகே|அருகிலுள்ள|கிலோமீட்ட|கி\.மீ|வரைபடத்தில்|மேப்ல|சுற்றி/;
-const WARD = /\bward (\d{1,3})\b|வார்டு (\d{1,3})|(\d{1,3}) வார்டு/;
+// "5 வார்டுகள்" (five wards) is a count of wards, not ward 5: the plural is not a ward number (QA pass 7, pass4-open-18 m08)
+const WARD = /\bward (\d{1,3})\b|வார்டு (\d{1,3})|(\d{1,3}) வார்டு(?!கள)/;
+/**
+ * A ranking or a count by ward ("top five wards by severe complaints", "தீவிர புகார்கள் அதிகம் உள்ள முதல் ஐந்து வார்டுகள்", "garbage complaints by ward"): the
+ * console's filters hold zones, not the 200 wards, and Ask the Map counts by ward. Asked in English, this set the Severe filter and dropped the wards; in Tamil it reached
+ * the map only by reading "five wards" as ward 5 (pass4-open-18, meta-words-2 m08). Both now go to the map, by what they ask.
+ */
+const WARD_RANK = /\bwards\b|\bby ward\b|\bward[- ]?wise\b|வார்டுகள|வார்டுவாரி|வார்டு வாரியாக|\bwardgal\b|\bwards? la\b/;
 
 function stateZoneName(world: World, n: number, lang: Lang = "en"): string {
   const z = world.zones.find((x) => x.n === n);
@@ -384,7 +391,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const worstQ = /(which|எந்த|edhu|ethu).*(zone|மண்டலம்).*(worst|மோசம்|most|அதிகம்|adhigam)|worst zone (edhu|which|ethu)\??$|^worst zone\?$|எந்த மண்டலம் (ரொம்ப )?மோசம்/.test(s);
   if (worstQ) return done([{ a: "read", what: "worstZone", name: null }]);
   const ward = WARD.exec(s);
-  if (SPATIAL.test(s) || ward || /what is (this|that) place|what'?s (here|there)/.test(s)) {
+  if (SPATIAL.test(s) || ward || WARD_RANK.test(s) || /what is (this|that) place|what'?s (here|there)/.test(s)) {
     return done([{ a: "map", q: heard }], 1, 1, 1);
   }
   if (/^(zoom|zoom in|zoom there|zoom in there|zoom here|idha zoom pannu|zoom pannu|அங்கே பெரிதாக்கு|பெரிதாக்கு)$|^zoom (in )?(there|here|to it|on it)$/.test(s)) {
