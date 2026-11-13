@@ -3,6 +3,8 @@
  * so the words a Collector reads every day are exact. "#" stands for a number ("# open" → "# திறந்தவை"); the
  * Translator puts the real numbers back in order. Anything not here is translated once by AI (api/i18n) and cached.
  */
+import { MANU_DEPTS } from "@/lib/manu/constants";
+
 export const TA: Record<string, string> = {
   // ---- pages and the top bar
   "Overview": "மேலோட்டம்", "Briefing": "சுருக்கம்", "Trends": "போக்குகள்", "Environment": "சுற்றுச்சூழல்", "Data Studio": "தரவு அரங்கம்",
@@ -157,7 +159,25 @@ export const TA: Record<string, string> = {
     "இதற்கு உள்நுழைந்திருப்பது மட்டும் போதாது. இந்தச் செயலுக்கென்றே சர்வரில் சரிபார்க்கப்பட்டு, தணிக்கைப் பதிவில் பதிவாகும்.",
   "Send email": "மின்னஞ்சல் அனுப்பு", "Record a decision": "முடிவைப் பதிவு செய்", "Send the completion report": "பணி நிறைவு அறிக்கையை அனுப்பு",
   "Delete a dataset": "தரவுத்தொகுப்பை நீக்கு", "Approve a new data source": "புதிய தரவு மூலத்துக்கு ஒப்புதல் அளி", "Change or remove a data source": "தரவு மூலத்தை மாற்று அல்லது நீக்கு", "Export data": "தரவைப் பதிவிறக்கு",
-  "Sign out every other device": "மற்ற எல்லாச் சாதனங்களிலிருந்தும் வெளியேறு"
+  "Sign out every other device": "மற்ற எல்லாச் சாதனங்களிலிருந்தும் வெளியேறு",
+
+  // ---- /track, where a petitioner's SMS sends them (fix-all run, hunt2-desk-15): it was English but for the heading
+  "Track your petition or complaint": "உங்கள் மனு அல்லது புகாரின் நிலையை அறியுங்கள்",
+  "Number on your slip": "உங்கள் ஒப்புகைச் சீட்டில் உள்ள எண்", "Last 4 digits of your mobile": "உங்கள் கைபேசி எண்ணின் கடைசி 4 இலக்கங்கள்",
+  "Check status": "நிலையை அறிக", "Check another number": "வேறொரு எண்ணின் நிலையை அறிக",
+  "With:": "கையாளும் துறை:", "Received:": "பெற்ற நாள்:", "Expected by:": "முடிக்க எதிர்பார்க்கும் நாள்:",
+  "Received at the Collector's office and sent to the department.": "ஆட்சியர் அலுவலகத்தில் பெறப்பட்டு, துறைக்கு அனுப்பப்பட்டது.",
+  "Received online and sent to the department.": "இணையம் வழியாகப் பெறப்பட்டு, துறைக்கு அனுப்பப்பட்டது.",
+  "Waiting for the department to accept it.": "துறை ஏற்றுக்கொள்வதற்காகக் காத்திருக்கிறது.",
+  "The department is working on it.": "துறை இதற்கான பணியைச் செய்து வருகிறது.",
+  "It could not be taken up. The Collector's office can tell you why.": "இதை எடுத்துக்கொள்ள இயலவில்லை. காரணத்தை ஆட்சியர் அலுவலகம் உங்களுக்குத் தெரிவிக்கும்.",
+  "We could not find that. Check the number on your slip and the last 4 digits of your mobile number.":
+    "இதைக் கண்டறிய முடியவில்லை. உங்கள் ஒப்புகைச் சீட்டில் உள்ள எண்ணையும், கைபேசி எண்ணின் கடைசி 4 இலக்கங்களையும் சரிபார்க்கவும்.",
+  "Too many tries. Please wait a few minutes.": "பலமுறை முயன்றுவிட்டீர்கள். சில நிமிடங்கள் கழித்து மீண்டும் முயலவும்.",
+  "Tracking is not available just now. Please try again.": "நிலையை இப்போது அறிய இயலவில்லை. மீண்டும் முயலவும்.",
+  "Tracking is not available just now.": "நிலையை இப்போது அறிய இயலவில்லை.",
+  // the petition desk's departments, by their English names (lib/manu/constants.ts; P5-025)
+  ...Object.fromEntries(MANU_DEPTS.map((d) => [d.label, d.ta]))
 };
 
 /**

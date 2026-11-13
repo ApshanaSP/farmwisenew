@@ -368,3 +368,24 @@ describe("P5-025: a Tamil petitioner's SMS names the department in Tamil", () =>
     }
   });
 });
+
+// hunt2-desk-15 (the API's part): /track kept "Expected by" after the case was closed, and did not say the petition was in Tamil
+describe("hunt2-desk-15: /track's answer for a closed case and a Tamil petition", () => {
+  it("open: the due date and the petition's language", async () => {
+    const r = await filePetition(await uploaded(), fields(), "x");
+    const v = await (await trackAs({ code: r.code, last4: "1873" })).json();
+    expect(v.lang).toBe("ta");
+    expect(v.dueBy).toBeTruthy();
+  });
+  it.each([["the department closed it", "close"], ["the Collector rejected it", "reject"]])("closed (%s): no 'expected by'", async (_k, how) => {
+    const r = await filePetition(await uploaded(), fields(), "x");
+    if (how === "close") step(r.code, "close", 1); else decide(r.code, "reject", 1);
+    const v = await (await trackAs({ code: r.code, last4: "1873" })).json();
+    expect(v.status).toBe(how === "close" ? "Resolved by Department" : "Rejected");
+    expect(v.dueBy).toBeNull();
+  });
+  it("an English petition says en", async () => {
+    const r = await filePetition(await uploaded(), fields({ name: "R. Kumar", subject: "Sewage", fullText: "From: R. Kumar" }), "x");
+    expect((await (await trackAs({ code: r.code, last4: "1873" })).json()).lang).toBe("en");
+  });
+});

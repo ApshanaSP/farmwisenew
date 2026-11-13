@@ -13,8 +13,15 @@ export function getLang(): UiLang {
   try { return localStorage.getItem(KEY) === "ta" ? "ta" : "en"; } catch { return "en"; }
 }
 
-export function setLang(l: UiLang) {
-  try { localStorage.setItem(KEY, l); } catch { /* not saved */ }
+/** Whether the person has chosen a language in this browser: a page may choose one for them only when they have not. */
+export function hasLangChoice(): boolean {
+  if (typeof window === "undefined") return false;
+  try { return localStorage.getItem(KEY) !== null; } catch { return false; }
+}
+
+/** Shows the site in this language. `remember` false: for this visit only, as when a page chooses it for the person (/track). */
+export function setLang(l: UiLang, remember = true) {
+  if (remember) try { localStorage.setItem(KEY, l); } catch { /* not saved */ }
   document.documentElement.lang = l === "ta" ? "ta" : "en";
   document.documentElement.dataset.lang = l;
   window.dispatchEvent(new CustomEvent("diq:lang", { detail: l }));
