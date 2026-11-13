@@ -54,6 +54,27 @@ export const consoleNow = (clock = FROZEN_WALL) => { const a = snapshotAsOf(); r
 
 // RC-26 (lane d): the latest decision WITH an effect decides; "Verify and close" closes, a note and an escalate have none (the same table as effective.ts)
 const EFFECT = { resolve: { open: false, status: "Resolved" }, verify: { open: false, status: "Resolved" }, reject: { open: false, status: "Rejected" }, reopen: { open: true, status: "Open" } };
+// hunt2-ops-09 (effective.ts STEP_STATUS): on a case still open, the lead department's latest officer step moves the status, when no decision
+// with an effect was made at or after it (in the same second the decision wins). A step never opens or closes a case. (reviewerG-07)
+const STEP_STATUS = { approve: "Assigned", action: "In progress", send: "Awaiting verification" };
+
+/**
+ * Each incident's officer step the status reads, by the app's rule (effective.ts laterStep): the department's latest step (by step_id) on
+ * the incident, kept only when no decision with an effect was made at or after it. Keyed "<incident>|<department>": the row's lead
+ * department's is the one read.
+ */
+function laterSteps(durable) {
+  const last = new Map();
+  for (const s of [...(durable.steps ?? [])].sort((a, b) => Number(a.step_id) - Number(b.step_id))) last.set(`${s.incident_id}|${s.dept_code}`, s);
+  const effectAt = new Map();
+  for (const d of durable.decisions ?? []) if (EFFECT[d.decision]) { const k = String(d.incident_id); if (!effectAt.has(k)) effectAt.set(k, []); effectAt.get(k).push(wallMs(d.decided_at)); }
+  const out = new Map();
+  for (const [k, s] of last) {
+    const at = wallMs(s.at);
+    if (!(effectAt.get(String(s.incident_id)) ?? []).some((t) => t != null && at != null && t >= at)) out.set(k, String(s.step));
+  }
+  return out;
+}
 
 function shape(r) {
   return {
@@ -69,23 +90,30 @@ const FIELD_OF_COLUMN = { zone_no: "zone", zone_name: "zoneName", ward_no: "ward
   place_text: "place", source_count: "sources", member_count: "members", dead: "dead", injured: "injured" };
 
 /** Layers the Collector's latest decision with an effect and the routing on a row: the same rule as the app's EFF, written out here. A closing
- *  decision's time is the row's closing time (reopened: none), and a resolve and a verify leave the row verified (RC-27, effective.ts). */
-function overlay(row, latest, routed, latestAt = new Map()) {
+ *  decision's time is the row's closing time (reopened: none), and a resolve and a verify leave the row verified (RC-27, effective.ts). On a
+ *  case still open, the lead department's later officer step sets the status (hunt2-ops-09, reviewerG-07): `officerStep` names it. */
+function overlay(row, latest, routed, latestAt = new Map(), steps = new Map()) {
   const d = latest.get(row.id);
   const e = d ? EFFECT[d] : null;
   const closed = e ? (e.open ? null : (latestAt.get(row.id) != null ? wallMs(latestAt.get(row.id)) : row.closed)) : row.closed;
   const verified = d === "resolve" || d === "verify" ? true : row.verified;
-  return { ...row, decision: d ?? null, open: e ? e.open : row.rawOpen, effStatus: e ? e.status : row.status, routed: routed.has(row.id), closed, verified };
+  const open = e ? e.open : row.rawOpen;
+  const step = open ? steps.get(`${row.id}|${row.dept}`) ?? null : null;
+  const status = e ? e.status : row.status;
+  return { ...row, decision: d ?? null, open, effStatus: step && STEP_STATUS[step] ? STEP_STATUS[step] : status, officerStep: step && STEP_STATUS[step] ? step : null,
+    routed: routed.has(row.id), closed, verified };
 }
 
-export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durableFile = null } = {}) {
+/** `durable`: the durable rows themselves ({ decisions, assignments, steps }), in place of the pinned ones or a server's file (tests). */
+export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durableFile = null, durable: given = null } = {}) {
   const now = consoleNow(clock), nowMs = wallMs(now);
-  const durable = durableRows(durableFile);
+  const durable = given ?? durableRows(durableFile);
   const latest = new Map(), latestAt = new Map();
   for (const d of [...durable.decisions].sort((a, b) => Number(a.decision_id) - Number(b.decision_id))) if (EFFECT[d.decision]) { latest.set(String(d.incident_id), d.decision); latestAt.set(String(d.incident_id), d.decided_at); }
   const routed = new Set(durable.assignments.map((a) => String(a.incident_id)));
   const rawRows = pinTable("incidents").map(shape);
-  const overlaid = rawRows.map((r) => overlay(r, latest, routed, latestAt));
+  const steps = laterSteps(durable);
+  const overlaid = rawRows.map((r) => overlay(r, latest, routed, latestAt, steps));
   const hooks = fs.existsSync(hooksFile) ? JSON.parse(fs.readFileSync(hooksFile, "utf8")) : { removed: [], changed: [], clusters: {} };
   const removedBy = new Map(hooks.removed.map((x) => [String(x.id), x.hook]));
   const changes = new Map();
@@ -103,7 +131,7 @@ export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durabl
     }
     return r;
   });
-  return new Oracle({ now, nowMs, raw: overlaid.map((r) => ({ ...r, open: r.rawOpen, effStatus: r.status, routed: false, decision: null })), overlaid, effective, removedBy, changes, durable, latest, routed, hooks });
+  return new Oracle({ now, nowMs, raw: overlaid.map((r) => ({ ...r, open: r.rawOpen, effStatus: r.status, routed: false, decision: null, officerStep: null })), overlaid, effective, removedBy, changes, durable, latest, routed, hooks });
 }
 
 // ------------------------------------------------------------------ the figures, one definition each --
