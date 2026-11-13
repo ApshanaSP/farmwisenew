@@ -217,8 +217,9 @@ export async function readInReader(buf: Buffer, name: string, contentType: strin
 
 /**
  * A fetched page's facts (its title; an article, a sign-in, a CAPTCHA wall, a JavaScript app), worked out in the reader: the patterns
- * that find them backtrack on a crafted page (QA pass 7 reviewer). A page the reader had to stop has none of them: the caller goes on
- * as for a page with no title that is none of these.
+ * that find them backtrack on a crafted page (QA pass 7 reviewer). A page the reader had to stop (time, memory) has none of them: the
+ * caller goes on as for a page with no title that is none of these. A busy reader is thrown as busy: answered "none", it turned a CAPTCHA
+ * wall into "no data here" (QA pass 7 reviewer, round 2).
  */
 export async function readFacts(html: string): Promise<PageFacts> {
   const none: PageFacts = { title: null, article: false, login: false, captcha: false, jsapp: false };
@@ -228,7 +229,7 @@ export async function readFacts(html: string): Promise<PageFacts> {
     if ("error" in r) throw thrown(r);
     return none;
   } catch (e) {
-    if (e instanceof ParseLimitError) return none;
+    if (e instanceof ParseLimitError && e.reason !== "busy") return none;
     throw e;
   }
 }

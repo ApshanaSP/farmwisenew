@@ -330,7 +330,9 @@ async function paginate(t: Table, first: string | null, url: string, cred: Param
       next = p.next;
     } catch { break; }
   }
-  if (pages > 1) log(`The table runs over ${pages} pages: read all ${rows.length.toLocaleString("en-IN")} rows.`);
+  if (pages > 1) log(cut || (next && rows.length >= MAX_ROWS)
+    ? `The table runs over ${pages} pages or more: read its first ${rows.length.toLocaleString("en-IN")} rows (the Studio reads at most ${MAX_ROWS.toLocaleString("en-IN")} rows of a table).`
+    : `The table runs over ${pages} pages: read all ${rows.length.toLocaleString("en-IN")} rows.`);
   return pages > 1 ? { ...t, rows, part: `${pages} pages`, truncated: t.truncated + cut } : t;
 }
 

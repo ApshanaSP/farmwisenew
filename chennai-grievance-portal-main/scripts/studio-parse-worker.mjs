@@ -1117,6 +1117,7 @@ function readFile(job) {
     return fail(e);
   }
 }
+var PAGE_TABLES = 24;
 function part(f, none) {
   try {
     return f();
@@ -1126,7 +1127,13 @@ function part(f, none) {
 }
 function readPage(job) {
   const { html, url } = job;
-  const tables = part(() => htmlTables(html), []).map((g) => part(() => ({ ...shape(g), sheet: null, sheets: [], format: "html", caption: null }), null));
+  let cells = 0;
+  const tables = part(() => htmlTables(html), []).slice(0, PAGE_TABLES).map((g) => {
+    const t = part(() => ({ ...shape(g), sheet: null, sheets: [], format: "html", caption: null }), null);
+    if (!t || cells + size(t) > MAX_CELLS) return null;
+    cells += size(t);
+    return t;
+  });
   return { page: {
     tables,
     feed: part(() => feedLinkIn(html, url), null),
@@ -1152,7 +1159,22 @@ function work(job) {
   }
   return job.op === "page" ? readPage(job) : readFile(job);
 }
-function packTable(t) {
+var Texts = class {
+  constructor() {
+    this.list = [];
+    this.seen = /* @__PURE__ */ new Map();
+  }
+  id(s) {
+    let k = this.seen.get(s);
+    if (k === void 0) {
+      k = this.list.length;
+      this.list.push(s);
+      this.seen.set(s, k);
+    }
+    return k;
+  }
+};
+function packTable(t, texts) {
   const { rows, ...meta } = t;
   const widths = new Int32Array(rows.length);
   let n = 0;
@@ -1161,8 +1183,6 @@ function packTable(t) {
     n += widths[r];
   }
   const kind = new Int32Array(n), nums = new Float64Array(n);
-  const strings = [];
-  const seen = /* @__PURE__ */ new Map();
   let i = 0;
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
@@ -1172,24 +1192,21 @@ function packTable(t) {
       else if (typeof v === "number") {
         kind[i] = -1;
         nums[i] = v;
-      } else {
-        let k = seen.get(v);
-        if (k === void 0) {
-          k = strings.length;
-          strings.push(v);
-          seen.set(v, k);
-        }
-        kind[i] = k;
-      }
+      } else kind[i] = texts.id(v);
     }
   }
-  return { meta, strings, kind, nums, widths };
+  return { meta, kind, nums, widths };
 }
 function toWire(r) {
-  if ("tables" in r) return { packed: r.tables.map(packTable) };
+  const texts = new Texts();
+  if ("tables" in r) {
+    const tables = r.tables.map((t) => packTable(t, texts));
+    return { packed: { texts: texts.list, tables } };
+  }
   if ("page" in r) {
     const { tables, ...rest } = r.page;
-    return { page: { ...rest, packed: tables.map((t) => t ? packTable(t) : null) } };
+    const packed = tables.map((t) => t ? packTable(t, texts) : null);
+    return { page: { ...rest, texts: texts.list, packed } };
   }
   return r;
 }

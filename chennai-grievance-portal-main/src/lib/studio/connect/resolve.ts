@@ -247,7 +247,9 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
     return done(outcomeOfError(e, url, checked));
   }
   const linkIsFeed = !connected.html && found.some((f) => f.cand.kind === "feed");
-  const facts = connected.html ? await readFacts(connected.html) : null;
+  // a busy reader is an outcome ("try again"), not "no data here" (QA pass 7 reviewer, round 2)
+  let facts: PageFacts | null = null;
+  try { facts = connected.html ? await readFacts(connected.html) : null; } catch (e) { return done(outcomeOfError(e, url, checked)); }
   let gates = gateAll(found, { url, title: connected.title ?? null, linkIsFeed });
   let passA = found.filter((f) => gates.get(f.cand.id)!.a.ok);
   let explored = 0;
