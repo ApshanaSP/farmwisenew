@@ -170,7 +170,7 @@ export const TA: Record<string, string> = {
   "Received online and sent to the department.": "இணையம் வழியாகப் பெறப்பட்டு, துறைக்கு அனுப்பப்பட்டது.",
   "Waiting for the department to accept it.": "துறை ஏற்றுக்கொள்வதற்காகக் காத்திருக்கிறது.",
   "The department is working on it.": "துறை இதற்கான பணியைச் செய்து வருகிறது.",
-  "It could not be taken up. The Collector's office can tell you why.": "இதை எடுத்துக்கொள்ள இயலவில்லை. காரணத்தை ஆட்சியர் அலுவலகம் உங்களுக்குத் தெரிவிக்கும்.",
+  "It could not be taken up. The Collector's office can tell you why.": "இதை எடுத்துக்கொள்ள இயலவில்லை. காரணத்தை ஆட்சியர் அலுவலகத்தில் கேட்டு அறிந்துகொள்ளலாம்.",
   "We could not find that. Check the number on your slip and the last 4 digits of your mobile number.":
     "இதைக் கண்டறிய முடியவில்லை. உங்கள் ஒப்புகைச் சீட்டில் உள்ள எண்ணையும், கைபேசி எண்ணின் கடைசி 4 இலக்கங்களையும் சரிபார்க்கவும்.",
   "Too many tries. Please wait a few minutes.": "பலமுறை முயன்றுவிட்டீர்கள். சில நிமிடங்கள் கழித்து மீண்டும் முயலவும்.",
