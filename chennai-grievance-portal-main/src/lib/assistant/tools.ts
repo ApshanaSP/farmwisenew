@@ -426,11 +426,15 @@ export const TOOLS = [
     async run({ scope }) {
       const d = await ov(scope);
       const P = PERIODS[scope.period];
+      // the Resolved tile's own words (PERIODS.resolved, "Resolved, last 7 days"): the count is closings in the rolling window, never
+      // "this week" (reviewerE-04, as hunt2-ops-10 fixed the tile and the PDF); it already names its window
       const label: Record<string, string> = { severe: "Severe events", complaints: "Open citizen complaints", ongoing: "Ongoing incidents",
-        resolved: `Resolved this ${P.unit.toLowerCase()}` };
+        resolved: P.resolved };
       const facts: Fact[] = [];
       for (const k of Object.keys(label)) {
-        facts.push(fact(`kpi.${k}`, `${label[k]}, ${P.label.toLowerCase()}`, d.kpi.cur[k]), fact(`kpi.${k}.prev`, `${label[k]}, ${P.prev}`, d.kpi.prev[k]));
+        const now = k === "resolved" ? label[k] : `${label[k]}, ${P.label.toLowerCase()}`;
+        const before = k === "resolved" ? `Resolved, ${P.prev}` : `${label[k]}, ${P.prev}`;
+        facts.push(fact(`kpi.${k}`, now, d.kpi.cur[k]), fact(`kpi.${k}.prev`, before, d.kpi.prev[k]));
       }
       const t = await testShare(scope, d.now);
       return {
