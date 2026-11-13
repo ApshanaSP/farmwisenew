@@ -1,0 +1,14 @@
+{
+  "tag": "p7-gate-utc",
+  "tz": "UTC",
+  "seed": "7204",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 63,
+  "numTotalTests": 3978,
+  "numPassedTests": 3965,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}

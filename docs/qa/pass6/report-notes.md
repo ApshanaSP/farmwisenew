@@ -47,3 +47,9 @@ manifests properly. The skeptic counted 46 open agent rows found by reading code
 runnable command, a narrower test. The three real-path tests missing from `gate.sh` when it ran were run on the same commit right after it (they
 are in `evidence/guards-gate.log`) and are now in the script. Processes from other worktrees (pass 4's servers on 3199 and 3211, and a pass 4
 test run the skeptic saw) were running during the gate; they were not this run's and were left alone.
+
+**QA pass 7 (13 Nov 2026).** The rows above now include pass 7's work: pass 6's open P0s fixed by six parallel lanes, the pass 6
+session's own fix branch, and QA pass 4's final commit `eec8c840`, all merged into `claude/elated-yalow-26931a` (local, not pushed).
+What was fixed, what the reviewers broke, every merge conflict and what is left: `docs/qa/pass7/P0_FIXES.md`. Pass 7's gate (on
+`ae65fe84`) and its logs are in `docs/qa/pass7/evidence/`; the gate figures above (tsc, lint, build, matrix, drive) are still pass 6's,
+except the `p7-gate-*` suite summaries.

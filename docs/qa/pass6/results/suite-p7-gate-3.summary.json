@@ -1,0 +1,14 @@
+{
+  "tag": "p7-gate-3",
+  "tz": "Asia/Kolkata",
+  "seed": "7203",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 62,
+  "numTotalTests": 3978,
+  "numPassedTests": 3965,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}
