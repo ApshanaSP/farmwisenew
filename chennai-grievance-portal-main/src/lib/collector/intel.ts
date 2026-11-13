@@ -18,6 +18,7 @@ import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
 import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/effective";
+import { dataEpoch } from "@/lib/collector/epoch";
 import { orEmpty, orNull } from "@/lib/fallback";
 import { deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
@@ -98,7 +99,7 @@ export const OPEN_STATUSES = ["Open", "Under review", "Assigned", "In progress",
 
 // ------------------------------------------------------------------ time --
 
-let asOfCache: { at: number; value: string } | null = null;
+let asOfCache: { at: number; value: string; epoch: number } | null = null;
 
 /**
  * The console's "now" as an IST wall-clock string "YYYY-MM-DD HH:MM:SS": the time the page is
@@ -112,12 +113,15 @@ export function asOfNow(): string {
 }
 
 export async function asOf(): Promise<string> {
-  if (asOfCache && Date.now() - asOfCache.at < 30_000) return asOfCache.value;
+  // kept 30 s, but never past a change to the data (a filing, a decision: bumpDataEpoch). The console's "now" is the upper bound of every
+  // window (first_reported_at <= now), so a case the desk filed after it was read was "not found in your department", and missing from the
+  // officer's list, for up to 30 s after the desk said it was forwarded (hunt2-desk-09)
+  if (asOfCache && Date.now() - asOfCache.at < 30_000 && asOfCache.epoch === dataEpoch()) return asOfCache.value;
   const [r] = await q(`SELECT JSON_UNQUOTE(value) AS v FROM metrics WHERE metric = 'as_of'`);
   const v = r?.v ? String(r.v).slice(0, 19).replace("T", " ") : "";
   const clock = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   const value = v > clock ? v : clock;
-  asOfCache = { at: Date.now(), value };
+  asOfCache = { at: Date.now(), value, epoch: dataEpoch() };
   return value;
 }
 
