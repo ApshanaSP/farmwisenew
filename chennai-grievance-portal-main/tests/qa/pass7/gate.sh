@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # QA pass 7: the one gate on the combined branch (the six pass 7 lanes, the pass 6 session's fixall, pass 4's eec8c840), one heavy job at a time.
 # Run from chennai-grievance-portal-main:   bash tests/qa/pass7/gate.sh
-# Holds the machine-wide Studio fixture lock (pass7-common-rules.md) for its whole run. Writes docs/qa/pass7/evidence/*-gate.log and
-# docs/qa/pass6/results/suite-p7-gate-*.json. Never prints a .env value. The golden master is not run: pass 6's baseline recording
-# (data/aws-cache/qa/golden) is not in this worktree.
+# Holds the machine-wide Studio fixture lock (pass7-common-rules.md) for its whole run. Writes docs/qa/pass7/evidence/*-gate.log,
+# docs/qa/pass6/results/suite-p7-gate-*.json and the golden master p7-gate (its manifest and its diff against pass 6's p6-gate; the bodies
+# stay in the gitignored data/aws-cache/qa/golden). Never prints a .env value.
 set -u
 EV=../docs/qa/pass7/evidence
 mkdir -p "$EV"
 stamp() { echo "[gate] $(date '+%H:%M:%S') $*"; }
+# Tests rewrite pass 4's and pass 6's evidence files as they run: put those back, but keep what this gate writes (its golden manifest and
+# diff, its suite summaries). Restoring the manifest lost the recording's hashes in the gate on 7e815c53.
+restore_evidence() {
+  git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 ':(exclude)../docs/qa/pass4/golden/p7-gate.manifest.json' \
+    ':(exclude)../docs/qa/pass4/golden/diffs/p6-gate__p7-gate.*' ':(exclude)../docs/qa/pass6/results/suite-p7-gate-*' \
+    | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
+}
 LOCK="C:/Users/arjun/AppData/Local/Claude-Data/claude_pzs8sxrjxfjjc/side-session-notes/local_3d5cffa2-303f-46bb-8215-bf3029705939/vitest-4599.lock"
 until mkdir "$LOCK" 2>/dev/null; do stamp "4599 lock held by another session; waiting"; sleep 60; done
 trap 'rmdir "$LOCK" 2>/dev/null; node tests/qa/pass4/server.mjs stop --port 3106 >/dev/null 2>&1' EXIT
@@ -57,7 +64,7 @@ node tests/qa/pass4/server.mjs stop-all >/dev/null 2>&1   # only the servers who
 stamp "golden master p7-gate (serial) and its diffs against p6-gate and the noise floor"
 { timeout 2400 node tests/qa/pass4/golden.mjs --label p7-gate --port 3107 --dist .next-qa --serial < /dev/null; echo "EXIT=$?"; node tests/qa/pass4/golden-diff.mjs p6-gate p7-gate > /dev/null; echo "DIFF_EXIT=$?"; node tests/qa/pass4/golden-diff.mjs p6-base p6-base2 > /dev/null; echo "NOISE_EXIT=$?"; } > "$EV/golden-gate.log" 2>&1
 node tests/qa/pass4/server.mjs stop-all >/dev/null 2>&1
-git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
+restore_evidence
 stamp "server 3106 on the build, access matrix with valid bodies, browser drive"
 node tests/qa/pass4/server.mjs start --port 3106 --dist .next-qa | tail -1
 node tests/qa/seed-local-users.mjs --file data/aws-cache/qa/srv/3106/durable.sqlite | tail -1
@@ -70,5 +77,5 @@ mkdir -p "$EV/journeys"
 git -C .. status --porcelain -- docs/qa/pass6/evidence/journeys | grep '^??' | cut -c4- | sed 's#/$##' | xargs -r -I{} rm -rf "../{}"
 stamp "pass 4's final red team against this build (its it.fails rows are its open findings)"
 { RT_PORT=3106 timeout 900 npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "✓|×|↓|Tests |Test Files|FAIL"; echo "EXIT=${PIPESTATUS[0]}"; } > "$EV/redteam-final-gate.log" 2>&1
-git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 | sed 's#^chennai-grievance-portal-main/##' | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
+restore_evidence
 stamp "done"
