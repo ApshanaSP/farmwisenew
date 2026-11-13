@@ -808,7 +808,7 @@
     "where": "src/lib/collector/effective.ts:47-50 (status = pipeline status unless a Collector decision); src/lib/collector/intel.ts incident() has no officer_steps; src/lib/complaint-progress.ts:69",
     "confidence": "high",
     "verified": false,
-    "note": "Fixed in the one expression: EFF.status/effectiveStatus read the department's latest officer step when it is after the latest effect decision (same second: the decision wins) on an open case: approve -> Assigned, action -> In progress, send -> Awaiting verification. Guard: effective.ts officerStepsOn() is on for the AWS store; on MySQL instrumentation's ready() checks information_schema before the first request; off = SQL as before. Case page shows the step; the map's world reads it. Live check left: the e19.mjs repro on a server, and the qa4/golden suites (their pinned store has 5 officer steps, so statuses there can move).",
+    "note": "Fixed in the one expression: EFF.status/effectiveStatus read the department's latest officer step when it is after the latest effect decision (same second: the decision wins) on an open case: approve -> Assigned, action -> In progress, send -> Awaiting verification. Guard: effective.ts officerStepsOn() is on for the AWS store; on MySQL instrumentation's ready() checks information_schema before the first request; off = SQL as before. Case page shows the step; the map's world reads it. Live check left: the e19.mjs repro on a server, and the qa4/golden suites (their pinned store has 5 officer steps, so statuses there can move). Round 2 (reviewer G): the guard is now checked on both stores (the AWS store too, not assumed) before the first request and again at most every 60 s, and the status SQL is built when read, not at load (reviewerG-02/03, caa711f7); the SELECT-only account gets a column grant on officer_steps (reviewerG-04, 0ecb5e66); the QA oracle applies the steps (reviewerG-07, e2e80f83).",
     "closed_in": "fixall"
   },
   {
@@ -4922,7 +4922,7 @@
     "revert_check": "6 of 6 fail without / 6 pass with",
     "status": "fixed",
     "reviewer": null,
-    "note": "Now all-or-nothing (rate-limit.ts checkRateLimits), the 429 says account or address, the give-back returns all. With no trusted proxy the address limit is not applied: 'direct' is the whole district, so any cap there is a district-wide off switch; the per-account limits stand alone",
+    "note": "Now all-or-nothing (rate-limit.ts checkRateLimits), the 429 says account or address, the give-back returns all. With no trusted proxy the address limit is not applied: 'direct' is the whole district, so any cap there is a district-wide off switch; the per-account limits stand alone. With no trusted proxy a district-wide ceiling of 1,000 filings an hour now stands in for the address limit (reviewerG-06, 08910f53).",
     "closed_in": "fixall"
   },
   {
@@ -4938,7 +4938,8 @@
     "revert_check": "5 of 5 fail without / 5 pass with",
     "status": "fixed",
     "reviewer": null,
-    "closed_in": "fixall"
+    "closed_in": "fixall",
+    "note": "Three readers it left on EFF.open (Ask planner is_open, the snapshot news-only figure and report() news list, flood preparation) moved to OPEN_NOW in reviewerG-01 (b4d2730e); the share answer names the routed count (reviewerG-05, a20c1f98)."
   },
   {
     "id": "reviewerE-03",
