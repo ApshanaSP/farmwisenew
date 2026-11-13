@@ -398,10 +398,10 @@ export default function ManuDesk() {
           {err && <p className="mn-err" role="alert">{err}</p>}
         </div>
         <div className="mn-lists">
-          {inReader.length > 0 && <><h4>Being read <b>{inReader.length}</b></h4><ul>{inReader.map(row)}</ul></>}
-          <h4>Awaiting verification <b>{toCheck.length}</b></h4>
+          {inReader.length > 0 && <><h3>Being read <b>{inReader.length}</b></h3><ul>{inReader.map(row)}</ul></>}
+          <h3>Awaiting verification <b>{toCheck.length}</b></h3>
           {toCheck.length ? <ul>{toCheck.map(row)}</ul> : <p className="mn-none">{items ? "No petitions are awaiting verification." : "Retrieving the petitions. Please wait."}</p>}
-          {filed.length > 0 && <><h4>Approved this week <b>{filed.length}</b></h4><ul>{filed.map(row)}</ul></>}
+          {filed.length > 0 && <><h3>Approved this week <b>{filed.length}</b></h3><ul>{filed.map(row)}</ul></>}
         </div>
       </aside>
 
