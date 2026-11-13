@@ -84,6 +84,41 @@ describe("Tamil words that only start like a period word are not one", () => {
   it("'now' as the first word of a command is not the current state", () => expect(kind("now show me Adyar")).toEqual({ kind: "none" }));
 });
 
+describe("days and ranges of days (p7-merge-04): one reading for both lanes", () => {
+  it.each([
+    ["how many complaints on 15 Oct", { kind: "days", from: { day: 15, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    ["how many complaints on Oct 15", { kind: "days", from: { day: 15, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    ["how many complaints between 1 Oct and 15 Oct", { kind: "days", from: { day: 1, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    ["complaints from 1 to 15 October", { kind: "days", from: { day: 1, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    ["complaints 1-15 Oct 2026", { kind: "days", from: { day: 1, month: 9, year: 2026 }, to: { day: 15, month: 9, year: 2026 } }],
+    ["அக்டோபர் 15 அன்று எத்தனை புகார்கள்", { kind: "days", from: { day: 15, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    ["15 october anru evlo complaints", { kind: "days", from: { day: 15, month: 9, year: null }, to: { day: 15, month: 9, year: null } }],
+    // since a day is a span to now, in every language (p7-rules-periods-03)
+    ["since 1 October complaints", { kind: "since", month: 9, day: 1 }],
+    ["அக்டோபர் 1 முதல் புகார்கள்", { kind: "since", month: 9, day: 1 }],
+    ["October 1 la irundhu complaints", { kind: "since", month: 9, day: 1 }],
+    ["தீபாவளியிலிருந்து எத்தனை புகார்கள்", { kind: "holiday", name: "Deepavali", dates: ["2025-10-20", "2026-11-08", "2027-10-29"] }],
+    ["அக்டோபர் கடைசி வாரம் புகார்கள்", { kind: "lastWeekOf", month: 9, year: null }],
+    ["October kadaisi vaaram complaints", { kind: "lastWeekOf", month: 9, year: null }],
+    // a month alone is still the month
+    ["how many complaints in october", { kind: "month", month: 9, year: null }]
+  ] as [string, PeriodSpec][])("%s", (q, want) => expect(readPeriod(q)).toEqual(want));
+  it("a day is that calendar day; a range runs to the end of its last day; both are inside the records", () => {
+    expect(spanOf(readPeriod("on 15 Oct"), NOW)).toMatchObject({ key: "daily", range: { from: "2026-10-15 00:00:00", to: "2026-10-16 00:00:00" }, label: { en: "15 Oct" } });
+    expect(spanOf(readPeriod("between 1 Oct and 15 Oct"), NOW)).toMatchObject({ key: "monthly", range: { from: "2026-10-01 00:00:00", to: "2026-10-16 00:00:00" }, label: { en: "1 Oct to 15 Oct" } });
+    // with no year, a day still to come this year is last year's (here older than the records: no dates)
+    expect(spanOf(readPeriod("on 25 December"), NOW)).toBeNull();
+    // today's date runs to now
+    expect(spanOf(readPeriod("on 6 Nov"), NOW)?.range).toEqual({ from: "2026-11-06 00:00:00", to: "2026-11-06 18:08:01" });
+    expect(spanOf(readPeriod("between 15 Oct and 1 Oct"), NOW)).toBeNull();
+  });
+  it("a days spec survives a trip through slots, and a bad one does not", () => {
+    const s = readPeriod("between 1 Oct and 15 Oct");
+    expect(checkSpec(JSON.parse(JSON.stringify(s)))).toEqual(s);
+    expect(checkSpec({ kind: "days", from: { day: 40, month: 9, year: null }, to: { day: 1, month: 9, year: null } })).toBeNull();
+  });
+});
+
 describe("dates, from the store's now", () => {
   it("today is midnight IST to now, inside the last 24 hours", () => {
     const s = spanOf({ kind: "day", back: 0 }, NOW)!;
