@@ -569,7 +569,7 @@
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e10.mjs",
     "failing_test": "src/lib/collector/filters.fixall.test.ts::the Collector's list: an unknown severity, status, scope or place is a 400 that names it, and the store is not read",
     "root_cause": "refuseBadFilter checked only zone, period, dept, cat, taluk; the routes read sev, status, scope, place, flag inline and dropped unknown values. Now one shared reader each (intel.ts) and filterProblem refuses what they cannot read",
-    "fix_commit": "7685f19f",
+    "fix_commit": "7685f19f, 308b2998",
     "revert_check": "fails without (3 of 4: 200 for every unknown value) / passes with (4 of 4)",
     "status": "fixed",
     "reviewer": null,

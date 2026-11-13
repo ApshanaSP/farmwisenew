@@ -73,7 +73,7 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
  * cases the Collector verified and those the department closed itself. It showed the Collector overview's figure and opened a list titled
  * "Verified by the Collector" that held another number of other cases (officer-day-13).
  */
-export function ResolvedKpi({ c, label, style }: { c: Ctx; label: string; style?: React.CSSProperties }) {
+export function ResolvedKpi({ c, label, style }: { c: Ctx; label: string; style: React.CSSProperties }) {
   const r = c.ov.resolved;
   return (
     <Kpi k="resolved" icon="checkc" tone="t-low" label={label} v={r.cur} p={r.prev} series={r.series} prevLabel={c.ov.periodInfo.prev} style={style}

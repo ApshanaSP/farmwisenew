@@ -67,7 +67,7 @@ describe("officer-day-13: the Resolved tile shows the officer's own count and op
     const opened: unknown[][] = [];
     const c = { ov: { resolved: { cur: 362, prev: 300, series: [1, 2, 3] }, periodInfo: { prev: "prev. month" }, board: { kpi: { cur: { resolved: 445 } } } },
       openList: (...a: unknown[]) => opened.push(a) };
-    const el = ResolvedKpi({ c: c as never, label: "Resolved this month" }) as { props: { v: number; p: number; series: number[]; onClick: () => void } };
+    const el = ResolvedKpi({ c: c as never, label: "Resolved this month", style: {} }) as { props: { v: number; p: number; series: number[]; onClick: () => void } };
     expect([el.props.v, el.props.p, el.props.series]).toEqual([362, 300, [1, 2, 3]]);
     el.props.onClick();
     expect(opened).toEqual([[null, RESOLVED_LIST_TITLE, undefined, { tab: "verified" }]]);
