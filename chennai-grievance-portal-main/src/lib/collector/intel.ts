@@ -83,6 +83,32 @@ export function readTaluk(v: unknown): string | null {
   return t != null && /^TLK-[A-Z]{3}$/.test(t) ? t : null;
 }
 
+// hunt2-ops-04: the list filters below were read in each route with its own inline test, and a value it did not know was "no filter":
+// ?sev=severe, ?status=Overdue, ?scope=al and ?flag=Overdue answered the whole list as if filtered. They have one reader each here too,
+// and filterProblem refuses a present value its reader cannot read, the same way as the zone and the period.
+/** The severity levels (one per list filter value). */
+export const SEVERITIES = ["Severe", "High", "Medium", "Low"] as const;
+export type Severity = (typeof SEVERITIES)[number];
+/** The Collector's incident list `status` filter: its groups, then the pipeline's statuses. */
+export const LIST_STATUSES = ["open", "awaiting", "unverified", "verified", "critical", "overdue", "Open", "Under review", "Assigned", "In progress",
+  "Awaiting verification", "Resolved", "Rejected", "Lapsed"] as const;
+/** The Collector's incident list `scope`: the period, the last 30 days, or every case. */
+export const LIST_SCOPES = ["period", "30d", "all"] as const;
+/** The officer's list `flag`: the Collector's snapshot tiles (open; severe or high and open; past deadline) and due within 24 hours. */
+export const LIST_FLAGS = ["open", "serious", "overdue", "due"] as const;
+const oneOf = <T extends string>(all: readonly T[]) => (v: unknown): T | null => {
+  const t = filterValue(v);
+  return t != null && (all as readonly string[]).includes(t) ? (t as T) : null;
+};
+export const readSev = oneOf(SEVERITIES);
+export const readStatus = oneOf(LIST_STATUSES);
+export const readScope = oneOf(LIST_SCOPES);
+export const readFlag = oneOf(LIST_FLAGS);
+export function readPlace(v: unknown): PlaceFilter | null {
+  const t = filterValue(v);
+  return t != null && Object.prototype.hasOwnProperty.call(PLACE_FILTERS, t) ? (t as PlaceFilter) : null;
+}
+
 /** The period a route answers for: the reader's, else daily (a present value it cannot read is refused first by filterProblem). */
 export function parsePeriod(v: unknown): Period {
   return readPeriod(v) ?? "daily";

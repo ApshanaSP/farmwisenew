@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { failed, fresh, officerSession, parseScope } from "@/lib/officer/guard";
 import { grievanceList } from "@/lib/officer/data";
 import { parseTab } from "@/lib/officer/stages";
-import { parseCat } from "@/lib/collector/intel";
+import { parseCat, readFlag, readSev } from "@/lib/collector/intel";
 import { refuseBadFilter, refuseBadTab } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
   if (badTab) return badTab;
   const int = (k: string, d: number) => (Number.isInteger(Number(p.get(k))) && p.get(k) !== null ? Number(p.get(k)) : d);
   const text = (p.get("q") ?? "").trim().slice(0, 80);
-  const flag = p.get("flag");
   try {
     return fresh(await grievanceList(ctx.dept, {
       ...parseScope(p),
@@ -31,8 +30,9 @@ export async function GET(req: NextRequest) {
       per: Math.max(1, Math.min(100, int("per", 8))),
       cat: parseCat(p.get("cat")),
       q: text.length >= 2 ? text : null,
-      flag: flag === "open" || flag === "serious" || flag === "overdue" || flag === "due" ? flag : null,
-      sev: ["Severe", "High", "Medium", "Low"].includes(p.get("sev") ?? "") ? p.get("sev") : null
+      // the shared readers: refuseBadFilter refused a flag or severity they cannot read (hunt2-ops-04)
+      flag: readFlag(p.get("flag")),
+      sev: readSev(p.get("sev"))
     }));
   } catch (err) {
     return failed(err, "grievances");
