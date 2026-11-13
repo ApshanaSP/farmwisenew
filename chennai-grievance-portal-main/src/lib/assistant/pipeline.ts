@@ -1286,6 +1286,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // (a router call, the place lookup and the search index, all for a greeting)
   if (ONLY_SMALLTALK.test(typed)) return finish(smalltalkCard(card0(null), message), { intent: "smalltalk", instant: true });
 
+  // an order chat never carries out (close, reopen or export cases) is said not to be done before any lane reads the data: the Data Studio
+  // lane below matched "export all complaints to excel" to an upload named "Rtf Export" and answered with its row count (SKG1-30)
+  if (!i.pinId && !i.insightKey) {
+    const order = notDone(typed, !aiStatus().available);
+    if (order?.kind === "order") return finish(notDoneCard(card0(null), order.say[lang]), { intent: "not_done", notDone: order.kind });
+  }
+
   // weather warnings and alerts ("is there a cyclone warning?", "புயல் எச்சரிக்கை உள்ளதா?"): the alerts lane, whatever the router
   // would say (it once called the cyclone question out of scope, LT-15)
   if (!i.pinId && !i.insightKey && (isWarningQuestion(typed) || isWarningQuestion(message))) {
