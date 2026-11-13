@@ -159,9 +159,10 @@ export async function progressFor(complaints: { code: string; createdAt: unknown
   const ids = [...new Set(inc.values())];
   if (!ids.length) return out;
   const [steps] = await intelPool.query<RowDataPacket[]>(
-    `SELECT step_id, incident_id, step, note, report_id, ${fmt("at")} AS at FROM ${ops("officer_steps")} WHERE incident_id IN (?)`, [ids]);
+    // every column: step_id and decision_id give the order of a same-second step and decision (progressOf); a store without them keeps the rows' order
+    `SELECT s.*, ${fmt("s.at")} AS at_s FROM ${ops("officer_steps")} s WHERE s.incident_id IN (?)`, [ids]);
   const [decisions] = await intelPool.query<RowDataPacket[]>(
-    `SELECT decision_id, incident_id, decision, note, decided_role, ${fmt("decided_at")} AS at FROM ${ops("collector_decisions")} WHERE incident_id IN (?)`, [ids]);
+    `SELECT d.*, ${fmt("d.decided_at")} AS at_s FROM ${ops("collector_decisions")} d WHERE d.incident_id IN (?)`, [ids]);
   const [reports] = await intelPool.query<RowDataPacket[]>(
     `SELECT report_id, incident_id, photo_dir, photos FROM ${ops("officer_reports")} WHERE incident_id IN (?)`, [ids]);
   const by = <T>(rows: Row[], map: (r: Row) => T) => {
@@ -169,8 +170,9 @@ export async function progressFor(complaints: { code: string; createdAt: unknown
     for (const r of rows) (m.get(String(r.incident_id)) ?? m.set(String(r.incident_id), []).get(String(r.incident_id))!).push(map(r));
     return m;
   };
-  const S = by(steps, (r): WorkStep => ({ id: Number(r.step_id), step: String(r.step), at: str(r.at), note: r.note == null ? null : scrubCitizenDetails(String(r.note)), reportId: r.report_id == null ? null : Number(r.report_id) }));
-  const D = by(decisions, (r): WorkDecision => ({ id: Number(r.decision_id), decision: String(r.decision), at: str(r.at), note: r.note == null ? null : r.decided_role === "department_officer" || String(r.note).startsWith(CLOSED_BY_DEPARTMENT) ? scrubCitizenDetails(String(r.note)) : r.note, role: r.decided_role ?? null }));
+  const idOf = (v: unknown) => (v == null || !Number.isFinite(Number(v)) ? undefined : Number(v));
+  const S = by(steps, (r): WorkStep => ({ id: idOf(r.step_id), step: String(r.step), at: str(r.at_s), note: r.note == null ? null : scrubCitizenDetails(String(r.note)), reportId: r.report_id == null ? null : Number(r.report_id) }));
+  const D = by(decisions, (r): WorkDecision => ({ id: idOf(r.decision_id), decision: String(r.decision), at: str(r.at_s), note: r.note == null ? null : r.decided_role === "department_officer" || String(r.note).startsWith(CLOSED_BY_DEPARTMENT) ? scrubCitizenDetails(String(r.note)) : r.note, role: r.decided_role ?? null }));
   const R = by(reports, (r): WorkReport => {
     let photos: string[] = [];
     try { photos = Array.isArray(r.photos) ? r.photos : JSON.parse(String(r.photos ?? "[]")); } catch { /* none */ }

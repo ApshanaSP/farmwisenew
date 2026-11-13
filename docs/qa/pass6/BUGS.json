@@ -4109,15 +4109,16 @@
     "title": "A batch instruction to one department now shows in another department's drawer when any listed case later moves department (before the fix only the first case could)",
     "found_by": "reviewer4",
     "repro": "zz-reviewer4 run: send a GCC-SWM batch, then UPDATE incidents SET lead_dept='GCC-ELE' for the 2nd listed case (as derive.ts does on re-categorisation), then grievanceDetail(GCC-ELE profile, that case).",
-    "failing_test": null,
-    "root_cause": "The email is matched to the case through followups.incident_id only; neither the email's department nor the case's department at send time is checked. The move is simulated in the per-process dry-run store.",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::a GCC-SWM batch whose listed cases later moved to GCC-ELE (the first and the second) stays out of GCC-ELE's drawer",
+    "root_cause": "the drawer matched emails to a case by incident_id or follow-up only, never by the department the email was for; now the follow-up names its department (followupdept.ts) and another department's email is left out",
+    "fix_commit": "7de29ee2",
+    "revert_check": "fails without (2 of 2) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts:474-476 (no department check on the email); src/lib/collector/derive.ts:473-475 (lead_dept rewritten on re-categorisation)",
     "confidence": "medium",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "reviewer4-04",
