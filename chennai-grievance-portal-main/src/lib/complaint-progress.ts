@@ -113,10 +113,19 @@ export async function incidentsOf(codes: string[]): Promise<Map<string, string>>
  * not told, and promised every complaint the Collector's verification (officer-day-06).
  */
 export async function checkerOf(code: string): Promise<"collector" | "department" | null> {
+  return (await caseFacts(code))?.checker ?? null;
+}
+
+/**
+ * The case a complaint was filed into, as the consoles hold it: who checks the work (above) and when it is due (the build's own deadline
+ * for its kind and severity, officer-day-02). Null when the case is not in this build.
+ */
+export async function caseFacts(code: string): Promise<{ checker: "collector" | "department"; dueAt: string | null } | null> {
   const id = (await incidentsOf([code])).get(code);
   if (!id) return null;
-  const [rows] = await intelPool.query<RowDataPacket[]>(`SELECT severity_level FROM incidents WHERE incident_id = ? LIMIT 1`, [id]);
-  return rows[0] ? (String(rows[0].severity_level) === "Severe" ? "collector" : "department") : null;
+  const [rows] = await intelPool.query<RowDataPacket[]>(`SELECT severity_level, sla_due_at FROM incidents WHERE incident_id = ? LIMIT 1`, [id]);
+  if (!rows[0]) return null;
+  return { checker: String(rows[0].severity_level) === "Severe" ? "collector" : "department", dueAt: rows[0].sla_due_at ? str(rows[0].sla_due_at) || null : null };
 }
 
 /** The complaint numbers filed into these incidents. */

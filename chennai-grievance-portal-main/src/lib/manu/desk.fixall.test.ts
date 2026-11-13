@@ -6,6 +6,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { DatabaseSync } from "node:sqlite";
+import { NextRequest } from "next/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
 
@@ -32,6 +33,8 @@ const { approvedWords } = await import("@/lib/manu/constants");
 const { savePages } = await import("@/lib/manu/files");
 const { caseIdFor, websiteCases } = await import("@/lib/manu/cases");
 const sms = await import("@/lib/manu/sms");
+const { POST: track } = await import("@/app/api/track/route");
+const trackAs = (body: unknown) => track(new NextRequest("http://x/api/track", { method: "POST", headers: { "x-forwarded-for": `10.9.1.${Math.floor(Math.random() * 250)}` }, body: JSON.stringify(body) }));
 const { syncComplaints } = await import("@/lib/complaint-progress");
 
 const JPG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(40, 1)]);
@@ -315,5 +318,28 @@ describe("reviewer1-06: a live send that never connected is 'failed' and tried a
       await sms.retryFailedSms();
       expect(sends).toBe(1);
     });
+  });
+});
+
+// hunt2-desk-06: /track told an online complainant "Received at the Collector's office and sent to the department" (one note per status,
+// whatever the channel), and its due date was blank (read only from the petitions table)
+describe("hunt2-desk-06: /track for an online complaint", () => {
+  const online = (sev = "Medium") => h.db.exec(`
+    INSERT INTO complaints (id, complaint_code, user_id, first_name, gender, street_address, mobile_number, zone_id, ward_number, department_id, title, description, is_anonymous, needs_manual_review, status, created_at, updated_at)
+      VALUES (900, '2026-900ONL', 5, 'Rani', 'Female', '9 Jawahar Street', '9000041899', 6, 70, 1, 'Garbage not cleared near the temple', 'x', 0, 0, 'Complaint Filed', '2026-11-12 10:00:00', '2026-11-12 10:00:00');
+    INSERT INTO complaint_status_history (complaint_id, status, stage, remarks, created_at) VALUES (900, 'Complaint Filed', 'Citizen', 'Complaint registered by citizen.', '2026-11-12 10:00:00');
+    INSERT INTO events (event_id, source, source_record_id, incident_id) VALUES ('GRV-2026-900ONL', 'grievance', '2026-900ONL', 'INC-W-2026-900ONL');
+    INSERT INTO incidents (incident_id, severity_level, sla_due_at) VALUES ('INC-W-2026-900ONL', '${sev}', '2026-11-17 10:00:00');`);
+  it("says it was received online, and gives its case's deadline", async () => {
+    online();
+    const v = await (await trackAs({ code: "2026-900ONL", last4: "1899" })).json();
+    expect(v.steps[0].note).toBe("Received online and sent to the department.");
+    expect(v.dueBy).toBe("2026-11-17 10:00:00");
+  });
+  it("a petition keeps 'Received at the Collector's office' and its own deadline", async () => {
+    const r = await filePetition(await uploaded(), fields(), "x");
+    const v = await (await trackAs({ code: r.code, last4: "1873" })).json();
+    expect(v.steps[0].note).toBe("Received at the Collector's office and sent to the department.");
+    expect(v.dueBy).toBe(one("SELECT due_at FROM petitions WHERE complaint_code = ?", r.code).due_at);
   });
 });

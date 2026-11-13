@@ -5,7 +5,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
-import { progressFor, withProgress } from "@/lib/complaint-progress";
+import { caseFacts, progressFor, withProgress } from "@/lib/complaint-progress";
 import { jwtSecret } from "@/lib/secrets";
 import { manuDeptLabel } from "./constants";
 import { digits } from "./clean";
@@ -46,6 +46,8 @@ const PUBLIC_NOTE: Record<string, string> = {
   "Verified by Collector": "The Collector's office checked the work and closed the complaint.",
   "Rejected": "It could not be taken up. The Collector's office can tell you why."
 };
+/** An online complaint was never at the Collector's office: it was told it was (hunt2-desk-06). */
+const ONLINE_FILED = "Received online and sent to the department.";
 
 export async function complaintForTrack(code: string): Promise<RowDataPacket | null> {
   const [r] = await pool.query<RowDataPacket[]>(
@@ -59,14 +61,17 @@ export async function trackView(c: RowDataPacket): Promise<TrackView> {
     `SELECT status, stage, remarks, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at FROM complaint_status_history WHERE complaint_id = ? ORDER BY created_at, id`, [c.id]);
   const prog = await progressFor([{ code, createdAt: c.created_at }]).catch(() => new Map());
   const p = prog.get(code);
-  let department = String(c.department_name ?? ""), dueBy: string | null = null;
+  let department = String(c.department_name ?? ""), dueBy: string | null = null, petition = false;
   try {
     const [pet] = await pool.query<RowDataPacket[]>(`SELECT dept_code, DATE_FORMAT(due_at, '%Y-%m-%d %H:%i:%s') AS due_at FROM petitions WHERE complaint_code = ? LIMIT 1`, [code]);
-    if (pet[0]) { department = manuDeptLabel(pet[0].dept_code) || department; dueBy = pet[0].due_at ?? null; }
+    if (pet[0]) { petition = true; department = manuDeptLabel(pet[0].dept_code) || department; dueBy = pet[0].due_at ?? null; }
   } catch { /* an older store with no petitions table */ }
+  // an online complaint has no petition row: its deadline is its case's, as the officer sees it (it was blank: hunt2-desk-06)
+  if (!petition) dueBy = (await caseFacts(code).catch(() => null))?.dueAt ?? null;
   const merged = withProgress(hist as { status: string; stage: string; remarks: string | null; created_at: string }[], p);
   return {
     code, status: p?.status ?? String(c.status), filedAt: str(c.created_at), department, dueBy,
-    steps: merged.map((h) => ({ status: h.status, stage: String((h as { stage?: string }).stage ?? ""), note: PUBLIC_NOTE[h.status] ?? null, at: str(h.created_at) }))
+    steps: merged.map((h) => ({ status: h.status, stage: String((h as { stage?: string }).stage ?? ""),
+      note: h.status === "Complaint Filed" && !petition ? ONLINE_FILED : PUBLIC_NOTE[h.status] ?? null, at: str(h.created_at) }))
   };
 }
