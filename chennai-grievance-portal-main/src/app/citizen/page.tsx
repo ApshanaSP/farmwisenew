@@ -7,6 +7,7 @@ import { ComplaintStatus } from "@/types";
 import pool from "@/lib/db";
 import { CITIZEN_NAV, RESOLVED_STATUSES } from "@/lib/constants";
 import { progressFor } from "@/lib/complaint-progress";
+import { istInstant } from "@/lib/ist-dates";
 import { RowDataPacket } from "mysql2";
 
 export default async function CitizenLandingPage() {
@@ -47,7 +48,8 @@ export default async function CitizenLandingPage() {
     code: c.complaint_code as string,
     title: c.title as string,
     status: c.status as ComplaintStatus,
-    createdAt: new Date(c.created_at as string).toISOString(),
+    // an IST wall-clock time, read as Chennai's whatever zone the server runs in: a UTC host shifted it by 5.5 h (officer-day-12)
+    createdAt: istInstant(c.created_at as string)?.toISOString() ?? "",
     department: (c.department_name ?? "") as string
   }));
 
