@@ -52,6 +52,14 @@ export const SMS_LIMITS = { inlineWaitMs: 5_000, sendMs: 20_000 };
  */
 class MaybeSent extends Error {}
 const AFTER_SENDING = new Set(["ECONNRESET", "UND_ERR_SOCKET", "EPIPE"]);
+/**
+ * Node's fetch (undici) gives up a connection it could not open after 10 s with UND_ERR_CONNECT_TIMEOUT (DNS, TCP and TLS included): such a
+ * send never reached the provider and is tried again. The whole send is given up only after that, so a timeout of our own means the request
+ * was connected and may have been taken. The old 8 s limit fired first, so a provider that was down, dropped SYNs or slow DNS looked like a
+ * send that went out, 'unsure', and was never tried again (reviewer1-06).
+ */
+const FETCH_CONNECT_MS = 10_000;
+export const MSG91_ABORT_MS = FETCH_CONNECT_MS + 5_000;
 
 /**
  * The work, or MaybeSent when it has not answered in `ms`: the work goes on behind the race and may still finish. A plain Error here made a
@@ -95,7 +103,7 @@ async function viaMsg91(mobile: string, template: string, vars: [string, string]
       headers: { authkey: env("MSG91_AUTH_KEY"), "Content-Type": "application/json" },
       // MSG91's current pages call this template_id and its older API page flow_id, so both are sent
       body: JSON.stringify({ template_id: template, flow_id: template, sender: env("MSG91_SENDER"), short_url: "0", recipients: [{ mobiles: `91${mobile}`, var1: vars[0], var2: vars[1] }] }),
-      signal: AbortSignal.timeout(Math.min(8_000, SMS_LIMITS.sendMs))
+      signal: AbortSignal.timeout(Math.min(MSG91_ABORT_MS, SMS_LIMITS.sendMs))
     });
   } catch (e) {
     const err = e as Error & { cause?: { code?: unknown } };

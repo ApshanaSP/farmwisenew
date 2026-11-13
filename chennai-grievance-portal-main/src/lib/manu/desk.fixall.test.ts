@@ -273,3 +273,47 @@ describe("reviewer1-03: a team-inbox mail that answers after the limit is 'unsur
   });
 });
 
+// reviewer1-06: the live send gave up at 8 s, before Node's fetch gives up a connection it cannot open (10 s, UND_ERR_CONNECT_TIMEOUT), so a
+// send that never connected (provider or network down, dropped SYNs, slow DNS) ended as a TimeoutError: 'unsure', never tried again. Time is
+// scaled down 100 times here: fetch's connect limit is 100 ms, and the send's own limit is what AbortSignal.timeout is given, / 100.
+describe("reviewer1-06: a live send that never connected is 'failed' and tried again; one that connected and stalled stays 'unsure'", () => {
+  const CONNECT_MS = 100;
+  let sends = 0;
+  const scaled = (stallAfterConnect: boolean) => {
+    const timeout = AbortSignal.timeout.bind(AbortSignal);
+    vi.spyOn(AbortSignal, "timeout").mockImplementation((ms: number) => timeout(ms / 100));
+    vi.stubGlobal("fetch", vi.fn((url: string, init: RequestInit) => new Promise((resolve, reject) => {
+      if (!String(url).includes("msg91")) return reject(new TypeError("fetch failed (test: no outward calls)")); // the reader's PaddleOCR call
+      sends++;
+      const signal = init.signal!;
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+      // undici: no connection by its connect limit -> "fetch failed" with cause UND_ERR_CONNECT_TIMEOUT; connected -> no answer at all
+      if (!stallAfterConnect) setTimeout(() => reject(Object.assign(new TypeError("fetch failed"), { cause: { code: "UND_ERR_CONNECT_TIMEOUT" } })), CONNECT_MS);
+      void resolve;
+    })));
+  };
+  it("never connected: 'failed', and the sweep sends it again", async () => {
+    live();
+    sends = 0;
+    scaled(false);
+    await withLimits({ inlineWaitMs: 1_000 }, async () => {
+      const r = await filePetition(await uploaded(), fields(), "x");
+      expect(rowOf(r.code).status).toBe("failed");
+      due();
+      await sms.retryFailedSms();
+      expect(sends).toBe(2);
+    });
+  });
+  it("connected, then no answer: 'unsure', not sent again", async () => {
+    live();
+    sends = 0;
+    scaled(true);
+    await withLimits({ inlineWaitMs: 1_000 }, async () => {
+      const r = await filePetition(await uploaded(), fields(), "x");
+      expect(rowOf(r.code).status).toBe("unsure");
+      due();
+      await sms.retryFailedSms();
+      expect(sends).toBe(1);
+    });
+  });
+});
