@@ -20,7 +20,7 @@
 import path from "path";
 import type { ChildProcess } from "node:child_process";
 import { ParseError, UserError, type Table } from "@/lib/studio/parse";
-import { MEMORY_MARK, fromWire, type FileJob, type Job, type Page, type Reply, type WireReply } from "@/lib/studio/parse-worker";
+import { MEMORY_MARK, fromWire, type CollectorRead, type CollectorWant, type FileJob, type Job, type Page, type Reply, type WireReply } from "@/lib/studio/parse-worker";
 import type { PageFacts } from "@/lib/studio/connect/links";
 
 /** A file stopped by one of the reader's limits, with what the Collector can do about it. */
@@ -240,4 +240,24 @@ export async function readPage(html: string, url: string): Promise<Page> {
   if ("error" in r) throw thrown(r);
   if ("page" in r) return r.page;
   throw new Error("The file reader answered with something else than a page.");
+}
+
+/**
+ * A Collector source's fetched page read in the reader (onboarding and every scheduled run): what `want` asks for (parse-worker.ts
+ * CollectorWant). Errors are thrown; a limit is a ParseLimitError (pageLimitMessage words it for a page).
+ */
+export async function readCollector(text: string, url: string, want: CollectorWant): Promise<CollectorRead> {
+  const r = await run({ op: "collector", text, url, want });
+  if ("error" in r) throw thrown(r);
+  if ("collector" in r) return r.collector;
+  throw new Error("The file reader answered with something else than a page.");
+}
+
+/** A reader limit, worded for a web page or feed rather than a file. */
+export function pageLimitMessage(e: ParseLimitError): string {
+  const L = parseLimits();
+  return e.reason === "time" ? `The page took longer than ${L.seconds} seconds to read, so it was not read. It may be built in a way that makes readers run on.`
+    : e.reason === "memory" ? "The page needs more memory to read than the server allows, so it was not read."
+    : e.reason === "busy" ? "The server is reading many pages and files at the moment. Try again in a minute."
+    : "The page reader stopped while reading this page. Try again in a minute.";
 }

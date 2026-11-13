@@ -15,7 +15,8 @@ import type { PoolConnection } from "mysql2/promise";
 import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
-import { applyMapping, extractRecords, nearChennai, readStored, type FetchKind } from "@/lib/collector/sourcemap";
+import { nearChennai, readStored } from "@/lib/collector/sourcemap";
+import { ParseLimitError, pageLimitMessage, readCollector } from "@/lib/studio/parse-pool";
 import { istNow, staleFeeds } from "@/lib/collector/freshness";
 import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
 import { orEmpty } from "@/lib/fallback";
@@ -281,8 +282,10 @@ async function session(s: Row, forceNew = false): Promise<Session> {
   return { cookie: await login(s), login: "fresh" };
 }
 
-const looksLikeLogin = (r: Response, text: string) =>
-  r.status === 401 || r.status === 403 || /\/(login|signin)\b/i.test(r.url) || /<input[^>]+type=["']?password/i.test(text.slice(0, 20000));
+// the password-field check reads the page in the Studio's file reader: its pattern searched to the end of the page from every unclosed
+// <input, on the server's thread, on every scheduled run (p7-studio-parse-12)
+const looksLikeLogin = async (r: Response, text: string) =>
+  r.status === 401 || r.status === 403 || /\/(login|signin)\b/i.test(r.url) || !!(await readCollector(text.slice(0, 20000), r.url, { password: 20000 })).password;
 
 async function fetchAndIngest(s: Row) {
   let sess: Session;
@@ -302,8 +305,10 @@ async function fetchAndIngest(s: Row) {
     return { r, text: buf.toString("utf8") };
   };
   let { v: res, attempts } = await withRetry(() => get(sess.cookie));
+  // the page is read in the Studio's file reader: one it had to stop (time, memory) or could not take (busy) fails this run, with why
+  try {
   // an expired session: log in again once and retry
-  if (s.auth === "form" && looksLikeLogin(res.r, res.text)) {
+  if (s.auth === "form" && await looksLikeLogin(res.r, res.text)) {
     try {
       sess = await session(s, true);
     } catch (e: any) {
@@ -312,17 +317,25 @@ async function fetchAndIngest(s: Row) {
     const again = await withRetry(() => get(sess.cookie));
     res = again.v;
     attempts += again.attempts;
-    if (looksLikeLogin(res.r, res.text)) return { ok: false, login: "failed", error: "The site still asks for a login.", http: res.r.status, seen: 0, items_new: 0, attempts };
+    if (await looksLikeLogin(res.r, res.text)) return { ok: false, login: "failed", error: "The site still asks for a login.", http: res.r.status, seen: 0, items_new: 0, attempts };
   }
   if (res.r.status >= 400) return { ok: false, http: res.r.status, error: `HTTP ${res.r.status}`, login: sess.login, seen: 0, items_new: 0, attempts };
-  // a source set up by the onboarding agent reads its records with the stored mapping (no AI at run time)
-  const stored = readStored(s.mapping);
-  const items: Item[] = stored
-    ? extractRecords(s.kind as FetchKind, res.text, s.url, stored.recordPath).records
-      .map((r) => applyMapping(r, stored.map)).filter((x): x is NonNullable<typeof x> => !!x)
-    : s.kind === "rss" ? parseRss(res.text) : s.kind === "json" ? parseJson(res.text) : parseHtml(res.text, s.url);
+  const items = await itemsFrom(s, res.text);
   const n = await ingest(s.source_id, items);
   return { ok: true, http: res.r.status, seen: items.length, items_new: n, login: sess.login, attempts, error: items.length ? null : "No items found on the page." };
+  } catch (e) {
+    if (e instanceof ParseLimitError) return { ok: false, http: res.r.status, error: pageLimitMessage(e), login: sess.login, seen: 0, items_new: 0, attempts };
+    throw e;
+  }
+}
+
+/**
+ * A fetched source's items: a source set up by the onboarding agent reads its records with the stored mapping (no AI at run time), an
+ * older one with the legacy readers. Read in the Studio's file reader, under its time and memory limits: the record patterns searched to
+ * the end of the page from every unclosed tag on the server's thread, on every schedule (300 KB of "<item>" held it 2.9 s; p7-studio-parse-12).
+ */
+export async function itemsFrom(s: Row, text: string): Promise<Item[]> {
+  return (await readCollector(text, s.url, { items: { kind: String(s.kind), stored: readStored(s.mapping) } })).items ?? [];
 }
 
 interface Item {
@@ -333,56 +346,6 @@ interface Item {
 
 /** Numeric character references (&#038; &#x2019;), left behind by some feeds. */
 const unent = (s: string) => s.replace(/&#(\d{1,6});/g, (_, d) => String.fromCodePoint(Number(d))).replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)));
-const strip = (s: string) => unent(s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
-  .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")).replace(/\s+/g, " ").trim();
-const tag = (x: string, t: string) => { const m = x.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`, "i")); return m ? strip(m[1]) : null; };
-
-function parseRss(xml: string): Item[] {
-  const blocks = [...xml.matchAll(/<(item|entry)\b[\s\S]*?<\/\1>/gi)].map((m) => m[0]);
-  return blocks.slice(0, 80).map((b) => ({
-    title: tag(b, "title") ?? "",
-    url: tag(b, "link") || (b.match(/<link[^>]+href=["']([^"']+)/i)?.[1] ?? null),
-    body: tag(b, "description") ?? tag(b, "summary") ?? tag(b, "content"),
-    published: tag(b, "pubDate") ?? tag(b, "published") ?? tag(b, "updated") ?? tag(b, "dc:date")
-  })).filter((i) => i.title);
-}
-
-function parseHtml(html: string, base: string): Item[] {
-  const out: Item[] = [];
-  const seen = new Set<string>();
-  for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const text = strip(m[2]);
-    if (text.length < 28 || text.length > 260 || seen.has(text)) continue;
-    seen.add(text);
-    let url: string | null = null;
-    try { url = new URL(m[1], base).toString(); } catch { /* keep null */ }
-    out.push({ title: text, url });
-    if (out.length >= 60) break;
-  }
-  if (!out.length) {
-    const t = tag(html, "title");
-    if (t) out.push({ title: t, url: base, body: strip(html).slice(0, 2000) });
-  }
-  return out;
-}
-
-function parseJson(text: string): Item[] {
-  let data: any;
-  try { data = JSON.parse(text); } catch { return []; }
-  const find = (v: any, depth = 0): any[] | null => {
-    if (Array.isArray(v) && v.length && typeof v[0] === "object") return v;
-    if (v && typeof v === "object" && depth < 4) for (const x of Object.values(v)) { const f = find(x, depth + 1); if (f) return f; }
-    return null;
-  };
-  const arr = find(data) ?? [];
-  const pick = (o: any, keys: string[]) => { for (const k of Object.keys(o)) if (keys.includes(k.toLowerCase()) && o[k] != null) return String(o[k]); return null; };
-  return arr.slice(0, 100).map((o: any) => ({
-    title: pick(o, ["title", "headline", "name", "subject", "event", "description"]) ?? JSON.stringify(o).slice(0, 160),
-    url: pick(o, ["url", "link", "href"]),
-    body: pick(o, ["summary", "text", "body", "content", "details", "description", "message"]),
-    published: pick(o, ["date", "published", "published_at", "pubdate", "created_at", "time", "timestamp"])
-  }));
-}
 
 function toDate(s: string | null | undefined): Date | null {
   if (!s) return null;

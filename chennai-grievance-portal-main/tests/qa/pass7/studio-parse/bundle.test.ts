@@ -36,11 +36,13 @@ function sources(dir = path.join(ROOT, "src")): string[] {
 }
 
 const IN_THREAD: Record<string, string[]> = {
-  parse: ["parseAll", "parseFile", "htmlTables", "headlinesIn", "feedLinkIn", "dataLinksIn", "stripPage", "shape"],
-  formats: ["pdfTables", "xmlGrid", "kmlGrid", "docxTables", "unzip", "zipIntact"],
-  ocr: ["pdfImages"],
+  "studio/parse": ["parseAll", "parseFile", "htmlTables", "headlinesIn", "feedLinkIn", "dataLinksIn", "stripPage", "shape"],
+  "studio/formats": ["pdfTables", "xmlGrid", "kmlGrid", "docxTables", "unzip", "zipIntact"],
+  "studio/ocr": ["pdfImages"],
   // the page checks moved out of resolve.ts, index.ts and explore.ts: only the reader runs them (the server asks readFacts)
-  "connect/links": ["pageFacts"]
+  "studio/connect/links": ["pageFacts"],
+  // the Collector's page reading (onboarding, scheduled runs): only the reader runs it (the server asks readCollector; p7-studio-parse-12)
+  "collector/sourcemap": ["extractRecords", "rssRecords", "jsonRecords", "htmlRecords", "feedLink", "loginForm", "legacyItems", "pageTitle", "passwordField"]
 };
 const READER = ["src/lib/studio/parse.ts", "src/lib/studio/parse-worker.ts", "src/lib/studio/parse-worker-main.ts", "src/lib/studio/formats.ts", "src/lib/studio/ocr.ts"];
 const EXCEPT: Record<string, string> = {
@@ -57,7 +59,7 @@ describe("no server code reads a file or a page on its own thread", () => {
       const rel = path.relative(ROOT, file).replace(/\\/g, "/");
       if (READER.includes(rel)) continue;
       const text = fs.readFileSync(file, "utf8");
-      for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']@\/lib\/studio\/(parse|formats|ocr|connect\/links)["']/g)) {
+      for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']@\/lib\/(studio\/(?:parse|formats|ocr|connect\/links)|collector\/sourcemap)["']/g)) {
         const names = m[1].split(",").map((s) => s.trim()).filter((s) => s && !s.startsWith("type ")).map((s) => s.split(/\s+as\s+/)[0]);
         const allowed = (EXCEPT[rel] ?? "").split(" ");
         const bad = names.filter((n) => IN_THREAD[m[2]].includes(n) && !allowed.includes(n));

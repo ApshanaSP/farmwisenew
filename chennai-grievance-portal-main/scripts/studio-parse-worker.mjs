@@ -998,14 +998,14 @@ function json(text2) {
   };
   const recs = geojsonRecords(data) ?? find(data) ?? columnar(data);
   if (!recs?.length) throw new ParseError("No list of records was found in the JSON.");
-  const flatten = (o, pre, r, depth) => {
+  const flatten2 = (o, pre, r, depth) => {
     for (const [k, v] of Object.entries(o)) {
-      if (v && typeof v === "object" && !Array.isArray(v) && depth < 3) flatten(v, `${pre}${k}.`, r, depth + 1);
+      if (v && typeof v === "object" && !Array.isArray(v) && depth < 3) flatten2(v, `${pre}${k}.`, r, depth + 1);
       else r[`${pre}${k}`] = scalar(v);
     }
     return r;
   };
-  const flat = recs.slice(0, MAX_ROWS).map((o) => flatten(o, "", {}, 0));
+  const flat = recs.slice(0, MAX_ROWS).map((o) => flatten2(o, "", {}, 0));
   const keys = [];
   for (const r of flat.slice(0, 500)) for (const k of Object.keys(r)) if (!keys.includes(k)) keys.push(k);
   const cols = keys.slice(0, MAX_COLS);
@@ -1085,6 +1085,419 @@ function shapeFrom(headerCells, body, caption) {
 
 // src/lib/studio/parse-worker.ts
 init_ocr();
+
+// src/lib/collector/sourcemap.ts
+import { parse } from "node-html-parser";
+var MAX_RECORDS = 120;
+var MAX_KEYS = 40;
+var unent3 = (s) => s.replace(/&#(\d{1,6});/g, (_, d) => String.fromCodePoint(Number(d))).replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)));
+var clean = (s) => unent3(s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")).replace(/\s+/g, " ").trim();
+var abs = (href, base) => {
+  if (!href || /^(javascript|mailto|tel):/i.test(href)) return null;
+  try {
+    return new URL(href, base).toString();
+  } catch {
+    return null;
+  }
+};
+function addPair(rec, key, v) {
+  const m = v.match(/^\s*(-?\d{1,3}\.\d+)\s*[ ,]\s*(-?\d{1,3}\.\d+)\s*$/);
+  if (m) {
+    rec[`${key}[0]`] = m[1];
+    rec[`${key}[1]`] = m[2];
+  }
+}
+function put(rec, key, v, join = false) {
+  if (v == null) return;
+  const s = v.length > 1500 ? v.slice(0, 1500) : v;
+  if (!s) return;
+  if (rec[key] != null) {
+    if (join && !rec[key].split(", ").includes(s)) rec[key] += `, ${s}`;
+    return;
+  }
+  if (Object.keys(rec).length >= MAX_KEYS) return;
+  rec[key] = s;
+  addPair(rec, key, s);
+}
+function rssRecords(xml) {
+  const out = [];
+  for (const b of xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)) {
+    const rec = {};
+    for (const m of b[2].matchAll(/<([a-zA-Z][\w:.-]*)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1\s*>)/g)) {
+      const name = m[1].toLowerCase(), attrs = m[2] ?? "";
+      const href = attrs.match(/\b(?:href|url)=["']([^"']+)["']/i)?.[1] ?? null;
+      const val2 = m[3] != null ? clean(m[3]) : "";
+      put(rec, name, val2 || href, name === "category" || name === "dc:subject");
+    }
+    if (Object.keys(rec).length) out.push(rec);
+    if (out.length >= MAX_RECORDS) break;
+  }
+  return out;
+}
+function flatten(o, prefix, depth, rec) {
+  if (o == null) return;
+  if (typeof o !== "object") return put(rec, prefix || "value", String(o));
+  if (Array.isArray(o)) {
+    if (!o.length) return;
+    if (o.every((x) => x == null || typeof x !== "object")) {
+      put(rec, prefix, o.filter((x) => x != null).join(", "));
+      if (o.length <= 3 && o.every((x) => typeof x === "number")) o.forEach((x, k) => put(rec, `${prefix}[${k}]`, String(x)));
+      return;
+    }
+    if (depth < 3) flatten(o[0], `${prefix}[0]`, depth + 1, rec);
+    return;
+  }
+  if (depth > 3) return;
+  for (const [k, v] of Object.entries(o)) flatten(v, prefix ? `${prefix}.${k}` : k, depth + 1, rec);
+}
+function getPath(data, p) {
+  if (!p) return data;
+  let cur = data;
+  for (const part2 of p.split(".")) {
+    if (cur == null) return void 0;
+    cur = cur[part2];
+  }
+  return cur;
+}
+function findList(data) {
+  let best = null;
+  const walk = (v, p, depth) => {
+    if (Array.isArray(v)) {
+      const objs = v.filter((x) => x && typeof x === "object" && !Array.isArray(x));
+      if (objs.length && objs.length >= v.length * 0.8) {
+        const keys = Math.min(12, Object.keys(objs[0]).length);
+        const score = objs.length * keys;
+        if (!best || score > best.score) best = { path: p, list: v, score };
+      }
+      return;
+    }
+    if (v && typeof v === "object" && depth < 5) for (const [k, x] of Object.entries(v)) walk(x, p ? `${p}.${k}` : k, depth + 1);
+  };
+  walk(data, "", 0);
+  return best;
+}
+function jsonRecords(text2, path) {
+  let data;
+  try {
+    data = JSON.parse(text2);
+  } catch {
+    return { records: [], path };
+  }
+  let list = null;
+  if (path != null) {
+    const v = getPath(data, path);
+    if (Array.isArray(v)) list = v;
+  }
+  if (!list) {
+    const f = findList(data);
+    if (f) {
+      list = f.list;
+      path = f.path;
+    } else if (data && typeof data === "object") {
+      list = [data];
+      path = null;
+    }
+  }
+  const records = (list ?? []).slice(0, MAX_RECORDS).map((o) => {
+    const r = {};
+    flatten(o, "", 0, r);
+    return r;
+  }).filter((r) => Object.keys(r).length);
+  return { records, path };
+}
+var NOISE = /(^|[\s_-])(nav|navbar|menu|footer|header|breadcrumbs?|pagination|pager|social|share|sharing|cookie|sidebar|widget|ad|ads|advert)([\s_-]|$)/i;
+var BUILT = /^(css|sc|jsx|svelte|emotion|tw)-/i;
+var hashed = (c) => BUILT.test(c) || /(__|_|-)[A-Za-z0-9]{5,}$/.test(c) && /\d/.test(c.slice(-6));
+var safeClass = (c) => /^[A-Za-z_][\w-]*$/.test(c) && !hashed(c);
+var classKey = (c) => /^[A-Za-z_][\w-]*$/.test(c) && !BUILT.test(c) ? c.replace(/(__|_|-)[A-Za-z0-9]{5,}$/, (m) => /\d/.test(m) ? "" : m) || null : null;
+var sig = (e) => `${e.rawTagName?.toLowerCase()}|${e.classNames.split(/\s+/).filter(safeClass).sort().slice(0, 2).join(".")}`;
+var sigSel = (e) => {
+  const cls = e.classNames.split(/\s+/).filter(safeClass).sort().slice(0, 2);
+  return `${e.rawTagName.toLowerCase()}${cls.map((c) => `.${c}`).join("")}`;
+};
+var elems = (e) => e.childNodes.filter((n) => n.nodeType === 1);
+var txt = (e) => e ? clean(e.text) : "";
+function inNoise(e) {
+  for (let k = 0; e && k < 8; k++, e = e.parentNode) {
+    const tag = e.rawTagName?.toLowerCase();
+    if (tag === "nav" || tag === "header" || tag === "footer" || tag === "aside") return true;
+    if (NOISE.test(`${e.id ?? ""} ${e.classNames ?? ""}`)) return true;
+  }
+  return false;
+}
+function pathSel(p) {
+  const parts = [];
+  for (let e = p, k = 0; e && e.rawTagName && k < 4; e = e.parentNode, k++) {
+    const tag = e.rawTagName.toLowerCase();
+    if (tag === "html" || tag === "body") break;
+    if (e.id && /^[A-Za-z][\w-]*$/.test(e.id) && !/\d{3,}/.test(e.id)) {
+      parts.unshift(`#${e.id}`);
+      break;
+    }
+    parts.unshift(sigSel(e));
+  }
+  return parts.join(" > ");
+}
+function findGroup(root) {
+  let best = null;
+  const all = root.querySelectorAll("*").slice(0, 8e3);
+  for (const p of all) {
+    const kids = elems(p);
+    if (kids.length < 3) continue;
+    const groups = /* @__PURE__ */ new Map();
+    for (const k of kids) {
+      const s = sig(k);
+      groups.set(s, [...groups.get(s) ?? [], k]);
+    }
+    for (const g of groups.values()) {
+      if (g.length < 3) continue;
+      const tag = g[0].rawTagName.toLowerCase();
+      if (["script", "style", "option", "br", "meta", "link", "svg", "path", "col"].includes(tag)) continue;
+      const lens = g.map((e) => Math.min(300, txt(e).length));
+      const avg = lens.reduce((a, b) => a + b, 0) / g.length;
+      if (avg < 15) continue;
+      if (inNoise(p)) continue;
+      const linked = g.filter((e) => tag === "a" || e.querySelector("a[href]")).length / g.length;
+      const score = g.length ** 0.8 * Math.min(avg, 160) * (0.35 + linked) * (tag === "tr" ? 1.25 : 1);
+      if (!best || score > best.score) best = { sel: `${pathSel(p)} > ${sigSel(g[0])}`, score, n: g.length };
+    }
+  }
+  if (!best) return null;
+  const n = root.querySelectorAll(best.sel).length;
+  if (n >= best.n * 0.8) return best.sel;
+  const bare = best.sel.split(" > ").pop();
+  const nb = root.querySelectorAll(bare).length;
+  return nb >= best.n && nb <= best.n * 3 ? bare : best.sel;
+}
+var DATE_RE = new RegExp([
+  String.raw`\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?`,
+  String.raw`\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}(?:,?\s+\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)?`,
+  String.raw`\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?,?\s+\d{4}`,
+  String.raw`(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}`
+].join("|"), "i");
+function htmlRecord(e, base, headers) {
+  const rec = {};
+  const tag = e.rawTagName.toLowerCase();
+  if (tag === "tr") {
+    const cells = elems(e).filter((c) => ["td", "th"].includes(c.rawTagName.toLowerCase()));
+    cells.forEach((c, k) => {
+      const h = headers?.[k] || `column ${k + 1}`;
+      put(rec, h, txt(c));
+      const a2 = c.querySelector("a[href]");
+      if (a2) put(rec, `${h} link`, abs(a2.getAttribute("href"), base));
+    });
+  }
+  const a = tag === "a" ? e : e.querySelector("a[href]");
+  if (a) {
+    put(rec, "link text", txt(a));
+    put(rec, "link", abs(a.getAttribute("href"), base));
+  }
+  put(rec, "heading", txt(e.querySelector("h1, h2, h3, h4, h5, h6")));
+  const time = e.querySelector("time");
+  if (time) put(rec, "time", time.getAttribute("datetime") || txt(time));
+  const full = txt(e);
+  put(rec, "date in text", full.match(DATE_RE)?.[0] ?? null);
+  const img = e.querySelector("img");
+  if (img) put(rec, "image", abs(img.getAttribute("src") || img.getAttribute("data-src"), base));
+  if (tag !== "tr") {
+    let n = 0;
+    for (const d of e.querySelectorAll("[class]")) {
+      if (n >= 18) break;
+      const c = d.classNames.split(/\s+/).map(classKey).find((x) => !!x);
+      if (!c) continue;
+      const t = txt(d);
+      if (!t || t === full || t.length > 600) continue;
+      put(rec, `.${c}`, t);
+      n++;
+    }
+  }
+  put(rec, "text", full.slice(0, 800));
+  return rec;
+}
+function htmlRecords(html, base, selector) {
+  const root = parse(html, { blockTextElements: { script: false, style: false, noscript: false } });
+  let sel = selector ?? findGroup(root);
+  if (!sel) return { records: [], path: null };
+  let els = [];
+  try {
+    els = root.querySelectorAll(sel);
+  } catch {
+  }
+  if (!els.length && selector) {
+    const again = findGroup(root);
+    if (again) {
+      sel = again;
+      els = root.querySelectorAll(again);
+    }
+  }
+  let headers = null;
+  if (els[0]?.rawTagName.toLowerCase() === "tr") {
+    const table = els[0].closest("table");
+    const hr = table?.querySelector("thead tr") ?? table?.querySelector("tr");
+    const th = hr ? elems(hr).filter((c) => c.rawTagName.toLowerCase() === "th") : [];
+    if (th.length) headers = th.map((c) => txt(c).slice(0, 40) || null).map((h, k) => h ?? `column ${k + 1}`);
+    els = els.filter((r) => r.querySelector("td"));
+  }
+  const records = els.slice(0, MAX_RECORDS).map((e) => htmlRecord(e, base, headers)).filter((r) => Object.keys(r).length > 1);
+  return { records, path: sel };
+}
+function loginForm(html, base) {
+  const root = parse(html, { blockTextElements: { script: false, style: false } });
+  const pw = root.querySelector("input[type=password]");
+  if (!pw) return null;
+  const form = pw.closest("form");
+  const inputs = (form ?? root).querySelectorAll("input");
+  const user = inputs.find((i) => {
+    const t = (i.getAttribute("type") || "text").toLowerCase();
+    return ["text", "email", "tel"].includes(t) && i.getAttribute("name");
+  });
+  return {
+    loginUrl: abs(form?.getAttribute("action") || base, base) ?? base,
+    userField: user?.getAttribute("name") || "username",
+    passField: pw.getAttribute("name") || "password"
+  };
+}
+function feedLink(html, base) {
+  const m = html.slice(0, 2e5).match(/<link\b[^>]*type=["']application\/(?:rss|atom)\+xml["'][^>]*>/i);
+  const href = m?.[0].match(/href=["']([^"']+)["']/i)?.[1];
+  return href ? abs(href, base) : null;
+}
+function extractRecords(kind, text2, base, path) {
+  if (kind === "rss") return { records: rssRecords(text2), path: null };
+  if (kind === "json") return jsonRecords(text2, path);
+  return htmlRecords(text2, base, path);
+}
+var legacyStrip = (s) => unent3(s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")).replace(/\s+/g, " ").trim();
+var legacyTag = (x, t) => {
+  const m = x.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`, "i"));
+  return m ? legacyStrip(m[1]) : null;
+};
+function legacyRss(xml) {
+  const blocks = [...xml.matchAll(/<(item|entry)\b[\s\S]*?<\/\1>/gi)].map((m) => m[0]);
+  return blocks.slice(0, 80).map((b) => ({
+    title: legacyTag(b, "title") ?? "",
+    url: legacyTag(b, "link") || (b.match(/<link[^>]+href=["']([^"']+)/i)?.[1] ?? null),
+    body: legacyTag(b, "description") ?? legacyTag(b, "summary") ?? legacyTag(b, "content"),
+    published: legacyTag(b, "pubDate") ?? legacyTag(b, "published") ?? legacyTag(b, "updated") ?? legacyTag(b, "dc:date")
+  })).filter((i) => i.title);
+}
+function legacyHtml(html, base) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const text2 = legacyStrip(m[2]);
+    if (text2.length < 28 || text2.length > 260 || seen.has(text2)) continue;
+    seen.add(text2);
+    let url = null;
+    try {
+      url = new URL(m[1], base).toString();
+    } catch {
+    }
+    out.push({ title: text2, url });
+    if (out.length >= 60) break;
+  }
+  if (!out.length) {
+    const t = legacyTag(html, "title");
+    if (t) out.push({ title: t, url: base, body: legacyStrip(html).slice(0, 2e3) });
+  }
+  return out;
+}
+function legacyJson(text2) {
+  let data;
+  try {
+    data = JSON.parse(text2);
+  } catch {
+    return [];
+  }
+  const find = (v, depth = 0) => {
+    if (Array.isArray(v) && v.length && typeof v[0] === "object") return v;
+    if (v && typeof v === "object" && depth < 4) for (const x of Object.values(v)) {
+      const f = find(x, depth + 1);
+      if (f) return f;
+    }
+    return null;
+  };
+  const arr = find(data) ?? [];
+  const pick = (o, keys) => {
+    for (const k of Object.keys(o)) if (keys.includes(k.toLowerCase()) && o[k] != null) return String(o[k]);
+    return null;
+  };
+  return arr.slice(0, 100).map((o) => ({
+    title: pick(o, ["title", "headline", "name", "subject", "event", "description"]) ?? JSON.stringify(o).slice(0, 160),
+    url: pick(o, ["url", "link", "href"]),
+    body: pick(o, ["summary", "text", "body", "content", "details", "description", "message"]),
+    published: pick(o, ["date", "published", "published_at", "pubdate", "created_at", "time", "timestamp"])
+  }));
+}
+function legacyItems(kind, text2, base) {
+  return kind === "rss" ? legacyRss(text2) : kind === "json" ? legacyJson(text2) : legacyHtml(text2, base);
+}
+var pageTitle = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null;
+var passwordField = (html, scan) => /<input[^>]+type=["']?password/i.test(html.slice(0, scan));
+var CHENNAI_OFFSET_MS = 330 * 6e4;
+var MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+function parseWhen(v, fmt = "auto") {
+  if (!v) return null;
+  const s = v.trim();
+  if (!s) return null;
+  if (/^\d{10}(\.\d+)?$/.test(s) && (fmt === "auto" || fmt === "unix")) return new Date(Number(s) * 1e3);
+  if (/^\d{13}$/.test(s) && (fmt === "auto" || fmt === "unix_ms")) return new Date(Number(s));
+  const num = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])?\.?m?\.?)?/i);
+  if (num && fmt !== "iso") {
+    let [a, b] = [Number(num[1]), Number(num[2])];
+    if (fmt === "mdy" || fmt === "auto" && b > 12 && a <= 12) [a, b] = [b, a];
+    const y = Number(num[3]) < 100 ? 2e3 + Number(num[3]) : Number(num[3]);
+    let h = Number(num[4] ?? 0);
+    if (num[7]?.toLowerCase() === "p" && h < 12) h += 12;
+    if (num[7]?.toLowerCase() === "a" && h === 12) h = 0;
+    const iso = `${y}-${String(b).padStart(2, "0")}-${String(a).padStart(2, "0")}T${String(h).padStart(2, "0")}:${num[5] ?? "00"}:${num[6] ?? "00"}+05:30`;
+    const d2 = new Date(iso);
+    return Number.isNaN(d2.getTime()) || b > 12 ? null : d2;
+  }
+  const plain2 = s.match(/^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?))?$/);
+  if (plain2) {
+    const d2 = /* @__PURE__ */ new Date(`${plain2[1]}T${plain2[2] ?? "00:00"}${plain2[2]?.length === 5 ? ":00" : ""}+05:30`);
+    return Number.isNaN(d2.getTime()) ? null : d2;
+  }
+  const named = /(?:\dZ|[+-]\d{2}:?\d{2}|\b(?:GMT|UTC|UT|IST|[ECMP][SD]T)\b)\s*(?:\([^)]*\))?\s*$/i.test(s);
+  const d = named ? new Date(s) : new Date(Date.parse(`${s.replace(/^(\d{4}-\d{2}-\d{2})T/, "$1 ")} UTC`) - CHENNAI_OFFSET_MS);
+  if (!Number.isNaN(d.getTime())) return d;
+  const w = s.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})/);
+  if (!w) return null;
+  const m = MONTHS[w[2].slice(0, 4).toLowerCase()] ?? MONTHS[w[2].slice(0, 3).toLowerCase()];
+  return m == null ? null : /* @__PURE__ */ new Date(`${w[3]}-${String(m + 1).padStart(2, "0")}-${w[1].padStart(2, "0")}T00:00:00+05:30`);
+}
+var toNum = (v) => {
+  const n = v == null ? NaN : Number(String(v).trim());
+  return Number.isFinite(n) ? n : null;
+};
+function applyMapping(r, m) {
+  const title = (m.title ? r[m.title] : null)?.trim();
+  if (!title) return null;
+  const body = m.body.map((k) => r[k]).filter((v) => v && v !== title).join(" — ") || null;
+  const when = parseWhen(m.published ? r[m.published] : null, m.dateFormat);
+  const place = m.place.map((k) => r[k]).filter(Boolean).join(", ") || null;
+  let lat = m.lat ? toNum(r[m.lat]) : null, lon = m.lon ? toNum(r[m.lon]) : null;
+  if (lat != null && lon != null && Math.abs(lat) > 40 && Math.abs(lon) < 40) [lat, lon] = [lon, lat];
+  if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+    lat = null;
+    lon = null;
+  }
+  const url = m.url ? r[m.url] ?? null : null;
+  return {
+    title: title.slice(0, 480),
+    url: url && /^https?:\/\//i.test(url) ? url : null,
+    body: body?.slice(0, 6e3) ?? null,
+    published: when ? when.toISOString() : null,
+    place,
+    lat,
+    lon,
+    category: m.category ? r[m.category] ?? null : null,
+    extId: m.id ? r[m.id] ?? null : null
+  };
+}
+
+// src/lib/studio/parse-worker.ts
 var MEMORY_MARK = "studio-parse: memory limit";
 var MAX_CELLS = 2 * MAX_ROWS * MAX_COLS;
 var size = (t) => t.rows.length * t.headers.length;
@@ -1149,7 +1562,27 @@ function fail(e) {
   if (e instanceof ParseError) return { error: { type: "parse", message } };
   return { error: { type: "other", message } };
 }
+function collectorRead({ text: text2, url, want }) {
+  const out = {};
+  if (want.title) out.title = pageTitle(text2);
+  if (want.feed) out.feed = feedLink(text2, url);
+  if (want.password) out.password = passwordField(text2, want.password);
+  if (want.form) out.form = loginForm(text2, url);
+  if (want.records) out.records = extractRecords(want.records.kind, text2, url, want.records.path);
+  if (want.items) {
+    const { kind, stored } = want.items;
+    out.items = stored ? extractRecords(kind, text2, url, stored.recordPath).records.map((r) => applyMapping(r, stored.map)).filter((x) => !!x) : legacyItems(kind, text2, url);
+  }
+  return out;
+}
 function work(job) {
+  if (job.op === "collector") {
+    try {
+      return { collector: collectorRead(job) };
+    } catch (e) {
+      return fail(e);
+    }
+  }
   if (job.op === "facts") {
     try {
       return { facts: pageFacts(job.html) };
