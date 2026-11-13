@@ -65,6 +65,8 @@ function countOf(toks: string[]): number | "negative" | "fraction" | null {
   }
   if (toks.some((x) => ORDINAL.test(x))) return null;
   if (toks.length === 1 && /^(?:a|an)$/.test(toks[0])) return 1;
+  // zero in words, in the three languages: a count of no time, said as such (pass4-open-08: "the last zero days" fell to the 90-day default)
+  if (toks.length === 1 && /^(?:zero|nil|none|nought|poojyam|pujyam|sunyam|பூஜ்ஜியம்|பூஜ்யம்|சுழியம்)$/.test(toks[0])) return 0;
   const v = readPositions(toks);
   return v && v.length === 1 && v[0] > 0 ? v[0] : null;
 }

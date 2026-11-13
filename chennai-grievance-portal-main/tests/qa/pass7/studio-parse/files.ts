@@ -76,6 +76,26 @@ export function pdfBombs(streams: number): Buffer {
   return Buffer.concat(parts);
 }
 
+/**
+ * A file the reader is still slow on (reviewer5-10, P2, open: an unclosed <Placemark> run is quadratic; 1 MB takes over 20 s), to hold a
+ * reader in the pool tests. The unended-deflate workbook no longer does: since the inflate budget (p7-studio-egress-19) zlib refuses it
+ * at once and SheetJS never sees it.
+ */
+export const slowKml = () => Buffer.from("<kml>" + "<Placemark><name>".repeat(60_000));
+
+/**
+ * A scanned PDF whose page images unpack large for OCR: `pages` 8-bit grey bitmaps of `mpx` million pixels, each Flate-packed to a few KB.
+ * OCR's page images keep their own budget (ocr.ts pdfImages, 600 MB; P6-007), so this is what the reader's memory watchdog still stops.
+ */
+export function scanPdf(pages: number, mpx: number): Buffer {
+  const side = Math.floor(Math.sqrt(mpx * 1e6));
+  const one = zlib.deflateSync(Buffer.alloc(side * side, 255));
+  const parts: Buffer[] = [Buffer.from("%PDF-1.4\n")];
+  for (let i = 0; i < pages; i++) parts.push(Buffer.from(`${i + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${side} /Height ${side} /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ${one.length} >>\nstream\n`), one, Buffer.from("\nendstream\nendobj\n"));
+  parts.push(Buffer.from("/Type /Page\ntrailer\n<< >>\n%%EOF\n"));
+  return Buffer.concat(parts);
+}
+
 /** A CSV of `rows` x `cols` short numbers. */
 export function csv(rows: number, cols: number): Buffer {
   const head = Array.from({ length: cols }, (_, c) => `col${c}`).join(",");

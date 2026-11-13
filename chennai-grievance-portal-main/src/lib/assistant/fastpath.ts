@@ -23,7 +23,6 @@ import { resolveSides } from "@/lib/assistant/compare";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
 import { orNull } from "@/lib/fallback";
-import { englishMonths, heldPeriod, windowIn } from "@/lib/windowspan";
 
 type Period = Scope["period"];
 const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -341,10 +340,11 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // "what percentage of complaints are resolved": a share of the incidents reported in the window, with the counts it comes from (RC-44)
       if (d.share) {
         const r = await shareOfIncidents(inc, i.now);
-        const have = { resolved: r.resolved, open: r.open, severe: r.severe, overdue: r.overdue }[d.share];
+        const have = { resolved: r.resolved, open: r.open, severe: r.severe, overdue: r.overdue, ontime: r.ontime, ratio: r.open }[d.share];
         const pct = r.n ? Math.round((have / r.n) * 1000) / 10 : 0;
         const word = { resolved: { en: "resolved", ta: "தீர்க்கப்பட்டவை", tanglish: "resolve aanavai" }, open: { en: "still open", ta: "இன்னும் திறந்திருப்பவை", tanglish: "innum open-la irukkiravai" },
-          severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" } }[d.share];
+          severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" },
+          ontime: { en: "resolved within the deadline", ta: "காலக்கெடுவுக்குள் தீர்க்கப்பட்டவை", tanglish: "deadline-kulla resolve aanavai" }, ratio: { en: "open", ta: "திறந்திருப்பவை", tanglish: "open-la irukkiravai" } }[d.share];
         // the share counts incidents (the pipeline's records), as the Tamil and Tanglish lines already say: "complaints" would name another unit than the one counted, and the department list refuses "complaints by department" for the same reason (g-review 5)
         const kindS = countNoun(what.replace(/\b(?:citizen )?(?:complaint|grievance)s?\b/gi, "incident"), r.n);
         const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
@@ -356,6 +356,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         if (!r.n) {
           card.headline = `No ${kindS} ${inP(inc.period)}${sw}, so there is no share to give`;
           card.answerMarkdown = `No ${kindS} were reported ${inP(inc.period)}${sw}, so a percentage cannot be worked out.`;
+        } else if (d.share === "ratio") {
+          // "ratio of open to closed incidents": both counts and the ratio between them, never one share in its place (pass4-open-11)
+          const ratio = r.closed ? Math.round((r.open / r.closed) * 100) / 100 : null;
+          card.headline = `Open to closed ${kindS}: ${num1(r.open)} : ${num1(r.closed)} · ${pl(inc.period)}`;
+          card.answerMarkdown = `Of the ${num1(r.n)} ${kindS} reported ${inP(inc.period)}${sw}, **${num1(r.open)}** ${r.open === 1 ? "is" : "are"} open and **${num1(r.closed)}** closed`
+            + `${ratio != null ? `: a ratio of ${ratio} open to each closed one` : ""}.\n\n- ${num1(r.resolved)} of the closed ones resolved, ${num1(r.closed - r.resolved)} rejected or lapsed`;
         } else if (i.lang === "en" || !whenTa) {
           card.headline = `${num1(pct)}% of ${kindS} are ${word.en} · ${pl(inc.period)}`;
           card.answerMarkdown = `**${num1(pct)}%** of the ${kindS} reported ${inP(inc.period)}${sw} ${r.n === 1 ? "is" : "are"} ${word.en}: ${num1(have)} of ${num1(r.n)}.`
@@ -611,13 +617,16 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     case "NEWS_TOP":
     case "NEWS_ONLY_GAPS":
     case "NEWS_DETAIL": {
+      // a calendar span the question named (yesterday, last month, a month, since a day): the news published inside it (p7-rules-periods-01)
+      const newsSpan = custom?.range && !custom.now ? custom.range : null;
       // a story described in words ("the Odisha worker news"): found by meaning and keywords among the period's articles
       // (the last 7 days when the question names no period); close runner-ups are named so the Collector can switch
       let others: string[] = [];
       if (d.intent === "NEWS_DETAIL" && !d.storyId && d.find) {
         const hours = d.period ? NEWS_HOURS[d.period] : 168;
         const nowSec = Date.parse(i.now.replace(" ", "T") + "+05:30") / 1000;
-        const found = (await hybridSearch("news", d.find, { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
+        const sec = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
+        const found = (await hybridSearch("news", d.find, newsSpan ? { since: sec(newsSpan.from), until: sec(newsSpan.to) } : { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
         const keys = await storiesOfDocs(found.map((x) => String(x.id)));
         if (!keys.length) {
           card.responseType = "news_list";
@@ -639,11 +648,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.sources.assumptions.push(`Found by meaning and keywords: "${d.find}"${d.period ? "" : " (last 7 days)"}.`);
       }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
-      const hours = d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
-      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS" }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
+      const hours = newsSpan ? custom!.hours : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
+      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
       card.responseType = one ? "news_detail" : "news_list";
       card.stories = r.stories;
-      const span = hours <= 36 ? "last 36 hours" : periodLabel(f.period as Period);
+      // the span asked, said as it was read ("last month (October)", "yesterday (5 Nov)"), never the rolling news window (p7-rules-periods-01)
+      const span = newsSpan ? custom!.label : hours <= 36 ? "last 36 hours" : periodLabel(f.period as Period);
       card.headline = one ? r.stories[0]?.headline ?? "Story not found"
         : d.intent === "NEWS_ONLY_GAPS" ? `In the news, no department record · ${span}` : `${topic ? `News about ${topic.label}` : "Top district news"} · ${span}`;
       card.answerMarkdown = one ? r.stories[0]?.summary ?? "That story is no longer in the news window."
@@ -706,10 +716,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
  */
 async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: number, message: string) {
   const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
-  // the question's own window ("past 24 hrs", "yesterday"), else the period
+  // a calendar span the question named ("last month", "yesterday") over its own bounds, as every count of it is (p7-rules-periods-02: the meaning search
+  // once ran over the rolling hours back from now under the label of October); else the question's own window ("past 24 hrs"), else the period
+  const ist = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
   const hours = inc.hours ?? PERIODS[inc.period].hours;
-  const until = nowT - (inc.offset ?? 0) * hours * 3600;
-  const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since: until - hours * 3600, until, zone: inc.zone ?? null,
+  const until = inc.range ? ist(inc.range.to) : nowT - (inc.offset ?? 0) * hours * 3600;
+  const since = inc.range ? ist(inc.range.from) : until - hours * 3600;
+  const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since, until, zone: inc.zone ?? null,
     cats: topic.cats, dept: inc.dept ?? null, openOnly: !!inc.openOnly }, 40);
   if (!hits) {
     // the meaning index is not ready: the topic's own words in the titles (and a recorded death, for a murder), never the
@@ -784,10 +797,7 @@ function listData(card: AnswerCard, items: IncidentItem[]) {
  */
 export interface Window { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string; now?: boolean; partial?: boolean }
 export function customWindow(text: string, now?: string): Window | null {
-  // "on 15 Oct", "between 1 Oct and 15 Oct": those calendar days (QA pass 4, SKG1-25). The shared reader names months, not single days,
-  // so a day range is read here first (merge of pass 4's eec8c840 into pass 7; Jarvis's lane does not read day ranges yet: an open row).
-  const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
-  if (Number.isFinite(nowMs)) { const days = dayRange(englishMonths(text), nowMs); if (days) return days; }
+  // "on 15 Oct", "between 1 Oct and 15 Oct", "அக்டோபர் 15 அன்று": the shared reader's days kind, the same reading Jarvis uses (p7-merge-04: they were read here alone, in dayRange)
   return windowOf(readPeriod(text), now);
 }
 export function windowOf(spec: PeriodSpec, now?: string): Window | null {
@@ -802,7 +812,7 @@ export function windowOf(spec: PeriodSpec, now?: string): Window | null {
     const s = spanOf(spec, now)!;
     return { hours: spec.hours, label: s.label.en, period: periodOfHours(spec.hours), ...(s.note ? { note: s.note } : {}) };
   }
-  if (!["day", "last", "lastWeekOf", "month", "since", "holiday", "now"].includes(spec.kind)) return null;
+  if (!["day", "days", "last", "lastWeekOf", "month", "since", "holiday", "now"].includes(spec.kind)) return null;
   const s = spanOf(spec, now);
   if (!s?.range) return null;
   const hours = s.now ? MAX_HOURS : Math.max(1, Math.round((Date.parse(`${s.range.to.replace(" ", "T")}+05:30`) - Date.parse(`${s.range.from.replace(" ", "T")}+05:30`)) / 3600_000));
@@ -815,39 +825,6 @@ export function windowOf(spec: PeriodSpec, now?: string): Window | null {
   return w;
 }
 const periodOfHours = (h: number): Period => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
-
-const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-/** The calendar days a question names: "on 15 Oct", "15 October 2026", "Oct 15", "between 1 Oct and 15 Oct", "from 1 Oct to 15 Oct". From midnight (IST) of the first to midnight of the day after the last. */
-function dayRange(text: string, nowMs: number): { hours: number; label: string; period: Period; range: { from: string; to: string } } | null {
-  const MON = "(january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)";
-  const D = String.raw`(\d{1,2})(?:st|nd|rd|th)?`;
-  const YR = String.raw`(?:\s+(20\d{2}))?`;
-  const t = text.toLowerCase().replace(new RegExp(String.raw`\b${MON}\s+(\d{1,2})(?:st|nd|rd|th)?\b`, "g"), "$2 $1"); // "Oct 15" is "15 Oct"
-  const one = (d: string, m: string, y: string | undefined) => {
-    const mi = MONTHS.indexOf(m.slice(0, 3)), day = Number(d), cur = new Date(nowMs + 330 * 60_000);
-    let yr = y ? Number(y) : cur.getUTCFullYear();
-    const valid = (yy: number) => mi >= 0 && day >= 1 && day <= new Date(Date.UTC(yy, mi + 1, 0)).getUTCDate();
-    const at = (yy: number) => Date.parse(`${yy}-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00+05:30`);
-    if (!valid(yr)) return null;
-    let ms = at(yr);
-    if (!y && ms > nowMs) { yr -= 1; if (!valid(yr)) return null; ms = at(yr); }
-    return { ms, yr };
-  };
-  const range = new RegExp(String.raw`\b(?:between|from)\s+${D}\s*(?:of\s+)?${MON}${YR}\s*(?:and|to|till|until|-|–)\s*${D}\s*(?:of\s+)?${MON}?${YR}\b`).exec(t);
-  const single = range ? null : new RegExp(String.raw`\b(?:on\s+)?${D}\s*(?:of\s+)?${MON}${YR}\b`).exec(t);
-  let a: { ms: number; yr: number } | null, b: { ms: number; yr: number } | null;
-  if (range) { a = one(range[1], range[2], range[3]); b = one(range[4], range[5] ?? range[2], range[6] ?? range[3]); }
-  else if (single && !/\b(?:since|from|after)\s*$/.test(t.slice(0, single.index))) { a = one(single[1], single[2], single[3]); b = a; }
-  else return null;
-  if (!a || !b || b.ms < a.ms) return null;
-  const from = a.ms, to = Math.min(b.ms + 864e5, nowMs + 1000);
-  if (from >= nowMs || nowMs - from > MAX_HOURS * 3600_000) return null;
-  const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
-  const show = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
-  const hours = Math.max(1, Math.round((to - from) / 3600_000));
-  const label = a.ms === b.ms ? show(a.ms) : `${show(a.ms)} to ${show(b.ms)}`;
-  return { hours, label, period: hours <= 24 ? "daily" : hours <= 168 ? "weekly" : hours <= 720 ? "monthly" : "quarterly", range: { from: ist(from), to: ist(to) } };
-}
 
 function scopeWords(s: Scope, n: RefNames): string {
   const parts = [s.zone != null ? `in ${n.zones.get(s.zone)?.name ?? `Zone ${s.zone}`} zone` : null, s.taluk ? `in ${n.taluks.get(s.taluk)?.name ?? s.taluk} taluk` : null,

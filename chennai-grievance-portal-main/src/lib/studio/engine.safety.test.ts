@@ -26,7 +26,8 @@ describe("hostile input stays fast and safe", () => {
   it("a PDF compression bomb is not inflated past its cap", () => {
     const bomb = zlib.deflateSync(Buffer.alloc(60 * 1024 * 1024, 32));
     const pdf = Buffer.concat([Buffer.from(`%PDF-1.4\n1 0 obj<</Length ${bomb.length}/Filter/FlateDecode>>stream\n`, "latin1"), bomb, Buffer.from("\nendstream endobj\n%%EOF")]);
-    expect(() => pdfTables(pdf)).not.toThrow();
+    // QA pass 7 (p7-studio-egress-18): no longer skipped in silence: a file that unpacks past 100 times its size is refused, with why
+    expect(() => pdfTables(pdf)).toThrow(/unpacks to far more than its size/);
   });
   it("a ZIP that unpacks to far more than its size is refused", () => {
     const big = zlib.deflateRawSync(Buffer.alloc(30 * 1024 * 1024, 0));

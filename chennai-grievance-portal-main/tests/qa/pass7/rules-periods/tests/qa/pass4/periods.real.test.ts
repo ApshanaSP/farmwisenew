@@ -102,6 +102,18 @@ describe.skipIf(!PINNED)("one period, one meaning, in both rules lanes", () => {
     expect(caseTotal(all)).toBeGreaterThan(got[0]!);
   }, 180_000);
 
+  it("p7-merge-04: a day and a range of days are read by both lanes over those calendar days, with the same count (Jarvis once had no reading of them)", async () => {
+    for (const [ask, show, label] of [["how many incidents on 15 Oct", "show the cases on 15 Oct", "15 Oct"], ["how many incidents between 1 Oct and 15 Oct", "show the cases between 1 Oct and 15 Oct", "1 Oct to 15 Oct"],
+      ["அக்டோபர் 15 அன்று எத்தனை சம்பவங்கள்", "show the cases on Oct 15", "15 Oct"]] as const) {
+      const a = await ai(ask);
+      expect(a.scopeLine, ask).toMatch(new RegExp(`^${label}`));
+      const j = await jarvis(show);
+      expect(j.lane, show).toBe("quick");
+      expect(j.stage?.title, show).toContain(label);
+      expect(caseTotal(j), show).toBe(kpi(a, /^Reported$/));
+    }
+  }, 180_000);
+
   it("'this week' and 'last 30 days' stay the console's windows, as said", async () => {
     expect((await ai("how many severe incidents this week")).scopeLine).toMatch(/^Last 7 days/);
     expect((await ai("how many severe incidents in the last 30 days")).scopeLine).toMatch(/^Last 30 days/);

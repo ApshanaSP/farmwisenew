@@ -53,7 +53,7 @@ export interface Detected {
   /** what a count is of: deaths ("road deaths today"), citizen complaints ("how many grievances"), else incidents */
   measure?: "deaths" | "complaints" | "injured" | null;
   /** a count asked as a share ("what percentage of complaints are resolved"): of which kind (RC-44) */
-  share?: "resolved" | "open" | "severe" | "overdue" | null;
+  share?: "resolved" | "open" | "severe" | "overdue" | "ontime" | "ratio" | null;
   /** compares the period with the one before ("this month vs last month"), not places */
   vsPrevious?: boolean;
   /** only incidents still open after this many days ("severe incidents open for more than 7 days") */

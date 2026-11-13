@@ -16,6 +16,48 @@ import zlib from "zlib";
 import type { Cell } from "@/lib/studio/parse";
 
 export class FormatError extends Error {}
+/** A file refused because it unpacks to more than its budget (Inflate): the whole file, never one part of it skipped. */
+export class InflateLimit extends FormatError {}
+
+// ----------------------------------------------------------------- inflate --
+
+/** What one file may unpack to, all its parts together: 100 times its size (workbooks, CSV archives and PDF text are 3 to 20 times). */
+export const INFLATE_RATIO = 100;
+export const INFLATE_FLOOR = 1024 * 1024;
+export const INFLATE_MAX = 200 * 1024 * 1024;
+const mb = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / (1024 * 1024)).toFixed(n < 10 * 1024 * 1024 ? 1 : 0)} MB`);
+
+/**
+ * One budget for everything a file unpacks: the entries of a ZIP, the entries of a workbook (inflated here before SheetJS sees the
+ * workbook), the text streams of a PDF, and the parts nested in them (a workbook inside a ZIP spends the upload's budget, not one of its
+ * own). Every inflate goes through run(), so a small file cannot become a large one in any format: an 80 KB PDF of Flate streams had
+ * become 80 MB, an 85 KB workbook 80 MB (QA pass 7, p7-studio-egress-18 and -19). The reader process's memory watchdog stays the
+ * backstop, not the rule. (A scan's page images for OCR keep their own, larger budget: ocr.ts pdfImages, QA pass 6 P6-007.)
+ */
+export class Inflate {
+  readonly limit: number;
+  used = 0;
+  constructor(readonly fileBytes: number) { this.limit = Math.min(INFLATE_MAX, Math.max(INFLATE_FLOOR, INFLATE_RATIO * fileBytes)); }
+  get left(): number { return Math.max(0, this.limit - this.used); }
+  /** The refusal, worded for the Collector. */
+  error(): FormatError {
+    return new InflateLimit(`This file unpacks to far more than its size (over ${mb(this.limit)} from ${mb(this.fileBytes)}), so it is not read: a safety limit. Save the table again as .csv or .xlsx, or split it into smaller files.`);
+  }
+  /** Inflate `data` (raw deflate for a ZIP entry, zlib-wrapped for a PDF stream) to at most `cap` bytes, within what the file has left. */
+  run(data: Buffer, raw: boolean, cap: number): Buffer {
+    const max = Math.min(cap, this.left);
+    if (max < 1) throw this.error();
+    try {
+      const out = raw ? zlib.inflateRawSync(data, { maxOutputLength: max }) : zlib.inflateSync(data, { maxOutputLength: max });
+      this.used += out.length;
+      return out;
+    } catch (e) {
+      // past what the file has left (not past this part's own cap): the whole file is refused
+      if (max < cap && (e as { code?: string }).code === "ERR_BUFFER_TOO_LARGE") throw this.error();
+      throw e;
+    }
+  }
+}
 
 // --------------------------------------------------------------------- zip --
 
@@ -51,8 +93,12 @@ export function zipIntact(buf: Buffer): boolean {
   return at <= cd + size;
 }
 
-/** The files in a ZIP (folders and the macOS __MACOSX shadows left out). */
-export function unzip(buf: Buffer): ZipEntry[] {
+/**
+ * The files in a ZIP (folders and the macOS __MACOSX shadows left out), each inflated within the file's budget (Inflate). An archive also
+ * keeps its own rules: at most 200 files and 60 MB, no entry past 400 times its packed size. A workbook (`workbook`) is read whole: all
+ * its entries, inflated to what the budget allows whatever sizes its table of contents claims (SheetJS never trusted them either).
+ */
+export function unzip(buf: Buffer, budget: Inflate = new Inflate(buf.length), { workbook = false }: { workbook?: boolean } = {}): ZipEntry[] {
   // the end-of-central-directory record: the last 22..65 557 bytes
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
@@ -61,7 +107,7 @@ export function unzip(buf: Buffer): ZipEntry[] {
   let at = buf.readUInt32LE(eocd + 16);
   const out: ZipEntry[] = [];
   let total = 0;
-  for (let k = 0; k < count && k < ZIP_FILES; k++) {
+  for (let k = 0; k < count && (workbook || k < ZIP_FILES); k++) {
     if (at + 46 > buf.length || buf.readUInt32LE(at) !== 0x02014b50) throw new FormatError("This ZIP file is damaged.");
     const method = buf.readUInt16LE(at + 10);
     const csize = buf.readUInt32LE(at + 20), usize = buf.readUInt32LE(at + 24);
@@ -71,18 +117,41 @@ export function unzip(buf: Buffer): ZipEntry[] {
     at += 46 + nlen + xlen + clen;
     if (name.endsWith("/") || /(^|\/)__MACOSX\//.test(name) || /(^|\/)\.DS_Store$/.test(name)) continue;
     total += usize;
-    if (total > ZIP_TOTAL || (csize > 0 && usize / csize > 400)) throw new FormatError("This ZIP unpacks to far more than its size: it is not read (a safety limit).");
+    if (!workbook && (total > ZIP_TOTAL || (csize > 0 && usize / csize > 400))) throw new FormatError("This ZIP unpacks to far more than its size: it is not read (a safety limit).");
     if (local + 30 > buf.length || buf.readUInt32LE(local) !== 0x04034b50) throw new FormatError("This ZIP file is damaged.");
     const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
     const raw = buf.subarray(start, start + csize);
     let data: Buffer;
     if (method === 0) data = Buffer.from(raw);
     else if (method === 8) {
-      try { data = zlib.inflateRawSync(raw, { maxOutputLength: Math.min(ZIP_TOTAL, Math.max(usize, 1) + 1024) }); } catch { throw new FormatError(`"${name}" inside the ZIP could not be unpacked.`); }
+      try { data = budget.run(raw, true, workbook ? INFLATE_MAX : Math.min(ZIP_TOTAL, Math.max(usize, 1) + 1024)); }
+      catch (e) { if (e instanceof FormatError) throw e; throw new FormatError(`"${name}" inside the ZIP could not be unpacked.`); }
     } else throw new FormatError(`"${name}" inside the ZIP uses a packing method the Studio cannot read.`);
     out.push({ name, data });
   }
   return out;
+}
+
+/**
+ * A workbook as SheetJS reads it: every entry inflated by zlib within the file's budget, then packed again unpacked (stored), so SheetJS
+ * never inflates anything itself. Its own inflate ignored the entries' sizes (an 85 KB workbook unpacked 80 MB, p7-studio-egress-19) and
+ * looped for ever on a deflate stream that never ends (redteam-gate-05); zlib stops at the budget and refuses an unended stream.
+ */
+export function storedWorkbook(buf: Buffer, budget: Inflate): Buffer {
+  const parts: Buffer[] = [], central: Buffer[] = [];
+  let off = 0, n = 0;
+  for (const e of unzip(buf, budget, { workbook: true })) {
+    const name = Buffer.from(e.name, "utf8"), crc = zlib.crc32(e.data) >>> 0;
+    const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(0x0800, 6);
+    h.writeUInt32LE(crc, 14); h.writeUInt32LE(e.data.length, 18); h.writeUInt32LE(e.data.length, 22); h.writeUInt16LE(name.length, 26);
+    const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(0x0800, 8);
+    c.writeUInt32LE(crc, 16); c.writeUInt32LE(e.data.length, 20); c.writeUInt32LE(e.data.length, 24); c.writeUInt16LE(name.length, 28); c.writeUInt32LE(off, 42);
+    parts.push(h, name, e.data); central.push(c, name);
+    off += 30 + name.length + e.data.length; n++;
+  }
+  const cd = Buffer.concat(central);
+  const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(n, 8); end.writeUInt16LE(n, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+  return Buffer.concat([...parts, cd, end]);
 }
 
 export const isZip = (b: Buffer) => b.length > 4 && b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04;
@@ -124,8 +193,8 @@ const val = (s: string): Cell => {
 };
 
 /** Word tables (each a grid), largest first. */
-export function docxTables(buf: Buffer): Cell[][][] {
-  const doc = unzip(buf).find((e) => e.name === "word/document.xml");
+export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length)): Cell[][][] {
+  const doc = unzip(buf, budget).find((e) => e.name === "word/document.xml");
   if (!doc) throw new FormatError("This Word file has no document inside it.");
   const xml = doc.data.toString("utf8");
   const grids: Cell[][][] = [];
@@ -218,8 +287,15 @@ export function xmlGrid(xml: string): Cell[][] | null {
 interface Glyph { x: number; y: number; s: string; page: number }
 const PDF_MAX = 40 * 1024 * 1024;
 
-/** The streams of a PDF, inflated where they are Flate-compressed. */
-function pdfStreams(buf: Buffer): { dict: string; data: Buffer }[] {
+/** A stream pdfTables never reads for text: an image or other XObject, a font, metadata. */
+const NOT_TEXT = /\/Subtype|\/Type\s*\/(XObject|Font|Metadata)|\/Length1/;
+
+/**
+ * The streams of a PDF, inflated where they are Flate-compressed and hold text: each to at most 40 MB, all of them within the file's
+ * budget (Inflate). Images, fonts and metadata are listed but not inflated (pdfTables skips them; they had been inflated all the same,
+ * 4 image streams of 20 MB from an 80 KB file: p7-studio-egress-18).
+ */
+function pdfStreams(buf: Buffer, budget: Inflate): { dict: string; data: Buffer }[] {
   const out: { dict: string; data: Buffer }[] = [];
   const src = buf.toString("latin1");
   const re = /<<((?:[^<>]|<<(?:[^<>]|<<[^<>]*>>)*>>)*)>>\s*stream\r?\n/g;
@@ -230,9 +306,13 @@ function pdfStreams(buf: Buffer): { dict: string; data: Buffer }[] {
     let end = lenM ? start + Number(lenM[1]) : src.indexOf("endstream", start);
     if (end < start || end > src.length) end = src.indexOf("endstream", start);
     let data = buf.subarray(start, end);
+    if (NOT_TEXT.test(m[1])) { out.push({ dict: m[1], data: Buffer.alloc(0) }); re.lastIndex = Math.max(re.lastIndex, end); continue; }
     if (/\/FlateDecode/.test(m[1])) {
-      // capped like a ZIP: a compression bomb is not inflated past 40 MB
-      try { data = zlib.inflateSync(data, { maxOutputLength: PDF_MAX }); } catch { try { data = zlib.inflateRawSync(data.subarray(2), { maxOutputLength: PDF_MAX }); } catch { continue; } }
+      // a stream past 40 MB is left out; the file past its budget is refused (Inflate.run throws a FormatError)
+      try { data = budget.run(data, false, PDF_MAX); } catch (e) {
+        if (e instanceof FormatError) throw e;
+        try { data = budget.run(data.subarray(2), true, PDF_MAX); } catch (e2) { if (e2 instanceof FormatError) throw e2; continue; }
+      }
     } else if (/\/Filter/.test(m[1])) { out.push({ dict: m[1], data: Buffer.alloc(0) }); continue; }
     out.push({ dict: m[1], data });
     re.lastIndex = end;
@@ -289,15 +369,15 @@ function glyphs(content: string, page: number): Glyph[] {
 }
 
 /** The tables of a text PDF: lines grouped by height, cells by gaps; pages that repeat the header are joined. */
-export function pdfTables(buf: Buffer): { grids: Cell[][][]; pages: number; scanned: boolean; words: number } {
+export function pdfTables(buf: Buffer, budget: Inflate = new Inflate(buf.length)): { grids: Cell[][][]; pages: number; scanned: boolean; words: number } {
   if (!buf.subarray(0, 1024).toString("latin1").includes("%PDF")) throw new FormatError("This is not a PDF file.");
-  const streams = pdfStreams(buf);
+  const streams = pdfStreams(buf, budget);
   const pages = Math.max(1, (buf.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? []).length);
   const images = streams.filter((s) => /\/Subtype\s*\/Image/.test(s.dict)).length;
   const all: Glyph[] = [];
   let page = 0;
   for (const s of streams) {
-    if (/\/Subtype|\/Type\s*\/(XObject|Font|Metadata)|\/Length1/.test(s.dict) || !s.data.length) continue;
+    if (NOT_TEXT.test(s.dict) || !s.data.length) continue;
     const c = s.data.toString("latin1");
     if (!/\bBT\b/.test(c)) continue;
     all.push(...glyphs(c, page++));

@@ -35,6 +35,9 @@ export interface NewsFilters {
   zone?: number | null;
   /** only stories no department has a record of */
   gapsOnly?: boolean;
+  /** a calendar span the question named (IST, from inclusive, to exclusive): "last month's news" is October's, "yesterday's news" is 5 Nov's, not the rolling
+   * hours back from now (QA pass 7, p7-rules-periods-01); `hours` is then the span's length */
+  range?: { from: string; to: string } | null;
 }
 
 function firstSentences(s: string, max = 2): string {
@@ -104,15 +107,17 @@ export async function docArticles(docIds: string[], n = 3, chars = 1000): Promis
 
 /** Stories for the filters, best first; `storyIds` narrows to given stories (a follow-up on one). */
 export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: string[]): Promise<{ stories: NewsStory[]; candidates: number }> {
+  // a story asked for by id is looked up over the year; a calendar span over its own bounds; else the hours back from now
+  const span = !storyIds?.length && f.range ? f.range : null;
   const docs = await q(
     `SELECT d.doc_id, d.story_id, d.title, d.summary, d.url, d.publisher, d.lang, d.report_type, d.is_incident, d.category_code, d.place_text,
             d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t, TIMESTAMPDIFF(MINUTE, d.published_at, ?) AS age_min
      FROM documents d
-     WHERE d.source_kind = 'news' AND d.is_district = 1 AND d.published_at > (? - INTERVAL ? HOUR) AND d.published_at <= ?
+     WHERE d.source_kind = 'news' AND d.is_district = 1 AND ${span ? "d.published_at >= ? AND d.published_at < ?" : "d.published_at > (? - INTERVAL ? HOUR) AND d.published_at <= ?"}
        AND (d.report_type IS NULL OR d.report_type NOT IN (?)) ${storyIds?.length ? "AND (d.story_id IN (?) OR d.doc_id IN (?))" : ""}
      ORDER BY d.published_at DESC LIMIT 3000`,
     // an article in no story is its own story, keyed "doc:<doc_id>"
-    [now, now, storyIds?.length ? 24 * 365 : f.hours, now, SKIP_TYPES,
+    [now, ...(span ? [span.from, span.to] : [now, storyIds?.length ? 24 * 365 : f.hours, now]), SKIP_TYPES,
       ...(storyIds?.length ? [storyIds, storyIds.map((k) => (k.startsWith("doc:") ? k.slice(4) : k))] : [])]);
   if (!docs.length) return { stories: [], candidates: 0 };
   // the newest 3,000 for a long window, back in time order (a story's first article is its first report)

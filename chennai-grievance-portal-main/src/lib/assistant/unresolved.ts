@@ -9,6 +9,8 @@ import type { Lang } from "@/lib/assistant/lang";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import type { RefNames } from "@/lib/assistant/scope";
 import { unheldPhrase, windowIn, type BadRead } from "@/lib/windowspan";
+import { isEnglishWord } from "@/lib/thunai/english";
+import { readPeriod } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 
 export interface Unresolved { kind: "zone" | "ward" | "place" | "period" | "date" | "year"; asked: string; say: Record<Lang, string> }
@@ -39,6 +41,8 @@ const NOT_PLACES = new Set(["chennai", "madras", "tamil", "nadu", "tamilnadu", "
   "total", "detail", "brief", "short", "full", "both", "all", "any", "each", "every", "this", "that", "these", "those", "order", "priority", "red", "green", "yellow", "orange", "particular",
   ...MONTHS]);
 
+/** a word that names a kind of place, part of a place's name ("Gotham City", "Anna Nagar"): never a reason to drop the name */
+const PLACE_WORD = /^(?:city|town|village|nagar|pettai|puram|kottai|district)$/i;
 const dim = (m: number, y: number) => [31, (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m];
 const monthIndex = (s: string) => MONTHS.findIndex((m) => m.startsWith(s.slice(0, 3).toLowerCase()));
 const clip = (s: string) => s.replace(/\s+/g, " ").trim().slice(0, 40);
@@ -128,14 +132,44 @@ export function unresolvedInput(message: string, w: UnresolvedWorld): Unresolved
     later ? `${y} innum varala (records ${w.now.slice(0, 10)} varaikkum thaan irukku), ennuradhukku edhuvum illa. Last 7, 30 illa 90 naal kelunga.`
       : `Console-la ${days} naal records thaan irukku, ${y} muzhusa illa. Last 7, 30 illa 90 naal, illa oru maasam kelunga.`) };
   }
-  // ---- a place the district does not have: said only when no model reads the question (a model looks the words up in the records' places too)
+  // ---- a month or a day the records cannot hold: still to come ("December 2026", "on 25 December" in November), or older than the records. The shared
+  // reader finds no dates for it, so the default window answered with a straight face (pass4-open-08)
+  const nowWall = Date.parse(`${w.now.replace(" ", "T")}Z`);
+  const reach = nowWall - (days + 1) * 864e5;
+  if (dm) {
+    const day = Number(dm[1] ?? dm[5]), mi = monthIndex(dm[2] ?? dm[4]), given = dm[3] ?? dm[6];
+    if (mi >= 0 && day >= 1 && day <= dim(mi, Number(given ?? nowYear))) {
+      const at = Date.UTC(Number(given ?? nowYear), mi, day), what = `${day} ${MONTHS[mi][0].toUpperCase()}${MONTHS[mi].slice(1)}${given ? ` ${given}` : ""}`;
+      if (at > nowWall) return { kind: "date", asked: what, say: L(`${what} has not come yet (the records run to ${w.now.slice(0, 10)}), so there is nothing to count for it. Ask for a day that has passed, or the last 7, 30 or 90 days.`,
+        `${what} இன்னும் வரவில்லை (பதிவுகள் ${w.now.slice(0, 10)} வரை உள்ளன), எண்ணுவதற்கு எதுவும் இல்லை. கடந்துவிட்ட ஒரு நாளை, அல்லது கடந்த 7, 30, 90 நாட்களைக் கேளுங்கள்.`,
+        `${what} innum varala (records ${w.now.slice(0, 10)} varaikkum thaan), ennuradhukku edhuvum illa. Mudinja oru naal, illa last 7, 30, 90 naal kelunga.`) };
+      if (given && at < reach) return { kind: "date", asked: what, say: L(`${what} is older than the records, which hold about ${days} days, so there is nothing to count for it. Ask for a day in the last ${days} days.`,
+        `${what} பதிவுகளை விடப் பழையது: சுமார் ${days} நாட்களின் பதிவுகள் மட்டுமே உள்ளன. கடந்த ${days} நாட்களில் ஒரு நாளைக் கேளுங்கள்.`,
+        `${what} records-a vida pazhasu: ${days} naal records thaan irukku. Last ${days} naal-la oru naal kelunga.`) };
+    }
+  }
+  const named = readPeriod(message);
+  if (named.kind === "month" && named.year != null) {
+    const start = Date.UTC(named.year, named.month, 1), end = Date.UTC(named.month === 11 ? named.year + 1 : named.year, (named.month + 1) % 12, 1);
+    const what = `${MONTHS[named.month][0].toUpperCase()}${MONTHS[named.month].slice(1)} ${named.year}`;
+    if (start > nowWall) return { kind: "period", asked: what, say: L(`${what} has not started yet (the records run to ${w.now.slice(0, 10)}), so there is nothing to count for it. Ask for a month that has passed, or the last 7, 30 or 90 days.`,
+      `${what} இன்னும் தொடங்கவில்லை (பதிவுகள் ${w.now.slice(0, 10)} வரை உள்ளன), எண்ணுவதற்கு எதுவும் இல்லை. கடந்துவிட்ட ஒரு மாதத்தை, அல்லது கடந்த 7, 30, 90 நாட்களைக் கேளுங்கள்.`,
+      `${what} innum aarambikkala (records ${w.now.slice(0, 10)} varaikkum thaan), ennuradhukku edhuvum illa. Mudinja oru maasam, illa last 7, 30, 90 naal kelunga.`) };
+    if (end <= reach) return { kind: "period", asked: what, say: L(`${what} is older than the records, which hold about ${days} days, so there is nothing to count for it. Ask for a month in the last ${Math.round(days / 30)} months.`,
+      `${what} பதிவுகளை விடப் பழையது: சுமார் ${days} நாட்களின் பதிவுகள் மட்டுமே உள்ளன. கடந்த ${Math.round(days / 30)} மாதங்களில் ஒரு மாதத்தைக் கேளுங்கள்.`,
+      `${what} records-a vida pazhasu: ${days} naal records thaan irukku. Last ${Math.round(days / 30)} maasathula oru maasam kelunga.`) };
+  }
+  // ---- a place the district does not have: said only when no model reads the question (a model looks the words up in the records' places too).
+  // A name is read by what it is, not by its capital letter: a word after in/at/near that is no English word, no word of the district and no time ("in atlantis"), or a capitalised
+  // one; a place word after it ("Gotham City") is part of the name, never a reason to drop it (pass4-open-08: the rule needed a capital, and "City" cleared the name)
   if (w.rulesOnly && !w.placeFound) {
-    const cand = /\b(?:in|at|near|around|within)\s+([A-Z][a-z]{3,}(?:\s+[A-Z][a-z]{3,})?)(?=[\s?.!,]|$)|\b([A-Z][a-z]{3,})\s*-?\s*(?:la|il)\b(?=[\s?.!,]|$)/.exec(message);
+    const cand = /\b(?:in|at|near|around|within)\s+([A-Za-z][a-z]{3,}(?:\s+(?:[A-Z][a-z]{3,}|city|town|nagar|village|pettai|puram|kottai))?)(?=[\s?.!,]|$)|\b([A-Z][a-z]{3,})\s*-?\s*(?:la|il)\b(?=[\s?.!,]|$)/.exec(message);
     const raw = cand?.[1] ?? cand?.[2];
     if (raw) {
       const words = raw.split(/\s+/);
       const first = words[0].toLowerCase();
-      const unknown = !words.some((x) => NOT_PLACES.has(x.toLowerCase()) || w.known(x));
+      const nameLike = /^[A-Z]/.test(words[0]) || !isEnglishWord(first);
+      const unknown = nameLike && !w.known(words[0]) && words.slice(1).every((x) => PLACE_WORD.test(x) || (!NOT_PLACES.has(x.toLowerCase()) && !w.known(x)));
       // "in Tamil Nadu", "in Ward 5": a first word that is a district word is not a place
       if (unknown && !NOT_PLACES.has(first)) return { kind: "place", asked: raw, say: L(`I did not find "${raw}" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district.`,
         `"${raw}" என்ற இடம் சென்னை மாவட்டத்தில் கிடைக்கவில்லை, அதனால் அதற்கு எதையும் எண்ணவில்லை. எழுத்துப்பிழையைப் பாருங்கள், ஒரு மண்டலம் அல்லது வட்டத்தைச் சொல்லுங்கள், அல்லது மாவட்டம் முழுவதையும் கேளுங்கள்.`,

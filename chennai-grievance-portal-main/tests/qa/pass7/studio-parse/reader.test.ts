@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ParseError, parseAll, parseAllAsync, parseFile, parseFileAsync } from "@/lib/studio/parse";
 import { ParseLimitError, readerState, stopReaders } from "@/lib/studio/parse-pool";
 import { budget, MAX_CELLS } from "@/lib/studio/parse-worker";
-import { FEED, PAGE, brokenSheet, csv, pdfBombs, unendedDeflate, workbook } from "./files";
+import { FEED, PAGE, brokenSheet, csv, pdfBombs, scanPdf, slowKml, unendedDeflate, workbook } from "./files";
 
 /** The longest gap between 10 ms ticks of this (the server's) thread while `f` runs. */
 async function loopGap<T>(f: () => Promise<T>): Promise<{ value: T; gap: number; ms: number }> {
@@ -56,14 +56,24 @@ describe("the reader reads ordinary files exactly as before", () => {
 });
 
 describe("redteam-gate-05 and reviewer5-04: a workbook SheetJS never finishes is stopped, and the server goes on", () => {
-  it("an unended deflate stream (00 00 00 FF FF): stopped at the time limit with a clear message, while another file is read and the thread ticks", async () => {
+  it("an unended deflate stream (00 00 00 FF FF): refused at once (zlib inflates a workbook's entries before SheetJS, since p7-studio-egress-19), the thread ticks", async () => {
+    limits({ STUDIO_PARSE_SECONDS: 3 });
+    const r = await loopGap(() => caught(parseAllAsync(unendedDeflate(), "register.xlsx")));
+    console.log("unended deflate:", { ms: r.ms, gap: r.gap, error: (r.value as Error)?.message.slice(0, 80) });
+    expect(r.value).toBeInstanceOf(ParseError);
+    expect(r.value).not.toBeInstanceOf(ParseLimitError);
+    expect((r.value as Error).message).toMatch(/^This Excel file is damaged/);
+    expect(r.ms).toBeLessThan(3000);
+    expect(r.gap).toBeLessThan(500);
+  }, 30_000);
+  it("a file the reader is slow on (a run of unclosed <Placemark>, reviewer5-10): stopped at the time limit with a clear message, while another file is read and the thread ticks", async () => {
     limits({ STUDIO_PARSE_SECONDS: 3 });
     const r = await loopGap(async () => {
-      const hang = caught(parseAllAsync(unendedDeflate(), "register.xlsx"));
+      const hang = caught(parseAllAsync(slowKml(), "map.kml"));
       const other = await parseAllAsync(csv(5, 3), "other.csv");
       return { other, hang: await hang };
     });
-    console.log("unended deflate:", { ms: r.ms, gap: r.gap, other: r.value.other[0].rows.length, error: (r.value.hang as Error)?.message.slice(0, 60) });
+    console.log("slow kml:", { ms: r.ms, gap: r.gap, other: r.value.other[0].rows.length, error: (r.value.hang as Error)?.message.slice(0, 60) });
     expect(r.value.other[0].rows).toHaveLength(5);
     expect(r.value.hang).toBeInstanceOf(ParseLimitError);
     expect((r.value.hang as ParseLimitError).reason).toBe("time");
@@ -84,13 +94,22 @@ describe("redteam-gate-05 and reviewer5-04: a workbook SheetJS never finishes is
 });
 
 describe("the memory limit: only the reader ends, never the server", () => {
-  it("a PDF of deflate bombs (20 streams x 39 MB) is stopped by the reader's own watchdog, outside V8's heap", async () => {
+  it("a PDF of deflate bombs (20 streams x 39 MB): refused by the inflate budget before the memory is spent (p7-studio-egress-18)", async () => {
     limits({ STUDIO_PARSE_RSS_MB: 300, STUDIO_PARSE_SECONDS: 30 });
-    const pdf = pdfBombs(20);
+    const r = await loopGap(() => caught(parseAllAsync(pdfBombs(20), "bombs.pdf")));
+    console.log("pdf bombs:", { ms: r.ms, gap: r.gap, error: (r.value as Error)?.message.slice(0, 70) });
+    expect(r.value).toBeInstanceOf(ParseError);
+    expect(r.value).not.toBeInstanceOf(ParseLimitError);
+    expect((r.value as Error).message).toMatch(/unpacks to far more than its size/);
+    expect(r.gap).toBeLessThan(500);
+  }, 60_000);
+  it("a scan whose page images unpack to 360 MB for OCR (their own, larger budget) is stopped by the reader's own watchdog, outside V8's heap", async () => {
+    limits({ STUDIO_PARSE_RSS_MB: 300, STUDIO_PARSE_SECONDS: 30 });
+    const pdf = scanPdf(10, 36);
     const before = process.memoryUsage.rss();
-    const r = await loopGap(() => caught(parseAllAsync(pdf, "bombs.pdf")));
+    const r = await loopGap(() => caught(parseAllAsync(pdf, "scan.pdf")));
     const grew = Math.round((process.memoryUsage.rss() - before) / 1e6);
-    console.log("pdf bombs:", { ms: r.ms, gap: r.gap, grewMb: grew, error: (r.value as Error)?.message.slice(0, 70) });
+    console.log("scan images:", { kb: Math.round(pdf.length / 1024), ms: r.ms, gap: r.gap, grewMb: grew, error: (r.value as Error)?.message.slice(0, 70) });
     expect(r.value).toBeInstanceOf(ParseLimitError);
     expect((r.value as ParseLimitError).reason).toBe("memory");
     expect((r.value as Error).message).toMatch(/needs more memory to read than the Studio allows/);
@@ -114,7 +133,7 @@ describe("the memory limit: only the reader ends, never the server", () => {
 describe("a reader that crashes, many files at once, a reader that cannot start", () => {
   it("the reader process killed mid-read: the file is said to be stopped, and the next file is read by a new reader", async () => {
     limits({ STUDIO_PARSE_SECONDS: 30 });
-    const hang = caught(parseAllAsync(unendedDeflate(), "register.xlsx"));
+    const hang = caught(parseAllAsync(slowKml(), "map.kml"));
     let pid: number | null = null;
     for (let i = 0; i < 200 && !pid; i++) { await new Promise((r) => setTimeout(r, 25)); pid = readerState().procs.find((p) => p.busy)?.pid ?? null; }
     expect(pid).toBeTruthy();
@@ -133,7 +152,7 @@ describe("a reader that crashes, many files at once, a reader that cannot start"
   it("two hanging files hold both readers: 6 more wait their turn and are read, the rest are told the Studio is busy, at once", async () => {
     limits({ STUDIO_PARSE_SECONDS: 3, STUDIO_PARSE_PROCS: 2, STUDIO_PARSE_QUEUE: 8 });
     const r = await loopGap(async () => {
-      const hangs = [caught(parseAllAsync(unendedDeflate(), "a.xlsx")), caught(parseAllAsync(unendedDeflate(), "b.xlsx"))];
+      const hangs = [caught(parseAllAsync(slowKml(), "a.kml")), caught(parseAllAsync(slowKml(), "b.kml"))];
       const t0 = Date.now();
       const small = Array.from({ length: 10 }, (_, i) => parseAllAsync(csv(i + 1, 2), `f${i}.csv`).then((t) => ({ rows: t[0].rows.length, at: Date.now() - t0 }), (e: Error) => ({ error: e, at: Date.now() - t0 })));
       return { hangs: await Promise.all(hangs), small: await Promise.all(small) };
@@ -151,7 +170,7 @@ describe("a reader that crashes, many files at once, a reader that cannot start"
 
   it("a file that waits longer than the wait limit is told the Studio is busy, not held", async () => {
     limits({ STUDIO_PARSE_SECONDS: 6, STUDIO_PARSE_PROCS: 1, STUDIO_PARSE_WAIT_SECONDS: 1 });
-    const hang = caught(parseAllAsync(unendedDeflate(), "a.xlsx"));
+    const hang = caught(parseAllAsync(slowKml(), "a.kml"));
     const t0 = Date.now();
     const e = await caught(parseAllAsync(csv(2, 2), "late.csv"));
     expect((e as ParseLimitError).reason).toBe("busy");

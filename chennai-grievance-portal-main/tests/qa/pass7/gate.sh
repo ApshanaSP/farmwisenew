@@ -51,6 +51,10 @@ node tests/qa/seed-local-users.mjs --file data/aws-cache/qa/srv/3106/durable.sql
 rm -f data/aws-cache/qa/run/cookies-3106.json
 { QA_ACCESS_OUT=../docs/qa/pass7/evidence/access-matrix-gate.json QA_ACCESS_BODIES=tests/qa/pass6/matrix-bodies.mjs timeout 1500 node tests/qa/pass4/access-matrix.mjs --port 3106 < /dev/null; echo "EXIT=$?"; } > "$EV/matrix-gate.log" 2>&1
 { timeout 1200 node tests/qa/pass6/drive.mjs --port 3106 < /dev/null; echo "EXIT=$?"; } > "$EV/drive-gate.log" 2>&1
+stamp "pass 6's Collector journey j1, Jarvis steps (P6-024: the analyst's answer is not covered by 'Asked District IQ')"
+mkdir -p "$EV/journeys"
+{ JOURNEYS_OUT="$EV/journeys" timeout 900 node tests/qa/pass6/known-failures/journeys/j1.mjs en jarvis < /dev/null; echo "EXIT=$?"; } > "$EV/j1-jarvis-gate.log" 2>&1
+git -C .. status --porcelain -- docs/qa/pass6/evidence/journeys | grep '^??' | cut -c4- | sed 's#/$##' | xargs -r -I{} rm -rf "../{}"
 stamp "pass 4's final red team against this build (its it.fails rows are its open findings)"
 { RT_PORT=3106 timeout 900 npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "✓|×|↓|Tests |Test Files|FAIL"; echo "EXIT=${PIPESTATUS[0]}"; } > "$EV/redteam-final-gate.log" 2>&1
 git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 | sed 's#^chennai-grievance-portal-main/##' | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
