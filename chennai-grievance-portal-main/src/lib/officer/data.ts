@@ -30,6 +30,7 @@ import { orEmpty } from "@/lib/fallback";
 import { pastDueSql } from "@/lib/reference/metrics";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
+import { followupDept } from "@/lib/collector/followupdept";
 
 type Row = Record<string, any>;
 
@@ -544,9 +545,15 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     // instructions the Collector sent about it (Take action on a severe incident)
     // (a batch email about several cases is stored once, under its first case; each case it lists has a follow-up row with its email_id, so
     // that is how the other cases find it: QA pass 6, P6-015)
-    q(`SELECT email_id AS id, subject, body, owner, body_hash, approved_at, ${fmt("created_at")} AS t FROM ${ops("outbound_emails")}
-       WHERE incident_id = ? OR email_id IN (SELECT f.email_id FROM ${ops("followups")} f WHERE f.incident_id = ? AND f.email_id IS NOT NULL)
-       ORDER BY created_at DESC, email_id DESC LIMIT 5`, [id, id]).catch(orEmpty("data:462"))
+    // reviewer4-03: an email addressed to another department (its follow-up for this case names it) is left out, so a case that moved
+    // department does not show the old department's instruction and the other cases it lists (followupdept.ts)
+    q(`SELECT e.email_id AS id, e.subject, e.body, e.owner, e.body_hash, e.approved_at, ${fmt("e.created_at")} AS t,
+              (SELECT f.summary FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = ? ORDER BY f.followup_id LIMIT 1) AS fsum
+       FROM ${ops("outbound_emails")} e
+       WHERE e.incident_id = ? OR e.email_id IN (SELECT f.email_id FROM ${ops("followups")} f WHERE f.incident_id = ? AND f.email_id IS NOT NULL)
+       ORDER BY e.created_at DESC, e.email_id DESC LIMIT 20`, [id, id, id])
+      .then((rows) => rows.filter((e) => { const to = followupDept(e.fsum); return to == null || to === dept.code; }).slice(0, 5))
+      .catch(orEmpty("data:462"))
   ]);
 
   const kindOf = (step: string) => (/resolved|verified/i.test(step) ? "fin" : /reject|lapsed|return|escalat/i.test(step) ? "esc" : "");

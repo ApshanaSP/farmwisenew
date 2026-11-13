@@ -246,4 +246,29 @@ describe("officer console data", () => {
       expect([d?.grievance.stage, d?.next]).toEqual(["action", "close"]);
     });
   });
+
+  describe("reviewer4-03: an instruction to one department never shows in another department's drawer", () => {
+    const ELE = { ...SWM, code: "GCC-ELE", name: "Electrical", short: "ELE" };
+    const mail = (id: number, inc: string, subject: string) =>
+      h.db.prepare(`INSERT INTO outbound_emails (email_id, incident_id, subject, body, owner, created_at) VALUES (?, ?, ?, 'Dear officer, ...', 'c@x', '2026-10-14 10:00:00')`).run(id, inc, subject);
+    const follow = (email: number, inc: string, summary: string) =>
+      h.db.prepare(`INSERT INTO followups (email_id, contact_id, incident_id, summary, due_date, status) VALUES (?, 0, ?, ?, '2026-10-15', 'pending')`).run(email, inc, summary);
+    it("a GCC-SWM batch whose listed cases later moved to GCC-ELE (the first and the second) stays out of GCC-ELE's drawer", async () => {
+      for (const id of ["INC-1", "INC-2", "INC-3"]) incident(id);
+      mail(1, "INC-1", "Action needed: 3 cases from the Collector's map");
+      for (const id of ["INC-1", "INC-2", "INC-3"]) follow(1, id, "Completion report with photos (map send to GCC-SWM)");
+      h.db.prepare(`UPDATE incidents SET lead_dept = 'GCC-ELE' WHERE incident_id IN ('INC-1', 'INC-2')`).run(); // re-categorised (derive.ts)
+      expect((await grievanceDetail(ELE, "INC-1"))?.instructions).toEqual([]);
+      expect((await grievanceDetail(ELE, "INC-2"))?.instructions).toEqual([]);
+      expect((await grievanceDetail(SWM, "INC-3"))?.instructions.map((e) => e.id)).toEqual([1]);
+    });
+    it("a rain-rehearsal job for another department is left out; an instruction about the case itself (Take action) still shows", async () => {
+      incident("INC-9", { lead_dept: "GCC-ELE" });
+      mail(2, "INC-9", "Before the rain: 2 jobs for Solid Waste Management");
+      follow(2, "INC-9", '[RR] {"r":"R1","d":"GCC-SWM","k":"j1","la":13,"lo":80,"w":9} Clear the drain');
+      mail(3, "INC-9", "Urgent: live wire on Test Street");
+      follow(3, "INC-9", "Completion report with photos from Electrical");
+      expect((await grievanceDetail(ELE, "INC-9"))?.instructions.map((e) => e.id)).toEqual([3]);
+    });
+  });
 });

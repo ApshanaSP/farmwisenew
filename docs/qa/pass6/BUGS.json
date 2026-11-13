@@ -1045,11 +1045,13 @@
     "root_cause": "no stage rule for Collector decisions",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "owner",
     "reviewer": null,
     "where": "src/app/api/collector/decisions/route.ts:57 (reopen skips the confirm and every stage check), src/lib/officer/data.ts:79-81,115, src/lib/complaint-progress.ts:77-79",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Decision: may the Collector send back work the department never approved or reported, moving it from New to In action with Returned and telling the citizen it was returned for more work? The Collector deciding at any stage is the owner's (officer-day-03, OWNER_SUMMARY); what such a reopen does to stage and tracker is hunt2-ops-01's option B, listed for the owner (docs/qa/pass7/P0_FIXES.md section 5). The missing confirm is fixed (b4ea9c1, hunt2-ops-01: a reopen is confirmed like every other decision).",
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-05",
@@ -1318,11 +1320,13 @@
     "root_cause": "the cached as-of time is earlier than the filing",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "not-reproduced",
     "reviewer": null,
     "where": "src/lib/collector/intel.ts:83-90 (asOf cached 30 s), src/lib/officer/data.ts:122 (first_reported_at <= now), src/lib/officer/queue-note.ts:5-8",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Fixed by 0eef423d (hunt2-desk-09) on the combined branch: asOf() gives up its 30 s cache when the data epoch moves, and the filing route adds the case at once (addCaseLive, src/app/api/complaints/route.ts:308), which bumps the epoch (lib/manu/cases.ts:196), so the next officer read has a now after the filing; src/lib/collector/asof.fixall.test.ts::a case filed 10 s after 'now' was read is inside the next window passes. The citizen note is ALREADY_THERE (\"already in the department officer's queue\") when the case was added (route.ts:323, reviewerB-04), the hourly sentence only when the add failed.",
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-20",
@@ -1460,15 +1464,16 @@
     "title": "The officer's 'Sent to Collector' tab (17 for GCC-SWM) is mostly non-severe pipeline cases the Collector will never verify (verify is refused for anything not Severe); they wait there under a label that says the Collector has them until the officer happens to press 'Close as done'",
     "found_by": "officer-day",
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1-scope.mjs (aQuarterlyStages)",
-    "failing_test": null,
-    "root_cause": "pipeline status Awaiting verification is mapped to the Collector stage whatever the severity",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::a non-severe case the pipeline marks Awaiting verification is the department's to close (In action), a severe one the Collector's",
+    "root_cause": "the stage overlay mapped pipeline Awaiting verification to sent whatever the severity; the Collector verifies severe only, so non-severe now maps to In action",
+    "fix_commit": "cfd36c28",
+    "revert_check": "fails without (the Medium case in Sent to Collector) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts:89 (status Awaiting verification -> stage sent, any severity), src/app/api/collector/decisions/route.ts:74-76 (verify only for Severe), src/lib/officer/stages.ts:16 (TAB_LABEL sent = Sent to Collector)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "P5-006",
