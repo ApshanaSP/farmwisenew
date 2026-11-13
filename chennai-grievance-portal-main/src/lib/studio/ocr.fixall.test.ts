@@ -41,3 +41,32 @@ describe("reviewer4-04: a stream with no direct /Length keeps its own last byte"
     expect(r.skipped).toBe(1);
   });
 });
+
+// reviewer2-15: only /DeviceRGB and /DeviceGray bitmaps were read, so a scanner's RGB or grey page with an ICC colour space (an indirect
+// reference, or [/ICCBased n 0 R]) was left out; and every 8-bit grey image was taken as a page, a JPEG page's soft mask included.
+describe("reviewer2-15: real scan encodings", () => {
+  const flate = (n: number, W: number, H: number, ch: number, cs: string, extra = "") => {
+    const px = zlib.deflateSync(Buffer.alloc(W * H * ch, 200));
+    return Buffer.concat([B(`${n} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /BitsPerComponent 8 /ColorSpace ${cs}${extra} /Filter /FlateDecode /Length ${px.length} >>\nstream\n`), px, B("\nendstream\nendobj\n")]);
+  };
+  const icc = (n: number, N: number) => B(`${n} 0 obj\n<< /N ${N} /Length 4 >>\nstream\nabcd\nendstream\nendobj\n`);
+  it("an RGB and a grey Flate page with an ICC colour space (indirect, or [/ICCBased n 0 R]) are read", () => {
+    const buf = Buffer.concat([B("%PDF-1.4\n"), icc(7, 3), icc(8, 1), B("9 0 obj\n[/ICCBased 7 0 R]\nendobj\n"), flate(1, 100, 100, 3, "9 0 R"), flate(2, 100, 100, 1, "[/ICCBased 8 0 R]")]);
+    const r = pdfImages(buf);
+    expect({ images: r.images.length, skipped: r.skipped }).toEqual({ images: 2, skipped: 0 });
+    expect(r.images.map((x) => x.subarray(0, 2).toString("latin1"))).toEqual(["P6", "P5"]);
+  });
+  it("a CMYK page behind an ICC colour space is skipped, not read as RGB or grey", () => {
+    const r = pdfImages(Buffer.concat([B("%PDF-1.4\n"), flate(1, 50, 50, 4, "[/ICCBased 7 0 R]")]));
+    expect({ images: r.images.length, skipped: r.skipped }).toEqual({ images: 0, skipped: 1 });
+  });
+  it("a JPEG page with a soft mask (/SMask n 0 R) is one page, wherever the mask is in the file", () => {
+    const page = (n: number, mask: number) => Buffer.concat([B(`${n} 0 obj\n<< /Type /XObject /Subtype /Image /Width 10 /Height 10 /BitsPerComponent 8 /ColorSpace /DeviceRGB /SMask ${mask} 0 R /Filter /DCTDecode /Length ${JPEG.length} >>\nstream\n`), JPEG, B("\nendstream\nendobj\n")]);
+    const before = pdfImages(Buffer.concat([B("%PDF-1.4\n"), flate(12, 10, 10, 1, "/DeviceGray"), page(11, 12)]));
+    const after = pdfImages(Buffer.concat([B("%PDF-1.4\n"), page(11, 12), flate(12, 10, 10, 1, "/DeviceGray"), flate(13, 10, 10, 1, "/DeviceGray", " /Decode [1 0]")]));
+    expect(before.images.length).toBe(1);
+    // the mask is left out, not counted as a page that could not be read; a grey page no image points at is still a page
+    expect(before.skipped).toBe(0);
+    expect(after.images.length).toBe(2);
+  });
+});

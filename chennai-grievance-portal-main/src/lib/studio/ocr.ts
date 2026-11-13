@@ -153,6 +153,10 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
   // "/Subtype /Image" inside the pattern, with a lazy part on each side, tried every occurrence of it in one dictionary as the anchor: time
   // grew with the square of a crafted dictionary (120 KB, 1.6 s; P6-013)
   const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
+  // the objects another image names as its soft mask or mask ("/SMask 12 0 R"): a mask is not a page, wherever it is in the file. Every
+  // 8-bit grey image was taken as one, so a JPEG page with an SMask counted as two (reviewer2-15)
+  const masks = new Set<string>();
+  for (const k of src.matchAll(/\/S?Mask\s+(\d+)\s+(\d+)\s+R/g)) masks.add(`${k[1]} ${k[2]}`);
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
@@ -168,6 +172,8 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     // every path below moves past this stream, so no stream is read from inside another
     re.lastIndex = Math.max(re.lastIndex, end);
     if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    const obj = src.slice(Math.max(0, m.index - 40), m.index).match(/(\d+)\s+(\d+)\s+obj\s*$/);
+    if (obj && masks.has(`${obj[1]} ${obj[2]}`)) continue;
     // with no trusted /Length the data runs to "endstream", end-of-line included. Only a JPEG has it taken off: a JPEG ends FF D9, so a CR
     // or LF after that is never its own. A Flate or unfiltered stream's last byte can be 0x0D or 0x0A, and taking it as the end-of-line
     // broke the page (reviewer4-04); zlib stops at the end of its own stream, and a bitmap is read for W x H bytes, so the extra byte is harmless
@@ -181,16 +187,23 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     }
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
       // an 8-bit bitmap, Flate-packed or stored as it is
-      const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
-      if (!rgb && !grey) { skipped++; continue; }
-      const need = W * H * (rgb ? 3 : 1);
+      // a scanner's ICC colour space ("/ColorSpace 9 0 R" or "[/ICCBased 7 0 R]") names its channels in another object: the page's own size
+      // tells grey (W x H) from RGB (3 W H), and anything else (CMYK) is skipped. Only the two device spaces were read (reviewer2-15)
+      const known = /\/DeviceRGB/.test(dict) ? 3 : /\/DeviceGray/.test(dict) ? 1 : 0;
+      const icc = !known && /\/ColorSpace\s*(\d+\s+\d+\s+R|\[\s*\/ICCBased\b)/.test(dict);
+      if (!known && !icc) { skipped++; continue; }
+      const need = W * H * (known || 3);
       // decided before anything is inflated: a bitmap the caller does not want, or one past the budget, costs nothing
       if (!bitmaps || bitmapBytes + need > maxBitmapBytes) { skipped++; re.lastIndex = Math.max(re.lastIndex, end); continue; }
       bitmapBytes += need;
       try {
-        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
-        if (px.length < need) { skipped++; continue; }
-        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, need)]));
+        const flate = /\/FlateDecode/.test(dict);
+        const px = flate ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+        // an unfiltered stream may still hold its end-of-line (at most 2 bytes); a Flate one is its exact size
+        const fits = (ch: number) => px.length >= W * H * ch && px.length <= W * H * ch + (flate ? 0 : 2);
+        const ch = known ? (px.length >= need ? known : 0) : fits(3) ? 3 : fits(1) ? 1 : 0;
+        if (!ch) { skipped++; continue; }
+        images.push(Buffer.concat([Buffer.from(`${ch === 3 ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, W * H * ch)]));
       } catch { skipped++; }
     } else skipped++;
     re.lastIndex = Math.max(re.lastIndex, end);
