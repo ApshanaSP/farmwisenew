@@ -34,6 +34,7 @@ import { buildFacts, rulesStory } from "@/lib/studio/story";
 import { AUTH_LABEL, ROLE_LABEL, STEPS, fmtNum, type AuthInput, type Outcome, type Brief, type ConnectInfo, type DatasetMeta, type Insight, type RefreshRun, type Relevance, type Filter, type PanelData, type Plan, type Role, type RunEvent, type SourceInfo, type Spec, type StepKey, type StepLog } from "@/lib/studio/types";
 import { fmtDay, normKey } from "@/lib/studio/values";
 import type { AiBusyError } from "@/lib/ai/gateway";
+import { said } from "@/lib/studio/untrusted"; // file text shown in the run log: one line, contact details masked (QA pass 7)
 
 type Emit = (e: RunEvent) => void;
 
@@ -125,7 +126,7 @@ export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   const readLog: StepLog = { step: "read", ms: Date.now() - t0, by: "code", model: null,
     detail: `${rowsCols(table)}${table.sheet ? ` · sheet "${table.sheet}"` : ""}${inp.connect ? ` · ${inp.connect.method === "browser" ? "read in a browser" : "downloaded"}` : ""}` };
   emit({ t: "step", step: "read", state: "done", detail: readLog.detail, by: "code", ms: readLog.ms });
-  if (table.caption) emit({ t: "log", text: `Title above the table kept as context: "${table.caption.slice(0, 120)}"` });
+  if (table.caption) emit({ t: "log", text: `Title above the table kept as context: "${said(table.caption, 120)}"` });
   for (const n of table.notes ?? []) emit({ t: "log", text: n });
   if (table.sheets.length > 1) emit({ t: "log", text: `Workbook has ${table.sheets.length} sheets; read the largest, "${table.sheet}".` });
   if (table.truncated) emit({ t: "log", text: `Only the first ${table.rows.length.toLocaleString("en-IN")} rows were read (${table.truncated.toLocaleString("en-IN")} more in the file).` });
@@ -538,7 +539,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
       return { v: owner(rules), detail: mapping(owner(rules)), by: "rules" };
     }
   });
-  for (const c of spec.columns.filter((x) => x.role !== "ignore").slice(0, 12)) emit({ t: "log", text: `${c.header} → ${ROLE_LABEL[c.role]}${c.unit ? ` (${c.unit})` : ""}` });
+  for (const c of spec.columns.filter((x) => x.role !== "ignore").slice(0, 12)) emit({ t: "log", text: `${said(c.header, 60)} → ${ROLE_LABEL[c.role]}${c.unit ? ` (${c.unit})` : ""}` });
   // a Tamil Nadu table (one row per district): Chennai's rows only
   const fullTable = table;
   let filtered: Relevance["filtered"] = null;
@@ -561,7 +562,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
     return { v: c, detail, by: "code" };
   });
   for (const i of cleaned.detective.issues.filter((x) => x.action !== "info").slice(0, 8))
-    emit({ t: "log", text: `${i.action === "fixed" ? "Fixed" : i.action === "removed" ? "Removed" : "Flagged"}: ${i.label} (${i.count})${i.examples[0] ? ` — e.g. ${i.examples[0]}` : ""}` });
+    emit({ t: "log", text: `${i.action === "fixed" ? "Fixed" : i.action === "removed" ? "Removed" : "Flagged"}: ${i.label} (${i.count})${i.examples[0] ? ` — e.g. ${said(i.examples[0], 60)}` : ""}` });
   const rows = cleaned.rows;
 
   // ---- Geo-locator
@@ -573,7 +574,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
       : `${r.placed.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} rows on the map · ${r.zones} zones${r.wards ? ` · ${r.wards} wards` : ""}`;
     return { v: r, detail, by: "code" };
   });
-  if (cleaned.detective.unplaced.length) emit({ t: "log", text: `Not in the Chennai gazetteer: ${cleaned.detective.unplaced.slice(0, 4).map((u) => u.v).join(", ")}` });
+  if (cleaned.detective.unplaced.length) emit({ t: "log", text: `Not in the Chennai gazetteer: ${cleaned.detective.unplaced.slice(0, 4).map((u) => said(u.v)).join(", ")}` });
   // a periodic return (the same number of rows on every report date): count its cases, not its rows
   spec.weight = periodicWeight(rows, spec);
   // a period table (district x year): totals are read for the latest period

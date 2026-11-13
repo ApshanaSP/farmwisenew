@@ -28,12 +28,18 @@ import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type Ins
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
 import { computeInsights2 } from "@/lib/studio/insights2";
 import { rankInsights } from "@/lib/studio/rank";
+import { oneLine, said, scrub } from "@/lib/studio/untrusted";
 import { detectFamily, familyBoost, type FamilyKey } from "@/lib/studio/family";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-IN");
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 const r1 = (x: number) => Math.round(x * 10) / 10;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Text a person typed into the file (a status, a type, a place, a column name) is written into these sentences, which are shown and go to
+// the AI brief (ai.ts). Every such value found in a sentence (fileValues below, whichever engine wrote it) is shown through said() (untrusted.ts:
+// one line, no quotes, personal details masked, 40 characters), and every sentence is masked whole as well (a value changed on the way, too long,
+// or a number cell). What the AI reads is decided in ai.ts by allowlist (untrusted.ts forModel), not here.
 
 /** A way to split the rows: by zone, or by one of the file's own type columns. */
 interface Dim { id: string; label: string; by: Plan["by"]; byCol: string | null; zone: boolean; of: (r: DRow) => string | number | null; name: (k: string | number) => string }
@@ -73,13 +79,40 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
   // STUDIO_TODAY: a fixed "today" for the tests' goldens (data age, days to a deadline)
   const today = process.env.STUDIO_TODAY || undefined;
   const more = rows.length < 3 ? [] : computeInsights2({ rows, spec, window, names, today });
+  const vals = fileValues(rows, spec);
   const span = window.from && window.to ? (window.from === window.to ? fmtDay(window.to) : `${fmtDay(window.from, false)} – ${fmtDay(window.to)}`) : null;
   const all = [...base.map((x) => ({ ...x, n: x.n ?? rows.length, method: x.method ?? "Counted over the cleaned rows" })), ...more.map((x, i) => ({ ...x, id: `i${base.length + i + 1}` }))]
+    .map((x) => shownSafe(x, vals))
     .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
   const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
   const seen = new Set((prev?.items ?? []).map((x) => `${x.label}|${x.title}`));
   const fam = family ?? detectFamily(spec).key;
   return rankInsights(all, { rows: rows.length, to: window.to, seen, things, today, boost: (l) => familyBoost(fam, l) });
+}
+
+/** The file's own text, longest first: every string cell (up to 5,000 distinct values a column) and every column name, as typed and lower-cased. */
+function fileValues(rows: DRow[], spec: Spec): string[] {
+  const out = new Set<string>();
+  for (const c of spec.columns) for (const v of [c.header, c.label]) if (v) { out.add(String(v)); out.add(String(v).toLowerCase()); }
+  for (const c of spec.columns) {
+    const seen = new Set<string>();
+    for (const r of rows) {
+      const v = r[c.key];
+      if (typeof v === "string" && v.length >= 2 && v.length <= 2000 && !seen.has(v)) { seen.add(v); if (seen.size >= 5000) break; }
+    }
+    for (const v of seen) out.add(v);
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+
+/** An insight as it may be shown: each file value in its sentences through said(), every sentence one line with contact details masked. */
+function shownSafe<T extends Insight>(x: T, vals: string[]): T {
+  const fix = (s: string) => {
+    let t = String(s ?? "");
+    for (const v of vals) if (t.includes(v)) { const shown = said(v); if (shown !== v) t = t.split(v).join(shown); }
+    return scrub(oneLine(t));
+  };
+  return { ...x, text: fix(x.text), title: fix(x.title), metric: { ...x.metric, caption: fix(x.metric.caption) }, bars: x.bars.map((b) => ({ ...b, label: fix(b.label) })) };
 }
 
 function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {
@@ -148,7 +181,7 @@ function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkRe
     const bars = status ? topCounts(open, (r) => (r[status.key] == null ? null : String(r[status.key])), 4).map((b, i) => ({ ...b, hi: i === 0, fmt: n(b.value) })) : [];
     add({ label: "Backlog", tone: rate >= 30 ? "sev" : rate >= 12 ? "high" : "info", score: 52 + Math.min(28, rate),
       title: `${n(open.length)} ${plural} ${ow}`, metric: { value: n(open.length), caption: `${rate}% of ${n(rows.length)} ${ow}` },
-      text: `${n(open.length)} of ${n(rows.length)} ${plural} (${rate}%) ${are}${status && bars[0] ? `; the largest group is "${bars[0].label}" with ${n(bars[0].value)}` : ""}.`,
+      text: `${n(open.length)} of ${n(rows.length)} ${plural} (${rate}%) ${are}${status && bars[0] ? `; the largest group is "${said(bars[0].label)}" with ${n(bars[0].value)}` : ""}.`,
       bars, plan: status ? mk({ id: "ins-open", title: `${cap(plural)} ${ow}, by status`, chart: "hbar", by: "col", byCol: status.key, filters: openF, limit: 10 }) : null });
 
     // the urgent ones among them: a priority / severity value that says "high", or the top fifth of a score
@@ -581,7 +614,7 @@ function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkRe
   const placed = rows.filter((r) => r._z != null).length;
   if (hasPlace && placed < rows.length * 0.8 && rows.length - placed >= 10)
     add({ label: "Data gap", tone: "low", score: 26, title: `${pct(rows.length - placed, rows.length)}% of ${plural} not on the map`, metric: { value: n(rows.length - placed), caption: "rows without a usable place" },
-      text: `${n(rows.length - placed)} of ${n(rows.length)} ${plural} (${pct(rows.length - placed, rows.length)}%) have no place the map could match${det.unplaced[0] ? `, such as "${det.unplaced[0].v}"` : ""}; zone figures leave them out.` });
+      text: `${n(rows.length - placed)} of ${n(rows.length)} ${plural} (${pct(rows.length - placed, rows.length)}%) have no place the map could match${det.unplaced[0] ? `, such as "${said(det.unplaced[0].v)}"` : ""}; zone figures leave them out.` });
   const missingDates = date ? rows.filter((r) => r._d == null).length : 0;
   if (missingDates >= Math.max(10, rows.length * 0.1))
     add({ label: "Data gap", tone: "low", score: 22, title: `${pct(missingDates, rows.length)}% without a date`, metric: { value: n(missingDates), caption: "rows without a readable date" },

@@ -8,7 +8,7 @@
  * "keep out" (RFC 9309, 2.3.1.3).
  */
 import { safeFetch } from "@/lib/netsafe";
-import { UA, UA_TOKEN, allowed, mirrored, politeTurn } from "@/lib/studio/fetchurl";
+import { UA, UA_TOKEN, allowed, mirrored, pinnedFetch, politeTurn } from "@/lib/studio/fetchurl";
 
 interface Group { agents: string[]; rules: { allow: boolean; path: string }[] }
 const cache = new Map<string, { at: number; groups: Group[] | "all" | "none" }>();
@@ -60,10 +60,10 @@ export async function robotsAllow(raw: string): Promise<boolean> {
   if (!c || Date.now() - c.at > 3600_000) {
     let groups: Group[] | "all" | "none" = "all";
     try {
-      // through the same guard as every other read (lib/netsafe.ts): checked hops, polite rate, size cap
+      // through the same guard as every other read (lib/netsafe.ts): checked hops, each connected to the address checked, polite rate, size cap
       const target = mirrored(new URL(`${u.origin}/robots.txt`));
       await politeTurn(target.host);
-      const got = await safeFetch(target, { allow: allowed, timeout: 8000, maxHops: 4, maxBytes: 500_000, headers: { "User-Agent": UA } });
+      const got = await safeFetch(target, { fetchImpl: pinnedFetch as typeof fetch, allow: allowed, timeout: 8000, maxHops: 4, maxBytes: 500_000, headers: { "User-Agent": UA } });
       const r = got.res;
       if (r.status === 401 || r.status === 403) groups = "none";
       else if (r.ok && /text|octet/i.test(r.headers.get("content-type") ?? "text/plain")) groups = parseRobots(got.buf.toString("utf8"));
