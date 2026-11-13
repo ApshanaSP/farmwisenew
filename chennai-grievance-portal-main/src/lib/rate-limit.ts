@@ -43,6 +43,34 @@ export function checkRateLimit(key: string, limit: number, windowSeconds: number
   return { allowed: true };
 }
 
+export interface LimitCheck {
+  key: string;
+  limit: number;
+  windowSeconds: number;
+}
+
+/**
+ * One try against several limits, all or nothing: every limit is looked at first, and the try counts in all of them only when all
+ * allow it. Counting it in each limit still under its own (checkRateLimit on each in turn) let tries one limit refused fill the
+ * others: one account's refused tries filled the address everyone shares (QA fix-all, reviewerE-01). `refusedBy` is the index of
+ * the first limit that refused; the wait is the longest of the limits that refused.
+ */
+export function checkRateLimits(checks: LimitCheck[]): RateLimitResult & { refusedBy?: number } {
+  const now = Date.now();
+  if (buckets.size >= SWEEP_AT) sweep(now);
+  let refusedBy: number | undefined;
+  let wait = 0;
+  checks.forEach((c, i) => {
+    const b = buckets.get(c.key);
+    if (!b || b.resetAt < now || b.count < c.limit) return;
+    refusedBy ??= i;
+    wait = Math.max(wait, Math.ceil((b.resetAt - now) / 1000));
+  });
+  if (refusedBy !== undefined) return { allowed: false, retryAfterSeconds: wait, refusedBy };
+  for (const c of checks) checkRateLimit(c.key, c.limit, c.windowSeconds);
+  return { allowed: true };
+}
+
 /**
  * Counting failures only (wrong second-step codes): `failuresOver` says whether `key` already has `limit` failures in
  * its window, without adding one; `addFailure` adds one; `clearFailures` forgets them after a success.

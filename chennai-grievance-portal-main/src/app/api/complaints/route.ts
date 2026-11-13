@@ -15,7 +15,7 @@ import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 import { oneAtATime } from "@/lib/serial";
 import { addCaseLive, onlineCase, type Routing } from "@/lib/manu/cases";
 import { istNow } from "@/lib/manu/clean";
-import { complaintTry, giveBackComplaintTry } from "@/lib/complaint-limit";
+import { complaintLimitMessage, complaintTry, giveBackComplaintTry } from "@/lib/complaint-limit";
 import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 
 /** Every field of the form at its longest is a few kilobytes, even written as \u escapes. */
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     // filing a classifier call, a dataset append and a case on a department's list); lib/complaint-limit.ts says why these numbers
     const limit = complaintTry(session.userId, req.headers);
     if (!limit.allowed) {
-      return NextResponse.json({ error: "Too many complaints from this account just now. Please try again later." },
+      return NextResponse.json({ error: complaintLimitMessage(limit.by) },
         { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds ?? 3600) } });
     }
     // read with a limit before anything parses it (the form's longest complaint is a few kilobytes)
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     release = await oneAtATime(`complaint:${session.userId}`);
     const same = await sameComplaintJustFiled(session.userId, data.title, data.description, data.wardNumber);
     if (same) {
-      giveBackComplaintTry(session.userId); // the same complaint sent twice files nothing new
+      giveBackComplaintTry(session.userId, req.headers); // the same complaint sent twice files nothing new
       return NextResponse.json({
         message: "This complaint was already registered a moment ago. Use your complaint number to check its status.",
         complaintCode: same.complaint_code, complaintId: same.id, department: same.department_name ?? null, departmentPending: false,
