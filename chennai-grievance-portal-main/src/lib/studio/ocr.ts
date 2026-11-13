@@ -167,11 +167,18 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     if (end < 0) break;
     // every path below moves past this stream, so no stream is read from inside another
     re.lastIndex = Math.max(re.lastIndex, end);
-    if (end !== start + len) { if (src[end - 1] === "\n") end--; if (src[end - 1] === "\r") end--; }
     if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    // with no trusted /Length the data runs to "endstream", end-of-line included. Only a JPEG has it taken off: a JPEG ends FF D9, so a CR
+    // or LF after that is never its own. A Flate or unfiltered stream's last byte can be 0x0D or 0x0A, and taking it as the end-of-line
+    // broke the page (reviewer4-04); zlib stops at the end of its own stream, and a bitmap is read for W x H bytes, so the extra byte is harmless
     const data = buf.subarray(start, Math.max(start, end));
+    if (!data.length) { skipped++; continue; }
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
-    if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));
+    if (/\/DCTDecode/.test(dict)) {
+      let e = data.length;
+      if (end !== start + len) { if (data[e - 1] === 0x0a) e--; if (data[e - 1] === 0x0d) e--; }
+      images.push(Buffer.from(data.subarray(0, e)));
+    }
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
       // an 8-bit bitmap, Flate-packed or stored as it is
       const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
