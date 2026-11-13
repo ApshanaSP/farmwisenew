@@ -1384,7 +1384,13 @@ function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | 
   };
 }
 
-export async function incident(id: string) {
+/**
+ * One incident in full, with its group. `dept`: a department officer's (Ask District IQ under the officer lock): the group is then only that
+ * department's incidents. A group is the same problem in the same area, found by category, place and time, never by department, and a
+ * category is led by several departments (SOLID_WASTE: GCC-SWM, GCC-HLT, GCC-ENG), so another department's reports, articles and complaints
+ * were merged into the officer's own case (fixall-lock-05). The incident itself is checked by the caller (otherDeptsIncident, idsOfDept).
+ */
+export async function incident(id: string, opts: { dept?: string | null } = {}) {
   const [inc] = await q(
     `SELECT ${ROW}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
             i.depts_involved, i.dead, i.injured,
@@ -1398,8 +1404,8 @@ export async function incident(id: string) {
   const group = await q(
     `SELECT i.incident_id AS id, ${TITLE} AS title, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, i.place_text AS loc,
             i.citizen_complaints AS complaints, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
-     FROM incidents i WHERE ${CLUSTER} = ? AND i.incident_id <> ? ORDER BY i.first_reported_at LIMIT 40`,
-    [inc.grp, id]
+     FROM incidents i WHERE ${CLUSTER} = ? AND i.incident_id <> ?${opts.dept ? " AND i.lead_dept = ?" : ""} ORDER BY i.first_reported_at LIMIT 40`,
+    [inc.grp, id, ...(opts.dept ? [opts.dept] : [])]
   );
   const ids = [id, ...group.map((g) => String(g.id))];
 

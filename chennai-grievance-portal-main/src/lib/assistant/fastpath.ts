@@ -571,7 +571,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // a department console opens only its own department's incidents: the planner's path refuses another's in words, and so does
       // the console (404); this path gave the whole card, place and officials included, to any officer who typed the id (QA pass 6, P6-006)
       if (i.lockDept && !(await idsOfDept([id], i.lockDept)).has(id)) return otherDept(i, d.intent);
-      const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus);
+      const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus, i.lockDept);
       if (!x) return null;
       card.responseType = "incident_detail";
       card.incident = x;

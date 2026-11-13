@@ -370,8 +370,9 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
  * One incident in full, for incident_detail and incident_story: its facts, plain-language reasons, the pipeline's own
  * summary line (never complaint text), the linked reports in time order, officials, assignment and decisions.
  */
-async function incidentBody(id: string, now: string): Promise<Body | null> {
-  const [d, flags] = await Promise.all([incident(id), incidentFlags(id)]);
+async function incidentBody(id: string, now: string, lockDept: string | null = null): Promise<Body | null> {
+  // under the officer lock, the incident's group is only the department's (fixall-lock-05)
+  const [d, flags] = await Promise.all([incident(id, { dept: lockDept }), incidentFlags(id)]);
   if (!d) return null;
   const i = d.incident;
   const data = {
@@ -742,10 +743,11 @@ export const TOOLS = [
   tool({
     name: "incident_detail",
     description: "One incident by its ID (INC-...): facts, plain-language reasons, deadline, the linked reports from each source in time order, the officials responsible and the Collector's decisions.",
-    args: z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{3,64}$/) }),
-    async run({ id }) {
+    // lockDept: set by the department lock (pipeline lockTools), never by the model
+    args: z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{3,64}$/), lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null) }),
+    async run({ id, lockDept }) {
       const now = await asOf();
-      return (await incidentBody(id, now)) ?? { scope: null, asOf: now, data: null, facts: [], sources: [fn("intel.incident")], incidentIds: [], testData: false,
+      return (await incidentBody(id, now, lockDept)) ?? { scope: null, asOf: now, data: null, facts: [], sources: [fn("intel.incident")], incidentIds: [], testData: false,
         caveats: [`No incident ${id} in the store.`] };
     }
   }),
@@ -761,7 +763,7 @@ export const TOOLS = [
       const { found, how, confident } = await findIncidents(text, scope, now);
       if (!found.length) return { scope: null, asOf: now, data: { found: false }, facts: [], sources: [fn("embed.semanticSearch")], incidentIds: [], testData: false,
         caveats: ["No incident in the store matches that description."] };
-      const body = await incidentBody(found[0].id, now);
+      const body = await incidentBody(found[0].id, now, lockDept);
       if (!body) return { scope: null, asOf: now, data: { found: false }, facts: [], sources: [fn("intel.incident")], incidentIds: [], testData: false,
         caveats: [`No incident ${found[0].id} in the store.`] };
       // the other close matches are searched over every department: for an officer, only their own department's (reviewerF-06). The

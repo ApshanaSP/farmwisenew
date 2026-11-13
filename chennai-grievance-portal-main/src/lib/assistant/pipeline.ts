@@ -164,7 +164,7 @@ const OWN_DEPT_NOTE = "Answered for your department only: a department console d
  * Tools that read records the department filter does not reach (news linked to incidents, a story's other close matches): they take
  * lockDept and leave another department's records out (reviewerF-06).
  */
-const LOCK_AWARE = new Set(["developing_stories", "search_records", "incident_story"]);
+const LOCK_AWARE = new Set(["developing_stories", "search_records", "incident_story", "incident_detail"]);
 const HOTSPOT_NOTE = "Hotspots are clusters of every department's incidents: shown here as where your department's incidents are.";
 
 /**

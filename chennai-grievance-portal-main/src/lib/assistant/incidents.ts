@@ -327,10 +327,11 @@ export async function categoryRanking(f: IncidentFilters, now: string, n: number
 }
 
 /** One incident in full: what happened, where, when, status, why, who, how it unfolded, and the evidence. */
-export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all"): Promise<IncidentDetail | null> {
+export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all", lockDept: string | null = null): Promise<IncidentDetail | null> {
   const [[r], full, steps, now] = await Promise.all([
     q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
-    incidentFull(id),
+    // a department console's card: the incident's group is only that department's (fixall-lock-05)
+    incidentFull(id, { dept: lockDept }),
     q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210")),
     asOf()
   ]);
