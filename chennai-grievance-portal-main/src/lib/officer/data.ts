@@ -22,7 +22,7 @@ import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
 import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
-import { NEXT_STEP, STAGE_LABEL, TAB_STAGES, type Stage, type Tab } from "./stages";
+import { STAGE_LABEL, TAB_STAGES, nextStep, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
 import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
 import { queueNoteFor } from "./queue-note";
@@ -508,7 +508,8 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
   return {
     now,
     grievance: g,
-    next: NEXT_STEP[g.stage as Stage] ?? null,
+    // the one step left for this case: a non-severe case in action is closed by the department, never sent (officer-day-26)
+    next: nextStep(g.stage, g.sev),
     timeline,
     sources: [
       ...members.map((m) => ({
