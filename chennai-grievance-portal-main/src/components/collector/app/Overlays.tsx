@@ -243,7 +243,7 @@ export function ExportBody({ c }: { c: Console }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Could not build the report.");
       const { buildReport } = await import("./reportPdf");
-      await buildReport(data, { scope: c.zoneName ?? "District-wide", dept: c.deptName, file: `${stem}-report.pdf` });
+      await buildReport(data, reportOpt(c, `${stem}-report.pdf`));
       c.toast("PDF report downloaded.");
     } catch (e: any) {
       c.toast(e.message, "alert");

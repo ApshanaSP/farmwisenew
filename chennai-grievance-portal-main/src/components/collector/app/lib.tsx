@@ -6,6 +6,19 @@ import { CountUp } from "@/components/ui";
 export type Row = Record<string, any>;
 
 /**
+ * The words for the console's scope, every filter it applies: "Teynampet · Storm Water Drains", "Garbage & sanitation · Mylapore taluk", or
+ * "District-wide". The list titles and the PDF's cover read this one rule (console-sync-02: the cover said "District-wide" under a taluk or
+ * category filter).
+ */
+export function scopeWords(f: { zoneName: string | null; deptName: string | null; catLabel: string | null; talukName: string | null }): string {
+  return [f.zoneName, f.deptName, f.catLabel, f.talukName ? `${f.talukName} taluk` : null].filter(Boolean).join(" · ") || "District-wide";
+}
+/** The PDF's options from the console: its scope words, and the department (which picks the department or category charts). */
+export function reportOpt(c: { scopeName: string; deptName: string | null }, file: string): { scope: string; dept: string | null; file: string } {
+  return { scope: c.scopeName, dept: c.deptName, file };
+}
+
+/**
  * A list that shows only the rows that fit its box whole: no inner scrollbar and no half-cut row. Rows past the
  * bottom get data-clip (hidden by CSS); the hook returns how many were hidden, for a "See all" link. Outside the
  * fitted console (phones), every row shows and the page scrolls. `key` re-measures when the rows change.

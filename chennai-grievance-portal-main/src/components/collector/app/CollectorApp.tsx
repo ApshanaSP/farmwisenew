@@ -33,7 +33,7 @@ import { ConflictView } from "./Conflicts";
 import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
-import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, watchBrief, type Row } from "./lib";
+import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, scopeWords, watchBrief, type Row } from "./lib";
 import { esc } from "./SatMap";
 import "./tokens.css";
 import "./collector.css";
@@ -106,6 +106,8 @@ export interface Console {
   periodLabel: string;
   zone: number | null;
   zoneName: string | null;
+  /** every filter in words, "District-wide" with none (lib.tsx scopeWords) */
+  scopeName: string;
   /** category chosen from a chart; filters every panel */
   cat: string | null;
   setCat: (c: string | null) => void;
@@ -525,7 +527,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   const zoneName = zone ? ov.zoneTable.find((z) => z.zone === zone)?.name ?? `Zone ${zone}` : null;
   const deptName = dept ? allDepts.find((d) => d.code === dept)?.name ?? dept : null;
-  const scopeName = [zoneName, deptName, catLabel, taluk ? `${talukName(taluk)} taluk` : null].filter(Boolean).join(" · ") || "District-wide";
+  const scopeName = scopeWords({ zoneName, deptName, catLabel, talukName: talukName(taluk) });
 
   // ------------------------------------------------------------ actions --
   const decide = async (rows: Row[], decision: string, note?: string) => {
@@ -604,7 +606,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   };
 
   const c: Console = {
-    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, cat, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
+    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, scopeName, cat, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
     mapMode, setMapMode, focus,
     locate: (i) => {
       if (i.lat == null) { toast("This incident has no map location.", "alert"); return; }
