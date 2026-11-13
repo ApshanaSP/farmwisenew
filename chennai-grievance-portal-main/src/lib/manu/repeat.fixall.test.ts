@@ -142,3 +142,31 @@ describe("hunt2-desk-03: one person, the other script: 'could not tell', not 'ot
     expect(r.matches[0].cannotTell).toBeUndefined();
   });
 });
+
+// p7-desk-and-accounts-16: the citizen's own online complaint typed in Tamil ('தெரு விளக்கு எரியவில்லை'), then a paper petition on the same
+// thing, whose problem line the reader always gives in English. The two share no word, and the desk said "1 earlier petition on other
+// problems". hunt2-desk-03 (f74a4ca0) covers it: an online complaint of the person's in the other script is "could not be told", and offered
+describe("p7-desk-and-accounts-16: the person's Tamil online complaint against the reader's English line", () => {
+  const me = { mobile: "9000011111", name: "R. Kumar", street: null, ward: 70, dept: "GCC-ELE", problem: "Street light not burning for two weeks", category: "STREETLIGHT_ELECTRICAL" };
+  const online = { mobile: "9000011111", reporterKind: "online" as const, dept: "GCC-ELE", problem: "தெரு விளக்கு எரியவில்லை", category: "STREETLIGHT_ELECTRICAL" };
+  it("pass 7's probe: not 'on other problems'; it could not be told, and the case is offered", () => {
+    const r = judgeRepeats(me, [e(online)]);
+    expect(r.headline).not.toMatch(/on other problems/);
+    expect(r.headline).toBe("This person has written 1 earlier petition. It is written in the other script (Tamil or English), so it could not be told whether it is about the same problem: read it before approving.");
+    expect(r.matches[0]).toMatchObject({ code: "2026-111AAA", samePerson: true, sameProblem: false, cannotTell: true, open: true, incidentId: "INC-W-2026-111AAA" });
+  });
+  it("the same through findRepeats: the online complaint's Tamil title as the store gives it, under the portal's department name", async () => {
+    const pool = (await import("@/lib/db")).default as unknown as { query?: (sql: string, args?: unknown[]) => Promise<unknown> };
+    pool.query = async (sql: string) => {
+      if (/FROM complaints c LEFT JOIN departments/.test(sql)) return [[{ code: "2026-222BBB", filed_at: "2026-10-01 09:00:00", status: "Complaint Filed", problem: "தெரு விளக்கு எரியவில்லை",
+        mobile_number: "9000011111", first_name: "Kumar", street_address: "4, Nehru Street, Perambur", ward_number: 70, dept_name: "Electrical Department" }], []];
+      return [[], []];
+    };
+    try {
+      const { findRepeats } = await import("@/lib/manu/repeat");
+      const r = await findRepeats({ ...me, excludeId: 7 });
+      expect(r.headline).toMatch(/could not be told whether it is about the same problem/);
+      expect(r.matches[0]).toMatchObject({ code: "2026-222BBB", cannotTell: true, incidentId: "INC-W-2026-222BBB" });
+    } finally { delete pool.query; }
+  });
+});
