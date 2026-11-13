@@ -106,6 +106,11 @@ async function pageFor(key: string | null, lang?: string): Promise<Page> {
     }
     await ctx.addCookies(cookies);
     await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+    // Per-tab sessions (lib/tab-session.ts): the page moves this tab to a slot of its own (POST /api/auth/tab clears the unslotted cookie and
+    // writes dcd_session_<portal>__<slot>), then names the slot in the dcd_tab cookie. A snapshot taken between the two holds the slotted
+    // cookie without dcd_tab, so the next page load is unslotted and goes to /login: the pass 7 gate's 90 s wait for ".band .daily" on a busy
+    // machine. Wait for the move to finish, so the snapshot is always a whole sign-in.
+    await page.waitForFunction(() => /(?:^|; )dcd_tab=/.test(document.cookie), null, { timeout: 30_000 });
     logins.set(key, await ctx.storageState());
   }
   return page;
