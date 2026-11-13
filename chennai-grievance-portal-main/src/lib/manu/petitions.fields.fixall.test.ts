@@ -19,6 +19,12 @@ describe("hunt2-desk-02: a name or problem made only of invisible characters is 
     "name of %s", (_k, name) => expect(errorsOf({ name })).toContain("name"));
   it.each([["zero-width spaces", "​".repeat(6)], ["joiners and spaces", "‌ ‍ ⁠ ﻿ ​"], ["four letters and joiners", "abcd​​​"]])(
     "problem of %s", (_k, problem) => expect(errorsOf({ problem })).toContain("problem"));
+  it("hunt2-desk-07: a pincode typed in Tamil or full-width digits is taken, as 0 to 9", () => {
+    expect(fileSchema.parse(fields({ pincode: "௬௦௦௦௧௧" })).pincode).toBe("600011");
+    expect(fileSchema.parse(fields({ pincode: "６０００１１" })).pincode).toBe("600011");
+    expect(errorsOf({ pincode: "௬௦௦௦௧" })).toContain("pincode");
+    expect(fileSchema.parse(fields({ pincode: "" })).pincode).toBe("");
+  });
   it("a real name and problem pass, kept as typed (a joiner inside a Tamil word is part of the word)", () => {
     const r = fileSchema.parse(fields({ name: "R. Kumar", problem: "க்‍ஷ No water" }));
     expect(r.name).toBe("R. Kumar");

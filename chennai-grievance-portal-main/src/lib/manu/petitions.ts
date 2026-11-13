@@ -12,7 +12,7 @@ import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
 import { hasVisibleText } from "@/lib/validators";
 import { addCaseLive, petitionCase } from "./cases";
-import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
+import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, asciiDigits, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
 import { mediaTypeOf, readPhoto, removePhoto } from "./files";
 import { readPetition } from "./read";
@@ -197,7 +197,8 @@ export const fileSchema = z.object({
   door: z.string().trim().max(40),
   street: z.string().trim().max(200),
   area: z.string().trim().max(120),
-  pincode: z.string().trim().regex(/^(\d{6})?$/, "A pincode has 6 digits."),
+  // any script's digits, kept as 0 to 9: \d is ASCII only, so a pincode typed on a Tamil keyboard was refused (hunt2-desk-07)
+  pincode: z.string().trim().transform((v) => asciiDigits(v)).refine((v) => /^(\d{6})?$/.test(v), "A pincode has 6 digits."),
   ward: z.number({ invalid_type_error: "Enter the ward number." }).int().min(1, "Ward numbers run from 1 to 200.").max(200, "Ward numbers run from 1 to 200."),
   date: z.string().trim().max(20),
   subject: z.string().trim().max(300),

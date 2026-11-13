@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MANU_DEPTS, MANU_LIMITS, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
 import type { DeskItem, Detail } from "@/lib/manu/petitions";
 import { MOBILE_RE, aadhaarShaped, tenDigits, typedMobile } from "@/lib/manu/clean";
+import { typedDigits } from "@/lib/typed-digits";
 import { shrinkForUpload } from "./shrink";
 import "./manu.css";
 
@@ -235,9 +236,9 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
         <Field label="Door no." flag={flag("door_no")}><input value={f.door} onChange={(e) => set("door", e.target.value)} /></Field>
         <Field label="Street" flag={flag("street")}><input value={f.street} onChange={(e) => set("street", e.target.value)} /></Field>
         <Field label="Area" flag={flag("area_en")}><input value={f.area} onChange={(e) => set("area", e.target.value)} /></Field>
-        <Field label="Pincode" flag={flag("pincode")} hint={saw("pincode")}><input inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, ""))} /></Field>
+        <Field label="Pincode" flag={flag("pincode")} hint={saw("pincode")}><input inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set("pincode", typedDigits(e.target.value))} /></Field>
         <Field label="Ward" must flag={flag("ward") || !!fromArea} hint={fromArea ? `Not written on the paper. Suggested from ${d.suggestedWard!.area}.` : zone ? `${zone} zone` : null}>
-          <input inputMode="numeric" maxLength={3} value={f.ward} onChange={(e) => set("ward", e.target.value.replace(/\D/g, ""))} />
+          <input inputMode="numeric" maxLength={3} value={f.ward} onChange={(e) => set("ward", typedDigits(e.target.value))} />
         </Field>
         <Field label="Department" must>
           <select value={f.dept} onChange={(e) => set("dept", e.target.value)}>
