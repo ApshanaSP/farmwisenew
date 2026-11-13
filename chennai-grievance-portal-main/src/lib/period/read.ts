@@ -21,6 +21,8 @@
  * "YYYY-MM-DD HH:MM:SS" that asOf() returns), so a frozen clock, the 1st of a month and midnight IST all come out of one place.
  */
 
+import { englishMonths, heldPeriod, unheldPhraseIn, windowIn } from "@/lib/windowspan";
+
 export type PeriodKey = "daily" | "weekly" | "monthly" | "quarterly";
 export type CalUnit = "week" | "month" | "quarter";
 
@@ -143,15 +145,6 @@ const THIS_EN = /\b(this|current|indha|intha|inda) (week|month|quarter|vaaram|ma
 const WEEK_TA = "வார(?:ம்|த்|ங்|ாந்|ந்|(?![\\u0B80-\\u0BFF]))";
 const MONTH_TA_W = "(?:மாத(?:ம்|த்|ங்|ாந்|(?![\\u0B80-\\u0BFF]))|மாச(?:ம்|த்|(?![\\u0B80-\\u0BFF])))";
 const THIS_TA = new RegExp(`(?:இந்த|தற்போதைய) ?(${WEEK_TA}|${MONTH_TA_W}|காலாண்டு)`);
-// a count of time: English, Tanglish ("pona 2 vaaram", "pona moonu maasam", "pona 30 naal la") and Tamil. The Tanglish lead word and units were missing, so
-// "pona 2 vaaram" was read as this week and "pona 3 maasam" as the month (QA pass 7 merge with pass 4's eec8c840: its windowspan.pass4 test, SKG1-31)
-const SPAN_LEAD = String.raw`(?:last|past|previous|kadandha|kadantha|kadanda|kadaisi|pona|poona|ponna|the last|the past)`;
-const SPAN_UNIT = String.raw`(hours?|hrs?|h\b|days?|weeks?|months?|naatkal|naal(?:-la)?|mani neram|vaarangal|vaaram|varam|maasangal|maasam|masam|maatham|maadham)`;
-const SPAN_N = new RegExp(String.raw`\b${SPAN_LEAD}\s+(\d{1,3})\s*${SPAN_UNIT}`, "i");
-const SPAN_N_TA = /(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்க|நாள்|வாரங்க|வார|மாதங்க|மாத)/;
-const N_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, ten: 10, fourteen: 14, fifteen: 15, twenty: 20, thirty: 30, sixty: 60, ninety: 90,
-  oru: 1, onnu: 1, rendu: 2, irandu: 2, moonu: 3, naalu: 4, anju: 5, aaru: 6, ezhu: 7, ettu: 8, pathu: 10 };
-const SPAN_W = new RegExp(String.raw`\b${SPAN_LEAD}\s+(${Object.keys(N_WORDS).join("|")})\s+${SPAN_UNIT}(?![a-z])`, "i");
 const DAILY = /\b(24 ?(?:hrs?|hours?|h)|past day|daily)\b|தினசரி|24 மணி/i;
 /** "7 days", "30 days" said bare: the console's own windows */
 const BARE_DAYS = /\b(7|seven) days\b|\b(30|thirty) days\b/i;
@@ -171,7 +164,7 @@ export function readPeriod(text: string): PeriodSpec {
   const cmp = compareIn(t);
   if (cmp) return { kind: "compare", key: cmp };
   // 2. a time the records cannot answer, before any window word inside it ("a month ago" holds "month")
-  if (AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(t)) return { kind: "unheld" };
+  if (AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(t) || unheldPhraseIn(t)) return { kind: "unheld" };
   // 3. the last week of a month
   const lwo = LAST_WEEK_OF.exec(t);
   if (lwo) return { kind: "lastWeekOf", month: MONTHS.indexOf(lwo[1].slice(0, 3)), year: lwo[2] ? Number(lwo[2]) : null };
@@ -193,7 +186,7 @@ export function readPeriod(text: string): PeriodSpec {
     if (mi >= 0 && d >= 1 && d <= 31) return { kind: "since", month: mi, day: d };
   }
   if (/\b(since|from|after)\b|இலிருந்து|முதல்/.test(t)) { const h = HOLIDAYS.find(([re]) => re.test(t)); if (h) return { kind: "holiday", name: h[1], dates: h[2] }; }
-  const mm = monthIn(t);
+  const mm = monthIn(englishMonths(t));
   if (mm) return { kind: "month", month: mm.month, year: mm.year };
   // 8. today, and this week or month (also "till now": up to now is a qualifier of them, not the current state)
   if (TODAY.test(t)) return { kind: "day", back: 0 };
@@ -231,25 +224,26 @@ function monthIn(t: string): { month: number; year: number | null } | null {
     const word = m[1] === "may" ? /\b(during|since|from|until|till|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before) || (/\bin\s+$/.test(before) && /^\s*(?:[?.!]|$)/.test(after))
       : /\b(in|during|for|of|since|from|until|till|by|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before);
     const context = !!m[2] || word
-      || /^\s*\d{1,2}(?:st|nd|rd|th)?\b/.test(after) || /\b\d{1,2}(?:st|nd|rd|th)?\s+$/.test(before) || /^\s*(?:month|maasam|la|le|il)\b/.test(after);
+      || /^\s*\d{1,2}(?:st|nd|rd|th)?\b/.test(after) || /\b\d{1,2}(?:st|nd|rd|th)?\s+$/.test(before) || /^\s*(?:month|maasam|la|le|il)\b/.test(after) || /^\s*மாத/.test(after);
     if (plain || context) return { month: MONTHS.indexOf(m[1].slice(0, 3)), year: m[2] ? Number(m[2]) : null };
   }
   return null;
 }
 const keyOfHours = (h: number): PeriodKey => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
 
+/**
+ * A stretch said as a count of time ("last 10 days", "last 7d", "கடந்த 10 நாட்களில்", "கடந்த இரண்டு வாரம்", "pona rendu vaaram"), read by pass 4's one reader of counts
+ * (lib/windowspan.ts windowIn, property-tested over count x unit x language x case ending). This reader once had its own count regexes and missed the Tamil endings, the
+ * number words and the short forms, so those fell to the 90-day default (QA pass 7 combined branch: SKG1-20, -22, -31). A count that cannot be applied (0, a fraction,
+ * more than the records hold, an unread number word) is no window at all: unheld, and the lanes say so (assistant/unresolved.ts names it).
+ */
 function spanIn(t: string): PeriodSpec | null {
-  const m = SPAN_N.exec(t) ?? SPAN_N_TA.exec(t);
-  const w = m ? null : SPAN_W.exec(t);
-  const n = m ? Number(m[1]) : w ? N_WORDS[w[1].toLowerCase()] : NaN;
-  const u = (m?.[2] ?? w?.[2] ?? "").toLowerCase();
-  if (!Number.isFinite(n) || !u) return null;
-  const unit = /^(h|மணி|mani)/.test(u) ? "hour" : /^(w|வார|vaar|var)/.test(u) ? "week" : /^(mo|மாத|maas|maat|maad|mas)/.test(u) ? "month" : "day";
-  const per = unit === "hour" ? 1 : unit === "week" ? 168 : unit === "month" ? 720 : 24;
-  if (!n) return { kind: "hours", hours: 0, n: 0, unit };
-  const hours = Math.min(n * per, MAX_HOURS);
-  const key = ({ 24: "daily", 168: "weekly", 720: "monthly", 2160: "quarterly" } as Record<number, PeriodKey>)[hours];
-  return key ? { kind: "window", key } : { kind: "hours", hours, n, unit };
+  const w = windowIn(t);
+  if (!w) return null;
+  if (w.kind === "bad") return { kind: "unheld" };
+  const key = heldPeriod(w.hours);
+  if (key) return { kind: "window", key };
+  return { kind: "hours", hours: w.hours, n: w.n, unit: w.unit === "year" ? "month" : w.unit };
 }
 
 /** The window a comparison sets against the one before it, or null when the question compares no periods. */
@@ -495,8 +489,10 @@ export function keyOf(s: PeriodSpec): PeriodKey | null {
 export function periodWordsOut(text: string): string {
   let t = ` ${text} `;
   // the longest phrases first: a comparison holds a month word ("மாதத்தை விட"), and a month word taken out first would leave the rest of it behind
-  for (const re of [REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, SPAN_N, SPAN_N_TA, SPAN_W, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
+  for (const re of [REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
     t = t.replace(new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`), " ");
+  const w = windowIn(t);
+  if (w) t = t.replace(w.said, " ");
   return t.replace(/\s+/g, " ");
 }
 

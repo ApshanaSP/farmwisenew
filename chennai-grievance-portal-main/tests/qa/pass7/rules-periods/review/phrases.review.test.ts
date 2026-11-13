@@ -72,8 +72,8 @@ describe("BREAK: 'last month's' in Tamil/Tanglish genitive is not the calendar m
 });
 
 describe("p7-rules-periods-03 (open, it.fails until fixed): BREAK: Tamil month names and Tamil 'since' are not read", () => {
-  it.fails("BREAK: செப்டம்பர் மாதம் (September) is September, not the last 30 days", () => expect(r("செப்டம்பர் மாதம் புகார்கள்")).toEqual(r("complaints in September")));
-  it.fails("BREAK: செப்டம்பரில் (in September)", () => expect(r("செப்டம்பரில் எத்தனை புகார்கள்")).toEqual(r("complaints in September")));
+  it("fixed (Tamil month names, via windowspan.ts englishMonths): செப்டம்பர் மாதம் (September) is September, not the last 30 days", () => expect(r("செப்டம்பர் மாதம் புகார்கள்")).toEqual(r("complaints in September")));
+  it("fixed: செப்டம்பரில் (in September)", () => expect(r("செப்டம்பரில் எத்தனை புகார்கள்")).toEqual(r("complaints in September")));
   it.fails("BREAK: தீபாவளியிலிருந்து (since Deepavali)", () => expect(r("தீபாவளியிலிருந்து எத்தனை புகார்கள்")).toEqual(r("since Diwali how many complaints")));
   it.fails("BREAK: அக்டோபர் 1 முதல் (since 1 October)", () => expect(r("அக்டோபர் 1 முதல் புகார்கள்")).toEqual(r("since 1 October complaints")));
   it.fails("BREAK: Tanglish 'October 1 la irundhu' (since 1 October) is read as all of October", () => expect(r("October 1 la irundhu complaints")).toEqual(r("since 1 October complaints")));

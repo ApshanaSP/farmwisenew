@@ -97,12 +97,16 @@ describe("g-review 3: a status or a window that is read is applied, or the sente
       expect(o.steps.filter((s) => s.a === "period" || s.a === "view"), `${p}: ${JSON.stringify(o.steps)} said ${o.said}`).toEqual([]);
     }
   });
-  it("a count of days the console does not hold ('last 3 days', 'last 14 days') is not answered as today", async () => {
-    for (const p of ["severe cases in the last 3 days", "severe cases in the last 14 days", "overdue cases in the last 2 days"]) {
+  // QA pass 7: the shared period reader counts a stretch no console window holds over its own hours (lib/period/read.ts, Jarvis's span screens), so "the last 3 days" is
+  // answered for the last 3 days instead of being handed on; what g-review 3 guards stays: it is never answered as today, or as another window
+  it("a count of days the console does not hold ('last 3 days', 'last 14 days') is not answered as today: it is counted over its own hours", async () => {
+    for (const [p, words, hours] of [["severe cases in the last 3 days", "last 3 days", 72], ["severe cases in the last 14 days", "last 14 days", 336], ["overdue cases in the last 2 days", "last 2 days", 48]] as const) {
       const { outs } = await talk(p);
       const o = outs[0];
-      expect(o.kind, `${p}: ${o.said}`).not.toBe("do");
       expect(o.said, p).not.toMatch(/\btoday\b/i);
+      if (o.kind !== "do") continue;
+      expect(o.said, p).toContain(words);
+      expect((o.stage?.slots as { span?: { kind: string; hours?: number } } | undefined)?.span, p).toMatchObject({ kind: "hours", hours });
     }
   });
   it("a window the console holds still sets it, with the status kept in the slots", async () => {
