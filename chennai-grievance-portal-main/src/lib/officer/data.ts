@@ -478,9 +478,11 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
   else if (f.flag) where.push(flagSql(now)[f.flag]);
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
-    // or a complaint number filed into it (events.source_record_id): a complaint that joined an existing case is not in its id (pass4-open-07)
+    // or a complaint number filed into it (events.source_record_id): a complaint that joined an existing case is not in its id (pass4-open-07);
+    // a complaint's only (online and Manu petitions alike are source 'grievance'), never another event's machine id the officer never sees:
+    // a news article's doc id matched any 2-character hex run (reviewerD-03), as intel.ts search and complaint-progress.ts read it
     where.push(`(w.title LIKE ? OR w.place_text LIKE ? OR w.incident_id LIKE ? OR w.category_label LIKE ? OR w.zone_name LIKE ?
-      OR EXISTS (SELECT 1 FROM events e WHERE e.incident_id = w.incident_id AND e.source_record_id LIKE ?))`);
+      OR EXISTS (SELECT 1 FROM events e WHERE e.incident_id = w.incident_id AND e.source = 'grievance' AND e.source_record_id LIKE ?))`);
     params.push(like, like, like, like, like, like);
   }
   const order = f.tab === "new" || f.tab === "action" ? `${SEV_ORDER}, w.citizen_complaints DESC, w.first_reported_at DESC, w.incident_id`
