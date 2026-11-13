@@ -42,11 +42,16 @@ done
 { echo "== src guards"; timeout 300 npx vitest run --config vitest.p7.config.ts src/lib/thunai/numbergate.pass4.test.ts src/app/pass5.seam.test.ts src/lib/manu/sms.pass5.test.ts src/gate-class-guards.pass4.test.ts < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E "Tests |Test Files|FAIL|×"; echo "EXIT=${PIPESTATUS[0]}"; } >> "$EV/guards-gate.log"
 
 stamp "production build"
-{ NEXT_DIST_DIR=.next-p7 NEXT_TELEMETRY_DISABLED=1 timeout 1200 npx next build; echo "EXIT=$?"; } > "$EV/build-gate.log" 2>&1
+{ NEXT_DIST_DIR=.next-qa NEXT_TELEMETRY_DISABLED=1 timeout 1200 npx next build; echo "EXIT=$?"; } > "$EV/build-gate.log" 2>&1
 git checkout -- tsconfig.json next-env.d.ts 2>/dev/null
 
+# pass 4 tests that start their own server build from .next-qa by default (tests/qa/pass4/server.mjs), so the build above is theirs too
+stamp "pass 4 whole real-path suite (P5-034), alone, one file at a time, on the pinned snapshot"
+{ timeout 5400 npx vitest run --config vitest.qa4.config.ts --maxWorkers=1 --reporter=dot --reporter=json --outputFile.json="$EV/pass4-suite-gate.json" < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g'; echo "EXIT=${PIPESTATUS[0]}"; } > "$EV/pass4-suite-gate.log" 2>&1
+node tests/qa/pass4/server.mjs stop-all >/dev/null 2>&1   # only the servers whose pid files are in this worktree
+git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
 stamp "server 3106 on the build, access matrix with valid bodies, browser drive"
-node tests/qa/pass4/server.mjs start --port 3106 --dist .next-p7 | tail -1
+node tests/qa/pass4/server.mjs start --port 3106 --dist .next-qa | tail -1
 node tests/qa/seed-local-users.mjs --file data/aws-cache/qa/srv/3106/durable.sqlite | tail -1
 rm -f data/aws-cache/qa/run/cookies-3106.json
 { QA_ACCESS_OUT=../docs/qa/pass7/evidence/access-matrix-gate.json QA_ACCESS_BODIES=tests/qa/pass6/matrix-bodies.mjs timeout 1500 node tests/qa/pass4/access-matrix.mjs --port 3106 < /dev/null; echo "EXIT=$?"; } > "$EV/matrix-gate.log" 2>&1
