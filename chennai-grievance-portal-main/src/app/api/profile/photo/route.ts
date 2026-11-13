@@ -4,6 +4,7 @@ import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
 import { sniff } from "@/lib/officer/photos";
 import { removePhoto, savePhoto } from "@/lib/profile-photo";
+import { readFormCapped, tooLargeResponse } from "@/lib/body-cap";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -14,8 +15,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const formData = await req.formData().catch(() => null); // not multipart: a 400, not a 500
-  if (!formData) return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
+  // read with a byte limit before it is parsed: req.formData() read a body of any size into memory first, and the 2 MB check came after,
+  // so a body with no Content-Length was pulled whole (pass 6's reviewerA-02). The limit is the largest valid upload plus the form's framing.
+  const { form: formData, tooLarge } = await readFormCapped(req, MAX_SIZE_BYTES + 64 * 1024);
+  if (tooLarge) return tooLargeResponse();
+  if (!formData) return NextResponse.json({ error: "No file uploaded." }, { status: 400 }); // not multipart: a 400, not a 500
   const file = formData.get("photo") as File | null;
 
   if (!file) {

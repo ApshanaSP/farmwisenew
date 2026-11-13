@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MANU_LIMITS } from "@/lib/manu/constants";
+import { readFormCapped } from "@/lib/body-cap";
 import { UploadError, savePages } from "@/lib/manu/files";
 import { manuFailed, manuStaff } from "@/lib/manu/guard";
 import { createPetition, deskList } from "@/lib/manu/petitions";
@@ -19,9 +20,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const s = await manuStaff();
   if (s instanceof NextResponse) return s;
-  if (Number(req.headers.get("content-length")) > MANU_LIMITS.maxRequestBytes) return NextResponse.json({ error: "Those files are too large to send at once." }, { status: 413 });
+  // the limit holds for the bytes read, not only for a declared Content-Length: a chunked body with none was read whole by req.formData()
+  // before anything checked it (pass 6's reviewerA-02)
+  const tooLarge = () => NextResponse.json({ error: "Those files are too large to send at once." }, { status: 413 });
+  if (Number(req.headers.get("content-length")) > MANU_LIMITS.maxRequestBytes) return tooLarge();
   try {
-    const form = await req.formData();
+    const capped = await readFormCapped(req, MANU_LIMITS.maxRequestBytes);
+    if (capped.tooLarge) return tooLarge();
+    const form = capped.form;
+    if (!form) return NextResponse.json({ error: "Choose at least one photo of the petition." }, { status: 400 });
     const files = form.getAll("pages").filter((f): f is File => typeof f !== "string");
     if (!files.length) return NextResponse.json({ error: "Choose at least one photo of the petition." }, { status: 400 });
     const pages = await savePages(await Promise.all(files.map(async (f) => Buffer.from(await f.arrayBuffer()))));
