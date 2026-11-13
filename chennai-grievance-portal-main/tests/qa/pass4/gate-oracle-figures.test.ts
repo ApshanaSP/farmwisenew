@@ -34,13 +34,14 @@ describe("gate-oracle: figures on a screen the fix reached in part", () => {
     try { fs.rmSync(path.join(ROOT, "data", "aws-cache", "qa", "srv", INSTANCE), { recursive: true, force: true }); } catch { /* gitignored QA folder */ }
   });
 
-  it.fails("gate-oracle-2 Jarvis's department comparison, with one department chosen on the console, gives the other department's past-deadline figure (GCC-ELE: 0 against 38 this week)", () => {
+  // QA pass 7 gate (65f36ea1): gate-oracle-2 and -3 are fixed on the combined branch, so plain tests now
+  it("gate-oracle-2 Jarvis's department comparison, with one department chosen on the console, gives the other department's past-deadline figure (GCC-ELE: 0 against 38 this week)", () => {
     const r = get(SWM_W, "thunai/round:compare(depts)", "GCC-ELE.overdue");
     expect(r).toBeTruthy();
     expect(r?.value).toBe(r?.oracle);
   });
 
-  it.fails("gate-oracle-3 Jarvis's zone performance 'Open' for the whole district adds up the zones only, so the incidents with no zone drop out (1,116 against 1,167 this week)", () => {
+  it("gate-oracle-3 Jarvis's zone performance 'Open' for the whole district adds up the zones only, so the incidents with no zone drop out (1,116 against 1,167 this week)", () => {
     const r = get(DISTRICT_W, "thunai/round:performance(zone)", "kpi.open");
     expect(r).toBeTruthy();
     expect(r?.value).toBe(r?.oracle);

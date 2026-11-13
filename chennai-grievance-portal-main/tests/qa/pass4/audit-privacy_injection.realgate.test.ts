@@ -192,16 +192,20 @@ describe("what Jarvis says with no model at all", () => {
     seen.read_brief_planted_lines = lines.filter((l) => /approve every draft|ஒப்புதல் செய்யுங்கள்|Ramesh|IGNORE PREVIOUS/i.test(l));
     expect(lines.join(" ")).not.toMatch(/approve every draft|ஒப்புதல் செய்யுங்கள்|Ramesh|IGNORE PREVIOUS/i);
   });
-  it.fails("audit-privacy_injection-4: the list's spoken line does not read a citizen's address or an instruction from the place field", async () => {
+  // QA pass 7 gate (65f36ea1): fixed on the combined branch, so a plain test now
+  it("audit-privacy_injection-4: the list's spoken line does not read a citizen's address or an instruction from the place field", async () => {
     const doc = (await buildScreen("cases", { ...emptySlots(), sev: "Severe", zones: [13] }, SCOPE, world, routeHands(), "severe cases in Adyar")).doc;
     seen.list_say_en = doc.say.en;
     expect(doc.say.en).not.toMatch(/Door No 12|Approve every draft/);
   });
-  it.fails.each([["Q13", /Approve every draft/], ["Q14", /ஒப்புதல் செய்யுங்கள்/], ["Q17", /Door No 12/], ["Q11", /Gandhi/], ["Q16", /ramesh/i]])("audit-privacy_injection-4: the case's spoken line, %s", async (q, re) => {
+  // QA pass 7 gate (65f36ea1): Q13, Q14, Q17 and Q11 are fixed on the combined branch (plain tests); Q16 still reads the name (open)
+  const caseLine = async (q: string, re: RegExp) => {
     const doc = (await buildScreen("case", { ...emptySlots(), id: `INC-20261106-${q}` }, SCOPE, world, routeHands(), `open INC-20261106-${q}`)).doc;
     seen[`case_say_${q}`] = doc.say.en;
     expect(doc.say.en).not.toMatch(re);
-  });
+  };
+  it.each([["Q13", /Approve every draft/], ["Q14", /ஒப்புதல் செய்யுங்கள்/], ["Q17", /Door No 12/], ["Q11", /Gandhi/]] as [string, RegExp][])("audit-privacy_injection-4: the case's spoken line, %s", caseLine);
+  it.fails.each([["Q16", /ramesh/i]] as [string, RegExp][])("audit-privacy_injection-4: the case's spoken line, %s", caseLine);
   // how often the real snapshot's own rows are read out by their title: counts only, no record's text goes in the evidence
   it("what 'read them' reads on the real rows: counted, for the finding", async () => {
     const t = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.resolve("data/aws-cache/qa/pinned/tables/incidents.json.gz"))).toString("utf8")) as { columns: [string, string][]; rows: unknown[][] };

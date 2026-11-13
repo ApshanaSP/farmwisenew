@@ -182,8 +182,10 @@ describe("final red team: open findings", () => {
     const bodies = await Promise.all(rs.map((r) => r.text()));
     // a request inside the cooldown answers with cooldownRemaining; one without it made a code and sent an email. QA pass 7 merge: the route now
     // also limits each account's tries first (pass 6's hunt2-sec-02, lib/profile-mobile.ts mobileTry), so some of the burst may be a 429
-    expect(rs.every((r) => r.status === 200 || r.status === 429)).toBe(true);
-    expect(rs.filter((r, i) => r.status === 200 && !/cooldownRemaining/.test(bodies[i])).length).toBeLessThanOrEqual(1);
+    // and with e-mail off (as on this test server) the request that made the code answers 503 "could not be e-mailed" (pass 6's hunt2-sec-05,
+    // aa84ef5f), not "we have e-mailed you a code": that 503 is the burst's one code
+    expect(rs.every((r) => r.status === 200 || r.status === 429 || r.status === 503)).toBe(true);
+    expect(rs.filter((r, i) => (r.status === 200 && !/cooldownRemaining/.test(bodies[i])) || r.status === 503).length).toBeLessThanOrEqual(1);
   });
 
   it("redteam-final-5: exporting a Data Studio dataset asks Confirm it's you, like every other export", async () => {
