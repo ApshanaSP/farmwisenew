@@ -49,6 +49,12 @@ git checkout -- tsconfig.json next-env.d.ts 2>/dev/null
 stamp "pass 4 whole real-path suite (P5-034), alone, one file at a time, on the pinned snapshot"
 { timeout 5400 npx vitest run --config vitest.qa4.config.ts --maxWorkers=1 --reporter=dot --reporter=json --outputFile.json="$EV/pass4-suite-gate.json" < /dev/null 2>&1 | sed 's/\x1b\[[0-9;]*m//g'; echo "EXIT=${PIPESTATUS[0]}"; } > "$EV/pass4-suite-gate.log" 2>&1
 node tests/qa/pass4/server.mjs stop-all >/dev/null 2>&1   # only the servers whose pid files are in this worktree
+
+# the golden master on this build, compared with pass 6's last green recording p6-gate (copied read-only from pass 6's worktree into the
+# gitignored data/aws-cache/qa/golden/); p6-base vs p6-base2 is the noise floor. Every change must be explained by a fix, by group.
+stamp "golden master p7-gate (serial) and its diffs against p6-gate and the noise floor"
+{ timeout 2400 node tests/qa/pass4/golden.mjs --label p7-gate --port 3107 --dist .next-qa --serial < /dev/null; echo "EXIT=$?"; node tests/qa/pass4/golden-diff.mjs p6-gate p7-gate > /dev/null; echo "DIFF_EXIT=$?"; node tests/qa/pass4/golden-diff.mjs p6-base p6-base2 > /dev/null; echo "NOISE_EXIT=$?"; } > "$EV/golden-gate.log" 2>&1
+node tests/qa/pass4/server.mjs stop-all >/dev/null 2>&1
 git diff --name-only -- ../docs/qa/pass4 ../docs/qa/pass6 | xargs -r -I{} git -C .. checkout -- {} 2>/dev/null
 stamp "server 3106 on the build, access matrix with valid bodies, browser drive"
 node tests/qa/pass4/server.mjs start --port 3106 --dist .next-qa | tail -1
