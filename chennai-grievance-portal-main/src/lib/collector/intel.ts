@@ -1657,8 +1657,14 @@ export async function attentionRows(w: { sql: string; params: unknown[] }): Prom
   return { need: open.map((r) => ({ ...r, why: explain(r) })).filter((r) => r.why.needsYou), ongoing: open.length };
 }
 
-export async function exportRows(period: Period, zone: number | null, dept: string | null, focus: Focus = {}) {
-  const now = await asOf();
+/**
+ * The Collector's action list for a scope, the ONE source of the CSV's two sections and the PDF's "need your attention": the open incidents
+ * the attention rules pick (attentionRows), and closed work waiting for the check (My Tasks' rule, one per group). An incident is in one
+ * section only: closed work the department sent for checking (any member of its group) is listed as such, not also as needing attention.
+ * The PDF counted every incident the rules pick and said all were in the CSV, which left those out (console-sync-14).
+ * `allNeed`: every incident the rules pick, closed work to check included; `routine` is `ongoing - allNeed`.
+ */
+async function actionList(period: Period, zone: number | null, dept: string | null, focus: Focus, now: string) {
   const w = scopeWhere({ period, zone, dept, ...focus }, now);
   const extra: string[] = [], xp: unknown[] = [];
   if (zone) { extra.push("i.zone_no = ?"); xp.push(zone); }
@@ -1679,14 +1685,19 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
   // one row per incident: closed work the department sent for checking (any member of the group) is listed as such, not also as
   // needing attention
   const checking = new Set(members.map((r) => String(r.id)));
-  const need = attn.need.filter((r) => !checking.has(String(r.id))).map((r) => ({ r, p: r.why }));
+  return { need: attn.need.filter((r) => !checking.has(String(r.id))), checks, ongoing: attn.ongoing, allNeed: attn.need.length };
+}
+
+export async function exportRows(period: Period, zone: number | null, dept: string | null, focus: Focus = {}) {
+  const now = await asOf();
+  const { need, checks } = await actionList(period, zone, dept, focus, now);
   const row = (list: string, r: Row, why: string) => ({
     list, id: r.id, what: r.title || r.type, where: [r.ward ? `Ward ${r.ward}` : null, r.zone_name].filter(Boolean).join(", ") || "Chennai",
     department: r.dept_name ?? r.dept, severity: r.sev, why, reported: String(r.t).slice(0, 16),
     past_deadline: deadlineState(r.sla_due ?? null, now, r.breached).overdue ? "Yes" : "No", complaints: r.complaints
   });
   return [
-    ...need.map(({ r, p }) => row("Needs your attention", r, p.attention.join("; "))),
+    ...need.map((r) => row("Needs your attention", r, r.why.attention.join("; "))),
     ...checks.map((r) => row("Closed work to check", r, taskBecause(r).join("; ")))
   ];
 }
@@ -1719,21 +1730,20 @@ export async function report(period: Period, zone: number | null, dept: string |
   const ov = await overview(period, zone, dept, focus);
   const now = ov.now;
   const w = scopeWhere({ period, zone, dept, ...focus }, now);
-  const [attn, news] = await Promise.all([
-    // the incidents that need the Collector: open, highest priority first, kept only if explain() says so (all of them: attentionRows)
-    attentionRows(w),
+  const [act, news] = await Promise.all([
+    // the incidents that need the Collector, as the CSV's "Needs your attention" lists them (actionList), highest priority first
+    actionList(period, zone, dept, focus, now),
     // in the news, with no department record
     q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
   ]);
   // the report lists the 10 most urgent; the rest are on the dashboard and in the action list (CSV)
-  const allNeed = attn.need;
-  const [a, g] = await Promise.all([withSources(allNeed.slice(0, 10)), withSources(news)]);
+  const [a, g] = await Promise.all([withSources(act.need.slice(0, 10)), withSources(news)]);
   return {
     ...ov,
     report: {
       attention: a,
-      attentionTotal: allNeed.length,
-      routine: Math.max(0, attn.ongoing - allNeed.length),
+      attentionTotal: act.need.length,
+      routine: Math.max(0, act.ongoing - act.allNeed),
       newsOnly: g.map((r) => ({ ...r, why: explain(r) }))
     }
   };

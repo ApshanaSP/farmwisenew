@@ -150,3 +150,20 @@ describe("console-sync-11: the bell keeps to the console's filters", () => {
     expect((await intel.overview("daily", 9)).kpi.cur.urgent).toBe(1);
   });
 });
+
+describe("console-sync-14: the PDF's 'need your attention' is the CSV's 'Needs your attention' section", () => {
+  it("an incident listed as closed work to check is in neither attention count, and the totals agree", async () => {
+    const several = "Needs several departments to act together";
+    add({ id: "INC-NEED", sev: "Severe", attention: several });
+    add({ id: "INC-BOTH", sev: "Severe", attention: several, awaiting: 1, complaints: 2 }); // needs you AND waits for your check
+    add({ id: "INC-ROUTINE", sev: "Low" });
+    const [rep, csv] = await Promise.all([intel.report("daily", null, null), intel.exportRows("daily", null, null)]);
+    const csvNeed = csv.filter((r) => r.list === "Needs your attention").map((r) => r.id);
+    expect(csvNeed).toEqual(["INC-NEED"]);
+    expect(csv.filter((r) => r.list === "Closed work to check").map((r) => r.id)).toEqual(["INC-BOTH"]);
+    expect(rep.report.attentionTotal).toBe(csvNeed.length);
+    expect(rep.report.attention.map((r) => r.id)).toEqual(csvNeed);
+    expect(rep.tasks.count).toBe(1);
+    expect(rep.report.routine).toBe(1);
+  });
+});

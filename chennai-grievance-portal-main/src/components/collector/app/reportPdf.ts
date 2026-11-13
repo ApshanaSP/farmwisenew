@@ -119,7 +119,7 @@ export async function buildReport(d: Row, opt: { scope: string; dept: string | n
   const R = d.report;
   const points = [
     `${n(k.cur.ongoing)} incidents are open (${k.cur.ongoing - k.prev.ongoing >= 0 ? "up" : "down"} ${n(Math.abs(k.cur.ongoing - k.prev.ongoing))} vs. ${P.prev}); ${n(sevOpen.Severe)} severe and ${n(sevOpen.High)} high.`,
-    `${n(R.attentionTotal ?? R.attention.length)} need your attention${(R.attentionTotal ?? 0) > R.attention.length ? ` (the ${n(R.attention.length)} most urgent are listed below; all are in the action list CSV)` : " (listed below)"}. The other ${n(R.routine)} are routine and the departments are handling them.`,
+    `${n(R.attentionTotal ?? R.attention.length)} need your attention${(R.attentionTotal ?? 0) > R.attention.length ? ` (the ${n(R.attention.length)} most urgent are listed below; all are in the action list CSV)` : " (listed below)"}. ${n(R.routine)} other open incidents are routine and the departments are handling them.`,
     `${n(d.tasks.count)} closed pieces of work are waiting for your check; ${n(d.tasks.leftToDepts)} routine closures are left to department heads.`,
     zoneTop && zoneTop.open ? `${zoneTop.name} zone has the most open incidents (${n(zoneTop.open)}).` : null,
     deptTop && !opt.dept ? `${deptTop.l} has the most citizen complaints (${n(deptTop.v)}).` : null,
