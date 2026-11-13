@@ -60,3 +60,17 @@ describe("officer-day-05: a case the Collector rejected is said as rejected, nev
     expect(done).toContain("Verified by Collector");
   });
 });
+
+describe("officer-day-13: the Resolved tile shows the officer's own count and opens a list named for what it holds", () => {
+  it("its figure, previous period and series are ov.resolved, and its list is titled for both kinds of closing", async () => {
+    const { ResolvedKpi, RESOLVED_LIST_TITLE } = await import("./Board");
+    const opened: unknown[][] = [];
+    const c = { ov: { resolved: { cur: 362, prev: 300, series: [1, 2, 3] }, periodInfo: { prev: "prev. month" }, board: { kpi: { cur: { resolved: 445 } } } },
+      openList: (...a: unknown[]) => opened.push(a) };
+    const el = ResolvedKpi({ c: c as never, label: "Resolved this month" }) as { props: { v: number; p: number; series: number[]; onClick: () => void } };
+    expect([el.props.v, el.props.p, el.props.series]).toEqual([362, 300, [1, 2, 3]]);
+    el.props.onClick();
+    expect(opened).toEqual([[null, RESOLVED_LIST_TITLE, undefined, { tab: "verified" }]]);
+    expect(RESOLVED_LIST_TITLE).toMatch(/verified by the Collector or closed by your department/);
+  });
+});

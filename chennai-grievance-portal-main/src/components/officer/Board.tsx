@@ -5,7 +5,8 @@
  * department selected: headline tiles, the map down the left, the department snapshot strip,
  * then severity, the officer's own work queue and the department's news. The numbers are the
  * Collector console's own (its overview, filtered to this department), so the officer and the
- * Collector always see the same figures; the work queue adds the officer's steps.
+ * Collector always see the same figures; the work queue adds the officer's steps. The Resolved tile
+ * is the officer's own count, by the definition of the Verified list it opens (officer-day-13).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SatMap from "@/components/collector/app/SatMap";
@@ -53,10 +54,7 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
             </span></span>
           </span>
         </button>
-        <Kpi k="resolved" icon="checkc" tone="t-low" label={daily ? "Resolved in 24 h" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
-          p={d.kpi.prev.resolved} series={d.kpi.series.resolved} prevLabel={P.prev} style={iv()}
-          onClick={() => c.openList(null, "Verified by the Collector", undefined, { tab: "verified" })}
-          tip="Your department's incidents reported in the period that are resolved." />
+        <ResolvedKpi c={c} label={daily ? "Resolved in 24 h" : `Resolved this ${P.unit.toLowerCase()}`} style={iv()} />
       </section>
 
       {/* by severity and My Work share one card two columns wide (a switch at its top), as on the Collector's Overview */}
@@ -69,6 +67,21 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
     </>
   );
 }
+
+/**
+ * The Resolved tile: the officer's own count (lib/officer/data.ts resolvedTile), by the definition of the list it opens, which holds the
+ * cases the Collector verified and those the department closed itself. It showed the Collector overview's figure and opened a list titled
+ * "Verified by the Collector" that held another number of other cases (officer-day-13).
+ */
+export function ResolvedKpi({ c, label, style }: { c: Ctx; label: string; style?: React.CSSProperties }) {
+  const r = c.ov.resolved;
+  return (
+    <Kpi k="resolved" icon="checkc" tone="t-low" label={label} v={r.cur} p={r.prev} series={r.series} prevLabel={c.ov.periodInfo.prev} style={style}
+      onClick={() => c.openList(null, RESOLVED_LIST_TITLE, undefined, { tab: "verified" })}
+      tip="Your department's grievances reported in the period that are resolved: verified by the Collector or closed by your department." />
+  );
+}
+export const RESOLVED_LIST_TITLE = "Resolved: verified by the Collector or closed by your department";
 
 // ------------------------------------------------------------------- map --
 

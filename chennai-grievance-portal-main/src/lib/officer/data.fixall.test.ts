@@ -29,7 +29,7 @@ vi.mock("@/lib/db", () => ({ default: pool }));
 vi.mock("@/lib/complaint-progress", () => ({ syncComplaints: async () => 0, awaitingQueue: async () => 0 }));
 vi.mock("@/lib/collector/intel", async (orig) => ({ ...(await orig<typeof import("@/lib/collector/intel")>()), asOf: async () => "2026-10-14 12:00:00" }));
 
-const { feedbackCounts, grievanceDetail, grievanceList, search } = await import("./data");
+const { feedbackCounts, grievanceDetail, grievanceList, resolvedTile, search } = await import("./data");
 
 const SWM = { code: "GCC-SWM", name: "Solid Waste Management", org: "GCC", head: "SE", route: "AE → EE", short: "SWM", remarkHint: "" };
 
@@ -198,6 +198,30 @@ describe("officer console data", () => {
       expect(d?.rejected).toEqual({ t: "2026-10-14 11:00:00", note: "Duplicate of an earlier complaint" });
       incident("INC-OK");
       expect((await grievanceDetail(SWM, "INC-OK"))?.rejected).toBeNull();
+    });
+  });
+
+  describe("officer-day-13: the board's Resolved tile counts what the list it opens holds", () => {
+    it("the tile, its previous period and its series are the Verified list's rows: Collector-verified and department-closed, by report date", async () => {
+      const scope = { period: "weekly" as const, zone: null, taluk: null };
+      incident("INC-V", { severity_level: "Severe" }); // verified by the Collector
+      step("INC-V", "send", "2026-10-14 10:00:00", "Done");
+      decide("INC-V", "verify", "2026-10-14 11:00:00");
+      incident("INC-D"); // closed by the department itself
+      closeByDept("INC-D", "2026-10-14 10:30:00");
+      incident("INC-P", { status_std: "Resolved", is_open: 0, first_reported_at: "2026-10-10 09:00:00" }); // resolved in the pipeline, earlier this week
+      incident("INC-OLD", { first_reported_at: "2026-09-01 09:00:00" }); // reported before the window, closed today: in neither
+      closeByDept("INC-OLD", "2026-10-14 10:40:00");
+      incident("INC-PREV", { status_std: "Resolved", is_open: 0, first_reported_at: "2026-10-05 09:00:00" }); // the week before
+      incident("INC-OPEN"); // still open
+      incident("INC-REJ"); // rejected: closed, not resolved
+      decide("INC-REJ", "reject", "2026-10-14 11:00:00", "Duplicate");
+      const tile = await resolvedTile(SWM, scope);
+      const list = await grievanceList(SWM, { ...scope, tab: "verified", page: 0, per: 100, cat: null, q: null });
+      expect(list.rows.map((r) => r.id).sort()).toEqual(["INC-D", "INC-P", "INC-V"]);
+      expect(tile.cur).toBe(list.total);
+      expect(tile.prev).toBe(1);
+      expect(tile.series.reduce((a, x) => a + x, 0)).toBe(tile.cur);
     });
   });
 });

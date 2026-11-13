@@ -143,8 +143,8 @@ function withStage(dept: string, now: string) {
  * ago and sent back was open again in no tab, count or search (hunt2-ops-05). `reported`: only what was reported in the period, for the
  * charts of what came in (the trend, by type, the news): a sent-back case from August is work now, not a grievance reported today.
  */
-function windowWhere(now: string, s: Scope, reported = false) {
-  const pw = periodWindow(s.period, now, "w.first_reported_at");
+function windowWhere(now: string, s: Scope, reported = false, off = 0) {
+  const pw = periodWindow(s.period, now, "w.first_reported_at", off);
   return {
     sql: `${reported ? pw.sql : `(${pw.sql} OR w.returned = 1)`} AND w.stage <> 'closed'${s.zone ? " AND w.zone_no = ?" : ""}${s.taluk ? " AND w.taluk_code = ?" : ""}`,
     params: [...pw.params, ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])] as unknown[]
@@ -281,7 +281,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   ]);
 
   const c = counts[0] ?? {};
-  const [outlets, fbCounts] = await Promise.all([outletsFor(news.map((r) => r.id)), feedbackCounts(dept.code, s)]);
+  const [outlets, fbCounts, resolved] = await Promise.all([outletsFor(news.map((r) => r.id)), feedbackCounts(dept.code, s), resolvedTile(dept, s)]);
   const updated = await refreshInfo(meta.exported_at ?? null, feeds);
   const series = new Map<string, { code: string; l: string; v: number[] }>();
   for (const r of trend) {
@@ -328,6 +328,8 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     /** one count per bucket (P.buckets across the period from `since`), oldest first */
     trend: [...series.values()].sort((a, b2) => b2.v.reduce((x, y) => x + y, 0) - a.v.reduce((x, y) => x + y, 0)),
     feedback,
+    /** the board's Resolved tile, counted as the Verified list it opens counts (officer-day-13) */
+    resolved,
     /** every decision of the Collector in the period by what it did (the feedback card lists only the newest few) */
     feedbackCounts: fbCounts,
     zones: geo.zones,
@@ -352,6 +354,29 @@ async function deptBoard(dept: string, s: Scope) {
   const d = await overview(s.period, s.zone, dept, { taluk: s.taluk });
   return { kpi: d.kpi, map: d.map, snapshot: d.snapshot, severity: d.severity, news: d.news, bell: d.bell, collection: d.collection,
     severityMix: d.severityMix, byCategory: d.bottom.byDept };
+}
+
+/**
+ * The board's "Resolved" tile, by the definition of the list it opens (the Verified tab: grievances reported in the period, in the
+ * zone / taluk, now verified by the Collector or closed by the department), with the previous period and the per-bucket series from
+ * the same rows. The tile showed the Collector overview's resolved count (closed in the period, any report date), 445 against the
+ * list's 362 (officer-day-13).
+ */
+export async function resolvedTile(dept: DeptProfile, s: Scope) {
+  const now = await asOf();
+  const b = withStage(dept.code, now);
+  const P = PERIODS[s.period];
+  const since = periodSince(s.period, now);
+  const cur = windowWhere(now, s), prev = windowWhere(now, s, false, 1);
+  const [[c], [p], series] = await Promise.all([
+    q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${cur.sql} AND w.stage IN (?)`, [...b.params, ...cur.params, TAB_STAGES.verified]),
+    q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${prev.sql} AND w.stage IN (?)`, [...b.params, ...prev.params, TAB_STAGES.verified]),
+    q(`${b.sql} SELECT FLOOR(TIMESTAMPDIFF(SECOND, ?, w.first_reported_at) / ?) AS b, COUNT(*) AS n FROM w WHERE ${cur.sql} AND w.stage IN (?) GROUP BY b`,
+      [...b.params, since, (P.hours * 3600) / P.buckets, ...cur.params, TAB_STAGES.verified])
+  ]);
+  const v = Array(P.buckets).fill(0) as number[];
+  for (const r of series) v[Math.min(P.buckets - 1, Math.max(0, Number(r.b)))] += Number(r.n);
+  return { cur: Number(c?.n ?? 0), prev: Number(p?.n ?? 0), series: v };
 }
 
 /** Cheap check the console polls: new grievances, Collector decisions, a new pipeline build. */
