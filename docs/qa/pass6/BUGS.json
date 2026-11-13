@@ -4521,6 +4521,38 @@
     "verified": true
   },
   {
+    "id": "reviewerC-01",
+    "severity": "P3",
+    "area": "Manu SMS sweep (reviewer1-09 fix review)",
+    "title": "The orphan SMS sweep is starved by petitions with no mobile: LIMIT 20 is applied before the mobile filter",
+    "found_by": "reviewerC (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/manu/sms.orphans.fixall.test.ts::reviewerC-01: petitions with no mobile starve the orphan sweep > 20 petitions without a mobile filed this morning; the one real orphan filed later is still texted",
+    "root_cause": "the orphan query applied LIMIT 20 before the JavaScript mobile test, so no-mobile petitions (never given a row) filled the window on every sweep",
+    "fix_commit": "0c45dda3",
+    "revert_check": "fails without / passes with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/manu/sms.ts:200",
+    "closed_in": "fixall"
+  },
+  {
+    "id": "reviewerC-04",
+    "severity": "P3",
+    "area": "Manu SMS test mode (reviewer1-03 fix review)",
+    "title": "Test mode: a team-inbox send that definitively failed after the 20 s limit stays 'unsure' and is never mailed (the reviewer1-06 bug moved into test mode)",
+    "found_by": "reviewerC (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/manu/sms.late.fixall.test.ts::reviewerC-04: a team-inbox send that FAILED after the limit is tried again",
+    "root_cause": "withLimit threw the work's late outcome away and the SMTP transport had no timeouts below our 20 s, so a down mail server ended unsure instead of failed",
+    "fix_commit": "fa32f9f3",
+    "revert_check": "2 of 3 fail without / 3 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "chennai-grievance-portal-main/src/lib/manu/sms.ts:70",
+    "closed_in": "fixall"
+  },
+  {
     "id": "skeptic-redsec1-1",
     "severity": "P2",
     "area": "sign-out (QA pass 4 skeptic / redteam-final-13)",
