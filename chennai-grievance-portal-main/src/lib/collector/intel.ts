@@ -677,14 +677,16 @@ export const NEWS_COMPLAINT_CATS = [
   "STREETLIGHT_ELECTRICAL", "WATER_SUPPLY", "DRAINAGE_SEWAGE", "SOLID_WASTE", "STRAY_ANIMALS", "ROAD_DAMAGE",
   "SANITATION_TOILETS", "TREES_PARKS", "ENCROACHMENT", "DARK_SPOT_SAFETY", "PUBLIC_WORKS", "DRAIN_WORKS_SAFETY"
 ];
-const ROUTED = `EXISTS (SELECT 1 FROM ${ops("dept_assignments")} da WHERE da.incident_id = i.incident_id)`;
+const routedSql = (a: string) => `EXISTS (SELECT 1 FROM ${ops("dept_assignments")} da WHERE da.incident_id = ${a}.incident_id)`;
 /**
  * "Open" in every open figure of the console, the glossary's rule (metrics.ts SQL.open): the effective open flag (the Collector's decisions
  * on top), minus news complaints handed to a department, which are the department's work, not incidents on the console. Each query applied
  * the second half or not by itself: the Ongoing tile left routed complaints out, the zone table, the department list, the snapshot, the
  * open-severe and open-complaints figures and the Briefing counted them (console-sync-10). A condition: use it as `${OPEN_NOW}` or SUM(...).
  */
-export const OPEN_NOW = `(${SQL.open({ open: EFF.open, routed: ROUTED })})`;
+export const OPEN_NOW = `(${SQL.open({ open: EFF.open, routed: routedSql("i") })})`;
+/** OPEN_NOW over another alias of incidents, given that alias's effective open flag (Ask District IQ's planner lane: b, j1) */
+export const openNowSql = (alias: string, open: string) => `(${SQL.open({ open, routed: routedSql(alias) })})`;
 const AUTO = "District IQ news monitor";
 
 /**
@@ -1184,7 +1186,7 @@ export async function snapCommon(s: Scope, now: string) {
   const [r] = await q(
     `SELECT COALESCE(SUM(${OPEN_NOW} AND i.severity_level IN ('Severe', 'High')), 0) AS serious,
             COALESCE(SUM(${OPEN_NOW} AND ${pastDueSql(now)}), 0) AS overdue,
-            COALESCE(SUM(${EFF.open} = 1 AND i.media_only = 1), 0) AS news_only
+            COALESCE(SUM(${OPEN_NOW} AND i.media_only = 1), 0) AS news_only
      FROM incidents i WHERE ${w.sql}`,
     w.params
   );
@@ -1745,7 +1747,7 @@ export async function report(period: Period, zone: number | null, dept: string |
     // the incidents that need the Collector, as the CSV's "Needs your attention" lists them (actionList), highest priority first
     actionList(period, zone, dept, focus, now),
     // in the news, with no department record
-    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
+    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
   ]);
   // the report lists the 10 most urgent; the rest are on the dashboard and in the action list (CSV)
   const [a, g] = await Promise.all([withSources(act.need.slice(0, 10)), withSources(news)]);

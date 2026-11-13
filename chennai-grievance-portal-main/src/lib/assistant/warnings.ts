@@ -10,13 +10,9 @@ import { categories } from "@/lib/collector/nlp";
 import type { Fact } from "@/lib/assistant/types";
 import type { AnswerCard } from "@/lib/assistant/answer";
 import type { RowDataPacket } from "mysql2";
-import intelPool, { TITLE, ops } from "@/lib/collector/db";
-import { asOfNow } from "@/lib/collector/intel";
+import intelPool, { TITLE } from "@/lib/collector/db";
+import { asOfNow, OPEN_NOW } from "@/lib/collector/intel";
 import { isPastDeadline } from "@/lib/reference/metrics";
-import { effectiveSql } from "@/lib/collector/effective";
-
-/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 /** A question about warnings or alerts for the weather (not "alerts" on the console, not a list of flooded streets). */
 export const WARNING_Q = new RegExp([
@@ -89,14 +85,15 @@ export function prepLines(items: PrepItem[], zones: { name: string; n: number }[
     ...(zones.length ? ["", `**Most open flood problems:** ${zones.map((z) => `${z.name} ${z.n}`).join(", ")}.`] : [])];
 }
 
-async function prepNow(): Promise<{ items: PrepItem[]; zones: { name: string; n: number }[] }> {
+/** Exported for its test. Open is the console's open (OPEN_NOW, as page 1's KPIs: BUG-035, reviewerG-01): routed news complaints are the department's. */
+export async function prepNow(): Promise<{ items: PrepItem[]; zones: { name: string; n: number }[] }> {
   const codes = categories().filter((c) => c.family === "FLOOD").map((c) => c.code);
   if (!codes.length) return { items: [], zones: [] };
   const [rows] = await intelPool.query<RowDataPacket[]>(
     `SELECT ${TITLE} AS title, i.place_text AS loc, i.zone_name AS zone, i.severity_level AS sev, i.sla_breached AS overdue, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due FROM incidents i
-     WHERE ${OPEN} = 1 AND i.category_code IN (?) AND i.severity_level IN ('Severe', 'High') ORDER BY i.priority_score DESC LIMIT 5`, [codes]);
+     WHERE ${OPEN_NOW} AND i.category_code IN (?) AND i.severity_level IN ('Severe', 'High') ORDER BY i.priority_score DESC LIMIT 5`, [codes]);
   const [zones] = await intelPool.query<RowDataPacket[]>(
-    `SELECT i.zone_name AS name, COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND i.category_code IN (?) AND i.zone_name IS NOT NULL
+    `SELECT i.zone_name AS name, COUNT(*) AS n FROM incidents i WHERE ${OPEN_NOW} AND i.category_code IN (?) AND i.zone_name IS NOT NULL
      GROUP BY i.zone_name ORDER BY n DESC LIMIT 3`, [codes]);
   return { items: rows.map((r) => ({ title: String(r.title), loc: r.loc ? String(r.loc) : null, zone: r.zone ? String(r.zone) : null, sev: String(r.sev), overdue: isPastDeadline({ breached: r.overdue, due: r.due }, asOfNow()) })),
     zones: zones.map((z) => ({ name: String(z.name), n: Number(z.n) })) };

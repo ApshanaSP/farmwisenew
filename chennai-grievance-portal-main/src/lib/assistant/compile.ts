@@ -16,6 +16,7 @@ import { connectionSettings } from "@/lib/db";
 import intelPool, { INTEL_DB } from "@/lib/collector/db";
 import { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
+import { openNowSql } from "@/lib/collector/intel";
 import { qualified, type Catalog, type CatalogColumn, type CatalogTable } from "@/lib/assistant/catalog";
 import { LIMITS } from "@/lib/assistant/limits";
 import type { Scope } from "@/lib/assistant/answer";
@@ -171,7 +172,8 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
   const column = (table: string, alias: string, c: string): string => {
     if (table !== "incidents") return `${alias}.${q(c)}`;
     const e = effectiveSql(ops("collector_decisions"), alias);
-    return ({ is_open: e.open, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
+    // "still open" is the console's open (OPEN_NOW): a news complaint handed to a department is its work, not open on the console (reviewerG-01)
+    return ({ is_open: `(CASE WHEN ${openNowSql(alias, e.open)} THEN 1 ELSE 0 END)`, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
   };
 
   /** under the lock, only a shared reference table's own reference columns (the rest are derived from every department's records) */
