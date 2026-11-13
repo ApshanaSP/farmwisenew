@@ -188,12 +188,15 @@ describe("QA pass 6: approval does not wait on the SMS without a limit, and the 
       const r = await filePetition(await uploaded(), fields(), "x");
       expect(r.sms.state).toBe("sending");
       await sleep(800);
-      expect(rowOf(r.code).status).toBe("failed");
-      expect((await sms.smsNote(r.code)).state).toBe("failed");
+      // given up at its limit, but the mail goes on behind it and may still arrive: 'unsure', as a live send that timed out, and not
+      // mailed again (reviewer1-03 in the fix-all run; this test expected 'failed' and a second mail)
+      expect(rowOf(r.code).status).toBe("unsure");
+      expect((await sms.smsNote(r.code)).state).toBe("unsure");
       h.mailImpl = null;
       due();
       await sms.retryFailedSms();
-      expect(rowOf(r.code).status).toBe("test");
+      expect(rowOf(r.code).status).toBe("unsure");
+      expect(h.mails).toHaveLength(1);
     } finally {
       Object.assign(sms.SMS_LIMITS, saved);
     }

@@ -53,9 +53,13 @@ export const SMS_LIMITS = { inlineWaitMs: 5_000, sendMs: 20_000 };
 class MaybeSent extends Error {}
 const AFTER_SENDING = new Set(["ECONNRESET", "UND_ERR_SOCKET", "EPIPE"]);
 
+/**
+ * The work, or MaybeSent when it has not answered in `ms`: the work goes on behind the race and may still finish. A plain Error here made a
+ * team-inbox mail that the server took after the limit 'failed', and the sweep mailed it again (reviewer1-03).
+ */
 function withLimit<T>(work: Promise<T>, ms: number, why: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const late = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(why)), ms); });
+  const late = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new MaybeSent(why)), ms); });
   return Promise.race([work, late]).finally(() => clearTimeout(timer));
 }
 const env = (name: string) => (process.env[name] ?? "").trim();
@@ -79,7 +83,7 @@ const htmlSafe = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 /** Test mode: the exact message, to the team inbox. */
 async function viaTeamInbox(mobile: string, text: string): Promise<void> {
   const html = `<p><b>Test SMS. Nothing was sent to this phone.</b> In live mode this goes to ${mobile}.</p><p style="font-size:16px;padding:12px;background:#f2f4f3;border-radius:8px">${htmlSafe(text)}</p>`;
-  const r = await withLimit(sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html), SMS_LIMITS.sendMs, "The team inbox did not answer in time.");
+  const r = await withLimit(sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html), SMS_LIMITS.sendMs, "The team inbox did not answer in time; the mail may still arrive.");
   if (!r.ok) throw new Error(r.reason === "send_failed" ? r.detail : "Email is not set up.");
 }
 

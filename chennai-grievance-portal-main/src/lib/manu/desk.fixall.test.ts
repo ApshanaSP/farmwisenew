@@ -243,3 +243,33 @@ describe("reviewer1-07: the rebuild keeps a petition in the case it joined", () 
     expect(h.db.prepare("SELECT DISTINCT incident_id x FROM events").all()).toEqual([{ x: caseIdFor(owner.code) }]);
   });
 });
+
+// reviewer1-03: test mode's time limit rejected with a plain Error, so a team-inbox mail the server took after the limit was 'failed', and the
+// sweep mailed a second copy (the reviewer's probe, tests/qa/pass6/known-failures/reviewer1/sms.probe.test.ts "team inbox")
+describe("reviewer1-03: a team-inbox mail that answers after the limit is 'unsure', not mailed again", () => {
+  it("the first mail lands after the limit: one mail in all, the row 'unsure'", async () => {
+    testMode();
+    await withLimits({ inlineWaitMs: 50, sendMs: 200 }, async () => {
+      let n = 0;
+      h.mailImpl = () => { n++; return n === 1 ? new Promise((r) => setTimeout(() => r({ ok: true }), 600)) : Promise.resolve({ ok: true }); };
+      const r = await filePetition(await uploaded(), fields(), "x");
+      await sleep(800);
+      expect(rowOf(r.code).status).toBe("unsure");
+      due();
+      await sms.retryFailedSms();
+      expect(h.mails.length).toBe(1);
+    });
+  });
+  it("a mail the server refused is still 'failed' and tried again", async () => {
+    testMode();
+    let n = 0;
+    h.mailImpl = async () => (++n === 1 ? { ok: false, reason: "send_failed", detail: "550 refused" } : { ok: true });
+    const r = await filePetition(await uploaded(), fields(), "x");
+    expect(rowOf(r.code).status).toBe("failed");
+    due();
+    await sms.retryFailedSms();
+    expect(h.mails.length).toBe(2);
+    expect(rowOf(r.code).status).toBe("test");
+  });
+});
+
