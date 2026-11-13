@@ -530,12 +530,13 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
   const now = await asOf();
   const g = await stageRow(dept.code, id, now);
   if (!g) return null;
-  const [pipeline, steps, decisions, members, docs, reports, instructions] = await Promise.all([
+  const [pipeline, steps, allDecisions, members, docs, reports, instructions] = await Promise.all([
     q(`SELECT ${fmt("at")} AS t, step, note, actor FROM incident_timeline WHERE incident_id = ? ORDER BY at`, [id]),
-    q(`SELECT step, note, actor, ${fmt("at")} AS t FROM ${ops("officer_steps")} WHERE incident_id = ? AND dept_code = ? ORDER BY at, step_id`, [id, dept.code]),
-    // the department's own closure is a resolve by the officer: it shows as its "close" step, not as a Collector decision
-    q(`SELECT decision, note, decided_by, ${fmt("decided_at")} AS t FROM ${ops("collector_decisions")} WHERE incident_id = ?
-       AND COALESCE(decided_role, '') <> 'department_officer' ORDER BY decided_at, decision_id`, [id]),
+    q(`SELECT step_id AS sid, step, note, actor, report_id AS rid, ${fmt("at")} AS t FROM ${ops("officer_steps")} WHERE incident_id = ? AND dept_code = ?
+       ORDER BY step_id`, [id, dept.code]),
+    // every decision, the department's own closures (a resolve by its officer) included: those place its close steps in the order
+    q(`SELECT decision_id AS did, decision, note, decided_by, COALESCE(decided_role, '') AS role, ${fmt("decided_at")} AS t
+       FROM ${ops("collector_decisions")} WHERE incident_id = ? ORDER BY decision_id`, [id]),
     // the source's whole text: the first 280 characters were the only copy the officer had of a complaint the form allows 400 for (officer-day-17)
     q(`SELECT m.source, m.channel, ${fmt("m.reported_at")} AS t, m.title, m.role, e.text AS text
        FROM incident_members m LEFT JOIN events e ON e.event_id = m.event_id WHERE m.incident_id = ? ORDER BY m.reported_at LIMIT 60`, [id]),
@@ -558,27 +559,55 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
       .catch(orEmpty("data:462"))
   ]);
 
+  // the department's own closure is a resolve by its officer: it shows as its "close" step, not as a Collector decision
+  const decisions = allDecisions.filter((d) => d.role !== "department_officer");
+  /**
+   * The case's steps and decisions in the one order the stage overlay reads (DECIDED_AFTER; complaint-progress.ts progressOf): steps by
+   * step_id, decisions by decision_id, the department's close at its resolve decision's place among the decisions, and a step before a
+   * Collector decision of the same second. The drawer merged them by time with every step first on a tie, so a send-back and the close
+   * in the same second ended "Returned by Collector" under a Verified stage, and the close's own report was marked returned (reviewerD-01).
+   */
+  const deptCloses = allDecisions.filter((d) => d.role === "department_officer" && d.decision === "resolve");
+  const closes = steps.filter((st) => st.step === "close");
+  // each close and its resolve are written together; paired from the latest back, as progressOf pairs them
+  const anchor = new Map(closes.map((c, j) => [c, deptCloses[deptCloses.length - closes.length + j]] as const).filter(([, d]) => d));
+  const order = [
+    ...steps.map((st, k) => { const d = anchor.get(st); return d ? { at: String(d.t), rank: 1, seq: allDecisions.indexOf(d), x: st } : { at: String(st.t), rank: 0, seq: k, x: st }; }),
+    ...allDecisions.map((d, k) => ({ at: String(d.t), rank: 1, seq: k, x: d })).filter((e) => e.x.role !== "department_officer")
+  ].sort((a, b2) => a.at.localeCompare(b2.at) || a.rank - b2.rank || a.seq - b2.seq);
+  const place = new Map<Row, number>(order.map((e, k) => [e.x, k]));
   const kindOf = (step: string) => (/resolved|verified/i.test(step) ? "fin" : /reject|lapsed|return|escalat/i.test(step) ? "esc" : "");
   const timeline = [
     ...pipeline.map((p) => ({ t: p.t, label: p.step, note: p.note ?? (p.actor ? `By ${p.actor}` : ""), kind: kindOf(p.step) })),
-    ...steps.map((st) => ({
+    ...order.filter((e) => steps.includes(e.x)).map(({ x: st }) => ({
       t: st.t,
       label: st.step === "approve" ? "Approved by department" : st.step === "action" ? "Work started" : st.step === "close" ? "Closed by department" : "Sent to Collector",
       note: st.step === "approve" ? `Approved by ${st.actor}; assigned to ${g.officer ?? "the field officer"}`
         : st.step === "action" ? `${g.officer ?? "Field team"} started work on site` : st.note ? `Completion report: “${String(st.note).slice(0, 140)}”` : "Completion report sent",
-      kind: st.step === "close" ? "fin" : ""
+      kind: st.step === "close" ? "fin" : "",
+      at: place.get(st)!
     })),
     ...decisions.filter((d) => d.decision !== "note").map((d) => ({
       t: d.t,
       label: ({ verify: "Verified by Collector", reopen: "Returned by Collector", resolve: "Resolved by Collector", reject: "Rejected by Collector", escalate: "Escalated by Collector" } as Record<string, string>)[d.decision] ?? d.decision,
       note: d.note ?? (d.decision === "verify" ? "Work verified; grievance closed" : ""),
-      kind: d.decision === "reopen" || d.decision === "reject" || d.decision === "escalate" ? "esc" : "fin"
+      kind: d.decision === "reopen" || d.decision === "reject" || d.decision === "escalate" ? "esc" : "fin",
+      at: place.get(d)!
     }))
-  ].sort((a, b2) => String(a.t).localeCompare(String(b2.t)));
+  ].map((e, k) => ({ e, k })).sort((a, b2) => String(a.e.t).localeCompare(String(b2.e.t)) || ((a.e as { at?: number }).at ?? -1) - ((b2.e as { at?: number }).at ?? -1) || a.k - b2.k)
+    .map(({ e }) => ({ t: e.t, label: e.label, note: e.note, kind: e.kind }));
 
   const lastVerify = [...decisions].reverse().find((d) => d.decision === "verify" || d.decision === "resolve");
   const lastReject = [...decisions].reverse().find((d) => d.decision === "reject");
   const lastReturn = [...decisions].reverse().find((d) => d.decision === "reopen");
+  const stepOfReport = new Map(steps.filter((st) => st.rid != null).map((st) => [Number(st.rid), st]));
+  /** a decision after a report: after the step that carried it, in the order above (a report with no step: by time, the decision after) */
+  const after = (d: Row | undefined, r: Row) => {
+    if (!d) return false;
+    const st = stepOfReport.get(Number(r.rid));
+    return st ? place.get(d)! > place.get(st)! : String(d.t) >= String(r.t);
+  };
+  const lastStep = steps[steps.length - 1];
   return {
     now,
     grievance: g,
@@ -597,8 +626,8 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
       return {
         id: Number(r.rid), remarks: String(r.remarks), by: String(r.sent_by), t: String(r.t),
         photos: names.map((nm) => photoUrl(r.photo_dir, nm)),
-        verifiedAt: lastVerify && lastVerify.t >= r.t ? String(lastVerify.t) : null,
-        returned: lastReturn && lastReturn.t >= r.t ? { t: String(lastReturn.t), note: String(lastReturn.note ?? "") } : null
+        verifiedAt: lastVerify && after(lastVerify, r) ? String(lastVerify.t) : null,
+        returned: lastReturn && after(lastReturn, r) ? { t: String(lastReturn.t), note: String(lastReturn.note ?? "") } : null
       };
     }),
     /** the Collector's instructions on this grievance, newest first, each with its signed reference (lib/security/stamp.ts) */
@@ -606,8 +635,11 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
       ref: e.owner && e.body_hash && e.approved_at ? emailRef({ owner: String(e.owner), subject: String(e.subject), bodyHash: String(e.body_hash), at: String(e.approved_at) }) : null })),
     /** closed by the Collector's reject (stage closed): when and why; the department can do nothing more on it (officer-day-05) */
     rejected: g.stage === "closed" && lastReject ? { t: String(lastReject.t), note: lastReject.note == null ? null : String(lastReject.note) } : null,
-    /** the department closed it itself (not severe) */
-    closedByDept: steps.length > 0 && steps[steps.length - 1].step === "close",
+    /**
+     * the department closed it itself (not severe), and that close stands: not once the Collector sent it back after it, when the step bar
+     * drew "Closed by your department" (done) beside the Returned banner and the Complete & close button (reviewerD-02)
+     */
+    closedByDept: g.stage === "verified" && lastStep?.step === "close" && !(lastReturn && place.get(lastReturn)! > place.get(lastStep)!),
     firstSource: members[0] ? SOURCE_LABEL[members[0].source] ?? members[0].source : docs[0]?.publisher ?? "—"
   };
 }
