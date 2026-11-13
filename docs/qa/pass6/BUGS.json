@@ -353,15 +353,17 @@
     "title": "For about 15 to 20 seconds after the desk shows 'Petition approved and forwarded', the department's officer gets 'Grievance not found in your department.' for the new case, and the case is missing from their list. The Collector sees it at once",
     "found_by": "hunt2-desk",
     "repro": "node tests/qa/pass6/known-failures/hunt2-desk/p14.mjs",
-    "failing_test": null,
-    "root_cause": "Not traced. The officer list's 'now' field stayed the same across calls seconds apart, which points to a cached clock or snapshot bound used as the upper limit on first_reported_at.",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/collector/asof.fixall.test.ts::hunt2-desk-09: a filing moves the consoles' 'now' at once",
+    "root_cause": "asOf() cached the consoles' 'now' for 30 s regardless of new data, and the officer's queries bound cases by first_reported_at <= now",
+    "fix_commit": "0eef423d",
+    "revert_check": "2 of 2 fail without / 2 pass with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts grievanceList / grievance detail (a cached 'now' or period bound; the list's 'now' stayed fixed across calls)",
     "confidence": "medium",
-    "verified": false
+    "verified": false,
+    "note": "Proven with a mocked clock; the live 15-20 s window (p14.mjs) was not re-run (needs a server).",
+    "closed_in": "fixall"
   },
   {
     "id": "hunt2-desk-10",
@@ -1290,11 +1292,13 @@
     "root_cause": "one category per department for website filings",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "not-reproduced",
     "reviewer": null,
     "where": "src/lib/manu/cases.ts:153-155,164 (ONLINE_CATEGORY by department code)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Fixed before this run by pass 7's desk-and-accounts lane (4069de10): onlineCase takes the category from the complaint type and sub-type (grade.ts grievanceCategory); the department default is only for type 'Other'. Shown by src/lib/manu/cases.category.fixall.test.ts (passes): the probe's 'dustbins in public toilets' and 'Broken sinks' are SANITATION_TOILETS.",
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-19",
@@ -1359,11 +1363,13 @@
     "root_cause": "the officer console reads the incident store, which keeps only the hash",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "owner",
     "reviewer": null,
     "where": "src/lib/validators.ts:146-147, src/lib/manu/cases.ts:166 (reporter: reporterHash(mobile)), src/lib/officer/data.ts:454-523 (grievanceDetail)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Privacy decision: whether a department officer may see the complainant's name and mobile. Building it means reading the complaint row (portal store) for the officer's own department's case, with an audit line per view; today the console keeps only a one-way reporter hash by design.",
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-24",
