@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   if (!checkRateLimit(`studio-add:${s.userId}`, 30, 600).allowed) return NextResponse.json({ error: "Too many files in a few minutes. Try again shortly." }, { status: 429 });
   const ct = req.headers.get("content-type") ?? "";
   if (ct.includes("multipart/form-data")) {
-    // the body is read with a limit before it is parsed: req.formData() read an upload of any size into memory before the file's own
+    // the body is read with a limit before it is parsed: the whole-form reader held an upload of any size in memory before the file's own
     // size was checked (QA pass 7, as officer-day-25: lib/body-cap.ts readFormCapped)
     const { form, tooLarge } = await readFormCapped(req, MAX_BYTES + 64 * 1024);
     if (tooLarge) return NextResponse.json({ error: "The file is larger than 15 MB." }, { status: 413 });
