@@ -6,6 +6,9 @@
  */
 import type { ToolResult } from "@/lib/assistant/types";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
+/** A Tamil count and its word: one takes the singular ("1 கடுமையானது"), any other number the plural ("2 கடுமையானவை"). A line said "1 கடுமையானவை"
+ * whatever the count (pass4-open-13, the PB-224 class). */
+const nTa = (n: number, one: string, many: string) => `${spoken(n)} ${n === 1 ? one : many}`;
 import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { needsDates, type PeriodSpec, type Span, type Comparison, type Words } from "@/lib/period/read";
@@ -618,7 +621,7 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${opts.when?.ta ?? PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${opts.state?.ta ?? ""}.`,
-    late.length ? `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
+    late.length ? `${lateN === 1 ? `1 ${unit ? "பதிவு " : ""}காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது` : `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை`}:${first.map(whereTa).join("; ")}.` : `${lateN ? `${nTa(lateN, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
     lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
@@ -702,9 +705,9 @@ async function spanBrief(c: Ctx, spec: PeriodSpec): Promise<Part> {
   const rows = r.rows.map((x) => caseRow(x, w));
   const lead = r.span.now
     ? bi(`In ${where}, ${plural(r.total, "incident is", "incidents are")} open right now, whatever the day reported; ${spoken(r.late)} past ${r.late === 1 ? "its" : "their"} deadline, ${spoken(r.severe)} severe.`,
-      `${whereTa}: இப்போது ${spoken(r.total)} சம்பவங்கள் நிலுவையில்; ${spoken(r.late)} காலக்கெடு தாண்டியவை, ${spoken(r.severe)} கடுமையானவை.`)
+      `${whereTa}: இப்போது ${spoken(r.total)} சம்பவங்கள் நிலுவையில்; ${nTa(r.late, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, ${nTa(r.severe, "கடுமையானது", "கடுமையானவை")}.`)
     : bi(`${capFirst(when.en)}: ${plural(r.total, "incident was", "incidents were")} reported in ${where}; ${spoken(r.open)} ${r.open === 1 ? "is" : "are"} still open, ${spoken(r.late)} past ${r.late === 1 ? "its" : "their"} deadline, ${spoken(r.severe)} severe.`,
-      `${when.ta}: ${whereTa} பகுதியில் ${spoken(r.total)} சம்பவங்கள் பதிவாகின; ${spoken(r.open)} இன்னும் நிலுவையில், ${spoken(r.late)} காலக்கெடு தாண்டியவை, ${spoken(r.severe)} கடுமையானவை.`);
+      `${when.ta}: ${whereTa} பகுதியில் ${spoken(r.total)} சம்பவங்கள் பதிவாகின; ${spoken(r.open)} இன்னும் நிலுவையில், ${nTa(r.late, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, ${nTa(r.severe, "கடுமையானது", "கடுமையானவை")}.`);
   const top = rows.slice(0, 4);
   const pointsTa = [{ text: lead.en, ta: lead.ta, incidentId: null as string | null },
     ...top.map((x) => ({ text: safeText(`${spokenLabel(x)}${x.zoneName && !spokenLabel(x).includes(x.zoneName) ? `, ${x.zoneName}` : ""}${x.overdue ? ": past its deadline" : ""}`, 400),
@@ -1231,7 +1234,7 @@ async function why(c: Ctx): Promise<Part> {
     reasonsTa.push(`${rises.map((x) => `${clip(x.label, 60)} ${spoken(Number(x.delta))} கூடியது`).join(", ")}`);
   }
   if (num(t.rainLinked)) { reasons.push(`${Number(t.rainLinked) === 1 ? "1 incident was" : `${spoken(Number(t.rainLinked))} incidents were`} rain-linked over ${plural(d.rainDays, "rain day", "rain days")}`); reasonsTa.push(`${spoken(d.rainDays)} மழை நாட்களில் ${spoken(Number(t.rainLinked))} மழை தொடர்பானவை`); }
-  if (num(t.overdue)) { reasons.push(Number(t.overdue) === 1 ? "1 open incident is past its deadline" : `${spoken(Number(t.overdue))} open incidents are past their deadline`); reasonsTa.push(`${spoken(Number(t.overdue))} காலக்கெடு தாண்டியவை`); }
+  if (num(t.overdue)) { reasons.push(Number(t.overdue) === 1 ? "1 open incident is past its deadline" : `${spoken(Number(t.overdue))} open incidents are past their deadline`); reasonsTa.push(nTa(Number(t.overdue), "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")); }
   const place = d.places?.[0];
   if (place) { reasons.push(`the busiest spot is ${clip(place.place, 60)} (${spoken(Number(place.n))} ${clip(place.category, 50).toLowerCase()})`); reasonsTa.push(`அதிக இடம் ${clip(place.place, 60)} (${spoken(Number(place.n))})`); }
   const head = ch.delta != null
@@ -1385,7 +1388,7 @@ async function dashboard(c: Ctx): Promise<Part> {
   return { title,
     takeaway: topZone ? bi(`${topZone.item.name} has the most: ${spoken(topZone.value)} of ${spoken(zrows.reduce((a, x) => a + Number(x.n), 0))}.`, `${zoneTa(w, Number(topZone.item.zone))} அதிகம்: ${spoken(topZone.value)}.`) : null,
     say: bi(`${spoken(rep)} ${reportsOf(subject, generic, rep)} ${inPeriod(s.period)}${ch.pct != null ? `, ${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}% on the period before` : ""}. ${spoken(Number(kd.cur?.severe ?? 0))} severe.${topZone ? ` Most in ${topZone.item.name}.` : ""}`,
-      `${PERIOD_TA[s.period]} ${generic ? "" : `${catTa(w, s.cat)}: `}${spoken(rep)} புகார்கள், ${spoken(Number(kd.cur?.severe ?? 0))} கடுமையானவை.${topZone ? ` அதிகம் ${zoneTa(w, Number(topZone.item.zone))}.` : ""}`),
+      `${PERIOD_TA[s.period]} ${generic ? "" : `${catTa(w, s.cat)}: `}${spoken(rep)} புகார்கள், ${nTa(Number(kd.cur?.severe ?? 0), "கடுமையானது", "கடுமையானவை")}.${topZone ? ` அதிகம் ${zoneTa(w, Number(topZone.item.zone))}.` : ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad"), tile("ongoing", "Still open", "neutral"), tile("complaints", "Open complaints", "neutral")] },
       { kind: "MapView", id: "map", title: "Where", rule: "Numbered pins are the cases below; rings are hotspots (3+ incidents within 250 m in 30 days).", shade: { geo: "zone", label: subject, values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.n) })) }, points: pts, outline: [] },
@@ -1545,7 +1548,7 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const stand = !rows.length ? "" : open || overdue
     ? `${reported != null ? `${plural(open, "case is", "cases are")} still open, and ` : ""}${overdue ? `${plural(overdue, "is", "are")} past the deadline` : "none is past the deadline"}`
     : "nothing is open";
-  const standTa = !rows.length ? "" : open || overdue ? `${reported != null ? `${spoken(open)} இன்னும் நிலுவையில்; ` : ""}${overdue ? `${spoken(overdue)} கெடு தாண்டியவை` : "கெடு தாண்டியது எதுவும் இல்லை"}` : "நிலுவையில் எதுவும் இல்லை";
+  const standTa = !rows.length ? "" : open || overdue ? `${reported != null ? `${spoken(open)} இன்னும் நிலுவையில்; ` : ""}${overdue ? `${nTa(overdue, "கெடு தாண்டியது", "கெடு தாண்டியவை")}` : "கெடு தாண்டியது எதுவும் இல்லை"}` : "நிலுவையில் எதுவும் இல்லை";
   const zEn = att[0]?.zone ? clip(att[0].zone, 40) : null;
   const zTa = zEn ? c.w.zones.find((z) => z.name.toLowerCase() === zEn.toLowerCase())?.ta ?? zEn : null;
   const where = zEn ? ` The one to look at first is in ${zEn}.` : worst && org ? ` Most of it sits with ${clip(worst.name, 60)}.` : "";
@@ -1561,7 +1564,7 @@ async function bodyBrief(c: Ctx): Promise<Part> {
     ...(serious ? [{ text: `${plural(serious, "is", "are")} serious (severe or high).`, ta: `${spoken(serious)} தீவிரமானவை (கடுமையானவை அல்லது அதிகம்).`, incidentId: null }] : []),
     ...att.slice(0, 3).map((a) => { const t = safeText(`${a.why?.summary && String(a.why.summary).length <= 110 ? a.why.summary : a.title}${a.zone ? `, ${a.zone}` : ""}`, 400); return { text: t, ta: t, incidentId: String(a.id) }; }),
     ...(org ? rows.slice(0, 4).map((r) => ({ text: `${clip(r.name, 60)}: ${spoken(num(r.open) ?? 0)} open, ${spoken(num(r.overdue) ?? 0)} past the deadline.`,
-      ta: `${DEPT_TA[String(r.code)] ?? clip(r.name, 60)}: ${spoken(num(r.open) ?? 0)} நிலுவை, ${spoken(num(r.overdue) ?? 0)} கெடு தாண்டியவை.`, incidentId: null })) : []),
+      ta: `${DEPT_TA[String(r.code)] ?? clip(r.name, 60)}: ${spoken(num(r.open) ?? 0)} நிலுவை, ${nTa(num(r.overdue) ?? 0, "கெடு தாண்டியது", "கெடு தாண்டியவை")}.`, incidentId: null })) : []),
     { text: `${src.en} ${age.en}`, ta: `${src.ta} ${age.ta}`, incidentId: null }
   ].slice(0, 10);
   return {
@@ -1601,10 +1604,10 @@ async function brief(c: Ctx): Promise<Part> {
   const nRep = Number(st.reported ?? 0);
   const scopeTa = [zoneTa(c.w, c.s.zone), c.s.taluk ? c.w.taluks.find((t) => t.code === c.s.taluk)?.ta ?? c.s.taluk : null, deptTa(c.w, c.s.dept), catTa(c.w, c.s.cat)].filter(Boolean).join(", ");
   const leadHeadTa = `${PERIOD_TA[c.s.period]} ${scopeTa ? `${scopeTa} பகுதியில்` : "சென்னை மாவட்டத்தில்"} ${spoken(nRep)} ${nRep === 1 ? "சம்பவம் பதிவானது" : "சம்பவங்கள் பதிவாகின"}${chg == null ? "" : chg === 0 ? "; முந்தைய காலத்தின் அதே அளவு" : `; முந்தைய காலத்தை விட ${spoken(Math.abs(chg))}% ${chg > 0 ? "அதிகம்" : "குறைவு"}`}.`;
-  const leadTa = `${leadHeadTa} ${spoken(Number(st.open ?? 0))} இன்னும் நிலுவையில்${Number(st.overdue) ? `, ${spoken(Number(st.overdue))} கெடு தாண்டியவை` : ""}; ${spoken(Number(st.severe ?? 0))} கடுமையானவை.`;
+  const leadTa = `${leadHeadTa} ${spoken(Number(st.open ?? 0))} இன்னும் நிலுவையில்${Number(st.overdue) ? `, ${nTa(Number(st.overdue), "கெடு தாண்டியது", "கெடு தாண்டியவை")}` : ""}; ${nTa(Number(st.severe ?? 0), "கடுமையானது", "கடுமையானவை")}.`;
   // the Tamil of each point the code builds (the lead, the open and overdue line, a record's own title); a sentence the briefing tool wrote only in English has no Tamil line and is shown as it is (RC-15, PB-207)
   const nHead = (d.headline ?? []).length, att = (d.attention ?? []).slice(0, 4), nAtt = att.length;
-  const standLineTa = `${spoken(Number(st.open ?? 0))} இன்னும் நிலுவையில், ${spoken(Number(st.overdue ?? 0))} கெடு தாண்டியவை; ${spoken(Number(st.severe ?? 0))} கடுமையானவை.`;
+  const standLineTa = `${spoken(Number(st.open ?? 0))} இன்னும் நிலுவையில், ${nTa(Number(st.overdue ?? 0), "கெடு தாண்டியது", "கெடு தாண்டியவை")}; ${nTa(Number(st.severe ?? 0), "கடுமையானது", "கடுமையானவை")}.`;
   const sourcesTa = `${spoken(Number(st.multi ?? 0))} சம்பவங்கள் ஒன்றுக்கு மேற்பட்ட மூலங்களிலிருந்து வந்தன; ${spoken(Number(st.newsOnly ?? 0))} செய்தியில் மட்டும் உள்ளன.`;
   // the reasons the briefing tool writes are fixed English templates (reasons.ts holds the Tamil of each); a story or a reason the pipeline AI wrote has no Tamil line ("" here): shown as it is, left out of a Tamil reading
   const attTa = att.map((a) => {
