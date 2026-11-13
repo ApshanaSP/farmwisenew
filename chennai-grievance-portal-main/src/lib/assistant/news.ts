@@ -181,16 +181,18 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
       + (ds.some((d) => num(d.is_incident) === 1) ? 10 : 0) + num(li?.dead) * 10;
     const c = cat.get(li?.cat ?? cats[0]);
     // the article's own place first (a story linked to the wrong incident must not move the lake to Egmore); the linked
-    // incident's place only when the articles name none more specific than "Chennai"
+    // incident's place only when the articles name none more specific than "Chennai", and for an officer only their own department's
+    // record's zone (another department's zone was still said: reviewerF-07)
     const said = ds.map((d) => String(d.place_text ?? "").trim()).find((p) => p && !/^chennai( district)?$/i.test(p)) ?? null;
-    const where = said ?? li?.zone_name ?? null;
+    const where = said ?? rec?.zone_name ?? null;
     stories.push({
       storyId, headline: String(lead.title), summary: ai ?? (own || `${sourceCount > 1 ? `${sourceCount} outlets` : String(lead.publisher ?? "One outlet")} reported this${where ? ` in ${where}` : ""}.`),
-      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: said ?? rec?.loc ?? lead.place_text ?? li?.zone_name ?? null,
+      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: said ?? rec?.loc ?? lead.place_text ?? rec?.zone_name ?? null,
       category: li?.label ?? c?.label ?? null, department: li?.dept_name ?? (c ? deptName.get(c.lead) ?? null : null), sourceCount,
       sources: ds.slice(0, 8).map((d) => ({ publisher: d.publisher ?? null, title: String(d.title), url: d.url ?? null, t: d.t ?? null })),
       matchedIncidentId: rec?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
-      score, zones: linked.map((r) => r.zone).filter((z) => z != null).map(num), cats, tally
+      // a zone question matches an officer's story by their own department's records only (another's zone is not theirs to see)
+      score, zones: linked.filter((r) => !f.lockDept || r.dept === f.lockDept).map((r) => r.zone).filter((z) => z != null).map(num), cats, tally
     });
     // a story can be about a place no linked incident records (or link no incident at all): the articles' own places count
     if (f.zone && !stories[stories.length - 1].zones.includes(f.zone)) {
