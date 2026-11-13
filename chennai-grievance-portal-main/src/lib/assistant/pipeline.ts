@@ -197,11 +197,14 @@ export function lockTools(tools: { name: string; args: Record<string, unknown> }
   return out;
 }
 
-/** An incident another department handles is not opened from a department console. */
-function otherDeptsIncident(r: ToolResult, dept: string): boolean {
+/**
+ * An incident another department handles is not opened from a department console, nor one no department leads (it is not the officer's
+ * department's either: it once passed, in full, fixall-lock-06). Nothing found is nothing to hold back.
+ */
+export function otherDeptsIncident(r: ToolResult, dept: string): boolean {
   if (r.tool !== "incident_detail" && r.tool !== "incident_story") return false;
-  const d = (r.data as Row | null)?.incident?.dept;
-  return !!d && d !== dept;
+  const inc = (r.data as Row | null)?.incident;
+  return !!inc && inc.dept !== dept;
 }
 
 /**
