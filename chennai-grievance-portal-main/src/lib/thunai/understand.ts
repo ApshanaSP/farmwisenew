@@ -398,7 +398,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // and a calendar span with its own dates ("last month", "in September", "since Diwali"): the console's filter holds none of them (the fast lane counts them;
   // these rules only move the console), so the Collector is asked which window to show, never moved to the nearest one (QA pass 7: "last month" was set as Monthly)
   const spanSaid = readPeriod(heard);
-  const otherTime = !oneDayBack && (unheldWindowIn(s, heard.toLowerCase()) || (needsDates(spanSaid) && !["day", "now", "compare"].includes(spanSaid.kind)));
+  const otherTime = !oneDayBack && (unheldWindowIn(s, heard.toLowerCase()) || spanSaid.kind === "unheld" || (needsDates(spanSaid) && !["day", "now", "compare"].includes(spanSaid.kind)));
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];

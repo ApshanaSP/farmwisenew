@@ -7,7 +7,7 @@
  */
 import { baseCard, notDoneCard } from "@/lib/assistant/cards";
 import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
-import { MAX_HOURS, readPeriod, spanOf, type PeriodSpec } from "@/lib/period/read";
+import { MAX_HOURS, prevOf, readPeriod, spanOf, type PeriodSpec } from "@/lib/period/read";
 import { aboutTheData } from "@/lib/assistant/help";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
@@ -83,11 +83,11 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
   { headline: string; text: string } | null {
   if (lang !== "ta" && lang !== "tanglish") return null;
   const place = c.where.replace(/^\s*in\s+/i, "").trim();
-  const days = c.period.match(/(\d+)\s*days?/)?.[1], hours = /24 hours/.test(c.period), yday = /previous day|yesterday/.test(c.period);
-  const lastWeek = /^last week\b/.test(c.period), lastMonth = /^last month\b/.test(c.period), today = /^today\b/.test(c.period), nowS = /^open now\b/.test(c.period);
+  const days = c.period.match(/^last (\d+)\s*days?/)?.[1], hours = /^last 24 hours/.test(c.period), yday = /^(previous day|yesterday)\b/.test(c.period), dby = /^the day before yesterday\b/.test(c.period);
+  const lastWeek = /^last week \(/.test(c.period), lastMonth = /^last month\b/.test(c.period), today = /^today\b/.test(c.period), nowS = /^open now\b/.test(c.period);
   const f = (v: number) => v.toLocaleString("en-IN");
   if (lang === "tanglish") {
-    const when = nowS ? "ippo" : today ? "inniki" : yday ? "netru" : lastWeek ? "pona vaaram" : lastMonth ? "pona maasam" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
+    const when = nowS ? "ippo" : today ? "inniki" : dby ? "munthaa naal" : yday ? "netru" : lastWeek ? "pona vaaram" : lastMonth ? "pona maasam" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
     const at = place ? `${place}-la ` : "";
     if (c.measure === "deaths")
       return { headline: `${f(c.dead)} per uyirizhappu · ${when}`, text: `${at}${when} ${c.kind}-la ${f(c.dead)} per uyirizhandhaanga (${f(c.n)} ${c.kind}, ${f(c.severe)} severe).` };
@@ -102,7 +102,7 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
     const text = `${at}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
     return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
   }
-  const when = nowS ? "இப்போது" : today ? "இன்று" : yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
+  const when = nowS ? "இப்போது" : today ? "இன்று" : dby ? "நேற்று முன்தினம்" : yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
   const kind = tamilKind(c.kind);
   // "Adyar zone" in a Tamil sentence: the zone's Tamil name ("அடையாறு மண்டல"), when the place is just the zone
   const zoneTa = c.zoneTa && /^[A-Za-z .-]+ zone$/.test(place) ? `${c.zoneTa} மண்டல` : null;
@@ -373,6 +373,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         break;
       }
       const c = await countIncidents(inc, i.now);
+      // a finished calendar span is set against the calendar span before it (October against September, as Jarvis sets it), not the same number of days
+      // before it (31 days back from 1 October): one question, one side figure in both lanes (QA pass 7, review break C28)
+      const before = custom?.range && !custom.partial && !custom.now ? prevOf(readPeriod(i.message), i.now) : null;
+      if (before?.range) {
+        const p = await countIncidents({ ...inc, range: before.range, offset: 0 }, i.now);
+        Object.assign(c, { prev: p.n, prevDead: p.dead, prevComplaints: p.complaints, prevComplaintIncidents: p.complaintIncidents });
+      }
       const kind = `${sevWord(f.sev)}${countNoun(what, c.n)}`;
       const openC = d.openOnly || !!custom?.now;
       const fmt =(v: number) => v.toLocaleString("en-IN");

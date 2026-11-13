@@ -8,7 +8,7 @@ import type { NextStepT, StageDocT } from "./stage";
 type B = StageDocT["blocks"][number];
 const find = <K extends B["kind"]>(d: StageDocT, k: K) => d.blocks.find((b) => b.kind === k) as Extract<B, { kind: K }> | undefined;
 const other = (p: string) => (p === "weekly" ? "monthly" : "weekly");
-const PERIOD_EN: Record<string, string> = { daily: "today", weekly: "this week", monthly: "30 days", quarterly: "90 days" };
+const PERIOD_EN: Record<string, string> = { daily: "24 hours", weekly: "this week", monthly: "30 days", quarterly: "90 days" };
 
 export function nextSteps(d: StageDocT): NextStepT[] {
   const out: NextStepT[] = [];

@@ -82,10 +82,12 @@ export interface Built { doc: StageDocT; runs: string[] }
 
 // ------------------------------------------------------------------ words --
 
-const PERIOD_EN: Record<PeriodKey, string> = { daily: "today", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
+// the console's daily window is the last 24 hours, said so: "today" is the calendar day since midnight (lib/period/read.ts), and a screen over the 24 hours that said
+// "today" put figures of yesterday evening under the word (QA pass 7, review break A4, the P6-022 class)
+const PERIOD_EN: Record<PeriodKey, string> = { daily: "the last 24 hours", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
 /** the period as an adverb after a noun: "cases today", "cases this week", "cases in the last 30 days" (never "cases the last 30 days", QA4 G1: AUD-NF-16, audit-understanding-20) */
-const inPeriod = (p: PeriodKey): string => (p === "monthly" || p === "quarterly" ? `in ${PERIOD_EN[p]}` : PERIOD_EN[p]);
-const PERIOD_TA: Record<PeriodKey, string> = { daily: "இன்று", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
+const inPeriod = (p: PeriodKey): string => (p === "weekly" ? PERIOD_EN[p] : `in ${PERIOD_EN[p]}`);
+const PERIOD_TA: Record<PeriodKey, string> = { daily: "கடந்த 24 மணி நேரத்தில்", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
 const SEV_TA: Record<string, string> = { Severe: "கடுமையான", High: "அதிக முக்கியத்துவ", Medium: "நடுத்தர", Low: "குறைந்த" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -641,8 +643,9 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
   const state = r.span.now ? bi(status === "overdue" ? " open past their deadline now" : " open now", status === "overdue" ? " இப்போது காலக்கெடு தாண்டி நிலுவையில்" : " இப்போது நிலுவையில்")
     : status === "overdue" ? bi(" past their deadline", " காலக்கெடு தாண்டியவை") : status === "open" ? bi(" still open", " இன்னும் நிலுவையில்") : bi("", "");
   const whenEn = r.span.now ? "" : ` ${when.en}`, whenTa = r.span.now ? "" : `${when.ta} `;
-  const title = asTa ? [`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · ")
-    : [`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · ");
+  // (the list's title has 160 characters on the catalog: a Tamil zone, department, kind and span ran past it and the screen was refused, review break C27)
+  const title = clip(asTa ? [`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · ")
+    : [`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160);
   const kpis: BlockT = { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
     { key: "total", label: clip(asTa ? `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள்${state.ta}, ${r.span.now ? "எந்த நாள் பதிவானாலும்" : when.ta}` : `${sev ?? "All"} cases${state.en}, ${r.span.now ? "whatever the day reported" : when.en}`, 80),
       value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },

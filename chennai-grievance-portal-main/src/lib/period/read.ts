@@ -75,12 +75,12 @@ export const MONTH_NAMES = ["January", "February", "March", "April", "May", "Jun
 const MONTH_TA = ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"];
 /** Days a Collector counts from, as observed in Tamil Nadu (dates, IST). */
 const HOLIDAYS: [RegExp, string, string[]][] = [
-  [/\b(diwali|deepavali|deepawali)\b|தீபாவளி/i, "Deepavali", ["2025-10-20", "2026-11-08"]],
-  [/\bpongal\b|பொங்கல்/i, "Pongal", ["2026-01-15"]],
-  [/\bnew year\b|புத்தாண்டு/i, "New Year", ["2026-01-01"]],
-  [/\bchristmas\b/i, "Christmas", ["2025-12-25"]],
-  [/\brepublic day\b/i, "Republic Day", ["2026-01-26"]],
-  [/\bindependence day\b/i, "Independence Day", ["2026-08-15"]]
+  [/\b(diwali|deepavali|deepawali)\b|தீபாவளி/i, "Deepavali", ["2025-10-20", "2026-11-08", "2027-10-29"]],
+  [/\bpongal\b|பொங்கல்/i, "Pongal", ["2026-01-15", "2027-01-15"]],
+  [/\bnew year\b|புத்தாண்டு/i, "New Year", ["2026-01-01", "2027-01-01"]],
+  [/\bchristmas\b/i, "Christmas", ["2025-12-25", "2026-12-25"]],
+  [/\brepublic day\b/i, "Republic Day", ["2026-01-26", "2027-01-26"]],
+  [/\bindependence day\b/i, "Independence Day", ["2025-08-15", "2026-08-15"]]
 ];
 /** The store keeps about 180 days: a window reaching further back is cut there, and says so. */
 export const MAX_HOURS = 180 * 24;
@@ -99,19 +99,25 @@ const DAY_BEFORE = /\b(day before yesterday|munthaa naal|munthanaal|mundhaa naal
 const SINCE_YESTERDAY = /\bsince yesterday\b|\bfrom yesterday (?:to|till|until|up to|onwards?)\b|நேற்றிலிருந்து|nethu(la)? irundhu/i;
 const TODAY = /\b(today'?s?|todays|tonight|this (morning|afternoon|evening)|so far today|innaiku|innaikku|inniki|innaiki|innikku|innikki|indru|inaiku)\b|இன்று|இன்றைய|இன்னைக்கு|இன்னிக்கு|இன்றிரவு|இன்று காலை/i;
 /** the current state: what is open now. "now" on its own counts ("show severe cases now"); "now" as a sequence word at the start ("now show Adyar") does not */
-const NOW = /\b(right now|just now|as of now|as on now|at (the|this) moment|at present|presently|currently|current(?:ly)? open|open now|now open|still open now)\b|(?<!^\s*)\bnow\b|\b(ippo|ippodhu|ippothu|ipo|ippa|ippove|ipodhu|ipothaikku|ippothaikku|ippa varaikkum)\b|இப்போது|இப்போ(?![஀-௿])|இப்ப(?![஀-௿])|தற்போது|தற்சமயம்|தற்போதைய|இந்த நேரத்தில்/i;
+const NOW = /\b(right now|just now|as of now|as on now|at (the|this) moment|at present|presently|currently|current(?:ly)? open|open now|now open|still open now)\b|\bnow\b|\b(ippo|ippodhu|ippothu|ipo|ippa|ippove|ipodhu|ipothaikku|ippothaikku)\b|இப்போது|இப்போ(?![஀-௿])|இப்ப(?![஀-௿])|தற்போது|தற்சமயம்|இந்த நேரத்தில்/i;
+/** "till now", "so far", "ippo varaikkum", "இதுவரை": up to now, a qualifier of another period ("today till now"), not the current state (review break 9) */
+const UPTO_NOW = /\b(?:till|until|up ?to|upto)\s+(?:now|today)\b|\bso far\b|\b(?:ippo|ipo|ippa)\s*varaikkum\b|இதுவரை|இப்போது வரை|இப்போ வரை/gi;
+/** "now" as a word of sequence: "now show", "ok now ...", "and now the fires", ", now Teynampet" (review break 10) */
+const SEQ_NOW = /(?:^\s*|[,.;:!?]\s*|\b(?:ok|okay|and|so|then|alright)\s+)now\b/gi;
 /** Ago, next, last year: a stretch the console does not hold (quick.ts held these for Jarvis alone; now both lanes) */
 const UNIT = "(?:days?|weeks?|months?|quarters?|years?)";
 const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3}|couple of|few|several|many) ${UNIT} (?:ago|back|before|earlier|prior)\b|\b(?:week|month|quarter|year) before last\b|\blast year\b|\bnext (?:week|month|quarter|year)s?\b|\b(?:tomorrow|next day)\b`, "i");
-const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaaram|maasam|maatham|varusham) (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham|naal)\b|\bpona (?:varusham|varudam)\b|\bnaalaiku|naalaikku|naalai\b/i;
-const AGO_TA = /(?:நாள்|நாட்கள்|வாரம்|வாரங்கள்|வாரத்துக்கு|மாதம்|மாதங்கள்|மாசம்|மாசத்துக்கு|ஆண்டு|வருடம்|வருஷம்)(?:த்துக்கு|க்கு|கள்)?\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்|நாள்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)|நாளை/;
+const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaara|maasa|maatha|varusha)[a-z]* (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham|naal)\b|\bpona (?:varusham|varudam)\b|\bnaalaiku|naalaikku|naalai\b/i;
+const AGO_TA = /(?:நாள்|நாட்க|நாளு|வார|மாத|மாச|ஆண்டு|வருட|வருஷ)[஀-௿]*\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்|நாள்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)|(?<!(?:ஒரு|முந்தைய|அந்த|அதே|எந்த) )(?<![஀-௿])நாளை(?![஀-௿])(?!\s*(?:விட|காட்டிலும்))/;
 
 /** an age, not a period: "open for more than 7 days", "pending over 30 days" */
 const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi;
 
 // the previous calendar unit: English, Tanglish, Tamil (with no Tamil case ending after it: "கடந்த வாரத்தில்", "in the past week", is the rolling week)
-const LAST_EN = /\b(?:last|previous|prior|pona|poona|ponna|kadandha|kadantha|kadanda|munthaiya|mundhaiya) (week|month|quarter|vaaram|varam|maasam|masam|maatham|kaalaandu)(?:'s|s)?\b(?!\s*(?:\d|of\b))/i;
-const LAST_TA = /(?:கடந்த|போன|சென்ற|முந்தைய) ?(வாரம்|மாதம்|மாசம்|காலாண்டு)(?![஀-௿])/;
+const LAST_EN = /\b(?:last|previous|prior|pona|poona|ponna|kadandha|kadantha|kadanda|munthaiya|mundhaiya) (week|month|quarter|vaaram|varam|maasam|masam|maatham|kaalaandu|maasathu|vaarathu|maathathu|maasathin|vaarathin)(?:'s|s)?\b(?!\s*(?:\d|of\b))/i;
+const LAST_TA = /(?:கடந்த|போன|சென்ற|முந்தைய) ?(வாரம்|மாதம்|மாசம்|காலாண்டு|வாரத்தின்|மாதத்தின்|மாசத்தின்|வாரத்து|மாதத்து|மாசத்து)(?![஀-௿])/;
+/** Tanglish "pona maasathula", "indha vaarathula" (in last month, in this week): the rolling window, as the Tamil locative is (கடந்த வாரத்தில்) */
+const LOC_TG = /\b(pona|kadandha|kadantha|last|indha|intha|inda|this) (vaara|maasa|maatha)[a-z]*(?:la|le|il|ula|ile)\b/i;
 /** "கடந்த", "போன", "pona" left over when the unit after them carried a case ending ("கடந்த மாதத்தை விட"): part of the time phrase, not an unknown word */
 const LAST_LONE = /(?<![\u0B80-\u0BFF])(?:கடந்த|போன|சென்ற|முந்தைய)(?![\u0B80-\u0BFF])|\b(?:pona|kadandha|kadantha)\b/;
 /** "in the last week", "since last month", "over the past month": rolling, as the words say */
@@ -122,22 +128,23 @@ const LAST_WEEK_OF = /\b(?:the )?(?:last|final) week of (january|february|march|
 /** asked which way it went, with no reference period in the words: "up or down?" */
 const EITHER_WAY = /\b(up or down|down or up|higher or lower|lower or higher|more or (?:less|fewer)|fewer or more|rise or fall|risen or fallen|rising or falling|increased? or decreased?|go(?:ne)? up or down)\b/i;
 /** "(vs | compared to | against | than | from | over | relative to) last month", "this month and last month" */
-const REF_EN = /\b(?:vs\.?|versus|compared?(?: to| with)?|comparing|against|than|relative to|over|from|with)\s+(?:the\s+)?(?:last|previous|prior|past|pona|kadandha|kadantha)\s+(day|week|month|quarter|period|vaaram|maasam|naal)\b|\b(?:vs\.?|versus|compared?(?: to| with)?|than|from|against|over)\s+(yesterday|nethu|netru)\b|\b(this|current|indha|intha)\s+(week|month|quarter|vaaram|maasam)\s+(?:and|with|to|vs\.?|versus|against)\s+(?:the\s+)?(?:last|previous|prior|pona)\s+(?:week|month|quarter|vaaram|maasam)\b|\b(today|innaiku|inniki)\s+(?:and|with|to|vs\.?|versus|against)\s+(yesterday|nethu)\b|\b(month|week|day|quarter)[- ]on[- ](?:month|week|day|quarter)\b|\b(month|week|day|quarter)[- ]over[- ](?:month|week|day|quarter)\b/i;
-/** a word of change: with it, "from last month" sets two periods side by side */
-const CHANGE_EN = /\b(up|down|higher|lower|more|less|fewer|rise|rose|risen|rising|fall|fell|fallen|falling|increase[ds]?|increasing|decrease[ds]?|decreasing|drop(?:ped|s)?|jump(?:ed|s)?|grew|grown|growth|change[ds]?|changing|difference|differ|better|worse)\b/i;
+const REF_EN = /\b(?:vs\.?|versus|compared?(?: to| with)?|comparing|against|than|relative to|over|from|with)\s+(?:the\s+)?(?:last|previous|prior|past|pona|kadandha|kadantha)\s+(day|week|month|quarter|period|vaaram|maasam|naal)\b|\b(?:vs\.?|versus|compared?(?: to| with)?|than|from|against|over)\s+(yesterday|nethu|netru)\b|\b(this|current|indha|intha)\s+(week|month|quarter|vaaram|maasam)\s+(?:and|with|to|vs\.?|versus|against)\s+(?:the\s+)?(?:last|previous|prior|pona)\s+(?:week|month|quarter|vaaram|maasam)\b|\b(today|innaiku|inniki)\s+(?:and|with|to|vs\.?|versus|against)\s+(yesterday|nethu)\b|\b(?:last|previous|prior|pona)\s+(week|month|quarter|vaaram|maasam)\s+(?:and|with|vs\.?|versus|against|compared? (?:to|with))\s+(?:this|current|indha|intha)\s+(?:week|month|quarter|vaaram|maasam)\b|\b(yesterday|nethu)\s+(?:and|vs\.?|versus|against|compared? (?:to|with))\s+(?:today|innaiku|inniki)\b|\b(month|week|day|quarter)[- ]on[- ](?:month|week|day|quarter)\b|\b(month|week|day|quarter)[- ]over[- ](?:month|week|day|quarter)\b/i;
+/** a word of change right before it: "down from last month", "risen over last week" set two periods side by side; "pull up the cases from last week", "5 more
+ * cases from last week", "complaints against the police from last month" do not (review break 21) */
+const CHANGE_NEAR = /\b(up|down|higher|lower|more|less|fewer|rise|rose|risen|rising|fall|fell|fallen|falling|increased?|increasing|decreased?|decreasing|dropped|jumped|grew|grown|changed?|change|difference|different|better|worse)\s+(?:(?:a lot|a little|much|sharply|slightly|significantly|so much)\s+)?(?:from|over|since|compared|against|on)\b/i;
 /** Tanglish: "pona maasatha vida", "last month vida", "nethai vida", "pona maasathoda compare", "kooduchaa korainjaa" */
 const VS_TG = /\b(?:pona|kadandha|kadantha|last|previous|munthaiya) (?:maasatha|maasam|maasathai|maasathoda|month|monthoda|vaaratha|vaaram|vaarathai|vaarathoda|week|weekoda) (?:vida|vidha|compare|oppittaa|oppidum)\b|\b(?:nethai|nethu|netrai|yesterday) (?:vida|vidha|compare|oppittaa)\b|\b(?:koodicha|kooduchaa|koodiyirukka|athigama(?:yirukka)?|jaasthiyaa|increase aa|up aa)\s*(?:illa\s+)?(?:korainjaa|korainjirukka|korachalaa|kammiyaa|kammiya|decrease aa|down aa)\b/i;
 /** Tamil: "கடந்த மாதத்தை விட", "நேற்றை விட", "கடந்த வாரத்துடன் ஒப்பிடும்போது", "கூடியதா குறைந்ததா" */
-const VS_TA = /(?:மாதத்தை|மாசத்தை|வாரத்தை|காலாண்டை|நேற்றை|நேற்றைய\s*நாளை)\s*(?:விட|விடவும்)|(?:மாதத்துடன்|மாசத்துடன்|வாரத்துடன்|நேற்றுடன்|மாதத்தோடு|வாரத்தோடு|நேற்றோடு)\s*ஒப்பி|(?:கூடியதா|அதிகரித்ததா|ஏறியதா|உயர்ந்ததா|அதிகமா)\s*(?:இல்லை\s*)?(?:குறைந்ததா|இறங்கியதா|குறைவா|சரிந்ததா)/;
+const VS_TA = /(?:மாதத்தை|மாசத்தை|வாரத்தை|காலாண்டை|நேற்றை|நேற்றைய\s*நாளை|நாளை)\s*(?:விட|விடவும்|காட்டிலும்)|(?:மாதத்துடன்|மாசத்துடன்|வாரத்துடன்|நேற்றுடன்|மாதத்தோடு|வாரத்தோடு|நேற்றோடு)\s*ஒப்பி|(?:கூடியதா|அதிகரித்ததா|அதிகரித்துள்ளதா|ஏறியதா|உயர்ந்ததா|உயர்ந்துள்ளதா|அதிகமா)\s*(?:இல்லை\s*)?(?:குறைந்ததா|குறைந்துள்ளதா|இறங்கியதா|குறைவா|சரிந்ததா|சரிந்துள்ளதா)/;
 
 // the console's rolling windows, as said
-const THIS_EN = /\b(this|current|indha|intha|inda) (week|month|quarter|vaaram|maasam|maatham)(?:'s|s)?\b/i;
+const THIS_EN = /\b(this|current|indha|intha|inda) (week|month|quarter|vaaram|maasam|maatham|vaarathu|maasathu)(?:'s|s)?\b/i;
 /** a Tamil week or month word: வாரம், வாரத்தில், வார ("this week's"); never வார்டு (a ward) or மாதவரம் (Madhavaram zone), which start with the same letters */
 const WEEK_TA = "வார(?:ம்|த்|ங்|ாந்|ந்|(?![\\u0B80-\\u0BFF]))";
 const MONTH_TA_W = "(?:மாத(?:ம்|த்|ங்|ாந்|(?![\\u0B80-\\u0BFF]))|மாச(?:ம்|த்|(?![\\u0B80-\\u0BFF])))";
-const THIS_TA = new RegExp(`இந்த ?(${WEEK_TA}|${MONTH_TA_W}|காலாண்டு)`);
+const THIS_TA = new RegExp(`(?:இந்த|தற்போதைய) ?(${WEEK_TA}|${MONTH_TA_W}|காலாண்டு)`);
 const SPAN_N = /\b(?:last|past|previous|kadandha|kadantha|kadaisi|the last|the past)\s+(\d{1,3})\s*(hours?|hrs?|h\b|days?|weeks?|months?|naal|naatkal|naal-la|mani neram)/i;
-const SPAN_N_TA = /(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்கள்|நாள்|வாரங்கள்|வாரம்|மாதங்கள்|மாதம்)/;
+const SPAN_N_TA = /(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்க|நாள்|வாரங்க|வார|மாதங்க|மாத)/;
 const N_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, ten: 10, fourteen: 14, fifteen: 15, twenty: 20, thirty: 30, sixty: 60, ninety: 90 };
 const SPAN_W = /\b(?:last|past|previous)\s+(one|two|three|four|five|six|seven|ten|fourteen|fifteen|twenty|thirty|sixty|ninety)\s+(hours?|days?|weeks?|months?)\b/i;
 const DAILY = /\b(24 ?(?:hrs?|hours?|h)|past day|daily)\b|தினசரி|24 மணி/i;
@@ -181,15 +188,17 @@ export function readPeriod(text: string): PeriodSpec {
     if (mi >= 0 && d >= 1 && d <= 31) return { kind: "since", month: mi, day: d };
   }
   if (/\b(since|from|after)\b|இலிருந்து|முதல்/.test(t)) { const h = HOLIDAYS.find(([re]) => re.test(t)); if (h) return { kind: "holiday", name: h[1], dates: h[2] }; }
-  const mm = t.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b(?:\s+(20\d{2}))?/);
-  if (mm && !(mm[1] === "may" && !mm[2] && !/\bin may\b/.test(t)) && !(mm[1] === "mar" && !mm[2])) return { kind: "month", month: MONTHS.indexOf(mm[1].slice(0, 3)), year: mm[2] ? Number(mm[2]) : null };
-  // 8. the current state
-  if (NOW.test(t)) return { kind: "now" };
-  // 9. today
+  const mm = monthIn(t);
+  if (mm) return { kind: "month", month: mm.month, year: mm.year };
+  // 8. today, and this week or month (also "till now": up to now is a qualifier of them, not the current state)
   if (TODAY.test(t)) return { kind: "day", back: 0 };
-  // 10. the console's windows, as said
+  const loc = LOC_TG.exec(t);
+  if (loc) return { kind: "window", key: /^vaara/.test(loc[2]) ? "weekly" : "monthly" };
   const th = THIS_EN.exec(t) ?? THIS_TA.exec(t);
   if (th) return { kind: "window", key: keyOfUnit(th[2] ?? th[1]) };
+  // 9. the current state, never from "till now" or a "now" of sequence ("ok now show ...")
+  if (NOW.test(t.replace(UPTO_NOW, " ").replace(SEQ_NOW, " "))) return { kind: "now" };
+  // 10. the console's windows, as said
   if (DAILY.test(t)) return { kind: "window", key: "daily" };
   const bare = BARE_DAYS.exec(t);
   if (bare) return { kind: "window", key: bare[1] ? "weekly" : "monthly" };
@@ -200,10 +209,25 @@ export function readPeriod(text: string): PeriodSpec {
 }
 
 function unitOf(w: string): CalUnit {
-  return /^(week|vaaram|varam|வாரம்)$/.test(w) ? "week" : /^(quarter|kaalaandu|காலாண்டு)$/.test(w) ? "quarter" : "month";
+  return /^(week|vaar|varam|வார)/.test(w) ? "week" : /^(quarter|kaalaandu|காலாண்டு)/.test(w) ? "quarter" : "month";
 }
 function keyOfUnit(w: string): PeriodKey {
-  return /^(week|vaaram|வார|வாரம்)/.test(w) ? "weekly" : /^(quarter|காலாண்டு)/.test(w) ? "quarterly" : "monthly";
+  return /^(week|vaar|வார)/.test(w) ? "weekly" : /^(quarter|காலாண்டு)/.test(w) ? "quarterly" : "monthly";
+}
+/**
+ * A month named by its name. A full name other than March and May counts anywhere; March, May and the short forms (Jan, Mar, Sept) count only with a month's
+ * context: a word before it (in, during, for, since, last, this ...), a year or a day number beside it ("the protest march", "Jan Aushadhi", "it may need" are no month).
+ */
+function monthIn(t: string): { month: number; year: number | null } | null {
+  const re = /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b(?:\s+(20\d{2}))?/g;
+  for (const m of t.matchAll(re)) {
+    const before = t.slice(0, m.index), after = t.slice((m.index ?? 0) + m[0].length);
+    const plain = !["march", "may"].includes(m[1]) && m[1].length > 4;
+    const context = !!m[2] || /\b(in|during|for|of|since|from|until|till|by|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before)
+      || /^\s*\d{1,2}(?:st|nd|rd|th)?\b/.test(after) || /\b\d{1,2}(?:st|nd|rd|th)?\s+$/.test(before) || /^\s*(?:month|maasam|la|le|il)\b/.test(after);
+    if (plain || context) return { month: MONTHS.indexOf(m[1].slice(0, 3)), year: m[2] ? Number(m[2]) : null };
+  }
+  return null;
 }
 const keyOfHours = (h: number): PeriodKey => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
 
@@ -225,21 +249,22 @@ function spanIn(t: string): PeriodSpec | null {
 function compareIn(t: string): PeriodKey | null {
   const ref = REF_EN.exec(t);
   // "from last month" alone ("complaints from last month") names a month, not a comparison: it needs a word of change with it ("up or down from last month")
-  if (ref && (!/^\s*(from|with|over)\b/.test(ref[0]) || CHANGE_EN.test(t) || /\b(vs|versus|compared?|against|than)\b/.test(t))) return keyOfRef(unitNear(ref[0]) || "month");
+  if (ref && (!/^\s*(from|with|over)\b/.test(ref[0]) || CHANGE_NEAR.test(t))) return keyOfRef(unitNear(ref[0]) || "month");
   const tg = VS_TG.exec(t);
   if (tg) return keyOfRef(unitNear(tg[0]) || unitNear(t) || "week");
   const ta = VS_TA.exec(t);
-  if (ta) return keyOfRef(/நேற்/.test(ta[0]) ? "day" : /வார/.test(ta[0]) ? "week" : /காலாண்/.test(ta[0]) ? "quarter" : /மாத|மாச/.test(ta[0]) ? "month" : unitNear(t));
+  if (ta) return keyOfRef(/நேற்/.test(ta[0]) ? "day" : /வார/.test(ta[0]) ? "week" : /காலாண்/.test(ta[0]) ? "quarter" : /மாத|மாச/.test(ta[0]) ? "month" : unitNear(t) || "week");
   // "garbage complaints, up or down?" with a month named elsewhere in the sentence ("this month", "pona maasam")
   // "are garbage complaints up or down?": the unit named elsewhere ("this month", "pona maasam"), else the week
   if (EITHER_WAY.test(t)) return keyOfRef(unitNear(t) || "week");
   return null;
 }
 function unitNear(t: string): string {
-  return /\b(yesterday|today|nethu|netru|nethai|netrai|innaiku|inniki|day|naal)\b|நேற்|இன்று/.test(t) ? "day"
-    : /\b(weeks?|vaaram|vaaratha|vaarathai|vaarathoda|weekoda)\b|வார(?!்)/.test(t) ? "week"
+  // the Tamil week and month words by their stems with endings only (வாரியம், a board, and மாதா, a church's name, are neither: review break 22)
+  return /\b(yesterday|today|nethu|netru|nethai|netrai|innaiku|inniki|day|naal)\b|நேற்|இன்று|நாளை\s*(?:விட|காட்டிலும்)/.test(t) ? "day"
+    : /\b(weeks?|vaaram|vaaratha|vaarathai|vaarathoda|weekoda)\b/.test(t) || new RegExp(`${TA_EDGE}${WEEK_TA}`).test(t) ? "week"
       : /\b(quarters?|kaalaandu)\b|காலாண்/.test(t) ? "quarter"
-        : /\b(months?|maasam|maasatha|maasathai|maasathoda|monthoda|period)\b|மாத(?!வ)|மாச/.test(t) ? "month" : "";
+        : /\b(months?|maasam|maasatha|maasathai|maasathoda|monthoda|period)\b/.test(t) || new RegExp(`${TA_EDGE}${MONTH_TA_W}`).test(t) ? "month" : "";
 }
 function keyOfRef(w: string): PeriodKey {
   const x = w.toLowerCase();
@@ -332,12 +357,14 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
       let y = spec.year ?? year;
       if (spec.year == null && mi > cur.getUTCMonth()) y -= 1;
       const end = Date.UTC(mi === 11 ? y + 1 : y, mi === 11 ? 0 : mi + 1, 1);
-      if (end > nowWall) return null;
+      const reach = nowWall - MAX_HOURS * 3600_000;
+      // not over yet, or wholly before the records begin (a false zero otherwise: review break 24)
+      if (end > nowWall || end <= reach) return null;
       const a = end - 7 * 864e5;
       const r = `${new Date(a).getUTCDate()} to ${new Date(end - 864e5).getUTCDate()} ${MONTH_NAMES[mi]}`;
       return { ...base, key: "weekly", range: { from: wall(a), to: wall(end) },
-        label: { en: `last week of ${MONTH_NAMES[mi]} ${y} (${r})`, ta: `${MONTH_TA[mi]} கடைசி வாரம் (${r})`, tg: `${MONTH_NAMES[mi]} kadaisi vaaram (${r})` },
-        note: tooOld(a) ? "The records go back about 180 days, so the start of this period is not covered." : null };
+        label: { en: `last week of ${MONTH_NAMES[mi]} ${y} (${r})`, ta: `${MONTH_TA[mi]} கடைசி வாரம் (${new Date(a).getUTCDate()} முதல் ${dayTa(end - 864e5)} வரை)`, tg: `${MONTH_NAMES[mi]} kadaisi vaaram (${r})` },
+        note: a < reach ? "The records go back about 180 days, so the start of this period is not covered." : null };
     }
     case "month": {
       const mi = spec.month;
@@ -369,7 +396,7 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
       }
       if (start == null || start >= nowWall) return null;
       const want = Math.ceil((nowWall - start) / 3600_000), hours = Math.min(want, MAX_HOURS);
-      return { ...base, key: keyOfHours(hours), range: { from: ist(nowMs - hours * 3600_000), to: toNow }, hours, partial: true, label: { en, ta: taL, tg: en },
+      return { ...base, key: keyOfHours(hours), range: { from: want > hours ? ist(nowMs - hours * 3600_000) : wall(start), to: toNow }, hours, partial: true, label: { en, ta: taL, tg: en },
         note: want > hours ? "The records go back about 180 days, so this counts from then." : null };
     }
     default:

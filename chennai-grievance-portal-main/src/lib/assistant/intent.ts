@@ -176,7 +176,7 @@ const COMPLAINT_WORDS = ["complaint", "complaints", "grievance", "grievances", "
 const DEATH_WORDS = ["death", "deaths", "died", "dead", "fatal", "fatality", "fatalities", "lives lost", "lost their lives", "killed", "உயிரிழ", "இறந்", "பலி", "uyirizhappu"];
 /** "this month vs last month", "compared with last week": the period against the one before */
 // ("compare this month and last month for street light complaints" too)
-const VS_PREVIOUS = /\b(vs\.?|versus|compared? (to|with)|against)\s+(the\s+)?(last|previous|prior|past)\s+(day|week|month|quarter|period)\b|\b(than|from)\s+(last|the previous)\s+(week|month|quarter)\b|\b(this|current)\s+(week|month|quarter)\s+(and|with|to|vs\.?|versus)\s+(the\s+)?(last|previous|prior)\s+(week|month|quarter)\b|\bcompare\b.{0,40}\b(with|to|and)\s+(the\s+)?(last|previous)\s+(week|month|quarter)\b/i;
+const VS_PREVIOUS = /\b(vs\.?|versus|compared? (to|with)|against)\s+(the\s+)?(last|previous|prior|past)\s+(day|week|month|quarter|period)\b|\bthan\s+(last|the previous)\s+(week|month|quarter)\b|\b(this|current)\s+(week|month|quarter)\s+(and|with|to|vs\.?|versus)\s+(the\s+)?(last|previous|prior)\s+(week|month|quarter)\b|\bcompare\b.{0,40}\b(with|to|and)\s+(the\s+)?(last|previous)\s+(week|month|quarter)\b/i;
 const RANKING = ["types", "type of", "kinds", "kind of", "categories", "category", "most common", "which type", "which kind", "breakdown", "by category", "by type",
   // Tanglish "enna prachanai adhigama irukku": which kinds are most frequent
   "adhigama", "athigama", "adhigam", "athigam", "அதிகமா"];

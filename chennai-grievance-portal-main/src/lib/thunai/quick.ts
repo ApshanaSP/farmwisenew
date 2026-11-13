@@ -353,13 +353,14 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const spec = readPeriod(text);
   // a time no lane can answer ("two weeks ago", "next week") is never answered with the current window (RC-06)
-  if (!o.noBail && spec.kind === "unheld") return null;
+  // (also for the readings that skip the bail-outs, noBail: the rules read after a planner miss and a follow-up's frame; review break A1)
+  if (spec.kind === "unheld") return null;
   const q = readScreen(text, w, o, spec);
-  return q && !o.noBail ? withSpan(q, spec) : q;
+  return q ? withSpan(q, spec) : q;
 }
 
 /** Is it asked as a count ("how many", "evlo", எத்தனை)? A count is answered for the period asked, never widened to another (P6-022). */
-export const asksCount = (text: string): boolean => /\b(how many|how much|count|number of|total|evlo|evvalavu|ethana|ethanai|eththanai)\b|எத்தனை|எவ்வளவு|மொத்தம்/i.test(text);
+export const asksCount = (text: string): boolean => /\b(how many|how much|count|number of|total|evlo|evalo|evvalo|evvalavu|ethana|ethanai|eththanai|ethhana)\b|எத்தனை|எவ்வளவு|மொத்தம்/i.test(text);
 
 /**
  * The time a request named, on the screen that answers it (QA pass 7). A list or a count, and a brief, are counted over the span's own dates (today since
@@ -377,6 +378,8 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   if ((q.recipe === "cases" && q.slots.status !== "resolved") || (q.recipe === "brief" && !(spec.kind === "day" && spec.back === 0))) return { ...q, slots: { ...q.slots, period: keyOf(spec), span: spec } };
   // a reading (air, rain, lakes), prices and a place search have no reporting window: the time words change nothing
   if (["readings", "prices", "nearby"].includes(q.recipe)) return q;
+  // a list of resolved cases over a span is not one this lane can count ("resolved today" is since midnight in Ask District IQ): handed on, never the last 24 hours
+  if (q.recipe === "cases") return null;
   if (spec.kind === "day" && spec.back === 0) return { ...q, slots: { ...q.slots, period: "daily" } };
   return null;
 }
