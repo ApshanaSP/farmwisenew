@@ -341,10 +341,11 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // "what percentage of complaints are resolved": a share of the incidents reported in the window, with the counts it comes from (RC-44)
       if (d.share) {
         const r = await shareOfIncidents(inc, i.now);
-        const have = { resolved: r.resolved, open: r.open, severe: r.severe, overdue: r.overdue }[d.share];
+        const have = { resolved: r.resolved, open: r.open, severe: r.severe, overdue: r.overdue, ontime: r.ontime, ratio: r.open }[d.share];
         const pct = r.n ? Math.round((have / r.n) * 1000) / 10 : 0;
         const word = { resolved: { en: "resolved", ta: "தீர்க்கப்பட்டவை", tanglish: "resolve aanavai" }, open: { en: "still open", ta: "இன்னும் திறந்திருப்பவை", tanglish: "innum open-la irukkiravai" },
-          severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" } }[d.share];
+          severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" },
+          ontime: { en: "resolved within the deadline", ta: "காலக்கெடுவுக்குள் தீர்க்கப்பட்டவை", tanglish: "deadline-kulla resolve aanavai" }, ratio: { en: "open", ta: "திறந்திருப்பவை", tanglish: "open-la irukkiravai" } }[d.share];
         // the share counts incidents (the pipeline's records), as the Tamil and Tanglish lines already say: "complaints" would name another unit than the one counted, and the department list refuses "complaints by department" for the same reason (g-review 5)
         const kindS = countNoun(what.replace(/\b(?:citizen )?(?:complaint|grievance)s?\b/gi, "incident"), r.n);
         const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
@@ -356,6 +357,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         if (!r.n) {
           card.headline = `No ${kindS} ${inP(inc.period)}${sw}, so there is no share to give`;
           card.answerMarkdown = `No ${kindS} were reported ${inP(inc.period)}${sw}, so a percentage cannot be worked out.`;
+        } else if (d.share === "ratio") {
+          // "ratio of open to closed incidents": both counts and the ratio between them, never one share in its place (pass4-open-11)
+          const ratio = r.closed ? Math.round((r.open / r.closed) * 100) / 100 : null;
+          card.headline = `Open to closed ${kindS}: ${num1(r.open)} : ${num1(r.closed)} · ${pl(inc.period)}`;
+          card.answerMarkdown = `Of the ${num1(r.n)} ${kindS} reported ${inP(inc.period)}${sw}, **${num1(r.open)}** ${r.open === 1 ? "is" : "are"} open and **${num1(r.closed)}** closed`
+            + `${ratio != null ? `: a ratio of ${ratio} open to each closed one` : ""}.\n\n- ${num1(r.resolved)} of the closed ones resolved, ${num1(r.closed - r.resolved)} rejected or lapsed`;
         } else if (i.lang === "en" || !whenTa) {
           card.headline = `${num1(pct)}% of ${kindS} are ${word.en} · ${pl(inc.period)}`;
           card.answerMarkdown = `**${num1(pct)}%** of the ${kindS} reported ${inP(inc.period)}${sw} ${r.n === 1 ? "is" : "are"} ${word.en}: ${num1(have)} of ${num1(r.n)}.`
