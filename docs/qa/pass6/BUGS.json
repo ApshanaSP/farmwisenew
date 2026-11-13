@@ -383,14 +383,14 @@
     "area": "Ask the Map / periods",
     "title": "Ask the Map reads \"today\" as the last 24 hours, while Jarvis and Ask District IQ read it as the calendar day since midnight (pass 7, P6-022)",
     "found_by": "fix-all round 3, same-number.test.ts (map/ask \"open incidents today\" equals the 24-hour figure, 236; Ask and Jarvis say 144 for \"today\")",
-    "repro": null,
+    "repro": "server.mjs start --frozen --ticking; POST /api/map/ask {text:\"open incidents today\"}: plan period last_days 1, \"236 open incidents (last 24 hours)\"; Ask District IQ, same words: \"Open incidents · today (6 Nov, since midnight)\"",
     "failing_test": null,
     "root_cause": "pass 7 put one period reader (src/lib/period/read.ts) under the two rules lanes only; the map engine (src/lib/map) keeps its own reading of today",
     "fix_commit": null,
     "revert_check": null,
     "status": "open",
     "reviewer": null,
-    "note": "Not fixed in round 3 (outside the nine files). A distance question with today in Ask District IQ goes to the map lane, so one chat can mean two windows. same-number keeps today for its map questions so it still passes; change WHEN there when the map follows read.ts."
+    "note": "Not fixed in round 3 (outside the nine files). Each answer names its window, so neither misleads, but one word means two windows on one console. same-number keeps today for its map questions so it still passes; change WHEN there when the map follows read.ts."
   },
   {
     "id": "fixall3-officer-open",
