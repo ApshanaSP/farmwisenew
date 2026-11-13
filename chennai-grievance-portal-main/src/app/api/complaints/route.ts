@@ -15,6 +15,11 @@ import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 import { oneAtATime } from "@/lib/serial";
 import { addCaseLive, onlineCase, type Routing } from "@/lib/manu/cases";
 import { istNow } from "@/lib/manu/clean";
+import { complaintTry, giveBackComplaintTry } from "@/lib/complaint-limit";
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+
+/** Every field of the form at its longest is a few kilobytes, even written as \u escapes. */
+const COMPLAINT_BODY_LIMIT = 32 * 1024;
 
 /** The same citizen's identical complaint (title, details, ward) filed in the last two minutes, if any. */
 async function sameComplaintJustFiled(userId: number, title: string, description: string, ward: number) {
@@ -45,8 +50,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
-    const parsed = complaintSubmitSchema.safeParse(body);
+    // each try counts, per account and per address, before the body is read or the store touched (hunt2-sec-12: no limit at all, and every
+    // filing a classifier call, a dataset append and a case on a department's list); lib/complaint-limit.ts says why these numbers
+    const limit = complaintTry(session.userId, req.headers);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: "Too many complaints from this account just now. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds ?? 3600) } });
+    }
+    // read with a limit before anything parses it (the form's longest complaint is a few kilobytes)
+    const { body, tooLarge } = await readJsonCapped(req, COMPLAINT_BODY_LIMIT);
+    if (tooLarge) return tooLargeResponse();
+    const parsed = complaintSubmitSchema.safeParse(body); // a malformed body is a 400 from the schema, not a 500
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
@@ -57,6 +71,7 @@ export async function POST(req: NextRequest) {
     release = await oneAtATime(`complaint:${session.userId}`);
     const same = await sameComplaintJustFiled(session.userId, data.title, data.description, data.wardNumber);
     if (same) {
+      giveBackComplaintTry(session.userId); // the same complaint sent twice files nothing new
       return NextResponse.json({
         message: "This complaint was already registered a moment ago. Use your complaint number to check its status.",
         complaintCode: same.complaint_code, complaintId: same.id, department: same.department_name ?? null, departmentPending: false,

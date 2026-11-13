@@ -35,6 +35,8 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/ai-classifier", () => ({ classifyComplaint: async () => ({ department: "Electrical Department", needsManualReview: true, method: "keywords" }) }));
 vi.mock("@/lib/dataset/append", () => ({ appendComplaintToDataset: async () => undefined }));
+// one citizen files more complaints here than the hourly limit allows (hunt2-sec-12, lib/complaint-limit.ts): the limit has its own test
+vi.mock("@/lib/complaint-limit", () => ({ complaintTry: () => ({ allowed: true }), giveBackComplaintTry: () => undefined }));
 
 const { POST: fileComplaint } = await import("@/app/api/complaints/route");
 const { GET: caseScreen } = await import("@/app/api/manu/case/[incident]/route");
