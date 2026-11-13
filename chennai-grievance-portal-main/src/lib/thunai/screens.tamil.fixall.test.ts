@@ -62,3 +62,20 @@ describe("pass4-open-12: the advice screen's first and past-deadline points name
     expect(t).toMatch(/3 பொதுப்பணித்துறை நீர்வளம் வசம்/);
   });
 });
+
+// pass4-open-15 (pass 4's PB-207): the Tamil district brief said "PWD Water Resources, அண்ணா நகர்: <reason>" twice for two cases.
+describe("pass4-open-15: no two Tamil brief points say the same thing, and the body is named in Tamil", () => {
+  it("two cases of one body in one zone with the same reason", async () => {
+    const why = { attention: ["Still open at more than twice its 6-hour deadline"] };
+    const h = fakeHands({ briefing: () => res({ headline: ["1,357 incidents were reported in Chennai district (last 7 days), 6% more than the previous period.", "1,167 incidents are still open, 505 of them past the deadline; 65 severe events."],
+      stats: { reported: 1357, change: 6, open: 1167, overdue: 505, severe: 65, newsOnly: 73, multi: 46 },
+      attention: [{ id: "INC-1", title: "Canal overflow at Pulianthope, Anna Nagar.", zone: "Anna Nagar", dept: "PWD Water Resources", why }, { id: "INC-2", title: "Canal overflow at Ice House, Teynampet.", zone: "Teynampet", dept: "PWD Water Resources", why },
+        { id: "INC-3", title: "Canal overflow at Kilpauk, Anna Nagar.", zone: "Anna Nagar", dept: "PWD Water Resources", why }], emerging: [], conditions: null }) });
+    const { doc } = await buildScreen("brief", { ...emptySlots(), period: "weekly" }, { ...SCOPE, period: "weekly" as never }, WORLD, h, "இந்த வாரம் சுருக்கம் சொல்லு");
+    const brief = (doc.blocks as { kind: string; points?: { ta?: string }[] }[]).find((b) => b.kind === "Brief")!;
+    const ta = brief.points!.map((p) => p.ta).filter((x): x is string => !!x);
+    expect(ta.length).toBeGreaterThan(3);
+    expect(ta.filter((l, i) => ta.indexOf(l) !== i)).toEqual([]);
+    expect(ta.join("\n")).not.toContain("PWD Water Resources");
+  });
+});
