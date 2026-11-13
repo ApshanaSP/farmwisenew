@@ -29,3 +29,7 @@
 - Agreed with the fix coordinator (owner-approved): it merges the six p7 lanes, claude/fixall-repeat-reviewer5, this branch and pass 4's eec8c840 into one branch, then runs the gate once.
   - This branch stops moving at its "freezing fixall".
   - The 71 rows that wait on p7 files continue on a new branch cut from the combined tip after the gate.
+- 2026-11-13 14:38: round 1 (`claude/fixall-a84a72`, `bb50d5f6`) was merged into the combined branch `claude/elated-yalow-26931a`. Its gate passed on `ae65fe84`.
+  - Round 2 starts on `claude/fixall2-a84a72`, cut from `1df591f0`.
+  - 74 rows: 70 of the 71 that waited (1 was fixed on the way) and 4 of round 1's.
+  - Batches (`round2-*.json`): desk 21, ai-studio 22, officer 16, collector 12, misc 3. Plus p7-studio-egress-20 (P1, `readFormCapped`).
