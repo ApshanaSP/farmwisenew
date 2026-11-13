@@ -1,6 +1,11 @@
-# Golden master: p7-gate (combined branch at 65f36ea1) against p6-gate (pass 6's last green recording)
+# Golden master: p7-gate (combined branch) against p6-gate (pass 6's last green recording)
 
-Recorded by `tests/qa/pass7/gate.sh` on the production build of `65f36ea1` (serial, pinned snapshot, frozen clock): 3,273 requests, no 5xx,
+**Final recording, on `7e815c53`** (round 3 merged): recorded on the final gate's production build, right after the gate (the gate's
+clean-up step had put back the previous manifest). The same 332 requests changed, the same 7 added and 11 removed, with the same
+differences as on `65f36ea1` below, except the map position of the complaint the recorder files itself (the noise floor). Round 3 changed
+nothing this recording sees; the explanations below hold for it unchanged.
+
+**First recording, on `65f36ea1`.** Recorded by `tests/qa/pass7/gate.sh` on the production build (serial, pinned snapshot, frozen clock): 3,273 requests, no 5xx,
 no problems, 4 gaps (routes with an id in the path the plan has no ids for: `/api/manu/case/[incident]`, `/api/manu/petitions/[id]`,
 `/api/manu/photos/[name]`, `/api/profile/photo/[name]`; pass 6 reported the first three the same way). The recordings' bodies stay in the
 gitignored `data/aws-cache/qa/golden/`; the diff is `docs/qa/pass4/golden/diffs/p6-gate__p7-gate.{json,md}`.

@@ -1,7 +1,8 @@
 # QA pass 7: pass 6's open P0s, and everything merged into one branch
 
-Branch `claude/elated-yalow-26931a`, local only: nothing pushed, nothing merged into main, no PR. The final gate ran on `ae65fe84` and is
-green (section 6); the commits after it change only test files and documents.
+Branch `claude/elated-yalow-26931a`. This session pushes nothing and opens no PR: the pass 5 session holds the owner's "push to main" and
+pushes the gated tip itself (GitHub main had `1df591f0` from this branch when this was written). The final gate ran on `7e815c53` and is
+green (section 6); the commits after it change only the gate script's clean-up step and documents.
 The owner asked for "all bugs" to be fixed at once, so the work ran as six parallel sessions ("lanes"), each in its own worktree with its own
 files and ports, and everything was merged here: the six lanes, the pass 6 session's own fix branch (`claude/fixall-a84a72` at `bb50d5f6`:
 P1-P3 rows outside the lanes' files), a fix it had parked (`claude/fixall-repeat-reviewer5`), and QA pass 4's final commit `eec8c840`
@@ -77,37 +78,57 @@ Each merge commit lists its conflicts and resolutions: `25ab4f55` (pass 4), `83d
   "deactivated only after the right password"; the officer drawer keeps both.
 - **Found on the merge, fixed:** p7-merge-01 (two backspace bytes written for `\b` in a regex: "recent" stopped meaning today),
   p7-merge-02 (`name in SHARED_TABLES` also found Object.prototype names), p7-merge-03 (Tanglish counts), the Tamil for pass 4's new
-  confirm title (pass 6's officer-day-11 test). Open: p7-merge-04 (Jarvis does not read "on 15 Oct"; Ask District IQ does).
+  confirm title (pass 6's officer-day-11 test). p7-merge-04 (Jarvis did not read "on 15 Oct"; Ask District IQ did) was fixed later by
+  rules-periods (`69820f2`).
+- **Pass 6's fix-all rounds 2 and 3, merged after the lanes:** `claude/fixall2-a84a72` at `64e6e155` (merge `65f36ea1`: its remaining
+  P1-P3 rows) and `claude/fixall3-a84a72` at `d85e11a9` (merge `8ea224dd`: pass 4's whole-suite failures and SKG1-30). Neither had a
+  conflict; the ledger was merged row by row. What each changes on purpose: `docs/qa/fixall/EXPECTED_CHANGES.md`.
 
 ## 5. What is left
-- **pass4-open-18 (P0, partly):** m03:tanglish and m08:ta still differ from English.
-- **Open P1s (9):** P6-024 (Jarvis replies "Asked District IQ" over the answer: the cause is `Thunai.tsx` `run()`); pass4-open-08, -10, -11
-  (rules-lane variants; not started); p7-rules-periods-01, -02 (news over a named day or month; a topic over a calendar span);
-  p7-studio-egress-18, -19 (PDF and Excel decompression bombs: the reader process's memory watchdog keeps the server safe, but a file's
-  reader still uses up to its cap); p7-studio-egress-20 (`readFormCapped` parses any content type; a urlencoded body is quadratic; the
-  Studio route no longer reaches it, other routes may).
-- **Not run:** the golden master (pass 6's baseline recording is not in this worktree); seven of pass 4's real-path files that start their
-  own servers without a build (audit-ui_honesty, gate-oracle-figures, golden-baseline, hunt-askiq, model-lifecycle, same-number, and
-  redteam-final, which the gate now runs against its build); pass 4's grader test does not load under vitest (a syntax error reported at
-  an import of a valid, unchanged file), as before this pass. No live model was called.
-- **For the owner:** sign-out revocation (above); hunt2-ops-01's option B (a reopen of open work that was never reported changes neither
-  stage nor tracker: `p7-collector-ops.md`); p7-askiq-writer-lock-03; p7-rules-periods-04; and pass 6's owner rows (P5-006, P5-020, P5-021).
-- The pass 6 session continues with the remaining P1-P3 rows on a new branch cut from this branch.
+The ledger (`docs/qa/pass6/BUGS.json`, 317 rows after the pass 6 session's three fix-all rounds): 281 fixed, 23 for the owner, 8 not
+reproduced, 4 duplicates, 1 open.
+- **Open: fixall3-map-today (P3).** Ask the Map reads "today" as the last 24 hours, while Jarvis and Ask District IQ read it as the calendar
+  day since midnight. The map reads every period word as a rolling window, so the fix is to move it onto the shared reader
+  (`src/lib/period/read.ts`); it was left until after the gate.
+- **Closed by this gate: P5-034.** Pass 4's whole real-path suite on the merged tree, which no gate had run whole and green before (section 6).
+- **For the owner (23 rows, unchanged by this pass):** sign-out does not end the session on the server (hunt2-sec-01, redsec2-04,
+  skeptic-redsec1-1: the per-tab sign-out was kept, see section 4); the desk password (P5-006, hunt2-sec-08); the closing SMS after a reopen
+  (P5-020); joining another department's case (P5-021, hunt2-desk-01, reviewer3-09); which "open" the officer console shows
+  (fixall3-officer-open); p7-rules-periods-04; and the rest of the `owner` rows in the ledger.
+- **Not run:** no live model was called (no key in the test processes; the code lanes answer); six of pass 4's files skip on their own
+  conditions (four need a server already up, one needs `QS`, one needs the sealed set, which is not opened).
 
-## 6. Gate on `ae65fe84` (`tests/qa/pass7/gate.sh`)
-Its logs stay in the worktree's `docs/qa/pass7/evidence/*.log` (`*.log` is gitignored, as pass 6's were); the access matrix JSON and the
-four suite summaries (`docs/qa/pass6/results/suite-p7-gate-*`) are committed. The first gate, on `94b99ed7`, was red (`evidence/first-gate/`): a stale reader bundle, a guard tripped by a comment, five test
-files that only passed in order under shuffling, and a test config that also ran all of pass 4's real-path folder, which showed ten period
-regressions from the merge. All were fixed (`7e5b3b46`, `8cc9a6f2`, rules-periods round 2 `19c4461`) and the gate ran again, once:
-- type check and lint: clean, no errors;
-- unit suite, 3 shuffled runs in Asia/Kolkata and 1 in UTC (seeds 7201-7204): 3965 passed, 13 skipped, 0 failed in each;
-- the lanes' tests in `tests/qa/pass7`: 756 passed, 9 skipped; collector-ops' real-path tests: 24/24;
+## 6. Final gate on `7e815c53` (`tests/qa/pass7/gate.sh`)
+`7e815c53` is the merge of round 3 (`8ea224dd`) plus the gate's port settings. Its logs stay in the worktree's
+`docs/qa/pass7/evidence/*.log` (`*.log` is gitignored, as pass 6's were); the access matrix, pass 4's suite report
+(`evidence/pass4-suite-gate.json`), the golden manifest and its diff are committed. One run, one heavy job at a time, holding the
+machine-wide Studio fixture lock:
+- type check and lint: clean, no errors (lint's four `<img>` warnings are as before);
+- unit suite, 3 shuffled runs in Asia/Kolkata and 1 in UTC (seeds 7201-7204): 4422 passed, 13 skipped, 0 failed in each (the
+  `suite-p7-gate-*` summaries in `docs/qa/pass6/results` are the previous gate's, with the same counts: this run's clean-up put them back);
+- the lanes' tests in `tests/qa/pass7`: 769 passed, 7 skipped; collector-ops' real-path tests: 24/24;
 - pass 4's guards and real-path checks, one file at a time on the pinned snapshot: lane-c 28/28, g2-cache 9/9, dept-lock 10/10, join-lock
   14/14, batch-mail 1/1, critical tile 4/4, Studio browser ws/bypass/more 1/1, 2/2, 2/2, metamorphic 128/128, open-baseline 46/46, and the
   src guards (numbergate, pass 5's seam, SMS, pass 4's class guards) 39/39;
 - production build: compiled;
+- **pass 4's whole real-path suite** (P5-034), every file in one process, one at a time, on the build: 67 files (61 passed, 6 skipped by
+  their own conditions), 2668 tests, 2648 passed, **0 failed**, 20 skipped. The gate on `65f36ea1` failed 30 of 2553 here; pass 7's test
+  flips (`43c1698a`) and round 3 fixed them, and `grader/grader.test.ts` (113 tests) now loads. Vitest's exit code was 1 for one error of
+  its own, a worker call to the runner that timed out ("Timeout calling onTaskUpdate", seen in pass 4 before:
+  `docs/qa/pass4/lanes/b/inproc-before.txt`); the JSON report says success and every file reported the same number of tests as in the
+  previous gate, so no result was lost;
+- golden master `p7-gate` against pass 6's `p6-gate` (serial, frozen clock, the build): 3,273 requests, no 5xx, no problems, the same 4
+  gaps; 332 changed, 7 added, 11 removed: the same requests as on `65f36ea1`, with the same differences, except the map position of the
+  complaint the recorder files itself (the noise floor). Every change is explained in `evidence/golden-explained.md`. The gate's clean-up
+  step put back the committed manifest after the recording, so the golden master was recorded again on the same build right after the gate
+  (`gate.sh` now keeps the gate's own golden and suite files);
 - access matrix with valid bodies: 1175 of 1176 cells as designed; the one other is the cell pass 6 explained (GET /api/auth/security as the
   Manu desk account, a department_officer, which reads its own sign-in history);
 - browser drive: 28 pages, none with a problem; the petition journey in full (upload, read, approve, code, SMS off, the tracker shows the
   status and nothing personal);
-- pass 4's final red team against the build: 17/17 after the test changes in `99f896c9` (test-only; the same build).
+- pass 6's Collector journey j1, Jarvis steps: no problem, and the analyst's answer is shown, not covered by "Asked District IQ" (P6-024);
+- pass 4's final red team against the build: 17/17.
+
+Earlier gates, for the record: `94b99ed7` was red (a stale reader bundle, a guard tripped by a comment, five order-dependent test files, a
+config that ran all of pass 4, ten period regressions from the merge; `evidence/first-gate/`); `ae65fe84` was green without pass 4's whole
+suite and the golden master (`evidence/gate-ae65fe84/`); `65f36ea1` was green except pass 4's whole suite (30 failed), which round 3 took.

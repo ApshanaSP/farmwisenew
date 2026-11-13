@@ -4,7 +4,7 @@ Compared 3277 requests with 3273. **332 changed, 7 added, 11 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to HhBnpmDixFNDpds9zgDbL
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to CBdQM0A0VtrCiiuGe8KNC
 
 ## By route
 
@@ -5400,12 +5400,12 @@ Session writes, id 1a74f77c3d8d08f6, 1435 bytes to 1458 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1202 bytes to 1252 bytes.
+Session writes, id cd47878c4defdb30, 1202 bytes to 1251 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.017283333333335 |
-| $.incidents[0].lon | 80.21072974509804 | 80.21232974509803 |
+| $.incidents[0].lat | 13.016499019607844 | 13.01767549019608 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21344347058823 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |
@@ -5492,7 +5492,7 @@ Session writes, id 312d7e3e75cbc3a0, 3536 bytes to 3257 bytes.
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235192 bytes.
+Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5526,7 +5526,7 @@ Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235192 bytes.
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 140493 bytes to 139124 bytes.
+Session writes, id 3f54c3ecc14de285, 140493 bytes to 139122 bytes.
 
 | Path | A | B |
 |---|---|---|
