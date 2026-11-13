@@ -48,9 +48,12 @@ export const SMS_LIMITS = { inlineWaitMs: 5_000, sendMs: 20_000 };
 /**
  * The provider may already have taken the message: the request went out and no answer came in time, the connection broke while it
  * answered, or it said 200 in a form we cannot read. Such a message is not sent again by the sweep, since the writer would get it twice
- * (QA pass 6, P5-022); the desk shows it as not confirmed.
+ * (QA pass 6, P5-022); the desk shows it as not confirmed. `late`, for a send given up at our own limit while it went on, is that send's own
+ * answer when it comes: the error when it says plainly that nothing was sent, else null.
  */
-class MaybeSent extends Error {}
+class MaybeSent extends Error {
+  constructor(message: string, readonly late?: Promise<Error | null>) { super(message); }
+}
 const AFTER_SENDING = new Set(["ECONNRESET", "UND_ERR_SOCKET", "EPIPE"]);
 /**
  * Node's fetch (undici) gives up a connection it could not open after 10 s with UND_ERR_CONNECT_TIMEOUT (DNS, TCP and TLS included): such a
@@ -63,11 +66,13 @@ export const MSG91_ABORT_MS = FETCH_CONNECT_MS + 5_000;
 
 /**
  * The work, or MaybeSent when it has not answered in `ms`: the work goes on behind the race and may still finish. A plain Error here made a
- * team-inbox mail that the server took after the limit 'failed', and the sweep mailed it again (reviewer1-03).
+ * team-inbox mail that the server took after the limit 'failed', and the sweep mailed it again (reviewer1-03). The MaybeSent carries the
+ * work's own later answer (a rejection is a plain "not sent"), so a send that then fails plainly is tried again (reviewerC-04).
  */
 function withLimit<T>(work: Promise<T>, ms: number, why: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const late = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new MaybeSent(why)), ms); });
+  const answer = () => work.then(() => null, (e: unknown) => (e instanceof Error ? e : new Error(String(e))));
+  const late = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new MaybeSent(why, answer())), ms); });
   return Promise.race([work, late]).finally(() => clearTimeout(timer));
 }
 const env = (name: string) => (process.env[name] ?? "").trim();
@@ -91,8 +96,11 @@ const htmlSafe = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 /** Test mode: the exact message, to the team inbox. */
 async function viaTeamInbox(mobile: string, text: string): Promise<void> {
   const html = `<p><b>Test SMS. Nothing was sent to this phone.</b> In live mode this goes to ${mobile}.</p><p style="font-size:16px;padding:12px;background:#f2f4f3;border-radius:8px">${htmlSafe(text)}</p>`;
-  const r = await withLimit(sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html), SMS_LIMITS.sendMs, "The team inbox did not answer in time; the mail may still arrive.");
-  if (!r.ok) throw new Error(r.reason === "send_failed" ? r.detail : "Email is not set up.");
+  // the mailer's "not sent" is a plain Error inside the limited work, so it settles the row also when it comes after the limit
+  const send = sendMail(env("EMAIL_SANDBOX_TO"), `[Test SMS] to ${mobile}`, html).then((r) => {
+    if (!r.ok) throw new Error(r.reason === "send_failed" ? r.detail : "Email is not set up.");
+  });
+  await withLimit(send, SMS_LIMITS.sendMs, "The team inbox did not answer in time; the mail may still arrive.");
 }
 
 async function viaMsg91(mobile: string, template: string, vars: [string, string]): Promise<void> {
@@ -135,6 +143,21 @@ async function deliver(code: string, kind: SmsKind, p: Row, result: SmsResult | 
   } catch (e) {
     await pool.query(`UPDATE petition_sms SET status = ?, detail = ?, attempts = attempts + 1, tried_at = ? WHERE complaint_code = ? AND kind = ?`,
       [e instanceof MaybeSent ? "unsure" : "failed", (e as Error).message.slice(0, 200), now, code, kind]);
+    // a send given up at our limit that later says plainly it was not sent (the mail server was down: "Connection timeout") is 'failed', and
+    // the sweep tries it again like any failed send. With no such answer it stays 'unsure' and is never sent again (reviewerC-04)
+    if (e instanceof MaybeSent && e.late) void failedLate(code, kind, now, e.late);
+  }
+}
+
+/** A row left 'unsure' by this try becomes 'failed' when the send's own late answer is a plain "not sent". Never throws. */
+async function failedLate(code: string, kind: SmsKind, triedAt: string, late: Promise<Error | null>): Promise<void> {
+  const err = await late;
+  if (!err) return;
+  try {
+    await pool.query(`UPDATE petition_sms SET status = 'failed', detail = ? WHERE complaint_code = ? AND kind = ? AND status = 'unsure' AND tried_at = ?`,
+      [err.message.slice(0, 200), code, kind, triedAt]);
+  } catch (e) {
+    console.warn(`[manu] SMS for ${code}: its late answer was not recorded: ${(e as Error).message}`);
   }
 }
 

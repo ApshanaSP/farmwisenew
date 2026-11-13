@@ -178,7 +178,7 @@ describe("QA pass 6: approval does not wait on the SMS without a limit, and the 
     expect((await sms.smsNote(outcome!.code)).state).toBe("sending");
   });
 
-  it("a send that never answers is given up after its own time limit and left for the sweep, not held forever", async () => {
+  it("a send that never answers is given up at its own time limit as 'unsure', not held forever, and the sweep does not mail it again", async () => {
     testMode();
     const saved = { ...sms.SMS_LIMITS };
     sms.SMS_LIMITS.inlineWaitMs = 50;
