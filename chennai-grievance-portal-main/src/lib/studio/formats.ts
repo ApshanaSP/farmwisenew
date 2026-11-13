@@ -251,24 +251,31 @@ const text = (s: string) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, "
  * Every element <name ...>inner</name> of the names the pattern `names` matches, in order, in one pass. The lazy patterns they replace
  * (<x\b[^>]*>([\s\S]*?)<\/x>) searched to the end of the text again for every opening tag with no closing one, so time grew with the
  * square of the text: 200 KB of unclosed <Placemark> 2.3 s (1 MB over 20 s), 140 KB of <table> 2.6 s, 300 KB of nested XML 10 s
- * (reviewer5-10). Here a name whose closing tag is not found after one opening tag has none after any later one either, so it is never
- * searched for again. `flags` "gi" for HTML and KML (names in any case), "g" for XML.
+ * (reviewer5-10). The closing tags are found first, in one pass, and listed by name; an opening tag takes the first closing tag of its
+ * name after it from that list, whose read position only moves forward. Remembering only the names whose closing tag was missing still
+ * searched to the end once per name, so a record of many DIFFERENT unclosed fields (<f0><f1>...<fN>) grew with the square again
+ * (reviewerF-03). `flags` "gi" for HTML and KML (names in any case), "g" for XML.
  */
 export function elements(src: string, names: string, flags: "g" | "gi" = "gi"): { name: string; attrs: string; inner: string; start: number; end: number }[] {
+  const keyOf = (name: string) => (flags === "gi" ? name.toLowerCase() : name);
+  const closes = new Map<string, { at: number[]; end: number[]; i: number }>();
+  for (const c of src.matchAll(new RegExp(`</(${names})\\s*>`, flags))) {
+    const key = keyOf(c[1]);
+    let l = closes.get(key);
+    if (!l) closes.set(key, (l = { at: [], end: [], i: 0 }));
+    l.at.push(c.index);
+    l.end.push(c.index + c[0].length);
+  }
   const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
-  const closes = new Map<string, RegExp | null>();
   const out: { name: string; attrs: string; inner: string; start: number; end: number }[] = [];
   let m: RegExpExecArray | null;
   while ((m = open.exec(src))) {
-    const key = flags === "gi" ? m[1].toLowerCase() : m[1];
-    let close = closes.get(key);
-    if (close === null) continue;
-    if (!close) { close = new RegExp(`</${m[1].replace(/[.:-]/g, (c) => `\\${c}`)}\\s*>`, flags); closes.set(key, close); }
-    close.lastIndex = open.lastIndex;
-    const c = close.exec(src);
-    if (!c) { closes.set(key, null); continue; }
-    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, c.index), start: m.index, end: c.index + c[0].length });
-    open.lastIndex = c.index + c[0].length;
+    const l = closes.get(keyOf(m[1]));
+    if (!l) continue;
+    while (l.i < l.at.length && l.at[l.i] < open.lastIndex) l.i++;
+    if (l.i === l.at.length) continue;
+    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, l.at[l.i]), start: m.index, end: l.end[l.i] });
+    open.lastIndex = l.end[l.i];
   }
   return out;
 }
@@ -326,7 +333,7 @@ export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length
 export function kmlGrid(xml: string): Cell[][] {
   const marks = elements(xml, "Placemark").map((m) => m.inner);
   if (!marks.length) throw new FormatError("This KML has no places in it.");
-  const extra: string[] = [];
+  const extra = new Set<string>(); // a Set: a list searched per field grew with the square of many distinct names (reviewerF-03)
   const recs = marks.map((p) => {
     const r: Record<string, Cell> = {};
     r.Name = val(p.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? "");
@@ -337,7 +344,7 @@ export function kmlGrid(xml: string): Cell[][] {
       if (!name) continue;
       const k = unent(name).trim();
       const v = d.inner.match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d.inner;
-      if (!extra.includes(k)) extra.push(k);
+      extra.add(k);
       r[k] = val(v);
     }
     const coords = p.match(/<coordinates>([\s\S]*?)<\/coordinates>/i)?.[1]?.trim().split(/\s+/).map((c) => c.split(",").map(Number)) ?? [];
@@ -348,7 +355,7 @@ export function kmlGrid(xml: string): Cell[][] {
     }
     return r;
   });
-  const cols = ["Name", ...(recs.some((r) => r.Description != null) ? ["Description"] : []), ...extra.slice(0, 40), "Latitude", "Longitude"];
+  const cols = ["Name", ...(recs.some((r) => r.Description != null) ? ["Description"] : []), ...[...extra].slice(0, 40), "Latitude", "Longitude"];
   return [cols, ...recs.map((r) => cols.map((c) => r[c] ?? null))];
 }
 
@@ -381,16 +388,17 @@ export function xmlGrid(xml: string): Cell[][] | null {
   const rec = [...counts.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!rec) return null;
   const esc = rec.replace(/[.:-]/g, (c) => `\\${c}`);
-  const cols: string[] = [];
+  // the columns in first-seen order: a Set, as a list searched once per field grew with the square of many distinct names (reviewerF-03)
+  const cols = new Set<string>();
   const recs = elements(body, esc, "g").slice(0, 50_000).map((m) => {
-    const r: Record<string, Cell> = {};
-    for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) { if (!cols.includes(a[1])) cols.push(a[1]); r[a[1]] = val(a[2]); }
-    for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) { if (!cols.includes(c.name)) cols.push(c.name); r[c.name] = val(c.inner); }
+    const r = new Map<string, Cell>();
+    for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) { cols.add(a[1]); r.set(a[1], val(a[2])); }
+    for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) { cols.add(c.name); r.set(c.name, val(c.inner)); }
     return r;
   });
-  if (recs.length < 3 || cols.length < 2) return null;
-  const keep = cols.slice(0, 60);
-  return [keep, ...recs.map((r) => keep.map((c) => r[c] ?? null))];
+  if (recs.length < 3 || cols.size < 2) return null;
+  const keep = [...cols].slice(0, 60);
+  return [keep, ...recs.map((r) => keep.map((c) => r.get(c) ?? null))];
 }
 
 // --------------------------------------------------------------------- pdf --

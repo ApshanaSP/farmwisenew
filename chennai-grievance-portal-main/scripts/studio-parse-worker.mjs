@@ -349,26 +349,25 @@ var unent = (s) => cdata(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
 });
 var text = (s) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, " ").trim();
 function elements(src, names, flags = "gi") {
-  const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
+  const keyOf = (name) => flags === "gi" ? name.toLowerCase() : name;
   const closes = /* @__PURE__ */ new Map();
+  for (const c of src.matchAll(new RegExp(`</(${names})\\s*>`, flags))) {
+    const key = keyOf(c[1]);
+    let l = closes.get(key);
+    if (!l) closes.set(key, l = { at: [], end: [], i: 0 });
+    l.at.push(c.index);
+    l.end.push(c.index + c[0].length);
+  }
+  const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
   const out = [];
   let m;
   while (m = open.exec(src)) {
-    const key = flags === "gi" ? m[1].toLowerCase() : m[1];
-    let close = closes.get(key);
-    if (close === null) continue;
-    if (!close) {
-      close = new RegExp(`</${m[1].replace(/[.:-]/g, (c2) => `\\${c2}`)}\\s*>`, flags);
-      closes.set(key, close);
-    }
-    close.lastIndex = open.lastIndex;
-    const c = close.exec(src);
-    if (!c) {
-      closes.set(key, null);
-      continue;
-    }
-    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, c.index), start: m.index, end: c.index + c[0].length });
-    open.lastIndex = c.index + c[0].length;
+    const l = closes.get(keyOf(m[1]));
+    if (!l) continue;
+    while (l.i < l.at.length && l.at[l.i] < open.lastIndex) l.i++;
+    if (l.i === l.at.length) continue;
+    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, l.at[l.i]), start: m.index, end: l.end[l.i] });
+    open.lastIndex = l.end[l.i];
   }
   return out;
 }
@@ -414,7 +413,7 @@ function docxTables(buf, budget2 = new Inflate(buf.length)) {
 function kmlGrid(xml) {
   const marks = elements(xml, "Placemark").map((m) => m.inner);
   if (!marks.length) throw new FormatError("This KML has no places in it.");
-  const extra = [];
+  const extra = /* @__PURE__ */ new Set();
   const recs = marks.map((p) => {
     const r = {};
     r.Name = val(p.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? "");
@@ -425,7 +424,7 @@ function kmlGrid(xml) {
       if (!name) continue;
       const k = unent(name).trim();
       const v = d.inner.match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d.inner;
-      if (!extra.includes(k)) extra.push(k);
+      extra.add(k);
       r[k] = val(v);
     }
     const coords = p.match(/<coordinates>([\s\S]*?)<\/coordinates>/i)?.[1]?.trim().split(/\s+/).map((c) => c.split(",").map(Number)) ?? [];
@@ -436,7 +435,7 @@ function kmlGrid(xml) {
     }
     return r;
   });
-  const cols = ["Name", ...recs.some((r) => r.Description != null) ? ["Description"] : [], ...extra.slice(0, 40), "Latitude", "Longitude"];
+  const cols = ["Name", ...recs.some((r) => r.Description != null) ? ["Description"] : [], ...[...extra].slice(0, 40), "Latitude", "Longitude"];
   return [cols, ...recs.map((r) => cols.map((c) => r[c] ?? null))];
 }
 function geojsonRecords(doc) {
@@ -464,22 +463,22 @@ function xmlGrid(xml) {
   const rec = [...counts.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!rec) return null;
   const esc = rec.replace(/[.:-]/g, (c) => `\\${c}`);
-  const cols = [];
+  const cols = /* @__PURE__ */ new Set();
   const recs = elements(body, esc, "g").slice(0, 5e4).map((m) => {
-    const r = {};
+    const r = /* @__PURE__ */ new Map();
     for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) {
-      if (!cols.includes(a[1])) cols.push(a[1]);
-      r[a[1]] = val(a[2]);
+      cols.add(a[1]);
+      r.set(a[1], val(a[2]));
     }
     for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) {
-      if (!cols.includes(c.name)) cols.push(c.name);
-      r[c.name] = val(c.inner);
+      cols.add(c.name);
+      r.set(c.name, val(c.inner));
     }
     return r;
   });
-  if (recs.length < 3 || cols.length < 2) return null;
-  const keep = cols.slice(0, 60);
-  return [keep, ...recs.map((r) => keep.map((c) => r[c] ?? null))];
+  if (recs.length < 3 || cols.size < 2) return null;
+  const keep = [...cols].slice(0, 60);
+  return [keep, ...recs.map((r) => keep.map((c) => r.get(c) ?? null))];
 }
 var PDF_MAX = 40 * 1024 * 1024;
 var NOT_TEXT = /\/Subtype|\/Type\s*\/(XObject|Font|Metadata)|\/Length1/;
