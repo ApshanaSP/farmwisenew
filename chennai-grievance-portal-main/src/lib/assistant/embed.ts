@@ -41,6 +41,48 @@ declare global {
 }
 const S: State = (global.__embed ??= { extractor: null, threads: 2, index: null, building: null, progress: null, error: null, pending: 0, fileMtime: 0 });
 
+/** The model file cannot be used as it is on disk; the meaning search stays on keywords until the file changes (P6-025). */
+export class ModelUnavailable extends Error {
+  constructor(message: string) { super(message); this.name = "ModelUnavailable"; }
+}
+
+/** The ONNX file transformers.js reads for MODEL at dtype q8, under `cacheDir`. */
+export const modelFile = (cacheDir: string, model = MODEL) => path.join(cacheDir, ...model.split("/"), "onnx", "model_quantized.onnx");
+/** A real model is hundreds of MB; anything under this is a stub, a pointer or a cut-off download. */
+const MIN_MODEL_BYTES = 1 << 20;
+
+/**
+ * What is wrong with the model file on disk, in a sentence, or null when it is absent (transformers.js downloads it) or looks
+ * whole. The repository keeps the model in Git LFS (.gitattributes: .cache/**\/*.onnx): a checkout or worktree made without
+ * the LFS files holds a 134-byte pointer there, and ONNX Runtime said only "Protobuf parsing failed" (QA pass 6, P6-025).
+ */
+export function modelFileProblem(file: string): string | null {
+  let size: number;
+  try { size = fs.statSync(file).size; } catch { return null; }
+  if (size >= MIN_MODEL_BYTES) return null;
+  let head = "";
+  try { const fd = fs.openSync(file, "r"); try { const b = Buffer.alloc(64); head = b.subarray(0, fs.readSync(fd, b, 0, 64, 0)).toString("utf8"); } finally { fs.closeSync(fd); } } catch { /* unreadable: said below */ }
+  return head.startsWith("version https://git-lfs")
+    ? `the embedding model file ${file} is a Git LFS pointer, not the model: run "git lfs pull" in the repository (or delete the file so it is downloaded again)`
+    : `the embedding model file ${file} is only ${size} bytes, not the model (a cut-off download?): delete it so it is downloaded again`;
+}
+
+/** A model file found unusable: the same file is not tried again (no worker per question), and it is said once. */
+let unusable: { file: string; mtimeMs: number; size: number; message: string } | null = null;
+function checkModelFile(cacheDir: string): void {
+  const file = modelFile(cacheDir);
+  let st: fs.Stats | null = null;
+  try { st = fs.statSync(file); } catch { /* absent: downloaded on first use */ }
+  if (unusable && st && unusable.file === file && unusable.mtimeMs === st.mtimeMs && unusable.size === st.size) throw new ModelUnavailable(unusable.message);
+  unusable = null;
+  const why = modelFileProblem(file);
+  if (!why || !st) return;
+  unusable = { file, mtimeMs: st.mtimeMs, size: st.size, message: why };
+  S.error = why.slice(0, 300);
+  console.warn(`[assistant] meaning search off, keyword search answers instead: ${why}`);
+  throw new ModelUnavailable(why);
+}
+
 /**
  * The model, loaded once per process (downloaded on first use into .cache/models, about 280 MB), on `threads` CPU
  * threads. The build job runs it in its own process; the web server runs it on a worker thread (scripts/embed-worker.mjs),
@@ -55,6 +97,8 @@ function extractor(): Promise<Extractor> {
     // loaded at run time from node_modules (not bundled): it carries ONNX Runtime's native binaries
     const entry = pathToFileURL(path.join(process.cwd(), "node_modules", "@huggingface", "transformers", "dist", "transformers.node.mjs")).href;
     const cacheDir = path.join(process.cwd(), ".cache", "models");
+    // a pointer or a stub where the model should be fails here, clearly and before any worker starts
+    checkModelFile(cacheDir);
     // the build job loads the library itself and hands it over
     const given = (globalThis as { __transformers?: any }).__transformers;
     const t0 = Date.now();
@@ -279,8 +323,9 @@ export async function semanticSearch(query: string, filter: { zone?: number | nu
   if (!ix || !ix.ids.length) return null;
   let q: Float32Array;
   try { q = (await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs; } catch (e) {
-    // not ready, a damaged or missing model file, a failed load: whatever the reason, the keyword search answers (the caller says so)
-    if (!(e instanceof ModelNotReady)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
+    // not ready, a damaged or missing model file, a failed load: whatever the reason, the keyword search answers (the caller says so);
+    // an unusable model file was said once when it was found
+    if (!(e instanceof ModelNotReady) && !(e instanceof ModelUnavailable)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
     return null;
   }
   const cats = filter.cats?.length ? new Set(filter.cats) : null;

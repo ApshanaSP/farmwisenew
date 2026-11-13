@@ -31,7 +31,9 @@
 
 /* the control itself answers at once */
 [data-diq-press] { filter: brightness(.9); }
-[data-diq-busy] { opacity: .68; pointer-events: none; }
+/* busy: dimmed, and its clicks are kept and dropped by the activity layer (install.ts), never passed through to what is under it
+   (pointer-events: none let a double click's second click land on the row, card or backdrop behind: click-layer-03) */
+[data-diq-busy] { opacity: .68; cursor: progress; }
 html[data-diq-working], html[data-diq-working] * { cursor: progress !important; }
 
 @keyframes diq-spin { to { transform: rotate(360deg); } }

@@ -39,15 +39,27 @@ const when = (s: string) =>
   istDateTime(s);
 
 /**
+ * Where a rejected complaint stood when it was rejected: the chain index of the last stage its own history shows before the
+ * rejection (officer-day-20). The Collector may reject at any stage, so the rejecting stage says nothing about the work done;
+ * with no history to read, only the filing is known.
+ */
+export function stoodAt(chain: ComplaintStatus[], history: HistoryRow[]): number {
+  const k = history.map((h) => h.status).lastIndexOf("Rejected");
+  let at = 0;
+  for (const h of k < 0 ? history : history.slice(0, k)) { const i = chain.indexOf(h.status as ComplaintStatus); if (i >= 0) at = i; }
+  return at;
+}
+
+/**
  * The complaint's journey as a vertical timeline: completed stages filled, the current one pulses once, later ones
  * hollow; each shows its date and remarks. A rejection ends the chain with a red node giving the stage and reason.
  */
 export default function StatusTracker({ status, rejectedStage, remarks, history = [] }: StatusTrackerProps) {
   const last = (s: string) => [...history].reverse().find((h) => h.status === s);
   const rejected = status === "Rejected";
-  // a rejection stops the chain after the stage that rejected it
+  // a rejection stops the chain where the complaint stood, by its history, not at the stage that rejected it (officer-day-20)
   const chain = chainFor(status);
-  const stopAt = rejected ? (rejectedStage === "Collector" ? 4 : 1) : chain.indexOf(status);
+  const stopAt = rejected ? stoodAt(chain, history) : chain.indexOf(status);
   const cur = stopAt < 0 ? 0 : stopAt;
   const done = status === "Verified by Collector" || status === "Resolved by Department";
 

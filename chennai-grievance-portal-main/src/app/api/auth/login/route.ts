@@ -13,6 +13,10 @@ import { ensurePetitionLogin } from "@/lib/manu/login";
 
 const GENERIC_ERROR = "Invalid email or password.";
 
+// A cost-10 hash of a password nobody uses, the same cost as every real one (register, reset, seeds). An unknown e-mail is checked
+// against it, so the answer takes as long as for a registered e-mail and the timing does not tell them apart (redsec2-15).
+const DUMMY_HASH = "$2a$10$xBGnKsd/9u1SMQo6r9/13OcEgaVN/tzNMJvYLyb6dVqr1e9y4/75S";
+
 export async function POST(req: NextRequest) {
   try {
     const { body, tooLarge } = await readJsonCapped(req); // a malformed body is a 400 from the schema, not a 500; a huge one is a 413
@@ -51,23 +55,27 @@ export async function POST(req: NextRequest) {
     );
 
     if (rows.length === 0) {
+      await bcrypt.compare(password, DUMMY_HASH); // same work as a registered e-mail: the timing must not tell them apart
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
 
     const user = rows[0] as UserRow;
 
-    if (!user.is_active) {
-      return NextResponse.json({ error: "This account has been deactivated." }, { status: 403 });
-    }
-
+    // The password first: "deactivated" is said only to someone who knows the password, never to anyone who types the e-mail.
     const passwordMatches = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatches) {
-      if (user.role !== "citizen") await securityLog(user.email, "auth:password_wrong", String(user.id), { ip });
+      // Not awaited: on the AWS store that saves, this write waits for a network call, so a staff e-mail with a wrong password
+      // answered one round trip slower than an unknown e-mail (reviewerA-04). securityLog catches its own errors.
+      if (user.role !== "citizen") void securityLog(user.email, "auth:password_wrong", String(user.id), { ip });
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
 
     clearFailures(pairKey);
     clearFailures(emailKey);
+    if (!user.is_active) {
+      return NextResponse.json({ error: "This account has been deactivated." }, { status: 403 });
+    }
+
     const tv = Number((user as UserRow & { token_version?: unknown }).token_version) || 0;
     const how = { ip, ua: req.headers.get("user-agent") };
     if (!roleToPortal(user.role)) {

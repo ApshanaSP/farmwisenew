@@ -3,11 +3,12 @@ import { z } from "zod";
 import { getSessionFromCookies, revokeSessions, setAuthCookie } from "@/lib/auth";
 import { signToken } from "@/lib/jwt";
 import { roleToPortal } from "@/lib/session-cookies";
-import { getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isStaff } from "@/lib/security/factors";
 import { staffHours } from "@/lib/security/session";
 import { recentEvents, securityLog } from "@/lib/security/audit";
 import { checkRef } from "@/lib/security/stamp";
+import { requireConfirm } from "@/lib/security/stepup";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,7 +17,9 @@ export const runtime = "nodejs";
  * The console's Security page (components/security/SecurityPanel.tsx), for the signed-in staff account:
  *   GET               when this session ends, recent sign-ins and confirmations
  *   check_ref         is "DIQ-7F3A-K2QZ" an email District IQ really sent (lib/security/stamp.ts)
- *   signout_others    ends every other session of the account; this tab gets a fresh one
+ *   signout_others    ends every other session of the account; this tab gets a fresh one. Confirmed with the password (or an
+ *                     e-mailed code) first: it is the recovery from a copied cookie, so the cookie alone must not be able to do it
+ *                     and keep a fresh session for itself (hunt2-sec-10).
  */
 export async function GET() {
   const s = await getSessionFromCookies();
@@ -39,11 +42,20 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   if (b.data.action === "check_ref") {
+    // a person checks the odd email; a script checking thousands is refused (each check reads the newest 20,000 emails: hunt2-sec-11)
+    const rl = checkRateLimit(`check-ref:${s.userId}`, 20, 15 * 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many checks. Wait a few minutes and try again." },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds ?? 60) } });
+    }
     const r = await checkRef(b.data.ref);
     await securityLog(s.email, "email:check_ref", null, { ref: b.data.ref.toUpperCase(), genuine: r.genuine, ip });
     return NextResponse.json(r);
   }
 
+  const c = await requireConfirm(req, s, "signout_others", "Sign out every other device and browser signed in to this account. This tab stays signed in.",
+    { uid: s.userId, tv: Number(s.tv) || 0 });
+  if (!c.ok) return c.res;
   const tv = await revokeSessions(s.userId);
   const portal = roleToPortal(s.role)!;
   const res = NextResponse.json({ ok: true });

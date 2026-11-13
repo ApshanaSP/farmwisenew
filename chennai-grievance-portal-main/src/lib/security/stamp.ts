@@ -49,6 +49,21 @@ export interface RefCheck {
   email?: { id: number; from: string; to: string; subject: string; at: string; atText: string; mode: string; status: string; incident: string | null };
 }
 
+// Each email's reference, worked out once: what it is made of does not change after approval, so a check no longer recomputes up to
+// 20,000 HMACs every time (hunt2-sec-11). Keyed by everything the reference is made of, so an edited row gets a new one.
+const refCache = new Map<string, string>();
+const REF_CACHE_CAP = 25_000;
+function cachedRef(e: StampOf): string {
+  const k = [e.owner.toLowerCase(), e.at.slice(0, 19), e.subject, e.bodyHash].join("\u0000");
+  let r = refCache.get(k);
+  if (r === undefined) {
+    r = normRef(emailRef(e));
+    if (refCache.size >= REF_CACHE_CAP) refCache.delete(refCache.keys().next().value as string);
+    refCache.set(k, r);
+  }
+  return r;
+}
+
 /** Is this reference one of ours? The newest 20,000 emails are checked (a district's emails of several years). */
 export async function checkRef(ref: string): Promise<RefCheck> {
   const want = normRef(ref);
@@ -58,7 +73,7 @@ export async function checkRef(ref: string): Promise<RefCheck> {
   for (const r of rows) {
     if (!r.approved_at || !r.body_hash) continue;
     const at = String(r.approved_at instanceof Date ? r.approved_at.toISOString().replace("T", " ") : r.approved_at);
-    const got = normRef(emailRef({ owner: String(r.owner), subject: String(r.subject), bodyHash: String(r.body_hash), at }));
+    const got = cachedRef({ owner: String(r.owner), subject: String(r.subject), bodyHash: String(r.body_hash), at });
     if (crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want))) {
       let to = "the department officer";
       try { const t = JSON.parse(String(r.to_contact_ids ?? "[]")); if (Array.isArray(t) && t[0]?.name) to = `${t[0].name}${t[0].email ? ` <${t[0].email}>` : ""}`; } catch { /* kept */ }

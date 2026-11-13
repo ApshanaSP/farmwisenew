@@ -327,7 +327,20 @@ const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k)
 /** Durable columns added by the website itself, created on every load so the queries that use them always work. */
 // users.token_version: raised on sign-out / password change, so old tokens are refused (lib/auth.ts, migration 013).
 // petitions.recurrence: how many times the writer came before, found at approval, so a new build's case keeps it (QA pass 6, P5-031; migration 017).
-const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"], petitions: ["recurrence"] };
+// Each with its SQLite type, the MySQL migration's: added as TEXT, a number was kept as the text "1.0" (reviewer1-08). Nullable here
+// (the migrations say NOT NULL DEFAULT 0), so a saved row whose value is NULL still loads; old rows get the 0.
+const DURABLE_ADDED: Record<string, Record<string, string>> = {
+  sources: { mapping: "TEXT" }, users: { token_version: "INTEGER DEFAULT 0" }, petitions: { recurrence: "INTEGER DEFAULT 0" }
+};
+
+/** Adds the DURABLE_ADDED columns table `t` lacks, each with its own type. `have`: its column names in lower case (kept up to date). */
+export function addDurableColumns(db: DB, t: string, have: Set<string>): void {
+  for (const [c, type] of Object.entries(DURABLE_ADDED[t] ?? {})) {
+    if (have.has(c)) continue;
+    db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} ${type}`);
+    have.add(c);
+  }
+}
 
 /**
  * Durable tables the website added after the migration (the matching MySQL migration is in migrations/). Created on load when
@@ -377,7 +390,7 @@ function ensureSiteTables(d: Durable): void {
     // the website's own added columns (DURABLE_ADDED) on its own tables too, not only on tables a snapshot brought (QA pass 6, P5-031)
     const addColumns = (t: string) => {
       const have = new Set((d.conn.prepare(`SELECT name FROM pragma_table_info(${lit(t)})`).all() as { name: string }[]).map((c) => c.name.toLowerCase()));
-      for (const c of DURABLE_ADDED[t] ?? []) if (!have.has(c)) d.conn.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} TEXT`);
+      addDurableColumns(d.conn, t, have);
     };
     for (const [t, s] of Object.entries(WEBSITE_TABLES)) {
       if (d.conn.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t)) { addColumns(t); continue; }
@@ -412,7 +425,7 @@ async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
     for (const ddl of s.ddl) db.exec(ddl);
     // columns the website added after the table was migrated (sources.mapping): the saved DDL does not list them, the rows do
     const have = new Set((db.prepare(`SELECT name FROM pragma_table_info(${lit(t)})`).all() as { name: string }[]).map((c) => c.name.toLowerCase()));
-    for (const c of DURABLE_ADDED[t] ?? []) if (!have.has(c)) { db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} TEXT`); have.add(c); }
+    addDurableColumns(db, t, have);
     for (const row of doc.rows[t] ?? []) {
       const cols = Object.keys(row);
       const sig = `${t}\u0000${cols.join("\u0000")}`;

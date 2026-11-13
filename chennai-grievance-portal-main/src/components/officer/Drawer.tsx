@@ -4,21 +4,21 @@ import { useEffect, useState } from "react";
 import { I } from "@/components/collector/app/icons";
 import { SOURCE_KIND, SevChip, fmtShort, fullTitle, type Row } from "@/components/collector/app/lib";
 import type { GrievanceDetail } from "@/lib/officer/data";
-import { STAGE_INDEX, STEP_LABELS, type Stage } from "@/lib/officer/stages";
+import { historyOf, stepsOf, type Stage, type StepHistory } from "@/lib/officer/stages";
 import { StageChip } from "./Cards";
 import type { Ctx } from "./OfficerApp";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
 
 type Report = GrievanceDetail["reports"][number];
 
-/** Received -> In action -> Sent to Collector -> Verified */
-function Steps({ stage }: { stage: Stage }) {
-  const k = STAGE_INDEX[stage] ?? 0;
-  const last = STEP_LABELS.length - 1;
+/** Received -> In action -> Sent to Collector -> Verified for a severe grievance; Received -> In action -> Closed by your department for any other */
+export function Steps({ stage, severe, closedByDept, hist }: { stage: Stage; severe: boolean; closedByDept: boolean; hist?: StepHistory }) {
+  const { labels, at: k } = stepsOf(stage, severe, closedByDept, hist);
+  const last = labels.length - 1;
   return (
-    <div className="wfs" aria-label={`Stage ${k + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[k]}`}>
+    <div className={labels.length === 3 ? "wfs n3" : "wfs"} aria-label={`Stage ${k + 1} of ${labels.length}: ${labels[k]}`}>
       <span className="rail"><i style={{ width: `${(k / last) * 100}%` }} /></span>
-      {STEP_LABELS.map((l, ix) => {
+      {labels.map((l, ix) => {
         const done = ix < k || k === last;
         return <div key={l} className={done ? "dn" : ix === k ? "cur" : ""}><s>{done ? <I n="check" /> : null}</s>{l}</div>;
       })}
@@ -130,7 +130,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
       </div>
       <div className="odrawer-b" tabIndex={0}>
-        <Steps stage={g.stage as Stage} />
+        <Steps stage={g.stage as Stage} severe={g.sev === "Severe"} closedByDept={!!d.closedByDept} hist={historyOf(d.timeline)} />
         {g.returned && lastReturn && (
           <div className="banner" style={{ background: "var(--high-soft)", color: "#8A4A06" }}><I n="refresh" />
             <span><b>Returned by the Collector for rework.</b> {lastReturn.note || "No note was added."} Fix it on site, then complete and send again.</span>

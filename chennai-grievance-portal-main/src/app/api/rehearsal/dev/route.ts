@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFormCapped, readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { facilityReach, pastRains, planFor, rehearsalState, routeBetween, RehearsalUnavailable } from "@/lib/rehearsal/engine";
 import { draftDept, markDone, readTasks, sendDept } from "@/lib/rehearsal/tasks";
 import { mapGeo } from "@/lib/collector/geo";
@@ -50,13 +51,18 @@ export async function POST(req: NextRequest) {
   const kind = req.nextUrl.searchParams.get("kind");
   try {
     if (kind === "done") {
-      const form = await req.formData();
+      // the dev form has only id, lat and lon: capped like every other body (reviewerA-02)
+      const { form, tooLarge } = await readFormCapped(req, 64 * 1024);
+      if (tooLarge) return tooLargeResponse();
+      if (!form) return NextResponse.json({ error: "Send the task as a form." }, { status: 400 });
       const lat = Number(form.get("lat")), lon = Number(form.get("lon"));
       const r = await markDone(Number(form.get("id")), String(req.nextUrl.searchParams.get("dept")), DEV_USER, null,
         form.get("lat") !== null && Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null);
       return NextResponse.json(r.body, { status: r.status });
     }
-    const b = await req.json();
+    const { body, tooLarge } = await readJsonCapped(req);
+    if (tooLarge) return tooLargeResponse();
+    const b = (body ?? {}) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (kind === "route") return NextResponse.json(await routeBetween(b.from, b.to, b.state ?? "rehearsal", { replay: b.replay ?? null }));
     const p = await planFor({ manual: !!b.manual });
     if (b.action === "send") {

@@ -10,6 +10,7 @@ import { CITIZEN_NAV, COMPLAINT_STATUSES } from "@/lib/constants";
 import Footer from "@/components/Footer";
 import StatusBadge from "@/components/StatusBadge";
 import StatusTracker, { MiniProgress } from "@/components/StatusTracker";
+import { ComplaintFacts, ComplaintPlace } from "@/components/citizen/ComplaintFacts";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 import { ComplaintStatus } from "@/types";
@@ -234,23 +235,13 @@ export default function TrackComplaintsPage() {
                         <StatusBadge status={sel.status} />
                       </div>
                       <h2 className="mt-2 text-[20px] font-semibold leading-snug tracking-[-0.02em] text-ink">{sel.title}</h2>
-                      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-                        {[
-                          { icon: Building2, label: "Department", value: sel.department_name },
-                          { icon: Tag, label: "Type", value: sel.complaint_type_name },
-                          // a complaint on a street typed in by hand has no listed locality: its street, else just the zone (never "null")
-                          { icon: MapPin, label: "Location", value: [sel.locality_name ?? detail?.street_name, sel.zone_name].filter(Boolean).join(", ") || "Not recorded" },
-                          { icon: CalendarDays, label: "Filed on", value: fmtDate(sel.created_at) }
-                        ].map(({ icon: Icon, label, value }) => (
-                          <div key={label} className="flex min-w-0 items-start gap-2">
-                            <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
-                            <div className="min-w-0">
-                              <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">{label}</dt>
-                              <dd className="truncate text-[13px] font-medium text-ink-muted" title={value}>{value}</dd>
-                            </div>
-                          </div>
-                        ))}
-                      </dl>
+                      <ComplaintFacts className="mt-4" facts={[
+                        { icon: Building2, label: "Department", value: sel.department_name },
+                        { icon: Tag, label: "Type", value: sel.complaint_type_name },
+                        // a complaint on a street typed in by hand has no listed locality: its street, else just the zone (never "null")
+                        { icon: MapPin, label: "Location", value: [sel.locality_name ?? detail?.street_name, sel.zone_name].filter(Boolean).join(", ") || "Not recorded" },
+                        { icon: CalendarDays, label: "Filed on", value: fmtDate(sel.created_at) }
+                      ]} />
                       {sel.remarks && sel.status !== "Rejected" && (
                         <p className="mt-4 rounded-[10px] border border-canvas-border bg-canvas-sunken p-3 text-[13px] text-ink-muted">
                           <span className="font-semibold text-ink">Remarks: </span>{sel.remarks}
@@ -298,15 +289,8 @@ export default function TrackComplaintsPage() {
                               <MiniMap lat={Number(detail.latitude)} lng={Number(detail.longitude)} />
                             </div>
                           )}
-                          <dl className="space-y-3 text-[13px]">
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Street</dt><dd className="text-ink-muted">{detail.street_name}</dd></div>
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Specific location</dt><dd className="text-ink-muted">{detail.specific_location || "—"}</dd></div>
-                            <div className="flex gap-6">
-                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Ward</dt><dd className="font-mono text-ink-muted">{detail.ward_number}</dd></div>
-                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Anonymous</dt><dd className="text-ink-muted">{detail.is_anonymous ? "Yes" : "No"}</dd></div>
-                            </div>
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Description</dt><dd className="leading-relaxed text-ink-muted">{detail.description}</dd></div>
-                          </dl>
+                          <ComplaintPlace street={detail.street_name} specificLocation={detail.specific_location} ward={detail.ward_number}
+                            anonymous={!!detail.is_anonymous} description={detail.description} />
                           {detail.media_path && (
                             // private uploads (/api/complaints/media/...) load with the citizen's own session; older public ones as before
                             isPhotoPath(detail.media_path) ? (

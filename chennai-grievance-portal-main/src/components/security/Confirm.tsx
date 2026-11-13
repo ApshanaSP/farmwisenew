@@ -13,6 +13,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { I } from "@/components/collector/app/icons";
 import { useLangNow } from "@/lib/i18n/lang";
 import "./confirm.css";
+import { typedDigits } from "@/lib/typed-digits";
 
 interface Ask { action: string; title: string; summary: string; scope: string }
 type Method = "email" | "password";
@@ -134,7 +135,7 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
         <input id="cfm-code" ref={input} value={code} autoComplete={method === "password" ? "current-password" : "one-time-code"}
           type={method === "password" ? "password" : "text"} inputMode={digits ? "numeric" : "text"} maxLength={digits ? 6 : 200}
           className={digits ? "num" : ""} placeholder={digits ? "123456" : ""}
-          onChange={(e) => setCode(digits ? e.target.value.replace(/\D/g, "") : e.target.value)} />
+          onChange={(e) => setCode(digits ? typedDigits(e.target.value) : e.target.value)} />
         {error && <div className="cfm-err" role="alert"><I n="alert" />{error}</div>}
         {note && !error && <div className="cfm-ok" role="status"><I n="checkc" />{note}</div>}
         <div className="cfm-acts">

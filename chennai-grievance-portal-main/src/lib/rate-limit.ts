@@ -58,6 +58,11 @@ export function addFailure(key: string, windowSeconds: number): void {
   if (!b || b.resetAt < now) buckets.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
   else b.count += 1;
 }
+/** Gives back one try counted by checkRateLimit, when the try turned out not to be one that should count (a right answer). */
+export function giveBackTry(key: string): void {
+  const b = buckets.get(key);
+  if (b && b.resetAt >= Date.now() && b.count > 0) b.count -= 1;
+}
 export function clearFailures(key: string): void {
   buckets.delete(key);
 }

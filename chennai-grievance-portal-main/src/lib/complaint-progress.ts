@@ -17,6 +17,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { photoUrl } from "@/lib/officer/photos";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { sendPetitionSms } from "@/lib/manu/sms";
+import { appendStatusChangeToDataset } from "@/lib/dataset/append";
 import type { ComplaintStatus } from "@/types";
 import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 
@@ -34,7 +35,7 @@ export interface Progress {
   /** who checked the finished work, once it is closed */
   checkedBy: "department" | "collector" | null;
   journey: JourneyRow[];
-  /** completion photos of the department's reports, as URLs the resident may open */
+  /** completion photos of the department's reports that still stand (none from a report the Collector sent back), as URLs the resident may open */
   photos: string[];
 }
 
@@ -78,6 +79,8 @@ export function progressOf(incidentId: string, filedAt: string, steps: WorkStep[
     } else if (d.decision === "reopen") {
       add("In Progress", "Collector", "The Collector's office returned it to the department for more work.", e.at);
       checkedBy = null;
+      // the report it sent back no longer stands: its photos are not "the work done" (officer-day-28); the next report's are
+      reportIds.clear();
     } else if (d.decision === "reject") {
       add("Rejected", "Collector", d.note?.trim() || "Rejected by the Collector's office.", e.at);
       rejectedStage = "Collector";
@@ -159,14 +162,17 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
     const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at })));
     let changed = 0;
     const closing: Promise<void>[] = [];
+    const grew: string[] = [];
     for (const r of rows) {
       const p = prog.get(String(r.complaint_code));
       if (!p) continue;
       const [had] = await pool.query<RowDataPacket[]>(`SELECT status, ${fmt("created_at")} AS at FROM complaint_status_history WHERE complaint_id = ?`, [r.id]);
       const seen = new Set(had.map((h) => `${h.status}|${str(h.at)}`));
-      for (const j of p.journey.filter((x) => !seen.has(`${x.status}|${x.created_at}`)))
+      const added = p.journey.filter((x) => !seen.has(`${x.status}|${x.created_at}`));
+      for (const j of added)
         await pool.query(`INSERT INTO complaint_status_history (complaint_id, status, stage, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
           [r.id, j.status, j.stage, j.remarks, actorUserId, j.created_at]);
+      if (added.length) grew.push(String(r.complaint_code));
       if (r.status !== p.status) {
         await pool.query(`UPDATE complaints SET status = ?, rejected_stage = ?, remarks = COALESCE(?, remarks) WHERE id = ?`,
           [p.status, p.rejectedStage, p.remarks, r.id]);
@@ -178,6 +184,11 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
       }
     }
     await Promise.all(closing);
+    // the grievance dataset gets the new history rows too, as a filing gets its line (PB-218, pass4-open-01). Fire-and-forget, like the
+    // filing's: a dataset problem must never fail or slow down an officer's step or a Collector's decision. Started once this is done,
+    // on the next turn of the event loop: the first read of the dataset file is parsed in one go and must not hold up the decision.
+    if (grew.length)
+      setImmediate(() => { for (const code of grew) appendStatusChangeToDataset(code).catch((err) => console.error(`[dataset] could not append ${code}:`, err)); });
     return changed;
   } catch (e) {
     console.warn(`[complaints] progress not written for ${incidentIds.join(", ")}: ${(e as Error).message}`);

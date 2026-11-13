@@ -19,7 +19,21 @@ const CACHE_KEY = "diq-i18n-ta";
 
 /** the template of a text: trimmed, one space, numbers as "#" */
 const keyOf = (s: string) => s.replace(/\s+/g, " ").trim().replace(NUM, "#");
-const lower: Record<string, string> = Object.fromEntries(Object.entries(TA).map(([k, v]) => [k.toLowerCase(), v]));
+/**
+ * The hand-checked words by template, the way a text is looked up. A key written with its number ("last 24 hours", "All 15 zones")
+ * never matched, since every number in a text becomes "#" (console-sync-13). Its numbers become "#" on both sides, so the number on the
+ * page is put back ("last 7 days" too). Only when the Tamil has the same numbers in the same order; a key already written with "#" wins.
+ */
+export const DICT: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(TA)) {
+    const kn = k.match(NUM) ?? [], vn = v.match(NUM) ?? [];
+    if (kn.length && kn.length === vn.length && kn.every((n, i) => n === vn[i])) out[keyOf(k)] = v.replace(NUM, "#");
+  }
+  for (const [k, v] of Object.entries(TA)) if (!/\d/.test(k)) out[keyOf(k)] = v;
+  return out;
+})();
+const lower: Record<string, string> = Object.fromEntries(Object.entries(DICT).map(([k, v]) => [k.toLowerCase(), v]));
 
 const learned = new Map<string, string>();
 const asked = new Set<string>();
@@ -43,7 +57,7 @@ function saveCache() {
 export function translate(src: string): string | null {
   const k = keyOf(src);
   if (!k || !LATIN.test(k)) return null;
-  const t = TA[k] ?? lower[k.toLowerCase()] ?? learned.get(k);
+  const t = DICT[k] ?? lower[k.toLowerCase()] ?? learned.get(k);
   if (t == null) return null;
   const nums = src.match(NUM) ?? [];
   let i = 0;

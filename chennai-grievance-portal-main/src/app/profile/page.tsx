@@ -9,6 +9,7 @@ import { EASE_OUT } from "@/components/ui/motion";
 import { CITIZEN_NAV } from "@/lib/constants";
 import Footer from "@/components/Footer";
 import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
+import { typedDigits } from "@/lib/typed-digits";
 
 interface Zone {
   id: number;
@@ -434,7 +435,7 @@ export default function ProfilePage() {
                             </div>
                             <div>
                               <label className="form-label" htmlFor="pincode">Pincode</label>
-                              <input id="pincode" maxLength={6} className="form-input font-mono" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "") })} />
+                              <input id="pincode" maxLength={6} className="form-input font-mono" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: typedDigits(e.target.value) })} />
                             </div>
                             <div className="sm:col-span-2">
                               <label className="form-label" htmlFor="doorStreet">Door no. &amp; street</label>
@@ -466,7 +467,7 @@ export default function ProfilePage() {
                               </label>
                               {/* typed digits are hidden like a password: the full number is never shown */}
                               <input id="aadhaar" type="password" autoComplete="off" maxLength={12} placeholder="12-digit Aadhaar (leave blank to keep unchanged)"
-                                className="form-input font-mono" value={form.aadhaarNumber} onChange={(e) => setForm({ ...form, aadhaarNumber: e.target.value.replace(/\D/g, "") })} />
+                                className="form-input font-mono" value={form.aadhaarNumber} onChange={(e) => setForm({ ...form, aadhaarNumber: typedDigits(e.target.value) })} />
                               <p className="form-hint">Stored encrypted. Only the last four digits are ever shown.</p>
                             </div>
                           </div>
@@ -497,7 +498,7 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                           <div className="flex-1">
                             <label className="form-label" htmlFor="newMobile">New mobile number</label>
-                            <input id="newMobile" maxLength={10} inputMode="numeric" className="form-input font-mono" value={newMobile} onChange={(e) => setNewMobile(e.target.value.replace(/\D/g, ""))} />
+                            <input id="newMobile" maxLength={10} inputMode="numeric" className="form-input font-mono" value={newMobile} onChange={(e) => setNewMobile(typedDigits(e.target.value))} />
                           </div>
                           <button type="button" disabled={mobileSubmitting} onClick={requestMobileOtp} className="btn-primary">{mobileSubmitting ? "Sending..." : "E-mail me a code"}</button>
                           <button type="button" className="btn-secondary" onClick={() => setMobileEditing(false)}>Cancel</button>

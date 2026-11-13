@@ -8,3 +8,24 @@
 - Ports: this run uses 3110–3113 and the pinned API on 3196; the P0 session uses 3106–3109 and 3197.
 - Studio fixture port 4599: a default-config vitest run first takes the lock folder `vitest-4599.lock` in the shared notes folder.
 - Rules for agents: `FIXER_RULES.md`.
+- 00:00: the P0 session split into six `p7-*` sessions that own all P0 and all 28 P1 rows, plus more files: `collector/**`, `manu/**`, `officer/data.ts`, `api/profile`, `api/complaints` and `assistant/{intent,decide,unresolved,cannot}`.
+  - The desk fixer was stopped. Its one commit (`d474842`, reviewer5-07/08 in `manu/repeat.ts`) was moved off this branch to `claude/fixall-repeat-reviewer5` for the p7 session that owns reviewer5-07.
+  - New ports: pinned API 3190, Next 3110–3113.
+  - Re-sorted: 32 P2/P3 rows are fixable outside their files (`mine-*.json`). 71 wait for their branches (`later.json`).
+- 03:23: batch A (16 rows) done by the fixer before the usage limit: 15 fixed, 1 duplicate. Lead check on 91395eb: tsc exit 0; the 14 new test files 89/89 pass; existing tests in every changed folder 3364 pass, 13 skipped, 0 failed. Batch B started.
+- 04:10: batch B (15 rows) done by its fixer: 10 fixed, 4 open (they need p7 files or a live check), 1 owner (journeys-01: case notes would be a new feature). Lead check on 172fabd: tsc exit 0; tests in every changed folder 3510 pass, 13 skipped, 0 failed; no p7-owned file touched.
+- Reviewer A (batch A, code reading, probes run by the lead) found 6 problems, and all 5 probes failed on the code.
+  - Fixed: reviewerA-01, -03, -04, -05, -06, each with a test and a revert check.
+  - reviewerA-02: fixed for the two rehearsal routes. The three other routes are in p7 files and were handed to desk-and-accounts and studio-egress.
+- The usage limit and a session restart stopped the run between 04:12 and 12:07. Reviewer B was resumed.
+- 12:09: tsc on 9acfd262 exit 0, 0 errors.
+- 12:57: reviewer B (batch B) found 7 problems, all probe-confirmed.
+  - Fixed: reviewerB-01 (P2, track guesses in a burst), -02, -03, -05 and -07, each with a test and a revert check.
+  - Open, in p7 files: reviewerB-04 (the coordinator fixes it on the combined branch) and reviewerB-06 (handed to collector-ops).
+- tsc on b8993a3e: exit 0, 0 errors.
+- Tally on this branch:
+  - My 31 rows: 25 fixed, 1 duplicate, 1 owner (journeys-01), 4 open. All 4 open ones need p7 files: officer-day-13 and -26 (officer/data.ts), P5-035 (a thunai test), and P5-033's p7 parts.
+  - Reviewer rows A/B (13): 10 fixed, 3 open (reviewerA-02's three routes, reviewerB-04, reviewerB-06).
+- Agreed with the fix coordinator (owner-approved): it merges the six p7 lanes, claude/fixall-repeat-reviewer5, this branch and pass 4's eec8c840 into one branch, then runs the gate once.
+  - This branch stops moving at its "freezing fixall".
+  - The 71 rows that wait on p7 files continue on a new branch cut from the combined tip after the gate.

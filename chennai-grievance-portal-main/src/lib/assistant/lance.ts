@@ -20,7 +20,7 @@ import { effectiveSql } from "@/lib/collector/effective";
 
 /** The Collector's decision laid over the pipeline's status and open flag (effective.ts): the index and its answers carry the decided state. */
 const EFF = effectiveSql(ops("collector_decisions"));
-import { ModelNotReady, embed } from "@/lib/assistant/embed";
+import { ModelNotReady, ModelUnavailable, embed } from "@/lib/assistant/embed";
 
 const DIR = path.join(process.cwd(), "data", "lancedb");
 const MODEL = (process.env.AI_EMBED_MODEL ?? "").trim() || "Xenova/multilingual-e5-base";
@@ -242,7 +242,7 @@ export async function hybridSearch(kind: Kind, query: string, f: Filters = {}, k
   let qv: number[];
   try { qv = Array.from((await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs); } catch (e) {
     // not ready, a damaged or missing model file, a failed load: whatever the reason, the keyword search answers (the caller says so)
-    if (!(e instanceof ModelNotReady)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
+    if (!(e instanceof ModelNotReady) && !(e instanceof ModelUnavailable)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
     return null;
   }
   const cols = ["id", "text", "title", "cat", "cat_label", "zone_no", "zone", "place", "taluk", "dept", "sev", "status", "open", "t", "dead", "source", "url", "story", "incident"];
