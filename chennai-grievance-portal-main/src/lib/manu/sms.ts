@@ -197,8 +197,13 @@ export async function retryFailedSms(): Promise<void> {
     // a petition filed in the last day whose 'registered' SMS was never queued (the server stopped between the approval's commit and the
     // send) gets it now: the row was only made at the end of the approval, so such a petitioner was never texted (reviewer1-09). Only the
     // last day: switching SMS on must not text every old petitioner.
+    // Only petitions with a mobile (ten digits starting 6 to 9, as MOBILE), tested in the WHERE: a petition with none never gets a row
+    // (sendPetitionSms returns first), so it was an "orphan" on every sweep for a day, and twenty of them filed earlier filled the LIMIT
+    // before the test in the loop dropped them; a real orphan filed later was never queued (reviewerC-01). A 10-character value whose
+    // number is 6000000000 or more is ten digits.
     const [orphans] = await pool.query<Row[]>(`SELECT p.complaint_code, p.mobile FROM petitions p LEFT JOIN petition_sms s ON s.complaint_code = p.complaint_code AND s.kind = 'received'
-      WHERE p.status = 'filed' AND p.complaint_code IS NOT NULL AND s.id IS NULL AND p.filed_at >= ? AND p.filed_at <= ? ORDER BY p.filed_at LIMIT 20`, [addHours(istNow(), -24), due]);
+      WHERE p.status = 'filed' AND p.complaint_code IS NOT NULL AND s.id IS NULL AND p.filed_at >= ? AND p.filed_at <= ?
+        AND LENGTH(p.mobile) = 10 AND CAST(p.mobile AS UNSIGNED) BETWEEN 6000000000 AND 9999999999 ORDER BY p.filed_at LIMIT 20`, [addHours(istNow(), -24), due]);
     for (const o of orphans)
       if (MOBILE.test(String(o.mobile ?? "")))
         await pool.query(`INSERT IGNORE INTO petition_sms (complaint_code, kind, status, tried_at, created_at) VALUES (?, 'received', 'waiting', ?, ?)`, [o.complaint_code, due, istNow()]);
