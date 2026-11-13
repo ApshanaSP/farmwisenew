@@ -33,6 +33,7 @@ const { approvedWords } = await import("@/lib/manu/constants");
 const { savePages } = await import("@/lib/manu/files");
 const { caseIdFor, websiteCases } = await import("@/lib/manu/cases");
 const sms = await import("@/lib/manu/sms");
+const { findRepeats } = await import("@/lib/manu/repeat");
 const { POST: track } = await import("@/app/api/track/route");
 const trackAs = (body: unknown) => track(new NextRequest("http://x/api/track", { method: "POST", headers: { "x-forwarded-for": `10.9.1.${Math.floor(Math.random() * 250)}` }, body: JSON.stringify(body) }));
 const { syncComplaints } = await import("@/lib/complaint-progress");
@@ -387,5 +388,23 @@ describe("hunt2-desk-15: /track's answer for a closed case and a Tamil petition"
   it("an English petition says en", async () => {
     const r = await filePetition(await uploaded(), fields({ name: "R. Kumar", subject: "Sewage", fullText: "From: R. Kumar" }), "x");
     expect((await (await trackAs({ code: r.code, last4: "1873" })).json()).lang).toBe("en");
+  });
+});
+
+// hunt2-desk-14: the person's own petitions shared one LIMIT 200 with the ward-and-department rows, newest first, so in a busy ward the
+// person's own older petition was cut and "came before" missed it
+describe("hunt2-desk-14: a person's own earlier petition is found in a ward with more than 200 petitions to the department", () => {
+  it("210 newer petitions from others in ward 70 to Metrowater: the person's own still comes first", async () => {
+    const mine = await filePetition(await uploaded(), fields({ mobile: "9000041873" }), "x");
+    h.db.prepare(`UPDATE petitions SET filed_at = '2026-01-05 10:00:00' WHERE complaint_code = ?`).run(mine.code);
+    const ins = h.db.prepare(`INSERT INTO petitions (status, pages, name, mobile, address, ward_number, dept_code, problem, complaint_code, incident_id, filed_at, created_at)
+      VALUES ('filed', '[]', ?, ?, 'x', 70, 'CMWSSB', 'Water supply irregular', ?, ?, ?, ?)`);
+    for (let i = 0; i < 210; i++) {
+      const code = `2026-${String(100 + i).padStart(3, "0")}BZY`;
+      ins.run(`Neighbour ${i}`, `98${String(10000000 + i)}`, code, `INC-W-${code}`, `2026-10-${String(1 + (i % 28)).padStart(2, "0")} 10:00:00`, "2026-10-01 10:00:00");
+    }
+    const r = await findRepeats({ mobile: "9000041873", name: "க. பார்வதி", street: "ஜவஹர் தெரு", ward: 70, dept: "CMWSSB", problem: "Sewage overflowing on the street", excludeId: -1 });
+    expect(r.matches[0]).toMatchObject({ code: mine.code, samePerson: true, sameProblem: true });
+    expect(r.headline).toMatch(/this person's second petition on this problem/);
   });
 });
