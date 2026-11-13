@@ -33,7 +33,7 @@ function build(ents: E[], { z64 = true, end64 = false } = {}): Buffer {
   const cd = Buffer.concat(cds);
   const tail: Buffer[] = [];
   if (end64) {
-    const r = Buffer.alloc(56); r.writeUInt32LE(0x06064b50, 0); r.writeBigUInt64LE(44n, 4); r.writeUInt16LE(45, 12); r.writeUInt16LE(45, 14);
+    const r = Buffer.alloc(56); r.writeUInt32LE(0x06064b50, 0); r.writeBigUInt64LE(BigInt(44), 4); r.writeUInt16LE(45, 12); r.writeUInt16LE(45, 14);
     r.writeBigUInt64LE(BigInt(ents.length), 24); r.writeBigUInt64LE(BigInt(ents.length), 32); r.writeBigUInt64LE(BigInt(cd.length), 40); r.writeBigUInt64LE(BigInt(off), 48);
     const loc = Buffer.alloc(20); loc.writeUInt32LE(0x07064b50, 0); loc.writeBigUInt64LE(BigInt(off + cd.length), 8); loc.writeUInt32LE(1, 16);
     tail.push(r, loc);
