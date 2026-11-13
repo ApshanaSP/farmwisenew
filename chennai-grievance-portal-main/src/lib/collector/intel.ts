@@ -1009,10 +1009,12 @@ export async function overview(period: Period, zone: number | null, dept: string
        FROM source_health ORDER BY FIELD(source, 'grievance', 'police', 'pwd', 'hospital', 'news', 'imd', 'cpcb', 'cfm')`
     ),
     q(
-      // the bell keeps to a department view too: an officer's overview never carries another department's incidents (BUG-026)
-      `SELECT ${ROW} ${FROM} WHERE ${EFF.open} = 1 AND i.severity_level IN ('Severe', 'High') AND NOT ${ROUTED}
-       AND ${periodWindow(period, now).sql}${dept ? " AND i.lead_dept = ?" : ""} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
-      [...periodWindow(period, now).params, ...(dept ? [dept] : [])]
+      // the bell is the scope's open severe and high incidents (the tile's "of them severe or high"): the same WHERE as the tiles, so it keeps
+      // to a department view (an officer's overview never carries another department's incidents, BUG-026) and to the zone, taluk and
+      // category the Collector chose (console-sync-11: it read the period and the department only)
+      `SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.severity_level IN ('Severe', 'High')
+       ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
+      w.params
     ),
     Promise.all([
       q(

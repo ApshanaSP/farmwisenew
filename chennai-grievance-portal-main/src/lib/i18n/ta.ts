@@ -18,7 +18,8 @@ export const TA: Record<string, string> = {
   "Chennai · Collector": "சென்னை · ஆட்சியர்", "Feeds and audit log": "தரவு ஊட்டங்கள், தணிக்கைப் பதிவு",
   "Every decision and change": "ஒவ்வொரு முடிவும் மாற்றமும்", "Fetch the latest from the store": "சமீபத்திய தரவைப் பெறு",
   "Whole district, every department": "முழு மாவட்டம், எல்லா துறைகளும்", "Feeds and added sources": "ஊட்டங்கள், சேர்த்த மூலங்கள்",
-  "Notifications": "அறிவிப்புகள்", "Mark all read": "அனைத்தையும் படித்ததாகக் குறி", "Alerts": "எச்சரிக்கைகள்",
+  "Notifications": "அறிவிப்புகள்", "Now": "இப்போது", "Earlier today": "இன்று முன்னதாக", "Earlier": "முன்னதாக",
+  "Severe and high · last 24 hours": "கடுமையானவை, அதிகமானவை · கடந்த 24 மணி நேரம்", "Severe and high · last 7 days": "கடுமையானவை, அதிகமானவை · கடந்த 7 நாட்கள்", "Mark all read": "அனைத்தையும் படித்ததாகக் குறி", "Alerts": "எச்சரிக்கைகள்",
 
   // ---- greetings and the band
   "Good morning, Collector": "காலை வணக்கம், ஆட்சியர்", "Good afternoon, Collector": "மதிய வணக்கம், ஆட்சியர்",

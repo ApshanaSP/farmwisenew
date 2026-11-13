@@ -135,3 +135,18 @@ describe("console-sync-10: a news complaint handed to a department is out of eve
     expect(stats?.overdue).toBe(1);
   });
 });
+
+describe("console-sync-11: the bell keeps to the console's filters", () => {
+  it("a zone, a taluk or a category shows only its own severe and high alerts, as the tiles count them", async () => {
+    add({ id: "INC-Z9", sev: "Severe", zone: 9, taluk: "TLK-MYL", cat: "DRAINAGE_SEWAGE" });
+    add({ id: "INC-Z10", sev: "High", zone: 10, taluk: "TLK-EGM", cat: "SOLID_WASTE" });
+    add({ id: "INC-LOW", sev: "Low", zone: 9, taluk: "TLK-MYL", cat: "DRAINAGE_SEWAGE" });
+    const ids = async (zone: number | null, focus: { cat?: string; taluk?: string } = {}) => (await intel.overview("daily", zone, null, focus)).bell.map((r) => r.id).sort();
+    expect(await ids(null)).toEqual(["INC-Z10", "INC-Z9"]);
+    expect(await ids(9)).toEqual(["INC-Z9"]);
+    expect(await ids(null, { taluk: "TLK-EGM" })).toEqual(["INC-Z10"]);
+    expect(await ids(null, { cat: "DRAINAGE_SEWAGE" })).toEqual(["INC-Z9"]);
+    // the same incidents as the tile's severe-or-high count under each filter
+    expect((await intel.overview("daily", 9)).kpi.cur.urgent).toBe(1);
+  });
+});
