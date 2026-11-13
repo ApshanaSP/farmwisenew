@@ -11,6 +11,8 @@ interface StatusTrackerProps {
   remarks: string | null;
   /** complaint_status_history rows (oldest first), for each step's date and remarks */
   history?: HistoryRow[];
+  /** who will check the finished work: the Collector for a severe case, else the department itself (officer-day-06) */
+  checker?: "collector" | "department" | null;
 }
 
 /** Every stage a complaint passes, in order. */
@@ -29,10 +31,16 @@ const LABEL: Record<string, string> = {
 
 /**
  * The stages of this complaint: work the department closes itself (not severe) ends there, without the Collector's
- * check; severe work goes on to the Collector.
+ * check; severe work goes on to the Collector. Who checks is known before the work ends: only a severe case is sent to the
+ * Collector (officer/data.ts), so a non-severe one was promised "Completed – pending Collector verification" and "Verified by
+ * Collector" as its next steps until the department closed it (officer-day-06). Unless told it is the Collector's, the chain is the
+ * department's; a complaint the Collector is already checking or has verified (the Collector may act at any stage) keeps the
+ * Collector's steps.
  */
-export function chainFor(status: ComplaintStatus): ComplaintStatus[] {
-  return status === "Resolved by Department" ? [...STATUS_CHAIN.slice(0, 4), "Resolved by Department"] : STATUS_CHAIN;
+export function chainFor(status: ComplaintStatus, checker: "collector" | "department" | null = null): ComplaintStatus[] {
+  const collectorsStep = status === "Completed - Pending Collector Verification" || status === "Verified by Collector";
+  if (status === "Resolved by Department" || (checker !== "collector" && !collectorsStep)) return [...STATUS_CHAIN.slice(0, 4), "Resolved by Department"];
+  return STATUS_CHAIN;
 }
 
 const when = (s: string) =>
@@ -54,11 +62,12 @@ export function stoodAt(chain: ComplaintStatus[], history: HistoryRow[]): number
  * The complaint's journey as a vertical timeline: completed stages filled, the current one pulses once, later ones
  * hollow; each shows its date and remarks. A rejection ends the chain with a red node giving the stage and reason.
  */
-export default function StatusTracker({ status, rejectedStage, remarks, history = [] }: StatusTrackerProps) {
+export default function StatusTracker({ status, rejectedStage, remarks, history = [], checker = null }: StatusTrackerProps) {
   const last = (s: string) => [...history].reverse().find((h) => h.status === s);
   const rejected = status === "Rejected";
   // a rejection stops the chain where the complaint stood, by its history, not at the stage that rejected it (officer-day-20)
-  const chain = chainFor(status);
+  // a rejected complaint's history may show the Collector's steps, whoever was to check it
+  const chain = rejected && history.some((h) => h.status === "Completed - Pending Collector Verification" || h.status === "Verified by Collector") ? STATUS_CHAIN : chainFor(status, checker);
   const stopAt = rejected ? stoodAt(chain, history) : chain.indexOf(status);
   const cur = stopAt < 0 ? 0 : stopAt;
   const done = status === "Verified by Collector" || status === "Resolved by Department";

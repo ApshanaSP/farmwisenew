@@ -107,6 +107,18 @@ export async function incidentsOf(codes: string[]): Promise<Map<string, string>>
   return new Map(rows.map((r) => [String(r.code), String(r.inc)]));
 }
 
+/**
+ * Who will check the finished work of the case a complaint was filed into: the Collector for a severe case, else the department itself
+ * (only a severe case may be sent to the Collector: officer/data.ts). Null when the case is not in this build. The citizen's tracker was
+ * not told, and promised every complaint the Collector's verification (officer-day-06).
+ */
+export async function checkerOf(code: string): Promise<"collector" | "department" | null> {
+  const id = (await incidentsOf([code])).get(code);
+  if (!id) return null;
+  const [rows] = await intelPool.query<RowDataPacket[]>(`SELECT severity_level FROM incidents WHERE incident_id = ? LIMIT 1`, [id]);
+  return rows[0] ? (String(rows[0].severity_level) === "Severe" ? "collector" : "department") : null;
+}
+
 /** The complaint numbers filed into these incidents. */
 async function codesOf(incidentIds: string[]): Promise<string[]> {
   if (!incidentIds.length) return [];

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
-import { progressFor, remarksFor, withProgress } from "@/lib/complaint-progress";
+import { checkerOf, progressFor, remarksFor, withProgress } from "@/lib/complaint-progress";
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ code: string }> }) {
   const params = await ctx.params;
@@ -73,9 +73,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ code: strin
     complaint.rejected_stage = progress.rejectedStage;
     complaint.remarks = remarksFor(complaint.remarks, progress);
   }
+  // who will check the work, so the tracker shows the department's steps for a case the department closes itself (officer-day-06)
+  const checker = await checkerOf(String(complaint.complaint_code)).catch(() => null);
   return NextResponse.json({
     complaint,
     history: withProgress(historyRows as { status: string; created_at: unknown }[], progress),
-    progress: progress ? { checkedBy: progress.checkedBy, photos: progress.photos } : null
+    progress: progress ? { checkedBy: progress.checkedBy, photos: progress.photos } : null,
+    checker
   });
 }

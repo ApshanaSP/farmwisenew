@@ -52,6 +52,8 @@ export default function TrackComplaintsPage() {
   const [history, setHistory] = useState<any[]>([]);
   // the department's and the Collector's work on it: who checked it, and the completion photos
   const [progress, setProgress] = useState<{ checkedBy: "department" | "collector" | null; photos: string[] } | null>(null);
+  // who will check the work: the Collector for a severe case, else the department (officer-day-06)
+  const [checker, setChecker] = useState<"collector" | "department" | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   // a failed request says so (with Retry) instead of looking like "no complaints" or loading forever
   const [listError, setListError] = useState(false);
@@ -115,6 +117,7 @@ export default function TrackComplaintsPage() {
       setDetail(data.complaint);
       setHistory(data.history || []);
       setProgress(data.progress ?? null);
+      setChecker(data.checker ?? null);
     } catch {
       if (req === detailReq.current) { setDetail(null); setDetailError(true); }
     } finally {
@@ -258,7 +261,7 @@ export default function TrackComplaintsPage() {
                           <div role="alert"><ErrorState message="This complaint's details could not be loaded." onRetry={() => loadDetail(sel.complaint_code)} /></div>
                         ) : (
                           <>
-                            <StatusTracker status={sel.status} rejectedStage={sel.rejected_stage} remarks={sel.remarks} history={history} />
+                            <StatusTracker status={sel.status} rejectedStage={sel.rejected_stage} remarks={sel.remarks} history={history} checker={checker} />
                             {progress?.checkedBy && (
                               <p className="mt-4 flex items-center gap-2 rounded-[10px] border border-canvas-border bg-canvas-sunken p-3 text-[13px] text-ink-muted">
                                 <Check className="h-4 w-4 flex-shrink-0 text-[var(--ok)]" aria-hidden="true" />
