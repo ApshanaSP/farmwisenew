@@ -119,4 +119,17 @@ describe("officer console data", () => {
       expect(await ids("2026-888BBB")).toEqual([]);
     });
   });
+
+  describe("officer-day-17: the officer reads the citizen's whole complaint", () => {
+    it("a 400-character complaint (the form's limit) reaches the drawer's source whole, not its first 280 characters", async () => {
+      incident("INC-LONG");
+      const text = `Garbage has not been cleared on Test Street for nine days. ${"The bins overflow onto the road and dogs scatter it. ".repeat(7)}`.slice(0, 397) + " END";
+      expect(text.length).toBe(401);
+      h.db.prepare(`INSERT INTO events (event_id, source, source_record_id, incident_id, text) VALUES ('GRV-1', 'grievance', '2026-111AAA', 'INC-LONG', ?)`).run(text);
+      h.db.prepare(`INSERT INTO incident_members (incident_id, event_id, source, channel, reported_at, title, role)
+        VALUES ('INC-LONG', 'GRV-1', 'grievance', 'citizen_app', '2026-10-14 09:00:00', 'Garbage not cleared', 'first_report')`).run();
+      const d = await grievanceDetail(SWM, "INC-LONG");
+      expect(d?.sources[0].note).toBe(text);
+    });
+  });
 });

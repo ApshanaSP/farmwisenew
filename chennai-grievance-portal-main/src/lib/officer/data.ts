@@ -472,7 +472,8 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     // the department's own closure is a resolve by the officer: it shows as its "close" step, not as a Collector decision
     q(`SELECT decision, note, decided_by, ${fmt("decided_at")} AS t FROM ${ops("collector_decisions")} WHERE incident_id = ?
        AND COALESCE(decided_role, '') <> 'department_officer' ORDER BY decided_at, decision_id`, [id]),
-    q(`SELECT m.source, m.channel, ${fmt("m.reported_at")} AS t, m.title, m.role, LEFT(e.text, 280) AS text
+    // the source's whole text: the first 280 characters were the only copy the officer had of a complaint the form allows 400 for (officer-day-17)
+    q(`SELECT m.source, m.channel, ${fmt("m.reported_at")} AS t, m.title, m.role, e.text AS text
        FROM incident_members m LEFT JOIN events e ON e.event_id = m.event_id WHERE m.incident_id = ? ORDER BY m.reported_at LIMIT 60`, [id]),
     q(`SELECT publisher, title, url, ${fmt("published_at")} AS t FROM documents WHERE linked_incident_id = ?
           OR story_id IN (SELECT story_id FROM (SELECT story_id FROM documents WHERE linked_incident_id = ? AND story_id IS NOT NULL) s)
