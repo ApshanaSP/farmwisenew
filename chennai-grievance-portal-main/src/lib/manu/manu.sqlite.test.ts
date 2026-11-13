@@ -472,7 +472,7 @@ describe("the SMS to the person who wrote it", () => {
     const c = sent(f);
     expect(c.url).toBe("https://control.msg91.com/api/v5/flow/");
     expect(c.headers.authkey).toBe("key");
-    expect(c.body).toMatchObject({ template_id: "t-rt", sender: "CHNCOL", recipients: [{ mobiles: "919000041873", var1: r.code, var2: "Metrowater" }] });
+    expect(c.body).toMatchObject({ template_id: "t-rt", sender: "CHNCOL", recipients: [{ mobiles: "919000041873", var1: r.code, var2: "சென்னை குடிநீர் வாரியம்" }] }); // the Tamil template names the department in Tamil (P5-025)
     expect(JSON.stringify(c.body)).not.toContain("Sewage"); // the number and the department, no details of the complaint
     await filePetition(id, fields(), "x");
     expect(f).toHaveBeenCalledTimes(1);
@@ -550,7 +550,7 @@ describe("the SMS to the person who wrote it", () => {
     expect(h.mails).toHaveLength(1);
     expect(h.mails[0]).toMatchObject({ to: "team@x.in", subject: "[Test SMS] to 9000041873" });
     expect(h.mails[0].html).toContain("Nothing was sent to this phone");
-    expect(h.mails[0].html).toContain(`மனு பதிவு செய்யப்பட்டது. எண் ${r.code}. அனுப்பப்பட்ட துறை Metrowater.`);
+    expect(h.mails[0].html).toContain(`மனு பதிவு செய்யப்பட்டது. எண் ${r.code}. அனுப்பப்பட்ட துறை சென்னை குடிநீர் வாரியம்.`); // in Tamil (P5-025)
     expect(one("SELECT * FROM petition_sms")).toMatchObject({ kind: "received", status: "test", attempts: 1 });
     await filePetition(id, fields(), "x");
     expect(h.mails).toHaveLength(1);

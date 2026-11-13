@@ -8,7 +8,7 @@ import { ResultSetHeader, RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
 import { addHours, istNow } from "./clean";
-import { manuDeptLabel, type SmsNote } from "./constants";
+import { manuDeptLabel, manuDeptTa, type SmsNote } from "./constants";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 
 type Row = RowDataPacket & Record<string, any>;
@@ -120,7 +120,8 @@ async function viaMsg91(mobile: string, template: string, vars: [string, string]
 
 async function deliver(code: string, kind: SmsKind, p: Row, result: SmsResult | null): Promise<void> {
   const lang: Lang = p.language === "en" ? "en" : "ta";
-  const second = kind === "received" ? manuDeptLabel(p.dept_code) : SMS_RESULT[result ?? "done"][lang];
+  // a Tamil message names the department in Tamil (P5-025)
+  const second = kind === "received" ? (lang === "ta" ? manuDeptTa(p.dept_code) : manuDeptLabel(p.dept_code)) : SMS_RESULT[result ?? "done"][lang];
   const now = istNow();
   const live = smsMode() === "live";
   // the number a live send really went to is recorded with it, so the desk never names the petitioner's phone for a test number (P5-024)

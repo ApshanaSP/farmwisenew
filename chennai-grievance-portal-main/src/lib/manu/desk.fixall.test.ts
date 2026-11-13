@@ -343,3 +343,28 @@ describe("hunt2-desk-06: /track for an online complaint", () => {
     expect(v.dueBy).toBe(one("SELECT due_at FROM petitions WHERE complaint_code = ?", r.code).due_at);
   });
 });
+
+// P5-025: the Tamil SMS named the department in English (department labels were English only)
+describe("P5-025: a Tamil petitioner's SMS names the department in Tamil", () => {
+  it("test mode, a Tamil petition to Metrowater: the message is all Tamil", async () => {
+    testMode();
+    await filePetition(await uploaded(), fields(), "x"); // no reading here: the language is the text's, Tamil
+    const text = h.mails[0].html.replace(/<[^>]+>/g, " ");
+    expect(text).toContain("அனுப்பப்பட்ட துறை சென்னை குடிநீர் வாரியம்.");
+    expect(text).not.toContain("Metrowater");
+  });
+  it("an English petition keeps the English name", async () => {
+    testMode();
+    await filePetition(await uploaded(), fields({ name: "R. Kumar", subject: "Sewage", fullText: "From: R. Kumar, Perambur" }), "x"); // no reading: the language is the text's
+    expect(h.mails[0].html).toContain("Sent to Metrowater.");
+  });
+  it("every department has a Tamil name within DLT's 30 characters, and the longest Tamil message stays within 2 segments", async () => {
+    const { MANU_DEPTS } = await import("@/lib/manu/constants");
+    for (const d of MANU_DEPTS) {
+      expect(d.ta, d.code).toMatch(/[஀-௿]/);
+      expect([...d.ta].length, d.code).toBeLessThanOrEqual(30);
+      const msg = sms.SMS_WORDING.received.ta.replace("{#var#}", "2026-123ABC").replace("{#var#}", d.ta);
+      expect(msg.length, d.code).toBeLessThanOrEqual(134); // two UCS-2 segments of 67
+    }
+  });
+});

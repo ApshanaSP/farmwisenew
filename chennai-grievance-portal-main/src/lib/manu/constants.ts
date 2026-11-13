@@ -19,34 +19,40 @@ export const MANU_LIMITS = {
   pollMs: 2500
 } as const;
 
-export interface ManuDept { code: string; label: string; handles: string }
+/**
+ * `ta`: the department's name in Tamil, for a Tamil petitioner's SMS and pages. The Tamil SMS named the department in English (QA pass 5,
+ * P5-025). At most 30 characters: DLT allows 30 a variable.
+ */
+export interface ManuDept { code: string; label: string; ta: string; handles: string }
 
 /** Where a petition can go: every department with an officer login that takes this kind of work. The first lines are the usual ones. */
 export const MANU_DEPTS: ManuDept[] = [
-  { code: "GCC-SWM", label: "Corporation Solid Waste", handles: "garbage collection, bins, street sweeping" },
-  { code: "GCC-SWD", label: "Corporation Storm Water Drain", handles: "rain water drains, street flooding, rain water entering homes" },
-  { code: "CMWSSB", label: "Metrowater", handles: "sewage overflow, sewer blocks, drinking water supply and quality" },
-  { code: "GCC-ELE", label: "Corporation Electrical", handles: "street lights and street light poles" },
-  { code: "GCC-ENG", label: "Corporation Engineering", handles: "damaged roads, road repair, building permissions, illegal construction" },
-  { code: "TANGEDCO", label: "TANGEDCO", handles: "household electricity supply, power cuts, transformers, meters" },
-  { code: "DIST-REV", label: "District Revenue", handles: "pensions and social security allowances, patta, land disputes, encroachment, ration cards, certificates" },
-  { code: "POL-GCP", label: "Greater Chennai Police", handles: "crime, threats, harassment, police not acting" },
-  { code: "HLT-DMS", label: "Government Hospitals", handles: "government hospitals, medicines, money or help for medical treatment" },
-  { code: "GCC-HLT", label: "Corporation Health", handles: "stray dogs, mosquitoes, public sanitation illness, Corporation dispensaries" },
-  { code: "GCC-EDU", label: "Corporation Education", handles: "Corporation schools and scholarships" },
-  { code: "GCC-PRK", label: "Corporation Parks", handles: "parks, playgrounds, fallen trees" },
-  { code: "GCC-REV", label: "Corporation Revenue", handles: "property tax, trade licences" },
-  { code: "GCC-BRG", label: "Corporation Bridges", handles: "bridges and subways" },
-  { code: "GCC-BLD", label: "Corporation Buildings", handles: "community halls, public toilets, Corporation buildings" },
-  { code: "GCC-LND", label: "Corporation Land and Estate", handles: "Corporation land, shops and leases" },
-  { code: "GCC-FWD", label: "Corporation Family Welfare", handles: "maternity care, child welfare, vaccination" },
-  { code: "PWD-WRD", label: "PWD Water Resources", handles: "lakes, rivers, canals and flood banks" },
-  { code: "TNPCB", label: "Pollution Control Board", handles: "air, water and noise pollution from factories and burning" },
-  { code: "DIST-DM", label: "District Disaster Management", handles: "flood and cyclone relief, relief camps" },
-  { code: "GCC-GAD", label: "Corporation Administration", handles: "anything that fits none of the others" }
+  { code: "GCC-SWM", label: "Corporation Solid Waste", ta: "மாநகராட்சி திடக்கழிவு மேலாண்மை", handles: "garbage collection, bins, street sweeping" },
+  { code: "GCC-SWD", label: "Corporation Storm Water Drain", ta: "மாநகராட்சி மழைநீர் வடிகால்", handles: "rain water drains, street flooding, rain water entering homes" },
+  { code: "CMWSSB", label: "Metrowater", ta: "சென்னை குடிநீர் வாரியம்", handles: "sewage overflow, sewer blocks, drinking water supply and quality" },
+  { code: "GCC-ELE", label: "Corporation Electrical", ta: "மாநகராட்சி மின்துறை", handles: "street lights and street light poles" },
+  { code: "GCC-ENG", label: "Corporation Engineering", ta: "மாநகராட்சி பொறியியல் துறை", handles: "damaged roads, road repair, building permissions, illegal construction" },
+  { code: "TANGEDCO", label: "TANGEDCO", ta: "தமிழ்நாடு மின்வாரியம்", handles: "household electricity supply, power cuts, transformers, meters" },
+  { code: "DIST-REV", label: "District Revenue", ta: "மாவட்ட வருவாய்த் துறை", handles: "pensions and social security allowances, patta, land disputes, encroachment, ration cards, certificates" },
+  { code: "POL-GCP", label: "Greater Chennai Police", ta: "பெருநகர சென்னை காவல்துறை", handles: "crime, threats, harassment, police not acting" },
+  { code: "HLT-DMS", label: "Government Hospitals", ta: "அரசு மருத்துவமனைகள்", handles: "government hospitals, medicines, money or help for medical treatment" },
+  { code: "GCC-HLT", label: "Corporation Health", ta: "மாநகராட்சி சுகாதாரத் துறை", handles: "stray dogs, mosquitoes, public sanitation illness, Corporation dispensaries" },
+  { code: "GCC-EDU", label: "Corporation Education", ta: "மாநகராட்சி கல்வித் துறை", handles: "Corporation schools and scholarships" },
+  { code: "GCC-PRK", label: "Corporation Parks", ta: "மாநகராட்சி பூங்காக்கள் துறை", handles: "parks, playgrounds, fallen trees" },
+  { code: "GCC-REV", label: "Corporation Revenue", ta: "மாநகராட்சி வருவாய்த் துறை", handles: "property tax, trade licences" },
+  { code: "GCC-BRG", label: "Corporation Bridges", ta: "மாநகராட்சி பாலங்கள் துறை", handles: "bridges and subways" },
+  { code: "GCC-BLD", label: "Corporation Buildings", ta: "மாநகராட்சி கட்டடங்கள் துறை", handles: "community halls, public toilets, Corporation buildings" },
+  { code: "GCC-LND", label: "Corporation Land and Estate", ta: "மாநகராட்சி நில நிர்வாகத் துறை", handles: "Corporation land, shops and leases" },
+  { code: "GCC-FWD", label: "Corporation Family Welfare", ta: "மாநகராட்சி குடும்ப நலத் துறை", handles: "maternity care, child welfare, vaccination" },
+  { code: "PWD-WRD", label: "PWD Water Resources", ta: "நீர்வளத் துறை", handles: "lakes, rivers, canals and flood banks" },
+  { code: "TNPCB", label: "Pollution Control Board", ta: "மாசு கட்டுப்பாட்டு வாரியம்", handles: "air, water and noise pollution from factories and burning" },
+  { code: "DIST-DM", label: "District Disaster Management", ta: "மாவட்டப் பேரிடர் மேலாண்மை", handles: "flood and cyclone relief, relief camps" },
+  { code: "GCC-GAD", label: "Corporation Administration", ta: "மாநகராட்சி நிர்வாகம்", handles: "anything that fits none of the others" }
 ];
 
 export const manuDeptLabel = (code: string | null | undefined): string => MANU_DEPTS.find((d) => d.code === code)?.label ?? (code || "");
+/** The department's name in Tamil; an unknown code as it is. */
+export const manuDeptTa = (code: string | null | undefined): string => MANU_DEPTS.find((d) => d.code === code)?.ta ?? (code || "");
 
 /** The fields the reader may say it could not read confidently. */
 export const READ_FIELDS = ["name", "mobile", "door_no", "street", "area_en", "pincode", "ward", "date", "aadhaar_last4", "subject", "full_text"] as const;
