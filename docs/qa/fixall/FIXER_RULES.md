@@ -33,8 +33,12 @@ separate session ("Fix pass 6's 14 open P0 bugs") and the six sessions it starte
 
 - Branch: `claude/fixall2-a84a72`, cut from the combined branch's tip `1df591f0`. The final gate passed on `ae65fe84`.
   The combined branch holds the six p7 lanes, round 1 (`claude/fixall-a84a72`) and pass 4's last commit.
-- The p7 sessions are finished, so their files are open to round 2, with one exception. Until the fix coordinator says otherwise, do
-  not change `src/lib/thunai/**`, `src/lib/studio/**` or the assistant rules lane: the open P0/P1 rows there may still be its.
+- Most p7 files are open to round 2. But the coordinator's lanes are fixing the open P0/P1 rows now, and until it says they are
+  done, never change these files:
+  - `src/lib/thunai/**`, `src/lib/studio/**` and `src/lib/period/**`;
+  - the assistant rules lane (`src/lib/assistant/{fastpath,intent,decide,unresolved,cannot}.ts`);
+  - `src/components/collector/app/thunai/Thunai.tsx`.
+
   If a row needs one of those files, leave it `open` with the note "needs <file>, held for the coordinator's open P0/P1 rows".
 - Never take a P0 or P1 row unless the lead gives it to you.
 - Ports: Next 3110–3113, pinned API 3190.
