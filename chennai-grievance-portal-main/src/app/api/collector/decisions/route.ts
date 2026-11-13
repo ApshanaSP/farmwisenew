@@ -80,6 +80,12 @@ export async function POST(req: NextRequest) {
     if (d.escalateTo) {
       const [dept] = await conn.query<RowDataPacket[]>("SELECT code FROM ref_departments WHERE code = ?", [d.escalateTo]);
       if (dept.length === 0) return NextResponse.json({ error: "Unknown department." }, { status: 400 });
+      // a case's department is its lead department everywhere it is read (the officer's queue and lock, the Collector's department filters
+      // and counts): an escalate naming another department was confirmed, recorded and audited, and the case never reached it (hunt2-ops-03).
+      // An escalate raises the case up its own department's chain; moving a case to another department is not something this console does
+      if (d.decision === "escalate" && incs.some((i) => i.lead_dept !== d.escalateTo)) {
+        return NextResponse.json({ error: "A case cannot be sent to another department from here: escalating raises it up its own department's chain." }, { status: 409 });
+      }
     }
 
     await conn.beginTransaction();
