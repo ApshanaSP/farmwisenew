@@ -13,7 +13,8 @@ vi.mock("@/lib/db", () => ({
   }
 }));
 
-describe("code cooldown under a burst", () => {
+// QA pass 7 gate: these tests run as a sequence over shared state (the number's code cooldown), so they keep their order when the suite is shuffled
+describe("code cooldown under a burst", { shuffle: false }, () => {
   it("redteam-final-4: 12 parallel requests for one number make one code; the others are told to wait", async () => {
     const { createOtp } = await import("./otp");
     const rs = await Promise.all(Array.from({ length: 12 }, () => createOtp("9000000001", "mobile_verify", 5)));

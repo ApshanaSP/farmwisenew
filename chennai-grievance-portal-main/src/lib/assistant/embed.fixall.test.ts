@@ -41,7 +41,8 @@ beforeAll(() => {
 afterAll(() => { vi.restoreAllMocks(); fs.rmSync(root, { recursive: true, force: true }); });
 beforeEach(() => { fake.started = 0; fake.mode = "protobuf"; });
 
-describe("P6-025: a model file that is a Git LFS pointer fails clearly, once, and the keyword search answers", () => {
+// QA pass 7 gate: these tests run as a sequence over shared state (the model file and the loader's verdict), so they keep their order when the suite is shuffled
+describe("P6-025: a model file that is a Git LFS pointer fails clearly, once, and the keyword search answers", { shuffle: false }, () => {
   it("embed() says the file is an LFS pointer and how to fix it, and starts no worker, however often it is asked", async () => {
     fs.writeFileSync(file, POINTER);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);

@@ -21,7 +21,8 @@ let ipSeq = 0;
 const track = (body: unknown) => POST(new NextRequest("http://x/api/track", { method: "POST", headers: { "x-forwarded-for": `10.77.${Math.floor(++ipSeq / 250)}.${ipSeq % 250}` }, body: JSON.stringify(body) }));
 const CODE = "2026-111AAA";
 
-describe("manu-sec-09: junk tries on a slip number never lock out the holder of the slip", () => {
+// QA pass 7 gate: these tests run as a sequence over shared state (the slip number's try counter), so they keep their order when the suite is shuffled
+describe("manu-sec-09: junk tries on a slip number never lock out the holder of the slip", { shuffle: false }, () => {
   beforeEach(() => { h.reads = 0; });
 
   it("after 12 wrong last-4 tries the QR key still opens the slip", async () => {

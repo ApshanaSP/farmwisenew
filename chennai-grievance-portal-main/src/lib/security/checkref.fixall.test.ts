@@ -19,7 +19,8 @@ vi.mock("@/lib/security/audit", () => ({ securityLog: async () => {}, recentEven
 const { checkRef, emailRef } = await import("./stamp");
 const { POST } = await import("@/app/api/auth/security/route");
 
-describe("hunt2-sec-11: checking an email reference", () => {
+// QA pass 7 gate: these tests run as a sequence over shared state (the reference cache and the account's check counter), so they keep their order when the suite is shuffled
+describe("hunt2-sec-11: checking an email reference", { shuffle: false }, () => {
   it("works each email's reference out once, not on every check", async () => {
     const spy = vi.spyOn(crypto, "createHmac");
     await checkRef("DIQ-ZZZZ-ZZZZ");

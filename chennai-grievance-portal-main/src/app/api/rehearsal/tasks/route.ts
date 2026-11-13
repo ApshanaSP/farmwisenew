@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
   // one photo at its limit plus the text fields: a larger request is refused before it is read into memory (officer-day-25,
-  // reviewerA-02: req.formData() read the whole body before the photo's size was checked)
+  // reviewerA-02: reading the form whole read the entire body before the photo's size was checked)
   const { form, tooLarge } = await readFormCapped(req, OFFICER.maxPhotoBytes + 64 * 1024);
   if (tooLarge) return NextResponse.json({ error: `The photo must be ${OFFICER.maxPhotoBytes / 1024 / 1024} MB or smaller.` }, { status: 413 });
   if (!form) return NextResponse.json({ error: "Send the task as a form." }, { status: 400 });

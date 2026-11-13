@@ -42,7 +42,8 @@ function streamed(total: number, chunk = 256 * 1024) {
 const req = (url: string, body: ReadableStream<Uint8Array>, type: string) =>
   new NextRequest(url, { method: "POST", body, headers: { "content-type": type, host: "localhost:3110" }, duplex: "half" } as never);
 
-describe("reviewerA-02: the rehearsal routes refuse a large body before reading it", () => {
+// QA pass 7 gate: these tests run as a sequence over shared state (the task's done mark), so they keep their order when the suite is shuffled
+describe("reviewerA-02: the rehearsal routes refuse a large body before reading it", { shuffle: false }, () => {
   it("/api/rehearsal/tasks: a 30 MB form is a 413, pulls far less than 30 MB, and marks nothing done", async () => {
     const { POST } = await import("./tasks/route");
     const { body, pulled } = streamed(30 * 1024 * 1024);
