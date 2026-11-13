@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { I } from "@/components/collector/app/icons";
 import { SOURCE_KIND, SevChip, fmtShort, fullTitle, type Row } from "@/components/collector/app/lib";
 import type { GrievanceDetail } from "@/lib/officer/data";
-import { stepsOf, type Stage } from "@/lib/officer/stages";
+import { historyOf, stepsOf, type Stage, type StepHistory } from "@/lib/officer/stages";
 import { StageChip } from "./Cards";
 import type { Ctx } from "./OfficerApp";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
@@ -12,8 +12,8 @@ import PetitionOriginal from "@/components/manu/PetitionOriginal";
 type Report = GrievanceDetail["reports"][number];
 
 /** Received -> In action -> Sent to Collector -> Verified for a severe grievance; Received -> In action -> Closed by your department for any other */
-export function Steps({ stage, severe, closedByDept }: { stage: Stage; severe: boolean; closedByDept: boolean }) {
-  const { labels, at: k } = stepsOf(stage, severe, closedByDept);
+export function Steps({ stage, severe, closedByDept, hist }: { stage: Stage; severe: boolean; closedByDept: boolean; hist?: StepHistory }) {
+  const { labels, at: k } = stepsOf(stage, severe, closedByDept, hist);
   const last = labels.length - 1;
   return (
     <div className={labels.length === 3 ? "wfs n3" : "wfs"} aria-label={`Stage ${k + 1} of ${labels.length}: ${labels[k]}`}>
@@ -130,7 +130,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
       </div>
       <div className="odrawer-b">
-        <Steps stage={g.stage as Stage} severe={g.sev === "Severe"} closedByDept={!!d.closedByDept} />
+        <Steps stage={g.stage as Stage} severe={g.sev === "Severe"} closedByDept={!!d.closedByDept} hist={historyOf(d.timeline)} />
         {g.returned && lastReturn && (
           <div className="banner" style={{ background: "var(--high-soft)", color: "#8A4A06" }}><I n="refresh" />
             <span><b>Returned by the Collector for rework.</b> {lastReturn.note || "No note was added."} Fix it on site, then complete and send again.</span>

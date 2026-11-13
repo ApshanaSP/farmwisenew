@@ -34,10 +34,35 @@ export const STAGE_INDEX: Record<Stage, number> = { new: 0, approved: 1, action:
  * "Sent to Collector": Received -> In action -> Closed by your department (or, when the Collector decided it first, what the
  * Collector did). `closedByDept`: the last officer step was the department's own close.
  */
-export function stepsOf(stage: Stage, severe: boolean, closedByDept = false): { labels: readonly string[]; at: number } {
-  if (!closedByDept && (severe || stage === "sent")) return { labels: STEP_LABELS, at: STAGE_INDEX[stage] ?? 0 };
-  const end = closedByDept || (stage !== "verified" && stage !== "closed") ? "Closed by your department" : stage === "verified" ? "Verified by Collector" : "Closed";
-  return { labels: ["Received", "In action", end], at: stage === "new" ? 0 : stage === "approved" || stage === "action" ? 1 : 2 };
+export function stepsOf(stage: Stage, severe: boolean, closedByDept = false, hist?: StepHistory): { labels: readonly string[]; at: number } {
+  // The stage alone cannot say whether the case was sent, or whether the department acted on it at all: a severe case the Collector
+  // rejected ('closed') was drawn with "Verified" ticked, one rejected straight from New with "In action" ticked, and a non-severe one
+  // sent before the rule lost its "Sent to Collector" step (reviewerB-05). The drawer passes the case's history; without it, both are
+  // read from the stage as before.
+  const decided = stage === "verified" || stage === "closed"; // the Collector (or the pipeline) closed it
+  const sent = hist?.sent ?? (stage === "sent" || (severe && stage === "verified"));
+  const acted = hist?.acted ?? stage !== "new";
+  if (closedByDept) return { labels: ["Received", "In action", "Closed by your department"], at: 2 };
+  if (sent || (severe && !decided)) {
+    return { labels: [...STEP_LABELS.slice(0, 3), stage === "closed" ? "Closed" : "Verified"], at: STAGE_INDEX[stage] ?? 0 };
+  }
+  if (!decided) return { labels: ["Received", "In action", "Closed by your department"], at: stage === "new" ? 0 : 1 };
+  // closed before the department sent it: what the department did, then how it was closed
+  const end = stage === "verified" ? "Verified by Collector" : "Closed";
+  const labels = acted ? ["Received", "In action", end] : ["Received", end];
+  return { labels, at: labels.length - 1 };
+}
+
+/** What a case's history says that its stage cannot: it was sent to the Collector; the department acted on it at all. */
+export type StepHistory = { sent: boolean; acted: boolean };
+
+/** The department's own steps, as grievanceDetail (lib/officer/data.ts) labels them in its timeline. */
+export const DEPT_STEP_LABELS = { approve: "Approved by department", action: "Work started", send: "Sent to Collector", close: "Closed by department" } as const;
+
+/** The history stepsOf needs, read from a grievance detail's timeline. */
+export function historyOf(timeline: readonly { label: string }[]): StepHistory {
+  const seen = new Set(timeline.map((t) => t.label));
+  return { sent: seen.has(DEPT_STEP_LABELS.send), acted: Object.values(DEPT_STEP_LABELS).some((l) => seen.has(l)) };
 }
 
 /** The stages each recorded step starts from (the same table as recordStep's in lib/officer/data.ts, which checks again under its lock). */
