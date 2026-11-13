@@ -1,10 +1,17 @@
 // QA pass 4, lane b skeptic: breaks of the RC-08 fix (ef189f1), on the real snapshot and the real round, no model key.
 // Each test states what must hold; it.fails keeps the suite green while the break is open. The fixer changes it.fails to it.
 //   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/skeptic-b.test.ts
-import { describe, expect, it } from "vitest";
+// The clock is frozen at the pinned snapshot's day (2026-11-06 12:00 IST), as in the other real-path files (a-skeptic, d-skeptic, skeptic-g1).
+// On the wall clock "this week" moved past the snapshot's last row (6 Nov 18:08), the week was empty and the lists had nothing to count.
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { asOf } from "@/lib/collector/intel";
 import { serverHands } from "@/lib/thunai/data";
 import { serverWorld } from "@/lib/thunai/world";
-import { planRound, RoundBody } from "@/lib/thunai/round";
+import { clearCaches, planRound, RoundBody } from "@/lib/thunai/round";
+import { FROZEN_NOW } from "./lib/env.mjs";
+
+beforeAll(async () => { vi.useFakeTimers({ toFake: ["Date"], now: new Date(FROZEN_NOW) }); clearCaches(); await asOf(); }, 300_000);
+afterAll(() => { vi.useRealTimers(); });
 
 const USER = "qa.skeptic.b@example.test";
 const state = () => ({ page: "overview", period: "weekly", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false });
