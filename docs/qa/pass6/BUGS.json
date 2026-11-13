@@ -5106,6 +5106,22 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerG-01",
+    "severity": "P3",
+    "area": "collector / Ask District IQ (open figures)",
+    "title": "Not every open figure reads OPEN_NOW: Ask's planner lane ('still open'), the snapshot's 'open, seen only in the news' figure and Ask's flood-prep zone counts still count routed news complaints as open",
+    "found_by": "reviewerG (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/assistant/open-now.reviewerG.fixall.test.ts::reviewerG-01: open readers reviewerE-02 left on EFF.open",
+    "root_cause": "reviewerE-02 left three readers on EFF.open (no routed half); now openNowSql(alias, open) / OPEN_NOW in compile.ts is_open, snapCommon, report() news list and warnings prepNow",
+    "fix_commit": "b4d2730e",
+    "revert_check": "3 of 3 fail without / 3 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/assistant/compile.ts:174; src/lib/collector/intel.ts:1187, :1742; src/lib/assistant/warnings.ts:19, 97-99",
+    "closed_in": "fixall"
+  },
+  {
     "id": "reviewerG-04",
     "severity": "P2",
     "area": "Ask District IQ (read-only account)",
