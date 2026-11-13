@@ -21,6 +21,8 @@ export default defineConfig({
     globalSetup: ["tests/qa/pass4/lib/global-setup.mjs"],
     env: { ...kept, ...Object.fromEntries(blank.map((k) => [k, ""])), AI_PROVIDER: "groq", AI_FALLBACK_PROVIDER: "groq", AI_CHAT_PROVIDER: "groq",
       DATA_BACKEND: "aws", AWS_STORE_SAVE: "", AWS_STORE_DRY_RUN: "1", AWS_STORE_RELOAD_MINUTES: "100000", AWS_DURABLE_FILE: path.join(srv, "durable.sqlite"),
+      // the run's own Data Studio folder: the worktree's data/studio held a test server's uploads ("Rtf Export"), and Ask answered from them (SKG1-30)
+      STUDIO_DIR: path.join(srv, "studio"),
       THUNAI_DIR: path.join(srv, "thunai"), AWS_API_URL: PIN_URL, REFRESH_API_KEY: "qa-pinned", SMTP_HOST: "127.0.0.1", SMTP_PORT: "1", EMAIL_MODE: "sandbox", QA_GROQ_ONLY: "1",
       // QA pass 5: no real SMS from the Manu Desk, PaddleOCR on a dead port
       SMS_MODE: "off", MSG91_AUTH_KEY: "", MSG91_SENDER: "", SMS_TEST_NUMBER: "", EMAIL_SANDBOX_TO: "", MANU_PADDLE_URL: "http://127.0.0.1:1" }
