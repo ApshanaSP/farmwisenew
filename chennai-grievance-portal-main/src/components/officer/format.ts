@@ -34,7 +34,15 @@ export function grievanceBriefing(ov: OfficerOverview, area: string | null): str
   const trend = ov.trend.length ? Array.from({ length: P.buckets }, (_, i) => ov.trend.reduce((s, x) => s + (x.v[i] ?? 0), 0)) : [];
   const half = Math.floor(trend.length / 2);
   const early = trend.slice(0, half).reduce((a, b) => a + b, 0), late = trend.slice(trend.length - half).reduce((a, b) => a + b, 0);
-  const ok = ov.feedback.filter((f) => f.ok).length, back = ov.feedback.length - ok;
+  // every decision of the period, counted (the feedback list holds only the newest few), each by what it did: a reject is not rework and
+  // a resolve is not a verified report (hunt2-ops-08)
+  const fb = ov.feedbackCounts;
+  const decided = [
+    fb.verified ? `verified ${plural(fb.verified, "report")}` : "",
+    fb.returned ? `returned ${n(fb.returned)} for rework` : "",
+    fb.resolved ? `closed ${n(fb.resolved)} without a report` : "",
+    fb.rejected ? `rejected ${n(fb.rejected)}` : ""
+  ].filter(Boolean);
   const sv = sev.Severe ?? 0, hi = sev.High ?? 0;
   return [
     `${P.label}${where}: ${plural(total, "grievance")} reported. ${plural(k.new, "new grievance")} ${k.new === 1 ? "is" : "are"} waiting for approval, ` +
@@ -49,7 +57,7 @@ export function grievanceBriefing(ov: OfficerOverview, area: string | null): str
       ? late > early ? `Reports rose in the second half of the period (${n(late)} against ${n(early)}).`
         : late < early ? `Reports fell in the second half of the period (${n(late)} against ${n(early)}).` : "Reports were steady across the period."
       : null,
-    ov.feedback.length ? `The Collector verified ${plural(ok, "report")} and returned ${n(back)} for rework in this period.` : null,
+    decided.length ? `The Collector ${decided.length > 1 ? `${decided.slice(0, -1).join(", ")} and ${decided[decided.length - 1]}` : decided[0]} in this period.` : null,
     ov.news.length ? `${plural(ov.news.length, "grievance")} ${ov.news.length === 1 ? "was" : "were"} covered by the news.` : null
   ].filter(Boolean) as string[];
 }

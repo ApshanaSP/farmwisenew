@@ -26,6 +26,21 @@ export function Steps({ stage, severe, closedByDept, hist }: { stage: Stage; sev
   );
 }
 
+/**
+ * How a case the department can no longer act on ended, in the drawer's footer. A case the Collector rejected (stage closed) was shown
+ * with the green "Verified by Collector" chip (officer-day-05): it is said as rejected, with the Collector's reason.
+ */
+export function Outcome({ stage, closedByDept, rejected }: { stage: Stage; closedByDept: boolean; rejected: { t: string; note: string | null } | null }) {
+  if (stage === "closed") {
+    return (
+      <span className="chip sev-high" style={{ padding: "8px 12px" }}><I n="x" />
+        {rejected ? `Rejected by the Collector · ${fmtShort(rejected.t)}${rejected.note ? `: ${rejected.note}` : ""}` : "Closed"}
+      </span>
+    );
+  }
+  return <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />{closedByDept ? "Closed by your department" : "Verified by Collector"}</span>;
+}
+
 function ReportBlock({ r, title }: { r: Report; title: string }) {
   return (
     <div>
@@ -196,9 +211,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
             <span className="hint">You verify this one: your remarks and photos are kept as the record.</span></>
         ) : g.stage === "sent" ? (
           <span className="st st-await" style={{ padding: "8px 12px", display: "inline-flex", gap: 6, alignItems: "center" }}><I n="clock" />Waiting for the Collector&apos;s verification</span>
-        ) : (
-          <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />{d.closedByDept ? "Closed by your department" : "Verified by Collector"}</span>
-        )}
+        ) : <Outcome stage={g.stage as Stage} closedByDept={!!d.closedByDept} rejected={d.rejected} />}
       </div>
     </div>
   );

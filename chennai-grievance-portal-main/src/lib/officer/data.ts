@@ -22,7 +22,7 @@ import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
 import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
-import { STAGE_LABEL, TAB_STAGES, nextStep, type Stage, type Tab } from "./stages";
+import { STAGE_LABEL, TAB_STAGES, feedbackKind, nextStep, type FeedbackKind, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
 import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
 import { queueNoteFor } from "./queue-note";
@@ -281,7 +281,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   ]);
 
   const c = counts[0] ?? {};
-  const outlets = await outletsFor(news.map((r) => r.id));
+  const [outlets, fbCounts] = await Promise.all([outletsFor(news.map((r) => r.id)), feedbackCounts(dept.code, s)]);
   const updated = await refreshInfo(meta.exported_at ?? null, feeds);
   const series = new Map<string, { code: string; l: string; v: number[] }>();
   for (const r of trend) {
@@ -328,6 +328,8 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     /** one count per bucket (P.buckets across the period from `since`), oldest first */
     trend: [...series.values()].sort((a, b2) => b2.v.reduce((x, y) => x + y, 0) - a.v.reduce((x, y) => x + y, 0)),
     feedback,
+    /** every decision of the Collector in the period by what it did (the feedback card lists only the newest few) */
+    feedbackCounts: fbCounts,
     zones: geo.zones,
     taluks: geo.taluks,
     /** every department has an insights page: its own work record, plus the store's data that concerns it */
@@ -369,20 +371,41 @@ export async function officerPulse(dept: DeptProfile) {
 /** Current IST wall-clock time, "YYYY-MM-DD HH:MM:SS" (decisions carry real times, not the pipeline's as-of). */
 const istNow = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
 
-/** The Collector's verify / return (reopen, reject) decisions on this department's grievances, made in the period. */
+/** The Collector's decisions on this department's grievances made in the period (the department's own close is not one). */
+function feedbackWhere(dept: string, s: Scope) {
+  // the department's own close is stored as a 'resolve' by its officer (decided_role): it is not the Collector's work
+  return {
+    sql: `FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
+     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?
+       ${s.zone ? "AND i.zone_no = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`,
+    params: [dept, periodSince(s.period, istNow()), ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])] as unknown[]
+  };
+}
+
+/** The Collector's verify / resolve / return (reopen) / reject decisions on this department's grievances, made in the period, newest first. */
 async function collectorFeedback(dept: string, s: Scope, limit: number) {
+  const w = feedbackWhere(dept, s);
   const r = await q(
     `SELECT d.decision_id AS did, d.incident_id AS id, d.decision, d.note, ${fmt("d.decided_at")} AS at,
             ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name
-     FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
-     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?
-       ${s.zone ? "AND i.zone_no = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}
-     ORDER BY d.decided_at DESC, d.decision_id DESC LIMIT ${Math.max(1, Math.min(50, limit))}`,
-    [dept, periodSince(s.period, istNow()), ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])]
+     ${w.sql} ORDER BY d.decided_at DESC, d.decision_id DESC LIMIT ${Math.max(1, Math.min(50, limit))}`,
+    w.params
   );
-  // the department's own close is stored as a 'resolve' by its officer (decided_role): it is not the Collector's work. A reject
-  // is returned work like a reopen: the officer must see it
-  return r.map((x) => ({ ...x, ok: x.decision === "verify" || x.decision === "resolve" })) as Row[];
+  // kind: what the decision did (stages.ts FEEDBACK_KIND): a reject closed the case for good, it is not returned work (officer-day-05);
+  // a resolve closed it without checking a report, it is not a verified report (hunt2-ops-08). ok: it closed the case
+  return r.map((x) => ({ ...x, kind: feedbackKind(x.decision), ok: x.decision === "verify" || x.decision === "resolve" })) as Row[];
+}
+
+/**
+ * How many of each the Collector decided in the period, for the briefing (hunt2-ops-08): counted, not read from the newest 8 decisions
+ * the feedback card shows.
+ */
+export async function feedbackCounts(dept: string, s: Scope): Promise<Record<FeedbackKind, number>> {
+  const w = feedbackWhere(dept, s);
+  const r = await q(`SELECT d.decision, COUNT(*) AS n ${w.sql} GROUP BY d.decision`, w.params);
+  const out: Record<FeedbackKind, number> = { verified: 0, resolved: 0, returned: 0, rejected: 0 };
+  for (const x of r) { const k = feedbackKind(x.decision); if (k) out[k] += Number(x.n); }
+  return out;
 }
 
 /** Publishers of the articles linked to each incident (and their news stories). */
@@ -518,6 +541,7 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
   ].sort((a, b2) => String(a.t).localeCompare(String(b2.t)));
 
   const lastVerify = [...decisions].reverse().find((d) => d.decision === "verify" || d.decision === "resolve");
+  const lastReject = [...decisions].reverse().find((d) => d.decision === "reject");
   const lastReturn = [...decisions].reverse().find((d) => d.decision === "reopen");
   return {
     now,
@@ -544,6 +568,8 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     /** the Collector's instructions on this grievance, newest first, each with its signed reference (lib/security/stamp.ts) */
     instructions: instructions.map((e) => ({ id: e.id, subject: e.subject, body: e.body, t: e.t, from: e.owner ?? null,
       ref: e.owner && e.body_hash && e.approved_at ? emailRef({ owner: String(e.owner), subject: String(e.subject), bodyHash: String(e.body_hash), at: String(e.approved_at) }) : null })),
+    /** closed by the Collector's reject (stage closed): when and why; the department can do nothing more on it (officer-day-05) */
+    rejected: g.stage === "closed" && lastReject ? { t: String(lastReject.t), note: lastReject.note == null ? null : String(lastReject.note) } : null,
     /** the department closed it itself (not severe) */
     closedByDept: steps.length > 0 && steps[steps.length - 1].step === "close",
     firstSource: members[0] ? SOURCE_LABEL[members[0].source] ?? members[0].source : docs[0]?.publisher ?? "—"

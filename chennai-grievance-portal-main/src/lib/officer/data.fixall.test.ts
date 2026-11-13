@@ -29,7 +29,7 @@ vi.mock("@/lib/db", () => ({ default: pool }));
 vi.mock("@/lib/complaint-progress", () => ({ syncComplaints: async () => 0, awaitingQueue: async () => 0 }));
 vi.mock("@/lib/collector/intel", async (orig) => ({ ...(await orig<typeof import("@/lib/collector/intel")>()), asOf: async () => "2026-10-14 12:00:00" }));
 
-const { grievanceDetail, grievanceList, search } = await import("./data");
+const { feedbackCounts, grievanceDetail, grievanceList, search } = await import("./data");
 
 const SWM = { code: "GCC-SWM", name: "Solid Waste Management", org: "GCC", head: "SE", route: "AE → EE", short: "SWM", remarkHint: "" };
 
@@ -174,6 +174,30 @@ describe("officer console data", () => {
       closeByDept("INC-R", T);
       decide("INC-R", "reopen", T, "Not done");
       expect(await views("INC-R")).toEqual({ stage: "action", returned: true, citizen: "In Progress", collector: "Open" });
+    });
+  });
+
+  describe("hunt2-ops-08, officer-day-05: the Collector's decisions, by what they did", () => {
+    // the feedback window runs back from the wall clock (decisions carry real times)
+    const ago = (min: number) => new Date(Date.now() + 330 * 60_000 - min * 60_000).toISOString().slice(0, 19).replace("T", " ");
+    it("every decision of the period is counted (not the newest 8), a reject is not rework, a resolve is not a verified report", async () => {
+      for (let k = 1; k <= 12; k++) incident(`INC-${k}`);
+      for (let k = 1; k <= 9; k++) decide(`INC-${k}`, "resolve", ago(60 - k));
+      decide("INC-10", "verify", ago(40));
+      decide("INC-11", "reopen", ago(30), "Not done");
+      decide("INC-12", "reject", ago(20), "Duplicate");
+      closeByDept("INC-1", ago(10)); // the department's own close is not the Collector's decision
+      decide("INC-2", "resolve", ago(60 * 30)); // before the period
+      expect(await feedbackCounts("GCC-SWM", { period: "daily", zone: null, taluk: null })).toEqual({ verified: 1, resolved: 9, returned: 1, rejected: 1 });
+    });
+    it("a rejected case's detail says it was rejected, when and why", async () => {
+      incident("INC-REJ");
+      decide("INC-REJ", "reject", "2026-10-14 11:00:00", "Duplicate of an earlier complaint");
+      const d = await grievanceDetail(SWM, "INC-REJ");
+      expect(d?.grievance.stage).toBe("closed");
+      expect(d?.rejected).toEqual({ t: "2026-10-14 11:00:00", note: "Duplicate of an earlier complaint" });
+      incident("INC-OK");
+      expect((await grievanceDetail(SWM, "INC-OK"))?.rejected).toBeNull();
     });
   });
 });

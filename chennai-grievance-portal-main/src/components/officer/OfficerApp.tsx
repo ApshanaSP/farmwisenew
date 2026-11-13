@@ -29,7 +29,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import type { DeptProfile, OfficerOverview } from "@/lib/officer/data";
 import type { InsightModule } from "@/lib/officer/insights";
 import { OFFICER } from "@/lib/officer/departments";
-import { STAGE_LABEL, type Stage, type Tab } from "@/lib/officer/stages";
+import { FEEDBACK_LABEL, STAGE_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
 import { OverviewPage } from "./Board";
 import { GrievanceDrawer } from "./Drawer";
 import { ModuleFull } from "./Insights";
@@ -545,7 +545,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                 {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
                   <button key={f.did} className="pop-i" onClick={() => { setPop(null); c.openGrievance(f.id); }}>
                     <span className={`bell-dot ${f.ok ? "" : "s-high"}`} style={f.ok ? { background: "var(--ok)" } : undefined} aria-hidden="true" />
-                    <span><b>{f.ok ? "Collector verified" : f.decision === "reject" ? "Collector rejected" : "Collector returned for rework"}: {f.title ?? f.type}</b>
+                    <span><b>{FEEDBACK_LABEL[f.kind as FeedbackKind] ?? f.decision}: {f.title ?? f.type}</b>
                       <small>{rel(f.at, c.now)}{!seen || String(f.at) > seen ? " · new" : ""}</small></span>
                   </button>
                 )) : <div className="empty">No notifications in this period.</div>}

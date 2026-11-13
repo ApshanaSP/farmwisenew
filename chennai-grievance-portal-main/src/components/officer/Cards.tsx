@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import SatMap from "@/components/collector/app/SatMap";
 import { I } from "@/components/collector/app/icons";
 import { Chart, Empty, HBars, SEV_HEX, SevChip, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
-import { STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type Stage, type Tab } from "@/lib/officer/stages";
+import { FEEDBACK_LABEL, STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
 import { useLangNow } from "@/lib/i18n/lang";
 import { bucketLabels } from "./format";
 import type { InsightModule } from "@/lib/officer/insights";
@@ -252,6 +252,9 @@ export function AreaCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   );
 }
 
+const FEEDBACK_TONE: Record<FeedbackKind, string> = { verified: "t-low", resolved: "t-low", returned: "t-high", rejected: "t-sev" };
+const FEEDBACK_ICON: Record<FeedbackKind, "checkc" | "refresh" | "x"> = { verified: "checkc", resolved: "checkc", returned: "refresh", rejected: "x" };
+
 export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const items = c.ov.feedback;
   return (
@@ -260,10 +263,11 @@ export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
       <div className="o-list">
         {items.length ? items.map((f) => (
           <button key={f.did} className="brief" onClick={() => c.openGrievance(f.id)}>
-            <span className={`bic ${f.ok ? "t-low" : "t-high"}`}><I n={f.ok ? "checkc" : "refresh"} /></span>
+            {/* what the decision did: a reject is closed for good, not returned for rework (officer-day-05) */}
+            <span className={`bic ${FEEDBACK_TONE[f.kind as FeedbackKind] ?? "t-high"}`}><I n={FEEDBACK_ICON[f.kind as FeedbackKind] ?? "refresh"} /></span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <b>{f.title ?? f.type}</b>
-              <span className="loc">{f.ok ? `Verified · ${rel(f.at, c.now)}` : `Returned · ${f.note || "no note"}`}</span>
+              <span className="loc">{FEEDBACK_LABEL[f.kind as FeedbackKind] ?? f.decision} · {f.ok ? rel(f.at, c.now) : f.note || "no note"}</span>
             </span>
           </button>
         )) : <Empty>No decisions in this period.</Empty>}
