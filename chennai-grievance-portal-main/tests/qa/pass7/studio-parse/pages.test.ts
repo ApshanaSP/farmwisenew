@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { feedLinkIn, feedRoot, headlinesIn, htmlTables, parseAll, shape, type Cell } from "@/lib/studio/parse";
 import { ParseLimitError, readPage, stopReaders } from "@/lib/studio/parse-pool";
 import { discover, dropComments, fileLinksIn, jsShell, newChecked, nextPageLink, scriptJsonUrls, visibleText } from "@/lib/studio/connect/discover";
-import { FEED, PAGE, commentsXml } from "./files";
+import { FEED, PAGE, commentsXml, stuckPage } from "./files";
 
 const OLD_FEED = /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i;
 const timed = <T>(f: () => T) => { const t0 = performance.now(); const value = f(); return { value, ms: performance.now() - t0 }; };
@@ -98,9 +98,26 @@ describe("discover reads a page in the file reader", () => {
     expect(p.next).toBe(nextPageLink(html, url));
     expect(p.next).toBe("https://example.in/wards?page=2");
   }, 30_000);
-  it("a crafted 200 KB page of <!-- (15-20 s in each helper on the server's thread before): the reader is stopped at its limit, the link says why, the server's thread ticks", async () => {
+  it("a crafted 200 KB page of <!-- (15-20 s in each helper on the server's thread before) is read at once (reviewer5-10: one pass a helper), and the server's thread ticks", async () => {
     vi.stubEnv("STUDIO_PARSE_SECONDS", "3");
     const html = "<html>" + "<!--".repeat(50_000);
+    const checked = newChecked();
+    let last = performance.now(), gap = 0;
+    const iv = setInterval(() => { const n = performance.now(); gap = Math.max(gap, n - last); last = n; }, 10);
+    const t0 = performance.now();
+    const found = await discover({ buf: Buffer.from(html), name: "page.html", contentType: "text/html", url: "https://example.in/x", html, json: [], title: "A page" }, () => {}, undefined, checked, { paginate: false, sniff: false });
+    clearInterval(iv);
+    gap = Math.max(gap, performance.now() - last);
+    const ms = performance.now() - t0;
+    console.log("crafted page:", { ms: Math.round(ms), gap: Math.round(gap), failed: checked.failed });
+    expect(found).toEqual([]);
+    expect(checked.failed.map((f) => f.why).join(" ")).not.toMatch(/took longer/);
+    expect(ms).toBeLessThan(3000);
+    expect(gap).toBeLessThan(500);
+  }, 30_000);
+  it("a page the reader is stuck on (the test seam): the reader is stopped at its limit, the link says why, the server's thread ticks", async () => {
+    vi.stubEnv("STUDIO_PARSE_SECONDS", "3");
+    const html = stuckPage();
     const checked = newChecked();
     let last = performance.now(), gap = 0;
     const iv = setInterval(() => { const n = performance.now(); gap = Math.max(gap, n - last); last = n; }, 10);
@@ -117,6 +134,6 @@ describe("discover reads a page in the file reader", () => {
   }, 30_000);
   it("readPage under a limit throws the limit's error (discover catches it)", async () => {
     vi.stubEnv("STUDIO_PARSE_SECONDS", "2");
-    await expect(readPage("<html>" + "<!--".repeat(50_000), "https://example.in/")).rejects.toBeInstanceOf(ParseLimitError);
+    await expect(readPage(stuckPage(), "https://example.in/")).rejects.toBeInstanceOf(ParseLimitError);
   }, 30_000);
 });

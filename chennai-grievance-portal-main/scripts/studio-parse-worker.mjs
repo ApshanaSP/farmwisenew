@@ -12,12 +12,39 @@ var __esm = (fn, res, err) => function __init() {
 
 // src/lib/studio/ocr.ts
 import zlib2 from "zlib";
+function ocrPage(px, W, H, ch) {
+  const f = Math.max(1, Math.ceil(Math.sqrt(W * H / OCR_PAGE_PIXELS)));
+  const w = Math.max(1, Math.floor(W / f)), h = Math.max(1, Math.floor(H / f));
+  const head = Buffer.from(`P5
+${w} ${h}
+255
+`, "latin1");
+  if (f === 1 && ch === 1) return Buffer.concat([head, px.subarray(0, W * H)]);
+  const out = Buffer.allocUnsafe(w * h);
+  const sum = new Uint32Array(w);
+  const n = f * f;
+  for (let y = 0; y < h; y++) {
+    sum.fill(0);
+    for (let dy = 0; dy < f; dy++) {
+      const row = (y * f + dy) * W * ch;
+      for (let x = 0; x < w; x++) {
+        let s = 0;
+        for (let dx = 0, i = row + x * f * ch; dx < f; dx++, i += ch) s += ch === 3 ? px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29 >> 8 : px[i];
+        sum[x] += s;
+      }
+    }
+    for (let x = 0; x < w; x++) out[y * w + x] = Math.round(sum[x] / n);
+  }
+  return Buffer.concat([head, out]);
+}
 function pdfImages(buf, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET } = {}) {
   const src = buf.toString("latin1");
   const images = [];
   let skipped = 0;
   let bitmapBytes = 0;
   const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
+  const masks = /* @__PURE__ */ new Set();
+  for (const k of src.matchAll(/\/S?Mask\s+(\d+)\s+(\d+)\s+R/g)) masks.add(`${k[1]} ${k[2]}`);
   let m;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
@@ -26,21 +53,30 @@ function pdfImages(buf, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET } =
     let end = len > 0 && start + len <= buf.length && /^\s*endstream/.test(src.slice(start + len, start + len + 32)) ? start + len : src.indexOf("endstream", start);
     if (end < 0) break;
     re.lastIndex = Math.max(re.lastIndex, end);
-    if (end !== start + len) {
-      if (src[end - 1] === "\n") end--;
-      if (src[end - 1] === "\r") end--;
-    }
     if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    const obj = src.slice(Math.max(0, m.index - 40), m.index).match(/(\d+)\s+(\d+)\s+obj\s*$/);
+    if (obj && masks.has(`${obj[1]} ${obj[2]}`)) continue;
     const data = buf.subarray(start, Math.max(start, end));
+    if (!data.length) {
+      skipped++;
+      continue;
+    }
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
-    if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));
-    else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 4e7) {
-      const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
-      if (!rgb && !grey) {
+    if (/\/DCTDecode/.test(dict)) {
+      let e = data.length;
+      if (end !== start + len) {
+        if (data[e - 1] === 10) e--;
+        if (data[e - 1] === 13) e--;
+      }
+      images.push(Buffer.from(data.subarray(0, e)));
+    } else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 4e7) {
+      const known = /\/DeviceRGB/.test(dict) ? 3 : /\/DeviceGray/.test(dict) ? 1 : 0;
+      const icc = !known && /\/ColorSpace\s*(\d+\s+\d+\s+R|\[\s*\/ICCBased\b)/.test(dict);
+      if (!known && !icc) {
         skipped++;
         continue;
       }
-      const need = W * H * (rgb ? 3 : 1);
+      const need = W * H * (known || 3);
       if (!bitmaps || bitmapBytes + need > maxBitmapBytes) {
         skipped++;
         re.lastIndex = Math.max(re.lastIndex, end);
@@ -48,15 +84,15 @@ function pdfImages(buf, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET } =
       }
       bitmapBytes += need;
       try {
-        const px = /\/FlateDecode/.test(dict) ? zlib2.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
-        if (px.length < need) {
+        const flate = /\/FlateDecode/.test(dict);
+        const px = flate ? zlib2.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+        const fits = (ch2) => px.length >= W * H * ch2 && px.length <= W * H * ch2 + (flate ? 0 : 2);
+        const ch = known ? px.length >= need ? known : 0 : fits(3) ? 3 : fits(1) ? 1 : 0;
+        if (!ch) {
           skipped++;
           continue;
         }
-        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}
-${W} ${H}
-255
-`, "latin1"), px.subarray(0, need)]));
+        images.push(ocrPage(px, W, H, ch));
       } catch {
         skipped++;
       }
@@ -65,7 +101,7 @@ ${W} ${H}
   }
   return { images, skipped };
 }
-var IDLE_MS, isImage, PDF_BITMAP_BUDGET;
+var IDLE_MS, isImage, PDF_BITMAP_BUDGET, OCR_PAGE_PIXELS;
 var init_ocr = __esm({
   "src/lib/studio/ocr.ts"() {
     "use strict";
@@ -73,6 +109,7 @@ var init_ocr = __esm({
     isImage = (b) => b[0] === 137 && b[1] === 80 && b[2] === 78 && b[3] === 71 || b[0] === 255 && b[1] === 216 && b[2] === 255 || b[0] === 73 && b[1] === 73 && b[2] === 42 || b[0] === 77 && b[1] === 77 && b[2] === 0 && b[3] === 42 || // a bitmap: "BM", its size, then four zero bytes (so a CSV that starts "BMC Ward" is not taken for one)
     b.length > 26 && b[0] === 66 && b[1] === 77 && b.readUInt32LE(6) === 0 && b.readUInt32LE(2) <= b.length + 1024 || b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP";
     PDF_BITMAP_BUDGET = 6e8;
+    OCR_PAGE_PIXELS = 9e6;
   }
 });
 
@@ -121,46 +158,84 @@ var Inflate = class {
 };
 var ZIP_TOTAL = 60 * 1024 * 1024;
 var ZIP_FILES = 200;
-function zipIntact(buf) {
-  if (buf.length < 22) return false;
-  let eocd = -1;
+var u64 = (buf, at) => {
+  const v = buf.readBigUInt64LE(at);
+  return v > BigInt(Number.MAX_SAFE_INTEGER) ? Infinity : Number(v);
+};
+function endRecord(buf) {
+  let at = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (buf.readUInt32LE(i) === 101010256) {
-    eocd = i;
+    at = i;
     break;
   }
-  if (eocd < 0) return false;
-  const count = buf.readUInt16LE(eocd + 10), size2 = buf.readUInt32LE(eocd + 12), cd = buf.readUInt32LE(eocd + 16);
-  if (buf.readUInt16LE(eocd + 8) !== count) return false;
-  if (cd + size2 > eocd) return false;
+  if (at < 0) return null;
+  const r = { at, onDisk: buf.readUInt16LE(at + 8), count: buf.readUInt16LE(at + 10), size: buf.readUInt32LE(at + 12), cd: buf.readUInt32LE(at + 16) };
+  if (r.onDisk !== 65535 && r.count !== 65535 && r.size !== 4294967295 && r.cd !== 4294967295) return r;
+  const loc = at - 20;
+  if (loc < 0 || buf.readUInt32LE(loc) !== 117853008) return r;
+  const z = u64(buf, loc + 8);
+  if (!(z + 56 <= loc) || buf.readUInt32LE(z) !== 101075792) return r;
+  return { at: z, onDisk: u64(buf, z + 24), count: u64(buf, z + 32), size: u64(buf, z + 40), cd: u64(buf, z + 48) };
+}
+function centralEntry(buf, at) {
+  const e = {
+    method: buf.readUInt16LE(at + 10),
+    csize: buf.readUInt32LE(at + 20),
+    usize: buf.readUInt32LE(at + 24),
+    local: buf.readUInt32LE(at + 42),
+    nlen: buf.readUInt16LE(at + 28),
+    xlen: buf.readUInt16LE(at + 30),
+    clen: buf.readUInt16LE(at + 32)
+  };
+  if (e.usize !== 4294967295 && e.csize !== 4294967295 && e.local !== 4294967295) return e;
+  const end = Math.min(buf.length, at + 46 + e.nlen + e.xlen);
+  for (let x = at + 46 + e.nlen; x + 4 <= end; ) {
+    const id = buf.readUInt16LE(x), len = buf.readUInt16LE(x + 2);
+    if (id === 1) {
+      let p = x + 4;
+      const take = () => {
+        if (p + 8 > x + 4 + len || p + 8 > buf.length) return Infinity;
+        const v = u64(buf, p);
+        p += 8;
+        return v;
+      };
+      if (e.usize === 4294967295) e.usize = take();
+      if (e.csize === 4294967295) e.csize = take();
+      if (e.local === 4294967295) e.local = take();
+      return e;
+    }
+    x += 4 + len;
+  }
+  return e;
+}
+function zipIntact(buf) {
+  if (buf.length < 22) return false;
+  const end = endRecord(buf);
+  if (!end) return false;
+  const { count, size: size2, cd } = end;
+  if (end.onDisk !== count) return false;
+  if (!(cd + size2 <= end.at)) return false;
   let at = cd;
   for (let k = 0; k < count; k++) {
     if (at + 46 > cd + size2 || buf.readUInt32LE(at) !== 33639248) return false;
-    const csize = buf.readUInt32LE(at + 20), local = buf.readUInt32LE(at + 42);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    if (local + 30 > cd || buf.readUInt32LE(local) !== 67324752) return false;
+    const { csize, local, nlen, xlen, clen } = centralEntry(buf, at);
+    if (!(local + 30 <= cd) || buf.readUInt32LE(local) !== 67324752) return false;
     const data = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
-    if (data + csize > cd) return false;
+    if (!(data + csize <= cd)) return false;
     at += 46 + nlen + xlen + clen;
   }
   return at <= cd + size2;
 }
 function unzip(buf, budget2 = new Inflate(buf.length), { workbook = false } = {}) {
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (buf.readUInt32LE(i) === 101010256) {
-    eocd = i;
-    break;
-  }
-  if (eocd < 0) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
-  const count = buf.readUInt16LE(eocd + 10);
-  let at = buf.readUInt32LE(eocd + 16);
+  const end = endRecord(buf);
+  if (!end) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
+  const count = end.count;
+  let at = end.cd;
   const out = [];
   let total = 0;
   for (let k = 0; k < count && (workbook || k < ZIP_FILES); k++) {
-    if (at + 46 > buf.length || buf.readUInt32LE(at) !== 33639248) throw new FormatError("This ZIP file is damaged.");
-    const method = buf.readUInt16LE(at + 10);
-    const csize = buf.readUInt32LE(at + 20), usize = buf.readUInt32LE(at + 24);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    const local = buf.readUInt32LE(at + 42);
+    if (!(at + 46 <= buf.length) || buf.readUInt32LE(at) !== 33639248) throw new FormatError("This ZIP file is damaged.");
+    const { method, csize, usize, nlen, xlen, clen, local } = centralEntry(buf, at);
     const name = buf.subarray(at + 46, at + 46 + nlen).toString("utf8");
     at += 46 + nlen + xlen + clen;
     if (name.endsWith("/") || /(^|\/)__MACOSX\//.test(name) || /(^|\/)\.DS_Store$/.test(name)) continue;
@@ -257,7 +332,45 @@ var unent = (s) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&(#x?
   const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1));
   return Number.isInteger(c) && c >= 0 && c <= 1114111 ? String.fromCodePoint(c) : m;
 });
-var text = (s) => unent(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+var text = (s) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, " ").trim();
+function elements(src, names, flags = "gi") {
+  const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
+  const closes = /* @__PURE__ */ new Map();
+  const out = [];
+  let m;
+  while (m = open.exec(src)) {
+    const key = flags === "gi" ? m[1].toLowerCase() : m[1];
+    let close = closes.get(key);
+    if (close === null) continue;
+    if (!close) {
+      close = new RegExp(`</${m[1].replace(/[.:-]/g, (c2) => `\\${c2}`)}\\s*>`, flags);
+      closes.set(key, close);
+    }
+    close.lastIndex = open.lastIndex;
+    const c = close.exec(src);
+    if (!c) {
+      closes.set(key, null);
+      continue;
+    }
+    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, c.index), start: m.index, end: c.index + c[0].length });
+    open.lastIndex = c.index + c[0].length;
+  }
+  return out;
+}
+function withoutSpans(src, open, close) {
+  const keep = [];
+  let at = 0;
+  for (; ; ) {
+    const i = src.indexOf(open, at);
+    if (i < 0) break;
+    const j = src.indexOf(close, i + open.length);
+    if (j < 0) break;
+    keep.push(src.slice(at, i));
+    at = j + close.length;
+  }
+  keep.push(src.slice(at));
+  return keep.join("");
+}
 var val = (s) => {
   const t = text(s);
   if (t === "") return null;
@@ -284,7 +397,7 @@ function docxTables(buf, budget2 = new Inflate(buf.length)) {
   return grids2.sort((a, b) => b.length - a.length);
 }
 function kmlGrid(xml) {
-  const marks = [...xml.matchAll(/<Placemark\b[^>]*>([\s\S]*?)<\/Placemark>/gi)].map((m) => m[1]);
+  const marks = elements(xml, "Placemark").map((m) => m.inner);
   if (!marks.length) throw new FormatError("This KML has no places in it.");
   const extra = [];
   const recs = marks.map((p) => {
@@ -292,9 +405,11 @@ function kmlGrid(xml) {
     r.Name = val(p.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? "");
     const desc = p.match(/<description>([\s\S]*?)<\/description>/i)?.[1];
     if (desc) r.Description = text(unent(desc)) || null;
-    for (const d of p.matchAll(/<(?:Data|SimpleData)\b[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/(?:Data|SimpleData)>/gi)) {
-      const k = unent(d[1]).trim();
-      const v = d[2].match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d[2];
+    for (const d of elements(p, "Data|SimpleData")) {
+      const name = d.attrs.match(/(?:^|\s)name="([^"]+)"/)?.[1];
+      if (!name) continue;
+      const k = unent(name).trim();
+      const v = d.inner.match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d.inner;
       if (!extra.includes(k)) extra.push(k);
       r[k] = val(v);
     }
@@ -328,22 +443,22 @@ function geojsonRecords(doc) {
   });
 }
 function xmlGrid(xml) {
-  const body = xml.replace(/<\?[\s\S]*?\?>/g, "").replace(/<!--[\s\S]*?-->/g, "");
+  const body = withoutSpans(withoutSpans(xml, "<?", "?>"), "<!--", "-->");
   const counts = /* @__PURE__ */ new Map();
-  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)\b[^>/]*>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
+  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)(?![\w.:-])[^<>/]{0,4000}>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
   const rec = [...counts.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!rec) return null;
   const esc = rec.replace(/[.:-]/g, (c) => `\\${c}`);
   const cols = [];
-  const recs = [...body.matchAll(new RegExp(`<${esc}\\b([^>]*)>([\\s\\S]*?)</${esc}>`, "g"))].slice(0, 5e4).map((m) => {
+  const recs = elements(body, esc, "g").slice(0, 5e4).map((m) => {
     const r = {};
-    for (const a of m[1].matchAll(/([\w:-]+)="([^"]*)"/g)) {
+    for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) {
       if (!cols.includes(a[1])) cols.push(a[1]);
       r[a[1]] = val(a[2]);
     }
-    for (const c of m[2].matchAll(/<([A-Za-z_][\w.:-]*)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
-      if (!cols.includes(c[1])) cols.push(c[1]);
-      r[c[1]] = val(c[2]);
+    for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) {
+      if (!cols.includes(c.name)) cols.push(c.name);
+      r[c.name] = val(c.inner);
     }
     return r;
   });
@@ -759,6 +874,19 @@ function readAll(buf, name, contentType, base, depth, budget2) {
     return out;
   }
   if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
+  if (!ole && ext === "xls") {
+    const notBook = new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook or a table, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
+    if (decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
+    let tables;
+    try {
+      tables = excelAll(buf, budget2);
+    } catch (e) {
+      if (e instanceof ParseError) throw notBook;
+      throw e;
+    }
+    if (tables.every((x) => !x.rows.length)) throw notBook;
+    return tables;
+  }
   if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf, budget2);
   if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf, budget2);
   const dec = decodeText(buf);
@@ -799,10 +927,38 @@ function pdf(buf, budget2) {
 }
 var ENT3 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s) {
-  return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT3[e.toLowerCase()] ?? m);
+  return cdata(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT3[e.toLowerCase()] ?? m);
 }
+function cdata(s) {
+  const out = [];
+  let at = 0;
+  for (; ; ) {
+    const i = s.indexOf("<![CDATA[", at);
+    if (i < 0) break;
+    const j = s.indexOf("]]>", i + 9);
+    if (j < 0) break;
+    out.push(s.slice(at, i), s.slice(i + 9, j));
+    at = j + 3;
+  }
+  out.push(s.slice(at));
+  return out.join("");
+}
+function cut(s, names) {
+  const keep = [];
+  let at = 0;
+  for (const e of elements(s, names)) {
+    keep.push(s.slice(at, e.start));
+    at = e.end;
+  }
+  keep.push(s.slice(at));
+  return keep.join("");
+}
+var links = (s) => elements(s, "a").flatMap((e) => {
+  const href = e.attrs.match(/href=["']([^"'#]+)["']/i)?.[1];
+  return href ? [{ href, inner: e.inner }] : [];
+});
 var tagOf = (xml, name) => xml.match(new RegExp(`<${name}\\b[^>]*>([\\s\\S]*?)</${name}>`, "i"))?.[1] ?? null;
-var plain = (s) => s == null ? null : tidy(unxml(unxml(s)).replace(/<[^>]+>/g, " ")) || null;
+var plain = (s) => s == null ? null : tidy(unxml(unxml(s)).replace(/<[^<>]+>/g, " ")) || null;
 function feedDate(s) {
   if (!s) return null;
   const t = Date.parse(s.trim());
@@ -812,7 +968,7 @@ function feedDate(s) {
   return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
 }
 function feed(xml) {
-  const items = [...xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map((m) => m[2]).slice(0, MAX_ROWS);
+  const items = elements(xml, "item|entry").map((m) => m.inner).slice(0, MAX_ROWS);
   if (!items.length) throw new ParseError("The feed has no articles in it.");
   const channel = plain(tagOf(xml.replace(/<(item|entry)\b[\s\S]*$/i, ""), "title"));
   const rows = items.map((it) => {
@@ -831,20 +987,20 @@ function feed(xml) {
   });
   return { headers: ["Headline", "Source", "Published", "Summary", "Link"], rows, sheet: null, sheets: [], caption: channel ? `News feed: ${channel}` : "News feed", format: "feed", truncated: 0 };
 }
-var stripPage = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "").replace(/(\s[\w:-]+=)("[^"]*"|'[^']*')/g, (m, a, v) => /[<>]/.test(v) ? `${a}""` : m);
-var cellText = (s) => tidy(unxml(s.replace(/<br\s*\/?>/gi, " ").replace(/<sup\b[\s\S]*?<\/sup>/gi, "").replace(/<[^>]+>/g, " ")).replace(/\[\s*(\d+|[a-z]|note \d+|citation needed)\s*\]/gi, ""));
+var stripPage = (html) => cut(withoutSpans(html, "<!--", "-->"), "script|style|noscript|svg|template").replace(/(\s[\w:-]+=)("[^"]*"|'[^']*')/g, (m, a, v) => /[<>]/.test(v) ? `${a}""` : m);
+var cellText = (s) => tidy(unxml(cut(s.replace(/<br\s*\/?>/gi, " "), "sup").replace(/<[^<>]+>/g, " ")).replace(/\[\s*(\d+|[a-z]|note \d+|citation needed)\s*\]/gi, ""));
 function htmlTables(html) {
   const page = stripPage(html);
   const out = [];
-  for (const m of page.matchAll(/<table\b[^>]*>([\s\S]*?)<\/table>/gi)) {
-    const body = m[1];
+  for (const m of elements(page, "table")) {
+    const body = m.inner;
     if (/<table\b/i.test(body)) continue;
     const grid = [];
-    for (const tr of body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    for (const tr of elements(body, "tr")) {
       const row = [];
-      for (const td of tr[1].matchAll(/<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/gi)) {
-        const span = Math.min(20, Number(td[2].match(/colspan=["']?(\d+)/i)?.[1] ?? 1) || 1);
-        const v = cellText(td[3]);
+      for (const td of elements(tr.inner, "th|td")) {
+        const span = Math.min(20, Number(td.attrs.match(/colspan=["']?(\d+)/i)?.[1] ?? 1) || 1);
+        const v = cellText(td.inner);
         for (let k = 0; k < span; k++) row.push(v === "" ? null : v);
       }
       if (row.some((c) => c != null)) grid.push(row);
@@ -872,7 +1028,7 @@ function htmlPage(html, base) {
   if (rows.length >= 5) return { headers: ["Headline", "Source", "Published", "Summary", "Link"], rows, sheet: null, sheets: [], caption: title ? `Headlines on ${title}` : "Headlines on the page", format: "feed", truncated: 0 };
   const host2 = host ?? "";
   if (/data\.gov\.in$/.test(host2)) throw new ParseError("data.gov.in builds its pages with JavaScript, so the data is not in the page. On the dataset's page press Download, choose CSV (or Excel), and drop that file here; or paste its API link (api.data.gov.in/resource/...&format=csv).");
-  const textLen = stripPage(html).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").length;
+  const textLen = stripPage(html).replace(/<[^<>]+>/g, " ").replace(/\s+/g, " ").length;
   if (textLen < 2e3 && html.length > 5e4) throw new ParseError("That page builds its content with JavaScript, so there is nothing to read in it. Look on the page for a Download (CSV / Excel) or RSS link and paste that, or download the table and drop the file here.");
   throw new ParseError('That web page has no table, no data file and no list of headlines to read. Open it, look for a "Download" (CSV / Excel) or an RSS link, and paste that instead.');
 }
@@ -886,14 +1042,14 @@ function headlinesIn(html, base) {
   })();
   const seen = /* @__PURE__ */ new Set();
   const rows = [];
-  const body = stripPage(html).replace(/<(nav|header|footer)\b[\s\S]*?<\/\1>/gi, "");
-  for (const m of body.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const text2 = cellText(m[2]);
+  const body = cut(stripPage(html), "nav|header|footer");
+  for (const m of links(body)) {
+    const text2 = cellText(m.inner);
     if (text2.length < 30 || text2.length > 260 || text2.split(" ").length < 5 || seen.has(text2.toLowerCase())) continue;
     seen.add(text2.toLowerCase());
     let link = null;
     try {
-      link = new URL(unxml(m[1]), base).toString();
+      link = new URL(unxml(m.href), base).toString();
     } catch {
     }
     rows.push([text2, host, null, null, link]);
