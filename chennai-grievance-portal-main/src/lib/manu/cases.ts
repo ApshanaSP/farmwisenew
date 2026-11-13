@@ -295,7 +295,10 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
         routing: r.subtype_dept != null ? "assumed" : "classifier" }))) added++;
   }
   if (await has("petitions")) {
-    for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY filed_at, id`)) {
+    // the petitions that own their case first, then those that joined one: filed_at has one-second resolution and id is the upload order,
+    // not the approval order, so a petition uploaded first that joined a case approved in the same second came before that case and got
+    // a case of its own (reviewer1-07). A petition only ever joins a case its owner made, never another joiner's.
+    for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY COALESCE(attached, 0), filed_at, id`)) {
       const c = petitionCase(p);
       if (Number(p.attached) === 1 && p.incident_id && (await attachToCase(wrap, String(p.incident_id), c))) { added++; continue; }
       if (await addCase(wrap, c)) added++;

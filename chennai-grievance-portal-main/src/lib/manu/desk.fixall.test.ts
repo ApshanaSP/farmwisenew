@@ -30,7 +30,7 @@ vi.mock("@/lib/mailer", () => ({
 const { createPetition, filePetition, getPetition, petitionDetail } = await import("@/lib/manu/petitions");
 const { approvedWords } = await import("@/lib/manu/constants");
 const { savePages } = await import("@/lib/manu/files");
-const { caseIdFor } = await import("@/lib/manu/cases");
+const { caseIdFor, websiteCases } = await import("@/lib/manu/cases");
 const sms = await import("@/lib/manu/sms");
 const { syncComplaints } = await import("@/lib/complaint-progress");
 
@@ -209,5 +209,37 @@ describe("P6-004: a petition the live build could not take is not called added",
       expect(approvedWords(a).title).toBe("Petition approved and forwarded");
       expect(approvedWords({ ...a, attached: true }, true).title).toBe("Approved and added to the existing complaint");
     } finally { process.env.DATA_BACKEND = "aws"; }
+  });
+});
+
+// reviewer1-07: a rebuild took petitions ORDER BY filed_at, id; filed_at has one-second resolution and id is the upload order, so a petition
+// uploaded first that joined a case approved in the same second came before that case and got a case of its own
+describe("reviewer1-07: the rebuild keeps a petition in the case it joined", () => {
+  const withDecisionIds = () => h.db.exec(`DROP TABLE collector_decisions; CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY AUTOINCREMENT, incident_id TEXT, decision TEXT, note TEXT, decided_role TEXT, decided_at TEXT)`);
+  const newBuild = () => h.db.exec(`DELETE FROM incidents; DELETE FROM events; DELETE FROM incident_members; DELETE FROM incident_timeline;`);
+  it("B (uploaded first) joined A's case; both approved in the same second", async () => {
+    withDecisionIds();
+    const idB = await uploaded();
+    const idA = await uploaded();
+    const a = await filePetition(idA, fields(), "x");
+    const b = await filePetition(idB, fields({ mobile: "9000041874", attachTo: caseIdFor(a.code) }), "x");
+    expect(b.attached).toBe(true);
+    h.db.exec(`UPDATE petitions SET filed_at = '2026-11-12 10:00:00'`);
+    newBuild();
+    await websiteCases(h.db);
+    expect(one("SELECT incident_id x FROM events WHERE source_record_id = ?", b.code).x).toBe(caseIdFor(a.code));
+    expect(one("SELECT COUNT(*) n FROM incidents").n).toBe(1);
+    expect(one("SELECT member_count m FROM incidents").m).toBe(2);
+  });
+  it("in a different order of upload and approval, still one case of three", async () => {
+    withDecisionIds();
+    const ids = [await uploaded(), await uploaded(), await uploaded()];
+    const owner = await filePetition(ids[2], fields(), "x");
+    await filePetition(ids[0], fields({ mobile: "9000041874", attachTo: caseIdFor(owner.code) }), "x");
+    await filePetition(ids[1], fields({ mobile: "9000041875", attachTo: caseIdFor(owner.code) }), "x");
+    h.db.exec(`UPDATE petitions SET filed_at = '2026-11-12 10:00:00'`);
+    newBuild();
+    await websiteCases(h.db);
+    expect(h.db.prepare("SELECT DISTINCT incident_id x FROM events").all()).toEqual([{ x: caseIdFor(owner.code) }]);
   });
 });
