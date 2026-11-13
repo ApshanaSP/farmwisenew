@@ -3,7 +3,7 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { getActivePortalSession } from "@/lib/auth";
 import type { JwtPayload } from "@/types";
-import { parsePeriod, parseTaluk, parseZone, type Period } from "@/lib/collector/intel";
+import { parseTaluk, parseZone, readPeriod, type Period } from "@/lib/collector/intel";
 import { OFFICER, codeForPortalDept } from "./departments";
 import { deptProfile, type DeptProfile, type Scope } from "./data";
 
@@ -71,7 +71,8 @@ export function fresh(data: unknown, status = 200) {
 /** Period, zone and taluk from the query string; the console opens on OFFICER.defaultPeriod. */
 export function parseScope(p: URLSearchParams): Scope {
   return {
-    period: p.get("period") ? parsePeriod(p.get("period")) : (OFFICER.defaultPeriod as Period),
+    // the shared reader (intel.ts, reviewerB-06): a blank or space-only period is absent, so the default, never daily
+    period: readPeriod(p.get("period")) ?? (OFFICER.defaultPeriod as Period),
     zone: parseZone(p.get("zone")),
     taluk: parseTaluk(p.get("taluk"))
   };

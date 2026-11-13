@@ -128,10 +128,14 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
     gridTemplateRows: "minmax(0,1fr)",
     gridTemplateAreas: `"${cols.join(" ")}"`
   };
+  // each layer's number is the pins drawn; when the map's pin limit cut a layer, its total is beside it and the rest are one click away
+  // in the list (hunt2-ops-11: the legend counted 205 severe while 98 were drawn, and said only the unlocated were left off)
   const LAYERS = [
-    ["severe", "Severe", CAT_COL.severe, d.map.layerCounts.severe], ["complaint", "Complaints", CAT_COL.complaint, d.map.layerCounts.complaint],
-    ["other", "Other", CAT_COL.other, d.map.layerCounts.other]
+    ["severe", "Severe", CAT_COL.severe, d.map.drawn.severe, d.map.layerCounts.severe],
+    ["complaint", "Complaints", CAT_COL.complaint, d.map.drawn.complaint, d.map.layerCounts.complaint],
+    ["other", "Other", CAT_COL.other, d.map.drawn.other, d.map.layerCounts.other]
   ] as const;
+  const notDrawn = LAYERS.reduce((s, [, , , n, all]) => s + Math.max(0, all - n), 0);
 
   return (
     <>
@@ -165,11 +169,19 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
             {/* the legend sits under the map, so nothing covers the map itself; each item turns its pins on or off */}
             <div className="map-leg2" role="group" aria-label="Show on the map">
               <h3 className="map-title"><I n="map" />{c.taluk ? <>{c.talukName(c.taluk)} taluk</> : c.zoneName ? c.zoneName : "Chennai District"}</h3>
-              {LAYERS.map(([k, l, col, n]) => (
-                <button key={k} className={c.layers[k] ? "" : "off"} aria-pressed={c.layers[k]} onClick={() => c.toggleLayer(k)} title={`Show or hide ${l.toLowerCase()} pins`}>
-                  <i style={{ background: col, color: col }} />{l}<b>{n.toLocaleString("en-IN")}</b>
+              {LAYERS.map(([k, l, col, n, all]) => (
+                <button key={k} className={c.layers[k] ? "" : "off"} aria-pressed={c.layers[k]} onClick={() => c.toggleLayer(k)}
+                  title={n < all ? `Show or hide ${l.toLowerCase()} pins. ${n.toLocaleString("en-IN")} of ${all.toLocaleString("en-IN")} are drawn: the map draws the ${d.map.pinLimit} most urgent incidents (open first, then the most severe).`
+                    : `Show or hide ${l.toLowerCase()} pins`}>
+                  <i style={{ background: col, color: col }} />{l}<b>{n.toLocaleString("en-IN")}</b>{n < all && <small>of {all.toLocaleString("en-IN")}</small>}
                 </button>
               ))}
+              {notDrawn > 0 && (
+                <button className="unloc" onClick={() => c.openList({ sort: "sev", dir: 1 }, "Every incident in this view")}
+                  title={`${notDrawn.toLocaleString("en-IN")} incidents with an exact place are not drawn: the map draws at most ${d.map.pinLimit} pins, the most urgent first. Click for the full list.`}>
+                  <i className="ring" /><b>{notDrawn.toLocaleString("en-IN")}</b>not drawn (pin limit)
+                </button>
+              )}
               <button className={c.layers.added ? "" : "off"} aria-pressed={c.layers.added} onClick={() => c.toggleLayer("added")}
                 title="Items from sources you added that name a place in or near Chennai">
                 <i className="dia" style={{ background: "var(--ai)" }} />Added<b>{addedPins.length}</b>

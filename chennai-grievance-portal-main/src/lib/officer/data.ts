@@ -124,11 +124,17 @@ function withStage(dept: string, now: string) {
   };
 }
 
-/** Grievances reported in the period (the Collector's windows), in the chosen zone / taluk; closed ones never. */
-function windowWhere(now: string, s: Scope) {
+/**
+ * Grievances reported in the period (the Collector's windows), in the chosen zone / taluk; closed ones never. The owner kept these
+ * reporting windows for the queue (officer-day-01), with one exception: work the Collector sent back that the department has not
+ * re-sent is in every window, whatever its date, because it is the department's to act on now. A case first reported more than 90 days
+ * ago and sent back was open again in no tab, count or search (hunt2-ops-05). `reported`: only what was reported in the period, for the
+ * charts of what came in (the trend, by type, the news): a sent-back case from August is work now, not a grievance reported today.
+ */
+function windowWhere(now: string, s: Scope, reported = false) {
   const pw = periodWindow(s.period, now, "w.first_reported_at");
   return {
-    sql: `${pw.sql} AND w.stage <> 'closed'${s.zone ? " AND w.zone_no = ?" : ""}${s.taluk ? " AND w.taluk_code = ?" : ""}`,
+    sql: `${reported ? pw.sql : `(${pw.sql} OR w.returned = 1)`} AND w.stage <> 'closed'${s.zone ? " AND w.zone_no = ?" : ""}${s.taluk ? " AND w.taluk_code = ?" : ""}`,
     params: [...pw.params, ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])] as unknown[]
   };
 }
@@ -212,6 +218,8 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   const now = await asOf();
   const b = withStage(dept.code, now);
   const win = windowWhere(now, s);
+  // what was reported in the period (the trend, by type, the news): a case sent back from an older period is work, not a new grievance
+  const rep = windowWhere(now, s, true);
   const P = PERIODS[s.period];
   // trend buckets run from the start of the window (midnight for Daily), like the Collector's charts
   const since = periodSince(s.period, now);
@@ -236,14 +244,14 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
        WHERE ${win.sql} AND w.stage IN ${OPEN_STAGES} AND ${areaKey} IS NOT NULL GROUP BY k, l ORDER BY v DESC LIMIT ${OFFICER.areaBars}`,
       [...b.params, ...win.params]),
     q(`${b.sql} SELECT w.category_code AS code, w.category_label AS l, COUNT(*) AS v
-       FROM w WHERE ${win.sql} GROUP BY w.category_code, w.category_label ORDER BY v DESC`, [...b.params, ...win.params]),
-    q(`${b.sql} SELECT ${ROW}, w.summary FROM w WHERE ${win.sql} AND w.outlet_count > 0
-       ORDER BY w.first_reported_at DESC LIMIT ${OFFICER.newsItems}`, [...b.params, ...win.params]),
+       FROM w WHERE ${rep.sql} GROUP BY w.category_code, w.category_label ORDER BY v DESC`, [...b.params, ...rep.params]),
+    q(`${b.sql} SELECT ${ROW}, w.summary FROM w WHERE ${rep.sql} AND w.outlet_count > 0
+       ORDER BY w.first_reported_at DESC LIMIT ${OFFICER.newsItems}`, [...b.params, ...rep.params]),
     // grievances reported per bucket and category, for the trend chart (the same set as the counts and by type)
     q(`${b.sql} SELECT w.category_code AS code, w.category_label AS l, FLOOR(TIMESTAMPDIFF(SECOND, ?, w.first_reported_at) / ?) AS b, COUNT(*) AS n
-       FROM w WHERE ${win.sql} AND w.first_reported_at <= ?
+       FROM w WHERE ${rep.sql} AND w.first_reported_at <= ?
        GROUP BY w.category_code, w.category_label, b`,
-      [...b.params, since, bucketSecs, ...win.params, now]),
+      [...b.params, since, bucketSecs, ...rep.params, now]),
     collectorFeedback(dept.code, s, OFFICER.feedbackItems),
     zonesAndTaluks(),
     exportMeta(),

@@ -5,27 +5,31 @@
  * value that is present and unknown is a 400 that says which one.
  */
 import { NextResponse } from "next/server";
-import { PERIODS } from "@/lib/collector/intel";
+import { GCC_ZONES, PERIODS, filterValue, readCat, readDept, readPeriod, readTaluk, readZone } from "@/lib/collector/intel";
 import { TABS } from "@/lib/officer/stages";
 
 /** The GCC has 15 zones (ref_wards.zone_no 1 to 15). */
-export const ZONES = 15;
+export const ZONES = GCC_ZONES;
 
 const show = (v: string) => JSON.stringify(v.replace(/[^\p{L}\p{N} _.:/-]/gu, "").slice(0, 24));
 
-/** What is wrong with the zone, period, department, category or taluk in a query string, in a plain sentence; null when all are fine or absent. */
+/**
+ * What is wrong with the zone, period, department, category or taluk in a query string, in a plain sentence; null when all are fine or absent.
+ * A value is refused when it is present (filterValue) and the reader every route uses (intel.ts read*, the parse* helpers) cannot read it:
+ * the check and the readers are the same code, so a value the check lets through is the value the route answers for (reviewerB-06).
+ */
 export function filterProblem(p: URLSearchParams): string | null {
-  const given = (k: string) => { const v = p.get(k); return v == null || v.trim() === "" ? null : v.trim(); };
+  const given = (k: string) => filterValue(p.get(k));
   const zone = given("zone");
-  if (zone != null && !(/^\d{1,2}$/.test(zone) && Number(zone) >= 1 && Number(zone) <= ZONES)) return `Zone ${show(zone)} is not one of the ${ZONES} GCC zones (1 to ${ZONES}).`;
+  if (zone != null && readZone(zone) == null) return `Zone ${show(zone)} is not one of the ${ZONES} GCC zones (1 to ${ZONES}).`;
   const period = given("period");
-  if (period != null && !Object.prototype.hasOwnProperty.call(PERIODS, period)) return `Period ${show(period)} is not one of ${Object.keys(PERIODS).join(", ")}.`;
+  if (period != null && readPeriod(period) == null) return `Period ${show(period)} is not one of ${Object.keys(PERIODS).join(", ")}.`;
   const dept = given("dept");
-  if (dept != null && !/^[A-Z0-9-]{2,20}$/.test(dept)) return `Department ${show(dept)} is not a department code.`;
+  if (dept != null && readDept(dept) == null) return `Department ${show(dept)} is not a department code.`;
   const cat = given("cat");
-  if (cat != null && !/^[A-Z_]{3,40}$/.test(cat)) return `Category ${show(cat)} is not a category code.`;
+  if (cat != null && readCat(cat) == null) return `Category ${show(cat)} is not a category code.`;
   const taluk = given("taluk");
-  if (taluk != null && !/^TLK-[A-Z]{3}$/.test(taluk)) return `Taluk ${show(taluk)} is not a taluk code.`;
+  if (taluk != null && readTaluk(taluk) == null) return `Taluk ${show(taluk)} is not a taluk code.`;
   return null;
 }
 

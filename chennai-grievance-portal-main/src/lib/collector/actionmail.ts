@@ -292,8 +292,10 @@ const BatchSchema = z.object({
 });
 
 /** One department's open cases among `ids`, worst first (re-read from the store: never taken from the browser). */
-async function deptCases(ids: string[], dept: string): Promise<Row[]> {
+async function deptCases(idsIn: string[], dept: string): Promise<Row[]> {
   const out: Row[] = [];
+  // each case once: an id sent twice (500 apart, two reads) was listed and followed up twice (P7 review 2 of reviewer4-02)
+  const ids = [...new Set(idsIn)];
   for (let k = 0; k < ids.length; k += 500) {
     const part = ids.slice(k, k + 500);
     out.push(...await q(`SELECT i.incident_id AS id, COALESCE(i.headline, i.title) AS title, i.severity_level AS sev, i.place_text AS place, i.zone_name, i.ward_no AS ward,
@@ -350,17 +352,22 @@ export async function sendBatchAction(input: unknown, user: string, factor: Fact
     [user, JSON.stringify(to ? [to] : []), String(cases[0].id), subject, body, dv.mode, status, at, status === "sent" ? istNow() : null, deliveredTo, st.bodyHash, error]
   ) as unknown as [{ insertId: number }];
   const emailId = Number(res?.insertId ?? 0);
-  // a follow-up for each case the email lists, due in 24 hours
-  for (const c of cases.slice(0, BATCH_MAX))
-    await intelPool.query(`INSERT INTO ${ops("followups")} (email_id, contact_id, incident_id, summary, due_date, status) VALUES (?, ?, ?, ?, ?, 'pending')`,
-      [emailId, to?.id ?? 0, String(c.id), `Completion report with photos (map send to ${dept})`, istNow(24)]);
+  // a follow-up for EVERY case the email asks the department to act on, due in 24 hours: the email names the first BATCH_MAX and
+  // sends the officer to the console for the rest, and the follow-up is the only link from a case to this email (the officer's drawer
+  // and the Collector's case emails find the instruction through followups.email_id). Only the first 25 had one (reviewer4-02).
+  const due = istNow(24), summary = `Completion report with photos (map send to ${dept})`;
+  for (let k = 0; k < cases.length; k += 200) {
+    const part = cases.slice(k, k + 200);
+    await intelPool.query(`INSERT INTO ${ops("followups")} (email_id, contact_id, incident_id, summary, due_date, status) VALUES
+      ${part.map(() => "(?, ?, ?, ?, ?, 'pending')").join(", ")}`, part.flatMap((c) => [emailId, to?.id ?? 0, String(c.id), summary, due]));
+  }
   await intelPool.query(
     `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'ask_map:send', 'outbound_emails', ?, ?, ?)`,
     [user, String(emailId), JSON.stringify({ plan }), JSON.stringify({ email_id: emailId, dept, cases: cases.length, listed: Math.min(cases.length, BATCH_MAX), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo, ref: emailRef(st), confirmed_with: factor })]
   );
   return {
     status: 201,
-    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, followups: Math.min(cases.length, BATCH_MAX), ref: emailRef(st),
+    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, followups: cases.length, ref: emailRef(st),
       note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
         : status === "failed" ? `The email could not be sent (${error}); the officer still sees the cases on the console.` : dv.note }
   };
