@@ -33,3 +33,10 @@
   - Round 2 starts on `claude/fixall2-a84a72`, cut from `1df591f0`.
   - 74 rows: 70 of the 71 that waited (1 was fixed on the way) and 4 of round 1's.
   - Batches (`round2-*.json`): desk 21, ai-studio 22, officer 16, collector 12, misc 3. Plus p7-studio-egress-20 (P1, `readFormCapped`).
+- 2026-11-13 20:44: round 2 done.
+  - Batches: desk 21, officer 16, Collector and accounts 15, AI and Studio 22 plus p7-studio-egress-20 (P1), and the last 3 open rows (p7-desk-and-accounts-16 and -10, p7-askiq-writer-lock-03).
+  - Each batch had its own reviewer: C (desk, 8 findings), D (officer, 3), E (Collector, 4, one a P1 in the new filing limit), F (AI and Studio, 8) and G (follow-ups and hunt2-ops-09, 7). Every finding was fixed or shown wrong with a test.
+  - New leaks found and fixed: fixall-lock-01 and -05 (P0, the same class as P6-006), and fixall-lock-02 to -04 and -06.
+  - The lead restored old-format Aadhaar masking (5f439230) and fixed two pass 7 test schemas (d2e68478).
+  - The changes the gate and the golden diff should expect: EXPECTED_CHANGES.md.
+  - The ledger now has 4 open rows at most, all P2/P3 (see FINAL_REPORT). P5-034, pass 4's whole real-path suite, is run by the coordinator's gate.
