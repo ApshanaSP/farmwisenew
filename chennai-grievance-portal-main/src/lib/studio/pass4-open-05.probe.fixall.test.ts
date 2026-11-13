@@ -9,7 +9,7 @@ import { parseAll } from "@/lib/studio/parse";
 const book = (bookType: "biff2" | "biff3" | "biff4") => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["ward", "count"], [1, 2], [2, 3]]), "Sheet1");
-  return Buffer.from(XLSX.write(wb, { bookType, type: "buffer" }) as Buffer);
+  return Buffer.from(XLSX.write(wb, { bookType: bookType as XLSX.BookType, type: "buffer" }) as Buffer); // SheetJS writes biff3 and biff4, though its type lists only biff2
 };
 
 describe("reviewerF-04 (pass4-open-05): an old Excel worksheet (BIFF2-4, not OLE) named .xls is still read", () => {

@@ -20,7 +20,7 @@ import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { pickIncident } from "@/lib/assistant/rerank";
-import { countByZone, resolutionTimes, windowRows } from "@/lib/assistant/incidents";
+import { countByZone, idsOfDept, resolutionTimes, windowRows } from "@/lib/assistant/incidents";
 import { docArticles } from "@/lib/assistant/news";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
@@ -672,10 +672,18 @@ export const TOOLS = [
       text: z.string().trim().min(2).max(300),
       scope: ScopeSchema.default({}),
       kinds: z.array(z.enum(["incidents", "news"])).min(1).default(["incidents", "news"]),
-      allTime: z.boolean().default(false)
+      allTime: z.boolean().default(false),
+      // set by the department lock (pipeline lockTools), never by the model: a report's link to another department's incident is left out
+      lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null)
     }),
     async run(a) {
       const s = a.scope;
+      // the news is public, but which incident a report is linked to is that department's record (reviewerF-06)
+      const ownLinks = async <T extends { incident: unknown }>(xs: T[]): Promise<T[]> => {
+        if (!a.lockDept) return xs;
+        const own = await idsOfDept([...new Set(xs.map((x) => String(x.incident ?? "")).filter(Boolean))], a.lockDept);
+        return xs.map((x) => (x.incident && !own.has(String(x.incident)) ? { ...x, incident: null } : x));
+      };
       const now = await asOf();
       const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
       const place = s.zone == null ? await resolvePlace(a.text).catch(orNull("tools:438")) : null;
@@ -692,8 +700,8 @@ export const TOOLS = [
         const words = keywordsOf(a.text).filter((w) => !ASKING.has(w) && !GENERIC_WORDS.has(w));
         const rows = words.length && a.kinds.includes("incidents") ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
         const newsRows = words.length && a.kinds.includes("news") ? await keywordNews(words, f.since, f.until).catch(orEmpty("tools:keyword news")) : [];
-        const articles = newsRows.map((r) => ({ id: String(r.id), title: r.title, publisher: r.publisher, place: r.place ?? null, url: r.url ?? null, incident: r.incident || null,
-          dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
+        const articles = await ownLinks(newsRows.map((r) => ({ id: String(r.id), title: r.title, publisher: r.publisher, place: r.place ?? null, url: r.url ?? null, incident: r.incident || null,
+          dead: Number(r.dead ?? 0), t: r.t, match: "keywords" })));
         const incidents = rows.map((r) => ({ id: String(r.id), title: r.title, type: r.type, zone_name: r.zone_name, place: r.place, sev: r.sev, status: r.status,
           dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
         return { scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles },
@@ -714,9 +722,9 @@ export const TOOLS = [
       const incidents = keep(inc).map((x) => ({ id: x.id, title: x.rec.title, type: x.rec.cat_label, zone_name: x.rec.zone, place: x.rec.place,
         sev: x.rec.sev, status: x.rec.status, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
         match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
-      const articles = keep(news).map((x) => ({ id: x.id, title: x.rec.title, publisher: x.rec.source, place: x.rec.place, url: x.rec.url,
+      const articles = await ownLinks(keep(news).map((x) => ({ id: x.id, title: x.rec.title, publisher: x.rec.source, place: x.rec.place, url: x.rec.url,
         incident: x.rec.incident || null, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
-        match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
+        match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` })));
       return {
         // what the matching articles say (full pages first): the story is told from them
         scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles,
@@ -745,8 +753,9 @@ export const TOOLS = [
   tool({
     name: "incident_story",
     description: "Explain one incident the Collector describes in words ('what is this murder case in Adyar', 'tell me about the fire in Guindy', 'what happened at Velachery lake yesterday', or an INC-... id): finds it by meaning (semantic search over every incident's type, title, place and summary, within the zone and category the question names, recent ones first), then gives its full story: what happened, where and when, severity, status, the department and officials, each linked report in time order (news, police, complaints), plus other close matches.",
-    args: z.object({ text: z.string().trim().min(2).max(300), scope: ScopeSchema.default({}) }),
-    async run({ text, scope }) {
+    // lockDept: set by the department lock (pipeline lockTools), never by the model
+    args: z.object({ text: z.string().trim().min(2).max(300), scope: ScopeSchema.default({}), lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null) }),
+    async run({ text, scope, lockDept }) {
       const now = await asOf();
       warmUp(now);
       const { found, how, confident } = await findIncidents(text, scope, now);
@@ -755,7 +764,11 @@ export const TOOLS = [
       const body = await incidentBody(found[0].id, now);
       if (!body) return { scope: null, asOf: now, data: { found: false }, facts: [], sources: [fn("intel.incident")], incidentIds: [], testData: false,
         caveats: [`No incident ${found[0].id} in the store.`] };
-      const others = await incidentsByIds(found.slice(1, 6).map((f) => f.id));
+      // the other close matches are searched over every department: for an officer, only their own department's (reviewerF-06). The
+      // best match itself is checked by the pipeline (otherDeptsIncident), which says it is another department's
+      const near = found.slice(1, 6).map((f) => f.id);
+      const own = lockDept ? await idsOfDept(near, lockDept) : null;
+      const others = await incidentsByIds(own ? near.filter((id) => own.has(id)) : near);
       return {
         ...body,
         data: { ...(body.data as Row), found: true, how, confident, others: others.map((o) => ({ id: String(o.id), title: o.title, type: o.type, zone_name: o.zone_name, place: o.place,

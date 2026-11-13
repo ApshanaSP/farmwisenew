@@ -160,6 +160,12 @@ const toolArgs = (name: string, c: Row, s: Scope) => (TOOL_ARGS[name] ?? ((_: Ro
 /** Tools that rank every department side by side: not on a department officer's console. */
 const ALL_DEPTS = new Set(["departments", "dept_backlog"]);
 const OWN_DEPT_NOTE = "Answered for your department only: a department console does not show other departments' figures.";
+/**
+ * Tools that read records the department filter does not reach (news linked to incidents, a story's other close matches): they take
+ * lockDept and leave another department's records out (reviewerF-06).
+ */
+const LOCK_AWARE = new Set(["developing_stories", "search_records", "incident_story"]);
+const HOTSPOT_NOTE = "Hotspots are clusters of every department's incidents: shown here as where your department's incidents are.";
 
 /**
  * A department officer's tools: each runs with their department as its filter, a ranking of all departments becomes the
@@ -177,9 +183,13 @@ export function lockTools(tools: { name: string; args: Record<string, unknown> }
       out.push({ name: "incidents", args: { scope, sev: null, status: null, q: String(t.args.text ?? "").slice(0, 80) || null, allTime: true } });
     } else if (t.name === "contacts") {
       out.push({ ...t, args: { ...t.args, dept } });
-    } else if (t.name === "developing_stories") {
+    } else if (LOCK_AWARE.has(t.name)) {
       // a story is kept when any of its reports is the department's, but only the department's own linked records are said (reviewerF-06)
       out.push({ ...t, args: { ...t.args, scope, lockDept: dept } });
+    } else if (t.name === "hotspots") {
+      // the pipeline's hotspots count every department's incidents (and their open state): the department's own places instead
+      notes.push(HOTSPOT_NOTE);
+      if (!out.some((x) => x.name === "place_breakdown")) out.push({ name: "place_breakdown", args: { scope, place: null } });
     } else {
       out.push(t.args.scope ? { ...t, args: { ...t.args, scope } } : t);
     }
@@ -192,6 +202,24 @@ function otherDeptsIncident(r: ToolResult, dept: string): boolean {
   if (r.tool !== "incident_detail" && r.tool !== "incident_story") return false;
   const d = (r.data as Row | null)?.incident?.dept;
   return !!d && d !== dept;
+}
+
+/**
+ * The tools the agent's "show" planned, run as every other path runs them: locked for a department officer, and another department's
+ * incident not opened (its incident_story ran unchecked, so an officer's "show INC-..." told another department's incident in full:
+ * fixall-lock-01).
+ */
+export async function runShown(tools: { name: string; args: Record<string, unknown> }[], lockDept: string | null, scope: Scope, notes: string[]) {
+  const runs: { name: string; args: Record<string, unknown>; result: ToolResult; ms: number }[] = [];
+  for (const t of lockDept ? lockTools(tools, lockDept, scope, notes) : tools) {
+    const t0 = Date.now();
+    try {
+      const result = await runTool(t.name, t.args);
+      if (lockDept && otherDeptsIncident(result, lockDept)) { notes.push("That incident is handled by another department, so it is not shown on your department's console."); continue; }
+      runs.push({ name: t.name, args: t.args, result, ms: Date.now() - t0 });
+    } catch (e) { if (!(e instanceof ToolError)) throw e; notes.push(`Skipped ${t.name}: ${e.message}`); }
+  }
+  return runs;
 }
 
 /** The planner's query keeps the officer's department: filters and groupings on department columns are dropped, so the scope applies. */
@@ -1505,12 +1533,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
             if (r) return r;
           }
           if (p?.tools) {
-            const runs: { name: string; args: Record<string, unknown>; result: ToolResult; ms: number }[] = [];
-            for (const t of i.lockDept ? lockTools(p.tools, i.lockDept, scope, notes) : p.tools) {
-              const t0 = Date.now();
-              try { runs.push({ name: t.name, args: t.args, result: await runTool(t.name, t.args), ms: Date.now() - t0 }); }
-              catch (e) { if (!(e instanceof ToolError)) throw e; notes.push(`Skipped ${t.name}: ${e.message}`); }
-            }
+            const runs = await runShown(p.tools, i.lockDept ?? null, scope, notes);
             if (runs.length) return composeRuns(runs);
           }
           break;
