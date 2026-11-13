@@ -17,7 +17,13 @@ const DIGIT = String.raw`\p{Nd}`;
 // dash and minus, full-width punctuation, zero-width characters), up to 8 of them. The first version took only space, dot, slash and the ASCII
 // hyphen, so an en dash, a minus sign, a comma or a number split over two indented lines got through whole (P5-007, found by the reviewer).
 const SEP = String.raw`[^\p{L}\p{M}\p{Nd}]`;
-const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})(?!${DIGIT})`, "gu");
+const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+＋])(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})(?!${DIGIT})`, "gu");
+// The same 12 digits in any other grouping: 5-7, 6-6, 2-4-6, 3-3-3-3, one digit at a time (redteam-gate-03). Only spaces and dashes join these
+// groups, at most three at a time, so a date's dots, a time's colon, a line break and a list's commas and slashes still end a number; and the
+// run must be exactly twelve digits, with no digit or "+" just before it and no digit just after it.
+const GAP = String.raw`[ \t   \-‐-―−﹘﹣－]`;
+const ANY_GROUPS = new RegExp(String.raw`(?<![${DIGIT}+＋]${GAP}{0,3})${DIGIT}(?:${GAP}{0,3}${DIGIT}){11}(?!${GAP}{0,3}${DIGIT})`, "gu");
+const GAPS = new RegExp(`${GAP}+`, "u");
 /** Written in Aadhaar's 4-4-4 groups (any separators between), as a reader returns one it was not asked for. */
 const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}\s*$`, "u");
 
@@ -25,10 +31,16 @@ const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{
 export { asciiDigits };
 
 /**
- * Any 12-digit number in the text, written with its first 8 digits hidden: in any script's digits, with up to eight separators of any kind
- * between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
+ * Any 12-digit number in the text, written with its first 8 digits hidden: in any script's digits, in 4-4-4 groups with up to eight
+ * separators of any kind between them, or in any other grouping joined by spaces and dashes. A number written straight after "+" is a phone
+ * number (+91...), not Aadhaar, and so is "91" written apart from the ten digits after it.
  */
-export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`);
+export const maskAadhaar = (s: string): string =>
+  s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`).replace(ANY_GROUPS, (m) => {
+    const groups = asciiDigits(m).split(GAPS);
+    if (groups.length > 1 && groups[0] === "91") return m; // "91 98400 12345": a mobile with its country code, the "+" left off
+    return `XXXX XXXX ${asciiDigits(m).replace(/\D/g, "").slice(-4)}`;
+  });
 
 export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
 
