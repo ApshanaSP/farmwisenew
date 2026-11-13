@@ -2350,7 +2350,8 @@
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/lib/assistant/unresolved.ts:63 (zone needs digits), :71 (zero needs the digit 0), :104-110 (a place needs a capital letter, and any word in NOT_PLACES such as City clears it); no rule for a future month or day",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "p7_note": "Not started in pass 7 (rules-periods lane, branch claude/p7-rules-periods-b6172e): left open, unchanged."
   },
   {
     "id": "pass4-open-09",
@@ -2384,7 +2385,8 @@
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/lib/assistant/cannot.ts:31-34 (FUTURE and WRITE word lists) and guard.ts:172 (the default overview/incident answer)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "p7_note": "Not started in pass 7 (rules-periods lane): left open, unchanged."
   },
   {
     "id": "pass4-open-11",
@@ -2401,7 +2403,8 @@
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/lib/assistant/cannot.ts:62-70 shareAsked (no on-time share; 'resolved' wins)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "p7_note": "Not started in pass 7 (rules-periods lane): left open, unchanged."
   },
   {
     "id": "pass4-open-12",
