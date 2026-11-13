@@ -56,7 +56,8 @@ export interface IncidentFilters {
   range?: { from: string; to: string } | null;
 }
 
-const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const COLS = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, ${EFF.status} AS status,
   ${EFF.open} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
@@ -180,7 +181,7 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
   for (let k = WIDER.indexOf(f.period); k < WIDER.length; k++) {
     period = WIDER[Math.max(0, k)];
     const w = where({ ...f, period }, now);
-    [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
+    [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS()} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
       q<{ total: number }>(`SELECT COUNT(*) AS total FROM incidents i WHERE ${w.sql}`, w.params)]);
     // a window the question names ("last 10 days") is never widened silently
     if (rows.length >= n || order !== "priority" || f.hours || f.offset) break;
@@ -192,7 +193,7 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
 /** The raw records of a window, most important first, with the window's open and complaint totals (a zone on a given day). */
 export async function windowRows(f: IncidentFilters, now: string, n: number): Promise<{ rows: Row[]; total: number; open: number; complaints: number }> {
   const w = where(f, now);
-  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
+  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS()} ${FROM} WHERE ${w.sql} ORDER BY ${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
     q(`SELECT COUNT(*) AS total, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(CASE WHEN ${OPEN} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints FROM incidents i WHERE ${w.sql}`, w.params)]);
   return { rows, total: num(t?.total), open: num(t?.open), complaints: num(t?.complaints) };
 }
@@ -214,7 +215,7 @@ export async function idsOfDept(ids: string[], dept: string): Promise<Set<string
 
 export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
   if (!ids.length) return [];
-  const rows = await q(`SELECT ${COLS} ${FROM} WHERE i.incident_id IN (?)`, [ids]);
+  const rows = await q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id IN (?)`, [ids]);
   const ev = await evidenceFor(ids);
   const by = new Map(rows.map((r) => [String(r.id), r]));
   return ids.map((id) => by.get(id)).filter(Boolean).map((r) => itemOf(r!, ev.get(String(r!.id)) ?? []));
@@ -330,7 +331,7 @@ export async function categoryRanking(f: IncidentFilters, now: string, n: number
 /** One incident in full: what happened, where, when, status, why, who, how it unfolded, and the evidence. */
 export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all", lockDept: string | null = null): Promise<IncidentDetail | null> {
   const [[r], full, steps, now] = await Promise.all([
-    q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
+    q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id = ?`, [id]),
     // a department console's card: the incident's group is only that department's (fixall-lock-05)
     incidentFull(id, { dept: lockDept }),
     q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210")),
@@ -371,7 +372,7 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
  * else in its zone), within 60 days of it, closest first.
  */
 export async function relatedIncidents(id: string, n = 5) {
-  const [a] = await q(`SELECT ${COLS}, i.first_reported_at AS ts ${FROM} WHERE i.incident_id = ?`, [id]);
+  const [a] = await q(`SELECT ${COLS()}, i.first_reported_at AS ts ${FROM} WHERE i.incident_id = ?`, [id]);
   if (!a) return null;
   const fam = categories().find((c) => c.code === a.cat);
   const family = fam?.family ? categories().filter((c) => c.family === fam.family).map((c) => c.code) : [a.cat];
@@ -381,7 +382,7 @@ export async function relatedIncidents(id: string, n = 5) {
     : { sql: "i.zone_no = ?", params: [a.zone] };
   const dist = a.lat != null ? `111.32 * SQRT(POW(i.lat - ${Number(a.lat)}, 2) + POW((i.lon - ${Number(a.lon)}) * COS(RADIANS(${Number(a.lat)})), 2))` : "0";
   const run = (cats: string[]) => q(
-    `SELECT ${COLS}, ROUND(${dist}, 2) AS km ${FROM}
+    `SELECT ${COLS()}, ROUND(${dist}, 2) AS km ${FROM}
      WHERE i.incident_id <> ? AND i.category_code IN (?) AND ${near.sql}
        AND i.first_reported_at BETWEEN (? - INTERVAL 60 DAY) AND (? + INTERVAL 60 DAY)
      ORDER BY km, i.first_reported_at DESC LIMIT ?`, [id, cats, ...near.params, a.ts, a.ts, n]);
@@ -396,7 +397,7 @@ export async function relatedIncidents(id: string, n = 5) {
 /** Actions on record for an incident: the department's open steps, the pipeline's AI next step, else the category's standard first step. */
 export async function actionsFor(id: string): Promise<{ title: string; items: ActionItem[] } | null> {
   const [[r], steps] = await Promise.all([
-    q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
+    q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id = ?`, [id]),
     q(`SELECT text, owner, DATE_FORMAT(due_at, '%Y-%m-%d %H:%i:%s') AS due, status FROM actions WHERE incident_id = ? AND status NOT IN ('Done', 'Verified')
        ORDER BY sop_step IS NULL, sop_step, due_at LIMIT 6`, [id])]);
   if (!r) return null;

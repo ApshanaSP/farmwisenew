@@ -128,7 +128,8 @@ function filters(s: BriefScope, a = "i") {
 
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const SRC: Record<string, string> = { grievance: "citizen complaints", police: "police", pwd: "PWD", news: "news", hospital: "hospital", imd: "IMD" };
-const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const INC = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
   i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
   i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
@@ -222,13 +223,13 @@ async function dayFacts(s: BriefScope) {
               SUM(i.citizen_complaints) AS complaints, SUM(i.citizen_complaints > 0) AS ginc, SUM(i.media_only) AS news_only, SUM(${OPEN}) AS open
        FROM incidents i WHERE ${W}`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${prev.sql}${f.sql}`, [...prev.params, ...f.params]),
-    q(`SELECT ${INC} ${FROM} WHERE ${W} AND (COALESCE(i.dead, 0) > 0 OR i.severity_level = 'Severe')
+    q(`SELECT ${INC()} ${FROM} WHERE ${W} AND (COALESCE(i.dead, 0) > 0 OR i.severity_level = 'Severe')
        ORDER BY COALESCE(i.dead, 0) DESC, ${SEV_ORDER}, i.priority_score DESC LIMIT 10`, WP),
     q(`SELECT i.category_label AS label, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0
        GROUP BY 1 ORDER BY n DESC LIMIT 5`, WP),
     q(`SELECT i.zone_name AS name, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0 AND i.zone_name IS NOT NULL
        GROUP BY 1 ORDER BY n DESC LIMIT 3`, WP),
-    q(`SELECT ${INC} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
+    q(`SELECT ${INC()} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND ${pastDueSql(await asOf())} AND i.citizen_complaints > 0${f.sql}`, f.params),
     // My Tasks' figure (metrics.ts awaiting_check), not every open item flagged for the Collector
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
@@ -330,7 +331,7 @@ export async function deptBrief(s: BriefScope, dept: string, user: string): Prom
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND ${pastDueSql(await asOf())}) AS overdue, SUM(i.citizen_complaints) AS complaints FROM incidents i WHERE ${W}`, WP),
     q(`SELECT i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
-    q(`SELECT ${INC} ${FROM} WHERE ${W} ORDER BY COALESCE(i.dead, 0) DESC, ${SEV_ORDER}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 15`, WP),
+    q(`SELECT ${INC()} ${FROM} WHERE ${W} ORDER BY COALESCE(i.dead, 0) DESC, ${SEV_ORDER}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 15`, WP),
     q(`SELECT name FROM ref_departments WHERE code = ?`, [dept])
   ]);
   const T = tot[0] ?? {};
@@ -382,7 +383,7 @@ export async function trendBrief(user: string): Promise<TrendBrief | null> {
   const rising = rows.filter((c) => (c.chg ?? 0) >= 10).sort((a, b) => (b.recent - b.before) - (a.recent - a.before)).slice(0, 4);
   const falling = rows.filter((c) => (c.chg ?? 0) <= -10).sort((a, b) => (a.recent - a.before) - (b.recent - b.before)).slice(0, 3);
   if (!rising.length && !falling.length) return null;
-  const examples = await Promise.all(rising.map((c) => q(`SELECT ${INC} ${FROM} WHERE i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY
+  const examples = await Promise.all(rising.map((c) => q(`SELECT ${INC()} ${FROM} WHERE i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY
       AND i.first_reported_at < ${MON} ORDER BY ${SEV_ORDER}, i.member_count DESC, i.first_reported_at DESC LIMIT 8`, [c.cat, now, now, now, now])));
   const facts = [
     `Last 4 full weeks against the 4 weeks before, district-wide (to ${when(now)}).`,

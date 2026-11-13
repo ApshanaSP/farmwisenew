@@ -314,8 +314,11 @@ async function officerReportsFull(id: string): Promise<Row[]> {
   });
 }
 
-/** Columns every incident row on the console carries. */
-const ROW = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat_code, i.family,
+/**
+ * Columns every incident row on the console carries. Built when read, not at load: EFF.status reads officer steps only while their table
+ * is there (effective.ts officerStepsOn, rechecked every 60 s; reviewerG-02).
+ */
+const ROW = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat_code, i.family,
   i.lead_dept AS dept, dp.name AS dept_name, i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc,
   i.lat, i.lon, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${EFF.verified} AS verified,
   i.citizen_complaints AS complaints, i.outlet_count AS outlets, i.sources, i.source_count, i.channels,
@@ -362,7 +365,7 @@ export async function newsStories(period: Period, now: string) {
   const ids = [...new Set(groups.map((g) => g.incident).filter(Boolean))] as string[];
   const [src, inc] = await Promise.all([
     sourcesFor(ids),
-    ids.length ? q(`SELECT ${ROW} ${FROM} WHERE i.incident_id IN (?)`, [ids]) : Promise.resolve([] as Row[])
+    ids.length ? q(`SELECT ${ROW()} ${FROM} WHERE i.incident_id IN (?)`, [ids]) : Promise.resolve([] as Row[])
   ]);
   const incOf = new Map(inc.map((r) => [r.id, r]));
   const RANK: Record<string, number> = { Severe: 0, High: 1, Medium: 2, Low: 3 };
@@ -961,19 +964,19 @@ export async function overview(period: Period, zone: number | null, dept: string
       w.params
     ),
     // news linked to incidents in scope, headed by the article's own headline (an English one first), not the incident's
-    q(`SELECT ${ROW}, (SELECT COALESCE(NULLIF(d.title_en, ''), d.title) FROM documents d WHERE d.linked_incident_id = i.incident_id
+    q(`SELECT ${ROW()}, (SELECT COALESCE(NULLIF(d.title_en, ''), d.title) FROM documents d WHERE d.linked_incident_id = i.incident_id
          ORDER BY (d.lang = 'en') DESC, d.published_at DESC LIMIT 1) AS news_title
        ${FROM} WHERE ${w.sql} AND i.outlet_count > 0 ORDER BY i.first_reported_at DESC LIMIT 24`, w.params),
     // one task per group of incidents that are the same problem in the same area (CLUSTER): a report sent by the
     // department first, then the group's member waiting longest
-    q(`SELECT * FROM (SELECT ${ROW}, ${sent} AS officer_sent, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+    q(`SELECT * FROM (SELECT ${ROW()}, ${sent} AS officer_sent, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
          ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${sent} DESC, i.last_update_at ASC) AS g_rn
        ${FROM} WHERE ${qWhere}) x WHERE g_rn = 1 ORDER BY officer_sent DESC, updated ASC LIMIT 12`, qParams),
     awaitingCheck(s, now).then((t) => [{ n: t.n, left_to_depts: t.leftToDepts }]),
     // By severity: one row per group (CLUSTER), shown under the group's most severe level, the 12 most urgent each
     q(
       `SELECT * FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY x.sev ORDER BY x.priority DESC, x.t DESC) AS rn FROM (
-         SELECT ${ROW}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+         SELECT ${ROW()}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
                 ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${SEV_RANK}, i.priority_score DESC, i.citizen_complaints DESC) AS g_rn
          ${FROM} WHERE ${sevWhere}) x WHERE x.g_rn = 1) y
        WHERE rn <= 12 ORDER BY FIELD(sev, 'Severe', 'High', 'Medium', 'Low'), rn`,
@@ -1013,7 +1016,7 @@ export async function overview(period: Period, zone: number | null, dept: string
       // the bell is the scope's open severe and high incidents (the tile's "of them severe or high"): the same WHERE as the tiles, so it keeps
       // to a department view (an officer's overview never carries another department's incidents, BUG-026) and to the zone, taluk and
       // category the Collector chose (console-sync-11: it read the period and the department only)
-      `SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.severity_level IN ('Severe', 'High')
+      `SELECT ${ROW()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.severity_level IN ('Severe', 'High')
        ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
       w.params
     ),
@@ -1394,7 +1397,7 @@ function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | 
  */
 export async function incident(id: string, opts: { dept?: string | null } = {}) {
   const [inc] = await q(
-    `SELECT ${ROW}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
+    `SELECT ${ROW()}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
             i.depts_involved, i.dead, i.injured,
             i.persons_affected, i.vulnerable, dp.head AS dept_head, dp.org AS dept_org, i.confidence, i.needs_review, i.review_reason,
             i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp, ${EFF.laterStep} AS officer_step
@@ -1576,7 +1579,7 @@ export async function list(f: ListFilter) {
   const dir = f.dir < 0 ? "DESC" : "ASC";
   const W = where.join(" AND ");
   const [rows, tot] = await Promise.all([
-    q(`SELECT * FROM (SELECT ${ROW}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+    q(`SELECT * FROM (SELECT ${ROW()}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
          ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC) AS g_rn
        ${FROM} WHERE ${W}) x WHERE x.g_rn = 1 ORDER BY ${order} ${dir}, x.t DESC LIMIT 12 OFFSET ?`, [
       ...params,
@@ -1624,7 +1627,7 @@ export async function search(text: string) {
       const inTitle = groups.length ? groups.map((g) => `(CASE WHEN ${g.map(() => `${TITLE} LIKE ?`).join(" OR ")} THEN 1 ELSE 0 END)`).join(" + ") : "0";
       const titleParams = groups.flatMap((g) => g.map((x) => `%${x}%`));
       return Promise.all([
-        q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, ${EFF.open} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
+        q(`SELECT ${ROW()} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, ${EFF.open} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
           [...w.params, ...titleParams]),
         q(`SELECT COUNT(*) AS n ${FROM} WHERE ${w.sql}`, w.params)
       ]);
@@ -1666,7 +1669,7 @@ export async function search(text: string) {
  * count depend on the cap, and "routine" was open minus the six shown (1,161).
  */
 export async function attentionRows(w: { sql: string; params: unknown[] }): Promise<{ need: (Row & { why: ReturnType<typeof explain> })[]; ongoing: number }> {
-  const open = await q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} ORDER BY i.priority_score DESC`, w.params);
+  const open = await q(`SELECT ${ROW()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} ORDER BY i.priority_score DESC`, w.params);
   return { need: open.map((r) => ({ ...r, why: explain(r) })).filter((r) => r.why.needsYou), ongoing: open.length };
 }
 
@@ -1689,7 +1692,7 @@ async function actionList(period: Period, zone: number | null, dept: string | nu
   const A = await awaitingRule(period, now);
   const [attn, members] = await Promise.all([
     attentionRows(w),
-    q(`SELECT ${ROW}, ${A.sent} AS officer_sent, ${CLUSTER} AS grp ${FROM} WHERE ${A.mine} ${extra.map((x) => `AND ${x}`).join(" ")}
+    q(`SELECT ${ROW()}, ${A.sent} AS officer_sent, ${CLUSTER} AS grp ${FROM} WHERE ${A.mine} ${extra.map((x) => `AND ${x}`).join(" ")}
        ORDER BY officer_sent DESC, i.last_update_at ASC`, [...A.params, ...xp])
   ]);
   const checks: Row[] = [];
@@ -1747,7 +1750,7 @@ export async function report(period: Period, zone: number | null, dept: string |
     // the incidents that need the Collector, as the CSV's "Needs your attention" lists them (actionList), highest priority first
     actionList(period, zone, dept, focus, now),
     // in the news, with no department record
-    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
+    q(`SELECT ${ROW()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
   ]);
   // the report lists the 10 most urgent; the rest are on the dashboard and in the action list (CSV)
   const [a, g] = await Promise.all([withSources(act.need.slice(0, 10)), withSources(news)]);

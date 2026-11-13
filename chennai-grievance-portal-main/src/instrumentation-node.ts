@@ -46,24 +46,45 @@ if (process.env.NEXT_PHASE !== "phase-production-build") {
 }
 
 /**
- * Before the first request: whether MySQL has the officer console's step table (npm run setup:officer), which the Collector's status reads
- * (collector/effective.ts officerStepsOn, hunt2-ops-09). Without it the status reads no officer step, as before. The AWS store always has it.
+ * Whether the store has the officer console's step table (npm run setup:officer on MySQL; an AWS store only when the MySQL it was migrated
+ * from had it), which the Collector's status reads (collector/effective.ts officerStepsOn, hunt2-ops-09). Without it the status reads no
+ * officer step, as before. Checked before the first request and again at most every 60 s while the status is read (effective.ts calls
+ * __diqOfficerStepsRecheck), as intel.ts officerOpsReady() looks again: a check that failed because MySQL was still starting, or a
+ * setup:officer run while the server is up, is picked up without a restart (reviewerG-02). The AWS store is checked too, through its
+ * information_schema, never assumed (reviewerG-03).
  */
-let checked: Promise<void> | null = null;
+const RECHECK_MS = 60_000;
+let checked: { at: number; done: Promise<void> } | null = null;
 export function ready(): Promise<void> {
-  return (checked ??= checkOfficerSteps());
+  if (!checked || Date.now() - checked.at >= RECHECK_MS) checked = { at: Date.now(), done: checkOfficerSteps() };
+  return checked.done;
 }
+if (process.env.NEXT_PHASE !== "phase-production-build") globalThis.__diqOfficerStepsRecheck = () => { ready().catch(() => undefined); };
+
+/**
+ * What register() waits for before the first request: on MySQL the first check (a moment; at most mysql2's 10 s connect timeout when the
+ * host is down). On the AWS store the check waits for the store's download (up to 90 s), so it runs on without holding the start; the status
+ * reads no officer step until it says the table is there.
+ */
+export function beforeFirstRequest(): Promise<void> {
+  const first = ready();
+  return process.env.DATA_BACKEND === "aws" ? Promise.resolve() : first;
+}
+
+let failing = false;
 async function checkOfficerSteps(): Promise<void> {
-  if (process.env.DATA_BACKEND === "aws" || process.env.NEXT_PHASE === "phase-production-build") return;
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
   const { setOfficerSteps } = await import("@/lib/collector/effective");
   try {
     const { default: pool, OPS_DB } = await import("@/lib/collector/db");
     const [rows] = await pool.query(
       "SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = ? AND table_name = 'officer_steps'", [OPS_DB]);
-    setOfficerSteps(Number((rows as { n: number }[])[0]?.n) === 1);
+    setOfficerSteps(Number((rows as { n: number }[])[0]?.n) > 0);
+    failing = false;
   } catch (e) {
-    setOfficerSteps(false);
-    console.warn("[officer] the officer step table could not be checked; the Collector's status reads no officer step:", (e as Error).message);
+    // a failed check changes nothing (off until one says the table is there; a passing outage is not a missing table): tried again in 60 s
+    if (!failing) console.warn("[officer] the officer step table could not be checked; looking again every minute:", (e as Error).message);
+    failing = true;
   }
 }
 

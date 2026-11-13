@@ -69,14 +69,21 @@ export function effectiveStatus(isOpen: unknown, status: unknown, latestDecision
 declare global {
   // eslint-disable-next-line no-var
   var __diqOfficerSteps: boolean | undefined;
+  /** set by the server (instrumentation-node.ts): looks again whether the table is there, at most once a minute */
+  // eslint-disable-next-line no-var
+  var __diqOfficerStepsRecheck: (() => void) | undefined;
 }
 /**
- * Whether the officer console's step table (district_intel_ops.officer_steps) is there to read. The AWS store always has it (the website's
- * durable tables); on MySQL it comes from `npm run setup:officer`, so the server checks once at start (instrumentation-node.ts) and the
- * Collector's status reads no officer step without it, exactly as before. Anything else (a script, a test store) leaves it off unless set.
+ * Whether the officer console's step table (district_intel_ops.officer_steps) is there to read: on MySQL it comes from
+ * `npm run setup:officer`, and an AWS store has it only when the MySQL it was migrated from did. The server checks information_schema
+ * (instrumentation-node.ts) before the first request and again at most every 60 s while the status is read (as intel.ts officerOpsReady()
+ * does), so a check that failed at start (MySQL still starting) or a setup:officer run later is picked up without a restart (reviewerG-02),
+ * and an AWS store without the table reads the status as before, never "no such table" (reviewerG-03). Off until a check says it is there:
+ * the Collector's status then reads no officer step, exactly as before hunt2-ops-09. A script or a test store leaves it off unless set.
  */
 export function officerStepsOn(): boolean {
-  return globalThis.__diqOfficerSteps ?? process.env.DATA_BACKEND === "aws";
+  globalThis.__diqOfficerStepsRecheck?.();
+  return globalThis.__diqOfficerSteps ?? false;
 }
 export function setOfficerSteps(on: boolean): void {
   globalThis.__diqOfficerSteps = on;
@@ -85,10 +92,11 @@ export function setOfficerSteps(on: boolean): void {
 /**
  * SQL over `incidents <alias>` (default i), given the decisions table's qualified name: the latest decision (not a note), the effective
  * open flag (0/1) and the effective status, built from DECISION_EFFECT so the SQL and effectiveStatus cannot drift. `stepsTable`: the
- * officer steps table (the decisions table's neighbour in the ops database), null when it is not there (officerStepsOn).
+ * officer steps table, null for none; left out, it is the decisions table's neighbour in the ops database whenever it is there
+ * (officerStepsOn), decided each time `status` or `laterStep` is read, never once when a module builds its SQL at load (reviewerG-02).
  */
-export function effectiveSql(decisionsTable: string, alias = "i",
-  stepsTable: string | null = officerStepsOn() ? decisionsTable.replace(/collector_decisions/, "officer_steps") : null) {
+export function effectiveSql(decisionsTable: string, alias = "i", stepsTable?: string | null) {
+  const steps = () => (stepsTable !== undefined ? stepsTable : officerStepsOn() ? decisionsTable.replace(/collector_decisions/, "officer_steps") : null);
   const i = alias; // the incidents table's alias in the caller's query
   const latest = `(SELECT d.decision FROM ${decisionsTable} d WHERE d.incident_id = ${i}.incident_id AND d.decision IN (${EFFECT_KEYS})
     ORDER BY d.decision_id DESC LIMIT 1)`;
@@ -110,9 +118,9 @@ export function effectiveSql(decisionsTable: string, alias = "i",
   const status = `(CASE ${latest} ${cases((e) => `'${e.status}'`)} ELSE ${i}.status_std END)`;
   // the department's latest step (its lead department's, as the officer's queue reads them), when no decision with an effect was made at
   // or after it: in the same second the decision comes after the step (officer/data.ts DECIDED_AFTER), so the decision decides
-  const laterStep = stepsTable ? `(SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM ${decisionsTable} sd WHERE sd.incident_id = s.incident_id
+  const laterStepIn = (t: string | null) => t ? `(SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM ${decisionsTable} sd WHERE sd.incident_id = s.incident_id
       AND sd.decision IN (${EFFECT_KEYS}) AND sd.decided_at >= s.at) THEN s.step END
-    FROM ${stepsTable} s WHERE s.incident_id = ${i}.incident_id AND s.dept_code = ${i}.lead_dept ORDER BY s.step_id DESC LIMIT 1)` : "NULL";
+    FROM ${t} s WHERE s.incident_id = ${i}.incident_id AND s.dept_code = ${i}.lead_dept ORDER BY s.step_id DESC LIMIT 1)` : "NULL";
   const stepCases = Object.entries(STEP_STATUS).map(([k, v]) => `WHEN '${k}' THEN '${v}'`).join(" ");
   return {
     latest,
@@ -120,9 +128,12 @@ export function effectiveSql(decisionsTable: string, alias = "i",
     pipelineOpen: `${i}.is_open`,
     open,
     /** the status: the latest decision with an effect on the pipeline's, then, on an open case, a later officer step's (STEP_STATUS) */
-    status: stepsTable ? `(CASE WHEN ${open} = 1 THEN (CASE ${laterStep} ${stepCases} ELSE ${status} END) ELSE ${status} END)` : status,
+    get status(): string {
+      const t = steps();
+      return t ? `(CASE WHEN ${open} = 1 THEN (CASE ${laterStepIn(t)} ${stepCases} ELSE ${status} END) ELSE ${status} END)` : status;
+    },
     /** the department's latest officer step when it came after the latest decision with an effect (NULL without one, or without the table) */
-    laterStep,
+    get laterStep(): string { return laterStepIn(steps()); },
     /**
      * when it closed: the first closing decision since it was last open (after the latest reopen; or, never reopened, the first one while
      * the pipeline has it open, else the earlier of the pipeline's closed_at and that decision, or that decision when the pipeline has

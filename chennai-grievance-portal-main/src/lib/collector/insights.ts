@@ -52,7 +52,8 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
   return { sql: parts.join(" AND "), params };
 }
 
-const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const INC = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${OPEN_NOW} AS open_now,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
@@ -143,7 +144,7 @@ export async function insights(period: Period, zone: number | null, dept: string
        FROM incidents i WHERE ${w.sql}`, w.params)),
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params)),
     // candidates for "needs your attention": open, highest priority first (explain() decides which need the Collector)
-    when(B, () => q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
+    when(B, () => q(`SELECT ${INC()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
     // next open action per open incident in scope (pipeline action list, SOP order)
     when(B, () => q(`SELECT a.incident_id AS id, a.dept_code, a.owner, a.text, a.status, DATE_FORMAT(a.due_at, '%Y-%m-%d %H:%i:%s') AS due,
               ROW_NUMBER() OVER (PARTITION BY a.incident_id ORDER BY a.status = 'In progress' DESC, a.due_at, a.action_id) AS rn
@@ -155,7 +156,7 @@ export async function insights(period: Period, zone: number | null, dept: string
        ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} GROUP BY i.lead_dept, dp.name, dp.head
        ORDER BY serious DESC, overdue DESC, open DESC`, w.params)),
     // in the news, no department record
-    when(B, () => q(`SELECT ${INC}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
+    when(B, () => q(`SELECT ${INC()}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
        LEFT JOIN gaps g ON g.incident_id = i.incident_id
        WHERE ${where(s, now).sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
        ORDER BY i.priority_score DESC`, where(s, now).params)), // every row: the written line, the list and the figure are one number (PB-064)
@@ -187,7 +188,7 @@ export async function insights(period: Period, zone: number | null, dept: string
               DATE_FORMAT(h.first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(h.last_seen, '%Y-%m-%d') AS last_seen
        FROM hotspots h WHERE h.incidents_30d >= 3 ORDER BY h.incidents_30d DESC LIMIT 60`)),
     // open incidents with no zone: judged by locreview.ts (most are not a location problem)
-    when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
+    when(T, () => q(`SELECT ${INC()}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
        ORDER BY i.priority_score DESC LIMIT 600`, rw.params)),
     when(T, () => q(`SELECT ward_no, zone_no, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`)),
     when(T, () => q(`SELECT item_type, COUNT(*) AS n FROM review_queue WHERE status IN ('open', 'pending', 'new') OR status IS NULL GROUP BY item_type`)),
@@ -338,7 +339,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   // --------------------------------------------------- department list --
   const perDept = new Map<string, Row[]>();
   const topByDept = await when(B, () => q(
-    `SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
+    `SELECT * FROM (SELECT ${INC()}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
                     ${FROM} WHERE ${w.sql} AND ${OPEN} = 1) x WHERE rk <= 3`, w.params));
   for (const i of topByDept) (perDept.get(i.dept) ?? perDept.set(i.dept, []).get(i.dept)!).push(i);
   // "N to check" per department is that department's My Tasks (intel.ts awaitingByDept, the departments table's figure), not the
@@ -465,7 +466,7 @@ export async function pattern(p: PatternQuery) {
   const zn = new Map(zones.map((z) => [Number(z.zone_no), String(z.zone_name)]));
 
   const incidentsOf = async (sql: string, params: unknown[]) => {
-    const rows = await q(`SELECT ${INC}, i.lat, i.lon ${FROM} WHERE ${sql} ORDER BY i.first_reported_at DESC LIMIT 60`, params);
+    const rows = await q(`SELECT ${INC()}, i.lat, i.lon ${FROM} WHERE ${sql} ORDER BY i.first_reported_at DESC LIMIT 60`, params);
     return rows.map((r) => ({ ...r, plain: explain(r) }) as Row);
   };
   const placesOf = (rows: Row[]) => {

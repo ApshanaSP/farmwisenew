@@ -3,5 +3,5 @@
  * too, so the Node-only module is imported only behind this check, which the bundler removes from the Edge build.
  */
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") await (await import("./instrumentation-node")).ready();
+  if (process.env.NEXT_RUNTIME === "nodejs") await (await import("./instrumentation-node")).beforeFirstRequest();
 }
