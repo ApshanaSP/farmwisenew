@@ -23,6 +23,7 @@ import { orEmpty, orNull } from "@/lib/fallback";
 import { deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
 import { scrubCitizenDetails, CLOSED_BY_DEPARTMENT } from "@/lib/collector/scrub";
+import { sevLabel } from "@/lib/sev-label";
 
 /** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
 const istWall = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -228,9 +229,9 @@ export const PIN_LIMIT = 150;
  */
 const FOR_COLLECTOR = `(i.severity_level = 'Severe')`;
 
-/** Why a task is on the Collector's list, in words. */
+/** Why a task is on the Collector's list, in words. The level reads as every screen says it (sev-label.ts: "Severe", never "Severe severity"). */
 function taskBecause(r: Row): string[] {
-  const out: string[] = ["Severe severity"];
+  const out: string[] = [sevLabel(r.sev ?? "Severe")];
   if (Number(r.complaints) >= 3) out.push(`${r.complaints} citizens complained`);
   if (/several departments/i.test(String(r.attention_reason ?? ""))) out.push("Several departments");
   if (/news/.test(String(r.sources ?? ""))) out.push("In the news");
