@@ -232,6 +232,22 @@
     "closed_in": "fixall"
   },
   {
+    "id": "fixall-board-resolved-01",
+    "severity": "P3",
+    "area": "Officer console",
+    "title": "The officer Board's Resolved tile said \"Resolved this week / month / quarter\" (\"Resolved in 24 h\" daily) over a rolling window of grievances reported in it",
+    "found_by": "reviewerE (fixall), noted on reviewerE-04",
+    "repro": "OverviewPage ResolvedKpi label for weekly: \"Resolved this week\"; resolvedTile counts grievances first reported in the last 7 days that are now verified",
+    "failing_test": "src/components/officer/board-resolved.fixall.test.ts::fixall-board-resolved-01: the officer's Resolved tile says what it counts",
+    "root_cause": "the label used calendar words; now resolvedLabel(P) \"Resolved, reported in last 7 days\" with hand-written Tamil templates in ta.ts",
+    "fix_commit": "2e1e070d",
+    "revert_check": "5 of 5 fail without / pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/components/officer/Board.tsx:57",
+    "closed_in": "fixall"
+  },
+  {
     "id": "fixall-lock-01",
     "severity": "P1",
     "area": "Ask District IQ (officer lock)",
@@ -4918,7 +4934,7 @@
     "revert_check": "4 of 4 fail without / 4 pass with",
     "status": "fixed",
     "reviewer": null,
-    "note": "Not fixed here (not in the row): the officer console's Board.tsx:57 says 'Resolved this week/month/quarter' over its own rolling window, the same wording fault",
+    "note": "Board.tsx:57 (the officer console's Resolved tile) fixed separately as fixall-board-resolved-01 (2e1e070d): \"Resolved, reported in last 7 days\", as it counts grievances reported in the window that are now verified.",
     "closed_in": "fixall"
   },
   {
