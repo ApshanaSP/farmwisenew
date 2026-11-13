@@ -106,12 +106,12 @@ const UPTO_NOW = /\b(?:till|until|up ?to|upto)\s+(?:now|today)\b|\bso far\b|\b(?
 const SEQ_NOW = /(?:^\s*|[,.;:!?]\s*|\b(?:ok|okay|and|so|then|alright)\s+)now\b/gi;
 /** Ago, next, last year: a stretch the console does not hold (quick.ts held these for Jarvis alone; now both lanes) */
 const UNIT = "(?:days?|weeks?|months?|quarters?|years?)";
-const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3}|couple of|few|several|many) ${UNIT} (?:ago|back|before|earlier|prior)\b|\b(?:week|month|quarter|year) before last\b|\blast year\b|\bnext (?:week|month|quarter|year)s?\b|\b(?:tomorrow|next day)\b`, "i");
+const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3}|couple of|few|several|many) ${UNIT} (?:ago|back|before|earlier|prior)\b|\b(?:week|month|quarter|year) before last\b|\blast year\b|\bthis year\b|\b(?:last|past) (?:\d{1,2}|two|three|few|several) years\b|\bnext (?:week|month|quarter|year)s?\b|\b(?:tomorrow|next day)\b`, "i");
 const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaara|maasa|maatha|varusha)[a-z]* (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham|naal)\b|\bpona (?:varusham|varudam)\b|\bnaalaiku|naalaikku|naalai\b/i;
 const AGO_TA = /(?:நாள்|நாட்க|நாளு|வார|மாத|மாச|ஆண்டு|வருட|வருஷ)[஀-௿]*\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்|நாள்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)|(?<!(?:ஒரு|முந்தைய|அந்த|அதே|எந்த) )(?<![஀-௿])நாளை(?![஀-௿])(?!\s*(?:விட|காட்டிலும்))/;
 
 /** an age, not a period: "open for more than 7 days", "pending over 30 days" */
-const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi;
+const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\b(pending|open|unresolved|stuck|lying|waiting)\s+(?:for\s+)(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi;
 
 // the previous calendar unit: English, Tanglish, Tamil (with no Tamil case ending after it: "கடந்த வாரத்தில்", "in the past week", is the rolling week)
 const LAST_EN = /\b(?:last|previous|prior|pona|poona|ponna|kadandha|kadantha|kadanda|munthaiya|mundhaiya) (week|month|quarter|vaaram|varam|maasam|masam|maatham|kaalaandu|maasathu|vaarathu|maathathu|maasathin|vaarathin)(?:'s|s)?\b(?!\s*(?:\d|of\b))/i;
@@ -223,7 +223,9 @@ function monthIn(t: string): { month: number; year: number | null } | null {
   for (const m of t.matchAll(re)) {
     const before = t.slice(0, m.index), after = t.slice((m.index ?? 0) + m[0].length);
     const plain = !["march", "may"].includes(m[1]) && m[1].length > 4;
-    const context = !!m[2] || /\b(in|during|for|of|since|from|until|till|by|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before)
+    const word = m[1] === "may" ? /\b(during|since|from|until|till|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before) || (/\bin\s+$/.test(before) && /^\s*(?:[?.!]|$)/.test(after))
+      : /\b(in|during|for|of|since|from|until|till|by|last|this|early|late|mid|whole|all|entire|month)\s+(?:the\s+)?(?:month\s+of\s+)?$/.test(before);
+    const context = !!m[2] || word
       || /^\s*\d{1,2}(?:st|nd|rd|th)?\b/.test(after) || /\b\d{1,2}(?:st|nd|rd|th)?\s+$/.test(before) || /^\s*(?:month|maasam|la|le|il)\b/.test(after);
     if (plain || context) return { month: MONTHS.indexOf(m[1].slice(0, 3)), year: m[2] ? Number(m[2]) : null };
   }

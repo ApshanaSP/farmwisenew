@@ -647,7 +647,7 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
   const title = clip(asTa ? [`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · ")
     : [`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160);
   const kpis: BlockT = { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-    { key: "total", label: clip(asTa ? `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள்${state.ta}, ${r.span.now ? "எந்த நாள் பதிவானாலும்" : when.ta}` : `${sev ?? "All"} cases${state.en}, ${r.span.now ? "whatever the day reported" : when.en}`, 80),
+    { key: "total", label: clip(asTa ? `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள்${state.ta}, ${r.span.now ? "எந்த நாள் பதிவானாலும்" : when.ta.replace(/\s*\(.*\)$/, "")}` : `${sev ?? "All"} cases${state.en}, ${r.span.now ? "whatever the day reported" : when.en}`, 80),
       value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
     ...(status === "overdue" ? [] : [{ key: "late", label: asTa ? "காலக்கெடு தாண்டியவை" : "Past their deadline", value: r.late, unit: null, prev: null, delta: null, tone: r.late ? "bad" as const : "good" as const, spark: [] }]),
     ...(status || r.span.now ? [] : [{ key: "open", label: asTa ? "இன்னும் நிலுவையில்" : "Still open", value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }])
