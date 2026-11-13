@@ -4,10 +4,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import SatMap from "@/components/collector/app/SatMap";
 import { I } from "@/components/collector/app/icons";
-import { Chart, Empty, HBars, SEV_HEX, SevChip, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
+import { Chart, Empty, HBars, SEV_HEX, SevChip, fmtShort, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
 import { FEEDBACK_LABEL, STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
 import { useLangNow } from "@/lib/i18n/lang";
-import { bucketLabels } from "./format";
+import { bucketLabels, deadlineOf } from "./format";
 import type { InsightModule } from "@/lib/officer/insights";
 import { MODULE_ICON } from "./Insights";
 import type { Ctx } from "./OfficerApp";
@@ -152,7 +152,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
                   <tr key={r.id} className={r.id === c.fresh ? "flash" : ""} onClick={() => c.openGrievance(r.id)} title={`${r.id} · ${fullTitle(r)}`}>
                     <td className="oq-g">
                       <b>{r.type}{r.returned && <span className="chip sev-high" title={r.returnNote ?? "Returned by the Collector"}><I n="refresh" />Returned</span>}</b>
-                      <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}{fromManu(r) ? " · Manu (paper petition)" : ""}</small>
+                      <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}{fromManu(r) ? " · Manu (paper petition)" : ""}<DueNote r={r} now={c.now} /></small>
                     </td>
                     <td><SevChip s={r.sev} /></td>
                     <td className="dim">{rel(recent ? r.t : r.updated, c.now)}</td>
@@ -168,6 +168,13 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
       </div>
     </article>
   );
+}
+
+/** An open grievance's own deadline in the work queue's second line (officer-day-10): missed in red, else when it is due. */
+function DueNote({ r, now }: { r: Row; now: string }) {
+  const dl = deadlineOf(r, now);
+  if (!dl || !["new", "approved", "action", "sent"].includes(String(r.stage))) return null;
+  return dl.missed ? <> · <span style={{ color: "var(--sev)" }}>deadline missed ({fmtShort(dl.due)})</span></> : <> · due {fmtShort(dl.due)}</>;
 }
 
 // ------------------------------------------------------------------ news --

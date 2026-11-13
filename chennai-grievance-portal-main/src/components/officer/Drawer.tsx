@@ -6,6 +6,7 @@ import { SOURCE_KIND, SevChip, fmtShort, fullTitle, type Row } from "@/component
 import type { GrievanceDetail } from "@/lib/officer/data";
 import { historyOf, stepsOf, type Stage, type StepHistory } from "@/lib/officer/stages";
 import { StageChip } from "./Cards";
+import { deadlineOf } from "./format";
 import type { Ctx } from "./OfficerApp";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
 
@@ -24,6 +25,12 @@ export function Steps({ stage, severe, closedByDept, hist }: { stage: Stage; sev
       })}
     </div>
   );
+}
+
+/** The grievance's own deadline, as the Collector's case page shows it: the due time, in red with "missed" once it has passed (officer-day-10). */
+export function Deadline({ r, now }: { r: { due_at?: unknown; breached?: unknown; stage?: unknown }; now: string }) {
+  const dl = deadlineOf(r, now);
+  return <div><small>Deadline</small><b style={{ color: dl?.missed ? "var(--sev)" : undefined }}>{dl ? `${fmtShort(dl.due)}${dl.missed ? " · missed" : ""}` : "—"}</b></div>;
 }
 
 /**
@@ -166,6 +173,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         {g.summary && <p style={{ margin: 0, color: "var(--text-2)" }}>{g.summary}</p>}
         <div className="dgrid">
           <div><small>Reported</small><b>{fmtShort(g.t)}</b></div>
+          <Deadline r={g} now={d.now} />
           <div><small>First source</small><b>{d.firstSource}</b></div>
           <div><small>Linked complaints</small><b className="num">{g.complaints}</b></div>
           <div><small>Field officer</small><b>{g.officer ?? "—"}</b></div>

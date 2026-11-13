@@ -224,4 +224,13 @@ describe("officer console data", () => {
       expect(tile.series.reduce((a, x) => a + x, 0)).toBe(tile.cur);
     });
   });
+
+  describe("officer-day-10: every list row and the detail carry the grievance's deadline and the pipeline's breach", () => {
+    it("due_at and breached on the list row and the detail", async () => {
+      incident("INC-DUE", { sla_due_at: "2026-10-15 09:00:00", sla_breached: 1 });
+      const l = await grievanceList(SWM, { tab: "new", period: "daily", zone: null, taluk: null, page: 0, per: 10, cat: null, q: null });
+      expect(l.rows[0]).toMatchObject({ id: "INC-DUE", due_at: "2026-10-15 09:00:00", breached: 1 });
+      expect((await grievanceDetail(SWM, "INC-DUE"))?.grievance).toMatchObject({ due_at: "2026-10-15 09:00:00", breached: 1 });
+    });
+  });
 });

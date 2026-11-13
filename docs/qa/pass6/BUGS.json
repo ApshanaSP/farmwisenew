@@ -1201,16 +1201,17 @@
     "title": "The officer board's 'Resolved this month' tile says 445 but opens a list titled 'Verified by the Collector' that holds 362: the tile is the Collector overview's figure, the list is the officer's Verified tab (which also holds the cases the department closed itself, so the list title is wrong too)",
     "found_by": "officer-day",
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p1-scope.mjs (monthlyTiles vs listsTheyOpen)",
-    "failing_test": null,
-    "root_cause": "the tile counts the Collector overview's resolved incidents, the list counts the officer stage 'verified' by report date",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::the tile, its previous period and its series are the Verified list's rows: Collector-verified and department-closed, by report date",
+    "root_cause": "the tile showed the Collector overview resolved count (closed in the period) and opened the officer Verified tab (reported in the period); now resolvedTile() counts the tab rows and the list is titled for both kinds of closing",
+    "fix_commit": "bf66ea7f",
+    "revert_check": "fails without (2 of 2) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/components/officer/Board.tsx:56-59 (KPI resolved = d.kpi.cur.resolved, onClick openList('Verified by the Collector', tab verified))",
     "confidence": "high",
     "verified": false,
-    "note": "needs src/lib/officer/data.ts, a p7 session's file. Both definitions live there: the tile is deptBoard() (data.ts:329) = the Collector overview's kpi.cur.resolved (lib/collector/intel overview, resolved incidents), the list is the officer's tab=verified (data.ts STAGE_SQL stage = 'verified', by report date, which also holds the department's own closes). Fix for the lead: give the tile the officer's own count (counts.verified, data.ts:226, same CTE and window as the list) with its previous period and series from the same query, then retitle the list in src/components/officer/Board.tsx:58 from 'Verified by the Collector' to TAB_LABEL.verified (or 'Verified or closed by your department'). Board.tsx alone cannot make the two agree without mixing definitions in the tile's delta and sparkline. Not changed here."
+    "note": "needs src/lib/officer/data.ts, a p7 session's file. Both definitions live there: the tile is deptBoard() (data.ts:329) = the Collector overview's kpi.cur.resolved (lib/collector/intel overview, resolved incidents), the list is the officer's tab=verified (data.ts STAGE_SQL stage = 'verified', by report date, which also holds the department's own closes). Fix for the lead: give the tile the officer's own count (counts.verified, data.ts:226, same CTE and window as the list) with its previous period and series from the same query, then retitle the list in src/components/officer/Board.tsx:58 from 'Verified by the Collector' to TAB_LABEL.verified (or 'Verified or closed by your department'). Board.tsx alone cannot make the two agree without mixing definitions in the tile's delta and sparkline. Not changed here.",
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-14",

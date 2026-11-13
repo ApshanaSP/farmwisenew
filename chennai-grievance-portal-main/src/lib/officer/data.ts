@@ -163,7 +163,7 @@ export type ListFlagKey = keyof ReturnType<typeof flagSql> | "due";
 const ROW = `w.incident_id AS id, w.title, w.category_label AS type, w.category_code AS cat, w.zone_no AS zone, w.zone_name,
   w.ward_no AS ward, w.taluk_code AS taluk, w.place_text AS loc, w.lat, w.lon, w.severity_level AS sev, w.status_std AS status, w.stage,
   w.returned, w.c_note AS returnNote, w.citizen_complaints AS complaints, w.outlet_count AS outlets, w.sources, w.channels, w.source_count, w.officer,
-  ${fmt("w.first_reported_at")} AS t, ${fmt("w.upd")} AS updated, ${fmt("w.sla_due_at")} AS due_at`;
+  ${fmt("w.first_reported_at")} AS t, ${fmt("w.upd")} AS updated, ${fmt("w.sla_due_at")} AS due_at, w.sla_breached AS breached`;
 const SEV_ORDER = `FIELD(w.severity_level, 'Severe', 'High', 'Medium', 'Low')`;
 const OPEN_STAGES = `('new', 'approved', 'action', 'sent')`;
 

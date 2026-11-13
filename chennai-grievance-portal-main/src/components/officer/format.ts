@@ -18,6 +18,18 @@ export function bucketLabels(since: string, P: { hours: number; buckets: number 
   });
 }
 
+/**
+ * A grievance's own deadline as the officer is shown it (officer-day-10): its due time, and whether it is missed while the work is
+ * still the department's (a breach the pipeline recorded, or the due time passed). The list and the drawer had no due date at all,
+ * only the overdue and due-in-24-hours counts. Null when the case has no deadline.
+ */
+export function deadlineOf(r: { due_at?: unknown; breached?: unknown; stage?: unknown }, now: string): { due: string; missed: boolean } | null {
+  const due = typeof r.due_at === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(r.due_at) ? r.due_at : null;
+  if (!due) return null;
+  const open = ["new", "approved", "action", "sent"].includes(String(r.stage));
+  return { due, missed: open && (Number(r.breached) === 1 || ms(due) < ms(now)) };
+}
+
 const n = (v: number) => Math.round(v).toLocaleString("en-IN");
 const plural = (k: number, one: string, many = `${one}s`) => `${n(k)} ${k === 1 ? one : many}`;
 
