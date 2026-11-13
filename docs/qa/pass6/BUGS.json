@@ -5072,6 +5072,23 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerG-04",
+    "severity": "P2",
+    "area": "Ask District IQ (read-only account)",
+    "title": "Ask District IQ's planner lane can no longer answer any question by status when the SELECT-only account is set up: it has no grant on officer_steps, which the status now reads",
+    "found_by": "reviewerG (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/assistant/ro-grants.fixall.test.ts::reviewerG-04: what the planner lane reads, the SELECT-only account may read",
+    "root_cause": "hunt2-ops-09 made the effective status read officer_steps; the SELECT-only account script grants listed ops tables only and was not updated; now a column grant (step_id, incident_id, dept_code, step, at) when the table exists",
+    "fix_commit": "0ecb5e66",
+    "revert_check": "3 of 5 fail without / 5 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "scripts/create-assistant-ro-user.sql:45-47; src/lib/collector/effective.ts laterStep; src/lib/assistant/compile.ts:174",
+    "note": "Kept the reviewer's probe as a lasting guard, widened to columns: every ops table and column the compiled SQL names must be granted in the script. The grant is a prepared statement behind an information_schema check (MySQL refuses a column grant on a missing table); re-run the script after setup:officer. Not run on a real MySQL.",
+    "closed_in": "fixall"
+  },
+  {
     "id": "skeptic-redsec1-1",
     "severity": "P2",
     "area": "sign-out (QA pass 4 skeptic / redteam-final-13)",
