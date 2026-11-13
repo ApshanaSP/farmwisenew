@@ -8,6 +8,7 @@ import { classifyComplaint } from "@/lib/ai-classifier";
 import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { appendComplaintToDataset } from "@/lib/dataset/append";
 import { QUEUE_DELAY_NOTE } from "@/lib/officer/queue-note";
+import { NEXT_UPDATE_NOTE } from "@/lib/manu/queue";
 import { progressFor, remarksFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
@@ -304,7 +305,7 @@ export async function POST(req: NextRequest) {
 
     // the officer and Collector consoles read cases: put this complaint in front of them now (a failure is logged, and the next build adds it).
     // Its type and sub-type grade it as the pipeline would (officer-day-02); a department the portal chose is flagged for checking (officer-day-07)
-    await addCaseLive(onlineCase({
+    const live = await addCaseLive(onlineCase({
       complaint_code: complaintCode, created_at: istNow(), title: data.title, description: data.description, ward_number: data.wardNumber,
       specific_location: data.specificLocation, street_address: data.streetAddress, mobile_number: data.mobileNumber, user_id: session.userId,
       needs_manual_review: needsManualReview ? 1 : 0
@@ -318,7 +319,8 @@ export async function POST(req: NextRequest) {
       complaintId,
       department: deptName,
       departmentPending: needsManualReview,
-      queueNote: needsManualReview ? null : QUEUE_DELAY_NOTE,
+      // "already in the queue" only when the case was added: a failed add was answered with it all the same (pass 6's reviewerB-04)
+      queueNote: needsManualReview ? null : live.inQueue ? QUEUE_DELAY_NOTE : NEXT_UPDATE_NOTE,
       complaintType: subtype.label as string,
       complaintCategory: subtype.category_name as string,
       wardNumber: data.wardNumber,

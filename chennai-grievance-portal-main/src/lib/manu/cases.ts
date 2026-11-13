@@ -172,26 +172,32 @@ const live: Db = {
   run: async (sql, params = []) => { await intelPool.query(sql, params); }
 };
 
+/** Where a filing's case is, and whether it is in the officers' queue now (a case of the build being served) or only at the next update. */
+export interface LiveCase { incidentId: string; inQueue: boolean }
+
 /**
- * Puts a filing into the build being served. Only the AWS store needs this: on MySQL the pipeline reads the complaint itself. A failure
- * is logged and the filing stands; the next build picks it up from the durable store.
+ * Puts a filing into the build being served. Only the AWS store needs this: on MySQL the pipeline reads the complaint itself, at the next
+ * update. A failure is logged and the filing stands; the next build picks it up from the durable store. The result says which happened, so
+ * the caller tells the citizen the truth: the failure was swallowed and the filing route said "already in the department officer's queue"
+ * all the same (pass 6's reviewerB-04).
  */
-export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promise<string> {
+export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promise<LiveCase> {
   const id = attachTo ?? caseIdFor(c.code);
-  if (process.env.DATA_BACKEND !== "aws") return id;
+  if (process.env.DATA_BACKEND !== "aws") return { incidentId: id, inQueue: false };
   try {
     // a new or bigger case changes the figures: the caches that hold a read start again (pass 4's RC-35; QA pass 5, P5-015)
     // a case that is already closed is not joined: the filing would be counted there and acted on by nobody (QA pass 5, P5-016)
     // open as every console reads it: the Collector's latest decision first, else the pipeline's flag (pass 4's effective status). The raw
     // is_open alone joined a case the Collector had resolved and refused one the Collector had reopened (the second reviewer)
     const open = attachTo ? (await live.all(`SELECT ${effectiveSql(ops("collector_decisions")).open} AS o FROM incidents i WHERE i.incident_id = ?`, [attachTo]))[0] : null;
-    if (attachTo && open && Number(open.o) !== 0 && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return attachTo; }
+    if (attachTo && open && Number(open.o) !== 0 && (await attachToCase(live, attachTo, c))) { bumpDataEpoch(); return { incidentId: attachTo, inQueue: true }; }
+    // a filing the build already holds (addCase returns null) is in the queue as well
     await addCase(live, c);
     bumpDataEpoch();
-    return caseIdFor(c.code);
+    return { incidentId: caseIdFor(c.code), inQueue: true };
   } catch (e) {
     console.warn(`[manu] case for ${c.code} not added to the current build: ${(e as Error).message}`);
-    return id;
+    return { incidentId: id, inQueue: false };
   }
 }
 
