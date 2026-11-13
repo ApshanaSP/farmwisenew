@@ -12,6 +12,11 @@ import { ConflictBox, useStoryConflicts } from "./Conflicts";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
 import { sevLabel } from "@/lib/sev-label";
 
+/** The department officer's steps as the case page names them (officer_steps.step; the close is the "Closed by the department" tag). */
+const OFFICER_STEP_WORDS: Record<string, string> = {
+  approve: "Approved by the department", action: "Work started by the department", send: "Completion report sent to you"
+};
+
 const CHANNEL: Record<string, string> = {
   citizen_app: "Citizen app", citizen_grievance: "Grievance portal", manu: "Manu (paper petition)", control_room_112: "Control room 112", fir_walk_in: "Police station",
   patrol: "Police patrol", field_staff: "Field staff", collector_office: "Collector's office", hospital_mis: "Hospital MIS",
@@ -134,6 +139,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
   const newsOutlets = [...new Set(reports.filter((r) => r.source === "news" && r.publisher).map((r) => String(r.publisher)))];
   const grievances = reports.filter((r) => r.source === "grievance").length;
   const deptReports = data.deptReports as Row[];
+  const officerStep = (data.officerStep ?? null) as Row | null;
   const byDept = dec?.decided_role === "department_officer";
 
   // the reports by day, oldest first
@@ -156,6 +162,8 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
           {dec?.decision === "verify" && <span className="tg"><I n="check" />Verified by you {rel(dec.t, c.now)}</span>}
           {dec?.decision === "resolve" && <span className="tg"><I n="check" />{byDept ? "Closed by the department" : "Resolved"} {rel(dec.t, c.now)}</span>}
           {data.assigned && <span className="tg"><I n="send" />Sent to {data.assigned.officer_designation ?? i.dept_name}</span>}
+          {/* the department's step on its console since your latest decision: the status above reads it too (hunt2-ops-09) */}
+          {officerStep && OFFICER_STEP_WORDS[officerStep.step] && <span className="tg"><I n="user" />{OFFICER_STEP_WORDS[officerStep.step]} {rel(officerStep.t, c.now)}</span>}
           {group.length > 0 && <span className="tg merged" title="The same problem reported in the same area, shown as one">
             <I n="layers" />{group.length + 1} incidents merged</span>}
           {newsOutlets.length > 0 && <span className="tg" title={newsOutlets.join(", ")}><I n="news" />In the news · {plural(newsOutlets.length, "outlet")}</span>}

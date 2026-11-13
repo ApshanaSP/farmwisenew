@@ -17,7 +17,7 @@ import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
-import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/effective";
+import { effectiveSql } from "@/lib/collector/effective";
 import { dataEpoch } from "@/lib/collector/epoch";
 import { orEmpty, orNull } from "@/lib/fallback";
 import { SQL, deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
@@ -491,10 +491,9 @@ async function decisionsFor(ids: string[]): Promise<Record<string, Row>> {
      FROM ${ops("collector_decisions")} WHERE incident_id IN (?) AND decision <> 'note' ORDER BY decision_id`,
     [ids]
   );
-  // the latest decision is what the row shows; the latest one with an effect (effective.ts) decides its status, so an
-  // escalate after a resolve is shown without reopening it
+  // the latest decision is what the row shows; its status is the row's own (EFF), so an escalate after a resolve is shown without reopening it
   const out: Record<string, Row> = {};
-  for (const d0 of r) { const d = forCollector(d0); out[d.incident_id] = { ...d, eff: decisionEffect(d.decision) ? d : out[d.incident_id]?.eff }; }
+  for (const d0 of r) { const d = forCollector(d0); out[d.incident_id] = d; }
   return out;
 }
 
@@ -792,17 +791,16 @@ export async function contactsFor(dept: string | null, zone: number | null): Pro
 }
 
 /**
- * A row with the Collector's latest decision on it: `d` is shown, `eff` (the latest one with an effect) decides the
- * status and the verified mark, the same rule as the SQL (effective.ts), so an escalate after a resolve stays closed.
+ * A row with the Collector's latest decision on it: `d` is shown (and an escalate marked). The row's open flag, status and verified
+ * mark are its SQL's (ROW reads EFF: the latest decision with an effect on the pipeline's, then a later officer step's), so an escalate
+ * after a resolve stays closed. They were set here again from the decision alone, which put "Open" back over an officer's approve made
+ * after a send-back (hunt2-ops-09).
  */
-function overlay<T extends Row>(r: T, d: Row | undefined, eff: Row | undefined = d?.eff ?? d): T {
+function overlay<T extends Row>(r: T, d: Row | undefined): T {
   if (!d) return r;
   const out: Row = { ...r, decision: d.decision, decided_at: d.decided_at };
   delete out.eff;
   if (d.decision === "escalate") out.escalated = 1;
-  const e = decisionEffect(eff?.decision); // resolve, verify and reject close, reopen opens
-  if (e) Object.assign(out, { open: e.open, status: e.status });
-  if (decisionVerifies(eff?.decision)) out.verified = 1;
   return out as T;
 }
 
@@ -1391,7 +1389,7 @@ export async function incident(id: string) {
     `SELECT ${ROW}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
             i.depts_involved, i.dead, i.injured,
             i.persons_affected, i.vulnerable, dp.head AS dept_head, dp.org AS dept_org, i.confidence, i.needs_review, i.review_reason,
-            i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp
+            i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp, ${EFF.laterStep} AS officer_step
      ${FROM} LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code WHERE i.incident_id = ?`,
     [id]
   );
@@ -1434,6 +1432,11 @@ export async function incident(id: string) {
     Promise.all(ids.slice(0, 12).map(officerReportsFull)).then((r) => r.flat().sort((a, b) => String(b.t).localeCompare(String(a.t))))
   ]);
   const emails = await actionEmails(ids);
+  // the department's step the status now reads (EFF.laterStep: after the latest decision with an effect), shown on the case page (hunt2-ops-09)
+  const officerStep = inc.officer_step
+    ? (await q(`SELECT step, actor, DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t FROM ${ops("officer_steps")} WHERE incident_id = ? AND dept_code = ?
+         ORDER BY step_id DESC LIMIT 1`, [id, inc.dept]).catch(orEmpty("intel:officerStep")))[0] ?? null
+    : null;
 
   // Linked reports in time order; news articles linked without a member row are added too. News comes from news media
   // and government sources only (isNewsMedia): a blog or a trading app that copied the story is left out.
@@ -1458,7 +1461,6 @@ export async function incident(id: string) {
   ].sort((a, b) => String(a.t).localeCompare(String(b.t)));
 
   const last = decisions.filter((d) => d.decision !== "note").slice(-1)[0];
-  const lastEffect = decisions.filter((d) => decisionEffect(d.decision)).slice(-1)[0];
   // the group's sources added up: every report it unfolded from
   const all: SourceCounts = { grievance: 0, police: 0, pwd: 0, hospital: 0, imd: 0, news: 0, outlets: [], total: 0 };
   for (const k of ids) {
@@ -1471,7 +1473,7 @@ export async function incident(id: string) {
   const listed = [...new Set(reports.filter((r) => r.source === "news" && r.publisher).map((r) => String(r.publisher)))];
   if (listed.length) all.outlets = [...new Set([...listed, ...all.outlets])];
   const complaints = Number(inc.complaints) + group.reduce((n, g) => n + Number(g.complaints ?? 0), 0);
-  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined, lastEffect ? { ...lastEffect, decided_at: lastEffect.t } : undefined), src: all.total || all.outlets.length ? all : null, complaints };
+  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined), src: all.total || all.outlets.length ? all : null, complaints };
   return {
     incident: { ...row, why: explain(row) } as Row,
     /** the other incidents merged into this one: the same problem in the same area */
@@ -1482,6 +1484,8 @@ export async function incident(id: string) {
     contacts,
     assigned: assigned[id] ?? null,
     decisions,
+    /** the department's latest step on its officer console when it came after your latest decision: approve, action or send */
+    officerStep,
     /** completion reports from the department's officer console (remarks and site photos), newest first */
     deptReports
   };

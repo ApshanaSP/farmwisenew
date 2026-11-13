@@ -12,7 +12,7 @@ import { asOf, exportMeta } from "@/lib/collector/intel";
 import { mapGeo } from "@/lib/collector/geo";
 import { categories, enRe, gazetteerEntries, taRe } from "@/lib/collector/nlp";
 import { isPinnable } from "@/lib/collector/mapplace";
-import { EFFECT_KEYS, effectiveStatus } from "@/lib/collector/effective";
+import { EFFECT_KEYS, effectiveSql, effectiveStatus, officerStepsOn } from "@/lib/collector/effective";
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
 import type { Entry, ResolverData } from "./resolve";
@@ -367,28 +367,38 @@ async function resolverData(points: Record<PointLayer, PointFeat[]>, lines: Reco
 }
 
 /** The world for one question: the cached base with the Collector's latest decisions laid on top, and the console's "now". */
+/** The department's latest officer step after the latest decision with an effect (effective.ts), built when read: the step table may be off. */
+const laterStep = () => effectiveSql(ops("collector_decisions")).laterStep;
+
 export async function world(): Promise<{ world: World; resolver: ResolverData }> {
   const key = await buildKey();
   const g = global.__askMapBase;
   if (!g || g.key !== key) global.__askMapBase = { at: Date.now(), key, base: loadBase(key) };
   let base: Base;
   try { base = await global.__askMapBase!.base; } catch (e) { global.__askMapBase = undefined; throw e; }
-  const [now, decided, routedRows] = await Promise.all([
+  const [now, decided, routedRows, stepRows] = await Promise.all([
     asOf(),
     // the decisions with an effect only (effective.ts): an escalate or a note after a resolve must not hide the resolve (RC-26, RC-27)
     q(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision IN (${EFFECT_KEYS}) ORDER BY decision_id`).catch(() => [] as Row[]),
-    q(`SELECT DISTINCT incident_id FROM ${ops("dept_assignments")}`).catch(() => [] as Row[])
+    q(`SELECT DISTINCT incident_id FROM ${ops("dept_assignments")}`).catch(() => [] as Row[]),
+    // a department officer's step after the latest decision moves an open case's status, as on the console (effective.ts, hunt2-ops-09)
+    officerStepsOn()
+      ? q(`SELECT i.incident_id, ${laterStep()} AS step FROM incidents i
+           WHERE i.incident_id IN (SELECT incident_id FROM ${ops("officer_steps")})`).catch(() => [] as Row[])
+      : Promise.resolve([] as Row[])
   ]);
   const latest = new Map<string, string>();
   for (const d of decided) latest.set(String(d.incident_id), String(d.decision));
+  const stepOf = new Map(stepRows.filter((r) => r.step).map((r) => [String(r.incident_id), String(r.step)]));
   const routed = new Set(routedRows.map((r) => String(r.incident_id)));
   // past its deadline is one rule (metrics.ts pastDueSql): the store's flag, or the due time gone by the console's now (RC-34)
   const incidents = base.incidents.map((i) => {
     const late = i.breached || (!!i.slaDue && i.slaDue < now);
     const d = latest.get(i.id);
     const r = routed.has(i.id);
-    if (!d && !r) return late === i.breached ? i : { ...i, breached: late };
-    const e = d ? effectiveStatus(i.open ? 1 : 0, i.status, d) : { open: i.open ? 1 : 0, status: i.status };
+    const step = stepOf.get(i.id) ?? null;
+    if (!d && !r && !step) return late === i.breached ? i : { ...i, breached: late };
+    const e = effectiveStatus(i.open ? 1 : 0, i.status, d ?? null, step);
     return { ...i, open: e.open === 1, status: e.status, routed: r, breached: late };
   });
   return { world: { ...base.world, now, incidents }, resolver: base.resolver };

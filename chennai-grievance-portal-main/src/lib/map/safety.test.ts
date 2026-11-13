@@ -18,7 +18,8 @@ describe("Ask the Map never builds SQL from a plan", () => {
     const s = read("world.ts");
     const sqls = [...s.matchAll(/\bq\(\s*`([\s\S]*?)`/g)].map((m) => m[1]);
     expect(sqls.length).toBeGreaterThan(4);
-    const allowed = new Set(["TITLE", 'ops("collector_decisions")', 'ops("dept_assignments")', "EFFECT_KEYS"]); // EFFECT_KEYS: the decisions with an effect, built from the one table in effective.ts
+    // EFFECT_KEYS: the decisions with an effect, built from the one table in effective.ts; laterStep(): effective.ts's officer step rule (hunt2-ops-09)
+    const allowed = new Set(["TITLE", 'ops("collector_decisions")', 'ops("dept_assignments")', 'ops("officer_steps")', "EFFECT_KEYS", "laterStep()"]);
     for (const sql of sqls) for (const m of sql.matchAll(/\$\{([^}]+)\}/g)) expect(allowed.has(m[1].trim()), `SQL interpolates ${m[1]}`).toBe(true);
   });
   it("no complainant's personal data is read or sent", () => {
