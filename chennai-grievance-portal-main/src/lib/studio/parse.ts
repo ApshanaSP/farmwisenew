@@ -98,6 +98,16 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
   }
   // a name that says Excel (a zip underneath) on bytes that are not a workbook is a damaged or renamed file, not an empty one (RC-43, PB-265)
   if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
+  if (!ole && ext === "xls") {
+    // a .xls that is not a legacy workbook (OLE) is an HTML or XML table, or text saved with an .xls name; SheetJS reads ANY text as a
+    // one-sheet workbook, so binary bytes or plain words came back as a table with no rows ("no data") instead of unreadable (pass4-open-05)
+    const notBook = new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook or a table, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
+    if (decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
+    let tables: Table[];
+    try { tables = excelAll(buf, budget); } catch (e) { if (e instanceof ParseError) throw notBook; throw e; }
+    if (tables.every((x) => !x.rows.length)) throw notBook;
+    return tables;
+  }
   if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf, budget);
   if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf, budget);
   const dec = decodeText(buf);
