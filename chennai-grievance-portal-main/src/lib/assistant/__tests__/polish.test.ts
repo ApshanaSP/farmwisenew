@@ -6,7 +6,10 @@ import { withoutEchoedNumbers } from "@/lib/assistant/verify";
 const card = {
   headline: "79 road accidents · last 7 days",
   answerMarkdown: "79 road accidents were reported in the last 7 days (81 in the period before): 6 severe, 75 still open, 7 deaths.",
-  scopeLine: "Last 7 days · District-wide · all departments", caveats: [], kpis: [], datasets: [],
+  // QA pass 7 (reviewer5-06): the KPIs and scope the count card carries (fastpath.ts INCIDENT_COUNT); the writer's figures come only from such
+  // typed values, and "the last 7 days" is the window only on a card whose period is weekly
+  scopeLine: "Last 7 days · District-wide · all departments", caveats: [], datasets: [], scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null },
+  kpis: [{ label: "Reported", value: 79, prev: 81 }, { label: "Severe", value: 6 }, { label: "Still open", value: 75 }, { label: "Deaths", value: 7 }],
   incidents: [{ incidentId: "INC-1", title: "Heavy vehicle crash reported in Jafferkhanpet", summary: "", aiWritten: false, category: "Road accident",
     location: "Jafferkhanpet", ward: 140, zone: "Adyar", taluk: null, occurredAt: null, severity: "Severe", priorityScore: 92, priorityReasons: ["1 death"],
     status: "In progress", department: "Greater Chennai Police", sourceCount: 2, newsOutletCount: 1, citizenComplaintCount: 0 }]
@@ -48,14 +51,20 @@ describe("the AI writes the store's answer", () => {
     expect(recs).toContain("Place: Jafferkhanpet, Ward 103, Anna Nagar zone, Purasawalkam taluk");
   });
 
+  // QA pass 7 (reviewer5-06): an article is others' writing (it begins with the headline, which can be the false claim itself): its figures
+  // pass only inside a word-for-word quote in the body, never unquoted, in the headline or in the spoken summary
   it("writes a news answer from what the articles say, and may quote their figures", () => {
     const news = { ...card, incidents: [], responseType: "news_detail", headline: "Protest against SIR in Chennai", answerMarkdown: "'ஜந்தர் மந்தர் 2.0'...",
       stories: [{ storyId: "STY-1", headline: "Protest against SIR in Chennai", location: "Egmore", sourceCount: 5, summary: "'ஜந்தர் மந்தர் 2.0'..." }] } as unknown as AnswerCard;
     const articles = [["Chennai protesters detained (The Hindu, 2026-10-22 23:32): Police detained 40 protesters four hours into a 24-hour sit-in demanding the CEC's resignation over SIR."]];
     expect(polishPrompt("what is the protest about", news, articles)).toMatch(/ARTICLES:\n<untrusted_data>\nStory 1:\n- Chennai protesters detained/);
-    const ok = checkPolish({ headline: "Students detained over SIR protest", answerMarkdown: "Police detained 40 protesters four hours into a 24-hour sit-in demanding the CEC's resignation over SIR.",
-      voiceSummary: "Police detained 40 protesters." }, "what is the protest about", news, articles);
+    const ok = checkPolish({ headline: "Students detained over SIR protest", answerMarkdown: "Police \"detained 40 protesters four hours into a 24-hour sit-in\" demanding the CEC's resignation over SIR.",
+      voiceSummary: "Police detained protesters at a sit-in over SIR." }, "what is the protest about", news, articles);
     expect("text" in ok).toBe(true);
+    expect(checkPolish({ headline: "Students detained over SIR protest", answerMarkdown: "Police detained 40 protesters four hours into a 24-hour sit-in demanding the CEC's resignation over SIR.",
+      voiceSummary: "Police detained protesters." }, "what is the protest about", news, articles)).toHaveProperty("rejected");
+    expect(checkPolish({ headline: "Students detained over SIR protest", answerMarkdown: "Police \"detained 40 protesters four hours into a 24-hour sit-in\".",
+      voiceSummary: "Police detained 40 protesters." }, "what is the protest about", news, articles)).toHaveProperty("rejected");
     // a figure no article states is still refused
     expect(checkPolish({ headline: "300 detained", answerMarkdown: "Police detained 300 protesters.", voiceSummary: "" }, "what is the protest about", news, articles)).toHaveProperty("rejected");
   });

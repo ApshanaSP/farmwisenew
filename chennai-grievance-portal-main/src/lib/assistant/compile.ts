@@ -94,7 +94,7 @@ export interface Compiled {
   testData: boolean | null;
   /** the same query over the previous window, when compare = previous_period */
   previous: { sql: string; params: unknown[] } | null;
-  /** pieces for re-running with a different grain or a top-N restriction */
+  /** pieces for re-running with a different grain or a top-N restriction (`whereParams`: the parameters of `from` then `where`, in order) */
   parts: { from: string; where: string; whereParams: unknown[]; order: string };
 }
 
@@ -104,21 +104,57 @@ const SCOPE_COLUMNS: [keyof Scope, string[]][] = [
 ];
 
 /**
+ * Tables that hold no department's data, and the columns of each an officer may read: geography and reference lists every department
+ * shares. Default deny, by table and by column: a column not named here is derived from records of every department (a ward's open
+ * incidents, its low_lying_index from all sources' flood reports, the calendar's rain_intensity from grievance, police and PWD flood
+ * records) and is not read from a department console; a table not named here, with no department column and no incident_id, is refused.
+ */
+const SHARED_TABLES: Record<string, ReadonlySet<string>> = {
+  ref_zones: new Set(["zone_no", "zone_name"]),
+  ref_wards: new Set(["ward_no", "zone_no", "zone_name", "taluk_code", "area_km2", "centroid_lat", "centroid_lon"]),
+  ref_taluks: new Set(["taluk_code", "name", "name_ta", "in_district", "lat", "lon", "note"]),
+  ref_departments: new Set(["code", "name", "org", "head", "route", "action_owner"]),
+  ref_facilities: new Set(["facility_id", "type", "name", "lat", "lon", "taluk_code", "capacity", "relevance", "specialties", "in_district", "basin"]),
+  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"])
+};
+const DEPT_COLUMNS = SCOPE_COLUMNS.find(([k]) => k === "dept")![1];
+
+/** How a table is held to an officer's department: by its department column, through its incidents, or not at all (shared reference). */
+type Hold = { by: "column"; col: string } | { by: "incident" } | { by: "shared" };
+function holdOf(t: CatalogTable, cat: Catalog): Hold | null {
+  const col = DEPT_COLUMNS.find((c) => t.columns.has(c));
+  if (col) return { by: "column", col };
+  if (t.columns.has("incident_id") && cat.tables.has("incidents")) return { by: "incident" };
+  return t.name in SHARED_TABLES ? { by: "shared" } : null;
+}
+
+/**
  * `lockDept`: a department officer's department, a hard limit (the console scope is a soft filter that adds nothing on a table with no
  * department column: an officer's planned query on v_collector_queue, alerts, v_media_gaps or hotspots read every department's rows,
- * QA pass 6, P6-014). A table with a department column is filtered by it; one with an incident_id is held to the department's incidents;
- * any other is refused.
+ * QA pass 6, P6-014). EVERY table the query reads is held to it, the base and each joined one: a table with a department column by that
+ * column, one with an incident_id through the department's incidents, a shared reference table not at all (but none of its columns
+ * derived from incidents); any other table is refused. Pass 6 held only the base, so a table joined back along any declared key brought
+ * in every row matching the key: ref_categories joined to incidents listed other departments' incidents (QA pass 7, reviewer4-01).
+ * A joined table's hold sits in its LEFT JOIN's ON, so the base's rows stay and another department's rows never join.
  */
 export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: Scope | null, lockDept: string | null = null): Compiled {
   const base = cat.tables.get(pq.table);
   if (!base) throw new CompileError(`Table "${pq.table}" is not in the catalog. Use one of: ${[...cat.tables.keys()].join(", ")}.`);
-  const lockCol = lockDept ? (SCOPE_COLUMNS.find(([k]) => k === "dept")?.[1] ?? []).find((c) => base.columns.has(c)) ?? null : null;
   const incidentsTable = cat.tables.get("incidents");
-  if (lockDept && !lockCol && !(base.columns.has("incident_id") && incidentsTable))
-    throw new CompileError(`"${pq.table}" is not kept by department, so it cannot be asked from a department console.`);
+  /** the table's hold under the lock (null without a lock); a table that cannot be held is refused */
+  const holdFor = (t: CatalogTable): Hold | null => {
+    if (!lockDept) return null;
+    const h = holdOf(t, cat);
+    if (!h) throw new CompileError(`"${t.name}" is not kept by department, so it cannot be asked from a department console.`);
+    return h;
+  };
+  /** the SQL condition holding `alias` (a table held by column or through incidents) to the department; its one "?" is the department */
+  const holdSql = (h: Hold, alias: string): string => (h.by === "column" ? `${alias}.${q(h.col)} = ?`
+    : `${alias}.\`incident_id\` IN (SELECT li.\`incident_id\` FROM ${qualified(incidentsTable!)} li WHERE li.\`lead_dept\` = ?)`);
+  const baseHold = holdFor(base);
   if (!ALIAS.test(pq.id.toLowerCase())) throw new CompileError(`Query id "${pq.id}" must be a short lower-case name.`);
   const notes: string[] = [];
-  const joins: { table: CatalogTable; alias: string; on: string }[] = [];
+  const joins: { table: CatalogTable; alias: string; on: string; hold: Hold | null }[] = [];
 
   /**
    * The incidents columns the Collector's decisions move are read through the same effective rule as the console (effective.ts),
@@ -130,12 +166,18 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
     return ({ is_open: e.open, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
   };
 
+  /** under the lock, only a shared reference table's own reference columns (the rest are derived from every department's records) */
+  const sharedOnly = (t: CatalogTable, h: Hold | null, col: CatalogColumn) => {
+    if (h?.by === "shared" && !SHARED_TABLES[t.name]?.has(col.name))
+      throw new CompileError(`${t.name}.${col.name} is worked out from every department's records, so it cannot be asked from a department console.`);
+  };
   /** a field of the base table ("zone_no") or of a table joined along a declared key ("ref_departments.name") */
   const ref = (name: string, purpose: string): Ref => {
     const [t, c] = name.includes(".") ? name.split(".", 2) : [base.name, name];
     if (t === base.name) {
       const col = base.columns.get(c);
       if (!col) throw new CompileError(`Column "${c}" (${purpose}) is not available on ${base.name}. Available: ${[...base.columns.keys()].join(", ")}.`);
+      sharedOnly(base, baseHold, col);
       return { sql: column(base.name, "b", c), col, table: base, alias: "b" };
     }
     const other = cat.tables.get(t);
@@ -147,11 +189,13 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
       const fwd = [...base.columns.values()].find((bc) => bc.join?.startsWith(`${t}.`));
       const back = [...other.columns.values()].find((oc) => oc.join?.startsWith(`${base.name}.`));
       const alias = `j${joins.length + 1}`;
-      if (fwd) j = { table: other, alias, on: `b.${q(fwd.name)} = ${alias}.${q(fwd.join!.split(".")[1])}` };
-      else if (back) j = { table: other, alias, on: `${alias}.${q(back.name)} = b.${q(back.join!.split(".")[1])}` };
+      const hold = holdFor(other);
+      if (fwd) j = { table: other, alias, on: `b.${q(fwd.name)} = ${alias}.${q(fwd.join!.split(".")[1])}`, hold };
+      else if (back) j = { table: other, alias, on: `${alias}.${q(back.name)} = b.${q(back.join!.split(".")[1])}`, hold };
       else throw new CompileError(`${t} cannot be joined to ${base.name}: no declared key links them.`);
       joins.push(j);
     }
+    sharedOnly(other, j.hold, col);
     return { sql: column(other.name, j.alias, c), col, table: other, alias: j.alias };
   };
 
@@ -284,13 +328,16 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
     }
   }
 
-  // the officer's department, whatever the plan or the console scope say (P6-014)
-  if (lockDept) {
-    if (lockCol) { where.push(`b.${q(lockCol)} = ?`); params.push(lockDept); }
-    else { where.push(`b.\`incident_id\` IN (SELECT li.\`incident_id\` FROM ${qualified(incidentsTable!)} li WHERE li.\`lead_dept\` = ?)`); params.push(lockDept); }
-  }
+  // the officer's department, whatever the plan or the console scope say (P6-014): on the base here, on each joined table in its ON
+  if (lockDept && baseHold && baseHold.by !== "shared") { where.push(holdSql(baseHold, "b")); params.push(lockDept); }
 
-  const from = `${qualified(base)} b ${joins.map((j) => `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on}`).join(" ")}`.trim();
+  // a joined table's hold is in its ON, so its "?" come before the WHERE's: `fromParams` lead every parameter list below
+  const fromParams: unknown[] = [];
+  const from = `${qualified(base)} b ${joins.map((j) => {
+    if (!lockDept || !j.hold || j.hold.by === "shared") return `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on}`;
+    fromParams.push(lockDept);
+    return `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on} AND ${holdSql(j.hold, j.alias)}`;
+  }).join(" ")}`.trim();
   const W = where.length ? where.join(" AND ") : "1=1";
   const testExpr = base.test === "0" || base.test === "1" ? null : base.test.replace(/\b([a-z_]+)\b(?=\s*(=|IN|<>|>|<))/g, "b.`$1`");
   const colTest = [...measures.map((m) => m.col), ...dims.map((d) => d.col)].some((c) => c?.test);
@@ -325,13 +372,14 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
     shifted[k] = `${timeRef.sql} > (? - INTERVAL ? HOUR) AND ${timeRef.sql} <= (? - INTERVAL ? HOUR)`;
     const pos = where.slice(0, k).reduce((a, w) => a + (w.match(/\?/g)?.length ?? 0), 0);
     const pp = [...pParams.slice(0, pos), asOf, windowHours * 2, asOf, windowHours, ...pParams.slice(pos + 3)];
-    previous = { sql: `SELECT ${hint} ${select.join(", ")} FROM ${from} WHERE ${shifted.join(" AND ")}${group} ORDER BY ${order} LIMIT ?`, params: [...pp, LIMITS.groupsComputed] };
+    previous = { sql: `SELECT ${hint} ${select.join(", ")} FROM ${from} WHERE ${shifted.join(" AND ")}${group} ORDER BY ${order} LIMIT ?`, params: [...fromParams, ...pp, LIMITS.groupsComputed] };
   }
 
+  const all = [...fromParams, ...params];
   return {
-    id: pq.id.toLowerCase(), purpose: pq.purpose, table: base, sql, params: [...params, limit], countSql, countParams: params,
+    id: pq.id.toLowerCase(), purpose: pq.purpose, table: base, sql, params: [...all, limit], countSql, countParams: all,
     dims: dims.map(({ alias, field, time, grain, col }) => ({ alias, field, time, grain, col })), measures: measures.map(({ alias, fn, col }) => ({ alias, fn, col })),
-    records, limit, notes, testData, previous, parts: { from, where: W, whereParams: params, order }
+    records, limit, notes, testData, previous, parts: { from, where: W, whereParams: all, order }
   };
 }
 
