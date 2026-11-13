@@ -649,7 +649,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
       const hours = newsSpan ? custom!.hours : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
-      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
+      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan, lockDept: i.lockDept }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
       card.responseType = one ? "news_detail" : "news_list";
       card.stories = r.stories;
       // the span asked, said as it was read ("last month (October)", "yesterday (5 Nov)"), never the rolling news window (p7-rules-periods-01)
