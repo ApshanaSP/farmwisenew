@@ -625,7 +625,7 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${opts.when?.ta ?? PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${opts.state?.ta ?? ""}.`,
-    late.length ? `${lateN === 1 ? `1 ${unit ? "பதிவு " : ""}காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது` : `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை`}:${first.map(whereTa).join("; ")}.` : `${lateN ? `${nTa(lateN, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
+    late.length ? `${lateN === 1 ? `1 ${unit ? "பதிவு " : ""}காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது` : `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை`}: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${nTa(lateN, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
     lead && lead[1] >= 2 ? `${deptTaByName(rows).get(lead[0]) ?? lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
