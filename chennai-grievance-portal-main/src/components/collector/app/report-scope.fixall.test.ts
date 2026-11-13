@@ -34,17 +34,17 @@ describe("console-sync-12: a zone's PDF keeps to that zone", () => {
   const places = [{ zone: null, l: "Mount Road", n: 6, v: 14 }, { zone: null, l: "Anna Salai", n: 9, v: 11 }];
   const d = base({ zone: 5, bottom: { ...base().bottom, byZone: places } });
   it("its key points name no other zone as the busiest", () => {
-    const pts = keyPoints(d, { scope: "Royapuram", dept: null }).join(" ");
+    const pts = keyPoints(d, { dept: null }).join(" ");
     expect(pts).not.toMatch(/Teynampet|Adyar/);
     expect(pts).toContain("Mount Road has the most citizen complaints in the zone (14)");
   });
   it("its workload chart is the zone's places, not the other zones", () => {
-    const right = workload(d, { scope: "Royapuram", dept: null }).right;
+    const right = workload(d, { dept: null }).right;
     expect(right.rows.map((r) => [r.l, r.v])).toEqual([["Mount Road", 14], ["Anna Salai", 11]]); // the zone's places by complaints, most first
     expect(right.head).not.toMatch(/by zone/i);
   });
   it("the district's PDF still names the busiest zone and charts the zones", () => {
-    expect(keyPoints(base(), { scope: "District-wide", dept: null }).join(" ")).toContain("Teynampet zone has the most open incidents (90)");
-    expect(workload(base(), { scope: "District-wide", dept: null }).right.rows.map((r) => r.l)).toEqual(["Teynampet", "Adyar", "Royapuram"]);
+    expect(keyPoints(base(), { dept: null }).join(" ")).toContain("Teynampet zone has the most open incidents (90)");
+    expect(workload(base(), { dept: null }).right.rows.map((r) => r.l)).toEqual(["Teynampet", "Adyar", "Royapuram"]);
   });
 });

@@ -5,7 +5,7 @@ import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { OfficerCard, StoryLink } from "./Overview";
-import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, rel, type Row } from "./lib";
+import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
 
 // -------------------------------------------------------------- modal --
