@@ -40,7 +40,7 @@ function upload(size: number, headers: Record<string, string> = {}) {
   });
   const req = new NextRequest("http://x/api/collector/studio", {
     method: "POST", body: stream, duplex: "half", headers: { "content-type": `multipart/form-data; boundary=${BOUNDARY}`, ...headers }
-  } as RequestInit & { duplex: "half" });
+  } as never);
   return { req, box };
 }
 
@@ -69,6 +69,17 @@ describe("POST /api/collector/studio reads a body with a limit before parsing it
     const res = await POST(req);
     expect(res.status).toBe(413);
     expect(calls).not.toContain("ingestLink");
+  });
+
+  it("p7-studio-egress-17: a urlencoded body whose content type only mentions multipart/form-data never reaches the form reader", async () => {
+    const { POST } = await import("@/app/api/collector/studio/route");
+    const req = new NextRequest("http://x/api/collector/studio", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded; multipart/form-data" },
+      body: "a&".repeat(1000) });
+    const res = await POST(req);
+    const said = await res.json();
+    // the form path would answer "Choose a file." after parsing the body as a form (in time growing with the square of its size)
+    expect(said.error).not.toBe("Choose a file.");
+    expect(res.status).toBe(400);
   });
 
   it("a normal upload is still read and handed to the pipeline", async () => {

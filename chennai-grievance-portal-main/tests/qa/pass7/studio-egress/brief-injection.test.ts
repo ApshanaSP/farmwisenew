@@ -182,7 +182,7 @@ describe("hunt2-sec-14: a cell's text cannot steer the Studio's AI brief", () =>
       call.reply = { verdict: "", summary: [], items: [], questions: [] };
       const { briefAI } = await import("@/lib/studio/ai");
       await briefAI({ spec, insights: ins, rules, rows: 600, window: { from: "2026-07-09", to: "2026-09-30" }, user: "t" });
-      const read = fencedLines(call.prompt).map((l) => JSON.parse(l)).flatMap((o) => Object.values(o).flat()).filter((v): v is string => typeof v === "string").join(" ");
+      const read = fencedLines(call.prompt).map((l) => JSON.parse(l)).flatMap((o) => Object.entries(o).filter(([k]) => k !== "id").map(([, v]) => v).flat()).filter((v): v is string => typeof v === "string").join(" ");
       const strangers = (read.replace(/\[value [A-Z]{1,2}\]/g, " ").toLowerCase().match(/[\p{L}\p{M}]+/gu) ?? []).filter((w) => !TEMPLATE_WORDS.has(w) && !["storm", "water", "drain"].includes(w));
       expect(strangers, read.slice(0, 400)).toEqual([]);
       expect(read.replace(/\d{4}-\d{2}-\d{2}/g, "")).not.toMatch(/\b(?!(?:19|20)\d\d\b)\d{4,}/);

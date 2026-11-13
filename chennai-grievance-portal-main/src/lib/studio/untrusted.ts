@@ -25,15 +25,16 @@ const INVISIBLE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu;
 
 // eight or more digits written close together, with any dash, dot, comma or bracket between: a phone number however it is written.
 // A figure the platform formats (1,84,029 or 12,345,678) and a date are not.
-const DIGITS_CLOSE = /\d(?:[\s()\-.,·–—−‒‐‑。]{0,3}\d){7,}/g;
-const FIGURE = /^(\d{1,3}(,\d{2})*,\d{3}|\d{1,3}(,\d{3})+)(\.\d+)?$/;
+const DIGITS_CLOSE = /\d(?:(?:[ \t()\-./:+_|*~%·–—−‒‐‑。]{1,3}|,(?![ \t]))?\d){7,}/g;
+const FIGURE = /^(\d{1,3}(,\d{2})*,\d{3}|\d{1,3}(,\d{3})+)(\.\d{1,2})?$/;
 const DATE = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})$/;
-const phoneLike = (m: string) => !FIGURE.test(m.trim()) && !DATE.test(m.trim()) && (m.match(/\d/g) ?? []).length >= 8;
+// ten digits or more is a phone number however it is grouped (9,87,65,43,210); eight or nine unless a platform figure or a date
+const phoneLike = (m: string) => { const d = (m.match(/\d/g) ?? []).length; return d >= 10 || (d >= 8 && !FIGURE.test(m.trim()) && !DATE.test(m.trim())); };
 
 // a web address, written plainly or dodged: a scheme, www, a path, or a name and a common ending joined by a dot written as a dot
 // (with no space), "dot", [.] or (.). "T.Nagar", "No.of" and "St.Thomas" are not addresses.
-const ENDINGS = "com|in|org|net|ly|gle|me|io|site|xyz|app|link|info|gov|nic|edu|ai|gg|to|tk|cc|biz|online|top|live|page|dev|club|store|shop|lk|pk|uk|us";
-const LINK = new RegExp(`\\b(?:https?|ftp)\\s*:\\s*/\\s*/\\S*|\\bwww\\s*[.。·]\\S*|\\b[a-z0-9-]+(?:(?:[.。·]|\\s*\\[\\s*[.]\\s*\\]\\s*|\\s*\\(\\s*[.]\\s*\\)\\s*|\\s+dot\\s+)[a-z0-9-]+)*(?:[.。·]|\\s*\\[\\s*[.]\\s*\\]\\s*|\\s*\\(\\s*[.]\\s*\\)\\s*|\\s+dot\\s+)(?:${ENDINGS})\\b(?:/\\S*)?|\\b[a-z0-9-]+[.。·][a-z0-9-]+/\\S*`, "gi");
+const ENDINGS = "com|in|org|net|ly|gle|me|io|site|xyz|app|link|info|gov|nic|edu|ai|gg|to|tk|cc|biz|online|top|live|page|dev|club|store|shop|lk|pk|uk|us|co|tv|ru|cn|de|fr|jp|br|au|ca|nl|eu|ws|su|ml|ga|cf|gq|icu|vip|win|xin";
+const LINK = new RegExp(`\\b(?:https?|ftp)\\s*:\\s*/\\s*/\\S*|\\bwww\\s*[.。·]\\S*|\\b[a-z0-9-]+(?:(?:[.。·]|\\s*\\[\\s*(?:[.]|dot)\\s*\\]\\s*|\\s*\\(\\s*(?:[.]|dot)\\s*\\)\\s*|\\s+dot\\s+)[a-z0-9-]+)*(?:[.。·]|\\s*\\[\\s*(?:[.]|dot)\\s*\\]\\s*|\\s*\\(\\s*(?:[.]|dot)\\s*\\)\\s*|\\s+dot\\s+)(?:${ENDINGS})\\b(?:\\s*/\\S*)?|\\b[a-z0-9-]+[.。·][a-z0-9-]+/\\S*|\\b[a-z][a-z0-9-]*\\s+[.。·]\\s+[a-z0-9-]+\\s*/\\S*|[(\\[]\\s*at\\s*[)\\]]`, "gi");
 
 /** Personal details and addresses masked: phone numbers (however written), e-mail addresses, links, ID numbers. */
 export const scrub = (s: string) => String(s ?? "")
@@ -81,13 +82,13 @@ export class Hidden {
 }
 
 // a part of a sentence: a mask the platform wrote, a word (letters of any script), a number, white space, or one other character
-const PART = /\[(?:phone|link|email|id number)\]|[\p{L}\p{M}]+(?:['’][\p{L}\p{M}]+)*|\d+(?:[,.]\d+)*%?|\s+|[^]/gu;
+const PART = /\[(?:phone|link|email|id number|a request, not shown)\]|[\p{L}\p{M}]+(?:['’][\p{L}\p{M}]+)*|\d+(?:[,.]\d+)*%?|\s+|[^]/gu;
 const YEAR = /^(19|20)\d\d$/;
 /** a number the model may read: short, a figure the platform formats, a percentage, a decimal, a year */
 const readableNumber = (n: string) => {
   const digits = (n.match(/\d/g) ?? []).length;
   const bare = n.replace(/%$/, "").replace(/\.$/, "");
-  return digits <= 3 || FIGURE.test(bare) || YEAR.test(bare) || /^\d{1,3}\.\d{1,2}$/.test(bare);
+  return digits <= 3 || (FIGURE.test(bare) && digits <= 9) || YEAR.test(bare) || /^\d{1,3}\.\d{1,2}$/.test(bare);
 };
 
 /**
@@ -95,20 +96,24 @@ const readableNumber = (n: string) => {
  * department's name from the fixed list). Every other run of words, and a number next to one, becomes a token of `hidden`.
  */
 export function forModel(s: string, hidden: Hidden, extra: ReadonlySet<string> = new Set()): string {
-  const text = oneLine(String(s ?? "").normalize("NFKC"));
+  // contact details are masked first, as on the page: a phone number, link or address never reaches the model, however written
+  const text = scrub(oneLine(String(s ?? "").normalize("NFKC")));
   const parts = text.match(PART) ?? [];
   type Kind = "read" | "hide" | "gap";
   const kind: Kind[] = parts.map((p) => {
     if (/^\s+$/.test(p) || /^[^\p{L}\p{M}\p{N}]$/u.test(p)) return "gap";
-    if (/^\[(phone|link|email|id number)\]$/.test(p)) return "hide";
+    if (/^\[(phone|link|email|id number|a request, not shown)\]$/.test(p)) return "hide";
     if (/^\d/.test(p)) return readableNumber(p) ? "read" : "hide";
+    // a word is read whole; an apostrophe only as a possessive of a word the platform writes ("collector's"), never as glue for pieces (d'i'a'l)
     const w = p.toLowerCase().replace(/’/g, "'");
-    return /^[a-z']+$/.test(w) && w.split("'").every((x) => !x || TEMPLATE_WORDS.has(x) || extra.has(x)) ? "read" : "hide";
+    const base = w.replace(/'s$/, "").replace(/s'$/, "s");
+    return /^[a-z]+$/.test(base) && (TEMPLATE_WORDS.has(base) || extra.has(base)) ? "read" : "hide";
   });
-  // a number written next to a hidden word belongs to it ("Helpline 9876", "Unit 10" when "unit" is not the platform's)
+  // a long number written next to a hidden word belongs to it ("Helpline 9876")
   for (let pass = 0; pass < 2; pass++) {
     for (let i = 0; i < parts.length; i++) {
-      if (kind[i] !== "read" || !/^\d/.test(parts[i])) continue;
+      // a short count next to a category name stays readable; a number of four digits or more goes with the hidden word
+      if (kind[i] !== "read" || !/^\d/.test(parts[i]) || (parts[i].match(/\d/g) ?? []).length < 4) continue;
       const near = (step: number) => { let j = i + step; while (j >= 0 && j < parts.length && kind[j] === "gap" && /^[\s\-–—./:]+$/.test(parts[j])) j += step; return j >= 0 && j < parts.length && kind[j] === "hide"; };
       if (near(-1) || near(1)) kind[i] = "hide";
     }
@@ -151,7 +156,7 @@ const PASS_ON = "(?:shar(?:e|es|ed|ing)|send(?:s|ing)?|sent|forward(?:s|ed|ing)?
   "hand(?:s|ed|ing)?(?: over)?|not(?:e|es|ed|ing)|anupp\\w*|kodu\\w*|kudu\\w*|disclos(?:e|es|ed|ing)|e-?mail(?:s|ed|ing)?|messag(?:e|es|ed|ing)|text(?:s|ed|ing)?|leak(?:s|ed|ing)?|list(?:s|ed|ing)? out|" +
   "ask(?:s|ed|ing)? for|bhej\\w*|de ?do|batao|dijiye)";
 const PASS_BASE = "(?:share|send|forward|collect|gather|obtain|compile|submit|furnish|provide|give|read out|post|upload|publish|hand(?: over)?|disclose|e-?mail|message|text|leak|list out|note|ask for|anupp\\w*|kodu\\w*|kudu\\w*|bhej\\w*|de ?do|batao|dijiye)";
-const BARE_ID = "(?:a{1,2}dh?a{1,2}r|uidai|epic|voter ?ids?|smart ?cards?|ration ?cards?|pan ?cards?)(?![\\s-]+seeding)";
+const BARE_ID = "(?:(?:a{1,2}dh?a{1,2}r|uidai|epic|voter ?ids?|smart ?cards?|ration ?cards?|pan ?cards?)(?![\\s-]+seeding)|names(?![\\s-]+of[\\s-]+(?:the[\\s-]+)?(?:wards?|zones?|places?|streets?|roads?|areas?|departments?|units?|schemes?)\\b))";
 const CHANNEL = "(?:to|on|in|via|into|onto)\\s+(?:the\\s+|a\\s+|our\\s+)?(?:whats ?app|telegram|signal)";
 /** Whether a text asks for people's identifiers or lists of people (see ASK). */
 export function asks(s: string): boolean { return ASK.test(String(s ?? "").normalize("NFKC").replace(INVISIBLE, "")); }
