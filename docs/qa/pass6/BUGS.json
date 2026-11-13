@@ -1343,15 +1343,16 @@
     "title": "The officer's search and list filter find nothing when the text has '_' or '%' (e.g. 'bin_50', '50% full'): the backslash escapes are sent without an ESCAPE clause, which SQLite (the AWS store) does not honour",
     "found_by": "officer-day",
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" \"bin_50% full\" && node p9-search.mjs 2026-954FHS",
-    "failing_test": null,
-    "root_cause": "MySQL's default LIKE escape is backslash, SQLite has none",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::'bin_50' and '50% full' find the case that says so, and '_' and '%' are not wildcards",
+    "root_cause": "LIKE ? with backslash escapes and no ESCAPE clause: MySQL default escape is backslash, SQLite has none; the AWS dialect now adds ESCAPE for parameter patterns",
+    "fix_commit": "0467549d",
+    "revert_check": "fails without (expected [] to deeply equal [INC-A]) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts:408-411 (like = '%' + q with \\\\ before % _ \\\\; 'LIKE ?' without ESCAPE), src/lib/aws/dialect.ts (no LIKE/ESCAPE handling)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-23",
