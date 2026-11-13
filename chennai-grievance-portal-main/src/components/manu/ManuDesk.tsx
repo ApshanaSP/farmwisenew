@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MANU_DEPTS, MANU_LIMITS, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
 import type { DeskItem, Detail } from "@/lib/manu/petitions";
+import { MOBILE_RE, aadhaarShaped, tenDigits, typedMobile } from "@/lib/manu/clean";
 import { shrinkForUpload } from "./shrink";
 import "./manu.css";
 
@@ -190,6 +191,12 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
   const unsure = d.reading?.unsure_fields.length ?? 0;
   const saw = (k: keyof PaddleSaw) => (d.reading?.paddle_saw?.[k] ? `PaddleOCR read ${d.reading.paddle_saw[k]}.` : null);
   const backup = d.reading?.readers === "paddle";
+  // the number the server will store for what is typed, so the desk sees it before approving
+  const mobile = aadhaarShaped(f.mobile) ? "" : tenDigits(f.mobile);
+  const mobileHint = !f.mobile.trim() ? saw("mobile") ?? "Always compare the digits with the paper."
+    : aadhaarShaped(f.mobile) ? "This looks like an Aadhaar number, not a mobile number."
+    : !MOBILE_RE.test(mobile) ? "Not a mobile number: 10 digits starting with 6, 7, 8 or 9 (+91 or a 0 in front is fine)."
+      : `${mobile !== f.mobile ? `Saved as ${mobile}. ` : ""}${saw("mobile") ?? "Always compare the digits with the paper."}`;
   const readBy = d.reading?.readers === "paddle+ai" ? ` Read by PaddleOCR and AI OCR in ${d.seconds ?? "?"} s.` : d.reading?.readers === "ai" ? ` Read by AI OCR in ${d.seconds ?? "?"} s. PaddleOCR was off, so the numbers had no second check.` : ` Read in ${d.seconds ?? "?"} s.`;
 
   return (
@@ -220,7 +227,10 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
 
       <div className="mn-grid">
         <Field label="Name" must flag={flag("name")} wide><input value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
-        <Field label="Mobile" flag={flag("mobile")} hint={saw("mobile") ?? "Always compare the digits with the paper."}><input inputMode="numeric" maxLength={10} value={f.mobile} onChange={(e) => set("mobile", e.target.value.replace(/\D/g, ""))} /></Field>
+        {/* as written on the paper ("+91 98400 12345", "098400 12345"): the server reads it as a number. Cutting it before reading it, at
+            10 characters or with any box limit, stored another person's number (QA pass 6, hunt2-desk-04; the pass 7 reviewer), so the box has
+            no maxLength: a value too long is refused by the server, with its message */}
+        <Field label="Mobile" flag={flag("mobile") || (!!f.mobile.trim() && !MOBILE_RE.test(mobile))} hint={mobileHint}><input inputMode="tel" value={f.mobile} onChange={(e) => set("mobile", typedMobile(e.target.value))} /></Field>
         <Field label="Date on the petition" flag={flag("date")} hint={saw("date")}><input value={f.date} onChange={(e) => set("date", e.target.value)} placeholder="DD.MM.YYYY" /></Field>
         <Field label="Door no." flag={flag("door_no")}><input value={f.door} onChange={(e) => set("door", e.target.value)} /></Field>
         <Field label="Street" flag={flag("street")}><input value={f.street} onChange={(e) => set("street", e.target.value)} /></Field>
@@ -247,7 +257,7 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
       </div>
 
       {err && <p className="mn-err" role="alert">{err}</p>}
-      {d.smsMode !== "off" && <p className="mn-sms">{!/^[6-9]\d{9}$/.test(f.mobile) ? "This petition has no valid mobile number, so no SMS will be sent." : d.smsMode === "live" ? <>On approval, an SMS goes to <b>{f.mobile}</b>. Make sure this matches the paper.</> : <>On approval, a test SMS for <b>{f.mobile}</b> goes to the team inbox. Make sure this matches the paper.</>}</p>}
+      {d.smsMode !== "off" && <p className="mn-sms">{!MOBILE_RE.test(mobile) ? "This petition has no valid mobile number, so no SMS will be sent." : d.smsMode === "live" ? <>On approval, an SMS goes to <b>{mobile}</b>. Make sure this matches the paper.</> : <>On approval, a test SMS for <b>{mobile}</b> goes to the team inbox. Make sure this matches the paper.</>}</p>}
       <div className="mn-acts">
         <button type="submit" className="mn-primary" disabled={busy}>{busy ? "Forwarding to the department…" : attach ? "Approve and add to the case" : "Approve and send"}</button>
         <button type="button" onClick={() => void again()} disabled={busy}>Read again</button>

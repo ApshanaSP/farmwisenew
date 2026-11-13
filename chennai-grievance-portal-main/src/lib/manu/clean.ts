@@ -32,13 +32,35 @@ export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b
 
 export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
 
-/** A mobile number as its 10 digits: +91 and a leading 0 are dropped. */
+/**
+ * A mobile number as its 10 digits: +91, 0091 and a leading 0 are dropped. A number written with its country code ("+91 ...", "0091 ...")
+ * keeps what follows the code, whatever its length: "+91 98400 123" (two digits short) was read as the ten digits 9198400123, another
+ * person's number (pass 7 reviewer on hunt2-desk-04). Anything that is not ten digits is not a mobile to the callers.
+ */
 export function tenDigits(s: string | null | undefined): string {
-  const d = digits(s);
+  // compatibility forms first: a full-width "＋91" is "+91" (pass 7 reviewer 2: "＋91 98400 123" was read as 9198400123)
+  const written = asciiDigits(String(s ?? "").normalize("NFKC"));
+  const d = digits(written);
+  if (/^[^\d]*(?:\+[^\d]*|0[^\d]*0[^\d]*)9[^\d]*1/.test(written)) return d.replace(/^(?:00)?91/, "");
   if (d.length === 12 && d.startsWith("91")) return d.slice(2);
   if (d.length === 11 && d.startsWith("0")) return d.slice(1);
   return d;
 }
+
+/** An Indian mobile number: ten digits starting 6, 7, 8 or 9. */
+export const MOBILE_RE = /^[6-9]\d{9}$/;
+
+/** Written in Aadhaar's 4-4-4 groups: a number the desk or the reader may have put in the mobile box by mistake, never kept as a mobile. */
+export const aadhaarShaped = (s: string | null | undefined): boolean => AADHAAR_SHAPED.test(String(s ?? ""));
+
+/**
+ * What a person typed or pasted into a mobile box, as it was written: digits of any script, spaces, "+", "-", brackets; nothing is cut. The
+ * desk's box used to keep only ASCII digits and cut the value at 10 characters before anything read it, so "+91 98400 12345" became
+ * "9198400123", a valid-looking number of somebody else (QA pass 6, hunt2-desk-04); a box limit of 24 still cut a pasted "Mobile no: +91
+ * 98400 12345" to that number (the pass 7 reviewer). The server reads the value with tenDigits() and refuses one longer than this.
+ */
+export const MOBILE_TYPED_MAX = 40;
+export const typedMobile = (s: string): string => s.normalize("NFKC").replace(/[^\p{Nd}+\s()-]/gu, "");
 
 const realDate = (d: number, mo: number, y: number): string | null => {
   const t = new Date(Date.UTC(y, mo - 1, d));

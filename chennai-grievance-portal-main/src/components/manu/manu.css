@@ -92,6 +92,8 @@
 .mn-orig img { width: 66px; height: 88px; object-fit: cover; border-radius: 5px; border: 1px solid var(--line-3); display: block; }
 .mn-orig span button { padding: 0; border: 0; border-radius: 5px; background: none; cursor: zoom-in; }
 .mn-orig span button:focus-visible { outline: 2px solid var(--accent-3); outline-offset: 2px; }
+.mn-orig span.mn-vid { width: 66px; height: 88px; align-items: center; justify-content: center; border-radius: 5px; border: 1px solid var(--line-3); font-size: 12px; font-weight: 600; color: var(--text-2); }
+.mn-lb-view video { display: block; margin: 0 auto; max-width: 100%; transform-origin: center; }
 
 /* a petition page opened over the case screen */
 .mn-lb { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; background: rgba(12, 20, 17, .94); color: #fff; font: 400 14px/1.4 var(--font-ui, system-ui, sans-serif); }

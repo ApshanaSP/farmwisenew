@@ -6,13 +6,15 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { RESOLVED_STATUSES } from "@/lib/constants";
 import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
-import { similarity, squash, tenDigits } from "./clean";
+import { asciiDigits, maskAadhaar, similarity, squash, tenDigits } from "./clean";
+import { grievanceCategory } from "./grade";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 
-export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; excludeId?: number }
+/** `category`: the kind of problem (the unified category codes: the reader's for a petition, the complaint type's for an online one). */
+export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; category?: string | null; excludeId?: number }
 export interface Earlier {
   code: string; incidentId: string | null; filedAt: string; status: string; problem: string; dept: string | null;
-  mobile: string | null; name: string | null; address: string | null; ward: number | null; reporterKind: "petition" | "online";
+  mobile: string | null; name: string | null; address: string | null; ward: number | null; reporterKind: "petition" | "online"; category?: string | null;
 }
 
 const STOP = new Set("the a an of in on at to for from and or is are was were not has have had no my our her his their this that with by be been it its days day week weeks month months year years street area near problem issue since still now more over very after before about".split(" "));
@@ -30,23 +32,151 @@ const FILLER = new Set(("please kindly take action immediately immediate urgent 
   "first second third many several வரவில்லை வருவதில்லை வரவே இரண்டு மூன்று நான்கு ஐந்து எங்களுடைய எங்களின் வார்டில் வார்டு வார்டின் " +
   "செய்யவில்லை எடுக்கவில்லை சரிசெய்ய சரிசெய்யவில்லை வேலை செய்யவில்லை தயவுசெய்து " +
   "rendu moonu naalu anju naala naalaa varala varalai varalae podunga edunga pannunga panunga seyyala seiyala irukku").split(" "));
-const words = (s: string | null | undefined) => new Set(String(s ?? "").normalize("NFC").toLowerCase()
-  // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
-  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/)
-  .filter((w) => [...w].length > 2 && !STOP.has(w) && !TA_STOP.has(w) && !FILLER.has(w)));
+// how long and how often (a closed class): "for a long time", "the last one week", "not yet", "many times" are shared by any two problems
+const DURATION = new Set(("time times long last past yet ago today yesterday tomorrow daily always often everyday hour hours minute minutes night nights whole entire " +
+  "continuous frequent " +
+  "நீண்ட முறை பலமுறை தினமும் எப்போதும் இரவு இரவில் பகல் வருடம் மாதம் வாரம் நேரம் " +
+  "thadava thadavai vaaram maasam varusham neram").split(" "));
+// where, not what (a closed class): the landmark two different problems of one street share ("near the Ganesh temple", "opposite the school")
+const PLACE = new Set(("temple kovil koil church mosque masjid school college hospital market station junction signal colony nagar layout stop stand opposite " +
+  "behind beside front corner main cross lane avenue extension office house houses home taluk veetu veedu munnadi pakkam pakkathula kitta " +
+  "கோயில் கோவில் பள்ளி பள்ளிக்கூடம் மருத்துவமனை சந்தை நிலையம் சந்திப்பு நகர் காலனி எதிரில் எதிரே பின்புறம் முன்பு அலுவலகம்").split(" "));
+// words for "a problem" that any problem is ("menace", "nuisance", "no response"): a closed class
+const GENERIC = new Set(("menace nuisance trouble hazard danger shortage response reply complaint complaints due official officials officer officers vao rdo " +
+  "tahsildar staff authority authorities ஆபத்து தொல்லை அதிகாரி அதிகாரிகள்").split(" "));
 
 /**
- * Do two problem lines, both to one department, share what they are about? The same person writing twice needs one shared content word
- * ("sewage"), however long the lines; different people in a ward need more, so that two unrelated road complaints are not joined. It only
- * brings the earlier petition to the staff's attention: a person decides.
+ * Words that say what is wrong with a thing, not what the thing is: predicates and state words. One writer's two different problems share
+ * them all the time ("Patta transfer pending" / "Building plan approval pending", "தெரு விளக்கு இயங்கவில்லை" / "குடிநீர் மோட்டார் இயங்கவில்லை",
+ * "Thanni varla" / "Current varla"), so they never name a topic (QA pass 6, reviewer5-07). The FILLER list could not keep up with them
+ * (P6-011 and P6-020 each added words, and the next reviewer found more): the open classes are read by their endings, and only closed ones
+ * are listed (English irregular participles, a few state words, -ing nouns).
  */
-export function sameTopic(a: string | null | undefined, b: string | null | undefined, samePerson = false): boolean {
-  const A = words(a), B = words(b);
-  if (!A.size || !B.size) return false;
+const PARTICIPLE = new Set(("broken fallen stolen taken given gone torn worn shown thrown grown blown drawn sunk stuck burnt burst built bent lost left kept laid paid " +
+  "sold told heard held found made sent spent lit hung shut split swept dug struck eaten frozen hidden beaten shaken written ridden driven risen bitten chosen " +
+  "forgotten spoken swollen woken rotten overgrown cut").split(" "));
+const STATE = new Set(("open full empty loose dirty unsafe dangerous dark low poor bad slow late weak stagnant pending " +
+  "illegal unauthorized unauthorised improper irregular defective faulty insufficient inadequate incomplete heavy huge severe serious constant frequent " +
+  "பழுது பழுதான சேதம் சேதமடைந்த மோசம் மோசமான ஆபத்தான sariya olunga").split(" "));
+/** -ing words that are things, not doings ("building", "parking"): a closed list of the exceptions to the -ing rule */
+const ING_NOUN = new Set("building ceiling parking flooding crossing railing housing lighting wiring plumbing fencing paving painting wedding clothing swimming waterlogging logging sweeping".split(" "));
+/** -ly words that are things ("family"), the exceptions to the -ly rule */
+const LY_NOUN = new Set("family assembly anomaly italy".split(" "));
+export function predicateWord(w: string): boolean {
+  if (STATE.has(w)) return true;
+  if (/^[a-z]+$/.test(w)) {
+    if (PARTICIPLE.has(w)) return true;
+    // English participles and gerunds: received, damaged, blocked, leaking, overflowing ("speed", "need" are not -ed)
+    if (w.length >= 5 && /(?:(?<!e)ed|ing)$/.test(w) && !ING_NOUN.has(w)) return true;
+    // English adverbs: properly, badly, regularly ("supply" is not one)
+    if (w.length >= 5 && /(?<!p)ly$/.test(w) && !LY_NOUN.has(w)) return true;
+    // Tanglish verb forms: the negative (varla, varala, kedaikala, aagala, seyyala, ...lai, ...lae), the present (aagudhu, odudhu), the
+    // past (aachu, odanjuchu), the participle (odanju, udanju) and the adverb (kashtama, vaarama); -la is also the locative ("therula",
+    // "roadla"), a place and not a problem
+    return (w.length >= 4 && /(?:la|lai|lae|udhu|uthu|idhu|ithu|chu|nju)$/.test(w)) || (w.length >= 5 && /ama$/.test(w));
+  }
+  // Tamil: the negative (-இல்லை: வரவில்லை, இயங்கவில்லை, சரிசெய்யப்படவில்லை, வருவதில்லை), the adverb of time or manner (-ஆக: நாட்களாக,
+  // வாரங்களாக, தாமதமாக), the locative (-இல்: நிலுவையில், சாலையில்), "without" (-ஆமல்), the finite verb (-கிறது, -கின்றன, -ள்ளது,
+  // -ந்தது, -ட்டது, ...) and the participles of breaking and falling (உடைந்து, பழுதடைந்து, விழுந்து)
+  return /(?:ல்லை|ாக|ஆக|ில்|இல்|ாமல்|கிறது|கின்றது|கின்றன|கிறார்கள்|ள்ளது|ள்ளன|ந்தது|ட்டது|த்தது|ற்றது|னது|டைந்து|ழுந்து)$/u.test(w);
+}
+
+/**
+ * One word as the key it is compared by: plurals taken off ("lights" "light", "supplies" "supply", "mosquitoes" "mosquito", "விளக்குகள்"
+ * "விளக்கு", "பள்ளங்கள்" "பள்ளம்"), an English -age or -ing noun as its root ("drainage" "drain", "lighting" "light"), and a Tamil word
+ * without its last vowel, so the object case meets the plain word ("குப்பையை" and "குப்பை", "விளக்கை" and "விளக்கு": pass 7 reviewer 3).
+ */
+const ROOT: Record<string, string> = { lighting: "light", wiring: "wire", waterlogging: "waterlog", logging: "log" };
+const stem = (w: string): string => {
+  if (/^[a-z]+$/.test(w)) {
+    if (ROOT[w]) return ROOT[w];
+    if (w.length <= 4) return w;
+    if (/ies$/.test(w)) return `${w.slice(0, -3)}y`;
+    if (/(?:ss|x|z|ch|sh|o)es$/.test(w)) return w.slice(0, -2);
+    if (w.length >= 7 && /age$/.test(w)) return w.slice(0, -3);
+    return /[^sui]s$/.test(w) ? w.slice(0, -1) : w;
+  }
+  let t = w;
+  if ([...t].length > 5 && t.endsWith("ங்கள்")) t = `${t.slice(0, -"ங்கள்".length)}ம்`;
+  else if ([...t].length > 4 && t.endsWith("கள்")) t = t.slice(0, -"கள்".length);
+  if ([...t].length > 4 && /[யவ]ை$/u.test(t)) t = t.slice(0, -2); // the object case after a vowel: குப்பையை -> குப்பை
+  return [...t].length > 2 ? t.replace(/[ுை]$/u, "") : t;
+};
+const listed = (w: string) => STOP.has(w) || TA_STOP.has(w) || FILLER.has(w) || DURATION.has(w) || PLACE.has(w) || GENERIC.has(w);
+
+/** A line's clauses ("Dangerous building, wall cracks, please demolish" has three), each as its words. */
+const clausesOf = (s: string | null | undefined): string[][] =>
+  // zero-width joiners and marks inside a word are not word breaks (squash() drops them too: P6-011)
+  String(s ?? "").normalize("NFC").toLowerCase().replace(/[​-‍⁠﻿]/g, "")
+    .split(/[,.;:!?\n()/]+|\s(?:and|but|also)\s|\sமற்றும்\s/u)
+    .map((c) => c.replace(/[^\p{L}\p{M}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean)).filter((c) => c.length);
+
+/** Two words written as one in the other line ("street light" / "streetlight", "தெரு விளக்கு" / "தெருவிளக்கு") are taken as that one word. */
+function joinCompounds(words: string[], other: Set<string>): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    if (i + 1 < words.length && other.has(words[i] + words[i + 1])) { out.push(words[i] + words[i + 1]); i++; } else out.push(words[i]);
+  }
+  return out;
+}
+
+/**
+ * A problem line's content words; those that name a thing (not a predicate, a state, a time, a place or a "problem" word); and its topics,
+ * the first such word of each clause: a petition names the thing first, in Tamil and Tanglish word order and in petition English ("Patta
+ * transfer application pending": patta). The idea of the clause's first word is d474842's (the pass 6 session's fix-all run).
+ */
+function wordsOf(clauses: string[][], other: Set<string>): { all: Set<string>; subject: Set<string>; topic: Set<string> } {
+  const all = new Set<string>(), subject = new Set<string>(), topic = new Set<string>();
+  for (const clause of clauses) {
+    let first = true;
+    for (const w of joinCompounds(clause, other)) {
+      if ([...w].length <= 2 || listed(w)) continue;
+      const st = stem(w);
+      if (listed(st)) continue;
+      all.add(st);
+      if (predicateWord(w)) continue;
+      subject.add(st);
+      if (first) { topic.add(st); first = false; }
+    }
+  }
+  return { all, subject, topic };
+}
+
+/** a kind of problem that says something: OTHER (or none) does not */
+const kindOf = (k: string | null | undefined): string | null => (k && k !== "OTHER" ? k : null);
+
+/**
+ * Do two problem lines, both to one department, share what they are about? They must share the word that names the thing: a word that is
+ * the topic (the first thing-word of a clause) of at least one of them ("sewage", "pension", "விளக்கு"). A shared predicate, state, time,
+ * place or "problem" word ("pending", "not received", "varla", "for a long time", "near my house", "menace") never is one; nor is a word
+ * that only qualifies the thing in both ("Patta transfer application" and "Community certificate application": the topics are patta and
+ * community). Predicates are read by their endings, so new ones need no list (reviewer5-07: the one-word rule counted any predicate the
+ * FILLER list did not hold, and the pass 7 reviewers found generic words in every list); the closed classes are listed. A line with no
+ * thing-word ("Flooding again") is compared on all its words when the other has none either. With the kind of each problem known (`kinds`:
+ * the reader's category for a petition, the complaint type's for an online complaint), two kinds are two problems, whatever words they share.
+ *
+ * The same person writing twice needs that one shared topic word, however long the lines; different people in a ward need more, so that two
+ * unrelated road complaints are not joined. It only brings the earlier petition to the staff's attention: a person decides.
+ */
+export function sameTopic(a: string | null | undefined, b: string | null | undefined, samePerson = false, kinds: { a?: string | null; b?: string | null } = {}): boolean {
+  const ka = kindOf(kinds.a), kb = kindOf(kinds.b);
+  if (ka && kb && ka !== kb) return false;
+  const ca = clausesOf(a), cb = clausesOf(b);
+  const A = wordsOf(ca, new Set(cb.flat())), B = wordsOf(cb, new Set(ca.flat()));
+  if (!A.all.size || !B.all.size) return false;
+  let shared = 0;
+  if (A.subject.size && B.subject.size) {
+    // both lines name their thing: a shared word must be a topic of one of them
+    for (const w of A.subject) if (B.subject.has(w) && (A.topic.has(w) || B.topic.has(w))) shared++;
+  } else if (!A.subject.size && !B.subject.size) {
+    for (const w of A.all) if (B.all.has(w)) shared++;
+  }
+  // only one names a thing: the other's words are only a predicate ("Street not swept, complained many times"), saying nothing of it
+  if (!shared) return false;
+  if (samePerson) return true;
   let both = 0;
-  for (const w of A) if (B.has(w)) both++;
-  if (samePerson) return both >= 1;
-  return both >= 2 || (both >= 1 && both / new Set([...A, ...B]).size >= 0.3);
+  for (const w of A.all) if (B.all.has(w)) both++;
+  return both >= 2 || both / new Set([...A.all, ...B.all]).size >= 0.3;
 }
 
 const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
@@ -54,24 +184,47 @@ const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
 const isOpen = (status: string) => !(RESOLVED_STATUSES as readonly string[]).includes(status) && status !== "Rejected";
 
-/** Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030). */
-/** "First Cross Street" as "1 Cross Street", so "First" and "Fifth" differ by their numbers, not by a letter or two (P6-020). */
-const ORDINAL: Record<string, string> = { first: "1", second: "2", third: "3", fourth: "4", fifth: "5", sixth: "6", seventh: "7", eighth: "8", ninth: "9", tenth: "10" };
-export const ordinals = (s: string | null | undefined): string => String(s ?? "").replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b/gi, (w) => ORDINAL[w.toLowerCase()]);
+// A street's own number, written as an ordinal: "2nd", "Second", "2வது", "இரண்டாவது". "First" and "Fifth" differ by their numbers, not by a
+// letter or two (P6-020); "Eleventh" is "11th" and "இரண்டாவது தெரு" is "2வது தெரு" (fix-all, reviewer5-08).
+const EN_ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+  "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"];
+const EN_TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40 };
+const TA_ORD = ["", "முதல", "இரண்ட", "மூன்ற", "நான்க", "ஐந்த", "ஆற", "ஏழ", "எட்ட", "ஒன்பத", "பத்த"]; // + ாவது / ாம் (முதல் alone is "first" too)
+const ORD_WORD = new RegExp(String.raw`(?<![\p{L}\p{M}])(?:(twenty|thirty|forty)[\s-]*)?(${EN_ORD.slice(1).join("|")})(?![\p{L}\p{M}])` +
+  String.raw`|(?<![\p{L}\p{M}])(${TA_ORD.slice(1).join("|")})(?:ாவது|ாம்)(?![\p{L}\p{M}])|(?<![\p{L}\p{M}])முதல்(?![\p{L}\p{M}])`, "giu");
+const ORD_DIGITS = /(?<![\p{L}\p{M}\p{Nd}])(\d+)(?:st|nd|rd|th|\s*[-‐–]?\s*(?:வது|ஆவது|ஆம்|ம்))(?![\p{L}\p{M}])/giu;
 
-function streetIn(street: string, address: string | null): boolean {
-  const all = squash(address);
-  if (all.includes(street)) return true;
-  // a spelling slip, not another street: "3rd Street" is not "2nd Street", so the numbers in the two must agree (P6-011). When the typed
-  // street has no number, the part's number is the door number ("12 Gandhi Street"), and the letters are compared (P6-020)
-  const num = (x: string) => x.replace(/\D/g, "");
-  return String(address ?? "").split(/[,\n;]/).map((p) => squash(ordinals(p))).filter(Boolean)
-    .some((part) => (num(street) ? num(part) === num(street) && similarity(street, part) >= 0.7 : similarity(street, part.replace(/\d/g, "")) >= 0.7));
+/** A street as its number (an ordinal; "" when none) and its words. A bare number is the door number ("12 Gandhi Street"), not the street's. */
+export function streetKey(s: string | null | undefined): { num: string; words: string[] } {
+  const v = asciiDigits(String(s ?? "").normalize("NFC")).replace(/[​-‍⁠﻿]/g, "")
+    .replace(ORD_WORD, (_m, tens?: string, en?: string, ta?: string) =>
+      ` #${ta ? TA_ORD.indexOf(ta) : en ? (tens ? EN_TENS[tens.toLowerCase()] : 0) + EN_ORD.indexOf(en.toLowerCase()) : 1} `)
+    .replace(ORD_DIGITS, (_m, n: string) => ` #${Number(n)} `);
+  const nums = v.match(/#\d+/g) ?? [];
+  const words = v.replace(/#\d+/g, " ").replace(/\p{Nd}+/gu, " ").split(/[^\p{L}\p{M}]+/u).map((w) => w.toLowerCase()).filter(Boolean);
+  return { num: nums[0]?.slice(1) ?? "", words };
+}
+
+/**
+ * Does the typed street name one part of the address ("door, street, area")? The end of the address is the area, not the street (P5-030).
+ * The street's number must agree ("3rd Street" is not "2nd Street", and "Gandhi Street" is not "2nd Gandhi Street": reviewer5-08); then the
+ * same words, the typed street inside a part with no comma before the area, or a spelling slip ("Gandhi Stret": P6-020).
+ */
+function streetIn(typed: string | null, address: string | null): boolean {
+  const t = streetKey(typed);
+  if (!t.words.length) return false;
+  const tn = t.words.join("");
+  const within = (p: string[]) => p.some((_, i) => t.words.every((w, k) => p[i + k] === w));
+  return String(address ?? "").split(/[,\n;]/).map(streetKey).some((p) => {
+    if (!p.words.length || p.num !== t.num) return false;
+    const pn = p.words.join("");
+    return pn === tn || (t.words.length >= 2 && within(p.words)) || similarity(tn, pn) >= 0.7;
+  });
 }
 
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
-  const mobile = tenDigits(c.mobile), name = squash(c.name), street = squash(ordinals(c.street));
+  const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
   const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
@@ -88,10 +241,14 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     // an online complaint is filed under the portal's departments, which the desk's do not all map to (eight have none: P5-037), so for
     // the same person the topic decides; between different people the department must agree as well
     // across departments the stricter rule for different people applies, so one shared word ("water") is not enough (P6-011)
-    const topic = sameDept ? sameTopic(c.problem, e.problem, samePerson) : samePerson && e.reporterKind === "online" && sameTopic(c.problem, e.problem, false);
+    // the kind of each problem, when known, keeps two kinds apart and lets one shared word name the problem within one kind (reviewer5-07)
+    const kinds = { a: c.category, b: e.category };
+    const topic = sameDept ? sameTopic(c.problem, e.problem, samePerson, kinds) : samePerson && e.reporterKind === "online" && sameTopic(c.problem, e.problem, false, kinds);
     const sameProblem = topic && (samePerson || (c.ward != null && e.ward === c.ward));
     if (!samePerson && !sameProblem) continue;
-    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: e.problem, dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
+    // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
+    // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
+    out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
       sameDept, who: squash(e.name) || theirs || e.code, phone: theirs });
   }
   // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
@@ -134,7 +291,7 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
   const mobile = tenDigits(c.mobile) || "__none__";
   const name = c.name?.trim() || "__none__";
   const COLS = `p.complaint_code AS code, p.incident_id AS incident_id, DATE_FORMAT(p.filed_at, '%Y-%m-%d %H:%i:%s') AS filed_at, COALESCE(c.status, 'Complaint Filed') AS status, p.problem, p.dept_code,
-            p.mobile, p.name, p.address, p.ward_number`;
+            p.mobile, p.name, p.address, p.ward_number, p.category_code`;
   // the same mobile or name, and the same ward and department, as before; in a query of their own, so a busy department can never push them
   // out of the limit (the second reviewer)
   const [byPerson] = await pool.query<RowDataPacket[]>(
@@ -160,12 +317,22 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
         AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL) ORDER BY c.created_at DESC LIMIT 50`,
     [mobile]
   );
+  // an online complaint's kind of problem, from its type and sub-type as the pipeline reads them (grade.ts). Best effort: a store with no
+  // taxonomy leaves it unknown, and the words alone decide
+  const kind = new Map<string, string>();
+  if (online.length) {
+    const [k] = await pool.query<RowDataPacket[]>(
+      `SELECT c.complaint_code AS code, cs.label AS subtype, cc.name AS type FROM complaints c JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id
+         LEFT JOIN complaint_categories cc ON cc.id = cs.category_id WHERE c.complaint_code IN (?)`, [online.map((r) => String(r.code))]).catch(() => [[] as RowDataPacket[]]);
+    for (const r of k) kind.set(String(r.code), grievanceCategory(r.type, r.subtype));
+  }
   const earlier: Earlier[] = [
     ...pet.map((r): Earlier => ({ code: String(r.code), incidentId: r.incident_id ?? null, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: r.dept_code ?? null,
-      mobile: r.mobile ?? null, name: r.name ?? null, address: r.address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "petition" })),
+      mobile: r.mobile ?? null, name: r.name ?? null, address: r.address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "petition", category: r.category_code ?? null })),
     // an online complaint names its department by the portal's name: the desk's code for it, so "the same problem" can match (P5-019)
     ...online.map((r): Earlier => ({ code: String(r.code), incidentId: `INC-W-${r.code}`, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: deptCodeFor(r.dept_name, c.dept),
-      mobile: r.mobile_number ?? null, name: r.first_name ?? null, address: r.street_address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "online" }))
+      mobile: r.mobile_number ?? null, name: r.first_name ?? null, address: r.street_address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "online",
+      category: kind.get(String(r.code)) ?? null }))
   ];
   return judgeRepeats(c, earlier);
 }

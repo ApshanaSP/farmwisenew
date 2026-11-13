@@ -10,7 +10,8 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { effectiveSql } from "@/lib/collector/effective";
-import { maskAadhaar } from "./clean";
+import { addHours, maskAadhaar } from "./clean";
+import { SLA_COLUMN, gradeGrievance, grievanceCategory, pipelineTitle, type Grade } from "./grade";
 
 type Row = Record<string, any>;
 export interface Db { all(sql: string, params?: unknown[]): Promise<Row[]>; run(sql: string, params?: unknown[]): Promise<void> }
@@ -33,6 +34,13 @@ export interface CaseInput {
   reporter: string | null;
   channel: "manu" | "citizen_grievance";
   recurrence: number;
+  /**
+   * An online complaint's severity by the pipeline's rules (grade.ts). With it, the case's deadline is the build's own for its category
+   * and severity (ref_categories), not hoursToAct; without it (a petition), urgent is High and anything else Medium.
+   */
+  grade?: Grade | null;
+  /** why the department needs checking: the complaint type had none, so the portal chose it (QA pass 6, officer-day-07) */
+  review?: string | null;
 }
 
 export const caseIdFor = (code: string): string => `INC-W-${code}`;
@@ -54,6 +62,20 @@ async function insert(db: Db, table: string, row: Row, cols: Set<string>): Promi
   const names = Object.keys(row).filter((c) => cols.has(c));
   await db.run(`INSERT INTO ${table} (${names.map((c) => `\`${c}\``).join(", ")}) VALUES (${names.map(() => "?").join(", ")})`, names.map((c) => row[c] ?? null));
 }
+
+/** The build's deadline in hours for a category at a severity (the pipeline's refdata.sla_hours), or null when this build has no table for it. */
+async function slaHours(db: Db, category: string, level: string): Promise<number | null> {
+  const col = SLA_COLUMN[level] ?? SLA_COLUMN.Low;
+  try {
+    const rows = await db.all(`SELECT category_code, ${col} AS h FROM ref_categories WHERE category_code IN (?, 'OTHER')`, [category]);
+    const r = rows.find((x) => x.category_code === category) ?? rows.find((x) => x.category_code === "OTHER");
+    const h = Number(r?.h);
+    return Number.isFinite(h) && h > 0 ? h : null;
+  } catch { return null; } // a build whose ref_categories has no deadline columns
+}
+
+const wall = (v: unknown): string => String(v ?? "").replace("T", " ").slice(0, 19);
+const RANK: Record<string, number> = { Severe: 4, High: 3, Medium: 2, Low: 1 };
 
 async function known(db: Db, code: string): Promise<boolean> {
   return (await db.all(`SELECT 1 AS x FROM events WHERE event_id = ? OR (source = 'grievance' AND source_record_id = ?) LIMIT 1`, [eventIdFor(code), code])).length > 0;
@@ -91,16 +113,23 @@ export async function addCase(db: Db, c: CaseInput): Promise<string | null> {
   const [dLat, dLon] = spread(c.code);
   const lat = w?.centroid_lat != null ? Number(w.centroid_lat) + dLat : null, lon = w?.centroid_lon != null ? Number(w.centroid_lon) + dLon : null;
   const id = caseIdFor(c.code);
-  const sev = c.urgent ? "High" : "Medium";
+  const sev = c.grade?.level ?? (c.urgent ? "High" : "Medium");
   const category = cat?.category_code ?? "OTHER";
+  // an online complaint is due when the pipeline would have it due: its category's hours for its severity, from this build's own table
+  // (officer-day-02). A build without that table keeps the hours the filing came with.
+  let hoursToAct = c.hoursToAct, dueAt = c.dueAt;
+  if (c.grade) {
+    const h = await slaHours(db, category, sev);
+    if (h) { hoursToAct = h; dueAt = addHours(c.filedAt, h); }
+  }
   const channelWord = c.channel === "manu" ? "Manu (paper petition)" : "Online complaint";
   await insert(db, "incidents", {
     incident_id: id, category_code: category, category_label: cat?.label ?? "Other", family: cat?.family ?? "OTHER", lead_dept: c.dept, depts_involved: c.dept, support_depts: "", needs_coordination: 0,
     first_reported_at: c.filedAt, occurred_at_est: c.filedAt, last_update_at: c.filedAt, ward_no: c.ward, zone_no: w?.zone_no ?? null, zone_name: w?.zone_name ?? null, taluk_code: w?.taluk_code ?? null,
     lat, lon, loc_precision_m: 500, place_text: c.place, spread_m: 0, member_count: 1, sources: "grievance", source_count: 1, channels: c.channel, citizen_complaints: 1, police_reports: 0, outlet_count: 0,
-    has_official_record: 1, media_only: 0, is_synthetic_any: 0, is_overlay_any: 0, status_std: "Open", verified: 0, is_open: 1, severity_score: c.urgent ? 75 : 40, severity_level: sev,
-    severity_reasons: c.urgent ? "Describes an immediate hazard" : "", dead: 0, injured: 0, vulnerable: "", weather_related: 0,
-    officer: w?.zone_name ? `Zonal Officer, ${w.zone_name}` : "", reliability: 1, confidence: 0.9, needs_review: 0, review_reason: "", sla_hours: c.hoursToAct, sla_due_at: c.dueAt, hours_open: 0, sla_basis: "resolution",
+    has_official_record: 1, media_only: 0, is_synthetic_any: 0, is_overlay_any: 0, status_std: "Open", verified: 0, is_open: 1, severity_score: c.grade?.score ?? (c.urgent ? 75 : 40), severity_level: sev,
+    severity_reasons: c.grade?.reasons ?? (c.urgent ? "Describes an immediate hazard" : ""), dead: 0, injured: 0, vulnerable: "", weather_related: 0,
+    officer: w?.zone_name ? `Zonal Officer, ${w.zone_name}` : "", reliability: 1, confidence: 0.9, needs_review: c.review ? 1 : 0, review_reason: c.review ?? "", sla_hours: hoursToAct, sla_due_at: dueAt, hours_open: 0, sla_basis: "resolution",
     sla_ratio: 0, sla_breached: 0, growth_24h: 0, recurrence_90d: c.recurrence, rain_coupled: 0, priority_score: c.urgent ? 90 : 45 + Math.min(c.recurrence, 4) * 8,
     priority_reasons: [c.urgent ? "Urgent" : channelWord, c.recurrence ? `written about ${c.recurrence} time${c.recurrence === 1 ? "" : "s"} before` : ""].filter(Boolean).join("; "),
     awaiting_collector: 0, attention_reason: c.urgent ? "Urgent petition given at the Collector's office" : "", attention_flag: c.urgent ? 1 : 0, title: c.title, headline: c.title,
@@ -112,13 +141,29 @@ export async function addCase(db: Db, c: CaseInput): Promise<string | null> {
 
 /** This filing as one more report in an existing case. False when that case is not in this build. */
 export async function attachToCase(db: Db, incidentId: string, c: CaseInput): Promise<boolean> {
-  const [i] = await db.all(`SELECT incident_id, lat, lon, zone_no, taluk_code, severity_level, family, channels FROM incidents WHERE incident_id = ?`, [incidentId]);
+  const [i] = await db.all(`SELECT * FROM incidents WHERE incident_id = ?`, [incidentId]);
   if (!i) return false;
   if (await known(db, c.code)) return true;
-  await addReport(db, incidentId, c, { lat: i.lat, lon: i.lon, zone: i.zone_no, taluk: i.taluk_code }, String(i.severity_level ?? "Medium"), String(i.family ?? "OTHER"));
+  // the case is never due later than a report in it was promised, and an urgent report makes it at least High: an urgent petition (2 days,
+  // shown on its /track) joined a normal case that kept its 15 days and Medium, so the deadline the petitioner was given was in nobody's
+  // queue (QA pass 6, hunt2-desk-11)
+  const due = wall(i.sla_due_at), mine = wall(c.dueAt);
+  const sooner = !!mine && (!due || mine < due);
+  const first = wall(i.first_reported_at) || c.filedAt;
+  const hours = sooner ? Math.max(1, Math.round((Date.parse(`${mine.replace(" ", "T")}Z`) - Date.parse(`${first.replace(" ", "T")}Z`)) / 3_600_000)) : null;
+  const raise = c.urgent && (RANK[String(i.severity_level)] ?? 0) < RANK.High;
+  const sev = raise ? "High" : String(i.severity_level ?? "Medium");
+  await addReport(db, incidentId, c, { lat: i.lat, lon: i.lon, zone: i.zone_no, taluk: i.taluk_code }, sev, String(i.family ?? "OTHER"));
   const channels = [...new Set([...String(i.channels ?? "").split("|").filter(Boolean), c.channel])].sort().join("|");
+  const set: string[] = [], args: unknown[] = [];
+  if (sooner && "sla_due_at" in i) { set.push("sla_due_at = ?"); args.push(mine); }
+  if (hours && "sla_hours" in i) { set.push("sla_hours = ?"); args.push(hours); }
+  if (raise && "severity_level" in i) { set.push("severity_level = 'High'"); }
+  if (raise && "severity_score" in i) { set.push("severity_score = ?"); args.push(Math.max(Number(i.severity_score) || 0, 75)); }
+  if (raise && "severity_reasons" in i) { set.push("severity_reasons = ?"); args.push([i.severity_reasons, "Urgent petition given at the Collector's office"].filter(Boolean).join("; ")); }
   await db.run(`UPDATE incidents SET member_count = COALESCE(member_count, 0) + 1, citizen_complaints = COALESCE(citizen_complaints, 0) + 1, channels = ?, last_update_at = ?,
-    recurrence_90d = COALESCE(recurrence_90d, 0) + 1 ${c.urgent ? ", attention_flag = 1, attention_reason = 'Urgent petition given at the Collector''s office', priority_score = 90" : ""} WHERE incident_id = ?`, [channels, c.filedAt, incidentId]);
+    recurrence_90d = COALESCE(recurrence_90d, 0) + 1 ${c.urgent ? ", attention_flag = 1, attention_reason = 'Urgent petition given at the Collector''s office', priority_score = 90" : ""}${set.map((s) => `, ${s}`).join("")} WHERE incident_id = ?`,
+    [channels, c.filedAt, ...args, incidentId]);
   return true;
 }
 
@@ -150,23 +195,44 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   }
 }
 
-/** The usual kind of case for an online complaint, from its department. */
+/** The usual kind of case for an online complaint's department: only when its type does not say ("Other"). */
 const ONLINE_CATEGORY: Record<string, string> = {
   "GCC-SWM": "SOLID_WASTE", "GCC-SWD": "FLOOD_WATERLOGGING", "GCC-ENG": "ROAD_DAMAGE", "GCC-ELE": "STREETLIGHT_ELECTRICAL", "GCC-HLT": "VECTOR_DISEASE", "GCC-PRK": "TREES_PARKS", "GCC-BRG": "PUBLIC_WORKS", "GCC-BLD": "CIVIC_FACILITIES"
 };
+/** a build with no deadline table (ref_categories without sla_*_h) keeps this */
 const ONLINE_HOURS = 120;
 
-/** An online complaint's case, from its row. */
-export function onlineCase(c: Row, deptName: string | null): CaseInput {
+/** Why the department needs checking, by how it was chosen: the classifier read the text ("Other"), or GCC has not published the type's routing. */
+export const REVIEW_DEPT = {
+  classifier: "The complaint type has no fixed department, so the portal chose this one from what the citizen wrote: check that it is the right department.",
+  assumed: "GCC has not published which department handles this complaint type, so the portal sent it to the department it is assumed to go to: check that it is the right department."
+} as const;
+export type Routing = keyof typeof REVIEW_DEPT;
+
+/**
+ * An online complaint's case, from its row: its kind and severity by the pipeline's rules from its type (complaint category), sub-type,
+ * title, words, landmark and street, as the pipeline grades the same complaint (grade.ts; QA pass 6, officer-day-02). `type` and `subtype`
+ * are the names the dataset gives the pipeline (complaint_categories, and complaint_subtypes or an older complaint_types); `street` the
+ * dataset's Street; `routing` how the department was chosen when it was not fixed by the type.
+ */
+export function onlineCase(c: Row, deptName: string | null, kind: { type?: string | null; subtype?: string | null; street?: string | null; routing?: Routing | null } = {}): CaseInput {
   const dept = codeForPortalDept(deptName) ?? "GCC-GAD";
   const at = String(c.created_at).replace("T", " ").slice(0, 19);
   const due = new Date(Date.parse(`${at.replace(" ", "T")}Z`) + ONLINE_HOURS * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
+  const byType = grievanceCategory(kind.type, kind.subtype);
+  // the grade reads the citizen's own words, with the title as the pipeline's loader builds it; what goes on the consoles is masked (P6-027)
+  const grade = gradeGrievance({ type: kind.type, subtype: kind.subtype, title: pipelineTitle(c.title, kind.subtype, kind.street, c.ward_number), text: String(c.description ?? ""),
+    landmark: c.specific_location ?? null });
+  const review = Number(c.needs_manual_review) === 1 ? REVIEW_DEPT[kind.routing ?? "classifier"] : null;
   return {
     // the citizen's own words go on the consoles masked, as the desk masks a petition's: a whole Aadhaar number written in a complaint
     // reached the Collector's case title, text and place (QA pass 6, P6-027)
-    code: String(c.complaint_code), filedAt: at, dueAt: due, hoursToAct: ONLINE_HOURS, dept, category: ONLINE_CATEGORY[dept] ?? "ADMIN_SERVICES", title: maskAadhaar(String(c.title)), text: maskAadhaar(String(c.description ?? c.title)),
+    code: String(c.complaint_code), filedAt: at, dueAt: due, hoursToAct: ONLINE_HOURS, dept, category: byType !== "OTHER" ? byType : ONLINE_CATEGORY[dept] ?? "ADMIN_SERVICES",
+    title: maskAadhaar(String(c.title)), text: maskAadhaar(String(c.description ?? c.title)),
     lang: /[஀-௿]/.test(String(c.description ?? "")) ? "ta" : "en", ward: Number(c.ward_number), place: maskAadhaar(String(c.specific_location || c.street_address || `Ward ${c.ward_number}`)).slice(0, 200), urgent: false,
-    reporter: reporterHash(c.mobile_number || c.user_id), channel: "citizen_grievance", recurrence: 0
+    reporter: reporterHash(c.mobile_number || c.user_id), channel: "citizen_grievance", recurrence: 0, grade,
+    // the citizen is told how the department was chosen; the case says so to the Collector (officer-day-07)
+    review
   };
 }
 
@@ -195,9 +261,23 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
   // complaint never joins another case, so it needs nothing from the petitions.
   if (await has("complaints")) {
     const petition = (await has("petitions")) ? "AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL)" : "";
-    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
+    // the complaint's type, sub-type and street as the dataset gives them to the pipeline (scripts/lib/dataset-sql.js: an older complaint's
+    // complaint_types name is its sub-type; Street is the GCC street, else the typed one), for its kind and severity (officer-day-02), and how
+    // its department was chosen (officer-day-07), from what this build holds
+    const subs = (await has("complaint_subtypes")) && (await has("complaint_categories"));
+    const legacy = await has("complaint_types"), streets = await has("gcc_streets");
+    const cols = await columns(wrap, "complaints");
+    const typed = cols.has("manual_street_name") ? `NULLIF(TRIM(COALESCE(c.manual_street_name, '') || ' ' || COALESCE(c.street_type, '')), '')` : "NULL";
+    const sub = [subs ? "cs.label" : null, legacy && cols.has("complaint_type_id") ? "ct.name" : null].filter(Boolean);
+    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name, ${sub.length ? `COALESCE(${sub.join(", ")}, NULL)` : "NULL"} AS subtype_name, ${subs ? "cc.name" : "NULL"} AS type_name,
+        ${subs ? "cs.department_id" : "NULL"} AS subtype_dept, COALESCE(${streets && cols.has("gcc_street_id") ? "gs.name, " : ""}${typed}, NULL) AS street_name
+        FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
+        ${subs ? "LEFT JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id LEFT JOIN complaint_categories cc ON cc.id = cs.category_id" : ""}
+        ${legacy && cols.has("complaint_type_id") ? "LEFT JOIN complaint_types ct ON ct.id = c.complaint_type_id" : ""}
+        ${streets && cols.has("gcc_street_id") ? "LEFT JOIN gcc_streets gs ON gs.id = c.gcc_street_id" : ""}
         WHERE COALESCE(c.is_synthetic, 0) = 0 AND c.user_id IS NOT NULL ${petition} ORDER BY c.created_at`))
-      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null))) added++;
+      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null, { type: r.type_name ?? null, subtype: r.subtype_name ?? null, street: r.street_name ?? null,
+        routing: r.subtype_dept != null ? "assumed" : "classifier" }))) added++;
   }
   if (await has("petitions")) {
     for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY filed_at, id`)) {

@@ -232,7 +232,7 @@ export default function ComplaintTypeSelector({
                 value={otherDescription} onChange={(e) => onOtherDescriptionChange(e.target.value)} />
               <p className="mt-2 flex items-start gap-1.5 text-xs text-violet-700">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-                Your description is read automatically and the complaint is routed to the department that handles it. An officer confirms the routing before work begins.
+                Your description is read automatically and the complaint is routed to the department that handles it. Your complaint record says the department was chosen this way.
               </p>
             </div>
           </motion.div>
@@ -252,7 +252,7 @@ export default function ComplaintTypeSelector({
                   <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-canvas-raised px-2.5 py-1 text-[12.5px] text-ink-muted ring-1 ring-inset ring-emerald-200">
                     <Send className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
                     We&apos;ll send this to: <b className="font-semibold text-ink">{selected.departmentName}</b>
-                    {selected.mappingStatus === "assumed" && " (confirmed by an officer)"}
+                    {selected.mappingStatus === "assumed" && " (our best match)"}
                   </p>
                 ) : (
                   <p className="mt-1 text-xs text-ink-muted">The department is chosen from your description when you submit.</p>
@@ -260,7 +260,7 @@ export default function ComplaintTypeSelector({
                 {selected.mappingStatus === "assumed" && (
                   <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-                    The Corporation does not publish a department for this type, so this routing is our best match and an officer will confirm it.
+                    The Corporation does not publish a department for this type, so this routing is our best match. Your complaint record says so.
                   </p>
                 )}
               </div>

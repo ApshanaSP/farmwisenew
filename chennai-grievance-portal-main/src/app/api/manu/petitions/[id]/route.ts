@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { manuFailed, manuStaff } from "@/lib/manu/guard";
-import { FileError, deletePage, deletePetition, fileSchema, filePetition, getPetition, petitionDetail, readAgain, wardName } from "@/lib/manu/petitions";
+import { FileError, deletePage, deletePetition, fileSchema, filePetition, getPetition, petitionDetail, readAgain, readingOf, wardName } from "@/lib/manu/petitions";
+import { MOBILE_TYPED_MAX } from "@/lib/manu/clean";
 import { findRepeats } from "@/lib/manu/repeat";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,9 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("read") }),
   z.object({ action: z.literal("delete") }),
   z.object({ action: z.literal("delete_page"), page: z.number().int().min(0).max(19) }),
-  z.object({ action: z.literal("repeats"), mobile: z.string().max(20), name: z.string().max(120), street: z.string().max(200), ward: z.number().int().nullable(), dept: z.string().max(20), problem: z.string().max(400) }),
+  // the mobile as the desk's box holds it (as written on the paper): the same limit as the approve's, or a number the approve takes was a 400
+  // here and the "came before" panel stayed as it was (pass 7 reviewer on hunt2-desk-04)
+  z.object({ action: z.literal("repeats"), mobile: z.string().max(MOBILE_TYPED_MAX), name: z.string().max(120), street: z.string().max(200), ward: z.number().int().nullable(), dept: z.string().max(20), problem: z.string().max(400) }),
   z.object({ action: z.literal("file"), fields: fileSchema })
 ]);
 
@@ -49,7 +52,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       // and only while it is being checked: an approved petition needs no repeat check, and the check is a lookup by any mobile typed
       // into the request (QA pass 6, P5-039)
       if (!["needs_check", "read_failed", "reading"].includes(String(p.status))) return NextResponse.json({ error: "This petition is already approved." }, { status: 409 });
-      const repeats = await findRepeats({ mobile: a.mobile, name: a.name, street: a.street, ward: a.ward, dept: a.dept, problem: a.problem, excludeId: id });
+      // the kind of problem is the reader's (the desk does not edit it), as filePetition stores it
+      const repeats = await findRepeats({ mobile: a.mobile, name: a.name, street: a.street, ward: a.ward, dept: a.dept, problem: a.problem, category: readingOf(p)?.category ?? null, excludeId: id });
       return NextResponse.json({ repeats, zone: await wardName(a.ward) });
     }
     return NextResponse.json({ approved: await filePetition(id, a.fields, s.session.email) });

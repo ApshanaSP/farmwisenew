@@ -499,18 +499,18 @@ export default function ProfilePage() {
                             <label className="form-label" htmlFor="newMobile">New mobile number</label>
                             <input id="newMobile" maxLength={10} inputMode="numeric" className="form-input font-mono" value={newMobile} onChange={(e) => setNewMobile(e.target.value.replace(/\D/g, ""))} />
                           </div>
-                          <button type="button" disabled={mobileSubmitting} onClick={requestMobileOtp} className="btn-primary">{mobileSubmitting ? "Sending..." : "Send OTP"}</button>
+                          <button type="button" disabled={mobileSubmitting} onClick={requestMobileOtp} className="btn-primary">{mobileSubmitting ? "Sending..." : "E-mail me a code"}</button>
                           <button type="button" className="btn-secondary" onClick={() => setMobileEditing(false)}>Cancel</button>
                         </div>
                       ) : (
                         <div className="space-y-4">
                           {mobileDevOtp && <p className="rounded-[8px] bg-navy-50 p-2 font-mono text-sm font-bold text-navy-800">[Dev mode] Your OTP: {mobileDevOtp}</p>}
                           <div>
-                            <span className="form-label">Enter the code sent to verify <span className="font-mono normal-case">{newMobile}</span></span>
+                            <span className="form-label">Enter the code we e-mailed you to save <span className="font-mono normal-case">{newMobile}</span></span>
                             <OtpInput value={mobileOtp} onChange={setMobileOtp} autoFocus label="Mobile OTP" />
                           </div>
                           <div className="flex gap-3">
-                            <button type="button" disabled={mobileSubmitting} onClick={verifyMobileOtp} className="btn-primary">{mobileSubmitting ? "Verifying..." : "Verify & save"}</button>
+                            <button type="button" disabled={mobileSubmitting} onClick={verifyMobileOtp} className="btn-primary">{mobileSubmitting ? "Saving..." : "Save number"}</button>
                             <button type="button" className="btn-secondary" onClick={() => { setMobileEditing(false); setMobileOtpSent(false); }}>Cancel</button>
                           </div>
                         </div>
