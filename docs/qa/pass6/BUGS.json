@@ -3092,6 +3092,21 @@
     "verified": false
   },
   {
+    "id": "redteam-final-1",
+    "severity": "P0",
+    "area": "privacy / Collector console audit log (QA pass 4 red team)",
+    "title": "Every citizen's sign-in (their email, user id, IP and browser) is written to the audit log the Collector's console shows",
+    "found_by": "QA pass 4 red team (docs/qa/pass4/findings/redteam-final.json on eec8c840)",
+    "repro": "npx vitest run --config vitest.p7.config.ts src/lib/collector/auditview.pass7.test.ts",
+    "failing_test": "src/lib/collector/auditview.pass7.test.ts",
+    "root_cause": "auditLog() (collector/workspaces.ts) returned the newest 200 rows of ops.audit_log unfiltered, and that log also holds every account's own security events (session.ts writes auth:signin with ip and ua for citizens too).",
+    "fix_commit": "90233497",
+    "revert_check": "without the fix 2/2 fail (citizen e-mail and IP in the answer; 400 citizen sign-ins push every staff row off a page of 20); with it 2/2 pass",
+    "status": "fixed",
+    "reviewer": null,
+    "verified": true
+  },
+  {
     "id": "redteam-gate-01",
     "severity": "P0",
     "area": "Data Studio link fetching (SSRF), P6-029 broken",
