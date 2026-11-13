@@ -315,6 +315,77 @@ export function extractRecords(kind: FetchKind, text: string, base: string, path
   return htmlRecords(text, base, path);
 }
 
+// ---------------------------------------------------------------- legacy --
+
+/**
+ * Items of a source set up before the onboarding agent (no stored mapping): feed items, a JSON list, a page's headline links. Moved here
+ * unchanged from sources.ts (QA pass 7, p7-studio-parse-12), so the Studio's file reader runs them, off the server's thread, on every
+ * scheduled run (their patterns search to the end of the page from every unclosed tag).
+ */
+export interface LegacyItem { title: string; url?: string | null; body?: string | null; published?: string | null }
+
+const legacyStrip = (s: string) => unent(s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
+  .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")).replace(/\s+/g, " ").trim();
+const legacyTag = (x: string, t: string) => { const m = x.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`, "i")); return m ? legacyStrip(m[1]) : null; };
+
+function legacyRss(xml: string): LegacyItem[] {
+  const blocks = [...xml.matchAll(/<(item|entry)\b[\s\S]*?<\/\1>/gi)].map((m) => m[0]);
+  return blocks.slice(0, 80).map((b) => ({
+    title: legacyTag(b, "title") ?? "",
+    url: legacyTag(b, "link") || (b.match(/<link[^>]+href=["']([^"']+)/i)?.[1] ?? null),
+    body: legacyTag(b, "description") ?? legacyTag(b, "summary") ?? legacyTag(b, "content"),
+    published: legacyTag(b, "pubDate") ?? legacyTag(b, "published") ?? legacyTag(b, "updated") ?? legacyTag(b, "dc:date")
+  })).filter((i) => i.title);
+}
+
+function legacyHtml(html: string, base: string): LegacyItem[] {
+  const out: LegacyItem[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const text = legacyStrip(m[2]);
+    if (text.length < 28 || text.length > 260 || seen.has(text)) continue;
+    seen.add(text);
+    let url: string | null = null;
+    try { url = new URL(m[1], base).toString(); } catch { /* keep null */ }
+    out.push({ title: text, url });
+    if (out.length >= 60) break;
+  }
+  if (!out.length) {
+    const t = legacyTag(html, "title");
+    if (t) out.push({ title: t, url: base, body: legacyStrip(html).slice(0, 2000) });
+  }
+  return out;
+}
+
+function legacyJson(text: string): LegacyItem[] {
+  let data: any;
+  try { data = JSON.parse(text); } catch { return []; }
+  const find = (v: any, depth = 0): any[] | null => {
+    if (Array.isArray(v) && v.length && typeof v[0] === "object") return v;
+    if (v && typeof v === "object" && depth < 4) for (const x of Object.values(v)) { const f = find(x, depth + 1); if (f) return f; }
+    return null;
+  };
+  const arr = find(data) ?? [];
+  const pick = (o: any, keys: string[]) => { for (const k of Object.keys(o)) if (keys.includes(k.toLowerCase()) && o[k] != null) return String(o[k]); return null; };
+  return arr.slice(0, 100).map((o: any) => ({
+    title: pick(o, ["title", "headline", "name", "subject", "event", "description"]) ?? JSON.stringify(o).slice(0, 160),
+    url: pick(o, ["url", "link", "href"]),
+    body: pick(o, ["summary", "text", "body", "content", "details", "description", "message"]),
+    published: pick(o, ["date", "published", "published_at", "pubdate", "created_at", "time", "timestamp"])
+  }));
+}
+
+export function legacyItems(kind: string, text: string, base: string): LegacyItem[] {
+  return kind === "rss" ? legacyRss(text) : kind === "json" ? legacyJson(text) : legacyHtml(text, base);
+}
+
+// ------------------------------------------------------------------ page --
+
+/** A page's <title> as the onboarding agent reads it (moved from onboard.ts unchanged). */
+export const pageTitle = (html: string) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null;
+/** A password field in the first `scan` characters (onboard.ts and sources.ts looksLikeLogin, moved here unchanged). */
+export const passwordField = (html: string, scan: number) => /<input[^>]+type=["']?password/i.test(html.slice(0, scan));
+
 // --------------------------------------------------------------- mapping --
 
 /** Every field in the records with how many records fill it and a sample value. */

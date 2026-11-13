@@ -22,9 +22,11 @@ import { classify, resolvePlace } from "@/lib/collector/nlp";
 import { auditIn, inTransaction, runSource } from "@/lib/collector/sources";
 import { AiBudgetError, AiBusyError, AiUnavailableError, generateJson } from "@/lib/ai/gateway";
 import {
-  SAMPLE, applyMapping, nearChennai, extractRecords, feedLink, fieldsOf, guessMapping, loginForm,
+  SAMPLE, applyMapping, nearChennai, fieldsOf, guessMapping,
   type DateFormat, type FetchKind, type Mapping, type Rec, type StoredMapping
 } from "@/lib/collector/sourcemap";
+import { ParseLimitError, pageLimitMessage, readCollector } from "@/lib/studio/parse-pool";
+import type { CollectorRead } from "@/lib/studio/parse-worker";
 
 const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard prototype)";
 const MAX_BYTES = 6_000_000;
@@ -138,8 +140,9 @@ async function authHeaders(a: Auth | null): Promise<Record<string, string>> {
   return { Cookie: cookie };
 }
 
-const looksLikeLogin = (status: number, url: string, html: string) =>
-  status === 401 || status === 403 || /\/(login|signin|sign-in|auth)\b/i.test(new URL(url).pathname) || /<input[^>]+type=["']?password/i.test(html.slice(0, 60000));
+// the password-field check (/<input[^>]+type=.../ on the first 60 KB) runs in the Studio's file reader with the rest of the page reading
+const looksLikeLogin = (status: number, url: string, password: boolean) =>
+  status === 401 || status === 403 || /\/(login|signin|sign-in|auth)\b/i.test(new URL(url).pathname) || password;
 
 // -------------------------------------------------------------- the agent --
 
@@ -261,27 +264,41 @@ export async function onboard(inputUrl: string, auth: Auth | null, actor: string
   let kind = kindOf(ct, got.text);
   let url = got.url, text = got.text, feedNote: string | null = null, login: LoginNeed | null = null;
   const status = got.res.status;
-  const title = kind === "html" ? (got.text.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null) : null;
+  // the page is read in the Studio's file reader (parse-pool.ts), under its time limit: its title, the feed it announces, a password field,
+  // its sign-in form and its records each came from patterns that searched to the end of the page from every unclosed tag, on the
+  // server's thread (160 KB of "<link " held it 2.6 s, 60 KB of "<title>" 70 s; p7-studio-parse-12)
+  const stopped = (e: unknown) => {
+    if (!(e instanceof ParseLimitError)) throw e;
+    step("detect", "fail", "Working out what it is", pageLimitMessage(e), Date.now() - t);
+    return null;
+  };
+  let page: CollectorRead;
+  try {
+    page = kind === "html" ? await readCollector(got.text, got.url, { title: true, feed: !auth, password: 60000, form: true }) : {};
+  } catch (e) { return stopped(e); }
+  const title = kind === "html" ? (page.title ?? null) : null;
   let detected: Detected = kind === "json" ? "api" : kind === "rss" ? "rss" : "page";
   if (kind === "html" && !auth) {
     // the site's own feed is steadier than reading its page layout
-    const feed = feedLink(got.text, got.url);
+    const feed = page.feed ?? null;
     if (feed) {
       try {
         const f = await safeFetch(feed, { timeout: 15000 });
-        if (f.res.status < 400 && kindOf(f.res.headers.get("content-type") ?? "", f.text) === "rss" && extractRecords("rss", f.text, f.url, null).records.length >= 3) {
+        if (f.res.status < 400 && kindOf(f.res.headers.get("content-type") ?? "", f.text) === "rss" && ((await readCollector(f.text, f.url, { records: { kind: "rss", path: null } })).records?.records.length ?? 0) >= 3) {
           url = f.url; text = f.text; kind = "rss"; detected = "rss";
           feedNote = "The page announces its own RSS feed; the agent reads the feed instead (steadier than the page layout).";
         }
       } catch { /* keep the page */ }
     }
   }
-  if (detected !== "rss" && (status === 401 || status === 403 || (kind === "html" && looksLikeLogin(status, got.url, got.text)))) {
-    const form = kind === "html" ? loginForm(got.text, got.url) : null;
+  if (detected !== "rss" && (status === 401 || status === 403 || (kind === "html" && looksLikeLogin(status, got.url, !!page.password)))) {
+    const form = kind === "html" ? (page.form ?? null) : null;
     const basic = /basic/i.test(got.res.headers.get("www-authenticate") ?? "");
     login = { mode: form ? "form" : basic ? "basic" : kind === "json" ? "token" : "form", loginUrl: form?.loginUrl ?? null, userField: form?.userField ?? null, passField: form?.passField ?? null };
   }
-  let { records, path } = extractRecords(kind, text, url, null);
+  let read: CollectorRead;
+  try { read = await readCollector(text, url, { records: { kind, path: null } }); } catch (e) { return stopped(e); }
+  let { records, path } = read.records ?? { records: [], path: null };
   if (login && (auth || records.length >= 3) && !(status === 401 || status === 403)) login = null; // signed in, or a page with a side login box
   if (login) detected = "login";
   step("detect", login ? "warn" : "ok", LABEL[detected], feedNote ?? (login

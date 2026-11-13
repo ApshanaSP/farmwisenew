@@ -11,6 +11,7 @@
 import { MAX_COLS, MAX_ROWS, NeedsOcr, ParseError, UserError, feedLinkIn, headlinesIn, htmlTables, parseAll, shape, type Cell, type Table } from "@/lib/studio/parse";
 import { pdfImages } from "@/lib/studio/ocr";
 import { fileLinksIn, nextPageLink, pageFacts, scriptJsonUrls, type PageFacts } from "@/lib/studio/connect/links";
+import { applyMapping, extractRecords, feedLink, legacyItems, loginForm, pageTitle, passwordField, type FetchKind, type LegacyItem, type MappedItem, type Rec, type StoredMapping } from "@/lib/collector/sourcemap";
 
 /** A file to read: every table in it (or, `main`, only the largest); `ocr`: a picture or a scan comes back as images to read with OCR. */
 export interface FileJob { op: "file"; buf: Uint8Array; name: string; contentType: string; base: string; ocr: boolean; main: boolean }
@@ -18,7 +19,16 @@ export interface FileJob { op: "file"; buf: Uint8Array; name: string; contentTyp
 export interface PageJob { op: "page"; html: string; url: string }
 /** A fetched page's facts (pageFacts in links.ts): its title, and whether it is an article, a sign-in, a CAPTCHA wall, a JavaScript app. */
 export interface FactsJob { op: "facts"; html: string }
-export type Job = FileJob | PageJob | FactsJob;
+/**
+ * A Collector source's fetched page or feed, read as source onboarding (collector/onboard.ts) and every scheduled run (collector/sources.ts)
+ * need it: its title, the feed it announces, a password field in its first `password` characters, its sign-in form, its records, or its
+ * items (records through the stored mapping, or the legacy readers). Every one of these patterns searched to the end of the page from
+ * every unclosed tag on the server's thread (p7-studio-parse-12).
+ */
+export interface CollectorWant { title?: boolean; feed?: boolean; password?: number; form?: boolean; records?: { kind: FetchKind; path: string | null }; items?: { kind: string; stored: StoredMapping | null } }
+export interface CollectorRead { title?: string | null; feed?: string | null; password?: boolean; form?: ReturnType<typeof loginForm>; records?: { records: Rec[]; path: string | null }; items?: (MappedItem | LegacyItem)[] }
+export interface CollectorJob { op: "collector"; text: string; url: string; want: CollectorWant }
+export type Job = FileJob | PageJob | FactsJob | CollectorJob;
 
 export interface Page {
   /** the page's tables, largest first (null: a grid that is not a table) */
@@ -34,6 +44,7 @@ export type Reply =
   | { ocr: { kind: "image" | "scan"; images: Uint8Array[]; skipped: number } }
   | { page: Page }
   | { facts: PageFacts }
+  | { collector: CollectorRead }
   | { error: { type: "parse" | "user" | "other"; message: string } };
 
 /** What the reader process writes before its watchdog ends it (parse-worker-main.ts): parse-pool.ts reads it to say the file needed too much memory. */
@@ -108,7 +119,24 @@ function fail(e: unknown): Reply {
   return { error: { type: "other", message } };
 }
 
+function collectorRead({ text, url, want }: CollectorJob): CollectorRead {
+  const out: CollectorRead = {};
+  if (want.title) out.title = pageTitle(text);
+  if (want.feed) out.feed = feedLink(text, url);
+  if (want.password) out.password = passwordField(text, want.password);
+  if (want.form) out.form = loginForm(text, url);
+  if (want.records) out.records = extractRecords(want.records.kind, text, url, want.records.path);
+  if (want.items) {
+    const { kind, stored } = want.items;
+    out.items = stored
+      ? extractRecords(kind as FetchKind, text, url, stored.recordPath).records.map((r) => applyMapping(r, stored.map)).filter((x): x is MappedItem => !!x)
+      : legacyItems(kind, text, url);
+  }
+  return out;
+}
+
 export function work(job: Job): Reply {
+  if (job.op === "collector") { try { return { collector: collectorRead(job) }; } catch (e) { return fail(e); } }
   if (job.op === "facts") { try { return { facts: pageFacts(job.html) }; } catch (e) { return fail(e); } }
   return job.op === "page" ? readPage(job) : readFile(job);
 }

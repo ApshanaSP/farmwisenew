@@ -27,8 +27,8 @@ export async function bundle() {
     platform: "node",
     format: "esm",
     target: "node22",
-    // packages load from node_modules at run time; the server side of the reader (dynamically imported by parse.ts) never runs in it
-    external: ["xlsx", "tesseract.js", "@/lib/studio/parse-pool"],
+    // packages load from node_modules at run time (SheetJS, and node-html-parser for the Collector's pages); the server side of the reader (dynamically imported by parse.ts) never runs in it
+    external: ["xlsx", "node-html-parser", "tesseract.js", "@/lib/studio/parse-pool"],
     write: false,
     legalComments: "none",
     charset: "utf8",
