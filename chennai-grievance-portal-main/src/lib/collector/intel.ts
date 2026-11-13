@@ -43,22 +43,52 @@ export type Period = keyof typeof PERIODS;
 export type Overview = Awaited<ReturnType<typeof overview>>;
 export type IncidentDetail = NonNullable<Awaited<ReturnType<typeof incident>>>;
 
+// ------------------------------------------------- filter values (one reader) --
+// reviewerB-06: the filter check (filters.ts filterProblem) trimmed a value before checking it and these readers did not, so
+// ?period=weekly%20 passed the check and was answered as daily, and ?dept=GCC-SWM%20 passed and dropped the department (the whole district).
+// Now there is ONE reader per filter: the check refuses a value that is present and that reader cannot read, and the parse* helpers
+// every route uses are the same readers. They cannot disagree.
+
+/** The GCC's zones are 1 to 15 (ref_wards.zone_no). */
+export const GCC_ZONES = 15;
+
+/** A filter value as every reader reads it: trimmed; absent (null) when missing or empty. */
+export function filterValue(v: unknown): string | null {
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t === "" ? null : t;
+}
+/** The strict readers: the value, or null when it is absent or not one the console knows. */
+export function readPeriod(v: unknown): Period | null {
+  const t = filterValue(v);
+  return t != null && Object.prototype.hasOwnProperty.call(PERIODS, t) ? (t as Period) : null;
+}
+export function readZone(v: unknown): number | null {
+  const t = filterValue(v);
+  return t != null && /^\d{1,2}$/.test(t) && Number(t) >= 1 && Number(t) <= GCC_ZONES ? Number(t) : null;
+}
+export function readDept(v: unknown): string | null {
+  const t = filterValue(v);
+  return t != null && /^[A-Z0-9-]{2,20}$/.test(t) ? t : null;
+}
+export function readCat(v: unknown): string | null {
+  const t = filterValue(v);
+  return t != null && /^[A-Z_]{3,40}$/.test(t) ? t : null;
+}
+export function readTaluk(v: unknown): string | null {
+  const t = filterValue(v);
+  return t != null && /^TLK-[A-Z]{3}$/.test(t) ? t : null;
+}
+
+/** The period a route answers for: the reader's, else daily (a present value it cannot read is refused first by filterProblem). */
 export function parsePeriod(v: unknown): Period {
-  return typeof v === "string" && Object.prototype.hasOwnProperty.call(PERIODS, v) ? (v as Period) : "daily";
+  return readPeriod(v) ?? "daily";
 }
-export function parseZone(v: unknown): number | null {
-  const n = Number(v);
-  return Number.isInteger(n) && n >= 1 && n <= 30 ? n : null;
-}
-export function parseDept(v: unknown): string | null {
-  return typeof v === "string" && /^[A-Z0-9-]{2,20}$/.test(v) ? v : null;
-}
-export function parseCat(v: unknown): string | null {
-  return typeof v === "string" && /^[A-Z_]{3,40}$/.test(v) ? v : null;
-}
-export function parseTaluk(v: unknown): string | null {
-  return typeof v === "string" && /^TLK-[A-Z]{3}$/.test(v) ? v : null;
-}
+export const parseZone = readZone;
+export const parseDept = readDept;
+export const parseCat = readCat;
+export const parseTaluk = readTaluk;
 /** Extra cross-filters: a category chosen from a chart, a taluk chosen from the map or ranking. */
 export interface Focus { cat?: string | null; taluk?: string | null }
 
