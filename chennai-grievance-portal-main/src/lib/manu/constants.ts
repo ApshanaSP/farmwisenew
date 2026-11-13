@@ -117,4 +117,25 @@ export interface Approved {
   dept: string;
   attached: boolean;
   sms: SmsNote;
+  /**
+   * Whether the case is in the build the officers' and Collector's consoles read now (AWS store): false when the live build could not take
+   * it, so it gets there at the next data update; null when this store has no live build (MySQL: the pipeline reads it at the next update).
+   */
+  inQueue?: boolean | null;
+}
+
+/**
+ * What the desk says of an approval: its heading and where the complaint is now. A petition added to an existing complaint was told "added"
+ * though the live build could not take it and it joined no case until the next build (QA pass 6, P6-004).
+ */
+export function approvedWords(a: Approved, short = false): { title: string; where: string } {
+  const later = a.inQueue === false;
+  const title = a.attached
+    ? later ? `${short ? "Approved" : "Petition approved"}; it joins the existing complaint at the next update` : `${short ? "Approved" : "Petition approved"} and added to the existing complaint`
+    : later ? `${short ? "Approved" : "Petition approved"}; it reaches the department at the next update` : short ? "Approved and sent" : "Petition approved and forwarded";
+  const office = short ? "the Collector" : "the Collector's Office";
+  return {
+    title,
+    where: later ? `is saved. The officers' consoles could not take it just now, so it reaches ${a.dept} and ${office} at the next data update.` : `is now with ${a.dept} and ${office}.`
+  };
 }

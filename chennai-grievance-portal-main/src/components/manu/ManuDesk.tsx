@@ -4,7 +4,7 @@
  * photo and approves it. Nothing goes to a department unapproved. Only the petition officer's own login opens this.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MANU_DEPTS, MANU_LIMITS, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
+import { MANU_DEPTS, MANU_LIMITS, approvedWords, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
 import type { DeskItem, Detail } from "@/lib/manu/petitions";
 import { MOBILE_RE, aadhaarShaped, tenDigits, typedMobile } from "@/lib/manu/clean";
 import { typedDigits } from "@/lib/typed-digits";
@@ -125,8 +125,8 @@ function Home({ notice, waiting, sending, onCamera, onFiles, onNext }: { notice:
     <div className="mn-home">
       {notice?.kind === "approved" && (
         <div className="mn-ok" role="status">
-          <h3>{notice.approved.attached ? "Petition approved and added to the existing complaint" : "Petition approved and forwarded"}</h3>
-          <p>Complaint number <strong>{notice.approved.code}</strong> is now with {notice.approved.dept} and the Collector&apos;s Office.</p>
+          <h3>{approvedWords(notice.approved).title}</h3>
+          <p>Complaint number <strong>{notice.approved.code}</strong> {approvedWords(notice.approved).where}</p>
           <p className="mn-sms" data-sms={notice.approved.sms.state}>{smsLine(notice.approved.sms)}</p>
         </div>
       )}
@@ -417,8 +417,8 @@ export default function ManuDesk() {
             )}
             {detail.status === "filed" && detail.approved && (
               <div className="mn-done">
-                <h3>{detail.approved.attached ? "Approved and added to the existing complaint" : "Approved and sent"}</h3>
-                <p>Complaint number <strong>{detail.approved.code}</strong> is now with {detail.approved.dept} and the Collector.</p>
+                <h3>{approvedWords(detail.approved, true).title}</h3>
+                <p>Complaint number <strong>{detail.approved.code}</strong> {approvedWords(detail.approved, true).where}</p>
                 <p className="mn-sms" data-sms={detail.approved.sms.state}>{smsLine(detail.approved.sms)}</p>
                 <div className="mn-acts"><button className="mn-primary" onClick={goHome}>Back to home</button></div>
               </div>

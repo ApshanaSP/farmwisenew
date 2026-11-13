@@ -201,6 +201,15 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   }
 }
 
+/**
+ * Whether the build the consoles read now holds this filing (AWS store), or null when it cannot be told: no live build on MySQL, or the read
+ * failed. The desk said a petition was "added to the existing complaint" whether or not the live add had worked (QA pass 6, P6-004).
+ */
+export async function inLiveBuild(code: string): Promise<boolean | null> {
+  if (process.env.DATA_BACKEND !== "aws") return null;
+  try { return await known(live, code); } catch { return null; }
+}
+
 /** The usual kind of case for an online complaint's department: only when its type does not say ("Other"). */
 const ONLINE_CATEGORY: Record<string, string> = {
   "GCC-SWM": "SOLID_WASTE", "GCC-SWD": "FLOOD_WATERLOGGING", "GCC-ENG": "ROAD_DAMAGE", "GCC-ELE": "STREETLIGHT_ELECTRICAL", "GCC-HLT": "VECTOR_DISEASE", "GCC-PRK": "TREES_PARKS", "GCC-BRG": "PUBLIC_WORKS", "GCC-BLD": "CIVIC_FACILITIES"

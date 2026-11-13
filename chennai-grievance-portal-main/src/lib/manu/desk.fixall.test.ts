@@ -27,7 +27,8 @@ vi.mock("@/lib/mailer", () => ({
   sendMail: async (to: string, subject: string, html: string) => { h.mails.push({ to, subject, html }); return h.mailImpl ? h.mailImpl() : { ok: true }; }
 }));
 
-const { createPetition, filePetition, getPetition } = await import("@/lib/manu/petitions");
+const { createPetition, filePetition, getPetition, petitionDetail } = await import("@/lib/manu/petitions");
+const { approvedWords } = await import("@/lib/manu/constants");
 const { savePages } = await import("@/lib/manu/files");
 const { caseIdFor } = await import("@/lib/manu/cases");
 const sms = await import("@/lib/manu/sms");
@@ -169,5 +170,44 @@ describe("reviewer1-09: an approval that fails after the petition is filed still
     await sms.retryFailedSms();
     expect(one("SELECT COUNT(*) AS n FROM petition_sms").n).toBe(0);
     expect((await sms.smsNote(code)).state).toBe("off");
+  });
+});
+
+// P6-004: when the live add failed (any store error in addCaseLive), the desk still said the petition was added to the chosen case, though
+// it joined no case in the build being served until the next build. This harness's collector_decisions has no decision_id, so the live
+// attach's open-case read fails, as in the lead's probe (tests/qa/pass6/known-failures/lead/ml16.test.ts).
+describe("P6-004: a petition the live build could not take is not called added", () => {
+  it("attach fails: the approval says it joins the existing complaint at the next update; the petition keeps that case for the next build", async () => {
+    const first = await filePetition(await uploaded(), fields(), "x");
+    expect(first.inQueue).toBe(true);
+    expect(approvedWords(first).title).toBe("Petition approved and forwarded");
+    const id = await uploaded();
+    const second = await filePetition(id, fields({ mobile: "9000041874", attachTo: caseIdFor(first.code) }), "x");
+    expect(one("SELECT COUNT(*) AS n FROM events WHERE source_record_id = ?", second.code).n).toBe(0); // the live build did not take it
+    expect(second.attached).toBe(true);
+    expect(second.inQueue).toBe(false);
+    expect(approvedWords(second).title).toBe("Petition approved; it joins the existing complaint at the next update");
+    expect(approvedWords(second).where).toMatch(/at the next data update/);
+    expect(approvedWords(second, true).title).toBe("Approved; it joins the existing complaint at the next update");
+    expect(one("SELECT incident_id, attached FROM petitions WHERE id = ?", id)).toMatchObject({ incident_id: caseIdFor(first.code), attached: 1 });
+    // opened again later, the desk reads the live build and says the same
+    expect((await petitionDetail(id))!.approved).toMatchObject({ attached: true, inQueue: false });
+  });
+  it("attach works: added, in the queue now", async () => {
+    h.db.exec(`DROP TABLE collector_decisions; CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY AUTOINCREMENT, incident_id TEXT, decision TEXT, note TEXT, decided_role TEXT, decided_at TEXT)`);
+    const first = await filePetition(await uploaded(), fields(), "x");
+    const second = await filePetition(await uploaded(), fields({ mobile: "9000041874", attachTo: caseIdFor(first.code) }), "x");
+    expect(second).toMatchObject({ attached: true, inQueue: true });
+    expect(approvedWords(second).title).toBe("Petition approved and added to the existing complaint");
+    expect(approvedWords(second).where).toBe("is now with Metrowater and the Collector's Office.");
+  });
+  it("not on the AWS store (no live build): the wording is as before", async () => {
+    process.env.DATA_BACKEND = "mysql";
+    try {
+      const a = await filePetition(await uploaded(), fields(), "x");
+      expect(a.inQueue).toBeNull();
+      expect(approvedWords(a).title).toBe("Petition approved and forwarded");
+      expect(approvedWords({ ...a, attached: true }, true).title).toBe("Approved and added to the existing complaint");
+    } finally { process.env.DATA_BACKEND = "aws"; }
   });
 });

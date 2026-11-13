@@ -11,7 +11,7 @@ import { audit } from "@/lib/collector/sources";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
 import { hasVisibleText } from "@/lib/validators";
-import { addCaseLive, petitionCase } from "./cases";
+import { addCaseLive, inLiveBuild, petitionCase } from "./cases";
 import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, asciiDigits, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
 import { mediaTypeOf, readPhoto, removePhoto } from "./files";
@@ -178,7 +178,9 @@ export async function petitionDetail(id: number): Promise<Detail | null> {
   };
 }
 
-const approvedNote = async (p: Row): Promise<Approved> => ({ code: String(p.complaint_code), dept: manuDeptLabel(p.dept_code), attached: Number(p.attached) === 1, sms: await smsNote(String(p.complaint_code)) });
+// inQueue: what addCaseLive said at the approval, else whether the live build holds the case now (P6-004)
+const approvedNote = async (p: Row, inQueue?: boolean): Promise<Approved> => ({ code: String(p.complaint_code), dept: manuDeptLabel(p.dept_code), attached: Number(p.attached) === 1,
+  sms: await smsNote(String(p.complaint_code)), inQueue: inQueue ?? await inLiveBuild(String(p.complaint_code)) });
 
 // ------------------------------------------------------------------- filing --
 
@@ -262,19 +264,23 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
     // the petition is filed from here on: whatever fails after this (the case, the audit), the petitioner is still told it is registered. The
     // SMS was sent only at the very end, so an approval that failed after the commit never sent it, and the retry's "already filed" answer
     // did not either (reviewer1-09)
+    let inQueue: boolean | undefined;
     try {
       const filed = (await getPetition(id))!;
       const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
       // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
       // migration 017 still approves, and only the next build's count is lost there
       await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
-      const { incidentId } = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
-      if (incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [incidentId, id]);
+      // a failed live add says so (inQueue false), and the desk says the petition reaches its case at the next update. The petition keeps the
+      // case it was added to, which the next build joins it to (websiteCases); the desk said "added to the existing complaint" (P6-004)
+      const live = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
+      inQueue = process.env.DATA_BACKEND === "aws" ? live.inQueue : undefined;
+      if (live.incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [live.incidentId, id]);
       await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });
     } finally {
       await sendPetitionSms(code, "received");
     }
-    return approvedNote((await getPetition(id))!);
+    return approvedNote((await getPetition(id))!, inQueue);
   } finally {
     release();
   }
