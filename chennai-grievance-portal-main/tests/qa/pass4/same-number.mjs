@@ -23,6 +23,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(here, "..", "..", "..");
 export const EVIDENCE_DIR = path.resolve(APP_ROOT, "..", "docs", "qa", "pass4", "evidence");
 const WHEN = { daily: "today", weekly: "this week", monthly: "this month", quarterly: "this quarter" };
+// The console's windows in the words of the rules lanes (Jarvis, Ask District IQ): since pass 7 (P6-022, src/lib/period/read.ts) "today" is the
+// calendar day since midnight IST in both, and the console's Daily (the last 24 hours) is "in the last 24 hours". Ask the Map reads "today" as
+// the last 24 hours still, so its own questions keep WHEN. The calendar day is read on its own below (readToday), against the oracle's day.
+const SAID = { ...WHEN, daily: "in the last 24 hours" };
 const LAST_DAYS = { daily: 1, weekly: 7, monthly: 30, quarterly: 90 };
 
 const P = ["daily", "weekly", "monthly", "quarterly"];
@@ -154,7 +158,9 @@ export const KNOWN = [
   [/^thunai\/round:performance\(zone\)$/, /^kpi\./, "bug", "same-number-11", "Zone performance adds up the 15 zones under the labels 'Reported' and 'Open', so the rows with no zone drop out, beside a trend on the same screen that has them."],
   [/^assistant\/chat:card label$/, /tile 'Reported'/, "bug", "same-number-13", "The card's tile says 'Reported' but holds the count asked about (open, or past deadline)."],
   [/^thunai\/round:(dashboard|cases\(open\))$/, /^(CaseList|kpi)\.total\(groups\)$/, "decision", "same-number-2", "Jarvis's open-case list now counts incidents (the console's own list, RC-08); the oracle row here counts the groups of the same problem that the list's rows are made of. Which unit the spoken total uses is the owner's decision (lanes/merge.md); the console's list shows both numbers."],
-  [/^assistant\/chat:list$/, /Incidents matching/, "bug", "same-number-9", "The list's total counts one row per group of the same problem; the card calls it incidents, and the console's own list has a separate incidents figure for this."]
+  [/^assistant\/chat:list$/, /Incidents matching/, "bug", "same-number-9", "The list's total counts one row per group of the same problem; the card calls it incidents, and the console's own list has a separate incidents figure for this."],
+  // fix-all round 3: seen only once the routing job hands news complaints to a department (the overlay part); the pinned snapshot has none open
+  [/^officer\/insights$/, /^work\.(still open|Open past deadline)$/, "decision", "fixall3-officer-open", "The officer's Work record counts a news complaint routed to the department as open (src/lib/officer/insights.ts reads the effective open flag, with no routing rule: it is the department's work, and it stays in the officer's queue), while the officer's Board (the Collector's overview of the department) and the officer's Ask District IQ use the glossary's open since fix-all round 2 (OPEN_NOW, not routed). With 2 complaints routed to Solid Waste the officer sees 66 still open in the Work record and the queue, and 64 on the Board. Which open the officer console shows is the owner's call."]
 ];
 export const classify = (r) => {
   for (const [sf, fg, cls, finding, why] of KNOWN) if (sf.test(r.surface) && fg.test(r.figure)) return { class: cls, finding, why };
@@ -164,6 +170,18 @@ export const classify = (r) => {
 // ------------------------------------------------------------------- the surfaces --
 
 const LABEL = (l) => ({ label: l });
+/**
+ * A department's "Awaiting your verification" (the departments table) and "N to check" (the Briefing's follow-ups): that department's My Tasks,
+ * one per group, in the scope's period and zone, never its department filter (intel.ts awaitingByDept, since pass 7's review 2 of console-sync-07,
+ * 4dacf4e4). Before, each read the pipeline's awaiting flag on any severity, and this harness compared them with `awaiting_flag`.
+ */
+const toCheck = (o, s, code) => ({
+  custom: () => {
+    const ids = o.awaitingCheck({ period: s.period, zone: s.zone }).nIds.filter((id) => o.row(id)?.dept === code);
+    return { value: new Set(ids.map((id) => o.groupOf(id))).size, ids };
+  },
+  label: "waiting for your check, by department"
+});
 
 async function readConsole(h, b, s) {
   const o = b.o, sv = "collector/overview";
@@ -209,7 +227,7 @@ async function readConsole(h, b, s) {
     b.add(s, sv, `deptNav.${x.code}.n`, x.n, "reported", { over });
     b.add(s, sv, `deptNav.${x.code}.open`, x.open, "open", { over });
     b.add(s, sv, `deptNav.${x.code}.severe`, x.severe, "severe", { over });
-    b.add(s, sv, `deptNav.${x.code}.unverified`, x.unverified, "awaiting_flag", { over });
+    b.add(s, sv, `deptNav.${x.code}.unverified`, x.unverified, "custom", { over, ...toCheck(o, s, x.code) });
   }
   if (s.dept) for (const x of d.bottom.byDept) b.add(s, sv, `bottom.byCategory.${x.l}`, x.v, "reported", { filter: (r) => r.catLabel === x.l });
   else for (const x of d.bottom.byDept) if (x.code) b.add(s, sv, `bottom.byDept.${x.code}.complaints`, x.v, "complaints_all", { over: { dept: x.code } });
@@ -219,7 +237,7 @@ async function readConsole(h, b, s) {
   if (snap.kind === "district") {
     const cr = o.critical();
     b.add(s, sv, "snapshot.critical", snap.critical, "custom", { custom: () => ({ value: cr.length, ids: cr.map((r) => r.id) }), label: "severe needing a check (no period)" });
-    const openHere = o.rows(s).filter((x) => x.open);
+    const openHere = o.rows(s).filter((x) => x.open && !x.routed); // OPEN_NOW (intel.ts districtSnapshot), as DEFS.open
     b.add(s, sv, "snapshot.activeDepts", snap.activeDepts, "custom", { custom: () => ({ value: new Set(openHere.map((x) => x.dept).filter(Boolean)).size }), label: "departments with open work" });
   }
   const aw = o.awaitingCheck(s);
@@ -277,7 +295,7 @@ async function readBriefing(h, b, s) {
     b.add(s, sv, `deptActions.${x.code}.overdue`, x.overdue, "overdue_flag", { over });
     b.add(s, sv, `deptActions.${x.code}.serious`, x.serious, "serious_open", { over });
     b.add(s, sv, `deptActions.${x.code}.complaints`, x.complaints, "complaints_open", { over });
-    b.add(s, sv, `deptActions.${x.code}.awaiting`, x.awaiting, "awaiting_flag", { over });
+    b.add(s, sv, `deptActions.${x.code}.awaiting`, x.awaiting, "custom", { over, ...toCheck(o, s, x.code) });
   }
   const t = d.book?.glance?.tiles;
   if (t) {
@@ -509,7 +527,7 @@ async function readToolsMore(h, b, s) {
 /** Ask District IQ itself, through its code path (the fast path answers these with no model; a card with no such figure is noted). */
 async function readChat(h, b, s, who = "collector") {
   const sv = who === "collector" ? "assistant/chat" : `assistant/chat(${who})`;
-  const when = WHEN[s.period];
+  const when = SAID[s.period];
   const ask = async (q) => {
     const r = await h.post(who, "/api/collector/assistant/chat", { message: q, consoleScope: { period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: null } }, {}, ["chat", 3300]);
     const m = r.text.match(/event: answer\ndata: (.*)\n/);
@@ -537,11 +555,39 @@ async function readChat(h, b, s, who = "collector") {
   if (c3) { b.add(s, sv, "openComplaints", kpi(c3, "Open complaints")?.value, "complaints_open", LABEL("complaints")); b.add(s, sv, "openComplaints.incidents", kpi(c3, "Incidents with complaints")?.value, "complaint_inc", LABEL("complaints")); }
   const c4 = await ask(`how many severe incidents ${when}`);
   if (c4) { b.add(s, sv, "severe.Severe", kpi(c4, "Severe")?.value, "severe", LABEL("severe")); b.add(s, sv, "severe.Still open", kpi(c4, "Still open")?.value, "severe_open", LABEL("severe")); }
+  if (s.period === "daily") await readToday(h, b, s, ask);
+}
+
+/**
+ * "today" in the rules lanes is the calendar day since midnight IST (pass 7, P6-022, src/lib/period/read.ts), not the console's Daily: Ask District
+ * IQ's count card and Jarvis's past-deadline list for "today" against the oracle's rows reported since midnight, so the phrase keeps one meaning in both.
+ */
+async function readToday(h, b, s, ask) {
+  const o = b.o;
+  const day = o.inStretch(`${o.now.slice(0, 10)} 00:00:00`, fmtWall(o.nowMs + 1000), s);
+  const of = (test) => () => { const rows = day.filter(test); return { value: rows.length, ids: rows.map((r) => r.id) }; };
+  const late = (r) => r.open && !r.routed && (r.breached || (r.due != null && r.due <= o.nowMs));
+  const where = s.zone ? ` in ${ZONE_WORDS[s.zone]}` : "";
+  const c = await ask(`how many incidents${where} today`);
+  const kpi = (l) => c?.kpis?.find((x) => x.label === l)?.value;
+  if (c) {
+    b.add(s, "assistant/chat:today", "count.Reported", kpi("Reported"), "custom", { custom: of(() => true), label: "reported today, since midnight" });
+    b.add(s, "assistant/chat:today", "count.Severe", kpi("Severe"), "custom", { custom: of((r) => r.sev === "Severe"), label: "severe today, since midnight" });
+    b.add(s, "assistant/chat:today", "count.Still open", kpi("Still open"), "custom", { custom: of((r) => r.open && !r.routed), label: "still open, reported since midnight" });
+  }
+  const who = s.dept ? DEPT_WORDS[s.dept] : null;
+  const text = who ? `${who} cases past deadline today` : `cases past deadline${where} today`;
+  const r = (await h.post("collector", "/api/collector/thunai/agent/round", { turnId: `same-${process.pid}-${++turnNo}`, round: 0, state: { ...ST, period: s.period, zone: s.zone, dept: s.dept }, text }, {}, ["round", 720])).json;
+  b.line(s, "thunai/round", text, r?.result?.say ?? null, { lane: r?.lane, recipe: r?.result?.stage?.recipe ?? null, stage_scope: r?.result?.stage?.scope ?? null });
+  const blocks = r?.result?.stage?.blocks ?? [];
+  const total = blocks.find((x) => x.kind === "Kpis")?.items?.find((x) => x.key === "total")?.value ?? blocks.find((x) => x.kind === "CaseList")?.total;
+  // a screen other than the case list leaves the figure missing, which "reads every surface" reports
+  b.add(s, "thunai/round:today", `"${text}" total`, r?.result?.stage?.recipe === "cases" ? total : null, "custom", { custom: of(late), label: "past deadline, reported since midnight" });
 }
 
 /** Ask District IQ's other code lanes: per-zone, per-department and per-category tables, resolved, and "how many past deadline" as a card. */
 async function readChatMore(h, b, s) {
-  const o = b.o, sv = "assistant/chat", when = WHEN[s.period];
+  const o = b.o, sv = "assistant/chat", when = SAID[s.period];
   const ask = async (q) => {
     const r = await h.post("collector", "/api/collector/assistant/chat", { message: q, consoleScope: { period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: null } }, {}, ["chat", 3300]);
     const m = r.text.match(/event: answer\ndata: (.*)\n/);
@@ -690,7 +736,7 @@ async function readJarvis(h, b, s) {
   // the same scope said in words: the rules' lanes
   const who = s.dept ? DEPT_WORDS[s.dept] : s.zone ? ZONE_WORDS[s.zone] : null;
   const place = s.zone ? ZONE_WORDS[s.zone] : null;
-  const texts = s.dept && !s.zone ? [`${who} report ${WHEN[s.period]}`, `how is ${who} doing ${WHEN[s.period]}`, `${who} cases past deadline ${WHEN[s.period]}`] : s.zone && !s.dept ? [`severe cases in ${place} ${WHEN[s.period]}`, `give me the briefing for ${place} ${WHEN[s.period]}`, `cases past deadline in ${place} ${WHEN[s.period]}`] : !s.dept && !s.zone ? [`give me the briefing ${WHEN[s.period]}`, `how many severe cases ${WHEN[s.period]}`, `cases past deadline ${WHEN[s.period]}`] : [];
+  const texts = s.dept && !s.zone ? [`${who} report ${SAID[s.period]}`, `how is ${who} doing ${SAID[s.period]}`, `${who} cases past deadline ${SAID[s.period]}`] : s.zone && !s.dept ? [`severe cases in ${place} ${SAID[s.period]}`, `give me the briefing for ${place} ${SAID[s.period]}`, `cases past deadline in ${place} ${SAID[s.period]}`] : !s.dept && !s.zone ? [`give me the briefing ${SAID[s.period]}`, `how many severe cases ${SAID[s.period]}`, `cases past deadline ${SAID[s.period]}`] : [];
   for (const text of texts) {
     const r = await round({ text });
     b.line(s, sv, text, r?.result?.say ?? null, { lane: r?.lane, kind: r?.result?.kind, note: r?.result?.note ?? null, recipe: r?.result?.stage?.recipe ?? null, title: r?.result?.stage?.title ?? null, stage_scope: r?.result?.stage?.scope ?? null, kpis: block(r, "Kpis")?.items?.map((x) => [x.key, x.value]) ?? null });

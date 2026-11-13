@@ -219,7 +219,50 @@ Two figures on screen with close names. Each pair below is named by id, for the 
 
 ## Decisions and routings on top
 
-Not run yet.
+Not run yet when this page was first written; same-number.test.ts runs it (its second describe). See the next section.
+
+## Since this was recorded: rules the app changed, and how the harness and the oracle follow them (fix-all round 3, 14 Nov 2026)
+
+The pass 7 gate (combined branch 43c1698a) ran same-number.test.ts for the first time since pass 4. Every difference it found was traced in one
+run on a fresh build (port 3110, the same --frozen --ticking server), and each one was one of two kinds: (a) screens that disagree with each other,
+an app bug, or (b) screens that agree with each other while the harness or the oracle still used a rule the app no longer has. All of them were (b).
+None of the expectations was set to what the app printed: each harness or oracle change below follows a rule the app documents in its code.
+
+1. **"today" in Jarvis and Ask District IQ is the calendar day since midnight IST** (pass 7, P6-022, `src/lib/period/read.ts`: "one phrase, one
+   meaning"). The harness asked "how many incidents today" for the console's Daily window (the last 24 hours). In the same run every other surface
+   said 239 reported, 236 still open, 22 past deadline, 9 severe and 147 open complaints for the last 24 hours, and Ask District IQ and Jarvis
+   both said 144 reported, 3 severe, 144 still open and 10 past deadline for "today", which are exactly the oracle's rows reported since
+   00:00 on 6 Nov. So the screens agree; the question named another window. The harness now names the console's Daily in the rules lanes' own
+   words, "in the last 24 hours" (`SAID` in same-number.mjs), and reads "today" on its own (`readToday`: Ask's count card and Jarvis's
+   "cases past deadline today", against the oracle's rows since midnight), so the phrase keeps its meaning under test. This also brings back the
+   card's "period before" (`count.Reported.prev`), which the calendar day does not print. Two things seen on the way, not changed here: "give me
+   the briefing today" is the last-24-hours brief in both lanes, and says so; and Ask the Map still reads "today" as the last 24 hours, so the
+   harness keeps "today" in its own map questions.
+2. **A department's "Awaiting your verification" and the Briefing's "N to check" are that department's My Tasks** (pass 7 review 2 of
+   console-sync-07, 4dacf4e4, `intel.ts awaitingByDept`), one per group, never the pipeline's awaiting flag on any severity. On the pinned snapshot
+   My Tasks is empty in the core scopes (the oracle's own `awaitingCheck` gives 0), and the app said 0 for every department, against
+   `awaiting_flag`'s 1 to 15. The harness now reads both figures against `awaitingCheck` by department (`toCheck`).
+3. **The officer's stages** (`src/lib/officer/data.ts STAGE_SQL`): the pipeline's "Awaiting verification" is Sent to Collector only for a
+   severe case, any other is In action (officer-day-29); and the latest step and decision are the ones with the highest step_id and decision_id
+   (officer-day-15, -24). Solid Waste this week: the app said 36 in action and 0 sent, the old oracle 21 and 15; the 15 are non-severe cases the
+   pipeline marks Awaiting verification. `pinned.mjs stageOf` now follows the app's rule, as it says it does.
+4. **Open is the glossary's open everywhere** (console-sync-10, reviewerE-02, reviewerG-01: `OPEN_NOW`, not routed to a department). On the pinned
+   snapshot no routed incident is open in any window (7 are routed: 4 closed, 3 not in this build), so the first describe does not move.
+   The second describe runs the routing job (11 news complaints handed to departments) and 5 decisions. There every surface of the Collector's
+   console, the Briefing and Ask District IQ's tools agreed with each other on the routed-out figure (weekly district: 1,153 still open on the
+   Ongoing tile, the Briefing, its headline and the briefing tool), while the oracle's `open`, `severe_open`, `serious_open`, `overdue_flag`,
+   `news_only_open`, `complaints_open`, `complaint_inc` and `verified_open` still counted routed complaints (1,164): 91 readings, all by the routed
+   ones. `pinned.mjs DEFS` now gives each of these the glossary's rule (`openNow`: open and not routed), and the district snapshot's "departments
+   with open work" in the harness does the same.
+
+   **One difference is left, and it is the owner's to decide (fixall3-officer-open, class `decision` in `KNOWN`):** the officer's own Work record
+   (`src/lib/officer/insights.ts`, the effective open flag with no routing rule) and the officer's queue count a news complaint routed to the
+   department as open: it is the department's work. The officer's Board (the Collector's overview of the department, which "the Collector's and
+   the officer's boards give the same figures" holds to) and the officer's Ask District IQ use OPEN_NOW since round 2. With 2 complaints routed to
+   Solid Waste this week the officer sees 66 still open in the Work record and the queue, and 64 on the Board. Before round 2 all of them said 66.
+   On the pinned snapshot nothing is routed open, so "the officer's own counts add up to the board's open figure" still passes, but it would not
+   on data where the routing job has run. Which open the officer console shows (the console's, or the department's queue) is a product choice.
+
 ## Findings
 
 | Id | Severity | Title | Class |
