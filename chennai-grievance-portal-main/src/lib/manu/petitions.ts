@@ -219,7 +219,9 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
   try {
     const p = await getPetition(id);
     if (!p) throw new FileError("That petition is no longer here.");
-    if (p.status === "filed") return approvedNote(p);
+    // a second Approve (a double click, or the officer trying again after an error) still sees that the 'registered' SMS is on its way: it is
+    // sent once, so this does nothing when it already was (reviewer1-09)
+    if (p.status === "filed") { await sendPetitionSms(String(p.complaint_code), "received"); return approvedNote((await getPetition(id)) ?? p); }
     if (p.status === "reading") throw new FileError("This petition is still being read.");
 
     const [wards] = await pool.query<Row[]>(`SELECT zone_id FROM zone_wards WHERE ward_number = ? LIMIT 1`, [f.ward]);
@@ -257,15 +259,21 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
       );
     });
 
-    const filed = (await getPetition(id))!;
-    const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
-    // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
-    // migration 017 still approves, and only the next build's count is lost there
-    await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
-    const { incidentId } = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
-    if (incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [incidentId, id]);
-    await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });
-    await sendPetitionSms(code, "received");
+    // the petition is filed from here on: whatever fails after this (the case, the audit), the petitioner is still told it is registered. The
+    // SMS was sent only at the very end, so an approval that failed after the commit never sent it, and the retry's "already filed" answer
+    // did not either (reviewer1-09)
+    try {
+      const filed = (await getPetition(id))!;
+      const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
+      // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
+      // migration 017 still approves, and only the next build's count is lost there
+      await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
+      const { incidentId } = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
+      if (incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [incidentId, id]);
+      await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });
+    } finally {
+      await sendPetitionSms(code, "received");
+    }
     return approvedNote((await getPetition(id))!);
   } finally {
     release();

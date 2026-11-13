@@ -134,6 +134,8 @@ export async function smsNote(code: string): Promise<SmsNote> {
     const status = String(rows[0].status ?? "");
     if (status === "testnumber") return { state: "testnumber", last4: String(rows[0].detail ?? "").match(/(\d{4})\s*$/)?.[1] ?? null };
     // a message on its way is "sending", not "failed": the approval no longer waits for it (P5-023)
+    // no row at all, with SMS on: the approval stopped before it queued the message; the sweep queues it (reviewer1-09). It was "not set up".
+    if (!status) return { state: smsMode() === "off" ? "off" : "sending", last4: mobile.slice(-4) };
     const state = ({ sent: "sent", test: "test", unsure: "unsure", failed: "failed", waiting: "sending", sending: "sending" } as const)[status as "sent"] ?? "off";
     return { state, last4: mobile.slice(-4) };
   } catch {
@@ -179,6 +181,14 @@ export async function retryFailedSms(): Promise<void> {
     await pool.query(`UPDATE petition_sms SET status = 'unsure', detail = 'The server stopped while this SMS was being sent; it may have gone. It is not sent again.'
       WHERE status = 'sending' AND tried_at <= ?`, [stuck]);
     if (smsMode() === "off") return;
+    // a petition filed in the last day whose 'registered' SMS was never queued (the server stopped between the approval's commit and the
+    // send) gets it now: the row was only made at the end of the approval, so such a petitioner was never texted (reviewer1-09). Only the
+    // last day: switching SMS on must not text every old petitioner.
+    const [orphans] = await pool.query<Row[]>(`SELECT p.complaint_code, p.mobile FROM petitions p LEFT JOIN petition_sms s ON s.complaint_code = p.complaint_code AND s.kind = 'received'
+      WHERE p.status = 'filed' AND p.complaint_code IS NOT NULL AND s.id IS NULL AND p.filed_at >= ? AND p.filed_at <= ? ORDER BY p.filed_at LIMIT 20`, [addHours(istNow(), -24), due]);
+    for (const o of orphans)
+      if (MOBILE.test(String(o.mobile ?? "")))
+        await pool.query(`INSERT IGNORE INTO petition_sms (complaint_code, kind, status, tried_at, created_at) VALUES (?, 'received', 'waiting', ?, ?)`, [o.complaint_code, due, istNow()]);
     const CLOSED = ["Rejected", ...RESOLVED_STATUSES];
     // a closing message for a complaint that is open again is not picked at all, so twenty of them cannot hold up every newer message (the reviewer)
     const [rows] = await pool.query<Row[]>(
