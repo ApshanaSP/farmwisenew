@@ -18,7 +18,9 @@ import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metri
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 /**
  * A hotspot's open count with the Collector's decisions laid on: the pipeline's own count, moved by what the decisions
  * changed among the hotspot's incidents (the pipeline's flag read raw ignored a resolve, RC-27).
@@ -51,7 +53,7 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
 }
 
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${OPEN_NOW} AS open_now,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
   i.ai_summary, i.ai_attention, i.ai_next_step,
@@ -555,7 +557,7 @@ export async function pattern(p: PatternQuery) {
     }
     const after = series.slice(series.map((x) => x.hl).lastIndexOf(true) + 1);
     const places = placesOf(rows);
-    const open = rows.filter((r) => Number(r.open) === 1).length;
+    const open = rows.filter((r) => Number(r.open_now) === 1).length;
     const one = places.length === 1 || (places[0] && places[0].n >= rows.length * 0.6);
     const lead = [
       slow
@@ -590,7 +592,7 @@ export async function pattern(p: PatternQuery) {
   ]);
   const places = placesOf(rows);
   const zone = rows.find((r) => r.zone)?.zone ?? null;
-  const open = rows.filter((r) => Number(r.open) === 1).length;
+  const open = rows.filter((r) => Number(r.open_now) === 1).length;
   const wards = String(h.wards ?? "").split(/[|,;\s]+/).filter(Boolean);
   const lastGap = rows.length > 1 ? Math.round((new Date(String(rows[0].t).replace(" ", "T")).getTime() - new Date(String(rows[1].t).replace(" ", "T")).getTime()) / 864e5) : null;
   const lead = [

@@ -16,7 +16,7 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
 import { isPastDeadline, pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
@@ -26,7 +26,9 @@ import { alertLane, type AlertLane } from "@/lib/collector/alerts";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -127,7 +129,7 @@ function filters(s: BriefScope, a = "i") {
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const SRC: Record<string, string> = { grievance: "citizen complaints", police: "police", pwd: "PWD", news: "news", hospital: "hospital", imd: "IMD" };
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
-  i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
+  i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
   i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 

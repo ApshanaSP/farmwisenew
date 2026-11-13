@@ -7,7 +7,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
 import { pctChange } from "@/lib/reference/metrics";
@@ -15,7 +15,9 @@ import { checkOpening } from "@/lib/collector/opening";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -41,7 +43,7 @@ function filters(s: BookScope, a = "i") {
 const CRIME = ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "SUICIDE_SELF_HARM", "DRUGS_LIQUOR", "PUBLIC_ORDER", "ROAD_ACCIDENT", "MISSING_PERSON"];
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.dead, i.injured, i.lat, i.lon,
   i.ai_summary, i.ai_attention, i.ai_next_step, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;

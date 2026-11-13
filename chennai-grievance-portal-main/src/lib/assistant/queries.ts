@@ -12,14 +12,16 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, asOf, exportMeta, scopeWhere } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, asOf, exportMeta, scopeWhere } from "@/lib/collector/intel";
 import { pastDueSql } from "@/lib/reference/metrics";
 import type { AssistantScope } from "@/lib/assistant/scope";
 import { orEmpty } from "@/lib/fallback";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 
 const REAL_LAKES = process.env.DATA_BACKEND === "aws";
 
@@ -144,7 +146,7 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
     q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
        FROM incidents i WHERE ${where} GROUP BY i.category_code ORDER BY n DESC LIMIT 12`, params),
-    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.severity_level AS sev, ${OPEN} AS open, i.place_text AS place, i.lat, i.lon,
+    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.severity_level AS sev, ${EFF.open} AS open, i.place_text AS place, i.lat, i.lon,
          i.priority_score AS priority
        FROM incidents i WHERE ${where} AND i.lat IS NOT NULL AND i.lon IS NOT NULL
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 400`, params),

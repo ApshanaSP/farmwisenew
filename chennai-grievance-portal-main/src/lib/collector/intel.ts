@@ -255,7 +255,8 @@ const EFF = effectiveSql(ops("collector_decisions"));
  * or rejected and then reopened is open and unchecked again (console-sync-06).
  */
 async function notYetChecked(): Promise<string> {
-  return `((${EFF.open} = 1 AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1)) OR ${await sentByOfficer()})`;
+  // open as every open figure counts it (OPEN_NOW: a news complaint handed to a department is not on the console, reviewerE-02)
+  return `((${OPEN_NOW} AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1)) OR ${await sentByOfficer()})`;
 }
 
 // ---- Shared with the Department Officer console (src/lib/officer): completion reports officers send.
