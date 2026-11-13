@@ -313,6 +313,40 @@
     "closed_in": "fixall"
   },
   {
+    "id": "fixall-lock-05",
+    "severity": "P1",
+    "area": "Ask District IQ (officer lock)",
+    "title": "An officer's own incident in Ask District IQ merged another department's reports through its cluster group (incident_detail, incident_story, the fast path's incident card)",
+    "found_by": "fixall round 2 fixer (reviewerF-06's open lock checks)",
+    "repro": "AWS store, one cluster of a GCC-SWM and a GCC-HLT SOLID_WASTE incident; officer GCC-SWM: lockTools -> incident_detail INC-OWN -> reports include the GCC-HLT report",
+    "failing_test": "src/lib/collector/incident.lock.fixall.test.ts::fixall-lock-05: an incident's group, for a department officer, is only that department's",
+    "root_cause": "the group is formed without department and the lock checked only the incident itself; incident(id, { dept }) keeps the group to the officer's department, passed by incident_detail (now LOCK_AWARE), incident_story and the fast path's incidentDetail",
+    "fix_commit": "c4ced4b1",
+    "revert_check": "4 of 5 fail without (the Collector case passes either way) / 5 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/collector/intel.ts incident() group (CLUSTER = ?, no department); cluster.ts groups by category, place and time",
+    "note": "Severity P1 by this fixer: what leaked is the other department's linked reports (titles, sources, publishers, times), its articles and complaint count, merged into the officer's own case, not the other incident's id, status, officials or decisions; the lead may raise it to P0 (P6-006 class). Only on the AWS store (on MySQL every incident is its own group). In the store 22 categories have more than one lead department, so such groups are expected; not checked on the live store.",
+    "closed_in": "fixall"
+  },
+  {
+    "id": "fixall-lock-06",
+    "severity": "P2",
+    "area": "Ask District IQ (officer lock)",
+    "title": "The officer lock let an incident with no lead department through to a department officer, in full (otherDeptsIncident)",
+    "found_by": "fixall round 2 fixer (reviewerF-06's open lock checks)",
+    "repro": "otherDeptsIncident({ tool: incident_detail, data: { incident: { dept: null } } }, GCC-SWM) -> false (shown)",
+    "failing_test": "src/lib/assistant/lock.nodept.fixall.test.ts::fixall-lock-06: an incident with no lead department is not an officer's",
+    "root_cause": "an empty lead department counted as not another department's; now held back unless it is the officer's",
+    "fix_commit": "142ac7d0",
+    "revert_check": "3 of 3 fail without / 3 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/assistant/pipeline.ts otherDeptsIncident (!!d && d !== dept)",
+    "note": "No incident in the current store lacks a lead department (28,097 checked), so not seen live; the fast path (idsOfDept) already held such an incident back.",
+    "closed_in": "fixall"
+  },
+  {
     "id": "fixall-studio-lazy-01",
     "severity": "P2",
     "area": "Data Studio file parsing",
@@ -5035,7 +5069,7 @@
     "status": "fixed",
     "reviewer": null,
     "where": "src/lib/assistant/tools.ts:1046-1055, src/lib/collector/threads.ts:337-339, :372",
-    "note": "Every other tool in lockTools checked (TOOLS in tools.ts, with scope.dept forced): no leak found in overview_kpis, zones, zone_profile, severity, verification_queue, resolution_times, incidents, search (-> incidents), briefing, dept_followups, news_gaps, category_trends, taluks, category_summary, change_drivers, place_breakdown, incident_series, contacts (dept forced), environment, mandi_prices, source_health, resolve_place, map_geo; departments and dept_backlog are replaced by overview_kpis. Fixed: search_records news links (fixall-lock-02), incident_story other matches (fixall-lock-03), hotspots (fixall-lock-04), and the agent's show path skipping otherDeptsIncident (fixall-lock-01). Left open, aggregate only: unusual_rises keeps the district's expected/ratio beside the department's observed count (no ids; the planner lock refuses the anomalies table); incident_detail's cluster group could merge another department's reports if one cluster spans two lead departments (not confirmed); otherDeptsIncident lets an incident with no lead department through.",
+    "note": "Every other tool in lockTools checked (TOOLS in tools.ts, with scope.dept forced): no leak found in overview_kpis, zones, zone_profile, severity, verification_queue, resolution_times, incidents, search (-> incidents), briefing, dept_followups, news_gaps, category_trends, taluks, category_summary, change_drivers, place_breakdown, incident_series, contacts (dept forced), environment, mandi_prices, source_health, resolve_place, map_geo; departments and dept_backlog are replaced by overview_kpis. Fixed: search_records news links (fixall-lock-02), incident_story other matches (fixall-lock-03), hotspots (fixall-lock-04), and the agent's show path skipping otherDeptsIncident (fixall-lock-01). Left open, aggregate only: unusual_rises keeps the district's expected/ratio beside the department's observed count (no ids; the planner lock refuses the anomalies table). Checked in round 2 (the last fixer): incident_detail's cluster group DID merge another department's reports (a cluster is by category, place and time; 22 categories have several lead departments): fixed as fixall-lock-05 (c4ced4b1, src/lib/collector/incident.lock.fixall.test.ts). otherDeptsIncident DID let an incident with no lead department through: fixed as fixall-lock-06 (142ac7d0, src/lib/assistant/lock.nodept.fixall.test.ts). fastpath.ts audited under the lock, intent by intent: INCIDENT_LIST / PRIORITY / COUNT / CHART / CATEGORY_RANKING / COMPARISON read incidents.ts where() with dept = the officer's (fastPath sets f.dept = lockDept and ignores a named department), narrowed() passes it to the meaning search, a pick from the last list goes through idsOfDept; INCIDENT_DETAIL / TIMELINE / RELATED and ACTION_REQUEST check the id with idsOfDept (P6-006), RELATED filters its items, pictureOfList filters the conversation's ids, NEWS_* pass lockDept to topStories (reviewer2-02). One leak found there, the incident card's cluster group (fixall-lock-05; the fast path case is in incident.lock.fixall.test.ts). Not reproduced, theoretical: narrowed() maps a stale index hit to a current incident by title and time (lance.ts currentIncidentIds) without a department check; it needs an incident renumbered into another department.",
     "closed_in": "fixall"
   },
   {
