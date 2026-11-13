@@ -249,7 +249,7 @@
   },
   {
     "id": "fixall-lock-01",
-    "severity": "P1",
+    "severity": "P0",
     "area": "Ask District IQ (officer lock)",
     "title": "The agent's \"show\" of an incident ran incident_story without the department check: an officer could be told another department's incident in full",
     "found_by": "fixall round 2 fixer (checking lockTools for reviewerF-06)",
@@ -261,7 +261,7 @@
     "status": "fixed",
     "reviewer": null,
     "where": "src/lib/assistant/pipeline.ts (agent case \"show\": runs pushed without otherDeptsIncident)",
-    "note": "Same class as P6-006 (P0), through the agent's show decision only. Needs a live check of the agent path (model).",
+    "note": "Severity set to P0 by the lead: the same leak class as P6-006 (P0), an officer reading another department's incident in full. Fixed in 49516157; the real show decision needs a live model to drive.",
     "closed_in": "fixall"
   },
   {
