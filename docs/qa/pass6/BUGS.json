@@ -378,6 +378,36 @@
     "closed_in": "fixall"
   },
   {
+    "id": "fixall3-map-today",
+    "severity": "P3",
+    "area": "Ask the Map / periods",
+    "title": "Ask the Map reads \"today\" as the last 24 hours, while Jarvis and Ask District IQ read it as the calendar day since midnight (pass 7, P6-022)",
+    "found_by": "fix-all round 3, same-number.test.ts (map/ask \"open incidents today\" equals the 24-hour figure, 236; Ask and Jarvis say 144 for \"today\")",
+    "repro": null,
+    "failing_test": null,
+    "root_cause": "pass 7 put one period reader (src/lib/period/read.ts) under the two rules lanes only; the map engine (src/lib/map) keeps its own reading of today",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "open",
+    "reviewer": null,
+    "note": "Not fixed in round 3 (outside the nine files). A distance question with today in Ask District IQ goes to the map lane, so one chat can mean two windows. same-number keeps today for its map questions so it still passes; change WHEN there when the map follows read.ts."
+  },
+  {
+    "id": "fixall3-officer-open",
+    "severity": "P2",
+    "area": "Officer console",
+    "title": "After the routing job, an officer sees two still-open figures for the department: the Work record and the queue count news complaints routed to it (66), the Board and Ask District IQ do not (64)",
+    "found_by": "fix-all round 3, same-number.test.ts overlay part (officer/insights work.still open)",
+    "repro": null,
+    "failing_test": "tests/qa/pass4/same-number.test.ts::every figure read follows the decisions and routings (KNOWN class decision, fixall3-officer-open)",
+    "root_cause": "round 2 (console-sync-10, reviewerE-02, reviewerG-01) moved the Collector overview the officer Board shows and Ask to OPEN_NOW (not routed); src/lib/officer (insights.ts, data.ts stages) has no routing rule, since a routed complaint is the department work",
+    "fix_commit": null,
+    "revert_check": null,
+    "status": "owner",
+    "reviewer": null,
+    "note": "Owner decision: on the officer console, is a news complaint routed to that department open on the Board (the department queue) or not (the Collector console)? The pinned snapshot has none open, so the first describe check that the officer counts add up to the Board still passes; on data where the routing job has run it would not."
+  },
+  {
     "id": "fixall3-skg1-30",
     "severity": "P2",
     "area": "Ask District IQ",
