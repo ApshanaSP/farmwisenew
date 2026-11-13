@@ -13,3 +13,9 @@
   - New ports: pinned API 3190, Next 3110–3113.
   - Re-sorted: 32 P2/P3 rows are fixable outside their files (`mine-*.json`). 71 wait for their branches (`later.json`).
 - 03:23: batch A (16 rows) done by the fixer before the usage limit: 15 fixed, 1 duplicate. Lead check on 91395eb: tsc exit 0; the 14 new test files 89/89 pass; existing tests in every changed folder 3364 pass, 13 skipped, 0 failed. Batch B started.
+- 04:10: batch B (15 rows) done by its fixer: 10 fixed, 4 open (they need p7 files or a live check), 1 owner (journeys-01: case notes would be a new feature). Lead check on 172fabd: tsc exit 0; tests in every changed folder 3510 pass, 13 skipped, 0 failed; no p7-owned file touched.
+- Reviewer A (batch A, code reading, probes run by the lead) found 6 problems, and all 5 probes failed on the code.
+  - Fixed: reviewerA-01, -03, -04, -05, -06, each with a test and a revert check.
+  - reviewerA-02: fixed for the two rehearsal routes. The three other routes are in p7 files and were handed to desk-and-accounts and studio-egress.
+- The usage limit and a session restart stopped the run between 04:12 and 12:07. Reviewer B was resumed.
+- 12:09: tsc on 9acfd262 exit 0, 0 errors.
