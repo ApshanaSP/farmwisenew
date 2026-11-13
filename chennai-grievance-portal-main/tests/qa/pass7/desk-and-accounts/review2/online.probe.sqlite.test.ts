@@ -168,8 +168,8 @@ describe("review2 officer-day-09: every attachment the case screen lists opens f
     expect(r.status).toBe(400);
   });
 
-  // open: p7-desk-and-accounts-10 (P3) is in the media route (src/app/api/complaints/media/[name]/route.ts, not this session's file)
-  it.skip("a video attached by the citizen answers a Range request with 206 and Accept-Ranges", async () => {
+  // p7-desk-and-accounts-10, fixed in fixall (f16c92c8): the media route answers one byte range with 206 (was it.skip)
+  it("a video attached by the citizen answers a Range request with 206 and Accept-Ranges", async () => {
     const url = put("c-20261112-bbbbbbbbbbbbbbbb.mp4", MP4);
     const code = await file({ mediaPath: url });
     const listed = (await screen(OFFICER_SWM, code)).media;
