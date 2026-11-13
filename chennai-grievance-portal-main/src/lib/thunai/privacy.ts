@@ -235,13 +235,16 @@ export function redact<T>(v: T, depth = 0): T {
  * Hands whose every result is redacted on its way out (the same rule round.ts's safeHands applies, without its cache), for any
  * path that reads tools: no route may hand a model or the Stage a citizen's number, Aadhaar or own words (BUG-009).
  */
-export function redactHands<H extends { tool: (n: string, a: Record<string, unknown>) => Promise<unknown>; severe: (s: never) => Promise<unknown>; news: (s: never) => Promise<unknown>; map: (q: string) => Promise<unknown>; dataset?: (n: string) => Promise<unknown> }>(h: H): H {
+export function redactHands<H extends { tool: (n: string, a: Record<string, unknown>) => Promise<unknown>; severe: (s: never) => Promise<unknown>; news: (s: never) => Promise<unknown>; map: (q: string) => Promise<unknown>; dataset?: (n: string) => Promise<unknown>; span?: (...a: never[]) => Promise<unknown>; compare?: (...a: never[]) => Promise<unknown> }>(h: H): H {
   return {
     ...h,
     tool: (n: string, a: Record<string, unknown>) => h.tool(n, a).then((r) => redact(r)),
     severe: (s: never) => h.severe(s).then((r) => redact(r)),
     news: (s: never) => h.news(s).then((r) => redact(r)),
     map: (q: string) => h.map(q).then((r) => redact(r)),
-    dataset: h.dataset ? (n: string) => h.dataset!(n).then((r) => redact(r)) : undefined
+    dataset: h.dataset ? (n: string) => h.dataset!(n).then((r) => redact(r)) : undefined,
+    // the span hands read incident titles and places, as the list does: redacted the same way (QA pass 7)
+    ...(h.span ? { span: (...a: never[]) => h.span!(...a).then((r) => redact(r)) } : {}),
+    ...(h.compare ? { compare: (...a: never[]) => h.compare!(...a).then((r) => redact(r)) } : {})
   } as H;
 }

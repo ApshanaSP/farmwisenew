@@ -20,7 +20,8 @@ import { AiStep, type Turn } from "./plan";
 import { NEVER_REPLY, PRIVACY_REPLY, redact } from "./privacy";
 import { lineProblem, turnRecords } from "./exitgate";
 import { recordText } from "./injection";
-import { catIn, periodIn, placesIn, quickScreen, reservoirIn, sevIn, zonesIn } from "./quick";
+import { asksCount, catIn, periodIn, placesIn, quickScreen, reservoirIn, sevIn, zonesIn } from "./quick";
+import { spanScreen } from "./spanned";
 import { GENERAL_FALLBACK, GENERAL_LABEL, GENERAL_SYSTEM, GeneralSchema, ROUTER_SYSTEM, RouterSchema, routeByRules, type Bundle } from "./router";
 import { checkStage, RECIPES, STAGE_DIGEST_MAX, type StageContext } from "./stage";
 import type { Hands } from "./screens";
@@ -86,7 +87,10 @@ export function safeHands(h: Hands, signal?: AbortSignal): Hands {
     severe: (s) => h.severe(s).then((r) => redact(r)),
     news: (s) => h.news(s).then((r) => redact(r)),
     map: (q) => h.map(q).then((r) => redact(r)),
-    dataset: h.dataset ? (name) => h.dataset!(name).then((r) => redact(r)) : undefined
+    dataset: h.dataset ? (name) => h.dataset!(name).then((r) => redact(r)) : undefined,
+    // the span hands read incident titles and places as the list does (QA pass 7): redacted, and stopped with the turn
+    span: h.span ? (spec, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.span!(spec, s, f).then((r) => redact(r))) : undefined,
+    compare: h.compare ? (key, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.compare!(key, s, f).then((r) => redact(r))) : undefined
   };
 }
 
@@ -283,10 +287,11 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     if (result) { telemetry("turn", { lane, ms: Date.now() - t0, tokens, calls, ok: result.kind !== "none", round: b.round, turn: b.turnId }); }
     return { done: true, result, steps: [], trace, tokens, calls, hops: [], lane, cached: false, ...o };
   };
+  // every rules-lane screen keeps the time its request named (spanned.ts: the checker alone would drop it)
   const screenFrom = async (recipe: (typeof RECIPES)[number], slots: Record<string, unknown>, label: string) =>
-    served(await timed(label, () => directScreen(recipe, slots, state, world, hands, b.text, lang)));
+    served(await timed(label, () => spanScreen(recipe, slots, state, world, hands, b.text, lang)));
 
-  if (b.direct) return out(served(await directScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang)), "direct");
+  if (b.direct) return out(served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang)), "direct");
 
   // 1. refused in code, before any model, on every round of a turn (a later round has the same words and the same rules)
   const route = routeByRules(b.text, world, !!stage);
@@ -334,7 +339,8 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     if (quick) {
       let r = await screenFrom(quick.recipe, quick.slots, lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data");
       const empty = (x: AgentResult) => !!x.stage && x.stage.blocks.every((bl) => bl.kind === "Note");
-      if (empty(r) && quick.recipe === "cases" && (quick.slots.period === "daily" || quick.slots.period === "weekly")) {
+      // a count, or a span the request named with its own dates, is answered for that period: "none today" is the answer, never this week's cases (P6-022)
+      if (empty(r) && quick.recipe === "cases" && !quick.slots.span && !asksCount(b.text) && (quick.slots.period === "daily" || quick.slots.period === "weekly")) {
         const tries: ["weekly" | "monthly", string, string][] = quick.slots.period === "daily" ? [["weekly", "None today. ", "இன்று எதுவும் இல்லை. "], ["monthly", "None today or this week. ", "இன்றும் இந்த வாரமும் இல்லை. "]] : [["monthly", "None this week. ", "இந்த வாரம் இல்லை. "]];
         for (const [period, en, ta] of tries) {
           const wk = await screenFrom("cases", { ...quick.slots, period }, lang === "ta" ? "நீண்ட காலத்தைப் பார்க்கிறேன்" : "Looking further back");

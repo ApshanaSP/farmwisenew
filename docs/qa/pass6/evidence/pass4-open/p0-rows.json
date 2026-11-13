@@ -4,8 +4,8 @@
   "text": "Tondiarpet report. Last month.",
   "lane": "resolve",
   "kind": "do",
-  "said": "9 points in the brief for the last 30 days. 417 incidents were reported in Tondiarpet (last 30 days), 6% more than the previous period.",
-  "title": "Briefing · the last 30 days",
+  "said": "5 points in the brief. Last month (October): 389 incidents were reported in Tondiarpet; 70 are still open, 60 past their deadline, 19 severe.",
+  "title": "Tondiarpet · brief, last month (October)",
   "console": {
    "page": "overview",
    "period": "daily",
@@ -18,21 +18,17 @@
    "incident": null,
    "stage_open": "brief"
   },
-  "grade": "wrong",
-  "confident_wrong": true,
-  "reasons": [
-   "3_period_words failed",
-   "3_figures failed",
-   "3_screen_figures failed"
-  ]
+  "grade": "right",
+  "confident_wrong": false,
+  "reasons": []
  },
  {
   "id": "en-numbers-06",
   "text": "Garbage complaints, up or down from last month?",
   "lane": "quick",
   "kind": "do",
-  "said": "616 cases in the last 30 days; here are the 12 that matter most. 66 are past their deadline and need you first: uncleared garbage at Durgadevi Nagar 5Th Cross St 2Nd Lane, Durga Devi Nagar, Tondiarpet, and uncleared garbage at Thirumalai Street Meenashi Nagar, Thirumalai Nagar, Nerkundram in Valasaravakkam. Say \"read them\", or \"open\" and a number.",
-  "title": "Cases · Garbage & solid waste · the last 30 days",
+  "said": "Garbage & solid waste incidents are down: 616 in the last 30 days against 639 in the month before (7 Sept to 7 Oct), 4% lower.",
+  "title": "Garbage & solid waste · last 30 days against the month before",
   "console": {
    "page": "overview",
    "period": "daily",
@@ -43,13 +39,10 @@
    "sev": null,
    "panel": null,
    "incident": null,
-   "stage_open": "cases"
+   "stage_open": "trend"
   },
-  "grade": "wrong",
-  "confident_wrong": true,
-  "reasons": [
-   "7_action failed",
-   "3_figures failed"
-  ]
+  "grade": "right",
+  "confident_wrong": false,
+  "reasons": []
  }
 ]

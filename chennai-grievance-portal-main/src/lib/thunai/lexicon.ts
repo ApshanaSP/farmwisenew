@@ -115,16 +115,17 @@ export const SEV_WORDS: [string, Sev][] = [
 
 /**
  * The words for each window: ONE table, read by the fast lane (quick.ts periodIn), by the rules lane (PERIOD_WORDS below) and so by every language. A word added for one lane or one
- * language is added here, so "pona vaaram" cannot be a week in one lane and nothing in another (QA pass 4, RC-06). "last week" and "last month" are the matching console window
- * (the last 7 and 30 days) in all three languages (BUG-003, an accepted decision); a stretch the console does not hold ("two weeks ago", "yesterday") is not in this table.
+ * language is added here, so "pona vaaram" cannot be a week in one lane and nothing in another (QA pass 4, RC-06). The console's own windows only: "last week" and "last month"
+ * are the previous calendar week and month (lib/period/read.ts, the reader both lanes share, QA pass 7; BUG-003 had made them the last 7 and 30 days in Jarvis alone, while
+ * Ask District IQ read the calendar month), and "two weeks ago" or "yesterday" are no window here either. The shared reader reads every one of these words the same way.
  */
 export const PERIOD_TABLE: Record<PeriodKey, string[]> = {
   daily: ["last 24 hours", "24 hours", "today", "daily", "இன்று", "இன்னைக்கு", "இன்றைய", "தினசரி", "innaiku", "innaikku", "inniki"],
-  weekly: ["last 7 days", "7 days", "this week", "this weeks", "last week", "last weeks", "weekly", "week", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாராந்திரம்", "வாரம்", "வாரத்துக்கு", "வாரந்தோறும்",
+  weekly: ["last 7 days", "7 days", "this week", "this weeks", "weekly", "week", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாராந்திரம்", "வாரம்", "வாரத்துக்கு", "வாரந்தோறும்",
     "vaaram", "vaara", "vaarathukku"],
-  monthly: ["last 30 days", "30 days", "this month", "this months", "last month", "last months", "monthly", "month", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "மாசத்துக்கு", "மாதத்தோடு",
+  monthly: ["last 30 days", "30 days", "this month", "this months", "monthly", "month", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "மாசத்துக்கு", "மாதத்தோடு",
     "maasam", "maatham", "maasathukku"],
-  quarterly: ["last 90 days", "90 days", "3 months", "three months", "this quarter", "last quarter", "quarterly", "quarter", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"]
+  quarterly: ["last 90 days", "90 days", "3 months", "three months", "this quarter", "quarterly", "quarter", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"]
 };
 /** the rules lane's list: the table, and the words only that lane reads ("day", for the token reader) */
 export const PERIOD_WORDS: [string, PeriodKey][] = [

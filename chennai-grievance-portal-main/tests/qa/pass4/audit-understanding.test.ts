@@ -79,12 +79,14 @@ describe("BUG-002 holds for the named cities: no Chennai filter or brief", () =>
   });
 });
 
+// QA pass 7 changes BUG-003 for "last week / month / quarter": they are the previous calendar week, month and quarter in both rules lanes (lib/period/read.ts), counted over
+// their own dates; the console's daily window is said as the last 24 hours, since "today" is the calendar day since midnight
 describe("BUG-003 holds where the period is read: the brief says its own period", () => {
-  for (const [s, title] of [["district brief this week", "this week"], ["give me the brief for this month", "the last 30 days"], ["brief me on the last quarter", "the last 90 days"], ["indha maasam brief sollu", "the last 30 days"], ["indha vaaram brief sollu", "this week"], ["இந்த மாதம் சுருக்கம்", "the last 30 days"], ["police report this week", "this week"], ["போலீஸ் அறிக்கை இந்த மாதம்", "the last 30 days"], ["today's brief", "today"]] as const)
+  for (const [s, title] of [["district brief this week", "this week"], ["give me the brief for this month", "the last 30 days"], ["brief me on the last quarter", "last quarter (July to September)"], ["indha maasam brief sollu", "the last 30 days"], ["indha vaaram brief sollu", "this week"], ["இந்த மாதம் சுருக்கம்", "the last 30 days"], ["police report this week", "this week"], ["போலீஸ் அறிக்கை இந்த மாதம்", "the last 30 days"], ["today's brief", "the last 24 hours"]] as const)
     it(s, async () => {
       const d = stageOf(await round(s))!;
       expect(d.title).toContain(title);
-      if (title !== "today") expect(d.say.en).not.toMatch(/\btoday's brief\b|in the brief for today|came in today/);
+      expect(d.say.en).not.toMatch(/\btoday's brief\b|in the brief for today|came in today/);
     });
 });
 
@@ -265,7 +267,7 @@ describe("audit-understanding-10 P1: a locality the reference does not spell is 
 });
 
 describe("audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003)", () => {
-  for (const [s, want] of [["quarterly brief", "the last 90 days"], ["police report last quarter", "the last 90 days"], ["police report for the last 90 days", "the last 90 days"], ["police report quarterly", "the last 90 days"], ["இந்த வார நிலவரம்", "this week"], ["இந்த மாத சுருக்கம்", "the last 30 days"], ["வாராந்திர சுருக்கம்", "this week"], ["இந்த வார போலீஸ் அறிக்கை", "this week"], ["இந்த மாத காவல்துறை அறிக்கை", "the last 30 days"], ["last week's brief", "this week"], ["police report for the last 7 days", "this week"], ["இந்த வாரத்தின் சுருக்கம்", "this week"], ["இந்த மாதத்தின் சுருக்கம்", "the last 30 days"], ["மாதாந்திர சுருக்கம்", "the last 30 days"], ["மாதாந்திர போலீஸ் அறிக்கை", "the last 30 days"]] as const)
+  for (const [s, want] of [["quarterly brief", "the last 90 days"], ["police report last quarter", "last quarter (July to September)"], ["police report for the last 90 days", "the last 90 days"], ["police report quarterly", "the last 90 days"], ["இந்த வார நிலவரம்", "this week"], ["இந்த மாத சுருக்கம்", "the last 30 days"], ["வாராந்திர சுருக்கம்", "this week"], ["இந்த வார போலீஸ் அறிக்கை", "this week"], ["இந்த மாத காவல்துறை அறிக்கை", "the last 30 days"], ["last week's brief", "last week (26 Oct to 1 Nov)"], ["police report for the last 7 days", "this week"], ["இந்த வாரத்தின் சுருக்கம்", "this week"], ["இந்த மாதத்தின் சுருக்கம்", "the last 30 days"], ["மாதாந்திர சுருக்கம்", "the last 30 days"], ["மாதாந்திர போலீஸ் அறிக்கை", "the last 30 days"]] as const)
     it(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
   for (const s of ["yesterday's brief", "நேற்றைய சுருக்கம்", "netru brief sollu", "police report yesterday", "நேற்று நிலவரம்"])
     it(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));

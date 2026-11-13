@@ -23,6 +23,7 @@ import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normal
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
 import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
+import { needsDates, readPeriod } from "@/lib/period/read";
 
 const TA = /[஀-௿]/;
 
@@ -394,7 +395,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // and it is not a refusal either: the rest of the sentence (the place, the topic) is read, and the Collector is asked which window to show it in (QA4 G1, ta-explain-14, ta-noisy-07)
   const oneDayBack = /\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard);
   // "two weeks ago", "a month ago", "last year", "next week": also not a window the console holds, and not the current one either (SK-5)
-  const otherTime = !oneDayBack && unheldWindowIn(s, heard.toLowerCase());
+  // and a calendar span with its own dates ("last month", "in September", "since Diwali"): the console's filter holds none of them (the fast lane counts them;
+  // these rules only move the console), so the Collector is asked which window to show, never moved to the nearest one (QA pass 7: "last month" was set as Monthly)
+  const spanSaid = readPeriod(heard);
+  const otherTime = !oneDayBack && (unheldWindowIn(s, heard.toLowerCase()) || spanSaid.kind === "unheld" || (needsDates(spanSaid) && !["day", "now", "compare"].includes(spanSaid.kind)));
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];

@@ -6,7 +6,7 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, HARSH_BESIDE, KEEPING, PERIOD_TABLE, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, HARSH_BESIDE, KEEPING, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
 import { foreignIn } from "./entities";
 import { betterCategory, saidStems } from "./catlabels";
 import { CATEGORY_LABELS } from "./narrate";
@@ -15,6 +15,7 @@ import { normalise } from "./normalise";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { asksForbidden } from "./privacy";
+import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -53,10 +54,13 @@ export function zonesIn(t: string, w: World): number[] {
       if (at >= 0) { hits.push({ n: Number(k), at }); break; }
     }
     // a Tamil name with a case ending changes its last letter: அடையாறு, அடையாறில்; அம்பத்தூர், அம்பத்தூரில்
+    // a name that ends in ம் takes த்த before its ending (மாதவரம், மாதவரத்தில்; வளசரவாக்கம், வளசரவாக்கத்தில்), and a name written with dots (திரு.வி.க. நகர்)
+    // is read as the sentence is, without them: in Tamil these zones were dropped and the district's figures given (QA pass 7, pass4-open-18: m18, m23, m27)
     if (!hits.some((h) => h.n === Number(k))) for (const word of z.ta) {
-      const stem = word.replace(/[்ுூ]$/, "");
-      const at = stem.length >= 4 ? t.indexOf(stem) : -1;
-      if (at >= 0) { hits.push({ n: Number(k), at }); break; }
+      const plain = norm(word).trim();
+      const stems = [plain.replace(/[்ுூ]$/, ""), /ம்$/.test(plain) ? plain.slice(0, -2) : ""].filter((x) => x.length >= 4);
+      const at = Math.min(...stems.map((x) => { const i = t.indexOf(x); return i < 0 ? Infinity : i; }));
+      if (Number.isFinite(at)) { hits.push({ n: Number(k), at }); break; }
     }
   }
   for (const z of w.zones) {
@@ -126,6 +130,8 @@ const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|cr
 const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|(cases|complaints|incidents|issues|problems|ones|reports|grievances) (that are |which are |are |still |now |currently )?open (in|at|near|for|now|today|here|across|within)|(that|which) are (still |now |currently )?open|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
 /** finished cases: "resolved", "closed", "solved" (English), the Tamil and Tanglish words; a lane that dropped this word answered with every case (SK-3) */
 const RESOLVED_RE = /\b(resolved|closed|solved|completed|settled|rectified|mudinjadhu|mudinja|theerthu vecha|theerthaachu|close (aachu|aayiduchu|aagi|pannitanga|pannita))\b|தீர்க்கப்பட்ட|தீர்க்கப்பட்டவை|முடிக்கப்பட்ட|முடிந்த|தீர்வான|மூடப்பட்ட/;
+/** every status phrase, and the Tamil word that ends one ("காலக்கெடு தாண்டிய"), for taking them out of a sentence */
+const STATUS_ALL = new RegExp(`${OVERDUE_RE.source}|${OPEN_RE.source}|${RESOLVED_RE.source}|(?<![஀-௿])(?:தாண்டிய|தாண்டியவை|தாண்டியுள்ள|தாண்டியுள்ளன|மீறிய|மீறியுள்ள|கடந்துவிட்ட)(?![஀-௿])`, "g");
 export function statusIn(t: string): "overdue" | "open" | "resolved" | null {
   return OVERDUE_RE.test(t) ? "overdue" : OPEN_RE.test(t) ? "open" : RESOLVED_RE.test(t) ? "resolved" : null;
 }
@@ -148,12 +154,6 @@ export function sevIn(t: string): Sev | null {
   return null;
 }
 /**
- * A window the console does not hold: yesterday, the day before, next week or month (and the Tamil and Tanglish words for them, with last week and last month, which the Tamil lanes
- * have never mapped to a window). The windows it holds are the last 24 hours, 7, 30 and 90 days; a lane that answered these with the current window would say the wrong period with a straight face, so it hands them on (RC-06). English "last week/month/quarter" stay the matching window, named in the screen's title (BUG-003, an accepted decision).
- */
-const CALENDAR_EN = /\b(yesterdays?|day before( yesterday)?|next (week|month|quarter)s?)\b|\b(nethu|neththu|netru|netraiya|pona (vaaram|maasam|maatham)|kadantha (vaaram|maasam|maatham)|last (vaaram|maasam)|adutha (vaaram|maasam))\b/;
-const CALENDAR_TA = ["நேற்று", "நேத்து", "நேற்றைய", "கடந்த வாரம்", "கடந்த வார", "போன வாரம்", "போன வார", "கடந்த மாதம்", "கடந்த மாத", "கடந்த மாசம்", "போன மாதம்", "போன மாசம்", "போன மாச", "கடந்த காலாண்டு", "போன காலாண்டு", "முந்தைய வாரம்", "முந்தைய மாதம்", "அடுத்த வாரம்", "அடுத்த மாதம்"];
-/**
  * A time that is not one of the console's windows and is not "last week/month" either: "two weeks ago", "a month ago", "3 months back", "last year", "next week" (and the Tamil and
  * Tanglish words for them). The matching window (the last 7 or 30 days) is the answer to "last week", never to "two weeks ago": that is a different stretch of time (RC-06, SK-5).
  * `t` is the sentence as a lane reads it (lower case, number words or digits), `raw` the Tamil letters as spoken.
@@ -163,13 +163,19 @@ const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|
 const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaaram|maasam|maatham|varusham) (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham)\b|\bpona (?:varusham|varudam)\b/;
 const AGO_TA = /(?:நாள்|நாட்கள்|வாரம்|வாரங்கள்|வாரத்துக்கு|மாதம்|மாதங்கள்|மாசம்|மாசத்துக்கு|ஆண்டு|வருடம்|வருஷம்)(?:த்துக்கு|க்கு|கள்)?\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)/;
 export const unheldWindowIn = (t: string, raw = t): boolean => AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(raw);
-export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0) || unheldWindowIn(t);
+/**
+ * A time no lane can answer: "two weeks ago", "next week", "last year" (lib/period/read.ts, unheld). Yesterday, last week and last month are no longer
+ * in this list: the shared reader gives them their calendar dates and the screens count them (QA pass 7; they were handed on, or in English read as the
+ * last 7 and 30 days, BUG-003, which made "last month" the last 30 days: pass4-open-16).
+ */
+export const calendarWindowIn = (t: string): boolean => readPeriod(t).kind === "unheld";
+/**
+ * The console window a sentence names, read by the one shared reader (lib/period/read.ts): "this week", "last 30 days", "monthly". Today is held by the last
+ * 24 hours. A span with its own dates (last month, yesterday) or the current state ("right now") is no window: null here, `spanIn` has it.
+ */
 export function periodIn(t: string): PeriodKey | null {
-  // the one table of period words (lexicon.ts PERIOD_TABLE); "now" and "ippo" are daily only in this lane (a spoken "now" is no window in the rules lane's token reader)
-  if (has(t, [...PERIOD_TABLE.daily, "now", "ippo"])) return "daily";
-  // the quarter first: "மூன்று மாதம்" (three months) holds the word for a month, and was read as the last 30 days
-  for (const k of ["quarterly", "weekly", "monthly"] as const) if (has(t, PERIOD_TABLE[k])) return k;
-  return null;
+  const s = readPeriod(t);
+  return s.kind === "window" ? s.key : s.kind === "day" && s.back === 0 ? "daily" : null;
 }
 
 const NEWS = ["news", "headline", "headlines", "seithi", "seithigal", "செய்தி", "செய்திகள்", "செய்திகளை", "நியூஸ்"];
@@ -309,7 +315,9 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
   if (asksForbidden(text)) return "forbidden-order";
   const all = t.trim().split(" ");
-  const left = all.filter((x) => !explained(x, w)).length;
+  // the words a slot reader reads are not unknown: a status said as a phrase ("காலக்கெடு தாண்டிய", "past the deadline") and the time the sentence names
+  // ("கடந்த வாரம்", "pona vaaram"); counted as unknown, "last week's overdue complaints" in Tamil fell to the model (pass4-open-14)
+  const left = periodWordsOut(t.replace(STATUS_ALL, " ")).trim().split(" ").filter((x) => x && !explained(x, w)).length;
   if (left >= 3 || (left >= 2 && left / all.length > 0.4)) return "unknown-words";
   // a kind of complaint no category names ("the power cut complaint", "noise complaints"): listing every case of the place would answer about something else. The word in front of
   // "complaint" that nothing here reads is the topic; the planner, which can search the records, takes it (RC-05, audit-understanding-16)
@@ -343,20 +351,58 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
+  const spec = readPeriod(text);
+  // a time no lane can answer ("two weeks ago", "next week") is never answered with the current window (RC-06)
+  // (also for the readings that skip the bail-outs, noBail: the rules read after a planner miss and a follow-up's frame; review break A1)
+  if (spec.kind === "unheld") return null;
+  const q = readScreen(text, w, o, spec);
+  return q ? withSpan(q, spec) : q;
+}
+
+/** Is it asked as a count ("how many", "evlo", எத்தனை)? A count is answered for the period asked, never widened to another (P6-022). */
+export const asksCount = (text: string): boolean => /\b(how many|how much|count|number of|total|evlo|evalo|evvalo|evvalavu|ethana|ethanai|eththanai|ethhana)\b|எத்தனை|எவ்வளவு|மொத்தம்/i.test(text);
+
+/**
+ * The time a request named, on the screen that answers it (QA pass 7). A list or a count, and a brief, are counted over the span's own dates (today since
+ * midnight, last month, right now); "up or down from last month" on cases is the comparison of two windows (the trend screen's); "today" on a screen
+ * that only knows the console's windows is the last 24 hours that hold it, as before. Any other screen with a span it cannot count is left to the planner,
+ * never answered with the nearest window.
+ */
+function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
+  if (!needsDates(spec)) return q;
+  if (spec.kind === "compare") {
+    if (q.recipe !== "cases" || q.slots.status === "resolved") return null;
+    return { recipe: "trend", slots: { cat: q.slots.cat ?? null, zones: q.slots.zones ?? [], sev: q.slots.sev ?? null, status: q.slots.status ?? null, period: spec.key, span: spec, fresh: true } };
+  }
+  // (a brief for today stays the briefing of the last 24 hours that holds it, with its conditions line: the same rule as the resolve lane, entities.ts)
+  if ((q.recipe === "cases" && q.slots.status !== "resolved") || (q.recipe === "brief" && !(spec.kind === "day" && spec.back === 0))) return { ...q, slots: { ...q.slots, period: keyOf(spec), span: spec } };
+  // a reading (air, rain, lakes), prices and a place search have no reporting window: the time words change nothing
+  if (["readings", "prices", "nearby"].includes(q.recipe)) return q;
+  // a list of resolved cases over a span is not one this lane can count ("resolved today" is since midnight in Ask District IQ): handed on, never the last 24 hours
+  if (q.recipe === "cases") return null;
+  if (spec.kind === "day" && spec.back === 0) return { ...q, slots: { ...q.slots, period: "daily" } };
+  return null;
+}
+
+/** the word for a zone or an area, in either language, with a Tamil case ending too ("மண்டலத்தில்": "which zone has the most", in Tamil, QA pass 7 m03) */
+const ZONE_WORDS = ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "மண்டலத்", "மண்டலங்களி", "பகுதி", "பகுதிகள்"];
+
+/** The fast lane's reading of one sentence, before the time it named is put on it. */
+function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: PeriodSpec): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
   // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
   if (foreignIn(text, w)) return null;
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
-  // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
-  if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
-  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
+  // the period the sentence names, by the shared reader: a console window, or the window that stands for a span until withSpan dates it
+  // (the severity is read without the time phrase: "குறைந்ததா", "did it fall", in a comparison is not the level "low")
+  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
@@ -400,9 +446,12 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
-  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // a ranking by a status ("by open complaints", "திறந்த புகார்கள் அதிகம்") is not the attention score this screen ranks by: handed on in every language, as the English
+  // "open" already is (QA pass 7: once the status words stopped counting as unknown, the Tamil form got the attention ranking while the English was handed on)
+  if (has(t, RANK) && !cat && statusIn(t) != null && has(t, ZONE_WORDS)) return null;
+  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
-  if (has(t, RANK) && cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return null;
+  if (has(t, RANK) && cat && has(t, ZONE_WORDS)) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list

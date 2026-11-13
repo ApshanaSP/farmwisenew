@@ -21,6 +21,7 @@ import { AREA_WORDS } from "./areas";
 import { LOCALITY_WORDS } from "./areas.localities";
 import { isEnglishWord } from "./english";
 import { calendarWindowIn, isListedExact, listedWord, periodIn } from "./quick";
+import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -455,7 +456,10 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `) || KEEPING.test(text) || CHANGE_RECORD.test(text)) return null;
   // the one period table (quick.ts) reads every lane's window; a window the console does not hold (yesterday, last week, last month) is not answered with the current one (RC-06)
   const tn = ` ${text.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim()} `;
-  if (calendarWindowIn(tn)) return null;
+  // the time it names, by the one shared reader (lib/period/read.ts): a time no lane can answer is not answered with the current window (RC-06), a comparison of
+  // two periods is not a brief; "last month" is the calendar month, counted over its own dates by the brief (QA pass 7, pass4-open-16: it was the last 30 days)
+  const spec = readPeriod(text);
+  if (calendarWindowIn(tn) || spec.kind === "compare") return null;
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
@@ -482,7 +486,9 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   if (loc && loc.zone == null) slots.name = loc.name;
   // a place of the Corporation's own list that the data cannot place in a zone ("Chetpet police report", Tamil "தி நகர்") is said the same way, never dropped (RC-02, audit-understanding-10)
   else if (!loc && !zone && e.kind !== "zone") { const u = unplacedPlace(text, w, e); if (u) slots.name = u; }
-  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? "daily", fresh: true } };
+  // today is held by the console's last 24 hours (the briefing tool's window); any other span is counted over its own dates (screens.ts spanBrief)
+  const own = needsDates(spec) && !(spec.kind === "day" && spec.back === 0);
+  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? keyOf(spec) ?? "daily", ...(own ? { span: spec } : {}), fresh: true } };
 }
 
 /** Words that make a sentence something other than a request for a brief on a body. */

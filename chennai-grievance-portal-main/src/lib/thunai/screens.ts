@@ -8,6 +8,7 @@ import type { ToolResult } from "@/lib/assistant/types";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
 import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
+import { needsDates, type PeriodSpec, type Span, type Comparison, type Words } from "@/lib/period/read";
 import { nextSteps } from "./next";
 import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
@@ -52,6 +53,9 @@ export interface Slots {
   ids?: string[];
   /** brief: a body above the departments (GCC, PWD), briefed across its own departments */
   org?: string | null;
+  /** the time the request named, when it is not one of the console's four windows: today since midnight, last month, right now, or a window against
+   * the one before (lib/period/read.ts); the screen counts that span itself (QA pass 7) */
+  span?: PeriodSpec;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -68,16 +72,22 @@ export interface Hands {
   list?: (s: ScopeT, f: { sev: string | null; status: string | null; q: string | null; sort: "sev" | "t" | "c"; page?: number }) => Promise<{ rows: Row[]; total: number; incidents?: number; asOf: string }>;
   news: (s: ScopeT) => Promise<{ rows: Row[]; total: number; asOf: string }>;
   map: (q: string) => Promise<Row>;
+  /** a list and its counts over a span with its own dates (data.ts consoleSpan); absent, a screen says it cannot count the span */
+  span?: (spec: PeriodSpec, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null; n: number }) => Promise<{ span: Span; rows: Row[]; total: number; severe: number; open: number; late: number; dead: number; prev: { n: number; label: Words } | null; asOf: string } | null>;
+  /** a window against the one before it (data.ts consoleCompare) */
+  compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<{ cmp: Comparison; n: number; prev: number; severe: number; open: number; asOf: string } | null>;
 }
 
 export interface Built { doc: StageDocT; runs: string[] }
 
 // ------------------------------------------------------------------ words --
 
-const PERIOD_EN: Record<PeriodKey, string> = { daily: "today", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
+// the console's daily window is the last 24 hours, said so: "today" is the calendar day since midnight (lib/period/read.ts), and a screen over the 24 hours that said
+// "today" put figures of yesterday evening under the word (QA pass 7, review break A4, the P6-022 class)
+const PERIOD_EN: Record<PeriodKey, string> = { daily: "the last 24 hours", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
 /** the period as an adverb after a noun: "cases today", "cases this week", "cases in the last 30 days" (never "cases the last 30 days", QA4 G1: AUD-NF-16, audit-understanding-20) */
-const inPeriod = (p: PeriodKey): string => (p === "monthly" || p === "quarterly" ? `in ${PERIOD_EN[p]}` : PERIOD_EN[p]);
-const PERIOD_TA: Record<PeriodKey, string> = { daily: "இன்று", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
+const inPeriod = (p: PeriodKey): string => (p === "weekly" ? PERIOD_EN[p] : `in ${PERIOD_EN[p]}`);
+const PERIOD_TA: Record<PeriodKey, string> = { daily: "கடந்த 24 மணி நேரத்தில்", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
 const SEV_TA: Record<string, string> = { Severe: "கடுமையான", High: "அதிக முக்கியத்துவ", Medium: "நடுத்தர", Low: "குறைந்த" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -126,9 +136,9 @@ export function fit(s: string, n: number): string {
 const fitBi = (b: Bilingual): Bilingual => ({ en: fit(b.en, 600), ta: fit(b.ta, 900) });
 
 /** The scope a screen covers, in words ("Adyar · flooding · this week"). */
-function scopeWords(w: World, s: ScopeT): Bilingual {
-  const en = [zoneName(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.name ?? s.taluk : null, deptName(w, s.dept), catLabel(w, s.cat), s.sev, PERIOD_EN[s.period]].filter(Boolean);
-  const ta = [zoneTa(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.ta ?? s.taluk : null, deptTa(w, s.dept), catTa(w, s.cat), s.sev ? SEV_TA[s.sev] : null, PERIOD_TA[s.period]].filter(Boolean);
+function scopeWords(w: World, s: ScopeT, withPeriod = true): Bilingual {
+  const en = [zoneName(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.name ?? s.taluk : null, deptName(w, s.dept), catLabel(w, s.cat), s.sev, withPeriod ? PERIOD_EN[s.period] : null].filter(Boolean);
+  const ta = [zoneTa(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.ta ?? s.taluk : null, deptTa(w, s.dept), catTa(w, s.cat), s.sev ? SEV_TA[s.sev] : null, withPeriod ? PERIOD_TA[s.period] : null].filter(Boolean);
   return bi(en.join(" · "), ta.join(" · "));
 }
 
@@ -452,6 +462,8 @@ async function complete(c: Ctx): Promise<Part> {
 
 async function cases(c: Ctx): Promise<Part> {
   const { w, s, slots } = c;
+  const sp = spanned(slots);
+  if (sp) return spanCases(c, sp);
   const sev = slots.sev;
   const n = Math.min(Math.max(slots.n ?? 12, 1), 30);
   let rows: CaseRowT[]; let total: number; let source: "console-severity" | "list";
@@ -562,7 +574,7 @@ async function cases(c: Ctx): Promise<Part> {
  * their deadline), who holds most of them, and what to say next. Names come from each incident's own short summary,
  * never an id or a citizen's words; every figure is a count of the rows.
  */
-export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean } = {}): Bilingual {
+export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean; when?: Bilingual; state?: Bilingual } = {}): Bilingual {
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
   // a case is named by its short summary; a long title would be the record read out, so it is retold as its kind and place
   const where = (r: CaseRowT) => {
@@ -580,17 +592,164 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
   // who holds most is a count over the rows given: said only for a list given whole
   const [lead] = (opts.complete ?? rows.length >= total) ? [...byDept.entries()].sort((a, b) => b[1] - a[1]) : [];
-  const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${inPeriod(period)}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
+  // a span named in the request is said as it was counted ("today (6 Nov, since midnight)", "right now, whatever the day reported"), never as a window
+  const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)}${opts.state?.en ?? ""} ${opts.when?.en ?? inPeriod(period)}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
   const need = late.length
     ? `${lateN === 1 ? "One is past its deadline and needs" : `${spoken(lateN)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
     : `${lateN ? `${lateN === 1 ? "One is" : `${spoken(lateN)} are`} past the deadline, not among these. ` : ""}The most urgent: ${where(first[0])}.`;
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
-  const ta = [`${PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்.`,
+  const ta = [`${opts.when?.ta ?? PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${opts.state?.ta ?? ""}.`,
     late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
     lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
+
+// ------------------------------------------------------------------ spans (QA pass 7) --
+// A request that names a span the console's four windows do not hold ("today" since midnight, yesterday, last month, a named month, "right now") is
+// counted over that span's own dates with Ask District IQ's counting (data.ts consoleSpan), and every line says the span: never the window that
+// happens to be nearest (P6-022: "today" answered with this week; pass4-open-16: "last month" answered with the last 30 days). The meaning of the
+// words is the shared reader's (lib/period/read.ts).
+
+/** The span a request names with its own dates, when this screen must count it itself (not a comparison: that is periodCompare). */
+const spanned = (slots: Slots): PeriodSpec | null => (slots.span && needsDates(slots.span) && slots.span.kind !== "compare" ? slots.span : null);
+const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Hands that cannot count a span (a test's fakes): said plainly, never answered with another window. */
+function cannotSpan(c: Ctx, spec: PeriodSpec): Part {
+  void spec;
+  return { title: c.heard.slice(0, 120) || "Cases", takeaway: null,
+    say: bi("I can't count that stretch of time here. Ask District IQ can, or I can show the last 24 hours, 7, 30 or 90 days.", "அந்தக் காலத்தை இங்கே எண்ண முடியாது. District IQ-இடம் கேளுங்கள், அல்லது கடந்த 24 மணி நேரம், 7, 30, 90 நாட்களைக் காட்டலாம்."),
+    blocks: [{ kind: "Note", id: "span", text: "This stretch of time is not one of the console's windows, and these figures could not be counted for it." }] };
+}
+
+async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
+  const { w, s, slots } = c;
+  if (!c.h.span) return cannotSpan(c, spec);
+  const sev = slots.sev;
+  const n = Math.min(Math.max(slots.n ?? 12, 1), 30);
+  const status = slots.status === "open" || slots.status === "overdue" ? slots.status : null;
+  c.runs.push("incidents");
+  c.sources.add("incidents");
+  const r = await c.h.span(spec, s, { sev, status, n });
+  if (!r) return cannotSpan(c, spec);
+  c.asOf ??= r.asOf;
+  const when = r.span.label;
+  const rows = sortRows(r.rows.map((x) => caseRow(x, w)), slots.sort).slice(0, n);
+  const asTa = /[஀-௿]/.test(c.heard);
+  const scope = scopeWords(w, { ...s, sev: null }, false);
+  const sevWord = sev ? `${sev.toLowerCase()} ` : "";
+  // what was counted, said with the count: "open now" for the current state, "still open" or "past their deadline" when that was asked
+  const state = r.span.now ? bi(status === "overdue" ? " open past their deadline now" : " open now", status === "overdue" ? " இப்போது காலக்கெடு தாண்டி நிலுவையில்" : " இப்போது நிலுவையில்")
+    : status === "overdue" ? bi(" past their deadline", " காலக்கெடு தாண்டியவை") : status === "open" ? bi(" still open", " இன்னும் நிலுவையில்") : bi("", "");
+  const whenEn = r.span.now ? "" : ` ${when.en}`, whenTa = r.span.now ? "" : `${when.ta} `;
+  // (the list's title has 160 characters on the catalog: a Tamil zone, department, kind and span ran past it and the screen was refused, review break C27)
+  const title = clip(asTa ? [`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · ")
+    : [`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160);
+  const kpis: BlockT = { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+    { key: "total", label: clip(asTa ? `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள்${state.ta}, ${r.span.now ? "எந்த நாள் பதிவானாலும்" : when.ta.replace(/\s*\(.*\)$/, "")}` : `${sev ?? "All"} cases${state.en}, ${r.span.now ? "whatever the day reported" : when.en}`, 80),
+      value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
+    ...(status === "overdue" ? [] : [{ key: "late", label: asTa ? "காலக்கெடு தாண்டியவை" : "Past their deadline", value: r.late, unit: null, prev: null, delta: null, tone: r.late ? "bad" as const : "good" as const, spark: [] }]),
+    ...(status || r.span.now ? [] : [{ key: "open", label: asTa ? "இன்னும் நிலுவையில்" : "Still open", value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }])
+  ] };
+  if (r.prev && kpis.kind === "Kpis") c.notes.push(`Beside the count: ${r.prev.label.en}, ${r.prev.n}.`);
+  if (!r.total) {
+    // none in the span asked: said for that span, never widened to another (P6-022)
+    return { title, takeaway: null, blocks: [kpis, { kind: "Note", id: "none", text: `No ${sevWord}incidents${state.en}${whenEn}${scope.en ? `, ${scope.en}` : ""}.` }],
+      say: bi(`No ${sevWord}cases${state.en}${whenEn}${r.span.now ? "" : "."}${r.span.now ? ", whatever the day reported." : ""}`, `${whenTa}${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${state.ta} எதுவும் இல்லை.`) };
+  }
+  const complete = rows.length >= r.total;
+  const say = casesSay(rows, r.total, sev, s.period, { late: r.late, complete, when: bi(r.span.now ? "right now, whatever the day reported" : when.en, r.span.now ? "இப்போது, எந்த நாள் பதிவானாலும்" : when.ta), state });
+  const late = r.late;
+  const takeaway = late && status !== "overdue" ? bi(`${late} of the ${r.total} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${r.total}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`) : null;
+  const blocks: BlockT[] = [kpis, { kind: "CaseList", id: "cases", title, source: "list", sev, total: r.total, rows }];
+  const pts = points(rows);
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: asTa ? "எங்கே உள்ளன" : "Where they are", rule: asTa ? "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை." : "Numbered as in the list; cases without an exact place are not drawn.", shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
+  return { title, takeaway, say, blocks };
+}
+
+/** A brief on a place or a department over a span (a zone's report for last month): its figures over the span's own dates, and the cases that matter most. */
+async function spanBrief(c: Ctx, spec: PeriodSpec): Promise<Part> {
+  const { w, s } = c;
+  // a body above the departments (GCC, PWD) has no one department to count by: not counted over a span here
+  if (!c.h.span || c.slots.org) return cannotSpan(c, spec);
+  c.runs.push("incidents");
+  c.sources.add("incidents");
+  const r = await c.h.span(spec, s, { sev: null, status: null, n: 6 });
+  if (!r) return cannotSpan(c, spec);
+  c.asOf ??= r.asOf;
+  const when = r.span.label;
+  const where = [zoneName(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.name ?? s.taluk : null, deptName(w, s.dept), catLabel(w, s.cat)].filter(Boolean).join(", ") || "Chennai district";
+  const whereTa = [zoneTa(w, s.zone), s.taluk ? w.taluks.find((t) => t.code === s.taluk)?.ta ?? s.taluk : null, deptTa(w, s.dept), catTa(w, s.cat)].filter(Boolean).join(", ") || "சென்னை மாவட்டம்";
+  const rows = r.rows.map((x) => caseRow(x, w));
+  const lead = r.span.now
+    ? bi(`In ${where}, ${plural(r.total, "incident is", "incidents are")} open right now, whatever the day reported; ${spoken(r.late)} past ${r.late === 1 ? "its" : "their"} deadline, ${spoken(r.severe)} severe.`,
+      `${whereTa}: இப்போது ${spoken(r.total)} சம்பவங்கள் நிலுவையில்; ${spoken(r.late)} காலக்கெடு தாண்டியவை, ${spoken(r.severe)} கடுமையானவை.`)
+    : bi(`${capFirst(when.en)}: ${plural(r.total, "incident was", "incidents were")} reported in ${where}; ${spoken(r.open)} ${r.open === 1 ? "is" : "are"} still open, ${spoken(r.late)} past ${r.late === 1 ? "its" : "their"} deadline, ${spoken(r.severe)} severe.`,
+      `${when.ta}: ${whereTa} பகுதியில் ${spoken(r.total)} சம்பவங்கள் பதிவாகின; ${spoken(r.open)} இன்னும் நிலுவையில், ${spoken(r.late)} காலக்கெடு தாண்டியவை, ${spoken(r.severe)} கடுமையானவை.`);
+  const top = rows.slice(0, 4);
+  const pointsTa = [{ text: lead.en, ta: lead.ta, incidentId: null as string | null },
+    ...top.map((x) => ({ text: safeText(`${spokenLabel(x)}${x.zoneName && !spokenLabel(x).includes(x.zoneName) ? `, ${x.zoneName}` : ""}${x.overdue ? ": past its deadline" : ""}`, 400),
+      ta: safeText(`${plainWhat(x.cat, x.title)?.ta ?? "ஒரு பிரச்சினை"}${x.zone ? `, ${ZONE_TA[x.zone] ?? x.zoneName ?? ""}` : ""}${x.overdue ? ": காலக்கெடு தாண்டியது" : ""}`, 400), incidentId: x.id }))];
+  if (r.prev) c.notes.push(`Reported ${r.prev.label.en}: ${r.prev.n}, for comparison.`);
+  if (r.span.note) c.notes.push(r.span.note);
+  return {
+    title: `${where} · brief, ${r.span.now ? "open now" : when.en}`,
+    takeaway: lead,
+    say: bi(`${pointsTa.length} ${pointsTa.length === 1 ? "point" : "points"} in the brief. ${lead.en}`, `சுருக்கத்தில் ${pointsTa.length} குறிப்புகள். ${lead.ta}`),
+    blocks: [
+      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+        { key: "reported", label: clip(r.span.now ? "Open now" : `Reported, ${when.en}`, 80), value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: "neutral", spark: [] },
+        { key: "severe", label: "Severe", value: r.severe, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        ...(r.span.now ? [] : [{ key: "open", label: "Still open", value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }]),
+        { key: "overdue", label: "Past deadline", value: r.late, unit: null, prev: null, delta: null, tone: "bad", spark: [] }
+      ] },
+      { kind: "Brief", id: "brief", title: "The brief", points: pointsTa }
+    ]
+  };
+}
+
+/**
+ * Whether a kind of complaint went up or down against last month: the window back from now against the one of the same length just before it, as the console's own
+ * "against the previous period" (pass4-open-17: this was a list of 616 cases). Both counts and the change are said, with the dates of each window.
+ */
+async function periodCompare(c: Ctx, key: PeriodKey): Promise<Part> {
+  const { w, s, slots } = c;
+  const subject = catLabel(w, s.cat) ?? "Incidents";
+  const subjectTa = catTa(w, s.cat) ?? "சம்பவங்கள்";
+  if (!c.h.compare) return cannotSpan(c, { kind: "compare", key });
+  c.runs.push("count_incidents");
+  c.sources.add("incidents");
+  const status = slots.status === "open" || slots.status === "overdue" ? slots.status : null;
+  const r = await c.h.compare(key, s, { sev: slots.sev, status });
+  if (!r) return cannotSpan(c, { kind: "compare", key });
+  c.asOf ??= r.asOf;
+  const where = scopeWords(w, { ...s, cat: null, sev: null }, false);
+  const sevWord = slots.sev ? `${slots.sev.toLowerCase()} ` : "";
+  const what = `${sevWord}${subject.toLowerCase()}${generic(subject) ? "" : " incidents"}`;
+  const diff = r.n - r.prev;
+  // the change as the share of the earlier window, rounded the way it is read out
+  const pct = r.prev ? Math.round((Math.abs(diff) / r.prev) * 100) : null;
+  const dir = diff > 0 ? "up" : diff < 0 ? "down" : "level";
+  const cur = r.cmp.cur.label, before = r.cmp.prev.label;
+  const en = dir === "level"
+    ? `${capFirst(what)} are level: ${spoken(r.n)} in the ${cur.en}, the same as in ${before.en}.`
+    : `${capFirst(what)} are ${dir}: ${spoken(r.n)} in the ${cur.en} against ${spoken(r.prev)} in ${before.en}${pct != null ? `, ${pct}% ${dir === "up" ? "higher" : "lower"}` : ""}.`;
+  const ta = dir === "level"
+    ? `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} அதே அளவு.`
+    : `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} ${spoken(r.prev)}; ${pct != null ? `${pct}% ` : ""}${dir === "up" ? "அதிகம்" : "குறைவு"}.`;
+  c.notes.push(`Two windows of equal length: ${r.cmp.label.en}. Incidents first reported in each, with the console's filters for ${where.en || "the district"}.`);
+  return {
+    title: `${subject}${where.en ? ` · ${where.en}` : ""} · ${r.cmp.cur.label.en} against the ${key === "daily" ? "day" : key === "weekly" ? "week" : key === "monthly" ? "month" : "quarter"} before`,
+    takeaway: bi(en, ta),
+    say: bi(en, ta),
+    blocks: [{ kind: "Kpis", id: "kpis", title: "Against the period before", items: [
+      { key: "cur", label: clip(capFirst(cur.en), 80), value: r.n, unit: null, prev: r.prev, delta: diff, pct: pct == null ? null : diff < 0 ? -pct : pct, tone: diff > 0 ? "bad" : "good", spark: [] },
+      { key: "prev", label: clip(capFirst(before.en), 80), value: r.prev, unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+    ] }]
+  };
+}
+const generic = (subject: string) => /^incidents$/i.test(subject);
 
 async function caseDetail(c: Ctx): Promise<Part> {
   let id = c.slots.id;
@@ -984,6 +1143,7 @@ async function seriesBlock(c: Ctx, s: ScopeT, title: string): Promise<{ block: E
 }
 
 async function trend(c: Ctx): Promise<Part> {
+  if (c.slots.span?.kind === "compare") return periodCompare(c, c.slots.span.key);
   const { w, s } = c;
   const scope = scopeWords(w, { ...s, cat: null });
   const subject = catLabel(w, s.cat) ?? "Incidents";
@@ -1386,6 +1546,8 @@ async function bodyBrief(c: Ctx): Promise<Part> {
 }
 
 async function brief(c: Ctx): Promise<Part> {
+  const sp = spanned(c.slots);
+  if (sp) return spanBrief(c, sp);
   if (c.slots.org || c.s.dept) return bodyBrief(c);
   const r = await call(c, "briefing", { scope: scopeArg(c.s) });
   const d = r.data as { headline: string[]; stats: Record<string, number>; attention: Row[]; emerging: Row[]; conditions: string | null };

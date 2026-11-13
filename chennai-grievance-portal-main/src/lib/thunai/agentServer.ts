@@ -9,7 +9,8 @@ import { AgentPlanLenient, AgentPlanSchema, directScreen, runThunaiAgent, type A
 import { PlanBody, screenOf } from "./brain";
 import type { Hands } from "./screens";
 import { checkStage, RECIPES, type StageContext } from "./stage";
-import { offTopic, quickScreen } from "./quick";
+import { asksCount, offTopic, quickScreen } from "./quick";
+import { spanScreen } from "./spanned";
 import type { Lang, World } from "./types";
 
 const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock" ? "bedrock" : "groq");
@@ -41,7 +42,7 @@ export async function handleAgent(b: AgentBodyT, world: World, rawHands: Hands, 
   if (asksPrivate(b.text)) return { kind: "refuse", lang: plang, reply: PRIVACY_REPLY[plang], steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "privacy" };
   if (asksForbidden(b.text)) return { kind: "refuse", lang: plang, reply: NEVER_REPLY[plang], steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "never" };
   const state = screenOf(b.state);
-  if (b.direct) return served(await directScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang));
+  if (b.direct) return served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang));
   // the everyday questions (severe cases, a place's news, prices, air, rain, lakes, why, where) are answered from the data
   // at once by rules, in the language they were asked in; the model is asked only when the rules are not sure
   // Jarvis answers only about the district: anything else gets a polite "ask me about the district" and no model call
@@ -55,15 +56,16 @@ export async function handleAgent(b: AgentBodyT, world: World, rawHands: Hands, 
   const quick = quickScreen(b.text, world);
   if (quick) {
     const lang: Lang = /[஀-௿]/.test(b.text) ? "ta" : "en";
-    let r = served(await directScreen(quick.recipe, quick.slots, state, world, hands, b.text, lang));
+    let r = served(await spanScreen(quick.recipe, quick.slots, state, world, hands, b.text, lang));
     // nothing today ("where did the fire happen today", no fire today): the last 7 days instead, and Jarvis says so
     const empty = (x: AgentResult) => !!x.stage && x.stage.blocks.every((bl) => bl.kind === "Note");
-    if (empty(r) && quick.recipe === "cases" && (quick.slots.period === "daily" || quick.slots.period === "weekly")) {
+    // a count, or a span the request named with its own dates, is answered for that period, never widened to another (P6-022)
+    if (empty(r) && quick.recipe === "cases" && !quick.slots.span && !asksCount(b.text) && (quick.slots.period === "daily" || quick.slots.period === "weekly")) {
       const tries: ["weekly" | "monthly", string, string][] = quick.slots.period === "daily"
         ? [["weekly", "None today. ", "இன்று எதுவும் இல்லை. "], ["monthly", "None today or this week. ", "இன்றும் இந்த வாரமும் இல்லை. "]]
         : [["monthly", "None this week. ", "இந்த வாரம் இல்லை. "]];
       for (const [period, en, ta] of tries) {
-        const wk = served(await directScreen("cases", { ...quick.slots, period }, state, world, hands, b.text, lang));
+        const wk = served(await spanScreen("cases", { ...quick.slots, period }, state, world, hands, b.text, lang));
         if (!wk.stage || empty(wk)) continue;
         r = { ...wk, say: `${lang === "ta" ? ta : en}${wk.say ?? ""}`, stage: { ...wk.stage, say: { en: `${en}${wk.stage.say.en}`, ta: `${ta}${wk.stage.say.ta}` } } };
         break;
