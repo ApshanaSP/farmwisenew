@@ -166,7 +166,7 @@ const OWN_DEPT_NOTE = "Answered for your department only: a department console d
  * department's own headline figures, a text search becomes a search of the department's incidents, and contacts are
  * the department's.
  */
-function lockTools(tools: { name: string; args: Record<string, unknown> }[], dept: string, base: Scope, notes: string[]) {
+export function lockTools(tools: { name: string; args: Record<string, unknown> }[], dept: string, base: Scope, notes: string[]) {
   const out: { name: string; args: Record<string, unknown> }[] = [];
   for (const t of tools) {
     const scope = { ...((t.args.scope as Scope | undefined) ?? base), dept };
@@ -177,6 +177,9 @@ function lockTools(tools: { name: string; args: Record<string, unknown> }[], dep
       out.push({ name: "incidents", args: { scope, sev: null, status: null, q: String(t.args.text ?? "").slice(0, 80) || null, allTime: true } });
     } else if (t.name === "contacts") {
       out.push({ ...t, args: { ...t.args, dept } });
+    } else if (t.name === "developing_stories") {
+      // a story is kept when any of its reports is the department's, but only the department's own linked records are said (reviewerF-06)
+      out.push({ ...t, args: { ...t.args, scope, lockDept: dept } });
     } else {
       out.push(t.args.scope ? { ...t, args: { ...t.args, scope } } : t);
     }

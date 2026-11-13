@@ -1031,10 +1031,12 @@ export const TOOLS = [
   tool({
     name: "developing_stories",
     description: "Developing stories: news reports about the same event followed over several days (first report, arrests, deaths, court, action...), as the console's Developing stories, optionally about one place (a locality, zone or taluk name).",
-    args: z.object({ scope: ScopeSchema.default({}), place: z.string().trim().min(2).max(60).nullable().default(null) }),
-    async run({ scope, place }) {
+    // lockDept: set by the department lock (pipeline lockTools), never by the model: another department's linked records are left out
+    args: z.object({ scope: ScopeSchema.default({}), place: z.string().trim().min(2).max(60).nullable().default(null),
+      lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null) }),
+    async run({ scope, place, lockDept }) {
       const now = await asOf();
-      const r = await threads({ hours: PERIODS[scope.period].hours, zone: scope.zone, dept: scope.dept, cat: scope.cat, taluk: scope.taluk }, now);
+      const r = await threads({ hours: PERIODS[scope.period].hours, zone: scope.zone, dept: scope.dept, cat: scope.cat, taluk: scope.taluk, lockDept }, now);
       let list = r.threads;
       let resolved = null as Awaited<ReturnType<typeof resolvePlace>>;
       if (place) {

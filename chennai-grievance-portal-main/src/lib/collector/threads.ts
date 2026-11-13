@@ -40,7 +40,11 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
 }
 
 /** `hours` is the dashboard period; stories are followed over at least 14 and at most 30 days. */
-export interface ThreadScope { hours: number; /** only stories with a report since then (the period start: daily = today) */ since?: string; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }
+export interface ThreadScope {
+  hours: number; /** only stories with a report since then (the period start: daily = today) */ since?: string; zone: number | null; dept: string | null; cat: string | null; taluk: string | null;
+  /** a department officer's view: another department's linked incident records are left out (lockedView) */
+  lockDept?: string | null;
+}
 
 interface Doc {
   id: string; story: string | null; inc: string | null; itemId: number | null; publisher: string | null; title: string; url: string | null;
@@ -140,12 +144,16 @@ export interface Thread {
   id: string; title: string; place: string | null; cat: string | null; catLabel: string | null; zones: number[]; depts: string[]; taluks: string[];
   incidents: string[]; sev: string | null; open: boolean | null; first: string; last: string; hours: number; reports: number; outlets: string[];
   added: number; stages: { stage: string; t: string }[]; days: { day: string; steps: ThreadStep[] }[]; latest: ThreadStep;
+  /** each linked incident record, last linked last, with the department that holds it (for lockedView) */
+  records: { id: string; dept: string | null; zone: number | null; taluk: string | null; sev: string | null; open: boolean | null }[];
+  /** the zones and taluks of reports linked to no incident: the articles' own places */
+  placed: { zones: number[]; taluks: string[] };
   /** the overview sends this count instead of every day's reports (the Stories view loads those itself) */
   updates?: number;
 }
 
 /** Bump when the threading rules change, so a cached result is not reused. */
-const RULES = 12;
+const RULES = 13;
 
 const SCHEDULE = /power (cut|shutdown)|shutdown areas|மின்தடை|மின் தடை|எந்தெந்த வழக்க/i;
 
@@ -327,6 +335,9 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
   for (const s of steps) if (s.stage !== "Update" && s.stage !== own && !stages.some((x) => x.stage === s.stage)) stages.push({ stage: s.stage, t: s.t });
   const cat = mode(m.map((d) => d.cat).filter(Boolean) as string[]);
   const lastInc = [...m].reverse().find((d) => d.sev);
+  const records = new Map<string, Thread["records"][number]>();
+  for (const d of m) if (d.inc) { records.delete(d.inc); records.set(d.inc, { id: d.inc, dept: d.dept, zone: d.zone, taluk: d.taluk, sev: d.sev, open: d.open }); }
+  const free = m.filter((d) => !d.inc);
   return {
     id: "THR-" + crypto.createHash("sha1").update(m[0].id).digest("hex").slice(0, 10),
     // the monitor's place tag, when a headline names it (tags are sometimes wrong)
@@ -339,7 +350,27 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
     sev: lastInc?.sev ?? null, open: lastInc ? lastInc.open : null,
     first: m[0].t, last: m[m.length - 1].t, hours: Math.round(hours), reports: m.length,
     outlets: [...new Set(m.map((d) => d.publisher).filter(Boolean) as string[])], added: m.filter((d) => d.itemId != null).length,
-    stages, days, latest: steps[steps.length - 1]
+    stages, days, latest: steps[steps.length - 1], records: [...records.values()],
+    placed: { zones: [...new Set(free.map((d) => d.zone).filter((z): z is number => z != null))], taluks: [...new Set(free.map((d) => d.taluk).filter(Boolean) as string[])] }
+  };
+}
+
+/**
+ * A thread as a department officer sees it. The news is public, so a story about their department is shown; but a thread kept because
+ * any of its reports is theirs carried every linked incident's id, the severity and open state of the last one, and its zone, whatever
+ * department holds it (reviewerF-06). Here only the officer's own department's records are linked; the zones and taluks are theirs and
+ * the articles' own places.
+ */
+export function lockedView(t: Thread, dept: string): Thread {
+  const own = t.records.filter((r) => r.dept === dept);
+  const ids = new Set(own.map((r) => r.id));
+  const last = [...own].reverse().find((r) => r.sev);
+  const step = (x: ThreadStep): ThreadStep => (x.incident && !ids.has(x.incident) ? { ...x, incident: null } : x);
+  return {
+    ...t, incidents: t.incidents.filter((id) => ids.has(id)), sev: last?.sev ?? null, open: last ? last.open : null, records: own,
+    zones: [...new Set([...t.placed.zones, ...own.map((r) => r.zone).filter((z): z is number => z != null)])],
+    taluks: [...new Set([...t.placed.taluks, ...own.map((r) => r.taluk).filter(Boolean) as string[]])],
+    days: t.days.map((d) => ({ ...d, steps: d.steps.map(step) })), latest: step(t.latest)
   };
 }
 
@@ -368,7 +399,8 @@ export async function threads(s: ThreadScope, now: string) {
     const keep = Object.fromEntries(Object.entries(global.__threadCache ?? {}).filter(([k]) => k.split("|")[1] === key.split("|")[1]));
     global.__threadCache = { ...keep, [key]: { at: Date.now(), threads: all } };
   }
-  const shown = all.filter((t) => (!s.since || t.last >= s.since) &&
+  const lock = s.lockDept;
+  const shown = (lock ? all.map((t) => lockedView(t, lock)) : all).filter((t) => (!s.since || t.last >= s.since) &&
     (!s.zone || t.zones.includes(s.zone)) && (!s.dept || t.depts.includes(s.dept)) && (!s.cat || t.cat === s.cat) && (!s.taluk || t.taluks.includes(s.taluk)));
   return { days, total: shown.length, threads: shown.slice(0, 40) };
 }
