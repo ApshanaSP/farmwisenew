@@ -5,6 +5,7 @@
  * the polite rate, within robots.txt. It stops at the first page that has real data.
  */
 import { robotsAllow } from "@/lib/studio/connect/robots";
+import { readFacts } from "@/lib/studio/parse-pool";
 import { FILE_EXT, READ_BUDGET, discover, isHtml, linksIn, safeDecode, type Checked, type Found } from "@/lib/studio/connect/discover";
 import { gateA } from "@/lib/studio/connect/gate";
 import { fetchOnce, type Credentials } from "@/lib/studio/fetchurl";
@@ -78,7 +79,8 @@ export async function explore(start: { html: string; url: string }, opts: { cred
       out.push(...got);
     } else {
       const html = f.buf.toString("utf8");
-      const title = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null;
+      // read in the file reader: the title pattern backtracks on a page of unclosed <title> tags (QA pass 7 reviewer)
+      const title = (await readFacts(html)).title;
       log(`Looked at "${(title ?? new URL(f.url).pathname).slice(0, 70)}" (${q.depth === 1 ? "one click" : "two clicks"} from the link).`);
       const got = await discover({ ...f, html, json: [], title }, log, opts.cred, checked);
       out.push(...got);

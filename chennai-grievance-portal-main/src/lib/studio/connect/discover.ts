@@ -14,10 +14,16 @@
 import crypto from "crypto";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
 import { robotsAllow } from "@/lib/studio/connect/robots";
-import { feedLinkIn, headlinesIn, htmlTables, parseAll, shape, type Cell, type Table } from "@/lib/studio/parse";
+import { MAX_ROWS, parseAllAsync, type Table } from "@/lib/studio/parse";
+import { ParseLimitError, readPage } from "@/lib/studio/parse-pool";
+import type { Page } from "@/lib/studio/parse-worker";
+import { FILE_EXT, NOT_DATA, safeDecode } from "@/lib/studio/connect/links";
 import { findSeries, seriesTitle } from "@/lib/studio/connect/series";
 import type { Candidate } from "@/lib/studio/types";
 import type { Captured } from "@/lib/studio/connect/browser";
+
+// the page helpers live in links.ts (pure, so the file reader runs them too); callers still import them from here
+export { FILE_EXT, anchors, dropComments, fileLinksIn, linksIn, nextPageLink, safeDecode, scriptJsonUrls } from "@/lib/studio/connect/links";
 
 export interface Found { cand: Candidate; table: Table }
 
@@ -88,15 +94,17 @@ export function add(out: Found[], kind: Candidate["kind"], label: string, table:
     type: TYPE[table.format], schema: schemaHash(table.headers), ...extra }, table });
 }
 
-function safeAll(buf: Buffer, name: string, ct: string, base: string): Table[] {
-  try { return parseAll(buf, name, ct, base); } catch { return []; }
+/**
+ * Every table in a fetched file, read in the Studio's file reader (off the server's thread, under its limits: parse-pool.ts); none when
+ * it is not a table. A file stopped by a limit is said (ParseLimitError), not taken for one with no table. Pictures and scans are not
+ * read with OCR here, as before.
+ */
+async function safeAll(buf: Buffer, name: string, ct: string, base: string): Promise<Table[]> {
+  try { return await parseAllAsync(buf, name, ct, base, { ocr: false }); } catch (e) { if (e instanceof ParseLimitError) throw e; return []; }
 }
 
-/** JSON a page loads that is never its data: map tiles and styles, social embeds, analytics, ads, consent, fonts. */
-const NOT_DATA = /\/maps\/vt|\/vt\/|tiles?[./]|mapbox|arcgis.*\/(tile|basemap)|openstreetmap|google(apis|tagmanager|-analytics|syndication)|doubleclick|facebook|twitter|x\.com|tweet|syndication|youtube|instagram|linkedin|analytics|gtag|hotjar|clarity\.ms|recaptcha|consent|cookie|fonts?\.|translate/i;
-
 /** Arrays of records inside a JSON answer (the data a dashboard loads), as tables. */
-function jsonTables(c: Captured): Table[] {
+async function jsonTables(c: Captured): Promise<Table[]> {
   if (NOT_DATA.test(c.url)) return [];
   let doc: unknown;
   try { doc = JSON.parse(c.text); } catch { return []; }
@@ -111,7 +119,10 @@ function jsonTables(c: Captured): Table[] {
     if (v && typeof v === "object") for (const x of Object.values(v as Record<string, unknown>)) walk(x, depth + 1);
   };
   walk(doc, 0);
-  return found.flatMap((arr) => safeAll(Buffer.from(JSON.stringify(arr)), "data.json", "application/json", c.url)).filter((t) => t.rows.length >= 3);
+  const out: Table[] = [];
+  // a JSON answer the reader stopped (a limit) is left out, as one that holds no table
+  for (const arr of found) out.push(...(await safeAll(Buffer.from(JSON.stringify(arr)), "data.json", "application/json", c.url).catch(() => [])));
+  return out.filter((t) => t.rows.length >= 3);
 }
 
 export interface Resource { buf: Buffer; name: string; contentType: string; url: string; html: string | null; json: Captured[]; title: string | null }
@@ -124,102 +135,62 @@ export function isHtml(buf: Buffer, ct: string): boolean {
 
 /** A page that draws itself with JavaScript: a large page with almost no readable text. */
 export function jsShell(html: string): boolean {
-  const text = html.replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  return text.length < 1500 && (/<script\b/i.test(html) || /id=["'](root|app|__next)["']/i.test(html));
+  if (!/<script\b/i.test(html) && !/id=["'](root|app|__next)["']/i.test(html)) return false;
+  return visibleText(html).length < 1500;
 }
 
-const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-const unent = (s: string) => s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => { if (e[0] !== "#") return ENT[e.toLowerCase()] ?? m; const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1)); return Number.isInteger(c) && c >= 0 && c <= 0x10ffff ? String.fromCodePoint(c) : m; });
-const linkText = (s: string) => unent(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
-
-export const FILE_EXT = /\.(csv|tsv|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|zip|pdf|docx)(\?|$)/i;
-
-/** decodeURIComponent that never throws (a stray "%" in a link). */
-export const safeDecode = (s: string) => { try { return decodeURIComponent(s); } catch { return s; } };
+const BLOCKS = ["script", "style", "noscript", "svg", "template"];
+const isWord = (c: string | undefined) => c != null && /\w/.test(c);
 
 /**
- * Each <a ...>text</a> of a page, scanned by hand (linear time even on a hostile page of unclosed tags), at most 3 MB
- * of page and 2 000 links.
+ * The text a page shows: its script, style, noscript, svg and template blocks dropped, its tags made spaces, its white space collapsed.
+ * The same as html.replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+ * .trim(), which jsShell ran on the server's thread for every page a link opens, but scanned by hand: the first two patterns searched to
+ * the end of the page from every "<script" with no "</script>" after it and from every "<" with no ">" after it (a 200 KB page of "<!--"
+ * took 20 s; QA pass 7). Each close is searched for once per position reached, so the time is linear.
  */
-export function anchors(html: string): { attrs: string; inner: string }[] {
-  const s = html.slice(0, 3_000_000);
-  const low = s.toLowerCase();
-  const out: { attrs: string; inner: string }[] = [];
-  let i = 0;
-  while (out.length < 2000) {
-    const a = low.indexOf("<a", i);
-    if (a < 0) break;
-    const c = low[a + 2];
-    if (c !== " " && c !== "\t" && c !== "\n" && c !== "\r" && c !== ">") { i = a + 2; continue; }
-    const gt = s.indexOf(">", a);
+export function visibleText(html: string): string {
+  // 1. the blocks: from "<name" (a whole word, any case) to the first "</name>" after it; a block with no close is left as it is
+  const kept: string[] = [];
+  const closeAt = new Map<string, number>();
+  let from = 0;
+  for (let p = html.indexOf("<"); p >= 0; p = html.indexOf("<", p + 1)) {
+    // every block's name starts with s, n or t (any case): other "<" are passed over without a copy
+    const c1 = html.charCodeAt(p + 1) | 32;
+    if (c1 !== 115 && c1 !== 110 && c1 !== 116) continue;
+    const name = BLOCKS.find((n) => html.slice(p + 1, p + 1 + n.length).toLowerCase() === n && !isWord(html[p + 1 + n.length]));
+    if (!name) continue;
+    let c = closeAt.get(name);
+    if (c === undefined || (c >= 0 && c < p)) {
+      const re = new RegExp(`</${name}>`, "gi");
+      re.lastIndex = p + 1 + name.length;
+      c = re.exec(html)?.index ?? -1;
+      closeAt.set(name, c);
+    }
+    // no close after this one, so none after a later one either: those stay as text, as the pattern left them
+    if (c < 0) continue;
+    kept.push(html.slice(from, p));
+    from = c + name.length + 3;
+    p = from - 1;
+  }
+  kept.push(html.slice(from));
+  const s = kept.join("");
+  // 2. a tag: "<", at least one character, the first ">" after it; with no ">" left, no later "<" starts a tag either
+  const out: string[] = [];
+  let at = 0;
+  for (let p = s.indexOf("<"); p >= 0; p = s.indexOf("<", p + 1)) {
+    const gt = s.indexOf(">", p + 1);
     if (gt < 0) break;
-    const end = low.indexOf("</a>", gt);
-    const stop = end < 0 || end - gt > 2000 ? Math.min(s.length, gt + 1 + 300) : end;
-    out.push({ attrs: s.slice(a + 2, gt), inner: s.slice(gt + 1, stop) });
-    i = end < 0 || end - gt > 2000 ? gt + 1 : end + 4;
+    if (gt === p + 1) continue; // "<>" is not a tag
+    out.push(s.slice(at, p), " ");
+    at = gt + 1;
+    p = gt;
   }
-  return out;
+  out.push(s.slice(at));
+  // 3. white space: these patterns are linear
+  return out.join("").replace(/\s+/g, " ").trim();
 }
 
-/** Every link on a page, with its words, absolute and without its #fragment. */
-export function linksIn(html: string, base: string): { url: string; text: string }[] {
-  const out: { url: string; text: string }[] = [];
-  const seen = new Set<string>();
-  for (const a of anchors(html.length < 3_000_000 ? html.replace(/<!--[\s\S]*?-->/g, "") : html)) {
-    const m = [a.attrs, a.attrs, a.inner];
-    const href = m[1].match(/href\s*=\s*["']([^"'#]+)["']/i)?.[1] ?? m[1].match(/href\s*=\s*([^\s>"'#]+)/i)?.[1];
-    if (!href || /^(mailto|tel|javascript|data):/i.test(href)) continue;
-    let url: string;
-    try { url = new URL(unent(href), base).toString(); } catch { continue; }
-    if (seen.has(url)) continue;
-    seen.add(url);
-    out.push({ url, text: `${linkText(m[2])} ${m[1].match(/(?:title|aria-label)\s*=\s*["']([^"']+)["']/i)?.[1] ?? ""}`.trim() });
-  }
-  return out;
-}
-
-/** Links to data files: by their file name, a format parameter, or the link's own words ("Download CSV"). */
-export function fileLinksIn(html: string, base: string): { url: string; text: string }[] {
-  return linksIn(html, base).filter((l) => {
-    const h = l.url.toLowerCase();
-    return FILE_EXT.test(h) || /[?&](?:format|type|output|export)=(csv|xlsx|xls|json|geojson|kml)\b/.test(h)
-      || (/(^|\W)(csv|xlsx?|excel|geojson|kml)(\W|$)/i.test(l.text) && !/\.(html?|php|aspx?)(\?|$)/.test(h));
-  }).slice(0, 80);
-}
-
-/** The next page of a paginated table: rel="next", or a "Next" / "›" / "»" link, or ?page=N+1 on the same path. */
-export function nextPageLink(html: string, url: string): string | null {
-  const rel = html.match(/<a\b[^>]*rel=["']next["'][^>]*href=["']([^"'#]+)["']|<a\b[^>]*href=["']([^"'#]+)["'][^>]*rel=["']next["']/i);
-  if (rel) { try { return new URL(unent(rel[1] ?? rel[2]), url).toString(); } catch { /* below */ } }
-  const here = new URL(url);
-  const n = Number(here.searchParams.get("page") ?? here.searchParams.get("p") ?? 1);
-  for (const l of linksIn(html, url)) {
-    if (/^(next|next page|next ›|next »|›|»|>|அடுத்து)$/i.test(l.text)) return l.url;
-    try {
-      const u = new URL(l.url);
-      if (u.pathname === here.pathname && Number(u.searchParams.get("page") ?? u.searchParams.get("p")) === n + 1) return l.url;
-    } catch { /* skip */ }
-  }
-  return null;
-}
-
-/** JSON addresses a page's own scripts load (fetch("/api/rows.json"), axios.get(...), a .json URL in a string). */
-export function scriptJsonUrls(html: string, base: string): string[] {
-  const out = new Set<string>();
-  // the scripts' text, scanned by hand (no backtracking on an unclosed <script>)
-  const low = html.slice(0, 3_000_000).toLowerCase();
-  const parts: string[] = [];
-  for (let i = low.indexOf("<script"); i >= 0 && parts.length < 50; i = low.indexOf("<script", i + 7)) {
-    const gt = low.indexOf(">", i), end = low.indexOf("</script>", gt);
-    if (gt < 0 || end < 0) break;
-    parts.push(html.slice(gt + 1, Math.min(end, gt + 1 + 400_000)));
-  }
-  const scripts = parts.join("\n");
-  const add1 = (s: string) => { try { const u = new URL(s, base); if (u.origin === new URL(base).origin) out.add(u.toString()); } catch { /* skip */ } };
-  for (const m of scripts.matchAll(/(?:fetch|axios\.get|\$\.getJSON|\.open\(\s*["']GET["']\s*,)\s*\(?\s*["'`]([^"'`\s]+)["'`]/g)) add1(m[1]);
-  for (const m of scripts.matchAll(/["'`]((?:https?:\/\/[^"'`\s]+|\/[^"'`\s]*)\.json(?:\?[^"'`\s]*)?)["'`]/g)) add1(m[1]);
-  return [...out].filter((u) => !NOT_DATA.test(u)).slice(0, 6);
-}
 
 /** A linked file read: every table it holds, as candidates (a workbook's sheets, a ZIP's files each their own). */
 async function readLinkedFile(out: Found[], url: string, words: string, page: string, cred: Parameters<typeof fetchOnce>[1], checked: Checked, log: (t: string) => void, extra: Partial<Candidate> = {}) {
@@ -228,7 +199,7 @@ async function readLinkedFile(out: Found[], url: string, words: string, page: st
     const f = await fetchOnce(url, cred && new URL(url).host === cred.host ? cred : null, undefined, 20_000);
     checked.bytes = (checked.bytes ?? 0) + f.buf.length;
     if (isHtml(f.buf, f.contentType)) { checked.failed.push({ label: f.name, why: "a web page, not a file" }); return null; }
-    const tables = safeAll(f.buf, f.name, f.contentType, f.url);
+    const tables = await safeAll(f.buf, f.name, f.contentType, f.url);
     if (!tables.length) { checked.failed.push({ label: f.name, why: "could not be read as a table (damaged, or not a table)" }); return null; }
     checked.files++;
     for (const t of tables) add(out, "file", t.part ? `${f.name} · ${t.part}` : f.name, { ...t, caption: t.caption ?? (words || null) },
@@ -248,7 +219,7 @@ async function readLinkedFile(out: Found[], url: string, words: string, page: st
 export async function discover(r: Resource, log: (t: string) => void, cred?: Parameters<typeof fetchOnce>[1], checked: Checked = newChecked(), opts: { paginate?: boolean; sniff?: boolean } = {}): Promise<Found[]> {
   const out: Found[] = [];
   if (!r.html) {
-    const tables = safeAll(r.buf, r.name, r.contentType, r.url);
+    const tables = await safeAll(r.buf, r.name, r.contentType, r.url);
     checked.files += tables.length ? 1 : 0;
     for (const t of tables) {
       const feed = t.format === "feed";
@@ -260,15 +231,24 @@ export async function discover(r: Resource, log: (t: string) => void, cred?: Par
   }
   checked.pages++;
   const title = r.title ?? null;
+  // the page's tables, links, feed and headlines, read in the file reader: the patterns that find them took 15 s or more on a crafted
+  // 200 KB page (a run of "<!--"), on the server's own thread (QA pass 7)
+  const page = await readPage(r.html, r.url).catch((e): Page => {
+    // a page the reader had to stop (a limit) holds nothing to offer; the Collector is told why, with what else the link brought
+    if (!(e instanceof ParseLimitError)) throw e;
+    checked.failed.push({ label: r.title || r.name, why: e.message.replace(/^This file/, "This page") });
+    log(`The page could not be read: ${e.message.replace(/^This file/, "it").slice(0, 120)}`);
+    return { tables: [], feed: null, headlines: [], files: [], scripts: [], next: null };
+  });
   // the data the page loaded for itself (browser), or the JSON its scripts name (no browser needed)
-  for (const c of r.json) for (const t of jsonTables(c)) { checked.json++; add(out, "api", `Data the page loads (${new URL(c.url).pathname.split("/").filter(Boolean).slice(-2).join("/") || "JSON"})`, { ...t, caption: title }, { url: c.url, source: r.url, type: "api" }); }
+  for (const c of r.json) for (const t of await jsonTables(c)) { checked.json++; add(out, "api", `Data the page loads (${new URL(c.url).pathname.split("/").filter(Boolean).slice(-2).join("/") || "JSON"})`, { ...t, caption: title }, { url: c.url, source: r.url, type: "api" }); }
   if (opts.sniff !== false && !r.json.length) {
-    for (const u of scriptJsonUrls(r.html, r.url)) {
+    for (const u of page.scripts) {
       try {
         if (!(await mayRead(u, checked, new URL(u).pathname))) continue;
         const f = await fetchOnce(u, cred && new URL(u).host === cred.host ? cred : null, "application/json", 15_000);
         checked.bytes = (checked.bytes ?? 0) + f.buf.length;
-        for (const t of jsonTables({ url: f.url, text: f.buf.toString("utf8"), status: 200 })) {
+        for (const t of await jsonTables({ url: f.url, text: f.buf.toString("utf8"), status: 200 })) {
           checked.json++;
           add(out, "api", `Data the page loads (${new URL(f.url).pathname.split("/").filter(Boolean).slice(-2).join("/")})`, { ...t, caption: title }, { url: f.url, source: r.url, type: "api" });
           log(`The page's script loads its data from ${new URL(f.url).pathname}: read it.`);
@@ -277,17 +257,16 @@ export async function discover(r: Resource, log: (t: string) => void, cred?: Par
     }
   }
   // the page's own tables (a paginated one: every page of it)
-  const tables = htmlTables(r.html).slice(0, 12);
+  const tables = page.tables.slice(0, 12);
   checked.tables += tables.length;
-  for (const [i, g] of tables.entries()) {
-    let t: Table;
-    try { t = { ...shape(g as Cell[][]), sheet: null, sheets: [], format: "html", caption: null } as Table; } catch { continue; }
-    t.caption = t.caption ?? title;
-    if (i === 0 && opts.paginate !== false && t.rows.length >= 5) t = await paginate(t, r.html, r.url, cred, log);
+  for (const [i, shaped] of tables.entries()) {
+    if (!shaped) continue;
+    let t: Table = { ...shaped, caption: shaped.caption ?? title };
+    if (i === 0 && opts.paginate !== false && t.rows.length >= 5) t = await paginate(t, page.next, r.url, cred, log);
     add(out, "table", tables.length > 1 ? `Table ${i + 1} of ${tables.length} on the page` : "The table on the page", t, { url: r.url, source: r.url, type: "html" });
   }
   // files the page links: a series of dated files is one candidate; the others are read one by one
-  const files = fileLinksIn(r.html, r.url);
+  const files = page.files;
   const { series, rest } = findSeries(files.map((f) => ({ url: f.url, name: f.text })));
   for (const s of series) {
     const newest = s.files[s.files.length - 1];
@@ -298,7 +277,7 @@ export async function discover(r: Resource, log: (t: string) => void, cred?: Par
     if (read && s.files.length > 1) {
       try {
         const f = await fetchOnce(s.files[0].url, null, undefined, 20_000);
-        const t0 = safeAll(f.buf, f.name, f.contentType, f.url)[0];
+        const t0 = (await safeAll(f.buf, f.name, f.contentType, f.url))[0];
         if (t0 && schemaHash(t0.headers) !== schemaHash(read[0].headers)) {
           log(`The oldest file of "${s.pattern}" has other columns: the series is offered as its newest file only.`);
           for (const f of out.slice(before)) f.cand.series = null;
@@ -311,16 +290,16 @@ export async function discover(r: Resource, log: (t: string) => void, cred?: Par
   for (const l of restFiles.slice(0, 20)) await readLinkedFile(out, l.url, files.find((f) => f.url === l.url)?.text ?? "", r.url, cred, checked, log, {});
   if (restFiles.length > 20) checked.failed.push({ label: `${restFiles.length - 20} more files`, why: "not opened: only the first 20 files of a page are read; pick from these or link a file directly" });
   // the news feed the page points to
-  const feed = feedLinkIn(r.html, r.url);
+  const feed = page.feed;
   if (feed && feed !== r.url) {
     try {
       const f = await fetchOnce(feed, null, undefined, 12_000);
-      const t = safeAll(f.buf, f.name, f.contentType, f.url)[0];
+      const t = (await safeAll(f.buf, f.name, f.contentType, f.url))[0];
       if (t?.format === "feed") { checked.feeds++; add(out, "feed", "The news feed the page points to", t, { url: f.url, source: r.url, type: "feed" }); }
     } catch { /* no feed after all */ }
   }
   // headlines: a news or notices page, as articles (never in place of a real table)
-  const h = headlinesIn(r.html, r.url);
+  const h = page.headlines;
   if (h.length >= 5) {
     const t = { headers: ["Headline", "Source", "Published", "Summary", "Link"], rows: h, sheet: null, sheets: [], caption: title ? `Headlines on ${title}` : "Headlines on the page", format: "feed", truncated: 0 } as Table;
     add(out, "headlines", `${h.length} headlines on the page (articles, not a data table)`, t, { url: r.url, source: r.url, type: "html" });
@@ -329,26 +308,32 @@ export async function discover(r: Resource, log: (t: string) => void, cred?: Par
 }
 
 /** A paginated table: the next pages' rows appended while their columns match (at most 20 pages). */
-async function paginate(t: Table, html: string, url: string, cred: Parameters<typeof fetchOnce>[1], log: (t: string) => void): Promise<Table> {
-  let next = nextPageLink(html, url);
+async function paginate(t: Table, first: string | null, url: string, cred: Parameters<typeof fetchOnce>[1], log: (t: string) => void): Promise<Table> {
+  let next = first;
   const seen = new Set([url]);
   const rows = [...t.rows];
-  let pages = 1;
-  while (next && !seen.has(next) && pages < 20 && new URL(next).origin === new URL(url).origin) {
+  let pages = 1, cut = 0;
+  // at most MAX_ROWS rows in all, as any table: 20 pages of 50 000 rows each built a million on the server (QA pass 7 reviewer)
+  while (next && !seen.has(next) && pages < 20 && rows.length < MAX_ROWS && new URL(next).origin === new URL(url).origin) {
     seen.add(next);
     if (!(await robotsAllow(next))) break;
     try {
       const f = await fetchOnce(next, cred && new URL(next).host === cred.host ? cred : null, "text/html", 15_000);
-      const page = f.buf.toString("utf8");
-      const g = htmlTables(page).map((x) => { try { return shape(x as Cell[][]); } catch { return null; } }).find((x) => x && x.headers.join("|") === t.headers.join("|"));
+      // read in the file reader, as the first page was
+      const p = await readPage(f.buf.toString("utf8"), f.url);
+      const g = p.tables.find((x) => x && x.headers.join("|") === t.headers.join("|"));
       if (!g) break;
-      rows.push(...g.rows);
+      const room = MAX_ROWS - rows.length;
+      rows.push(...g.rows.slice(0, room));
+      cut += Math.max(0, g.rows.length - room);
       pages++;
-      next = nextPageLink(page, f.url);
+      next = p.next;
     } catch { break; }
   }
-  if (pages > 1) log(`The table runs over ${pages} pages: read all ${rows.length.toLocaleString("en-IN")} rows.`);
-  return pages > 1 ? { ...t, rows, part: `${pages} pages` } : t;
+  if (pages > 1) log(cut || (next && rows.length >= MAX_ROWS)
+    ? `The table runs over ${pages} pages or more: read its first ${rows.length.toLocaleString("en-IN")} rows (the Studio reads at most ${MAX_ROWS.toLocaleString("en-IN")} rows of a table).`
+    : `The table runs over ${pages} pages: read all ${rows.length.toLocaleString("en-IN")} rows.`);
+  return pages > 1 ? { ...t, rows, part: `${pages} pages`, truncated: t.truncated + cut } : t;
 }
 
 /** The data the run should use: the Collector's choice if it still exists, else the same table as before, else the best. */

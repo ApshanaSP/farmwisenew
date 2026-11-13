@@ -13,7 +13,7 @@
 import { fetchOnce, LinkError, type Credentials } from "@/lib/studio/fetchurl";
 import { robotsAllow } from "@/lib/studio/connect/robots";
 import { scoreTable, type Found } from "@/lib/studio/connect/discover";
-import { parseAll, ParseError, type Table } from "@/lib/studio/parse";
+import { parseAllAsync, ParseError, type Table } from "@/lib/studio/parse";
 import type { Candidate } from "@/lib/studio/types";
 
 export type Known =
@@ -69,7 +69,8 @@ async function readFiles(list: { url: string; name: string; format: string | nul
     if (/^(html?|api|wms|web\s*page)$/i.test(r.format ?? "")) { skipped.push({ label: r.name, why: `a ${r.format} link, not a file` }); continue; }
     try {
       const f = await fetchOnce(r.url, cred && new URL(r.url).host === cred.host ? cred : null);
-      const tables = parseAll(f.buf, /\.[a-z0-9]{2,5}$/i.test(f.name) ? f.name : `${f.name}.${(r.format ?? "csv").toLowerCase()}`, f.contentType, f.url);
+      // read in the Studio's file reader, off the server's thread (parse-pool.ts); pictures and scans are not read with OCR here
+      const tables = await parseAllAsync(f.buf, /\.[a-z0-9]{2,5}$/i.test(f.name) ? f.name : `${f.name}.${(r.format ?? "csv").toLowerCase()}`, f.contentType, f.url, { ocr: false });
       tables.forEach((t) => found.push(meta(t.part ? `${r.name} · ${t.part}` : r.name, { ...t, caption: t.caption ?? r.name }, "file",
         { url: f.url, source, type: typeOf(f.name, r.format), bytes: f.buf.length, updated: r.updated ?? null })));
       log(`Read "${r.name}" (${(r.format ?? "file").toUpperCase()}): ${tables[0].rows.length.toLocaleString("en-IN")} rows.`);
@@ -107,7 +108,7 @@ async function socrata(u: URL, log: (t: string) => void): Promise<PlatformRead |
   if (!Array.isArray(rows)) return null;
   log(`A Socrata open-data portal: "${title}", ${rows.length.toLocaleString("en-IN")} rows through its API.`);
   const buf = Buffer.from(JSON.stringify(rows));
-  const t = parseAll(buf, `${id}.json`, "application/json")[0];
+  const t = (await parseAllAsync(buf, `${id}.json`, "application/json", undefined, { ocr: false }))[0];
   return { platform: "Socrata", title, found: [meta(title, { ...t, caption: title }, "api", { url: `${u.origin}/resource/${id}.json`, source: u.toString(), type: "api", bytes: buf.length })], skipped: [], raw: buf };
 }
 
@@ -132,7 +133,7 @@ async function arcgis(u: URL, log: (t: string) => void): Promise<PlatformRead | 
   }
   log(`An ArcGIS map layer: "${title}", ${features.length.toLocaleString("en-IN")} features read page by page.`);
   const buf = Buffer.from(JSON.stringify({ type: "FeatureCollection", features }));
-  const t = parseAll(buf, "layer.geojson", "application/json")[0];
+  const t = (await parseAllAsync(buf, "layer.geojson", "application/json", undefined, { ocr: false }))[0];
   return { platform: "ArcGIS", title, found: [meta(title, { ...t, caption: title, format: "geo" }, "api", { url: layer, source: u.toString(), type: "map", bytes: buf.length })], skipped: [], raw: buf };
 }
 
@@ -159,7 +160,7 @@ async function ogd(u: URL, cred: Credentials | null, log: (t: string) => void): 
   if (!id) return null;
   const api = `https://api.data.gov.in/resource/${id}?format=json&limit=10000`;
   const f = await fetchOnce(api, { ...cred, host: "api.data.gov.in" });
-  const t = parseAll(f.buf, `${id}.json`, "application/json")[0];
+  const t = (await parseAllAsync(f.buf, `${id}.json`, "application/json", undefined, { ocr: false }))[0];
   log(`data.gov.in's API: resource ${id}, ${t.rows.length.toLocaleString("en-IN")} rows.`);
   return { platform: "data.gov.in", title: t.caption ?? id, found: [meta(t.caption ?? "data.gov.in resource", t, "api", { url: api.replace(/api-key=[^&]+/, "api-key=…"), source: u.toString(), type: "api", bytes: f.buf.length })], skipped: [], raw: f.buf };
 }

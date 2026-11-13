@@ -22,6 +22,8 @@ import { seriesTitle } from "@/lib/studio/connect/series";
 import { credentialsFor } from "@/lib/studio/connect/vault";
 import { LinkError, fetchOnce } from "@/lib/studio/fetchurl";
 import type { Table } from "@/lib/studio/parse";
+import { ParseLimitError, readFacts } from "@/lib/studio/parse-pool";
+import type { PageFacts } from "@/lib/studio/connect/links";
 import { earns, readiness, type Readiness } from "@/lib/studio/readiness";
 import { datasetIds, findBySource, getMeta } from "@/lib/studio/store";
 import type { AuthInput, Outcome, OutcomeAction, PickCard, PickGroup, PickSet } from "@/lib/studio/types";
@@ -82,6 +84,8 @@ export function outcomeOfError(e: unknown, url: string | null, checked: Checked)
     case "http": return { kind: "error", reason: le.status && le.status >= 500 ? "500" : "http", why: msg, checked: lines, next: le.status && le.status >= 500 ? [retry] : [{ label: "Check the link", act: "link" }], url };
     case "browser": return { kind: "error", reason: "browser", why: msg, checked: lines, next: [file], url };
   }
+  // the Studio's own file reader was busy: try again in a minute; it says nothing about the file or the site (QA pass 7 reviewer)
+  if (e instanceof ParseLimitError && e.reason === "busy") return { kind: "error", reason: "unknown", why: msg, checked: lines, next: [retry], url };
   return { kind: "error", reason: "unknown", why: `Something went wrong while reading the link: ${msg.slice(0, 160)}`, checked: lines, next: [retry], url };
 }
 
@@ -99,24 +103,8 @@ export function dateRangeOf(t: Table): { from: string; to: string } | null {
   return b ? { from: b.from, to: b.to } : null;
 }
 
-/** A page that reads as an article or a blog post (one story, many paragraphs). */
-function articleLike(html: string): boolean {
-  if (/<meta[^>]+property=["']og:type["'][^>]+content=["']article["']/i.test(html) || /<meta[^>]+content=["']article["'][^>]+property=["']og:type["']/i.test(html)) return true;
-  // paragraphs, split by hand (no backtracking on unclosed tags)
-  const paras = html.slice(0, 3_000_000).split(/<p\b/i).slice(1, 400).map((x) => x.split(/<\/p>/i)[0].slice(0, 5000).replace(/<[^>]+>/g, " ").trim()).filter((p) => p.split(/\s+/).length >= 20);
-  return /<article\b/i.test(html) ? paras.length >= 3 : paras.length >= 6;
-}
-const loginPage = (html: string) => /<input\b[^>]*type\s*=\s*["']?password/i.test(html);
-/**
- * A page that is a challenge, not content: a CAPTCHA widget or a "verify you are human" wall, on a page with little
- * text of its own. The word "captcha" alone (in a script, a footer, an edit form) does not make a page a challenge.
- */
-const captchaPage = (html: string) => {
-  const widget = /class=["'][^"']*\b(g-recaptcha|h-captcha|cf-turnstile)\b|challenges\.cloudflare\.com\/(turnstile|cdn-cgi)|\/cdn-cgi\/challenge-platform/i.test(html);
-  const wall = /verify (that )?you are (a )?human|are you a robot|enter the (characters|text) (you see|shown)|checking your browser before/i.test(html);
-  const text = html.replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
-  return (widget || wall) && text < 4000;
-};
+// articleLike, loginPage and captchaPage moved to links.ts pageFacts(): they backtrack on a crafted page, so the file reader runs them
+// (readFacts, under its time limit) and this thread only reads the answer (QA pass 7)
 
 /** The Studio's datasets that hold the same table (by content), or the same link with the same columns. */
 export function findDuplicate(url: string | null, buf: Buffer | null, t: Table | null): Outcome["dupOf"] {
@@ -188,7 +176,7 @@ export function gateAll(found: Found[], ctx: { url: string; title: string | null
 }
 
 /** Why there is no data, and the best next step, from what the page was. */
-function noData(found: Found[], gates: Map<string, GateInfo>, c: Connected | null, url: string, checked: Checked, explored: number): Outcome {
+function noData(found: Found[], gates: Map<string, GateInfo>, c: Connected | null, url: string, checked: Checked, explored: number, facts: PageFacts | null): Outcome {
   const html = c?.html ?? null;
   const lines = checkedLines(checked, explored);
   const passA = found.filter((f) => gates.get(f.cand.id)?.a.ok);
@@ -202,12 +190,12 @@ function noData(found: Found[], gates: Map<string, GateInfo>, c: Connected | nul
       next: [{ label: "Find more on this site", act: "link", href: url }, { label: "Add a fuller file", act: "file" }] };
   }
   const headlines = found.some((f) => f.cand.kind === "headlines" || f.cand.kind === "feed");
-  if (html && (articleLike(html) || headlines)) return { kind: "nodata", reason: "news", url, checked: lines,
-    why: headlines && !articleLike(html) ? "This page lists news headlines, not a data table." : "This reads as a news story or article, not a data table.",
+  if (html && (facts?.article || headlines)) return { kind: "nodata", reason: "news", url, checked: lines,
+    why: headlines && !facts?.article ? "This page lists news headlines, not a data table." : "This reads as a news story or article, not a data table.",
     next: [{ label: "Add it to News instead", act: "news", href: url }, { label: "Try this site's Downloads or Data page", act: "link" }] };
   if (c && !html) return { kind: "nodata", reason: "empty", url, checked: lines, why: "The file has no table with rows of data in it.", next: [{ label: "Ask the department for the full file", act: "file" }] };
   const menus = found.some((f) => /menu|layout|links/.test(gates.get(f.cand.id)?.a.why ?? ""));
-  return { kind: "nodata", reason: menus ? "menu" : html && /<script\b/i.test(html) && html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").trim().length < 400 ? "jsapp" : "page", url, checked: lines,
+  return { kind: "nodata", reason: menus ? "menu" : html && facts?.jsapp ? "jsapp" : "page", url, checked: lines,
     why: menus ? "The only tables on this page are its menus and layout, not data." : "No data to chart here: no table, data file or feed with data in it.",
     next: [{ label: `Try ${hostOf(url)}'s Downloads or Data page`, act: "link" }, { label: "Add a file instead", act: "file" }] };
 }
@@ -259,13 +247,16 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
     return done(outcomeOfError(e, url, checked));
   }
   const linkIsFeed = !connected.html && found.some((f) => f.cand.kind === "feed");
+  // a busy reader is an outcome ("try again"), not "no data here" (QA pass 7 reviewer, round 2)
+  let facts: PageFacts | null = null;
+  try { facts = connected.html ? await readFacts(connected.html) : null; } catch (e) { return done(outcomeOfError(e, url, checked)); }
   let gates = gateAll(found, { url, title: connected.title ?? null, linkIsFeed });
   let passA = found.filter((f) => gates.get(f.cand.id)!.a.ok);
   let explored = 0;
 
   // a page with no data of its own: a sign-in or a CAPTCHA first, else the site's own links
   if (!passA.length && connected.html) {
-    if (captchaPage(connected.html)) return done({ kind: "blocked", reason: "captcha", url, checked: checkedLines(checked, 0),
+    if (facts?.captcha) return done({ kind: "blocked", reason: "captcha", url, checked: checkedLines(checked, 0),
       why: "The site asks to prove a person is reading (a CAPTCHA). The Studio never answers one.", next: [{ label: "Sign in yourself (I'll sign in myself)", act: "vault" }, { label: "Add the file instead", act: "file" }] }, found, gates, connected);
     if (opts.explore !== false) {
       const before = checked.pages;
@@ -279,10 +270,10 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
     }
   }
   // still nothing, and the page holds a sign-in form: it is the sign-in that stands between the Studio and the data
-  if (!passA.length && connected.html && loginPage(connected.html)) return done({ kind: "blocked", reason: "login", url, checked: checkedLines(checked, explored),
+  if (!passA.length && connected.html && facts?.login) return done({ kind: "blocked", reason: "login", url, checked: checkedLines(checked, explored),
     why: "The page asks for a sign-in, and nothing on the site is readable without it.", next: [{ label: "Add sign-in details", act: "vault" }, { label: "Add the file instead", act: "file" }] }, found, gates, connected);
   const lines = checkedLines(checked, explored);
-  if (!passA.length) return done(noData(found, gates, connected, url, checked, explored), found, gates, connected);
+  if (!passA.length) return done(noData(found, gates, connected, url, checked, explored, facts), found, gates, connected);
   const passAll = passA.filter((f) => gates.get(f.cand.id)!.ok);
   const series = passA.some((f) => f.cand.series && f.cand.series.files.length >= 3);
   const relevant = passA.filter((f) => gates.get(f.cand.id)!.rel.verdict !== "unrelated");
@@ -302,7 +293,7 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
   // none of them is Chennai's: the best real one is shown as NOT RELEVANT
   const one = passAll[0] ?? relevant[0] ?? [...passA].sort((x, y) => (earns(gates.get(y.cand.id)!.r.tier) ? 1 : 0) - (earns(gates.get(x.cand.id)!.r.tier) ? 1 : 0) || y.cand.score - x.cand.score)[0];
   const g = gates.get(one.cand.id)!;
-  if (!earns(g.r.tier)) return done(noData(found, gates, connected, url, checked, explored), found, gates, connected);
+  if (!earns(g.r.tier)) return done(noData(found, gates, connected, url, checked, explored, facts), found, gates, connected);
   // a news page whose only real table is something else (a market ticker, a score card) is still a news page
   const newsPage = !!connected.html && found.some((f) => f.cand.kind === "headlines" && f.cand.rows >= 12);
   if (g.rel.verdict === "unrelated" && newsPage && passA.every((f) => gates.get(f.cand.id)!.rel.verdict === "unrelated"))
