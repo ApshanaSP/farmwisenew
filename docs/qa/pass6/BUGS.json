@@ -5139,6 +5139,22 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerG-05",
+    "severity": "P3",
+    "area": "Ask District IQ (share of incidents)",
+    "title": "Ask's open-to-closed answer no longer adds up: a routed complaint is counted in the total but is neither open nor closed, and the answer does not say so",
+    "found_by": "reviewerG (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/assistant/share-routed.reviewerG.fixall.test.ts::reviewerG-05: Ask's share of incidents accounts for every incident it counts",
+    "root_cause": "open became OPEN_NOW while closed stayed EFF.open = 0, so routed complaints were in n and in no figure; shareOfIncidents now returns routed and the answers name it (open + closed + routed = n)",
+    "fix_commit": "a20c1f98",
+    "revert_check": "3 of 4 fail without (the unrouted case passes either way) / 4 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/assistant/incidents.ts:250-253; src/lib/assistant/fastpath.ts:361-364",
+    "closed_in": "fixall"
+  },
+  {
     "id": "skeptic-redsec1-1",
     "severity": "P2",
     "area": "sign-out (QA pass 4 skeptic / redteam-final-13)",
