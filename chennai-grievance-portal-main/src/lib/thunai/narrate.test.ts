@@ -67,7 +67,8 @@ describe("asking for one issue to be explained, with no number", () => {
 describe("a list's spoken line never reads a long title out", async () => {
   const { casesSay } = await import("./screens");
   it("a six-word title is retold as its kind and place", () => {
-    const say = casesSay([{ ...row, why: null, cat: null }], 1, null, "daily").en;
+    // the place is said as the gazetteer names it (reviewerF-02): Velachery is one of its places
+    const say = casesSay([{ ...row, why: null, cat: null }], 1, null, "daily", { places: [{ name: "Velachery", aliases: [] }] }).en;
     expect(copiedRun(say, [row.title], ["Velachery", "Adyar"])).toBeNull();
     expect(say).toMatch(/standing water at Velachery/);
   });

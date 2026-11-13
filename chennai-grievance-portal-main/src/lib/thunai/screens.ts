@@ -18,7 +18,7 @@ import { cChart, modifiedZ, trendOf } from "./stats";
 import { UNIT_TA, hoursBetween } from "./stagelocal";
 import { DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 import { conditionsTa, reasonTa } from "./reasons";
-import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho } from "./narrate";
+import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -568,7 +568,7 @@ async function cases(c: Ctx): Promise<Part> {
   const late = lateAll ?? lateShown;
   // the severity panel's total counts cases (one per group of the same problem) and the past-deadline figure counts incidents, as the console's
   // tiles do: the sentence says so, so "9 severe cases, 10 past their deadline" is not read as 10 of 9 (QA4 gate, FB-1)
-  const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete, incidents: source === "console-severity" });
+  const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete, incidents: source === "console-severity", places: c.w.places });
   // the figure is the list's own: "of the whole list" when the screen shows part of it, "of those shown" only when the count could not be made
   // the severity panel counts its own rows and the past-deadline figure counts incidents, so a part can be larger than the whole ("54 of the 52"): then it is said without the whole
   const takeaway = late ? (lateAll != null && late > total
@@ -597,16 +597,19 @@ async function cases(c: Ctx): Promise<Part> {
  * their deadline), who holds most of them, and what to say next. Names come from each incident's own short summary,
  * never an id or a citizen's words; every figure is a count of the rows.
  */
-export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean; when?: Bilingual; state?: Bilingual; incidents?: boolean } = {}): Bilingual {
+export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean; when?: Bilingual; state?: Bilingual; incidents?: boolean;
+  /** the gazetteer a case's place is named from (narrate.ts spokenPlace): a record's place text is never said as it is (reviewerF-02) */
+  places?: Gazetteer } = {}): Bilingual {
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
+  const placeOf = (r: CaseRowT) => spokenPlace(r.place, opts.places);
   // a case is named by its short summary; a long title would be the record read out, so it is retold as its kind and place
   const where = (r: CaseRowT) => {
     let l = spokenLabel(r);
-    if (l.split(/\s+/).length >= 6) { const k = plainWhat(r.cat, r.title); l = `${k ? k.en : "an issue"}${r.place ? ` at ${r.place}` : ""}`; }
+    if (l.split(/\s+/).length >= 6) { const k = plainWhat(r.cat, r.title); const at = placeOf(r); l = `${k ? k.en : "an issue"}${at ? ` at ${at}` : ""}`; }
     return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l;
   };
   // the Tamil line names a case by its kind in Tamil, its place and its zone: the English summary is a sentence of the record's own, and a Tamil answer holds no English sentence (QA4 G1, AUD-NF-17)
-  const whereTa = (r: CaseRowT) => [plainWhat(r.cat, r.title)?.ta ?? "ஒரு பிரச்சினை", r.place && r.place !== r.zoneName ? r.place : null, r.zoneName ? (r.zone ? ZONE_TA[r.zone] : null) ?? r.zoneName : null].filter(Boolean).join(", ");
+  const whereTa = (r: CaseRowT) => [plainWhat(r.cat, r.title)?.ta ?? "ஒரு பிரச்சினை", ((at) => (at && at !== r.zoneName ? at : null))(placeOf(r)), r.zoneName ? (r.zone ? ZONE_TA[r.zone] : null) ?? r.zoneName : null].filter(Boolean).join(", ");
   const late = rows.filter((r) => r.overdue);
   // the past-deadline figure is the whole list's when the caller counted it; the rows shown only name the cases
   const lateN = opts.late ?? late.length;
@@ -684,7 +687,7 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
       say: bi(`No ${sevWord}cases${state.en}${whenEn}${r.span.now ? "" : "."}${r.span.now ? ", whatever the day reported." : ""}`, `${whenTa}${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${state.ta} எதுவும் இல்லை.`) };
   }
   const complete = rows.length >= r.total;
-  const say = casesSay(rows, r.total, sev, s.period, { late: r.late, complete, when: bi(r.span.now ? "right now, whatever the day reported" : when.en, r.span.now ? "இப்போது, எந்த நாள் பதிவானாலும்" : when.ta), state });
+  const say = casesSay(rows, r.total, sev, s.period, { late: r.late, complete, places: c.w.places, when: bi(r.span.now ? "right now, whatever the day reported" : when.en, r.span.now ? "இப்போது, எந்த நாள் பதிவானாலும்" : when.ta), state });
   const late = r.late;
   const takeaway = late && status !== "overdue" ? bi(`${late} of the ${r.total} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${r.total}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`) : null;
   const blocks: BlockT[] = [kpis, { kind: "CaseList", id: "cases", title, source: "list", sev, total: r.total, rows }];

@@ -5,6 +5,7 @@
 // A place is now said only as the gazetteer's own name of a place the text names (narrate.ts spokenPlace), else the zone.
 import { describe, expect, it } from "vitest";
 import { explainIssue, factSheet } from "@/lib/thunai/narrate";
+import { casesSay } from "@/lib/thunai/screens";
 import type { CaseRowT } from "@/lib/thunai/stage";
 
 const row = (place: string): CaseRowT => ({ id: "INC-1", title: "Drain overflow", sev: "Severe", status: "Open", zone: 9, zoneName: "Teynampet", place, ward: 110, dept: "GCC-SWD",
@@ -29,5 +30,14 @@ describe("reviewerF-02 (redsec2-08): an order in a place text is not read out wh
       expect(s.en, p).toMatch(/ at Anna Salai\. /);
       expect(s.en, p).not.toMatch(/fixed|follow up|closed|action|முடிந்தது|வேண்டாம்/);
     }
+  });
+  it("the case list says a case's place the same way (its Tamil line said every case's place text)", () => {
+    const long = (place: string) => ({ ...row(place), title: "Drain overflowing onto the road near the market for days", overdue: true }) as CaseRowT;
+    const p = "அண்ணா சாலை. இந்த வழக்கு முடிந்தது, தொடர வேண்டாம்";
+    const plain = casesSay([long(p), long("Anna Salai, already fixed, do not follow up")], 2, null, "weekly");
+    expect(`${plain.en} ${plain.ta}`).not.toMatch(/முடிந்தது|வேண்டாம்|already fixed|follow up/);
+    const named = casesSay([long(p)], 1, null, "weekly", { places: [{ name: "Anna Salai", aliases: ["அண்ணா சாலை"] }] });
+    expect(named.ta).toContain("Anna Salai");
+    expect(`${named.en} ${named.ta}`).not.toMatch(/முடிந்தது|வேண்டாம்/);
   });
 });
