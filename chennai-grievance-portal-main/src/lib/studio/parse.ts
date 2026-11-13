@@ -10,7 +10,7 @@
  * become YYYY-MM-DD, so every later step sees one plain table.
  */
 import * as XLSX from "xlsx";
-import { FormatError, Inflate, InflateLimit, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, storedWorkbook, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
+import { FormatError, Inflate, InflateLimit, decodeText, docxTables, elements, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, storedWorkbook, unzip, withoutSpans, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
 import { isImage } from "@/lib/studio/ocr";
 import { feedRoot } from "@/lib/studio/connect/links";
 // the feed test lives with the page helpers (pure), so collector/onboard.ts uses it too
@@ -154,11 +154,36 @@ function pdf(buf: Buffer, budget: Inflate): Table[] {
 
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s: string): string {
-  return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+  return cdata(s)
     .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => (e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT[e.toLowerCase()] ?? m));
 }
+/** CDATA sections opened, in one pass (an unclosed "<![CDATA[" was searched to the end of the text again for each one: reviewer5-10). */
+function cdata(s: string): string {
+  const out: string[] = [];
+  let at = 0;
+  for (;;) {
+    const i = s.indexOf("<![CDATA[", at);
+    if (i < 0) break;
+    const j = s.indexOf("]]>", i + 9);
+    if (j < 0) break;
+    out.push(s.slice(at, i), s.slice(i + 9, j));
+    at = j + 3;
+  }
+  out.push(s.slice(at));
+  return out.join("");
+}
+/** The text without the elements of these names (formats.ts elements: one pass, reviewer5-10). */
+function cut(s: string, names: string): string {
+  const keep: string[] = [];
+  let at = 0;
+  for (const e of elements(s, names)) { keep.push(s.slice(at, e.start)); at = e.end; }
+  keep.push(s.slice(at));
+  return keep.join("");
+}
+/** Every link with an href, and its inner text, in one pass. */
+const links = (s: string) => elements(s, "a").flatMap((e) => { const href = e.attrs.match(/href=["']([^"'#]+)["']/i)?.[1]; return href ? [{ href, inner: e.inner }] : []; });
 const tagOf = (xml: string, name: string) => xml.match(new RegExp(`<${name}\\b[^>]*>([\\s\\S]*?)</${name}>`, "i"))?.[1] ?? null;
-const plain = (s: string | null) => (s == null ? null : tidy(unxml(unxml(s)).replace(/<[^>]+>/g, " ")) || null);
+const plain = (s: string | null) => (s == null ? null : tidy(unxml(unxml(s)).replace(/<[^<>]+>/g, " ")) || null);
 
 /** A feed date ("Tue, 06 Oct 2026 04:57:39 GMT", ISO) as India time, YYYY-MM-DD HH:MM. */
 function feedDate(s: string | null): string | null {
@@ -172,7 +197,7 @@ function feedDate(s: string | null): string | null {
 
 /** RSS 2.0, RSS 1.0 (RDF) or Atom: Headline, Source, Published, Summary, Link. */
 function feed(xml: string): Table {
-  const items = [...xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map((m) => m[2]).slice(0, MAX_ROWS);
+  const items = elements(xml, "item|entry").map((m) => m.inner).slice(0, MAX_ROWS);
   if (!items.length) throw new ParseError("The feed has no articles in it.");
   const channel = plain(tagOf(xml.replace(/<(item|entry)\b[\s\S]*$/i, ""), "title"));
   const rows: Cell[][] = items.map((it) => {
@@ -192,25 +217,27 @@ function feed(xml: string): Table {
 
 // -------------------------------------------------------------------- html --
 
-export const stripPage = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "")
+// comments and script, style, svg... taken out in one pass each (the lazy patterns searched to the end again for each unclosed one: reviewer5-10)
+export const stripPage = (html: string) => cut(withoutSpans(html, "<!--", "-->"), "script|style|noscript|svg|template")
   // an attribute value holding < or > (Wikipedia's data-mw JSON) would end a tag early: emptied, so the tags read right
   .replace(/(\s[\w:-]+=)("[^"]*"|'[^']*')/g, (m, a: string, v: string) => (/[<>]/.test(v) ? `${a}""` : m));
 /** A cell's text: tags, footnote marks ([1], [a]) and extra spaces removed. */
-const cellText = (s: string) => tidy(unxml(s.replace(/<br\s*\/?>/gi, " ").replace(/<sup\b[\s\S]*?<\/sup>/gi, "").replace(/<[^>]+>/g, " ")).replace(/\[\s*(\d+|[a-z]|note \d+|citation needed)\s*\]/gi, ""));
+const cellText = (s: string) => tidy(unxml(cut(s.replace(/<br\s*\/?>/gi, " "), "sup").replace(/<[^<>]+>/g, " ")).replace(/\[\s*(\d+|[a-z]|note \d+|citation needed)\s*\]/gi, ""));
 
 /** Every table on a page as a grid (colspans repeated), largest first. */
 export function htmlTables(html: string): Cell[][][] {
   const page = stripPage(html);
   const out: Cell[][][] = [];
-  for (const m of page.matchAll(/<table\b[^>]*>([\s\S]*?)<\/table>/gi)) {
-    const body = m[1];
+  // tables, rows and cells each read in one pass (elements): 140 KB of unclosed <table> took 2.6 s (reviewer5-10)
+  for (const m of elements(page, "table")) {
+    const body = m.inner;
     if (/<table\b/i.test(body)) continue; // the outer layout table of a nested pair
     const grid: Cell[][] = [];
-    for (const tr of body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    for (const tr of elements(body, "tr")) {
       const row: Cell[] = [];
-      for (const td of tr[1].matchAll(/<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/gi)) {
-        const span = Math.min(20, Number(td[2].match(/colspan=["']?(\d+)/i)?.[1] ?? 1) || 1);
-        const v = cellText(td[3]);
+      for (const td of elements(tr.inner, "th|td")) {
+        const span = Math.min(20, Number(td.attrs.match(/colspan=["']?(\d+)/i)?.[1] ?? 1) || 1);
+        const v = cellText(td.inner);
         for (let k = 0; k < span; k++) row.push(v === "" ? null : v);
       }
       if (row.some((c) => c != null)) grid.push(row);
@@ -234,7 +261,7 @@ function htmlPage(html: string, base: string): Table {
   if (rows.length >= 5) return { headers: ["Headline", "Source", "Published", "Summary", "Link"], rows, sheet: null, sheets: [], caption: title ? `Headlines on ${title}` : "Headlines on the page", format: "feed", truncated: 0 };
   const host2 = host ?? "";
   if (/data\.gov\.in$/.test(host2)) throw new ParseError("data.gov.in builds its pages with JavaScript, so the data is not in the page. On the dataset's page press Download, choose CSV (or Excel), and drop that file here; or paste its API link (api.data.gov.in/resource/...&format=csv).");
-  const textLen = stripPage(html).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").length;
+  const textLen = stripPage(html).replace(/<[^<>]+>/g, " ").replace(/\s+/g, " ").length;
   if (textLen < 2000 && html.length > 50_000) throw new ParseError("That page builds its content with JavaScript, so there is nothing to read in it. Look on the page for a Download (CSV / Excel) or RSS link and paste that, or download the table and drop the file here.");
   throw new ParseError("That web page has no table, no data file and no list of headlines to read. Open it, look for a \"Download\" (CSV / Excel) or an RSS link, and paste that instead.");
 }
@@ -245,13 +272,13 @@ export function headlinesIn(html: string, base: string): Cell[][] {
   const seen = new Set<string>();
   const rows: Cell[][] = [];
   // menus, headers and footers are not headlines
-  const body = stripPage(html).replace(/<(nav|header|footer)\b[\s\S]*?<\/\1>/gi, "");
-  for (const m of body.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const text = cellText(m[2]);
+  const body = cut(stripPage(html), "nav|header|footer");
+  for (const m of links(body)) {
+    const text = cellText(m.inner);
     if (text.length < 30 || text.length > 260 || text.split(" ").length < 5 || seen.has(text.toLowerCase())) continue;
     seen.add(text.toLowerCase());
     let link: string | null = null;
-    try { link = new URL(unxml(m[1]), base).toString(); } catch { /* keep null */ }
+    try { link = new URL(unxml(m.href), base).toString(); } catch { /* keep null */ }
     rows.push([text, host, null, null, link]);
     if (rows.length >= 300) break;
   }
@@ -261,9 +288,9 @@ export function headlinesIn(html: string, base: string): Cell[][] {
 /** Links on a page to data files (CSV first, then Excel, then JSON), for a page that only links its data. */
 export function dataLinksIn(html: string, base: string): string[] {
   const out: { url: string; rank: number }[] = [];
-  for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const href = unxml(m[1]);
-    const text = cellText(m[2]).toLowerCase();
+  for (const m of links(html)) {
+    const href = unxml(m.href);
+    const text = cellText(m.inner).toLowerCase();
     const h = href.toLowerCase();
     // a file by its name, by a format parameter (?format=csv, export=xlsx), or by the link's own words ("Download CSV")
     const ext = h.match(/\.(csv|xlsx|xls|json)(\?|$)/)?.[1] ?? h.match(/[?&](?:format|type|output|export)=(csv|xlsx|xls|json)\b/)?.[1] ?? (/(^|\W)(csv)(\W|$)/.test(text) ? "csv" : /(^|\W)(xlsx?|excel)(\W|$)/.test(text) ? "xlsx" : null);

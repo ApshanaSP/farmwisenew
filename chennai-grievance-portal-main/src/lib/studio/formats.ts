@@ -225,7 +225,51 @@ function zipNames(buf: Buffer): string[] {
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 export const unent = (s: string) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
   .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => { if (e[0] !== "#") return ENT[e.toLowerCase()] ?? m; const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1)); return Number.isInteger(c) && c >= 0 && c <= 0x10ffff ? String.fromCodePoint(c) : m; });
-const text = (s: string) => unent(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+// a tag is "<" to the next ">" with no "<" in between: "<[^>]+>" searched to the end again from every "<" that has no ">" after it
+const text = (s: string) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, " ").trim();
+
+/**
+ * Every element <name ...>inner</name> of the names the pattern `names` matches, in order, in one pass. The lazy patterns they replace
+ * (<x\b[^>]*>([\s\S]*?)<\/x>) searched to the end of the text again for every opening tag with no closing one, so time grew with the
+ * square of the text: 200 KB of unclosed <Placemark> 2.3 s (1 MB over 20 s), 140 KB of <table> 2.6 s, 300 KB of nested XML 10 s
+ * (reviewer5-10). Here a name whose closing tag is not found after one opening tag has none after any later one either, so it is never
+ * searched for again. `flags` "gi" for HTML and KML (names in any case), "g" for XML.
+ */
+export function elements(src: string, names: string, flags: "g" | "gi" = "gi"): { name: string; attrs: string; inner: string; start: number; end: number }[] {
+  const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
+  const closes = new Map<string, RegExp | null>();
+  const out: { name: string; attrs: string; inner: string; start: number; end: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = open.exec(src))) {
+    const key = flags === "gi" ? m[1].toLowerCase() : m[1];
+    let close = closes.get(key);
+    if (close === null) continue;
+    if (!close) { close = new RegExp(`</${m[1].replace(/[.:-]/g, (c) => `\\${c}`)}\\s*>`, flags); closes.set(key, close); }
+    close.lastIndex = open.lastIndex;
+    const c = close.exec(src);
+    if (!c) { closes.set(key, null); continue; }
+    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, c.index), start: m.index, end: c.index + c[0].length });
+    open.lastIndex = c.index + c[0].length;
+  }
+  return out;
+}
+
+/** The text without every span from `open` to the next `close`, in one pass (an `open` with no `close` after it ends the search). */
+export function withoutSpans(src: string, open: string, close: string): string {
+  const keep: string[] = [];
+  let at = 0;
+  for (;;) {
+    const i = src.indexOf(open, at);
+    if (i < 0) break;
+    const j = src.indexOf(close, i + open.length);
+    if (j < 0) break;
+    keep.push(src.slice(at, i));
+    at = j + close.length;
+  }
+  keep.push(src.slice(at));
+  return keep.join("");
+}
+
 const val = (s: string): Cell => {
   const t = text(s);
   if (t === "") return null;
@@ -256,7 +300,7 @@ export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length
 
 /** KML placemarks as a grid: Name, Description, every ExtendedData field, Latitude, Longitude. */
 export function kmlGrid(xml: string): Cell[][] {
-  const marks = [...xml.matchAll(/<Placemark\b[^>]*>([\s\S]*?)<\/Placemark>/gi)].map((m) => m[1]);
+  const marks = elements(xml, "Placemark").map((m) => m.inner);
   if (!marks.length) throw new FormatError("This KML has no places in it.");
   const extra: string[] = [];
   const recs = marks.map((p) => {
@@ -264,9 +308,11 @@ export function kmlGrid(xml: string): Cell[][] {
     r.Name = val(p.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? "");
     const desc = p.match(/<description>([\s\S]*?)<\/description>/i)?.[1];
     if (desc) r.Description = (text(unent(desc)) || null);
-    for (const d of p.matchAll(/<(?:Data|SimpleData)\b[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/(?:Data|SimpleData)>/gi)) {
-      const k = unent(d[1]).trim();
-      const v = d[2].match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d[2];
+    for (const d of elements(p, "Data|SimpleData")) {
+      const name = d.attrs.match(/(?:^|\s)name="([^"]+)"/)?.[1];
+      if (!name) continue;
+      const k = unent(name).trim();
+      const v = d.inner.match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d.inner;
       if (!extra.includes(k)) extra.push(k);
       r[k] = val(v);
     }
@@ -304,17 +350,18 @@ export function geojsonRecords(doc: unknown): Record<string, unknown>[] | null {
 
 /** A generic XML file: the element that repeats most (with child elements) is a record, its children the columns. */
 export function xmlGrid(xml: string): Cell[][] | null {
-  const body = xml.replace(/<\?[\s\S]*?\?>/g, "").replace(/<!--[\s\S]*?-->/g, "");
+  // every reader here goes once over the text (reviewer5-10: comments, instructions and records left open were each searched to the end)
+  const body = withoutSpans(withoutSpans(xml, "<?", "?>"), "<!--", "-->");
   const counts = new Map<string, number>();
-  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)\b[^>/]*>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
+  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)(?![\w.:-])[^<>/]{0,4000}>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
   const rec = [...counts.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!rec) return null;
   const esc = rec.replace(/[.:-]/g, (c) => `\\${c}`);
   const cols: string[] = [];
-  const recs = [...body.matchAll(new RegExp(`<${esc}\\b([^>]*)>([\\s\\S]*?)</${esc}>`, "g"))].slice(0, 50_000).map((m) => {
+  const recs = elements(body, esc, "g").slice(0, 50_000).map((m) => {
     const r: Record<string, Cell> = {};
-    for (const a of m[1].matchAll(/([\w:-]+)="([^"]*)"/g)) { if (!cols.includes(a[1])) cols.push(a[1]); r[a[1]] = val(a[2]); }
-    for (const c of m[2].matchAll(/<([A-Za-z_][\w.:-]*)\b[^>]*>([\s\S]*?)<\/\1>/g)) { if (!cols.includes(c[1])) cols.push(c[1]); r[c[1]] = val(c[2]); }
+    for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) { if (!cols.includes(a[1])) cols.push(a[1]); r[a[1]] = val(a[2]); }
+    for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) { if (!cols.includes(c.name)) cols.push(c.name); r[c.name] = val(c.inner); }
     return r;
   });
   if (recs.length < 3 || cols.length < 2) return null;
