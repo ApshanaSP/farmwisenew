@@ -5190,6 +5190,23 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerG-06",
+    "severity": "P3",
+    "area": "accounts (filing limit)",
+    "title": "With no trusted proxy the filing limit has no district-wide ceiling any more: cheap accounts multiply the per-account cap, each filing a paid classifier call",
+    "found_by": "reviewerG (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/complaint-limit.district.fixall.test.ts::reviewerG-06: with no trusted proxy, a district-wide hourly ceiling well above real volume",
+    "root_cause": "reviewerE-01 dropped the address limit for the shared direct address (a district-wide off switch) and nothing replaced it; now a district-wide hourly ceiling in that mode only",
+    "fix_commit": "08910f53",
+    "revert_check": "3 of 6 fail without / 6 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/complaint-limit.ts:30; src/app/api/auth/register/route.ts:12",
+    "note": "COMPLAINTS_DISTRICT_PER_HOUR = 1,000. How: the busiest hour in data/datasets/grievances.csv (Filed On, 16,287 filings) holds 19 (2026-09-21 18:00; busiest day 163); 5 x 19 = 95, so the 1,000 floor decides (about 50x the busiest hour). Only 4 of the 16,287 rows are marked non-synthetic, so the dataset's volume, not those 4, was taken as real volume. The 429 says the site is busy across the district, not the account. Behind a trusted proxy nothing changes. A design trade-off: the owner may want another number.",
+    "closed_in": "fixall"
+  },
+  {
     "id": "skeptic-redsec1-1",
     "severity": "P2",
     "area": "sign-out (QA pass 4 skeptic / redteam-final-13)",
