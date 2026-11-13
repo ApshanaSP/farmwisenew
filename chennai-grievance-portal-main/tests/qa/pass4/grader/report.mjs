@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // QA pass 4: the report of a run.   node tests/qa/pass4/grader/report.mjs <label>
 // Writes docs/qa/pass4/results/<label>.md: confident wrong answers first, then per family and per language tables of right, safe, wrong and code-lane coverage, with Wilson 95 % intervals.
 // QA_P4_RESULTS_DIR moves the folder, for the tool's own test.

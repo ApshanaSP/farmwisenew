@@ -33,6 +33,9 @@ export function qaEnv(o = {}) {
     DATA_BACKEND: "aws", AWS_STORE_DRY_RUN: "1", AWS_STORE_SAVE: "", AWS_STORE_RELOAD_MINUTES: "100000",
     AWS_DURABLE_FILE: path.join(srvDir, "durable.sqlite"),
     DATASET_DIR: path.join(srvDir, "datasets"),   // RC-45: a test server's dataset rows go to its own folder, never to the tracked data/datasets
+    // and its Data Studio uploads to its own folder, never to the worktree's data/studio: redteam-final-5's rtf-export.csv stayed there after every
+    // gate run, and the in-process real-path tests read it back (Ask matched "export all complaints to excel" to it, SKG1-30)
+    STUDIO_DIR: path.join(srvDir, "studio"),
     SMTP_HOST: "127.0.0.1", SMTP_PORT: "1", EMAIL_MODE: "sandbox", NEXT_DIST_DIR: dist,
     AI_PROVIDER: "groq", AI_FALLBACK_PROVIDER: "groq", AI_CHAT_PROVIDER: "groq", QA_GROQ_ONLY: "1",
     NEXT_TELEMETRY_DISABLED: "1",

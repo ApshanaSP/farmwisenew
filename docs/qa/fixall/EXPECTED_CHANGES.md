@@ -91,3 +91,17 @@ their changes are in `docs/qa/pass7/P0_FIXES.md`. Each line names its rows; the 
   export, the case-page step tag, the E-03 captions, Jarvis's question list on a phone, and axe on the Manu Desk.
 - **Live services**: a real model (the "show" decision, figure citing), a mail server that is down, an MSG91 connect timeout, PaddleOCR, the
   read-only grant on real MySQL, and the AWS start-up path of the step-table check.
+
+## Round 3 (`claude/fixall3-a84a72`, from `43c1698a`): pass 4's real-path suite
+- **App**: Ask District IQ says an order to close, reopen or export cases is not done (the `not_done` card) before the warnings, map and
+  Data Studio lanes read anything (SKG1-30, `fixall3-skg1-30`). Before, a Studio upload whose name shared a word with the order ("Rtf Export")
+  answered "export all complaints to excel" with its row count, and an order with a distance or a warning word could reach those lanes.
+- **Test servers and runs**: a pass 4 test server (`qaEnv`) and a `vitest.qa4.config.ts` run keep Data Studio uploads in their own
+  `data/aws-cache/qa/srv/<instance>/studio`, no longer the worktree's `data/studio` (redteam-final-5's upload stayed there after each gate).
+- **Harness and oracle**: `same-number.mjs` asks the rules lanes for the console's Daily as "in the last 24 hours" and checks "today" against
+  the calendar day; the departments' "to check" figures are read against My Tasks; `pinned.mjs` counts open by OPEN_NOW and the officer's stages
+  by `STAGE_SQL`. Reasons in `docs/qa/pass4/evidence/same-number.md` ("Since this was recorded").
+- **Other test fixes**: skeptic-b freezes the clock; scan-findings reads the dev-code helper's new call and its gate; audit-ui_honesty waits for
+  the tab's own slot; the grader's three tools lost their shebang line (vitest could not load them).
+- **Port defaults**: model-lifecycle (3142), audit-ui_honesty (3134) and same-number (3120) start their own server on a fixed default port;
+  `QA_MODEL_PORT`, `QA_UI_HONESTY_PORT` and `QA_SAME_NUMBER_PORT` move them. Round 3 ran them on 3111, 3112 and 3110.

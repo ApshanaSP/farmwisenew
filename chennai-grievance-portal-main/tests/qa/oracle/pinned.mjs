@@ -136,36 +136,45 @@ export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durabl
 
 // ------------------------------------------------------------------ the figures, one definition each --
 
+/**
+ * Open, as every open figure of the app counts it since fix-all round 2 (console-sync-10, reviewerE-02, reviewerG-01): the glossary's rule
+ * (src/lib/reference/metrics.ts SQL.open, the app's OPEN_NOW in intel.ts), the effective open flag with the Collector's decisions on top and NOT a
+ * news complaint the routing job handed to a department. Before, the open, severe, serious, past-deadline, news-only, complaint and verified
+ * figures here counted routed complaints (the app did too, in most queries), and only "ongoing", "urgent", "overdue" and "complaints_ongoing"
+ * left them out. The pinned snapshot holds no open routed incident, so only a run that routes (same-number's overlay part) sees the change.
+ */
+const openNow = (r) => r.open && !r.routed;
+
 /** name -> { what: in words; test: is the row counted; sum: the column added up (else rows are counted) } */
 export const DEFS = {
   reported: { what: "every incident in the scope", test: () => true },
-  open: { what: "open, with the Collector's decisions on top (news complaints routed to a department still count)", test: (r) => r.open },
+  open: { what: "open by the glossary's rule (OPEN_NOW): the Collector's decisions on top, not a news complaint routed to a department", test: openNow },
   ongoing: { what: "open and not routed to a department (the Ongoing tile, the glossary's 'Still open')", test: (r) => r.open && !r.routed },
   resolved: { what: "closed as Resolved, with decisions on top", test: (r) => !r.open && r.effStatus === "Resolved" },
   severe: { what: "rated Severe, open or closed", test: (r) => r.sev === "Severe" },
-  severe_open: { what: "rated Severe and open", test: (r) => r.sev === "Severe" && r.open },
+  severe_open: { what: "rated Severe and open (OPEN_NOW)", test: (r) => r.sev === "Severe" && openNow(r) },
   high: { what: "rated High, open or closed", test: (r) => r.sev === "High" },
-  high_open: { what: "rated High and open", test: (r) => r.sev === "High" && r.open },
-  serious_open: { what: "Severe or High and open", test: (r) => r.open && (r.sev === "Severe" || r.sev === "High") },
+  high_open: { what: "rated High and open (OPEN_NOW)", test: (r) => r.sev === "High" && openNow(r) },
+  serious_open: { what: "Severe or High and open (OPEN_NOW)", test: (r) => openNow(r) && (r.sev === "Severe" || r.sev === "High") },
   serious_all: { what: "Severe or High, open or closed", test: (r) => r.sev === "Severe" || r.sev === "High" },
   urgent: { what: "Severe or High, open and not routed", test: (r) => r.open && !r.routed && (r.sev === "Severe" || r.sev === "High") },
   // RC-34 (lane d): past deadline is ONE rule: the store's flag, or the due time gone by the console's now (the case page already said so)
   overdue_store_flag: { what: "open with the store's own past-deadline flag, alone (the pipeline's flag, OPEN-7: it misses open incidents whose due time has gone)", test: (r) => r.open && r.breached },
-  overdue_flag: { what: "open and past its deadline: the store's flag or the due time gone (routed ones count)", test: (r, o) => r.open && (r.breached || (r.due != null && r.due <= o.nowMs)) },
+  overdue_flag: { what: "open (OPEN_NOW) and past its deadline: the store's flag or the due time gone", test: (r, o) => openNow(r) && (r.breached || (r.due != null && r.due <= o.nowMs)) },
   overdue: { what: "open and past its deadline (the flag or the due time gone), not routed (the glossary's 'Past deadline, still open')", test: (r, o) => r.open && (r.breached || (r.due != null && r.due <= o.nowMs)) && !r.routed },
   overdue_due: { what: "open and its due time has passed by the console's now, whatever the store's flag says", test: (r, o) => r.open && r.due != null && r.due <= o.nowMs },
   news_only: { what: "seen only in the news, open or closed", test: (r) => r.mediaOnly },
-  news_only_open: { what: "seen only in the news and open", test: (r) => r.mediaOnly && r.open },
+  news_only_open: { what: "seen only in the news and open (OPEN_NOW, reviewerG-01)", test: (r) => r.mediaOnly && openNow(r) },
   multi: { what: "from more than one source", test: (r) => r.sources > 1 },
   complaints_all: { what: "citizen complaints added up, open or closed", sum: "complaints" },
-  complaints_open: { what: "citizen complaints added up, open incidents only", sum: "complaints", test: (r) => r.open },
+  complaints_open: { what: "citizen complaints added up, open incidents only (OPEN_NOW)", sum: "complaints", test: openNow },
   complaints_ongoing: { what: "citizen complaints added up, open and not routed", sum: "complaints", test: (r) => r.open && !r.routed },
-  complaint_inc: { what: "open incidents with at least one citizen complaint", test: (r) => r.open && r.complaints > 0 },
+  complaint_inc: { what: "open incidents (OPEN_NOW) with at least one citizen complaint", test: (r) => openNow(r) && r.complaints > 0 },
   deaths: { what: "people who died, added up", sum: "dead" },
   injured: { what: "people injured, added up", sum: "injured" },
   awaiting_flag: { what: "open and flagged awaiting the Collector", test: (r) => r.open && r.awaiting },
   awaiting_sum: { what: "open incidents flagged awaiting the Collector (any severity)", test: (r) => r.awaiting },
-  verified_open: { what: "open and verified", test: (r) => r.open && r.verified },
+  verified_open: { what: "open (OPEN_NOW) and verified", test: (r) => openNow(r) && r.verified },
   pinnable: { what: "located closely enough to pin on a map", test: (r) => r.lat != null && num(r.prec) <= 2000 },
   unlocated: { what: "no point, or too coarse to pin", test: (r) => !(r.lat != null && num(r.prec) <= 2000) },
   has_point: { what: "has a map point", test: (r) => r.lat != null && r.lon != null },
@@ -213,12 +222,16 @@ export class Oracle {
   }
 
   /** The department officer's stage of a row (the same rule as officer/data.ts STAGE_SQL, written out). */
+  // The officer's stage, by the app's rule (src/lib/officer/data.ts STAGE_SQL). Fix-all round 2: the latest step is the one with the highest step_id
+  // and the latest decision the one with the highest decision_id (officer-day-15, -24; a decision at the step's second or later wins), and the
+  // pipeline's "Awaiting verification" is Sent to Collector only for a severe case: any other is the department's own to close, In action
+  // (officer-day-29).
   stageOf(r, dept) {
     const steps = this.durable.steps.filter((s) => String(s.incident_id) === r.id && s.dept_code === dept)
-      .sort((a, b) => String(a.at).localeCompare(String(b.at)) || Number(a.step_id) - Number(b.step_id));
+      .sort((a, b) => Number(a.step_id) - Number(b.step_id));
     const os = steps[steps.length - 1] ?? null;
     const decs = this.durable.decisions.filter((d) => String(d.incident_id) === r.id && ["verify", "reopen", "resolve", "reject"].includes(d.decision))
-      .sort((a, b) => String(a.decided_at).localeCompare(String(b.decided_at)) || Number(a.decision_id) - Number(b.decision_id));
+      .sort((a, b) => Number(a.decision_id) - Number(b.decision_id));
     const cd = decs[decs.length - 1] ?? null;
     if (cd && (!os || String(cd.decided_at) >= String(os.at))) return cd.decision === "reopen" ? "action" : cd.decision === "reject" ? "closed" : "verified";
     if (os?.step === "close") return "verified";
@@ -228,7 +241,7 @@ export class Oracle {
     if (r.status === "Open" || r.status === "Under review") return "new";
     if (r.status === "Assigned") return "approved";
     if (r.status === "In progress") return "action";
-    if (r.status === "Awaiting verification") return "sent";
+    if (r.status === "Awaiting verification") return r.sev === "Severe" ? "sent" : "action";
     if (r.status === "Resolved") return "verified";
     return "closed";
   }

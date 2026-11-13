@@ -90,12 +90,21 @@ describe("checked and sound: keep it that way", () => {
     if (!fs.existsSync(route)) return; // no build on this machine: nothing to check
     const js = fs.readFileSync(route, "utf8");
     // The minified names change with every build and every Next version (Next 14: `GP:()=>q`, Next 15: `v8:()=>o`), so they are read from the route itself:
-    // the call that makes the reset reply's devOtp takes (otp, headers); its export names the helper; the helper must be an empty function.
-    const exported = js.match(/\(0,\w+\.(\w+)\)\(\w+\.otp,\w+\.headers\)/)?.[1];
+    // the call that makes the reset reply's devOtp takes (otp, headers); its export names the helper; the helper must return nothing.
+    // Fix-all round 2 (hunt2-sec-06) made the route wait for the code only when devOtpShown(headers) says so, and pass the awaited code as a
+    // plain value (`(0,z.v8)(b,a.headers)`, no longer `c.otp`): so the code helper's call takes a value or an `.otp`, and the gate, the same
+    // module's one-argument helper on the headers, must compile to `return false`.
+    const call = js.match(/\(0,(\w+)\.(\w+)\)\(\w+(?:\.otp)?,\w+\.headers\)/);
+    const exported = call?.[2];
     expect(exported, "the call of the dev-code helper").toBeTruthy();
-    const helper = js.match(new RegExp(String.raw`[^\w]` + exported + String.raw`:\(\)=>(\w+)`))?.[1];
+    const helperOf = (name: string) => js.match(new RegExp(String.raw`[^\w]` + name + String.raw`:\(\)=>(\w+)`))?.[1];
+    const helper = helperOf(exported!);
     expect(helper, "the helper behind that export").toBeTruthy();
-    expect(js).toMatch(new RegExp("function " + helper + String.raw`\([\w,]*\)\{\}`));
+    // an empty body, or one that returns nothing (`{}`, `{0}`, `{return}`, `{return void 0}`)
+    expect(js).toMatch(new RegExp("function " + helper + String.raw`\([\w,]*\)\{(?:0|void 0|return(?: void 0)?;?)?\}`));
+    const gate = js.match(new RegExp(String.raw`\(0,` + call![1] + String.raw`\.(\w+)\)\(\w+\.headers\)`))?.[1];
+    expect(gate, "the call of the dev-code gate (devOtpShown) beside it").toBeTruthy();
+    expect(js).toMatch(new RegExp("function " + helperOf(gate!) + String.raw`\([\w,]*\)\{return!1\}`));
     expect(js).not.toContain("DEV_SHOW_OTP");
   });
 

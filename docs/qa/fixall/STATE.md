@@ -40,3 +40,15 @@
   - The lead restored old-format Aadhaar masking (5f439230) and fixed two pass 7 test schemas (d2e68478).
   - The changes the gate and the golden diff should expect: EXPECTED_CHANGES.md.
   - The ledger now has 4 open rows at most, all P2/P3 (see FINAL_REPORT). P5-034, pass 4's whole real-path suite, is run by the coordinator's gate.
+- 2026-11-14 01:10: round 3 (`claude/fixall3-a84a72`, from `43c1698a`) fixed the gate's pass 4 real-path failures. The 8 failing files and the new SKG1-30 test pass, each run alone.
+  - App: fixall3-skg1-30 (`6dc8f1cc`). Ask District IQ refuses an order to close, reopen or export before the warnings, map and Data Studio lanes run.
+  - Test fixes: skeptic-b (clock), scan-findings (new dev-code helper call), audit-ui_honesty (tab slot race), and the grader (shebang lines).
+  - Oracle: same-number follows OPEN_NOW, My Tasks, the officer stages and "today" since midnight. Reasons in `docs/qa/pass4/evidence/same-number.md`.
+  - Studio uploads from the qa4 runs now go to their own folder.
+  - model-lifecycle and g2-cache: not reproduced. The gate run stalled.
+  - Lead check on `0cc7ebed`:
+    - tsc exit 0; `src/lib/assistant` shuffled 891/891.
+    - On pinned API 3190, shuffled: skg1-30, grader, skeptic-b and scan-findings 131/131.
+    - Revert check: with `6dc8f1cc^`'s pipeline.ts, SKG1-30 fails with the gate's message.
+  - New rows: fixall3-officer-open (owner, P2) is which "open" the officer console shows. fixall3-map-today (open, P3): the map reads every period word as a rolling window, so only moving it onto `src/lib/period/read.ts` fixes it. Left for after the gate.
+  - Frozen here; the coordinator merges and re-runs the gate.
