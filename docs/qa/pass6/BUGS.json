@@ -645,7 +645,9 @@
     "reviewer": null,
     "where": "src/lib/collector/effective.ts:47-50 (status = pipeline status unless a Collector decision); src/lib/collector/intel.ts incident() has no officer_steps; src/lib/complaint-progress.ts:69",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Not done in round 2 (time box): it changes the Collector's effective status, which is one SQL expression (effective.ts effectiveSql, EFF.status) used at 21 sites in 8 modules: the Collector console (intel.ts list, chips, status filter, case page), briefbook, insights, aibrief and Ask District IQ (assistant/incidents, lance, news, queries). Left: (1) effectiveSql and effectiveStatus take the latest officer step (by step_id) and, when it is later than the latest effect decision (same-second: the decision wins, as officer/data.ts DECIDED_AFTER) and the case is effectively open, map approve to Assigned, action to In progress, send to Awaiting verification; (2) intel.ts withDecisions/overlay read the latest step for rows; (3) intel.ts incident() adds the officer steps to the case page timeline; (4) guard: officer_steps is optional on MySQL (intel.ts officerOpsReady), so the step overlay must be off without the table, and every in-memory test store that builds EFF needs the table. Repro: hunt2-ops/e19.mjs.",
+    "closed_in": null
   },
   {
     "id": "hunt2-ops-10",
@@ -1244,7 +1246,7 @@
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p6-severe.mjs INC-20260914-8A0C40 officerB (tag 'returned')",
     "failing_test": "src/lib/officer/data.fixall.test.ts::officer-day-15: a send-back in the same second as the send is In action AND Returned, as the citizen and the Collector read it",
     "root_cause": "the officer stage, its returned flag and the citizen tracker each broke a same-second step/decision tie differently, and the tracker placed the department close by its step time, not its resolve decision id; now one order (ids within each table, the close at its decision id, step before decision in the same second)",
-    "fix_commit": "7251e564",
+    "fix_commit": "7251e564, 6a4be084",
     "revert_check": "fails without (2 of the 3 same-second cases: returned false; the citizen In Progress while the consoles say Verified) / passes with",
     "status": "fixed",
     "reviewer": null,
@@ -1392,7 +1394,7 @@
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p10-race.mjs <code1> <code2> (part 2: officer close and Collector reopen sent together); node p10b.mjs INC-W-2026-153CHY",
     "failing_test": "src/lib/officer/data.fixall.test.ts::officer-day-24: a send-back, then the department's close, in the same second: closed, for all three",
     "root_cause": "the officer stage, its returned flag and the citizen tracker each broke a same-second step/decision tie differently, and the tracker placed the department close by its step time, not its resolve decision id; now one order (ids within each table, the close at its decision id, step before decision in the same second)",
-    "fix_commit": "7251e564",
+    "fix_commit": "7251e564, 6a4be084",
     "revert_check": "fails without (2 of the 3 same-second cases: returned false; the citizen In Progress while the consoles say Verified) / passes with",
     "status": "fixed",
     "reviewer": null,

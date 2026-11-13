@@ -63,3 +63,17 @@ describe("hunt2-ops-04: every list refuses a filter value it cannot apply, the s
     for (const q of ok) expect(filterProblem(new URLSearchParams(q)), q).toBeNull();
   });
 });
+
+describe("hunt2-ops-04: the Collector's list sends the severity the server reads, whatever language the page is shown in", () => {
+  it("each severity option carries its value, so the Tamil page's translated text is never sent as ?sev= (now refused)", async () => {
+    const React = await import("react");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    (globalThis as { React?: unknown }).React = React;
+    const { ListBody } = await import("@/components/collector/app/Overlays");
+    const c = { dept: null, depts: [], period: "weekly", periodLabel: "Last 7 days", zone: null, reloadKey: 0 };
+    const html = renderToStaticMarkup(React.createElement(ListBody, { preset: {}, c: c as never }));
+    const sev = html.match(/<select[^>]*aria-label="Severity"[^>]*>([\s\S]*?)<\/select>/)?.[1] ?? "";
+    expect([...sev.matchAll(/<option([^>]*)>([^<]*)<\/option>/g)].map((m) => [m[1].match(/value="([^"]*)"/)?.[1] ?? null, m[2]]))
+      .toEqual([["", "All severities"], ["Severe", "Severe"], ["High", "High"], ["Medium", "Medium"], ["Low", "Low"]]);
+  });
+});
