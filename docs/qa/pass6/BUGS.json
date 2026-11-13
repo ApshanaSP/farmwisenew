@@ -378,6 +378,21 @@
     "closed_in": "fixall"
   },
   {
+    "id": "fixall3-skg1-30",
+    "severity": "P2",
+    "area": "Ask District IQ",
+    "title": "SKG1-30: 'export all complaints to excel' answered with a Data Studio upload's figure when an upload's name shares a word with the order",
+    "found_by": "pass 7 gate, pass 4 real-path suite (skeptic-g1.test.ts SKG1-30), pass 4's known open P2",
+    "repro": null,
+    "failing_test": "tests/qa/pass4/skg1-30-studio-order.test.ts::'export all complaints to excel', and the same in Tanglish and Tamil, is said not to be done, not answered with the upload's figure",
+    "root_cause": "pipeline.ts checked notDone()'s order (close, reopen, export) after the warnings, map and Data Studio lanes; datasetNamed() matched 'export' to an upload named 'Rtf Export' (redteam-final-5's rtf-export.csv left in data/studio)",
+    "fix_commit": "6dc8f1cc",
+    "revert_check": "fails without (the gate's 'answer | Street lights: 3 (rows after cleaning) | Data Studio · Rtf Export') / passes with",
+    "status": "fixed",
+    "reviewer": null,
+    "closed_in": "fixall"
+  },
+  {
     "id": "hunt2-desk-01",
     "severity": "P1",
     "area": "Manu Desk: joining a case",
