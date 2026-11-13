@@ -4,6 +4,7 @@
  */
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import pool from "@/lib/db";
 import { audit, auditIn, inTransaction } from "@/lib/collector/sources";
 
 type Row = Record<string, any>;
@@ -99,11 +100,46 @@ export async function deleteWorkspace(owner: string, name: string) {
   });
 }
 
+/**
+ * The Collector's view of the audit log (GET /api/collector/audit): the newest `limit` rows a Collector may see.
+ *
+ * The log also holds every account's own security events (security/audit.ts: sign-ins with IP and browser, which each account reads
+ * back as its own history), citizens' included. A citizen's details never reach a staff role (QA pass 4, redteam-final-1: the
+ * Collector's console listed citizens' e-mails, user ids, IPs and browsers). So a row whose actor is a citizen account is never shown,
+ * nor a security row whose actor is an e-mail that is no staff account (a deleted or renamed citizen); system actors (the pipeline, a
+ * scheduled job) are not e-mails and stay. The rule is applied on reading, so rows written before it are covered too, and the page
+ * is filled from older rows when citizens' rows are left out.
+ */
 export async function auditLog(limit = 200) {
-  const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT log_id AS id, DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS at, actor, action, table_name, record_id, LEFT(after_value, 400) AS after_value
-     FROM ${ops("audit_log")} ORDER BY log_id DESC LIMIT ?`,
-    [limit]
-  );
-  return rows;
+  const out: RowDataPacket[] = [];
+  const page = 500;
+  for (let offset = 0; out.length < limit && offset < page * 10; offset += page) {
+    const [rows] = await intelPool.query<RowDataPacket[]>(
+      `SELECT log_id AS id, DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS at, actor, action, table_name, record_id, LEFT(after_value, 400) AS after_value
+       FROM ${ops("audit_log")} ORDER BY log_id DESC LIMIT ? OFFSET ?`,
+      [page, offset]
+    );
+    out.push(...(await staffVisible(rows)));
+    if (rows.length < page) break;
+  }
+  return out.slice(0, limit);
+}
+
+/** The rows a staff role may see: no citizen account's row, and no security row of an e-mail that is no staff account. */
+async function staffVisible(rows: RowDataPacket[]): Promise<RowDataPacket[]> {
+  const key = (a: unknown) => String(a ?? "").trim().toLowerCase();
+  const emails = [...new Set(rows.map((r) => key(r.actor)).filter((a) => a.includes("@")))];
+  const role = new Map<string, string>();
+  if (emails.length) {
+    // users live in the main database; a failed lookup fails the request (the route says so) rather than showing the rows unchecked
+    const [users] = await pool.query<RowDataPacket[]>(`SELECT LOWER(email) AS email, role FROM users WHERE LOWER(email) IN (?)`, [emails]);
+    for (const u of users) role.set(key(u.email), String(u.role));
+  }
+  return rows.filter((r) => {
+    const a = key(r.actor);
+    if (!a.includes("@")) return true;
+    const ro = role.get(a);
+    if (ro) return ro !== "citizen";
+    return r.table_name !== "security";
+  });
 }
