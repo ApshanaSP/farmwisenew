@@ -242,15 +242,16 @@ export async function countIncidents(f: IncidentFilters, now: string) {
 /**
  * Of the incidents reported in the window, how many are now resolved, still open, severe, and open past their deadline (for "what percentage of
  * complaints are resolved"): the same filters and the same decision-aware status as every count, so the share and the counts beside it agree.
- * Rejected and lapsed incidents are in the total and are not resolved.
+ * Rejected and lapsed incidents are in the total and are not resolved. `routed`: news complaints handed to a department, in the total and
+ * neither open (OPEN_NOW) nor closed, so open + closed + routed = n (reviewerG-05).
  */
 export async function shareOfIncidents(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now);
-  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(${EFF.open} = 0) AS closed, SUM(i.severity_level = 'Severe') AS severe,
+  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(${EFF.open} = 0) AS closed, SUM(${EFF.open} = 1 AND NOT ${OPEN}) AS routed, SUM(i.severity_level = 'Severe') AS severe,
     SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved' AND ${closedOnTimeSql(EFF.closedAt)}) AS ontime FROM incidents i WHERE ${w.sql}`, w.params);
   // ontime: resolved and closed by the deadline (a closing with no deadline on record is not counted on time); closed: every incident no longer open (pass4-open-11)
-  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue), ontime: num(a?.ontime), closed: num(a?.closed) };
+  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue), ontime: num(a?.ontime), closed: num(a?.closed), routed: num(a?.routed) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
