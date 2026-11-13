@@ -31,7 +31,6 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
   const P = c.ov.periodInfo;
   let ix = 0;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
-  const daily = c.ov.period === "daily";
   return (
     <>
       {/* Rain Rehearsal: the jobs the Collector sent before a heavy rain (only while there are some) */}
@@ -54,7 +53,7 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
             </span></span>
           </span>
         </button>
-        <ResolvedKpi c={c} label={daily ? "Resolved in 24 h" : `Resolved this ${P.unit.toLowerCase()}`} style={iv()} />
+        <ResolvedKpi c={c} label={resolvedLabel(P)} style={iv()} />
       </section>
 
       {/* by severity and My Work share one card two columns wide (a switch at its top), as on the Collector's Overview */}
@@ -81,6 +80,14 @@ export function ResolvedKpi({ c, label, style }: { c: Ctx; label: string; style:
       tip="Your department's grievances reported in the period that are resolved: verified by the Collector or closed by your department." />
   );
 }
+/**
+ * The officer's Resolved tile counts the department's grievances first reported in the console's window (the last 24 hours, or the last
+ * 7, 30 or 90 days back from now) that are now verified (resolvedTile, windowWhere on first_reported_at). It said "Resolved this week /
+ * month / quarter" and "Resolved in 24 h": calendar words, and closings, neither of which it counts (fixall-board-resolved-01; the
+ * Collector's tile and Ask District IQ were corrected the same way: console-sync-01, reviewerE-04). Tamil in i18n/ta.ts.
+ */
+export const resolvedLabel = (P: { label: string }) => `Resolved, reported in ${P.label.toLowerCase()}`;
+
 export const RESOLVED_LIST_TITLE = "Resolved: verified by the Collector or closed by your department";
 
 // ------------------------------------------------------------------- map --

@@ -37,6 +37,8 @@ export const TA: Record<string, string> = {
   "Resolved this quarter": "இந்தக் காலாண்டில் தீர்க்கப்பட்டவை",
   // the Collector's Resolved tile: its window back from now, not a calendar day or week (console-sync-01, hunt2-ops-10); "#" holds 24, 7, 30, 90
   "Resolved, last 24 hours": "தீர்க்கப்பட்டவை, கடந்த 24 மணி நேரம்", "Resolved, last 7 days": "தீர்க்கப்பட்டவை, கடந்த 7 நாட்கள்",
+  // the officer's Resolved tile: grievances reported in that window that are now resolved (fixall-board-resolved-01)
+  "Resolved, reported in last 24 hours": "கடந்த 24 மணி நேரத்தில் பதிவாகி, தீர்க்கப்பட்டவை", "Resolved, reported in last 7 days": "கடந்த 7 நாட்களில் பதிவாகி, தீர்க்கப்பட்டவை",
   "than yesterday": "நேற்றை விட", "than last week": "கடந்த வாரத்தை விட", "than last month": "கடந்த மாதத்தை விட", "from yesterday": "நேற்றிலிருந்து",
   "# fewer": "# குறைவு", "# more": "# அதிகம்", "No change": "மாற்றமில்லை",
   "Most serious zones": "மிகவும் தீவிரமான மண்டலங்கள்", "Past deadline, still open · 24 h": "காலக்கெடு தாண்டியும் திறந்தவை · 24 மணி",
