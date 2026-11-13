@@ -232,6 +232,37 @@
     "closed_in": "fixall"
   },
   {
+    "id": "fixall-studio-lazy-01",
+    "severity": "P2",
+    "area": "Data Studio file parsing",
+    "title": "Word tables were read with lazy patterns (w:tbl, w:tr, w:tc, w:t): 400 KB of unclosed <w:tbl> took 4.5 s, of unclosed <w:t> in one cell 4.2 s (1 MB about 28 s)",
+    "found_by": "fixall round 2 fixer (timing after reviewer5-10)",
+    "repro": "docxTables on a stored zip whose word/document.xml is 1 MB of '<w:tbl>' (or one closed cell holding 1 MB of '<w:t>')",
+    "failing_test": "src/lib/studio/formats.lazy.fixall.test.ts::fixall-studio-lazy-01: 1 MB of unclosed <w:tbl>, and of unclosed <w:t> in one closed cell, each well inside a second",
+    "root_cause": "docxTables kept the lazy open-to-close patterns reviewer5-10 replaced elsewhere; now elements() in one pass",
+    "fix_commit": "b111bd69",
+    "revert_check": "fails without (29.5 s) / passes with",
+    "status": "fixed",
+    "reviewer": null,
+    "note": "pdfStreams' dictionary pattern was timed on 1 and 5 MB of nested, unclosed and deep dictionaries: under 60 ms, not affected (guard case in the same test). Reader bundle rebuilt.",
+    "closed_in": "fixall"
+  },
+  {
+    "id": "fixall-studio-lazy-02",
+    "severity": "P2",
+    "area": "Data Studio file parsing",
+    "title": "formats.ts unent's CDATA step was a lazy pattern: 400 KB of unclosed '<![CDATA[' took 1.5 s (1 MB about 10 s)",
+    "found_by": "fixall round 2 fixer (timing after reviewer5-10)",
+    "repro": "unent('<![CDATA['.repeat(116000))",
+    "failing_test": "src/lib/studio/formats.lazy.fixall.test.ts::fixall-studio-lazy-02: 1 MB of unclosed CDATA sections, well inside a second, the text left as it is",
+    "root_cause": "unent read CDATA with a lazy pattern that rescans to the end for each unclosed opening; now a one-pass indexOf loop",
+    "fix_commit": "b111bd69",
+    "revert_check": "fails without (10.2 s) / passes with",
+    "status": "fixed",
+    "reviewer": null,
+    "closed_in": "fixall"
+  },
+  {
     "id": "hunt2-desk-01",
     "severity": "P1",
     "area": "Manu Desk: joining a case",
