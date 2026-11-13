@@ -13,6 +13,22 @@ export type Row = Record<string, any>;
 export function scopeWords(f: { zoneName: string | null; deptName: string | null; catLabel: string | null; talukName: string | null }): string {
   return [f.zoneName, f.deptName, f.catLabel, f.talukName ? `${f.talukName} taluk` : null].filter(Boolean).join(" · ") || "District-wide";
 }
+/**
+ * The incident list's scope in words, from the filters its request carries (the console's zone unless the list asks for any zone, and the
+ * list's own department, category and taluk): the caption under the list said "District-wide" under a taluk or category (reviewerE-03).
+ */
+export function listScopeWords(
+  c: { zoneName: string | null; cat: string | null; catLabel: string | null; depts: { code: string; name: string }[]; talukName: (code: string | null) => string | null },
+  f: { anyZone?: boolean; dept?: string | null; cat?: string | null; taluk?: string | null }
+): string {
+  const cat = f.cat || null;
+  return scopeWords({
+    zoneName: f.anyZone ? null : c.zoneName,
+    deptName: f.dept ? c.depts.find((d) => d.code === f.dept)?.name ?? f.dept : null,
+    catLabel: cat ? (cat === c.cat && c.catLabel ? c.catLabel : cat.replace(/_/g, " ").toLowerCase()) : null,
+    talukName: c.talukName(f.taluk || null)
+  });
+}
 /** The PDF's options from the console: its scope words, and the department (which picks the department or category charts). */
 export function reportOpt(c: { scopeName: string; deptName: string | null }, file: string): { scope: string; dept: string | null; file: string } {
   return { scope: c.scopeName, dept: c.deptName, file };

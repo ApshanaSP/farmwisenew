@@ -5,7 +5,7 @@ import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { OfficerCard, StoryLink } from "./Overview";
-import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, rel, reportOpt, type Row } from "./lib";
+import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, listScopeWords, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
 
 // -------------------------------------------------------------- modal --
@@ -82,7 +82,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
       <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 8 }}>
         {error ? <span role="alert">{error} <button className="lnk" onClick={() => setRetry((n) => n + 1)}>Retry</button></span>
           : data ? `${(data.incidents ?? data.total).toLocaleString("en-IN")} incidents${data.incidents != null && data.incidents !== data.total
-            ? ` in ${data.total.toLocaleString("en-IN")} rows (similar reports in one area grouped)` : ""} · ${c.zoneName ?? "District-wide"} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}`
+            ? ` in ${data.total.toLocaleString("en-IN")} rows (similar reports in one area grouped)` : ""} · ${listScopeWords(c, f)} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}`
           : "Loading…"}
       </div>
       <div className="tbl-wrap">
@@ -281,7 +281,8 @@ export function ExportBody({ c }: { c: Console }) {
               onClick={() => setPeriod(k)}>{w}</button>
           ))}
         </div>
-        <small>{word[2]} · {c.zoneName ?? "whole district"}{c.talukName(c.taluk) ? ` · ${c.talukName(c.taluk)} taluk` : ""}{c.deptName ? ` · ${c.deptName}` : ""}</small>
+        {/* every filter the report is built with, in the console's words (lib.tsx scopeWords): the category was left out (reviewerE-03) */}
+        <small>{word[2]} · {c.scopeName}</small>
       </div>
       <div className="xopts">
         <div className="xopt main">

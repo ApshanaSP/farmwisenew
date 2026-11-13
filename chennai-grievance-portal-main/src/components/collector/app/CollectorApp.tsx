@@ -110,6 +110,8 @@ export interface Console {
   scopeName: string;
   /** category chosen from a chart; filters every panel */
   cat: string | null;
+  /** that category in words */
+  catLabel: string | null;
   setCat: (c: string | null) => void;
   /** taluk chosen from the map or the taluk ranking; filters every panel */
   taluk: string | null;
@@ -606,7 +608,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   };
 
   const c: Console = {
-    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, scopeName, cat, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
+    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, scopeName, cat, catLabel, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
     mapMode, setMapMode, focus,
     locate: (i) => {
       if (i.lat == null) { toast("This incident has no map location.", "alert"); return; }
