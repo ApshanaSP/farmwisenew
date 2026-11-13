@@ -141,8 +141,40 @@ export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: stri
  * inflated in memory before the desk refused the file (QA pass 6, P5-028).
  */
 export interface PdfImageOptions { bitmaps?: boolean; maxBitmapBytes?: number }
-// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB)
+// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB).
+// It bounds the inflating; what a call keeps is at most 20 pages of OCR_PAGE_PIXELS bytes (ocrPage)
 export const PDF_BITMAP_BUDGET = 600_000_000;
+
+/** The most pixels of one bitmap page given to OCR: an A4 page at 300 dpi is 8.7 million, and OCR reads no better above that. */
+export const OCR_PAGE_PIXELS = 9_000_000;
+
+/**
+ * One inflated bitmap page as OCR is given it: grey (what Tesseract reads in any case), and shrunk by a whole factor (the mean of each
+ * f x f block) to at most OCR_PAGE_PIXELS. The budget above was also what one request held: a 762 KB PDF of 40 Mpx pages came back as
+ * 600 MB of page images, read at that size by OCR (reviewer2-13). Now one call holds at most 20 x 9 MB.
+ */
+function ocrPage(px: Buffer, W: number, H: number, ch: number): Buffer {
+  const f = Math.max(1, Math.ceil(Math.sqrt((W * H) / OCR_PAGE_PIXELS)));
+  const w = Math.max(1, Math.floor(W / f)), h = Math.max(1, Math.floor(H / f));
+  const head = Buffer.from(`P5\n${w} ${h}\n255\n`, "latin1");
+  if (f === 1 && ch === 1) return Buffer.concat([head, px.subarray(0, W * H)]);
+  const out = Buffer.allocUnsafe(w * h);
+  const sum = new Uint32Array(w);
+  const n = f * f;
+  for (let y = 0; y < h; y++) {
+    sum.fill(0);
+    for (let dy = 0; dy < f; dy++) {
+      const row = (y * f + dy) * W * ch;
+      for (let x = 0; x < w; x++) {
+        let s = 0;
+        for (let dx = 0, i = row + x * f * ch; dx < f; dx++, i += ch) s += ch === 3 ? (px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29) >> 8 : px[i];
+        sum[x] += s;
+      }
+    }
+    for (let x = 0; x < w; x++) out[y * w + x] = Math.round(sum[x] / n);
+  }
+  return Buffer.concat([head, out]);
+}
 
 export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET }: PdfImageOptions = {}): { images: Buffer[]; skipped: number } {
   const src = buf.toString("latin1");
@@ -203,7 +235,7 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
         const fits = (ch: number) => px.length >= W * H * ch && px.length <= W * H * ch + (flate ? 0 : 2);
         const ch = known ? (px.length >= need ? known : 0) : fits(3) ? 3 : fits(1) ? 1 : 0;
         if (!ch) { skipped++; continue; }
-        images.push(Buffer.concat([Buffer.from(`${ch === 3 ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, W * H * ch)]));
+        images.push(ocrPage(px, W, H, ch));
       } catch { skipped++; }
     } else skipped++;
     re.lastIndex = Math.max(re.lastIndex, end);

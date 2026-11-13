@@ -54,7 +54,8 @@ describe("reviewer2-15: real scan encodings", () => {
     const buf = Buffer.concat([B("%PDF-1.4\n"), icc(7, 3), icc(8, 1), B("9 0 obj\n[/ICCBased 7 0 R]\nendobj\n"), flate(1, 100, 100, 3, "9 0 R"), flate(2, 100, 100, 1, "[/ICCBased 8 0 R]")]);
     const r = pdfImages(buf);
     expect({ images: r.images.length, skipped: r.skipped }).toEqual({ images: 2, skipped: 0 });
-    expect(r.images.map((x) => x.subarray(0, 2).toString("latin1"))).toEqual(["P6", "P5"]);
+    // every page reaches OCR grey (reviewer2-13): the RGB page's 200, 200, 200 is grey 200, and both are 100 x 100
+    expect(r.images.map((x) => [x.subarray(0, 15).toString("latin1"), x.length, x[x.length - 1]])).toEqual([["P5\n100 100\n255\n", 15 + 100 * 100, 200], ["P5\n100 100\n255\n", 15 + 100 * 100, 200]]);
   });
   it("a CMYK page behind an ICC colour space is skipped, not read as RGB or grey", () => {
     const r = pdfImages(Buffer.concat([B("%PDF-1.4\n"), flate(1, 50, 50, 4, "[/ICCBased 7 0 R]")]));
@@ -69,4 +70,37 @@ describe("reviewer2-15: real scan encodings", () => {
     expect(before.skipped).toBe(0);
     expect(after.images.length).toBe(2);
   });
+});
+
+// reviewer2-13: the bitmap budget (600 MB, to fit 20 real A4 300 dpi colour pages) was also what one request held: a 762 KB PDF of
+// 40 Mpx pages came back as 600 MB of page images, and OCR then ran on fifteen 40 Mpx pages. OCR needs no more than a 300 dpi grey page.
+describe("reviewer2-13: a small PDF of huge pages is not held, or read by OCR, at full size", () => {
+  const page = (n: number, W: number, H: number, ch: number, px: Buffer) => {
+    const z = zlib.deflateSync(px, { level: 9 });
+    return Buffer.concat([B(`${n} 0 obj\n<< /Subtype /Image /Width ${W} /Height ${H} /BitsPerComponent 8 /ColorSpace /Device${ch === 3 ? "RGB" : "Gray"} /Filter /FlateDecode /Length ${z.length} >>\nstream\n`), z, B("\nendstream\nendobj\n")]);
+  };
+  const dims = (img: Buffer) => img.subarray(0, 40).toString("latin1").match(/^P5\n(\d+) (\d+)\n255\n/)!.slice(1).map(Number);
+  it("20 grey pages of 40 Mpx: what the call returns stays within 200 times the file, every page at most OCR_PAGE_PIXELS", async () => {
+    const { OCR_PAGE_PIXELS } = await import("@/lib/studio/ocr") as { OCR_PAGE_PIXELS: number };
+    const one = page(1, 8000, 5000, 1, Buffer.alloc(8000 * 5000, 255));
+    const buf = Buffer.concat([B("%PDF-1.4\n"), ...Array.from({ length: 20 }, () => one)]);
+    const r = pdfImages(buf);
+    const held = r.images.reduce((s, x) => s + x.length, 0);
+    expect(r.images.length).toBeGreaterThan(10);
+    expect(held / buf.length, `${held} bytes held from a ${buf.length} byte file`).toBeLessThan(200);
+    for (const img of r.images) { const [w, h] = dims(img); expect(w * h).toBeLessThanOrEqual(OCR_PAGE_PIXELS); }
+  }, 60_000);
+  it("an A4 colour page at 300 dpi is kept at full size (as grey), and a page shrunk to fit keeps its picture", () => {
+    const a4 = pdfImages(Buffer.concat([B("%PDF-1.4\n"), page(1, 2480, 3508, 3, Buffer.alloc(2480 * 3508 * 3, 200))]));
+    expect(dims(a4.images[0])).toEqual([2480, 3508]);
+    expect(a4.images[0][a4.images[0].length - 1]).toBe(200);
+    // 6000 x 6000, left half black, right half white: half the size each way, still black then white
+    const W = 6000, px = Buffer.alloc(W * W, 255);
+    for (let y = 0; y < W; y++) px.fill(0, y * W, y * W + W / 2);
+    const big = pdfImages(Buffer.concat([B("%PDF-1.4\n"), page(1, W, W, 1, px)])).images[0];
+    const [w, h] = dims(big);
+    expect([w, h]).toEqual([3000, 3000]);
+    const body = big.subarray(big.length - w * h);
+    expect([body[0], body[w / 2 - 1], body[w / 2], body[w * h - 1]]).toEqual([0, 0, 255, 255]);
+  }, 60_000);
 });
