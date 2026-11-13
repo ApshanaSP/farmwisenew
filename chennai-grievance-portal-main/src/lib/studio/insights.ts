@@ -28,7 +28,7 @@ import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type Ins
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
 import { computeInsights2 } from "@/lib/studio/insights2";
 import { rankInsights } from "@/lib/studio/rank";
-import { oneLine, said } from "@/lib/studio/untrusted";
+import { oneLine, said, scrub } from "@/lib/studio/untrusted";
 import { detectFamily, familyBoost, type FamilyKey } from "@/lib/studio/family";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-IN");
@@ -37,8 +37,9 @@ const r1 = (x: number) => Math.round(x * 10) / 10;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // Text a person typed into the file (a status, a type, a place, a column name) is written into these sentences, which are shown and go to
-// the AI brief (ai.ts). Every such value is shown through said() (untrusted.ts: one line, no quotes, personal details masked, 40 characters),
-// found by value, whichever engine wrote the sentence (fileValues below), and listed in `quoted` so ai.ts can keep the unusual ones from the model.
+// the AI brief (ai.ts). Every such value found in a sentence (fileValues below, whichever engine wrote it) is shown through said() (untrusted.ts:
+// one line, no quotes, personal details masked, 40 characters), and every sentence is masked whole as well (a value changed on the way, too long,
+// or a number cell). What the AI reads is decided in ai.ts by allowlist (untrusted.ts forModel), not here.
 
 /** A way to split the rows: by zone, or by one of the file's own type columns. */
 interface Dim { id: string; label: string; by: Plan["by"]; byCol: string | null; zone: boolean; of: (r: DRow) => string | number | null; name: (k: string | number) => string }
@@ -104,16 +105,14 @@ function fileValues(rows: DRow[], spec: Spec): string[] {
   return [...out].sort((a, b) => b.length - a.length);
 }
 
-/** An insight as it may be shown: each file value in its sentences through said(), every sentence one line, the values it quotes listed. */
+/** An insight as it may be shown: each file value in its sentences through said(), every sentence one line with contact details masked. */
 function shownSafe<T extends Insight>(x: T, vals: string[]): T {
   const fix = (s: string) => {
     let t = String(s ?? "");
     for (const v of vals) if (t.includes(v)) { const shown = said(v); if (shown !== v) t = t.split(v).join(shown); }
-    return oneLine(t);
+    return scrub(oneLine(t));
   };
-  const text = fix(x.text), title = fix(x.title), caption = fix(x.metric.caption);
-  const quoted = [...new Set(vals.map((v) => said(v)).filter((v) => v.length >= 2 && (text.includes(v) || title.includes(v) || caption.includes(v))))];
-  return { ...x, text, title, metric: { ...x.metric, caption }, bars: x.bars.map((b) => ({ ...b, label: fix(b.label) })), quoted };
+  return { ...x, text: fix(x.text), title: fix(x.title), metric: { ...x.metric, caption: fix(x.metric.caption) }, bars: x.bars.map((b) => ({ ...b, label: fix(b.label) })) };
 }
 
 function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {

@@ -5,6 +5,7 @@
  */
 import { openPhrase, type Brief, type BriefItem, type Insight, type InsightLabel, type Priority, type Spec } from "@/lib/studio/types";
 import { shortlist } from "@/lib/studio/insights";
+import { said } from "@/lib/studio/untrusted"; // the entity name may come from the file (QA pass 7, studio-egress)
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -46,7 +47,7 @@ const WHY: Record<InsightLabel, (s: Spec) => string> = {
 };
 
 const ACTION: Record<InsightLabel, (x: Insight, s: Spec) => string | null> = {
-  Backlog: (x, s) => `Ask ${x.owner ?? "the department"} for a dated plan to clear the ${s.entityPlural} ${openPhrase(s).adj}, oldest first.`,
+  Backlog: (x, s) => `Ask ${x.owner ?? "the department"} for a dated plan to clear the ${said(s.entityPlural)} ${openPhrase(s).adj}, oldest first.`,
   Delay: (x) => `Ask ${x.owner ?? "the department"} to review every item waiting over 30 days and report a closing date for each.`,
   Turnaround: (x) => `Ask ${x.owner ?? "the department"} why closing takes longest here and what would bring it to the district median.`,
   "Service gap": (x) => `Review this unit with ${x.owner ?? "the officer in charge"}: staffing, pending items and the reasons given.`,
@@ -86,14 +87,14 @@ export function rulesBrief(all: Insight[], spec: Spec): Brief {
   const top = picked[0];
   const qs: string[] = [];
   const has = (l: InsightLabel) => picked.find((x) => x.label === l);
-  if (has("Backlog") || has("Delay")) qs.push(`What is the plan, with dates, to clear the ${spec.entityPlural} ${openPhrase(spec).adj}?`);
+  if (has("Backlog") || has("Delay")) qs.push(`What is the plan, with dates, to clear the ${said(spec.entityPlural)} ${openPhrase(spec).adj}?`);
   const gap = has("Service gap") ?? has("Hotspot");
   if (gap) qs.push(`Why is ${gap.title.split(/ (lags|carries)/)[0]} behind the rest, and what extra support is needed?`);
   if (has("Rising")) qs.push("What is behind the recent rise, and is it expected to continue?");
   if (has("Data gap") || has("Anomaly")) qs.push("Can the entries without a place or date, and the unusual values, be corrected at source?");
-  if (qs.length < 3) qs.push(`Which ${spec.entityPlural} need the Collector's direct intervention this week?`);
+  if (qs.length < 3) qs.push(`Which ${said(spec.entityPlural)} need the Collector's direct intervention this week?`);
   return {
-    verdict: top ? cap(top.title) : `${cap(spec.entityPlural)} at a glance`,
+    verdict: top ? cap(top.title) : `${cap(said(spec.entityPlural))} at a glance`,
     summary: picked.slice(0, 3).map((x) => x.text),
     items, questions: qs.slice(0, 3), considered: all.length, by: "rules", model: null, dropped: 0, at: new Date().toISOString()
   };
