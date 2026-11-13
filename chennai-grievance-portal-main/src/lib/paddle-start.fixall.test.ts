@@ -23,9 +23,10 @@ describe("sms-ocr-14: start-paddle reads every setting the same way, environment
     expect(settings({ MANU_PADDLE_URL: "OFF" }, "").start).toBe(false);
   });
 
-  it("the port is the one the app will call: MANU_PADDLE_URL's, else MANU_PADDLE_PORT, else 8867", () => {
+  // Changed by reviewerB-02: MANU_PADDLE_PORT is no longer a source, since the app never reads it (the server moved away from the app).
+  it("the port is the one the app will call: MANU_PADDLE_URL's, else 8867", () => {
     expect(settings({}, "")).toEqual({ start: true, port: 8867 });
-    expect(settings({}, "MANU_PADDLE_PORT=9011")).toEqual({ start: true, port: 9011 });
+    expect(settings({}, "MANU_PADDLE_PORT=9011")).toEqual({ start: true, port: 8867 });
     expect(settings({}, "MANU_PADDLE_URL=http://127.0.0.1:9022")).toEqual({ start: true, port: 9022 });
     expect(settings({ MANU_PADDLE_URL: "http://localhost:9033/" }, "MANU_PADDLE_URL=http://127.0.0.1:9022")).toEqual({ start: true, port: 9033 });
   });

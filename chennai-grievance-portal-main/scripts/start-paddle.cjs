@@ -21,7 +21,9 @@ function parseEnv(text) {
     const m = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
     if (!m) continue;
     let v = m[2];
-    if (/^(["']).*\1$/.test(v)) v = v.slice(1, -1);
+    // a quoted value may have a comment after it, as dotenv reads it: AWS_STORE_DRY_RUN="1" # a test copy is 1 (reviewerB-03)
+    const q = v.match(/^(["'])(.*?)\1(?:\s+#.*)?$/);
+    if (q) v = q[2];
     else v = v.replace(/\s+#.*$/, "");
     out[m[1]] = v;
   }
@@ -30,8 +32,9 @@ function parseEnv(text) {
 
 /**
  * What to do, from the environment and the .env text: start PaddleOCR on `port`, or not, and why not.
- * The app reads MANU_PADDLE_URL (default http://127.0.0.1:8867); the server reads MANU_PADDLE_PORT. A URL on another computer means
- * this one has nothing to start.
+ * The app reads MANU_PADDLE_URL only (default http://127.0.0.1:8867), so the server is started on that port, given to it through its
+ * MANU_PADDLE_PORT. MANU_PADDLE_PORT in .env is not read here: the app never reads it, and a server moved to it is one the app never
+ * calls (reviewerB-02). A URL on another computer means this one has nothing to start.
  */
 function settings(env, envFileText) {
   const file = parseEnv(envFileText);
@@ -42,7 +45,7 @@ function settings(env, envFileText) {
   if (get("AWS_STORE_DRY_RUN") === "1") return { start: false, why: "a test copy (AWS_STORE_DRY_RUN=1)" };
   const url = get("MANU_PADDLE_URL");
   if (/^off$/i.test(url)) return { start: false, why: "MANU_PADDLE_URL=off" };
-  let port = Number(get("MANU_PADDLE_PORT")) || DEFAULT_PORT;
+  let port = DEFAULT_PORT;
   if (url) {
     let u;
     try { u = new URL(url); } catch { return { start: false, why: "MANU_PADDLE_URL is not an address" }; }
