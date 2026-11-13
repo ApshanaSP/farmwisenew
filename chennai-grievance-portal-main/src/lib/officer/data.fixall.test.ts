@@ -29,7 +29,7 @@ vi.mock("@/lib/db", () => ({ default: pool }));
 vi.mock("@/lib/complaint-progress", () => ({ syncComplaints: async () => 0, awaitingQueue: async () => 0 }));
 vi.mock("@/lib/collector/intel", async (orig) => ({ ...(await orig<typeof import("@/lib/collector/intel")>()), asOf: async () => "2026-10-14 12:00:00" }));
 
-const { grievanceDetail } = await import("./data");
+const { grievanceDetail, grievanceList, search } = await import("./data");
 
 const SWM = { code: "GCC-SWM", name: "Solid Waste Management", org: "GCC", head: "SE", route: "AE → EE", short: "SWM", remarkHint: "" };
 
@@ -92,5 +92,18 @@ describe("officer console data", () => {
       expect((await grievanceDetail(SWM, "INC-DONE"))?.next).toBeNull();
     });
   });
-});
 
+  describe("officer-day-22: the search finds text with '_' and '%' in it on the AWS store", () => {
+    it("'bin_50' and '50% full' find the case that says so, and '_' and '%' are not wildcards", async () => {
+      incident("INC-A", { title: "Garbage bin_50% full near the school" });
+      incident("INC-B", { title: "Garbage bin 50 is full" });
+      const ids = async (q: string) => (await search(SWM, q)).map((r) => r.id).sort();
+      expect(await ids("bin_50")).toEqual(["INC-A"]);
+      expect(await ids("50% full")).toEqual(["INC-A"]);
+      expect(await ids("bin_50% full")).toEqual(["INC-A"]);
+      expect(await ids("full")).toEqual(["INC-A", "INC-B"]);
+      const l = await grievanceList(SWM, { tab: "all", period: "daily", zone: null, taluk: null, page: 0, per: 50, cat: null, q: "bin_50" });
+      expect(l.rows.map((r) => r.id)).toEqual(["INC-A"]);
+    });
+  });
+});

@@ -567,15 +567,16 @@
     "title": "An unknown severity, status, scope or flag value is silently dropped: sev=severe or status=Overdue returns the whole list as if filtered",
     "found_by": "hunt2-ops",
     "repro": "node tests/qa/pass6/known-failures/hunt2-ops/e10.mjs",
-    "failing_test": null,
-    "root_cause": "refuseBadFilter() checks zone, period, dept, cat and taluk only; the routes map other unknown values to null (no filter).",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/collector/filters.fixall.test.ts::the Collector's list: an unknown severity, status, scope or place is a 400 that names it, and the store is not read",
+    "root_cause": "refuseBadFilter checked only zone, period, dept, cat, taluk; the routes read sev, status, scope, place, flag inline and dropped unknown values. Now one shared reader each (intel.ts) and filterProblem refuses what they cannot read",
+    "fix_commit": "7685f19f",
+    "revert_check": "fails without (3 of 4: 200 for every unknown value) / passes with (4 of 4)",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/app/api/collector/list/route.ts:26-37 (sev, status, scope fall back to no filter); src/app/api/officer/grievances/route.ts:30-35 (flag, sev); against the rule in src/lib/collector/filters.ts:1-5",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "hunt2-ops-05",
