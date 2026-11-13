@@ -1414,17 +1414,17 @@
     "title": "For a case the department closes itself the officer's step bar still ticks 'Sent to Collector', and the API's 'next' says 'send' for every non-severe case in action (the action is 'close')",
     "found_by": "officer-day",
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p3-work.mjs <code> (next: 'send' at stage approved for a Medium case; after the close the stage index is 3, so all four steps are drawn done)",
-    "failing_test": "src/lib/officer/stages.fixall.test.ts::a case the department closed: three steps, all done, and no 'Sent to Collector'",
-    "root_cause": "the workflow labels predate the department's own close: one 4-step bar placed by stage alone, and NEXT_STEP keyed by stage alone",
-    "fix_commit": "c4a0df1",
-    "revert_check": "fails without (5 of 5: Steps not exported, stepsOf/nextStep missing) / passes with (5 of 5)",
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::a Medium case in action: the next step is the department's own close, not a send to the Collector",
+    "root_cause": "grievanceDetail took next from NEXT_STEP keyed by stage alone; now nextStep(stage, severity) from stages.ts (the drawer half was c4a0df1)",
+    "fix_commit": "226fc485",
+    "revert_check": "fails without (expected send to be close) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/stages.ts:28-32 (STEP_LABELS always includes Sent to Collector; NEXT_STEP approved/action = send), src/components/officer/Drawer.tsx:15-26",
     "confidence": "high",
     "verified": false,
     "note": "Half fixed in c4a0df1: the drawer's step bar now has three steps (Received, In action, Closed by your department) for a case the department closes, via stepsOf in stages.ts. Left: the API's next needs src/lib/officer/data.ts, a p7 session's file: line 502 next: NEXT_STEP[g.stage as Stage] -> next: nextStep(g.stage, g.sev) (nextStep is in stages.ts, tested in the same file). Then this row is fixed.",
-    "closed_in": null
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-28",
