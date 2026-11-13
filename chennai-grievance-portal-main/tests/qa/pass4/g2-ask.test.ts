@@ -63,7 +63,8 @@ describe("RC-43: an input that cannot be applied is named, in English, Tamil let
     ["zone", "complaints in zone 5 this week", /Zone 5/],
     ["place", "garbage complaints in Kodambakkam", /Kodambakkam/],
     ["ward", "complaints in ward 106", /Ward 106|ward 106/i],
-    ["district name", "complaints in Chennai today", /last 24 hours/i],
+    // QA pass 7: today is the calendar day since midnight in both lanes (lib/period/read.ts), no longer the last 24 hours
+    ["district name", "complaints in Chennai today", /Today \(6 Nov, since midnight\)/],
     ["month with year", "complaints in October 2026", /October 2026/],
     ["last 10 days", "complaints in Adyar in the last 10 days", /last 10 days/i],
     ["a real date", "incidents on 28 October", /./],

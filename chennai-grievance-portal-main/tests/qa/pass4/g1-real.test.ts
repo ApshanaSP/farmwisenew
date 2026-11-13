@@ -24,7 +24,7 @@ async function say(text: string) {
   const c = await runConversation(sim, [], text);
   // the console's filters, or the screen's own scope when the answer was a screen
   const slots = (c.last.stage?.slots ?? {}) as { zones?: number[]; cat?: string | null };
-  return { said: c.last.said ?? "", kind: c.last.kind, steps: c.last.steps ?? [], zone: sim.zone ?? slots.zones?.[0] ?? null, cat: sim.cat ?? slots.cat ?? null, dept: sim.dept };
+  return { said: c.last.said ?? "", kind: c.last.kind, steps: c.last.steps ?? [], stage: c.last.stage, zone: sim.zone ?? slots.zones?.[0] ?? null, cat: sim.cat ?? slots.cat ?? null, dept: sim.dept };
 }
 const NO_DATA = /no data on|தரவு இல்லை|data illa|தரவு இல்லை/i;
 
@@ -64,9 +64,17 @@ describe("3 yesterday is asked about, not refused, and nothing is shown for toda
     ["Tanglish", "nethu Adyar la fire accident enna aachu"]
   ])("%s: %s", async (_n, text) => {
     const r = await say(text);
-    expect(r.kind).toBe("clarify");
-    expect(r.steps, "no step is taken before the Collector answers").toEqual([]);
-    expect(r.said).toMatch(/yesterday|நேற்று/i);
+    // QA pass 7: yesterday is the calendar day before today (lib/period/read.ts), which the span screens count over its own dates; a lane that cannot count it asks.
+    // What this guards stays: nothing is shown for today as if it were yesterday
+    if (r.kind === "clarify") {
+      expect(r.steps, "no step is taken before the Collector answers").toEqual([]);
+      expect(r.said).toMatch(/yesterday|நேற்று/i);
+      return;
+    }
+    expect(r.kind).toBe("do");
+    expect(`${r.stage?.title} ${r.said}`).toMatch(/yesterday|நேற்று|5 Nov/i);
+    const list = r.stage?.blocks.find((b) => b.kind === "CaseList");
+    for (const row of list && list.kind === "CaseList" ? list.rows : []) expect(String(row.t), row.id).toMatch(/^2026-11-05/);
   });
 });
 

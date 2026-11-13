@@ -461,10 +461,12 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
-  // a ranking by a status ("by open complaints", "திறந்த புகார்கள் அதிகம்") is not the attention score this screen ranks by: handed on in every language, as the English
-  // "open" already is (QA pass 7: once the status words stopped counting as unknown, the Tamil form got the attention ranking while the English was handed on)
-  if (has(t, RANK) && !cat && statusIn(t) != null && has(t, ZONE_WORDS)) return null;
-  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: topN(t), order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // a ranking by what was asked, in every language: open cases by open cases ("top 3 zones by open complaints", "திறந்த புகார்கள் அதிகம்", pass 4 g-repair), severe by
+  // severe (the severity reader, so தீவிர counts as severe does), else the attention score. A ranking by overdue or resolved cases has no zone measure here: handed on,
+  // never ranked by the attention score under another name (QA pass 7)
+  const rankStatus = statusIn(t);
+  if (has(t, RANK) && !cat && (rankStatus === "overdue" || rankStatus === "resolved") && has(t, ZONE_WORDS)) return null;
+  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: sev === "Severe" || has(t, ["severe", "கடுமையான"]) ? "zone_severe" : rankStatus === "open" ? "zone_open" : "zone_attention", n: topN(t), order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
   if (has(t, RANK) && cat && has(t, ZONE_WORDS)) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: topN(t), period: period ?? "weekly" } };
