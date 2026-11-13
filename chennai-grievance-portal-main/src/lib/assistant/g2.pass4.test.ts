@@ -24,11 +24,18 @@ describe("RC-43 unresolvedInput", () => {
     expect(r?.kind, JSON.stringify(r)).toBe(kind);
   });
   it.each([
-    "zone 5 complaints", "zone-5", "zone 15", "ward 106", "complaints in Adyar", "complaints in Chennai", "in Tamil Nadu", "reported in October 2026", "29 February 2028", "28 February",
+    "zone 5 complaints", "zone-5", "zone 15", "ward 106", "complaints in Adyar", "complaints in Chennai", "in Tamil Nadu", "reported in October 2026", "28 February",
     "since 1 October", "last 10 days", "last week", "INC-2026-1234", "2026-11-05", "5 complaints in 2026-11", "in the news", "in Metrowater", "for Drainage", "in English", "in Ward 5",
     "complaints in zone 5 and Adyar", "on Monday", "in March", "at 5 pm", "In August 2026", "cases in GCC"
   ])("a real input is let through: %s", (text) => {
     expect(bad(text, { wardFound: /ward \d/i.test(text) })).toBeNull();
+  });
+  // QA pass 7 (pass4-open-08): a day still to come is named; 29 February 2028 stays a real day (a leap year), so it is named as to come, never as "not a date"
+  it("29 February 2028 is a real day, still to come", () => {
+    const r = bad("29 February 2028");
+    expect(r?.kind).toBe("date");
+    expect(r?.say.en).toMatch(/has not come yet/);
+    expect(r?.say.en).not.toMatch(/is not a date/);
   });
   it("a place is checked only when no model reads the question, and only when no place was found", () => {
     expect(bad("complaints in Atlantis", { rulesOnly: false })).toBeNull();
