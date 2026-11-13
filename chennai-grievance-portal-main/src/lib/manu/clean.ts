@@ -40,11 +40,14 @@ export function verhoeffValid(digits: string): boolean {
 /**
  * Is a 12-digit run (ASCII digits) an Aadhaar number to hide? By Aadhaar's own rules, not by its grouping (reviewerC-02, reviewerC-03): it
  * never starts with 0 or 1 (a TANGEDCO service number, "09-213-004-1234", and a date with a time, "12-11-2026 1030", do), and its last digit
- * is its Verhoeff check digit, which nine in ten other numbers fail. Written the old way (unbroken or 4-4-4: `oldWay`) it is hidden without
- * the check, as before, so a number with a digit misread is still hidden. "91" and then a mobile (ten digits starting 6 to 9) is a phone
- * number with its country code, the "+" left off ("91 98400 12345"); the rule was "the first group is 91", so "91-2345-678901" got through.
+ * is its Verhoeff check digit, which nine in ten other numbers fail. Those two rules decide only the odd groupings this round newly catches.
+ * Written the old way (unbroken or 4-4-4: `oldWay`) any 12-digit run is hidden as before, whatever its first digit and without the check:
+ * nothing hidden before may show now, and an Aadhaar number with its first or any digit misread must stay hidden (the lead's rule, privacy
+ * first; an unbroken TANGEDCO number is hidden too, as it was). "91" and then a mobile (ten digits starting 6 to 9) is a phone number with
+ * its country code, the "+" left off ("91 98400 12345"); the rule was "the first group is 91", so "91-2345-678901" got through.
  */
-const isAadhaar = (d: string, oldWay: boolean): boolean => /^[2-9]\d{11}$/.test(d) && (oldWay || (!/^91[6-9]\d{9}$/.test(d) && verhoeffValid(d)));
+const isAadhaar = (d: string, oldWay: boolean): boolean =>
+  /^\d{12}$/.test(d) && (oldWay || (/^[2-9]/.test(d) && !/^91[6-9]\d{9}$/.test(d) && verhoeffValid(d)));
 /** Written in Aadhaar's 4-4-4 groups (any separators between), as a reader returns one it was not asked for. */
 const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}\s*$`, "u");
 

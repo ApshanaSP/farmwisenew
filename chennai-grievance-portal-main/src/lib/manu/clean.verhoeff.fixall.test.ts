@@ -85,9 +85,13 @@ describe("reviewerC-02: 12-digit references that are not Aadhaar stay whole", ()
   it.each([
     "TANGEDCO service connection no. 09-213-004-1234: no supply for three days",
     "EB service number 01 202 003 1045, meter burnt",
-    "Inspected on 12-11-2026 1030 hrs, nothing done",
-    "TANGEDCO SC No. 092130041234 (written unbroken)"
+    "Inspected on 12-11-2026 1030 hrs, nothing done"
   ])("%s", (t) => expect(maskAadhaar(t)).toBe(t));
+  // The lead's rule (privacy first): nothing masked before this round stops being masked. A 12-digit run written the old way
+  // (unbroken or 4-4-4) is hidden whatever its first digit, as it was before reviewerC-02/03: an Aadhaar number whose first digit was
+  // misread as 0 or 1 must not show. The 2-9 and Verhoeff rules apply only to the odd groupings this round newly catches.
+  it.each(["TANGEDCO SC No. 092130041234 (written unbroken)", "Aadhaar 1234 5678 9012", "Aadhaar 0234 5678 9012"])(
+    "written the old way, masked whatever its first digit: %s", (t) => expect(maskAadhaar(t)).toMatch(/XXXX XXXX \d{4}/));
   it("a TANGEDCO number stays whole even when its digits pass the check: it starts with 0", () => {
     const sc = withCheck("09213004123");
     const t = `Service no. ${sc.slice(0, 2)}-${sc.slice(2, 5)}-${sc.slice(5, 8)}-${sc.slice(8)}`;
