@@ -65,29 +65,72 @@ export interface ZipEntry { name: string; data: Buffer }
 const ZIP_TOTAL = 60 * 1024 * 1024;
 const ZIP_FILES = 200;
 
+/** A 64-bit field as a number; one past what a Buffer can index is Infinity (and then fails every bounds check). */
+const u64 = (buf: Buffer, at: number) => { const v = buf.readBigUInt64LE(at); return v > BigInt(Number.MAX_SAFE_INTEGER) ? Infinity : Number(v); };
+
+/**
+ * The end record: where the table of contents is, its size, and the entry counts (on this disk and in all). A field at its 16- or 32-bit
+ * limit is read from the zip64 end record its locator points to (reviewer5-05: those were read as 0xFFFF and 0xFFFFFFFF). Null: no end record.
+ */
+function endRecord(buf: Buffer): { at: number; onDisk: number; count: number; size: number; cd: number } | null {
+  let at = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { at = i; break; }
+  if (at < 0) return null;
+  const r = { at, onDisk: buf.readUInt16LE(at + 8), count: buf.readUInt16LE(at + 10), size: buf.readUInt32LE(at + 12), cd: buf.readUInt32LE(at + 16) };
+  if (r.onDisk !== 0xffff && r.count !== 0xffff && r.size !== 0xffffffff && r.cd !== 0xffffffff) return r;
+  // the zip64 locator sits just before the end record, and names where the zip64 end record is
+  const loc = at - 20;
+  if (loc < 0 || buf.readUInt32LE(loc) !== 0x07064b50) return r;
+  const z = u64(buf, loc + 8);
+  if (!(z + 56 <= loc) || buf.readUInt32LE(z) !== 0x06064b50) return r;
+  // the zip64 table of contents ends where the zip64 end record starts: that is the end every entry's data must lie before
+  return { at: z, onDisk: u64(buf, z + 24), count: u64(buf, z + 32), size: u64(buf, z + 40), cd: u64(buf, z + 48) };
+}
+
+/** One table-of-contents entry at `at`; a size or offset at its 32-bit limit is read from the entry's zip64 extra field (0x0001). */
+function centralEntry(buf: Buffer, at: number) {
+  const e = { method: buf.readUInt16LE(at + 10), csize: buf.readUInt32LE(at + 20), usize: buf.readUInt32LE(at + 24), local: buf.readUInt32LE(at + 42),
+    nlen: buf.readUInt16LE(at + 28), xlen: buf.readUInt16LE(at + 30), clen: buf.readUInt16LE(at + 32) };
+  if (e.usize !== 0xffffffff && e.csize !== 0xffffffff && e.local !== 0xffffffff) return e;
+  // the zip64 extra holds, in this order, only the fields that are at their limit above
+  const end = Math.min(buf.length, at + 46 + e.nlen + e.xlen);
+  for (let x = at + 46 + e.nlen; x + 4 <= end;) {
+    const id = buf.readUInt16LE(x), len = buf.readUInt16LE(x + 2);
+    if (id === 0x0001) {
+      let p = x + 4;
+      const take = () => { if (p + 8 > x + 4 + len || p + 8 > buf.length) return Infinity; const v = u64(buf, p); p += 8; return v; };
+      if (e.usize === 0xffffffff) e.usize = take();
+      if (e.csize === 0xffffffff) e.csize = take();
+      if (e.local === 0xffffffff) e.local = take();
+      return e;
+    }
+    x += 4 + len;
+  }
+  return e;
+}
+
 /**
  * Is this ZIP whole: its end record is there, and the table of contents it points to lies inside the file and starts where it says?
  * A cut-off workbook made SheetJS run forever on the server's thread (QA pass 6, P6-008), so a workbook is checked with this first.
  */
 export function zipIntact(buf: Buffer): boolean {
   if (buf.length < 22) return false;
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-  if (eocd < 0) return false;
-  const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), cd = buf.readUInt32LE(eocd + 16);
+  const end = endRecord(buf);
+  if (!end) return false;
+  const { count, size, cd } = end;
   // the entries on this disk and in all must agree: SheetJS reads the first, this check read the second (reviewer 5 on P6-018, P6-030)
-  if (buf.readUInt16LE(eocd + 8) !== count) return false;
-  if (cd + size > eocd) return false;
+  if (end.onDisk !== count) return false;
+  if (!(cd + size <= end.at)) return false;
   // every entry the table of contents lists: its local header is where it says, and its data lies whole before the table of contents. An
-  // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008)
+  // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008). Sizes and offsets at their 32-bit
+  // limit are read from the zip64 fields (reviewer5-05)
   let at = cd;
   for (let k = 0; k < count; k++) {
     if (at + 46 > cd + size || buf.readUInt32LE(at) !== 0x02014b50) return false;
-    const csize = buf.readUInt32LE(at + 20), local = buf.readUInt32LE(at + 42);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    if (local + 30 > cd || buf.readUInt32LE(local) !== 0x04034b50) return false;
+    const { csize, local, nlen, xlen, clen } = centralEntry(buf, at);
+    if (!(local + 30 <= cd) || buf.readUInt32LE(local) !== 0x04034b50) return false;
     const data = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
-    if (data + csize > cd) return false;
+    if (!(data + csize <= cd)) return false;
     at += 46 + nlen + xlen + clen;
   }
   return at <= cd + size;
@@ -100,19 +143,16 @@ export function zipIntact(buf: Buffer): boolean {
  */
 export function unzip(buf: Buffer, budget: Inflate = new Inflate(buf.length), { workbook = false }: { workbook?: boolean } = {}): ZipEntry[] {
   // the end-of-central-directory record: the last 22..65 557 bytes
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-  if (eocd < 0) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
-  const count = buf.readUInt16LE(eocd + 10);
-  let at = buf.readUInt32LE(eocd + 16);
+  const end = endRecord(buf);
+  if (!end) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
+  const count = end.count;
+  let at = end.cd;
   const out: ZipEntry[] = [];
   let total = 0;
   for (let k = 0; k < count && (workbook || k < ZIP_FILES); k++) {
-    if (at + 46 > buf.length || buf.readUInt32LE(at) !== 0x02014b50) throw new FormatError("This ZIP file is damaged.");
-    const method = buf.readUInt16LE(at + 10);
-    const csize = buf.readUInt32LE(at + 20), usize = buf.readUInt32LE(at + 24);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    const local = buf.readUInt32LE(at + 42);
+    if (!(at + 46 <= buf.length) || buf.readUInt32LE(at) !== 0x02014b50) throw new FormatError("This ZIP file is damaged.");
+    // sizes and the local offset, from the zip64 extra when they are at their 32-bit limit (reviewer5-05)
+    const { method, csize, usize, nlen, xlen, clen, local } = centralEntry(buf, at);
     const name = buf.subarray(at + 46, at + 46 + nlen).toString("utf8");
     at += 46 + nlen + xlen + clen;
     if (name.endsWith("/") || /(^|\/)__MACOSX\//.test(name) || /(^|\/)\.DS_Store$/.test(name)) continue;
@@ -183,28 +223,103 @@ function zipNames(buf: Buffer): string[] {
 // --------------------------------------------------------------------- xml --
 
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-export const unent = (s: string) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+/**
+ * CDATA sections opened, in one pass: the lazy pattern (<!\[CDATA\[([\s\S]*?)\]\]>) searched to the end of the text again for every
+ * "<![CDATA[" with no "]]>" after it, so 400 KB of them took 1.5 s (fixall-studio-lazy-02). A section with no end leaves the rest as it is.
+ */
+function cdata(s: string): string {
+  if (!s.includes("<![CDATA[")) return s;
+  const out: string[] = [];
+  let at = 0;
+  for (;;) {
+    const i = s.indexOf("<![CDATA[", at);
+    if (i < 0) break;
+    const j = s.indexOf("]]>", i + 9);
+    if (j < 0) break;
+    out.push(s.slice(at, i), s.slice(i + 9, j));
+    at = j + 3;
+  }
+  out.push(s.slice(at));
+  return out.join("");
+}
+export const unent = (s: string) => cdata(s)
   .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => { if (e[0] !== "#") return ENT[e.toLowerCase()] ?? m; const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1)); return Number.isInteger(c) && c >= 0 && c <= 0x10ffff ? String.fromCodePoint(c) : m; });
-const text = (s: string) => unent(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+// a tag is "<" to the next ">" with no "<" in between: "<[^>]+>" searched to the end again from every "<" that has no ">" after it
+const text = (s: string) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, " ").trim();
+
+/**
+ * Every element <name ...>inner</name> of the names the pattern `names` matches, in order, in one pass. The lazy patterns they replace
+ * (<x\b[^>]*>([\s\S]*?)<\/x>) searched to the end of the text again for every opening tag with no closing one, so time grew with the
+ * square of the text: 200 KB of unclosed <Placemark> 2.3 s (1 MB over 20 s), 140 KB of <table> 2.6 s, 300 KB of nested XML 10 s
+ * (reviewer5-10). The closing tags are found first, in one pass, and listed by name; an opening tag takes the first closing tag of its
+ * name after it from that list, whose read position only moves forward. Remembering only the names whose closing tag was missing still
+ * searched to the end once per name, so a record of many DIFFERENT unclosed fields (<f0><f1>...<fN>) grew with the square again
+ * (reviewerF-03). `flags` "gi" for HTML and KML (names in any case), "g" for XML.
+ */
+export function elements(src: string, names: string, flags: "g" | "gi" = "gi"): { name: string; attrs: string; inner: string; start: number; end: number }[] {
+  const keyOf = (name: string) => (flags === "gi" ? name.toLowerCase() : name);
+  const closes = new Map<string, { at: number[]; end: number[]; i: number }>();
+  for (const c of src.matchAll(new RegExp(`</(${names})\\s*>`, flags))) {
+    const key = keyOf(c[1]);
+    let l = closes.get(key);
+    if (!l) closes.set(key, (l = { at: [], end: [], i: 0 }));
+    l.at.push(c.index);
+    l.end.push(c.index + c[0].length);
+  }
+  const open = new RegExp(`<(${names})(?![\\w.:-])([^<>]{0,4000})>`, flags);
+  const out: { name: string; attrs: string; inner: string; start: number; end: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = open.exec(src))) {
+    const l = closes.get(keyOf(m[1]));
+    if (!l) continue;
+    while (l.i < l.at.length && l.at[l.i] < open.lastIndex) l.i++;
+    if (l.i === l.at.length) continue;
+    out.push({ name: m[1], attrs: m[2], inner: src.slice(open.lastIndex, l.at[l.i]), start: m.index, end: l.end[l.i] });
+    open.lastIndex = l.end[l.i];
+  }
+  return out;
+}
+
+/** The text without every span from `open` to the next `close`, in one pass (an `open` with no `close` after it ends the search). */
+export function withoutSpans(src: string, open: string, close: string): string {
+  const keep: string[] = [];
+  let at = 0;
+  for (;;) {
+    const i = src.indexOf(open, at);
+    if (i < 0) break;
+    const j = src.indexOf(close, i + open.length);
+    if (j < 0) break;
+    keep.push(src.slice(at, i));
+    at = j + close.length;
+  }
+  keep.push(src.slice(at));
+  return keep.join("");
+}
+
 const val = (s: string): Cell => {
   const t = text(s);
   if (t === "") return null;
   return /^-?\d+(\.\d+)?$/.test(t) && t.length < 16 && !/^0\d/.test(t) ? Number(t) : t;
 };
 
-/** Word tables (each a grid), largest first. */
+/**
+ * Word tables (each a grid), largest first. The table, row, cell and text elements are read by elements(), in one pass: the lazy patterns
+ * they replace (<w:tbl>([\s\S]*?)<\/w:tbl>, and the same for w:tr, w:tc and w:t) searched to the end of the document again for every
+ * opening tag with no closing one, so 400 KB of unclosed <w:tbl> took 4.5 s and of unclosed <w:t> in one cell 4.2 s (fixall-studio-lazy-01).
+ * An empty element written self-closed (<w:t/>) is dropped first: those patterns never matched it.
+ */
 export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length)): Cell[][][] {
   const doc = unzip(buf, budget).find((e) => e.name === "word/document.xml");
   if (!doc) throw new FormatError("This Word file has no document inside it.");
-  const xml = doc.data.toString("utf8");
+  const xml = doc.data.toString("utf8").replace(/<w:(?:tbl|tr|tc|t)(?:\s[^<>]*)?\/>/g, "");
   const grids: Cell[][][] = [];
-  for (const t of xml.matchAll(/<w:tbl>([\s\S]*?)<\/w:tbl>/g)) {
+  for (const t of elements(xml, "w:tbl", "g")) {
     const grid: Cell[][] = [];
-    for (const tr of t[1].matchAll(/<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g)) {
+    for (const tr of elements(t.inner, "w:tr", "g")) {
       const row: Cell[] = [];
-      for (const tc of tr[1].matchAll(/<w:tc>([\s\S]*?)<\/w:tc>/g)) {
-        const span = Number(tc[1].match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
-        const v = val([...tc[1].matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map((m) => m[1]).join(" "));
+      for (const tc of elements(tr.inner, "w:tc", "g")) {
+        const span = Number(tc.inner.match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
+        const v = val(elements(tc.inner, "w:t", "g").map((m) => m.inner).join(" "));
         for (let k = 0; k < Math.min(span, 20); k++) row.push(v);
       }
       if (row.some((c) => c != null)) grid.push(row);
@@ -216,18 +331,20 @@ export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length
 
 /** KML placemarks as a grid: Name, Description, every ExtendedData field, Latitude, Longitude. */
 export function kmlGrid(xml: string): Cell[][] {
-  const marks = [...xml.matchAll(/<Placemark\b[^>]*>([\s\S]*?)<\/Placemark>/gi)].map((m) => m[1]);
+  const marks = elements(xml, "Placemark").map((m) => m.inner);
   if (!marks.length) throw new FormatError("This KML has no places in it.");
-  const extra: string[] = [];
+  const extra = new Set<string>(); // a Set: a list searched per field grew with the square of many distinct names (reviewerF-03)
   const recs = marks.map((p) => {
     const r: Record<string, Cell> = {};
     r.Name = val(p.match(/<name>([\s\S]*?)<\/name>/i)?.[1] ?? "");
     const desc = p.match(/<description>([\s\S]*?)<\/description>/i)?.[1];
     if (desc) r.Description = (text(unent(desc)) || null);
-    for (const d of p.matchAll(/<(?:Data|SimpleData)\b[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/(?:Data|SimpleData)>/gi)) {
-      const k = unent(d[1]).trim();
-      const v = d[2].match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d[2];
-      if (!extra.includes(k)) extra.push(k);
+    for (const d of elements(p, "Data|SimpleData")) {
+      const name = d.attrs.match(/(?:^|\s)name="([^"]+)"/)?.[1];
+      if (!name) continue;
+      const k = unent(name).trim();
+      const v = d.inner.match(/<value>([\s\S]*?)<\/value>/i)?.[1] ?? d.inner;
+      extra.add(k);
       r[k] = val(v);
     }
     const coords = p.match(/<coordinates>([\s\S]*?)<\/coordinates>/i)?.[1]?.trim().split(/\s+/).map((c) => c.split(",").map(Number)) ?? [];
@@ -238,7 +355,7 @@ export function kmlGrid(xml: string): Cell[][] {
     }
     return r;
   });
-  const cols = ["Name", ...(recs.some((r) => r.Description != null) ? ["Description"] : []), ...extra.slice(0, 40), "Latitude", "Longitude"];
+  const cols = ["Name", ...(recs.some((r) => r.Description != null) ? ["Description"] : []), ...[...extra].slice(0, 40), "Latitude", "Longitude"];
   return [cols, ...recs.map((r) => cols.map((c) => r[c] ?? null))];
 }
 
@@ -264,22 +381,24 @@ export function geojsonRecords(doc: unknown): Record<string, unknown>[] | null {
 
 /** A generic XML file: the element that repeats most (with child elements) is a record, its children the columns. */
 export function xmlGrid(xml: string): Cell[][] | null {
-  const body = xml.replace(/<\?[\s\S]*?\?>/g, "").replace(/<!--[\s\S]*?-->/g, "");
+  // every reader here goes once over the text (reviewer5-10: comments, instructions and records left open were each searched to the end)
+  const body = withoutSpans(withoutSpans(xml, "<?", "?>"), "<!--", "-->");
   const counts = new Map<string, number>();
-  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)\b[^>/]*>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
+  for (const m of body.matchAll(/<([A-Za-z_][\w.:-]*)(?![\w.:-])[^<>/]{0,4000}>\s*<[A-Za-z_]/g)) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
   const rec = [...counts.entries()].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!rec) return null;
   const esc = rec.replace(/[.:-]/g, (c) => `\\${c}`);
-  const cols: string[] = [];
-  const recs = [...body.matchAll(new RegExp(`<${esc}\\b([^>]*)>([\\s\\S]*?)</${esc}>`, "g"))].slice(0, 50_000).map((m) => {
-    const r: Record<string, Cell> = {};
-    for (const a of m[1].matchAll(/([\w:-]+)="([^"]*)"/g)) { if (!cols.includes(a[1])) cols.push(a[1]); r[a[1]] = val(a[2]); }
-    for (const c of m[2].matchAll(/<([A-Za-z_][\w.:-]*)\b[^>]*>([\s\S]*?)<\/\1>/g)) { if (!cols.includes(c[1])) cols.push(c[1]); r[c[1]] = val(c[2]); }
+  // the columns in first-seen order: a Set, as a list searched once per field grew with the square of many distinct names (reviewerF-03)
+  const cols = new Set<string>();
+  const recs = elements(body, esc, "g").slice(0, 50_000).map((m) => {
+    const r = new Map<string, Cell>();
+    for (const a of m.attrs.matchAll(/([\w:-]+)="([^"]*)"/g)) { cols.add(a[1]); r.set(a[1], val(a[2])); }
+    for (const c of elements(m.inner, "[A-Za-z_][\\w.:-]*", "g")) { cols.add(c.name); r.set(c.name, val(c.inner)); }
     return r;
   });
-  if (recs.length < 3 || cols.length < 2) return null;
-  const keep = cols.slice(0, 60);
-  return [keep, ...recs.map((r) => keep.map((c) => r[c] ?? null))];
+  if (recs.length < 3 || cols.size < 2) return null;
+  const keep = [...cols].slice(0, 60);
+  return [keep, ...recs.map((r) => keep.map((c) => r.get(c) ?? null))];
 }
 
 // --------------------------------------------------------------------- pdf --

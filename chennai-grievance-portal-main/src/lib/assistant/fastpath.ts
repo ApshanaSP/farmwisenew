@@ -353,6 +353,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.responseType = "kpi";
         card.display = "kpi";
         card.visualAsked = true;
+        // news complaints handed to a department are in the total and are neither open nor closed on the console (OPEN_NOW): named, so the
+        // figures add up to the total (reviewerG-05: "Of the 3 incidents, 2 are open and 0 closed" said nothing of the third)
+        const routedEn = r.routed ? `${num1(r.routed)} ${r.routed === 1 ? "is a news complaint" : "are news complaints"} handed to ${r.routed === 1 ? "a department" : "departments"}` : "";
         if (!r.n) {
           card.headline = `No ${kindS} ${inP(inc.period)}${sw}, so there is no share to give`;
           card.answerMarkdown = `No ${kindS} were reported ${inP(inc.period)}${sw}, so a percentage cannot be worked out.`;
@@ -360,22 +363,25 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           // "ratio of open to closed incidents": both counts and the ratio between them, never one share in its place (pass4-open-11)
           const ratio = r.closed ? Math.round((r.open / r.closed) * 100) / 100 : null;
           card.headline = `Open to closed ${kindS}: ${num1(r.open)} : ${num1(r.closed)} · ${pl(inc.period)}`;
-          card.answerMarkdown = `Of the ${num1(r.n)} ${kindS} reported ${inP(inc.period)}${sw}, **${num1(r.open)}** ${r.open === 1 ? "is" : "are"} open and **${num1(r.closed)}** closed`
+          card.answerMarkdown = `Of the ${num1(r.n)} ${kindS} reported ${inP(inc.period)}${sw}, **${num1(r.open)}** ${r.open === 1 ? "is" : "are"} open${routedEn ? ", " : " and "}**${num1(r.closed)}** closed`
+            + `${routedEn ? ` and ${routedEn}, neither open nor closed on the console` : ""}`
             + `${ratio != null ? `: a ratio of ${ratio} open to each closed one` : ""}.\n\n- ${num1(r.resolved)} of the closed ones resolved, ${num1(r.closed - r.resolved)} rejected or lapsed`;
         } else if (i.lang === "en" || !whenTa) {
           card.headline = `${num1(pct)}% of ${kindS} are ${word.en} · ${pl(inc.period)}`;
           card.answerMarkdown = `**${num1(pct)}%** of the ${kindS} reported ${inP(inc.period)}${sw} ${r.n === 1 ? "is" : "are"} ${word.en}: ${num1(have)} of ${num1(r.n)}.`
-            + `\n\n- ${num1(r.resolved)} resolved, ${num1(r.open)} still open, ${num1(r.severe)} severe, ${num1(r.overdue)} open past their deadline`;
+            + `\n\n- ${num1(r.resolved)} resolved, ${num1(r.open)} still open, ${num1(r.severe)} severe, ${num1(r.overdue)} open past their deadline${routedEn ? `; ${routedEn}` : ""}`;
         } else if (i.lang === "ta") {
           card.headline = `${whenTa.ta} பதிவான ${num1(r.n)} சம்பவங்களில் ${num1(pct)}% ${word.ta}`;
-          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.ta}.\n\n- தீர்க்கப்பட்டவை ${num1(r.resolved)}, இன்னும் திறந்திருப்பவை ${num1(r.open)}, கடுமையானவை ${num1(r.severe)}`;
+          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.ta}.\n\n- தீர்க்கப்பட்டவை ${num1(r.resolved)}, இன்னும் திறந்திருப்பவை ${num1(r.open)}, கடுமையானவை ${num1(r.severe)}${r.routed ? `, துறைகளிடம் ஒப்படைக்கப்பட்ட செய்திப் புகார்கள் ${num1(r.routed)}` : ""}`;
         } else {
           card.headline = `${whenTa.tanglish} report aana ${num1(r.n)} incidents-la ${num1(pct)}% ${word.tanglish}`;
-          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.tanglish}.\n\n- resolve aanavai ${num1(r.resolved)}, innum open ${num1(r.open)}, severe ${num1(r.severe)}`;
+          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.tanglish}.\n\n- resolve aanavai ${num1(r.resolved)}, innum open ${num1(r.open)}, severe ${num1(r.severe)}${r.routed ? `, department-kitta oppadaicha news complaints ${num1(r.routed)}` : ""}`;
         }
         card.voiceSummary = card.answerMarkdown.replace(/\*\*/g, "").replace(/\n+/g, " ");
-        if (r.n) card.kpis = [{ label: `Share ${word.en}`, value: pct, tone: "info" }, { label: countLabel(inc), value: r.n, tone: "info" }, { label: "Resolved", value: r.resolved }, { label: "Still open", value: r.open }];
-        card.caveats.push("Share of the incidents reported in the window, by their status now, with the Collector's decisions applied. Rejected and lapsed incidents are in the total and are not counted as resolved.");
+        if (r.n) card.kpis = [{ label: `Share ${word.en}`, value: pct, tone: "info" }, { label: countLabel(inc), value: r.n, tone: "info" }, { label: "Resolved", value: r.resolved }, { label: "Still open", value: r.open },
+          ...(r.routed ? [{ label: "Handed to departments", value: r.routed }] : [])];
+        card.caveats.push("Share of the incidents reported in the window, by their status now, with the Collector's decisions applied. Rejected and lapsed incidents are in the total and are not counted as resolved."
+          + (r.routed ? " News complaints handed to a department are in the total too, neither open nor closed on the console." : ""));
         card.context = { ...ctxBase, lastResponseType: "kpi" };
         card.sources.tools.push({ name: "share_of_incidents", args: { ...inc, share: d.share }, ms: 0 });
         break;
@@ -571,7 +577,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // a department console opens only its own department's incidents: the planner's path refuses another's in words, and so does
       // the console (404); this path gave the whole card, place and officials included, to any officer who typed the id (QA pass 6, P6-006)
       if (i.lockDept && !(await idsOfDept([id], i.lockDept)).has(id)) return otherDept(i, d.intent);
-      const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus);
+      const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus, i.lockDept);
       if (!x) return null;
       card.responseType = "incident_detail";
       card.incident = x;
@@ -649,7 +655,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
       const hours = newsSpan ? custom!.hours : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
-      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
+      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan, lockDept: i.lockDept }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
       card.responseType = one ? "news_detail" : "news_list";
       card.stories = r.stories;
       // the span asked, said as it was read ("last month (October)", "yesterday (5 Nov)"), never the rolling news window (p7-rules-periods-01)

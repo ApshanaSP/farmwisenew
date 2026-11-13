@@ -141,8 +141,40 @@ export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: stri
  * inflated in memory before the desk refused the file (QA pass 6, P5-028).
  */
 export interface PdfImageOptions { bitmaps?: boolean; maxBitmapBytes?: number }
-// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB)
+// about 20 A4 colour pages at 300 dpi (26 MB each): 150 MB dropped pages of a real scan (P6-007); before P5-028 there was no limit (2.4 GB).
+// It bounds the inflating; what a call keeps is at most 20 pages of OCR_PAGE_PIXELS bytes (ocrPage)
 export const PDF_BITMAP_BUDGET = 600_000_000;
+
+/** The most pixels of one bitmap page given to OCR: an A4 page at 300 dpi is 8.7 million, and OCR reads no better above that. */
+export const OCR_PAGE_PIXELS = 9_000_000;
+
+/**
+ * One inflated bitmap page as OCR is given it: grey (what Tesseract reads in any case), and shrunk by a whole factor (the mean of each
+ * f x f block) to at most OCR_PAGE_PIXELS. The budget above was also what one request held: a 762 KB PDF of 40 Mpx pages came back as
+ * 600 MB of page images, read at that size by OCR (reviewer2-13). Now one call holds at most 20 x 9 MB.
+ */
+function ocrPage(px: Buffer, W: number, H: number, ch: number): Buffer {
+  const f = Math.max(1, Math.ceil(Math.sqrt((W * H) / OCR_PAGE_PIXELS)));
+  const w = Math.max(1, Math.floor(W / f)), h = Math.max(1, Math.floor(H / f));
+  const head = Buffer.from(`P5\n${w} ${h}\n255\n`, "latin1");
+  if (f === 1 && ch === 1) return Buffer.concat([head, px.subarray(0, W * H)]);
+  const out = Buffer.allocUnsafe(w * h);
+  const sum = new Uint32Array(w);
+  const n = f * f;
+  for (let y = 0; y < h; y++) {
+    sum.fill(0);
+    for (let dy = 0; dy < f; dy++) {
+      const row = (y * f + dy) * W * ch;
+      for (let x = 0; x < w; x++) {
+        let s = 0;
+        for (let dx = 0, i = row + x * f * ch; dx < f; dx++, i += ch) s += ch === 3 ? (px[i] * 77 + px[i + 1] * 150 + px[i + 2] * 29) >> 8 : px[i];
+        sum[x] += s;
+      }
+    }
+    for (let x = 0; x < w; x++) out[y * w + x] = Math.round(sum[x] / n);
+  }
+  return Buffer.concat([head, out]);
+}
 
 export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET }: PdfImageOptions = {}): { images: Buffer[]; skipped: number } {
   const src = buf.toString("latin1");
@@ -153,6 +185,35 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
   // "/Subtype /Image" inside the pattern, with a lazy part on each side, tried every occurrence of it in one dictionary as the anchor: time
   // grew with the square of a crafted dictionary (120 KB, 1.6 s; P6-013)
   const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
+  // the objects another image names as its soft mask or mask ("/SMask 12 0 R"): a mask is not a page, wherever it is in the file. Every
+  // 8-bit grey image was taken as one, so a JPEG page with an SMask counted as two (reviewer2-15)
+  const masks = new Set<string>();
+  for (const k of src.matchAll(/\/S?Mask\s+(\d+)\s+(\d+)\s+R/g)) masks.add(`${k[1]} ${k[2]}`);
+  // where each "n g obj" starts, found in one pass the first time a colour space must be followed (a later definition wins, as in an
+  // updated file)
+  let objs: Map<string, number> | null = null;
+  const object = (n: string, g: string): string | null => {
+    objs ??= new Map([...src.matchAll(/(?<!\d)(\d+)\s+(\d+)\s+obj\b/g)].map((k) => [`${k[1]} ${k[2]}`, k.index + k[0].length]));
+    const at = objs.get(`${n} ${g}`);
+    return at == null ? null : src.slice(at, at + 2000).trimStart();
+  };
+  /**
+   * A colour space's channels: 1 grey, 3 RGB, null an ICC profile whose /N is not found (told by the page's size), 0 anything else. An
+   * indirect one ("/ColorSpace 9 0 R") is followed: it was taken as ICC unread, so a palette (Indexed) or Separation page reached OCR as
+   * its indices or ink tints read as grey (reviewerF-08). One that cannot be found in the file (a compressed object stream) is skipped.
+   */
+  const channels = (cs: string, depth = 0): number | null => {
+    if (/^\/DeviceGray\b/.test(cs)) return 1;
+    if (/^\/DeviceRGB\b/.test(cs)) return 3;
+    const icc = cs.match(/^\[\s*\/ICCBased\s+(\d+)\s+(\d+)\s+R\b/);
+    if (icc) {
+      const n = object(icc[1], icc[2])?.match(/^<<((?:[^<>]|<<[^<>]*>>)*)>>/)?.[1].match(/\/N\s+(\d+)/)?.[1];
+      return n == null ? null : n === "1" ? 1 : n === "3" ? 3 : 0;
+    }
+    const ref = cs.match(/^(\d+)\s+(\d+)\s+R\b/);
+    const target = ref && depth < 3 ? object(ref[1], ref[2]) : null;
+    return target == null ? 0 : channels(target, depth + 1);
+  };
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
@@ -167,23 +228,39 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     if (end < 0) break;
     // every path below moves past this stream, so no stream is read from inside another
     re.lastIndex = Math.max(re.lastIndex, end);
-    if (end !== start + len) { if (src[end - 1] === "\n") end--; if (src[end - 1] === "\r") end--; }
     if (!/\/Subtype\s*\/Image\b/.test(dict)) continue;
+    const obj = src.slice(Math.max(0, m.index - 40), m.index).match(/(\d+)\s+(\d+)\s+obj\s*$/);
+    if (obj && masks.has(`${obj[1]} ${obj[2]}`)) continue;
+    // with no trusted /Length the data runs to "endstream", end-of-line included. Only a JPEG has it taken off: a JPEG ends FF D9, so a CR
+    // or LF after that is never its own. A Flate or unfiltered stream's last byte can be 0x0D or 0x0A, and taking it as the end-of-line
+    // broke the page (reviewer4-04); zlib stops at the end of its own stream, and a bitmap is read for W x H bytes, so the extra byte is harmless
     const data = buf.subarray(start, Math.max(start, end));
+    if (!data.length) { skipped++; continue; }
     const W = Number(dict.match(/\/Width\s+(\d+)/)?.[1]), H = Number(dict.match(/\/Height\s+(\d+)/)?.[1]);
-    if (/\/DCTDecode/.test(dict)) images.push(Buffer.from(data));
+    if (/\/DCTDecode/.test(dict)) {
+      let e = data.length;
+      if (end !== start + len) { if (data[e - 1] === 0x0a) e--; if (data[e - 1] === 0x0d) e--; }
+      images.push(Buffer.from(data.subarray(0, e)));
+    }
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
       // an 8-bit bitmap, Flate-packed or stored as it is
-      const rgb = /\/DeviceRGB/.test(dict), grey = /\/DeviceGray/.test(dict);
-      if (!rgb && !grey) { skipped++; continue; }
-      const need = W * H * (rgb ? 3 : 1);
+      // a scanner's ICC colour space ("/ColorSpace 9 0 R" or "[/ICCBased 7 0 R]") names its channels in another object, followed here: its
+      // /N, else the page's own size, tells grey (W x H) from RGB (3 W H), and anything else (CMYK, a palette, a separation) is skipped.
+      // Only the two device spaces were read (reviewer2-15)
+      const known = channels(dict.match(/\/ColorSpace\s*(\/[A-Za-z]+|\d+\s+\d+\s+R|\[[^\]]*\])/)?.[1] ?? "");
+      if (known === 0) { skipped++; continue; }
+      const need = W * H * (known ?? 3);
       // decided before anything is inflated: a bitmap the caller does not want, or one past the budget, costs nothing
       if (!bitmaps || bitmapBytes + need > maxBitmapBytes) { skipped++; re.lastIndex = Math.max(re.lastIndex, end); continue; }
       bitmapBytes += need;
       try {
-        const px = /\/FlateDecode/.test(dict) ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
-        if (px.length < need) { skipped++; continue; }
-        images.push(Buffer.concat([Buffer.from(`${rgb ? "P6" : "P5"}\n${W} ${H}\n255\n`, "latin1"), px.subarray(0, need)]));
+        const flate = /\/FlateDecode/.test(dict);
+        const px = flate ? zlib.inflateSync(data, { maxOutputLength: need + 1024 }) : data;
+        // an unfiltered stream may still hold its end-of-line (at most 2 bytes); a Flate one is its exact size
+        const fits = (ch: number) => px.length >= W * H * ch && px.length <= W * H * ch + (flate ? 0 : 2);
+        const ch = known ? (px.length >= need ? known : 0) : fits(3) ? 3 : fits(1) ? 1 : 0;
+        if (!ch) { skipped++; continue; }
+        images.push(ocrPage(px, W, H, ch));
       } catch { skipped++; }
     } else skipped++;
     re.lastIndex = Math.max(re.lastIndex, end);

@@ -8,7 +8,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { closedLateSql, closedOnTimeSql, isPastDeadline, pastDueSql } from "@/lib/reference/metrics";
-import { asOf, explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
+import { asOf, explain, incident as incidentFull, OPEN_NOW, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
@@ -25,7 +25,9 @@ const num = (v: unknown) => Number(v ?? 0);
  * incident is no longer "still open" here either), so an answer and the KPI tile it matches agree.
  */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 
 export interface IncidentFilters {
   period: Period;
@@ -54,9 +56,10 @@ export interface IncidentFilters {
   range?: { from: string; to: string } | null;
 }
 
-const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const COLS = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, ${EFF.status} AS status,
-  ${OPEN} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
+  ${EFF.open} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
   i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, ${EFF.verified} AS verified,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due,
@@ -178,7 +181,7 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
   for (let k = WIDER.indexOf(f.period); k < WIDER.length; k++) {
     period = WIDER[Math.max(0, k)];
     const w = where({ ...f, period }, now);
-    [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
+    [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS()} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
       q<{ total: number }>(`SELECT COUNT(*) AS total FROM incidents i WHERE ${w.sql}`, w.params)]);
     // a window the question names ("last 10 days") is never widened silently
     if (rows.length >= n || order !== "priority" || f.hours || f.offset) break;
@@ -190,7 +193,7 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
 /** The raw records of a window, most important first, with the window's open and complaint totals (a zone on a given day). */
 export async function windowRows(f: IncidentFilters, now: string, n: number): Promise<{ rows: Row[]; total: number; open: number; complaints: number }> {
   const w = where(f, now);
-  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
+  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS()} ${FROM} WHERE ${w.sql} ORDER BY ${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
     q(`SELECT COUNT(*) AS total, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(CASE WHEN ${OPEN} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints FROM incidents i WHERE ${w.sql}`, w.params)]);
   return { rows, total: num(t?.total), open: num(t?.open), complaints: num(t?.complaints) };
 }
@@ -212,7 +215,7 @@ export async function idsOfDept(ids: string[], dept: string): Promise<Set<string
 
 export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
   if (!ids.length) return [];
-  const rows = await q(`SELECT ${COLS} ${FROM} WHERE i.incident_id IN (?)`, [ids]);
+  const rows = await q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id IN (?)`, [ids]);
   const ev = await evidenceFor(ids);
   const by = new Map(rows.map((r) => [String(r.id), r]));
   return ids.map((id) => by.get(id)).filter(Boolean).map((r) => itemOf(r!, ev.get(String(r!.id)) ?? []));
@@ -240,22 +243,23 @@ export async function countIncidents(f: IncidentFilters, now: string) {
 /**
  * Of the incidents reported in the window, how many are now resolved, still open, severe, and open past their deadline (for "what percentage of
  * complaints are resolved"): the same filters and the same decision-aware status as every count, so the share and the counts beside it agree.
- * Rejected and lapsed incidents are in the total and are not resolved.
+ * Rejected and lapsed incidents are in the total and are not resolved. `routed`: news complaints handed to a department, in the total and
+ * neither open (OPEN_NOW) nor closed, so open + closed + routed = n (reviewerG-05).
  */
 export async function shareOfIncidents(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now);
-  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(i.severity_level = 'Severe') AS severe,
-    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND ${closedOnTimeSql(EFF.closedAt)}) AS ontime FROM incidents i WHERE ${w.sql}`, w.params);
+  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(${EFF.open} = 0) AS closed, SUM(${EFF.open} = 1 AND NOT ${OPEN}) AS routed, SUM(i.severity_level = 'Severe') AS severe,
+    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved' AND ${closedOnTimeSql(EFF.closedAt)}) AS ontime FROM incidents i WHERE ${w.sql}`, w.params);
   // ontime: resolved and closed by the deadline (a closing with no deadline on record is not counted on time); closed: every incident no longer open (pass4-open-11)
-  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue), ontime: num(a?.ontime), closed: num(a?.n) - num(a?.open) };
+  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue), ontime: num(a?.ontime), closed: num(a?.closed), routed: num(a?.routed) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
 export async function countResolved(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
-  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
+  const done = `${EFF.open} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${closedLateSql(EFF.closedAt)}) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
@@ -270,7 +274,7 @@ export async function countResolved(f: IncidentFilters, now: string) {
 export async function resolutionTimes(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
-  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND ${EFF.closedAt} >= i.first_reported_at`;
+  const done = `${EFF.open} = 0 AND ${EFF.status} = 'Resolved' AND ${EFF.closedAt} >= i.first_reported_at`;
   const hrs = `TIMESTAMPDIFF(MINUTE, i.first_reported_at, ${EFF.closedAt}) / 60`;
   const [rows, prev] = await Promise.all([
     q(`SELECT i.lead_dept AS code, COALESCE(dp.name, i.lead_dept) AS name, COUNT(*) AS n, AVG(${hrs}) AS hours,
@@ -325,10 +329,11 @@ export async function categoryRanking(f: IncidentFilters, now: string, n: number
 }
 
 /** One incident in full: what happened, where, when, status, why, who, how it unfolded, and the evidence. */
-export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all"): Promise<IncidentDetail | null> {
+export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all", lockDept: string | null = null): Promise<IncidentDetail | null> {
   const [[r], full, steps, now] = await Promise.all([
-    q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
-    incidentFull(id),
+    q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id = ?`, [id]),
+    // a department console's card: the incident's group is only that department's (fixall-lock-05)
+    incidentFull(id, { dept: lockDept }),
     q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210")),
     asOf()
   ]);
@@ -367,7 +372,7 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
  * else in its zone), within 60 days of it, closest first.
  */
 export async function relatedIncidents(id: string, n = 5) {
-  const [a] = await q(`SELECT ${COLS}, i.first_reported_at AS ts ${FROM} WHERE i.incident_id = ?`, [id]);
+  const [a] = await q(`SELECT ${COLS()}, i.first_reported_at AS ts ${FROM} WHERE i.incident_id = ?`, [id]);
   if (!a) return null;
   const fam = categories().find((c) => c.code === a.cat);
   const family = fam?.family ? categories().filter((c) => c.family === fam.family).map((c) => c.code) : [a.cat];
@@ -377,7 +382,7 @@ export async function relatedIncidents(id: string, n = 5) {
     : { sql: "i.zone_no = ?", params: [a.zone] };
   const dist = a.lat != null ? `111.32 * SQRT(POW(i.lat - ${Number(a.lat)}, 2) + POW((i.lon - ${Number(a.lon)}) * COS(RADIANS(${Number(a.lat)})), 2))` : "0";
   const run = (cats: string[]) => q(
-    `SELECT ${COLS}, ROUND(${dist}, 2) AS km ${FROM}
+    `SELECT ${COLS()}, ROUND(${dist}, 2) AS km ${FROM}
      WHERE i.incident_id <> ? AND i.category_code IN (?) AND ${near.sql}
        AND i.first_reported_at BETWEEN (? - INTERVAL 60 DAY) AND (? + INTERVAL 60 DAY)
      ORDER BY km, i.first_reported_at DESC LIMIT ?`, [id, cats, ...near.params, a.ts, a.ts, n]);
@@ -392,7 +397,7 @@ export async function relatedIncidents(id: string, n = 5) {
 /** Actions on record for an incident: the department's open steps, the pipeline's AI next step, else the category's standard first step. */
 export async function actionsFor(id: string): Promise<{ title: string; items: ActionItem[] } | null> {
   const [[r], steps] = await Promise.all([
-    q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
+    q(`SELECT ${COLS()} ${FROM} WHERE i.incident_id = ?`, [id]),
     q(`SELECT text, owner, DATE_FORMAT(due_at, '%Y-%m-%d %H:%i:%s') AS due, status FROM actions WHERE incident_id = ? AND status NOT IN ('Done', 'Verified')
        ORDER BY sop_step IS NULL, sop_step, due_at LIMIT 6`, [id])]);
   if (!r) return null;

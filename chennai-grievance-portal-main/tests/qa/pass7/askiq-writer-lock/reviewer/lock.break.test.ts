@@ -18,7 +18,7 @@ const plan = (table: string, p: Partial<PlanQuery>): PlanQuery => ({ id: "q1", p
   compare: null, sort: [], limit: 50, derive: [], ...p });
 const dims = (...fields: string[]) => fields.map((f, i) => ({ field: f, alias: `d${i}`, grain: null }));
 const locked = (p: PlanQuery) => compileQuery(p, cat, AS_OF, SCOPE, DEPT);
-const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar"]);
+const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar", "mandi_market_prices", "mandi_prices", "mandi_weekly"]); // market prices since reviewer4-05
 const DEPT_COLS = ["lead_dept", "dept_code", "department"];
 const refusedOrThrows = (p: PlanQuery) => { try { locked(p); return "compiled"; } catch (e) { return e instanceof CompileError ? "refused" : `threw ${(e as Error).message}`; } };
 
@@ -95,13 +95,16 @@ describe("shared reference tables: columns computed from every department's reco
 });
 
 describe("a table held by its own department column also names incidents", () => {
-  // open: row p7-askiq-writer-lock-03 (P3, a judgement call): holding these tables also through incident_id would hide the officer's own
-  // records that were merged into another department's incident; the id alone opens nothing (P6-006 refuses it)
-  it.skip("events (held by events.lead_dept) of an SWM record merged into another department's incident give that incident's id: the id is not held", () => {
+  // row p7-askiq-writer-lock-03 (fixall): holding these tables also through incident_id would hide the officer's own records that were merged
+  // into another department's incident, so the row stays held by its department column and the id it names is read through the department's
+  // incidents (compile.ts incidentOf): another department's incident id reads as NULL. Was it.skip asserting a row filter on b.incident_id
+  it("events (held by events.lead_dept) of an SWM record merged into another department's incident give that incident's id: the id is held", () => {
     // incidents.py: an incident's lead_dept is its lead member's; needs_coordination marks incidents with records from several departments
     const c = locked(plan("events", { measures: [{ fn: "count", field: null, alias: "n" }], dimensions: dims("incident_id") }));
     const text = format(c.sql, c.params as never[]);
-    expect(text, "b.incident_id held through the department's incidents").toMatch(/b\.`incident_id` IN \(SELECT li\.`incident_id` FROM [^)]*li\.`lead_dept` = 'GCC-SWM'\)/);
+    expect(text, "b.incident_id held through the department's incidents")
+      .toMatch(/LEFT JOIN \(SELECT DISTINCT li\.`incident_id` FROM [^)]*li\.`lead_dept` = 'GCC-SWM'\) (k\d+) ON \1\.`incident_id` = b\.`incident_id`/);
+    expect(text, "the id selected is the department's incident's").toMatch(/^SELECT \/\*\+[^*]*\*\/ k\d+\.`incident_id` AS `d0`/);
   });
 });
 

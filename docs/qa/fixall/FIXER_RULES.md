@@ -3,7 +3,7 @@
 The owner said "fix all" after QA pass 6. This run works through pass 6's open P1, P2 and P3 rows in `docs/qa/pass6/BUGS.json`. A
 separate session ("Fix pass 6's 14 open P0 bugs") and the six sessions it started fix the P0 and P1 rows in their own worktrees at the same time.
 
-- Worktree: `E:\farm\.claude\worktrees\qa-pass6-a84a72`. Branch: `claude/fixall-a84a72`, cut from GitHub main `d399015`. The app is
+- Worktree: `E:\farm\.claude\worktrees\qa-pass6-a84a72`. Branch: see "Round 2" below (round 1 was `claude/fixall-a84a72`). The app is
   in `chennai-grievance-portal-main/`.
 - Only one fixer works at a time, in this worktree. The machine has 15 GB of memory and seven other sessions run alongside, so keep test runs targeted.
 
@@ -29,21 +29,22 @@ separate session ("Fix pass 6's 14 open P0 bugs") and the six sessions it starte
   Say what the decision is in one line.
 - **open**: you ran out of time, or it needs a running server or a live model. Say exactly what is left.
 
-## Files and rows you must not change (other sessions own them)
+## Round 2 (after the combined merge)
 
-The P0 session split into six parallel sessions (branches `p7-*`). They own every P0 row and all 28 open P1 rows. Their files:
+- Branch: `claude/fixall2-a84a72`, cut from the combined branch's tip `1df591f0`. The final gate passed on `ae65fe84`.
+  The combined branch holds the six p7 lanes, round 1 (`claude/fixall-a84a72`) and pass 4's last commit.
+- Every file is open to round 2. The coordinator's lanes finished the P0/P1 rows, and their last round was merged into this branch
+  as `e8dfa08f` (merge `56b022e4`). Main changes:
+  - `lib/period/read.ts` takes counted spans from `windowspan.ts`, and day ranges are a new "days" kind (fastpath's `dayRange` is
+    gone);
+  - `src/lib/studio/formats.ts` has a per-file inflate budget;
+  - Studio parsing runs in a reader process.
 
-- `src/lib/studio/**` and `src/lib/thunai/**`;
-- in `src/lib/assistant/`: `polish.ts`, `compile.ts`, `fastpath.ts`, `intent.ts`, `decide.ts`, `unresolved.ts`, `cannot.ts`, and the rules lane;
-- `src/lib/collector/**` and `src/components/collector/app/**`;
-- `src/lib/officer/data.ts`;
-- `src/lib/manu/**`, `src/components/manu/**` and `src/app/api/manu/**`;
-- `src/app/api/profile/**`, `src/app/api/complaints/route.ts` and `src/app/api/collector/decisions/route.ts`.
-
-If a row's fix needs one of those files, leave the row `open` with the note "needs <file>, a p7 session's file". The lead does it after their
-branches are done. Never take a P1 row.
-
-Ports for this run: Next 3110–3113, pinned API 3190. The p7 sessions use 3104–3109 and pinned APIs 3191–3196.
+  Read the current code before changing any of it.
+- Never take a P0 or P1 row unless the lead gives it to you.
+- Ports: Next 3110–3113, pinned API 3190.
+- The gate runs vitest shuffled. A test that passes only in file order is a bug in the test: make it order-independent (reset
+  module state in beforeEach, or use unique keys) instead of turning shuffle off.
 
 ## Commands
 

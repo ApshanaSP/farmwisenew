@@ -73,7 +73,7 @@ describe("the backup when the AI OCR cannot answer", () => {
 
 describe("asking the service", () => {
   const pages = [{ data: Buffer.from("one").toString("base64") }, { data: Buffer.from("two").toString("base64") }];
-  beforeEach(() => { vi.stubEnv("MANU_PADDLE_URL", "http://paddle.test"); vi.spyOn(console, "warn").mockImplementation(() => undefined); });
+  beforeEach(() => { vi.stubEnv("MANU_PADDLE_URL", "http://127.0.0.1:8867"); vi.spyOn(console, "warn").mockImplementation(() => undefined); });
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
   it("joins the lines of every page, and masks Aadhaar on arrival", async () => {

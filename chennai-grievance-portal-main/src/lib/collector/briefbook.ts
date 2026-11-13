@@ -7,7 +7,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
 import { pctChange } from "@/lib/reference/metrics";
@@ -15,7 +15,9 @@ import { checkOpening } from "@/lib/collector/opening";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -40,8 +42,9 @@ function filters(s: BookScope, a = "i") {
 
 const CRIME = ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "SUICIDE_SELF_HARM", "DRUGS_LIQUOR", "PUBLIC_ORDER", "ROAD_ACCIDENT", "MISSING_PERSON"];
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
-const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const INC = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.dead, i.injured, i.lat, i.lon,
   i.ai_summary, i.ai_attention, i.ai_next_step, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
@@ -64,12 +67,12 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${P}`, PP),
     // the same rule as My Tasks (metrics.ts awaiting_check, LT-07): "128 waiting" beside "My Tasks 0" was two definitions
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
-    q(`SELECT ${INC} ${FROM} WHERE ${cw.sql}${f.sql} AND ${OPEN} = 1 AND i.severity_level = 'Severe'
+    q(`SELECT ${INC()} ${FROM} WHERE ${cw.sql}${f.sql} AND ${OPEN} = 1 AND i.severity_level = 'Severe'
        ORDER BY COALESCE(i.dead, 0) DESC, i.priority_score DESC LIMIT 4`, [...cw.params, ...f.params]),
     // departments: only what came in during the period
     q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead
        ${FROM} WHERE ${W} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY severe DESC, n DESC`, WP),
-    q(`SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY ${SEV_ORDER}, COALESCE(i.dead, 0) DESC, i.first_reported_at DESC) AS rk
+    q(`SELECT * FROM (SELECT ${INC()}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY ${SEV_ORDER}, COALESCE(i.dead, 0) DESC, i.first_reported_at DESC) AS rk
        ${FROM} WHERE ${W}) x WHERE rk <= 4`, WP),
     q(`SELECT i.zone_no AS zone, i.zone_name AS name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe
        FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY severe DESC, n DESC LIMIT 6`, WP),
@@ -82,10 +85,10 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT i.category_code AS cat, COUNT(*) AS n FROM incidents i WHERE ${P} AND i.category_code IN (?) GROUP BY 1`, [...PP, CRIME]),
     q(`SELECT i.category_label AS label, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0
        GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
-    q(`SELECT ${INC}, DATEDIFF(?, i.first_reported_at) AS days ${FROM} WHERE ${OPEN} = 1 AND i.citizen_complaints > 0${f.sql}
+    q(`SELECT ${INC()}, DATEDIFF(?, i.first_reported_at) AS days ${FROM} WHERE ${OPEN} = 1 AND i.citizen_complaints > 0${f.sql}
        AND i.first_reported_at > (? - INTERVAL 180 DAY) ORDER BY i.first_reported_at LIMIT 1`, [now, ...f.params, now]),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved'`, [...closed.params, ...f.params]),
-    q(`SELECT ${INC} ${FROM} WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved' AND i.severity_level IN ('Severe', 'High')
+    q(`SELECT ${INC()} ${FROM} WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved' AND i.severity_level IN ('Severe', 'High')
        ORDER BY i.severity_level = 'Severe' DESC, i.priority_score DESC LIMIT 3`, [...closed.params, ...f.params]),
     q(`SELECT i.category_code AS cat, i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} GROUP BY 1, 2`, WP),
     q(`SELECT i.category_code AS cat, COUNT(*) AS n FROM incidents i WHERE ${P} GROUP BY 1`, PP),
@@ -94,7 +97,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT i.zone_name AS zone, COUNT(*) AS n FROM incidents i WHERE ${wk.sql}${f.sql} AND i.category_code = 'VECTOR_DISEASE'
        AND i.zone_name IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 3`, [...wk.params, ...f.params]),
     // every incident with a death in the period: the department rows say what happened
-    q(`SELECT ${INC} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP),
+    q(`SELECT ${INC()} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP),
     alertLane(now).catch((e) => (console.warn(`[briefbook] alerts lane: ${(e as Error).message}`), null))
   ]);
 

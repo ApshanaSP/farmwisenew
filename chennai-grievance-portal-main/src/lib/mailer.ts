@@ -23,6 +23,13 @@ function trustedCa(): string[] | undefined {
   }
 }
 
+/**
+ * How long the mail server may take to connect (DNS, TCP and TLS) and to greet. nodemailer's own limits are 2 minutes and 30 s, so a mail
+ * server that was down outlasted the 20 s an SMS test copy is given (manu/sms.ts, SMS_LIMITS.sendMs): the copy was taken as "maybe sent"
+ * and never tried again (reviewerC-04). Together they are below that limit, so a server that is down fails plainly and is tried again.
+ */
+export const SMTP_TIMEOUTS = { connectionTimeout: 8_000, greetingTimeout: 8_000 } as const;
+
 function getTransporter(): Transporter | null {
   if (!isSmtpConfigured()) return null;
   if (!transporter) {
@@ -32,6 +39,7 @@ function getTransporter(): Transporter | null {
       port: Number(process.env.SMTP_PORT) || 587,
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      ...SMTP_TIMEOUTS,
       ...(ca ? { tls: { ca } } : {})
     });
   }

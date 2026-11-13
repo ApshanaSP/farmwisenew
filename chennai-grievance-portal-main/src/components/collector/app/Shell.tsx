@@ -303,17 +303,29 @@ export function Palette({ open, onClose, actions, search, ask, askMap }: {
 // -------------------------------------------------------------- the bell --
 
 export interface BellItem { id: string; title: string; sub: string; sev: string; t: number; icon: IconName }
-/** Alerts: the bell shakes once when new alerts arrive; the popover groups them into Now (last hour) and Earlier today. */
-export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs }: {
+/** The IST calendar day of a time, "YYYY-MM-DD". */
+const istDay = (t: number) => new Date(t + 330 * 60_000).toISOString().slice(0, 10);
+/**
+ * The popover's groups: Now (the last hour), Earlier today (today in IST), Earlier (before today). Everything older than an hour was
+ * "Earlier today", weeks-old alerts of a 90-day view too (console-sync-11).
+ */
+export function bellGroups(items: BellItem[], nowMs: number): { l: string; rows: BellItem[] }[] {
+  const today = istDay(nowMs);
+  return [
+    { l: "Now", rows: items.filter((i) => nowMs - i.t < 3600e3) },
+    { l: "Earlier today", rows: items.filter((i) => nowMs - i.t >= 3600e3 && istDay(i.t) === today) },
+    { l: "Earlier", rows: items.filter((i) => nowMs - i.t >= 3600e3 && istDay(i.t) !== today) }
+  ].filter((g) => g.rows.length);
+}
+/** Alerts: the bell shakes once when new alerts arrive; the popover groups them (bellGroups) under the period they are from. */
+export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs, period }: {
   items: BellItem[]; unread: number; open: boolean; onToggle: () => void; onPick: (id: string) => void; onMarkRead: () => void; nowMs: number;
+  /** the console's period, "Last 7 days" (the bell's alerts are the period's) */ period: string;
 }) {
   const prev = useRef(unread);
   const [shake, setShake] = useState(0);
   useEffect(() => { if (unread > prev.current) setShake((s) => s + 1); prev.current = unread; }, [unread]);
-  const groups = [
-    { l: "Now", rows: items.filter((i) => nowMs - i.t < 3600e3) },
-    { l: "Earlier today", rows: items.filter((i) => nowMs - i.t >= 3600e3) }
-  ].filter((g) => g.rows.length);
+  const groups = bellGroups(items, nowMs);
   return (
     <div className="rel">
       <motion.button className="tbtn icon" data-pop onClick={onToggle} aria-label={unread > 0 ? `Alerts, ${unread} new` : "Alerts"} aria-expanded={open} key={shake}
@@ -324,7 +336,7 @@ export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs 
         {open && (
           <motion.div className="pop bellpop" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
             transition={{ duration: T.fast }} style={{ transformOrigin: "top right" }}>
-            <div className="pop-h">Severe and high · last 24 hours<button className="lnk" onClick={onMarkRead}>Mark all read</button></div>
+            <div className="pop-h">{`Severe and high · ${period.toLowerCase()}`}<button className="lnk" onClick={onMarkRead}>Mark all read</button></div>
             {groups.length ? groups.map((g) => (
               <div key={g.l}>
                 <div className="pop-g">{g.l}</div>

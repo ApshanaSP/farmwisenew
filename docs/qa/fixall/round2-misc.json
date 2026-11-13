@@ -1,0 +1,53 @@
+[
+ {
+  "id": "hunt2-sec-04",
+  "severity": "P2",
+  "area": "account verification",
+  "title": "PUT /api/profile changes the mobile number with no OTP and no duplicate check, and keeps mobile_verified TRUE, so the Verified chip then stands on a number never checked",
+  "found_by": "hunt2-sec",
+  "repro": "after a verified number, PUT /api/profile with the usual fields and a different mobileNumber; GET /api/profile shows the new number with mobileVerified true",
+  "failing_test": null,
+  "root_cause": "mobileNumber left in profileUpdateSchema and the UPDATE; the verified flag is not tied to the number it verified.",
+  "fix_commit": null,
+  "revert_check": null,
+  "status": "open",
+  "reviewer": null,
+  "where": "src/app/api/profile/route.ts:139,173 (mobile_number = COALESCE(?, mobile_number); mobile_verified untouched)",
+  "confidence": "medium",
+  "verified": false
+ },
+ {
+  "id": "hunt2-sec-05",
+  "severity": "P2",
+  "area": "personal data in logs / honest status",
+  "title": "With SMTP off, every OTP mail writes the account's e-mail address into the server log, and the mobile-OTP route still answers \"OTP sent.\"",
+  "found_by": "hunt2-sec",
+  "repro": "node tests/qa/pass6/known-failures/hunt2-sec/mobile-oracle.mjs, then grep \"[mailer]\" data/aws-cache/qa/run/srv-3106.log",
+  "failing_test": null,
+  "root_cause": "sendMail logs the recipient address; the route ignores sendMail's {ok:false, reason:\"not_configured\"} (mailer.ts says callers must not claim a mail was sent unless ok).",
+  "fix_commit": null,
+  "revert_check": null,
+  "status": "open",
+  "reviewer": null,
+  "where": "src/lib/mailer.ts:71; src/app/api/profile/mobile-otp/request/route.ts:35-38",
+  "confidence": "high",
+  "verified": false
+ },
+ {
+  "id": "hunt2-sec-12",
+  "severity": "P2",
+  "area": "abuse / load",
+  "title": "Filing a complaint has no rate limit: a signed-in citizen can file without end, each one a paid classifier call (when a model key is set), a dataset append and a case on a department's list; its JSON body is also read with no size cap",
+  "found_by": "hunt2-sec",
+  "repro": "code path: grep checkRateLimit src/app/api/complaints/route.ts finds nothing; vary the title per request and every POST files a new complaint",
+  "failing_test": null,
+  "root_cause": "the duplicate guard was added for double clicks, not for volume; no per-citizen or per-IP limit on filings.",
+  "fix_commit": null,
+  "revert_check": null,
+  "status": "open",
+  "reviewer": null,
+  "where": "src/app/api/complaints/route.ts:47 (req.json() uncapped), 54-63 (only a one-at-a-time lock and a same-text-just-filed check), 191 (classifyComplaint per filing)",
+  "confidence": "medium",
+  "verified": false
+ }
+]

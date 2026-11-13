@@ -16,13 +16,13 @@ test.describe("holding", () => {
     await modeOn(page);
     await speakingAnswer(page, ctx);
     const agentBefore = ctx.agentCalls.length;
-    const stateBefore = await page.getByTestId("state").textContent();
+    const stateBefore = await page.getByTestId("harness-state").textContent();
     ctx.hear.push({ text: "wait" });
     await say(page, "wait");
     await until(page, "holding", 8000);
     expect(await speakingNow(page)).toBe(false);
     expect(ctx.agentCalls.length).toBe(agentBefore);
-    expect(await page.getByTestId("state").textContent()).toBe(stateBefore);
+    expect(await page.getByTestId("harness-state").textContent()).toBe(stateBefore);
     // the extra listening time ends back at listening
     await until(page, "listening", 6000);
   });
@@ -47,7 +47,7 @@ test.describe("holding", () => {
     await speakingAnswer(page, ctx);
     ctx.hear.push({ text: "wait, show Anna Nagar" });
     await say(page, "cmd_zone");
-    await expect(page.getByTestId("state")).toContainText('"zone": 8', { timeout: 15_000 });
+    await expect(page.getByTestId("harness-state")).toContainText('"zone": 8', { timeout: 15_000 });
     expect(ctx.agentCalls.some((c) => c.text === "show Anna Nagar")).toBe(true);
   });
 

@@ -1,7 +1,7 @@
 /* Manu Desk: the petition officer's screen, the original paper on a complaint, and the tracking page. Uses the site's tokens. */
 .mn-page { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); color: var(--text); font: 400 14px/1.45 var(--font-ui, system-ui, sans-serif); }
 .mn-band { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; background: var(--band); color: var(--band-ink); flex: none; }
-.mn-band b { font-size: 17px; margin-right: 10px; }
+.mn-band b, .mn-band .mn-title { font-size: 17px; margin: 0 10px 0 0; display: inline; font-weight: 700; }
 .mn-band span { color: var(--band-ink-2); font-size: 13px; }
 .mn-who { display: flex; align-items: center; gap: 10px; }
 .mn-who button { background: rgba(255, 255, 255, .15); color: inherit; border: 1px solid rgba(255, 255, 255, .35); border-radius: 8px; padding: 5px 12px; cursor: pointer; font: inherit; }
@@ -18,7 +18,7 @@
 .mn-send { margin: 0; font-size: 12.5px; color: var(--accent-2); }
 .mn-err { margin: 0; padding: 7px 10px; border-radius: 8px; background: #FDECEC; color: #A01622; font-size: 13px; }
 .mn-lists { flex: 1; min-height: 0; overflow: auto; padding: 4px 8px 14px; }
-.mn-lists h4 { margin: 12px 6px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3); display: flex; justify-content: space-between; }
+.mn-lists h3 { margin: 12px 6px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3); display: flex; justify-content: space-between; }
 .mn-lists ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
 .mn-none { margin: 4px 6px; color: var(--text-3); font-size: 13px; }
 .mn-row { position: relative; }

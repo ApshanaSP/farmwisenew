@@ -42,7 +42,7 @@ export function AttentionCard({ d, c, only }: { d: OverviewData; c: Console; onl
         ) : (
           <div className="att-sw" role="tablist" aria-label="What needs you">
             <button role="tab" aria-selected={v === "sev"} className={v === "sev" ? "on" : ""} onClick={() => setView("sev")}
-              title="Open incidents by severity (the Severe events tile counts every severe event reported in the period)">
+              title="Open incidents by severity, the same problem reported several times in one area as one row (the Ongoing incidents tile counts each incident; the Severe events tile counts every severe event reported in the period)">
               <I n="alert" />By severity<em>{openN.toLocaleString("en-IN")}</em></button>
             <button role="tab" aria-selected={v === "tasks"} className={v === "tasks" ? "on" : ""} onClick={() => setView("tasks")} title={"Closed work for you to check. " + TASK_RULE}>
               <I n="tasks" />My tasks<em className={d.tasks.count ? "hot" : ""}>{d.tasks.count.toLocaleString("en-IN")}</em></button>

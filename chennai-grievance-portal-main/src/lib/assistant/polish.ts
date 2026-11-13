@@ -56,8 +56,14 @@ export function recordsOf(card: AnswerCard): string[] {
   return out.map((x) => x.slice(0, 320));
 }
 
-/** A fence tag written inside fenced text (a complaint title, a question, an article) is taken out, so the text cannot close its own fence (P6-009). */
-const unfenced = (s: string): string => String(s ?? "").normalize("NFKC").replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/untrusted[\s_\-]*data/gi, "untrusted data");
+/**
+ * Fenced text (a complaint title, a question, an article) cannot close its own fence (P6-009): after NFKC (which folds full-width and small
+ * forms to "<" and ">") it holds no angle bracket at all, and no invisible format character (Unicode's Cf class). Taking out only the zero
+ * widths and renaming a tag spelt in Latin letters left "</untrus\u00ADted_data>" (soft hyphen), U+2061 or a Cyrillic letter in it as a
+ * closing tag (reviewer5-11); with no bracket, no letters make a tag.
+ */
+const unfenced = (s: string): string => String(s ?? "").normalize("NFKC").replace(/\p{Cf}/gu, "").replace(/</g, "\u2039").replace(/>/g, "\u203A")
+  .replace(/untrusted[\s_\-]*data/gi, "untrusted data");
 
 /**
  * Text in a card that people outside the code wrote: complaint and record titles, places, summaries and news headlines. Its numbers are

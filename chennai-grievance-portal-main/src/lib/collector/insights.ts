@@ -6,7 +6,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, PLACE_FILTERS, asOf, attentionRows, awaitingByDept, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, PLACE_FILTERS, asOf, attentionRows, awaitingByDept, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
@@ -18,7 +18,9 @@ import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metri
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
-const OPEN = EFF.open;
+/** "Open" in every open count and filter: the console's one rule (intel.ts OPEN_NOW: news complaints handed to a department are the
+ * department's work, not open on the console, reviewerE-02). A row's own open flag is EFF.open, its status. */
+const OPEN = OPEN_NOW;
 /**
  * A hotspot's open count with the Collector's decisions laid on: the pipeline's own count, moved by what the decisions
  * changed among the hotspot's incidents (the pipeline's flag read raw ignored a resolve, RC-27).
@@ -50,8 +52,9 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
   return { sql: parts.join(" AND "), params };
 }
 
-const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
+// built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
+const INC = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${OPEN_NOW} AS open_now,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
   i.ai_summary, i.ai_attention, i.ai_next_step,
@@ -134,13 +137,14 @@ export async function insights(period: Period, zone: number | null, dept: string
   // up to and including the console's now (the range's end is exclusive, so one second on)
   const monthRange: [string, string] = [`${tk.months[0]}-01 00:00:00`, new Date(Date.parse(`${now.slice(0, 10)}T${now.slice(11, 19)}Z`) + 1000).toISOString().slice(0, 19).replace("T", " ")];
   const [k, kp, top, nextActs, deptRows, gapsAll, weekly, monthly, taluks, anomaliesAll, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
-    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open,
-              SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(i.citizen_complaints) AS complaints,
+    // open and past deadline as on the tiles and lists (intel.ts OPEN_NOW: routed news complaints are the department's, console-sync-10)
+    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN_NOW}) AS open,
+              SUM(${OPEN_NOW} AND ${pastDueSql(now)}) AS overdue, SUM(i.citizen_complaints) AS complaints,
               SUM(i.source_count > 1) AS multi, SUM(i.media_only = 1 AND i.status_std <> 'Lapsed') AS news_only
        FROM incidents i WHERE ${w.sql}`, w.params)),
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params)),
     // candidates for "needs your attention": open, highest priority first (explain() decides which need the Collector)
-    when(B, () => q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
+    when(B, () => q(`SELECT ${INC()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
     // next open action per open incident in scope (pipeline action list, SOP order)
     when(B, () => q(`SELECT a.incident_id AS id, a.dept_code, a.owner, a.text, a.status, DATE_FORMAT(a.due_at, '%Y-%m-%d %H:%i:%s') AS due,
               ROW_NUMBER() OVER (PARTITION BY a.incident_id ORDER BY a.status = 'In progress' DESC, a.due_at, a.action_id) AS rn
@@ -149,10 +153,10 @@ export async function insights(period: Period, zone: number | null, dept: string
     when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(${pastDueSql(now)}) AS overdue,
               SUM(i.severity_level IN ('Severe', 'High')) AS serious,
               SUM(i.citizen_complaints) AS complaints
-       ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 GROUP BY i.lead_dept, dp.name, dp.head
+       ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} GROUP BY i.lead_dept, dp.name, dp.head
        ORDER BY serious DESC, overdue DESC, open DESC`, w.params)),
     // in the news, no department record
-    when(B, () => q(`SELECT ${INC}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
+    when(B, () => q(`SELECT ${INC()}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
        LEFT JOIN gaps g ON g.incident_id = i.incident_id
        WHERE ${where(s, now).sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
        ORDER BY i.priority_score DESC`, where(s, now).params)), // every row: the written line, the list and the figure are one number (PB-064)
@@ -165,8 +169,8 @@ export async function insights(period: Period, zone: number | null, dept: string
     when(T || (B && !!s.taluk), () => q(`SELECT t.taluk_code AS code, t.name, COALESCE(x.open, 0) AS open, COALESCE(x.severe, 0) AS severe, COALESCE(x.overdue, 0) AS overdue,
               COALESCE(x.reported, 0) AS reported, COALESCE(y.reported, 0) AS prev
        FROM ref_taluks t
-       LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND i.severity_level = 'Severe') AS severe,
-                         SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue
+       LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(${OPEN_NOW}) AS open, SUM(${OPEN_NOW} AND i.severity_level = 'Severe') AS severe,
+                         SUM(${OPEN_NOW} AND ${pastDueSql(now)}) AS overdue
                   FROM incidents i WHERE ${where({ ...s, taluk: null }, now, { hours: 720 }).sql} GROUP BY i.taluk_code) x ON x.taluk_code = t.taluk_code
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported FROM incidents i
                   WHERE ${where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql} GROUP BY i.taluk_code) y ON y.taluk_code = t.taluk_code
@@ -184,7 +188,7 @@ export async function insights(period: Period, zone: number | null, dept: string
               DATE_FORMAT(h.first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(h.last_seen, '%Y-%m-%d') AS last_seen
        FROM hotspots h WHERE h.incidents_30d >= 3 ORDER BY h.incidents_30d DESC LIMIT 60`)),
     // open incidents with no zone: judged by locreview.ts (most are not a location problem)
-    when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
+    when(T, () => q(`SELECT ${INC()}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
        ORDER BY i.priority_score DESC LIMIT 600`, rw.params)),
     when(T, () => q(`SELECT ward_no, zone_no, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`)),
     when(T, () => q(`SELECT item_type, COUNT(*) AS n FROM review_queue WHERE status IN ('open', 'pending', 'new') OR status IS NULL GROUP BY item_type`)),
@@ -203,8 +207,8 @@ export async function insights(period: Period, zone: number | null, dept: string
   // outside the district), so the ranking adds up to the total
   const tw = where({ ...s, taluk: null }, now, { hours: 720 });
   const [noTaluk] = T
-    ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(${OPEN} = 1 AND i.severity_level = 'Severe'), 0) AS severe,
-              COALESCE(SUM(${OPEN} = 1 AND ${pastDueSql(now)}), 0) AS overdue
+    ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(${OPEN_NOW}), 0) AS open, COALESCE(SUM(${OPEN_NOW} AND i.severity_level = 'Severe'), 0) AS severe,
+              COALESCE(SUM(${OPEN_NOW} AND ${pastDueSql(now)}), 0) AS overdue
        FROM incidents i WHERE ${tw.sql} AND ${PLACE_FILTERS.notaluk}`, tw.params)
     : [];
 
@@ -335,7 +339,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   // --------------------------------------------------- department list --
   const perDept = new Map<string, Row[]>();
   const topByDept = await when(B, () => q(
-    `SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
+    `SELECT * FROM (SELECT ${INC()}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
                     ${FROM} WHERE ${w.sql} AND ${OPEN} = 1) x WHERE rk <= 3`, w.params));
   for (const i of topByDept) (perDept.get(i.dept) ?? perDept.set(i.dept, []).get(i.dept)!).push(i);
   // "N to check" per department is that department's My Tasks (intel.ts awaitingByDept, the departments table's figure), not the
@@ -462,7 +466,7 @@ export async function pattern(p: PatternQuery) {
   const zn = new Map(zones.map((z) => [Number(z.zone_no), String(z.zone_name)]));
 
   const incidentsOf = async (sql: string, params: unknown[]) => {
-    const rows = await q(`SELECT ${INC}, i.lat, i.lon ${FROM} WHERE ${sql} ORDER BY i.first_reported_at DESC LIMIT 60`, params);
+    const rows = await q(`SELECT ${INC()}, i.lat, i.lon ${FROM} WHERE ${sql} ORDER BY i.first_reported_at DESC LIMIT 60`, params);
     return rows.map((r) => ({ ...r, plain: explain(r) }) as Row);
   };
   const placesOf = (rows: Row[]) => {
@@ -554,7 +558,7 @@ export async function pattern(p: PatternQuery) {
     }
     const after = series.slice(series.map((x) => x.hl).lastIndexOf(true) + 1);
     const places = placesOf(rows);
-    const open = rows.filter((r) => Number(r.open) === 1).length;
+    const open = rows.filter((r) => Number(r.open_now) === 1).length;
     const one = places.length === 1 || (places[0] && places[0].n >= rows.length * 0.6);
     const lead = [
       slow
@@ -589,7 +593,7 @@ export async function pattern(p: PatternQuery) {
   ]);
   const places = placesOf(rows);
   const zone = rows.find((r) => r.zone)?.zone ?? null;
-  const open = rows.filter((r) => Number(r.open) === 1).length;
+  const open = rows.filter((r) => Number(r.open_now) === 1).length;
   const wards = String(h.wards ?? "").split(/[|,;\s]+/).filter(Boolean);
   const lastGap = rows.length > 1 ? Math.round((new Date(String(rows[0].t).replace(" ", "T")).getTime() - new Date(String(rows[1].t).replace(" ", "T")).getTime()) / 864e5) : null;
   const lead = [

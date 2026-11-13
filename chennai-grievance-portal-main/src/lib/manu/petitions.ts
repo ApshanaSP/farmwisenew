@@ -10,8 +10,9 @@ import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { audit } from "@/lib/collector/sources";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
-import { addCaseLive, petitionCase } from "./cases";
-import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
+import { hasVisibleText } from "@/lib/validators";
+import { addCaseLive, inLiveBuild, petitionCase } from "./cases";
+import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, asciiDigits, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
 import { mediaTypeOf, readPhoto, removePhoto } from "./files";
 import { readPetition } from "./read";
@@ -177,12 +178,18 @@ export async function petitionDetail(id: number): Promise<Detail | null> {
   };
 }
 
-const approvedNote = async (p: Row): Promise<Approved> => ({ code: String(p.complaint_code), dept: manuDeptLabel(p.dept_code), attached: Number(p.attached) === 1, sms: await smsNote(String(p.complaint_code)) });
+// inQueue: what addCaseLive said at the approval, else whether the live build holds the case now (P6-004)
+const approvedNote = async (p: Row, inQueue?: boolean): Promise<Approved> => ({ code: String(p.complaint_code), dept: manuDeptLabel(p.dept_code), attached: Number(p.attached) === 1,
+  sms: await smsNote(String(p.complaint_code)), inQueue: inQueue ?? await inLiveBuild(String(p.complaint_code)) });
 
 // ------------------------------------------------------------------- filing --
 
+// the name and the problem must have characters a reader can see: trim() keeps the zero-width ones (U+200B, joiners, U+2060, U+FEFF), so a
+// petition was approved with an invisible name, and a problem of six zero-width spaces passed the 5-character minimum (hunt2-desk-02).
+// The shared rule of every other form (validators.ts); the value is kept as typed.
+const NAME = "Enter the petitioner's name.", PROBLEM = "Say in a line what the problem is.";
 export const fileSchema = z.object({
-  name: z.string().trim().min(2, "Enter the petitioner's name.").max(120),
+  name: z.string().trim().min(2, NAME).max(120).refine((v) => hasVisibleText(v, 2), NAME),
   // read as a number first (+91, 0091 and a leading 0 dropped, any script's digits), then it must be a mobile: 10 digits starting 6 to 9.
   // Ten digits of any kind were accepted, so "0984001234" (a 0-prefixed number cut short) was stored and an SMS would go to it (hunt2-desk-04)
   // a number in Aadhaar's 4-4-4 groups is refused here as the reader's check refuses it (cleanReading), not read as a +91 mobile
@@ -192,11 +199,12 @@ export const fileSchema = z.object({
   door: z.string().trim().max(40),
   street: z.string().trim().max(200),
   area: z.string().trim().max(120),
-  pincode: z.string().trim().regex(/^(\d{6})?$/, "A pincode has 6 digits."),
+  // any script's digits, kept as 0 to 9: \d is ASCII only, so a pincode typed on a Tamil keyboard was refused (hunt2-desk-07)
+  pincode: z.string().trim().transform((v) => asciiDigits(v)).refine((v) => /^(\d{6})?$/.test(v), "A pincode has 6 digits."),
   ward: z.number({ invalid_type_error: "Enter the ward number." }).int().min(1, "Ward numbers run from 1 to 200.").max(200, "Ward numbers run from 1 to 200."),
   date: z.string().trim().max(20),
   subject: z.string().trim().max(300),
-  problem: z.string().trim().min(5, "Say in a line what the problem is.").max(400),
+  problem: z.string().trim().min(5, PROBLEM).max(400).refine((v) => hasVisibleText(v, 5), PROBLEM),
   request: z.string().trim().max(500),
   dept: z.enum(MANU_DEPTS.map((d) => d.code) as [string, ...string[]], { errorMap: () => ({ message: "Choose a department." }) }),
   urgent: z.boolean(),
@@ -213,7 +221,9 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
   try {
     const p = await getPetition(id);
     if (!p) throw new FileError("That petition is no longer here.");
-    if (p.status === "filed") return approvedNote(p);
+    // a second Approve (a double click, or the officer trying again after an error) still sees that the 'registered' SMS is on its way: it is
+    // sent once, so this does nothing when it already was (reviewer1-09)
+    if (p.status === "filed") { await sendPetitionSms(String(p.complaint_code), "received"); return approvedNote((await getPetition(id)) ?? p); }
     if (p.status === "reading") throw new FileError("This petition is still being read.");
 
     const [wards] = await pool.query<Row[]>(`SELECT zone_id FROM zone_wards WHERE ward_number = ? LIMIT 1`, [f.ward]);
@@ -251,16 +261,26 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
       );
     });
 
-    const filed = (await getPetition(id))!;
-    const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
-    // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
-    // migration 017 still approves, and only the next build's count is lost there
-    await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
-    const { incidentId } = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
-    if (incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [incidentId, id]);
-    await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });
-    await sendPetitionSms(code, "received");
-    return approvedNote((await getPetition(id))!);
+    // the petition is filed from here on: whatever fails after this (the case, the audit), the petitioner is still told it is registered. The
+    // SMS was sent only at the very end, so an approval that failed after the commit never sent it, and the retry's "already filed" answer
+    // did not either (reviewer1-09)
+    let inQueue: boolean | undefined;
+    try {
+      const filed = (await getPetition(id))!;
+      const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
+      // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
+      // migration 017 still approves, and only the next build's count is lost there
+      await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);
+      // a failed live add says so (inQueue false), and the desk says the petition reaches its case at the next update. The petition keeps the
+      // case it was added to, which the next build joins it to (websiteCases); the desk said "added to the existing complaint" (P6-004)
+      const live = await addCaseLive({ ...petitionCase(filed), recurrence: earlier }, f.attachTo ?? null);
+      inQueue = process.env.DATA_BACKEND === "aws" ? live.inQueue : undefined;
+      if (live.incidentId !== filed.incident_id) await pool.query(`UPDATE petitions SET incident_id = ?, attached = 0 WHERE id = ?`, [live.incidentId, id]);
+      await audit(by, "petition:file", "petitions", id, null, { code, dept: f.dept, ward: f.ward, urgent: f.urgent, attachedTo: f.attachTo ?? null });
+    } finally {
+      await sendPetitionSms(code, "received");
+    }
+    return approvedNote((await getPetition(id))!, inQueue);
   } finally {
     release();
   }

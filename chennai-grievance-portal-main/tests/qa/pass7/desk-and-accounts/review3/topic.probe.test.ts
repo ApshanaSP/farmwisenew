@@ -74,8 +74,8 @@ describe("review3 reviewer5-07: one writer, the same problem in other words, is 
 describe("review3 reviewer5-07: the citizen's own Tamil online complaint, then a paper petition on the same thing", () => {
   // the reader always gives problem_en in English (read.ts); the online complaint's title is what the citizen typed. Same mobile, same
   // department, same kind (Street Light -> STREETLIGHT_ELECTRICAL)
-  // open: p7-desk-and-accounts-16 (P2): no word in common across the two languages; needs the petition's as-written text or a translation
-  it.skip("the desk does not tell the staff it is a petition 'on other problems'", () => {
+  // p7-desk-and-accounts-16, not reproduced in fixall: hunt2-desk-03 (f74a4ca0) says "could not be told" for the other script (was it.skip)
+  it("the desk does not tell the staff it is a petition 'on other problems'", () => {
     const r = judgeRepeats({ mobile: "9000011111", name: "R. Kumar", street: null, ward: 70, dept: "GCC-ELE", problem: "Street light not burning for two weeks", category: "STREETLIGHT_ELECTRICAL" },
       [e({ reporterKind: "online", dept: "GCC-ELE", problem: "தெரு விளக்கு எரியவில்லை", category: "STREETLIGHT_ELECTRICAL", incidentId: "INC-W-2026-111AAA" })]);
     expect(r.headline ?? "").not.toMatch(/on other problems/);

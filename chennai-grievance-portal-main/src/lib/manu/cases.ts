@@ -201,6 +201,15 @@ export async function addCaseLive(c: CaseInput, attachTo?: string | null): Promi
   }
 }
 
+/**
+ * Whether the build the consoles read now holds this filing (AWS store), or null when it cannot be told: no live build on MySQL, or the read
+ * failed. The desk said a petition was "added to the existing complaint" whether or not the live add had worked (QA pass 6, P6-004).
+ */
+export async function inLiveBuild(code: string): Promise<boolean | null> {
+  if (process.env.DATA_BACKEND !== "aws") return null;
+  try { return await known(live, code); } catch { return null; }
+}
+
 /** The usual kind of case for an online complaint's department: only when its type does not say ("Other"). */
 const ONLINE_CATEGORY: Record<string, string> = {
   "GCC-SWM": "SOLID_WASTE", "GCC-SWD": "FLOOD_WATERLOGGING", "GCC-ENG": "ROAD_DAMAGE", "GCC-ELE": "STREETLIGHT_ELECTRICAL", "GCC-HLT": "VECTOR_DISEASE", "GCC-PRK": "TREES_PARKS", "GCC-BRG": "PUBLIC_WORKS", "GCC-BLD": "CIVIC_FACILITIES"
@@ -286,7 +295,10 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
         routing: r.subtype_dept != null ? "assumed" : "classifier" }))) added++;
   }
   if (await has("petitions")) {
-    for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY filed_at, id`)) {
+    // the petitions that own their case first, then those that joined one: filed_at has one-second resolution and id is the upload order,
+    // not the approval order, so a petition uploaded first that joined a case approved in the same second came before that case and got
+    // a case of its own (reviewer1-07). A petition only ever joins a case its owner made, never another joiner's.
+    for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY COALESCE(attached, 0), filed_at, id`)) {
       const c = petitionCase(p);
       if (Number(p.attached) === 1 && p.incident_id && (await attachToCase(wrap, String(p.incident_id), c))) { added++; continue; }
       if (await addCase(wrap, c)) added++;

@@ -67,7 +67,8 @@ html.jv-hud .jq { bottom: 128px; }
 @media (max-width: 480px) {
   /* one row with Ask District IQ's round button, above the bottom bar, instead of a column that stands on the map's zoom control */
   .dic:not(.fit) .jvf-wrap { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); right: 72px; }
-  .dic:not(.fit) .jq { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+  /* the list is drawn in <body> (JarvisFab.tsx createPortal), outside .dic: ".dic:not(.fit) .jq" never matched it (pass 5's seam-06) */
+  body:has(.dic:not(.fit)) .jq, body:has(.dic:not(.fit)) .jq.jq-tall { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
   .dic .jvf { padding: 0 7px; }
   .dic .jvf > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }

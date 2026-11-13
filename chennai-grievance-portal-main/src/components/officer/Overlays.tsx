@@ -5,6 +5,7 @@ import { I } from "@/components/collector/app/icons";
 import { Empty, SevChip, fmtShort, fromManu, type Row } from "@/components/collector/app/lib";
 import { StageChip } from "./Cards";
 import type { Ctx, ListFlag } from "./OfficerApp";
+import { deadlineOf } from "./format";
 
 export function Modal({ title, children, onClose, narrow }: { title: string; children: ReactNode; onClose: () => void; narrow?: boolean }) {
   return (
@@ -13,6 +14,12 @@ export function Modal({ title, children, onClose, narrow }: { title: string; chi
       <div className="modal-b">{children}</div>
     </div>
   );
+}
+
+/** A list row's own deadline (officer-day-10): the due time, red with "missed" once passed while the work is open. */
+export function DeadlineCell({ r, now }: { r: Row; now: string }) {
+  const dl = deadlineOf(r, now);
+  return <td className={dl?.missed ? "num" : "dim num"} style={dl?.missed ? { color: "var(--sev)" } : undefined}>{dl ? `${fmtShort(dl.due)}${dl.missed ? " · missed" : ""}` : "—"}</td>;
 }
 
 /**
@@ -57,14 +64,15 @@ export function ListBody({ c, cat, flag, sev, tab = "all" }: { c: Ctx; cat: stri
       {err ? <div className="o-state err">{err}</div> : (
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Grievance</th><th>Stage</th><th>Severity</th><th>Location</th><th>Complaints</th><th>Reported</th></tr></thead>
+            <thead><tr><th>ID</th><th>Grievance</th><th>Stage</th><th>Severity</th><th>Location</th><th>Complaints</th><th>Reported</th><th>Deadline</th></tr></thead>
             <tbody>
               {data?.rows.length ? data.rows.map((r) => (
                 <tr key={r.id} onClick={() => c.openGrievance(r.id)}>
                   <td className="dim num">{r.id}</td><td className="ev">{r.type}{fromManu(r) && <span className="dim"> · Manu</span>}</td><td><StageChip r={r} /></td><td><SevChip s={r.sev} /></td>
                   <td>{r.loc ?? "—"} <span className="dim">· {r.zone_name ?? "Chennai"}</span></td><td className="num">{r.complaints}</td><td className="dim num">{fmtShort(r.t)}</td>
+                  <DeadlineCell r={r} now={c.now} />
                 </tr>
-              )) : data ? <tr><td colSpan={7}><Empty>No grievances match.</Empty></td></tr> : null}
+              )) : data ? <tr><td colSpan={8}><Empty>No grievances match.</Empty></td></tr> : null}
             </tbody>
           </table>
         </div>

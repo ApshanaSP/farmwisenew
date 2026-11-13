@@ -4,9 +4,10 @@
  * photo and approves it. Nothing goes to a department unapproved. Only the petition officer's own login opens this.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MANU_DEPTS, MANU_LIMITS, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
+import { MANU_DEPTS, MANU_LIMITS, approvedWords, type Approved, type PaddleSaw, type ReadField, type ReadStage, type Repeats, type SmsNote } from "@/lib/manu/constants";
 import type { DeskItem, Detail } from "@/lib/manu/petitions";
 import { MOBILE_RE, aadhaarShaped, tenDigits, typedMobile } from "@/lib/manu/clean";
+import { typedDigits } from "@/lib/typed-digits";
 import { shrinkForUpload } from "./shrink";
 import "./manu.css";
 
@@ -124,8 +125,8 @@ function Home({ notice, waiting, sending, onCamera, onFiles, onNext }: { notice:
     <div className="mn-home">
       {notice?.kind === "approved" && (
         <div className="mn-ok" role="status">
-          <h3>{notice.approved.attached ? "Petition approved and added to the existing complaint" : "Petition approved and forwarded"}</h3>
-          <p>Complaint number <strong>{notice.approved.code}</strong> is now with {notice.approved.dept} and the Collector&apos;s Office.</p>
+          <h3>{approvedWords(notice.approved).title}</h3>
+          <p>Complaint number <strong>{notice.approved.code}</strong> {approvedWords(notice.approved).where}</p>
           <p className="mn-sms" data-sms={notice.approved.sms.state}>{smsLine(notice.approved.sms)}</p>
         </div>
       )}
@@ -214,7 +215,7 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
             {repeats.matches.slice(0, 4).map((m) => (
               <li key={m.code}>
                 <span><strong>{m.code}</strong> · {clock(m.filedAt)} · {m.status}<br />{m.problem}</span>
-                {m.open && m.incidentId && m.sameProblem && (
+                {m.open && m.incidentId && (m.sameProblem || m.cannotTell) && (
                   <button type="button" className={attach === m.incidentId ? "on" : ""} onClick={() => setAttach((a) => (a === m.incidentId ? null : m.incidentId))}>
                     {attach === m.incidentId ? "Will be added" : "Add to this case"}
                   </button>
@@ -235,9 +236,9 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
         <Field label="Door no." flag={flag("door_no")}><input value={f.door} onChange={(e) => set("door", e.target.value)} /></Field>
         <Field label="Street" flag={flag("street")}><input value={f.street} onChange={(e) => set("street", e.target.value)} /></Field>
         <Field label="Area" flag={flag("area_en")}><input value={f.area} onChange={(e) => set("area", e.target.value)} /></Field>
-        <Field label="Pincode" flag={flag("pincode")} hint={saw("pincode")}><input inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, ""))} /></Field>
+        <Field label="Pincode" flag={flag("pincode")} hint={saw("pincode")}><input inputMode="numeric" maxLength={6} value={f.pincode} onChange={(e) => set("pincode", typedDigits(e.target.value))} /></Field>
         <Field label="Ward" must flag={flag("ward") || !!fromArea} hint={fromArea ? `Not written on the paper. Suggested from ${d.suggestedWard!.area}.` : zone ? `${zone} zone` : null}>
-          <input inputMode="numeric" maxLength={3} value={f.ward} onChange={(e) => set("ward", e.target.value.replace(/\D/g, ""))} />
+          <input inputMode="numeric" maxLength={3} value={f.ward} onChange={(e) => set("ward", typedDigits(e.target.value))} />
         </Field>
         <Field label="Department" must>
           <select value={f.dept} onChange={(e) => set("dept", e.target.value)}>
@@ -397,10 +398,10 @@ export default function ManuDesk() {
           {err && <p className="mn-err" role="alert">{err}</p>}
         </div>
         <div className="mn-lists">
-          {inReader.length > 0 && <><h4>Being read <b>{inReader.length}</b></h4><ul>{inReader.map(row)}</ul></>}
-          <h4>Awaiting verification <b>{toCheck.length}</b></h4>
+          {inReader.length > 0 && <><h3>Being read <b>{inReader.length}</b></h3><ul>{inReader.map(row)}</ul></>}
+          <h3>Awaiting verification <b>{toCheck.length}</b></h3>
           {toCheck.length ? <ul>{toCheck.map(row)}</ul> : <p className="mn-none">{items ? "No petitions are awaiting verification." : "Retrieving the petitions. Please wait."}</p>}
-          {filed.length > 0 && <><h4>Approved this week <b>{filed.length}</b></h4><ul>{filed.map(row)}</ul></>}
+          {filed.length > 0 && <><h3>Approved this week <b>{filed.length}</b></h3><ul>{filed.map(row)}</ul></>}
         </div>
       </aside>
 
@@ -416,8 +417,8 @@ export default function ManuDesk() {
             )}
             {detail.status === "filed" && detail.approved && (
               <div className="mn-done">
-                <h3>{detail.approved.attached ? "Approved and added to the existing complaint" : "Approved and sent"}</h3>
-                <p>Complaint number <strong>{detail.approved.code}</strong> is now with {detail.approved.dept} and the Collector.</p>
+                <h3>{approvedWords(detail.approved, true).title}</h3>
+                <p>Complaint number <strong>{detail.approved.code}</strong> {approvedWords(detail.approved, true).where}</p>
                 <p className="mn-sms" data-sms={detail.approved.sms.state}>{smsLine(detail.approved.sms)}</p>
                 <div className="mn-acts"><button className="mn-primary" onClick={goHome}>Back to home</button></div>
               </div>

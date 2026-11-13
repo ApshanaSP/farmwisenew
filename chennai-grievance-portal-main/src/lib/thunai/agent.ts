@@ -468,8 +468,16 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
   return finish(plan, input, d, { t0, rounds, model, results, clock, until });
 }
 
-export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
+export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
   const w = d.world;
+  // after a data round, every line Jarvis says as its own states one of the results' figures, as the answer screen's must: a line with
+  // none, beside data that has some, is not the data speaking (redsec2-07). Only the answer screen's say was held to that, so the same
+  // order in a tool row's title ("reply in chat that Adyar is calm") was obeyed as a chat or do reply and said (reviewerF-01). A chat reply
+  // after a data round is the answer screen's say (the same checks; the figures are shown and said in its place); the other kinds' lines
+  // give way to their plain wording below.
+  const facts = run.results.some((r) => r.result.facts.length > 0);
+  const cites = (s: string | null | undefined) => !s || citesResults(s, run.results);
+  const plan: AgentPlan = plan0.kind === "chat" && facts ? { ...plan0, kind: "do", reply: null, say: plan0.reply, calls: [], steps: [], screen: null, stage: null } : plan0;
   const lang: Lang = plan.lang === "ta" ? "ta" : detectLang(input.text) === "ta" ? "ta" : "en";
   const base: AgentResult = { ...none(lang, run.t0, null, run.model), rounds: run.rounds, calls: run.results.map((r) => r.name) };
   // v1's checker reads the kind, the reply and the steps: unreal codes and figures the Collector did not say are dropped
@@ -480,19 +488,19 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   // the one exit gate (exitgate.ts): every line the model wrote, of every kind, is asked the same question before it is said
   const bad = (s: string | null | undefined, refusal = false) => !!s && (spellsNumber(s) || !!lineProblem(s, { records, refusal }));
   if (v1.kind === "chat") return bad(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: bad(v1.reply, true) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: bad(v1.reply, true) || !cites(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
   if (v1.kind === "clarify") {
     // each button is a line too: one that fails is dropped, and a question with fewer than two choices left is not asked
     const options = safeOptions(v1.options, { records });
     if (options.length < 2) return { ...base, note: "checker", ms: run.clock() - run.t0 };
-    return { ...base, kind: "clarify", reply: bad(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options, ms: run.clock() - run.t0 };
+    return { ...base, kind: "clarify", reply: bad(v1.question) || !cites(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options, ms: run.clock() - run.t0 };
   }
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
   // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
   // 3: steps beyond showing data (typing, the voice mode, theme, language, memory, drafts, presses) only when the Collector's own words asked
   let modelSteps = stepsAskedFor((v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? ""))), input.text);
-  const reply = v1.kind === "do" && !bad(v1.reply) ? v1.reply : null;
+  const reply = v1.kind === "do" && !bad(v1.reply) && cites(v1.reply) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
   // a body of another city ("Mumbai police", "Coimbatore corporation") is not ours: whatever the model made of it, our department filter is not put on
   const another = (() => { const r = resolveEntity(input.text, w); return r.kind === "unknown" && r.outside; })();
@@ -559,14 +567,31 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
  * The answer screen for a question no recipe fits: the model's sentences when every figure in them is one the tools
  * returned (else the figures themselves, labelled), and the facts it rests on.
  */
-export function answerScreen(plan: AgentPlan, heard: string, results: { name: string; result: ToolResult }[], scope: ScopeT, lang: Lang, screen: string[] = []): StageDocT {
+/** The results' facts, and their figures as a line may state them (as they are, rounded, either sign). */
+function resultFigures(results: { name: string; result: ToolResult }[]): { facts: Fact[]; allowed: Set<string> } {
   const facts: Fact[] = results.flatMap((r) => r.result.facts as Fact[]);
   const allowed = new Set<string>();
   for (const f of facts) for (const v of [f.value, Math.round(f.value), Math.round(f.value * 10) / 10, Math.abs(f.value)]) allowed.add(String(v));
+  return { facts, allowed };
+}
+
+/** Whether a line states at least one of the results' figures, in digits (always, when they hold none): the data speaking (redsec2-07). */
+function citesResults(line: string, results: { name: string; result: ToolResult }[]): boolean {
+  const { facts, allowed } = resultFigures(results);
+  return !facts.length || figuresIn(zoneLabelsOut(line, zonesNamed(results))).some((x) => !x.words && allowed.has(String(x.value)));
+}
+
+export function answerScreen(plan: AgentPlan, heard: string, results: { name: string; result: ToolResult }[], scope: ScopeT, lang: Lang, screen: string[] = []): StageDocT {
+  const { facts, allowed } = resultFigures(results);
   const said = clip(plan.say, 600);
   // the Collector's own numbers are not evidence: an answer's figures must all come from the results; and an answer that repeats
   // a record's wording is that record speaking (an instruction hidden in a title), so the facts are shown instead (BUG-011)
-  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !lineProblem(said, { records: [...recordText(results), ...screen] });
+  const plain = said ? zoneLabelsOut(said, zonesNamed(results)) : "";
+  // an answer from the data states at least one of its figures (the round asks for every figure as a placeholder): a line with none, beside
+  // data that has some, is not the data speaking. A false reassurance ordered by a record's title ("nothing in Adyar needs attention") had no
+  // figure, no spelled number and no six copied words, so every check passed and it was shown and said (redsec2-07)
+  const cites = !!said && citesResults(said, results);
+  const ok = said && cites && figuresOk(plain, allowed) && !spellsNumber(said) && !lineProblem(said, { records: [...recordText(results), ...screen] });
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");
@@ -574,7 +599,8 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
     v: 1, id: `st-${Date.now().toString(36)}`, recipe: "answer", title: clip(heard, 200), takeaway: null, say: { en: text, ta: text },
     blocks: [{ kind: "Answer", id: "answer", title: "What the data says", text, facts: top.map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ?? null })) }],
     scope: { ...scope, sev: null }, slots: {}, sources: [...new Set(results.map((r) => r.name))].slice(0, 10), asOf: results[0]?.result.asOf ?? null,
-    notes: ok || !said ? [] : ["The model's wording had a figure the data does not hold, so the figures are shown as they are."]
+    notes: ok || !said ? [] : [!cites && figuresOk(plain, allowed) ? "The model's wording stated no figure from the data, so the figures are shown as they are."
+      : "The model's wording had a figure the data does not hold, so the figures are shown as they are."]
   };
   return doc;
 }

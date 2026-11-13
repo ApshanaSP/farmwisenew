@@ -70,7 +70,7 @@ beforeEach(() => {
       department_id INT, complaint_subtype_id INT, complaint_type_id INT, title TEXT, description TEXT, media_path TEXT, is_anonymous INT, needs_manual_review INT, status TEXT, is_synthetic INT NOT NULL DEFAULT 0, rejected_stage TEXT, remarks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')), updated_at TEXT);
     CREATE TABLE complaint_status_history (id INTEGER PRIMARY KEY, complaint_id INT, status TEXT, stage TEXT, remarks TEXT, changed_by INT, created_at TEXT DEFAULT (datetime('now', '+330 minutes')));
-    CREATE TABLE petitions (id INTEGER PRIMARY KEY, complaint_code TEXT, subject TEXT, pages TEXT, dept_code TEXT, incident_id TEXT, status TEXT, filed_at TEXT);
+    CREATE TABLE petitions (id INTEGER PRIMARY KEY, complaint_code TEXT, subject TEXT, pages TEXT, dept_code TEXT, incident_id TEXT, status TEXT, filed_at TEXT, attached INTEGER NOT NULL DEFAULT 0); -- attached: as migrations/015_petitions.sql (cases.ts reads it since 5e336a51)
     CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, category_code TEXT, category_label TEXT, family TEXT, lead_dept TEXT, first_reported_at TEXT, last_update_at TEXT, ward_no INT, zone_no INT, zone_name TEXT, taluk_code TEXT, lat REAL, lon REAL, loc_precision_m REAL,
       place_text TEXT, member_count INT, sources TEXT, channels TEXT, citizen_complaints INT, status_std TEXT, is_open INT, severity_score REAL, severity_level TEXT, severity_reasons TEXT, sla_hours REAL, sla_due_at TEXT, priority_score REAL, attention_flag INT, attention_reason TEXT,
       recurrence_90d INT, needs_review INT, review_reason TEXT, title TEXT, headline TEXT, summary TEXT);
@@ -168,8 +168,8 @@ describe("review2 officer-day-09: every attachment the case screen lists opens f
     expect(r.status).toBe(400);
   });
 
-  // open: p7-desk-and-accounts-10 (P3) is in the media route (src/app/api/complaints/media/[name]/route.ts, not this session's file)
-  it.skip("a video attached by the citizen answers a Range request with 206 and Accept-Ranges", async () => {
+  // p7-desk-and-accounts-10, fixed in fixall (f16c92c8): the media route answers one byte range with 206 (was it.skip)
+  it("a video attached by the citizen answers a Range request with 206 and Accept-Ranges", async () => {
     const url = put("c-20261112-bbbbbbbbbbbbbbbb.mp4", MP4);
     const code = await file({ mediaPath: url });
     const listed = (await screen(OFFICER_SWM, code)).media;

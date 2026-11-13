@@ -5,7 +5,10 @@
  * value that is present and unknown is a 400 that says which one.
  */
 import { NextResponse } from "next/server";
-import { GCC_ZONES, PERIODS, filterValue, readCat, readDept, readPeriod, readTaluk, readZone } from "@/lib/collector/intel";
+import {
+  GCC_ZONES, LIST_FLAGS, LIST_SCOPES, LIST_STATUSES, PERIODS, PLACE_FILTERS, SEVERITIES, filterValue, readCat, readDept, readFlag, readPeriod, readPlace,
+  readScope, readSev, readStatus, readTaluk, readZone
+} from "@/lib/collector/intel";
 import { TABS } from "@/lib/officer/stages";
 
 /** The GCC has 15 zones (ref_wards.zone_no 1 to 15). */
@@ -30,6 +33,17 @@ export function filterProblem(p: URLSearchParams): string | null {
   if (cat != null && readCat(cat) == null) return `Category ${show(cat)} is not a category code.`;
   const taluk = given("taluk");
   if (taluk != null && readTaluk(taluk) == null) return `Taluk ${show(taluk)} is not a taluk code.`;
+  // the list filters (hunt2-ops-04): an unknown severity, status, scope, place or flag was dropped and the whole list answered
+  const sev = given("sev");
+  if (sev != null && readSev(sev) == null) return `Severity ${show(sev)} is not one of ${SEVERITIES.join(", ")}.`;
+  const status = given("status");
+  if (status != null && readStatus(status) == null) return `Status ${show(status)} is not one of ${LIST_STATUSES.join(", ")}.`;
+  const scope = given("scope");
+  if (scope != null && readScope(scope) == null) return `Scope ${show(scope)} is not one of ${LIST_SCOPES.join(", ")}.`;
+  const place = given("place");
+  if (place != null && readPlace(place) == null) return `Place ${show(place)} is not one of ${Object.keys(PLACE_FILTERS).join(", ")}.`;
+  const flag = given("flag");
+  if (flag != null && readFlag(flag) == null) return `Flag ${show(flag)} is not one of ${LIST_FLAGS.join(", ")}.`;
   return null;
 }
 

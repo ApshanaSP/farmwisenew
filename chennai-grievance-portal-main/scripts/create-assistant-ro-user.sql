@@ -46,4 +46,14 @@ GRANT SELECT (`source_id`, `name`, `kind`, `description`, `pipeline_key`, `refre
 GRANT SELECT (`decision_id`, `incident_id`, `decision`, `decided_at`)
   ON `district_intel_ops`.`collector_decisions` TO 'diq_assistant_ro'@'localhost';
 
+-- The department officers' steps: the effective status reads the lead department's latest step (approve, action, send) once the officer
+-- console's tables are there (`npm run setup:officer`; effective.ts officerStepsOn). Only the columns that rule needs, not the note or who.
+-- Granted only when the table exists (MySQL refuses a column grant on a missing table): run this script again after setup:officer.
+SET @diq_grant := IF((SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'district_intel_ops' AND table_name = 'officer_steps') = 1,
+  'GRANT SELECT (`step_id`, `incident_id`, `dept_code`, `step`, `at`) ON `district_intel_ops`.`officer_steps` TO ''diq_assistant_ro''@''localhost''',
+  'DO 0');
+PREPARE diq_grant FROM @diq_grant;
+EXECUTE diq_grant;
+DEALLOCATE PREPARE diq_grant;
+
 SHOW GRANTS FOR 'diq_assistant_ro'@'localhost';

@@ -4,6 +4,7 @@ import { manuFailed, manuStaff } from "@/lib/manu/guard";
 import { FileError, deletePage, deletePetition, fileSchema, filePetition, getPetition, petitionDetail, readAgain, readingOf, wardName } from "@/lib/manu/petitions";
 import { MOBILE_TYPED_MAX } from "@/lib/manu/clean";
 import { findRepeats } from "@/lib/manu/repeat";
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (s instanceof NextResponse) return s;
   const id = idOf(params);
   if (!id) return NextResponse.json({ error: "Invalid petition." }, { status: 400 });
-  const parsed = actionSchema.safeParse(await req.json().catch(() => null));
+  // JSON only, read with a limit: req.json() parsed any body whatever its Content-Type, so a cross-site text/plain form post would read as an
+  // action if the CSRF check in middleware ever missed this route (pass 5's manu-sec-12). An approval's text is at most 30 000 characters
+  // (90 KB of Tamil in UTF-8): 256 KB holds it and its fields
+  if ((req.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase() !== "application/json") return NextResponse.json({ error: "Send the action as JSON." }, { status: 415 });
+  const body = await readJsonCapped(req, 256 * 1024);
+  if (body.tooLarge) return tooLargeResponse();
+  const parsed = actionSchema.safeParse(body.body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Please check the details." }, { status: 400 });
   const a = parsed.data;
   try {

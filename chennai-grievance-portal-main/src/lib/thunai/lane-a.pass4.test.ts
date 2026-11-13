@@ -65,7 +65,9 @@ describe("RC-01: an outside place or body is never answered with ours, in any la
     // that falls out of the data shows up as a failure and is never passed silently
     const HOMONYMS = new Set(["railway", "central", "state", "union", "university", "customs", "ramanathapuram", "bhavani", "srinagar", "thiruvallur", "siruvallur", "madhurai", "madhura", "madurai", "chidambaram", "mettur", "ariyalur", "palani", "avadi", "medavakkam", "sivakami", "bharani", "thirupathi", "thirupathy", "tiropthi", "kazhaikoothu", "veerangal"]);
     expect([...new Set(bad.map((x) => x.split(" ")[0]))].filter((x) => !HOMONYMS.has(x))).toEqual([]);
-  });
+    // its own limit (P5-035): about 4,000 resolutions (2,014 localities x 2 agency heads) take 2.5 s on a quiet machine and took 16.4 s
+    // while a build ran, past the 15 s default. The work is fixed in size, so a real hang still fails, at 60 s.
+  }, 60_000);
   it("general knowledge about a far place stays the general lane's", () => {
     expect(foreignIn("what is the capital of Delhi", world as never)).toBeNull();
     expect(foreignIn("Delhi police report", world as never)).not.toBeNull();

@@ -2,8 +2,11 @@
  * Crafted files for the Studio file-reader tests (QA pass 7, studio-parse): the pass 6 probes' builders (redteam-gate's unended deflate,
  * reviewer5's broken sheet streams, reviewer5's run of comments), a PDF of deflate bombs and a few ordinary files.
  */
+import path from "node:path";
 import zlib from "node:zlib";
+import { vi } from "vitest";
 import * as XLSX from "xlsx";
+import { stopReaders } from "@/lib/studio/parse-pool";
 
 /** One deflated entry in a ZIP whose structure is whole (redteam-gate-05's builder, tests/qa/pass6/known-failures/redteam-gate/p6-030-unended-deflate.test.ts). */
 export function oneEntryZip(data: Buffer, name = "[Content_Types].xml"): Buffer {
@@ -114,3 +117,20 @@ export const FEED = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 export const PAGE = Buffer.from(`<!doctype html><html><head><title>Ward data</title></head><body><!-- nav --><nav><a href="/">Home</a></nav>
 <table><tr><th>Ward</th><th>Zone</th><th>Complaints</th></tr>${Array.from({ length: 8 }, (_, i) => `<tr><td>W${i}</td><td>Zone ${i % 3}</td><td>${i * 7}</td></tr>`).join("")}</table>
 <a href="/data/wards.csv">Download CSV</a> <a href="?page=2">Next</a><link rel="alternate" type="application/rss+xml" href="/rss.xml"></body></html>`);
+
+/**
+ * A file the reader never finishes (QA fixall round 2): reader-seam.cjs, loaded into the readers started from now on, holds the reader that
+ * gets it. Readers already running are stopped once, so the next job starts one with the seam. The run of unclosed <Placemark> this stood
+ * for (slowKml) is read at once since reviewer5-10.
+ */
+export const SEAM = path.join(__dirname, "reader-seam.cjs").split(path.sep).join("/");
+function seamed() {
+  const o = process.env.NODE_OPTIONS ?? "";
+  if (o.includes("reader-seam.cjs")) return;
+  vi.stubEnv("NODE_OPTIONS", `${o} --require ${SEAM}`.trim());
+  stopReaders();
+}
+export function stuckFile(): Buffer { seamed(); return Buffer.from("QA-STUCK a file the reader never finishes\n"); }
+export function stuckPage(): string { seamed(); return "QA-STUCK <html>a page the reader never finishes</html>"; }
+/** A file whose reading fills memory outside V8's heap, past any cap: what the reader's own watchdog ends. */
+export function fillFile(): Buffer { seamed(); return Buffer.from("QA-FILL a file whose reading fills memory\n"); }

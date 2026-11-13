@@ -28,6 +28,7 @@ import { generateJson } from "@/lib/ai/gateway";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
 import { isPastDeadline } from "@/lib/reference/metrics";
 import { orEmpty } from "@/lib/fallback";
+import { batchFollowupSummary } from "@/lib/collector/followupdept";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const OPEN = effectiveSql(ops("collector_decisions")).open;
@@ -355,7 +356,8 @@ export async function sendBatchAction(input: unknown, user: string, factor: Fact
   // a follow-up for EVERY case the email asks the department to act on, due in 24 hours: the email names the first BATCH_MAX and
   // sends the officer to the console for the rest, and the follow-up is the only link from a case to this email (the officer's drawer
   // and the Collector's case emails find the instruction through followups.email_id). Only the first 25 had one (reviewer4-02).
-  const due = istNow(24), summary = `Completion report with photos (map send to ${dept})`;
+  // the follow-up names the department in the words the officer's drawer reads (followupdept.ts: reviewer4-03)
+  const due = istNow(24), summary = batchFollowupSummary(dept);
   for (let k = 0; k < cases.length; k += 200) {
     const part = cases.slice(k, k + 200);
     await intelPool.query(`INSERT INTO ${ops("followups")} (email_id, contact_id, incident_id, summary, due_date, status) VALUES

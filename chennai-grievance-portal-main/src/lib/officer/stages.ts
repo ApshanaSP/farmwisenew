@@ -98,6 +98,22 @@ export function nextStep(stage: string, severity: string | null | undefined): "a
   return null;
 }
 
+/**
+ * What a Collector decision did to the department's work, for the feedback card, the bell and the briefing (hunt2-ops-08,
+ * officer-day-05). A verify checked a report; a resolve closed the case without one; a reopen returned it for rework; a reject closed it
+ * for good, so the department can do nothing more: it is never "returned" nor "verified".
+ */
+export type FeedbackKind = "verified" | "resolved" | "returned" | "rejected";
+export const FEEDBACK_KIND: Record<"verify" | "resolve" | "reopen" | "reject", FeedbackKind> = {
+  verify: "verified", resolve: "resolved", reopen: "returned", reject: "rejected"
+};
+export const FEEDBACK_LABEL: Record<FeedbackKind, string> = {
+  verified: "Verified", resolved: "Closed by the Collector", returned: "Returned for rework", rejected: "Rejected by the Collector"
+};
+export function feedbackKind(decision: unknown): FeedbackKind | null {
+  return typeof decision === "string" && Object.prototype.hasOwnProperty.call(FEEDBACK_KIND, decision) ? FEEDBACK_KIND[decision as keyof typeof FEEDBACK_KIND] : null;
+}
+
 export function isStage(v: unknown): v is Stage {
   return typeof v === "string" && Object.prototype.hasOwnProperty.call(STAGE_LABEL, v);
 }

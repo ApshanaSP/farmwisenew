@@ -221,6 +221,13 @@ export function translate(sql: string): string {
       continue;
     }
     if (W(t, "DIV")) { out.push({ t: "p", v: "/" }); continue; }
+    if (t.t === "q" && t.v === "?" && W(toks[next(toks, k - 1, -1)], "LIKE") && !W(nx, "ESCAPE")) {
+      // `x LIKE ?`: MySQL's default escape is the backslash, SQLite has none, so a pattern escaped for MySQL ('bin\_50') matched
+      // nothing on the AWS store and the officer's search for 'bin_50' or '50% full' found nothing (officer-day-22). Say it, as char(92):
+      // a quoted backslash would read as an escaped quote to every later tokenizer (expand), which then swallowed the placeholders after it.
+      out.push(t, { t: "w", v: " ESCAPE char(92)" });
+      continue;
+    }
     if (t.t === "w" && UNITS.has(t.v.toUpperCase()) && out.length) {
       // TIMESTAMPDIFF(SECOND, a, b) / TIMESTAMPADD(DAY, n, x): the bare unit becomes a string argument
       const prev = (() => { for (let m = out.length - 1; m >= 0; m--) if (out[m].t !== "ws") return m; return -1; })();

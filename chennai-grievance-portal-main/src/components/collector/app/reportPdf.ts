@@ -48,6 +48,56 @@ const sourcesText = (i: Row) => {
 };
 const reasons = (i: Row) => t([...(i.why?.what ?? []).slice(0, 2), ...(i.why?.why ?? []).slice(0, 3)].join("; "));
 
+/** The cover's four tiles, named as the console's tiles are (the Resolved tile says its window: PERIODS.resolved). */
+export function pdfTiles(P: Row): [string, string, boolean, RGB][] {
+  return [
+    ["Severe events", "severe", true, SEV.Severe], ["Open complaints", "complaints", true, [224, 115, 13]],
+    ["Ongoing incidents", "ongoing", true, NAVY], [String(P.resolved ?? `Resolved, ${String(P.label ?? "").toLowerCase()}`), "resolved", false, SEV.Low]
+  ];
+}
+
+/** The cover's scope line: the period, then every filter in words (lib.tsx scopeWords; the department is one of them). */
+export function coverLine(d: Row, opt: { scope: string }): string {
+  return `${d.periodInfo.label} · ${opt.scope}`;
+}
+
+/**
+ * The key points. A zone's report keeps to the zone: the busiest-zone sentence came from the page's table of every zone (the zone picker),
+ * so with a zone chosen it named another zone (console-sync-12); the zone's own busiest place is said instead.
+ */
+export function keyPoints(d: Row, opt: { dept: string | null }): string[] {
+  const P = d.periodInfo, k = d.kpi;
+  const zoneTop = d.zone ? null : [...d.zoneTable].sort((a: Row, b: Row) => b.open - a.open)[0];
+  // with a zone, the overview's byZone is the zone's places with the most citizen complaints (intel.ts overview, ORDER BY complaints)
+  const placeTop = d.zone ? [...(d.bottom.byZone ?? [])].sort((a: Row, b: Row) => b.v - a.v)[0] : null;
+  const deptTop = d.bottom.byDept[0];
+  const R = d.report;
+  return [
+    // severe and high in incidents, the unit of the open count they are part of (the tile's breakdown), not the severity card's groups
+    `${n(k.cur.ongoing)} incidents are open (${k.cur.ongoing - k.prev.ongoing >= 0 ? "up" : "down"} ${n(Math.abs(k.cur.ongoing - k.prev.ongoing))} vs. ${P.prev}); ${n(k.cur.severe_open)} severe and ${n(k.cur.urgent - k.cur.severe_open)} high.`,
+    `${n(R.attentionTotal ?? R.attention.length)} need your attention${(R.attentionTotal ?? 0) > R.attention.length ? ` (the ${n(R.attention.length)} most urgent are listed below; all are in the action list CSV)` : " (listed below)"}. ${n(R.routine)} other open incidents are routine and the departments are handling them.`,
+    `${n(d.tasks.count)} closed pieces of work are waiting for your check; ${n(d.tasks.leftToDepts)} routine closures are left to department heads.`,
+    zoneTop && zoneTop.open ? `${zoneTop.name} zone has the most open incidents (${n(zoneTop.open)}).` : null,
+    placeTop && placeTop.v ? `${placeTop.l} has the most citizen complaints in the zone (${n(placeTop.v)}).` : null,
+    deptTop && !opt.dept ? `${deptTop.l} has the most citizen complaints (${n(deptTop.v)}).` : null,
+    R.newsOnly.length ? `${n(d.snapshot.newsOnly ?? R.newsOnly.length)} open incidents are in the news with no department record.` : null,
+    envSummary(d)
+  ].filter(Boolean) as string[];
+}
+
+/**
+ * "Where the workload is": by department (or by category, in a department's report), and by zone; a zone's report charts the zone's own
+ * places (the overview's places in the zone with the most citizen complaints), not the other zones of the page's table (console-sync-12).
+ */
+export function workload(d: Row, opt: { dept: string | null }): { left: { head: string; rows: { l: string; v: number }[] }; right: { head: string; rows: { l: string; v: number }[] } } {
+  const left = { head: opt.dept ? "Incidents by category" : "Complaints by department", rows: d.bottom.byDept.slice(0, 6).map((r: Row) => ({ l: t(r.l), v: r.v })) };
+  const right = d.zone
+    ? { head: "Complaints by place", rows: [...(d.bottom.byZone ?? [])].filter((r: Row) => Number(r.v) > 0).sort((a: Row, b: Row) => b.v - a.v).slice(0, 6)
+        .map((r: Row) => ({ l: t(r.l), v: Number(r.v) })) }
+    : { head: "Open incidents by zone", rows: [...d.zoneTable].sort((a: Row, b: Row) => b.open - a.open).slice(0, 6).map((z: Row) => ({ l: t(z.name), v: z.open })) };
+  return { left, right };
+}
+
 export async function buildReport(d: Row, opt: { scope: string; dept: string | null; file: string }) {
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
   let y = 0;
@@ -80,16 +130,13 @@ export async function buildReport(d: Row, opt: { scope: string; dept: string | n
   font(10, "bold"); doc.text("DISTRICT IQ  |  Chennai Intelligent District Governance Platform", M, 11);
   font(20, "bold"); doc.text(t(`Collector's ${P.word ?? "Daily"} Report`), M, 22);
   font(10); color([205, 222, 255]);
-  doc.text(t(`${P.label} · ${opt.scope}${opt.dept ? ` · ${opt.dept}` : ""}`), M, 30);
+  doc.text(t(coverLine(d, opt)), M, 30);
   doc.text(t(`Data as of ${fmt(d.now)}  ·  Generated ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} IST`), W - M, 30, { align: "right" });
   y = 46;
 
   // KPI tiles
   const k = d.kpi;
-  const tiles: [string, string, boolean, RGB][] = [
-    ["Severe events", "severe", true, SEV.Severe], ["Open complaints", "complaints", true, [224, 115, 13]],
-    ["Ongoing incidents", "ongoing", true, NAVY], [`Resolved this ${String(P.unit).toLowerCase()}`, "resolved", false, SEV.Low]
-  ];
+  const tiles = pdfTiles(P);
   const tw = (W - 2 * M - 3 * 4) / 4;
   tiles.forEach(([label, key, goodDown, c], ix) => {
     const x = M + ix * (tw + 4);
@@ -108,19 +155,8 @@ export async function buildReport(d: Row, opt: { scope: string; dept: string | n
 
   // Key points: a few plain sentences, no lists of everything
   section("Key points");
-  const zoneTop = [...d.zoneTable].sort((a: Row, b: Row) => b.open - a.open)[0];
-  const deptTop = d.bottom.byDept[0];
-  const sevOpen = d.severity.counts;
   const R = d.report;
-  const points = [
-    `${n(k.cur.ongoing)} incidents are open (${k.cur.ongoing - k.prev.ongoing >= 0 ? "up" : "down"} ${n(Math.abs(k.cur.ongoing - k.prev.ongoing))} vs. ${P.prev}); ${n(sevOpen.Severe)} severe and ${n(sevOpen.High)} high.`,
-    `${n(R.attentionTotal ?? R.attention.length)} need your attention${(R.attentionTotal ?? 0) > R.attention.length ? ` (the ${n(R.attention.length)} most urgent are listed below; all are in the action list CSV)` : " (listed below)"}. The other ${n(R.routine)} are routine and the departments are handling them.`,
-    `${n(d.tasks.count)} closed pieces of work are waiting for your check; ${n(d.tasks.leftToDepts)} routine closures are left to department heads.`,
-    zoneTop && zoneTop.open ? `${zoneTop.name} zone has the most open incidents (${n(zoneTop.open)}).` : null,
-    deptTop && !opt.dept ? `${deptTop.l} has the most citizen complaints (${n(deptTop.v)}).` : null,
-    R.newsOnly.length ? `${n(d.snapshot.newsOnly ?? R.newsOnly.length)} open incidents are in the news with no department record.` : null,
-    envSummary(d)
-  ].filter(Boolean) as string[];
+  const points = keyPoints(d, opt);
   font(10); color(INK);
   for (const s of points) {
     const lines = doc.splitTextToSize(t(s), W - 2 * M - 7);
@@ -160,10 +196,9 @@ export async function buildReport(d: Row, opt: { scope: string; dept: string | n
   need(70);
   section("Where the workload is", P.label);
   const cw = (W - 2 * M - 6) / 2;
-  const deptRows = d.bottom.byDept.slice(0, 6).map((r: Row) => ({ l: t(r.l), v: r.v }));
-  const zoneRows = [...d.zoneTable].sort((a: Row, b: Row) => b.open - a.open).slice(0, 6).map((z: Row) => ({ l: t(z.name), v: z.open }));
-  const h1 = hbars(doc, M, y, cw, opt.dept ? "Incidents by category" : "Complaints by department", deptRows);
-  const h2 = hbars(doc, M + cw + 6, y, cw, "Open incidents by zone", zoneRows);
+  const wl = workload(d, opt);
+  const h1 = hbars(doc, M, y, cw, wl.left.head, wl.left.rows);
+  const h2 = hbars(doc, M + cw + 6, y, cw, wl.right.head, wl.right.rows);
   y += Math.max(h1, h2) + 6;
 
   // In the news, no department record

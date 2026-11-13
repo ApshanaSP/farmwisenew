@@ -58,8 +58,10 @@ const detail = (status: string, open: number) => fakeHands({ incident_detail: (a
     complaints: 4, t: "2026-10-01 10:00:00", open_for: open ? "4 days" : null, why: { what: [], why: [] } }, reports: [], officials: [] } }) });
 
 describe("a closed case is told as closed (BUG-031)", () => {
+  // a place is said as the gazetteer names it (reviewerF-02): this record's place is one of the gazetteer's
+  const places = [{ name: "Lakshmi Nagar", aliases: [] }];
   it.each([["Resolved", /marked resolved/], ["Rejected", /rejected/], ["Lapsed", /lapsed/]])("%s", (status, said) => {
-    const say = explainIssue(factSheet({ ...row, status }, { firstAt: row.t, now: NOW, next: { en: "ask Storm Water Drains to send a pump", ta: "பம்பு" } }), "Rain water");
+    const say = explainIssue(factSheet({ ...row, status }, { firstAt: row.t, now: NOW, next: { en: "ask Storm Water Drains to send a pump", ta: "பம்பு" }, places }), "Rain water");
     expect(say.en).toMatch(/^There was standing water at Lakshmi Nagar\./);
     expect(say.en).toMatch(said);
     expect(say.en).not.toMatch(/been open|past its deadline|send a pump|serious ones/);
@@ -68,7 +70,7 @@ describe("a closed case is told as closed (BUG-031)", () => {
     expect(labelIn(say.en)).toBeNull();
   });
   it("an open case still reads as open", () => {
-    const say = explainIssue(factSheet({ ...row, status: "In progress" }, { openFor: "4 days", now: NOW }), "Rain water");
+    const say = explainIssue(factSheet({ ...row, status: "In progress" }, { openFor: "4 days", now: NOW, places }), "Rain water");
     expect(say.en).toMatch(/^There's standing water at Lakshmi Nagar\. It's been open for several days/);
   });
   const scope = { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null } as never;

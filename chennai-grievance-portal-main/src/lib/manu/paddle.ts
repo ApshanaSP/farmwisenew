@@ -10,11 +10,25 @@ import { maskAadhaar, normalDate, tenDigits } from "./clean";
 
 export interface PaddleLine { text: string; score: number }
 
+/**
+ * The service is this computer's own (manu_paddle_ocr/server.py listens on 127.0.0.1): the petition photos, with names, phones and Aadhaar
+ * numbers on them, go to nothing else. A MANU_PADDLE_URL naming another computer was asked all the same, over plain http (pass 5's
+ * sms-ocr-13); it is now taken as off and said once (scripts/start-paddle.cjs refuses to start one too).
+ */
+const LOOPBACK = new Set(["127.0.0.1", "localhost", "[::1]"]);
+let warned = false;
 const baseUrl = (): string | null => {
   const v = (process.env.MANU_PADDLE_URL ?? "").trim();
   if (/^off$/i.test(v)) return null;
-  return (v || "http://127.0.0.1:8867").replace(/\/+$/, "");
+  const url = (v || "http://127.0.0.1:8867").replace(/\/+$/, "");
+  let u: URL | null = null;
+  try { u = new URL(url); } catch { /* not an address */ }
+  if (u && /^https?:$/.test(u.protocol) && LOOPBACK.has(u.hostname.toLowerCase())) return url;
+  if (!warned) { warned = true; console.warn("[manu] MANU_PADDLE_URL is not this computer's address: the PaddleOCR step is off."); }
+  return null;
 };
+/** At most this much of an answer is kept: a page's lines, and each line's text. The approval holds 30 000 characters of text (sms-ocr-12). */
+const MOST_LINES = 1000, LINE_CHARS = 500, TEXT_CHARS = 30_000;
 
 /** Up to three petitions are read at once and the service takes one page at a time, so a page may wait for several others. */
 const PAGE_WAIT_MS = 90_000;
@@ -33,7 +47,8 @@ export async function paddleRead(pages: { data: string }[], onPage?: (page: numb
       if (!r.ok) throw new Error(`answered ${r.status}`);
       const j = (await r.json()) as { lines?: PaddleLine[] };
       if (!Array.isArray(j.lines)) throw new Error("no lines in the answer");
-      lines.push(...j.lines);
+      // an answer of any size was taken whole (sms-ocr-12)
+      for (const l of j.lines.slice(0, Math.max(0, MOST_LINES - lines.length))) lines.push({ text: String(l?.text ?? "").slice(0, LINE_CHARS), score: Number(l?.score) || 0 });
     }
     return lines.map((l) => ({ text: maskAadhaar(String(l.text ?? "")), score: Number(l.score) || 0 }));
   } catch (e) {
@@ -86,7 +101,8 @@ export function crossCheck(reading: Reading, first: PaddleLine[] | null): Readin
 
 /** When the AI OCR cannot answer: PaddleOCR's text and numbers, every field marked, and the department left for the officer to choose. */
 export function backupReading(lines: PaddleLine[]): Reading {
-  const text = maskAadhaar(lines.map((l) => l.text).join("\n"));
+  // the approval takes at most 30 000 characters of text: more made "approve" fail with a message naming no field (sms-ocr-12)
+  const text = maskAadhaar(lines.map((l) => l.text).join("\n")).slice(0, TEXT_CHARS);
   const n = numbersOn(lines);
   return {
     name: null, mobile: n.mobile[0] ?? null, door_no: null, street: null, area_en: null, pincode: n.pincode[0] ?? null, ward: null, date: n.date[0] ?? null,

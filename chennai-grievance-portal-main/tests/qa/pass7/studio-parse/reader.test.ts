@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ParseError, parseAll, parseAllAsync, parseFile, parseFileAsync } from "@/lib/studio/parse";
 import { ParseLimitError, readerState, stopReaders } from "@/lib/studio/parse-pool";
 import { budget, MAX_CELLS } from "@/lib/studio/parse-worker";
-import { FEED, PAGE, brokenSheet, csv, pdfBombs, scanPdf, slowKml, unendedDeflate, workbook } from "./files";
+import { FEED, PAGE, brokenSheet, csv, fillFile, pdfBombs, stuckFile, unendedDeflate, workbook } from "./files";
 
 /** The longest gap between 10 ms ticks of this (the server's) thread while `f` runs. */
 async function loopGap<T>(f: () => Promise<T>): Promise<{ value: T; gap: number; ms: number }> {
@@ -66,10 +66,10 @@ describe("redteam-gate-05 and reviewer5-04: a workbook SheetJS never finishes is
     expect(r.ms).toBeLessThan(3000);
     expect(r.gap).toBeLessThan(500);
   }, 30_000);
-  it("a file the reader is slow on (a run of unclosed <Placemark>, reviewer5-10): stopped at the time limit with a clear message, while another file is read and the thread ticks", async () => {
+  it("a file the reader is stuck on (the test seam: a run of unclosed <Placemark> is read at once since reviewer5-10): stopped at the time limit with a clear message, while another file is read and the thread ticks", async () => {
     limits({ STUDIO_PARSE_SECONDS: 3 });
     const r = await loopGap(async () => {
-      const hang = caught(parseAllAsync(slowKml(), "map.kml"));
+      const hang = caught(parseAllAsync(stuckFile(), "map.kml"));
       const other = await parseAllAsync(csv(5, 3), "other.csv");
       return { other, hang: await hang };
     });
@@ -103,9 +103,9 @@ describe("the memory limit: only the reader ends, never the server", () => {
     expect((r.value as Error).message).toMatch(/unpacks to far more than its size/);
     expect(r.gap).toBeLessThan(500);
   }, 60_000);
-  it("a scan whose page images unpack to 360 MB for OCR (their own, larger budget) is stopped by the reader's own watchdog, outside V8's heap", async () => {
+  it("a file whose reading fills memory outside V8's heap is stopped by the reader's own watchdog (the test seam: a scan of 36 Mpx pages is held at 9 MB a page since reviewer2-13)", async () => {
     limits({ STUDIO_PARSE_RSS_MB: 300, STUDIO_PARSE_SECONDS: 30 });
-    const pdf = scanPdf(10, 36);
+    const pdf = fillFile();
     const before = process.memoryUsage.rss();
     const r = await loopGap(() => caught(parseAllAsync(pdf, "scan.pdf")));
     const grew = Math.round((process.memoryUsage.rss() - before) / 1e6);
@@ -133,7 +133,7 @@ describe("the memory limit: only the reader ends, never the server", () => {
 describe("a reader that crashes, many files at once, a reader that cannot start", () => {
   it("the reader process killed mid-read: the file is said to be stopped, and the next file is read by a new reader", async () => {
     limits({ STUDIO_PARSE_SECONDS: 30 });
-    const hang = caught(parseAllAsync(slowKml(), "map.kml"));
+    const hang = caught(parseAllAsync(stuckFile(), "map.kml"));
     let pid: number | null = null;
     for (let i = 0; i < 200 && !pid; i++) { await new Promise((r) => setTimeout(r, 25)); pid = readerState().procs.find((p) => p.busy)?.pid ?? null; }
     expect(pid).toBeTruthy();
@@ -152,7 +152,7 @@ describe("a reader that crashes, many files at once, a reader that cannot start"
   it("two hanging files hold both readers: 6 more wait their turn and are read, the rest are told the Studio is busy, at once", async () => {
     limits({ STUDIO_PARSE_SECONDS: 3, STUDIO_PARSE_PROCS: 2, STUDIO_PARSE_QUEUE: 8 });
     const r = await loopGap(async () => {
-      const hangs = [caught(parseAllAsync(slowKml(), "a.kml")), caught(parseAllAsync(slowKml(), "b.kml"))];
+      const hangs = [caught(parseAllAsync(stuckFile(), "a.kml")), caught(parseAllAsync(stuckFile(), "b.kml"))];
       const t0 = Date.now();
       const small = Array.from({ length: 10 }, (_, i) => parseAllAsync(csv(i + 1, 2), `f${i}.csv`).then((t) => ({ rows: t[0].rows.length, at: Date.now() - t0 }), (e: Error) => ({ error: e, at: Date.now() - t0 })));
       return { hangs: await Promise.all(hangs), small: await Promise.all(small) };
@@ -170,7 +170,7 @@ describe("a reader that crashes, many files at once, a reader that cannot start"
 
   it("a file that waits longer than the wait limit is told the Studio is busy, not held", async () => {
     limits({ STUDIO_PARSE_SECONDS: 6, STUDIO_PARSE_PROCS: 1, STUDIO_PARSE_WAIT_SECONDS: 1 });
-    const hang = caught(parseAllAsync(slowKml(), "a.kml"));
+    const hang = caught(parseAllAsync(stuckFile(), "a.kml"));
     const t0 = Date.now();
     const e = await caught(parseAllAsync(csv(2, 2), "late.csv"));
     expect((e as ParseLimitError).reason).toBe("busy");

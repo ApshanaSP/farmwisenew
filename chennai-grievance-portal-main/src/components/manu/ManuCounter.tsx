@@ -8,7 +8,7 @@ export default function ManuCounter({ user }: { user: string }) {
   return (
     <div className="mn-page">
       <header className="mn-band">
-        <div><b>Manu Desk</b><span>மனு · Collector&apos;s Office, Chennai</span></div>
+        <div><h1 className="mn-title">Manu Desk</h1><span>மனு · Collector&apos;s Office, Chennai</span></div>
         <div className="mn-who"><span>{user.split("@")[0]}</span><button onClick={() => void signOut()}>Sign out</button></div>
       </header>
       <ManuDesk />

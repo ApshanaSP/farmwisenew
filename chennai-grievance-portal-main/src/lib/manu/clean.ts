@@ -17,7 +17,37 @@ const DIGIT = String.raw`\p{Nd}`;
 // dash and minus, full-width punctuation, zero-width characters), up to 8 of them. The first version took only space, dot, slash and the ASCII
 // hyphen, so an en dash, a minus sign, a comma or a number split over two indented lines got through whole (P5-007, found by the reviewer).
 const SEP = String.raw`[^\p{L}\p{M}\p{Nd}]`;
-const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})(?!${DIGIT})`, "gu");
+const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+＋])(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})(?!${DIGIT})`, "gu");
+// The same 12 digits in any other grouping: 5-7, 6-6, 2-4-6, 3-3-3-3, one digit at a time (redteam-gate-03). Spaces of every width (thin,
+// ideographic ...), zero-width characters and dashes join these groups, at most three at a time, so a date's dots, a time's colon, a line
+// break and a list's commas and slashes still end a number; and the run must be exactly twelve digits, with no digit or "+" just before it
+// and no digit just after it. A zero-width or a thin space let a number through whole (reviewerC-03).
+const GAP = String.raw`[\p{Zs}\t\u00AD\u200B-\u200D\u2060\uFEFF\-\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]`;
+const ANY_GROUPS = new RegExp(String.raw`(?<![${DIGIT}+＋]${GAP}{0,3})${DIGIT}(?:${GAP}{0,3}${DIGIT}){11}(?!${GAP}{0,3}${DIGIT})`, "gu");
+
+// Verhoeff's check, the last digit of every Aadhaar number (UIDAI): the dihedral group D5's table and its permutation, applied right to left.
+const VERHOEFF_D = ["0123456789", "1234067895", "2340178956", "3401289567", "4012395678", "5987604321", "6598710432", "7659821043", "8765932104", "9876543210"]
+  .map((r) => [...r].map(Number));
+const VERHOEFF_P = ["0123456789", "1576283094", "5803796142", "8916043527", "9453126870", "4286573901", "2793806415", "7046913258"].map((r) => [...r].map(Number));
+/** True when the digits end in their Verhoeff check digit, as an Aadhaar number does. */
+export function verhoeffValid(digits: string): boolean {
+  if (!/^\d+$/.test(digits)) return false;
+  let c = 0;
+  for (let i = 0; i < digits.length; i++) c = VERHOEFF_D[c][VERHOEFF_P[i % 8][Number(digits[digits.length - 1 - i])]];
+  return c === 0;
+}
+
+/**
+ * Is a 12-digit run (ASCII digits) an Aadhaar number to hide? By Aadhaar's own rules, not by its grouping (reviewerC-02, reviewerC-03): it
+ * never starts with 0 or 1 (a TANGEDCO service number, "09-213-004-1234", and a date with a time, "12-11-2026 1030", do), and its last digit
+ * is its Verhoeff check digit, which nine in ten other numbers fail. Those two rules decide only the odd groupings this round newly catches.
+ * Written the old way (unbroken or 4-4-4: `oldWay`) any 12-digit run is hidden as before, whatever its first digit and without the check:
+ * nothing hidden before may show now, and an Aadhaar number with its first or any digit misread must stay hidden (the lead's rule, privacy
+ * first; an unbroken TANGEDCO number is hidden too, as it was). "91" and then a mobile (ten digits starting 6 to 9) is a phone number with
+ * its country code, the "+" left off ("91 98400 12345"); the rule was "the first group is 91", so "91-2345-678901" got through.
+ */
+const isAadhaar = (d: string, oldWay: boolean): boolean =>
+  /^\d{12}$/.test(d) && (oldWay || (/^[2-9]/.test(d) && !/^91[6-9]\d{9}$/.test(d) && verhoeffValid(d)));
 /** Written in Aadhaar's 4-4-4 groups (any separators between), as a reader returns one it was not asked for. */
 const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}\s*$`, "u");
 
@@ -25,10 +55,14 @@ const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{
 export { asciiDigits };
 
 /**
- * Any 12-digit number in the text, written with its first 8 digits hidden: in any script's digits, with up to eight separators of any kind
- * between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
+ * Every Aadhaar number in the text, written with its first 8 digits hidden: in any script's digits, in 4-4-4 groups with up to eight
+ * separators of any kind between them, or in any other grouping joined by spaces, zero-width characters and dashes (isAadhaar() decides).
+ * A number written straight after "+" is a phone number (+91...), not Aadhaar.
  */
-export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`);
+export const maskAadhaar = (s: string): string => {
+  const masked = (m: string, oldWay: boolean) => { const d = asciiDigits(m).replace(/\D/g, ""); return isAadhaar(d, oldWay) ? `XXXX XXXX ${d.slice(-4)}` : m; };
+  return s.replace(AADHAAR, (m) => masked(m, true)).replace(ANY_GROUPS, (m) => masked(m, false));
+};
 
 export const digits = (s: string | null | undefined): string => asciiDigits(String(s ?? "")).replace(/\D/g, "");
 

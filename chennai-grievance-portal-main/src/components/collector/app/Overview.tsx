@@ -65,8 +65,8 @@ function useKpis(d: OverviewData, c: Console) {
     ongoing: <Kpi key="ongoing" k="ongoing" icon="doc" tone="t-info" label={merged ? "Open incidents" : "Ongoing incidents"} v={d.kpi.cur.ongoing} p={d.kpi.prev.ongoing}
       goodDown prevLabel={P.prev} style={iv()} sub={`${fmtN(K.urgent)} of them severe or high`} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
-      tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
-    resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={period1(c) ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
+      tip="Incidents reported in the period that are not yet resolved. The card below lists them by severity with the same problem reported several times in one area as one row, so its counts can be smaller." />,
+    resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={P.resolved} v={d.kpi.cur.resolved}
       p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `closed in the period; ${fmtN(K.reported)} reported` : undefined}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
       tip="Incidents closed as resolved in the period (by the day they were closed), including the ones you resolved." />
@@ -291,7 +291,6 @@ function CommonTiles({ s, c }: { s: { overdue: number }; c: Console }) {
 
 /** "Daily · last 24 hours": the period's name and what it covers. */
 const periodSub = (c: Console) => `${PERIOD_NAME[c.period]} · ${c.periodLabel.toLowerCase()}`;
-const period1 = (c: Console) => c.period === "daily";
 const PERIOD_NAME: Record<string, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 
 function DistrictSnap({ d, c }: { d: OverviewData; c: Console }) {

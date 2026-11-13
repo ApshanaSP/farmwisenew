@@ -38,6 +38,8 @@ export interface NewsFilters {
   /** a calendar span the question named (IST, from inclusive, to exclusive): "last month's news" is October's, "yesterday's news" is 5 Nov's, not the rolling
    * hours back from now (QA pass 7, p7-rules-periods-01); `hours` is then the span's length */
   range?: { from: string; to: string } | null;
+  /** a department officer's department: another department's linked incident lends the story no record of its own (reviewer2-02) */
+  lockDept?: string | null;
 }
 
 function firstSentences(s: string, max = 2): string {
@@ -147,6 +149,10 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   for (const [storyId, ds] of groups) {
     const linked = ds.map((d) => inc.get(d.linked_incident_id)).filter(Boolean) as Row[];
     const li = linked.sort((a, b) => num(b.priority) - num(a.priority))[0] ?? null;
+    // what the story SAYS of its linked incident: for an officer, only their own department's. Another department's incident still ranks
+    // the story (the order says no more than the articles do), but its id, severity, deaths, open state, complaints, place and summary are
+    // that department's record: an officer's news carried them, and the follow-up selected it (reviewer2-02, P6-006)
+    const rec = !f.lockDept || !li || li.dept === f.lockDept ? li : null;
     const lead = ds.find((d) => d.lang === "en") ?? ds[0];
     const publishers = [...new Set(ds.map((d) => String(d.publisher ?? "").trim()).filter(Boolean))];
     const sourceCount = Math.max(1, publishers.length);
@@ -158,15 +164,16 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
     if (li?.cat && !Object.keys(tally).length) tally[String(li.cat)] = 1;
     const ageH = Math.min(...ds.map((d) => num(d.age_min))) / 60;
     // the briefing's AI digest line, else the linked incident's AI summary (both written from facts, numbers checked)
-    const ai = ds.map((d) => aiLine.get(String(d.doc_id))).find(Boolean) ?? (li?.ai_summary ? String(li.ai_summary) : null);
+    const ai = ds.map((d) => aiLine.get(String(d.doc_id))).find(Boolean) ?? (rec?.ai_summary ? String(rec.ai_summary) : null);
     const own = ds.map((d) => (d.summary ? firstSentences(String(d.summary)) : "")).find((s) => s && s.toLowerCase() !== String(d0(ds).title).toLowerCase()) ?? "";
     const newsOnly = li ? num(li.media_only) === 1 : true;
     const why: string[] = [];
-    if (li?.sev === "Severe" || li?.sev === "High") why.push(`Linked to a ${String(li.sev).toLowerCase()}-severity incident`);
-    if (num(li?.dead)) why.push(`${num(li.dead)} ${num(li.dead) === 1 ? "death" : "deaths"} reported`);
+    if (rec?.sev === "Severe" || rec?.sev === "High") why.push(`Linked to a ${String(rec.sev).toLowerCase()}-severity incident`);
+    if (num(rec?.dead)) why.push(`${num(rec!.dead)} ${num(rec!.dead) === 1 ? "death" : "deaths"} reported`);
     if (sourceCount >= 2) why.push(`Carried by ${sourceCount} independent outlets`);
-    if (li && num(li.open)) why.push("Still open");
-    if (num(li?.complaints)) why.push(`${num(li.complaints)} citizen complaints`);
+    if (rec && num(rec.open)) why.push("Still open");
+    if (num(rec?.complaints)) why.push(`${num(rec!.complaints)} citizen complaints`);
+    if (li && !rec && !newsOnly) why.push("Another department has a record of it");
     if (li && newsOnly) why.push("No department has a record of it yet");
     if (!li && ds.some((d) => num(d.is_incident) === 1)) why.push("Reported incident, not yet linked to any department record");
     const score = (li ? SEV_W[li.sev] ?? 0 : 0) + Math.min(30, num(li?.priority) * 0.3) + 8 * Math.log2(1 + sourceCount)
@@ -174,16 +181,18 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
       + (ds.some((d) => num(d.is_incident) === 1) ? 10 : 0) + num(li?.dead) * 10;
     const c = cat.get(li?.cat ?? cats[0]);
     // the article's own place first (a story linked to the wrong incident must not move the lake to Egmore); the linked
-    // incident's place only when the articles name none more specific than "Chennai"
+    // incident's place only when the articles name none more specific than "Chennai", and for an officer only their own department's
+    // record's zone (another department's zone was still said: reviewerF-07)
     const said = ds.map((d) => String(d.place_text ?? "").trim()).find((p) => p && !/^chennai( district)?$/i.test(p)) ?? null;
-    const where = said ?? li?.zone_name ?? null;
+    const where = said ?? rec?.zone_name ?? null;
     stories.push({
       storyId, headline: String(lead.title), summary: ai ?? (own || `${sourceCount > 1 ? `${sourceCount} outlets` : String(lead.publisher ?? "One outlet")} reported this${where ? ` in ${where}` : ""}.`),
-      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: said ?? li?.loc ?? lead.place_text ?? li?.zone_name ?? null,
+      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: said ?? rec?.loc ?? lead.place_text ?? rec?.zone_name ?? null,
       category: li?.label ?? c?.label ?? null, department: li?.dept_name ?? (c ? deptName.get(c.lead) ?? null : null), sourceCount,
       sources: ds.slice(0, 8).map((d) => ({ publisher: d.publisher ?? null, title: String(d.title), url: d.url ?? null, t: d.t ?? null })),
-      matchedIncidentId: li?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
-      score, zones: linked.map((r) => r.zone).filter((z) => z != null).map(num), cats, tally
+      matchedIncidentId: rec?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
+      // a zone question matches an officer's story by their own department's records only (another's zone is not theirs to see)
+      score, zones: linked.filter((r) => !f.lockDept || r.dept === f.lockDept).map((r) => r.zone).filter((z) => z != null).map(num), cats, tally
     });
     // a story can be about a place no linked incident records (or link no incident at all): the articles' own places count
     if (f.zone && !stories[stories.length - 1].zones.includes(f.zone)) {

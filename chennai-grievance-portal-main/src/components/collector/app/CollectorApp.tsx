@@ -33,7 +33,7 @@ import { ConflictView } from "./Conflicts";
 import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
-import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, watchBrief, type Row } from "./lib";
+import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, scopeWords, watchBrief, type Row } from "./lib";
 import { esc } from "./SatMap";
 import "./tokens.css";
 import "./collector.css";
@@ -106,8 +106,12 @@ export interface Console {
   periodLabel: string;
   zone: number | null;
   zoneName: string | null;
+  /** every filter in words, "District-wide" with none (lib.tsx scopeWords) */
+  scopeName: string;
   /** category chosen from a chart; filters every panel */
   cat: string | null;
+  /** that category in words */
+  catLabel: string | null;
   setCat: (c: string | null) => void;
   /** taluk chosen from the map or the taluk ranking; filters every panel */
   taluk: string | null;
@@ -525,7 +529,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   const zoneName = zone ? ov.zoneTable.find((z) => z.zone === zone)?.name ?? `Zone ${zone}` : null;
   const deptName = dept ? allDepts.find((d) => d.code === dept)?.name ?? dept : null;
-  const scopeName = [zoneName, deptName, catLabel, taluk ? `${talukName(taluk)} taluk` : null].filter(Boolean).join(" · ") || "District-wide";
+  const scopeName = scopeWords({ zoneName, deptName, catLabel, talukName: talukName(taluk) });
 
   // ------------------------------------------------------------ actions --
   const decide = async (rows: Row[], decision: string, note?: string) => {
@@ -604,7 +608,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   };
 
   const c: Console = {
-    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, cat, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
+    dept, deptName, period, periodLabel: ov.periodInfo.label, zone, zoneName, scopeName, cat, catLabel, setCat, taluk, setTaluk, now: ov.now, depts, geo, page, setPage,
     mapMode, setMapMode, focus,
     locate: (i) => {
       if (i.lat == null) { toast("This incident has no map location.", "alert"); return; }
@@ -821,7 +825,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds and audit log", run: c.openFeeds },
             { key: "sec", icon: "shield", label: "Security", sub: "Sign-ins, sessions, check an email", run: () => setSecOpen(true) }
           ]} />
-          <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)}
+          <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)} period={ov.periodInfo.label}
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
             items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />
           <div className="rel">

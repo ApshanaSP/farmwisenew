@@ -47,17 +47,56 @@ export function decisionVerifies(decision: unknown): boolean {
   return typeof decision === "string" && (VERIFYING as readonly string[]).includes(decision);
 }
 
-/** Effective open flag and status for one row, from its pipeline values and its latest decision. */
-export function effectiveStatus(isOpen: unknown, status: unknown, latestDecision: unknown): { open: number; status: string } {
+/**
+ * What a department officer's step says about a case that is still open, in the Collector's statuses (hunt2-ops-09): an approve was
+ * recorded only in officer_steps, so the Collector's status chip, list filter and case page kept "Under review" while the officer showed
+ * In action and the citizen was told it was approved. The close is not here: it is stored as a resolve decision too, which closes the case.
+ */
+export const STEP_STATUS = { approve: "Assigned", action: "In progress", send: "Awaiting verification" } as const;
+
+/**
+ * Effective open flag and status for one row, from its pipeline values, its latest decision with an effect, and `laterStep`: the
+ * department's latest officer step when it came after that decision (in the same second the decision wins, as the officer's stage reads
+ * it: officer/data.ts DECIDED_AFTER). A step moves the status of an open case only; it never opens or closes one.
+ */
+export function effectiveStatus(isOpen: unknown, status: unknown, latestDecision: unknown, laterStep: unknown = null): { open: number; status: string } {
   const e = decisionEffect(latestDecision);
-  return e ? { open: e.open, status: e.status } : { open: Number(isOpen) === 1 ? 1 : 0, status: String(status ?? "") };
+  const base = e ? { open: e.open as number, status: e.status as string } : { open: Number(isOpen) === 1 ? 1 : 0, status: String(status ?? "") };
+  const s = typeof laterStep === "string" && Object.prototype.hasOwnProperty.call(STEP_STATUS, laterStep) ? STEP_STATUS[laterStep as keyof typeof STEP_STATUS] : null;
+  return s && base.open === 1 ? { open: 1, status: s } : base;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __diqOfficerSteps: boolean | undefined;
+  /** set by the server (instrumentation-node.ts): looks again whether the table is there, at most once a minute */
+  // eslint-disable-next-line no-var
+  var __diqOfficerStepsRecheck: (() => void) | undefined;
+}
+/**
+ * Whether the officer console's step table (district_intel_ops.officer_steps) is there to read: on MySQL it comes from
+ * `npm run setup:officer`, and an AWS store has it only when the MySQL it was migrated from did. The server checks information_schema
+ * (instrumentation-node.ts) before the first request and again at most every 60 s while the status is read (as intel.ts officerOpsReady()
+ * does), so a check that failed at start (MySQL still starting) or a setup:officer run later is picked up without a restart (reviewerG-02),
+ * and an AWS store without the table reads the status as before, never "no such table" (reviewerG-03). Off until a check says it is there:
+ * the Collector's status then reads no officer step, exactly as before hunt2-ops-09. A script or a test store leaves it off unless set.
+ */
+export function officerStepsOn(): boolean {
+  globalThis.__diqOfficerStepsRecheck?.();
+  return globalThis.__diqOfficerSteps ?? false;
+}
+export function setOfficerSteps(on: boolean): void {
+  globalThis.__diqOfficerSteps = on;
 }
 
 /**
  * SQL over `incidents <alias>` (default i), given the decisions table's qualified name: the latest decision (not a note), the effective
- * open flag (0/1) and the effective status, built from DECISION_EFFECT so the SQL and effectiveStatus cannot drift.
+ * open flag (0/1) and the effective status, built from DECISION_EFFECT so the SQL and effectiveStatus cannot drift. `stepsTable`: the
+ * officer steps table, null for none; left out, it is the decisions table's neighbour in the ops database whenever it is there
+ * (officerStepsOn), decided each time `status` or `laterStep` is read, never once when a module builds its SQL at load (reviewerG-02).
  */
-export function effectiveSql(decisionsTable: string, alias = "i") {
+export function effectiveSql(decisionsTable: string, alias = "i", stepsTable?: string | null) {
+  const steps = () => (stepsTable !== undefined ? stepsTable : officerStepsOn() ? decisionsTable.replace(/collector_decisions/, "officer_steps") : null);
   const i = alias; // the incidents table's alias in the caller's query
   const latest = `(SELECT d.decision FROM ${decisionsTable} d WHERE d.incident_id = ${i}.incident_id AND d.decision IN (${EFFECT_KEYS})
     ORDER BY d.decision_id DESC LIMIT 1)`;
@@ -75,12 +114,26 @@ export function effectiveSql(decisionsTable: string, alias = "i") {
     ELSE COALESCE(LEAST(${i}.closed_at, ${firstClosingAfter("0")}), ${firstClosingAfter("0")}) END)`;
   const cases = (pick: (e: Effect) => string) =>
     Object.entries(DECISION_EFFECT).map(([k, e]) => `WHEN '${k}' THEN ${pick(e)}`).join(" ");
+  const open = `(CASE ${latest} ${cases((e) => String(e.open))} ELSE ${i}.is_open END)`;
+  const status = `(CASE ${latest} ${cases((e) => `'${e.status}'`)} ELSE ${i}.status_std END)`;
+  // the department's latest step (its lead department's, as the officer's queue reads them), when no decision with an effect was made at
+  // or after it: in the same second the decision comes after the step (officer/data.ts DECIDED_AFTER), so the decision decides
+  const laterStepIn = (t: string | null) => t ? `(SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM ${decisionsTable} sd WHERE sd.incident_id = s.incident_id
+      AND sd.decision IN (${EFFECT_KEYS}) AND sd.decided_at >= s.at) THEN s.step END
+    FROM ${t} s WHERE s.incident_id = ${i}.incident_id AND s.dept_code = ${i}.lead_dept ORDER BY s.step_id DESC LIMIT 1)` : "NULL";
+  const stepCases = Object.entries(STEP_STATUS).map(([k, v]) => `WHEN '${k}' THEN '${v}'`).join(" ");
   return {
     latest,
     /** the pipeline's own flag, named: only for the arithmetic of a delta (a hotspot's count moved by what decisions changed) */
     pipelineOpen: `${i}.is_open`,
-    open: `(CASE ${latest} ${cases((e) => String(e.open))} ELSE ${i}.is_open END)`,
-    status: `(CASE ${latest} ${cases((e) => `'${e.status}'`)} ELSE ${i}.status_std END)`,
+    open,
+    /** the status: the latest decision with an effect on the pipeline's, then, on an open case, a later officer step's (STEP_STATUS) */
+    get status(): string {
+      const t = steps();
+      return t ? `(CASE WHEN ${open} = 1 THEN (CASE ${laterStepIn(t)} ${stepCases} ELSE ${status} END) ELSE ${status} END)` : status;
+    },
+    /** the department's latest officer step when it came after the latest decision with an effect (NULL without one, or without the table) */
+    get laterStep(): string { return laterStepIn(steps()); },
     /**
      * when it closed: the first closing decision since it was last open (after the latest reopen; or, never reopened, the first one while
      * the pipeline has it open, else the earlier of the pipeline's closed_at and that decision, or that decision when the pipeline has

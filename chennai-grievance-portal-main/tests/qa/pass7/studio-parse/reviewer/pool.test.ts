@@ -18,7 +18,7 @@ vi.mock("@/lib/studio/connect/robots", () => ({ robotsAllow: async () => true })
 import { resolveLink } from "@/lib/studio/connect/resolve";
 import { parseAllAsync } from "@/lib/studio/parse";
 import { ParseLimitError, readerState, stopReaders } from "@/lib/studio/parse-pool";
-import { csv, slowKml, workbook } from "../files";
+import { csv, stuckFile, workbook } from "../files";
 
 const caught = (p: Promise<unknown>) => p.then(() => null, (e: Error) => e);
 afterEach(() => { vi.unstubAllEnvs(); stopReaders(); });
@@ -27,7 +27,7 @@ it("a pasted link to a file, while the Studio is busy: the Collector is told it 
   stopReaders();
   vi.stubEnv("STUDIO_PARSE_PROCS", "1"); vi.stubEnv("STUDIO_PARSE_QUEUE", "1"); vi.stubEnv("STUDIO_PARSE_SECONDS", "4"); vi.stubEnv("STUDIO_BROWSER", "0");
   // a file the reader is still slow on (the unended-deflate workbook is refused at once since the inflate budget)
-  const hang = caught(parseAllAsync(slowKml(), "a.kml"));
+  const hang = caught(parseAllAsync(stuckFile(), "a.kml")); // the test seam: unclosed <Placemark> is read at once since reviewer5-10
   h.body = workbook(20);
   const r = await resolveLink(h.url, { mode: "none" } as never, { log: () => {}, explore: false });
   console.log("busy link:", { kind: r.outcome.kind, reason: r.outcome.reason, why: r.outcome.why, checked: r.outcome.checked });

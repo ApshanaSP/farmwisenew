@@ -179,6 +179,19 @@ export function sameTopic(a: string | null | undefined, b: string | null | undef
   return both >= 2 || both / new Set([...A.all, ...B.all]).size >= 0.3;
 }
 
+/**
+ * The script a problem line is written in: Tamil, Latin (English or Tanglish), or both. Between Tamil script and Latin no word can meet
+ * (there is no transliteration here), so "the same problem" cannot be told from the words (hunt2-desk-03).
+ */
+const scriptOf = (s: string | null | undefined): "ta" | "latin" | "both" | "none" => {
+  const ta = /[஀-௿]/u.test(String(s ?? "")), la = /[A-Za-z]{2,}/.test(String(s ?? ""));
+  return ta && la ? "both" : ta ? "ta" : la ? "latin" : "none";
+};
+const otherScripts = (a: string | null | undefined, b: string | null | undefined) => {
+  const x = scriptOf(a), y = scriptOf(b);
+  return (x === "ta" && y === "latin") || (x === "latin" && y === "ta");
+};
+
 const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
 const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
@@ -222,10 +235,27 @@ function streetIn(typed: string | null, address: string | null): boolean {
   });
 }
 
+/** Words of a door, not of a street: "No. 1", "Door No 12", "Plot 5", "Flat 2B", "கதவு எண் 4". */
+const DOOR = new Set("no nos number num door dr plot flat house old new block apt apartment எண் கதவு".split(" "));
+/**
+ * The parts of an address ("door, street, area", as the desk files it) that can be its street: not the door, which has no word of a street
+ * ("1", "No. 1"), and not the area at its end when another part is there (P5-030).
+ */
+function streetParts(address: string | null): string[] {
+  const parts = String(address ?? "").split(/[,\n;]/).filter((p) => streetKey(p).words.some((w) => [...w].length > 1 && !DOOR.has(w)));
+  return parts.length > 1 ? parts.slice(0, -1) : parts;
+}
+/**
+ * Do two addresses name one street, by streetIn()'s rule (the street's words and number, or a spelling slip)? The desk types the address
+ * afresh for each petition, so "1, Kamaraj Salai" and "No. 1, Kamarajar Salai" are one; byte-equal text made them two (reviewerC-06).
+ */
+const sameStreet = (a: string | null, b: string | null): boolean =>
+  streetParts(a).some((p) => streetIn(p, b)) || streetParts(b).some((p) => streetIn(p, a));
+
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
-  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
+  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string | null; cannotTell: boolean })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
     const sameMobile = !!mobile && theirs === mobile;
@@ -249,7 +279,9 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
     // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
     out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
-      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs });
+      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: e.address,
+      // the person's petition to the same department (or online), in the other script: the words cannot say, so it is not "another problem"
+      cannotTell: samePerson && !sameProblem && (sameDept || e.reporterKind === "online") && otherScripts(c.problem, e.problem) });
   }
   // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
   // others on it, then the person's other petitions; newest first in each (P6-011)
@@ -262,21 +294,34 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     headline = `This is this person's ${nth(mine.length + 1)} petition on this problem. The last one was filed on ${day(last.filedAt)} and is ${last.open ? "still open" : `marked "${last.status}"`}.`;
   } else if (others.length) {
     // people, not petitions: one neighbour who wrote three times is one person (P5-030)
-    // one person may write once with a mobile and once without: a name or a mobile in common is one person (P6-011)
+    // a mobile is a person; two mobiles are two people even with one name ("R. Kumar" of Kamaraj Salai and "R Kumar" of Nehru Street were
+    // counted as one, and common names undercounted the people affected: hunt2-desk-10), unless the name and the street are the same too
+    // (a new mobile), by the rule the person's own match uses (sameStreet: reviewerC-06). A filing with no mobile is the person of that name
+    // who has one (once with a mobile and once without is one person: P6-011), or a person of its own when nobody of that name has one.
     const parent = new Map<string, string>();
     const root = (k: string): string => { let r = k; while (parent.has(r) && parent.get(r) !== r) r = parent.get(r)!; return r; };
     const join = (a: string, b: string) => { const x = root(a), y = root(b); if (x !== y) parent.set(y, x); };
-    for (const m of others) { if (!parent.has(m.who)) parent.set(m.who, m.who); if (m.phone) join(m.who, `tel:${m.phone}`); }
-    const people = new Set(others.map((m) => root(m.who))).size;
+    const keyOf = (m: (typeof others)[number]) => (m.phone ? `tel:${m.phone}` : `name:${m.who}`);
+    for (const m of others) if (!parent.has(keyOf(m))) parent.set(keyOf(m), keyOf(m));
+    const phoned = others.filter((m) => m.phone);
+    for (const a of phoned) for (const b of phoned) if (a.phone !== b.phone && a.who === b.who && sameStreet(a.addr, b.addr)) join(keyOf(a), keyOf(b));
+    for (const m of others) if (!m.phone) { const same = phoned.find((x) => x.who === m.who); if (same) join(keyOf(same), keyOf(m)); }
+    const people = new Set(others.map((m) => root(keyOf(m)))).size;
     headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
   } else if (person.length) {
-    headline = `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
+    // one in Tamil script and one in English or Tanglish share no word, so the words cannot tell: "on other problems" was said confidently of
+    // the same sewage problem written both ways (hunt2-desk-03). The staff read it; the desk offers to add it to that case.
+    const unsure = person.filter((m) => m.cannotTell).length;
+    headline = unsure
+      ? `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"}. ${unsure === 1 ? (person.length === 1 ? "It is" : "One is") : `${unsure} are`} written in the other script (Tamil or English), so it could not be told whether ${unsure === 1 ? "it is" : "they are"} about the same problem: read ${unsure === 1 ? "it" : "them"} before approving.`
+      : `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
   }
   // only a case of the same department is offered: joining another department's case is the owner's decision (P5-021)
   const target = [...mine, ...others].find((m) => m.open && m.incidentId && m.sameDept);
   // a case of another department is not offered to join: the desk shows "Add to this case" for a match with a case id, so such a match
   // comes without one (joining another department's case is the owner's decision, P5-021; P6-011)
-  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, ...m }) => (sameDept ? m : { ...m, incidentId: null })), attachTo: target?.incidentId ?? null };
+  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, addr: _a, cannotTell, ...m }) =>
+    ({ ...(sameDept ? m : { ...m, incidentId: null }), ...(cannotTell ? { cannotTell: true } : {}) })), attachTo: target?.incidentId ?? null };
 }
 
 /** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */
@@ -292,14 +337,25 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
   const name = c.name?.trim() || "__none__";
   const COLS = `p.complaint_code AS code, p.incident_id AS incident_id, DATE_FORMAT(p.filed_at, '%Y-%m-%d %H:%i:%s') AS filed_at, COALESCE(c.status, 'Complaint Filed') AS status, p.problem, p.dept_code,
             p.mobile, p.name, p.address, p.ward_number, p.category_code`;
-  // the same mobile or name, and the same ward and department, as before; in a query of their own, so a busy department can never push them
-  // out of the limit (the second reviewer)
-  const [byPerson] = await pool.query<RowDataPacket[]>(
+  // the person's own petitions (the same mobile or name) in a query of their own, so a busy ward and department can never push them out of
+  // the limit: they shared one LIMIT 200 with the ward-and-department rows, newest first, so in a ward with more than 200 approved petitions
+  // to one department the person's own older petition was cut and "came before" missed it (hunt2-desk-14). The same mobile and the same
+  // name each have their own limit: sharing one, 200 newer petitions from others of a common name ("R. Kumar") cut the person's own
+  // petition by mobile again (reviewerC-05)
+  const person = (col: "mobile" | "name", value: string) => pool.query<RowDataPacket[]>(
     `SELECT ${COLS} FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
-      WHERE p.status = 'filed' AND p.id <> ? AND (p.mobile = ? OR p.name = ? OR (p.ward_number = ? AND p.dept_code = ?))
+      WHERE p.status = 'filed' AND p.id <> ? AND p.${col} = ?
       ORDER BY p.filed_at DESC LIMIT 200`,
-    [c.excludeId ?? 0, mobile, name, c.ward ?? -1, c.dept ?? "__none__"]
+    [c.excludeId ?? 0, value]
   );
+  const [byMobile] = await person("mobile", mobile);
+  const [byName] = await person("name", name);
+  // others in the same ward and department, for "people have written about this"
+  const [byWard] = c.ward != null && c.dept
+    ? await pool.query<RowDataPacket[]>(
+      `SELECT ${COLS} FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
+        WHERE p.status = 'filed' AND p.id <> ? AND p.ward_number = ? AND p.dept_code = ? ORDER BY p.filed_at DESC LIMIT 200`, [c.excludeId ?? 0, c.ward, c.dept])
+    : [[] as RowDataPacket[]];
   // with no ward read, also the department's recent petitions, so the matcher (which compares names by their letters: squash()) sees
   // "R.Kumar" for "R. Kumar", decomposed Tamil and a name with a zero-width joiner; a byte-exact name was all it got before (P5-018)
   const [byDept] = c.ward == null && c.dept
@@ -308,7 +364,7 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
         WHERE p.status = 'filed' AND p.id <> ? AND p.dept_code = ? ORDER BY p.filed_at DESC LIMIT 200`, [c.excludeId ?? 0, c.dept])
     : [[] as RowDataPacket[]];
   const seen = new Set<string>();
-  const pet = [...byPerson, ...byDept].filter((r) => { const k = String(r.code); if (seen.has(k)) return false; seen.add(k); return true; });
+  const pet = [...byMobile, ...byName, ...byWard, ...byDept].filter((r) => { const k = String(r.code); if (seen.has(k)) return false; seen.add(k); return true; });
   // a citizen who filed anonymously is never shown to the desk, whatever number it types (QA pass 5, P5-014)
   const [online] = await pool.query<RowDataPacket[]>(
     `SELECT c.complaint_code AS code, DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') AS filed_at, c.status, c.title AS problem, c.mobile_number, c.first_name, c.street_address, c.ward_number, d.name AS dept_name

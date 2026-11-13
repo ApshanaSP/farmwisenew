@@ -40,7 +40,7 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await page.waitForTimeout(durOf("cmd_trends"));
     ctx.hear.push({ text: "put something together for Adyar" });
     await say(page, "cmd_adyar");
-    await expect(page.getByTestId("state")).toContainText('"zone": 13', { timeout: 15_000 });
+    await expect(page.getByTestId("harness-state")).toContainText('"zone": 13', { timeout: 15_000 });
     expect(ctx.hearCalls[1].lane).toBe("engaged");
   });
 
@@ -114,11 +114,11 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await modeOn(page);
     ctx.hear.push({ text: "Go to the trends page." });
     await say(page, "cmd_trends");
-    await expect(page.getByTestId("state")).toContainText('"page": "trends"', { timeout: 15_000 });
+    await expect(page.getByTestId("harness-state")).toContainText('"page": "trends"', { timeout: 15_000 });
     await page.waitForTimeout(800);
     ctx.hear.push({ text: "Show the severe cases in Adyar." });
     await say(page, "cmd_adyar");
-    await expect(page.getByTestId("state")).toContainText('"zone": 13', { timeout: 15_000 });
+    await expect(page.getByTestId("harness-state")).toContainText('"zone": 13', { timeout: 15_000 });
     await page.waitForTimeout(800);
     ctx.hear.push({ text: "Show Anna Nagar on the map." });
     await say(page, "cmd_zone");
@@ -134,7 +134,7 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await say(page, "cmd_adyar");
     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint.includes("Adyar file"), null, { timeout: 15_000 });
     expect(ctx.agentCalls.length).toBe(0);
-    await expect(page.getByTestId("state")).toContainText('"zone": null');
+    await expect(page.getByTestId("harness-state")).toContainText('"zone": null');
     // gone in two seconds
     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint === "", null, { timeout: 4000 });
     expect(ctx.hearCalls[0].lane).toBe("ambient");

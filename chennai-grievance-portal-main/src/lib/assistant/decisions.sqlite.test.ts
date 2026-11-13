@@ -29,6 +29,8 @@ function fresh() {
       first_reported_at TEXT, hours_open REAL, sla_breached INTEGER, sla_due_at TEXT, category_code TEXT, taluk_code TEXT, status_std TEXT);
     CREATE TABLE metrics (metric TEXT, value TEXT);
     CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY, incident_id TEXT, decision TEXT);
+    -- Ask's open counts read the console's rule (intel.ts OPEN_NOW), which leaves out news complaints routed to a department
+    CREATE TABLE dept_assignments (incident_id TEXT, dept_code TEXT);
     CREATE TABLE ref_wards (ward_no INTEGER, zone_no INTEGER, zone_name TEXT);
     CREATE TABLE ref_departments (code TEXT, name TEXT);
     INSERT INTO ref_wards VALUES (178, 13, 'Adyar');

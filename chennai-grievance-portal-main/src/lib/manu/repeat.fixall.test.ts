@@ -85,3 +85,88 @@ describe("reviewer5-08: streets", () => {
     expect(r.matches[0]?.samePerson ?? false).toBe(same);
   });
 });
+
+// hunt2-desk-10: "who" was the squashed name before the mobile, so two people of one name (different mobiles, different streets) were one
+// root of the union, and "1 other person has written" undercounted a ward's common names (Kumar, Lakshmi, Murugan)
+describe("hunt2-desk-10: two people of one name are two people", () => {
+  const now = { mobile: "9000011111", name: "Meenakshi", street: "Gandhi Street", ward: 64, dept: "GCC-HLT", problem: "Stray dogs biting children near school" };
+  const dog = (o: Partial<E>) => e({ dept: "GCC-HLT", ward: 64, problem: "Stray dogs biting children near the school gate", ...o });
+  it("R. Kumar of Kamaraj Salai and R Kumar of Nehru Street, two mobiles: 2 other people", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai, Kolathur" }),
+      dog({ code: "2026-1B", name: "R Kumar", mobile: "9000033333", address: "5, Nehru Street, Kolathur" })]);
+    expect(r.headline).toBe("2 other people have written about this in the same ward.");
+  });
+  it("one name, one address, a new mobile: 1 person", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai, Kolathur" }),
+      dog({ code: "2026-1B", name: "R Kumar", mobile: "9000033333", address: "1, Kamaraj Salai, Kolathur" })]);
+    expect(r.headline).toBe("1 other person has written about this in the same ward.");
+  });
+  it("one mobile under two spellings of the name: 1 person", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222" }), dog({ code: "2026-1B", name: "Kumar R", mobile: "9000022222" })]);
+    expect(r.headline).toBe("1 other person has written about this in the same ward.");
+  });
+  it("two named people with mobiles and the first once more without one: 2 people", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai" }),
+      dog({ code: "2026-1B", name: "Lakshmi", mobile: "9000033333", address: "5, Nehru Street" }), dog({ code: "2026-1C", name: "R. Kumar", mobile: null, address: "1, Kamaraj Salai" })]);
+    expect(r.headline).toBe("2 other people have written about this in the same ward.");
+  });
+});
+
+// hunt2-desk-03: the same person writing about the same sewage problem once in Tamil script and once in Tanglish was told "written 1 earlier
+// petition on other problems": no word of one script meets the other, and the headline said "other problems" confidently
+describe("hunt2-desk-03: one person, the other script: 'could not tell', not 'other problems'", () => {
+  const me = { mobile: "9000041873", name: "க. பார்வதி", street: null, ward: 70, dept: "CMWSSB" };
+  it("Tamil petition, Tanglish check (the probe's case): could not tell, and the case is offered", () => {
+    const r = judgeRepeats({ ...me, problem: "kazhivu neer theruvil odudhu, smell romba" },
+      [e({ mobile: "9000041873", name: "க. பார்வதி", dept: "CMWSSB", problem: "கழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்" })]);
+    expect(r.headline).toBe("This person has written 1 earlier petition. It is written in the other script (Tamil or English), so it could not be told whether it is about the same problem: read it before approving.");
+    expect(r.matches[0]).toMatchObject({ samePerson: true, sameProblem: false, cannotTell: true, incidentId: "INC-W-2026-111AAA" });
+  });
+  it("a Tamil petition against the person's English online complaint (p10.mjs): could not tell", () => {
+    const r = judgeRepeats({ ...me, dept: "GCC-SWM", problem: "கோவில் அருகே குப்பை அள்ளப்படவில்லை" },
+      [e({ mobile: "9000041873", name: "Rani", dept: "GCC-SWM", reporterKind: "online", problem: "Garbage not cleared near the temple" })]);
+    expect(r.headline).toMatch(/could not be told whether it is about the same problem/);
+  });
+  it("two of three in the other script", () => {
+    const r = judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [
+      e({ code: "2026-1A", mobile: "9000041873", dept: "CMWSSB", problem: "கழிவுநீர் தெருவில் ஓடுகிறது" }),
+      e({ code: "2026-1B", mobile: "9000041873", dept: "CMWSSB", problem: "குடிநீர் வரவில்லை" }),
+      e({ code: "2026-1C", mobile: "9000041873", dept: "CMWSSB", problem: "Water meter broken" })]);
+    expect(r.headline).toBe("This person has written 3 earlier petitions. 2 are written in the other script (Tamil or English), so it could not be told whether they are about the same problem: read them before approving.");
+  });
+  it("the same script and different problems: still 'on other problems'; another department: not offered", () => {
+    expect(judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [e({ mobile: "9000041873", dept: "CMWSSB", problem: "Water meter broken" })]).headline)
+      .toBe("This person has written 1 earlier petition on other problems.");
+    const r = judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [e({ mobile: "9000041873", dept: "GCC-ELE", problem: "தெரு விளக்கு எரியவில்லை" })]);
+    expect(r.headline).toBe("This person has written 1 earlier petition on other problems.");
+    expect(r.matches[0].cannotTell).toBeUndefined();
+  });
+});
+
+// p7-desk-and-accounts-16: the citizen's own online complaint typed in Tamil ('தெரு விளக்கு எரியவில்லை'), then a paper petition on the same
+// thing, whose problem line the reader always gives in English. The two share no word, and the desk said "1 earlier petition on other
+// problems". hunt2-desk-03 (f74a4ca0) covers it: an online complaint of the person's in the other script is "could not be told", and offered
+describe("p7-desk-and-accounts-16: the person's Tamil online complaint against the reader's English line", () => {
+  const me = { mobile: "9000011111", name: "R. Kumar", street: null, ward: 70, dept: "GCC-ELE", problem: "Street light not burning for two weeks", category: "STREETLIGHT_ELECTRICAL" };
+  const online = { mobile: "9000011111", reporterKind: "online" as const, dept: "GCC-ELE", problem: "தெரு விளக்கு எரியவில்லை", category: "STREETLIGHT_ELECTRICAL" };
+  it("pass 7's probe: not 'on other problems'; it could not be told, and the case is offered", () => {
+    const r = judgeRepeats(me, [e(online)]);
+    expect(r.headline).not.toMatch(/on other problems/);
+    expect(r.headline).toBe("This person has written 1 earlier petition. It is written in the other script (Tamil or English), so it could not be told whether it is about the same problem: read it before approving.");
+    expect(r.matches[0]).toMatchObject({ code: "2026-111AAA", samePerson: true, sameProblem: false, cannotTell: true, open: true, incidentId: "INC-W-2026-111AAA" });
+  });
+  it("the same through findRepeats: the online complaint's Tamil title as the store gives it, under the portal's department name", async () => {
+    const pool = (await import("@/lib/db")).default as unknown as { query?: (sql: string, args?: unknown[]) => Promise<unknown> };
+    pool.query = async (sql: string) => {
+      if (/FROM complaints c LEFT JOIN departments/.test(sql)) return [[{ code: "2026-222BBB", filed_at: "2026-10-01 09:00:00", status: "Complaint Filed", problem: "தெரு விளக்கு எரியவில்லை",
+        mobile_number: "9000011111", first_name: "Kumar", street_address: "4, Nehru Street, Perambur", ward_number: 70, dept_name: "Electrical Department" }], []];
+      return [[], []];
+    };
+    try {
+      const { findRepeats } = await import("@/lib/manu/repeat");
+      const r = await findRepeats({ ...me, excludeId: 7 });
+      expect(r.headline).toMatch(/could not be told whether it is about the same problem/);
+      expect(r.matches[0]).toMatchObject({ code: "2026-222BBB", cannotTell: true, incidentId: "INC-W-2026-222BBB" });
+    } finally { delete pool.query; }
+  });
+});

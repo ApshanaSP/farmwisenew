@@ -16,6 +16,7 @@ import { connectionSettings } from "@/lib/db";
 import intelPool, { INTEL_DB } from "@/lib/collector/db";
 import { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
+import { openNowSql } from "@/lib/collector/intel";
 import { qualified, type Catalog, type CatalogColumn, type CatalogTable } from "@/lib/assistant/catalog";
 import { LIMITS } from "@/lib/assistant/limits";
 import type { Scope } from "@/lib/assistant/answer";
@@ -115,7 +116,13 @@ const SHARED_TABLES: Record<string, ReadonlySet<string>> = {
   ref_taluks: new Set(["taluk_code", "name", "name_ta", "in_district", "lat", "lon", "note"]),
   ref_departments: new Set(["code", "name", "org", "head", "route", "action_owner"]),
   ref_facilities: new Set(["facility_id", "type", "name", "lat", "lon", "taluk_code", "capacity", "relevance", "specialties", "in_district", "basin"]),
-  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"])
+  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"]),
+  // AGMARKNET's public market prices: no department's records and nothing derived from incidents (reviewer4-05: an officer's planned
+  // question on them was refused). The weather and health readings (observations) stay out: their rows mix the district's sensors with
+  // hospitals' bed and alert figures
+  mandi_market_prices: new Set(["date", "market", "commodity", "variety", "cmdt_group", "min_price", "max_price", "modal_price", "arrival", "fetched_at"]),
+  mandi_prices: new Set(["date", "scope", "commodity", "cmdt_group", "price", "arrival", "msp", "fetched_at"]),
+  mandi_weekly: new Set(["week_start", "week_label", "scope", "commodity", "price", "districts", "chg_week", "chg_month", "chg_year", "fetched_at"])
 };
 const DEPT_COLUMNS = SCOPE_COLUMNS.find(([k]) => k === "dept")![1];
 
@@ -154,6 +161,22 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
   const holdSql = (h: Hold, alias: string): string => (h.by === "column" ? `${alias}.${q(h.col)} = ?`
     : `${alias}.\`incident_id\` IN (SELECT li.\`incident_id\` FROM ${qualified(incidentsTable!)} li WHERE li.\`lead_dept\` = ?)`);
   const baseHold = holdFor(base);
+  /**
+   * Under the lock, a column naming an incident (declared key incidents.incident_id) on a table held by its own department column: the row is
+   * the department's, but the incident it was merged into may be another department's, and its id was given out (p7-askiq-writer-lock-03).
+   * Holding the row through that incident too would hide the officer's own records, so the row stays and the id is read through the
+   * department's incidents instead: another department's incident id reads as NULL, as a dimension, a measure or a filter. Each such column
+   * gets a LEFT JOIN of the department's incident ids (`masks`), whose one "?" is the department, placed in FROM after its table.
+   */
+  const masks: { alias: string; col: string; as: string }[] = [];
+  const incidentOf = (t: CatalogTable, h: Hold | null, alias: string, col: CatalogColumn): string | null => {
+    if (h?.by !== "column" || t.name === "incidents" || col.join !== "incidents.incident_id" || !incidentsTable) return null;
+    let m = masks.find((x) => x.alias === alias && x.col === col.name);
+    if (!m) masks.push((m = { alias, col: col.name, as: `k${masks.length + 1}` }));
+    return `${m.as}.\`incident_id\``;
+  };
+  const maskJoins = (alias: string): string => masks.filter((m) => m.alias === alias).map((m) =>
+    ` LEFT JOIN (SELECT DISTINCT li.\`incident_id\` FROM ${qualified(incidentsTable!)} li WHERE li.\`lead_dept\` = ?) ${m.as} ON ${m.as}.\`incident_id\` = ${alias}.${q(m.col)}`).join("");
   if (!ALIAS.test(pq.id.toLowerCase())) throw new CompileError(`Query id "${pq.id}" must be a short lower-case name.`);
   const notes: string[] = [];
   const joins: { table: CatalogTable; alias: string; on: string; hold: Hold | null }[] = [];
@@ -165,7 +188,8 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
   const column = (table: string, alias: string, c: string): string => {
     if (table !== "incidents") return `${alias}.${q(c)}`;
     const e = effectiveSql(ops("collector_decisions"), alias);
-    return ({ is_open: e.open, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
+    // "still open" is the console's open (OPEN_NOW): a news complaint handed to a department is its work, not open on the console (reviewerG-01)
+    return ({ is_open: `(CASE WHEN ${openNowSql(alias, e.open)} THEN 1 ELSE 0 END)`, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
   };
 
   /** under the lock, only a shared reference table's own reference columns (the rest are derived from every department's records) */
@@ -180,7 +204,7 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
       const col = base.columns.get(c);
       if (!col) throw new CompileError(`Column "${c}" (${purpose}) is not available on ${base.name}. Available: ${[...base.columns.keys()].join(", ")}.`);
       sharedOnly(base, baseHold, col);
-      return { sql: column(base.name, "b", c), col, table: base, alias: "b" };
+      return { sql: incidentOf(base, baseHold, "b", col) ?? column(base.name, "b", c), col, table: base, alias: "b" };
     }
     const other = cat.tables.get(t);
     if (!other) throw new CompileError(`Table "${t}" (${purpose}) is not in the catalog.`);
@@ -198,7 +222,7 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
       joins.push(j);
     }
     sharedOnly(other, j.hold, col);
-    return { sql: column(other.name, j.alias, c), col, table: other, alias: j.alias };
+    return { sql: incidentOf(other, j.hold, j.alias, col) ?? column(other.name, j.alias, c), col, table: other, alias: j.alias };
   };
 
   if (pq.measures.length === 0 && pq.dimensions.length === 0) throw new CompileError("Select at least one measure or dimension.");
@@ -335,10 +359,12 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
 
   // a joined table's hold is in its ON, so its "?" come before the WHERE's: `fromParams` lead every parameter list below
   const fromParams: unknown[] = [];
-  const from = `${qualified(base)} b ${joins.map((j) => {
+  /** a table's mask joins (p7-askiq-writer-lock-03), right after it, each with its "?" in order */
+  const masked = (alias: string) => { for (const m of masks) if (m.alias === alias) fromParams.push(lockDept); return maskJoins(alias); };
+  const from = `${qualified(base)} b${masked("b")} ${joins.map((j) => {
     if (!lockDept || !j.hold || j.hold.by === "shared") return `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on}`;
     fromParams.push(lockDept);
-    return `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on} AND ${holdSql(j.hold, j.alias)}`;
+    return `LEFT JOIN ${qualified(j.table)} ${j.alias} ON ${j.on} AND ${holdSql(j.hold, j.alias)}${masked(j.alias)}`;
   }).join(" ")}`.trim();
   const W = where.length ? where.join(" AND ") : "1=1";
   const testExpr = base.test === "0" || base.test === "1" ? null : base.test.replace(/\b([a-z_]+)\b(?=\s*(=|IN|<>|>|<))/g, "b.`$1`");
