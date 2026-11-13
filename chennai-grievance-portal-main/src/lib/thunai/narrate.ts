@@ -186,6 +186,20 @@ export function hoursOf(openFor: unknown): number | null {
   return u.startsWith("min") ? n / 60 : u.startsWith("h") ? n : u.startsWith("d") ? n * 24 : u.startsWith("w") ? n * 168 : n * 720;
 }
 
+/**
+ * A record's place as it may be said aloud: a name, not a sentence. The place is a citizen's or a pipeline's free text (up to 120
+ * characters), and the retelling said it as it is and gave it to the speech gate as a name, so an order written into it was read out by
+ * Jarvis and by the gate's own fallback (redsec2-08). A place with a sentence break (a word of three or more letters and then ". ", or
+ * "!", "?", ";", a line break), over 8 words or over 60 characters is not said; the caller says the zone. Initials and abbreviations
+ * ("T. Nagar", "St. Thomas Mount") are names.
+ */
+export function spokenPlace(p: string | null | undefined): string | null {
+  const t = String(p ?? "").trim();
+  if (!t || /[!?;\n\r]|[\p{L}]{3,}\.\s/u.test(t)) return null;
+  const one = t.replace(/\s+/g, " ");
+  return one.length > 60 || one.split(" ").length > 8 ? null : one;
+}
+
 export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: string | null; now?: number; next?: { en: string; ta: string } | null; placeTa?: string | null; open?: unknown } = {}): FactSheet {
   let hours = hoursOf(extra.openFor);
   if (hours == null && extra.firstAt) {
@@ -193,7 +207,7 @@ export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: s
     if (m) hours = ((extra.now ?? Date.now()) - Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]) - 5, Number(m[5]) - 30)) / 3_600_000;
   }
   return {
-    what: plainWhat(row.cat, row.why ?? row.title), place: row.place ?? row.zoneName ?? null, placeTa: extra.placeTa ?? row.zoneName ?? row.place ?? null,
+    what: plainWhat(row.cat, row.why ?? row.title), place: spokenPlace(row.place) ?? row.zoneName ?? null, placeTa: extra.placeTa ?? row.zoneName ?? spokenPlace(row.place),
     hours, overdue: row.overdue, serious: row.sev === "Severe" || row.sev === "High", complaints: row.complaints, who: plainWho(row.dept, row.deptName), next: extra.next ?? null, closed: closedAs(row.status, extra.open)
   };
 }
