@@ -19,3 +19,13 @@
   - reviewerA-02: fixed for the two rehearsal routes. The three other routes are in p7 files and were handed to desk-and-accounts and studio-egress.
 - The usage limit and a session restart stopped the run between 04:12 and 12:07. Reviewer B was resumed.
 - 12:09: tsc on 9acfd262 exit 0, 0 errors.
+- 12:57: reviewer B (batch B) found 7 problems, all probe-confirmed.
+  - Fixed: reviewerB-01 (P2, track guesses in a burst), -02, -03, -05 and -07, each with a test and a revert check.
+  - Open, in p7 files: reviewerB-04 (the coordinator fixes it on the combined branch) and reviewerB-06 (handed to collector-ops).
+- tsc on b8993a3e: exit 0, 0 errors.
+- Tally on this branch:
+  - My 31 rows: 25 fixed, 1 duplicate, 1 owner (journeys-01), 4 open. All 4 open ones need p7 files: officer-day-13 and -26 (officer/data.ts), P5-035 (a thunai test), and P5-033's p7 parts.
+  - Reviewer rows A/B (13): 10 fixed, 3 open (reviewerA-02's three routes, reviewerB-04, reviewerB-06).
+- Agreed with the fix coordinator (owner-approved): it merges the six p7 lanes, claude/fixall-repeat-reviewer5, this branch and pass 4's eec8c840 into one branch, then runs the gate once.
+  - This branch stops moving at its "freezing fixall".
+  - The 71 rows that wait on p7 files continue on a new branch cut from the combined tip after the gate.
