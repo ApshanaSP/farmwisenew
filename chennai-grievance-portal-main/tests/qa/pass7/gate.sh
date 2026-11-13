@@ -12,6 +12,8 @@ LOCK="C:/Users/arjun/AppData/Local/Claude-Data/claude_pzs8sxrjxfjjc/side-session
 until mkdir "$LOCK" 2>/dev/null; do stamp "4599 lock held by another session; waiting"; sleep 60; done
 trap 'rmdir "$LOCK" 2>/dev/null; node tests/qa/pass4/server.mjs stop --port 3106 >/dev/null 2>&1' EXIT
 export QA_PIN_PORT=3197
+# pass 4 files that start a server on a fixed default port (3142, 3134, 3120) run inside this gate's range; the suite runs one file at a time
+export QA_MODEL_PORT=3107 QA_UI_HONESTY_PORT=3108 QA_SAME_NUMBER_PORT=3109
 stamp "commit $(git rev-parse --short HEAD)"
 node tests/qa/pass4/server.mjs stop --port 3106 >/dev/null 2>&1 || true
 
