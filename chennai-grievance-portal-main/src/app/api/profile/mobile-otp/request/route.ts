@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionFromCookies } from "@/lib/auth";
 import { mobileSchema } from "@/lib/validators";
-import { createOtp, devOtpForResponse } from "@/lib/otp";
+import { createOtp, devOtpForResponse, discardOtp } from "@/lib/otp";
 import { sendMail, otpEmailHtml } from "@/lib/mailer";
 import { mobileOtpId, mobileTry, tryAgainIn } from "@/lib/profile-mobile";
 
@@ -33,8 +33,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Code already sent.", cooldownRemaining: result.cooldownRemaining });
   }
 
-  await sendMail(session.email, "Confirm the mobile number on your account", otpEmailHtml(result.otp, `adding the mobile number ${mobileNumber} to your account`));
-
+  // "e-mailed" only when the mail server took it (mailer.ts): with SMTP off, or a refused send, the citizen was told to wait for a mail that
+  // never comes, and the unsent code blocked a new one for the cooldown (QA pass 6, hunt2-sec-05)
+  const sent = await sendMail(session.email, "Confirm the mobile number on your account", otpEmailHtml(result.otp, `adding the mobile number ${mobileNumber} to your account`));
   const devOtp = devOtpForResponse(result.otp, req.headers);
+  if (!sent.ok) {
+    if (devOtp) return NextResponse.json({ message: "E-mail is not working on this server, so no code was e-mailed. The code is shown here (development only).", devOtp });
+    await discardOtp(mobileOtpId(session.userId, mobileNumber), "mobile_verify");
+    return NextResponse.json({ error: "The code could not be e-mailed just now. Please try again later." }, { status: 503 });
+  }
   return NextResponse.json({ message: "We have e-mailed you a code. Enter it to save this number.", devOtp });
 }
