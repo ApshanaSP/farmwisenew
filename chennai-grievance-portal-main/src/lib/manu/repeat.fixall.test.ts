@@ -85,3 +85,29 @@ describe("reviewer5-08: streets", () => {
     expect(r.matches[0]?.samePerson ?? false).toBe(same);
   });
 });
+
+// hunt2-desk-10: "who" was the squashed name before the mobile, so two people of one name (different mobiles, different streets) were one
+// root of the union, and "1 other person has written" undercounted a ward's common names (Kumar, Lakshmi, Murugan)
+describe("hunt2-desk-10: two people of one name are two people", () => {
+  const now = { mobile: "9000011111", name: "Meenakshi", street: "Gandhi Street", ward: 64, dept: "GCC-HLT", problem: "Stray dogs biting children near school" };
+  const dog = (o: Partial<E>) => e({ dept: "GCC-HLT", ward: 64, problem: "Stray dogs biting children near the school gate", ...o });
+  it("R. Kumar of Kamaraj Salai and R Kumar of Nehru Street, two mobiles: 2 other people", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai, Kolathur" }),
+      dog({ code: "2026-1B", name: "R Kumar", mobile: "9000033333", address: "5, Nehru Street, Kolathur" })]);
+    expect(r.headline).toBe("2 other people have written about this in the same ward.");
+  });
+  it("one name, one address, a new mobile: 1 person", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai, Kolathur" }),
+      dog({ code: "2026-1B", name: "R Kumar", mobile: "9000033333", address: "1, Kamaraj Salai, Kolathur" })]);
+    expect(r.headline).toBe("1 other person has written about this in the same ward.");
+  });
+  it("one mobile under two spellings of the name: 1 person", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222" }), dog({ code: "2026-1B", name: "Kumar R", mobile: "9000022222" })]);
+    expect(r.headline).toBe("1 other person has written about this in the same ward.");
+  });
+  it("two named people with mobiles and the first once more without one: 2 people", () => {
+    const r = judgeRepeats(now, [dog({ code: "2026-1A", name: "R. Kumar", mobile: "9000022222", address: "1, Kamaraj Salai" }),
+      dog({ code: "2026-1B", name: "Lakshmi", mobile: "9000033333", address: "5, Nehru Street" }), dog({ code: "2026-1C", name: "R. Kumar", mobile: null, address: "1, Kamaraj Salai" })]);
+    expect(r.headline).toBe("2 other people have written about this in the same ward.");
+  });
+});

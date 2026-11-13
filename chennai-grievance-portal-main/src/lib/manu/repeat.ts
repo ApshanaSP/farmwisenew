@@ -225,7 +225,7 @@ function streetIn(typed: string | null, address: string | null): boolean {
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
-  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string })[] = [];
+  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
     const sameMobile = !!mobile && theirs === mobile;
@@ -249,7 +249,7 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
     // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
     out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
-      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs });
+      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: squash(e.address) });
   }
   // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
   // others on it, then the person's other petitions; newest first in each (P6-011)
@@ -262,12 +262,19 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     headline = `This is this person's ${nth(mine.length + 1)} petition on this problem. The last one was filed on ${day(last.filedAt)} and is ${last.open ? "still open" : `marked "${last.status}"`}.`;
   } else if (others.length) {
     // people, not petitions: one neighbour who wrote three times is one person (P5-030)
-    // one person may write once with a mobile and once without: a name or a mobile in common is one person (P6-011)
+    // a mobile is a person; two mobiles are two people even with one name ("R. Kumar" of Kamaraj Salai and "R Kumar" of Nehru Street were
+    // counted as one, and common names undercounted the people affected: hunt2-desk-10), unless the name and the address are the same too
+    // (a new mobile). A filing with no mobile is the person of that name who has one (once with a mobile and once without is one person:
+    // P6-011), or a person of its own when nobody of that name has one.
     const parent = new Map<string, string>();
     const root = (k: string): string => { let r = k; while (parent.has(r) && parent.get(r) !== r) r = parent.get(r)!; return r; };
     const join = (a: string, b: string) => { const x = root(a), y = root(b); if (x !== y) parent.set(y, x); };
-    for (const m of others) { if (!parent.has(m.who)) parent.set(m.who, m.who); if (m.phone) join(m.who, `tel:${m.phone}`); }
-    const people = new Set(others.map((m) => root(m.who))).size;
+    const keyOf = (m: (typeof others)[number]) => (m.phone ? `tel:${m.phone}` : `name:${m.who}`);
+    for (const m of others) if (!parent.has(keyOf(m))) parent.set(keyOf(m), keyOf(m));
+    const phoned = others.filter((m) => m.phone);
+    for (const a of phoned) for (const b of phoned) if (a.phone !== b.phone && a.who === b.who && a.addr && a.addr === b.addr) join(keyOf(a), keyOf(b));
+    for (const m of others) if (!m.phone) { const same = phoned.find((x) => x.who === m.who); if (same) join(keyOf(same), keyOf(m)); }
+    const people = new Set(others.map((m) => root(keyOf(m)))).size;
     headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
   } else if (person.length) {
     headline = `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
@@ -276,7 +283,7 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const target = [...mine, ...others].find((m) => m.open && m.incidentId && m.sameDept);
   // a case of another department is not offered to join: the desk shows "Add to this case" for a match with a case id, so such a match
   // comes without one (joining another department's case is the owner's decision, P5-021; P6-011)
-  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, ...m }) => (sameDept ? m : { ...m, incidentId: null })), attachTo: target?.incidentId ?? null };
+  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, addr: _a, ...m }) => (sameDept ? m : { ...m, incidentId: null })), attachTo: target?.incidentId ?? null };
 }
 
 /** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */
