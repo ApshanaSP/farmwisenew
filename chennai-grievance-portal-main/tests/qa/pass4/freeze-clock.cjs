@@ -28,19 +28,28 @@ if (!Number.isNaN(at)) {
     const stmts = new Map();
     const iso = () => new Real(now()).toISOString().replace("T", " ").replace("Z", "");
     const DATE_FNS = ["datetime", "date", "time", "julianday", "unixepoch"];
+    // Integers come back as BigInt, which node:sqlite returns as INTEGER: unixepoch() stays an INTEGER, so whole-day division on it
+    // still truncates (reviewerB-07; as a JS number it came back REAL).
     const call = (name, args) => {
       const key = `${name}/${args.length}`;
       let st = stmts.get(key);
-      if (!st) stmts.set(key, (st = helper.prepare(`SELECT ${name}(${args.map(() => "?").join(", ")}) AS v`)));
+      if (!st) {
+        st = helper.prepare(`SELECT ${name}(${args.map(() => "?").join(", ")}) AS v`);
+        st.setReadBigInts(true);
+        stmts.set(key, st);
+      }
       return st.get(...args).v;
     };
     const isNow = (v) => typeof v === "string" && v.trim().toLowerCase() === "now";
     class FrozenClockDb extends RealDb {
       constructor(...a) {
         super(...a);
-        for (const name of DATE_FNS) this.function(name, { varargs: true }, (...args) => call(name, args.length ? args.map((v, i) => (i === 0 && isNow(v) ? iso() : v)) : [iso()]));
+        // deterministic, as SQLite's own date functions are for any time but 'now': an index or generated column on date(at) builds
+        // under the moved clock as it does without it, instead of failing only here (reviewerB-07)
+        const opts = { varargs: true, deterministic: true };
+        for (const name of DATE_FNS) this.function(name, opts, (...args) => call(name, args.length ? args.map((v, i) => (i === 0 && isNow(v) ? iso() : v)) : [iso()]));
         // strftime(format, time, ...): the time is the second argument
-        this.function("strftime", { varargs: true }, (...args) => call("strftime", args.length === 1 ? [args[0], iso()] : args.map((v, i) => (i === 1 && isNow(v) ? iso() : v))));
+        this.function("strftime", opts, (...args) => call("strftime", args.length === 1 ? [args[0], iso()] : args.map((v, i) => (i === 1 && isNow(v) ? iso() : v))));
       }
     }
     sqlite.DatabaseSync = FrozenClockDb;
