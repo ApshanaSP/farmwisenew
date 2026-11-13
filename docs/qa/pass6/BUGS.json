@@ -1272,15 +1272,16 @@
     "title": "The officer sees only the first 280 characters of the citizen's complaint (the form allows 400) and nowhere the rest",
     "found_by": "officer-day",
     "repro": "cd chennai-grievance-portal-main/tests/qa/pass6/known-failures/officer-day && node p2-file.mjs \"garbage|waste|debris\" \"Solid Waste\" flow media long",
-    "failing_test": null,
-    "root_cause": "the source preview length is the only copy of the text",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/officer/data.fixall.test.ts::a 400-character complaint (the form's limit) reaches the drawer's source whole, not its first 280 characters",
+    "root_cause": "grievanceDetail read the source text as LEFT(e.text, 280), the only copy the officer had",
+    "fix_commit": "ce88fba9",
+    "revert_check": "fails without (note cut at 280) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/lib/officer/data.ts:464 (LEFT(e.text, 280)), src/lib/validators.ts:176 (description max 400)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-18",

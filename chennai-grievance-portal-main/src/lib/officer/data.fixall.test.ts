@@ -68,6 +68,10 @@ function incident(id: string, o: Record<string, unknown> = {}) {
   const k = Object.keys(r);
   h.db.prepare(`INSERT INTO incidents (${k.join(", ")}) VALUES (${k.map(() => "?").join(", ")})`).run(...(Object.values(r) as never[]));
 }
+const decide = (id: string, d: string, at: string, note: string | null = null, role = "collector") =>
+  h.db.prepare(`INSERT INTO collector_decisions (incident_id, decision, note, decided_by, decided_role, decided_at) VALUES (?, ?, ?, 'c@x', ?, ?)`).run(id, d, note, role, at);
+/** The department's own close, as recordStep writes it: the step, then a resolve decision by its officer, in one transaction. */
+const closeByDept = (id: string, at: string) => { step(id, "close", at, "Cleared"); decide(id, "resolve", at, "Closed by the department: Cleared", "department_officer"); };
 const step = (id: string, s: string, at: string, note: string | null = null) =>
   h.db.prepare(`INSERT INTO officer_steps (incident_id, dept_code, step, note, actor, at) VALUES (?, 'GCC-SWM', ?, ?, 'swm@x', ?)`).run(id, s, note, at);
 
@@ -130,6 +134,46 @@ describe("officer console data", () => {
         VALUES ('INC-LONG', 'GRV-1', 'grievance', 'citizen_app', '2026-10-14 09:00:00', 'Garbage not cleared', 'first_report')`).run();
       const d = await grievanceDetail(SWM, "INC-LONG");
       expect(d?.sources[0].note).toBe(text);
+    });
+  });
+
+  describe("officer-day-15, officer-day-24: a step and a decision in the same second are read in one order by every console", () => {
+    /** The three readers of one case: the officer's stage, the citizen's tracker (complaint-progress.ts, the real reader), the Collector's status. */
+    async function views(id: string) {
+      h.db.prepare(`INSERT INTO events (event_id, source, source_record_id, incident_id, text) VALUES (?, 'grievance', ?, ?, 'x')`).run(`GRV-${id}`, `C-${id}`, id);
+      const { progressFor } = await vi.importActual<typeof import("@/lib/complaint-progress")>("@/lib/complaint-progress");
+      const { effectiveStatus } = await import("@/lib/collector/effective");
+      const g = (await grievanceDetail(SWM, id))!.grievance;
+      const citizen = (await progressFor([{ code: `C-${id}`, createdAt: "2026-10-14 08:00:00" }])).get(`C-${id}`)!.status;
+      // the Collector reads the latest decision with an effect by decision_id (effective.ts effectiveSql)
+      const last = h.db.prepare(`SELECT decision FROM collector_decisions WHERE incident_id = ? AND decision IN ('verify', 'resolve', 'reject', 'reopen')
+        ORDER BY decision_id DESC LIMIT 1`).get(id) as { decision: string };
+      return { stage: g.stage, returned: g.returned, citizen, collector: effectiveStatus(1, "Open", last.decision).status };
+    }
+    const T = "2026-10-14 11:00:00";
+
+    it("officer-day-15: a send-back in the same second as the send is In action AND Returned, as the citizen and the Collector read it", async () => {
+      incident("INC-S", { severity_level: "Severe" });
+      step("INC-S", "approve", "2026-10-14 10:00:00");
+      step("INC-S", "send", T, "Cleared");
+      decide("INC-S", "reopen", T, "Photos do not show the street");
+      expect(await views("INC-S")).toEqual({ stage: "action", returned: true, citizen: "In Progress", collector: "Open" });
+    });
+
+    it("officer-day-24: a send-back, then the department's close, in the same second: closed, for all three", async () => {
+      incident("INC-C");
+      step("INC-C", "approve", "2026-10-14 10:00:00");
+      decide("INC-C", "reopen", T, "Not done");
+      closeByDept("INC-C", T);
+      expect(await views("INC-C")).toEqual({ stage: "verified", returned: false, citizen: "Resolved by Department", collector: "Resolved" });
+    });
+
+    it("officer-day-24: the department's close, then a send-back, in the same second: returned, for all three", async () => {
+      incident("INC-R");
+      step("INC-R", "approve", "2026-10-14 10:00:00");
+      closeByDept("INC-R", T);
+      decide("INC-R", "reopen", T, "Not done");
+      expect(await views("INC-R")).toEqual({ stage: "action", returned: true, citizen: "In Progress", collector: "Open" });
     });
   });
 });

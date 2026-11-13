@@ -77,8 +77,19 @@ export async function deptProfile(code: string): Promise<DeptProfile | null> {
 
 // ------------------------------------------------------ stage overlay --
 
+/**
+ * The one order of a case's events, for every reader (this overlay, the Collector's effective status, the citizen's tracker:
+ * complaint-progress.ts progressOf). Steps among themselves go by step_id and decisions among themselves by decision_id (the
+ * Collector's effective status reads the latest decision by id too); the department's close is itself a decision (a resolve by its
+ * officer), so it is placed among the Collector's decisions by its id. A step and a Collector decision in different seconds go by time;
+ * in the same second the step comes first and the decision after it. officer-day-15: the stage took a same-second reopen as after the
+ * send (>=) while "returned" took it as before (<), so the case moved to In action without the Returned flag; officer-day-24: the
+ * officer's close and a reopen in the same second were read in different orders by the officer and the citizen.
+ */
+const DECIDED_AFTER = (decidedAt: string, stepAt: string) => `${decidedAt} >= ${stepAt}`;
+
 const STAGE_SQL = `CASE
-    WHEN cd.decided_at IS NOT NULL AND (os.at IS NULL OR cd.decided_at >= os.at)
+    WHEN cd.decided_at IS NOT NULL AND (os.at IS NULL OR ${DECIDED_AFTER("cd.decided_at", "os.at")})
       THEN CASE cd.decision WHEN 'reopen' THEN 'action' WHEN 'reject' THEN 'closed' ELSE 'verified' END
     WHEN os.step = 'close' THEN 'verified'
     WHEN os.step = 'send' THEN 'sent'
@@ -99,13 +110,13 @@ function withStage(dept: string, now: string) {
   return {
     sql: `WITH os AS (
         SELECT incident_id, step, at FROM (
-          SELECT s.incident_id, s.step, s.at, ROW_NUMBER() OVER (PARTITION BY s.incident_id ORDER BY s.at DESC, s.step_id DESC) AS rn
+          SELECT s.incident_id, s.step, s.at, ROW_NUMBER() OVER (PARTITION BY s.incident_id ORDER BY s.step_id DESC) AS rn
           FROM ${ops("officer_steps")} s WHERE s.dept_code = ?) x WHERE rn = 1),
       ls AS (SELECT incident_id, MAX(at) AS at FROM ${ops("officer_steps")} WHERE dept_code = ? AND step = 'send' GROUP BY incident_id),
       cd AS (
         SELECT incident_id, decision, decided_at, note FROM (
           SELECT d.incident_id, d.decision, d.decided_at, d.note,
-                 ROW_NUMBER() OVER (PARTITION BY d.incident_id ORDER BY d.decided_at DESC, d.decision_id DESC) AS rn
+                 ROW_NUMBER() OVER (PARTITION BY d.incident_id ORDER BY d.decision_id DESC) AS rn
           FROM ${ops("collector_decisions")} d JOIN incidents di ON di.incident_id = d.incident_id AND di.lead_dept = ?
           WHERE d.decision IN ('verify', 'reopen', 'resolve', 'reject')) x WHERE rn = 1),
       w AS (
@@ -113,7 +124,7 @@ function withStage(dept: string, now: string) {
                i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.channels, i.source_count, i.officer,
                i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
                ${STAGE_SQL} AS stage,
-               (cd.decision = 'reopen' AND (ls.at IS NULL OR ls.at < cd.decided_at)) AS returned,
+               (cd.decision = 'reopen' AND (ls.at IS NULL OR ${DECIDED_AFTER("cd.decided_at", "ls.at")})) AS returned,
                cd.note AS c_note, cd.decision AS c_decision, cd.decided_at AS c_at,
                GREATEST(i.last_update_at, COALESCE(os.at, i.last_update_at), COALESCE(cd.decided_at, i.last_update_at)) AS upd
         FROM incidents i

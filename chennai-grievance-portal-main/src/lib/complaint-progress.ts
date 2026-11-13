@@ -21,8 +21,9 @@ import { appendStatusChangeToDataset } from "@/lib/dataset/append";
 import type { ComplaintStatus } from "@/types";
 import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 
-export interface WorkStep { step: string; at: string; note: string | null; reportId: number | null }
-export interface WorkDecision { decision: string; at: string; note: string | null; role: string | null }
+/** `id`: the row's step_id / decision_id, its place among the case's steps / decisions (without it, the order given) */
+export interface WorkStep { step: string; at: string; note: string | null; reportId: number | null; id?: number }
+export interface WorkDecision { decision: string; at: string; note: string | null; role: string | null; id?: number }
 export interface WorkReport { reportId: number; photoDir: string | null; photos: string[] }
 export interface JourneyRow { status: ComplaintStatus; stage: string; remarks: string | null; created_at: string }
 
@@ -47,12 +48,26 @@ const DECISIONS = ["verify", "resolve", "reopen", "reject"];
  * stored as a step and a 'resolve' decision by the officer: the step is read, the decision skipped.
  */
 export function progressOf(incidentId: string, filedAt: string, steps: WorkStep[], decisions: WorkDecision[], reports: WorkReport[]): Progress | null {
-  type Ev = { at: string; kind: "step" | "decision"; s?: WorkStep; d?: WorkDecision };
+  // The one order of a case's events that the officer's stage uses too (lib/officer/data.ts DECIDED_AFTER): steps by step_id, decisions
+  // by decision_id; a step and a Collector decision in different seconds by time, in the same second the step first. The department's
+  // close is also a decision (its officer's resolve), so the close step takes that decision's place among the Collector's: a close and a
+  // send-back in the same second were read here as close-then-reopen whatever their ids, while the officer and the Collector read the
+  // later decision by id, and the consoles disagreed for good (officer-day-24).
+  const inOrder = <T extends { id?: number }>(xs: T[]) => xs.map((x, k) => ({ x, k })).sort((a, b) => (a.x.id ?? a.k) - (b.x.id ?? b.k)).map((e) => e.x);
+  const S = inOrder(steps), D = inOrder(decisions);
+  const deptCloses = D.filter((d) => d.role === "department_officer" && d.decision === "resolve");
+  const closes = S.filter((s) => s.step === "close");
+  // each close and its resolve are written together; paired from the latest back, so a close from before the resolve was written keeps its own time
+  const anchor = new Map(closes.map((c, j) => [c, deptCloses[deptCloses.length - closes.length + j]] as const).filter(([, d]) => d));
+  type Ev = { at: string; rank: number; seq: number; s?: WorkStep; d?: WorkDecision };
   const evs: Ev[] = [
-    ...steps.filter((s) => s.at >= filedAt).map((s) => ({ at: s.at, kind: "step" as const, s })),
-    ...decisions.filter((d) => d.at >= filedAt && DECISIONS.includes(d.decision) && d.role !== "department_officer")
-      .map((d) => ({ at: d.at, kind: "decision" as const, d }))
-  ].sort((a, b) => a.at.localeCompare(b.at) || (a.kind === b.kind ? 0 : a.kind === "step" ? -1 : 1));
+    ...S.filter((s) => s.at >= filedAt).map((s, k): Ev => {
+      const d = anchor.get(s);
+      return d ? { at: d.at, rank: 1, seq: D.indexOf(d), s } : { at: s.at, rank: 0, seq: k, s };
+    }),
+    ...D.map((d, k) => ({ d, k })).filter(({ d }) => d.at >= filedAt && DECISIONS.includes(d.decision) && d.role !== "department_officer")
+      .map(({ d, k }): Ev => ({ at: d.at, rank: 1, seq: k, d }))
+  ].sort((a, b) => a.at.localeCompare(b.at) || a.rank - b.rank || a.seq - b.seq);
   if (!evs.length) return null;
 
   const journey: JourneyRow[] = [];
@@ -144,9 +159,9 @@ export async function progressFor(complaints: { code: string; createdAt: unknown
   const ids = [...new Set(inc.values())];
   if (!ids.length) return out;
   const [steps] = await intelPool.query<RowDataPacket[]>(
-    `SELECT incident_id, step, note, report_id, ${fmt("at")} AS at FROM ${ops("officer_steps")} WHERE incident_id IN (?)`, [ids]);
+    `SELECT step_id, incident_id, step, note, report_id, ${fmt("at")} AS at FROM ${ops("officer_steps")} WHERE incident_id IN (?)`, [ids]);
   const [decisions] = await intelPool.query<RowDataPacket[]>(
-    `SELECT incident_id, decision, note, decided_role, ${fmt("decided_at")} AS at FROM ${ops("collector_decisions")} WHERE incident_id IN (?)`, [ids]);
+    `SELECT decision_id, incident_id, decision, note, decided_role, ${fmt("decided_at")} AS at FROM ${ops("collector_decisions")} WHERE incident_id IN (?)`, [ids]);
   const [reports] = await intelPool.query<RowDataPacket[]>(
     `SELECT report_id, incident_id, photo_dir, photos FROM ${ops("officer_reports")} WHERE incident_id IN (?)`, [ids]);
   const by = <T>(rows: Row[], map: (r: Row) => T) => {
@@ -154,8 +169,8 @@ export async function progressFor(complaints: { code: string; createdAt: unknown
     for (const r of rows) (m.get(String(r.incident_id)) ?? m.set(String(r.incident_id), []).get(String(r.incident_id))!).push(map(r));
     return m;
   };
-  const S = by(steps, (r): WorkStep => ({ step: String(r.step), at: str(r.at), note: r.note == null ? null : scrubCitizenDetails(String(r.note)), reportId: r.report_id == null ? null : Number(r.report_id) }));
-  const D = by(decisions, (r): WorkDecision => ({ decision: String(r.decision), at: str(r.at), note: r.note == null ? null : r.decided_role === "department_officer" || String(r.note).startsWith(CLOSED_BY_DEPARTMENT) ? scrubCitizenDetails(String(r.note)) : r.note, role: r.decided_role ?? null }));
+  const S = by(steps, (r): WorkStep => ({ id: Number(r.step_id), step: String(r.step), at: str(r.at), note: r.note == null ? null : scrubCitizenDetails(String(r.note)), reportId: r.report_id == null ? null : Number(r.report_id) }));
+  const D = by(decisions, (r): WorkDecision => ({ id: Number(r.decision_id), decision: String(r.decision), at: str(r.at), note: r.note == null ? null : r.decided_role === "department_officer" || String(r.note).startsWith(CLOSED_BY_DEPARTMENT) ? scrubCitizenDetails(String(r.note)) : r.note, role: r.decided_role ?? null }));
   const R = by(reports, (r): WorkReport => {
     let photos: string[] = [];
     try { photos = Array.isArray(r.photos) ? r.photos : JSON.parse(String(r.photos ?? "[]")); } catch { /* none */ }
