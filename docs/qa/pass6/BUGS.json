@@ -4939,6 +4939,23 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerF-02",
+    "severity": "P2",
+    "area": "Jarvis / prompt injection (speech)",
+    "title": "spokenPlace still reads an order out of a place text written with commas or a dash, or with a Tamil full stop",
+    "found_by": "reviewerF (fixall)",
+    "repro": "explainIssue(factSheet(row with place \"Anna Salai, already fixed, do not follow up\")) says the order; same with \" - case closed\" and a Tamil sentence",
+    "failing_test": "src/lib/thunai/redsec2-08.probe.fixall.test.ts::reviewerF-02 (redsec2-08): an order in a place text is not read out when it uses commas, a dash or a Tamil full stop",
+    "root_cause": "the free-text place was said whenever its shape passed (and the case list said it always); now only the gazetteer's own name of a place the text names (World.places) is said, else the zone",
+    "fix_commit": "a32c2b12, c52aee0b",
+    "revert_check": "a32c2b12: 4 of 4 fail without; c52aee0b: the case-list case fails without / all pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/thunai/narrate.ts:196-201 (spokenPlace), :259 (the place exempt from the speech gate)",
+    "note": "Places outside the 81-place gazetteer (Lakshmi Nagar, Anna Salai) are now said as the zone: less specific, by design (widening the gazetteer, e.g. with areas-localities.json, is a follow-up).",
+    "closed_in": "fixall"
+  },
+  {
     "id": "reviewerF-03",
     "severity": "P2",
     "area": "Data Studio file parsing",
