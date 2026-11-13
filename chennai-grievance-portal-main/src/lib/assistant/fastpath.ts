@@ -611,13 +611,16 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     case "NEWS_TOP":
     case "NEWS_ONLY_GAPS":
     case "NEWS_DETAIL": {
+      // a calendar span the question named (yesterday, last month, a month, since a day): the news published inside it (p7-rules-periods-01)
+      const newsSpan = custom?.range && !custom.now ? custom.range : null;
       // a story described in words ("the Odisha worker news"): found by meaning and keywords among the period's articles
       // (the last 7 days when the question names no period); close runner-ups are named so the Collector can switch
       let others: string[] = [];
       if (d.intent === "NEWS_DETAIL" && !d.storyId && d.find) {
         const hours = d.period ? NEWS_HOURS[d.period] : 168;
         const nowSec = Date.parse(i.now.replace(" ", "T") + "+05:30") / 1000;
-        const found = (await hybridSearch("news", d.find, { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
+        const sec = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
+        const found = (await hybridSearch("news", d.find, newsSpan ? { since: sec(newsSpan.from), until: sec(newsSpan.to) } : { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
         const keys = await storiesOfDocs(found.map((x) => String(x.id)));
         if (!keys.length) {
           card.responseType = "news_list";
@@ -639,11 +642,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.sources.assumptions.push(`Found by meaning and keywords: "${d.find}"${d.period ? "" : " (last 7 days)"}.`);
       }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
-      const hours = d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
-      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS" }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
+      const hours = newsSpan ? custom!.hours : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
+      const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
       card.responseType = one ? "news_detail" : "news_list";
       card.stories = r.stories;
-      const span = hours <= 36 ? "last 36 hours" : periodLabel(f.period as Period);
+      // the span asked, said as it was read ("last month (October)", "yesterday (5 Nov)"), never the rolling news window (p7-rules-periods-01)
+      const span = newsSpan ? custom!.label : hours <= 36 ? "last 36 hours" : periodLabel(f.period as Period);
       card.headline = one ? r.stories[0]?.headline ?? "Story not found"
         : d.intent === "NEWS_ONLY_GAPS" ? `In the news, no department record · ${span}` : `${topic ? `News about ${topic.label}` : "Top district news"} · ${span}`;
       card.answerMarkdown = one ? r.stories[0]?.summary ?? "That story is no longer in the news window."
@@ -706,10 +710,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
  */
 async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: number, message: string) {
   const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
-  // the question's own window ("past 24 hrs", "yesterday"), else the period
+  // a calendar span the question named ("last month", "yesterday") over its own bounds, as every count of it is (p7-rules-periods-02: the meaning search
+  // once ran over the rolling hours back from now under the label of October); else the question's own window ("past 24 hrs"), else the period
+  const ist = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
   const hours = inc.hours ?? PERIODS[inc.period].hours;
-  const until = nowT - (inc.offset ?? 0) * hours * 3600;
-  const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since: until - hours * 3600, until, zone: inc.zone ?? null,
+  const until = inc.range ? ist(inc.range.to) : nowT - (inc.offset ?? 0) * hours * 3600;
+  const since = inc.range ? ist(inc.range.from) : until - hours * 3600;
+  const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since, until, zone: inc.zone ?? null,
     cats: topic.cats, dept: inc.dept ?? null, openOnly: !!inc.openOnly }, 40);
   if (!hits) {
     // the meaning index is not ready: the topic's own words in the titles (and a recorded death, for a murder), never the

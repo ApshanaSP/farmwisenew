@@ -31,25 +31,32 @@ const ask = (message: string, lang: "en" | "ta" | "tanglish" = "en") =>
 const istSec = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
 beforeEach(() => { rec.counts.length = 0; rec.resolved.length = 0; rec.news.length = 0; rec.search.length = 0; });
 
-describe("p7-rules-periods-01 (open, it.fails until fixed): BREAK: news over a named day or month is the rolling news window", () => {
-  it.fails("BREAK: 'Top news from last month' is not answered with the last 30 days", async () => {
+describe("p7-rules-periods-01 (fixed): news over a named day or month is the news published inside it, said as such", () => {
+  it("'Top news from last month' is October's news, not the last 30 days", async () => {
     const o = (await ask("Top news from last month"))!;
     expect(readPeriod("Top news from last month")).toEqual({ kind: "last", unit: "month" });
-    expect({ hours: rec.news[0]?.hours, scope: o.card.scopeLine }).not.toEqual({ hours: 720, scope: "Last 30 days · Chennai news" });
+    expect(rec.news[0]?.range).toEqual({ from: "2026-10-01 00:00:00", to: "2026-11-01 00:00:00" });
+    expect(o.card.scopeLine).toMatch(/^Last month \(October\) · Chennai news/);
   });
-  it.fails("BREAK: 'yesterday's news' is not answered with the last 36 hours (which hold today)", async () => {
+  it("'yesterday's news' is 5 Nov's news (midnight to midnight), not the last 36 hours (which hold today)", async () => {
     const o = (await ask("yesterday's news"))!;
-    expect({ hours: rec.news[0]?.hours, scope: o.card.scopeLine }).not.toEqual({ hours: 36, scope: "Last 36 hours · Chennai news" });
+    expect(rec.news[0]?.range).toEqual({ from: "2026-11-05 00:00:00", to: "2026-11-06 00:00:00" });
+    expect(o.card.scopeLine).toMatch(/^Yesterday \(5 Nov\) · Chennai news/);
+  });
+  it("news with no named span keeps the rolling news window", async () => {
+    await ask("top news this week");
+    expect(rec.news[0]?.range ?? null).toBeNull();
+    expect(rec.news[0]?.hours).toBe(168);
   });
 });
 
-describe("p7-rules-periods-02 (open, it.fails until fixed): BREAK: a narrow topic (murder) over a calendar span is searched over a rolling window that ends now", () => {
-  it.fails("BREAK: 'list the murders last month' searches October (1 Oct to 1 Nov), not the 744 hours back from now", async () => {
+describe("p7-rules-periods-02 (fixed): a narrow topic (murder) over a calendar span is searched over that span's bounds", () => {
+  it("'list the murders last month' searches October (1 Oct to 1 Nov), not the 744 hours back from now", async () => {
     const o = (await ask("list the murders last month"))!;
     expect(o.card.scopeLine).toMatch(/^Last month \(October\)/);
     expect({ since: rec.search[0]?.since, until: rec.search[0]?.until }).toEqual({ since: istSec("2026-10-01 00:00:00"), until: istSec("2026-11-01 00:00:00") });
   });
-  it.fails("BREAK: 'list the murders yesterday' searches 5 Nov (midnight to midnight), not the 24 hours before the last 24", async () => {
+  it("'list the murders yesterday' searches 5 Nov (midnight to midnight), not the 24 hours before the last 24", async () => {
     await ask("list the murders yesterday");
     expect({ since: rec.search[0]?.since, until: rec.search[0]?.until }).toEqual({ since: istSec("2026-11-05 00:00:00"), until: istSec("2026-11-06 00:00:00") });
   });
