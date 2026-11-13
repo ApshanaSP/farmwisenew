@@ -125,6 +125,10 @@ const deptTaNamed = (w: World, d: string | null): string | null => {
   return best?.[1] ?? deptName(w, d);
 };
 const catTa = (w: World, c: string | null) => (c ? CAT_LABEL_TA[c] ?? catLabel(w, c) : null);
+/** A case's body in Tamil, by its code (DEPT_TA covers every code): the Tamil lines said the row's English name, "PWD Water Resources வசம் 2" (pass4-open-12). */
+const rowDeptTa = (r: { dept?: string | null; deptName?: string | null }) => (r.dept ? DEPT_TA[r.dept] : undefined) ?? r.deptName ?? r.dept ?? null;
+/** Each body's Tamil name, by the English name the rows are counted under. */
+const deptTaByName = (rows: CaseRowT[]) => new Map(rows.filter((r) => r.deptName).map((r) => [r.deptName as string, rowDeptTa(r) as string]));
 const MONTH_TA: Record<string, string> = { Jan: "ஜன.", Feb: "பிப்.", Mar: "மார்.", Apr: "ஏப்.", May: "மே", Jun: "ஜூன்", Jul: "ஜூலை", Aug: "ஆக.", Sep: "செப்.", Oct: "அக்.", Nov: "நவ.", Dec: "டிச." };
 /** A chart's time label ("21 Oct", "3 pm") in Tamil, so a Tamil line never says a Latin month or AM/PM (RC-15). */
 const labelTa = (l: string) => String(l).replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m) => MONTH_TA[m]).replace(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/gi, (_m, h, mi, ap) => `${/pm/i.test(ap) ? "பிற்பகல்" : "முற்பகல்"} ${h}${mi ? `:${mi}` : ""}`);
@@ -317,12 +321,12 @@ async function advise(c: Ctx): Promise<Part> {
   // 1. the case past its deadline that matters most (else the most urgent open case)
   const first = lateRows[0] ?? rows.find((r) => r.overdue) ?? rows[0];
   if (first) {
-    const h = holder(first), p = at(first);
+    const h = holder(first), p = at(first), hTa = rowDeptTa(first);
     points.push(first.overdue
       ? { en: `First: ${clip(first.title, 120)}${p ? ` at ${p}` : ""} is past its deadline${h ? `; ${h} holds it, call them` : ""}.`,
-        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""} காலக்கெடு தாண்டிவிட்டது${h ? `; ${h} துறையை அழையுங்கள்` : ""}.`, id: first.id }
+        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""} காலக்கெடு தாண்டிவிட்டது${hTa ? `; ${hTa} வசம் உள்ளது, அழையுங்கள்` : ""}.`, id: first.id }
       : { en: `First: ${clip(first.title, 120)}${p ? ` at ${p}` : ""}${first.sev ? `, ${first.sev.toLowerCase()}` : ""}${h ? `, with ${h}` : ""}.`,
-        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""}${h ? `; ${h} வசம் உள்ளது` : ""}.`, id: first.id });
+        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""}${hTa ? `; ${hTa} வசம் உள்ளது` : ""}.`, id: first.id });
   }
   // 2. a department sitting on several overdue cases
   // 2. a department sitting on several overdue cases: the count is the whole scope's, the department is read from the most serious of them
@@ -337,7 +341,7 @@ async function advise(c: Ctx): Promise<Part> {
     const part = late && overdueAll > overdue.length ? ` of the ${spoken(overdue.length)} most serious` : "";
     const partTa = late && overdueAll > overdue.length ? `மிகத் தீவிரமான ${spoken(overdue.length)}-இல்` : "";
     points.push({ en: `${of}${dept && n > 1 ? `, ${spoken(n)}${part} with ${dept}: ask for a status today` : ""}.`,
-      ta: `${ofTa}${dept && n > 1 ? `; ${partTa ? `${partTa} ` : ""}${spoken(n)} ${dept} வசம்: இன்றே நிலவரம் கேளுங்கள்` : ""}.`, id: null });
+      ta: `${ofTa}${dept && n > 1 ? `; ${partTa ? `${partTa} ` : ""}${spoken(n)} ${rowDeptTa(overdue.find((r) => holder(r) === dept) ?? { deptName: dept })} வசம்: இன்றே நிலவரம் கேளுங்கள்` : ""}.`, id: null });
   }
   // 3. what is rising fastest, with the ask that fits it
   const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
@@ -581,7 +585,7 @@ async function cases(c: Ctx): Promise<Part> {
   blocks.push({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
     { key: "total", label: L(`${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள், ${PERIOD_TA[s.period]}`), value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
     { key: "late", label: L("Past their deadline", "காலக்கெடு தாண்டியவை"), value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
-    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: L(`Held by ${lead[0]}`, `${lead[0]} வசம்`), value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
+    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: L(`Held by ${lead[0]}`, `${deptTaByName(rows).get(lead[0]) ?? lead[0]} வசம்`), value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
   ] });
   blocks.push({ kind: "CaseList", id: "cases", title, source, sev, total, rows });
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L("Where they are", "எங்கே உள்ளன"), rule: L("Numbered as in the list; cases without an exact place are not drawn.", "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."), shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
@@ -622,7 +626,7 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${opts.when?.ta ?? PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${opts.state?.ta ?? ""}.`,
     late.length ? `${lateN === 1 ? `1 ${unit ? "பதிவு " : ""}காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது` : `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை`}:${first.map(whereTa).join("; ")}.` : `${lateN ? `${nTa(lateN, "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")}, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
-    lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
+    lead && lead[1] >= 2 ? `${deptTaByName(rows).get(lead[0]) ?? lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
 

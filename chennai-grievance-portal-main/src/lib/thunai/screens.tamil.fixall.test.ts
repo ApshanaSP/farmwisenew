@@ -36,3 +36,29 @@ describe("pass4-open-13: the same in a case list, a body's brief and a kind's su
     expect(t).toMatch(/1 (பதிவு )?காலக்கெடு தாண்டியது/);
   });
 });
+
+// pass4-open-12 (pass 4's RC-15, PB-161 class): a Tamil case list named the body in English, "PWD Water Resources வசம் 2", in the key
+// numbers and the spoken line; the "first" and "past their deadline" points of a brief did the same.
+describe("pass4-open-12: a Tamil case list names the body in Tamil", () => {
+  const row = (id: string, overdue: number) => ({ id, title: "Lake bund seepage", sev: "Severe", status: "Open", zone: 13, zone_name: "Adyar", place: "Velachery", dept: "PWD-WRD", dept_name: "PWD Water Resources",
+    complaints: 2, t: "2026-11-12 08:00:00", overdue, breached: overdue });
+  it("the key numbers and the spoken line", async () => {
+    const h = fakeHands({ incidents: () => res({ rows: [row("INC-1", 1), row("INC-2", 1)], total: 2, complaints: 4 }) });
+    const { doc } = await buildScreen("cases", { ...emptySlots(), zones: [13] }, SCOPE, WORLD, h, "அடையாறு வழக்குகள்");
+    const t = tamil(doc);
+    expect(t).not.toContain("PWD Water Resources வசம்");
+    expect(t).toContain("பொதுப்பணித்துறை நீர்வளம் வசம்");
+  });
+});
+
+describe("pass4-open-12: the advice screen's first and past-deadline points name the body in Tamil", () => {
+  it("first case and the body sitting on several overdue cases", async () => {
+    const h = fakeHands({ incidents: () => res({ rows: [1, 2, 3].map((k) => ({ id: `INC-${k}`, title: "Lake bund seepage", sev: "Severe", status: "Open", zone: 13, zone_name: "Adyar", place: "Velachery",
+      dept: "PWD-WRD", dept_name: "PWD Water Resources", complaints: 2, t: "2026-11-12 08:00:00", overdue: 1, breached: 1 })), total: 3, complaints: 6 }) });
+    const { doc } = await buildScreen("advise", { ...emptySlots(), zones: [13] }, SCOPE, WORLD, h, "அடையாறில் என்ன செய்ய வேண்டும்");
+    const t = tamil(doc);
+    expect(t).not.toMatch(/PWD Water Resources (வசம்|துறையை)/);
+    expect(t).toMatch(/பொதுப்பணித்துறை நீர்வளம் வசம் உள்ளது/);
+    expect(t).toMatch(/3 பொதுப்பணித்துறை நீர்வளம் வசம்/);
+  });
+});
