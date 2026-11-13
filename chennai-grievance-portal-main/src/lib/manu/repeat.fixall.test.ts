@@ -111,3 +111,34 @@ describe("hunt2-desk-10: two people of one name are two people", () => {
     expect(r.headline).toBe("2 other people have written about this in the same ward.");
   });
 });
+
+// hunt2-desk-03: the same person writing about the same sewage problem once in Tamil script and once in Tanglish was told "written 1 earlier
+// petition on other problems": no word of one script meets the other, and the headline said "other problems" confidently
+describe("hunt2-desk-03: one person, the other script: 'could not tell', not 'other problems'", () => {
+  const me = { mobile: "9000041873", name: "க. பார்வதி", street: null, ward: 70, dept: "CMWSSB" };
+  it("Tamil petition, Tanglish check (the probe's case): could not tell, and the case is offered", () => {
+    const r = judgeRepeats({ ...me, problem: "kazhivu neer theruvil odudhu, smell romba" },
+      [e({ mobile: "9000041873", name: "க. பார்வதி", dept: "CMWSSB", problem: "கழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்" })]);
+    expect(r.headline).toBe("This person has written 1 earlier petition. It is written in the other script (Tamil or English), so it could not be told whether it is about the same problem: read it before approving.");
+    expect(r.matches[0]).toMatchObject({ samePerson: true, sameProblem: false, cannotTell: true, incidentId: "INC-W-2026-111AAA" });
+  });
+  it("a Tamil petition against the person's English online complaint (p10.mjs): could not tell", () => {
+    const r = judgeRepeats({ ...me, dept: "GCC-SWM", problem: "கோவில் அருகே குப்பை அள்ளப்படவில்லை" },
+      [e({ mobile: "9000041873", name: "Rani", dept: "GCC-SWM", reporterKind: "online", problem: "Garbage not cleared near the temple" })]);
+    expect(r.headline).toMatch(/could not be told whether it is about the same problem/);
+  });
+  it("two of three in the other script", () => {
+    const r = judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [
+      e({ code: "2026-1A", mobile: "9000041873", dept: "CMWSSB", problem: "கழிவுநீர் தெருவில் ஓடுகிறது" }),
+      e({ code: "2026-1B", mobile: "9000041873", dept: "CMWSSB", problem: "குடிநீர் வரவில்லை" }),
+      e({ code: "2026-1C", mobile: "9000041873", dept: "CMWSSB", problem: "Water meter broken" })]);
+    expect(r.headline).toBe("This person has written 3 earlier petitions. 2 are written in the other script (Tamil or English), so it could not be told whether they are about the same problem: read them before approving.");
+  });
+  it("the same script and different problems: still 'on other problems'; another department: not offered", () => {
+    expect(judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [e({ mobile: "9000041873", dept: "CMWSSB", problem: "Water meter broken" })]).headline)
+      .toBe("This person has written 1 earlier petition on other problems.");
+    const r = judgeRepeats({ ...me, problem: "Sewage overflowing on the street" }, [e({ mobile: "9000041873", dept: "GCC-ELE", problem: "தெரு விளக்கு எரியவில்லை" })]);
+    expect(r.headline).toBe("This person has written 1 earlier petition on other problems.");
+    expect(r.matches[0].cannotTell).toBeUndefined();
+  });
+});

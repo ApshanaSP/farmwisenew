@@ -179,6 +179,19 @@ export function sameTopic(a: string | null | undefined, b: string | null | undef
   return both >= 2 || both / new Set([...A.all, ...B.all]).size >= 0.3;
 }
 
+/**
+ * The script a problem line is written in: Tamil, Latin (English or Tanglish), or both. Between Tamil script and Latin no word can meet
+ * (there is no transliteration here), so "the same problem" cannot be told from the words (hunt2-desk-03).
+ */
+const scriptOf = (s: string | null | undefined): "ta" | "latin" | "both" | "none" => {
+  const ta = /[஀-௿]/u.test(String(s ?? "")), la = /[A-Za-z]{2,}/.test(String(s ?? ""));
+  return ta && la ? "both" : ta ? "ta" : la ? "latin" : "none";
+};
+const otherScripts = (a: string | null | undefined, b: string | null | undefined) => {
+  const x = scriptOf(a), y = scriptOf(b);
+  return (x === "ta" && y === "latin") || (x === "latin" && y === "ta");
+};
+
 const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
 const nth = (n: number) => ORD[n] ?? `${n}th`;
 const day = (t: string) => { const [y, m, d] = t.slice(0, 10).split("-"); return `${d}.${m}.${y}`; };
@@ -225,7 +238,7 @@ function streetIn(typed: string | null, address: string | null): boolean {
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
-  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string })[] = [];
+  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string; cannotTell: boolean })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
     const sameMobile = !!mobile && theirs === mobile;
@@ -249,7 +262,9 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
     // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
     out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
-      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: squash(e.address) });
+      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: squash(e.address),
+      // the person's petition to the same department (or online), in the other script: the words cannot say, so it is not "another problem"
+      cannotTell: samePerson && !sameProblem && (sameDept || e.reporterKind === "online") && otherScripts(c.problem, e.problem) });
   }
   // the person's own petitions on this problem first (the headline names the latest of them, and the desk shows the first rows), then
   // others on it, then the person's other petitions; newest first in each (P6-011)
@@ -277,13 +292,19 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     const people = new Set(others.map((m) => root(keyOf(m)))).size;
     headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
   } else if (person.length) {
-    headline = `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
+    // one in Tamil script and one in English or Tanglish share no word, so the words cannot tell: "on other problems" was said confidently of
+    // the same sewage problem written both ways (hunt2-desk-03). The staff read it; the desk offers to add it to that case.
+    const unsure = person.filter((m) => m.cannotTell).length;
+    headline = unsure
+      ? `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"}. ${unsure === 1 ? (person.length === 1 ? "It is" : "One is") : `${unsure} are`} written in the other script (Tamil or English), so it could not be told whether ${unsure === 1 ? "it is" : "they are"} about the same problem: read ${unsure === 1 ? "it" : "them"} before approving.`
+      : `This person has written ${person.length} earlier ${person.length === 1 ? "petition" : "petitions"} on other problems.`;
   }
   // only a case of the same department is offered: joining another department's case is the owner's decision (P5-021)
   const target = [...mine, ...others].find((m) => m.open && m.incidentId && m.sameDept);
   // a case of another department is not offered to join: the desk shows "Add to this case" for a match with a case id, so such a match
   // comes without one (joining another department's case is the owner's decision, P5-021; P6-011)
-  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, addr: _a, ...m }) => (sameDept ? m : { ...m, incidentId: null })), attachTo: target?.incidentId ?? null };
+  return { headline, matches: out.slice(0, 8).map(({ sameDept, who: _w, phone: _p, addr: _a, cannotTell, ...m }) =>
+    ({ ...(sameDept ? m : { ...m, incidentId: null }), ...(cannotTell ? { cannotTell: true } : {}) })), attachTo: target?.incidentId ?? null };
 }
 
 /** The desk's department code for a portal department name: the candidate's own when it is that portal department, else the first that is. */

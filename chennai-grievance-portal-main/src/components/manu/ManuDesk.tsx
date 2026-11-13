@@ -215,7 +215,7 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
             {repeats.matches.slice(0, 4).map((m) => (
               <li key={m.code}>
                 <span><strong>{m.code}</strong> · {clock(m.filedAt)} · {m.status}<br />{m.problem}</span>
-                {m.open && m.incidentId && m.sameProblem && (
+                {m.open && m.incidentId && (m.sameProblem || m.cannotTell) && (
                   <button type="button" className={attach === m.incidentId ? "on" : ""} onClick={() => setAttach((a) => (a === m.incidentId ? null : m.incidentId))}>
                     {attach === m.incidentId ? "Will be added" : "Add to this case"}
                   </button>

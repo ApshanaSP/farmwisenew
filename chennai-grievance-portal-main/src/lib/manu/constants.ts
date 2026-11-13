@@ -107,6 +107,8 @@ export interface RepeatMatch {
   samePerson: boolean;
   sameProblem: boolean;
   open: boolean;
+  /** the person's petition in the other script (Tamil or English): whether it is the same problem could not be told (hunt2-desk-03) */
+  cannotTell?: boolean;
 }
 export interface Repeats { headline: string | null; matches: RepeatMatch[]; attachTo: string | null }
 
