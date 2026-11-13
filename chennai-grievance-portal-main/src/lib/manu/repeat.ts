@@ -235,10 +235,27 @@ function streetIn(typed: string | null, address: string | null): boolean {
   });
 }
 
+/** Words of a door, not of a street: "No. 1", "Door No 12", "Plot 5", "Flat 2B", "கதவு எண் 4". */
+const DOOR = new Set("no nos number num door dr plot flat house old new block apt apartment எண் கதவு".split(" "));
+/**
+ * The parts of an address ("door, street, area", as the desk files it) that can be its street: not the door, which has no word of a street
+ * ("1", "No. 1"), and not the area at its end when another part is there (P5-030).
+ */
+function streetParts(address: string | null): string[] {
+  const parts = String(address ?? "").split(/[,\n;]/).filter((p) => streetKey(p).words.some((w) => [...w].length > 1 && !DOOR.has(w)));
+  return parts.length > 1 ? parts.slice(0, -1) : parts;
+}
+/**
+ * Do two addresses name one street, by streetIn()'s rule (the street's words and number, or a spelling slip)? The desk types the address
+ * afresh for each petition, so "1, Kamaraj Salai" and "No. 1, Kamarajar Salai" are one; byte-equal text made them two (reviewerC-06).
+ */
+const sameStreet = (a: string | null, b: string | null): boolean =>
+  streetParts(a).some((p) => streetIn(p, b)) || streetParts(b).some((p) => streetIn(p, a));
+
 /** The matches and the one line the staff read. Pure. */
 export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   const mobile = tenDigits(c.mobile), name = squash(c.name), street = streetKey(c.street).words.length ? c.street : null;
-  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string; cannotTell: boolean })[] = [];
+  const out: (RepeatMatch & { sameDept: boolean; who: string; phone: string; addr: string | null; cannotTell: boolean })[] = [];
   for (const e of earlier) {
     const theirs = tenDigits(e.mobile);
     const sameMobile = !!mobile && theirs === mobile;
@@ -262,7 +279,7 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
     // what the desk is shown of an earlier filing goes through the mask here, whatever the source: an online complaint's title was
     // returned raw, whole Aadhaar number and all (QA pass 6, redteam-gate-02)
     out.push({ code: e.code, incidentId: e.incidentId, filedAt: e.filedAt, status: e.status, problem: maskAadhaar(e.problem), dept: manuDeptLabel(e.dept), samePerson, sameProblem, open: isOpen(e.status),
-      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: squash(e.address),
+      sameDept, who: squash(e.name) || theirs || e.code, phone: theirs, addr: e.address,
       // the person's petition to the same department (or online), in the other script: the words cannot say, so it is not "another problem"
       cannotTell: samePerson && !sameProblem && (sameDept || e.reporterKind === "online") && otherScripts(c.problem, e.problem) });
   }
@@ -278,16 +295,16 @@ export function judgeRepeats(c: Candidate, earlier: Earlier[]): Repeats {
   } else if (others.length) {
     // people, not petitions: one neighbour who wrote three times is one person (P5-030)
     // a mobile is a person; two mobiles are two people even with one name ("R. Kumar" of Kamaraj Salai and "R Kumar" of Nehru Street were
-    // counted as one, and common names undercounted the people affected: hunt2-desk-10), unless the name and the address are the same too
-    // (a new mobile). A filing with no mobile is the person of that name who has one (once with a mobile and once without is one person:
-    // P6-011), or a person of its own when nobody of that name has one.
+    // counted as one, and common names undercounted the people affected: hunt2-desk-10), unless the name and the street are the same too
+    // (a new mobile), by the rule the person's own match uses (sameStreet: reviewerC-06). A filing with no mobile is the person of that name
+    // who has one (once with a mobile and once without is one person: P6-011), or a person of its own when nobody of that name has one.
     const parent = new Map<string, string>();
     const root = (k: string): string => { let r = k; while (parent.has(r) && parent.get(r) !== r) r = parent.get(r)!; return r; };
     const join = (a: string, b: string) => { const x = root(a), y = root(b); if (x !== y) parent.set(y, x); };
     const keyOf = (m: (typeof others)[number]) => (m.phone ? `tel:${m.phone}` : `name:${m.who}`);
     for (const m of others) if (!parent.has(keyOf(m))) parent.set(keyOf(m), keyOf(m));
     const phoned = others.filter((m) => m.phone);
-    for (const a of phoned) for (const b of phoned) if (a.phone !== b.phone && a.who === b.who && a.addr && a.addr === b.addr) join(keyOf(a), keyOf(b));
+    for (const a of phoned) for (const b of phoned) if (a.phone !== b.phone && a.who === b.who && sameStreet(a.addr, b.addr)) join(keyOf(a), keyOf(b));
     for (const m of others) if (!m.phone) { const same = phoned.find((x) => x.who === m.who); if (same) join(keyOf(same), keyOf(m)); }
     const people = new Set(others.map((m) => root(keyOf(m)))).size;
     headline = `${people} other ${people === 1 ? "person has" : "people have"} written about this in the same ward.`;
