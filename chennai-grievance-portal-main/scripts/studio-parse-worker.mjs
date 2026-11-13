@@ -327,7 +327,22 @@ function zipNames(buf) {
   return out;
 }
 var ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-var unent = (s) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
+function cdata(s) {
+  if (!s.includes("<![CDATA[")) return s;
+  const out = [];
+  let at = 0;
+  for (; ; ) {
+    const i = s.indexOf("<![CDATA[", at);
+    if (i < 0) break;
+    const j = s.indexOf("]]>", i + 9);
+    if (j < 0) break;
+    out.push(s.slice(at, i), s.slice(i + 9, j));
+    at = j + 3;
+  }
+  out.push(s.slice(at));
+  return out.join("");
+}
+var unent = (s) => cdata(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
   if (e[0] !== "#") return ENT[e.toLowerCase()] ?? m;
   const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1));
   return Number.isInteger(c) && c >= 0 && c <= 1114111 ? String.fromCodePoint(c) : m;
@@ -379,15 +394,15 @@ var val = (s) => {
 function docxTables(buf, budget2 = new Inflate(buf.length)) {
   const doc = unzip(buf, budget2).find((e) => e.name === "word/document.xml");
   if (!doc) throw new FormatError("This Word file has no document inside it.");
-  const xml = doc.data.toString("utf8");
+  const xml = doc.data.toString("utf8").replace(/<w:(?:tbl|tr|tc|t)(?:\s[^<>]*)?\/>/g, "");
   const grids2 = [];
-  for (const t of xml.matchAll(/<w:tbl>([\s\S]*?)<\/w:tbl>/g)) {
+  for (const t of elements(xml, "w:tbl", "g")) {
     const grid = [];
-    for (const tr of t[1].matchAll(/<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g)) {
+    for (const tr of elements(t.inner, "w:tr", "g")) {
       const row = [];
-      for (const tc of tr[1].matchAll(/<w:tc>([\s\S]*?)<\/w:tc>/g)) {
-        const span = Number(tc[1].match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
-        const v = val([...tc[1].matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map((m) => m[1]).join(" "));
+      for (const tc of elements(tr.inner, "w:tc", "g")) {
+        const span = Number(tc.inner.match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
+        const v = val(elements(tc.inner, "w:t", "g").map((m) => m.inner).join(" "));
         for (let k = 0; k < Math.min(span, 20); k++) row.push(v);
       }
       if (row.some((c) => c != null)) grid.push(row);
@@ -927,9 +942,9 @@ function pdf(buf, budget2) {
 }
 var ENT3 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s) {
-  return cdata(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT3[e.toLowerCase()] ?? m);
+  return cdata2(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT3[e.toLowerCase()] ?? m);
 }
-function cdata(s) {
+function cdata2(s) {
   const out = [];
   let at = 0;
   for (; ; ) {

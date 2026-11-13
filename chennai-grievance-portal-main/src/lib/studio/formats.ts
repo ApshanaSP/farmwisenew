@@ -223,7 +223,26 @@ function zipNames(buf: Buffer): string[] {
 // --------------------------------------------------------------------- xml --
 
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-export const unent = (s: string) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+/**
+ * CDATA sections opened, in one pass: the lazy pattern (<!\[CDATA\[([\s\S]*?)\]\]>) searched to the end of the text again for every
+ * "<![CDATA[" with no "]]>" after it, so 400 KB of them took 1.5 s (fixall-studio-lazy-02). A section with no end leaves the rest as it is.
+ */
+function cdata(s: string): string {
+  if (!s.includes("<![CDATA[")) return s;
+  const out: string[] = [];
+  let at = 0;
+  for (;;) {
+    const i = s.indexOf("<![CDATA[", at);
+    if (i < 0) break;
+    const j = s.indexOf("]]>", i + 9);
+    if (j < 0) break;
+    out.push(s.slice(at, i), s.slice(i + 9, j));
+    at = j + 3;
+  }
+  out.push(s.slice(at));
+  return out.join("");
+}
+export const unent = (s: string) => cdata(s)
   .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => { if (e[0] !== "#") return ENT[e.toLowerCase()] ?? m; const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1)); return Number.isInteger(c) && c >= 0 && c <= 0x10ffff ? String.fromCodePoint(c) : m; });
 // a tag is "<" to the next ">" with no "<" in between: "<[^>]+>" searched to the end again from every "<" that has no ">" after it
 const text = (s: string) => unent(s.replace(/<[^<>]+>/g, " ")).replace(/\s+/g, " ").trim();
@@ -276,19 +295,24 @@ const val = (s: string): Cell => {
   return /^-?\d+(\.\d+)?$/.test(t) && t.length < 16 && !/^0\d/.test(t) ? Number(t) : t;
 };
 
-/** Word tables (each a grid), largest first. */
+/**
+ * Word tables (each a grid), largest first. The table, row, cell and text elements are read by elements(), in one pass: the lazy patterns
+ * they replace (<w:tbl>([\s\S]*?)<\/w:tbl>, and the same for w:tr, w:tc and w:t) searched to the end of the document again for every
+ * opening tag with no closing one, so 400 KB of unclosed <w:tbl> took 4.5 s and of unclosed <w:t> in one cell 4.2 s (fixall-studio-lazy-01).
+ * An empty element written self-closed (<w:t/>) is dropped first: those patterns never matched it.
+ */
 export function docxTables(buf: Buffer, budget: Inflate = new Inflate(buf.length)): Cell[][][] {
   const doc = unzip(buf, budget).find((e) => e.name === "word/document.xml");
   if (!doc) throw new FormatError("This Word file has no document inside it.");
-  const xml = doc.data.toString("utf8");
+  const xml = doc.data.toString("utf8").replace(/<w:(?:tbl|tr|tc|t)(?:\s[^<>]*)?\/>/g, "");
   const grids: Cell[][][] = [];
-  for (const t of xml.matchAll(/<w:tbl>([\s\S]*?)<\/w:tbl>/g)) {
+  for (const t of elements(xml, "w:tbl", "g")) {
     const grid: Cell[][] = [];
-    for (const tr of t[1].matchAll(/<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g)) {
+    for (const tr of elements(t.inner, "w:tr", "g")) {
       const row: Cell[] = [];
-      for (const tc of tr[1].matchAll(/<w:tc>([\s\S]*?)<\/w:tc>/g)) {
-        const span = Number(tc[1].match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
-        const v = val([...tc[1].matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map((m) => m[1]).join(" "));
+      for (const tc of elements(tr.inner, "w:tc", "g")) {
+        const span = Number(tc.inner.match(/<w:gridSpan w:val="(\d+)"/)?.[1] ?? 1);
+        const v = val(elements(tc.inner, "w:t", "g").map((m) => m.inner).join(" "));
         for (let k = 0; k < Math.min(span, 20); k++) row.push(v);
       }
       if (row.some((c) => c != null)) grid.push(row);
