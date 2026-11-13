@@ -10,6 +10,7 @@ import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { audit } from "@/lib/collector/sources";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
+import { hasVisibleText } from "@/lib/validators";
 import { addCaseLive, petitionCase } from "./cases";
 import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
@@ -181,8 +182,12 @@ const approvedNote = async (p: Row): Promise<Approved> => ({ code: String(p.comp
 
 // ------------------------------------------------------------------- filing --
 
+// the name and the problem must have characters a reader can see: trim() keeps the zero-width ones (U+200B, joiners, U+2060, U+FEFF), so a
+// petition was approved with an invisible name, and a problem of six zero-width spaces passed the 5-character minimum (hunt2-desk-02).
+// The shared rule of every other form (validators.ts); the value is kept as typed.
+const NAME = "Enter the petitioner's name.", PROBLEM = "Say in a line what the problem is.";
 export const fileSchema = z.object({
-  name: z.string().trim().min(2, "Enter the petitioner's name.").max(120),
+  name: z.string().trim().min(2, NAME).max(120).refine((v) => hasVisibleText(v, 2), NAME),
   // read as a number first (+91, 0091 and a leading 0 dropped, any script's digits), then it must be a mobile: 10 digits starting 6 to 9.
   // Ten digits of any kind were accepted, so "0984001234" (a 0-prefixed number cut short) was stored and an SMS would go to it (hunt2-desk-04)
   // a number in Aadhaar's 4-4-4 groups is refused here as the reader's check refuses it (cleanReading), not read as a +91 mobile
@@ -196,7 +201,7 @@ export const fileSchema = z.object({
   ward: z.number({ invalid_type_error: "Enter the ward number." }).int().min(1, "Ward numbers run from 1 to 200.").max(200, "Ward numbers run from 1 to 200."),
   date: z.string().trim().max(20),
   subject: z.string().trim().max(300),
-  problem: z.string().trim().min(5, "Say in a line what the problem is.").max(400),
+  problem: z.string().trim().min(5, PROBLEM).max(400).refine((v) => hasVisibleText(v, 5), PROBLEM),
   request: z.string().trim().max(500),
   dept: z.enum(MANU_DEPTS.map((d) => d.code) as [string, ...string[]], { errorMap: () => ({ message: "Choose a department." }) }),
   urgent: z.boolean(),
