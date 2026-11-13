@@ -71,10 +71,10 @@ export function keyPoints(d: Row, opt: { dept: string | null }): string[] {
   // with a zone, the overview's byZone is the zone's places with the most citizen complaints (intel.ts overview, ORDER BY complaints)
   const placeTop = d.zone ? [...(d.bottom.byZone ?? [])].sort((a: Row, b: Row) => b.v - a.v)[0] : null;
   const deptTop = d.bottom.byDept[0];
-  const sevOpen = d.severity.counts;
   const R = d.report;
   return [
-    `${n(k.cur.ongoing)} incidents are open (${k.cur.ongoing - k.prev.ongoing >= 0 ? "up" : "down"} ${n(Math.abs(k.cur.ongoing - k.prev.ongoing))} vs. ${P.prev}); ${n(sevOpen.Severe)} severe and ${n(sevOpen.High)} high.`,
+    // severe and high in incidents, the unit of the open count they are part of (the tile's breakdown), not the severity card's groups
+    `${n(k.cur.ongoing)} incidents are open (${k.cur.ongoing - k.prev.ongoing >= 0 ? "up" : "down"} ${n(Math.abs(k.cur.ongoing - k.prev.ongoing))} vs. ${P.prev}); ${n(k.cur.severe_open)} severe and ${n(k.cur.urgent - k.cur.severe_open)} high.`,
     `${n(R.attentionTotal ?? R.attention.length)} need your attention${(R.attentionTotal ?? 0) > R.attention.length ? ` (the ${n(R.attention.length)} most urgent are listed below; all are in the action list CSV)` : " (listed below)"}. ${n(R.routine)} other open incidents are routine and the departments are handling them.`,
     `${n(d.tasks.count)} closed pieces of work are waiting for your check; ${n(d.tasks.leftToDepts)} routine closures are left to department heads.`,
     zoneTop && zoneTop.open ? `${zoneTop.name} zone has the most open incidents (${n(zoneTop.open)}).` : null,

@@ -65,7 +65,7 @@ function useKpis(d: OverviewData, c: Console) {
     ongoing: <Kpi key="ongoing" k="ongoing" icon="doc" tone="t-info" label={merged ? "Open incidents" : "Ongoing incidents"} v={d.kpi.cur.ongoing} p={d.kpi.prev.ongoing}
       goodDown prevLabel={P.prev} style={iv()} sub={`${fmtN(K.urgent)} of them severe or high`} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
-      tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
+      tip="Incidents reported in the period that are not yet resolved. The card below lists them by severity with the same problem reported several times in one area as one row, so its counts can be smaller." />,
     resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={P.resolved} v={d.kpi.cur.resolved}
       p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `closed in the period; ${fmtN(K.reported)} reported` : undefined}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
