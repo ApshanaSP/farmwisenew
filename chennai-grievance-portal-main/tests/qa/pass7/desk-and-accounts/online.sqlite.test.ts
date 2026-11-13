@@ -75,7 +75,7 @@ beforeEach(() => {
       department_id INT, complaint_subtype_id INT, complaint_type_id INT, title TEXT, description TEXT, media_path TEXT, is_anonymous INT, needs_manual_review INT, status TEXT, is_synthetic INT NOT NULL DEFAULT 0, rejected_stage TEXT, remarks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')), updated_at TEXT);
     CREATE TABLE complaint_status_history (id INTEGER PRIMARY KEY, complaint_id INT, status TEXT, stage TEXT, remarks TEXT, changed_by INT, created_at TEXT DEFAULT (datetime('now', '+330 minutes')));
-    CREATE TABLE petitions (id INTEGER PRIMARY KEY, complaint_code TEXT, subject TEXT, pages TEXT, dept_code TEXT, incident_id TEXT, status TEXT, filed_at TEXT);
+    CREATE TABLE petitions (id INTEGER PRIMARY KEY, complaint_code TEXT, subject TEXT, pages TEXT, dept_code TEXT, incident_id TEXT, status TEXT, filed_at TEXT, attached INTEGER NOT NULL DEFAULT 0); -- attached: as migrations/015_petitions.sql (cases.ts reads it since 5e336a51)
     CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, category_code TEXT, category_label TEXT, family TEXT, lead_dept TEXT, first_reported_at TEXT, last_update_at TEXT, ward_no INT, zone_no INT, zone_name TEXT, taluk_code TEXT, lat REAL, lon REAL, loc_precision_m REAL,
       place_text TEXT, member_count INT, sources TEXT, channels TEXT, citizen_complaints INT, status_std TEXT, is_open INT, severity_score REAL, severity_level TEXT, severity_reasons TEXT, sla_hours REAL, sla_due_at TEXT, priority_score REAL, attention_flag INT, attention_reason TEXT,
       recurrence_90d INT, needs_review INT, review_reason TEXT, title TEXT, headline TEXT, summary TEXT);
