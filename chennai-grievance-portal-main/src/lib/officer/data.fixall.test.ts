@@ -233,4 +233,17 @@ describe("officer console data", () => {
       expect((await grievanceDetail(SWM, "INC-DUE"))?.grievance).toMatchObject({ due_at: "2026-10-15 09:00:00", breached: 1 });
     });
   });
+
+  describe("officer-day-29: only a severe case waits in 'Sent to Collector'", () => {
+    it("a non-severe case the pipeline marks Awaiting verification is the department's to close (In action), a severe one the Collector's", async () => {
+      incident("INC-MED-AV", { status_std: "Awaiting verification" });
+      incident("INC-SEV-AV", { status_std: "Awaiting verification", severity_level: "Severe" });
+      const tab = async (t: "action" | "sent") =>
+        (await grievanceList(SWM, { tab: t, period: "daily", zone: null, taluk: null, page: 0, per: 10, cat: null, q: null })).rows.map((r) => r.id);
+      expect(await tab("sent")).toEqual(["INC-SEV-AV"]);
+      expect(await tab("action")).toEqual(["INC-MED-AV"]);
+      const d = await grievanceDetail(SWM, "INC-MED-AV");
+      expect([d?.grievance.stage, d?.next]).toEqual(["action", "close"]);
+    });
+  });
 });

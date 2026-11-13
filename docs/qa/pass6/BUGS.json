@@ -1147,15 +1147,16 @@
     "title": "The officer is never shown a grievance's own deadline: the list (ID, Grievance, Stage, Severity, Location, Complaints, Reported) and the drawer (Reported, First source, Linked complaints, Field officer) have no due date or 'late by' anywhere, although the API returns due_at / due; only the overdue and due-in-24-h counts exist",
     "found_by": "officer-day",
     "repro": "grep -n \"due_at\\|\\.due\\b\" src/components/officer/*.tsx (only BeforeRainTasks, the rehearsal tasks)",
-    "failing_test": null,
-    "root_cause": "the deadline is computed and sent but never rendered",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/components/officer/deadline.fixall.test.ts::the drawer's facts: the due time, and 'missed' in red once it has passed on open work",
+    "root_cause": "due_at was sent but never rendered and the breach flag was not in the row; now a Deadline fact in the drawer, a Deadline column in the list, and due/missed on queue rows",
+    "fix_commit": "ff9cc5ad",
+    "revert_check": "fails without (3 of 3) / passes with",
+    "status": "fixed",
     "reviewer": null,
     "where": "src/components/officer/Overlays.tsx:59-66, src/components/officer/Drawer.tsx:152-157, src/lib/officer/data.ts:148,446 (due_at / due are in the payload)",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "closed_in": "fixall"
   },
   {
     "id": "officer-day-11",

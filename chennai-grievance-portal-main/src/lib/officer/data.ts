@@ -88,6 +88,8 @@ export async function deptProfile(code: string): Promise<DeptProfile | null> {
  */
 const DECIDED_AFTER = (decidedAt: string, stepAt: string) => `${decidedAt} >= ${stepAt}`;
 
+// The pipeline's "Awaiting verification" is the Collector's only for a severe case (the Collector verifies severe work only); any other
+// is the department's to close itself, so it is In action, not waiting under "Sent to Collector" for a check that never comes (officer-day-29).
 const STAGE_SQL = `CASE
     WHEN cd.decided_at IS NOT NULL AND (os.at IS NULL OR ${DECIDED_AFTER("cd.decided_at", "os.at")})
       THEN CASE cd.decision WHEN 'reopen' THEN 'action' WHEN 'reject' THEN 'closed' ELSE 'verified' END
@@ -98,7 +100,7 @@ const STAGE_SQL = `CASE
     WHEN i.status_std IN ('Open', 'Under review') THEN 'new'
     WHEN i.status_std = 'Assigned' THEN 'approved'
     WHEN i.status_std = 'In progress' THEN 'action'
-    WHEN i.status_std = 'Awaiting verification' THEN 'sent'
+    WHEN i.status_std = 'Awaiting verification' THEN CASE WHEN i.severity_level = 'Severe' THEN 'sent' ELSE 'action' END
     WHEN i.status_std = 'Resolved' THEN 'verified'
     ELSE 'closed' END`;
 
