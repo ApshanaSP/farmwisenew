@@ -230,3 +230,46 @@ describe("pass 7 reviewer 2: grading, routing words and one file per complaint",
     expect(r.status).toBe(400);
   });
 });
+
+// ------------------------------------------------------------------------------------------------ reviewerB-04 (pass 6 session's row) --
+
+// The queue note as 029beaba (P5-033 seam-05, the pass 6 session's branch) sends it on the AWS store: "already in the department officer's
+// queue". It may only be sent when the case was added: addCaseLive caught its own errors and the route could not tell.
+vi.mock("@/lib/officer/queue-note", () => ({
+  QUEUE_DELAY_NOTE: { en: "Your complaint is registered and is already in the department officer's queue.", ta: "உங்கள் புகார் பதிவு செய்யப்பட்டது; இது ஏற்கனவே துறை அலுவலரின் பட்டியலில் உள்ளது." },
+  queueNoteFor: () => null
+}));
+
+describe("reviewerB-04: the citizen is told the complaint is in the officer's queue only when it was put there", () => {
+  const filed = async (o: Record<string, unknown> = {}) => {
+    h.session = CITIZEN;
+    const r = await fileComplaint(new NextRequest("http://127.0.0.1/api/complaints", { method: "POST", body: JSON.stringify(body(o)), headers: { "content-type": "application/json" } }));
+    expect(r.status).toBe(200);
+    return (await r.json()) as { complaintCode: string; queueNote: { en: string; ta: string } | null };
+  };
+
+  it("the case could not be added (the build's tables are not there): the note says the next update, not 'already in the queue'", async () => {
+    h.db.exec("DROP TABLE incidents");
+    const j = await filed();
+    expect(j.queueNote?.en).toMatch(/next update/i);
+    expect(j.queueNote?.en).not.toMatch(/already/i);
+    expect(j.queueNote?.ta).not.toMatch(/ஏற்கனவே/);
+  });
+
+  it("the case was added: the store's own note (on the AWS store, already in the queue) is sent as it is", async () => {
+    const j = await filed();
+    expect(caseOf(j.complaintCode)).toBeTruthy();
+    expect(j.queueNote?.en).toMatch(/already in the department officer's queue/);
+  });
+
+  it("addCaseLive says whether the case is in the queue now: the AWS store and a working build yes; a failed add or another store no", async () => {
+    const { addCaseLive, onlineCase } = await import("@/lib/manu/cases");
+    const c = (code: string) => onlineCase({ complaint_code: code, created_at: "2026-11-13 10:00:00", title: "Garbage", description: "Garbage", ward_number: 70, user_id: 5 }, "Solid Waste Management Department");
+    expect(await addCaseLive(c("2026-801AAA"))).toEqual({ incidentId: "INC-W-2026-801AAA", inQueue: true });
+    const was = process.env.DATA_BACKEND;
+    process.env.DATA_BACKEND = "mysql";
+    try { expect(await addCaseLive(c("2026-802AAA"))).toEqual({ incidentId: "INC-W-2026-802AAA", inQueue: false }); } finally { process.env.DATA_BACKEND = was; }
+    h.db.exec("DROP TABLE events");
+    expect(await addCaseLive(c("2026-803AAA"))).toMatchObject({ inQueue: false });
+  });
+});

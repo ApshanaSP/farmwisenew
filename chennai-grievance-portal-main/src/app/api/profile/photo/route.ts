@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // read with a byte limit before it is parsed: req.formData() read a body of any size into memory first, and the 2 MB check came after,
+  // read with a byte limit before it is parsed: the request's own form reader took a body of any size into memory first, and the 2 MB check came after,
   // so a body with no Content-Length was pulled whole (pass 6's reviewerA-02). The limit is the largest valid upload plus the form's framing.
   const { form: formData, tooLarge } = await readFormCapped(req, MAX_SIZE_BYTES + 64 * 1024);
   if (tooLarge) return tooLargeResponse();
