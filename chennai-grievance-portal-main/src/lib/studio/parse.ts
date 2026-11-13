@@ -102,7 +102,10 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
     // a .xls that is not a legacy workbook (OLE) is an HTML or XML table, or text saved with an .xls name; SheetJS reads ANY text as a
     // one-sheet workbook, so binary bytes or plain words came back as a table with no rows ("no data") instead of unreadable (pass4-open-05)
     const notBook = new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook or a table, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
-    if (decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
+    // an Excel 2.x-4.0 worksheet is a bare BIFF stream, not OLE: its BOF record (09 00/02/04 then a 4- to 16-byte length) holds NULs, and
+    // SheetJS reads it, so it is not "binary bytes" (reviewerF-04)
+    const biff = buf.length >= 4 && buf[0] === 0x09 && [0x00, 0x02, 0x04, 0x08].includes(buf[1]) && buf[3] === 0 && buf[2] >= 4 && buf[2] <= 16;
+    if (!biff && decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
     let tables: Table[];
     try { tables = excelAll(buf, budget); } catch (e) { if (e instanceof ParseError) throw notBook; throw e; }
     if (tables.every((x) => !x.rows.length)) throw notBook;

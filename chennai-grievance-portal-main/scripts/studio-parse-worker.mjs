@@ -891,7 +891,8 @@ function readAll(buf, name, contentType, base, depth, budget2) {
   if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
   if (!ole && ext === "xls") {
     const notBook = new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook or a table, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
-    if (decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
+    const biff = buf.length >= 4 && buf[0] === 9 && [0, 2, 4, 8].includes(buf[1]) && buf[3] === 0 && buf[2] >= 4 && buf[2] <= 16;
+    if (!biff && decodeText(buf.subarray(0, 4096)).encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw notBook;
     let tables;
     try {
       tables = excelAll(buf, budget2);
