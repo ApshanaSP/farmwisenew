@@ -4857,6 +4857,23 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerF-03",
+    "severity": "P2",
+    "area": "Data Studio file parsing",
+    "title": "XML records holding many differently named unclosed fields are still read in time growing with the square of the record",
+    "found_by": "reviewerF (fixall)",
+    "repro": "xmlGrid of three <r> records each of 24 000 distinct unclosed fields <f0><f1>... (540 KB): 3.7 s against 238 ms for a quarter of it",
+    "failing_test": "src/lib/studio/reviewer5-10.probe.fixall.test.ts::reviewerF-03 (reviewer5-10): XML records of distinct fields are read in time growing with their size",
+    "root_cause": "elements() searched to the end once per new name; now every closing tag is listed in one pass and taken by a forward-only position. Column lists (xmlGrid, KML) are Sets",
+    "fix_commit": "176f40e0",
+    "revert_check": "4 of 4 fail without (unclosed 0.2 s -> 3.7 s for 4x) / 4 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/studio/formats.ts:364 (xmlGrid field scan), :238-256 (elements memo per name)",
+    "note": "Also: a record is a Map, so a field named like an Object property (constructor) no longer leaks into records without it. Reader bundle rebuilt.",
+    "closed_in": "fixall"
+  },
+  {
     "id": "reviewerF-04",
     "severity": "P3",
     "area": "Data Studio file parsing",
@@ -4887,6 +4904,23 @@
     "status": "fixed",
     "reviewer": null,
     "where": "src/lib/thunai/screens.ts:628 (casesSay, the late.length branch)",
+    "closed_in": "fixall"
+  },
+  {
+    "id": "reviewerF-08",
+    "severity": "P3",
+    "area": "Data Studio OCR (PDF page images)",
+    "title": "Any indirect colour space is now read by size as grey or RGB: a palette (Indexed) or Separation page reaches OCR as its indices or ink tints",
+    "found_by": "reviewerF (fixall)",
+    "repro": "pdfImages of a 40x40 Flate page with /ColorSpace 5 0 R, 5 = [/Indexed /DeviceRGB 1 <000000FFFFFF>], all index 1 (white): read as grey 1",
+    "failing_test": "src/lib/studio/reviewer2-15.probe.fixall.test.ts::reviewerF-08 (reviewer2-15): a palette page behind an indirect colour space is not read as grey",
+    "root_cause": "an indirect colour space was taken as ICC unread; the reference is now followed (ICC /N, device spaces read; Indexed, Separation, unresolvable skipped)",
+    "fix_commit": "51156944",
+    "revert_check": "3 of 4 fail without / 4 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "src/lib/studio/ocr.ts:225 (icc = /ColorSpace N G R or [/ICCBased), :236",
+    "note": "A colour space held only in a compressed object stream (PDF 1.5) cannot be followed and is skipped and counted, as before 041e1aa6. Reader bundle rebuilt.",
     "closed_in": "fixall"
   },
   {
