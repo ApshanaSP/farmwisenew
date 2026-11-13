@@ -57,8 +57,8 @@ it("the CAPTCHA wall pasted while the only reader is held and the queue is full:
   vi.stubEnv("STUDIO_BROWSER", "0"); vi.stubEnv("STUDIO_PARSE_PROCS", "1"); vi.stubEnv("STUDIO_PARSE_QUEUE", "1"); vi.stubEnv("STUDIO_PARSE_SECONDS", "4");
   h.html = CAPTCHA;
   const { parseAllAsync } = await import("@/lib/studio/parse");
-  const { unendedDeflate } = await import("../files");
-  const hold = caught(parseAllAsync(unendedDeflate(), "held.xlsx"));
+  const { slowKml } = await import("../files");
+  const hold = caught(parseAllAsync(slowKml(), "held.kml"));
   for (let i = 0; i < 200 && !readerState().procs.some((p) => p.busy); i++) await new Promise((r) => setTimeout(r, 25));
   const waiting = caught(readFacts("<html><title>x</title></html>"));
   const r = await resolveLink(h.url, { mode: "none" } as never, { log: () => {}, explore: false });

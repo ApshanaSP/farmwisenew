@@ -10,7 +10,7 @@
  * become YYYY-MM-DD, so every later step sees one plain table.
  */
 import * as XLSX from "xlsx";
-import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
+import { FormatError, Inflate, InflateLimit, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, storedWorkbook, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
 import { isImage } from "@/lib/studio/ocr";
 import { feedRoot } from "@/lib/studio/connect/links";
 // the feed test lives with the page helpers (pure), so collector/onboard.ts uses it too
@@ -52,17 +52,20 @@ export function parseFile(buf: Buffer, name: string, contentType = "", base = "h
   return all.length === 1 ? all[0] : [...all].sort((a, b) => b.rows.length * b.headers.length - a.rows.length * a.headers.length)[0];
 }
 
-/** Every table a file holds: each sheet of a workbook, each file in a ZIP, each table of a Word file or PDF. */
+/**
+ * Every table a file holds: each sheet of a workbook, each file in a ZIP, each table of a Word file or PDF. Everything the file unpacks,
+ * its nested parts included, comes out of one budget (formats.ts Inflate: 100 times its size, at most 200 MB).
+ */
 export function parseAll(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/", depth = 0): Table[] {
   try {
-    return readAll(buf, name, contentType, base, depth);
+    return readAll(buf, name, contentType, base, depth, new Inflate(buf.length));
   } catch (e) {
     if (e instanceof FormatError) throw new ParseError(e.message);
     throw e;
   }
 }
 
-function readAll(buf: Buffer, name: string, contentType: string, base: string, depth: number): Table[] {
+function readAll(buf: Buffer, name: string, contentType: string, base: string, depth: number, budget: Inflate): Table[] {
   const ext = (name.match(/\.([a-z0-9]+)$/i)?.[1] ?? "").toLowerCase();
   const head = buf.subarray(0, 8);
   const ole = head[0] === 0xd0 && head[1] === 0xcf; // legacy .xls
@@ -70,29 +73,33 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
   if (isImage(buf)) throw new NeedsOcr("image", "This is a picture: its table is read with OCR.");
   if (isZip(buf)) {
     const kind = ["xlsx", "xlsm", "ods", "xlsb"].includes(ext) ? "xlsx" : ext === "docx" ? "docx" : zipKind(buf);
-    if (kind === "xlsx" || kind === "ods") return excelAll(buf);
-    if (kind === "docx") return grids(docxTables(buf), "docx", "Word table", "This Word file has no tables in it.");
+    if (kind === "xlsx" || kind === "ods") return excelAll(buf, budget);
+    if (kind === "docx") return grids(docxTables(buf, budget), "docx", "Word table", "This Word file has no tables in it.");
     if (kind === "kmz") {
-      const k = unzip(buf).find((e) => /\.kml$/i.test(e.name));
+      const k = unzip(buf, budget).find((e) => /\.kml$/i.test(e.name));
       if (k) return [{ ...shape(kmlGrid(decodeText(k.data).text), 0), sheet: null, sheets: [], format: "geo" }];
     }
     if (depth > 0) throw new ParseError("A ZIP inside a ZIP is not opened.");
     // an archive: every file in it that reads as a table
     const out: Table[] = [];
     const skipped: string[] = [];
-    for (const e of unzip(buf)) {
+    for (const e of unzip(buf, budget)) {
       if (!/\.(csv|tsv|txt|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|docx|pdf)$/i.test(e.name)) { skipped.push(e.name); continue; }
       try {
-        for (const t of readAll(e.data, e.name, "", base, depth + 1)) out.push({ ...t, part: t.part ? `${e.name} · ${t.part}` : e.name });
-      } catch { skipped.push(e.name); }
+        for (const t of readAll(e.data, e.name, "", base, depth + 1, budget)) out.push({ ...t, part: t.part ? `${e.name} · ${t.part}` : e.name });
+      } catch (err) {
+        // the archive past its budget is refused whole, not one entry skipped (its later entries would only fail the same way)
+        if (err instanceof InflateLimit) throw err;
+        skipped.push(e.name);
+      }
     }
     if (!out.length) throw new ParseError(`The ZIP holds no table the Studio can read${skipped.length ? ` (${skipped.slice(0, 4).join(", ")})` : ""}.`);
     return out;
   }
   // a name that says Excel (a zip underneath) on bytes that are not a workbook is a damaged or renamed file, not an empty one (RC-43, PB-265)
   if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
-  if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf);
-  if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf);
+  if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf, budget);
+  if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf, budget);
   const dec = decodeText(buf);
   // bytes with NUL characters that are not UTF-16 text are not a table: say so, not that the file holds no rows
   if (dec.encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw new ParseError(`"${name}" could not be read as text: it holds binary data, not a table. Save the table again as .csv or .xlsx, or ask for a fresh copy.`);
@@ -126,8 +133,8 @@ function grids(g: Cell[][][], format: Table["format"], what: string, none: strin
   return out;
 }
 
-function pdf(buf: Buffer): Table[] {
-  const r = pdfTables(buf);
+function pdf(buf: Buffer, budget: Inflate): Table[] {
+  const r = pdfTables(buf, budget);
   if (r.scanned) throw new NeedsOcr("scan", `This PDF is a scan (pictures of pages, ${r.pages} ${r.pages === 1 ? "page" : "pages"}), so its text cannot be read without OCR. Ask the department for the Excel or CSV file.`);
   if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" : "pages"}) but no table in it.`);
   return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers against the original."] }));
@@ -284,14 +291,22 @@ function resetFormats() {
 }
 
 /** Every sheet of a workbook that holds a table, the largest first. */
-function excelAll(buf: Buffer): Table[] {
+function excelAll(buf: Buffer, budget: Inflate = new Inflate(buf.length)): Table[] {
   resetFormats();
   // a workbook is a ZIP: a cut-off one (the first 30 or 40 bytes) made XLSX.read run without returning, on the server's own thread (P6-008)
   // (any "PK" start is read as a ZIP by SheetJS, not only a local header: a cut-off "PK\x07\x08..." named .xls hung it too: reviewer 3)
-  if ((isZip(buf) || (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b)) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
+  const zipped = isZip(buf) || (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b);
+  if (zipped && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
+  // a zipped workbook reaches SheetJS with every entry already inflated, by zlib within the file's budget (formats.ts storedWorkbook):
+  // SheetJS's own inflate never runs (it ignored sizes and looped on a stream that never ends; p7-studio-egress-19, redteam-gate-05)
+  let book: Buffer;
+  try { book = zipped ? storedWorkbook(buf, budget) : buf; } catch (e) {
+    if (e instanceof InflateLimit) throw e;
+    throw new ParseError(`This Excel file is damaged: ${(e as Error).message.replace(/^"[^"]*" inside the ZIP /, "a part of it ").slice(0, 120)} Save it again as .xlsx or .csv and retry.`);
+  }
   let wb: XLSX.WorkBook;
   try {
-    wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
+    wb = XLSX.read(book, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
   } catch (e) {
     throw new ParseError(`This Excel file could not be read (${(e as Error).message.slice(0, 80)}). Save it again as .xlsx or .csv and retry.`);
   }

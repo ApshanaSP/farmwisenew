@@ -86,6 +86,39 @@ import * as XLSX from "xlsx";
 import zlib from "zlib";
 var FormatError = class extends Error {
 };
+var InflateLimit = class extends FormatError {
+};
+var INFLATE_RATIO = 100;
+var INFLATE_FLOOR = 1024 * 1024;
+var INFLATE_MAX = 200 * 1024 * 1024;
+var mb = (n) => n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / (1024 * 1024)).toFixed(n < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+var Inflate = class {
+  constructor(fileBytes) {
+    this.fileBytes = fileBytes;
+    this.used = 0;
+    this.limit = Math.min(INFLATE_MAX, Math.max(INFLATE_FLOOR, INFLATE_RATIO * fileBytes));
+  }
+  get left() {
+    return Math.max(0, this.limit - this.used);
+  }
+  /** The refusal, worded for the Collector. */
+  error() {
+    return new InflateLimit(`This file unpacks to far more than its size (over ${mb(this.limit)} from ${mb(this.fileBytes)}), so it is not read: a safety limit. Save the table again as .csv or .xlsx, or split it into smaller files.`);
+  }
+  /** Inflate `data` (raw deflate for a ZIP entry, zlib-wrapped for a PDF stream) to at most `cap` bytes, within what the file has left. */
+  run(data, raw, cap) {
+    const max = Math.min(cap, this.left);
+    if (max < 1) throw this.error();
+    try {
+      const out = raw ? zlib.inflateRawSync(data, { maxOutputLength: max }) : zlib.inflateSync(data, { maxOutputLength: max });
+      this.used += out.length;
+      return out;
+    } catch (e) {
+      if (max < cap && e.code === "ERR_BUFFER_TOO_LARGE") throw this.error();
+      throw e;
+    }
+  }
+};
 var ZIP_TOTAL = 60 * 1024 * 1024;
 var ZIP_FILES = 200;
 function zipIntact(buf) {
@@ -111,7 +144,7 @@ function zipIntact(buf) {
   }
   return at <= cd + size2;
 }
-function unzip(buf) {
+function unzip(buf, budget2 = new Inflate(buf.length), { workbook = false } = {}) {
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (buf.readUInt32LE(i) === 101010256) {
     eocd = i;
@@ -122,7 +155,7 @@ function unzip(buf) {
   let at = buf.readUInt32LE(eocd + 16);
   const out = [];
   let total = 0;
-  for (let k = 0; k < count && k < ZIP_FILES; k++) {
+  for (let k = 0; k < count && (workbook || k < ZIP_FILES); k++) {
     if (at + 46 > buf.length || buf.readUInt32LE(at) !== 33639248) throw new FormatError("This ZIP file is damaged.");
     const method = buf.readUInt16LE(at + 10);
     const csize = buf.readUInt32LE(at + 20), usize = buf.readUInt32LE(at + 24);
@@ -132,7 +165,7 @@ function unzip(buf) {
     at += 46 + nlen + xlen + clen;
     if (name.endsWith("/") || /(^|\/)__MACOSX\//.test(name) || /(^|\/)\.DS_Store$/.test(name)) continue;
     total += usize;
-    if (total > ZIP_TOTAL || csize > 0 && usize / csize > 400) throw new FormatError("This ZIP unpacks to far more than its size: it is not read (a safety limit).");
+    if (!workbook && (total > ZIP_TOTAL || csize > 0 && usize / csize > 400)) throw new FormatError("This ZIP unpacks to far more than its size: it is not read (a safety limit).");
     if (local + 30 > buf.length || buf.readUInt32LE(local) !== 67324752) throw new FormatError("This ZIP file is damaged.");
     const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
     const raw = buf.subarray(start, start + csize);
@@ -140,14 +173,52 @@ function unzip(buf) {
     if (method === 0) data = Buffer.from(raw);
     else if (method === 8) {
       try {
-        data = zlib.inflateRawSync(raw, { maxOutputLength: Math.min(ZIP_TOTAL, Math.max(usize, 1) + 1024) });
-      } catch {
+        data = budget2.run(raw, true, workbook ? INFLATE_MAX : Math.min(ZIP_TOTAL, Math.max(usize, 1) + 1024));
+      } catch (e) {
+        if (e instanceof FormatError) throw e;
         throw new FormatError(`"${name}" inside the ZIP could not be unpacked.`);
       }
     } else throw new FormatError(`"${name}" inside the ZIP uses a packing method the Studio cannot read.`);
     out.push({ name, data });
   }
   return out;
+}
+function storedWorkbook(buf, budget2) {
+  const parts = [], central = [];
+  let off = 0, n = 0;
+  for (const e of unzip(buf, budget2, { workbook: true })) {
+    const name = Buffer.from(e.name, "utf8"), crc = zlib.crc32(e.data) >>> 0;
+    const h = Buffer.alloc(30);
+    h.writeUInt32LE(67324752, 0);
+    h.writeUInt16LE(20, 4);
+    h.writeUInt16LE(2048, 6);
+    h.writeUInt32LE(crc, 14);
+    h.writeUInt32LE(e.data.length, 18);
+    h.writeUInt32LE(e.data.length, 22);
+    h.writeUInt16LE(name.length, 26);
+    const c = Buffer.alloc(46);
+    c.writeUInt32LE(33639248, 0);
+    c.writeUInt16LE(20, 4);
+    c.writeUInt16LE(20, 6);
+    c.writeUInt16LE(2048, 8);
+    c.writeUInt32LE(crc, 16);
+    c.writeUInt32LE(e.data.length, 20);
+    c.writeUInt32LE(e.data.length, 24);
+    c.writeUInt16LE(name.length, 28);
+    c.writeUInt32LE(off, 42);
+    parts.push(h, name, e.data);
+    central.push(c, name);
+    off += 30 + name.length + e.data.length;
+    n++;
+  }
+  const cd = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(101010256, 0);
+  end.writeUInt16LE(n, 8);
+  end.writeUInt16LE(n, 10);
+  end.writeUInt32LE(cd.length, 12);
+  end.writeUInt32LE(off, 16);
+  return Buffer.concat([...parts, cd, end]);
 }
 var isZip = (b) => b.length > 4 && b[0] === 80 && b[1] === 75 && b[2] === 3 && b[3] === 4;
 function zipKind(b) {
@@ -192,8 +263,8 @@ var val = (s) => {
   if (t === "") return null;
   return /^-?\d+(\.\d+)?$/.test(t) && t.length < 16 && !/^0\d/.test(t) ? Number(t) : t;
 };
-function docxTables(buf) {
-  const doc = unzip(buf).find((e) => e.name === "word/document.xml");
+function docxTables(buf, budget2 = new Inflate(buf.length)) {
+  const doc = unzip(buf, budget2).find((e) => e.name === "word/document.xml");
   if (!doc) throw new FormatError("This Word file has no document inside it.");
   const xml = doc.data.toString("utf8");
   const grids2 = [];
@@ -281,7 +352,8 @@ function xmlGrid(xml) {
   return [keep, ...recs.map((r) => keep.map((c) => r[c] ?? null))];
 }
 var PDF_MAX = 40 * 1024 * 1024;
-function pdfStreams(buf) {
+var NOT_TEXT = /\/Subtype|\/Type\s*\/(XObject|Font|Metadata)|\/Length1/;
+function pdfStreams(buf, budget2) {
   const out = [];
   const src = buf.toString("latin1");
   const re = /<<((?:[^<>]|<<(?:[^<>]|<<[^<>]*>>)*>>)*)>>\s*stream\r?\n/g;
@@ -292,13 +364,20 @@ function pdfStreams(buf) {
     let end = lenM ? start + Number(lenM[1]) : src.indexOf("endstream", start);
     if (end < start || end > src.length) end = src.indexOf("endstream", start);
     let data = buf.subarray(start, end);
+    if (NOT_TEXT.test(m[1])) {
+      out.push({ dict: m[1], data: Buffer.alloc(0) });
+      re.lastIndex = Math.max(re.lastIndex, end);
+      continue;
+    }
     if (/\/FlateDecode/.test(m[1])) {
       try {
-        data = zlib.inflateSync(data, { maxOutputLength: PDF_MAX });
-      } catch {
+        data = budget2.run(data, false, PDF_MAX);
+      } catch (e) {
+        if (e instanceof FormatError) throw e;
         try {
-          data = zlib.inflateRawSync(data.subarray(2), { maxOutputLength: PDF_MAX });
-        } catch {
+          data = budget2.run(data.subarray(2), true, PDF_MAX);
+        } catch (e2) {
+          if (e2 instanceof FormatError) throw e2;
           continue;
         }
       }
@@ -370,15 +449,15 @@ function glyphs(content, page) {
   }
   return out.filter((g) => g.s.trim());
 }
-function pdfTables(buf) {
+function pdfTables(buf, budget2 = new Inflate(buf.length)) {
   if (!buf.subarray(0, 1024).toString("latin1").includes("%PDF")) throw new FormatError("This is not a PDF file.");
-  const streams = pdfStreams(buf);
+  const streams = pdfStreams(buf, budget2);
   const pages = Math.max(1, (buf.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? []).length);
   const images = streams.filter((s) => /\/Subtype\s*\/Image/.test(s.dict)).length;
   const all = [];
   let page = 0;
   for (const s of streams) {
-    if (/\/Subtype|\/Type\s*\/(XObject|Font|Metadata)|\/Length1/.test(s.dict) || !s.data.length) continue;
+    if (NOT_TEXT.test(s.dict) || !s.data.length) continue;
     const c = s.data.toString("latin1");
     if (!/\bBT\b/.test(c)) continue;
     all.push(...glyphs(c, page++));
@@ -641,13 +720,13 @@ var NeedsOcr = class extends ParseError {
 };
 function parseAll(buf, name, contentType = "", base = "https://example.invalid/", depth = 0) {
   try {
-    return readAll(buf, name, contentType, base, depth);
+    return readAll(buf, name, contentType, base, depth, new Inflate(buf.length));
   } catch (e) {
     if (e instanceof FormatError) throw new ParseError(e.message);
     throw e;
   }
 }
-function readAll(buf, name, contentType, base, depth) {
+function readAll(buf, name, contentType, base, depth, budget2) {
   const ext = (name.match(/\.([a-z0-9]+)$/i)?.[1] ?? "").toLowerCase();
   const head = buf.subarray(0, 8);
   const ole = head[0] === 208 && head[1] === 207;
@@ -655,23 +734,24 @@ function readAll(buf, name, contentType, base, depth) {
   if (isImage(buf)) throw new NeedsOcr("image", "This is a picture: its table is read with OCR.");
   if (isZip(buf)) {
     const kind = ["xlsx", "xlsm", "ods", "xlsb"].includes(ext) ? "xlsx" : ext === "docx" ? "docx" : zipKind(buf);
-    if (kind === "xlsx" || kind === "ods") return excelAll(buf);
-    if (kind === "docx") return grids(docxTables(buf), "docx", "Word table", "This Word file has no tables in it.");
+    if (kind === "xlsx" || kind === "ods") return excelAll(buf, budget2);
+    if (kind === "docx") return grids(docxTables(buf, budget2), "docx", "Word table", "This Word file has no tables in it.");
     if (kind === "kmz") {
-      const k = unzip(buf).find((e) => /\.kml$/i.test(e.name));
+      const k = unzip(buf, budget2).find((e) => /\.kml$/i.test(e.name));
       if (k) return [{ ...shape(kmlGrid(decodeText(k.data).text), 0), sheet: null, sheets: [], format: "geo" }];
     }
     if (depth > 0) throw new ParseError("A ZIP inside a ZIP is not opened.");
     const out = [];
     const skipped = [];
-    for (const e of unzip(buf)) {
+    for (const e of unzip(buf, budget2)) {
       if (!/\.(csv|tsv|txt|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|docx|pdf)$/i.test(e.name)) {
         skipped.push(e.name);
         continue;
       }
       try {
-        for (const t2 of readAll(e.data, e.name, "", base, depth + 1)) out.push({ ...t2, part: t2.part ? `${e.name} · ${t2.part}` : e.name });
-      } catch {
+        for (const t2 of readAll(e.data, e.name, "", base, depth + 1, budget2)) out.push({ ...t2, part: t2.part ? `${e.name} · ${t2.part}` : e.name });
+      } catch (err) {
+        if (err instanceof InflateLimit) throw err;
         skipped.push(e.name);
       }
     }
@@ -679,8 +759,8 @@ function readAll(buf, name, contentType, base, depth) {
     return out;
   }
   if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
-  if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf);
-  if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf);
+  if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf, budget2);
+  if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf, budget2);
   const dec = decodeText(buf);
   if (dec.encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw new ParseError(`"${name}" could not be read as text: it holds binary data, not a table. Save the table again as .csv or .xlsx, or ask for a fresh copy.`);
   const text2 = dec.text;
@@ -711,8 +791,8 @@ function grids(g, format, what, none) {
   if (!out.length) throw new ParseError(none);
   return out;
 }
-function pdf(buf) {
-  const r = pdfTables(buf);
+function pdf(buf, budget2) {
+  const r = pdfTables(buf, budget2);
   if (r.scanned) throw new NeedsOcr("scan", `This PDF is a scan (pictures of pages, ${r.pages} ${r.pages === 1 ? "page" : "pages"}), so its text cannot be read without OCR. Ask the department for the Excel or CSV file.`);
   if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" : "pages"}) but no table in it.`);
   return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers against the original."] }));
@@ -840,12 +920,20 @@ function resetFormats() {
   for (const k of Object.keys(t)) delete t[Number(k)];
   Object.assign(t, FORMATS);
 }
-function excelAll(buf) {
+function excelAll(buf, budget2 = new Inflate(buf.length)) {
   resetFormats();
-  if ((isZip(buf) || buf.length >= 2 && buf[0] === 80 && buf[1] === 75) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
+  const zipped = isZip(buf) || buf.length >= 2 && buf[0] === 80 && buf[1] === 75;
+  if (zipped && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
+  let book;
+  try {
+    book = zipped ? storedWorkbook(buf, budget2) : buf;
+  } catch (e) {
+    if (e instanceof InflateLimit) throw e;
+    throw new ParseError(`This Excel file is damaged: ${e.message.replace(/^"[^"]*" inside the ZIP /, "a part of it ").slice(0, 120)} Save it again as .xlsx or .csv and retry.`);
+  }
   let wb;
   try {
-    wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
+    wb = XLSX.read(book, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
   } catch (e) {
     throw new ParseError(`This Excel file could not be read (${e.message.slice(0, 80)}). Save it again as .xlsx or .csv and retry.`);
   }
