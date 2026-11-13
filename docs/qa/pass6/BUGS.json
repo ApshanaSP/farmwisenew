@@ -5207,6 +5207,23 @@
     "closed_in": "fixall"
   },
   {
+    "id": "reviewerG-07",
+    "severity": "P3",
+    "area": "QA oracle / grader",
+    "title": "The QA oracle and grader still lay decisions only, so graded runs that record officer steps will mark the app's new statuses as wrong",
+    "found_by": "reviewerG (fixall)",
+    "repro": null,
+    "failing_test": "src/lib/collector/oracle-steps.fixall.test.ts::reviewerG-07: the QA oracle applies officer steps by the app's rule",
+    "root_cause": "the oracle's overlay ignored the officer steps it loaded; now the lead department's later step sets effStatus on an open case by effective.ts's rule, and the grader reads it through truth.mjs",
+    "fix_commit": "e2e80f83",
+    "revert_check": "2 of 3 fail without (the pinned-figures case passes either way) / 3 pass with",
+    "status": "fixed",
+    "reviewer": null,
+    "where": "tests/qa/oracle/pinned.mjs:73-79 (overlay); tests/qa/pass4/grader/grade.mjs:446",
+    "note": "EXPECTED DIFF AT THE GATE: golden-master recordings of /api/collector/incidents/<id> now carry an officerStep key (hunt2-ops-09's case-page field, null without a step), so golden-diff against the committed baseline shows it on every case-page body; explain it, do not fail on it. The pinned snapshot's 5 steps are orphans, so pinned figures do not move. decision-matrix.mjs keeps its own open/Resolved rule, which a step never changes. Not run: the qa4, golden and graded live suites.",
+    "closed_in": "fixall"
+  },
+  {
     "id": "skeptic-redsec1-1",
     "severity": "P2",
     "area": "sign-out (QA pass 4 skeptic / redteam-final-13)",
