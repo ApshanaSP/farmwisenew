@@ -189,6 +189,31 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
   // 8-bit grey image was taken as one, so a JPEG page with an SMask counted as two (reviewer2-15)
   const masks = new Set<string>();
   for (const k of src.matchAll(/\/S?Mask\s+(\d+)\s+(\d+)\s+R/g)) masks.add(`${k[1]} ${k[2]}`);
+  // where each "n g obj" starts, found in one pass the first time a colour space must be followed (a later definition wins, as in an
+  // updated file)
+  let objs: Map<string, number> | null = null;
+  const object = (n: string, g: string): string | null => {
+    objs ??= new Map([...src.matchAll(/(?<!\d)(\d+)\s+(\d+)\s+obj\b/g)].map((k) => [`${k[1]} ${k[2]}`, k.index + k[0].length]));
+    const at = objs.get(`${n} ${g}`);
+    return at == null ? null : src.slice(at, at + 2000).trimStart();
+  };
+  /**
+   * A colour space's channels: 1 grey, 3 RGB, null an ICC profile whose /N is not found (told by the page's size), 0 anything else. An
+   * indirect one ("/ColorSpace 9 0 R") is followed: it was taken as ICC unread, so a palette (Indexed) or Separation page reached OCR as
+   * its indices or ink tints read as grey (reviewerF-08). One that cannot be found in the file (a compressed object stream) is skipped.
+   */
+  const channels = (cs: string, depth = 0): number | null => {
+    if (/^\/DeviceGray\b/.test(cs)) return 1;
+    if (/^\/DeviceRGB\b/.test(cs)) return 3;
+    const icc = cs.match(/^\[\s*\/ICCBased\s+(\d+)\s+(\d+)\s+R\b/);
+    if (icc) {
+      const n = object(icc[1], icc[2])?.match(/^<<((?:[^<>]|<<[^<>]*>>)*)>>/)?.[1].match(/\/N\s+(\d+)/)?.[1];
+      return n == null ? null : n === "1" ? 1 : n === "3" ? 3 : 0;
+    }
+    const ref = cs.match(/^(\d+)\s+(\d+)\s+R\b/);
+    const target = ref && depth < 3 ? object(ref[1], ref[2]) : null;
+    return target == null ? 0 : channels(target, depth + 1);
+  };
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
@@ -219,12 +244,12 @@ export function pdfImages(buf: Buffer, { bitmaps = true, maxBitmapBytes = PDF_BI
     }
     else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 40_000_000) {
       // an 8-bit bitmap, Flate-packed or stored as it is
-      // a scanner's ICC colour space ("/ColorSpace 9 0 R" or "[/ICCBased 7 0 R]") names its channels in another object: the page's own size
-      // tells grey (W x H) from RGB (3 W H), and anything else (CMYK) is skipped. Only the two device spaces were read (reviewer2-15)
-      const known = /\/DeviceRGB/.test(dict) ? 3 : /\/DeviceGray/.test(dict) ? 1 : 0;
-      const icc = !known && /\/ColorSpace\s*(\d+\s+\d+\s+R|\[\s*\/ICCBased\b)/.test(dict);
-      if (!known && !icc) { skipped++; continue; }
-      const need = W * H * (known || 3);
+      // a scanner's ICC colour space ("/ColorSpace 9 0 R" or "[/ICCBased 7 0 R]") names its channels in another object, followed here: its
+      // /N, else the page's own size, tells grey (W x H) from RGB (3 W H), and anything else (CMYK, a palette, a separation) is skipped.
+      // Only the two device spaces were read (reviewer2-15)
+      const known = channels(dict.match(/\/ColorSpace\s*(\/[A-Za-z]+|\d+\s+\d+\s+R|\[[^\]]*\])/)?.[1] ?? "");
+      if (known === 0) { skipped++; continue; }
+      const need = W * H * (known ?? 3);
       // decided before anything is inflated: a bitmap the caller does not want, or one past the budget, costs nothing
       if (!bitmaps || bitmapBytes + need > maxBitmapBytes) { skipped++; re.lastIndex = Math.max(re.lastIndex, end); continue; }
       bitmapBytes += need;

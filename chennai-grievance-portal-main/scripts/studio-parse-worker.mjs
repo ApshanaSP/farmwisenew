@@ -45,6 +45,24 @@ function pdfImages(buf, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET } =
   const re = /<<((?:[^<>]|<<[^<>]*>>)*)>>\s*stream\r?\n/g;
   const masks = /* @__PURE__ */ new Set();
   for (const k of src.matchAll(/\/S?Mask\s+(\d+)\s+(\d+)\s+R/g)) masks.add(`${k[1]} ${k[2]}`);
+  let objs = null;
+  const object = (n, g) => {
+    objs ??= new Map([...src.matchAll(/(?<!\d)(\d+)\s+(\d+)\s+obj\b/g)].map((k) => [`${k[1]} ${k[2]}`, k.index + k[0].length]));
+    const at = objs.get(`${n} ${g}`);
+    return at == null ? null : src.slice(at, at + 2e3).trimStart();
+  };
+  const channels = (cs, depth = 0) => {
+    if (/^\/DeviceGray\b/.test(cs)) return 1;
+    if (/^\/DeviceRGB\b/.test(cs)) return 3;
+    const icc = cs.match(/^\[\s*\/ICCBased\s+(\d+)\s+(\d+)\s+R\b/);
+    if (icc) {
+      const n = object(icc[1], icc[2])?.match(/^<<((?:[^<>]|<<[^<>]*>>)*)>>/)?.[1].match(/\/N\s+(\d+)/)?.[1];
+      return n == null ? null : n === "1" ? 1 : n === "3" ? 3 : 0;
+    }
+    const ref = cs.match(/^(\d+)\s+(\d+)\s+R\b/);
+    const target = ref && depth < 3 ? object(ref[1], ref[2]) : null;
+    return target == null ? 0 : channels(target, depth + 1);
+  };
   let m;
   while ((m = re.exec(src)) && images.length < 20) {
     const dict = m[1];
@@ -70,13 +88,12 @@ function pdfImages(buf, { bitmaps = true, maxBitmapBytes = PDF_BITMAP_BUDGET } =
       }
       images.push(Buffer.from(data.subarray(0, e)));
     } else if ((/\/FlateDecode/.test(dict) || !/\/Filter/.test(dict)) && !/\/DecodeParms/.test(dict) && Number(dict.match(/\/BitsPerComponent\s+(\d+)/)?.[1]) === 8 && W > 0 && H > 0 && W * H <= 4e7) {
-      const known = /\/DeviceRGB/.test(dict) ? 3 : /\/DeviceGray/.test(dict) ? 1 : 0;
-      const icc = !known && /\/ColorSpace\s*(\d+\s+\d+\s+R|\[\s*\/ICCBased\b)/.test(dict);
-      if (!known && !icc) {
+      const known = channels(dict.match(/\/ColorSpace\s*(\/[A-Za-z]+|\d+\s+\d+\s+R|\[[^\]]*\])/)?.[1] ?? "");
+      if (known === 0) {
         skipped++;
         continue;
       }
-      const need = W * H * (known || 3);
+      const need = W * H * (known ?? 3);
       if (!bitmaps || bitmapBytes + need > maxBitmapBytes) {
         skipped++;
         re.lastIndex = Math.max(re.lastIndex, end);
