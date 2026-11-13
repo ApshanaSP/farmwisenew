@@ -86,7 +86,8 @@ describe("RC-44 (PB-261, PB-262, PB-305, PB-306, PB-307, PB-330): a question the
     expect((c.incidents ?? []).length, "an incident list is not a taluk ranking").toBe(0);
   });
 
-  it.each([["PB-261 orig", "how many severe", /^Severe/i], ["PB-261 variant critical", "how many critical incidents this week", /critical|severe/i], ["PB-261 variant medium", "how many medium severity incidents", /^Medium/i]])
+  // (QA pass 7: a count of one level, "5,352 medium-severity incidents", names the level asked and no other leads; the break was "Low leads" over a severe question)
+  it.each([["PB-261 orig", "how many severe", /^Severe/i], ["PB-261 variant critical", "how many critical incidents this week", /critical|severe/i], ["PB-261 variant medium", "how many medium severity incidents", /^(?:Medium|[\d,]+ medium-severity)/i]])
   ("%s: a severity question leads with the severity asked: %s", async (name, text, lead) => {
     const c = await askChat(text as string);
     keep(`RC-44 ${name}`, c);

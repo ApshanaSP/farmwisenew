@@ -51,10 +51,13 @@ const PAST_DEADLINE = /\b(overdue|past (the |their )?(deadline|due)|missed (the 
 const SAVE =/\b(save|store|reopen|re-open|restore|bookmark)\b|சேமி|மீண்டும் திற|\bsave\s*(pannu|pannunga|pannu)\b/i;
 const WORKSPACE = /\b(workspaces?|layouts?|saved views?|this view|this screen|this briefing|daily briefing|my briefing)\b|பணியிட/i;
 const ALL_SOURCES = /\b(show|list|give|display|reveal|print)\b.{0,25}\b(every|all|each|full|complete)\b.{0,25}\b(sources?|records?|references?|rows?)\b.{0,70}\b(used|behind|for|to (create|build|make|write|produce)|in)\b/i;
-const FUTURE = /\b(predict|predicts|predicted|forecast|forecasts|projection|projected|project(?:s)? how|expect(?:ed)? (?:to|how)|estimate how)\b|\bwill (?:be|get|have|see|receive|reach|rise|increase|go|come|need|drop|fall|stand)\b|\bgoing to (?:be|get|rise|increase|have)\b|\bnext (?:week|month|quarter|year|few days)\b|\btomorrow\b|\bby (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|next month|end of)\b|வரும் (?:வாரம்|மாதம்)|அடுத்த (?:வாரம்|மாதம்)|நாளை|\b(?:next|adutha|varum) (?:vaaram|varam|maasam|week|month)\b|\bnaalaiku\b/i;
-const THINGS = /\b(complaints?|incidents?|cases?|grievances?|reports?|petitions?|accidents?|crimes?|requests?)\b|புகார்|சம்பவ|\bpugar\b/i;
+// a question about what will happen, by its shape ("what will the backlog look like", "how will ..."), not a list of verbs after "will" (pass4-open-10); "will you" is a request
+const FUTURE = /\b(predict|predicts|predicted|forecast|forecasts|projection|projected|project(?:s)? how|expect(?:ed)? (?:to|how)|estimate how)\b|\bwill (?:be|get|have|see|receive|reach|rise|increase|go|come|need|drop|fall|stand)\b|\b(?:what|how|when|where|which) (?:\w+ ){0,3}will (?!you\b|u\b)\w+|\bwill (?:the|there|it|they|we|this|that|these|those) (?!you\b)\w+|\b(?:at|by) the end of (?:this|the|next) (?:week|month|quarter|year)\b|\bgoing to (?:be|get|rise|increase|have)\b|\bnext (?:week|month|quarter|year|few days)\b|\btomorrow\b|\bby (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|next month|end of)\b|வரும் (?:வாரம்|மாதம்)|அடுத்த (?:வாரம்|மாதம்)|நாளை|\b(?:next|adutha|varum) (?:vaaram|varam|maasam|week|month)\b|\bnaalaiku\b/i;
+const THINGS = /\b(complaints?|incidents?|cases?|grievances?|reports?|petitions?|accidents?|crimes?|requests?|backlogs?|pending|workload|load|volume|numbers?|figures?|counts?)\b|புகார்|சம்பவ|நிலுவை|\bpugar\b/i;
 const WEATHER = /\b(rain|rainfall|weather|cyclone|storm|imd|warning|alert|temperature|heat|flood warning|wind|aqi|air quality)\b|மழை|வானிலை|புயல்/i;
-const WRITE = /\b(draft|write|compose|prepare|make|create|send)\b.{0,40}\b(letters?|e-?mails?|mails?|memos?|notices?|speech|press release|circular)\b|(கடிதம்|மின்னஞ்சல்).{0,25}(வரை|எழுது)|\b(letter|email|mail)\b.{0,25}\b(ezhudhu|ezhuthu|draft pannu|write pannu)\b/i;
+// writing to someone, by its shape: any "draft" (in chat it is always a piece of writing), or a verb of writing with a piece of writing ("a reply to the citizen", "a note for the
+// Chief Secretary"); a list of letter words missed the reply and the note (pass4-open-10). A briefing or a report is not a letter: those are answered.
+const WRITE = /^\s*(?:(?:please|pls|kindly|can you|could you)\s+)*draft\b|\b(draft|write|compose|prepare|make|create|send)\b.{0,40}\b(letters?|e-?mails?|mails?|memos?|notices?|notes?|repl(?:y|ies)|responses?|messages?|statements?|minutes|speech|press release|circular)\b|(கடிதம்|மின்னஞ்சல்).{0,25}(வரை|எழுது)|\b(letter|email|mail)\b.{0,25}\b(ezhudhu|ezhuthu|draft pannu|write pannu)\b/i;
 
 const SOURCES_TA = /(எல்லா|அனைத்து|ஒவ்வொரு).{0,20}(ஆதார|மூல|பதிவு).{0,50}(காட்டு|பட்டியலிடு|காண்பி)/;
 const SOURCES_TG = /\b(ella|ellam|ovvoru|full)\b.{0,25}\b(sources?|records?)\b.{0,60}\b(kaattu|kaatunga|kaamichu|list pannu|list)\b/i;
@@ -75,12 +78,16 @@ export function notDone(message: string, rulesOnly: boolean): { kind: NotDone; s
   return null;
 }
 
-export type ShareOf = "resolved" | "open" | "severe" | "overdue";
+export type ShareOf = "resolved" | "open" | "severe" | "overdue" | "ontime" | "ratio";
 const PERCENT = /(?<![\d.]\s?)\b(percent(?:age)?s?|share of|proportion of|ratio of|fraction of)\b|சதவீதம்|சதவிகிதம்|\bsathaveedham\b|\bsathavigidham\b|(?<![\d.]\s?)%/i;
 /** "what percentage of complaints are resolved?": the share asked for and of what, else null. A threshold ("above 90 percent") is not a share. */
 export function shareAsked(message: string): ShareOf | null {
   if (!PERCENT.test(message)) return null;
   if (/\d\s*(%|percent)/i.test(message) && !/\b(percentage|share|proportion|what percent)\b/i.test(message)) return null;
+  // the ratio of two states ("ratio of open to closed incidents"): both counts, not one share (pass4-open-11)
+  if (/\bratio\b/i.test(message) && /\b(open|pending|unresolved)\b/i.test(message) && /\b(closed|resolved|completed|done)\b/i.test(message)) return "ratio";
+  // resolved within the deadline is its own share: the resolved share once answered it and dropped the deadline (pass4-open-11)
+  if (/\b(within|before|inside|in) (?:the |their |its )?(deadline|due date|time limit|sla)\b|\bon[- ]time\b|\bin time\b|காலக்கெடுவுக்குள்|கெடுவுக்குள்|\bdeadline(?:-?kulla| kulla)\b/i.test(message)) return "ontime";
   if (/\b(overdue|late|past (the |their )?deadline|missed (the |their )?deadline)\b|கெடு தாண்டிய|\bdeadline (thaandi|thandi)/i.test(message)) return "overdue";
   if (/\b(resolved|closed|completed|solved|fixed|cleared|resolve aana|close aana)\b|தீர்க்கப்பட்ட|தீர்வான|முடிந்த/i.test(message)) return "resolved";
   if (/\b(severe|critical)\b|கடுமையான/i.test(message)) return "severe";

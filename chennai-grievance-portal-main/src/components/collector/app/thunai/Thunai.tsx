@@ -20,6 +20,7 @@ import { confirmGate, planRisk, tapRisk } from "@/lib/thunai/risk";
 import { say as line } from "@/lib/thunai/say";
 import type { Lang, OutMode, PageKey, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "@/lib/thunai/types";
 import { describe as describeStep, PAGE_EN, PAGE_TA, PERIOD_EN, PERIOD_TA, SUGGEST, understand } from "@/lib/thunai/understand";
+import { afterPlan } from "@/lib/thunai/afterplan";
 import { band, canSpeak as watchMaySpeak, remember as watchRemember, type Signal, type WatchMemory } from "@/lib/thunai/watch";
 import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
@@ -751,7 +752,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!steps.some((s) => s.a === "whatDid" || s.a === "repeat")) remember(heardText, steps.map((s) => describeStep(s, worldRef.current, "en")).join("; "));
     changeMemory({ op: "recent", text: heardText });
     if (!alive()) return;
-    const speakLine = [note, ...said].filter(Boolean).join(" ");
+    // what is said now (lib/thunai/afterplan.ts): the steps' own lines; nothing over a step that answered for itself (Ask District IQ's card: P6-024,
+    // "Asked District IQ" once replaced the answer); a description only for moves that said nothing
+    const after = afterPlan(steps, said, note, (s) => describeStep(s, worldRef.current, lang));
     if (steps.some((s) => s.a === "off")) return;
     // a command on the dashboard (a page, a filter, a panel, the map): the insight screen closes and Jarvis becomes a
     // small card, so what it did is in plain view; the conversation goes on
@@ -760,8 +763,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // the Stage speaks for itself: the steps only made the console agree with it
     if (quiet) { setPhase(tray.length ? "waiting" : "ready"); return; }
-    if (speakLine) out(speakLine, lang, tray.length ? "waiting" : "ready");
-    else { earcon("done"); const done = steps.map((s) => describeStep(s, worldRef.current, lang)).join(" · "); setReply(done); showAlt(done, lang); setPhase(tray.length ? "waiting" : "ready"); }
+    if (after.kind === "say") out(after.text, lang, tray.length ? "waiting" : "ready");
+    else if (after.kind === "describe") { earcon("done"); setReply(after.text); showAlt(after.text, lang); setPhase(tray.length ? "waiting" : "ready"); }
+    // the analyst has said its answer (or that it could not): its line and phase stand
+    else setPhase(tray.length ? "waiting" : "ready");
   };
 
   const ask = (card: AskCard, allowed?: Set<string>) => {

@@ -246,8 +246,9 @@ export async function shareOfIncidents(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now);
   const [a] = await q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(i.severity_level = 'Severe') AS severe,
-    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue FROM incidents i WHERE ${w.sql}`, w.params);
-  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue) };
+    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND ${closedOnTimeSql(EFF.closedAt)}) AS ontime FROM incidents i WHERE ${w.sql}`, w.params);
+  // ontime: resolved and closed by the deadline (a closing with no deadline on record is not counted on time); closed: every incident no longer open (pass4-open-11)
+  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue), ontime: num(a?.ontime), closed: num(a?.n) - num(a?.open) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
