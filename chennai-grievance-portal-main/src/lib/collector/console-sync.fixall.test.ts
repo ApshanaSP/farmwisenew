@@ -12,12 +12,18 @@ const pool = {
   query: async (sql: string, params: unknown[] = []) => {
     const [s, p] = expand(translate(sql), params);
     let st;
-    try {
-      st = h.db.prepare(s);
-    } catch (e) {
-      // the parts of the console this store does not hold (feeds, stations, news, sources) read as nothing
-      if (/no such table/i.test(String((e as Error).message))) return [[]];
-      throw e;
+    for (let tries = 0; !st; tries++) {
+      try {
+        st = h.db.prepare(s);
+      } catch (e) {
+        const msg = String((e as Error).message);
+        // the parts of the console this store does not hold (feeds, stations, news, sources) read as nothing
+        if (/no such table/i.test(msg)) return [[]];
+        // an incident column none of these tests sets (the briefing reads dozens) is an empty column
+        const col = /no such column: i\.(\w+)/.exec(msg)?.[1];
+        if (col && tries < 60) { h.db.exec(`ALTER TABLE incidents ADD COLUMN ${col}`); continue; }
+        throw e;
+      }
     }
     return /^\s*(SELECT|WITH)/i.test(s) ? [st.all(...(p as never[]))] : [{ affectedRows: Number(st.run(...(p as never[])).changes) }];
   }
@@ -46,7 +52,7 @@ function fresh() {
       source_count INTEGER, channels TEXT, first_reported_at TEXT, summary TEXT, priority_score REAL, sla_breached INTEGER, sla_due_at TEXT,
       closed_at TEXT, hours_open REAL, severity_reasons TEXT, priority_reasons TEXT, attention_reason TEXT, officer TEXT, media_only INTEGER,
       awaiting_collector INTEGER, police_reports INTEGER, last_update_at TEXT, ai_summary TEXT, ai_attention TEXT, ai_next_step TEXT,
-      loc_precision_m REAL, persons_affected INTEGER);
+      loc_precision_m REAL, persons_affected INTEGER, member_count INTEGER, confidence REAL, hotspot_id TEXT);
     CREATE TABLE ref_departments (code TEXT, name TEXT, org TEXT, head TEXT, route TEXT, action_owner INTEGER);
     CREATE TABLE ref_wards (ward_no INTEGER, zone_no INTEGER, zone_name TEXT, taluk_code TEXT, centroid_lat REAL, centroid_lon REAL);
     CREATE TABLE ref_taluks (taluk_code TEXT, name TEXT);
@@ -88,5 +94,44 @@ describe("pass4-open-03: My Tasks' reason names the level the way every screen d
     expect(check[0].why.split("; ")[0]).toBe("Severe");
     const ov = await intel.overview("daily", null);
     expect(ov.tasks.rows.map((r) => r.because)).toEqual([["Severe"]]);
+  });
+});
+
+describe("console-sync-10: a news complaint handed to a department is out of every open figure, as the glossary says", () => {
+  // two open incidents in zone 9 and one in zone 10, and a news complaint (zone 9) the routing job handed to the department
+  const seed = () => {
+    add({ id: "INC-A", sev: "Severe", zone: 9, complaints: 2 });
+    add({ id: "INC-B", sev: "High", zone: 10, complaints: 0 });
+    add({ id: "INC-C", sev: "Medium", zone: 9, complaints: 1 });
+    add({ id: "INC-N", sev: "Severe", zone: 9, complaints: 1 }); // severe, open, with a complaint: it counts nowhere once routed
+    h.db.exec(`INSERT INTO dept_assignments (incident_id, dept_code, status) VALUES ('INC-N', 'GCC-SWD', 'Assigned')`);
+  };
+
+  it("the Ongoing tile, the zone table (with its no-zone row), the department list and the snapshot count the same open incidents", async () => {
+    seed();
+    const ov = await intel.overview("daily", null);
+    const k = ov.kpi.cur;
+    expect(k.ongoing).toBe(3);
+    expect(ov.zoneTable.reduce((a, z) => a + z.open, 0) + ov.zoneUnassigned.open).toBe(k.ongoing);
+    expect(ov.deptNav.reduce((a, d) => a + d.open, 0)).toBe(k.ongoing);
+    // the parts under the tiles: open severe, open complaints and the incidents behind them
+    expect(k.severe_open).toBe(1);
+    expect(k.complaints).toBe(3);
+    expect(k.complaint_inc).toBe(2);
+    expect(ov.zoneTable.reduce((a, z) => a + z.complaints, 0) + ov.zoneUnassigned.complaints).toBe(k.complaints);
+    expect(ov.snapshot.serious).toBe(k.urgent);
+  });
+
+  it("the Briefing's open and past-deadline figures are the tile's and the list's", async () => {
+    seed();
+    h.db.exec(`UPDATE incidents SET sla_breached = 1, sla_due_at = '${ist(1)}' WHERE incident_id IN ('INC-A', 'INC-N')`);
+    const { insights } = await import("./insights");
+    const [ov, ins, overdue] = await Promise.all([intel.overview("daily", null), insights("daily", null, null, {}, "briefing"),
+      intel.list({ period: "daily", zone: null, dept: null, sev: null, cat: null, taluk: null, place: null, q: null, sort: "t", dir: -1, page: 0,
+        scope: "period", status: "overdue" })]);
+    const stats = (ins as { briefing?: { stats?: { open: number; overdue: number } } }).briefing?.stats;
+    expect(stats?.open).toBe(ov.kpi.cur.ongoing);
+    expect(stats?.overdue).toBe(overdue.incidents);
+    expect(stats?.overdue).toBe(1);
   });
 });
