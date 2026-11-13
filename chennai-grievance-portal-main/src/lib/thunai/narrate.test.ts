@@ -32,7 +32,8 @@ describe("explaining one issue", () => {
     for (const h of [1, 10, 30, 60, 100, 200, 400, 900]) expect(ageWords(h)!.en).not.toMatch(/\d/);
   });
   it("answers first, in plain words, and passes both gates", () => {
-    const f = factSheet(row, { openFor: "4 days", next: null });
+    // the place is said as the gazetteer names it (reviewerF-02): Velachery is one of its places
+    const f = factSheet(row, { openFor: "4 days", next: null, places: [{ name: "Velachery", aliases: [] }] });
     const say = explainIssue(f, "Water stagnation", [row.title]);
     expect(say.en.startsWith("There's standing water at Velachery.")).toBe(true);
     expect(say.en).toMatch(/several days, and it's past its deadline/);

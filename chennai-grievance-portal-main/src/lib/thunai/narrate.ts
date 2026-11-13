@@ -186,28 +186,40 @@ export function hoursOf(openFor: unknown): number | null {
   return u.startsWith("min") ? n / 60 : u.startsWith("h") ? n : u.startsWith("d") ? n * 24 : u.startsWith("w") ? n * 168 : n * 720;
 }
 
+/** the gazetteer's places (World.places): a name and the other ways it is written */
+export type Gazetteer = readonly { name: string; aliases: readonly string[] }[];
+/** letters, vowel signs and digits only, lower case, one space between words */
+const placeKey = (s: string) => ` ${s.toLowerCase().replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim()} `;
+
 /**
- * A record's place as it may be said aloud: a name, not a sentence. The place is a citizen's or a pipeline's free text (up to 120
- * characters), and the retelling said it as it is and gave it to the speech gate as a name, so an order written into it was read out by
- * Jarvis and by the gate's own fallback (redsec2-08). A place with a sentence break (a word of three or more letters and then ". ", or
- * "!", "?", ";", a line break), over 8 words or over 60 characters is not said; the caller says the zone. Initials and abbreviations
- * ("T. Nagar", "St. Thomas Mount") are names.
+ * A record's place as it may be said aloud: the gazetteer's own name of the place the record's place text names, never the text itself.
+ * The place is a citizen's or a pipeline's free text (up to 120 characters), and it is given to the speech gate as a name, so an order
+ * written into it was read out (redsec2-08). Judging the text's shape (no sentence break, at most 8 words) still let an order written with
+ * commas, a dash or a Tamil full stop through (reviewerF-02). So only reference data is said: the longest gazetteer name or alias found in
+ * the text, as whole words, said as the gazetteer writes it. A text that names no place of the gazetteer says none (the caller says the zone).
  */
-export function spokenPlace(p: string | null | undefined): string | null {
-  const t = String(p ?? "").trim();
-  if (!t || /[!?;\n\r]|[\p{L}]{3,}\.\s/u.test(t)) return null;
-  const one = t.replace(/\s+/g, " ");
-  return one.length > 60 || one.split(" ").length > 8 ? null : one;
+export function spokenPlace(p: string | null | undefined, places: Gazetteer = []): string | null {
+  const text = placeKey(String(p ?? "").slice(0, 200));
+  if (!text.trim()) return null;
+  let best: string | null = null, len = 0;
+  for (const g of places) for (const n of [g.name, ...g.aliases]) {
+    const k = placeKey(n);
+    if (k.trim() && k.length > len && text.includes(k)) { best = g.name; len = k.length; }
+  }
+  return best;
 }
 
-export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: string | null; now?: number; next?: { en: string; ta: string } | null; placeTa?: string | null; open?: unknown } = {}): FactSheet {
+export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: string | null; now?: number; next?: { en: string; ta: string } | null; placeTa?: string | null; open?: unknown;
+  /** the gazetteer the record's place is named from (World.places); none given, no place is said but the zone */
+  places?: Gazetteer } = {}): FactSheet {
   let hours = hoursOf(extra.openFor);
   if (hours == null && extra.firstAt) {
     const m = String(extra.firstAt).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
     if (m) hours = ((extra.now ?? Date.now()) - Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]) - 5, Number(m[5]) - 30)) / 3_600_000;
   }
   return {
-    what: plainWhat(row.cat, row.why ?? row.title), place: spokenPlace(row.place) ?? row.zoneName ?? null, placeTa: extra.placeTa ?? row.zoneName ?? spokenPlace(row.place),
+    what: plainWhat(row.cat, row.why ?? row.title), place: spokenPlace(row.place, extra.places) ?? row.zoneName ?? null,
+    placeTa: extra.placeTa ?? row.zoneName ?? spokenPlace(row.place, extra.places),
     hours, overdue: row.overdue, serious: row.sev === "Severe" || row.sev === "High", complaints: row.complaints, who: plainWho(row.dept, row.deptName), next: extra.next ?? null, closed: closedAs(row.status, extra.open)
   };
 }

@@ -802,7 +802,8 @@ async function caseDetail(c: Ctx): Promise<Part> {
     points: [{ n: 1, id: row.id, lat: row.lat, lon: row.lon as number, label: row.title, sev: row.sev, value: null, hot: true }] });
   // retold, not read out: a fact sheet from the record, then what is wrong, how long, why it matters and what I would do
   const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
-  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open });
+  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open,
+    places: c.w.places });
   const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   return { title: row.title, takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
 }
