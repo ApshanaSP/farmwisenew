@@ -36,11 +36,16 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
   return r as unknown as T[];
 }
 
+/**
+ * The console's reporting windows: the last 24 hours and the last 7, 30 and 90 days back from now (periodWindow), not a calendar day, week,
+ * month or quarter. `resolved` is the Resolved tile's name on the console and in the PDF, which says that window: it said "Resolved today"
+ * and "Resolved this week" (console-sync-01, hunt2-ops-10).
+ */
 export const PERIODS = {
-  daily: { hours: 24, buckets: 12, unit: "Day", prev: "yesterday", label: "Last 24 hours", word: "Daily" },
-  weekly: { hours: 168, buckets: 7, unit: "Week", prev: "prev. week", label: "Last 7 days", word: "Weekly" },
-  monthly: { hours: 720, buckets: 30, unit: "Month", prev: "prev. month", label: "Last 30 days", word: "Monthly" },
-  quarterly: { hours: 2160, buckets: 13, unit: "Quarter", prev: "prev. quarter", label: "Last 90 days", word: "Quarterly" }
+  daily: { hours: 24, buckets: 12, unit: "Day", prev: "yesterday", label: "Last 24 hours", word: "Daily", resolved: "Resolved, last 24 hours" },
+  weekly: { hours: 168, buckets: 7, unit: "Week", prev: "prev. week", label: "Last 7 days", word: "Weekly", resolved: "Resolved, last 7 days" },
+  monthly: { hours: 720, buckets: 30, unit: "Month", prev: "prev. month", label: "Last 30 days", word: "Monthly", resolved: "Resolved, last 30 days" },
+  quarterly: { hours: 2160, buckets: 13, unit: "Quarter", prev: "prev. quarter", label: "Last 90 days", word: "Quarterly", resolved: "Resolved, last 90 days" }
 } as const;
 export type Period = keyof typeof PERIODS;
 export type Overview = Awaited<ReturnType<typeof overview>>;

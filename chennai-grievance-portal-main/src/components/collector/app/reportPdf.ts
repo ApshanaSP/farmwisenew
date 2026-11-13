@@ -48,6 +48,14 @@ const sourcesText = (i: Row) => {
 };
 const reasons = (i: Row) => t([...(i.why?.what ?? []).slice(0, 2), ...(i.why?.why ?? []).slice(0, 3)].join("; "));
 
+/** The cover's four tiles, named as the console's tiles are (the Resolved tile says its window: PERIODS.resolved). */
+export function pdfTiles(P: Row): [string, string, boolean, RGB][] {
+  return [
+    ["Severe events", "severe", true, SEV.Severe], ["Open complaints", "complaints", true, [224, 115, 13]],
+    ["Ongoing incidents", "ongoing", true, NAVY], [String(P.resolved ?? `Resolved, ${String(P.label ?? "").toLowerCase()}`), "resolved", false, SEV.Low]
+  ];
+}
+
 export async function buildReport(d: Row, opt: { scope: string; dept: string | null; file: string }) {
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
   let y = 0;
@@ -86,10 +94,7 @@ export async function buildReport(d: Row, opt: { scope: string; dept: string | n
 
   // KPI tiles
   const k = d.kpi;
-  const tiles: [string, string, boolean, RGB][] = [
-    ["Severe events", "severe", true, SEV.Severe], ["Open complaints", "complaints", true, [224, 115, 13]],
-    ["Ongoing incidents", "ongoing", true, NAVY], [`Resolved this ${String(P.unit).toLowerCase()}`, "resolved", false, SEV.Low]
-  ];
+  const tiles = pdfTiles(P);
   const tw = (W - 2 * M - 3 * 4) / 4;
   tiles.forEach(([label, key, goodDown, c], ix) => {
     const x = M + ix * (tw + 4);
