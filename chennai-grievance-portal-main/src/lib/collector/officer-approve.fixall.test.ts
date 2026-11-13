@@ -94,7 +94,7 @@ async function readers(id: string) {
   const page = await intel.incident(id);
   const [ask] = await asked.incidentsByIds([id]);
   const mine = await officer.grievanceDetail(SWM, id);
-  const rows = listed.rows as { id: string; status: string }[];
+  const rows = listed.rows as unknown as { id: string; status: string }[];
   return { list: rows.find((r) => r.id === id)?.status, page: page?.incident.status, ask: ask?.status, stage: mine?.grievance.stage,
     step: (page?.officerStep as { step: string } | null | undefined)?.step ?? null };
 }
@@ -110,7 +110,7 @@ describe("hunt2-ops-09: an officer's step reaches the Collector's status, on one
     expect(await readers("INC-1")).toEqual({ list: "Assigned", page: "Assigned", ask: "Assigned", stage: "approved", step: "approve" });
     // the console's status filter finds it under the officer's step
     const assigned = await intel.list({ period: "quarterly", zone: null, dept: null, sev: null, status: "Assigned", q: null, sort: "t", dir: -1, page: 0, scope: "all" });
-    expect((assigned.rows as { id: string }[]).map((r) => r.id)).toEqual(["INC-1"]);
+    expect((assigned.rows as unknown as { id: string }[]).map((r) => r.id)).toEqual(["INC-1"]);
   });
 
   it("work started, then sent: In progress, then Awaiting verification", async () => {
