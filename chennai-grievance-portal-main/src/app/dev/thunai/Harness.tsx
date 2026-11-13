@@ -109,7 +109,7 @@ export default function Harness() {
         </section>
         <section className="card" style={box}>
           <h3>State</h3>
-          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }} data-testid="state">{JSON.stringify({ page, period, zone, dept, cat, taluk, sevTab, mapMode, stations: layers.stations, inc, modal, ask }, null, 1)}</pre>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }} data-testid="harness-state">{JSON.stringify({ page, period, zone, dept, cat, taluk, sevTab, mapMode, stations: layers.stations, inc, modal, ask }, null, 1)}</pre>
           <ol style={{ fontSize: 12 }} data-testid="log">{log.map((l, i) => <li key={i}>{l}</li>)}</ol>
         </section>
       </div>
