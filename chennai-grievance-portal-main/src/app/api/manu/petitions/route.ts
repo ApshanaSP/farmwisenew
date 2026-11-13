@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const s = await manuStaff();
   if (s instanceof NextResponse) return s;
-  // the limit holds for the bytes read, not only for a declared Content-Length: a chunked body with none was read whole by req.formData()
+  // the limit holds for the bytes read, not only for a declared Content-Length: a chunked body with none was read whole by the request's form reader
   // before anything checked it (pass 6's reviewerA-02)
   const tooLarge = () => NextResponse.json({ error: "Those files are too large to send at once." }, { status: 413 });
   if (Number(req.headers.get("content-length")) > MANU_LIMITS.maxRequestBytes) return tooLarge();
