@@ -416,8 +416,10 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
   else if (f.flag) where.push(flagSql(now)[f.flag]);
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
-    where.push("(w.title LIKE ? OR w.place_text LIKE ? OR w.incident_id LIKE ? OR w.category_label LIKE ? OR w.zone_name LIKE ?)");
-    params.push(like, like, like, like, like);
+    // or a complaint number filed into it (events.source_record_id): a complaint that joined an existing case is not in its id (pass4-open-07)
+    where.push(`(w.title LIKE ? OR w.place_text LIKE ? OR w.incident_id LIKE ? OR w.category_label LIKE ? OR w.zone_name LIKE ?
+      OR EXISTS (SELECT 1 FROM events e WHERE e.incident_id = w.incident_id AND e.source_record_id LIKE ?))`);
+    params.push(like, like, like, like, like, like);
   }
   const order = f.tab === "new" || f.tab === "action" ? `${SEV_ORDER}, w.citizen_complaints DESC, w.first_reported_at DESC, w.incident_id`
     : f.tab === "all" ? "w.first_reported_at DESC" : "w.upd DESC, w.incident_id";

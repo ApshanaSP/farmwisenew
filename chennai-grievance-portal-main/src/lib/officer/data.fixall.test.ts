@@ -106,4 +106,17 @@ describe("officer console data", () => {
       expect(l.rows.map((r) => r.id)).toEqual(["INC-A"]);
     });
   });
+
+  describe("pass4-open-07: the officer finds a case by a complaint number filed into it", () => {
+    it("a complaint number (whole or in part) finds the case it joined, whose id does not contain it", async () => {
+      incident("INC-20261014-AB12CD", { title: "Garbage heap on Test Street" });
+      incident("INC-OTHER", { title: "Another heap" });
+      h.db.prepare(`INSERT INTO events (event_id, source, source_record_id, incident_id, text) VALUES (?, 'grievance', ?, ?, ?)`)
+        .run("GRV-2026-777AAA", "2026-777AAA", "INC-20261014-AB12CD", "Garbage not cleared for a week");
+      const ids = async (q: string) => (await search(SWM, q)).map((r) => r.id);
+      expect(await ids("2026-777AAA")).toEqual(["INC-20261014-AB12CD"]);
+      expect(await ids("777aaa")).toEqual(["INC-20261014-AB12CD"]);
+      expect(await ids("2026-888BBB")).toEqual([]);
+    });
+  });
 });
