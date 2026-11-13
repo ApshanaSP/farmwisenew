@@ -26,7 +26,7 @@
     "repro": "Set a taluk (map) or a category (chart) filter with no zone, Export report > PDF. The request carries &taluk=/&cat= (Overlays.tsx q()), the server filters every figure (report() -> overview(..., focus)), but buildReport is given scope: c.zoneName ?? \"District-wide\" and dept only.",
     "failing_test": "src/components/collector/app/report-scope.fixall.test.ts::a taluk and a category with no zone: not 'District-wide'",
     "root_cause": "the PDF was given zoneName ?? 'District-wide' and the department, written before the taluk and category filters; now lib.tsx scopeWords() feeds both the console's scopeName and the cover",
-    "fix_commit": "22cff30c",
+    "fix_commit": "22cff30c, 3c52e5b0",
     "revert_check": "fails without / passes with",
     "status": "fixed",
     "reviewer": null,
@@ -350,11 +350,13 @@
     "root_cause": "The decisions route takes 'reopen' for any open case. progressOf turns every reopen into 'In Progress' without checking that there was a close or resolve to undo.",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "owner",
     "reviewer": null,
     "where": "src/app/api/collector/decisions/route.ts:57 (reopen needs no confirmation and no closed state); src/lib/complaint-progress.ts:77-79 (reopen always adds 'In Progress')",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "The rest of hunt2-ops-01 (its option B, left for the owner in pass 7; the reopen now needs the step-up confirmation, b4ea9c1): whether a Collector reopen of a case nobody closed, accepted or reported is refused or recorded without moving the stage and without telling the citizen In Progress (decisions/route.ts, complaint-progress.ts). The summary lists the Collector deciding at any stage as the owner's.",
+    "closed_in": "fixall"
   },
   {
     "id": "hunt2-desk-09",
@@ -421,11 +423,13 @@
     "root_cause": "progressOf maps 'resolve' to the same public status and wording as 'verify'. The Collector route allows 'verify' only for severe work, but 'resolve' for any case.",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "owner",
     "reviewer": null,
     "where": "src/lib/complaint-progress.ts:74-76 (resolve and verify both become 'Verified by Collector'); src/lib/manu/track.ts:46",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Whether a Collector Mark resolved on a case with no work reported gets its own citizen status (Resolved by the Collector's office) instead of Verified by Collector: checked the work. The summary lists the Collector deciding at any stage, and citizens told checked when nothing was done, as the owner's; the fix is a new status value (a migration on complaints.status and the history ENUM) plus complaint-progress.ts, track.ts PUBLIC_NOTE, StatusTracker and the Tamil words.",
+    "closed_in": "fixall"
   },
   {
     "id": "hunt2-desk-13",
