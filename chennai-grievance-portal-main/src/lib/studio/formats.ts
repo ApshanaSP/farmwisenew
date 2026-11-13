@@ -65,29 +65,72 @@ export interface ZipEntry { name: string; data: Buffer }
 const ZIP_TOTAL = 60 * 1024 * 1024;
 const ZIP_FILES = 200;
 
+/** A 64-bit field as a number; one past what a Buffer can index is Infinity (and then fails every bounds check). */
+const u64 = (buf: Buffer, at: number) => { const v = buf.readBigUInt64LE(at); return v > BigInt(Number.MAX_SAFE_INTEGER) ? Infinity : Number(v); };
+
+/**
+ * The end record: where the table of contents is, its size, and the entry counts (on this disk and in all). A field at its 16- or 32-bit
+ * limit is read from the zip64 end record its locator points to (reviewer5-05: those were read as 0xFFFF and 0xFFFFFFFF). Null: no end record.
+ */
+function endRecord(buf: Buffer): { at: number; onDisk: number; count: number; size: number; cd: number } | null {
+  let at = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { at = i; break; }
+  if (at < 0) return null;
+  const r = { at, onDisk: buf.readUInt16LE(at + 8), count: buf.readUInt16LE(at + 10), size: buf.readUInt32LE(at + 12), cd: buf.readUInt32LE(at + 16) };
+  if (r.onDisk !== 0xffff && r.count !== 0xffff && r.size !== 0xffffffff && r.cd !== 0xffffffff) return r;
+  // the zip64 locator sits just before the end record, and names where the zip64 end record is
+  const loc = at - 20;
+  if (loc < 0 || buf.readUInt32LE(loc) !== 0x07064b50) return r;
+  const z = u64(buf, loc + 8);
+  if (!(z + 56 <= loc) || buf.readUInt32LE(z) !== 0x06064b50) return r;
+  // the zip64 table of contents ends where the zip64 end record starts: that is the end every entry's data must lie before
+  return { at: z, onDisk: u64(buf, z + 24), count: u64(buf, z + 32), size: u64(buf, z + 40), cd: u64(buf, z + 48) };
+}
+
+/** One table-of-contents entry at `at`; a size or offset at its 32-bit limit is read from the entry's zip64 extra field (0x0001). */
+function centralEntry(buf: Buffer, at: number) {
+  const e = { method: buf.readUInt16LE(at + 10), csize: buf.readUInt32LE(at + 20), usize: buf.readUInt32LE(at + 24), local: buf.readUInt32LE(at + 42),
+    nlen: buf.readUInt16LE(at + 28), xlen: buf.readUInt16LE(at + 30), clen: buf.readUInt16LE(at + 32) };
+  if (e.usize !== 0xffffffff && e.csize !== 0xffffffff && e.local !== 0xffffffff) return e;
+  // the zip64 extra holds, in this order, only the fields that are at their limit above
+  const end = Math.min(buf.length, at + 46 + e.nlen + e.xlen);
+  for (let x = at + 46 + e.nlen; x + 4 <= end;) {
+    const id = buf.readUInt16LE(x), len = buf.readUInt16LE(x + 2);
+    if (id === 0x0001) {
+      let p = x + 4;
+      const take = () => { if (p + 8 > x + 4 + len || p + 8 > buf.length) return Infinity; const v = u64(buf, p); p += 8; return v; };
+      if (e.usize === 0xffffffff) e.usize = take();
+      if (e.csize === 0xffffffff) e.csize = take();
+      if (e.local === 0xffffffff) e.local = take();
+      return e;
+    }
+    x += 4 + len;
+  }
+  return e;
+}
+
 /**
  * Is this ZIP whole: its end record is there, and the table of contents it points to lies inside the file and starts where it says?
  * A cut-off workbook made SheetJS run forever on the server's thread (QA pass 6, P6-008), so a workbook is checked with this first.
  */
 export function zipIntact(buf: Buffer): boolean {
   if (buf.length < 22) return false;
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-  if (eocd < 0) return false;
-  const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), cd = buf.readUInt32LE(eocd + 16);
+  const end = endRecord(buf);
+  if (!end) return false;
+  const { count, size, cd } = end;
   // the entries on this disk and in all must agree: SheetJS reads the first, this check read the second (reviewer 5 on P6-018, P6-030)
-  if (buf.readUInt16LE(eocd + 8) !== count) return false;
-  if (cd + size > eocd) return false;
+  if (end.onDisk !== count) return false;
+  if (!(cd + size <= end.at)) return false;
   // every entry the table of contents lists: its local header is where it says, and its data lies whole before the table of contents. An
-  // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008)
+  // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008). Sizes and offsets at their 32-bit
+  // limit are read from the zip64 fields (reviewer5-05)
   let at = cd;
   for (let k = 0; k < count; k++) {
     if (at + 46 > cd + size || buf.readUInt32LE(at) !== 0x02014b50) return false;
-    const csize = buf.readUInt32LE(at + 20), local = buf.readUInt32LE(at + 42);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    if (local + 30 > cd || buf.readUInt32LE(local) !== 0x04034b50) return false;
+    const { csize, local, nlen, xlen, clen } = centralEntry(buf, at);
+    if (!(local + 30 <= cd) || buf.readUInt32LE(local) !== 0x04034b50) return false;
     const data = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
-    if (data + csize > cd) return false;
+    if (!(data + csize <= cd)) return false;
     at += 46 + nlen + xlen + clen;
   }
   return at <= cd + size;
@@ -100,19 +143,16 @@ export function zipIntact(buf: Buffer): boolean {
  */
 export function unzip(buf: Buffer, budget: Inflate = new Inflate(buf.length), { workbook = false }: { workbook?: boolean } = {}): ZipEntry[] {
   // the end-of-central-directory record: the last 22..65 557 bytes
-  let eocd = -1;
-  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
-  if (eocd < 0) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
-  const count = buf.readUInt16LE(eocd + 10);
-  let at = buf.readUInt32LE(eocd + 16);
+  const end = endRecord(buf);
+  if (!end) throw new FormatError("This ZIP file is damaged: its table of contents is missing.");
+  const count = end.count;
+  let at = end.cd;
   const out: ZipEntry[] = [];
   let total = 0;
   for (let k = 0; k < count && (workbook || k < ZIP_FILES); k++) {
-    if (at + 46 > buf.length || buf.readUInt32LE(at) !== 0x02014b50) throw new FormatError("This ZIP file is damaged.");
-    const method = buf.readUInt16LE(at + 10);
-    const csize = buf.readUInt32LE(at + 20), usize = buf.readUInt32LE(at + 24);
-    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
-    const local = buf.readUInt32LE(at + 42);
+    if (!(at + 46 <= buf.length) || buf.readUInt32LE(at) !== 0x02014b50) throw new FormatError("This ZIP file is damaged.");
+    // sizes and the local offset, from the zip64 extra when they are at their 32-bit limit (reviewer5-05)
+    const { method, csize, usize, nlen, xlen, clen, local } = centralEntry(buf, at);
     const name = buf.subarray(at + 46, at + 46 + nlen).toString("utf8");
     at += 46 + nlen + xlen + clen;
     if (name.endsWith("/") || /(^|\/)__MACOSX\//.test(name) || /(^|\/)\.DS_Store$/.test(name)) continue;
