@@ -42,6 +42,8 @@ export type PeriodSpec =
   | { kind: "lastWeekOf"; month: number; year: number | null }
   /** "in September": that calendar month (to now when it is this month) */
   | { kind: "month"; month: number; year: number | null }
+  /** "on 15 Oct", "between 1 Oct and 15 Oct", "அக்டோபர் 15 அன்று": those calendar days, the last inclusive (p7-merge-04: Ask District IQ alone read them, in fastpath's dayRange) */
+  | { kind: "days"; from: DayOf; to: DayOf }
   /** "since 1 October": from that day to now */
   | { kind: "since"; month: number; day: number }
   /** "since Diwali": from the last time it fell to now */
@@ -52,6 +54,8 @@ export type PeriodSpec =
   | { kind: "unheld" };
 
 export interface Words { en: string; ta: string; tg: string }
+/** a calendar day as said: no year means the most recent one that has begun */
+export interface DayOf { day: number; month: number; year: number | null }
 
 /** A period with dates on it. */
 export interface Span {
@@ -125,6 +129,17 @@ const LAST_LONE = /(?<![\u0B80-\u0BFF])(?:கடந்த|போன|சென்
 /** "in the last week", "since last month", "over the past month": rolling, as the words say */
 const ROLLING_LAST = /\b(?:since|in the|during the|over the|within the|for the|throughout the) (?:last|past|previous|pona|kadandha|kadantha) (?:week|month|quarter|vaaram|maasam)\b/i;
 const LAST_WEEK_OF = /\b(?:the )?(?:last|final) week of (january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(20\d{2}))?/i;
+/** "அக்டோபர் கடைசி வாரம்", "October kadaisi vaaram" (read after englishMonths): the last week of that month, as "the last week of October" (p7-rules-periods-03) */
+const LAST_WEEK_OF_TA = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(20\d{2}))?\s*(?:கடைசி|இறுதி|kadaisi|kadasi|kadaisiya)\s*(?:வார\S*|vaara\S*|week)/i;
+const MON_ALT = "(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)";
+const DAY_N = String.raw`(\d{1,2})(?:st|nd|rd|th)?`;
+const YEAR_OPT = String.raw`(?:\s+(20\d{2}))?`;
+/** "between 1 Oct and 15 Oct", "from 1 to 15 October", "1-15 Oct" */
+const DAYS_RANGE = new RegExp(String.raw`\b(?:between|from)\s+${DAY_N}\s*(?:of\s+)?(?:${MON_ALT}${YEAR_OPT})?\s*(?:and|to|till|until|-|–)\s*${DAY_N}\s*(?:of\s+)?${MON_ALT}${YEAR_OPT}\b|\b${DAY_N}\s*(?:-|–)\s*${DAY_N}\s+${MON_ALT}${YEAR_OPT}\b`, "i");
+/** "on 15 Oct", "15 October 2026", "15 october anru", "அக்டோபர் 15 அன்று" ("Oct 15" is turned round first) */
+const DAY_ONE = new RegExp(String.raw`\b(?:on\s+)?${DAY_N}\s*(?:of\s+)?${MON_ALT}${YEAR_OPT}\b`, "i");
+/** Tamil and Tanglish "since a day": "அக்டோபர் 1 முதல்", "1 October-ilirundhu", "October 1 la irundhu" (read after englishMonths and the day turned round) */
+const SINCE_DAY_TA = new RegExp(String.raw`\b${DAY_N}\s*(?:of\s+)?${MON_ALT}\b\s*(?:-?\s*(?:la|il|le)?\s*(?:irundhu|irunthu|ilirundhu|lerndhu|mudhal|mudal)\b|(?:முதல்|லிருந்து|இலிருந்து|ிலிருந்து|இருந்து))`, "i");
 
 // comparison words: a period set against the one before it
 /** asked which way it went, with no reference period in the words: "up or down?" */
@@ -165,9 +180,13 @@ export function readPeriod(text: string): PeriodSpec {
   if (cmp) return { kind: "compare", key: cmp };
   // 2. a time the records cannot answer, before any window word inside it ("a month ago" holds "month")
   if (AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(t) || unheldPhraseIn(t)) return { kind: "unheld" };
-  // 3. the last week of a month
-  const lwo = LAST_WEEK_OF.exec(t);
+  // 3. the last week of a month (Tamil and Tanglish month names read as English ones, pass 4's englishMonths)
+  const tm = turnDays(englishMonths(t));
+  const lwo = LAST_WEEK_OF.exec(tm) ?? LAST_WEEK_OF_TA.exec(tm);
   if (lwo) return { kind: "lastWeekOf", month: MONTHS.indexOf(lwo[1].slice(0, 3)), year: lwo[2] ? Number(lwo[2]) : null };
+  // 3b. a day or a range of days ("on 15 Oct", "between 1 Oct and 15 Oct"), never "since 1 October" (a span to now, below)
+  const days = daysIn(tm);
+  if (days) return days;
   // 4. calendar days
   if (DAY_BEFORE.test(t)) return { kind: "day", back: 2 };
   if (YESTERDAY.test(t) && !SINCE_YESTERDAY.test(t)) return { kind: "day", back: 1 };
@@ -185,7 +204,11 @@ export function readPeriod(text: string): PeriodSpec {
     const d = Number(since[1] ?? since[4]), mi = MONTHS.indexOf(String(since[2] ?? since[3]).slice(0, 3));
     if (mi >= 0 && d >= 1 && d <= 31) return { kind: "since", month: mi, day: d };
   }
-  if (/\b(since|from|after)\b|இலிருந்து|முதல்/.test(t)) { const h = HOLIDAYS.find(([re]) => re.test(t)); if (h) return { kind: "holiday", name: h[1], dates: h[2] }; }
+  // since a day said in Tamil or Tanglish ("அக்டோபர் 1 முதல்", "October 1 la irundhu"; p7-rules-periods-03)
+  const sinceTa = SINCE_DAY_TA.exec(tm);
+  if (sinceTa) { const d = Number(sinceTa[1]), mi = MONTHS.indexOf(sinceTa[2].slice(0, 3)); if (mi >= 0 && d >= 1 && d <= 31) return { kind: "since", month: mi, day: d }; }
+  // since a holiday: "since Diwali", "தீபாவளியிலிருந்து" (the Tamil ending joins the name: யிலிருந்து, not a word of its own)
+  if (/\b(since|from|after)\b|லிருந்து|இருந்து|முதல்|\b(?:irundhu|lerndhu|mudhal)\b/.test(t)) { const h = HOLIDAYS.find(([re]) => re.test(t)); if (h) return { kind: "holiday", name: h[1], dates: h[2] }; }
   const mm = monthIn(englishMonths(t));
   if (mm) return { kind: "month", month: mm.month, year: mm.year };
   // 8. today, and this week or month (also "till now": up to now is a qualifier of them, not the current state)
@@ -204,6 +227,27 @@ export function readPeriod(text: string): PeriodSpec {
   if (WEEKLY.test(t)) return { kind: "window", key: "weekly" };
   if (MONTHLY.test(t)) return { kind: "window", key: "monthly" };
   return { kind: "none" };
+}
+
+/** "Oct 15" as "15 Oct", so one reader of days serves both orders */
+const turnDays = (t: string) => t.replace(new RegExp(String.raw`\b${MON_ALT}\s+(\d{1,2})(?:st|nd|rd|th)?\b`, "gi"), "$2 $1");
+function dayOf(d: string, m: string, y: string | undefined): DayOf | null {
+  const day = Number(d), month = MONTHS.indexOf(m.slice(0, 3).toLowerCase());
+  return month >= 0 && day >= 1 && day <= 31 ? { day, month, year: y ? Number(y) : null } : null;
+}
+/** A day or a range of days the text names, or null. A single day after since / from / after is a span to now (the "since" kind). */
+function daysIn(t: string): PeriodSpec | null {
+  const r = DAYS_RANGE.exec(t);
+  if (r) {
+    // between 1 Oct and 15 Oct (groups 1-6), or 1-15 Oct (groups 7-10)
+    const from = r[1] ? dayOf(r[1], r[2] ?? r[5], r[3] ?? r[6]) : dayOf(r[7], r[9], r[10]);
+    const to = r[1] ? dayOf(r[4], r[5], r[6]) : dayOf(r[8], r[9], r[10]);
+    return from && to ? { kind: "days", from, to } : null;
+  }
+  const one = DAY_ONE.exec(t);
+  if (!one || /\b(?:since|from|after)\s*$/.test(t.slice(0, one.index)) || SINCE_DAY_TA.test(t)) return null;
+  const d = dayOf(one[1], one[2], one[3]);
+  return d ? { kind: "days", from: d, to: d } : null;
 }
 
 function unitOf(w: string): CalUnit {
@@ -380,6 +424,27 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
         label: { en: name, ta: `${MONTH_TA[mi]} ${y}${toDate ? " (இதுவரை)" : ""}`, tg: `${MONTH_NAMES[mi]} ${y}${toDate ? " (ippo varaikkum)" : ""}` },
         note: from > s ? "The records go back about 180 days, so the start of this month is not covered." : null };
     }
+    case "days": {
+      // as fastpath's dayRange read them (pass 4, SKG1-25): no year is the most recent such day that has begun; the last day is whole, or runs to now
+      const at = (x: DayOf): number | null => {
+        let y = x.year ?? year;
+        const ok = (yy: number) => x.day <= new Date(Date.UTC(yy, x.month + 1, 0)).getUTCDate();
+        if (!ok(y)) return null;
+        let v = Date.UTC(y, x.month, x.day);
+        if (x.year == null && v > nowWall) { y -= 1; if (!ok(y)) return null; v = Date.UTC(y, x.month, x.day); }
+        return v;
+      };
+      const a = at(spec.from), b0 = at(spec.to);
+      if (a == null || b0 == null || b0 < a) return null;
+      const b = Math.min(b0 + 864e5, nowWall + 1000);
+      if (a >= nowWall || nowWall - a > MAX_HOURS * 3600_000) return null;
+      const one = a === b0;
+      const yrA = new Date(a).getUTCFullYear(), yrB = new Date(b0).getUTCFullYear();
+      const en = one ? `${dayLabel(a)}${yr(yrA)}` : `${dayLabel(a)} to ${dayLabel(b0)}${yr(yrB)}`;
+      const taL = one ? dayTa(a) : `${dayTa(a)} முதல் ${dayTa(b0)} வரை`;
+      const hours = Math.max(1, Math.round((b - a) / 3600_000));
+      return { ...base, key: keyOfHours(hours), range: { from: wall(a), to: b === nowWall + 1000 ? toNow : wall(b) }, partial: b > nowWall, label: { en, ta: taL, tg: en } };
+    }
     case "since":
     case "holiday": {
       let start: number | null = null, en = "", taL = "";
@@ -466,6 +531,11 @@ export function checkSpec(x: unknown): PeriodSpec | null {
     case "lastWeekOf": return int(s.month, 0, 11) && (s.year == null || int(s.year, 2000, 2100)) ? { kind: "lastWeekOf", month: s.month as number, year: (s.year as number) ?? null } : null;
     case "month": return int(s.month, 0, 11) && (s.year == null || int(s.year, 2000, 2100)) ? { kind: "month", month: s.month as number, year: (s.year as number) ?? null } : null;
     case "since": return int(s.month, 0, 11) && int(s.day, 1, 31) ? { kind: "since", month: s.month as number, day: s.day as number } : null;
+    case "days": {
+      const day = (v: unknown): DayOf | null => { const x = v as Record<string, unknown> | null; return x && int(x.day, 1, 31) && int(x.month, 0, 11) && (x.year == null || int(x.year, 2000, 2100)) ? { day: x.day as number, month: x.month as number, year: (x.year as number) ?? null } : null; };
+      const from = day(s.from), to = day(s.to);
+      return from && to ? { kind: "days", from, to } : null;
+    }
     case "holiday": { const h = HOLIDAYS.find(([, n]) => n === s.name); return h ? { kind: "holiday", name: h[1], dates: h[2] } : null; }
     default: return null;
   }
@@ -479,6 +549,7 @@ export function keyOf(s: PeriodSpec): PeriodKey | null {
     case "last": return s.unit === "week" ? "weekly" : s.unit === "month" ? "monthly" : "quarterly";
     case "lastWeekOf": return "weekly";
     case "month": case "since": case "holiday": return "monthly";
+    case "days": { const n = Math.round((Date.UTC(2001, s.to.month, s.to.day) - Date.UTC(2001, s.from.month, s.from.day)) / 864e5) + 1; return n <= 1 ? "daily" : n <= 7 ? "weekly" : n <= 30 ? "monthly" : "quarterly"; }
     case "hours": return s.hours ? keyOfHours(s.hours) : null;
     case "now": return "quarterly";
     default: return null;
@@ -489,7 +560,7 @@ export function keyOf(s: PeriodSpec): PeriodKey | null {
 export function periodWordsOut(text: string): string {
   let t = ` ${text} `;
   // the longest phrases first: a comparison holds a month word ("மாதத்தை விட"), and a month word taken out first would leave the rest of it behind
-  for (const re of [REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
+  for (const re of [DAYS_RANGE, DAY_ONE, SINCE_DAY_TA, LAST_WEEK_OF_TA, REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
     t = t.replace(new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`), " ");
   const w = windowIn(t);
   if (w) t = t.replace(w.said, " ");
