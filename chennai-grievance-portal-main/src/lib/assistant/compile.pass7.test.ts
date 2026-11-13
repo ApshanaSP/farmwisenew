@@ -61,7 +61,7 @@ function heldBy(text: string, alias: string, table: string, on: string | null): 
   return null;
 }
 /** Tables an officer may read whole: they hold no department's data. */
-const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar"]);
+const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar", "mandi_market_prices", "mandi_prices", "mandi_weekly"]); // market prices since reviewer4-05
 
 /** Each statement the compiled query runs (the query, its count, the previous period) holds every table it reads. */
 function expectHeld(c: Compiled) {

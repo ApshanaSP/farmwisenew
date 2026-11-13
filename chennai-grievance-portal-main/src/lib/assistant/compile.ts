@@ -115,7 +115,13 @@ const SHARED_TABLES: Record<string, ReadonlySet<string>> = {
   ref_taluks: new Set(["taluk_code", "name", "name_ta", "in_district", "lat", "lon", "note"]),
   ref_departments: new Set(["code", "name", "org", "head", "route", "action_owner"]),
   ref_facilities: new Set(["facility_id", "type", "name", "lat", "lon", "taluk_code", "capacity", "relevance", "specialties", "in_district", "basin"]),
-  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"])
+  world_calendar: new Set(["date", "festival", "protest", "monsoon_phase", "weekday"]),
+  // AGMARKNET's public market prices: no department's records and nothing derived from incidents (reviewer4-05: an officer's planned
+  // question on them was refused). The weather and health readings (observations) stay out: their rows mix the district's sensors with
+  // hospitals' bed and alert figures
+  mandi_market_prices: new Set(["date", "market", "commodity", "variety", "cmdt_group", "min_price", "max_price", "modal_price", "arrival", "fetched_at"]),
+  mandi_prices: new Set(["date", "scope", "commodity", "cmdt_group", "price", "arrival", "msp", "fetched_at"]),
+  mandi_weekly: new Set(["week_start", "week_label", "scope", "commodity", "price", "districts", "chg_week", "chg_month", "chg_year", "fetched_at"])
 };
 const DEPT_COLUMNS = SCOPE_COLUMNS.find(([k]) => k === "dept")![1];
 

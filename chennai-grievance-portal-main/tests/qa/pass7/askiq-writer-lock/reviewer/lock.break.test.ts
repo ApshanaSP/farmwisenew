@@ -18,7 +18,7 @@ const plan = (table: string, p: Partial<PlanQuery>): PlanQuery => ({ id: "q1", p
   compare: null, sort: [], limit: 50, derive: [], ...p });
 const dims = (...fields: string[]) => fields.map((f, i) => ({ field: f, alias: `d${i}`, grain: null }));
 const locked = (p: PlanQuery) => compileQuery(p, cat, AS_OF, SCOPE, DEPT);
-const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar"]);
+const SHARED = new Set(["ref_zones", "ref_wards", "ref_taluks", "ref_departments", "ref_facilities", "world_calendar", "mandi_market_prices", "mandi_prices", "mandi_weekly"]); // market prices since reviewer4-05
 const DEPT_COLS = ["lead_dept", "dept_code", "department"];
 const refusedOrThrows = (p: PlanQuery) => { try { locked(p); return "compiled"; } catch (e) { return e instanceof CompileError ? "refused" : `threw ${(e as Error).message}`; } };
 
