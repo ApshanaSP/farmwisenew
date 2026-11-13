@@ -22,6 +22,7 @@ import { LOCALITY_WORDS } from "./areas.localities";
 import { isEnglishWord } from "./english";
 import { calendarWindowIn, isListedExact, listedWord, periodIn } from "./quick";
 import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
+import { zoneNosIn } from "@/lib/zone-no";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -460,6 +461,22 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   // two periods is not a brief; "last month" is the calendar month, counted over its own dates by the brief (QA pass 7, pass4-open-16: it was the last 30 days)
   const spec = readPeriod(text);
   if (calendarWindowIn(tn) || spec.kind === "compare") return null;
+  // a zone said by its number, in any language or script: one that is no zone ("zone 99") is said, several are asked one at a time, and one is read as "zone N" for the matcher below (SKG1-33..35)
+  const nos = zoneNosIn(text);
+  if (nos.length) {
+    const have = new Set(w.zones.map((z) => z.n)), max = Math.max(...have);
+    const missing = nos.find((n) => !have.has(n));
+    if (missing !== undefined) return { kind: "reply", conf: 0, via: "no-zone", text: {
+      en: `There is no zone ${missing}: the district has zones 1 to ${max}. Tell me which zone you mean.`,
+      ta: `${missing}-ஆம் மண்டலம் இல்லை: மாவட்டத்தில் 1 முதல் ${max} வரை மண்டலங்கள் உள்ளன. எந்த மண்டலம் என்று சொல்லுங்கள்.` } };
+    if (nos.length > 1) {
+      const pick = nos.slice(0, 4), name = (n: number) => w.zones.find((z) => z.n === n);
+      const en = pick.map((n) => `zone ${n} (${name(n)?.name ?? n})`).join(", "), ta = pick.map((n) => `${n}-ஆம் மண்டலம் (${name(n)?.ta ?? name(n)?.name ?? n})`).join(", ");
+      return { kind: "clarify", conf: 0.5, via: "several-zones", options: pick.map((n) => ({ label: name(n)?.name ?? `Zone ${n}`, request: `brief me on zone ${n}` })), text: {
+        en: `I brief one zone at a time. Which one: ${en}?`, ta: `ஒரு நேரத்தில் ஒரு மண்டலத்தின் சுருக்கத்தை மட்டுமே சொல்வேன். எது: ${ta}?` } };
+    }
+    text = `${text} zone ${nos[0]}`;
+  }
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {

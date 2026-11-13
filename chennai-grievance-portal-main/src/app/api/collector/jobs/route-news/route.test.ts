@@ -61,16 +61,17 @@ async function seed() {
 }
 
 describe("news routing job (BE-001)", () => {
-  // The job's "now" is the later of the store's as_of and the real clock (asOf() in lib/collector/intel.ts). The seeded rows are
-  // dated against as_of 2026-10-12, so the clock is held there: without this the test turned red on 10 Nov 2026, when the real
-  // clock passed as_of + 29 days and INC-1 fell out of the 30-day window (QA pass 5, P5-003).
-  beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-12T04:30:00.000Z")); });
-  afterEach(() => { vi.useRealTimers(); });
+  // The job reads a 30-day window back from the console clock (asOf() in lib/collector/intel.ts: the later of the store's as_of and the real clock)
+  // and the fixture sits at 12 Oct 2026: with the real clock this test failed once the date moved on (QA pass 5, P5-003; QA4 g-repair, reviewer
+  // problem 8). The clock is held at the fixture's own time (10:00 IST), Date only, in the beforeEach below.
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T04:30:00Z"));
     h.db = await seed();
     h.writes = [];
     process.env.REFRESH_API_KEY = KEY;
   });
+  afterEach(() => { vi.useRealTimers(); });
 
   it("refuses a missing or wrong key and writes nothing", async () => {
     for (const k of [undefined, "", "wrong", KEY + "x"]) expect((await post(k)).status).toBe(401);

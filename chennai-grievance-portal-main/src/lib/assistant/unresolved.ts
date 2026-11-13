@@ -8,6 +8,8 @@
 import type { Lang } from "@/lib/assistant/lang";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import type { RefNames } from "@/lib/assistant/scope";
+import { unheldPhrase, windowIn, type BadRead } from "@/lib/windowspan";
+import { zoneNosIn } from "@/lib/zone-no";
 
 export interface Unresolved { kind: "zone" | "ward" | "place" | "period" | "date" | "year"; asked: string; say: Record<Lang, string> }
 const L = (en: string, ta: string, tanglish: string): Record<Lang, string> => ({ en, ta, tanglish });
@@ -41,14 +43,38 @@ const dim = (m: number, y: number) => [31, (y % 4 === 0 && y % 100 !== 0) || y %
 const monthIndex = (s: string) => MONTHS.findIndex((m) => m.startsWith(s.slice(0, 3).toLowerCase()));
 const clip = (s: string) => s.replace(/\s+/g, " ").trim().slice(0, 40);
 
+/** What a count of time that cannot be applied should say, in the three languages (windowspan.ts). */
+function badWindow(w: BadRead): Record<Lang, string> {
+  const a = clip(w.said);
+  switch (w.why) {
+    case "negative": return L(`"${a}" is not a period: time does not run backwards. Ask for the last 24 hours, 7, 30 or 90 days, or a number of days from 1.`,
+      `"${a}" என்பது காலம் அல்ல: காலம் பின்னோக்கிச் செல்லாது. கடந்த 24 மணி நேரம், 7, 30 அல்லது 90 நாட்கள், அல்லது 1 முதல் நாட்களின் எண்ணிக்கையைக் கேளுங்கள்.`,
+      `"${a}" oru period illa: neram pinnaadi poagaadhu. Last 24 hours, 7, 30 illa 90 naal, illa 1 la irundhu naal count kelunga.`);
+    case "fraction": return L(`"${a}" is not a whole number of hours, days or weeks. Ask for the last 24 hours, 7, 30 or 90 days, or a whole number of days.`,
+      `"${a}" என்பதில் முழு எண் இல்லை. கடந்த 24 மணி நேரம், 7, 30 அல்லது 90 நாட்கள், அல்லது முழு எண்ணிக்கையில் நாட்களைக் கேளுங்கள்.`,
+      `"${a}" la muzhu number illa. Last 24 hours, 7, 30 illa 90 naal, illa muzhu number-la naal kelunga.`);
+    case "large": return L(`"${a}" reaches back further than the records, which hold about 180 days. Ask for the last 7, 30 or 90 days.`,
+      `"${a}" என்பது பதிவுகள் உள்ள காலத்தை விடப் பெரியது: சுமார் 180 நாட்கள் மட்டுமே உள்ளன. கடந்த 7, 30 அல்லது 90 நாட்களைக் கேளுங்கள்.`,
+      `"${a}" records irukkura kaalatha vida periyadhu: 180 naal thaan irukku. Last 7, 30 illa 90 naal kelunga.`);
+    case "unread": return L(`I could not read the number in "${a}". Say it in digits, like "last 10 days", or ask for the last 24 hours, 7, 30 or 90 days.`,
+      `"${a}" என்பதில் உள்ள எண்ணைப் படிக்க முடியவில்லை. "கடந்த 10 நாட்கள்" என்பது போல் இலக்கத்தில் சொல்லுங்கள், அல்லது கடந்த 24 மணி நேரம், 7, 30, 90 நாட்களைக் கேளுங்கள்.`,
+      `"${a}" la irukkura number-a padikka mudiyala. "last 10 naal" maadhiri digit-la sollunga, illa last 24 hours, 7, 30, 90 naal kelunga.`);
+    default: return L(`"${a}" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1.`,
+      `"${a}" என்பது காலம் அல்ல: அதில் நேரமே இல்லை. கடந்த 24 மணி நேரம், 7, 30 அல்லது 90 நாட்கள், அல்லது 1 முதல் நாட்களின் எண்ணிக்கையைக் கேளுங்கள்.`,
+      `"${a}" oru period illa: adhula neram illa. Last 24 hours, 7, 30 illa 90 naal, illa 1 la irundhu naal count kelunga.`);
+  }
+}
+
 /** What in the question cannot be applied, or null. */
 export function unresolvedInput(message: string, w: UnresolvedWorld): Unresolved | null {
   const nowYear = Number(w.now.slice(0, 4));
   const days = w.days ?? 180;
   // ---- a zone number the district does not have (zone 99, zone 0, zone -1, மண்டலம் 99)
   const z = /\bzone(?:-|\s+)?(?:no\.?|number|#)?\s*(-?\s?\d{1,4})\b/i.exec(message) ?? /மண்டலம்\s*(-?\d{1,4})/.exec(message) ?? /\bmandalam\s*(-?\d{1,4})\b/i.exec(message);
-  if (z) {
-    const n = Number(z[1].replace(/\s/g, ""));
+  // a zone said in words or in another script ("zone ninety nine", "mandalam ٩٩") is read as well (zone-no.ts); the digit patterns above keep "zone -1"
+  const zw = z ? null : zoneNosIn(message).find((n) => !w.zones.includes(n));
+  if (z || zw !== undefined && zw !== null) {
+    const n = z ? Number(z[1].replace(/\s/g, "")) : (zw as number);
     if (!w.zones.includes(n)) {
       const max = Math.max(...w.zones);
       return { kind: "zone", asked: `zone ${n}`, say: L(`I did not find zone ${n}: the district has zones 1 to ${max}. Tell me which zone you mean, or ask for the whole district.`,
@@ -69,6 +95,14 @@ export function unresolvedInput(message: string, w: UnresolvedWorld): Unresolved
   if (zero) return { kind: "period", asked: clip(zero[0]), say: L(`"${clip(zero[0])}" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1.`,
     `"${clip(zero[0])}" என்பது காலம் அல்ல: அதில் நேரமே இல்லை. கடந்த 24 மணி நேரம், 7, 30 அல்லது 90 நாட்கள், அல்லது 1 முதல் நாட்களின் எண்ணிக்கையைக் கேளுங்கள்.`,
     `"${clip(zero[0])}" oru period illa: adhula neram illa. Last 24 hours, 7, 30 illa 90 naal, illa 1 la irundhu naal count kelunga.`) };
+  // a count of time that cannot be applied, in any of the three languages (-5 days, 3.5 days, 1000 days, an unknown number word), or a time the console does not hold with no count (since monday, this year)
+  const win = windowIn(message);
+  if (win?.kind === "bad") return { kind: "period", asked: clip(win.said), say: badWindow(win) };
+  const unheld = unheldPhrase(message);
+  if (unheld) return { kind: "period", asked: clip(unheld), say: L(
+    `"${clip(unheld)}" is not a window I hold: I have the last 24 hours, 7, 30 and 90 days, a month, or a number of days. Ask for one of those.`,
+    `"${clip(unheld)}" என்ற காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள், ஒரு மாதம், அல்லது நாட்களின் எண்ணிக்கை மட்டுமே உள்ளன. அவற்றில் ஒன்றைக் கேளுங்கள்.`,
+    `"${clip(unheld)}" nu oru period en kitta illa: last 24 hours, 7, 30, 90 naal, oru maasam, illa naal count thaan irukku. Adhula onnu kelunga.`) };
   // an impossible day ("31 February", "Feb 30", "0 March")
   const dm = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_RE}\\b(?:\\s+(\\d{4}))?|\\b${MONTH_RE}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b(?!\\s*,?\\s*\\d{4}\\b)(?:,?\\s*(\\d{4}))?`, "i").exec(message);
   if (dm) {

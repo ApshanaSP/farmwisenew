@@ -1,0 +1,15 @@
+first {"s":200,"t":"{\"notes\":[{\"id\":\"8bf014fb3202\",\"text\":\"first\",\"at\":\"2026-11-12T03:58:29.409Z\"}],\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"}
+file memory-1000000001.json
+BAD FILE {"notes":null,"reminders":"x"}
+ GET   {"s":200,"t":"{\"notes\":null,\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":\"x\",\"recent\":[],\"pins\":[]}"}
+ POST  {"s":500,"t":"{\"error\":\"Could not load Thunai's memory.\"}"}
+ after {"notes":null,"reminders":"x"} | kept aside: 0
+BAD FILE {"notes":"abc"}
+ GET   {"s":200,"t":"{\"notes\":\"abc\",\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"}
+ POST  {"s":200,"t":"{\"notes\":[\"a\",\"b\",\"c\",{\"id\":\"c84f0bc9d9b5\",\"text\":\"second\",\"at\":\"2026-11-12T03:58:29.495Z\"}],\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pin"}
+ after { "notes": [ "a", "b", "c", { "id": "c84f0bc9d9b5", "text": "second", "at": "2026-11-12T03:58:29.495Z" | kept aside: 0
+BAD FILE {"notes":{"a":1}}
+ GET   {"s":200,"t":"{\"notes\":{\"a\":1},\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"}
+ POST  {"s":500,"t":"{\"error\":\"Could not load Thunai's memory.\"}"}
+ after {"notes":{"a":1}} | kept aside: 0
+restored

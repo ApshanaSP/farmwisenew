@@ -41,6 +41,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
   const typing = !!card.answerMarkdown && card.answerMarkdown !== card.headline && shown < words.length;
   // the CSV is fetched, not followed as a link: the export asks for the confirm step (a 428 the console's confirm box answers), and a plain link cannot send the grant
   const [dl, setDl] = useState<"idle" | "busy" | "failed">("idle");
+  const [cut, setCut] = useState<string | null>(null);
   const download = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (!card.download || dl === "busy") return;
@@ -53,6 +54,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       const a = document.createElement("a");
       a.href = url; a.download = name; a.click();
       URL.revokeObjectURL(url);
+      setCut(r.headers.get("x-export-truncated") === "true" ? `${Number(r.headers.get("x-export-rows")).toLocaleString("en-IN")} of ${Number(r.headers.get("x-export-total")).toLocaleString("en-IN")} rows: the file stops at its row limit` : null);
       setDl("idle");
     } catch { setDl("failed"); }
   };
@@ -112,6 +114,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       {open && rt !== "incident_list" && <FigureResponse card={card} geo={geo} onAction={onAction} expanded={expanded} onExpand={onExpand} onAsk={onAsk} />}
 
       {card.download && <a className="aq-dl" href={card.download.href} onClick={download} aria-busy={dl === "busy"}><I n="download" />{card.download.label}{dl === "failed" ? " (not downloaded: try again)" : ""}</a>}
+      {card.download && cut && <small className="aq-dl-cut" role="status">{cut}</small>}
       {card.caveats.length > 0 && <ul className="aq-cav">{card.caveats.map((c, i) => <li key={i}><I n="info" />{c}</li>)}</ul>}
       {card.chips.length > 0 && <div className="aq-chips">{card.chips.map((q) => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>}
       {actions.length > 0 && (

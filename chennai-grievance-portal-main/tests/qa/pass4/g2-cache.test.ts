@@ -104,6 +104,33 @@ describe("RC-35 class guard: a timed cache over the store follows the epoch or s
       .filter(({ f, s }) => !/syncEpoch(Keys)?\(/.test(s) && !NOT_NEEDED[f]).map(({ f }) => f);
     expect(loose).toEqual([]);
   });
+  // g-review (smaller point): the check above is per file, so a second cache added to a file that already syncs one would pass. This one is per cache: every module-level Map or WeakMap of a file that
+  // follows the epoch is synced itself, or is named here with the reason it holds nothing a decision changes.
+  const MAP_NOT_SYNCED: Record<string, string> = {
+    "lib/assistant/tools.ts:BY_NAME": "the registry of tool definitions by name: code, not data read from the store",
+    "lib/map/ask.ts:byIncident": "an index of the news documents by incident, held weakly and rebuilt when the documents array is replaced: it caches no status",
+    "lib/thunai/round.ts:turns": "the turn memory of a conversation: what was said, not what the store holds",
+    "lib/thunai/round.ts:planCache": "the model's plan for a request: it holds no figure, and the results of the tools it calls go through toolCache, which is synced"
+  };
+  const mapsOf = (s: string) => [...s.matchAll(/^(?:export )?(?:const|let) (\w+)(?:\s*:[^=\n]+)?\s*=\s*(?:new Map|new WeakMap)/gm)].map((m) => m[1]);
+  it("every module-level Map or WeakMap in an epoch-aware file is itself synced, or is listed with its reason", () => {
+    const loose: string[] = [];
+    for (const f of files) {
+      const s = fs.readFileSync(f, "utf8");
+      if (!timedCache(s) || !/syncEpoch(Keys)?\(/.test(s)) continue;
+      const rel = path.relative(root, f).split(path.sep).join("/");
+      for (const n of mapsOf(s)) if (!new RegExp(String.raw`syncEpoch(?:Keys)?\(\s*${n}\b`).test(s) && !MAP_NOT_SYNCED[`${rel}:${n}`]) loose.push(`${rel}:${n}`);
+    }
+    expect(loose).toEqual([]);
+  });
+  it("every listed unsynced Map is still declared (the list does not rot)", () => {
+    const stale = Object.keys(MAP_NOT_SYNCED).filter((k) => {
+      const [f, n] = k.split(":");
+      const p = path.join(root, f);
+      return !fs.existsSync(p) || !mapsOf(fs.readFileSync(p, "utf8")).includes(n);
+    });
+    expect(stale).toEqual([]);
+  });
   it("every listed exception is still a cached reader (the list does not rot)", () => {
     const stale = Object.keys(NOT_NEEDED).filter((f) => !files.some((x) => x.replace(/\\/g, "/").endsWith(`/src/${f}`) && timedCache(fs.readFileSync(x, "utf8"))));
     expect(stale).toEqual([]);

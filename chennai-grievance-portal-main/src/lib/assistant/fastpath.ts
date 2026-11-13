@@ -23,6 +23,7 @@ import { resolveSides } from "@/lib/assistant/compare";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
 import { orNull } from "@/lib/fallback";
+import { englishMonths, heldPeriod, windowIn } from "@/lib/windowspan";
 
 type Period = Scope["period"];
 const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -66,7 +67,7 @@ export function periodNamed(text: string): Period | null {
     case "month": return "monthly";
     case "hours": return s.hours ? periodOfHours(s.hours) : null;
     // "the latest", "recent": this lane's default for news and lists asked as new (not a period the words name)
-    case "none": return /(recent(ly)?|latest)/i.test(text) ? "daily" : null;
+    case "none": return /\b(recent(ly)?|latest)\b/i.test(text) ? "daily" : null;
     default: return null;
   }
 }
@@ -344,7 +345,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         const pct = r.n ? Math.round((have / r.n) * 1000) / 10 : 0;
         const word = { resolved: { en: "resolved", ta: "தீர்க்கப்பட்டவை", tanglish: "resolve aanavai" }, open: { en: "still open", ta: "இன்னும் திறந்திருப்பவை", tanglish: "innum open-la irukkiravai" },
           severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" } }[d.share];
-        const kindS = countNoun(what, r.n);
+        // the share counts incidents (the pipeline's records), as the Tamil and Tanglish lines already say: "complaints" would name another unit than the one counted, and the department list refuses "complaints by department" for the same reason (g-review 5)
+        const kindS = countNoun(what.replace(/\b(?:citizen )?(?:complaint|grievance)s?\b/gi, "incident"), r.n);
         const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
         const whenTa = custom ? null : { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
           monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[inc.period as Period];
@@ -782,6 +784,10 @@ function listData(card: AnswerCard, items: IncidentItem[]) {
  */
 export interface Window { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string; now?: boolean; partial?: boolean }
 export function customWindow(text: string, now?: string): Window | null {
+  // "on 15 Oct", "between 1 Oct and 15 Oct": those calendar days (QA pass 4, SKG1-25). The shared reader names months, not single days,
+  // so a day range is read here first (merge of pass 4's eec8c840 into pass 7; Jarvis's lane does not read day ranges yet: an open row).
+  const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
+  if (Number.isFinite(nowMs)) { const days = dayRange(englishMonths(text), nowMs); if (days) return days; }
   return windowOf(readPeriod(text), now);
 }
 export function windowOf(spec: PeriodSpec, now?: string): Window | null {
@@ -809,6 +815,39 @@ export function windowOf(spec: PeriodSpec, now?: string): Window | null {
   return w;
 }
 const periodOfHours = (h: number): Period => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+/** The calendar days a question names: "on 15 Oct", "15 October 2026", "Oct 15", "between 1 Oct and 15 Oct", "from 1 Oct to 15 Oct". From midnight (IST) of the first to midnight of the day after the last. */
+function dayRange(text: string, nowMs: number): { hours: number; label: string; period: Period; range: { from: string; to: string } } | null {
+  const MON = "(january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)";
+  const D = String.raw`(\d{1,2})(?:st|nd|rd|th)?`;
+  const YR = String.raw`(?:\s+(20\d{2}))?`;
+  const t = text.toLowerCase().replace(new RegExp(String.raw`\b${MON}\s+(\d{1,2})(?:st|nd|rd|th)?\b`, "g"), "$2 $1"); // "Oct 15" is "15 Oct"
+  const one = (d: string, m: string, y: string | undefined) => {
+    const mi = MONTHS.indexOf(m.slice(0, 3)), day = Number(d), cur = new Date(nowMs + 330 * 60_000);
+    let yr = y ? Number(y) : cur.getUTCFullYear();
+    const valid = (yy: number) => mi >= 0 && day >= 1 && day <= new Date(Date.UTC(yy, mi + 1, 0)).getUTCDate();
+    const at = (yy: number) => Date.parse(`${yy}-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00+05:30`);
+    if (!valid(yr)) return null;
+    let ms = at(yr);
+    if (!y && ms > nowMs) { yr -= 1; if (!valid(yr)) return null; ms = at(yr); }
+    return { ms, yr };
+  };
+  const range = new RegExp(String.raw`\b(?:between|from)\s+${D}\s*(?:of\s+)?${MON}${YR}\s*(?:and|to|till|until|-|–)\s*${D}\s*(?:of\s+)?${MON}?${YR}\b`).exec(t);
+  const single = range ? null : new RegExp(String.raw`\b(?:on\s+)?${D}\s*(?:of\s+)?${MON}${YR}\b`).exec(t);
+  let a: { ms: number; yr: number } | null, b: { ms: number; yr: number } | null;
+  if (range) { a = one(range[1], range[2], range[3]); b = one(range[4], range[5] ?? range[2], range[6] ?? range[3]); }
+  else if (single && !/\b(?:since|from|after)\s*$/.test(t.slice(0, single.index))) { a = one(single[1], single[2], single[3]); b = a; }
+  else return null;
+  if (!a || !b || b.ms < a.ms) return null;
+  const from = a.ms, to = Math.min(b.ms + 864e5, nowMs + 1000);
+  if (from >= nowMs || nowMs - from > MAX_HOURS * 3600_000) return null;
+  const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const show = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const hours = Math.max(1, Math.round((to - from) / 3600_000));
+  const label = a.ms === b.ms ? show(a.ms) : `${show(a.ms)} to ${show(b.ms)}`;
+  return { hours, label, period: hours <= 24 ? "daily" : hours <= 168 ? "weekly" : hours <= 720 ? "monthly" : "quarterly", range: { from: ist(from), to: ist(to) } };
+}
 
 function scopeWords(s: Scope, n: RefNames): string {
   const parts = [s.zone != null ? `in ${n.zones.get(s.zone)?.name ?? `Zone ${s.zone}`} zone` : null, s.taluk ? `in ${n.taluks.get(s.taluk)?.name ?? s.taluk} taluk` : null,

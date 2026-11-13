@@ -132,7 +132,7 @@ function effect(action, inc) {
     resolve: { open: 0, status: "Resolved", decision: "resolve", verified: 1, stage: "verified", tracker: "Verified by Collector", checkedBy: "collector", decided: true, pageDec: 1 },
     reject: { open: 0, status: "Rejected", decision: "reject", verified: inc.ver, stage: "closed", tracker: "Rejected", rejected: "Collector", decided: true, pageDec: 1 },
     reopen: { open: 1, status: "Open", decision: "reopen", verified: inc.ver, stage: "action", returned: 1, tracker: "In Progress", pageDec: 1 },
-    verify: { ...pipe, decision: "verify", verified: 1, stage: "verified", tracker: "Verified by Collector", checkedBy: "collector", decided: true, pageDec: 1 },
+    verify: { open: 0, status: "Resolved", decision: "verify", verified: 1, stage: "verified", tracker: "Verified by Collector", checkedBy: "collector", decided: true, pageDec: 1 },
     escalate: { ...pipe, decision: "escalate", escalated: 1, verified: inc.ver, stage: stageOf(inc.pipeStatus), pageDec: 1 },
     note: { ...pipe, decision: null, verified: inc.ver, stage: stageOf(inc.pipeStatus), pageDec: 1 },
     officer_close: { open: 0, status: "Resolved", decision: "resolve", verified: 1, stage: "verified", tracker: "Resolved by Department", checkedBy: "department", decided: true, pageDec: 1, report: 1 },
@@ -186,7 +186,8 @@ function expected(action, inc) {
   set("console_list", "scoped.groups", { info: true });
   set("console_list", "overdue.incidents", { d: inc.br ? dOpen : 0 });
   set("console_list", "unverified.incidents", { d: unverified(a.open, a.decided) - unverified(inc.pipeOpen, false) });
-  set("console_list", "verified.incidents", { d: verifiedList(a.open) - verifiedList(inc.pipeOpen) });
+  // intel.ts: the verified filter holds verified work that is still open, and what the Collector has just verified ("Verify and close" closes it, its row says verified)
+  set("console_list", "verified.incidents", { d: (action === "verify" ? 1 : verifiedList(a.open)) - verifiedList(inc.pipeOpen) });
   set("console_list", "critical.incidents", { d: dCrit });
   set("console_list", "awaiting.incidents", { d: a.tasks ?? 0 });
   set("console_list", "id.open", { eq: a.open });
@@ -257,7 +258,7 @@ function expected(action, inc) {
   set("officer_insights", "work.closed", { d: -dOpen });
   set("officer_insights", "work.pastDeadline", { d: inc.br ? dOpen : 0 });
   set("officer_insights", "work.checks.verified", { d: ["verify", "resolve"].includes(action) ? 1 : 0 });
-  set("officer_insights", "work.checks.returned", { d: action === "reopen" ? 1 : 0 });
+  set("officer_insights", "work.checks.returned", { d: ["reopen", "reject"].includes(action) ? 1 : 0 });
 
   // citizen: complaint-progress.ts
   if (a.tracker) {
@@ -612,7 +613,8 @@ function judgeAll(action, inc, before, imm, settled) {
   const dOpen = effect(action, inc).open - inc.pipeOpen;
   exp["exports|report.routine"] = { d: dOpen - (onAfter - wasOn) };
   // Jarvis's case list counts what the console's list counts: groups of the same problem in one area (intel.ts list(): total), so closing one member of a group leaves the count
-  const dGroups = settled["console_list|scoped.groups"] - before["console_list|scoped.groups"];
+  // since 8779570 the case list counts incidents (the console list's `incidents`), not groups
+  const dGroups = settled["console_list|scoped.incidents"] - before["console_list|scoped.incidents"];
   exp["jarvis|cases.total"] = { d: dGroups };
   exp["jarvis|cases.spoken"] = { d: dGroups };
   // the bell lists six: an incident below the sixth is simply not on it
@@ -734,10 +736,10 @@ async function sequences(load) {
     { open: 0, status: "Resolved", decision: "resolve" }, "effective.ts: \"The latest decision other than a note decides\"");
   await run("resolve, then escalate", "INC-20261103-B74560", "officerA",
     (i) => [["resolve", () => decide(i.id, "resolve")], ["escalate", () => decide(i.id, "escalate")]],
-    { open: 1, status: "Assigned", decision: "escalate", stage: "verified" }, "effective.ts: \"verify and escalate leave the status as it is (a verify after a resolve therefore shows the pipeline's status, as the list does)\". So the console reopens it; the officer's stage ignores escalate, so the officer still sees it verified.");
+    { open: 0, status: "Resolved", decision: "escalate", stage: "verified" }, "effective.ts: \"The latest decision with an effect decides\": an escalate has none, so the resolve stands; the officer's stage ignores escalate too.");
   await run("severe: resolve, then verify", "INC-20261105-BB4429", "officerC",
     (i) => [["resolve", () => decide(i.id, "resolve")], ["verify", () => decide(i.id, "verify")]],
-    { open: 1, status: "In progress", decision: "verify", stage: "verified" }, "effective.ts names this case: a verify after a resolve shows the pipeline's status");
+    { open: 0, status: "Resolved", decision: "verify", stage: "verified" }, "effective.ts: a verify (\"Verify and close\") closes, so after a resolve it stays closed");
   await run("officer close, then the Collector reopens", "INC-20261101-5C6119", "officerA",
     (i) => [["officer close", () => officerStep("officerA", i.id, "close")], ["reopen", () => decide(i.id, "reopen", { note: "QA: sent back." })]],
     { open: 1, status: "Open", decision: "reopen", stage: "action", returned: true }, "officer/data.ts: \"The latest of those wins\"; the Collector's Send back is a reopen");
@@ -746,7 +748,7 @@ async function sequences(load) {
     { open: 1, status: "Open", decision: "reopen", stage: "action" }, "reopen opens what reject closed");
   await run("verify a severe incident the pipeline has not verified", "INC-20261105-D0CC25", null,
     (i) => [["verify", () => decide(i.id, "verify")]],
-    { open: 1, decision: "verify" }, "verify leaves the status; the list's verified filter should hold it (next check)");
+    { open: 0, status: "Resolved", decision: "verify" }, "verify closes the incident (effective.ts); the list's verified filter should hold it (next check)");
   // the whole loop: the officer sent it in the matrix above; the Collector's check takes it off My Tasks
   const task = async () => (await session.collector.get(`/api/collector/overview?period=${PERIOD}`)).data.tasks.count;
   const before = await task();
@@ -860,15 +862,18 @@ function oracle(rawIncs, now) {
   const { rows, routed } = decisionRows();
   const routedSet = new Set(routed);
   const latest = new Map();
-  for (const r of rows) if (r.decision !== "note") latest.set(r.incident_id, r.decision);
-  const EFFECT = { resolve: { open: 0, status: "Resolved" }, reject: { open: 0, status: "Rejected" }, reopen: { open: 1, status: "Open" } };
+  // effective.ts (RC-26): the latest decision WITH AN EFFECT decides. resolve, verify ("Verify and close") and reject close, reopen opens; a note and an escalate are skipped.
+  const EFFECT = { resolve: { open: 0, status: "Resolved" }, verify: { open: 0, status: "Resolved" }, reject: { open: 0, status: "Rejected" }, reopen: { open: 1, status: "Open" } };
+  for (const r of rows) if (EFFECT[r.decision]) latest.set(r.incident_id, r.decision);
   const end = new Date(now.replace(" ", "T") + "Z").getTime();
   const fromT = new Date(end - 168 * 3600_000).toISOString().slice(0, 19).replace("T", " ");
   const out = { ongoing: 0, resolved: 0, complaints: 0, severe_open: 0, urgent: 0, reported: 0, open_all: 0, byZone: {}, byDept: {} };
   for (const i of rawIncs) {
     const t = t19(i.first_reported_at);
-    if (!(t > fromT && t <= now)) continue;
     const e = EFFECT[latest.get(i.incident_id)] ?? { open: Number(i.is_open) === 1 ? 1 : 0, status: i.status_std };
+    // Resolved is counted in the window by its closing time (PB-214, RC-29; the oracle's resolvedByClose): an incident reported before the window and closed by a decision now counts, as the Resolved tile counts it.
+    // Every other figure keeps the reported-in-window rule.
+    if (!(t > fromT && t <= now)) { if (e.status === "Resolved" && latest.has(i.incident_id)) out.resolved++; continue; }
     out.reported++;
     if (e.open) {
       out.open_all++;
@@ -930,7 +935,7 @@ async function sums(rawIncs, baselineOracle, baselineConsole) {
     const openStages = off.counts.new + off.counts.action + off.counts.sent;
     rows.push({ figure: `${code}: the Collector's Ongoing and the board on the officer's page`, oracle: Number(cd.kpi.cur.ongoing), values: [["officer's board", Number(off.board.kpi.cur.ongoing)]], ok: same(Number(off.board.kpi.cur.ongoing), Number(cd.kpi.cur.ongoing)), note: "" });
     rows.push({ figure: `${code}: open on the board against New + In action + Sent on the same officer page`, oracle: Number(off.board.kpi.cur.ongoing), values: [["New + In action + Sent", openStages]], ok: same(openStages, Number(off.board.kpi.cur.ongoing)),
-      note: "A verify counts as closed in the stages and as open on the board." });
+      note: "A verify closes the incident in the stages and on the board." });
   }
   return { rows, oracle: { ...or, byZone: undefined, byDept: undefined }, raw_before_any_decision: { ...baselineOracle, byZone: undefined, byDept: undefined }, console_before_any_decision: { ...baselineConsole, zones: undefined },
     build_offset: { reported: baselineOracle.reported - baselineConsole.reported, open: baselineOracle.open_all - baselineConsole.open_all, why: "open news-only incidents the server leaves out when it loads a build (derive.ts: news media, report kinds, news sanity)" } };
@@ -1052,7 +1057,7 @@ async function main() {
 // ----------------------------------------------------------------- the report --
 
 const DESIGN = [
-  ["The rule for status", "\"The latest decision other than a note decides: resolve and reject close the incident, reopen opens it; verify and escalate leave the status as it is (a verify after a resolve therefore shows the pipeline's status, as the list does).\"", "src/lib/collector/effective.ts"],
+  ["The rule for status", "\"The latest decision with an effect decides: resolve, verify (Verify and close) and reject close the incident, reopen opens it. A note and an escalate have no effect and are skipped, so an escalate after a resolve leaves it closed\" (RC-26)", "src/lib/collector/effective.ts"],
   ["One rule, at once", "\"One rule for the row lists (overlay in intel.ts) and the SQL behind the KPI tiles and list filters, so a resolved incident leaves 'Ongoing' on the tile at the same moment it shows Resolved in the list.\"", "src/lib/collector/effective.ts"],
   ["Every number", "\"'Open' is the Collector-adjusted flag (EFF), as on the tiles and lists, so a resolved incident drops out of every number at once.\"", "src/lib/collector/intel.ts, snapCommon"],
   ["The route", "\"The console shows them at once; the pipeline applies them on its next build.\"", "src/app/api/collector/decisions/route.ts"],

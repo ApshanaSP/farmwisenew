@@ -1,0 +1,40 @@
+{
+ "objectsScanned": 52,
+ "bytesScanned": 6655329890,
+ "secretVariablesChecked": [
+  "AADHAAR_ENCRYPTION_KEY",
+  "ANTHROPIC_API_KEY",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_BEARER_TOKEN_BEDROCK",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_SESSION_TOKEN",
+  "GEMINI_API_KEY",
+  "GROQ_API_KEY",
+  "GROQ_API_KEY_2",
+  "GROQ_API_KEY_3",
+  "JWT_SECRET",
+  "REFRESH_API_KEY",
+  "SMTP_PASS",
+  "SMTP_USER"
+ ],
+ "patternsChecked": [
+  "aws-access-key-AKIA",
+  "aws-temp-key-ASIA",
+  "groq-gsk_",
+  "anthropic-sk-ant",
+  "openai-sk",
+  "google-AIza",
+  "github-token",
+  "slack-token",
+  "brevo-key",
+  "sendgrid-key",
+  "stripe-live-key",
+  "huggingface-hf_",
+  "bedrock-bearer",
+  "jwt-signed",
+  "private-key-block",
+  "database-url-with-password",
+  "bearer-literal"
+ ],
+ "hits": []
+}

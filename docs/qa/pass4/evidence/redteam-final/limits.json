@@ -1,0 +1,56 @@
+{
+ "bad": [
+  {
+   "what": "change-password answers every password guess (no limit, no lock), even while the confirm box is locked",
+   "answered": 60,
+   "of": 60
+  },
+  {
+   "what": "a burst of reset-code requests made more than one code and email inside the 60 s cooldown",
+   "made": 12,
+   "of": 12,
+   "ms": 2123
+  },
+  {
+   "what": "a burst of mobile-code requests made more than one code and email inside the 60 s cooldown",
+   "made": 12,
+   "of": 12
+  }
+ ],
+ "out": {
+  "confirmBurst": {
+   "401": 5,
+   "429": 20
+  },
+  "confirmRightWhileLocked": 429,
+  "changePasswordSerial": {
+   "400": 30
+  },
+  "changePasswordParallel": {
+   "400": 30
+  },
+  "changePasswordAnswer": "{\"error\":\"Current password is incorrect.\"}",
+  "loginBurst": {
+   "401": 7,
+   "429": 13
+  },
+  "loginRightAfterBurst same": 429,
+  "loginRightAfterBurst variant": 429,
+  "resetCodeBurst": {
+   "200": 12
+  },
+  "resetCodesMade": 12,
+  "mobileCodeBurst": {
+   "200": 12
+  },
+  "mobileCodesMade": 12,
+  "verifyBurst": {
+   "400": 20
+  },
+  "verifyChecked": 5,
+  "confirmEmailStep": {
+   "status": 503,
+   "head": "{\"error\":\"Email is not set up on this server. Use your password.\"}"
+  }
+ }
+}

@@ -6,6 +6,7 @@ import SatMap from "@/components/collector/app/SatMap";
 import { I } from "@/components/collector/app/icons";
 import { Chart, Empty, HBars, SEV_HEX, SevChip, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
 import { STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type Stage, type Tab } from "@/lib/officer/stages";
+import { useLangNow } from "@/lib/i18n/lang";
 import { bucketLabels } from "./format";
 import type { InsightModule } from "@/lib/officer/insights";
 import { MODULE_ICON } from "./Insights";
@@ -104,6 +105,7 @@ const EMPTY: Record<Tab, string> = {
 
 /** The grievance board: one tab per workflow stage, the one step each grievance needs, as many rows as fit. */
 export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
+  const uiLang = useLangNow();
   const [wrap, size] = useSize<HTMLDivElement>();
   const { setPer, fit } = c;
   // as many rows as fit the card (the console never scrolls on desktop); phones get a fixed page
@@ -134,7 +136,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
           </button>
         ))}
       </div>
-      {c.tab === "new" && L?.awaitingNote && <p className="dim" role="status" data-testid="queue-awaiting" style={{ margin: 0, padding: "4px 12px", fontSize: 12 }}>{L.awaitingNote.en}</p>}
+      {c.tab === "new" && L?.awaitingNote && <p className="dim" role="status" data-testid="queue-awaiting" style={{ margin: 0, padding: "4px 12px", fontSize: 12 }}>{uiLang === "ta" ? L.awaitingNote.ta : L.awaitingNote.en}</p>}
       <div className="cb">
         <div className="tbl-wrap" ref={wrap}>
           <table>

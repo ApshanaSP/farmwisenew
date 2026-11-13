@@ -1,0 +1,25 @@
+{
+ "started": "2026-11-12T15:45:27.482Z",
+ "steps": [
+  {
+   "lang": "en",
+   "vp": 1440,
+   "key": "citizenA",
+   "itemText": "Sign out",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fcitizen",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "ta",
+   "vp": 360,
+   "key": "citizenA",
+   "itemText": "வெளியேறு",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fcitizen",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  }
+ ]
+}

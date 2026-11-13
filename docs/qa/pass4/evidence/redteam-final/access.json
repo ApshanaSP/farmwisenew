@@ -1,0 +1,2184 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "tried": 435,
+ "bad": [],
+ "tricks": [
+  {
+   "name": "citizen token as collector cookie",
+   "u": "/api/collector/list",
+   "status": 401
+  },
+  {
+   "name": "officer token as collector cookie",
+   "u": "/api/collector/list",
+   "status": 401
+  },
+  {
+   "name": "citizen token as officer cookie",
+   "u": "/api/officer/grievances",
+   "status": 401
+  },
+  {
+   "name": "collector token as officer cookie",
+   "u": "/api/officer/grievances",
+   "status": 401
+  },
+  {
+   "name": "alg none collector",
+   "u": "/api/collector/list",
+   "status": 401
+  },
+  {
+   "name": "truncated signature",
+   "u": "/api/collector/list",
+   "status": 401
+  },
+  {
+   "name": "officer token as citizen cookie",
+   "u": "/api/complaints",
+   "status": 401
+  },
+  {
+   "name": "two collector cookies, first forged",
+   "u": "/api/collector/list",
+   "status": 200
+  }
+ ],
+ "matrix": [
+  {
+   "u": "/api/auth/me",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/me",
+   "id": "citizenB",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/auth/security",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/profile",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/profile",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "id": "citizenB",
+   "status": 200
+  },
+  {
+   "u": "/api/complaints",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/complaints",
+   "id": "citizenB",
+   "status": 200
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "citizenA",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/CMP-0000000",
+   "id": "citizenB",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "officerA",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "officerB",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "officerC",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "citizenA",
+   "status": 404
+  },
+  {
+   "u": "/api/complaints/media/x.jpg",
+   "id": "citizenB",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/alerts",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/insights",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/sessions",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/status",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "anonymous",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "officerA",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "officerB",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "officerC",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "citizenA",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/tools",
+   "id": "citizenB",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/pins",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "collector",
+   "status": 428
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "officerA",
+   "status": 428
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "officerB",
+   "status": 428
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "officerC",
+   "status": 428
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/assistant/export?format=csv",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/audit",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/brief",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/conflicts",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "collector",
+   "status": 428
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/export?kind=incidents",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/geo",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/analysis",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "collector",
+   "status": 409
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/incidents/INC-20261106-896A64/action",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/insights",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/list",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/nearby?lat=13.08&lon=80.27",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/analysis",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/news/article?id=THR-f4b1b3a425",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/overview",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/pattern",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/report",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/search?q=water",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/sources",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/stories",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/connectors",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/pick",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/studio/watch",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/audit",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "officerA",
+   "status": 0
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/thunai/world",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/geo",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "officerB",
+   "status": 404
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "officerC",
+   "status": 404
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/grievances/INC-20261106-896A64",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/insights",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/overview",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/officer/search?q=water",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/map/layers/news",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/map/suggest?q=water",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/impacts",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/rains",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/reach",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/state",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/tasks",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/live",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "collector",
+   "status": 204
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "officerA",
+   "status": 204
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "officerB",
+   "status": 204
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "officerC",
+   "status": 204
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "u": "/api/rehearsal/traffic/12/2930/1880",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "anonymous",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "officerA",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "officerB",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "officerC",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "citizenA",
+   "status": 404
+  },
+  {
+   "u": "/api/dev/thunai/draft",
+   "id": "citizenB",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "anonymous",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "officerA",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "officerB",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "officerC",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "citizenA",
+   "status": 404
+  },
+  {
+   "u": "/api/rehearsal/dev?kind=reach&id=x",
+   "id": "citizenB",
+   "status": 404
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "anonymous",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/complaint-types",
+   "id": "citizenB",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "anonymous",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/departments",
+   "id": "citizenB",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "anonymous",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "citizenA",
+   "status": 200
+  },
+  {
+   "u": "/api/locations/zones",
+   "id": "citizenB",
+   "status": 200
+  }
+ ]
+}

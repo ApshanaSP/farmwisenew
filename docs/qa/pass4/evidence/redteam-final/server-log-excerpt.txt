@@ -1,0 +1,7 @@
+# QA pass 4 final red team: server log lines that are not expected 'no model' notes (counts per distinct line). Run date 2026-11-12 16:18:32.
+## srv-3230.log (.next-qa, frozen 2026-11-06 12:00 IST, ticking)
+     33 [assistant] embedding index: Load model from E:\farm\.claude\worktrees\qa-pass4-ecfcb9\chennai-grievance-portal-main\.cache\models\Xenova\multilingual-e5-base\onnx\model_quantized.onnx failed:Protobuf parsing failed.
+## srv-3231.log (second server, same build)
+     20 [mailer] SMTP is not configured; no email sent to qa.citizen.a@example.test (Verify your mobile number)
+     12 [mailer] SMTP is not configured; no email sent to qa.citizen.a@example.test (Your password reset OTP)
+      6 [mailer] SMTP is not configured; no email sent to qa.citizen.b@example.test (Your password reset OTP)

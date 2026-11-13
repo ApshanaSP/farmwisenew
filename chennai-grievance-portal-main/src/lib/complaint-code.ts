@@ -22,7 +22,8 @@ function randomLetters(n: number): string {
  * constraint on complaints.complaint_code.
  */
 export async function generateUniqueComplaintCode(): Promise<string> {
-  const year = new Date().getFullYear();
+  // the year in Chennai, not the server's: on a UTC server a complaint filed after midnight on 1 January in Chennai would carry last year's code (RC-16 getters, g-review)
+  const year = new Date(Date.now() + 330 * 60_000).getUTCFullYear();
   const maxAttempts = 20;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {

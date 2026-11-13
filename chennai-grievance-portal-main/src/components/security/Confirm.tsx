@@ -11,10 +11,17 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { I } from "@/components/collector/app/icons";
+import { useLangNow } from "@/lib/i18n/lang";
 import "./confirm.css";
 
 interface Ask { action: string; title: string; summary: string; scope: string }
 type Method = "email" | "password";
+/** the box's own words, English and Tamil (the page translator does not know them, and a guarded action must read plainly) */
+const WORDS = {
+  en: { title: "Confirm it's you", cancel: "Cancel", labelEmail: "The 6-digit code from the email", labelPassword: "Your account password", confirm: "Confirm", checking: "Checking…", usePassword: "Use my password", another: "Send another code", emailMe: "Email me a code", why: "Being signed in is not enough for this. It is checked on the server for exactly this action, and recorded in the audit log.", failed: "That did not work. Try again.", notSent: "The code could not be sent.", sent: (to: string) => `A code was sent to ${to}.` },
+  ta: { title: "இது நீங்கள்தான் என உறுதிசெய்யுங்கள்", cancel: "ரத்து", labelEmail: "மின்னஞ்சலில் வந்த 6 இலக்கக் குறியீடு", labelPassword: "உங்கள் கணக்கின் கடவுச்சொல்", confirm: "உறுதிசெய்", checking: "சரிபார்க்கிறது…", usePassword: "என் கடவுச்சொல்லைப் பயன்படுத்து", another: "இன்னொரு குறியீட்டை அனுப்பு", emailMe: "எனக்கு மின்னஞ்சலில் குறியீடு அனுப்பு", why: "உள்நுழைந்திருப்பது மட்டும் இதற்குப் போதாது. இந்தச் செயலுக்காகவே சர்வரில் சரிபார்க்கப்பட்டு, தணிக்கைப் பதிவில் பதியப்படும்.", failed: "அது வேலை செய்யவில்லை. மீண்டும் முயலுங்கள்.", notSent: "குறியீட்டை அனுப்ப முடியவில்லை.", sent: (to: string) => `${to} முகவரிக்குக் குறியீடு அனுப்பப்பட்டது.` }
+};
+const FOCUSABLE = "button:not([disabled]), input:not([disabled]), [href], select, textarea, [tabindex]:not([tabindex='-1'])";
 const GRANT_HEADER = "x-diq-grant";
 // the same two names as lib/security/stepup.ts (not imported: that file reads server-only code)
 const SOFT_HEADER = "x-diq-confirm", SOFT_ANSWER = "x-diq-confirm";
@@ -70,6 +77,8 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
   const [error, setError] = useState<string | null>(why);
   const [note, setNote] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const uiLang = useLangNow();
+  const w = WORDS[uiLang];
 
   const post = async (body: Record<string, unknown>) => {
     const r = await fetch("/api/auth/confirm", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -90,28 +99,37 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
     const { ok, j } = await post({ step: "check", action: ask.action, scope: ask.scope, summary: ask.summary, method, code: code.trim() });
     setBusy(false);
     if (ok && j.grant) { onDone(j.grant); return; }
-    setError(j.error ?? "That did not work. Try again.");
+    setError(j.error ?? w.failed);
     setCode("");
   };
   const email = async () => {
     setBusy(true); setError(null);
     const { ok, j } = await post({ step: "email" });
     setBusy(false);
-    if (ok) { setMethod("email"); setCode(""); setNote(`A code was sent to ${j.to}.`); } else setError(j.error ?? "The code could not be sent.");
+    if (ok) { setMethod("email"); setCode(""); setNote(w.sent(String(j.to))); } else setError(j.error ?? w.notSent);
   };
 
   const digits = method === "email";
+  // the box is modal: Tab and Shift+Tab go round its own controls and never reach the console behind it (SK2-10)
+  const trap = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Tab") return;
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1], at = document.activeElement;
+    if (e.shiftKey && (at === first || !e.currentTarget.contains(at))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (at === last || !e.currentTarget.contains(at))) { e.preventDefault(); first.focus(); }
+  };
   return (
     <div className="cfm-veil" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDone(null); }}>
-      <form className="cfm" role="dialog" aria-modal="true" aria-labelledby="cfm-t" onSubmit={submit}>
+      <form className="cfm" role="dialog" aria-modal="true" aria-labelledby="cfm-t" onSubmit={submit} onKeyDown={trap}>
         <header>
           <span className="cfm-ic"><I n="shield" /></span>
-          <div><h3 id="cfm-t">Confirm it&apos;s you</h3><small>{ask.title}</small></div>
-          <button type="button" className="cfm-x" onClick={() => onDone(null)} aria-label="Cancel"><I n="x" /></button>
+          <div><h3 id="cfm-t">{w.title}</h3><small>{ask.title}</small></div>
+          <button type="button" className="cfm-x" onClick={() => onDone(null)} aria-label={w.cancel}><I n="x" /></button>
         </header>
         <p className="cfm-what">{ask.summary}</p>
         <label htmlFor="cfm-code">
-          {method === "email" ? "The 6-digit code from the email" : "Your account password"}
+          {method === "email" ? w.labelEmail : w.labelPassword}
         </label>
         <input id="cfm-code" ref={input} value={code} autoComplete={method === "password" ? "current-password" : "one-time-code"}
           type={method === "password" ? "password" : "text"} inputMode={digits ? "numeric" : "text"} maxLength={digits ? 6 : 200}
@@ -120,14 +138,14 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
         {error && <div className="cfm-err" role="alert"><I n="alert" />{error}</div>}
         {note && !error && <div className="cfm-ok" role="status"><I n="checkc" />{note}</div>}
         <div className="cfm-acts">
-          <button type="button" onClick={() => onDone(null)}>Cancel</button>
-          <button type="submit" className="pri" disabled={busy || (digits ? code.length !== 6 : !code.trim())}><I n="check" />{busy ? "Checking…" : "Confirm"}</button>
+          <button type="button" onClick={() => onDone(null)}>{w.cancel}</button>
+          <button type="submit" className="pri" disabled={busy || (digits ? code.length !== 6 : !code.trim())}><I n="check" />{busy ? w.checking : w.confirm}</button>
         </div>
         <div className="cfm-alt">
-          {method === "email" && <button type="button" onClick={() => { setMethod("password"); setCode(""); setNote(null); }}>Use my password</button>}
-          <button type="button" onClick={email} disabled={busy}>{method === "email" ? "Send another code" : "Email me a code"}</button>
+          {method === "email" && <button type="button" onClick={() => { setMethod("password"); setCode(""); setNote(null); }}>{w.usePassword}</button>}
+          <button type="button" onClick={email} disabled={busy}>{method === "email" ? w.another : w.emailMe}</button>
         </div>
-        <p className="cfm-why"><I n="lock" />Being signed in is not enough for this. It is checked on the server for exactly this action, and recorded in the audit log.</p>
+        <p className="cfm-why"><I n="lock" />{w.why}</p>
       </form>
     </div>
   );

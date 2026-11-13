@@ -1,0 +1,1 @@
+{"parallel":4,"mbEach":100,"route":"PUT /api/profile (citizen A)","statuses":[400,400,400,400],"ms":4924,"serverMbBefore":747,"serverMbPeak":858,"serverMbAfter":858,"aliveAfter":200}

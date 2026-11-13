@@ -1,0 +1,2702 @@
+{
+ "m01:base": {
+  "text": "how many severe complaints are open in Adyar zone",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,1,1"
+  },
+  "said": "1 severe case today. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Saidapet stretch). Say \"read them\", or \"open\" and a number."
+ },
+ "m01:ta": {
+  "text": "அடையாறு மண்டலத்தில் எத்தனை தீவிர புகார்கள் திறந்துள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,1,1"
+  },
+  "said": "இன்று 1 கடுமையான சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m01:tanglish": {
+  "text": "Adyar zone la evlo severe complaints open irukku",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,1,1"
+  },
+  "said": "இன்று 1 கடுமையான சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m01:polite": {
+  "text": "could you please tell me how many severe complaints are open in the Adyar zone",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,1,1"
+  },
+  "said": "1 severe case today. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Saidapet stretch). Say \"read them\", or \"open\" and a number."
+ },
+ "m01:order": {
+  "text": "in Adyar zone, open severe complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": 13,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": "Severe",
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Zone 13 · Adyar · Severe"
+ },
+ "m02:base": {
+  "text": "how many open complaints in Ambattur",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "35,72,72"
+  },
+  "said": "72 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: standing water at Gangai Nagar in Ambattur, and standing water at Ambattur OT. Say \"read them\", or \"open\" and a number."
+ },
+ "m02:ta": {
+  "text": "அம்பத்தூரில் எத்தனை புகார்கள் திறந்துள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "35,72,72"
+  },
+  "said": "இந்த வாரம் 72 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Gangai Nagar, அம்பத்தூர்; தண்ணீர் தேக்கம், Ambattur OT, அம்பத்தூர். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m02:tanglish": {
+  "text": "Ambattur la evlo complaints open irukku",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "35,72,72"
+  },
+  "said": "இந்த வாரம் 72 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Gangai Nagar, அம்பத்தூர்; தண்ணீர் தேக்கம், Ambattur OT, அம்பத்தூர். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m02:polite": {
+  "text": "please can you tell me how many open complaints there are in Ambattur",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "35,72,72"
+  },
+  "said": "72 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: standing water at Gangai Nagar in Ambattur, and standing water at Ambattur OT. Say \"read them\", or \"open\" and a number."
+ },
+ "m02:order": {
+  "text": "Ambattur, open complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "35,72,72"
+  },
+  "said": "72 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: standing water at Gangai Nagar in Ambattur, and standing water at Ambattur OT. Say \"read them\", or \"open\" and a number."
+ },
+ "m03:base": {
+  "text": "which zone has the most severe complaints",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_severe\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "4,5,7,9,16,16,25,65"
+  },
+  "said": "Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7."
+ },
+ "m03:ta": {
+  "text": "எந்த மண்டலத்தில் அதிக தீவிர புகார்கள் உள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,8,8,8"
+  },
+  "said": "இன்று 8 கடுமையான சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை; தண்ணீர் தேக்கம், Pallikaranai (Pallikaranai Marsh Outlet Drain), சோழிங்கநல்லூர். PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m03:tanglish": {
+  "text": "entha zone la adhigama severe complaints irukku",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,8,8,8"
+  },
+  "said": "இன்று 8 கடுமையான சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை; தண்ணீர் தேக்கம், Pallikaranai (Pallikaranai Marsh Outlet Drain), சோழிங்கநல்லூர். PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m03:polite": {
+  "text": "kindly tell me which zone has the most severe complaints",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_severe\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "4,5,7,9,16,16,25,65"
+  },
+  "said": "Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7."
+ },
+ "m03:order": {
+  "text": "most severe complaints, which zone has them",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_severe\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "4,5,7,9,16,16,25,65"
+  },
+  "said": "Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7."
+ },
+ "m04:base": {
+  "text": "garbage complaints in Anna Nagar",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8],\"dept\":null,\"depts\":[],\"cat\":\"SOLID_WASTE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week. The most urgent: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar. Solid Waste Management holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m04:ta": {
+  "text": "அண்ணா நகரில் குப்பை புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8],\"dept\":null,\"depts\":[],\"cat\":\"SOLID_WASTE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "இந்த வாரம் 5 சம்பவங்கள். மிக அவசரமானது: அகற்றப்படாத குப்பை, Nehru 3Rd Cross Street, அண்ணா நகர். Solid Waste Management வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m04:tanglish": {
+  "text": "Anna Nagar la kuppai complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8],\"dept\":null,\"depts\":[],\"cat\":\"SOLID_WASTE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week. The most urgent: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar. Solid Waste Management holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m04:polite": {
+  "text": "please show me the garbage complaints in Anna Nagar",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8],\"dept\":null,\"depts\":[],\"cat\":\"SOLID_WASTE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week. The most urgent: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar. Solid Waste Management holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m04:plural": {
+  "text": "garbage complaint in Anna Nagar",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8],\"dept\":null,\"depts\":[],\"cat\":\"SOLID_WASTE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week. The most urgent: uncleared garbage at Nehru 3Rd Cross Street in Anna Nagar. Solid Waste Management holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m05:base": {
+  "text": "how many overdue complaints in Manali",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "2,7,7,7"
+  },
+  "said": "7 cases this week; here are the 5 that matter most. 7 are past their deadline and need you first: Flooding & waterlogging at Manali, and a crime report at Manali. Greater Chennai Police holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m05:ta": {
+  "text": "மணலியில் எத்தனை புகார்கள் காலக்கெடு தாண்டியுள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "2,7,7,7"
+  },
+  "said": "இந்த வாரம் 7 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், மணலி; குற்றப் புகார், மணலி. Greater Chennai Police வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m05:tanglish": {
+  "text": "Manali la evlo complaints overdue",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "2,7,7,7"
+  },
+  "said": "இந்த வாரம் 7 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், மணலி; குற்றப் புகார், மணலி. Greater Chennai Police வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m05:polite": {
+  "text": "could you tell me the number of overdue complaints in Manali please",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "2,7,7,7"
+  },
+  "said": "7 cases this week; here are the 5 that matter most. 7 are past their deadline and need you first: Flooding & waterlogging at Manali, and a crime report at Manali. Greater Chennai Police holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m05:order": {
+  "text": "in Manali, overdue complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "2,7,7,7"
+  },
+  "said": "7 cases this week; here are the 5 that matter most. 7 are past their deadline and need you first: Flooding & waterlogging at Manali, and a crime report at Manali. Greater Chennai Police holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m06:base": {
+  "text": "street light complaints in Perungudi",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[14],\"dept\":null,\"depts\":[],\"cat\":\"STREETLIGHT_ELECTRICAL\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,9,9,9"
+  },
+  "said": "9 cases this week. 3 are past their deadline and need you first: a street light or electrical problem at Nethaji Street, M.G.R.Nagar, Tharamani in Perungudi, and a street light or electrical problem at Pallikaranai in Perungudi. Street Lighting & Electrical holds 9 of them. Say \"read them\", or \"open"
+ },
+ "m06:ta": {
+  "text": "பெருங்குடியில் தெருவிளக்கு புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[14],\"dept\":null,\"depts\":[],\"cat\":\"STREETLIGHT_ELECTRICAL\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,9,9,9"
+  },
+  "said": "இந்த வாரம் 9 சம்பவங்கள். 3 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Nethaji Street, M.G.R.Nagar, Tharamani, பெருங்குடி; தெருவிளக்கு அல்லது மின் பிரச்சினை, Pallikaranai, பெருங்குடி. Street Lighting & Electrical வசம் 9. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லு"
+ },
+ "m06:tanglish": {
+  "text": "Perungudi la street light complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[14],\"dept\":null,\"depts\":[],\"cat\":\"STREETLIGHT_ELECTRICAL\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,9,9,9"
+  },
+  "said": "9 cases this week. 3 are past their deadline and need you first: a street light or electrical problem at Nethaji Street, M.G.R.Nagar, Tharamani in Perungudi, and a street light or electrical problem at Pallikaranai in Perungudi. Street Lighting & Electrical holds 9 of them. Say \"read them\", or \"open"
+ },
+ "m06:polite": {
+  "text": "please show the street light complaints in Perungudi",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[14],\"dept\":null,\"depts\":[],\"cat\":\"STREETLIGHT_ELECTRICAL\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,9,9,9"
+  },
+  "said": "9 cases this week. 3 are past their deadline and need you first: a street light or electrical problem at Nethaji Street, M.G.R.Nagar, Tharamani in Perungudi, and a street light or electrical problem at Pallikaranai in Perungudi. Street Lighting & Electrical holds 9 of them. Say \"read them\", or \"open"
+ },
+ "m06:plural": {
+  "text": "street lights complaint in Perungudi",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[14],\"dept\":null,\"depts\":[],\"cat\":\"STREETLIGHT_ELECTRICAL\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,9,9,9"
+  },
+  "said": "9 cases this week. 3 are past their deadline and need you first: a street light or electrical problem at Nethaji Street, M.G.R.Nagar, Tharamani in Perungudi, and a street light or electrical problem at Pallikaranai in Perungudi. Street Lighting & Electrical holds 9 of them. Say \"read them\", or \"open"
+ },
+ "m07:base": {
+  "text": "top three zones by open complaints",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_open\",\"by\":null,\"order\":\"top\",\"n\":3,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "12,108,110,135,135,1116"
+  },
+  "said": "Highest: Royapuram, 135 incidents. Then Tondiarpet 110, Teynampet 108."
+ },
+ "m07:ta": {
+  "text": "திறந்த புகார்கள் அதிகம் உள்ள முதல் மூன்று மண்டலங்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_open\",\"by\":null,\"order\":\"top\",\"n\":3,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "12,108,110,135,135,1116"
+  },
+  "said": "அதிகம்: ராயபுரம், 135 சம்பவங்கள். அடுத்து தண்டையார்பேட்டை 110, தேனாம்பேட்டை 108."
+ },
+ "m07:number": {
+  "text": "top 3 zones by open complaints",
+  "kind": "number",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_open\",\"by\":null,\"order\":\"top\",\"n\":3,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "12,108,110,135,135,1116"
+  },
+  "said": "Highest: Royapuram, 135 incidents. Then Tondiarpet 110, Teynampet 108."
+ },
+ "m07:polite": {
+  "text": "please show me the top three zones by open complaints",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_open\",\"by\":null,\"order\":\"top\",\"n\":3,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "12,108,110,135,135,1116"
+  },
+  "said": "Highest: Royapuram, 135 incidents. Then Tondiarpet 110, Teynampet 108."
+ },
+ "m07:order": {
+  "text": "by open complaints, the top three zones",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"zone_open\",\"by\":null,\"order\":\"top\",\"n\":3,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "12,108,110,135,135,1116"
+  },
+  "said": "Highest: Royapuram, 135 incidents. Then Tondiarpet 110, Teynampet 108."
+ },
+ "m08:base": {
+  "text": "top five wards by severe complaints",
+  "kind": "base",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": "Severe",
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Severe"
+ },
+ "m08:ta": {
+  "text": "தீவிர புகார்கள் அதிகம் உள்ள முதல் ஐந்து வார்டுகள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "வரைபடத்தில் கேள்வி"
+ },
+ "m08:number": {
+  "text": "top 5 wards by severe complaints",
+  "kind": "number",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": "Severe",
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Severe"
+ },
+ "m08:polite": {
+  "text": "please give me the top five wards by severe complaints",
+  "kind": "polite",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": "Severe",
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Severe"
+ },
+ "m08:order": {
+  "text": "by severe complaints, the top five wards",
+  "kind": "order",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": "Severe",
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Severe"
+ },
+ "m09:base": {
+  "text": "drainage complaints in Royapuram",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[5],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,8,11,11"
+  },
+  "said": "11 cases this week; here are the 9 that matter most. The most urgent: Drainage & sewage at Vepery in Royapuram. Storm Water Drain holds 8 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m09:ta": {
+  "text": "ராயபுரத்தில் வடிகால் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,90,90"
+  },
+  "said": "இந்த வாரம் 90 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: வடிகால் அல்லது கழிவுநீர் பிரச்சினை, Kathivakkam (Kathivakkam Macro Drain), திருவொற்றியூர். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m09:tanglish": {
+  "text": "Royapuram la drainage complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[5],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,8,11,11"
+  },
+  "said": "11 cases this week; here are the 9 that matter most. The most urgent: Drainage & sewage at Vepery in Royapuram. Storm Water Drain holds 8 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m09:polite": {
+  "text": "please show me drainage complaints in Royapuram",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[5],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,8,11,11"
+  },
+  "said": "11 cases this week; here are the 9 that matter most. The most urgent: Drainage & sewage at Vepery in Royapuram. Storm Water Drain holds 8 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m09:plural": {
+  "text": "drainage complaint in Royapuram",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[5],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,8,11,11"
+  },
+  "said": "11 cases this week; here are the 9 that matter most. The most urgent: Drainage & sewage at Vepery in Royapuram. Storm Water Drain holds 8 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m10:base": {
+  "text": "flooding complaints in Thiruvottiyur",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[1],\"dept\":null,\"depts\":[],\"cat\":\"FLOOD_WATERLOGGING\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,10,14,14"
+  },
+  "said": "14 cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Wimco Nagar in Thiruvottiyur, and Flooding & waterlogging at Kaladipet in Thiruvottiyur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m10:ta": {
+  "text": "திருவொற்றியூரில் வெள்ளம் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[1],\"dept\":null,\"depts\":[],\"cat\":\"FLOOD_WATERLOGGING\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,10,14,14"
+  },
+  "said": "இந்த வாரம் 14 சம்பவங்கள். 10 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Wimco Nagar, திருவொற்றியூர்; தண்ணீர் தேக்கம், Kaladipet, திருவொற்றியூர். PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m10:tanglish": {
+  "text": "Thiruvottiyur la flooding complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[1],\"dept\":null,\"depts\":[],\"cat\":\"FLOOD_WATERLOGGING\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,10,14,14"
+  },
+  "said": "14 cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Wimco Nagar in Thiruvottiyur, and Flooding & waterlogging at Kaladipet in Thiruvottiyur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m10:polite": {
+  "text": "kindly show flooding complaints in Thiruvottiyur",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[1],\"dept\":null,\"depts\":[],\"cat\":\"FLOOD_WATERLOGGING\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,10,14,14"
+  },
+  "said": "14 cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Wimco Nagar in Thiruvottiyur, and Flooding & waterlogging at Kaladipet in Thiruvottiyur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m10:order": {
+  "text": "in Thiruvottiyur, flooding complaints",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[1],\"dept\":null,\"depts\":[],\"cat\":\"FLOOD_WATERLOGGING\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "6,10,14,14"
+  },
+  "said": "14 cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Wimco Nagar in Thiruvottiyur, and Flooding & waterlogging at Kaladipet in Thiruvottiyur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m11:base": {
+  "text": "how many complaints are open today",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "22,236,236"
+  },
+  "said": "236 cases today; here are the 12 that matter most. 22 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m11:ta": {
+  "text": "இன்று எத்தனை புகார்கள் திறந்துள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "22,236,236"
+  },
+  "said": "இன்று 236 சம்பவங்கள். 22 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: குற்றப் புகார், Puzhal, மாதவரம்; தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m11:tanglish": {
+  "text": "inniki evlo complaints open irukku",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "22,236,236"
+  },
+  "said": "இன்று 236 சம்பவங்கள். 22 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: குற்றப் புகார், Puzhal, மாதவரம்; தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m11:polite": {
+  "text": "could you please tell me how many complaints are open today",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "22,236,236"
+  },
+  "said": "236 cases today; here are the 12 that matter most. 22 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m11:order": {
+  "text": "today, open complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"open\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "22,236,236"
+  },
+  "said": "236 cases today; here are the 12 that matter most. 22 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m12:base": {
+  "text": "severe complaints this week",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "52,52,54"
+  },
+  "said": "52 severe cases this week; here are the 12 that matter most. 54 are past their deadline and need you first: standing water at Pulianthope (Buckingham Canal - Basin Bridge stretch) in Anna Nagar, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m12:ta": {
+  "text": "இந்த வாரம் தீவிர புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "52,52,54"
+  },
+  "said": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin Bridge stretch), அண்ணா நகர்; தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m12:tanglish": {
+  "text": "indha vaaram severe complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "52,52,54"
+  },
+  "said": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin Bridge stretch), அண்ணா நகர்; தண்ணீர் தேக்கம், Ice House, தேனாம்பேட்டை. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m12:polite": {
+  "text": "please show me the severe complaints this week",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "52,52,54"
+  },
+  "said": "52 severe cases this week; here are the 12 that matter most. 54 are past their deadline and need you first: standing water at Pulianthope (Buckingham Canal - Basin Bridge stretch) in Anna Nagar, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m12:order": {
+  "text": "this week, severe complaints",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":\"Severe\",\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "52,52,54"
+  },
+  "said": "52 severe cases this week; here are the 12 that matter most. 54 are past their deadline and need you first: standing water at Pulianthope (Buckingham Canal - Basin Bridge stretch) in Anna Nagar, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number."
+ },
+ "m13:base": {
+  "text": "how much rain in the last 24 hours",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"rain\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."
+ },
+ "m13:ta": {
+  "text": "கடந்த 24 மணி நேரத்தில் எவ்வளவு மழை",
+  "kind": "ta",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "மழை அளவு"
+ },
+ "m13:tanglish": {
+  "text": "last 24 hours la evlo mazhai",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"rain\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 மி.மீ, 6 நவ., முற்பகல் 8:30 நிலவரப்படி."
+ },
+ "m13:polite": {
+  "text": "could you please tell me how much rain fell in the last 24 hours",
+  "kind": "polite",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Rainfall"
+ },
+ "m13:order": {
+  "text": "in the last 24 hours, how much rain",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"rain\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "4 readings. Highest: Chennai-Madhavaram at 14 mm, as of 6 Nov, 8:30 AM."
+ },
+ "m14:base": {
+  "text": "which department has the most open complaints",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"dept_open\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "84,100,105,174,405"
+  },
+  "said": "Highest: Greater Chennai Police, 405 incidents. Then Storm Water Drain 174, PWD Water Resources 105."
+ },
+ "m14:ta": {
+  "text": "எந்த துறையில் அதிக திறந்த புகார்கள் உள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "resolve",
+   "kind": "chat",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "எந்த துறையில் பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்."
+ },
+ "m14:tanglish": {
+  "text": "entha department la adhigama open complaints irukku",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "resolve",
+   "kind": "chat",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Entha Department பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்."
+ },
+ "m14:polite": {
+  "text": "kindly tell me which department has the most open complaints",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"dept_open\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "84,100,105,174,405"
+  },
+  "said": "Highest: Greater Chennai Police, 405 incidents. Then Storm Water Drain 174, PWD Water Resources 105."
+ },
+ "m14:order": {
+  "text": "most open complaints, which department",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "ranking",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":\"dept_open\",\"by\":null,\"order\":\"top\",\"n\":5,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": "84,100,105,174,405"
+  },
+  "said": "Highest: Greater Chennai Police, 405 incidents. Then Storm Water Drain 174, PWD Water Resources 105."
+ },
+ "m15:base": {
+  "text": "water supply complaints in Alandur",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[12],\"dept\":null,\"depts\":[],\"cat\":\"WATER_SUPPLY\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": ""
+  },
+  "said": "There are no cases this week for this view."
+ },
+ "m15:ta": {
+  "text": "ஆலந்தூரில் குடிநீர் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[12],\"dept\":null,\"depts\":[],\"cat\":\"WATER_SUPPLY\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": ""
+  },
+  "said": "இந்தப் பார்வையில் இந்த வாரம்  சம்பவங்கள் இல்லை."
+ },
+ "m15:tanglish": {
+  "text": "Alandur la water supply complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[12],\"dept\":null,\"depts\":[],\"cat\":\"WATER_SUPPLY\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": ""
+  },
+  "said": "There are no cases this week for this view."
+ },
+ "m15:polite": {
+  "text": "please show the water supply complaints in Alandur",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[12],\"dept\":null,\"depts\":[],\"cat\":\"WATER_SUPPLY\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": ""
+  },
+  "said": "There are no cases this week for this view."
+ },
+ "m15:plural": {
+  "text": "water supply complaint in Alandur",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[12],\"dept\":null,\"depts\":[],\"cat\":\"WATER_SUPPLY\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": ""
+  },
+  "said": "There are no cases this week for this view."
+ },
+ "m16:base": {
+  "text": "show me a summary of Kodambakkam zone",
+  "kind": "base",
+  "facts": {
+   "lane": "resolve",
+   "kind": "do",
+   "recipe": "brief",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[10],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null,\"fresh\":true}",
+   "figures": "0,1,1,21"
+  },
+  "said": "3 points in the brief for today. 21 incidents were reported in Kodambakkam (last 24 hours), 25% fewer than the previous period."
+ },
+ "m16:ta": {
+  "text": "கோடம்பாக்கம் மண்டலத்தின் சுருக்கத்தைக் காட்டு",
+  "kind": "ta",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": 10,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "மண்டலம் 10 · கோடம்பாக்கம்"
+ },
+ "m16:tanglish": {
+  "text": "Kodambakkam zone summary kaattu",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "resolve",
+   "kind": "do",
+   "recipe": "brief",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[10],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null,\"fresh\":true}",
+   "figures": "0,1,1,21"
+  },
+  "said": "இன்று சுருக்கத்தில் 3 குறிப்புகள். இன்று கோடம்பாக்கம் பகுதியில் 21 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 25% குறைவு. 21 இன்னும் நிலுவையில், 1 கெடு தாண்டியவை; 0 கடுமையானவை."
+ },
+ "m16:polite": {
+  "text": "could you please show me a summary of the Kodambakkam zone",
+  "kind": "polite",
+  "facts": {
+   "lane": "resolve",
+   "kind": "do",
+   "recipe": "brief",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[10],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null,\"fresh\":true}",
+   "figures": "0,1,1,21"
+  },
+  "said": "3 points in the brief for today. 21 incidents were reported in Kodambakkam (last 24 hours), 25% fewer than the previous period."
+ },
+ "m16:order": {
+  "text": "Kodambakkam zone, a summary, show me",
+  "kind": "order",
+  "facts": {
+   "lane": "resolve",
+   "kind": "do",
+   "recipe": "brief",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"daily\",\"zones\":[10],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null,\"fresh\":true}",
+   "figures": "0,1,1,21"
+  },
+  "said": "3 points in the brief for today. 21 incidents were reported in Kodambakkam (last 24 hours), 25% fewer than the previous period."
+ },
+ "m17:base": {
+  "text": "vector borne disease complaints in Tondiarpet",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[4],\"dept\":null,\"depts\":[],\"cat\":\"VECTOR_DISEASE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a mosquito or water-borne disease problem at Katta Thotti (T.H.Road), T.H.Road, Kaladipet in Tondiarpet. Public Health (GCC) holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m17:ta": {
+  "text": "தண்டையார்பேட்டையில் நோய் பரப்பும் கொசு புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[4],\"dept\":null,\"depts\":[],\"cat\":\"VECTOR_DISEASE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "இந்த வாரம் 2 சம்பவங்கள். மிக அவசரமானது: கொசு அல்லது நீர்வழி நோய்ப் பிரச்சினை, Katta Thotti (T.H.Road), T.H.Road, Kaladipet, தண்டையார்பேட்டை. Public Health (GCC) வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m17:tanglish": {
+  "text": "Tondiarpet la mosquito dengue complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[4],\"dept\":null,\"depts\":[],\"cat\":\"VECTOR_DISEASE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a mosquito or water-borne disease problem at Katta Thotti (T.H.Road), T.H.Road, Kaladipet in Tondiarpet. Public Health (GCC) holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m17:polite": {
+  "text": "please show vector borne disease complaints in Tondiarpet",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[4],\"dept\":null,\"depts\":[],\"cat\":\"VECTOR_DISEASE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a mosquito or water-borne disease problem at Katta Thotti (T.H.Road), T.H.Road, Kaladipet in Tondiarpet. Public Health (GCC) holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m17:plural": {
+  "text": "vector borne diseases complaint in Tondiarpet",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[4],\"dept\":null,\"depts\":[],\"cat\":\"VECTOR_DISEASE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a mosquito or water-borne disease problem at Katta Thotti (T.H.Road), T.H.Road, Kaladipet in Tondiarpet. Public Health (GCC) holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m18:base": {
+  "text": "stray animal complaints in Valasaravakkam",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[11],\"dept\":null,\"depts\":[],\"cat\":\"STRAY_ANIMALS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,4,4"
+  },
+  "said": "None this week. 4 cases in the last 30 days. The most urgent: a stray animal problem at Visvanathan 1St Cross Street, Darmaraja Nagar, Karambakkam in Valasaravakkam. Public Health (GCC) holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m18:ta": {
+  "text": "வளசரவாக்கத்தில் தெருநாய் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":\"STRAY_ANIMALS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,16,16"
+  },
+  "said": "இந்த வாரம் 16 சம்பவங்கள். மிக அவசரமானது: தெரு விலங்குகள் பிரச்சினை, West Jones Road, Saidapet West, Saidapet West, கோடம்பாக்கம். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m18:tanglish": {
+  "text": "Valasaravakkam la stray dog complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[11],\"dept\":null,\"depts\":[],\"cat\":\"STRAY_ANIMALS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,4,4"
+  },
+  "said": "None this week. 4 cases in the last 30 days. The most urgent: a stray animal problem at Visvanathan 1St Cross Street, Darmaraja Nagar, Karambakkam in Valasaravakkam. Public Health (GCC) holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m18:polite": {
+  "text": "please show the stray animal complaints in Valasaravakkam",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[11],\"dept\":null,\"depts\":[],\"cat\":\"STRAY_ANIMALS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,4,4"
+  },
+  "said": "None this week. 4 cases in the last 30 days. The most urgent: a stray animal problem at Visvanathan 1St Cross Street, Darmaraja Nagar, Karambakkam in Valasaravakkam. Public Health (GCC) holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m18:plural": {
+  "text": "stray animals complaint in Valasaravakkam",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[11],\"dept\":null,\"depts\":[],\"cat\":\"STRAY_ANIMALS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,4,4"
+  },
+  "said": "None this week. 4 cases in the last 30 days. The most urgent: a stray animal problem at Visvanathan 1St Cross Street, Darmaraja Nagar, Karambakkam in Valasaravakkam. Public Health (GCC) holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m19:base": {
+  "text": "pothole complaints in Sholinganallur",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[15],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a damaged road at Clri Nagar 14Th Cross Street, Neelankarai, Neelankarai in Sholinganallur. Roads & Building Permissions holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m19:ta": {
+  "text": "சோழிங்கநல்லூரில் பள்ளம் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[15],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "இந்த வாரம் 2 சம்பவங்கள். மிக அவசரமானது: சேதமான சாலை, Clri Nagar 14Th Cross Street, Neelankarai, Neelankarai, சோழிங்கநல்லூர். Roads & Building Permissions வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m19:tanglish": {
+  "text": "Sholinganallur la pothole complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[15],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a damaged road at Clri Nagar 14Th Cross Street, Neelankarai, Neelankarai in Sholinganallur. Roads & Building Permissions holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m19:polite": {
+  "text": "please show me pothole complaints in Sholinganallur",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[15],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a damaged road at Clri Nagar 14Th Cross Street, Neelankarai, Neelankarai in Sholinganallur. Roads & Building Permissions holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m19:plural": {
+  "text": "potholes complaint in Sholinganallur",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[15],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,2,2,2"
+  },
+  "said": "2 cases this week. The most urgent: a damaged road at Clri Nagar 14Th Cross Street, Neelankarai, Neelankarai in Sholinganallur. Roads & Building Permissions holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m20:base": {
+  "text": "what is the air quality now",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"aqi\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "7 readings. Highest: Arumbakkam, Chennai - TNPCB at 136 AQI, as of 4 Nov, 5:00 PM."
+ },
+ "m20:ta": {
+  "text": "இப்போது காற்றின் தரம் என்ன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"aqi\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "7 அளவீடுகள். அதிகம்: Arumbakkam, Chennai - TNPCB, 136 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி."
+ },
+ "m20:tanglish": {
+  "text": "ippo air quality enna",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"aqi\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "7 அளவீடுகள். அதிகம்: Arumbakkam, Chennai - TNPCB, 136 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி."
+ },
+ "m20:polite": {
+  "text": "could you please tell me what the air quality is right now",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"aqi\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "7 readings. Highest: Arumbakkam, Chennai - TNPCB at 136 AQI, as of 4 Nov, 5:00 PM."
+ },
+ "m20:order": {
+  "text": "now, the air quality, what is it",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"aqi\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "7 readings. Highest: Arumbakkam, Chennai - TNPCB at 136 AQI, as of 4 Nov, 5:00 PM."
+ },
+ "m21:base": {
+  "text": "what is the level of the lakes",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"lakes\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "6 readings. Highest: Veeranam at 72% full, as of 6 Nov, 6:00 AM."
+ },
+ "m21:ta": {
+  "text": "ஏரிகளின் நீர் மட்டம் என்ன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"lakes\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+ },
+ "m21:tanglish": {
+  "text": "lakes la water level enna",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"lakes\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+ },
+ "m21:polite": {
+  "text": "could you please tell me the level of the lakes",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"lakes\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "6 readings. Highest: Veeranam at 72% full, as of 6 Nov, 6:00 AM."
+ },
+ "m21:plural": {
+  "text": "what is the level of the lake",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "readings",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":null,\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":\"lakes\",\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "6 readings. Highest: Veeranam at 72% full, as of 6 Nov, 6:00 AM."
+ },
+ "m22:base": {
+  "text": "compare Adyar and Anna Nagar zones",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "compare",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13,8],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "Adyar: 4 severe and 91 open. Anna Nagar: 7 severe and 97 open. The biggest gap is severe: Anna Nagar 7 against Adyar 4."
+ },
+ "m22:ta": {
+  "text": "அடையாறு மற்றும் அண்ணா நகர் மண்டலங்களை ஒப்பிடு",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "compare",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13,8],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "அடையாறு: 4 கடுமையான, 91 திறந்தவை. அண்ணா நகர்: 7 கடுமையான, 97 திறந்தவை. பெரிய வேறுபாடு Severe: Anna Nagar 7, Adyar 4."
+ },
+ "m22:tanglish": {
+  "text": "Adyar and Anna Nagar zones compare pannunga",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "compare",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13,8],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "அடையாறு: 4 கடுமையான, 91 திறந்தவை. அண்ணா நகர்: 7 கடுமையான, 97 திறந்தவை. பெரிய வேறுபாடு Severe: Anna Nagar 7, Adyar 4."
+ },
+ "m22:polite": {
+  "text": "could you please compare the Adyar and Anna Nagar zones",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "compare",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13,8],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "Adyar: 4 severe and 91 open. Anna Nagar: 7 severe and 97 open. The biggest gap is severe: Anna Nagar 7 against Adyar 4."
+ },
+ "m22:order": {
+  "text": "Anna Nagar and Adyar zones, compare",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "compare",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[8,13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":null,\"id\":null,\"name\":null,\"what\":null,\"sort\":null}",
+   "figures": ""
+  },
+  "said": "Anna Nagar: 7 severe and 97 open. Adyar: 4 severe and 91 open. The biggest gap is severe: Anna Nagar 7 against Adyar 4."
+ },
+ "m23:base": {
+  "text": "fire complaints in Madhavaram",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[3],\"dept\":null,\"depts\":[],\"cat\":\"FIRE_EXPLOSION\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,1,1"
+  },
+  "said": "None this week. 1 case in the last 30 days. The most urgent: Fire & explosion at Puzhal in Madhavaram. Say \"read them\", or \"open\" and a number."
+ },
+ "m23:ta": {
+  "text": "மாதவரத்தில் தீ புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":\"FIRE_EXPLOSION\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "3,4,5,5"
+  },
+  "said": "இந்த வாரம் 5 சம்பவங்கள். 4 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தீ விபத்து, Ennore, திருவொற்றியூர்; தீ விபத்து, Periyar Nagar, அண்ணா நகர். District Disaster Management வசம் 3. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m23:tanglish": {
+  "text": "Madhavaram la fire complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[3],\"dept\":null,\"depts\":[],\"cat\":\"FIRE_EXPLOSION\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,1,1"
+  },
+  "said": "None this week. 1 case in the last 30 days. The most urgent: Fire & explosion at Puzhal in Madhavaram. Say \"read them\", or \"open\" and a number."
+ },
+ "m23:polite": {
+  "text": "please show the fire complaints in Madhavaram",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[3],\"dept\":null,\"depts\":[],\"cat\":\"FIRE_EXPLOSION\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,1,1"
+  },
+  "said": "None this week. 1 case in the last 30 days. The most urgent: Fire & explosion at Puzhal in Madhavaram. Say \"read them\", or \"open\" and a number."
+ },
+ "m23:plural": {
+  "text": "fires complaint in Madhavaram",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"monthly\",\"zones\":[3],\"dept\":null,\"depts\":[],\"cat\":\"FIRE_EXPLOSION\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,1,1"
+  },
+  "said": "None this week. 1 case in the last 30 days. The most urgent: Fire & explosion at Puzhal in Madhavaram. Say \"read them\", or \"open\" and a number."
+ },
+ "m24:base": {
+  "text": "tree fall complaints in Teynampet",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[9],\"dept\":null,\"depts\":[],\"cat\":\"TREES_PARKS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,3,3"
+  },
+  "said": "3 cases this week. The most urgent: a tree or park problem at Krishnaveni Ammal Street, Ayyavoo Colony, Aminjikarai in Teynampet. Parks & Play Fields holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m24:ta": {
+  "text": "தேனாம்பேட்டையில் மரம் விழுந்த புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[9],\"dept\":null,\"depts\":[],\"cat\":\"TREES_PARKS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,3,3"
+  },
+  "said": "இந்த வாரம் 3 சம்பவங்கள். மிக அவசரமானது: மரம் அல்லது பூங்கா பிரச்சினை, Krishnaveni Ammal Street, Ayyavoo Colony, Aminjikarai, தேனாம்பேட்டை. Parks & Play Fields வசம் 3. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m24:tanglish": {
+  "text": "Teynampet la tree fall complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[9],\"dept\":null,\"depts\":[],\"cat\":\"TREES_PARKS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,3,3"
+  },
+  "said": "3 cases this week. The most urgent: a tree or park problem at Krishnaveni Ammal Street, Ayyavoo Colony, Aminjikarai in Teynampet. Parks & Play Fields holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m24:polite": {
+  "text": "please show me the tree fall complaints in Teynampet",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[9],\"dept\":null,\"depts\":[],\"cat\":\"TREES_PARKS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,3,3"
+  },
+  "said": "3 cases this week. The most urgent: a tree or park problem at Krishnaveni Ammal Street, Ayyavoo Colony, Aminjikarai in Teynampet. Parks & Play Fields holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m24:plural": {
+  "text": "fallen trees complaint in Teynampet",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[9],\"dept\":null,\"depts\":[],\"cat\":\"TREES_PARKS\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,3,3"
+  },
+  "said": "3 cases this week. The most urgent: a tree or park problem at Krishnaveni Ammal Street, Ayyavoo Colony, Aminjikarai in Teynampet. Parks & Play Fields holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m25:base": {
+  "text": "drain complaints in Ambattur",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,4,4"
+  },
+  "said": "4 cases this week. The most urgent: Drainage & sewage at Padi in Ambattur. Storm Water Drain holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m25:ta": {
+  "text": "அம்பத்தூரில் வடிகால் புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,4,4"
+  },
+  "said": "இந்த வாரம் 4 சம்பவங்கள். மிக அவசரமானது: வடிகால் அல்லது கழிவுநீர் பிரச்சினை, Padi, அம்பத்தூர். Storm Water Drain வசம் 3. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m25:tanglish": {
+  "text": "Ambattur la drain complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,4,4"
+  },
+  "said": "4 cases this week. The most urgent: Drainage & sewage at Padi in Ambattur. Storm Water Drain holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m25:polite": {
+  "text": "please show me the drain complaints in Ambattur",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,4,4"
+  },
+  "said": "4 cases this week. The most urgent: Drainage & sewage at Padi in Ambattur. Storm Water Drain holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m25:plural": {
+  "text": "drains complaint in Ambattur",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[7],\"dept\":null,\"depts\":[],\"cat\":\"DRAINAGE_SEWAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,3,4,4"
+  },
+  "said": "4 cases this week. The most urgent: Drainage & sewage at Padi in Ambattur. Storm Water Drain holds 3 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m26:base": {
+  "text": "how many street complaints in Adyar",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,112,112"
+  },
+  "said": "112 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River - Saidapet stretch), and standing water at Little Mount in Adyar. Say \"read them\", or \"open\" and a number."
+ },
+ "m26:ta": {
+  "text": "அடையாறில் தெரு புகார்கள் எத்தனை",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,112,112"
+  },
+  "said": "இந்த வாரம் 112 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m26:tanglish": {
+  "text": "Adyar la street complaints evlo",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,112,112"
+  },
+  "said": "இந்த வாரம் 112 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m26:polite": {
+  "text": "could you tell me how many street complaints there are in Adyar",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,112,112"
+  },
+  "said": "112 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River - Saidapet stretch), and standing water at Little Mount in Adyar. Say \"read them\", or \"open\" and a number."
+ },
+ "m26:order": {
+  "text": "in Adyar, street complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,112,112"
+  },
+  "said": "112 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River - Saidapet stretch), and standing water at Little Mount in Adyar. Say \"read them\", or \"open\" and a number."
+ },
+ "m27:base": {
+  "text": "road complaints in Thiru-Vi-Ka-Nagar",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[6],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week; here are the 4 that matter most. The most urgent: a damaged road at Perumal Nagar Main Street, Perumal Nagar, Kolathur in Thiru-Vi-Ka-Nagar. Roads & Building Permissions holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m27:ta": {
+  "text": "திரு.வி.க. நகரில் சாலை புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "1,52,52"
+  },
+  "said": "இந்த வாரம் 52 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: சேதமான சாலை, Manali (Manali Kosasthalaiyar Causeway), திருவொற்றியூர். \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m27:tanglish": {
+  "text": "Thiru-Vi-Ka-Nagar la road complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[6],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week; here are the 4 that matter most. The most urgent: a damaged road at Perumal Nagar Main Street, Perumal Nagar, Kolathur in Thiru-Vi-Ka-Nagar. Roads & Building Permissions holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m27:polite": {
+  "text": "please show me the road complaints in Thiru-Vi-Ka-Nagar",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[6],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week; here are the 4 that matter most. The most urgent: a damaged road at Perumal Nagar Main Street, Perumal Nagar, Kolathur in Thiru-Vi-Ka-Nagar. Roads & Building Permissions holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m27:plural": {
+  "text": "roads complaint in Thiru-Vi-Ka-Nagar",
+  "kind": "plural",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[6],\"dept\":null,\"depts\":[],\"cat\":\"ROAD_DAMAGE\",\"taluk\":null,\"sev\":null,\"status\":null,\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "0,4,5,5"
+  },
+  "said": "5 cases this week; here are the 4 that matter most. The most urgent: a damaged road at Perumal Nagar Main Street, Perumal Nagar, Kolathur in Thiru-Vi-Ka-Nagar. Roads & Building Permissions holds 4 of them. Say \"read them\", or \"open\" and a number."
+ },
+ "m28:base": {
+  "text": "severe complaints in ward 172",
+  "kind": "base",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Asked the map"
+ },
+ "m28:ta": {
+  "text": "வார்டு 172 இல் தீவிர புகார்கள்",
+  "kind": "ta",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "வரைபடத்தில் கேள்வி"
+ },
+ "m28:tanglish": {
+  "text": "ward 172 la severe complaints",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Asked the map"
+ },
+ "m28:polite": {
+  "text": "please show me the severe complaints in ward 172",
+  "kind": "polite",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Asked the map"
+ },
+ "m28:order": {
+  "text": "in ward 172, severe complaints",
+  "kind": "order",
+  "facts": {
+   "lane": "no-model",
+   "kind": "do",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "Asked the map"
+ },
+ "m29:base": {
+  "text": "how many complaints breached their deadline in Adyar",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,42,42"
+  },
+  "said": "42 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River - Saidapet stretch), and standing water at Little Mount in Adyar. Say \"read them\", or \"open\" and a number."
+ },
+ "m29:ta": {
+  "text": "அடையாறில் எத்தனை புகார்கள் காலக்கெடுவை மீறியுள்ளன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,42,42"
+  },
+  "said": "இந்த வாரம் 42 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m29:tanglish": {
+  "text": "Adyar la evlo complaints deadline miss aachu",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,42,42"
+  },
+  "said": "இந்த வாரம் 42 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; தண்ணீர் தேக்கம், Little Mount, அடையாறு. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m29:polite": {
+  "text": "could you please tell me how many complaints breached their deadline in Adyar",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[13],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"overdue\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "42,42,42"
+  },
+  "said": "42 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River - Saidapet stretch), and standing water at Little Mount in Adyar. Say \"read them\", or \"open\" and a number."
+ },
+ "m29:order": {
+  "text": "in Adyar, complaints that breached their deadline, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "no-model",
+   "kind": "none",
+   "recipe": null,
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": null,
+   "figures": ""
+  },
+  "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page."
+ },
+ "m30:base": {
+  "text": "how many complaints were closed this week in Manali",
+  "kind": "base",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"resolved\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "7,30,30"
+  },
+  "said": "30 cases this week; here are the 12 that matter most. 7 are past the deadline, not among these. The most urgent: a mosquito or water-borne disease problem at Aathikkulam Street, Aathikkulam, Mathur in Manali. Say \"read them\", or \"open\" and a number."
+ },
+ "m30:ta": {
+  "text": "இந்த வாரம் மணலியில் எத்தனை புகார்கள் முடிக்கப்பட்டன",
+  "kind": "ta",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"resolved\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "7,30,30"
+  },
+  "said": "இந்த வாரம் 30 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. மிக அவசரமானது: கொசு அல்லது நீர்வழி நோய்ப் பிரச்சினை, Aathikkulam Street, Aathikkulam, Mathur, மணலி. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m30:tanglish": {
+  "text": "indha vaaram Manali la evlo complaints close aachu",
+  "kind": "tanglish",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"resolved\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "7,30,30"
+  },
+  "said": "இந்த வாரம் 30 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. மிக அவசரமானது: கொசு அல்லது நீர்வழி நோய்ப் பிரச்சினை, Aathikkulam Street, Aathikkulam, Mathur, மணலி. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "m30:polite": {
+  "text": "could you please tell me how many complaints were closed this week in Manali",
+  "kind": "polite",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"resolved\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "7,30,30"
+  },
+  "said": "30 cases this week; here are the 12 that matter most. 7 are past the deadline, not among these. The most urgent: a mosquito or water-borne disease problem at Aathikkulam Street, Aathikkulam, Mathur in Manali. Say \"read them\", or \"open\" and a number."
+ },
+ "m30:order": {
+  "text": "in Manali this week, closed complaints, how many",
+  "kind": "order",
+  "facts": {
+   "lane": "quick",
+   "kind": "do",
+   "recipe": "cases",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "period": "daily",
+   "slots": "{\"period\":\"weekly\",\"zones\":[2],\"dept\":null,\"depts\":[],\"cat\":null,\"taluk\":null,\"sev\":null,\"status\":\"resolved\",\"q\":null,\"metric\":null,\"measure\":null,\"by\":null,\"order\":\"top\",\"n\":20,\"id\":null,\"name\":null,\"what\":null,\"sort\":\"priority\",\"fresh\":true}",
+   "figures": "7,30,30"
+  },
+  "said": "30 cases this week; here are the 12 that matter most. 7 are past the deadline, not among these. The most urgent: a mosquito or water-borne disease problem at Aathikkulam Street, Aathikkulam, Mathur in Manali. Say \"read them\", or \"open\" and a number."
+ }
+}

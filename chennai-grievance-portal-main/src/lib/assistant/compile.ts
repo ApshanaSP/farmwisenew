@@ -125,8 +125,10 @@ function holdOf(t: CatalogTable, cat: Catalog): Hold | null {
   const col = DEPT_COLUMNS.find((c) => t.columns.has(c));
   if (col) return { by: "column", col };
   if (t.columns.has("incident_id") && cat.tables.has("incidents")) return { by: "incident" };
-  return t.name in SHARED_TABLES ? { by: "shared" } : null;
+  // own keys only: `in` also finds "constructor", "toString" and the rest of Object.prototype (RC-29 class guard, parse-period.pass4.test.ts)
+  return Object.hasOwn(SHARED_TABLES, t.name) ? { by: "shared" } : null;
 }
+const sharedCols = (name: string): ReadonlySet<string> | undefined => (Object.hasOwn(SHARED_TABLES, name) ? SHARED_TABLES[name] : undefined);
 
 /**
  * `lockDept`: a department officer's department, a hard limit (the console scope is a soft filter that adds nothing on a table with no
@@ -168,7 +170,7 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
 
   /** under the lock, only a shared reference table's own reference columns (the rest are derived from every department's records) */
   const sharedOnly = (t: CatalogTable, h: Hold | null, col: CatalogColumn) => {
-    if (h?.by === "shared" && !SHARED_TABLES[t.name]?.has(col.name))
+    if (h?.by === "shared" && !sharedCols(t.name)?.has(col.name))
       throw new CompileError(`${t.name}.${col.name} is worked out from every department's records, so it cannot be asked from a department console.`);
   };
   /** a field of the base table ("zone_no") or of a table joined along a declared key ("ref_departments.name") */

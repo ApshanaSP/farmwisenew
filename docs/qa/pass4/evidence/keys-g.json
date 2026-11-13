@@ -1,0 +1,157 @@
+[
+ {
+  "label": "citizen",
+  "stops": 40,
+  "distinct": 15,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 2,
+  "first": [
+   "a:CITIZEN PORTAL · CHENNAI",
+   "a:Overview",
+   "a:File a Complaint",
+   "a:Track Status",
+   "a:Helpline\n1913",
+   "button:தமிழ்: switch the site to Tamil"
+  ],
+  "errs": []
+ },
+ {
+  "label": "file",
+  "stops": 40,
+  "distinct": 17,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 2,
+  "first": [
+   "a:CITIZEN PORTAL · CHENNAI",
+   "a:Overview",
+   "a:File a Complaint",
+   "a:Track Status",
+   "a:Helpline\n1913",
+   "button:தமிழ்: switch the site to Tamil"
+  ],
+  "errs": []
+ },
+ {
+  "label": "track",
+  "stops": 40,
+  "distinct": 22,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 1,
+  "first": [
+   "a:CITIZEN PORTAL · CHENNAI",
+   "a:Overview",
+   "a:File a Complaint",
+   "a:Track Status",
+   "a:Helpline\n1913",
+   "button:தமிழ்: switch the site to Tamil"
+  ],
+  "errs": []
+ },
+ {
+  "label": "officer",
+  "stops": 40,
+  "distinct": 20,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 0,
+  "first": [
+   "button:Overview",
+   "button:Work & insights",
+   "button:Search and commands (/)",
+   "button:தமிழ்: switch the site to Tamil",
+   "button:Collected 6 Nov, 06:10 PM\n6 of 8 feeds c",
+   "button:SWM in the news"
+  ],
+  "errs": []
+ },
+ {
+  "label": "login",
+  "stops": 40,
+  "distinct": 11,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 3,
+  "first": [
+   "a:CHENNAI",
+   "a:Helpline\n1913",
+   "button:தமிழ்: switch the site to Tamil",
+   "button:Switch to dark mode",
+   "input:you@example.com",
+   "a:Forgot password?"
+  ],
+  "errs": []
+ },
+ {
+  "label": "register",
+  "stops": 40,
+  "distinct": 14,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 2,
+  "first": [
+   "a:CHENNAI",
+   "a:Helpline\n1913",
+   "button:தமிழ்: switch the site to Tamil",
+   "button:Switch to dark mode",
+   "input:Arjun",
+   "input:Kumar"
+  ],
+  "errs": []
+ },
+ {
+  "label": "collector",
+  "stops": 40,
+  "distinct": 25,
+  "noRing": [],
+  "offscreen": [],
+  "bodyLoss": 0,
+  "first": [
+   "button:Overview",
+   "button:Briefing",
+   "button:Trends",
+   "button:Environment",
+   "button:Data Studio",
+   "button:Search and commands (/)"
+  ],
+  "errs": []
+ },
+ {
+  "label": "jarvis dialog",
+  "opened": 1,
+  "activeAtOpen": {
+   "tag": "textarea",
+   "name": "Ask about incidents, complaints, weather",
+   "ring": false,
+   "vis": true,
+   "role": null,
+   "inDialog": true
+  },
+  "escapedDialog": [],
+  "noRing": [
+   "textarea:Ask about incidents, complaints, weather"
+  ],
+  "jarvisTabEscaped": 0,
+  "jarvisTabStops": [
+   "select:Reply language",
+   "button:Conversation history",
+   "button:New conversation",
+   "button:Maximise",
+   "button:Close",
+   "button:Ask District IQ",
+   "button:Asked of Jarvis"
+  ],
+  "closedByEscape": true,
+  "activeAfterClose": {
+   "tag": "button",
+   "name": "Ask District IQ",
+   "ring": true,
+   "vis": true,
+   "role": null,
+   "inDialog": false
+  },
+  "errs": []
+ }
+]

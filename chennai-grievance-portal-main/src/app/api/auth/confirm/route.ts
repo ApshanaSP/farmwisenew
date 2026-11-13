@@ -9,7 +9,7 @@ import { securityLog } from "@/lib/security/audit";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const ACTIONS = ["send_email", "decide", "officer_report", "delete_dataset", "approve_source", "export"] as const;
+const ACTIONS = ["send_email", "decide", "officer_report", "delete_dataset", "approve_source", "change_source", "export"] as const;
 const Body = z.discriminatedUnion("step", [
   z.object({ step: z.literal("email") }),
   z.object({

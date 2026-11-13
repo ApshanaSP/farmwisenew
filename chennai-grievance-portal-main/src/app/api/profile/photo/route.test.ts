@@ -26,6 +26,8 @@ describe("profile photo upload", () => {
   it("stores a real PNG under its real type", async () => {
     const r = await upload(PNG, "image/png");
     expect(r.status).toBe(200);
-    expect(h.written[0]).toMatch(/user-5-\d+\.png$/);
+    // stored outside public/ under a random name (QA pass 6, hunt2-sec-07: it was public/uploads/profile/user-<id>-<ms>.png, guessable)
+    expect(h.written[0]).toMatch(/[\\/]p-[a-f0-9]{20}\.png$/);
+    expect(h.written[0]).not.toMatch(/[\\/]public[\\/]/);
   });
 });

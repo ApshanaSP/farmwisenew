@@ -1,0 +1,53 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:41:18.908Z",
+ "rows": [
+  {
+   "source": {
+    "id": 1,
+    "builtIn": null,
+    "kind": "pipeline"
+   },
+   "pause": {
+    "status": 200,
+    "head": "{\"ok\":true}"
+   },
+   "softHeader": {
+    "status": 200,
+    "confirmHeader": null
+   },
+   "afterPause": {
+    "enabled": false,
+    "refresh": 1440
+   },
+   "restore": 200
+  }
+ ],
+ "keys": [
+  "id",
+  "name",
+  "url",
+  "kind",
+  "description",
+  "pipeline_key",
+  "auth",
+  "login_url",
+  "username",
+  "refresh_minutes",
+  "enabled",
+  "status",
+  "mapped",
+  "last_run_at",
+  "last_ok_at",
+  "last_error",
+  "items_total",
+  "created_by",
+  "session_expires_at",
+  "generated",
+  "error_detail",
+  "newest",
+  "rows",
+  "minutes_since_success",
+  "runs"
+ ]
+}

@@ -1,0 +1,111 @@
+{
+ "lang": "en",
+ "vp": 1440,
+ "who": "officerA",
+ "steps": [
+  {
+   "name": "home",
+   "counts": {
+    "toApprove": "34",
+    "inAction": "36"
+   },
+   "text": "Officer · SWM | Overview | Work & insights | Search | / | Collected 6 Nov, 06:10 PM | 6 of 8 feeds current · 2/8 live | Export PDF | SW | LOGGED IN AS | qa.officer.swm | · | Good afternoon | Overview | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai |",
+   "sideways": {
+    "sw": 1440,
+    "cw": 1440,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "approve-buttons",
+   "n": 1
+  },
+  {
+   "name": "approved",
+   "row": "Kosapet people sarbaaga indha complaint. Daily evening kuppai erikiranga, pugai romba jaasthi, moochu vida mudiyala | MediumRoyapuram · 6 days ago · 1 complaint",
+   "counts": {
+    "toApprove": "34",
+    "inAction": "36"
+   },
+   "toast": " ",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "in-action",
+   "hasComplete": 1,
+   "counts": {
+    "toApprove": "34",
+    "inAction": "36"
+   },
+   "buttons": [
+    "Overview",
+    "Work & insights",
+    "Search /",
+    "Collected 6 Nov, 06:10 PM 6 of 8 feeds current · 2/8 live",
+    "Export PDF",
+    "SW LOGGED IN AS qa.officer.swm",
+    "Daily",
+    "Weekly",
+    "Monthly",
+    "Quarterly",
+    "SEVERE EVENTS 0 No change from the previous month",
+    "OPEN INCIDENTS· 90 citizen complaints 87 79 more than the previous month",
+    "WAITING FOR YOUR APPROVAL 34 0 severe or high",
+    "RESOLVED THIS MONTH 446 100 fewer than the previous month",
+    "+",
+    "−",
+    "Ask the map",
+    "Severe 0",
+    "Complaints 455",
+    "Other 4",
+    "All contacts",
+    "SEVERE OR HIGH, STILL OPEN 1",
+    "PAST DEADLINE, STILL OPEN 87",
+    "DUE IN 24 HOURS 0",
+    "MOST OPEN WORK IN Royapuram · 13",
+    "By severity 79",
+    "My work 70",
+    "See all",
+    "34 To approve",
+    "36 In action"
+   ]
+  },
+  {
+   "name": "report-open",
+   "text": "Completion report · close as done | Garbage at the dumping ground is burning since last Monday | INC-20261102-8EC358 · Teynampet · reported 2 Nov, 10:29 AM · 2 complaints | Medium | REMARKS · WHAT WAS DONE | 0/2000 | PHOTOS OF COMPLETED WORK (0/8) | Upload site photos | JPG or PNG · you can pick several, or drop them here | Cancel | Medium severity: your department verifies and closes it; only Severe cases go to the Collector. | Close as done"
+  },
+  {
+   "name": "confirm-asked",
+   "text": "Completion report · close as done | Garbage at the dumping ground is burning since last Monday | INC-20261102-8EC358 · Teynampet · reported 2 Nov, 10:29 AM · 2 complaints | Medium | REMARKS · WHAT WAS DONE | 102/2000 | PHOTOS OF COMPLETED WORK (1/8) | Upload site photos | JPG or PNG · you can pick s"
+  },
+  {
+   "name": "closed",
+   "counts": {
+    "toApprove": "33",
+    "inAction": "36"
+   },
+   "toast": " ",
+   "text": "INC-20261102-8EC358 | Medium | Verified | Garbage at the dumping ground is burning since last Monday | Vedantha Desigar Street, R.K.Mutt Road, Mylapore, Teynampet, Ward 125 · Solid Waste Management | Received | In action | Sent to Collector | Verified | 2 reports (Grievance portal) about garbage & s",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "reload-after",
+   "counts": {
+    "toApprove": "33",
+    "inAction": "36"
+   }
+  }
+ ],
+ "started": "2026-11-12T11:10:05.745Z",
+ "approved": "Kosapet people sarbaaga indha complaint. Daily evening kuppai erikiranga, pugai romba jaasthi, moochu vida mudiyala | MediumRoyapuram · 6 days ago · 1 complaint",
+ "closed": "Garbage at the dumping ground is burning since last Monday | MediumTeynampet · 10 days ago · 2 complaints | Complete & close",
+ "incidentId": null,
+ "watchers": {
+  "console": [],
+  "http": [],
+  "failed": []
+ }
+}

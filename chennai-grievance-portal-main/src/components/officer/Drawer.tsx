@@ -70,13 +70,13 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
   const close = <button className="xbtn" onClick={c.closeAll} aria-label="Close"><I n="x" /></button>;
   if (!d || d.grievance.id !== id) {
     return (
-      <aside className="odrawer" role="dialog" aria-label="Grievance">
+      <div className="odrawer" role="dialog" aria-label="Grievance">
         <div className="odrawer-h">{close}<h2>{err ? "Grievance" : "Loading…"}</h2></div>
         <div className={`o-state${err ? " err" : ""}`}>
           {err ?? "Loading the grievance…"}
           {err && <button className="btn sm plain" onClick={() => setRetry((n) => n + 1)}>Try again</button>}
         </div>
-      </aside>
+      </div>
     );
   }
 
@@ -87,13 +87,13 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
     const news = d.sources.filter((s) => s.kind === "news");
     const outlets = new Set(news.map((s) => s.name).filter(Boolean));
     return (
-      <aside className="odrawer" role="dialog" aria-label="News details">
+      <div className="odrawer" role="dialog" aria-label="News details">
         <div className="odrawer-h">{close}
           <div className="meta-row"><span className="chip chip-src"><I n="news" />News report</span><span>{fmtShort(news[0]?.t ?? g.t)}</span></div>
           <h2>{fullTitle(g)}</h2>
           <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
         </div>
-        <div className="odrawer-b">
+        <div className="odrawer-b" tabIndex={0}>
           {g.summary && <p style={{ margin: 0, color: "var(--text-2)" }}>{g.summary}</p>}
           <div className="dgrid">
             <div><small>Area</small><b>{g.zone_name ?? "Chennai"}</b></div>
@@ -116,20 +116,20 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
           </div>
         </div>
         <div className="odrawer-f"><button className="btn plain" onClick={() => onMode("off")}><I n="tasks" />Open the grievance</button></div>
-      </aside>
+      </div>
     );
   }
 
   const busy = c.busy.has(g.id);
   const lastReturn = d.reports.find((r) => r.returned)?.returned ?? (g.returned ? { note: g.returnNote ?? "", t: g.updated } : null);
   return (
-    <aside className="odrawer" role="dialog" aria-label={`Grievance ${g.id}`}>
+    <div className="odrawer" role="dialog" aria-label={`Grievance ${g.id}`}>
       <div className="odrawer-h">{close}
         <div className="meta-row"><span className="num" style={{ color: "#fff", fontWeight: 700 }}>{g.id}</span><SevChip s={g.sev} /><StageChip r={g} /></div>
         <h2>{fullTitle(g)}</h2>
         <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
       </div>
-      <div className="odrawer-b">
+      <div className="odrawer-b" tabIndex={0}>
         <Steps stage={g.stage as Stage} />
         {g.returned && lastReturn && (
           <div className="banner" style={{ background: "var(--high-soft)", color: "#8A4A06" }}><I n="refresh" />
@@ -200,6 +200,6 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
           <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />{d.closedByDept ? "Closed by your department" : "Verified by Collector"}</span>
         )}
       </div>
-    </aside>
+    </div>
   );
 }

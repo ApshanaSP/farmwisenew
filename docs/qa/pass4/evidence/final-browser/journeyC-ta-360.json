@@ -1,0 +1,112 @@
+{
+ "lang": "ta",
+ "vp": 360,
+ "steps": [
+  {
+   "name": "officer-before",
+   "waitingBefore": 33,
+   "text": "மேலோட்டம் | Work & insights | தேடல் | / | Collected 6 Nov, 06:10 PM | 6 / 8 ஊட்டங்கள் நடப்பில் · 2/8 நேரலை | Export PDF | SW | LOGGED IN AS | qa.officer.swm | · | Good afternoon | மேலோட்டம் | தினசரி | வாராந்திர | மாதாந்திர | காலாண்டு | அனைத்து 15 மண்டலங்கள் | திருவோட்டியூர் | மணாலி | மதவாரம் | தொண்டியர்பேட் | ராயாப்புரம் | திரு-வி-கா-நகர் | அம்பட்டூர் | அண்ணா நகர் | தேய்னம்பேட் | கோடம்பாக்கம் | வலசராவாக்கம் | அலண்டூர் | அடையாறு | பெருங்குடி | சொலிங்கனல்லூர் | அனைத்து வட்டங்கள் | அலண்டூர் | அம்பட"
+  },
+  {
+   "name": "form",
+   "text": "QC | Account menu | மேலோட்டம் | File | Track | Back to overview | File a complaint | Public Grievance Redressal — Greater Chennai Corporation | 1 | Your Details | 2 | Location | 3 | Type | 4 | விவரங்கள் | Your details | Prefilled from your profile — you only enter these once. | Prefilled from your profile | NAME | Qa CitizenA | மின்னஞ்சல் | qa.citizen.a@example.test | MOBILE | 9000000001 | GENDER | Male | YOUR ADDRESS | 12 Test Street, Adyar, Chennai 600020 | Something out of date? Update it in ",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "buttons-step1",
+   "buttons": [
+    "QC Account menu",
+    "Next: Location"
+   ]
+  },
+  {
+   "name": "pin",
+   "text": "INT TO THE PROBLEM ON THE MAP | Optional — you can type the details instead | Click the map or drag the pin to mark where the problem is. | Use my location | + | − |  Leaflet | © OpenStreetMap contributors | Pin: | 13.082697, 80.270748 | Google Maps is not configured, so address search and automatic address fill are off. Place the pin on the map and enter the address fields yourself. | Ward 58 · Royapuram | Ward determined by point-in-polygon against DataMeet / Municipal_Spatial_Data / Chennai / Wards.geojson (community dataset, not GCC-official). This is a community dataset, not an official Corporation publication — an officer confirms the ward during processing. | Filled in from the map: மண்டலம். Check them and correct anything that looks wrong. | Address details | Confirm or correct these | மண்டலம்* | Set from the map pin. | STREET* | TYPE | Optional | Street | Road | Main Road | Cros",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "details",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   },
+   "text": "t type you chose. Edit it freely — that will not change the selected type. | DETAILS OF COMPLAINT | English, தமிழ் or Tanglish — all welcome | Writing in தமிழ் | 109/400 | PHOTOGRAPH / VIDEO (optional, max 10MB) | citizen-photo-fixture.jpg | 0.01 MB | File anonymously — your name and contact details will be hidden from department officers. | பின் | Submit complaint | REVIEW | You | Edit | Qa CitizenA · 9000000001 | Where | Edit | Gandhi Nagar 2nd Cross · Ward 58 · Royapuram | Type | Edit | Garbage › Overflowing of Garbage Bin | Goes to Solid Waste Management Department | பின் செய் 13.08270, 80.27075 | District IQ · சென்னை நுண்ணறிவு மாவட்ட நிர்வாகத் தளம் · உதவி எண் 1913 | 24×7 · © 2026 மாவட்ட நிர்வாகம், சென்னை"
+  },
+  {
+   "name": "submitted",
+   "complaintNo": null,
+   "text": "QC | Account menu | மேலோட்டம் | File | Track | Back to overview | File a complaint | Public Grievance Redressal — Greater Chennai Corporation | Complaint registered | Your complaint has been registered in the Public Grievance Redressal Portal of GCC. Use your complaint number to check its status at any time. | COMPLAINT NUMBER | 2 | 0 | 2 | 6 | - | 9 | 0 | 9 | F | R | O | துறை | Solid Waste Management Department | TYPE | Overflowing of Garbage Bin | உங்கள் புகார் பதிவு செய்யப்பட்டது. துறை அலுவலர் அடுத்த புதுப்பிப்பில் தம் பட்டியலில் இதைப் பார்ப்பார். புதுப்பிப்பு ஒவ்வொரு மணிநேரமும் நடக்கும். | WHAT HAPPENS NEXT | Complaint filed | Just now. You can track it any time. | Department officer reviews it | Solid Waste Management Department approves and plans the work. | Work in progress | The officer reports back with photos when it's done. | Verified by the Collector | The Collector checks th",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "track",
+   "hasNo": null,
+   "text": "QC | Account menu | மேலோட்டம் | File | Track | Back to overview | Track complaint status | Every complaint you've filed, with its current stage. | தேடல் | All | Filed | Pending approval | Approved | நடைபெறுகிறது | Awaiting Collector | Verified | தீர்க்கப்பட்டது | Rejected | 2026-909FRO | Overflowing of Garbage Bin | Overflowing of Garbage Bin · 12 Nov 2026 | Complaint Filed | 2026-789RVA | Overflowing of Garbage Bin | Overflowing of Garbage Bin · 12 Nov 2026 | Complaint Filed | 2026-913GTZ | Overflowing of Garbage Bin | Overflowing of Garbage Bin · 12 Nov 2026 | Complaint Filed | District IQ · சென்னை நுண்ணறிவு மாவட்ட நிர்வாகத் தளம் · உதவி எண் 1913 | 24×7 · © 2026 மாவட்ட நிர்வாகம், சென்னை"
+  },
+  {
+   "name": "officer-after",
+   "waitingBefore": 33,
+   "waitingAfter": 33,
+   "hasNo": null,
+   "hasGandhi": false,
+   "officerNote": null,
+   "bell": ""
+  },
+  {
+   "name": "officer-work",
+   "note": "உங்கள் துறைக்கு 3 புதிய புகார்கள் பதிவாகியுள்ளது; அடுத்த புதுப்பிப்பில் இந்தப் பட்டியலில் சேரும்."
+  },
+  {
+   "name": "officer-api",
+   "status": 200,
+   "rows": 0,
+   "keys": [
+    "now",
+    "rows",
+    "total",
+    "page",
+    "per",
+    "awaiting",
+    "awaitingNote"
+   ]
+  }
+ ],
+ "started": "2026-11-12T11:15:07.973Z",
+ "complaintNo": null,
+ "watchers": {
+  "citizen": {
+   "console": [],
+   "http": [],
+   "failed": [
+    "net::ERR_ABORTED /citizen?_rsc=0fEkq66ureeeVxKI"
+   ]
+  },
+  "officerBefore": {
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  "officerAfter": {
+   "console": [],
+   "http": [],
+   "failed": [
+    "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/18/121490/189497",
+    "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/18/121490/1",
+    "net::ERR_ABORTED https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/18/1"
+   ]
+  }
+ }
+}

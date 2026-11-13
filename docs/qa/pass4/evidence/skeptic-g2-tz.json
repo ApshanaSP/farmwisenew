@@ -1,0 +1,85 @@
+[
+ {
+  "who": "citizenA",
+  "p": "/citizen",
+  "differs": [],
+  "greets": {
+   "Asia/Kolkata": null,
+   "Pacific/Auckland": null,
+   "America/Los_Angeles": null
+  },
+  "errs": {
+   "Asia/Kolkata": [],
+   "Pacific/Auckland": [],
+   "America/Los_Angeles": []
+  },
+  "ist": [
+   "11 November",
+   "Wednesday"
+  ]
+ },
+ {
+  "who": "citizenA",
+  "p": "/citizen/track-complaints",
+  "differs": [],
+  "greets": {
+   "Asia/Kolkata": null,
+   "Pacific/Auckland": null,
+   "America/Los_Angeles": null
+  },
+  "errs": {
+   "Asia/Kolkata": [],
+   "Pacific/Auckland": [],
+   "America/Los_Angeles": []
+  },
+  "ist": []
+ },
+ {
+  "who": "officerA",
+  "p": "/officer",
+  "differs": [],
+  "greets": {
+   "Asia/Kolkata": "Good evening",
+   "Pacific/Auckland": "Good evening",
+   "America/Los_Angeles": "Good evening"
+  },
+  "errs": {
+   "Asia/Kolkata": [],
+   "Pacific/Auckland": [],
+   "America/Los_Angeles": []
+  },
+  "ist": [
+   "6 Nov, 06:10 PM",
+   "MONTH",
+   "Monthly",
+   "month",
+   "monthly"
+  ]
+ },
+ {
+  "who": "collector",
+  "p": "/collector",
+  "differs": [
+   {
+    "tz": "America/Los_Angeles",
+    "onlyHere": []
+   }
+  ],
+  "greets": {
+   "Asia/Kolkata": "Good evening",
+   "Pacific/Auckland": "Good evening",
+   "America/Los_Angeles": null
+  },
+  "errs": {
+   "Asia/Kolkata": [],
+   "Pacific/Auckland": [],
+   "America/Los_Angeles": []
+  },
+  "ist": [
+   "11 November",
+   "6 Nov, 06:10 PM",
+   "Monthly",
+   "Wednesday"
+  ]
+ }
+]

@@ -1,0 +1,77 @@
+{
+ "started": "2026-11-12T15:43:24.008Z",
+ "steps": [
+  {
+   "lang": "en",
+   "vp": 1440,
+   "key": "collector",
+   "itemText": "Sign out",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fcollector",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "en",
+   "vp": 1440,
+   "key": "officerA",
+   "itemText": "Sign out",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fofficer",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "en",
+   "vp": 1440,
+   "key": "officerC",
+   "itemText": "Sign out",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fofficer",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "en",
+   "vp": 1440,
+   "key": "citizenA",
+   "error": "locator.click: Timeout 8000ms exceeded."
+  },
+  {
+   "lang": "ta",
+   "vp": 360,
+   "key": "collector",
+   "itemText": "வெளியேறு",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fcollector",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "ta",
+   "vp": 360,
+   "key": "officerA",
+   "itemText": "வெளியேறு",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fofficer",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "ta",
+   "vp": 360,
+   "key": "officerC",
+   "itemText": "வெளியேறு",
+   "after": "/login",
+   "reopen": "/login?redirect=%2Fofficer",
+   "cookiesLeft": 0,
+   "oldCookieReplay": 200
+  },
+  {
+   "lang": "ta",
+   "vp": 360,
+   "key": "citizenA",
+   "error": "locator.click: Page crashed"
+  }
+ ]
+}

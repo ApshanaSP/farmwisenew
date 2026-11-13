@@ -1,0 +1,107 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:41:18.153Z",
+ "rows": [
+  {
+   "extra": "role",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "role,department_id",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "email",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "userId,user_id,id",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "mobileVerified,mobile_verified",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "profilePhoto,profile_photo",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "aadhaar_number_encrypted,aadhaar_last4",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "__proto__",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "extra": "constructor",
+   "status": 200,
+   "head": "{\"message\":\"Profile updated successfully.\"}"
+  },
+  {
+   "register": "{\"role\":\"Collector\"}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"role\":\" collector\"}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"role\":[\"collector\"]}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"role\":{\"toString\":\"collector\"}}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"role\":null}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"role\":\"citizen​\"}",
+   "status": 403,
+   "head": "{\"error\":\"Only citizens can create an account here. Officer and Collector accounts are iss"
+  },
+  {
+   "register": "{\"__proto__\":{\"role\":\"collector\"}}",
+   "status": 409,
+   "head": "{\"error\":\"An account with this email already exists.\"}"
+  },
+  {
+   "register": "{\"Role\":\"collector\"}",
+   "status": 409,
+   "head": "{\"error\":\"An account with this email already exists.\"}"
+  },
+  {
+   "register": "{\"ROLE\":\"collector\"}",
+   "status": 409,
+   "head": "{\"error\":\"An account with this email already exists.\"}"
+  },
+  {
+   "register": "{\"role\":\"citizen\",\"department_id\":2,\"departmentId\":2}",
+   "status": 409,
+   "head": "{\"error\":\"An account with this email already exists.\"}"
+  }
+ ],
+ "changed": {
+  "role": false,
+  "email": false,
+  "photo": false
+ },
+ "restore": 200
+}

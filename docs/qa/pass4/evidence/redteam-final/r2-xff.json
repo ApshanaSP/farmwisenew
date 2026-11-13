@@ -1,0 +1,127 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:41:17.819Z",
+ "email": "rt-r2-nobody@example.invalid",
+ "rows": [
+  {
+   "i": 0,
+   "ip": "203.0.113.1",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 1,
+   "ip": "203.0.113.2",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 2,
+   "ip": "203.0.113.3",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 3,
+   "ip": "203.0.113.4",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 4,
+   "ip": "203.0.113.5",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 5,
+   "ip": "203.0.113.6",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 6,
+   "ip": "203.0.113.7",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 7,
+   "ip": "203.0.113.8",
+   "status": 401,
+   "head": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "i": 8,
+   "ip": "203.0.113.9",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 9,
+   "ip": "203.0.113.10",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 10,
+   "ip": "203.0.113.11",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 11,
+   "ip": "203.0.113.12",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 12,
+   "ip": "203.0.113.13",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 13,
+   "ip": "203.0.113.14",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 14,
+   "ip": "203.0.113.15",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 15,
+   "ip": "203.0.113.16",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 16,
+   "ip": "203.0.113.17",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 17,
+   "ip": "203.0.113.18",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 18,
+   "ip": "203.0.113.19",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  },
+  {
+   "i": 19,
+   "ip": "203.0.113.20",
+   "status": 429,
+   "head": "{\"error\":\"Too many login attempts. Please wait a few minutes and try again.\"}"
+  }
+ ]
+}

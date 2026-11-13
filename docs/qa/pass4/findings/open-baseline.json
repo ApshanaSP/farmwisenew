@@ -213,7 +213,8 @@
     "row_id": "ta-list-20",
     "mechanism": "M04",
     "model_needed": false,
-    "lane": "rules-instant"
+    "lane": "rules-instant",
+    "fixed": true
   },
   {
     "id": "open-baseline-13",
@@ -841,6 +842,7 @@
       "tanglish-other_body-08",
       "tanglish-privacy_safety-03"
     ],
-    "mechanism": "M23"
+    "mechanism": "M23",
+    "fixed": true
   }
 ]

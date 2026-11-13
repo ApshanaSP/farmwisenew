@@ -26,6 +26,7 @@ export async function startSession(u: SignedIn, how: { factor: Factor | null; ip
   const res = NextResponse.json({ message: "Login successful", redirectTo: landing(u.role), role: u.role, ...extra });
   await migrateLegacyCookie(res);
   await setAuthCookie(res, token, portal, staff ? staffHours() * 3600 : undefined);
-  await securityLog(u.email, "auth:signin", String(u.id), { factor: how.factor ?? "password", ip: how.ip, ua: how.ua?.slice(0, 120) ?? null });
+  // only staff sign-ins are kept: the Security page is for staff, and a citizen's email, IP and browser have no reader (QA4 gate, redteam-final-1)
+  if (staff) await securityLog(u.email, "auth:signin", String(u.id), { factor: how.factor ?? "password", ip: how.ip, ua: how.ua?.slice(0, 120) ?? null });
   return res;
 }

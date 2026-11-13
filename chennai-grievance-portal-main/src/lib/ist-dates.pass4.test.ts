@@ -63,6 +63,34 @@ describe("RC-16: dates are printed in Chennai's time zone, on any server and in 
   });
 });
 
+// g-review (smaller point): the guard above sees only the printing calls. A getter or a setter of the runtime's zone (getFullYear, getMonth, getDate, getDay, getHours, setDate, setHours) on a server reads a
+// different day from a Chennai browser too. A use is allowed only where it is the browser's own clock (a component that greets by the viewer's hour), a test fixture or a plain local-time file name, each listed with its reason.
+describe("RC-16: no getter or setter of the runtime's time zone in the server code", () => {
+  const LOCAL_OK: Record<string, string> = {
+    "components/collector/app/assistant/AssistantDialog.tsx": "a greeting by the viewer's own hour, in the viewer's browser",
+    "components/collector/app/Insights.tsx": "a greeting; the clock text it reads is already Chennai wall time",
+    "components/collector/app/Shell.tsx": "a greeting; reads the Chennai hour from the as-of text and falls back on the browser's",
+    "components/collector/app/thunai/Thunai.tsx": "a greeting by the viewer's own hour, in the viewer's browser",
+    "lib/complaint-media.ts": "a folder name for an upload (a day in the server's zone is as good as any)",
+    "lib/officer/photos.ts": "a folder name for a photo (a day in the server's zone is as good as any)",
+    "lib/studio/values.ts": "reads a spreadsheet cell's own date, built by the sheet reader in local time and written back in the same zone"
+  };
+  const GETTER = /\.(?:getFullYear|getMonth|getDate|getDay|getHours|getMinutes|setDate|setHours|setMonth|setFullYear)\(/;
+  it("a runtime-zone getter or setter is in a file listed with its reason, or not at all", () => {
+    const bad: string[] = [];
+    for (const f of files) {
+      const rel = path.relative(SRC, f).split(path.sep).join("/");
+      if (LOCAL_OK[rel]) continue;
+      fs.readFileSync(f, "utf8").split("\n").forEach((l, i) => { if (GETTER.test(l) && !/getUTC|setUTC/.test(l.replace(GETTER, "X"))) bad.push(`${rel}:${i + 1}: ${l.trim().slice(0, 90)}`); });
+    }
+    expect(bad).toEqual([]);
+  });
+  it("the listed files still hold such a call (the list does not rot)", () => {
+    const stale = Object.keys(LOCAL_OK).filter((rel) => { const p = path.join(SRC, rel); return !fs.existsSync(p) || !GETTER.test(fs.readFileSync(p, "utf8")); });
+    expect(stale).toEqual([]);
+  });
+});
+
 describe("RC-16: the shared Chennai date helpers", () => {
   it("print the Chennai day for an instant near midnight, whatever the process zone is", async () => {
     const { istDate, istDateTime } = await import("@/lib/ist-dates");

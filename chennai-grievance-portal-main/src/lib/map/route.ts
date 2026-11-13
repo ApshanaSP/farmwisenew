@@ -6,6 +6,7 @@
  * and the caller may ask the AI to fill the same schema (ai.ts). Pure.
  */
 import { tokens, hasPhrase, topicOf, OVERDUE } from "@/lib/assistant/intent";
+import { zoneNosIn } from "@/lib/zone-no";
 import { detectLanguage } from "@/lib/assistant/lang";
 import { classify } from "@/lib/collector/nlp";
 import { LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
@@ -432,7 +433,7 @@ export function noSuchArea(t: string): { en: string; ta: string } | null {
   const n = w ? Number(w[1] ?? w[2]) : null;
   if (n != null && (n < 1 || n > 200)) return { en: `There is no Ward ${n}: Chennai's wards are numbered 1 to 200.`, ta: `வார்டு ${n} இல்லை: சென்னை வார்டுகள் 1 முதல் 200 வரை.` };
   const z = t.match(/\bzone\s*(?:no\.?\s*|number\s*)?(\d{1,4})\b|மண்டலம்\s*(\d{1,4})/i);
-  const m = z ? Number(z[1] ?? z[2]) : null;
+  const m = z ? Number(z[1] ?? z[2]) : zoneNosIn(t).find((n) => n < 1 || n > 15) ?? null; // a zone said in words or in another script is read too ("zone ninety nine")
   if (m != null && (m < 1 || m > 15)) return { en: `There is no Zone ${m}: Chennai has 15 zones, numbered 1 to 15.`, ta: `மண்டலம் ${m} இல்லை: சென்னையில் 1 முதல் 15 வரை 15 மண்டலங்கள்.` };
   return null;
 }

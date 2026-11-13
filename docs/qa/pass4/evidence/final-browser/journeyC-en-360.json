@@ -1,0 +1,111 @@
+{
+ "lang": "en",
+ "vp": 360,
+ "steps": [
+  {
+   "name": "officer-before",
+   "waitingBefore": 36,
+   "text": "Officer · SWM | Overview | Work & insights | Search | / | Collected 6 Nov, 06:10 PM | 6 of 8 feeds current · 2/8 live | Export PDF | SW | LOGGED IN AS | qa.officer.swm | · | Good evening | Overview | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | A"
+  },
+  {
+   "name": "form",
+   "text": "QC | Account menu | Overview | File | Track | Back to overview | File a complaint | Public Grievance Redressal — Greater Chennai Corporation | 1 | Your Details | 2 | Location | 3 | Type | 4 | Details | Your details | Fields marked * are required. They are saved to your profile, so you will not be asked again. | Prefilled from your profile | NAME | Qa CitizenA | EMAIL | qa.citizen.a@example.test | MOBILE | 9000000001 | Something out of date? Update it in your profile. | These are missing from you",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "buttons-step1",
+   "buttons": [
+    "QC Account menu",
+    "Male",
+    "Female",
+    "Transgender",
+    "Next: Location"
+   ]
+  },
+  {
+   "name": "pin",
+   "text": " TO THE PROBLEM ON THE MAP | Optional — you can type the details instead | Click the map or drag the pin to mark where the problem is. | Use my location | + | − |  Leaflet | © OpenStreetMap contributors | Pin: | 13.082697, 80.270748 | Google Maps is not configured, so address search and automatic address fill are off. Place the pin on the map and enter the address fields yourself. | Ward 58 · Royapuram | Ward determined by point-in-polygon against DataMeet / Municipal_Spatial_Data / Chennai / Wards.geojson (community dataset, not GCC-official). This is a community dataset, not an official Corporation publication — an officer confirms the ward during processing. | Filled in from the map: zone. Check them and correct anything that looks wrong. | Address details | Confirm or correct these | ZONE* | Set from the map pin. | STREET* | TYPE | Optional | Street | Road | Main Road | Cross Street ",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "details",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   },
+   "text": "ype you chose. Edit it freely — that will not change the selected type. | DETAILS OF COMPLAINT | English, தமிழ் or Tanglish — all welcome | Writing in English / Tanglish | 130/400 | PHOTOGRAPH / VIDEO (optional, max 10MB) | citizen-photo-fixture.jpg | 0.01 MB | File anonymously — your name and contact details will be hidden from department officers. | Back | Submit complaint | REVIEW | You | Edit | Qa CitizenA · 9000000001 | Where | Edit | Gandhi Nagar 2nd Cross · Ward 58 · Royapuram | Type | Edit | Garbage › Overflowing of Garbage Bin | Goes to Solid Waste Management Department | Pin 13.08270, 80.27075 | District IQ · Chennai Intelligent District Governance Platform · Helpline 1913 | 24×7 · © 2026 District Administration, Chennai"
+  },
+  {
+   "name": "submitted",
+   "complaintNo": null,
+   "text": "QC | Account menu | Overview | File | Track | Back to overview | File a complaint | Public Grievance Redressal — Greater Chennai Corporation | Complaint registered | Your complaint has been registered in the Public Grievance Redressal Portal of GCC. Use your complaint number to check its status at any time. | COMPLAINT NUMBER | 2 | 0 | 2 | 6 | - | 3 | 0 | 0 | S | C | P | DEPARTMENT | Solid Waste Management Department | TYPE | Overflowing of Garbage Bin | Your complaint is registered. The department officer will see it in their queue at the next update, which runs every hour. | WHAT HAPPENS NEXT | Complaint filed | Just now. You can track it any time. | Department officer reviews it | Solid Waste Management Department approves and plans the work. | Work in progress | The officer reports back with photos when it's done. | Verified by the Collector | The Collector checks the work and closes",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "track",
+   "hasNo": null,
+   "text": "QC | Account menu | Overview | File | Track | Back to overview | Track complaint status | Every complaint you've filed, with its current stage. | Search | All | Filed | Pending approval | Approved | In progress | Awaiting Collector | Verified | Resolved | Rejected | 2026-300SCP | Overflowing of Garbage Bin | Overflowing of Garbage Bin · 12 Nov 2026 | Complaint Filed | District IQ · Chennai Intelligent District Governance Platform · Helpline 1913 | 24×7 · © 2026 District Administration, Chennai"
+  },
+  {
+   "name": "officer-after",
+   "waitingBefore": 36,
+   "waitingAfter": 36,
+   "hasNo": null,
+   "hasGandhi": false,
+   "officerNote": null,
+   "bell": ""
+  },
+  {
+   "name": "officer-work",
+   "note": "1 new complaint is filed with your department and will join this list at the next update."
+  },
+  {
+   "name": "officer-api",
+   "status": 200,
+   "rows": 0,
+   "keys": [
+    "now",
+    "rows",
+    "total",
+    "page",
+    "per",
+    "awaiting",
+    "awaitingNote"
+   ]
+  }
+ ],
+ "started": "2026-11-12T15:40:21.508Z",
+ "complaintNo": null,
+ "watchers": {
+  "citizen": {
+   "console": [],
+   "http": [],
+   "failed": [
+    "net::ERR_ABORTED /citizen?_rsc=0fEkq66ureeeVxKI"
+   ]
+  },
+  "officerBefore": {
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  "officerAfter": {
+   "console": [],
+   "http": [],
+   "failed": []
+  }
+ }
+}

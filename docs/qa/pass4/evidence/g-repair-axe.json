@@ -1,0 +1,964 @@
+{
+ "when": "2026-11-12T08:39:42.881Z",
+ "byImpact": {
+  "minor": 4
+ },
+ "runs": [
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:overview",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:work",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:daily",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:weekly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:monthly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:overview",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:work",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:daily",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:overview",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:work",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:daily",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:work",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:overview",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:trends",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:environment",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:studio",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:daily",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:Zones",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:Taluks",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:By severity\n0",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:overview",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:trends",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:environment",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:studio",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:daily",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:Zones",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:Taluks",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:By severity\n0",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:overview",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:trends",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:environment",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:studio",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:daily",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:மண்டலங்கள்",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:வட்டங்கள்",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:தீவிரம்\n0",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:trends",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:environment",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:studio",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:மண்டலங்கள்",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:வட்டங்கள்",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "collector:தீவிரம்\n0",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "light",
+   "url": "/login",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/login",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "light",
+   "url": "/register",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/register",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [],
+   "console": []
+  },
+  {
+   "page": "officer:drawer@360",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "help": "ARIA role should be appropriate for the element",
+     "sample": [
+      "aside"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer:drawer@360",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "help": "ARIA role should be appropriate for the element",
+     "sample": [
+      "aside"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer:drawer@360",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "help": "ARIA role should be appropriate for the element",
+     "sample": [
+      "aside"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer:drawer@360",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "help": "ARIA role should be appropriate for the element",
+     "sample": [
+      "aside"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "404",
+   "lang": "en",
+   "theme": "light",
+   "url": "/this-page-does-not-exist-xyz",
+   "violations": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ]
+  },
+  {
+   "page": "404",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/this-page-does-not-exist-xyz",
+   "violations": [],
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ]
+  }
+ ]
+}

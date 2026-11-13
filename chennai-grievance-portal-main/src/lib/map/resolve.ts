@@ -9,6 +9,7 @@
  * or river, "in" an area, "near" a point), and the others become chips. Never a blocking question.
  */
 import { closest, allowedEdits } from "@/lib/assistant/fuzzy";
+import { withZoneDigits } from "@/lib/zone-no";
 import type { LayerId } from "./types";
 
 export type PlaceKind = "ward" | "zone" | "taluk" | "locality" | "osm_place" | "facility" | "road" | "waterway" | "street_name_only";
@@ -46,7 +47,8 @@ export const NEAR_M = { locality: 1000, osm_place: 1000, facility: 500 } as cons
 const ROAD_WORD = /\b(road|rd|street|st|salai|avenue|lane|high road|main road|nagar main road|cross street|trunk road|bypass|highway)\b|சாலை|தெரு/i;
 
 /** Ward and zone numbers in English and Tamil: "ward 178", "W-178", "178வது வார்டு", "zone 13", "மண்டலம் 13". */
-function numbered(text: string): Match[] {
+function numbered(text0: string): Match[] {
+  const text = withZoneDigits(text0); // "zone five", "zone anju", "fifth zone", "zone ٥": the zone number is read in every language and script, not digits only
   const out: Match[] = [];
   const add = (kind: "ward" | "zone", n: number, m: RegExpExecArray) => {
     if (kind === "ward" ? n < 1 || n > 200 : n < 1 || n > 15) return;

@@ -1,0 +1,126 @@
+{
+ "lang": "en",
+ "vp": 360,
+ "who": "officerC",
+ "steps": [
+  {
+   "name": "home",
+   "counts": {
+    "toApprove": "2",
+    "inAction": "0"
+   },
+   "text": "Overview | Work & insights | ME | · | Good afternoon | Overview | Daily | Weekly | Monthly | Quarterly | All 15 zones | Thiruvottiyur | Manali | Madhavaram | Tondiarpet | Royapuram | Thiru-Vi-Ka-Nagar | Ambattur | Anna Nagar | Teynampet | Kodambakkam | Valasaravakkam | Alandur | Adyar | Perungudi | Sholinganallur | All taluks | Alandur | Ambattur | Aminjikarai | Ayanavaram | Egmore | Guindy | Kolathur | Madhavaram | Maduravoyal | Mambalam | Mylapore | Perambur | Purasawalkam | Sholinganallur | T",
+   "sideways": {
+    "sw": 360,
+    "cw": 360,
+    "over": false,
+    "body": false
+   }
+  },
+  {
+   "name": "approve-buttons",
+   "n": 1
+  },
+  {
+   "name": "approved",
+   "row": "India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | Medium12 days ago | Approve",
+   "counts": {
+    "toApprove": "1",
+    "inAction": "1"
+   },
+   "toast": " ",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "in-action",
+   "hasComplete": 1,
+   "counts": {
+    "toApprove": "1",
+    "inAction": "1"
+   },
+   "buttons": [
+    "Overview",
+    "Work & insights",
+    "Collected 6 Nov, 06:10 PM6 of 8 feeds current · 2/8 live",
+    "ME",
+    "Daily",
+    "Weekly",
+    "Monthly",
+    "Quarterly",
+    "SEVERE EVENTS 0 No change from the previous month",
+    "OPEN INCIDENTS· 0 citizen complaints 2 2 more than the previous month",
+    "WAITING FOR YOUR APPROVAL 1 0 severe or high",
+    "RESOLVED THIS MONTH 0 No change from the previous month",
+    "+",
+    "−",
+    "Ask the map",
+    "Severe 0",
+    "Complaints 0",
+    "Other 4",
+    "All contacts",
+    "SEVERE OR HIGH, STILL OPEN 0",
+    "PAST DEADLINE, STILL OPEN 2",
+    "DUE IN 24 HOURS 0",
+    "MOST OPEN WORK IN Kodambakkam · 1",
+    "By severity 2",
+    "My work 2",
+    "See all",
+    "1 To approve",
+    "1 In action",
+    "India, ADB sign $230 million loan to modernise Chennai water supply, sanitation Medium12 days ago",
+    "Complete & close"
+   ]
+  },
+  {
+   "name": "report-open",
+   "text": "Completion report · close as done | India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | INC-20261031-345A17 · Chennai · reported 31 Oct, 02:17 PM · 0 complaints | Medium | REMARKS · WHAT WAS DONE | 0/2000 | PHOTOS OF COMPLETED WORK (0/8) | Upload site photos | JPG or PNG · you can pick several, or drop them here | Cancel | Medium severity: your department verifies and closes it; only Severe cases go to the Collector. | Close as done"
+  },
+  {
+   "name": "confirm-asked",
+   "text": "Completion report · close as done | India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | INC-20261031-345A17 · Chennai · reported 31 Oct, 02:17 PM · 0 complaints | Medium | REMARKS · WHAT WAS DONE | 102/2000 | PHOTOS OF COMPLETED WORK (1/8) | Upload site photos | JPG or "
+  },
+  {
+   "name": "closed",
+   "counts": {
+    "toApprove": "1",
+    "inAction": "0"
+   },
+   "toast": " ",
+   "text": "INC-20261031-345A17 | Medium | Verified | India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | Chennai · Chennai Metrowater | Received | In action | Sent to Collector | Verified | 1 report (News) about drinking water supply at Chennai. First reported 31 Oct 14:17. Status",
+   "console": [],
+   "http": []
+  },
+  {
+   "name": "reload-after",
+   "counts": {
+    "toApprove": "1",
+    "inAction": "0"
+   }
+  },
+  {
+   "name": "collector-search",
+   "id": "INC-20261031-345A17",
+   "found": 1,
+   "text": "Esc | INCIDENTS | India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | Chennai · 12 days ago | ASK | Ask the map: “INC-20261031-345A17” | Answers on the Overview's map | Ask District IQ: “INC-20261031-345A17” | Opens the chat with this question | ↑ | ↓ | move | Enter | open | / | search anywhere"
+  },
+  {
+   "name": "collector-incident",
+   "text": "Overview | Briefing | Trends | Environment | Data Studio | CO | THIRUVOTTIYUR | MANALI | MADHAVARAM | TONDIARPET | ROYAPURAM | THIRU-VI-KA-NAGAR | AMBATTUR | ANNA NAGAR | TEYNAMPET | VALASARAVAKKAM | ALANDUR | ADYAR | PERUNGUDI | SHOLINGANALLUR | Madhavaram | 0 open · 0 severe · 0 complaints | Click to filter to this zone | Ward 27 | 5 km | Imagery © Esri, Maxar, Earthstar Geographics | + | − | Ask the map | New chat | Back to overview | INC-20261031-345A17 | I can answer these kinds of map questions without AI: | waterlogging within 300 m of schools | open complaints near Adyar | flooding in Zone 13 this week | thefts along Anna Salai this month | garbage complaints by ward | where are road"
+  }
+ ],
+ "started": "2026-11-12T11:20:00.575Z",
+ "approved": "India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | Medium12 days ago | Approve",
+ "closed": "India, ADB sign $230 million loan to modernise Chennai water supply, sanitation | Medium12 days ago | Complete & close",
+ "incidentId": "INC-20261031-345A17",
+ "collectorWatchers": {
+  "console": [],
+  "http": [],
+  "failed": []
+ },
+ "watchers": {
+  "console": [],
+  "http": [],
+  "failed": []
+ }
+}

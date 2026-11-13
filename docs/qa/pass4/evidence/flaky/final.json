@@ -1,0 +1,565 @@
+{
+ "label": "final",
+ "complete": true,
+ "command": "npx vitest run --sequence.shuffle --sequence.seed=<seed> --reporter=json --reporter=dot --outputFile.json=<tmp>",
+ "held_semaphore": "vitest-full 2",
+ "runs_per_time_zone": 10,
+ "node": "v24.21.0",
+ "started": "2026-11-12T10:35:25.317Z",
+ "finished": "2026-11-12T11:05:28.075Z",
+ "time_zones_checked": {
+  "UTC": {
+   "offset": 0,
+   "zone": "UTC"
+  },
+  "Asia/Kolkata": {
+   "offset": -330,
+   "zone": "Asia/Calcutta"
+  }
+ },
+ "runs_done": 20,
+ "runs_with_any_failure": 13,
+ "tests_that_failed": 5,
+ "failures": [
+  {
+   "name": "G-REPAIR 2: the five-tries lock holds against a burst a right password clears the count (one wrong, then the right one, then four more wrong ones are all checked)",
+   "file": "src/lib/security/grepair.pass4.test.ts",
+   "failed_in_runs": [
+    1,
+    3,
+    5,
+    9,
+    12,
+    13,
+    15,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected false to be true // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\security\\grepair.pass4.test.ts:26:68\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 10,
+   "by_time_zone": {
+    "UTC": 8,
+    "Asia/Kolkata": 2
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "Thunai understanding: the rules that must always hold sets a reminder for tomorrow 10 am",
+   "file": "src/lib/thunai/golden.test.ts",
+   "failed_in_runs": [
+    1,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected [ 30, 4 ] to deeply equal [ 30, 10 ]\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\golden.test.ts:254:43\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\n    at runTest (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)",
+   "times_failed": 10,
+   "by_time_zone": {
+    "UTC": 10,
+    "Asia/Kolkata": 0
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "(the file failed before its tests ran)",
+   "file": "src/lib/collector/alerts.test.ts",
+   "failed_in_runs": [
+    2
+   ],
+   "first_failure_message": "UNKNOWN: unknown error, read",
+   "times_failed": 1,
+   "by_time_zone": {
+    "UTC": 0,
+    "Asia/Kolkata": 1
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "a line copied from what the model read is not said (BUG-034) through a real round the digest the browser sends counts as the screen",
+   "file": "src/lib/thunai/pass3.test.ts",
+   "failed_in_runs": [
+    2
+   ],
+   "first_failure_message": "Error: STACK_TRACE_ERROR\n    at beforeEach (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:2165:26)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\pass3.test.ts:153:5\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:734:40\n    at runWithSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1849:8)\n    at Object.collect (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:734:10)\n    at Object.collect (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:738:54)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at Object.collect (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:738:46)\n    at collectTests (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1179:25)\n    at startTests (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1817:17)",
+   "times_failed": 1,
+   "by_time_zone": {
+    "UTC": 0,
+    "Asia/Kolkata": 1
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "resolver (property) stays inside a 20 ms budget at p95, alone",
+   "file": "src/lib/thunai/resolver.pass4.test.ts",
+   "failed_in_runs": [
+    2
+   ],
+   "first_failure_message": "AssertionError: p95 21.52 ms: expected 21.5211 to be less than 20\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\resolver.pass4.test.ts:38:45\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\n    at runTest (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)",
+   "times_failed": 1,
+   "by_time_zone": {
+    "UTC": 0,
+    "Asia/Kolkata": 1
+   },
+   "file_differs_from_commit": false
+  }
+ ],
+ "skipped_in_only_some_runs": [],
+ "skipped_in_every_run": 13,
+ "slowest_tests": [
+  {
+   "name": "signing in with a browser reuses the kept session, and signs in again by itself when it has expired",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 30818
+  },
+  {
+   "name": "a department's view keeps to that department emerging patterns and their example headlines keep to the department (BUG-027)",
+   "file": "src/lib/collector/deptscope.test.ts",
+   "max_ms": 14624
+  },
+  {
+   "name": "a line copied from what the model read is not said (BUG-034) through a real round the digest the browser sends counts as the screen",
+   "file": "src/lib/thunai/pass3.test.ts",
+   "max_ms": 13312
+  },
+  {
+   "name": "a department's view keeps to that department the briefing counts open incidents with the Collector's decisions on top (BUG-028)",
+   "file": "src/lib/collector/deptscope.test.ts",
+   "max_ms": 10973
+  },
+  {
+   "name": "RC-01: an outside place or body is never answered with ours, in any lane every Chennai locality of the Corporation's own list in front of an agency word is ours",
+   "file": "src/lib/thunai/lane-a.pass4.test.ts",
+   "max_ms": 10663
+  },
+  {
+   "name": "signing in with a browser signs in on the site's own form, reads the data the page loads, and keeps the session",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 10451
+  },
+  {
+   "name": "PB-303: a day from a feed is a date, not an ISO string whenOrDay turns a whole day into '7 Nov' and keeps a moment readable",
+   "file": "src/lib/thunai/rc15.pass4.test.ts",
+   "max_ms": 9934
+  },
+  {
+   "name": "9.4 every DATA fixture's dashboard breaks no chart rule 0 hard violations over every panel",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 8231
+  },
+  {
+   "name": "PB-300: the fixed labels of the Briefing page have their Tamil '11 reports · 9 outlets' is one text, so the translator sees a template and not a fragment and a stray 's'",
+   "file": "src/lib/thunai/rc15.pass4.test.ts",
+   "max_ms": 8221
+  },
+  {
+   "name": "signing in with a browser says plainly when the password is wrong",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 7898
+  },
+  {
+   "name": "a department's view keeps to that department the overview's bell carries only the department's incidents (BUG-026)",
+   "file": "src/lib/collector/deptscope.test.ts",
+   "max_ms": 6749
+  },
+  {
+   "name": "citizen -> officer -> Collector -> citizen the resident sees the Collector's verification and the completion photo",
+   "file": "src/lib/loop.sqlite.test.ts",
+   "max_ms": 6151
+  },
+  {
+   "name": "9.10 a 50,000-row file is read, cleaned, designed, checked and mined in under 20 s, and memory settles",
+   "file": "src/lib/studio/perf.test.ts",
+   "max_ms": 5453
+  },
+  {
+   "name": "resolver (property) resolveEntity and briefTurn never throw, for any string including __proto__ and constructor",
+   "file": "src/lib/thunai/resolver.pass4.test.ts",
+   "max_ms": 5130
+  },
+  {
+   "name": "9.7 numbers: every headline and bar recomputed from the raw rows each KPI and each by-column bar equals an independent sum over the raw file",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 4982
+  }
+ ],
+ "paths_changed_during_hunt": [
+  " M chennai-grievance-portal-main/tests/qa/pass4/decision-matrix.mjs",
+  " M chennai-grievance-portal-main/tests/qa/pass4/same-number.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.figures.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.journeyB.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.journeyE.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.journeyS.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.overlays.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/final-browser.table.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/gate-oracle.test.ts"
+ ],
+ "runs": [
+  {
+   "n": 1,
+   "tz": "UTC",
+   "seed": 1031918770,
+   "duration_s": 111.1,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1031918770"
+  },
+  {
+   "n": 2,
+   "tz": "Asia/Kolkata",
+   "seed": 395299091,
+   "duration_s": 178.2,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3123,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3138,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=395299091"
+  },
+  {
+   "n": 3,
+   "tz": "UTC",
+   "seed": 732958914,
+   "duration_s": 61.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=732958914"
+  },
+  {
+   "n": 4,
+   "tz": "Asia/Kolkata",
+   "seed": 1131855698,
+   "duration_s": 77.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1131855698"
+  },
+  {
+   "n": 5,
+   "tz": "UTC",
+   "seed": 193236308,
+   "duration_s": 92.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=193236308"
+  },
+  {
+   "n": 6,
+   "tz": "Asia/Kolkata",
+   "seed": 1863281371,
+   "duration_s": 83.9,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1863281371"
+  },
+  {
+   "n": 7,
+   "tz": "UTC",
+   "seed": 466847362,
+   "duration_s": 72,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3147,
+   "failed": 1,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=466847362"
+  },
+  {
+   "n": 8,
+   "tz": "Asia/Kolkata",
+   "seed": 2013598763,
+   "duration_s": 73.6,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=2013598763"
+  },
+  {
+   "n": 9,
+   "tz": "UTC",
+   "seed": 1479721868,
+   "duration_s": 97.1,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1479721868"
+  },
+  {
+   "n": 10,
+   "tz": "Asia/Kolkata",
+   "seed": 1392440879,
+   "duration_s": 107.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1392440879"
+  },
+  {
+   "n": 11,
+   "tz": "UTC",
+   "seed": 1788069132,
+   "duration_s": 73.8,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3147,
+   "failed": 1,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "0c94cc2",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1788069132"
+  },
+  {
+   "n": 12,
+   "tz": "Asia/Kolkata",
+   "seed": 628181176,
+   "duration_s": 89.9,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3147,
+   "failed": 1,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=628181176"
+  },
+  {
+   "n": 13,
+   "tz": "UTC",
+   "seed": 1815819761,
+   "duration_s": 99,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1815819761"
+  },
+  {
+   "n": 14,
+   "tz": "Asia/Kolkata",
+   "seed": 243096654,
+   "duration_s": 87.8,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=243096654"
+  },
+  {
+   "n": 15,
+   "tz": "UTC",
+   "seed": 19994948,
+   "duration_s": 53.9,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=19994948"
+  },
+  {
+   "n": 16,
+   "tz": "Asia/Kolkata",
+   "seed": 812440259,
+   "duration_s": 81.3,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=812440259"
+  },
+  {
+   "n": 17,
+   "tz": "UTC",
+   "seed": 1325244174,
+   "duration_s": 134.3,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1325244174"
+  },
+  {
+   "n": 18,
+   "tz": "Asia/Kolkata",
+   "seed": 1552738641,
+   "duration_s": 89.1,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3147,
+   "failed": 1,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1552738641"
+  },
+  {
+   "n": 19,
+   "tz": "UTC",
+   "seed": 99936489,
+   "duration_s": 56.6,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3146,
+   "failed": 2,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=99936489"
+  },
+  {
+   "n": 20,
+   "tz": "Asia/Kolkata",
+   "seed": 689931751,
+   "duration_s": 72,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "todo": 0,
+   "total": 3161,
+   "files": 206,
+   "exit_code": 0,
+   "timed_out": false,
+   "commit": "aff6e33",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=689931751"
+  }
+ ]
+}

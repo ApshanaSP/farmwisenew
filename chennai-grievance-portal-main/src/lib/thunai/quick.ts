@@ -16,10 +16,14 @@ import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { asksForbidden } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
+import { zoneNosIn } from "@/lib/zone-no";
+import { asciiDigits } from "./digits";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
-const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
+// the digits of every script are 0-9 first: the filter below drops any other character, so "zone ٥" and "zone ５" would lose their number (SKG1-33); and the text is NFC first, so a letter
+// written decomposed (o + a combining mark) is read as the composed one and the same sentence gets the same answer (resolver.pass4.test.ts, NFC and NFD)
+const norm = (s: string) => ` ${asciiDigits(s.normalize("NFC").toLowerCase()).replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 /** the endings a short Tamil word takes (தீ: தீயில், தீக்கு), so that a short word is a word and not the start of another (தீவிர, "severe", is not தீ, "fire") (RC-03) */
 /** a Tamil word of this many code points or fewer (தீ, "fire") is strict at its right edge; a longer one may be the start of a compound (மழைநீர், தெருவிளக்கு) */
 export const TA_SHORT = 2;
@@ -127,7 +131,7 @@ export function catIn(t: string): string | null {
  * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds a list (RC-05). overdue wins over open.
  */
 const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|breach|exceeded|exceeding|violated)( the| their| its| a)? (deadline|due date|sla|time limit)\b|\bdeadline (passed|crossed|missed|miss|over|exceeded|breached|mudinj[a-z]*|thaand[a-z]*|thand[a-z]*)\b|\bnot (resolved|closed|done|attended|fixed) (in|on|within) time\b|\blate (cases|complaints|ones|severe)\b|\b(thaamadham|thamadham|thaamathamaana)\b|தாமத|கெடு (தாண்ட|முடிந்த|மீறி|கடந்த)|காலக்கெடு|கெடுவை/;
-const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|(cases|complaints|incidents|issues|problems|ones|reports|grievances) (that are |which are |are |still |now |currently )?open (in|at|near|for|now|today|here|across|within)|(that|which) are (still |now |currently )?open|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
+const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|open (la |ah |aa )?(irukku|iruku|irukkum|irukkura|irukkunga|irukkaa|irukka)|(cases|complaints|incidents|issues|problems|ones|reports|grievances) (that are |which are |are |still |now |currently )?open (in|at|near|for|now|today|here|across|within)|(that|which) are (still |now |currently )?open|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
 /** finished cases: "resolved", "closed", "solved" (English), the Tamil and Tanglish words; a lane that dropped this word answered with every case (SK-3) */
 const RESOLVED_RE = /\b(resolved|closed|solved|completed|settled|rectified|mudinjadhu|mudinja|theerthu vecha|theerthaachu|close (aachu|aayiduchu|aagi|pannitanga|pannita))\b|தீர்க்கப்பட்ட|தீர்க்கப்பட்டவை|முடிக்கப்பட்ட|முடிந்த|தீர்வான|மூடப்பட்ட/;
 /** every status phrase, and the Tamil word that ends one ("காலக்கெடு தாண்டிய"), for taking them out of a sentence */
@@ -276,6 +280,8 @@ const TAMIL_STEMS = [...LISTED].filter((x) => /[஀-௿]/.test(x) && x.length >=
 function explained(word: string, w: World): boolean {
   const known = worldWords(w);
   if (LISTED.has(word) || known.has(word) || /^\d+$/.test(word)) return true;
+  // a word the lane reads as a status, a level or a window is accounted for, and a number said in words ("மூன்று", "moonu", "three") is a number (so the Tamil of "top three zones by open complaints" is answered as its English is)
+  if (readAsSlot(word) || /^\d+$/.test(normalise(word).text)) return true;
   // a Tamil word's case ending (அடையாறில், புகாருக்கு); a Tanglish place with its ending joined on (Adyarla); an English plural
   if (/[஀-௿]/.test(word)) return TAMIL_STEMS.some((x) => word.startsWith(x)) || [...known].some((x) => /[஀-௿]/.test(x) && x.length >= 3 && word.startsWith(x.replace(/[்ுூ]$/, "")));
   const bare = word.replace(/(la|le|ku|kku|s)$/, "");
@@ -349,6 +355,9 @@ const ASKING = new Set(("explain to me tell more about the a an of in at on with
   "புகார் பிரச்சனை பிரச்சினை சம்பவம் பற்றி பத்தி சொல்லு சொல்லுங்க சொல்லுங்கள் விளக்கு விளக்குங்க விளக்குங்கள் விளக்கவும் விளக்கி விளக்கம் விளக்கமா விளக்கமாக என்னன்னு என்ன ஆச்சு புரியல உள்ள இருக்கும் வந்த இந்த அந்த கொஞ்சம் பகுதி பகுதியில் மண்டலம் மண்டலத்தில் எளிமையா").split(" "));
 const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|list|rise|rising|increase|increasing|spike|spiking|jump|drop|fall|falling|trend|trends|why|pattern|patterns|high|low|many|count|stats|statistics) |புகார்கள்|சம்பவங்கள்|பிரச்சனைகள்|பிரச்சினைகள்|ஏன்|அதிகரி|போக்கு|பட்டியல்/;
 
+/** How many a ranking is asked for ("top 3 zones", "top three zones", "முதல் மூன்று", "mudhal moonu"): the number through the console's own number reader, 5 when none is said. */
+const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).text} `)?.[1]) || 5;
+
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const spec = readPeriod(text);
@@ -396,10 +405,16 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"])) return null;
+  // "open" is the verb of a follow-up ("open 3", "open the first one") unless it is the status of the cases ("open cases in Adyar", "cases open now": OPEN_RE), and "that" and "those" point back at
+  // an earlier answer unless they open a relative clause ("complaints that are open"): a status said in the sentence is applied in the slots, not handed on (g-review 4)
+  const openIsStatus = OPEN_RE.test(t) && !/ open (the|this|that|it|its|them|these|those|case|\d|number|no|first|second|third|last|next|previous) /.test(t);
+  const pointsBack = / (that|those) (?!(are|is|were|was|have|has|had) )/.test(t);
+  if (!o.noBail && (has(t, ["same", "also", "only", "instead", "draft", "send", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"]) || (has(t, ["open"]) && !openIsStatus) || pointsBack)) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
+  // a zone said by a number that is no zone ("zone 99", "zone 0"), or several zones by number: the brief turn says so, the district list would drop them (SKG1-34, SKG1-35)
+  if (!o.noBail) { const nos = zoneNosIn(text); if (nos.some((n) => n < 1 || n > 15) || (nos.length > 1 && !isComparing(t))) return null; }
   // the period the sentence names, by the shared reader: a console window, or the window that stands for a span until withSpan dates it
   // (the severity is read without the time phrase: "குறைந்ததா", "did it fall", in a comparison is not the level "low")
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
@@ -449,10 +464,10 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   // a ranking by a status ("by open complaints", "திறந்த புகார்கள் அதிகம்") is not the attention score this screen ranks by: handed on in every language, as the English
   // "open" already is (QA pass 7: once the status words stopped counting as unknown, the Tamil form got the attention ranking while the English was handed on)
   if (has(t, RANK) && !cat && statusIn(t) != null && has(t, ZONE_WORDS)) return null;
-  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  if (has(t, RANK) && !cat && has(t, ZONE_WORDS)) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: topN(t), order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
   if (has(t, RANK) && cat && has(t, ZONE_WORDS)) return null;
-  if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
+  if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: topN(t), period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
   if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {

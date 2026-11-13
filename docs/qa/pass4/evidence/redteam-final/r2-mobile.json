@@ -1,0 +1,19 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:41:18.207Z",
+ "account": "citizenA",
+ "before": {
+  "verified": false,
+  "numberSet": true
+ },
+ "put": 200,
+ "after": {
+  "verified": false,
+  "numberIsNew": true
+ },
+ "restore": 200,
+ "restored": {
+  "sameNumber": true,
+  "verified": false
+ }
+}

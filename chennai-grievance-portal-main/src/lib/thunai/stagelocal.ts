@@ -8,7 +8,7 @@ import type { Lang } from "./types";
 import { DEPT_TA, ZONES, ZONE_TA_NAME } from "./lexicon";
 import { asciiDigits } from "./digits";
 import { catTaOfLabel } from "./narrate";
-import { LAST, OPEN_VERBS, SOFT_VERBS, readPositions, tokensOf } from "./ordinal";
+import { OPEN_VERBS, SOFT_VERBS, readPicks, readPositions, tokensOf } from "./ordinal";
 
 /** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
 const zoneNamed = (x: string): number | null => {
@@ -26,7 +26,7 @@ export type LocalCmd =
   | { op: "export"; what: "png" | "csv" | null }
   /** n is a 1-based position (LAST = the last one); several positions (ns) are refused in the reducer with a plain line; `where` is a place to find among the rows */
   | { op: "open"; n: number; ns?: number[]; where?: string }
-  | { op: "draft"; n: number; first: boolean; ns?: number[]; it?: boolean }
+  | { op: "draft"; n: number; first: boolean; last?: boolean; ns?: number[]; it?: boolean }
   | { op: "map"; n: number | null }
   | { op: "full" }
   | { op: "everywhere" };
@@ -86,10 +86,11 @@ export function localStageCommand(raw: string): LocalCmd | null {
     while (lead < rest.length && (rest[lead] === "for" || rest[lead] === "to" || rest[lead] === "the")) lead++;
     const body = rest.slice(lead);
     if (body.length === 1 && /^(it|this|that)$/.test(body[0])) return { op: "draft", n: 0, first: false, it: true };
-    const first = (body[0] === "first" || body[0] === "top") && body.length > 1;
-    const ns = readPositions(body, { count: true });
-    if (ns && first) return { op: "draft", n: ns.length, first: true };
-    if (ns) return ns.length === 1 ? { op: "draft", n: ns[0], first: false } : { op: "draft", n: ns[0], first: false, ns };
+    // one reader for the count words of every language (ordinal.ts): "first three", "last two", "கடைசி இரண்டு", "mudhal moonu" are counts; "first and third" is two cases
+    const pk = readPicks(body, { count: true });
+    if (pk?.kind === "first") return { op: "draft", n: pk.n, first: true };
+    if (pk?.kind === "last") return { op: "draft", n: pk.n, first: false, last: true };
+    if (pk) return pk.ns.length === 1 ? { op: "draft", n: pk.ns[0], first: false } : { op: "draft", n: pk.ns[0], first: false, ns: pk.ns };
   }
   return null;
 }
@@ -120,6 +121,8 @@ export const stageEmpty: StageModel = { doc: null, back: [], views: {}, filter: 
  * is given, so a digest made right after it is right. "open" and the like ask for a rebuild: the new screen arrives through
  * pushScreen.
  */
+/** A position of the reader (ordinal.ts) as a 1-based place in a list of this length: 3 is the third; -1 is the last, -2 the one before it. */
+const fromEnd = (p: number, len: number): number => (p < 0 ? len + p + 1 : p);
 const say = (en: string, ta: string): StageEffect => ({ fx: "say", en, ta, speak: true });
 const outOfRange = (have: number, asked: number): StageEffect => have
   ? say(`There ${have === 1 ? "is only 1 item" : `are only ${have} items`} here${asked > 0 ? `, so there is no number ${asked}` : ""}.`, `இங்கே ${have} உருப்படிகள் மட்டுமே உள்ளன${asked > 0 ? `, ${asked}-வது இல்லை` : ""}.`)
@@ -170,7 +173,7 @@ export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx:
         if (hit.length > 1) return { m, fx: [say(`${hit.length} of these cases mention ${cmd.where}. Say the number of the one you want.`, `${hit.length} சம்பவங்கள் "${cmd.where}" என்று உள்ளன. எந்த எண் என்று சொல்லுங்கள்.`)] };
         at = ids.indexOf(hit[0].id) + 1;
       }
-      const k = at === LAST ? ids.length : at;
+      const k = fromEnd(at, ids.length);
       if (k < 1 || k > ids.length) return { m, fx: [outOfRange(ids.length, at)] };
       const id = ids[k - 1];
       return { m, fx: [{ fx: "rebuild", recipe: "case", slots: { id }, label: { en: `Opening case ${k}`, ta: `${k}-வது சம்பவத்தைத் திறக்கிறேன்` } }] };
@@ -179,11 +182,12 @@ export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx:
       const ids = caseIds(doc);
       if (cmd.it) return { m, fx: [doc.recipe === "case" && ids.length ? { fx: "draft", ids: ids.slice(0, 1) } : say("Which case should I draft for? Say its number.", "எந்தச் சம்பவத்துக்கு வரைவு? எண்ணைச் சொல்லுங்கள்.")] };
       if (cmd.first) return { m, fx: [{ fx: "draft", ids: ids.slice(0, cmd.n) }] };
+      if (cmd.last) return cmd.n > ids.length ? { m, fx: [outOfRange(ids.length, cmd.n)] } : { m, fx: [{ fx: "draft", ids: ids.slice(ids.length - cmd.n) }] };
       if (doc.recipe === "case") return { m, fx: [{ fx: "draft", ids: ids.slice(0, 1) }] };
       const want = cmd.ns ?? [cmd.n];
-      const bad = want.find((p) => (p === LAST ? ids.length : p) < 1 || (p === LAST ? ids.length : p) > ids.length);
+      const bad = want.find((p) => fromEnd(p, ids.length) < 1 || fromEnd(p, ids.length) > ids.length);
       if (bad !== undefined) return { m, fx: [outOfRange(ids.length, bad)] };
-      return { m, fx: [{ fx: "draft", ids: [...new Set(want.map((p) => ids[(p === LAST ? ids.length : p) - 1]))] }] };
+      return { m, fx: [{ fx: "draft", ids: [...new Set(want.map((p) => ids[fromEnd(p, ids.length) - 1]))] }] };
     }
     case "map": {
       const ids = caseIds(doc);

@@ -3,6 +3,7 @@
  * them is refused here, with no model involved, and every tool result is redacted on its way out (so neither the model nor
  * the Stage ever sees them). Also: Jarvis never sends, approves or deletes, whatever it is told. Pure and tested.
  */
+import { skeleton } from "./skeleton";
 export const PRIVACY_REPLY = {
   en: "I can't share a citizen's name, phone number, Aadhaar or their own words. I can show the case, its place, its department and how long it has been open.",
   ta: "குடிமக்களின் பெயர், தொலைபேசி எண், ஆதார் அல்லது அவர்கள் சொன்ன வார்த்தைகளை என்னால் தர முடியாது. சம்பவம், இடம், துறை, எவ்வளவு காலமாகத் திறந்துள்ளது என்பதைக் காட்டலாம்."
@@ -71,7 +72,7 @@ export function normaliseNumbers(s: string): string {
 
 /** Asks for a private fact about a citizen: refused in code. An officer's contact is a different thing (contacts tool). */
 export function asksPrivate(text: string): boolean {
-  const t = stripFormat(text).trim();
+  const t = skeleton(stripFormat(text)).trim();
   if (/\bwhose\b.{0,40}(complaint|grievance|petition|inc-)|யாருடைய\s*புகார்|\byaar\w*\s+(kuduth|pannin|koduth)/i.test(t)) return true;
   if (/(புகார்தாரர்|புகார்\s*கொடுத்தவர்|மனுதாரர்).{0,20}(பேர்|பெயர்|எண்|நம்பர்|முகவரி)/.test(t)) return true;
   // "how many people", "the people's complaints": people as a count or a subject is not a request for a person's details
@@ -124,10 +125,13 @@ const REVEAL_RULES = /\b(?:print|show|reveal|repeat|tell|read|output|display|sha
 
 /** Tells Jarvis to do what it never does: send, approve or delete (or to ignore its rules). */
 export function asksForbidden(text: string): boolean {
-  const t = stripFormat(text).trim().replace(DONE_PHRASE, " ");
-  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(t)) return true;
+  // The rules (ignore them, show them, do what a record says, move money) are read on the whole sentence: a marker after them ("ignore all your rules aachu") does not make them
+  // a statement about the past. Only the order verbs below read the sentence with the done phrase taken out (QA4 g-repair 1, reviewer problem 1).
+  const whole = skeleton(stripFormat(text)).trim();
+  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(whole)) return true;
+  if (OBEY_RECORD.test(whole) || REVEAL_RULES.test(whole) || MONEY_VERB.test(whole)) return true;
+  const t = whole.replace(DONE_PHRASE, " ");
   if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
-  if (OBEY_RECORD.test(t) || REVEAL_RULES.test(t) || MONEY_VERB.test(t)) return true;
   if (!CONSOLE_THING.test(t) && (/\bresolved\b.{0,14}\bmark\b|\bmark\b.{0,20}\bresolved\b|resolved-?\s*nu\s+mark|resolved.{0,12}மார்க்|தீர்ந்த(?:தாக|து)?\s*(?:என)?\s*குறி/i.test(t))) return true;
   // the act said with a Tamil helper verb, with nothing else needed ("sanction pannunga", "send seiyunga", "அப்ரூவ் பண்ணுங்க")
   if (/\b(?:approve|delete|send|sanction|reject|authori[sz]e|forward|publish|erase|wipe)\s+(?:pann|seiy|sei\b|panni)\w*|(?:அப்ரூவ்|சாங்ஷன்|டெலிட்|சென்ட்|செண்ட்|ரிஜெக்ட்)\s*(?:பண்ண|செய்)/i.test(t)) return true;

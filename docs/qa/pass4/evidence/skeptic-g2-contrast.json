@@ -1,0 +1,1254 @@
+[
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-s:nth-child(1) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".oi-s:nth-child(2) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-s:nth-child(1) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".oi-s:nth-child(2) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 4,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".oi-s:nth-child(1) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 4,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".oi-s:nth-child(1) > .oi-sh > .oi-st > .old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "36",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 1280,
+  "view": "35",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "light",
+  "w": 360,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+    "why": "{\"fgColor\":\"#d0d6db\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.38,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-n",
+    "why": "{\"fgColor\":\"#bfc4c7\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.65,\"fontSize\":\"18.0pt (24px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRati"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub",
+    "why": "{\"fgColor\":\"#d0d6db\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.38,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "36",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 1280,
+  "view": "35",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerA",
+  "theme": "dark",
+  "w": 360,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 6,
+  "sample": [
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+    "why": "{\"fgColor\":\"#314144\",\"bgColor\":\"#081610\",\"contrastRatio\":1.73,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-n",
+    "why": "{\"fgColor\":\"#556160\",\"bgColor\":\"#081610\",\"contrastRatio\":2.88,\"fontSize\":\"18.0pt (24px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRati"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub",
+    "why": "{\"fgColor\":\"#314144\",\"bgColor\":\"#081610\",\"contrastRatio\":1.73,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 12,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 4,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-type:nth-child(1) > .oi-ch.down",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".oi-type:nth-child(2) > .oi-ch.down",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "38",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 1280,
+  "view": "48",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 13,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "light",
+  "w": 360,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+    "why": "{\"fgColor\":\"#d0d6db\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.38,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-n",
+    "why": "{\"fgColor\":\"#bfc4c7\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.65,\"fontSize\":\"18.0pt (24px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRati"
+   },
+   {
+    "t": ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub",
+    "why": "{\"fgColor\":\"#d0d6db\",\"bgColor\":\"#f6f9f7\",\"contrastRatio\":1.38,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "38",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerB",
+  "theme": "dark",
+  "w": 1280,
+  "view": "48",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 10,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#0e9f6e\",\"bgColor\":\"#e3f6ee\",\"contrastRatio\":3.01,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 5,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 5,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "2",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 5,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 1280,
+  "view": "0",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".daily > span:nth-child(2) > small",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#fff3e6\",\"contrastRatio\":2.84,\"fontSize\":\"7.9pt (10.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": ".oi-ch",
+    "why": "{\"fgColor\":\"#e0364a\",\"bgColor\":\"#ffeff1\",\"contrastRatio\":3.93,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"bold\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": ".old",
+    "why": "{\"fgColor\":\"#e5720f\",\"bgColor\":\"#f6f8fb\",\"contrastRatio\":2.92,\"fontSize\":\"8.3pt (11px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "light",
+  "w": 360,
+  "view": "2",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium",
+    "why": "{\"fgColor\":\"#b98b00\",\"bgColor\":\"#fdf6dd\",\"contrastRatio\":2.87,\"fontSize\":\"8.6pt (11.5px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRat"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "daily",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "weekly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "quarterly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "By severity",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "My work",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "2",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 3,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 1280,
+  "view": "0",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": ".lb",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.8pt (13px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 360,
+  "view": "monthly",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 1,
+  "sample": [
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ },
+ {
+  "who": "officerC",
+  "theme": "dark",
+  "w": 360,
+  "view": "2",
+  "rule": "color-contrast",
+  "impact": "serious",
+  "nodes": 2,
+  "sample": [
+   {
+    "t": "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   },
+   {
+    "t": "tr:nth-child(2) > td:nth-child(4) > .btn.sm",
+    "why": "{\"fgColor\":\"#ffffff\",\"bgColor\":\"#1a8f4e\",\"contrastRatio\":4.13,\"fontSize\":\"9.0pt (12px)\",\"fontWeight\":\"normal\",\"messageKey\":null,\"expectedContrastRatio"
+   }
+  ]
+ }
+]

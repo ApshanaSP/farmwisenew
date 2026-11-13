@@ -1,0 +1,150 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:42:52.213Z",
+ "rows": [
+  {
+   "mb": 40,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "ms": 633,
+   "head": "{\"error\":\"Expected object, received null\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 400,
+   "ms": 470,
+   "head": "{\"error\":\"Give the workspace a name of at least two letters.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "DELETE",
+   "u": "/api/collector/workspaces",
+   "status": 400,
+   "ms": 391,
+   "head": "{\"error\":\"Say which workspace to delete.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "PATCH",
+   "u": "/api/collector/sources/1",
+   "status": 400,
+   "ms": 428,
+   "head": "{\"error\":\"Expected object, received null\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "status": 404,
+   "ms": 432,
+   "head": "{\"error\":\"Unknown dataset.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "ms": 338,
+   "head": "{\"error\":\"Say which pin.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "POST",
+   "u": "/api/auth/tab",
+   "status": 413,
+   "ms": 526,
+   "head": "{\"error\":\"That request is too large.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 40,
+   "m": "POST",
+   "u": "/api/auth/logout",
+   "status": 200,
+   "ms": 362,
+   "head": "{\"message\":\"Logged out\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "ms": 1091,
+   "head": "{\"error\":\"Expected object, received null\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 400,
+   "ms": 1063,
+   "head": "{\"error\":\"Give the workspace a name of at least two letters.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "DELETE",
+   "u": "/api/collector/workspaces",
+   "status": 400,
+   "ms": 1029,
+   "head": "{\"error\":\"Say which workspace to delete.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "PATCH",
+   "u": "/api/collector/sources/1",
+   "status": 400,
+   "ms": 1087,
+   "head": "{\"error\":\"Expected object, received null\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "status": 404,
+   "ms": 1032,
+   "head": "{\"error\":\"Unknown dataset.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "ms": 1010,
+   "head": "{\"error\":\"Say which pin.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "POST",
+   "u": "/api/auth/tab",
+   "status": 413,
+   "ms": 1342,
+   "head": "{\"error\":\"That request is too large.\"}",
+   "serverAnswersAfter": 200
+  },
+  {
+   "mb": 120,
+   "m": "POST",
+   "u": "/api/auth/logout",
+   "status": 200,
+   "ms": 1166,
+   "head": "{\"message\":\"Logged out\"}",
+   "serverAnswersAfter": 200
+  }
+ ]
+}

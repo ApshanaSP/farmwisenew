@@ -141,6 +141,10 @@ beforeAll(async () => {
   reportRoute = await import("@/app/api/officer/grievances/[id]/report/route");
   grievanceRoute = await import("@/app/api/officer/grievances/[id]/route");
   complaintRoute = await import("@/app/api/complaints/[code]/route");
+  // FINAL-GATE (12 Nov), finding STORE-1: the first query a fresh store sees must not be a write. A write takes the store lock and then loads the build; the load first sends the previous run's unsent changes
+  // (src/lib/aws/store.ts durable() -> send(), which takes the same lock), so it waits on itself for ever. It happens here whenever another test file in the same run left changes in the shared durable file (152 rows after
+  // audit-narrate_and_figures), and then this hook timed out after 280 s with all 50 tests skipped. One read first loads the store and the same UPDATE goes through. Evidence: docs/qa/pass4/evidence/store-first-write-deadlock.md
+  await pool.query("SELECT 1 AS warm");
   await pool.query("UPDATE users SET dept_code = 'PWD-WRD' WHERE id = 1000000004");
 
   const ele = (await officerData.deptProfile("GCC-ELE"))!, swm = (await officerData.deptProfile("GCC-SWM"))!, wrd = (await officerData.deptProfile("PWD-WRD"))!;

@@ -36,6 +36,14 @@ export interface CreateOtpResult {
 }
 
 /**
+ * Codes being made or just made, by purpose and identifier: the time of the claim. A request claims its pair with nothing awaited
+ * before the claim, so a parallel burst cannot all read "no code yet" from the database and all make one (QA4 gate,
+ * redteam-final-4: 12 requests, 12 codes, 12 emails). The database row still holds the cooldown across restarts.
+ */
+const claims = new Map<string, number>();
+const claimKey = (identifier: string, purpose: OtpPurpose) => `${purpose}|${identifier}`;
+
+/**
  * Creates and stores a new (hashed) OTP for the given identifier + purpose,
  * invalidating any previous unused code for that pair. Enforces the resend
  * cooldown. Returns the plaintext OTP so the caller can deliver it.
@@ -47,6 +55,26 @@ export async function createOtp(
   purpose: OtpPurpose,
   userId: number | null
 ): Promise<CreateOtpResult> {
+  const key = claimKey(identifier, purpose);
+  const now = Date.now();
+  const claimed = claims.get(key);
+  if (claimed !== undefined && now - claimed < OTP_RESEND_COOLDOWN_SECONDS * 1000) {
+    return { otp: "", cooldownRemaining: Math.max(1, Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - (now - claimed) / 1000)) };
+  }
+  claims.set(key, now);
+  if (claims.size > 5000) for (const [k, t] of claims) if (now - t >= OTP_RESEND_COOLDOWN_SECONDS * 1000) claims.delete(k);
+  try {
+    const made = await issueOtp(identifier, purpose, userId);
+    // no code was made (the database says one is still in its cooldown): the claim is not needed
+    if (made.cooldownRemaining) claims.delete(key);
+    return made;
+  } catch (err) {
+    claims.delete(key);
+    throw err;
+  }
+}
+
+async function issueOtp(identifier: string, purpose: OtpPurpose, userId: number | null): Promise<CreateOtpResult> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT created_at FROM password_resets
      WHERE identifier = ? AND purpose = ? AND used = FALSE
@@ -87,6 +115,7 @@ export async function createOtp(
 
 /** Deletes any outstanding code, e.g. after a failed delivery attempt. */
 export async function discardOtp(identifier: string, purpose: OtpPurpose): Promise<void> {
+  claims.delete(claimKey(identifier, purpose));
   await pool.query(
     `UPDATE password_resets SET used = TRUE
      WHERE identifier = ? AND purpose = ? AND used = FALSE`,
@@ -137,17 +166,19 @@ export async function verifyAndConsumeOtp(
     return { ok: false, reason: "too_many_attempts" };
   }
 
+  // Claim the try BEFORE the slow compare, in one conditional UPDATE, in the database so it survives a restart and is shared across instances. A burst of guesses all
+  // read the same count, so counting after the compare let every guess of the burst be checked (QA4 skeptic 2, SK2-5). Only the guesses that win a try reach the compare.
+  const [claim] = await pool.query<ResultSetHeader>(
+    `UPDATE password_resets SET attempts = attempts + 1
+     WHERE id = ? AND used = FALSE AND attempts < ?`,
+    [record.id, OTP_MAX_ATTEMPTS]
+  );
+  if (claim.affectedRows !== 1) return { ok: false, reason: "too_many_attempts" };
+  const usedAttempts = (record.attempts as number) + 1;
+
   const matches = await bcrypt.compare(submittedOtp, record.otp_hash as string);
 
   if (!matches) {
-    // Count the attempt in the database so it survives a process restart and
-    // is shared across server instances.
-    const [res] = await pool.query<ResultSetHeader>(
-      `UPDATE password_resets SET attempts = attempts + 1
-       WHERE id = ? AND used = FALSE AND attempts < ?`,
-      [record.id, OTP_MAX_ATTEMPTS]
-    );
-    const usedAttempts = (record.attempts as number) + (res.affectedRows === 1 ? 1 : 0);
     const attemptsRemaining = Math.max(0, OTP_MAX_ATTEMPTS - usedAttempts);
     if (attemptsRemaining === 0) return { ok: false, reason: "too_many_attempts" };
     return { ok: false, reason: "incorrect", attemptsRemaining };
@@ -210,14 +241,15 @@ export async function verifyOtp(
     return { ok: false, reason: "too_many_attempts" };
   }
 
+  // the try is claimed before the compare (see verifyAndConsumeOtp); a right code gives its try back, because this call does not consume the code
+  const [claim] = await pool.query<ResultSetHeader>(
+    `UPDATE password_resets SET attempts = attempts + 1 WHERE id = ? AND used = FALSE AND attempts < ?`,
+    [record.id, OTP_MAX_ATTEMPTS]
+  );
+  if (claim.affectedRows !== 1) return { ok: false, reason: "too_many_attempts" };
   const matches = await bcrypt.compare(submittedOtp, record.otp_hash as string);
-  if (!matches) {
-    await pool.query(
-      `UPDATE password_resets SET attempts = attempts + 1 WHERE id = ? AND used = FALSE`,
-      [record.id]
-    );
-    return { ok: false, reason: "incorrect" };
-  }
+  if (!matches) return { ok: false, reason: "incorrect" };
+  await pool.query(`UPDATE password_resets SET attempts = attempts - 1 WHERE id = ? AND used = FALSE AND attempts > 0`, [record.id]);
   return { ok: true };
 }
 

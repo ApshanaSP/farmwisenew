@@ -1,0 +1,208 @@
+{
+ "started": "2026-11-12T15:36:47.031Z",
+ "steps": [
+  {
+   "name": "signin-en-1440",
+   "who": "collector",
+   "landed": "/collector",
+   "ok": true,
+   "title": "Good evening, Collector",
+   "console": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+   ],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "collector",
+   "after": "/collector",
+   "backToHome": "/collector"
+  },
+  {
+   "name": "signin-en-1440",
+   "who": "officerA",
+   "landed": "/officer",
+   "ok": true,
+   "title": "Overview",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "officerA",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-en-1440",
+   "who": "officerB",
+   "landed": "/officer",
+   "ok": true,
+   "title": "Overview",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "officerB",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-en-1440",
+   "who": "officerC",
+   "landed": "/officer",
+   "ok": true,
+   "title": "Overview",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "officerC",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-en-1440",
+   "who": "citizenA",
+   "landed": "/citizen",
+   "ok": true,
+   "title": "Vanakkam, Qa · வணக்கம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "citizenA",
+   "after": "/citizen",
+   "backToHome": "/citizen"
+  },
+  {
+   "name": "wrong-password",
+   "who": "citizenB",
+   "url": "/login",
+   "text": "Invalid email or password. "
+  },
+  {
+   "name": "signin-en-1440",
+   "who": "citizenB",
+   "landed": "/citizen",
+   "ok": true,
+   "title": "Vanakkam, Qa · வணக்கம்",
+   "console": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+   ],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-en-1440",
+   "who": "citizenB",
+   "after": "/citizen",
+   "backToHome": "/citizen"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "collector",
+   "landed": "/collector",
+   "ok": true,
+   "title": "மாலை வணக்கம், ஆட்சியர்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "collector",
+   "after": "/login",
+   "backToHome": "/login?redirect=%2Fcollector"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "officerA",
+   "landed": "/officer",
+   "ok": true,
+   "title": "மேலோட்டம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "officerA",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "officerB",
+   "landed": "/officer",
+   "ok": true,
+   "title": "மேலோட்டம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "officerB",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "officerC",
+   "landed": "/officer",
+   "ok": true,
+   "title": "மேலோட்டம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "officerC",
+   "after": "/officer",
+   "backToHome": "/officer"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "citizenA",
+   "landed": "/citizen",
+   "ok": true,
+   "title": "Vanakkam, Qa · வணக்கம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "citizenA",
+   "after": "/citizen",
+   "backToHome": "/citizen"
+  },
+  {
+   "name": "signin-ta-360",
+   "who": "citizenB",
+   "landed": "/citizen",
+   "ok": true,
+   "title": "Vanakkam, Qa · வணக்கம்",
+   "console": [],
+   "http": [],
+   "failed": []
+  },
+  {
+   "name": "signout-ta-360",
+   "who": "citizenB",
+   "after": "/citizen",
+   "backToHome": "/citizen"
+  }
+ ]
+}

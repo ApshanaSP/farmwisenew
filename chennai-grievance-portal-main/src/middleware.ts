@@ -73,7 +73,10 @@ export function crossSite(request: NextRequest): boolean {
   if (!origin || origin === "null") return origin === "null";
   let host: string;
   try { host = new URL(origin).host.toLowerCase(); } catch { return true; }
-  const own = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host).split(",")[0].trim().toLowerCase();
+  // X-Forwarded-Host is written by the client too: it names the site only behind a proxy the server trusts (TRUST_PROXY_HOPS, as for the
+  // client address), never on its own (QA4 gate, redteam-final-15)
+  const forwarded = Number(process.env.TRUST_PROXY_HOPS) > 0 ? request.headers.get("x-forwarded-host") : null;
+  const own = (forwarded ?? request.headers.get("host") ?? request.nextUrl.host).split(",")[0].trim().toLowerCase();
   if (host === own) return false;
   const extra = (process.env.ALLOWED_ORIGINS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   return !extra.some((x) => x === origin.toLowerCase() || x === host);

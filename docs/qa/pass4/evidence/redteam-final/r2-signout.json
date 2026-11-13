@@ -1,0 +1,22 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:50:03.913Z",
+ "account": "officerC",
+ "lifetimeHours": 12,
+ "logout": 200,
+ "cookieClearedInBrowser": true,
+ "oldCookieAfterSignOut": [
+  {
+   "u": "/api/auth/me",
+   "status": 200
+  },
+  {
+   "u": "/api/officer/grievances",
+   "status": 200
+  },
+  {
+   "u": "/api/profile",
+   "status": 200
+  }
+ ]
+}

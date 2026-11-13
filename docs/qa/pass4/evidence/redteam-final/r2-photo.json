@@ -1,0 +1,51 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:50:03.768Z",
+ "account": "citizenA",
+ "photoBefore": "/uploads/profile/user-1000000005-1794498537708.png",
+ "upload": 200,
+ "namePattern": "/uploads/profile/user-<ms>-1794498603336.png",
+ "rows": [
+  {
+   "who": "citizenA",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "sameBytes": false,
+   "cache": "private, no-cache, no-store, max-age=0, must-revalidate"
+  },
+  {
+   "who": "anonymous",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "sameBytes": false,
+   "cache": "private, no-cache, no-store, max-age=0, must-revalidate"
+  },
+  {
+   "who": "citizenB",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "sameBytes": false,
+   "cache": "private, no-cache, no-store, max-age=0, must-revalidate"
+  },
+  {
+   "who": "officerA",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "sameBytes": false,
+   "cache": "private, no-cache, no-store, max-age=0, must-revalidate"
+  },
+  {
+   "who": "collector",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "sameBytes": false,
+   "cache": "private, no-cache, no-store, max-age=0, must-revalidate"
+  },
+  {
+   "guess": "81 names around the upload time, anonymous",
+   "tries": 49,
+   "hits": 0
+  }
+ ],
+ "removedTestFile": true
+}

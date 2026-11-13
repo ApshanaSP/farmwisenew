@@ -1,0 +1,637 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:40:50.477Z",
+ "rows": [
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/sources/999999",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/studio/ds-none",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/studio/ds-none",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/workspaces",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "collector",
+   "status": 404
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/workspaces?name=rt-r2-none",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "officerA",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "officerB",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "officerC",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "officerA",
+   "status": 200
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "officerB",
+   "status": 200
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "officerC",
+   "status": 200
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "collector",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/actions",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/jobs/route-news",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "collector",
+   "status": 200
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "officerA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "officerB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "officerC",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/collector/thunai/memory",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "officerA",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "officerB",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "officerC",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/rehearsal/tasks",
+   "id": "citizenB",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "anonymous",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "collector",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "officerA",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "officerB",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "officerC",
+   "status": 400
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "citizenA",
+   "status": 401
+  },
+  {
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "id": "citizenB",
+   "status": 401
+  }
+ ],
+ "bad": []
+}

@@ -1,0 +1,217 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:40:51.322Z",
+ "rows": [
+  {
+   "p": "/.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/.env.local",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/.git/config",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/.git/HEAD",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/package.json",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/next.config.js",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/.next-qa/BUILD_ID",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/BUILD_ID",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/server.js",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/profile/..%2f..%2f.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/profile/%2e%2e/%2e%2e/package.json",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/../.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/profile/..\\..\\.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/_next/static/..%2f..%2f..%2f.env",
+   "status": 404,
+   "type": "text/plain; charset=utf-8",
+   "bytes": 9,
+   "secretish": false
+  },
+  {
+   "p": "/_next/static/%2e%2e/%2e%2e/BUILD_ID",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/_next/../package.json",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/_next/static/chunks/../../../.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/data/aws-cache/qa/test-collector.txt",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/profile/",
+   "status": 308,
+   "type": null,
+   "bytes": 16,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/",
+   "status": 308,
+   "type": null,
+   "bytes": 8,
+   "secretish": false
+  },
+  {
+   "p": "/api/../.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/%2e%2e/.env",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/profile/%00.png",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/_next/image?url=http://127.0.0.1:3199/&w=64&q=75",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/_next/image?url=/uploads/../.env&w=64&q=75",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/uploads/officer-reports/",
+   "status": 308,
+   "type": null,
+   "bytes": 24,
+   "secretish": false
+  },
+  {
+   "p": "/data/private-uploads/complaints/",
+   "status": 308,
+   "type": null,
+   "bytes": 32,
+   "secretish": false
+  },
+  {
+   "p": "/robots.txt",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/sitemap.xml",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  },
+  {
+   "p": "/.well-known/security.txt",
+   "status": 404,
+   "type": "text/html; charset=utf-8",
+   "bytes": 12611,
+   "secretish": false
+  }
+ ],
+ "served": []
+}

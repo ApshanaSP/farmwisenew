@@ -1,0 +1,717 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:40:48.939Z",
+ "rows": [
+  {
+   "origin": "other site",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "other site",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "other site",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "other site",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "other site",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "null origin (sandboxed frame, file:)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "null origin (sandboxed frame, file:)",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "null origin (sandboxed frame, file:)",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "null origin (sandboxed frame, file:)",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "null origin (sandboxed frame, file:)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "sec-fetch-site cross-site, no origin",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "sec-fetch-site cross-site, no origin",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "sec-fetch-site cross-site, no origin",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "sec-fetch-site cross-site, no origin",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "sec-fetch-site cross-site, no origin",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host, other port",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host, other port",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host, other port",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host, other port",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host, other port",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as a prefix",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as a prefix",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as a prefix",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as a prefix",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as a prefix",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as userinfo",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as userinfo",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as userinfo",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as userinfo",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own host as userinfo",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "localhost alias",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "localhost alias",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "localhost alias",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "localhost alias",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "localhost alias",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "nip.io alias",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "nip.io alias",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "nip.io alias",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "nip.io alias",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "nip.io alias",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own origin but cross-site fetch flag",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own origin but cross-site fetch flag",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own origin but cross-site fetch flag",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own origin but cross-site fetch flag",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "own origin but cross-site fetch flag",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "two origins in one header",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "two origins in one header",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "two origins in one header",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "two origins in one header",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "two origins in one header",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "unparsable origin",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "unparsable origin",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "unparsable origin",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "unparsable origin",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "unparsable origin",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 403,
+   "head": "{\"error\":\"Requests that change data must come from District IQ's own pages.\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  },
+  {
+   "origin": "own origin, upper case (control: must pass)",
+   "control": true,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "own origin, upper case (control: must pass)",
+   "control": true,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "own origin, upper case (control: must pass)",
+   "control": true,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "own origin, upper case (control: must pass)",
+   "control": true,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "own origin, upper case (control: must pass)",
+   "control": true,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  },
+  {
+   "origin": "own origin (control: must pass)",
+   "control": true,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "own origin (control: must pass)",
+   "control": true,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "own origin (control: must pass)",
+   "control": true,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "own origin (control: must pass)",
+   "control": true,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "own origin (control: must pass)",
+   "control": true,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  },
+  {
+   "origin": "other site",
+   "m": "POST",
+   "u": "/api/auth/logout",
+   "status": 403,
+   "stillSignedIn": true
+  },
+  {
+   "origin": "method override x-http-method-override",
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "method override x-method-override",
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "method override x-http-method",
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  }
+ ],
+ "leaked": [
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "other site + forged x-forwarded-host (needs a script that can set headers: preflight)",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "POST",
+   "u": "/api/collector/assistant/pins",
+   "status": 400,
+   "head": "{\"error\":\"Say which answer to pin.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "DELETE",
+   "u": "/api/collector/assistant/pins?id=999999999",
+   "status": 200,
+   "head": "{\"ok\":false}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "PATCH",
+   "u": "/api/collector/workspaces",
+   "status": 404,
+   "head": "{\"error\":\"Workspace not found.\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "PUT",
+   "u": "/api/profile",
+   "status": 400,
+   "head": "{\"error\":\"First name is required\"}"
+  },
+  {
+   "origin": "other site + forged host list",
+   "control": false,
+   "m": "POST",
+   "u": "/api/officer/grievances/INC-NONE",
+   "status": 400,
+   "head": "{\"error\":\"Unknown step.\"}"
+  }
+ ],
+ "controlsRefused": []
+}

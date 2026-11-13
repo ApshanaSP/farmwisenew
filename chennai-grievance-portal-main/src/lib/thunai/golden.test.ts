@@ -250,8 +250,10 @@ describe("Thunai understanding: the rules that must always hold", () => {
     expect(r.kind).toBe("do");
     const s = r.kind === "do" ? r.steps[0] : null;
     expect(s && s.a === "remind" && s.text).toBe("check the Velachery drain");
-    const at = new Date(s && s.a === "remind" ? s.at : 0);
-    expect([at.getDate(), at.getHours()]).toEqual([new Date(NOW + 86_400_000).getDate(), 10]);
+    // The reminder is for 10 am in Chennai whatever zone the machine runs in (see the comment above the parser in understand.ts), so the
+    // day and the hour are read in Asia/Kolkata. Before, they were read in the machine's zone and the test failed under TZ=UTC.
+    const chennai = (ms: number) => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", day: "numeric", hour: "numeric", hourCycle: "h23" }).formatToParts(new Date(ms)); return [Number(p.find((x) => x.type === "day")?.value), Number(p.find((x) => x.type === "hour")?.value)]; };
+    expect(chennai(Date.parse(s && s.a === "remind" ? s.at : ""))).toEqual([chennai(NOW + 86_400_000)[0], 10]);
   });
   it("replies in the language the Collector used", () => {
     expect(understand("Zone 7", START, WORLD).lang).toBe("en");

@@ -12,6 +12,7 @@ import { type DraftNote, type DrillResult, type Filter, type Plan } from "@/lib/
 import type { Console } from "../CollectorApp";
 import { I } from "../icons";
 import { api } from "./client";
+import { viaConfirm } from "./download";
 import { AnimatedNum, DataTable } from "./Dataset";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel sm" /> });
@@ -84,7 +85,7 @@ export default function Drill({ id, start, extra, c, onClose, onFocus, onAsk, on
               <I n="target" />Focus the dashboard on this</button>
             <button className="ds-chip-b" onClick={() => onAsk(`${data.title} for ${data.label}: what stands out?`)}><I n="chat" />Ask the AI</button>
             <button className="ds-chip-b" onClick={draft} disabled={note === "busy"}>{note === "busy" ? <span className="ds-spin sm" /> : <I n="scroll" />}Draft a note to the department</button>
-            <a className="ds-chip-b" href={csv}><I n="download" />Download these {data.rows.toLocaleString("en-IN")} rows</a>
+            <a className="ds-chip-b" href={csv} onClick={viaConfirm(csv)}><I n="download" />Download these {data.rows.toLocaleString("en-IN")} rows</a>
             <button className="ds-chip-b" onClick={() => onPin({ ...level.plan, id: `p_${Date.now().toString(36)}`, title: `${level.plan.title}: ${data.label}`, filters: data.filters, by: level.plan.by === "time" ? "time" : "none", chart: level.plan.by === "time" ? "area" : "kpi" })}>
               <I n="plus" />Add to dashboard</button>
           </div>

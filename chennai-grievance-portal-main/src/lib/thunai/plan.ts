@@ -10,6 +10,7 @@ import { PANELS, type Lang, type PageKey, type PeriodKey, type ScreenState, type
 import { detectLang } from "./normalise";
 import { figuresIn, zoneLabelsOut } from "./numbergate";
 import { parseWhen } from "./understand";
+import { isDangerButton } from "./skeleton";
 
 const PAGES = ["overview", "briefing", "trends", "environment", "studio"] as const;
 const PERIODS = ["daily", "weekly", "monthly", "quarterly"] as const;
@@ -193,7 +194,7 @@ function checkStep(s: AiStepT, w: World, heard: string, now: number): Step | nul
       if (s.n != null && s.n >= 1 && s.n <= 500) return { a: "click", n: s.n, name: null };
       const name = clip(s.text, 60);
       // the model never presses a button that sends, approves or deletes: only the Collector's own "confirm N" sends
-      if (/send|approve|confirm|delete|remove|discard|reject|submit|அனுப்பு|நீக்கு|உறுதி/i.test(name)) return null;
+      if (isDangerButton(name)) return null;
       return name ? { a: "click", n: null, name } : null;
     }
     case "scroll": return s.option === "up" || s.option === "down" || s.option === "top" || s.option === "bottom" ? { a: "scroll", dir: s.option } : null;

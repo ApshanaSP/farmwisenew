@@ -24,6 +24,7 @@ import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step
 import { asksForbidden, NEVER_REPLY } from "./privacy";
 import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
 import { needsDates, readPeriod } from "@/lib/period/read";
+import { heldPeriod, windowIn } from "@/lib/windowspan";
 
 const TA = /[஀-௿]/;
 
@@ -178,10 +179,14 @@ function stateZoneName(world: World, n: number, lang: Lang = "en"): string {
   return (lang === "ta" ? z?.ta ?? ZONES[n]?.ta[0] : z?.name) ?? z?.name ?? `Zone ${n}`;
 }
 
-/** "remind me friday at 10 to …": a local time from words, else null. */
+/**
+ * "remind me friday at 10 to …": a Chennai time from words, else null. The day and the clock are Chennai's whatever zone the server runs in (it runs on the server, in plan.ts):
+ * the date is held as Chennai's wall time in UTC fields, so no getDay, setDate or setHours reads the machine's zone (RC-16; QA4 SKG1-14, SKG1-15).
+ */
 export function parseWhen(text: string, now: number): Date | null {
   const t = text.toLowerCase();
-  const d = new Date(now);
+  const IST_MS = 330 * 60_000;
+  const wall = new Date(now + IST_MS);
   let set = false;
   const rel = /\bin (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)\b/.exec(t);
   if (rel) return new Date(now + Number(rel[1]) * (rel[2].startsWith("h") ? 3_600_000 : 60_000));
@@ -190,8 +195,8 @@ export function parseWhen(text: string, now: number): Date | null {
   const wd = days.findIndex((x) => t.includes(x));
   const wdTa = daysTa.findIndex((x) => text.includes(x));
   const w = wd >= 0 ? wd : wdTa;
-  if (/\btomorrow\b|நாளை|naalaikku|nalaikku/.test(t)) { d.setDate(d.getDate() + 1); set = true; }
-  else if (w >= 0) { const add = (w - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + add); set = true; }
+  if (/\btomorrow\b|நாளை|naalaikku|nalaikku/.test(t)) { wall.setUTCDate(wall.getUTCDate() + 1); set = true; }
+  else if (w >= 0) { const add = (w - wall.getUTCDay() + 7) % 7 || 7; wall.setUTCDate(wall.getUTCDate() + add); set = true; }
   else if (/\btoday\b|இன்று|innaiku/.test(t)) set = true;
   const hm = /\bat (\d{1,2})(?::(\d{2}))? ?(am|pm)?\b|(\d{1,2})(?::(\d{2}))? ?(am|pm)\b|(\d{1,2}) மணிக்கு/.exec(t);
   let h = 10, m = 0;
@@ -205,9 +210,9 @@ export function parseWhen(text: string, now: number): Date | null {
     set = true;
   }
   if (!set) return null;
-  d.setHours(h, m, 0, 0);
-  if (d.getTime() <= now) d.setDate(d.getDate() + 1);
-  return d;
+  wall.setUTCHours(h, m, 0, 0);
+  if (wall.getTime() - IST_MS <= now) wall.setUTCDate(wall.getUTCDate() + 1);
+  return new Date(wall.getTime() - IST_MS);
 }
 
 /** The text after a leading command phrase, from the original words (keeps the Collector's own casing). */
@@ -290,7 +295,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
     const what = (m?.[2] ?? rest(heard, /^\s*remind me\s*/i)).trim();
     const whenText = `${m?.[1] ?? ""} ${m?.[3] ?? ""} ${heard}`;
     const at = parseWhen(whenText, state.now);
-    const when = at ?? (() => { const d = new Date(state.now); d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0); return d; })();
+    // no time heard: tomorrow at 10:00 Chennai time on any server (RC-16 getters: setDate and setHours read the server's zone)
+    const when = at ?? (() => { const IST_MS = 330 * 60_000, d = new Date(new Date(state.now).getTime() + IST_MS); d.setUTCDate(d.getUTCDate() + 1); d.setUTCHours(10, 0, 0, 0); return new Date(d.getTime() - IST_MS); })();
     return done([{ a: "remind", text: what, at: when.toISOString() }], 1, at ? 1 : 0.8, 1,
       at ? undefined : b("No time heard: set for tomorrow at 10:00.", "நேரம் கேட்கவில்லை: நாளை காலை 10 மணிக்கு வைத்தேன்."));
   }
@@ -419,7 +425,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // pages
   const pageM = lastStanding(mentions(tk, PAGE_WORDS, taken), tk);
   // periods (words like "last month" carry the comparison: the console shows the change against the previous period)
-  const perM = lastStanding(mentions(tk, PERIOD_WORDS, taken), tk);
+  let perM = lastStanding(mentions(tk, PERIOD_WORDS, taken), tk);
+  // a count of time says its own window (windowspan.ts): "pona 3 maasam" is the quarter, not the month inside it, and "pona 2 vaaram" is no window the console holds (otherTime asks)
+  const counted = windowIn(s) ?? windowIn(heard.toLowerCase());
+  if (counted) perM = counted.kind === "span" && heldPeriod(counted.hours) ? { value: heldPeriod(counted.hours) as PeriodKey, start: 0, end: 0, score: 1 } : null;
   // zones by number: "zone 7", "7th zone", "மண்டலம் 7", "ஏழாவது மண்டலம்"
   const zoneNumMentions: Mention<number>[] = [];
   tk.forEach((tok, i) => {
@@ -491,7 +500,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // a body this console holds no records of: no department filter is put on for it, and the sentence is handed on to the lane that says so
   if (deptM && !world.depts.some((d) => d.code === deptM.value)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // two kinds of complaint of the same weight and none taken back ("fire accident"): the sentence is handed on, not filtered by the last one said
-  if (tiedTopics(catMs, tk)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // (a time the console does not hold is asked about first, and the question says that the kind was not read, so the sentence is neither answered by the last kind nor silently narrowed)
+  const tied = tiedTopics(catMs, tk);
+  if (tied && !(oneDayBack || otherTime)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   const catM = longestStanding(catMs, tk);
   if (zoneM) { view.zone = zoneM.value; match = Math.min(match, zoneM.score); }
   if (talukM) { view.taluk = talukM.value; match = Math.min(match, talukM.score); }
@@ -563,14 +574,16 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (!itemStep && ordinal) itemStep = { a: "item", which: Number(ordinal[1] ?? ordinal[3]) };
   const draft = /\bdraft\b|take action|\binstruction\b|உத்தரவு|நடவடிக்கை/.test(s);
   const closeAllM = /^close (all|everything)$|close all (panels|windows)|எல்லாவற்றையும் மூடு|ellaam close/.test(s);
-  const closeOne = /^(close|close it|close this|close that|close the panel|close pannu|மூடு|இதை மூடு)$/.test(s);
+  // close is about a panel, not a record: "close" with it, this or that, or with the name of a panel (panel, window, card, drawer, dialog, view, tab, screen, map), never with the name of a case
+  // ("close the case", "close this complaint" are orders to change a record, refused above); not an exact list of phrases (g-review, smaller point)
+  const closeOne = /^(?:please )?(?:close|shut|dismiss)(?: (?:it|this|that|this one))?(?: pannu| please)?$|^(?:please )?(?:close|shut|dismiss) (?:the |this |that |my )?(?:[a-z]+ ){0,2}(?:panel|window|popup|pop-up|drawer|dialog|card|view|tab|screen|map)(?: pannu| please)?$|^(?:மூடு|இதை மூடு)$/.test(s);
   if (closeAllM || closeOne) return done([{ a: "close", all: closeAllM }]);
 
   // assemble: page first, then the filters as one transaction, then period, map, panel, item
   const hasView = Object.keys(view).length > 0;
   // a status ("open cases", "pending", "unresolved", "past the deadline") is a filter the console's view cannot hold: a view step with only the place would drop it without a word, so the rules hand the
   // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
-  if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  if ((hasView || perM) && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // a kind of complaint nothing here reads ("GH bed doctor prachanai complaints"): a window or a place alone would answer about something else (RC-05)
   if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && (unknownTopicIn(` ${s} `, world) || unreadClauseIn(` ${s} `, world))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });
@@ -591,9 +604,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   if (oneDayBack || otherTime) {
     const base = steps.filter((x) => x.a === "view" || x.a === "page");
+    const tiedNote = (q: Bilingual): Bilingual => (tied ? b(`${q.en} I could not tell which kind of complaint you meant, so nothing is filtered by it.`, `${q.ta} எந்த வகைப் புகார் என்று புரியவில்லை, அதனால் அதன்படி வடிகட்டவில்லை.`) : q);
     return { kind: "ask", lang, heard,
-      question: oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
-        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?"),
+      question: tiedNote(oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
+        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?")),
       choices: [
         { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
         { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },
@@ -631,7 +645,7 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
       const fresh = keys.some((k) => v[k] === null) && keys.some((k) => v[k] != null);
       const parts: string[] = [];
       if (v.zone !== undefined && !(fresh && v.zone === null)) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
-      if (v.taluk !== undefined && !(fresh && v.taluk === null)) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
+      if (v.taluk !== undefined && !(fresh && v.taluk === null)) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${(ta ? world.taluks.find((t) => t.code === v.taluk)?.ta : null) ?? world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
       if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : (ta ? DEPT_TA[v.dept] : null) ?? world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
       if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : (ta ? CAT_LABEL_TA[v.cat] : null) ?? world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
       if (v.sev !== undefined && !(fresh && v.sev === null)) parts.push(v.sev == null ? (ta ? "எல்லா தீவிரங்கள்" : "All severities") : ta ? SEV_TA[v.sev] : v.sev);

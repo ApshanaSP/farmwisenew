@@ -106,6 +106,8 @@ function clip(text: string, lang: "ta" | "en"): Promise<AudioBuffer | null> {
     if (!c) return null;
     try {
       const r = await fetch("/api/jarvis/say", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 700), lang, voice: jarvisVoice }), signal: AbortSignal.timeout(14_000) });
+      // the server has no voice set up (503 no-tts): asking again only logs another failed request, so it is not asked again until the page is reloaded (QA4 gate, FB-10)
+      if (r.status === 503 && (await r.clone().json().catch(() => null))?.error === "no-tts") { serverDownUntil = Number.MAX_SAFE_INTEGER; clips.delete(key); return null; }
       if (!r.ok) throw new Error(String(r.status));
       fails = 0;
       return await c.decodeAudioData(await r.arrayBuffer());

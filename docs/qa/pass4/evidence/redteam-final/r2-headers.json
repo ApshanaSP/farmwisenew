@@ -1,0 +1,63 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:40:47.967Z",
+ "rows": [
+  {
+   "u": "/",
+   "status": 307,
+   "missing": [],
+   "poweredBy": null,
+   "location": "/login"
+  },
+  {
+   "u": "/login",
+   "status": 200,
+   "missing": [],
+   "poweredBy": null,
+   "location": null
+  },
+  {
+   "u": "/register",
+   "status": 200,
+   "missing": [],
+   "poweredBy": null,
+   "location": null
+  },
+  {
+   "u": "/collector",
+   "status": 307,
+   "missing": [],
+   "poweredBy": null,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector"
+  },
+  {
+   "u": "/api/auth/me",
+   "status": 401,
+   "missing": [],
+   "poweredBy": null,
+   "location": null
+  },
+  {
+   "u": "/api/departments",
+   "status": 200,
+   "missing": [],
+   "poweredBy": null,
+   "location": null
+  }
+ ],
+ "cookies": [
+  {
+   "name": "dcd_session_officer",
+   "attrs": [
+    "path",
+    "expires",
+    "max-age",
+    "secure",
+    "httponly",
+    "samesite=lax"
+   ]
+  }
+ ],
+ "bad": [],
+ "badCookie": []
+}

@@ -1,0 +1,1738 @@
+{
+ "tried": 277,
+ "bad": [],
+ "canaryHits": [],
+ "out": [
+  {
+   "p": "/api/complaints/media/..%2f..%2f.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/%2e%2e%2fpackage.json",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/%2e%2e%2fpackage.json",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/%2e%2e%2fpackage.json",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/..%5c..%5c.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/..%5c..%5c.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/..%5c..%5c.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/x.jpg%00.png",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/x.jpg%00.png",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/x.jpg%00.png",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/....%2f%2f....%2f%2fpackage.json",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/....%2f%2f....%2f%2fpackage.json",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/complaints/media/....%2f%2f....%2f%2fpackage.json",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/..%2f..%2f/.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/..%2f..%2f/.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/..%2f..%2f/.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/x/..%2f..%2f.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/x/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/x/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/officer/photos/%2e%2e/%2e%2e",
+   "who": "collector",
+   "status": 308
+  },
+  {
+   "p": "/api/officer/photos/%2e%2e/%2e%2e",
+   "who": "officerA",
+   "status": 308
+  },
+  {
+   "p": "/api/officer/photos/%2e%2e/%2e%2e",
+   "who": "citizenA",
+   "status": 308
+  },
+  {
+   "p": "/api/rehearsal/photo/..%2f../package.json",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/photo/..%2f../package.json",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/photo/..%2f../package.json",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/photo/x/..%5c..%5c.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/photo/x/..%5c..%5c.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/photo/x/..%5c..%5c.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/map/layers/..%2f..%2fpackage.json",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/map/layers/..%2f..%2fpackage.json",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/map/layers/..%2f..%2fpackage.json",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/studio/..%2f..%2fpackage.json",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/collector/studio/..%2f..%2fpackage.json",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/studio/..%2f..%2fpackage.json",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/studio/%2e%2e",
+   "who": "collector",
+   "status": 308
+  },
+  {
+   "p": "/api/collector/studio/%2e%2e",
+   "who": "officerA",
+   "status": 308
+  },
+  {
+   "p": "/api/collector/studio/%2e%2e",
+   "who": "citizenA",
+   "status": 308
+  },
+  {
+   "p": "/api/collector/workspaces/..%2f..%2f.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/collector/workspaces/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/workspaces/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/sources/..%2f..%2f.env",
+   "who": "collector",
+   "status": 405
+  },
+  {
+   "p": "/api/collector/sources/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 405
+  },
+  {
+   "p": "/api/collector/sources/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 405
+  },
+  {
+   "p": "/api/collector/incidents/..%2f..%2f.env",
+   "who": "collector",
+   "status": 400
+  },
+  {
+   "p": "/api/collector/incidents/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/incidents/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/assistant/sessions/..%2f..%2f.env",
+   "who": "collector",
+   "status": 400
+  },
+  {
+   "p": "/api/collector/assistant/sessions/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 400
+  },
+  {
+   "p": "/api/collector/assistant/sessions/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/%2e%2e/1",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/%2e%2e/1",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/%2e%2e/1",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/rehearsal/traffic/99/99999999/999999999",
+   "who": "collector",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/99/99999999/999999999",
+   "who": "officerA",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/99/99999999/999999999",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/rehearsal/traffic/-1/0/0",
+   "who": "collector",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/-1/0/0",
+   "who": "officerA",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/-1/0/0",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/rehearsal/traffic/1e3/0/0",
+   "who": "collector",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/1e3/0/0",
+   "who": "officerA",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/1e3/0/0",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/2930/1880%2f..%2f..%2f",
+   "who": "collector",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/2930/1880%2f..%2f..%2f",
+   "who": "officerA",
+   "status": 204
+  },
+  {
+   "p": "/api/rehearsal/traffic/12/2930/1880%2f..%2f..%2f",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/news/article?id=..%2f..%2f.env",
+   "who": "collector",
+   "status": 400
+  },
+  {
+   "p": "/api/collector/news/article?id=..%2f..%2f.env",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/news/article?id=..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/news/article?url=file:///C:/Windows/win.ini",
+   "who": "collector",
+   "status": 400
+  },
+  {
+   "p": "/api/collector/news/article?url=file:///C:/Windows/win.ini",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/news/article?url=file:///C:/Windows/win.ini",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/nearby?lat=13&lon=80&q=..%2f..%2f",
+   "who": "collector",
+   "status": 200
+  },
+  {
+   "p": "/api/collector/nearby?lat=13&lon=80&q=..%2f..%2f",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/nearby?lat=13&lon=80&q=..%2f..%2f",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/studio/x?export=csv&f=%5B%7B%22col%22%3A%22..%2F..%2F.env%22%7D%5D",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/collector/studio/x?export=csv&f=%5B%7B%22col%22%3A%22..%2F..%2F.env%22%7D%5D",
+   "who": "officerA",
+   "status": 401
+  },
+  {
+   "p": "/api/collector/studio/x?export=csv&f=%5B%7B%22col%22%3A%22..%2F..%2F.env%22%7D%5D",
+   "who": "citizenA",
+   "status": 401
+  },
+  {
+   "p": "/api/locations/streets?locality=..%2f..",
+   "who": "collector",
+   "status": 400
+  },
+  {
+   "p": "/api/locations/streets?locality=..%2f..",
+   "who": "officerA",
+   "status": 400
+  },
+  {
+   "p": "/api/locations/streets?locality=..%2f..",
+   "who": "citizenA",
+   "status": 400
+  },
+  {
+   "p": "/_next/static/..%2f..%2f.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/_next/static/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/_next/static/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/../.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/../.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/../.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/data/aws-cache/qa/test-collector.txt",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/data/aws-cache/qa/test-collector.txt",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/data/aws-cache/qa/test-collector.txt",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "/api/i18n/..%2f..%2f.env",
+   "who": "collector",
+   "status": 404
+  },
+  {
+   "p": "/api/i18n/..%2f..%2f.env",
+   "who": "officerA",
+   "status": 404
+  },
+  {
+   "p": "/api/i18n/..%2f..%2f.env",
+   "who": "citizenA",
+   "status": 404
+  },
+  {
+   "p": "i18n lang ../../package",
+   "status": 400
+  },
+  {
+   "p": "i18n lang ..\\..\\.env",
+   "status": 400
+  },
+  {
+   "p": "i18n lang ta/../../../.env",
+   "status": 400
+  },
+  {
+   "p": "i18n lang constructor",
+   "status": 400
+  }
+ ],
+ "ssrf": [
+  {
+   "sink": "studio link",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://localhost:53048/b",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://localhost.:53048/c",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://127.1:53048/e",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://2130706433:53048/f",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[::1]:53048/i",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 200,
+   "reached": false,
+   "why": "The link could not be reached."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://0:53048/q",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://localtest.me:53048/s",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 200,
+   "reached": false,
+   "why": "Put the user name and password in the sign-in fields, not in the link."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 200,
+   "reached": false,
+   "why": "Only http and https links can be read."
+  },
+  {
+   "sink": "studio link",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 200,
+   "reached": false,
+   "why": "Only http and https links can be read."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 400,
+   "reached": false,
+   "why": "Paste a link (http or https), choose a file, or pick a sample."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "studio link",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 200,
+   "reached": false,
+   "why": "That address is on this computer or a private network, so the Studio does not read it (a safety rule)."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://localhost:53048/b",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to this computer or a private network; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://localhost.:53048/c",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to this computer or a private network; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127.1:53048/e",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://2130706433:53048/f",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[::1]:53048/i",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 200,
+   "reached": false,
+   "why": "Could not reach the site (fetch failed)."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://0:53048/q",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://localtest.me:53048/s",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 200,
+   "reached": false,
+   "why": "Put the user name and password in the sign-in fields, not in the link."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 200,
+   "reached": false,
+   "why": "The site file could not be found (DNS)."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 200,
+   "reached": false,
+   "why": "The site gopher could not be found (DNS)."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 200,
+   "reached": false,
+   "why": "That is not a valid web link."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources onboard",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 200,
+   "reached": false,
+   "why": "That link points to a private network address; only public sites can be read."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://localhost:53048/b",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://localhost.:53048/c",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127.1:53048/e",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://2130706433:53048/f",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[::1]:53048/i",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://0:53048/q",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://localtest.me:53048/s",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid url"
+  },
+  {
+   "sink": "sources add",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "sources add",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 400,
+   "reached": false,
+   "why": "Confirm that you are authorized to use this source."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://localhost:53048/b",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://localhost.:53048/c",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127.1:53048/e",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://2130706433:53048/f",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[::1]:53048/i",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://0:53048/q",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://localtest.me:53048/s",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio connectors",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 400,
+   "reached": false,
+   "why": "Unknown connector action."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 400,
+   "reached": false,
+   "why": "Choose at least one dataset."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://localhost:53048/b",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://localhost.:53048/c",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127.1:53048/e",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://2130706433:53048/f",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[::1]:53048/i",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://0:53048/q",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://localtest.me:53048/s",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "studio pick",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 429,
+   "reached": false,
+   "why": "Too many datasets in a few minutes. Try again shortly."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127.0.0.1:53048/a",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://localhost:53048/b",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://localhost.:53048/c",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://LOCALHOST:53048/d",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127.1:53048/e",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://2130706433:53048/f",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://0x7f.0.0.1:53048/g",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://0177.0.0.1:53048/h",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[::1]:53048/i",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[::ffff:127.0.0.1]:53048/j",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[::ffff:7f00:1]:53048/k",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[0:0:0:0:0:ffff:127.0.0.1]:53048/l",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[::ffff:0:7f00:1]:53048/m",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[64:ff9b::7f00:1]:53048/n",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[::127.0.0.1]:53048/o",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://0.0.0.0:53048/p",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://0:53048/q",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127.0.0.1.nip.io:53048/r",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://localtest.me:53048/s",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://169.254.169.254/latest/meta-data/",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://[fd00::1]:53048/t",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://user:pw@127.0.0.1:53048/u",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127.0.0.1:3199/health",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "file:///C:/Windows/win.ini",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "gopher://127.0.0.1:53048/_x",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127.0.0.1%2509:53048/v",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://①②⑦.0.0.1:53048/w",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://１２７.０.０.１:53048/x",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  },
+  {
+   "sink": "news article",
+   "t": "http://127。0。0。1:53048/y",
+   "status": 400,
+   "reached": false,
+   "why": "Invalid report id."
+  }
+ ]
+}

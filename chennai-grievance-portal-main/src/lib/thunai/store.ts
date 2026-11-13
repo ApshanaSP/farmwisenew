@@ -37,6 +37,9 @@ export class MemoryDamagedError extends Error {
   constructor(public user: number) { super("Thunai's saved memory file is damaged"); this.name = "MemoryDamagedError"; }
 }
 
+const LISTS = ["notes", "reminders", "recent", "pins"] as const;
+const MAPS = ["habits", "pending", "prefs"] as const;
+
 /** A missing file is an empty memory. A file that is there but unreadable is damaged, and must never be treated as empty. */
 function load(user: number): { m: Memory; damaged: boolean; unreadable?: boolean } {
   let text: string;
@@ -45,6 +48,9 @@ function load(user: number): { m: Memory; damaged: boolean; unreadable?: boolean
   try {
     const m = JSON.parse(text);
     if (!m || typeof m !== "object" || Array.isArray(m)) return { m: blank(), damaged: true };
+    // a field that is there but of the wrong kind (notes as text, reminders as null) is damage too: a spread of it would throw or split text into letters (SK2-2, SK2-3)
+    for (const k of LISTS) if (k in m && !Array.isArray(m[k])) return { m: blank(), damaged: true };
+    for (const k of MAPS) if (k in m && (!m[k] || typeof m[k] !== "object" || Array.isArray(m[k]))) return { m: blank(), damaged: true };
     return { m: { ...blank(), ...m }, damaged: false };
   } catch { return { m: blank(), damaged: true }; }
 }

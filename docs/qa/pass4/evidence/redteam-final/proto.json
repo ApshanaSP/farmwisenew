@@ -1,0 +1,1378 @@
+{
+ "tried": 343,
+ "bad": [],
+ "out": [
+  {
+   "where": "GET /api/collector/list?zone=__proto__&dept=__proto__&cat=__proto__&sev=__proto__&status=__proto__&sort=__proto__&period=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=__proto__&zone=__proto__&dept=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=__proto__&lang=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=__proto__&zone=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=__proto__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=__proto__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=__proto__&zone=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=__proto__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=__proto__&lng=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=__proto__&zone=__proto__&taluk=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=__proto__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/__proto__",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=__proto__",
+   "status": 200
+  },
+  {
+   "where": "i18n __proto__",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"__proto__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show __proto__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone __proto__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open __proto__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"__proto__ complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to __proto__ page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=__proto__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=__proto__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=__proto__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=__proto__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=__proto__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=__proto__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=__proto__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=__proto__",
+   "status": 200
+  },
+  {
+   "where": "ask \"__proto__\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in __proto__ zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=constructor&dept=constructor&cat=constructor&sev=constructor&status=constructor&sort=constructor&period=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=constructor&zone=constructor&dept=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=constructor&lang=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=constructor&zone=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=constructor",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=constructor",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=constructor&zone=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=constructor",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=constructor",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=constructor&lng=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=constructor&zone=constructor&taluk=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=constructor",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/constructor",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=constructor",
+   "status": 200
+  },
+  {
+   "where": "i18n constructor",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"constructor\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show constructor\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone constructor\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open constructor\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"constructor complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to constructor page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=constructor",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=constructor",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=constructor",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=constructor",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=constructor",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=constructor",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=constructor",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=constructor",
+   "status": 200
+  },
+  {
+   "where": "ask \"constructor\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in constructor zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=prototype&dept=prototype&cat=prototype&sev=prototype&status=prototype&sort=prototype&period=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=prototype&zone=prototype&dept=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=prototype&lang=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=prototype&zone=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=prototype",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=prototype",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=prototype&zone=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=prototype",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=prototype",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=prototype&lng=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=prototype&zone=prototype&taluk=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=prototype",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/prototype",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=prototype",
+   "status": 200
+  },
+  {
+   "where": "i18n prototype",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"prototype\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show prototype\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone prototype\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open prototype\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"prototype complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to prototype page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=prototype",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=prototype",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=prototype",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=prototype",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=prototype",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=prototype",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=prototype",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=prototype",
+   "status": 200
+  },
+  {
+   "where": "ask \"prototype\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in prototype zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=toString&dept=toString&cat=toString&sev=toString&status=toString&sort=toString&period=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=toString&zone=toString&dept=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=toString&lang=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=toString&zone=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=toString",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=toString",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=toString&zone=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=toString",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=toString",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=toString",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=toString&lng=toString",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=toString&zone=toString&taluk=toString",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=toString",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/toString",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=toString",
+   "status": 200
+  },
+  {
+   "where": "i18n toString",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"toString\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show toString\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone toString\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open toString\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"toString complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to toString page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=toString",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=toString",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=toString",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=toString",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=toString",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=toString",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=toString",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=toString",
+   "status": 200
+  },
+  {
+   "where": "ask \"toString\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in toString zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=hasOwnProperty&dept=hasOwnProperty&cat=hasOwnProperty&sev=hasOwnProperty&status=hasOwnProperty&sort=hasOwnProperty&period=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=hasOwnProperty&zone=hasOwnProperty&dept=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=hasOwnProperty&lang=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=hasOwnProperty&zone=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=hasOwnProperty&zone=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=hasOwnProperty&lng=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=hasOwnProperty&zone=hasOwnProperty&taluk=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/hasOwnProperty",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "i18n hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"hasOwnProperty\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show hasOwnProperty\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone hasOwnProperty\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open hasOwnProperty\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"hasOwnProperty complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to hasOwnProperty page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=hasOwnProperty",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=hasOwnProperty",
+   "status": 200
+  },
+  {
+   "where": "ask \"hasOwnProperty\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in hasOwnProperty zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=valueOf&dept=valueOf&cat=valueOf&sev=valueOf&status=valueOf&sort=valueOf&period=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=valueOf&zone=valueOf&dept=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=valueOf&lang=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=valueOf&zone=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=valueOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=valueOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=valueOf&zone=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=valueOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=valueOf&lng=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=valueOf&zone=valueOf&taluk=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=valueOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/valueOf",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=valueOf",
+   "status": 200
+  },
+  {
+   "where": "i18n valueOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"valueOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show valueOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone valueOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open valueOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"valueOf complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to valueOf page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=valueOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=valueOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=valueOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=valueOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=valueOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=valueOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=valueOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=valueOf",
+   "status": 200
+  },
+  {
+   "where": "ask \"valueOf\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in valueOf zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=__defineGetter__&dept=__defineGetter__&cat=__defineGetter__&sev=__defineGetter__&status=__defineGetter__&sort=__defineGetter__&period=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=__defineGetter__&zone=__defineGetter__&dept=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=__defineGetter__&lang=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=__defineGetter__&zone=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=__defineGetter__&zone=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=__defineGetter__&lng=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=__defineGetter__&zone=__defineGetter__&taluk=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/__defineGetter__",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "i18n __defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"__defineGetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show __defineGetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone __defineGetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open __defineGetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"__defineGetter__ complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to __defineGetter__ page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=__defineGetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=__defineGetter__",
+   "status": 200
+  },
+  {
+   "where": "ask \"__defineGetter__\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in __defineGetter__ zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=isPrototypeOf&dept=isPrototypeOf&cat=isPrototypeOf&sev=isPrototypeOf&status=isPrototypeOf&sort=isPrototypeOf&period=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=isPrototypeOf&zone=isPrototypeOf&dept=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=isPrototypeOf&lang=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=isPrototypeOf&zone=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=isPrototypeOf&zone=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=isPrototypeOf&lng=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=isPrototypeOf&zone=isPrototypeOf&taluk=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/isPrototypeOf",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "i18n isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"isPrototypeOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show isPrototypeOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone isPrototypeOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open isPrototypeOf\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"isPrototypeOf complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to isPrototypeOf page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=isPrototypeOf",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=isPrototypeOf",
+   "status": 200
+  },
+  {
+   "where": "ask \"isPrototypeOf\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in isPrototypeOf zone\"",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/list?zone=__lookupSetter__&dept=__lookupSetter__&cat=__lookupSetter__&sev=__lookupSetter__&status=__lookupSetter__&sort=__lookupSetter__&period=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/overview?period=__lookupSetter__&zone=__lookupSetter__&dept=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/brief?period=__lookupSetter__&lang=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/pattern?cat=__lookupSetter__&zone=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/collector/incidents/__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/studio/__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/workspaces/__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/news/article?id=__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/collector/search?q=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/map/layers/__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/map/suggest?q=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/collector/insights?period=__lookupSetter__&zone=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/rehearsal/reach?id=__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET /api/locations/wards?zone=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "GET /api/locations/streets?locality=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET /api/locations/resolve-ward?lat=__lookupSetter__&lng=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances?period=__lookupSetter__&zone=__lookupSetter__&taluk=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/overview?period=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "GET officer /api/officer/grievances/__lookupSetter__",
+   "status": 404
+  },
+  {
+   "where": "GET officer /api/officer/search?q=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "i18n __lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis \"__lookupSetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"show __lookupSetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"zone __lookupSetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"open __lookupSetter__\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"__lookupSetter__ complaints in Adyar\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis \"go to __lookupSetter__ page\"",
+   "status": 200
+  },
+  {
+   "where": "jarvis state=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct brief slots=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct list slots=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct zone slots=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct dept slots=__lookupSetter__",
+   "status": 400
+  },
+  {
+   "where": "jarvis direct answer slots=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct readings slots=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "jarvis direct compare slots=__lookupSetter__",
+   "status": 200
+  },
+  {
+   "where": "ask \"__lookupSetter__\"",
+   "status": 200
+  },
+  {
+   "where": "ask \"in __lookupSetter__ zone\"",
+   "status": 200
+  },
+  {
+   "where": "pollute /api/collector/thunai/memory",
+   "status": 200
+  },
+  {
+   "where": "pollute /api/collector/workspaces",
+   "status": 400
+  },
+  {
+   "where": "pollute /api/collector/decisions",
+   "status": 404
+  },
+  {
+   "where": "pollute /api/collector/assistant/chat",
+   "status": 200
+  },
+  {
+   "where": "pollute /api/collector/thunai/agent",
+   "status": 200
+  },
+  {
+   "where": "pollute /api/auth/login",
+   "status": 401
+  },
+  {
+   "where": "pollute /api/i18n",
+   "status": 400
+  },
+  {
+   "where": "pollute /api/map/ask",
+   "status": 400
+  },
+  {
+   "where": "pollute /api/collector/sources/onboard/preview",
+   "status": 400
+  },
+  {
+   "where": "pollution check",
+   "polluted": 0
+  }
+ ]
+}

@@ -1,0 +1,1180 @@
+{
+ "before": {
+  "label": "baseline",
+  "commit": "cd14265b4fc3d12799075bccfb5a50303a5aaa09",
+  "tests": {
+   "files": 163,
+   "total": 2332,
+   "passed": 2319,
+   "failed": 0,
+   "skipped": 13,
+   "success": true
+  },
+  "totals": {
+   "statements": {
+    "covered": 19174,
+    "total": 55560,
+    "pct": 34.51
+   },
+   "branches": {
+    "covered": 16005,
+    "total": 56471,
+    "pct": 28.34
+   },
+   "functions": {
+    "covered": 3900,
+    "total": 13848,
+    "pct": 28.16
+   },
+   "lines": {
+    "covered": 13731,
+    "total": 38122,
+    "pct": 36.01
+   }
+  },
+  "critical": {
+   "covered": 1377,
+   "total": 1782,
+   "pct": 77.27
+  }
+ },
+ "after": {
+  "label": "final",
+  "commit": "b9725eab902ce5f2aeda28e5722d595b764554d7",
+  "tests": {
+   "files": 206,
+   "total": 3161,
+   "passed": 3148,
+   "failed": 0,
+   "skipped": 13,
+   "success": true
+  },
+  "totals": {
+   "statements": {
+    "covered": 21030,
+    "total": 57781,
+    "pct": 36.39
+   },
+   "branches": {
+    "covered": 17817,
+    "total": 58883,
+    "pct": 30.25
+   },
+   "functions": {
+    "covered": 4218,
+    "total": 14218,
+    "pct": 29.66
+   },
+   "lines": {
+    "covered": 15015,
+    "total": 39591,
+    "pct": 37.92
+   }
+  },
+  "critical": {
+   "covered": 1859,
+   "total": 2285,
+   "pct": 81.36
+  }
+ },
+ "target": 85,
+ "modules": [
+  {
+   "file": "src/lib/collector/guard.ts",
+   "was": {
+    "covered": 0,
+    "total": 4,
+    "pct": 0
+   },
+   "now": {
+    "covered": 0,
+    "total": 4,
+    "pct": 0
+   },
+   "met": false,
+   "add": 4,
+   "note": "No test loads this file"
+  },
+  {
+   "file": "src/lib/officer/guard.ts",
+   "was": {
+    "covered": 1,
+    "total": 18,
+    "pct": 5.55
+   },
+   "now": {
+    "covered": 1,
+    "total": 18,
+    "pct": 5.55
+   },
+   "met": false,
+   "add": 15,
+   "note": ""
+  },
+  {
+   "file": "src/lib/assistant/compile.ts",
+   "was": {
+    "covered": 119,
+    "total": 255,
+    "pct": 46.66
+   },
+   "now": {
+    "covered": 123,
+    "total": 259,
+    "pct": 47.49
+   },
+   "met": false,
+   "add": 98,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/narrate.ts",
+   "was": {
+    "covered": 126,
+    "total": 192,
+    "pct": 65.62
+   },
+   "now": {
+    "covered": 143,
+    "total": 206,
+    "pct": 69.41
+   },
+   "met": false,
+   "add": 33,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/frame.ts",
+   "was": {
+    "covered": 100,
+    "total": 143,
+    "pct": 69.93
+   },
+   "now": {
+    "covered": 105,
+    "total": 148,
+    "pct": 70.94
+   },
+   "met": false,
+   "add": 21,
+   "note": ""
+  },
+  {
+   "file": "src/lib/rate-limit.ts",
+   "was": {
+    "covered": 20,
+    "total": 33,
+    "pct": 60.6
+   },
+   "now": {
+    "covered": 26,
+    "total": 33,
+    "pct": 78.78
+   },
+   "met": false,
+   "add": 3,
+   "note": ""
+  },
+  {
+   "file": "src/lib/security/stepup.ts",
+   "was": {
+    "covered": 22,
+    "total": 28,
+    "pct": 78.57
+   },
+   "now": {
+    "covered": 24,
+    "total": 30,
+    "pct": 80
+   },
+   "met": false,
+   "add": 2,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/speechcheck.ts",
+   "was": {
+    "covered": 13,
+    "total": 15,
+    "pct": 86.66
+   },
+   "now": {
+    "covered": 13,
+    "total": 15,
+    "pct": 86.66
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/quick.ts",
+   "was": {
+    "covered": 307,
+    "total": 370,
+    "pct": 82.97
+   },
+   "now": {
+    "covered": 444,
+    "total": 508,
+    "pct": 87.4
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/privacy.ts",
+   "was": {
+    "covered": 92,
+    "total": 96,
+    "pct": 95.83
+   },
+   "now": {
+    "covered": 152,
+    "total": 169,
+    "pct": 89.94
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/numbergate.ts",
+   "was": {
+    "covered": 56,
+    "total": 64,
+    "pct": 87.5
+   },
+   "now": {
+    "covered": 89,
+    "total": 98,
+    "pct": 90.81
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/netsafe.ts",
+   "was": {
+    "covered": 128,
+    "total": 140,
+    "pct": 91.42
+   },
+   "now": {
+    "covered": 128,
+    "total": 140,
+    "pct": 91.42
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/csv.ts",
+   "was": {
+    "covered": 12,
+    "total": 13,
+    "pct": 92.3
+   },
+   "now": {
+    "covered": 12,
+    "total": 13,
+    "pct": 92.3
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/entities.ts",
+   "was": {
+    "covered": 326,
+    "total": 354,
+    "pct": 92.09
+   },
+   "now": {
+    "covered": 532,
+    "total": 575,
+    "pct": 92.52
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/injection.ts",
+   "was": {
+    "covered": 17,
+    "total": 18,
+    "pct": 94.44
+   },
+   "now": {
+    "covered": 18,
+    "total": 19,
+    "pct": 94.73
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/thunai/outside.ts",
+   "was": {
+    "covered": 29,
+    "total": 29,
+    "pct": 100
+   },
+   "now": {
+    "covered": 36,
+    "total": 37,
+    "pct": 97.29
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  },
+  {
+   "file": "src/lib/collector/effective.ts",
+   "was": {
+    "covered": 9,
+    "total": 10,
+    "pct": 90
+   },
+   "now": {
+    "covered": 13,
+    "total": 13,
+    "pct": 100
+   },
+   "met": true,
+   "add": 0,
+   "note": ""
+  }
+ ],
+ "modules_under_target": [
+  "src/lib/collector/guard.ts",
+  "src/lib/officer/guard.ts",
+  "src/lib/assistant/compile.ts",
+  "src/lib/thunai/narrate.ts",
+  "src/lib/thunai/frame.ts",
+  "src/lib/rate-limit.ts",
+  "src/lib/security/stepup.ts"
+ ],
+ "falls_elsewhere": [
+  {
+   "file": "src/lib/thunai/devguard.ts",
+   "branches_before": {
+    "covered": 4,
+    "total": 4,
+    "pct": 100
+   },
+   "branches_after": {
+    "covered": 13,
+    "total": 20,
+    "pct": 65
+   },
+   "lines_before": {
+    "covered": 4,
+    "total": 4,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 13,
+    "total": 13,
+    "pct": 100
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/thunai/brain.ts",
+   "branches_before": {
+    "covered": 2,
+    "total": 13,
+    "pct": 15.38
+   },
+   "branches_after": {
+    "covered": 2,
+    "total": 45,
+    "pct": 4.44
+   },
+   "lines_before": {
+    "covered": 2,
+    "total": 8,
+    "pct": 25
+   },
+   "lines_after": {
+    "covered": 2,
+    "total": 23,
+    "pct": 8.69
+   },
+   "why": "branch %, line %"
+  },
+  {
+   "file": "src/components/collector/app/thunai/guards.ts",
+   "branches_before": {
+    "covered": 7,
+    "total": 8,
+    "pct": 87.5
+   },
+   "branches_after": {
+    "covered": 11,
+    "total": 14,
+    "pct": 78.57
+   },
+   "lines_before": {
+    "covered": 3,
+    "total": 3,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 6,
+    "total": 6,
+    "pct": 100
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/app/api/collector/sources/[id]/route.ts",
+   "branches_before": {
+    "covered": 16,
+    "total": 30,
+    "pct": 53.33
+   },
+   "branches_after": {
+    "covered": 12,
+    "total": 26,
+    "pct": 46.15
+   },
+   "lines_before": {
+    "covered": 23,
+    "total": 34,
+    "pct": 67.64
+   },
+   "lines_after": {
+    "covered": 26,
+    "total": 37,
+    "pct": 70.27
+   },
+   "why": "branch %, covered branches"
+  },
+  {
+   "file": "src/lib/collector/searchwords.ts",
+   "branches_before": {
+    "covered": 7,
+    "total": 10,
+    "pct": 70
+   },
+   "branches_after": {
+    "covered": 9,
+    "total": 14,
+    "pct": 64.28
+   },
+   "lines_before": {
+    "covered": 10,
+    "total": 10,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 12,
+    "total": 12,
+    "pct": 100
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/assistant/direct.ts",
+   "branches_before": {
+    "covered": 82,
+    "total": 91,
+    "pct": 90.1
+   },
+   "branches_after": {
+    "covered": 102,
+    "total": 120,
+    "pct": 85
+   },
+   "lines_before": {
+    "covered": 64,
+    "total": 64,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 72,
+    "total": 72,
+    "pct": 100
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/complaint-progress.ts",
+   "branches_before": {
+    "covered": 74,
+    "total": 99,
+    "pct": 74.74
+   },
+   "branches_after": {
+    "covered": 86,
+    "total": 119,
+    "pct": 72.26
+   },
+   "lines_before": {
+    "covered": 97,
+    "total": 99,
+    "pct": 97.97
+   },
+   "lines_after": {
+    "covered": 109,
+    "total": 111,
+    "pct": 98.19
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/app/api/profile/photo/route.ts",
+   "branches_before": {
+    "covered": 9,
+    "total": 14,
+    "pct": 64.28
+   },
+   "branches_after": {
+    "covered": 10,
+    "total": 16,
+    "pct": 62.5
+   },
+   "lines_before": {
+    "covered": 24,
+    "total": 29,
+    "pct": 82.75
+   },
+   "lines_after": {
+    "covered": 25,
+    "total": 30,
+    "pct": 83.33
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/app/api/collector/decisions/route.ts",
+   "branches_before": {
+    "covered": 37,
+    "total": 68,
+    "pct": 54.41
+   },
+   "branches_after": {
+    "covered": 40,
+    "total": 76,
+    "pct": 52.63
+   },
+   "lines_before": {
+    "covered": 39,
+    "total": 51,
+    "pct": 76.47
+   },
+   "lines_after": {
+    "covered": 45,
+    "total": 57,
+    "pct": 78.94
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/app/api/auth/login/route.ts",
+   "branches_before": {
+    "covered": 12,
+    "total": 18,
+    "pct": 66.66
+   },
+   "branches_after": {
+    "covered": 13,
+    "total": 20,
+    "pct": 65
+   },
+   "lines_before": {
+    "covered": 23,
+    "total": 29,
+    "pct": 79.31
+   },
+   "lines_after": {
+    "covered": 24,
+    "total": 30,
+    "pct": 80
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/thunai/agent.ts",
+   "branches_before": {
+    "covered": 379,
+    "total": 481,
+    "pct": 78.79
+   },
+   "branches_after": {
+    "covered": 379,
+    "total": 490,
+    "pct": 77.34
+   },
+   "lines_before": {
+    "covered": 213,
+    "total": 234,
+    "pct": 91.02
+   },
+   "lines_after": {
+    "covered": 218,
+    "total": 241,
+    "pct": 90.45
+   },
+   "why": "branch %, line %"
+  },
+  {
+   "file": "src/lib/thunai/addressed.ts",
+   "branches_before": {
+    "covered": 97,
+    "total": 99,
+    "pct": 97.97
+   },
+   "branches_after": {
+    "covered": 98,
+    "total": 101,
+    "pct": 97.02
+   },
+   "lines_before": {
+    "covered": 72,
+    "total": 72,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 76,
+    "total": 76,
+    "pct": 100
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/assistant/guard.ts",
+   "branches_before": {
+    "covered": 23,
+    "total": 122,
+    "pct": 18.85
+   },
+   "branches_after": {
+    "covered": 23,
+    "total": 128,
+    "pct": 17.96
+   },
+   "lines_before": {
+    "covered": 25,
+    "total": 72,
+    "pct": 34.72
+   },
+   "lines_after": {
+    "covered": 25,
+    "total": 73,
+    "pct": 34.24
+   },
+   "why": "branch %, line %"
+  },
+  {
+   "file": "src/lib/assistant/intent.ts",
+   "branches_before": {
+    "covered": 240,
+    "total": 268,
+    "pct": 89.55
+   },
+   "branches_after": {
+    "covered": 247,
+    "total": 278,
+    "pct": 88.84
+   },
+   "lines_before": {
+    "covered": 133,
+    "total": 136,
+    "pct": 97.79
+   },
+   "lines_after": {
+    "covered": 133,
+    "total": 136,
+    "pct": 97.79
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/officer/data.ts",
+   "branches_before": {
+    "covered": 43,
+    "total": 269,
+    "pct": 15.98
+   },
+   "branches_after": {
+    "covered": 43,
+    "total": 279,
+    "pct": 15.41
+   },
+   "lines_before": {
+    "covered": 65,
+    "total": 168,
+    "pct": 38.69
+   },
+   "lines_after": {
+    "covered": 66,
+    "total": 170,
+    "pct": 38.82
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/assistant/lance.ts",
+   "branches_before": {
+    "covered": 4,
+    "total": 151,
+    "pct": 2.64
+   },
+   "branches_after": {
+    "covered": 4,
+    "total": 167,
+    "pct": 2.39
+   },
+   "lines_before": {
+    "covered": 12,
+    "total": 156,
+    "pct": 7.69
+   },
+   "lines_after": {
+    "covered": 13,
+    "total": 167,
+    "pct": 7.78
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/collector/sources.ts",
+   "branches_before": {
+    "covered": 38,
+    "total": 485,
+    "pct": 7.83
+   },
+   "branches_after": {
+    "covered": 38,
+    "total": 495,
+    "pct": 7.67
+   },
+   "lines_before": {
+    "covered": 103,
+    "total": 381,
+    "pct": 27.03
+   },
+   "lines_after": {
+    "covered": 103,
+    "total": 381,
+    "pct": 27.03
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/aws/store.ts",
+   "branches_before": {
+    "covered": 28,
+    "total": 245,
+    "pct": 11.42
+   },
+   "branches_after": {
+    "covered": 28,
+    "total": 247,
+    "pct": 11.33
+   },
+   "lines_before": {
+    "covered": 80,
+    "total": 389,
+    "pct": 20.56
+   },
+   "lines_after": {
+    "covered": 80,
+    "total": 390,
+    "pct": 20.51
+   },
+   "why": "branch %, line %"
+  },
+  {
+   "file": "src/lib/studio/pipeline.ts",
+   "branches_before": {
+    "covered": 3,
+    "total": 491,
+    "pct": 0.61
+   },
+   "branches_after": {
+    "covered": 3,
+    "total": 495,
+    "pct": 0.6
+   },
+   "lines_before": {
+    "covered": 14,
+    "total": 444,
+    "pct": 3.15
+   },
+   "lines_after": {
+    "covered": 14,
+    "total": 447,
+    "pct": 3.13
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/assistant/incidents.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 256,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 271,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 8,
+    "total": 154,
+    "pct": 5.19
+   },
+   "lines_after": {
+    "covered": 8,
+    "total": 161,
+    "pct": 4.96
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/assistant/insightcards.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 40,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 40,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 3,
+    "total": 31,
+    "pct": 9.67
+   },
+   "lines_after": {
+    "covered": 3,
+    "total": 32,
+    "pct": 9.37
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/auth.ts",
+   "branches_before": {
+    "covered": 23,
+    "total": 76,
+    "pct": 30.26
+   },
+   "branches_after": {
+    "covered": 23,
+    "total": 76,
+    "pct": 30.26
+   },
+   "lines_before": {
+    "covered": 31,
+    "total": 65,
+    "pct": 47.69
+   },
+   "lines_after": {
+    "covered": 31,
+    "total": 66,
+    "pct": 46.96
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/collector/storyai.ts",
+   "branches_before": {
+    "covered": 17,
+    "total": 96,
+    "pct": 17.7
+   },
+   "branches_after": {
+    "covered": 17,
+    "total": 96,
+    "pct": 17.7
+   },
+   "lines_before": {
+    "covered": 28,
+    "total": 110,
+    "pct": 25.45
+   },
+   "lines_after": {
+    "covered": 28,
+    "total": 112,
+    "pct": 25
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/crypto.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 2,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 4,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 4,
+    "total": 19,
+    "pct": 21.05
+   },
+   "lines_after": {
+    "covered": 4,
+    "total": 20,
+    "pct": 20
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/map/analyst.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 41,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 41,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 4,
+    "total": 35,
+    "pct": 11.42
+   },
+   "lines_after": {
+    "covered": 4,
+    "total": 36,
+    "pct": 11.11
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/map/ask.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 474,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 474,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 11,
+    "total": 295,
+    "pct": 3.72
+   },
+   "lines_after": {
+    "covered": 11,
+    "total": 296,
+    "pct": 3.71
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/map/world.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 344,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 345,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 7,
+    "total": 195,
+    "pct": 3.58
+   },
+   "lines_after": {
+    "covered": 7,
+    "total": 196,
+    "pct": 3.57
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/studio/link.ts",
+   "branches_before": {
+    "covered": 0,
+    "total": 213,
+    "pct": 0
+   },
+   "branches_after": {
+    "covered": 0,
+    "total": 213,
+    "pct": 0
+   },
+   "lines_before": {
+    "covered": 4,
+    "total": 119,
+    "pct": 3.36
+   },
+   "lines_after": {
+    "covered": 4,
+    "total": 120,
+    "pct": 3.33
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/assistant/cards.ts",
+   "branches_before": {
+    "covered": 51,
+    "total": 470,
+    "pct": 10.85
+   },
+   "branches_after": {
+    "covered": 52,
+    "total": 477,
+    "pct": 10.9
+   },
+   "lines_before": {
+    "covered": 54,
+    "total": 211,
+    "pct": 25.59
+   },
+   "lines_after": {
+    "covered": 54,
+    "total": 215,
+    "pct": 25.11
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/app/api/complaints/[code]/route.ts",
+   "branches_before": {
+    "covered": 8,
+    "total": 14,
+    "pct": 57.14
+   },
+   "branches_after": {
+    "covered": 7,
+    "total": 12,
+    "pct": 58.33
+   },
+   "lines_before": {
+    "covered": 13,
+    "total": 18,
+    "pct": 72.22
+   },
+   "lines_after": {
+    "covered": 14,
+    "total": 19,
+    "pct": 73.68
+   },
+   "why": "covered branches"
+  },
+  {
+   "file": "src/lib/thunai/screens.ts",
+   "branches_before": {
+    "covered": 965,
+    "total": 1600,
+    "pct": 60.31
+   },
+   "branches_after": {
+    "covered": 1155,
+    "total": 1868,
+    "pct": 61.83
+   },
+   "lines_before": {
+    "covered": 666,
+    "total": 729,
+    "pct": 91.35
+   },
+   "lines_after": {
+    "covered": 731,
+    "total": 801,
+    "pct": 91.26
+   },
+   "why": "line %"
+  },
+  {
+   "file": "src/lib/thunai/say.ts",
+   "branches_before": {
+    "covered": 9,
+    "total": 13,
+    "pct": 69.23
+   },
+   "branches_after": {
+    "covered": 33,
+    "total": 43,
+    "pct": 76.74
+   },
+   "lines_before": {
+    "covered": 11,
+    "total": 11,
+    "pct": 100
+   },
+   "lines_after": {
+    "covered": 19,
+    "total": 20,
+    "pct": 95
+   },
+   "why": "line %"
+  }
+ ],
+ "falls_in_critical": [
+  {
+   "file": "src/lib/thunai/privacy.ts",
+   "branches_before": {
+    "covered": 92,
+    "total": 96,
+    "pct": 95.83
+   },
+   "branches_after": {
+    "covered": 152,
+    "total": 169,
+    "pct": 89.94
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/thunai/outside.ts",
+   "branches_before": {
+    "covered": 29,
+    "total": 29,
+    "pct": 100
+   },
+   "branches_after": {
+    "covered": 36,
+    "total": 37,
+    "pct": 97.29
+   },
+   "why": "branch %"
+  },
+  {
+   "file": "src/lib/thunai/entities.ts",
+   "branches_before": {
+    "covered": 326,
+    "total": 354,
+    "pct": 92.09
+   },
+   "branches_after": {
+    "covered": 532,
+    "total": 575,
+    "pct": 92.52
+   },
+   "why": "line %"
+  }
+ ],
+ "new_files": 24,
+ "removed_files": 1
+}

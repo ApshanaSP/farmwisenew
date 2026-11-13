@@ -32,6 +32,13 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   if (!validId(params.id)) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
   try {
     const extra = filtersOf(req.nextUrl.searchParams.get("f"));
+    // every way of taking the dataset's data out (CSV, Excel, the PDF brief) asks "Confirm it's you", as the other exports do (QA4 gate, redteam-final-5)
+    const sp = req.nextUrl.searchParams;
+    const kind = sp.get("export") === "csv" ? "csv" : sp.get("export") === "xlsx" ? "xlsx" : sp.get("brief") === "pdf" ? "brief" : null;
+    if (kind) {
+      const c = await requireConfirm(req, s, "export", `Download dataset ${params.id} as ${kind === "brief" ? "a PDF brief" : kind === "xlsx" ? "an Excel file" : "a CSV file"}`, { id: params.id, kind, f: sp.get("f") ?? "", lang: sp.get("lang") ?? "" });
+      if (!c.ok) return c.res;
+    }
     if (req.nextUrl.searchParams.get("export") === "csv") return exportCsv(params.id, extra);
     if (req.nextUrl.searchParams.get("export") === "xlsx") return exportXlsx(params.id);
     if (req.nextUrl.searchParams.get("brief") === "pdf") {

@@ -29,6 +29,7 @@ import { queueNoteFor } from "./queue-note";
 import { orEmpty } from "@/lib/fallback";
 import { pastDueSql } from "@/lib/reference/metrics";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 
 type Row = Record<string, any>;
 
@@ -583,7 +584,8 @@ export async function recordStep(
       );
       reportId = res.insertId;
     }
-    const note = step !== "approve" ? report?.remarks ?? null : null;
+    // the copies the Collector reads (the step note and the closing decision) are written without a citizen's name, phone and address (redteam-final-10)
+    const note = step !== "approve" && report ? scrubCitizenDetails(report.remarks) : null;
     const [res] = await conn.query<ResultSetHeader>(
       `INSERT INTO ${ops("officer_steps")} (incident_id, dept_code, step, note, report_id, actor, actor_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, dept.code, step, note, reportId, actor.email, actor.userId]
@@ -591,7 +593,7 @@ export async function recordStep(
     if (step === "close")
       await conn.query(
         `INSERT INTO ${ops("collector_decisions")} (incident_id, decision, escalate_to, note, decided_by, decided_role) VALUES (?, 'resolve', NULL, ?, ?, 'department_officer')`,
-        [id, `Closed by the department: ${report?.remarks ?? "work done"}`, actor.email]
+        [id, `${CLOSED_BY_DEPARTMENT} ${report ? scrubCitizenDetails(report.remarks) : "work done"}`, actor.email]
       );
     await conn.query(
       `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, ?, 'officer_steps', ?, ?, ?)`,

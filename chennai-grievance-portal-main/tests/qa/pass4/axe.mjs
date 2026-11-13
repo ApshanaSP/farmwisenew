@@ -11,13 +11,42 @@ for (const [name, p, who] of PAGES) for (const lang of ["en", "ta"]) for (const 
   try {
     await go(L, page, p);
     if (name === "collector") for (const k of (await tabs(page)).slice(0, 12)) targets.push([`${name}:${k}`, k]);
+    // g-repair (skeptic 2's process note): every view of the officer console too, scanned once its rows are drawn (a scan at 1.5 s sees an empty table), and the case drawer at phone width below
+    if (name === "officer") { await page.locator("[data-key]").first().waitFor({ timeout: 60000 }).catch(() => {}); for (const k of await page.locator("[data-key]").evaluateAll((e) => [...new Set(e.map((x) => x.getAttribute("data-key")).filter(Boolean))])) targets.push([`${name}:${k}`, k]); }
     for (const [label, k] of targets) {
-      if (k) { await page.locator(`[role=tab], nav.rail button[data-key][data-key="${k}"]`).first().click({ timeout: 4000 }).catch(() => {}); await page.waitForTimeout(1500); }
+      if (k) { await page.locator(name === "officer" ? `[data-key="${k}"]` : `[role=tab], nav.rail button[data-key][data-key="${k}"]`).first().click({ timeout: 4000 }).catch(() => {}); await page.waitForTimeout(1500); }
+      if (name === "officer" && k && k !== "overview") await page.locator("table tbody tr, .oi-s").first().waitFor({ timeout: 15000 }).then(() => page.waitForTimeout(2500)).catch(() => {});
       const r = await new AxeBuilder({ page }).analyze();
       const v = r.violations.map((x) => { bump(x.impact || "none"); return { id: x.id, impact: x.impact, nodes: x.nodes.length, help: x.help, sample: x.nodes.slice(0, 2).map((n) => n.target.join(" ") + " :: " + (n.any[0]?.message || n.all[0]?.message || "").slice(0, 120)) }; });
       out.runs.push({ page: label, lang, theme, url: page.url().replace(L.base, ""), violations: v, console: errs.splice(0) });
     }
   } catch (e) { out.runs.push({ page: name, lang, theme, error: e.message.slice(0, 200) }); }
+  await ctx.close();
+}
+// the officer's case drawer at phone width: its scrolling body must be reachable by keyboard (SK2-16)
+for (const lang of ["en", "ta"]) for (const theme of ["light", "dark"]) {
+  const { ctx, page, errs } = await open(L, "officerA", lang, theme, { width: 360, height: 740 });
+  try {
+    await go(L, page, "/officer");
+    await page.locator("[data-key=work]").first().click({ timeout: 8000 });
+    await page.locator("table tbody tr, [data-row], li[role=button]").first().waitFor({ timeout: 15000 });
+    await page.locator("table tbody tr, [data-row], li[role=button]").first().click({ timeout: 5000 });
+    await page.waitForTimeout(2000);
+    const r = await new AxeBuilder({ page }).analyze();
+    const v = r.violations.map((x) => { bump(x.impact || "none"); return { id: x.id, impact: x.impact, nodes: x.nodes.length, help: x.help, sample: x.nodes.slice(0, 2).map((n) => n.target.join(" ")) }; });
+    out.runs.push({ page: "officer:drawer@360", lang, theme, url: page.url().replace(L.base, ""), violations: v, console: errs.splice(0) });
+  } catch (e) { out.runs.push({ page: "officer:drawer@360", lang, theme, error: e.message.slice(0, 200) }); }
+  await ctx.close();
+}
+// the page for an address that does not exist (SK2-15)
+for (const theme of ["light", "dark"]) {
+  const { ctx, page, errs } = await open(L, null, "en", theme, { width: 1280, height: 800 });
+  try {
+    await go(L, page, "/this-page-does-not-exist-xyz");
+    const r = await new AxeBuilder({ page }).analyze();
+    const v = r.violations.map((x) => { bump(x.impact || "none"); return { id: x.id, impact: x.impact, nodes: x.nodes.length, help: x.help, sample: x.nodes.slice(0, 2).map((n) => n.target.join(" ")) }; });
+    out.runs.push({ page: "404", lang: "en", theme, url: page.url().replace(L.base, ""), violations: v, console: errs.splice(0) });
+  } catch (e) { out.runs.push({ page: "404", lang: "en", theme, error: e.message.slice(0, 200) }); }
   await ctx.close();
 }
 await L.br.close();

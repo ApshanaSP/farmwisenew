@@ -3,6 +3,7 @@ import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { removeSource, runSource, updateSource } from "@/lib/collector/sources";
 import { parseStoreId } from "@/lib/store-id";
+import { requireConfirm } from "@/lib/security/stepup";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (id == null) return invalid();
   const parsed = PatchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid change." }, { status: 400 });
+  // pausing a source or changing how often it is fetched takes data out of the Collector's picture, so it asks "Confirm it's you" as
+  // approving a source does (QA4 gate, redteam-final-12); turning one back on needs no confirmation
+  if (parsed.data.enabled === false || parsed.data.refreshMinutes !== undefined) {
+    const what = parsed.data.enabled === false ? "Pause" : "Change how often";
+    const c = await requireConfirm(req, s, "change_source", `${what} data source ${id}`, { id, ...parsed.data });
+    if (!c.ok) return c.res;
+  }
   try {
     await updateSource(id, parsed.data, s.email);
     return NextResponse.json({ ok: true });
@@ -46,12 +54,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 }
 
-export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const id = sourceId(params.id);
   if (id == null) return invalid();
+  const c = await requireConfirm(req, s, "change_source", `Remove data source ${id}`, { id, remove: true });
+  if (!c.ok) return c.res;
   try {
     await removeSource(id, s.email);
     return NextResponse.json({ ok: true });

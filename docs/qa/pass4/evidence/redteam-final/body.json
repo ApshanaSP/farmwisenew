@@ -1,0 +1,391 @@
+{
+ "tried": 56,
+ "bad": [],
+ "out": [
+  {
+   "u": "/api/auth/login",
+   "who": "anonymous",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 109
+  },
+  {
+   "u": "/api/auth/login",
+   "who": "anonymous",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 318
+  },
+  {
+   "u": "/api/auth/register",
+   "who": "anonymous",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 17
+  },
+  {
+   "u": "/api/auth/register",
+   "who": "anonymous",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 479
+  },
+  {
+   "u": "/api/auth/forgot-password/request-otp",
+   "who": "anonymous",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 49
+  },
+  {
+   "u": "/api/auth/forgot-password/request-otp",
+   "who": "anonymous",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 282
+  },
+  {
+   "u": "/api/auth/tab",
+   "who": "anonymous",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 25
+  },
+  {
+   "u": "/api/auth/tab",
+   "who": "anonymous",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 290
+  },
+  {
+   "u": "/api/i18n",
+   "who": "anonymous",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 11
+  },
+  {
+   "u": "/api/i18n",
+   "who": "anonymous",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 289
+  },
+  {
+   "u": "/api/auth/confirm",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 15
+  },
+  {
+   "u": "/api/auth/confirm",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 506
+  },
+  {
+   "u": "/api/auth/security",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 81
+  },
+  {
+   "u": "/api/auth/security",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 459
+  },
+  {
+   "u": "/api/collector/thunai/agent",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 14
+  },
+  {
+   "u": "/api/collector/thunai/agent",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 389
+  },
+  {
+   "u": "/api/collector/thunai/agent/round",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 20
+  },
+  {
+   "u": "/api/collector/thunai/agent/round",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 380
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 12
+  },
+  {
+   "u": "/api/collector/thunai/memory",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 450
+  },
+  {
+   "u": "/api/collector/assistant/chat",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 15
+  },
+  {
+   "u": "/api/collector/assistant/chat",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 362
+  },
+  {
+   "u": "/api/collector/decisions",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 61
+  },
+  {
+   "u": "/api/collector/decisions",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 379
+  },
+  {
+   "u": "/api/collector/actions",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 35
+  },
+  {
+   "u": "/api/collector/actions",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 325
+  },
+  {
+   "u": "/api/map/ask",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 413,
+   "ms": 13
+  },
+  {
+   "u": "/api/map/ask",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 413,
+   "ms": 293
+  },
+  {
+   "u": "/api/map/send",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 16
+  },
+  {
+   "u": "/api/map/send",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 316
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 16
+  },
+  {
+   "u": "/api/collector/workspaces",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 588
+  },
+  {
+   "u": "/api/collector/sources/onboard/preview",
+   "who": "collector",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 39
+  },
+  {
+   "u": "/api/collector/sources/onboard/preview",
+   "who": "collector",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 349
+  },
+  {
+   "u": "/api/complaints",
+   "who": "citizenA",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 215
+  },
+  {
+   "u": "/api/complaints",
+   "who": "citizenA",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 541
+  },
+  {
+   "u": "/api/profile/change-password",
+   "who": "citizenA",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 16
+  },
+  {
+   "u": "/api/profile/change-password",
+   "who": "citizenA",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 339
+  },
+  {
+   "u": "/api/profile/mobile-otp/request",
+   "who": "citizenA",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 22
+  },
+  {
+   "u": "/api/profile/mobile-otp/request",
+   "who": "citizenA",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 397
+  },
+  {
+   "u": "/api/officer/grievances/INC-X",
+   "who": "officerA",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 20
+  },
+  {
+   "u": "/api/officer/grievances/INC-X",
+   "who": "officerA",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 498
+  },
+  {
+   "u": "/api/rehearsal/route",
+   "who": "officerA",
+   "bytes": 350000,
+   "status": 400,
+   "ms": 29
+  },
+  {
+   "u": "/api/rehearsal/route",
+   "who": "officerA",
+   "bytes": 40000000,
+   "status": 400,
+   "ms": 428
+  },
+  {
+   "u": "/api/auth/login",
+   "chunked": true,
+   "status": 413
+  },
+  {
+   "u": "/api/auth/register",
+   "chunked": true,
+   "status": 413
+  },
+  {
+   "u": "/api/i18n",
+   "chunked": true,
+   "status": 413
+  },
+  {
+   "u": "/api/auth/tab",
+   "chunked": true,
+   "status": 413
+  },
+  {
+   "u": "/api/auth/login",
+   "deep": true,
+   "status": 413
+  },
+  {
+   "u": "/api/collector/thunai/agent",
+   "deep": true,
+   "status": 400
+  },
+  {
+   "u": "/api/collector/assistant/chat",
+   "deep": true,
+   "status": 400
+  },
+  {
+   "label": "citizen media 60 MB",
+   "status": 400,
+   "ms": 651,
+   "head": "{\"error\":\"No file uploaded.\"}"
+  },
+  {
+   "label": "profile photo 60 MB",
+   "status": 400,
+   "ms": 813,
+   "head": "{\"error\":\"No file uploaded.\"}"
+  },
+  {
+   "label": "officer report 60 MB",
+   "status": 400,
+   "ms": 928,
+   "head": "{\"error\":\"Send the report as a form with remarks and photos.\"}"
+  },
+  {
+   "label": "studio 60 MB",
+   "status": 429,
+   "ms": 313,
+   "head": "{\"error\":\"Too many files in a few minutes. Try again shortly.\"}"
+  },
+  {
+   "rss": {
+    "start": 919,
+    "afterJson": 733,
+    "beforeUploads": 743,
+    "afterUploads": 719,
+    "afterParallel": 657
+   },
+   "parallel": [
+    400,
+    400,
+    400,
+    400,
+    400,
+    400
+   ],
+   "alive": 200
+  }
+ ]
+}
