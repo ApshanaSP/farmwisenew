@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { aiStatus } from "@/lib/ai/gateway";
+import { readFormCapped, readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { renderPanel } from "@/lib/studio/chartlint";
@@ -65,8 +66,11 @@ export async function POST(req: NextRequest) {
   if (!checkRateLimit(`studio-add:${s.userId}`, 30, 600).allowed) return NextResponse.json({ error: "Too many files in a few minutes. Try again shortly." }, { status: 429 });
   const ct = req.headers.get("content-type") ?? "";
   if (ct.includes("multipart/form-data")) {
-    let form: FormData;
-    try { form = await req.formData(); } catch { return NextResponse.json({ error: "The upload could not be read." }, { status: 400 }); }
+    // the body is read with a limit before it is parsed: req.formData() read an upload of any size into memory before the file's own
+    // size was checked (QA pass 7, as officer-day-25: lib/body-cap.ts readFormCapped)
+    const { form, tooLarge } = await readFormCapped(req, MAX_BYTES + 64 * 1024);
+    if (tooLarge) return NextResponse.json({ error: "The file is larger than 15 MB." }, { status: 413 });
+    if (!form) return NextResponse.json({ error: "The upload could not be read." }, { status: 400 });
     const file = form.get("file");
     if (!(file instanceof File)) return NextResponse.json({ error: "Choose a file." }, { status: 400 });
     if (file.size > MAX_BYTES) return NextResponse.json({ error: "The file is larger than 15 MB." }, { status: 413 });
@@ -79,7 +83,9 @@ export async function POST(req: NextRequest) {
       return id;
     });
   }
-  const body = await req.json().catch(() => ({}));
+  const read = await readJsonCapped(req);
+  if (read.tooLarge) return tooLargeResponse();
+  const body = read.body ?? {};
   const sample = SampleBody.safeParse(body);
   if (sample.success) {
     const f = sampleFile(sample.data.sample);
