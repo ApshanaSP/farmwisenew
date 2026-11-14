@@ -20,7 +20,7 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, mapLang, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, mapLang, rulesRoute, type RouteEnv } from "./route";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
@@ -269,6 +269,8 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     }
   }
   if (!plan) return done(out);
+  // a date range is counted and labelled for this run's now (a saved view, a chip edit, Turn again)
+  plan = freshPlan(plan, w.now);
 
   // "compare with Adyar" after a district-wide answer: compare the zone holding most of the current answer
   for (const s of plan.steps) if (s.op === "compare" && s.a.kind === "zone" && s.a.id === -1) {
@@ -534,7 +536,7 @@ export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ 
   const { world: w, resolver: data } = await world();
   const lockDept = user.role === "department_officer" ? user.lockDept : null;
   const ctx: Ctx = { place: placeLookup(w, data, lockDept), lang: c.plan.language, lockDept };
-  const r = runMapPlan(c.plan, w, ctx, user.role === "department_officer" ? user.lockDept : null);
+  const r = runMapPlan(freshPlan(c.plan, w.now), w, ctx, user.role === "department_officer" ? user.lockDept : null);
   const deptName = (d: string) => w.depts.get(d)?.name ?? d;
   const rows: Row[] = r.hits.map((h) => ({
     id: h.inc.id, title: h.inc.title, sev: h.inc.sev, status: h.inc.status, open: h.inc.open, cat: h.inc.cat, catLabel: w.cats.get(h.inc.cat)?.label ?? h.inc.cat,
@@ -565,7 +567,7 @@ const csvCell = (v: unknown) => { const s = v == null ? "" : String(v); return /
 /** CSV or GeoJSON of exactly the answer's rows (the count equals the headline). No personal data; the as-of and the plan go in the header. */
 export async function exportAnswer(plan: Plan, question: string | null, user: AskInput["user"], format: "csv" | "geojson"): Promise<{ body: string; type: string; name: string; rows: number }> {
   const { rows, asOf, now, feats } = await answerRows(plan, user);
-  const counted = windowLine(plan, now);
+  const counted = windowLine(freshPlan(plan, now), now);
   const stamp = asOf.slice(0, 16).replace(/[: ]/g, "-");
   if (format === "geojson") {
     const fc = {

@@ -27,7 +27,7 @@ export const PeriodSchema = z.discriminatedUnion("kind", [
   /** IST wall clock, both ends inclusive; `label` is how the question named it ("September", "last 36 hours"), from src/lib/period/read.ts */
   // `said`: the reader's PeriodSpec, put on the run's own now (a saved view run later counts "last 36 hours" from then); `age_hours`: an age
   z.object({ kind: z.literal("range"), from: z.string(), to: z.string(), label: z.object({ en: z.string(), ta: z.string() }).nullable().optional(),
-    said: z.unknown().optional(), age_hours: z.number().positive().optional() })
+    said: z.unknown().optional(), age_hours: z.number().positive().max(LIMITS.days * 24).optional() })
 ]);
 export type Period = z.infer<typeof PeriodSchema>;
 
@@ -136,6 +136,7 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
     if (!(d >= 1 && d <= LIMITS.days)) problems.push(`a period of ${Number.isFinite(d) ? d : "?"} days is outside 1–${LIMITS.days} days`);
     if (p.kind === "last_days" && (p.offset < 0 || (p.offset + 1) * p.days > LIMITS.days * 2)) problems.push("a period reaches too far back");
     if (isCalendar(p) && (p.offset < 0 || p.offset > CALENDAR[p.kind].max)) problems.push(`a ${p.kind} offset is outside 0–${CALENDAR[p.kind].max}`);
+    if (p.kind === "range" && p.from > p.to) problems.push("a period ends before it starts");
   }
   return problems.length ? { ok: false, problems } : { ok: true, plan };
 }

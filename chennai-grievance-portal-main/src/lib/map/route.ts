@@ -9,7 +9,7 @@ import { tokens, hasPhrase, topicOf, OVERDUE } from "@/lib/assistant/intent";
 import { zoneNosIn } from "@/lib/zone-no";
 import { detectLanguage } from "@/lib/assistant/lang";
 import { classify } from "@/lib/collector/nlp";
-import { AGE, periodWordsOut, readPeriod, spanOf, type PeriodKey, type PeriodSpec } from "@/lib/period/read";
+import { AGE, checkSpec, MAX_HOURS, periodWordsOut, readPeriod, spanOf, type PeriodKey, type PeriodSpec } from "@/lib/period/read";
 import { isCalendar, LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import { areaFor, isLine, type Found, type Verb } from "./resolve";
 import type { LayerId } from "./types";
@@ -130,7 +130,7 @@ const ALL_TIME = /\b(all time|ever|since may|whole period|all dates|any time)\b|
 // a time the question bounds or leaves out ("reported before yesterday", "leaving out today", "except this week") is not the window it asks for
 // ("the day before yesterday" is a day, not a bound)
 const BOUNDED = new RegExp([
-  String.raw`(?<!\bday\s)\b(?:before|prior to|earlier than|older than|newer than|later than|except|excluding|leaving out|other than|apart from|not including)\s+(?:the\s+|of\s+)?`
+  String.raw`\b(?:(?<!\b(?:day|week|month)\s)before|prior to|earlier than|older than|newer than|later than|except|excluding|leaving out|other than|apart from|not including|but not|not|outside(?:\s+of)?)\s+(?:(?:on|in|during|for|from|the|of)\s+)*`
     + String.raw`(?:today|tonight|yesterday|(?:this|last|past|previous)\s+(?:\d+\s+)?(?:days?|weeks?|months?|quarters?|years?)\b`
     + String.raw`|january|february|march|april|june|july|august|september|october|november|december|(?:jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\s+\d`
     + String.raw`|\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))`,
@@ -147,6 +147,15 @@ const DAYS_TG = /(\d{1,3})\s*(?:naal|naatkal|days)\s*(?:la|kulla)\b/i;
 // a count longer than the records reach (the reader calls it unheld): "last 200 days", "past 12 months", "last 30 weeks"
 const LONG_COUNT = /\b(?:last|past|previous|over the past|over the last|in the last|in the past)\s+(\d{1,4})\s+(days?|weeks?|months?|years?)\b|கடந்த\s*(\d{1,4})\s*(நா|வார|மாத)/i;
 const AGE_N: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, seven: 7, thirty: 30 };
+// "8 months ago", "200 days back": a time further back than the records reach (the reader's MAX_HOURS, about 180 days)
+const AGO = /\b(\d{1,5}|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(days?|weeks?|months?)\s+(?:ago|back)\b/i;
+const NUM_WORD: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
+function agoBeyondRecords(text: string): boolean {
+  const m = text.match(AGO);
+  if (!m) return false;
+  const n = /^\d/.test(m[1]) ? Number(m[1]) : NUM_WORD[m[1].toLowerCase()] ?? 1, u = m[2].toLowerCase();
+  return n * (u.startsWith("day") ? 24 : u.startsWith("week") ? 168 : 720) > MAX_HOURS;
+}
 
 /** The map's IST wall clock "YYYY-MM-DD HH:MM:SS" moved by `hours` (may be negative). */
 const wallPlus = (wall: string, hours: number): string => new Date(Date.parse(wall.replace(" ", "T") + "Z") + Math.round(hours * 3600_000)).toISOString().slice(0, 19).replace("T", " ");
@@ -191,6 +200,7 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
   if (BOUNDED.test(text)) return periodOf(text.replace(BOUNDED_ALL, " "), now);
   const age = ageHours(text);
   if (age) {
+    if (age.hours >= 24 * LIMITS.days) return "unheld";
     if (!now) return null;
     const unit = { day: ["day", "நாட்கள்"], week: ["week", "வாரங்கள்"], month: ["month", "மாதங்கள்"] }[age.unit];
     return { kind: "range", from: wallPlus(now, -24 * LIMITS.days + 1 / 3600), to: wallPlus(now, -age.hours),
@@ -208,8 +218,10 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
     case "month": case "days": case "since": case "holiday": case "lastWeekOf": return now ? rangeOf(s, now) : null;
     case "unheld": {
       const m = t.match(LONG_COUNT);
-      if (!m && FAR.test(text)) return "unheld";
-      if (!m) break; // not a time the map reads ("since Monday", "a few days"): its words stay unread, as before
+      if (!m && (FAR.test(text) || agoBeyondRecords(text))) return "unheld";
+      // not a time the map reads ("since Monday", "a few days", "7 days ago"): no window, and its words stay unread for the AI or the note.
+      // The map's own fallback below would read "7 days" in "7 days ago" as the current window (YRULES-05)
+      if (!m) return null;
       const n = Number(m[1] ?? m[3]), u = (m[2] ?? m[4] ?? "").toLowerCase();
       const days = /^(week|வார)/.test(u) ? n * 7 : /^(month|மாத)/.test(u) ? n * 30 : /^year/.test(u) ? n * 365 : n;
       return { kind: "last_days", days: Math.min(LIMITS.days, days), offset: 0 };
@@ -232,16 +244,46 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
   return null;
 }
 
+const MONTH_WORDS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
+  "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec"];
+// what a follow-up may hold besides its time and still be a time edit alone ("show me today's", "only this month", "இப்போது காட்டு")
+const EDIT_FILLER = new Set(["show", "only", "just", "me", "the", "them", "those", "these", "ones", "one", "it", "please", "pls", "now", "then", "and",
+  "so", "ok", "okay", "also", "make", "set", "change", "to", "for", "in", "of", "list", "give", "instead", "what", "about", "s", "கட்டு", "காட்டு",
+  "காட்டுங்கள்", "காண்பி", "மட்டும்", "kaattu", "kaatunga", "sollu", "sollunga", "mattum", "ippo", "இப்போது",
+  // the glue of a time phrase the reader leaves behind ("last" in "last 30 days", the month in "in September")
+  "last", "past", "previous", "this", "since", "from", "till", "until", "between", "on", "at", "day", "days", "week", "weeks", "month", "months", "hour",
+  "hours", "quarter", ...MONTH_WORDS]);
+const onlyTime = (t: string): boolean => tokens(periodWordsOutMap(t)).every((w) => EDIT_FILLER.has(w) || /^\d+$/.test(w));
+
+/**
+ * A plan with each date range put on `now` (XPATHS-04, YRANGES-02): a range the words gave ("since 1 October", "last 36 hours", an age) is
+ * counted, labelled and exported for the run's own now, so a saved view never names one window and counts another.
+ */
+export function freshPlan(plan: Plan, now: string): Plan {
+  const fresh = (p: Period | null): Period | null => {
+    if (!p || p.kind !== "range") return p;
+    if (p.age_hours) return { ...p, from: wallPlus(now, -24 * LIMITS.days + 1 / 3600), to: wallPlus(now, -p.age_hours) };
+    const spec = p.said ? checkSpec(p.said) : null;
+    const r = spec ? rangeOf(spec, now) : null;
+    return r && r !== "unheld" ? r : p;
+  };
+  if (!plan.steps.some((s) => (s.op === "take" && s.filter?.period?.kind === "range") || (s.op === "change" && (s.now.kind === "range" || s.before.kind === "range")))) return plan;
+  return { ...plan, steps: plan.steps.map((s) => s.op === "take" && s.filter ? { ...s, filter: { ...s.filter, period: fresh(s.filter.period) } }
+    : s.op === "change" ? { ...s, now: fresh(s.now)!, before: fresh(s.before)! } : s) };
+}
+
 /** The sentence with the time words the map read taken out, so they are never counted as words it could not use. */
 export function periodWordsOutMap(text: string): string {
-  return periodWordsOut(text.replace(AGE, " ")).replace(new RegExp(DAYS_TG.source, "gi"), " ").replace(new RegExp(ALL_TIME.source, "gi"), " ");
+  const out = periodWordsOut(text.replace(AGE, " ")).replace(new RegExp(DAYS_TG.source, "gi"), " ").replace(new RegExp(ALL_TIME.source, "gi"), " ");
+  // a month the map read is read, not a word left for the AI
+  return out.replace(new RegExp(String.raw`\b(?:${MONTH_WORDS.join("|")})\b`, "gi"), " ");
 }
 
 /** A word that names a time ("yesterday", "last month", "vaaram"), as opposed to a comparison alone ("up or down?"). */
-const TIME_WORD = /\b(?:today|yesterday|tonight|days?|weeks?|months?|quarters?|years?|hours?|innaiki|inniki|innaiku|nethu\w*|nethai\w*|vaara\w*|maasa\w*|kadandha|pona)\b|இன்ற|நேற்ற|வார|மாத|நாள்|நாட்/i;
+const TIME_WORD = /\b(?:today|yesterday|tonight|days?|weeks?|months?|quarters?|years?|hours?|innaiki|inniki|innaiku|nethu|nethai\w*|vaaram|vaarath\w*|maasam|maasath\w*|kadandha|pona)\b|இன்ற|நேற்ற|வாரம்|வாரத்|மாதம்|மாதத்|நாள்|நாட்/i;
 // a comparison word and a date or month ("compared to August", "vs 20 Oct"): a comparison the map cannot plan as one change
 const CMP_WORDS = /\b(?:compared?\s+(?:to|with)|vs\.?|versus|than|against|relative to)\b|\bvida\b|விட/i;
-const DATE_WORD = /\b(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
+const DATE_WORD = /\b(?:january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b|\bmay\s+\d|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
 
 /** The reader reads a comparison of two periods: "up or down", "than yesterday", "pona maasatha vida", "நேற்றை விட". */
 // never a bound ("older than yesterday" is the incidents before yesterday, not a comparison with it)
@@ -447,15 +489,18 @@ export function parse(text: string, env: RouteEnv): Parsed {
   // a period the map read is read: "hours" in "in the last 24 hours" and "since yesterday" sent a question the rules had read whole to the AI
   // (fixall3-map-today). A time the map has no window for ("in September") keeps its words unread, so the AI may still read them.
   const period = periodOf(text, env.now);
+  const twoAreas = places.filter((x) => !isLine(x.pick.entry) && placeArea(x, null)).length >= 2;
+  const cmpWords = isComparison(text), cmpTime = cmpWords && !twoAreas;
   return {
     unread: unreadWords(period ? tokens(periodWordsOutMap(rest)) : rtoks, classified),
     lang, toks, facilities, cats, family, citizen, news, severity, status, period, dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
     facNear: facilityIsNear(free, facWords),
     shape: {
       countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
-      // a comparison the reader reads ("up or down", "than yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District IQ
-      // (two areas compared, "Adyar vs Velachery, higher or lower?", stay an area comparison)
-      compare: COMPARE.test(text) && !CHANGE.test(text), change: CHANGE.test(text) || (isComparison(text) && !COMPARE.test(text)), changeRef: REFERENCE.test(text), brief: BRIEF.test(text)
+      // a comparison the reader reads ("up or down", "today vs yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District
+      // IQ; with two areas named ("Adyar vs Velachery, higher or lower?", "Adyar or Velachery, which is higher?") it is an area comparison
+      compare: !CHANGE.test(text) && !cmpTime && (COMPARE.test(text) || (cmpWords && twoAreas)), change: CHANGE.test(text) || cmpTime,
+      changeRef: REFERENCE.test(text), brief: BRIEF.test(text)
     }
   };
 }
@@ -671,21 +716,25 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
     return ok("change");
   }
   // "compared to August", "vs 20 Oct", "vs the month before": a comparison with a time the rules do not plan as a change goes to the AI, never a period edit
-  if (take && CMP_WORDS.test(t) && (TIME_WORD.test(t) || DATE_WORD.test(t))) return null;
+  if (take && CMP_WORDS.test(t) && (TIME_WORD.test(t) || DATE_WORD.test(t)) && !env.resolve(t, null).some((f) => !isLine(f.pick.entry))) return null;
   // a period alone: "last 7 days", "this month", "today"
   const per = periodOf(t, env.now);
-  if (take && per && per !== "unheld" && tokens(t).length <= 5 && !parseSubject(t, env)) {
+  if (take && per && per !== "unheld" && tokens(t).length <= 5 && onlyTime(t) && !parseSubject(t, env)) {
     if (plan.steps.some((s) => s.op === "change")) return null;
     filt().period = isPeriod(per) ? per : null;
     // "right now": what is open now, whatever day it was reported
     if (per === "now" && filt().status === "any") filt().status = "open";
     return ok("period");
   }
-  // "show by ward", "zone wise"
+  // "show by ward", "zone wise" (and "by ward right now": the time said with it is applied too)
   const by = COUNT_BY.find(([re]) => re.test(t))?.[1];
   // "show by ward" edits the answer; "garbage complaints by ward" is a new question
   if (by && take && tokens(t).length <= 5 && !parseSubject(t.replace(COUNT_BY.find(([re]) => re.test(t))![0], " "), env)) {
     const last = plan.steps[plan.steps.length - 1];
+    if (per && per !== "unheld" && !plan.steps.some((s) => s.op === "change")) {
+      filt().period = isPeriod(per) ? per : null;
+      if (per === "now" && filt().status === "any") filt().status = "open";
+    }
     if (last.op === "count_by") last.by = by;
     else {
       if (plan.steps.length >= LIMITS.steps) return null;

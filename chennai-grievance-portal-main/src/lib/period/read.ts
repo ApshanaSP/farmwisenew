@@ -527,7 +527,7 @@ export function checkSpec(x: unknown): PeriodSpec | null {
     case "compare": return key(s.key) ? { kind: "compare", key: s.key } : null;
     case "day": return s.back === 0 || s.back === 1 || s.back === 2 ? { kind: "day", back: s.back } : null;
     case "last": return s.unit === "week" || s.unit === "month" || s.unit === "quarter" ? { kind: "last", unit: s.unit } : null;
-    case "hours": return int(s.hours, 0, MAX_HOURS) && int(s.n, 0, 999) && ["hour", "day", "week", "month"].includes(String(s.unit)) ? { kind: "hours", hours: s.hours as number, n: s.n as number, unit: s.unit as "day" } : null;
+    case "hours": return int(s.hours, 0, MAX_HOURS) && int(s.n, 0, MAX_HOURS) && ["hour", "day", "week", "month"].includes(String(s.unit)) ? { kind: "hours", hours: s.hours as number, n: s.n as number, unit: s.unit as "day" } : null;
     case "lastWeekOf": return int(s.month, 0, 11) && (s.year == null || int(s.year, 2000, 2100)) ? { kind: "lastWeekOf", month: s.month as number, year: (s.year as number) ?? null } : null;
     case "month": return int(s.month, 0, 11) && (s.year == null || int(s.year, 2000, 2100)) ? { kind: "month", month: s.month as number, year: (s.year as number) ?? null } : null;
     case "since": return int(s.month, 0, 11) && int(s.day, 1, 31) ? { kind: "since", month: s.month as number, day: s.day as number } : null;
