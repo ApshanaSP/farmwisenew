@@ -87,7 +87,7 @@ export const StageDoc = z.object({
   v: z.literal(1),
   id: str(40),
   recipe: z.enum(RECIPES),
-  /** the question, restated (the screen's title) */
+  /** the question, restated (the screen's title), in the screen's language (`lang`) */
   title: str(200),
   /** the one finding that matters, computed by code */
   takeaway: Bi.nullable(),
@@ -100,10 +100,16 @@ export const StageDoc = z.object({
   slots: z.record(z.unknown()),
   sources: z.array(str(80)).max(10),
   asOf: str(40).nullable(),
-  /** honest limits ("no history before the dataset starts") */
+  /** honest limits ("no history before the dataset starts"), in the screen's language; never a blank line */
   notes: z.array(str(300)).max(4),
   /** what Thunai suggests next, computed by code */
-  next: z.array(NextStep).max(3).optional()
+  next: z.array(NextStep).max(3).optional(),
+  /** the language the screen's own words are in (its title, its blocks' titles, its notes): the turn's (v4 brief, defect 9) */
+  lang: z.enum(["en", "ta"]).optional(),
+  /** the title in both languages; `title` is the one in `lang` (older screens and pins carry `title` alone) */
+  titles: Bi.optional(),
+  /** the notes in both languages; `notes` are the ones in `lang` */
+  notesBi: z.array(Bi).max(4).optional()
 });
 export type StageDocT = z.infer<typeof StageDoc>;
 
@@ -118,7 +124,9 @@ export function checkStage(d: unknown): { ok: true; doc: StageDocT } | { ok: fal
 }
 
 /** The open Stage as the agent sees it with the next sentence (Tambo's "interactable"): kind, ids, nothing else. */
-export interface StageContext { recipe: Recipe; title: string; blocks: { kind: BlockKind; ids: string[] }[]; slots: Record<string, unknown>; focus: number | null }
+export interface StageContext { recipe: Recipe; title: string; blocks: { kind: BlockKind; ids: string[];
+  /** a short label per id, same order, when the browser sends them (register.ts labelsOf): untrusted text from the screen */
+  labels?: string[] }[]; slots: Record<string, unknown>; focus: number | null }
 
 /** the longest digest of a screen the browser may send with a round */
 export const STAGE_DIGEST_MAX = 1800;

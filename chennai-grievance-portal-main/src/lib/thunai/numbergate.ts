@@ -163,6 +163,45 @@ export function zoneLabelsOut(text: string, zones: Iterable<number>): string {
   return text.replace(/(?<![\p{L}])(zone|மண்டலம்)\s*(\d{1,2})(?![\d\p{L}])/giu, (m, _w: string, n: string) => (real.has(Number(n)) ? " " : m));
 }
 
+/** a letter-led code (INC-2026-004, Covid-19) or a real zone's label ("Zone 13"): kept whole when the figures around it are taken out */
+const KEEP_CODE = /\p{L}[\p{L}\p{M}\d]*(?:-[\p{L}\p{M}\d]*\d[\p{L}\p{M}\d]*)+/gu;
+const PERCENT_WORD = /(?<![\p{L}\p{M}])(?:per\s?cent|percentage|சதவீத[஀-௿]*|sadhaveedham|sathaveetham)(?![\p{L}\p{M}])/giu;
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * A model's words with every figure taken out (Finding 51): digits of every script, lakh/crore, percentages and number words in English,
+ * Tamil and Tanglish, by the gate's own reading (figuresIn). A real zone's label ("Zone 13", `zones`) and a letter-led code (INC-2026-004)
+ * stay. Returns the text unchanged when it holds no figure, and null when a figure could not be taken out, so the caller drops the slot.
+ * For words a screen shows or says: never for a lookup, which keeps what the Collector asked for.
+ */
+export function stripFigures(text: string, zones: Iterable<number> = []): string | null {
+  const real = [...zones];
+  const has = (t: string) => figuresIn(zoneLabelsOut(t, real)).length > 0;
+  if (!has(text)) return text;
+  const kept: string[] = [];
+  // a private-use mark stands in for each kept code or label while the figures around it are taken out (it is neither a letter nor a digit)
+  const keep = (m: string) => { kept.push(m); return String.fromCharCode(0xe000 + kept.length - 1); };
+  let t = forGate(text).replace(KEEP_CODE, keep).replace(/(?<![\p{L}])(?:zone|மண்டலம்)\s*(\d{1,2})(?![\d\p{L}])/giu, (m: string, n: string) => (real.includes(Number(n)) ? keep(m) : m));
+  for (let round = 0; round < 12; round++) {
+    const figs = figuresIn(t);
+    if (!figs.length) break;
+    const before = t;
+    for (const f of [...figs].sort((a, b) => b.raw.length - a.raw.length)) {
+      if (f.raw === "percent") { t = t.replace(PERCENT_WORD, " "); continue; }
+      // a count said in a phrase ("oru maranam", "a single death", "ஒரு புகார் மட்டும்") loses its number word, not the words it counts
+      const raw = f.words && /\s/.test(f.raw) ? f.raw.split(/\s+/)[0] : f.raw;
+      const re = /\p{L}/u.test(raw) && !/^\d/.test(raw)
+        ? new RegExp(`(?<![\\p{L}\\p{M}])${escapeRe(raw)}(?![\\p{L}\\p{M}])`, "giu")
+        // a figure in digits goes with its sign, its percent and a scale word after it ("45%", "3.5 lakh")
+        : new RegExp(`[-+−]?(?<![\\p{L}\\p{M}\\d.,])${escapeRe(f.raw)}(?![\\d])\\s*(?:%|${PERCENT_WORD.source})?`, "giu");
+      t = t.replace(re, " ");
+    }
+    if (t === before) break;
+  }
+  t = t.replace(/[-]/g, (c) => kept[c.charCodeAt(0) - 0xe000] ?? "").replace(/\s+([,.;:!?])/g, "$1").replace(/\s+/g, " ").replace(/^[\s,.;:–-]+|[\s,;:–-]+$/g, "").trim();
+  return has(t) ? null : t;
+}
+
 /** Figures a chunk may use: the same value in any form, rounded to whole and to one place (as the screens show it). */
 export function allowedSet(values: Iterable<number | string>): Set<string> {
   const s = new Set<string>();

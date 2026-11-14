@@ -18,7 +18,7 @@ import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { detectLang } from "./normalise";
-import { figuresIn, zoneLabelsOut } from "./numbergate";
+import { figuresIn, stripFigures, zoneLabelsOut } from "./numbergate";
 import { AiStep, checkPlan, codesText, stateCard, type AiPlan, type Context } from "./plan";
 import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
 import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
@@ -189,24 +189,30 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (typeof s.taluk === "string" && w.taluks.some((t) => t.code === s.taluk)) out.taluk = s.taluk;
   if ((SEVS as readonly string[]).includes(s.sev as string)) out.sev = s.sev as Sev;
   if (s.status === "open" || s.status === "overdue" || s.status === "resolved") out.status = s.status;
-  out.q = clip(s.q, recipe === "cases" ? 80 : 240) || null;
+  // the model's own words reach a title, a note or what Jarvis says: no figure of its own goes with them (Finding 51). A real zone's
+  // label ("Zone 13") stays a name; the map question keeps its distances for Ask the Map (screens.ts shows it without them), and a
+  // dataset's name stays as the Studio has it for the lookup (the screen shows the dataset's own name)
+  const zoneNs = w.zones.map((x) => x.n);
+  const words = (v: unknown, n: number) => { const t = clip(v, n); return t ? stripFigures(t, zoneNs) || null : null; };
+  out.q = recipe === "nearby" ? clip(s.q, 240) || null : words(s.q, recipe === "cases" ? 80 : 240);
   if ((METRICS as readonly string[]).includes(s.metric as string)) out.metric = s.metric as Slots["metric"];
   if ((MEASURES as readonly string[]).includes(s.measure as string)) out.measure = s.measure as Slots["measure"];
   if (s.by === "dept" || s.by === "zone") out.by = s.by;
   if (s.order === "bottom") out.order = "bottom";
   if (typeof s.n === "number" && s.n >= 1 && s.n <= 30) out.n = Math.round(s.n);
-  out.name = clip(s.name, 80) || null;
+  out.name = recipe === "complete" ? clip(s.name, 80) || null : words(s.name, 80);
   if (s.what === "severe" || s.what === "hotspots" || s.what === "cases") out.what = s.what;
   if (s.sort === "priority" || s.sort === "complaints" || s.sort === "time") out.sort = s.sort;
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
   if (recipe === "complete" && Array.isArray(s.ids)) {
-    const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x)))].slice(0, 30);
+    // an id is a code: one spelled with number words ("INC-THREE-HUNDRED") is a model's figure, not an incident
+    const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x) && !figuresIn(x).length))].slice(0, 30);
     if (ids.length) out.ids = ids;
   }
   if (recipe === "case") {
     const id = clip(s.id, 80).toUpperCase();
-    if (/^INC-[A-Z0-9-]{4,60}$/.test(id)) out.id = id;
+    if (/^INC-[A-Z0-9-]{4,60}$/.test(id) && !figuresIn(id).length) out.id = id;
     else if (typeof s.item === "number" && stage) {
       // "the third one": the third case on the open Stage
       const ids = stage.blocks.find((b) => b.kind === "CaseList" && b.ids.length)?.ids ?? stage.blocks.find((b) => b.kind === "MapView")?.ids ?? [];
