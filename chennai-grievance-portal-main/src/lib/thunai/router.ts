@@ -25,10 +25,25 @@ const STAGE = /\b(this|these|that|those|the (first|second|third|fourth|fifth|las
 const MEMORY = /\b(remember|remind|note that|make a note|note this|save|saved|workspace|forget|pin|bookmark|keep (this|it))\b|(நினைவில்|நினைவூட்டு|சேமி|சேவ்|பின் செய்|குறித்து வை|மறந்துவிடு|பின் பண்ண|ஒர்க்ஸ்பேஸ்)|\b(nyabagam|gnabagam|save pannu|note pannu|pin pannu|ninaivu|vachuko|vechuko)\b/i;
 const DATA = /\b(how many|how much|total|count|number of|percent|percentage|price|rate|contact|who is the|officer of|source|feed|fresh|resolution|backlog|follow.?ups?|gaps?|in the news but|verification|queue|stories|unusual|rises?|outliers?|anomal|stand out|stands out|find|search|look up)\b|(எத்தனை|எவ்வளவு|மொத்தம்|விலை|அதிகாரி|தொடர்பு)|\b(ethana|evlo|evvalavu)\b/i;
 
+/**
+ * How fast or how often something is closed, asked as a measure ("which department is slowest to close drainage complaints", "how long does
+ * it take to close a case", "the closing rate of complaints"): a question about the data, not an order to close anything.
+ */
+const CLOSING_MEASURE = /\b(?:slow|slower|slowest|fast|faster|fastest|quick|quicker|quickest|long|longer|longest|time|times|days|hours|rate|rates|speed|average|median|late|later|latest)\b(?:\s+[\w-]+){0,3}?\s+(?:to\s+)?(?:close|closing)\b|\b(?:clos(?:e|ing)|closure)\s+(?:rates?|times?|speed|performance|percentage|ratio)\b|\bhow\s+(?:long|fast|quickly|soon|often|many\s+days)\b.{0,40}?\bclos(?:e|es|ing|ed)\b/gi;
+/**
+ * The never rule (privacy.ts asksForbidden) for a sentence, with a question about how fast things are closed read as the question it is:
+ * the measure's words are taken out and the rest is asked again, so "how long to close cases, then delete them all" is still refused.
+ */
+export function asksForbiddenOrder(text: string): boolean {
+  if (!asksForbidden(text)) return false;
+  const rest = text.replace(CLOSING_MEASURE, " ");
+  return rest === text || asksForbidden(rest);
+}
+
 /** The lane by rules, when they are sure. lane null: the tiny router call decides. */
 export function routeByRules(text: string, w: World, stageOpen: boolean): Route {
   if (asksPrivate(text)) return { lane: "refuse", bundle: null, why: "privacy" };
-  if (asksForbidden(text)) return { lane: "refuse", bundle: null, why: "never" };
+  if (asksForbiddenOrder(text)) return { lane: "refuse", bundle: null, why: "never" };
   const district = districtNounIn(text, w);
   if (!district && SUBJECTS.test(text)) return { lane: "general", bundle: null, why: "subject" };
   if (PLAINLY_OTHER.test(text) && !namesZone(text, w)) return { lane: "general", bundle: null, why: "subject" };

@@ -16,9 +16,17 @@ export type TurnEvent =
   | (Base & { type: "RUN_STARTED"; at: number })
   /** said or shown at once, before any model: code-templated, numberless */
   | (Base & { type: "CUSTOM"; name: "ack"; value: { text: string; lang: Lang } })
-  /** how the server read the sentence: its language, the lane it took, the speech confidence it was given */
-  | (Base & { type: "CUSTOM"; name: "heard"; value: { lang: Lang; lane: string; conf: number | null } })
-  | (Base & { type: "STEP_STARTED"; stepName: string; id: string })
+  /**
+   * how the server read the sentence: its language, the lane it took, the speech confidence it was given; `speed` and `budgetMs` (v4,
+   * optional): a command has 8 s, an analysis question or a mission 25 s (round.ts turnSpeed), so the browser waits that long. The ack
+   * and heard events come in round 0 only.
+   */
+  | (Base & { type: "CUSTOM"; name: "heard"; value: { lang: Lang; lane: string; conf: number | null; speed?: "command" | "analysis"; budgetMs?: number } })
+  /**
+   * a step of the work begins. `elapsedMs` (v4, optional): the same step is still running after this long; a waiting analysis turn
+   * sends one every few seconds (round.ts PROGRESS_EVERY_MS) so the browser can show, or say, that it is still working
+   */
+  | (Base & { type: "STEP_STARTED"; stepName: string; id: string; elapsedMs?: number })
   | (Base & { type: "STEP_FINISHED"; stepName: string; id: string; ms: number; ok: boolean })
   /** console steps the plan runs before it looks again; how they went comes back as observations in the next round */
   | (Base & { type: "CUSTOM"; name: "steps"; value: { steps: Step[] } })

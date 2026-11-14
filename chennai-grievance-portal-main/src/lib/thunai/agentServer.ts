@@ -2,7 +2,8 @@
  * The agent's request handling, shared by the console's route (/api/collector/thunai/agent) and the dev test console's
  * twin: the body check, the model call (THUNAI_PROVIDER as the v1 brain), and the run. Server only.
  */
-import { asksForbidden, asksPrivate, NEVER_REPLY, PRIVACY_REPLY, redactHands } from "./privacy";
+import { asksPrivate, NEVER_REPLY, PRIVACY_REPLY, redactHands } from "./privacy";
+import { asksForbiddenOrder } from "./router";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
 import { AgentPlanLenient, AgentPlanSchema, directScreen, runThunaiAgent, type AgentResult } from "./agent";
@@ -40,7 +41,7 @@ export async function handleAgent(b: AgentBodyT, world: World, rawHands: Hands, 
   const hands = redactHands(rawHands);
   const plang: Lang = /[஀-௿]/.test(b.text) ? "ta" : "en";
   if (asksPrivate(b.text)) return { kind: "refuse", lang: plang, reply: PRIVACY_REPLY[plang], steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "privacy" };
-  if (asksForbidden(b.text)) return { kind: "refuse", lang: plang, reply: NEVER_REPLY[plang], steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "never" };
+  if (asksForbiddenOrder(b.text)) return { kind: "refuse", lang: plang, reply: NEVER_REPLY[plang], steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "never" };
   const state = screenOf(b.state);
   if (b.direct) return served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang));
   // the everyday questions (severe cases, a place's news, prices, air, rain, lakes, why, where) are answered from the data
