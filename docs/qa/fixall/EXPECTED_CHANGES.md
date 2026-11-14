@@ -105,3 +105,56 @@ their changes are in `docs/qa/pass7/P0_FIXES.md`. Each line names its rows; the 
   the tab's own slot; the grader's three tools lost their shebang line (vitest could not load them).
 - **Port defaults**: model-lifecycle (3142), audit-ui_honesty (3134) and same-number (3120) start their own server on a fixed default port;
   `QA_MODEL_PORT`, `QA_UI_HONESTY_PORT` and `QA_SAME_NUMBER_PORT` move them. Round 3 ran them on 3111, 3112 and 3110.
+
+## Round 4 (`claude/fixall4-a84a72`, from `fe7c15d7`): Ask the Map's time words (fixall3-map-today)
+Ask the Map now reads time words with `src/lib/period/read.ts`, the reader Jarvis and Ask District IQ use. Commits 9aecf063 and 42a22525, then
+6f4efc6e for the 19 bugs two reviews found in those two commits, 90a11f0b for the 12 a second review found in 6f4efc6e, and 5b8c5d76 for
+the 12 a third review found in 90a11f0b (when the map is not sure of a time, it does what `fe7c15d7` did). Frozen at `5b8c5d76`.
+- **Calendar words**: "today" is the calendar day since midnight IST, "yesterday" the day before, and "last week / last month / last quarter"
+  the calendar week (Monday to Sunday), month or quarter before. Before, the map read them as the last 24 hours and the last 7, 30 and 90 days.
+  A map answer for "today" is labelled "today, since midnight", and its count can drop by the incidents from yesterday evening.
+- **Unchanged rolling windows**: "this week", "last 7 days", "this month", "last 30 days", "in the last 24 hours" and "since yesterday".
+- **New readings**:
+  - "last 36 hours" is 36 hours back.
+  - "in September", "on 20 Oct", "since 1 October" and "the last week of September" are those days, labelled in the reader's words.
+  - "open for more than 30 days" means the incidents reported before then.
+  - Counts past the records ("last 12 months") are that many days, at most a year.
+- **Refusals**: only a time the records cannot reach gets a "say" answer: "last year", "next week", "tomorrow", "அடுத்த வாரம்". Before, these got
+  the 7-day default. Times the reader does not model but the records hold ("since Monday", "a few days", "fortnight", "two weeks ago") keep the old
+  behaviour: the 7-day default, flagged, with the words left for the AI.
+- **Right now**: "right now", "currently", "at present", "as of now", "at the moment" and தற்போது mean open, with no reporting window, on every path. A
+  hotspot or a news question then holds open incidents only. A plain "now" ("by ward now") is not a time.
+- **Comparisons**: "up or down", "than yesterday", "compared with last week", "pona maasatha vida" and "நேற்றை விட" are a change between two
+  equal rolling windows, as a new question or as a follow-up ("up or down?" compares the answer's own window). "up from last month" compares
+  the last 30 days with the 30 before. A whole calendar period said as the window ("did flooding go up last month") is compared with the one before.
+- **Bounds**: a bound and its time ("before yesterday", "older than yesterday", "excluding today") are taken out, and the rest is read, so "the last
+  30 days excluding today" is the last 30 days. A bound alone leaves no window, and its words stay unread for the AI or the "not used" note.
+- **Comparisons kept apart**: two areas compared ("Adyar vs Velachery, higher or lower?") stay an area comparison. A follow-up comparing with a month
+  or date ("compared to August", "vs 20 Oct") goes to the AI, never a plain period edit. The comparison follow-up respects the 8-step limit.
+- **Unread words**: the words of a time the map read no longer count as unread. "in the last 24 hours" and "since yesterday" no longer go to the
+  AI, and the "Not used from your question" notes lose their time words.
+- **Model plans** (fitModelPlan):
+  - Any time the question names wins over the model's period.
+  - A model's change gets the same two equal windows.
+  - A follow-up keeps a date range the model's flat form cannot carry.
+  - The flat form gains `period_calendar`, and the prompt has three new lines.
+- **Plans**: new period kinds `day`, `week` and `quarter` with an offset, beside `month`. `range` gains an optional `label`, `said` (the reader's
+  spec) and `age_hours`, and a range with them is put on each run's own now: a saved "last 36 hours" or "since 1 October" view counts from the
+  time it is run. `RouteEnv` gains `now`.
+- **Words**: change headlines and trace notes read "yesterday", "in the last calendar month" and "in September". A tie reads "the same as in the 7 days
+  before", where it used to read "the same as the the 7 days before". The week label is "last calendar week, Monday to Sunday", and the panel's
+  headline split handles a period with brackets of its own.
+- **Exports**: the CSV has a `# Window:` line and the GeoJSON a `window` property, giving the dates the rows were counted on.
+- **Tests and harness**:
+  - `route.test.ts`: five plans are now the calendar day.
+  - `map.golden.ts` asks the console's Daily as "in the last 24 hours".
+  - `same-number.mjs` asks the map in the rules lanes' words and checks the map's "today" against the oracle's rows since midnight.
+  - New tests: `periods.fixall.test.ts`, `periods2.fixall.test.ts`, `periods3.fixall.test.ts` and `periods4.fixall.test.ts`.
+- **Golden master** (from the round 4 gate-impact reviews):
+  - S0 "today" (collector and officer A): the plan, label and count change, and so do the 10 requests built from S0's plan.
+  - S17, Tamil "today": the calendar day, a Tamil label, and a shorter unread note.
+  - S15 "from last month": a change of the last 30 days against the 30 before, as before.
+  - S36 "Nethu irundhu": the last 24 hours instead of the 7-day default.
+  - S7, S18 and S30: only the "Not used" note changes.
+  - The golden map exports of sentences 1 and 2 gain the `# Window:` line (and the GeoJSON `window` property).
+  - A change between two 24-hour windows says "the 24 hours before", where it said "the 1 days before".

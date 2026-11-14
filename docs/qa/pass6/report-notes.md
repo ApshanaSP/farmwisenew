@@ -52,5 +52,5 @@ test run the skeptic saw) were running during the gate; they were not this run's
 session's own fix branch, and QA pass 4's final commit `eec8c840`, all merged into `claude/elated-yalow-26931a` (local, not pushed).
 What was fixed, what the reviewers broke, every merge conflict and what is left: `docs/qa/pass7/P0_FIXES.md`. Pass 7's final gate (on
 `7e815c53`, after the pass 6 session's fix-all rounds 2 and 3 were merged) is green, pass 4's whole real-path suite included (2648 passed,
-0 failed: P5-034 closed); its figures are in P0_FIXES section 6 and its logs in `docs/qa/pass7/evidence/`. The gate figures above (tsc,
+0 failed: P5-034 closed), and round 4 (the map's time words) was gated on `5b8c5d76`; its figures are in P0_FIXES section 6 and its logs in `docs/qa/pass7/evidence/`. The gate figures above (tsc,
 lint, build, matrix, drive) are still pass 6's, except the `p7-gate-*` suite summaries.

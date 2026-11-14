@@ -384,13 +384,14 @@
     "title": "Ask the Map reads \"today\" as the last 24 hours, while Jarvis and Ask District IQ read it as the calendar day since midnight (pass 7, P6-022)",
     "found_by": "fix-all round 3, same-number.test.ts (map/ask \"open incidents today\" equals the 24-hour figure, 236; Ask and Jarvis say 144 for \"today\")",
     "repro": "server.mjs start --frozen --ticking; POST /api/map/ask {text:\"open incidents today\"}: plan period last_days 1, \"236 open incidents (last 24 hours)\"; Ask District IQ, same words: \"Open incidents · today (6 Nov, since midnight)\"",
-    "failing_test": null,
+    "failing_test": "src/lib/map/periods.fixall.test.ts, periods2/3/4.fixall.test.ts",
     "root_cause": "pass 7 put one period reader (src/lib/period/read.ts) under the two rules lanes only; the map engine (src/lib/map) keeps its own reading of today",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null,
-    "note": "Not fixed in round 3 (outside the nine files). Each answer names its window, so neither misleads, but one word means two windows on one console. same-number keeps today for its map questions so it still passes; change WHEN there when the map follows read.ts."
+    "fix_commit": "9aecf063, 42a22525, 6f4efc6e, 90a11f0b, 5b8c5d76",
+    "revert_check": "each batch: the previous route/execute/words/plan fail its new tests (9aecf063: 12+9+2+1; 6f4efc6e: 26; 90a11f0b: 36 of 70; 5b8c5d76: 31 of 32)",
+    "status": "fixed",
+    "reviewer": "reviewer H, review-map-periods (4 lenses), -2 (3 lenses), -3 (2 lenses); 43 confirmed findings fixed; a 4th review was stopped unfinished when the owner froze the round",
+    "note": "Not fixed in round 3 (outside the nine files). Each answer names its window, so neither misleads, but one word means two windows on one console. same-number keeps today for its map questions so it still passes; change WHEN there when the map follows read.ts.",
+    "closed_in": "pass 7 round 4 gate on 5b8c5d76 (tests/qa/pass7/gate-fast.sh)"
   },
   {
     "id": "fixall3-officer-open",

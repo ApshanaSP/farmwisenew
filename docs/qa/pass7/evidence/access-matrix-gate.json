@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-13T20:46:53.037Z",
+ "generated": "2026-11-14T13:56:34.607Z",
  "port": 3106,
  "routes": 121,
  "methods": 147,
@@ -13311,7 +13311,7 @@
    "expected": "deny",
    "status": 200,
    "verdict": "fail",
-   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-14T08:46:52.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-14 02:16:52\",\"action\":\""
+   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-15T01:56:33.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-14 19:26:33\",\"action\":\""
   },
   {
    "route": "/api/auth/security",

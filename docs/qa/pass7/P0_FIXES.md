@@ -85,11 +85,11 @@ Each merge commit lists its conflicts and resolutions: `25ab4f55` (pass 4), `83d
   conflict; the ledger was merged row by row. What each changes on purpose: `docs/qa/fixall/EXPECTED_CHANGES.md`.
 
 ## 5. What is left
-The ledger (`docs/qa/pass6/BUGS.json`, 317 rows after the pass 6 session's three fix-all rounds): 281 fixed, 23 for the owner, 8 not
-reproduced, 4 duplicates, 1 open.
-- **Open: fixall3-map-today (P3).** Ask the Map reads "today" as the last 24 hours, while Jarvis and Ask District IQ read it as the calendar
-  day since midnight. The map reads every period word as a rolling window, so the fix is to move it onto the shared reader
-  (`src/lib/period/read.ts`); it was left until after the gate.
+The ledger (`docs/qa/pass6/BUGS.json`, 317 rows after the pass 6 session's four fix-all rounds): 282 fixed, 23 for the owner, 8 not
+reproduced, 4 duplicates, none open.
+- **Fixed in round 4: fixall3-map-today (P3).** Ask the Map read "today" as the last 24 hours, while Jarvis and Ask District IQ read it as the
+  calendar day since midnight. The map now reads time words with the shared reader (`src/lib/period/read.ts`); gate in section 7. A fourth
+  review of round 4's last commit was stopped unfinished when the owner froze the round; the three before it found P2/P3 issues only.
 - **Closed by this gate: P5-034.** Pass 4's whole real-path suite on the merged tree, which no gate had run whole and green before (section 6).
 - **For the owner (23 rows, unchanged by this pass):** sign-out does not end the session on the server (hunt2-sec-01, redsec2-04,
   skeptic-redsec1-1: the per-tab sign-out was kept, see section 4); the desk password (P5-006, hunt2-sec-08); the closing SMS after a reopen
@@ -132,3 +132,28 @@ machine-wide Studio fixture lock:
 Earlier gates, for the record: `94b99ed7` was red (a stale reader bundle, a guard tripped by a comment, five order-dependent test files, a
 config that ran all of pass 4, ten period regressions from the merge; `evidence/first-gate/`); `ae65fe84` was green without pass 4's whole
 suite and the golden master (`evidence/gate-ae65fe84/`); `65f36ea1` was green except pass 4's whole suite (30 failed), which round 3 took.
+
+## 7. Round 4 gate on `5b8c5d76` (`tests/qa/pass7/gate-fast.sh`)
+Round 4 (`claude/fixall4-a84a72`, five commits on `fe7c15d7`: the map's time words, fixall3-map-today) was gated at the owner's "do it", once,
+on its frozen tip, fast-forwarded here. For speed the gate ran in two lanes (`gate-fast.sh`): type check, lint and the build first; then pass
+4's whole real-path suite (which runs every pass 4 guard file and redteam-final) beside the unit runs, the pass 7 tests, the src guards, the
+golden master, the access matrix, the browser drive and j1. 18:58 to 19:51.
+- type check, lint, build: clean, no errors;
+- unit suite, 3 shuffled runs in Asia/Kolkata and 1 in UTC: 4571 passed, 13 skipped, 0 failed in each;
+- `tests/qa/pass7`: 769 passed, 7 skipped; collector-ops real-path 24/24; src guards 39/39;
+- pass 4's whole real-path suite: 67 files, 2668 tests, 2646 passed, 1 failed, 21 skipped (7 files skip on their own conditions:
+  skeptic-redsec1 needs a server on 3192, which another session's run happened to provide at the previous gate). The failure was g2-cache's
+  RC-35 epoch test, timed out at 180 s on its first store load while the other lane's unit runs held the CPU; run again alone on the same tree
+  right after, g2-cache passed 9/9 (RC-35 in 9 s; `evidence/g2-cache-rerun-gate.log`). It passed in every earlier gate, and round 4 does not
+  touch the store. The guards inside the suite: lane-c 28/28, dept-lock 10/10, join-lock 14/14, batch-mail 1/1, critical tile 4/4, Studio
+  browser 1/1, 2/2, 2/2, metamorphic 128/128, open-baseline 46/46; redteam-final 17/17. Vitest also reported two of its own "Timeout calling
+  onTaskUpdate" errors, as before;
+- golden master `p7-gate`: 3,273 requests, no 5xx, no problems, the same 4 gaps. Against the previous gate's recording (`p7-gate-r3`, the
+  manifest committed at `fe7c15d7`; diff `docs/qa/pass4/golden/diffs/p7-gate-r3__p7-gate.*`): 23 changed, 10 added, 10 removed, every one in
+  round 4's expected changes (`docs/qa/fixall/EXPECTED_CHANGES.md`, Round 4) or the noise floor: S0 "today" for the Collector and officer A
+  (the calendar day, "today, since midnight", 13 to 11) and its Tamil S17 ("இன்று, நள்ளிரவு முதல்"); S36 "Nethu irundhu" the last 24 hours
+  instead of 7 days (1,167 to 236; officer B 84 to 23); the "Not used" notes of S7, S18 and S30 lose their time words; the map exports gain
+  the window line and property; the audit rows of those exports; the 10 insight, export and send requests built from S0's plan (new ids);
+  the Studio exports' confirm scope hash (it covers the dataset id, new at each recording's upload) and the recorder's own complaint position
+  (noise);
+- access matrix 1175/1176 (pass 6's explained cell); browser drive 28 pages, no problem; j1 Jarvis: no problem.
