@@ -1,17 +1,25 @@
 /**
- * Jarvis's mouth. One voice for each language, chosen once and kept, so it never changes between answers or mid-answer:
- *   1. the browser's own voice for the language, when it has one (Edge: Pallavi for Tamil, Neerja for Indian English): free, at
- *      once. No PCM exists on this path, so a barge-in cancels it once the speech is confirmed (a cough does not cut it off), and
- *      the HUD's level is an envelope driven by the state.
- *   2. no browser voice for the language (Tamil in Chrome): the server's voice (api/jarvis/say), played through an AudioContext
- *      (source -> gain -> analyser -> speakers), so a barge-in pauses within a frame and the HUD reads the real level.
- *   3. the words on screen, for the time they would take to say.
- * What was said once is kept. Every chunk (lib/thunai/chunker.ts) passes the number gate before it is spoken; a chunk that
- * fails stays on screen and is not said. The next chunk is fetched while one plays.
+ * Jarvis's mouth. The voice for an answer is chosen once, when the answer starts, and kept to its end: it never switches voice
+ * or path mid-answer.
+ *   1. the browser's own natural voice for the language (Edge: Pallavi for Tamil, Neerja for Indian English): free, at once.
+ *   2. no natural browser voice (Tamil in Chrome): the server's voice (api/jarvis/say), asked for ONCE for the whole answer (the
+ *      speech models allow 3 requests a minute, and a request per chunk spent that after about three answers), and played
+ *      through an AudioContext as it arrives (source -> the answer's gain -> the duck gain -> analyser -> speakers), so a
+ *      barge-in ducks or pauses within a frame and the HUD reads the real level. A request that fails before any sound sends
+ *      the whole answer to the next rung; once a sound has played, the answer is never handed to another voice.
+ *   3. the browser's other voice for the language.
+ *   4. the words on screen, for the time they would take to say.
+ * Every chunk (lib/thunai/chunker.ts) passes the number gate before it is spoken or sent: a chunk that fails stays on screen and
+ * is neither said nor sent. Grouped figures from a lakh up are said in lakh and crore (lib/thunai/numberwords.ts), and the gate
+ * checks the line again as it will be said. What was said is kept, so "continue" goes on with the same audio and no request.
+ * The barge-in's duck (duckVoice, unduckVoice), the end-of-speech earcon (earconEnd), the numberless acknowledgement (speakAck)
+ * and the warm-up on mode-on (warmVoice) live here; the conductor and Thunai.tsx decide when.
  */
 import { chunks } from "@/lib/thunai/chunker";
-import { gateChunk } from "@/lib/thunai/numbergate";
+import { figuresIn, gateChunk } from "@/lib/thunai/numbergate";
+import { speakNumbers, spokenAllowed } from "@/lib/thunai/numberwords";
 import type { JarvisVoice } from "@/lib/jarvis/voices";
+import { joinSamples, l16ToFloat, pieceStarts, Player, toBuffer } from "./pcmplay";
 import * as browser from "./voice";
 
 export interface SpeakOpts {
@@ -20,34 +28,69 @@ export interface SpeakOpts {
   allowed?: Set<string>;
 }
 export type VoicePath = "browser" | "pcm" | "text";
-export interface MouthHooks { onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void }
+/** What a duck did: on which path, how (the gain to 20 %, speechSynthesis.pause(), or the voice kept speaking), and in how many ms. */
+export interface DuckInfo { path: VoicePath; how: "gain" | "pause" | "kept"; ms: number | null; outMs: number | null }
+export interface MouthHooks {
+  onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void;
+  /** an earcon is about to sound for about `ms`: the ears must take it as Jarvis's own sound (Conductor.earcon(ms)) */
+  onEarcon?: (ms: number) => void;
+  /** a duck took effect, or could not: for the HUD strip and the barge-in telemetry */
+  onDuck?: (d: DuckInfo) => void;
+}
 
 let hooks: MouthHooks = {};
 export function setMouthHooks(h: MouthHooks) { hooks = h; }
 
 interface Piece { text: string; line: number; first: boolean }
-interface Speech { pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean }
+/** a run of the answer asked for in one request, and its audio once it is in */
+interface Group { from: number; to: number; text: string; buf: AudioBuffer | null; pending: Promise<AudioBuffer | null> | null }
+interface Speech { pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null }
+
+const SAY = "/api/jarvis/say";
+/** the most of an answer sent in one request (the route takes 2,400 characters): a longer narration is asked for in runs */
+const GROUP_MAX = 2000;
+/** the duck: the gain to 20 % in 30 ms (the brief allows 50) */
+export const DUCK_LEVEL = 0.2;
+export const DUCK_MS = 30;
+/** the end-of-speech earcon's length, and how long the ears take it as Jarvis's own sound */
+export const EARCON_MS = 110;
+export const EARCON_GUARD_MS = 400;
 
 let token = 0;
 let cur: Speech | null = null;
 /** the last speech that was cut short, for "continue" */
 let bookmark: Speech | null = null;
-let jarvisVoice: JarvisVoice = "Despina";
+const jarvisVoice: JarvisVoice = "Despina";
 let speakingNow = false;
 let path: VoicePath = "browser";
 /** the server's voice failed: it is tried again after a minute, not never (it used to stay off until a reload) */
 let serverDownUntil = 0;
 let fails = 0;
-const clips = new Map<string, Promise<AudioBuffer | null>>();
+/** whole answers' audio, decoded: a repeated answer, or an acknowledgement said before, costs no request */
+const audioCache = new Map<string, AudioBuffer>();
 
 let ctx: AudioContext | null = null;
-let gain: GainNode | null = null;
+/** the duck and the pause act on this gain; each answer has its own gain before it, so cutting one never touches the next */
+let master: GainNode | null = null;
 let analyser: AnalyserNode | null = null;
-let source: AudioBufferSourceNode | null = null;
+let player: Player | null = null;
+let answerGain: GainNode | null = null;
 let paused = false;
+/** how the voice is ducked now: not, by its gain, by speechSynthesis.pause(), or not at all (the browser voice keeps speaking) */
+let ducked: false | DuckInfo["how"] = false;
+/**
+ * Pause the browser's voice on a duck. Whether Edge's natural voices honour speechSynthesis.pause() is not verified, so it is off
+ * unless NEXT_PUBLIC_JARVIS_DUCK_PAUSE=1 (or setDuckPause(true)); off, the voice keeps speaking until the barge-in is confirmed.
+ * A duck never cancels.
+ */
+let duckPause = process.env.NEXT_PUBLIC_JARVIS_DUCK_PAUSE === "1";
+let lastDuckInfo: DuckInfo | null = null;
+/** the earcons' own context: a paused voice (its context suspended) never swallows one */
+let fx: AudioContext | null = null;
 const levelBuf = new Float32Array(512);
 
 const AC = () => {
+  if (typeof window === "undefined") return undefined;
   const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
   return W.AudioContext ?? W.webkitAudioContext;
 };
@@ -56,17 +99,23 @@ function out(): AudioContext | null {
   const A = AC();
   if (!A) return null;
   ctx = new A();
-  gain = ctx.createGain();
+  master = ctx.createGain();
   analyser = ctx.createAnalyser();
   analyser.fftSize = 512;
   analyser.smoothingTimeConstant = 0.5;
-  gain.connect(analyser).connect(ctx.destination);
+  master.connect(analyser).connect(ctx.destination);
   return ctx;
+}
+function fxOut(): AudioContext | null {
+  if (fx) return fx;
+  const A = AC();
+  if (!A) return null;
+  try { fx = new A(); } catch { return null; }
+  return fx;
 }
 
 const serverUp = () => Date.now() >= serverDownUntil;
 
-export function setJarvisVoice(v: JarvisVoice) { jarvisVoice = v; }
 export const speaking = () => speakingNow || browser.speaking();
 export const voicePath = () => path;
 /** Tamil can always be spoken while the server voice works */
@@ -75,6 +124,10 @@ export const warmVoices = browser.warmVoices;
 export const voicesFor = browser.voicesFor;
 /** the words being said right now (the self-hearing guard) */
 export const nowSaying = (): string | null => (speakingNow && cur ? cur.pieces.map((p) => p.text).join(" ") : null);
+/** The last duck: its path, how, and ms (null until one happened). */
+export const lastDuck = () => lastDuckInfo;
+/** Turn the browser voice's pause-on-duck on or off (see duckPause). */
+export function setDuckPause(on: boolean) { duckPause = on; }
 
 const short = (l: string) => (l.toLowerCase().startsWith("ta") ? "ta" : "en") as "ta" | "en";
 
@@ -86,6 +139,13 @@ function natural(lang: "ta" | "en"): boolean {
   const v = browser.bestVoice(lang === "ta" ? "ta-IN" : "en-IN");
   return !!v && v.lang.toLowerCase().startsWith(lang);
 }
+const browserCan = (l: "ta" | "en") => browser.canSpeak() && (l !== "ta" || browser.hasVoice("ta-IN"));
+/** the voice for a whole answer, chosen once */
+function choosePath(l: "ta" | "en"): VoicePath {
+  if (natural(l)) return "browser";
+  if (serverUp() && AC()) return "pcm";
+  return browserCan(l) ? "browser" : "text";
+}
 
 /** Which voice Jarvis speaks the language with on this browser, for its settings ("Microsoft Pallavi · Edge"). */
 export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "browser" | "server" | "none" } {
@@ -95,107 +155,214 @@ export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "brows
   return v && v.lang.toLowerCase().startsWith(lang) ? { name: v.name, how: "browser" } : { name: null, how: "none" };
 }
 
-/** the clip for one chunk, from the cache or the server; null when the server cannot (the next rung then speaks) */
-function clip(text: string, lang: "ta" | "en"): Promise<AudioBuffer | null> {
-  const key = `${jarvisVoice}|${lang}|${text}`;
-  const have = clips.get(key);
-  if (have) return have;
-  const p = (async () => {
-    if (!serverUp()) return null;
-    const c = out();
-    if (!c) return null;
-    try {
-      const r = await fetch("/api/jarvis/say", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 700), lang, voice: jarvisVoice }), signal: AbortSignal.timeout(14_000) });
-      // the server has no voice set up (503 no-tts): asking again only logs another failed request, so it is not asked again until the page is reloaded (QA4 gate, FB-10)
-      if (r.status === 503 && (await r.clone().json().catch(() => null))?.error === "no-tts") { serverDownUntil = Number.MAX_SAFE_INTEGER; clips.delete(key); return null; }
-      if (!r.ok) throw new Error(String(r.status));
-      fails = 0;
-      return await c.decodeAudioData(await r.arrayBuffer());
-    } catch {
-      if (++fails >= 2) { serverDownUntil = Date.now() + 60_000; fails = 0; }
-      clips.delete(key);
-      return null;
-    }
-  })();
-  clips.set(key, p);
-  if (clips.size > 80) clips.delete(clips.keys().next().value as string);
-  return p;
-}
-
-/** Fetch a line ahead of time (a greeting at start). Nothing when the browser's voice will speak it. */
-export function prefetch(text: string, lang: string) { const l = short(lang); if (text.trim() && !natural(l)) void clip(text.trim(), l); }
-
-/** Play a decoded clip from `offset` seconds, through the gain and the analyser. Resolves when it ends or is cut. */
-function playPcm(buf: AudioBuffer, my: number): Promise<boolean> {
-  return new Promise((done) => {
-    const c = out();
-    if (!c || !gain) { done(false); return; }
-    void c.resume().catch(() => undefined);
-    const s = c.createBufferSource();
-    s.buffer = buf;
-    gain.gain.cancelScheduledValues(c.currentTime);
-    gain.gain.setValueAtTime(1, c.currentTime);
-    s.connect(gain);
-    source = s;
-    s.onended = () => { if (source === s) source = null; done(my === token); };
-    s.start();
-  });
-}
-
-/** The browser speaks one chunk, or nothing is said and the words wait on screen. */
-function fallback(text: string, lang: string, o: SpeakOpts, line: number, my: number): Promise<void> {
-  return new Promise((done) => {
-    const bl = short(lang) === "ta" ? "ta-IN" : "en-IN";
-    if (short(lang) === "ta" && !browser.hasVoice("ta-IN")) { path = "text"; setTimeout(done, Math.min(6000, 600 + text.length * 45)); return; }
-    if (!browser.canSpeak()) { path = "text"; setTimeout(done, Math.min(6000, 600 + text.length * 45)); return; }
-    path = "browser";
-    const ok = browser.speakText(text, bl, { rate: o.rate, voice: o.voice, onWord: (_, ch) => { if (my === token) o.onWord?.(line, ch); }, onEnd: () => done() });
-    if (!ok) done();
-  });
-}
-
 function pieces(lines: string[]): Piece[] {
   return lines.flatMap((raw, line) => chunks(raw).map((text, k) => ({ text, line, first: k === 0 })));
 }
 
-async function run(s: Speech, my: number) {
-  const l = short(s.lang);
-  // the choice between the two voices waits until the browser has said which voices it has: deciding early changed the voice later
-  await browser.voicesReady();
-  if (my !== token) return;
-  let started = false;
-  const start = (p: VoicePath) => { if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
-  for (; s.at < s.pieces.length; s.at++) {
-    if (my !== token) return;
-    const piece = s.pieces[s.at];
-    // the gate on every spoken chunk: a figure code did not supply is not said (it stays on screen, or is not there at all)
-    if (s.o.allowed) {
-      const g = gateChunk(piece.text, s.o.allowed);
+/**
+ * The gate on every chunk: a figure code did not supply is not said (the chunk stays on screen). The chunk is then put as it
+ * will be said (lakh and crore), and that is gated again, with the rounded values the spoken forms say.
+ */
+function gate(raw: Piece[], allowed: Set<string> | undefined, l: "ta" | "en"): Piece[] {
+  const kept: Piece[] = [];
+  const lines = new Set<number>();
+  for (const p of raw) {
+    if (allowed) {
+      const g = gateChunk(p.text, allowed);
       if (!g.ok) { hooks.onGateRefused?.(g.bad); continue; }
     }
-    if (piece.first) s.o.onLine?.(piece.line);
-    if (natural(l)) {
-      path = "browser";
-      start("browser");
-      await fallback(piece.text, s.lang, s.o, piece.line, my);
-    } else {
-      // the next chunk is asked for while this one is fetched and played
-      const next = s.pieces[s.at + 1];
-      if (next) void clip(next.text, l);
-      const buf = await clip(piece.text, l);
-      if (my !== token) return;
-      if (buf) { path = "pcm"; start("pcm"); await playPcm(buf, my); }
-      else { start(browser.hasVoice(s.lang) ? "browser" : "text"); await fallback(piece.text, s.lang, s.o, piece.line, my); }
+    const said = speakNumbers(p.text, l);
+    if (allowed && said.values.length) {
+      const g = gateChunk(said.text, spokenAllowed(allowed, said.values));
+      if (!g.ok) { hooks.onGateRefused?.(g.bad); continue; }
     }
+    kept.push({ text: said.text, line: p.line, first: !lines.has(p.line) });
+    lines.add(p.line);
+  }
+  return kept;
+}
+
+/** a run of pieces as one text, as code rendered it: sentences of a line by a space, lines by a newline */
+function joinText(ps: Piece[], from: number, to: number): string {
+  let t = "";
+  for (let i = from; i <= to; i++) t += (i > from ? (ps[i].line !== ps[i - 1].line ? "\n" : " ") : "") + ps[i].text;
+  return t;
+}
+function groupsFrom(ps: Piece[], from: number): Group[] {
+  const gs: Group[] = [];
+  let start = from, len = 0;
+  const add = (a: number, b: number) => gs.push({ from: a, to: b, text: joinText(ps, a, b), buf: null, pending: null });
+  for (let i = from; i < ps.length; i++) {
+    const n = ps[i].text.length + 1;
+    if (i > start && len + n > GROUP_MAX) { add(start, i - 1); start = i; len = 0; }
+    len += n;
+  }
+  if (start < ps.length) add(start, ps.length - 1);
+  return gs;
+}
+/** "continue" inside a run whose audio never arrived: the runs are made again from there */
+function ensureGroups(s: Speech) {
+  const g = s.groups?.find((x) => x.from <= s.at && s.at <= x.to);
+  if (!g || (s.at > g.from && !g.buf && !g.pending)) s.groups = groupsFrom(s.pieces, s.at);
+}
+/** seconds a run will take, until its audio says (for the line highlight only) */
+const estimate = (text: string, l: "ta" | "en") => text.length / (l === "ta" ? 11 : 14);
+
+/**
+ * One request for a run of the answer. Each piece of audio is handed to `feed` as it arrives (a WAV in one piece, a stream in
+ * many); resolves with the whole of it, or null when the server could not say it all.
+ */
+async function fetchAudio(text: string, l: "ta" | "en", c: AudioContext, feed: (b: AudioBuffer) => void): Promise<AudioBuffer | null> {
+  const key = `${jarvisVoice}|${l}|${text}`;
+  const have = audioCache.get(key);
+  if (have) { feed(have); return have; }
+  if (!serverUp()) return null;
+  try {
+    const r = await fetch(SAY, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: l, voice: jarvisVoice, stream: true }), signal: AbortSignal.timeout(30_000) });
+    // the server has no voice set up (503 no-tts): asking again only logs another failed request, so it is not asked again until the page is reloaded (QA4 gate, FB-10)
+    if (r.status === 503 && (await r.clone().json().catch(() => null))?.error === "no-tts") { serverDownUntil = Number.MAX_SAFE_INTEGER; return null; }
+    if (!r.ok) throw new Error(String(r.status));
+    const type = r.headers.get("content-type") ?? "";
+    let buf: AudioBuffer;
+    if (/audio\/(l16|pcm)/i.test(type) && r.body) {
+      // streamed: headerless 16-bit little-endian mono, each piece played as it comes
+      const rate = Number(/rate=(\d+)/i.exec(type)?.[1] ?? 24000);
+      const reader = r.body.getReader();
+      const parts: Float32Array[] = [];
+      let carry: number | null = null;
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value?.length) continue;
+        const x = l16ToFloat(value, carry);
+        carry = x.carry;
+        if (x.samples.length) { parts.push(x.samples); feed(toBuffer(c, x.samples, rate)); }
+      }
+      if (!parts.length) throw new Error("no audio");
+      buf = joinSamples(c, parts, rate);
+    } else {
+      buf = await c.decodeAudioData(await r.arrayBuffer());
+      feed(buf);
+    }
+    fails = 0;
+    audioCache.set(key, buf);
+    if (audioCache.size > 24) audioCache.delete(audioCache.keys().next().value as string);
+    return buf;
+  } catch {
+    if (++fails >= 2) { serverDownUntil = Date.now() + 60_000; fails = 0; }
+    return null;
+  }
+}
+
+/** The PCM rung for a whole answer: "played", "failed" (nothing was heard: the next rung takes all of it) or "cut". */
+async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePath) => void): Promise<"played" | "failed" | "cut"> {
+  const c = out();
+  if (!c || !master) return "failed";
+  if (!paused) void c.resume().catch(() => undefined);
+  const g = c.createGain();
+  g.connect(master);
+  const p = new Player(c, g);
+  player = p;
+  answerGain = g;
+  // where each piece starts in this answer's audio (seconds), for the line highlight and for where "continue" starts
+  const tl = new Array<number>(s.pieces.length).fill(Infinity);
+  let said = s.at - 1;
+  const tick = () => {
     if (my !== token) return;
-    // a paused voice waits here (the PCM path resumes inside the clip; the browser path restarts this chunk)
-    while (paused && my === token) await new Promise((r) => setTimeout(r, 30));
-    if (my !== token) return;
-    if (s.at < s.pieces.length - 1) await new Promise((r) => setTimeout(r, s.ack ? 0 : 120));
+    const pos = p.position();
+    while (said + 1 < s.pieces.length && tl[said + 1] <= pos + 1e-3) {
+      said++;
+      s.at = said;
+      if (s.pieces[said].first) s.o.onLine?.(s.pieces[said].line);
+    }
+  };
+  const iv = setInterval(tick, 50);
+  try {
+    ensureGroups(s);
+    let broke = false;
+    for (const gr of s.groups ?? []) {
+      if (gr.to < s.at) continue;
+      const from = Math.max(gr.from, s.at);
+      const lengths = s.pieces.slice(gr.from, gr.to + 1).map((x) => x.text.length + 1);
+      const base = p.scheduled;
+      const place = (dur: number, skip: number) => { const st = pieceStarts(lengths, dur); for (let i = from; i <= gr.to; i++) tl[i] = base + st[i - gr.from] - skip; };
+      if (!gr.buf && !gr.pending) {
+        // the one request for this run (the whole answer, unless it is a long narration)
+        place(estimate(gr.text, l), 0);
+        tick();
+        gr.pending = fetchAudio(gr.text, l, c, (b) => { if (my === token) { start("pcm"); p.push(b); } }).then((b) => { gr.buf = b; gr.pending = null; return b; });
+        const b = await gr.pending;
+        if (my !== token) return "cut";
+        if (!b) { broke = true; break; }
+        place(b.duration, 0);
+        continue;
+      }
+      // audio this answer already has (it was cut, and goes on): from the piece it was on, no second request
+      const b = gr.buf ?? (await gr.pending);
+      if (my !== token) return "cut";
+      if (!b) { broke = true; break; }
+      const skip = pieceStarts(lengths, b.duration)[from - gr.from];
+      place(b.duration, skip);
+      start("pcm");
+      p.push(b, skip);
+    }
+    if (broke && !p.started) return "failed";
+    p.end();
+    tick();
+    const ok = await p.done();
+    if (my !== token || !ok) return "cut";
+    // all of it played: every piece was said (after a failed run, the rest is on screen and is not handed to another voice)
+    if (!broke) while (said + 1 < s.pieces.length) { said++; if (s.pieces[said].first) s.o.onLine?.(s.pieces[said].line); }
+    s.at = s.pieces.length;
+    return "played";
+  } finally {
+    clearInterval(iv);
+  }
+}
+
+/** The browser speaks one chunk, or nothing is said and the words wait on screen. */
+function byBrowser(text: string, lang: string, o: SpeakOpts, line: number, my: number, how: VoicePath): Promise<void> {
+  return new Promise((done) => {
+    if (how === "text" || !browser.canSpeak()) { setTimeout(done, Math.min(6000, 600 + text.length * 45)); return; }
+    const ok = browser.speakText(text, short(lang) === "ta" ? "ta-IN" : "en-IN", { rate: o.rate, voice: o.voice, onWord: (_, ch) => { if (my === token) o.onWord?.(line, ch); }, onEnd: () => done() });
+    if (!ok) done();
+  });
+}
+
+async function run(s: Speech, my: number) {
+  const l = short(s.lang);
+  // the choice of voice waits until the browser has said which voices it has: deciding early changed the voice later
+  await browser.voicesReady();
+  if (my !== token) return;
+  if (!s.gated) { s.pieces = gate(s.pieces, s.o.allowed, l); s.gated = true; }
+  if (!s.path) s.path = choosePath(l);
+  let started = false;
+  const start = (p: VoicePath) => { path = p; if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
+  if (s.path === "pcm" && s.at < s.pieces.length) {
+    const r = await runPcm(s, my, l, start);
+    if (r === "cut" || my !== token) return;
+    // the server could not say any of it: the whole answer goes to the next rung (nothing has been heard, so the voice is one)
+    if (r === "failed") s.path = browserCan(l) ? "browser" : "text";
+  }
+  if (s.path !== "pcm") {
+    for (; s.at < s.pieces.length; s.at++) {
+      if (my !== token) return;
+      const piece = s.pieces[s.at];
+      if (piece.first) s.o.onLine?.(piece.line);
+      start(s.path);
+      await byBrowser(piece.text, s.lang, s.o, piece.line, my, s.path);
+      if (my !== token) return;
+      while (paused && my === token) await new Promise((r) => setTimeout(r, 30));
+      if (my !== token) return;
+      if (s.at < s.pieces.length - 1) await new Promise((r) => setTimeout(r, s.ack ? 0 : 120));
+    }
   }
   if (my !== token) return;
   speakingNow = false;
   cur = null;
+  player = null;
+  answerGain = null;
+  clearDuck();
   hooks.onEnd?.(s.ack);
   s.o.onEnd?.();
 }
@@ -212,7 +379,7 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
   const my = ++token;
   speakingNow = true;
   paused = false;
-  cur = { pieces: list, lang, o, at: 0, ack: false };
+  cur = { pieces: list, lang, o, at: 0, ack: false, gated: false, path: null, groups: null };
   void run(cur, my);
   return true;
 }
@@ -222,17 +389,22 @@ export function speakText(text: string, lang: string, o: SpeakOpts = {}): boolea
 }
 
 /**
- * The acknowledgement: only where a voice is ready at once (the browser's natural voice, or a clip already kept). It never
- * spends the server's voice and never holds up the answer: speakLines() cuts it the moment the answer exists.
+ * The acknowledgement ("One moment."), for when no finding is ready by 1.2 s. Refused (false) when the text holds any figure,
+ * when anything is already being said (an answer is never cut or held up by one), and where no voice is ready at once: it
+ * speaks only with the browser's natural voice, which the answer will use too, or with audio already kept for that line; it
+ * never spends a request. speakLines() cuts it the moment the answer exists (the PCM path fades it over 15 ms).
  */
 export function speakAck(text: string, lang: string): boolean {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (!t || figuresIn(t).length) return false;
+  if (speakingNow || browser.speaking()) return false;
   const l = short(lang);
-  if (!natural(l) && !clips.has(`${jarvisVoice}|${l}|${text}`)) return false;
-  stopVoice();
+  const nat = natural(l);
+  if (!nat && !audioCache.has(`${jarvisVoice}|${l}|${t}`)) return false;
   const my = ++token;
   speakingNow = true;
   paused = false;
-  cur = { pieces: [{ text, line: 0, first: true }], lang, o: {}, at: 0, ack: true };
+  cur = { pieces: [{ text: t, line: 0, first: true }], lang, o: {}, at: 0, ack: true, gated: true, path: nat ? "browser" : "pcm", groups: null };
   void run(cur, my);
   return true;
 }
@@ -242,16 +414,12 @@ export function speakAck(text: string, lang: string): boolean {
  * exact. speechSynthesis has no reliable pause for its natural voices: it goes on until the barge-in is confirmed.
  */
 export function pauseVoice() {
-  if (!speakingNow) return;
-  paused = true;
-  if (source && ctx && gain) {
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setTargetAtTime(0, ctx.currentTime, 0.004);
+  if (!speakingNow || !cur) return;
+  if (cur.path === "pcm" && ctx && master) {
+    paused = true;
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setTargetAtTime(0, ctx.currentTime, 0.004);
     void ctx.suspend().catch(() => undefined);
-  } else {
-    // the browser's voice cannot pause, only stop and start the sentence again, which was the crack in the voice at every cough
-    // or echo: it carries on until the speech is confirmed, and is then cancelled
-    paused = false;
   }
 }
 
@@ -259,15 +427,76 @@ export function pauseVoice() {
 export function resumeVoice() {
   if (!paused) return;
   paused = false;
-  if (source && ctx && gain) {
+  if (ctx && master) {
     void ctx.resume().catch(() => undefined);
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setTargetAtTime(1, ctx.currentTime, 0.004);
-  } else if (cur && speakingNow && !browser.speaking()) {
-    // the browser's voice was cancelled: start again from the sentence it was on
-    const my = ++token;
-    void run(cur, my);
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setTargetAtTime(ducked === "gain" ? DUCK_LEVEL : 1, ctx.currentTime, 0.004);
   }
+}
+
+function reportDuck(d: DuckInfo) {
+  lastDuckInfo = d;
+  hooks.onDuck?.(d);
+  // dev only: the end-to-end specs' marks (window.__jv exists only where Thunai.tsx sets it up for them)
+  try { (window as unknown as { __jv?: { marks?: { name: string; t: number }[] } }).__jv?.marks?.push({ name: `duck:${d.path}:${d.how}`, t: performance.now() }); } catch { /* no window */ }
+}
+
+/**
+ * Speech began over Jarvis: the voice drops, it does not stop. PCM: the duck gain to 20 % in 30 ms (a linear ramp on the audio
+ * clock). The browser's voice: speechSynthesis.pause() when the flag is on (setDuckPause; how soon `paused` reads true is
+ * reported, which is what the browser says, not what the speaker did), else it keeps speaking. Never a cancel: stopVoice()
+ * is the conductor's, once the speech holds two real words or 600 ms.
+ */
+export function duckVoice(): void {
+  if (!speakingNow || !cur || ducked) return;
+  const t0 = performance.now();
+  const p = cur.path ?? path;
+  if (p === "pcm" && ctx && master) {
+    const now = ctx.currentTime, g = master.gain;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(DUCK_LEVEL, now + DUCK_MS / 1000);
+    ducked = "gain";
+    const c = ctx as AudioContext & { baseLatency?: number; outputLatency?: number };
+    const lat = (c.baseLatency ?? 0) + (c.outputLatency ?? 0);
+    reportDuck({ path: "pcm", how: "gain", ms: DUCK_MS, outMs: lat ? Math.round(lat * 1000) : null });
+    return;
+  }
+  if (p !== "browser") return;
+  if (duckPause && browser.pause()) {
+    ducked = "pause";
+    const poll = () => {
+      if (ducked !== "pause") return;
+      const ms = performance.now() - t0;
+      if (browser.isPaused()) reportDuck({ path: "browser", how: "pause", ms: Math.round(ms), outMs: null });
+      else if (ms > 300) reportDuck({ path: "browser", how: "pause", ms: null, outMs: null });
+      else setTimeout(poll, 10);
+    };
+    poll();
+    return;
+  }
+  ducked = "kept";
+  reportDuck({ path: "browser", how: "kept", ms: null, outMs: null });
+}
+
+/** The speech over Jarvis was a backchannel or a noise: the voice comes back to full (PCM in 60 ms; the browser's resumes). */
+export function unduckVoice(): void {
+  if (!ducked) return;
+  const was = ducked;
+  ducked = false;
+  if (was === "gain" && ctx && master && !paused) {
+    const now = ctx.currentTime, g = master.gain;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(1, now + 0.06);
+  }
+  if (was === "pause") browser.resume();
+}
+
+function clearDuck() {
+  if (ducked === "pause") browser.resume();
+  ducked = false;
+  if (ctx && master) { const now = ctx.currentTime; master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(1, now); }
 }
 
 /** Everything stops; what was being said is kept for "continue". */
@@ -278,14 +507,23 @@ export function stopVoice() {
   cur = null;
   speakingNow = false;
   paused = false;
-  if (source) { try { source.onended = null; source.stop(); } catch { /* ended */ } source = null; }
+  if (player && ctx && answerGain) {
+    // a 15 ms fade on this answer's own gain, then its sources stop: no click, and the next answer's gain is untouched
+    const now = ctx.currentTime;
+    answerGain.gain.cancelScheduledValues(now);
+    answerGain.gain.setTargetAtTime(0, now, 0.004);
+    player.stop(now + 0.015);
+  } else player?.stop();
+  player = null;
+  answerGain = null;
   if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+  clearDuck();
   browser.stopVoice();
   // whoever cut it, the turn machine hears that the voice stopped: it must never show Speaking in silence
   if (was) hooks.onEnd?.(ack);
 }
 
-/** "Continue": the interrupted answer from the chunk it was on. False when there is nothing to continue. */
+/** "Continue": the interrupted answer from the chunk it was on, in the same voice and from the same audio. False when there is nothing to continue. */
 export function continueAnswer(): boolean {
   const s = bookmark;
   bookmark = null;
@@ -301,6 +539,50 @@ export function continueAnswer(): boolean {
 export const canContinue = () => !!bookmark;
 /** A new question was asked: what was interrupted before it is gone. */
 export const forgetBookmark = () => { bookmark = null; };
+
+/**
+ * A soft tone of 110 ms (120 ms with its edges) at the end of the Collector's speech: "heard you", honest, before any answer.
+ * It plays only when the ears are told first (MouthHooks.onEarcon, wired to Conductor.earcon), so it is taken as Jarvis's own
+ * sound and can never start a barge-in; with no such hook, or while Jarvis's own voice is sounding, there is no tone (false).
+ * Call it for an engaged or named sentence only, never for side talk.
+ */
+export function earconEnd(): boolean {
+  if (!hooks.onEarcon || (speakingNow && !paused)) return false;
+  const c = fxOut();
+  if (!c) return false;
+  hooks.onEarcon(EARCON_GUARD_MS);
+  try {
+    if (c.state === "suspended") void c.resume().catch(() => undefined);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.value = 740;
+    const t = c.currentTime + 0.005, end = t + EARCON_MS / 1000;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.04, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    o.connect(g).connect(c.destination);
+    o.start(t);
+    o.stop(end + 0.005);
+    return true;
+  } catch { return false; }
+}
+
+/**
+ * Mode on: the voices are listed, the earcon's context and (where the server's voice will speak) the voice's AudioContext are
+ * opened and resumed inside the gesture, so the first answer starts with nothing to set up. Nothing is said and no request is
+ * made: the page's own connection to the server is already open, and a speech request would spend the 3-a-minute allowance.
+ */
+export function warmVoice(lang: string): void {
+  browser.warmVoices();
+  const f = fxOut();
+  if (f && f.state === "suspended") void f.resume().catch(() => undefined);
+  const l = short(lang);
+  void browser.voicesReady().then(() => {
+    if (natural(l) || !serverUp()) return;
+    const c = out();
+    if (c && c.state === "suspended" && !paused) void c.resume().catch(() => undefined);
+  });
+}
 
 /**
  * The voice's level, 0..1, for the HUD. The analyser on the PCM path; speechSynthesis gives no signal, so there it is an
