@@ -9,6 +9,7 @@
  *   (PIN_PRECISION_M); the others are counted in the trace as "left out: no exact place".
  */
 import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, haversineM, inBbox, mPerDegLon, pointInPolygon, type LatLon, type Pair } from "./geom";
+import { checkSpec, spanOf } from "@/lib/period/read";
 import { isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
 import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang } from "./words";
@@ -90,6 +91,13 @@ export function periodRange(p: Period, now: string): { from: string; to: string;
     const last = f(end - 1000);
     return { from: f(start), to: last > now ? now : last, fromOpen: false };
   }
+  // a window the words gave relative to now ("last 36 hours", "since 1 October", "in November" so far, an age) is put on this run's now, so a saved
+  // view run again later counts what its words say, not the dates of the day it was asked (XPATHS-04)
+  if (p.age_hours) return { from: shiftWall(now, -24 * 365 + 1 / 3600), to: shiftWall(now, -p.age_hours), fromOpen: false };
+  const spec = p.said ? checkSpec(p.said) : null;
+  const span = spec ? spanOf(spec, now) : null;
+  if (span?.range) return { from: span.range.from, to: shiftWall(span.range.to, -1 / 3600), fromOpen: false };
+  if (span?.hours) return { from: shiftWall(now, -span.hours), to: now, fromOpen: true };
   return { from: p.from.length === 10 ? `${p.from} 00:00:00` : p.from, to: p.to.length === 10 ? `${p.to} 23:59:59` : p.to, fromOpen: false };
 }
 

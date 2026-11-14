@@ -46,7 +46,8 @@ describe("counts, hours, dates and ages get the reader's window", () => {
   it("'last 36 hours' is 36 hours back, not 2 days; without the map's clock it is left for the AI, never rounded", () => {
     const p = takeOf(planOf("flooding in the last 36 hours")?.plan)?.filter?.period as Period;
     const r = periodRange(p, NOW);
-    expect([r.from, r.to]).toEqual([shiftWall(NOW, -36 + 1 / 3600), NOW]);
+    // (from, to], as the reader counts hours, put on the run's own now
+    expect([r.from, r.to, r.fromOpen]).toEqual([shiftWall(NOW, -36), NOW, true]);
     expect(periodOf("flooding in the last 36 hours")).toBeNull();
     expect(planOf("flooding in the last 36 hours", null, noClock)?.unread).toContain("hours");
   });
@@ -57,7 +58,7 @@ describe("counts, hours, dates and ages get the reader's window", () => {
     expect(takeOf(planOf("garbage complaints since 1 October")?.plan)?.filter?.period).toMatchObject({ kind: "range", from: "2026-10-01 00:00:00", to: NOW });
     expect(takeOf(planOf("garbage complaints on 20 Oct")?.plan)?.filter?.period).toMatchObject({ kind: "range", from: "2026-10-20 00:00:00", to: "2026-10-20 23:59:59" });
   });
-  it.each(["garbage complaints two weeks ago", "flooding last year", "accidents next week"])("%s: a time the records cannot answer is said, not answered", (q) => {
+  it.each(["flooding last year", "accidents next week", "garbage complaints tomorrow"])("%s: a time the records cannot reach is said, not answered", (q) => {
     const r = rulesRoute(q, null, env);
     expect(r?.kind).toBe("say");
   });

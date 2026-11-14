@@ -64,6 +64,7 @@ export function periodWords(p: Period | null, lang: Lang): string {
   if (!p) return ta ? "எல்லா நாட்களும்" : "any time";
   if (p.kind === "last_days") {
     if (p.offset === 0) return p.days === 1 ? (ta ? "கடந்த 24 மணி நேரம்" : "last 24 hours") : ta ? `கடந்த ${p.days} நாட்கள்` : `last ${p.days} days`;
+    if (p.days === 1) return ta ? "அதற்கு முந்தைய 24 மணி நேரம்" : p.offset === 1 ? "the 24 hours before" : `24 hours, ${p.offset} periods back`;
     return ta ? `அதற்கு முந்தைய ${p.days} நாட்கள்` : p.offset === 1 ? `the ${p.days} days before` : `${p.days} days, ${p.offset} periods back`;
   }
   if (p.kind === "month") return ta ? (p.offset === 0 ? "இந்த மாதம்" : `${p.offset} மாதம் முன்`) : p.offset === 0 ? "this calendar month" : p.offset === 1 ? "last calendar month" : `the calendar month ${p.offset} months back`;

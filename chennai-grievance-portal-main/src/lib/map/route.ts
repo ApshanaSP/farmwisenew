@@ -130,13 +130,18 @@ const ALL_TIME = /\b(all time|ever|since may|whole period|all dates|any time)\b|
 // a time the question bounds or leaves out ("reported before yesterday", "leaving out today", "except this week") is not the window it asks for
 // ("the day before yesterday" is a day, not a bound)
 const BOUNDED = new RegExp([
-  String.raw`(?<!\bday\s)\b(?:before|prior to|earlier than|except|excluding|leaving out|other than|apart from|not including)\s+(?:the\s+|of\s+)?`
+  String.raw`(?<!\bday\s)\b(?:before|prior to|earlier than|older than|newer than|later than|except|excluding|leaving out|other than|apart from|not including)\s+(?:the\s+|of\s+)?`
     + String.raw`(?:today|tonight|yesterday|(?:this|last|past|previous)\s+(?:\d+\s+)?(?:days?|weeks?|months?|quarters?|years?)\b`
     + String.raw`|january|february|march|april|june|july|august|september|october|november|december|(?:jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\s+\d`
     + String.raw`|\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))`,
-  String.raw`(?:இன்று|இன்றை|நேற்று|நேற்றை|இந்த|கடந்த)[஀-௿]*\s*(?:க்கு\s*)?(?:முன்|தவிர)`,
+  String.raw`(?:இன்று|இன்றை|நேற்று|நேற்றை|இந்த|கடந்த)[஀-௿]*\s*(?:க்கு\s*)?(?:முன்(?!தினம்)|தவிர)`,
   String.raw`\b(?:innaiki|inniki|innaiku|nethu|indha|pona)\S*\s+(?:munnadi|thavira)\b`
 ].join("|"), "i");
+const BOUNDED_ALL = new RegExp(BOUNDED.source, "gi");
+// a plain "now" is mostly a sequence word ("by ward now", "இப்போது வார்டு வாரியாக காட்டு"): only these name the current state
+const NOW_STATE = /\b(?:right now|currently|at present|presently|as of now|at the moment|at this moment)\b|தற்போது/i;
+// a time the records cannot reach: ahead of now, or a year back. A weekday, "a few days" or "a fortnight" the reader does not read is not one
+const FAR = /\b(?:next|coming|upcoming)\s+(?:week|month|quarter|year)\b|\btomorrow\b|\b(?:last|previous|past)\s+year\b|\bnext year\b|\b(?:\d+|a|one|two|three)\s+years?\s+ago\b|அடுத்த\s*(?:வாரம்|மாதம்|ஆண்டு|வருடம்)|நாளை|கடந்த\s*(?:ஆண்டு|வருடம்)/i;
 // "5 naal kulla", "10 naatkal la": the map's own Tanglish count, which the reader does not hold
 const DAYS_TG = /(\d{1,3})\s*(?:naal|naatkal|days)\s*(?:la|kulla)\b/i;
 // a count longer than the records reach (the reader calls it unheld): "last 200 days", "past 12 months", "last 30 weeks"
@@ -162,10 +167,10 @@ function ageHours(text: string): { hours: number; n: number; unit: "day" | "week
 function rangeOf(spec: PeriodSpec, now: string): Period | "unheld" {
   const span = spanOf(spec, now);
   if (!span) return "unheld";
-  if (span.range) return { kind: "range", from: span.range.from, to: wallPlus(span.range.to, -1 / 3600), label: { en: span.label.en, ta: span.label.ta } };
+  if (span.range) return { kind: "range", from: span.range.from, to: wallPlus(span.range.to, -1 / 3600), label: { en: span.label.en, ta: span.label.ta }, said: spec };
   // a rolling count of hours: the hours back from now, (from, to] as the reader counts them
   const hours = span.hours ?? KEY_DAYS[span.key] * 24;
-  return { kind: "range", from: wallPlus(now, -hours + 1 / 3600), to: now, label: { en: span.label.en, ta: span.label.ta } };
+  return { kind: "range", from: wallPlus(now, -hours + 1 / 3600), to: now, label: { en: span.label.en, ta: span.label.ta }, said: spec };
 }
 
 /**
@@ -182,13 +187,14 @@ function rangeOf(spec: PeriodSpec, now: string): Period | "unheld" {
 export function periodOf(text: string, now?: string | null): SaidPeriod {
   const t = text.toLowerCase();
   if (ALL_TIME.test(t)) return "all";
-  if (BOUNDED.test(text)) return null;
+  // the bound and its time are taken out and the rest is read: "the last 30 days excluding today" is the last 30 days
+  if (BOUNDED.test(text)) return periodOf(text.replace(BOUNDED_ALL, " "), now);
   const age = ageHours(text);
   if (age) {
     if (!now) return null;
     const unit = { day: ["day", "நாட்கள்"], week: ["week", "வாரங்கள்"], month: ["month", "மாதங்கள்"] }[age.unit];
     return { kind: "range", from: wallPlus(now, -24 * LIMITS.days + 1 / 3600), to: wallPlus(now, -age.hours),
-      label: { en: `reported more than ${age.n} ${unit[0]}${age.n === 1 ? "" : "s"} ago`, ta: `${age.n} ${unit[1]}க்கு முன் பதிவானவை` } };
+      label: { en: `reported more than ${age.n} ${unit[0]}${age.n === 1 ? "" : "s"} ago`, ta: `${age.n} ${unit[1]}க்கு முன் பதிவானவை` }, age_hours: age.hours };
   }
   const s = readPeriod(text);
   switch (s.kind) {
@@ -198,11 +204,12 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
       return now ? rangeOf(s, now) : null;
     case "day": return { kind: "day", offset: s.back };
     case "last": return { kind: s.unit, offset: 1 };
-    case "now": return "now";
+    case "now": return NOW_STATE.test(text) ? "now" : null;
     case "month": case "days": case "since": case "holiday": case "lastWeekOf": return now ? rangeOf(s, now) : null;
     case "unheld": {
       const m = t.match(LONG_COUNT);
-      if (!m) return "unheld";
+      if (!m && FAR.test(text)) return "unheld";
+      if (!m) break; // not a time the map reads ("since Monday", "a few days"): its words stay unread, as before
       const n = Number(m[1] ?? m[3]), u = (m[2] ?? m[4] ?? "").toLowerCase();
       const days = /^(week|வார)/.test(u) ? n * 7 : /^(month|மாத)/.test(u) ? n * 30 : /^year/.test(u) ? n * 365 : n;
       return { kind: "last_days", days: Math.min(LIMITS.days, days), offset: 0 };
@@ -231,10 +238,14 @@ export function periodWordsOutMap(text: string): string {
 }
 
 /** A word that names a time ("yesterday", "last month", "vaaram"), as opposed to a comparison alone ("up or down?"). */
-const TIME_WORD = /\b(?:today|yesterday|tonight|days?|weeks?|months?|quarters?|years?|hours?|innaiki|inniki|innaiku|nethu|vaaram|vaaratha|maasam|maasatha)\b|இன்று|நேற்று|வார|மாத|நாள்|நாட்/i;
+const TIME_WORD = /\b(?:today|yesterday|tonight|days?|weeks?|months?|quarters?|years?|hours?|innaiki|inniki|innaiku|nethu\w*|nethai\w*|vaara\w*|maasa\w*|kadandha|pona)\b|இன்ற|நேற்ற|வார|மாத|நாள்|நாட்/i;
+// a comparison word and a date or month ("compared to August", "vs 20 Oct"): a comparison the map cannot plan as one change
+const CMP_WORDS = /\b(?:compared?\s+(?:to|with)|vs\.?|versus|than|against|relative to)\b|\bvida\b|விட/i;
+const DATE_WORD = /\b(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
 
 /** The reader reads a comparison of two periods: "up or down", "than yesterday", "pona maasatha vida", "நேற்றை விட". */
-export const isComparison = (text: string): boolean => readPeriod(text).kind === "compare";
+// never a bound ("older than yesterday" is the incidents before yesterday, not a comparison with it)
+export const isComparison = (text: string): boolean => readPeriod(text).kind === "compare" && !BOUNDED.test(text);
 // the period after a comparison word is the one compared against, not the window asked about: "up from last month", "more than last week"
 const REFERENCE = /\b(?:than|from|vs\.?|versus|compared (?:to|with)|against|relative to|over)\s+(?:the\s+)?(?:last|previous|past)\s+(?:week|month|quarter)\b|\b(?:than|from|vs\.?|versus|compared (?:to|with)|against)\s+yesterday\b|(?:வாரத்தை|மாதத்தை|நேற்றை)\s*விட|\b(?:vaaratha|maasatha|nethai|nethaiya)\s+vida\b/i;
 
@@ -443,7 +454,8 @@ export function parse(text: string, env: RouteEnv): Parsed {
     shape: {
       countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       // a comparison the reader reads ("up or down", "than yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District IQ
-      compare: COMPARE.test(text) && !CHANGE.test(text) && !isComparison(text), change: CHANGE.test(text) || isComparison(text), changeRef: REFERENCE.test(text), brief: BRIEF.test(text)
+      // (two areas compared, "Adyar vs Velachery, higher or lower?", stay an area comparison)
+      compare: COMPARE.test(text) && !CHANGE.test(text), change: CHANGE.test(text) || (isComparison(text) && !COMPARE.test(text)), changeRef: REFERENCE.test(text), brief: BRIEF.test(text)
     }
   };
 }
@@ -648,7 +660,7 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
   // (fixall3-map-today; before, the comparison was dropped and only the period was edited)
   if (take && isComparison(t) && tokens(t).length <= 6 && !parseSubject(t, env)) {
     const last = plan.steps[plan.steps.length - 1];
-    if (plan.steps.some((s) => s.op === "change") || !["take", "inside", "within", "along"].includes(last.op)) return null;
+    if (plan.steps.length >= LIMITS.steps || plan.steps.some((s) => s.op === "change") || !["take", "inside", "within", "along"].includes(last.op)) return null;
     // "up or down?" names no time of its own (the reader's default week): the answer's own window is compared
     const said = TIME_WORD.test(t) ? periodOf(t, env.now) : null;
     const { now: per, before } = changeWindows(isPeriod(said) ? said : take.filter?.period ?? null, REFERENCE.test(t));
@@ -658,6 +670,8 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
     plan.show = as;
     return ok("change");
   }
+  // "compared to August", "vs 20 Oct", "vs the month before": a comparison with a time the rules do not plan as a change goes to the AI, never a period edit
+  if (take && CMP_WORDS.test(t) && (TIME_WORD.test(t) || DATE_WORD.test(t))) return null;
   // a period alone: "last 7 days", "this month", "today"
   const per = periodOf(t, env.now);
   if (take && per && per !== "unheld" && tokens(t).length <= 5 && !parseSubject(t, env)) {
@@ -789,7 +803,7 @@ export function mergeFollowUp(text: string, prev: Plan, env: RouteEnv): RouteOut
     m.severity = p.severity ?? f?.severity ?? null;
     m.overdue = p.overdue ?? f?.overdue ?? null;
     m.dept = p.dept ?? f?.dept?.[0] ?? null;
-    m.status = p.status ?? f?.status ?? null;
+    m.status = p.status ?? (p.period === "now" ? "open" : f?.status ?? null);
     m.period = p.period ?? (f ? f.period ?? "all" : null);
     if (!p.facilities.length && prevFacs.length) { m.facilities = prevFacs; m.facNear = true; m.meters = p.meters ?? within!.meters; }
     if (!p.shape.countBy && last?.op === "count_by" && last.by !== "hex500") m.shape.countBy = last.by;
