@@ -1,8 +1,10 @@
-/* Jarvis over the console, in the console's own theme: one light-blue core, one bar at the bottom, one answer in the corner. The
-   page keeps its colours: nothing dims it, and only transform and opacity animate. */
+/* Jarvis over the console, in the console's own theme: one bar at the bottom with the light-blue core docked in it, one answer in
+   the corner. The page keeps its colours: nothing dims it, and only transform and opacity animate. */
 .hud {
   --c: #0e7490; --core: #22d3ee; --c-soft: rgba(34, 211, 238, .16); --c-line: rgba(8, 145, 178, .38); --amber: #b45309; --ink: #0f172a; --ink-2: #475569;
   --glass: rgba(255, 255, 255, .97); --glass-2: #f1f7f9; --line: rgba(15, 23, 42, .12); --shade: 0 14px 40px -14px rgba(15, 23, 42, .32), 0 2px 6px rgba(15, 23, 42, .08); --rec: #e11d48;
+  /* the bar's glow, by state (hudcore.ts visualOf sets how strong, as opacity) */
+  --gc: 8, 145, 178;
   position: fixed; inset: 0; z-index: 2147482995; pointer-events: none; color: var(--ink); display: block;
   font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Noto Sans Tamil Variable", "Noto Sans Tamil", "Nirmala UI", system-ui, sans-serif;
   font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; text-rendering: geometricPrecision;
@@ -10,104 +12,174 @@
 html[data-theme="dark"] .hud {
   --c: #67e8f9; --c-soft: rgba(34, 211, 238, .14); --c-line: rgba(34, 211, 238, .36); --amber: #fbbf24; --ink: #f1f7fb; --ink-2: #b9c7d4;
   --glass: rgba(9, 18, 27, .97); --glass-2: rgba(255, 255, 255, .06); --line: rgba(255, 255, 255, .14); --shade: 0 14px 40px -14px rgba(0, 0, 0, .7);
+  --gc: 34, 211, 238;
 }
+.hud[data-visual="offline"] { --gc: 180, 83, 9; }
+html[data-theme="dark"] .hud[data-visual="offline"] { --gc: 251, 191, 36; }
 .hud [lang="ta"], .hud[lang="ta"] { font-family: "Noto Sans Tamil Variable", "Noto Sans Tamil", "Nirmala UI", system-ui, sans-serif; letter-spacing: normal; line-height: 1.6; }
 .hud button, .hud input, .hud .th-card, .hud .th-tray, .hud .hud-first, .hud .hud-ans { pointer-events: auto; }
 .hud button { font: inherit; cursor: pointer; }
+.hud button:disabled { cursor: default; opacity: .55; }
 .hud :focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
 .hud svg.ic, .hud .ic { width: 15px; height: 15px; flex: none; }
+/* words for screen readers only */
+.hud-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* the dock: the core above the bar, at the bottom of the screen, clear of the console's tabs */
+/* the dock: the waiting cards above the bar, at the bottom of the screen, clear of the console's tabs */
 .hud-dock { position: absolute; left: 50%; bottom: 14px; width: min(780px, calc(100vw - 32px)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; }
 
 /* the chatbot open at the right: Jarvis's bar moves to the left, clear of the chat's box */
 html:has(.dic .aq-overlay) .hud-dock { left: 16px; transform: none; width: min(780px, calc(100vw - 600px)); }
 
-/* the core keeps its own small night sky on a light page, so the light blue glows as it does in the dark */
-.hud-core { position: absolute; left: 50%; bottom: calc(100% - 26px); width: 240px; height: 240px; margin-left: -120px; transform: scale(.4); transform-origin: bottom center; transition: transform .32s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
-.hud-core.big { transform: scale(.82); }
-.hud-core::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, #0b2a3f 0%, #0b2a3f 58%, rgba(11, 42, 63, .75) 68%, rgba(11, 42, 63, 0) 73%); }
-html[data-theme="dark"] .hud-core::before { background: none; }
-.hud-canvas { position: absolute; inset: 0; width: 240px; height: 240px; }
+/* the core, docked at the bar's left: drawn at its own size on the bar's own surface (no navy disc behind it on a light page) */
+.hud-core { position: relative; flex: none; align-self: center; width: 40px; height: 40px; }
+.hud-canvas { position: absolute; inset: 0; width: 40px; height: 40px; }
 .hud-anchor { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; }
-.hud-dial { position: absolute; inset: 0; width: 240px; height: 240px; fill: none; stroke: rgba(34, 211, 238, .34); stroke-width: 1; }
-.hud-ticks line { stroke-width: 1; }
-.hud-core[data-state="thinking"] .hud-dial { animation: hud-turn 14s linear infinite; }
-.hud-core[data-state="offline"] .hud-dial { stroke: rgba(251, 191, 36, .4); }
-@keyframes hud-turn { to { transform: rotate(360deg); } }
 
-/* the bar: what is happening, in words, and every control, in words */
-.hud-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 9px 10px 9px 16px; border-radius: 16px; background: var(--glass); border: 1px solid var(--c-line); box-shadow: var(--shade); pointer-events: auto; }
+/* the bar: what is happening, in words, and every control, in words; its border glows with the state */
+.hud-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 10px 8px 10px; border-radius: 16px; background: var(--glass); border: 1px solid var(--c-line); box-shadow: var(--shade); pointer-events: auto; }
+.hud-glow { position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; box-shadow: 0 0 0 1.5px rgba(var(--gc), .85), 0 0 18px 1px rgba(var(--gc), .45); will-change: opacity; }
 .hud-read { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
 .hud-state { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14.5px; }
 .hud-state b { font-weight: 700; color: var(--c); }
 .hud[data-core="offline"] .hud-state b { color: var(--amber); }
 .hud-hint { font-size: 13.5px; color: var(--ink-2); }
+/* the microphone is open: a red dot, distinct from every state's colour, that breathes (opacity) */
 .hud-mic { display: inline-flex; align-self: center; }
-.hud-mic i { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); animation: hud-pulse 1.6s ease-in-out infinite; }
+.hud-mic i { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 2px rgba(225, 29, 72, .18); animation: hud-pulse 1.6s ease-in-out infinite; }
 @keyframes hud-pulse { 50% { opacity: .35; } }
 /* the words as they are heard */
 .hud-ribbon { font-size: 16px; font-weight: 550; color: var(--ink); overflow-wrap: anywhere; animation: hud-in .18s ease both; }
 .hud-faint { font-size: 13.5px; color: var(--ink-2); opacity: .75; animation: hud-fade 2s ease forwards; }
 @keyframes hud-fade { 0%, 60% { opacity: .75; } 100% { opacity: 0; } }
 @keyframes hud-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes hud-show { from { opacity: 0; } }
 .hud-notice { font-size: 13.5px; color: var(--ink-2); }
 .hud-notice.warn { color: var(--amber); font-weight: 600; }
 .hud-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.hud-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--glass-2); color: var(--ink); font-size: 13.5px; font-weight: 600; white-space: nowrap; transition: border-color .15s, background .15s; }
+.hud-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--glass-2); color: var(--ink); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
 .hud-btn:hover { border-color: var(--c); }
 .hud-btn.pri { background: var(--c); border-color: var(--c); color: #fff; }
 html[data-theme="dark"] .hud-btn.pri { color: #04131a; }
 .hud-btn.close { background: transparent; }
 .hud-btn.close:hover { border-color: var(--rec); color: var(--rec); }
+.hud-btn em { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--c); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; font-style: normal; text-align: center; box-sizing: border-box; }
+html[data-theme="dark"] .hud-btn em { color: #04131a; }
+.hud-queue { padding: 0 9px; }
+.hud-queue em { background: var(--amber); }
 .hud-compose { flex-basis: 100%; }
 .hud-compose input { width: 100%; height: 40px; padding: 0 12px; font: inherit; font-size: 15px; color: var(--ink); background: var(--glass-2); border: 1px solid var(--c); border-radius: 10px; outline: none; box-sizing: border-box; }
 .hud-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
-/* the latest answer: one card, in the corner, with its question; a new question replaces it */
-.hud-ans { position: absolute; right: 16px; top: 84px; width: min(370px, calc(100vw - 32px)); max-height: calc(100dvh - 250px); overflow: auto; padding: 12px 14px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); border-top: 3px solid var(--core); box-shadow: var(--shade); animation: hud-in .22s ease both; }
+/* the live progress line: the turn's real steps and their times, one line under the state word */
+.hud-progress { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 4px 12px; margin: 0; padding: 0; list-style: none; overflow: hidden; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+.hud-progress li { display: inline-flex; align-items: baseline; gap: 4px; flex: none; }
+.hud-progress li:last-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hud-progress li i { font-style: normal; width: 1em; text-align: center; }
+.hud-progress li.running { color: var(--ink); font-weight: 600; }
+.hud-progress li.done i { color: var(--c); }
+.hud-progress li.failed { color: var(--amber); }
+.hud-progress small { font-size: 11.5px; opacity: .85; }
+.hud-progress .more { opacity: .7; }
+.hud-progress[lang="ta"], .hud-progress [lang="ta"] { font-size: 14px; line-height: 1.5; }
+/* a plan's own step chips (the console's steps while it acts), shown as the same one compact line, take the line's place */
+.hud .hud-cards .th-chips { display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 4px; margin: 0; padding: 5px 10px; overflow: hidden; white-space: nowrap; border-radius: 10px; background: var(--glass); border: 1px solid var(--c-line); box-shadow: var(--shade); }
+.hud .hud-cards .th-chip { flex: none; padding: 1px 8px; font-size: 12.5px; color: var(--ink-2); border-color: var(--line); }
+.hud .hud-cards .th-chip.running { color: var(--ink); border-color: var(--c); }
+.hud .hud-cards .th-chip.done { color: var(--c); }
+.hud-dock:has(.hud-cards .th-chips) .hud-progress { display: none; }
+
+/* what Jarvis is saying, the word under the voice marked; a new line fades in whole (Tamil is never split per glyph) */
+.hud-cap p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); overflow-wrap: break-word; animation: hud-show .2s ease both; }
+.hud-cap .done { color: var(--ink-2); }
+/* the mark changes colour, never size: no padding, so the line does not move as the word moves */
+.hud-cap mark { background: var(--c-soft); color: var(--ink); border-radius: 4px; box-shadow: 0 0 0 2px var(--c-soft); }
+.hud-cap[lang="ta"] p { line-height: 1.6; }
+
+/* where the answer came from: one line, a button when it can open the rows */
+.hud-ev { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; align-self: flex-start; max-width: 100%; margin: 2px 0 0; padding: 2px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--glass-2); color: var(--ink-2); font-size: 12px; font-weight: 550; text-align: left; }
+.hud-ev span + span::before { content: "·"; margin-right: 6px; opacity: .7; }
+.hud-ev .ic { width: 13px; height: 13px; color: var(--c); }
+button.hud-ev:hover { border-color: var(--c); color: var(--ink); }
+.hud-ev[lang="ta"] { font-size: 13px; line-height: 1.5; }
+
+/* the latest answer: one small card, in the corner, with its question; a new question replaces it; it folds to a pill */
+.hud-ans { position: absolute; right: 16px; top: 84px; width: min(330px, calc(100vw - 32px)); max-height: calc(100dvh - 250px); overflow: auto; padding: 10px 12px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); border-top: 3px solid var(--core); box-shadow: var(--shade); animation: hud-in .22s ease both; }
+.hud-pill { position: absolute; right: 16px; top: 84px; display: inline-flex; align-items: center; gap: 8px; max-width: min(300px, calc(100vw - 32px)); height: 34px; padding: 0 10px 0 12px; border-radius: 17px; background: var(--glass); color: var(--ink); border: 1px solid var(--c-line); box-shadow: var(--shade); font-size: 13px; font-weight: 600; pointer-events: auto; animation: hud-show .18s ease both; }
+.hud-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-pill-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--core); }
+.hud-pill:hover { border-color: var(--c); }
 /* it steps aside for the console's own popovers and dialogs */
 /* only a window that needs the whole screen hides it (a toast no longer does: the card used to vanish whenever one showed) */
-html:has(.dic .pop, .dic .alc-pop, .dic .modal, .dic .scrim, .dic .pal, .dic .aq-overlay, .dic .ds-modal-veil, .dic .jq) .hud-ans { visibility: hidden; }
+html:has(.dic .pop, .dic .alc-pop, .dic .modal, .dic .scrim, .dic .pal, .dic .aq-overlay, .dic .ds-modal-veil, .dic .jq) .hud-ans,
+html:has(.dic .pop, .dic .alc-pop, .dic .modal, .dic .scrim, .dic .pal, .dic .aq-overlay, .dic .ds-modal-veil, .dic .jq) .hud-pill { visibility: hidden; }
 /* the console's toasts sit where the card is: while a card is up they show at the left instead */
-html:has(.hud-ans) .dic .toasts { right: auto; left: 18px; }
+html:has(.hud-ans) .dic .toasts, html:has(.hud-pill) .dic .toasts { right: auto; left: 18px; }
 .hud-ans header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hud-ans header > span { display: inline-flex; gap: 2px; }
 .hud-ans header small { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
 .hud-x { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-2); }
 .hud-x:hover { background: var(--glass-2); color: var(--ink); }
-.hud-q { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.hud-q { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .hud-ans h3 { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--c); }
 .hud-a { margin: 0 0 8px; font-size: 14.5px; color: var(--ink); }
 .hud-ans dl { margin: 0 0 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .hud-ans dt { font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
-.hud-ans dd { margin: 0; font-size: 21px; font-weight: 700; color: var(--ink); }
+.hud-ans dd { margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); }
 .hud-ans dd small { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
 .hud-ans footer { font-size: 12px; color: var(--ink-2); margin-bottom: 8px; }
 .hud-ans-acts { display: flex; flex-wrap: wrap; gap: 6px; }
 .hud-ans-acts button { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--glass-2); color: var(--ink); font-size: 12.5px; font-weight: 600; }
 .hud-ans-acts button:hover { border-color: var(--c); }
 .hud-ans[lang="ta"] dt, .hud-ans[lang="ta"] footer, .hud-first[lang="ta"] p { font-size: 14px; line-height: 1.5; }
+/* Tamil body text at least 16 px, line-height at least 1.5 */
+.hud-a[lang="ta"], .hud-q[lang="ta"], .hud[lang="ta"] .hud-hint, .hud-ribbon[lang="ta"] { font-size: 16px; line-height: 1.6; }
 
-/* the waiting cards (a question, a yes, the tray) sit above the bar */
+/* the waiting cards (a question, a yes, the tray, a mission, something noticed) sit above the bar */
 .hud-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; position: relative; z-index: 1; }
 .hud-cards:empty { display: none; }
-.hud .hud-cards .th-card, .hud .hud-cards .th-tray { position: static; width: auto; background: var(--glass); color: var(--ink); border: 1px solid var(--c-line); border-radius: 12px; box-shadow: var(--shade); }
-.hud .hud-cards .th-card button, .hud .hud-cards .th-tray button { color: var(--ink); background: var(--glass-2); border: 1px solid var(--line); border-radius: 8px; }
+.hud .hud-cards .th-card, .hud .hud-cards .th-tray { position: static; width: auto; background: var(--glass); color: var(--ink); border: 1px solid var(--c-line); border-radius: 12px; box-shadow: var(--shade); animation: hud-show .2s ease both; }
+.hud .hud-cards .th-card button, .hud .hud-cards .th-tray button { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); background: var(--glass-2); border: 1px solid var(--line); border-radius: 8px; }
 .hud .hud-cards .th-card button.primary, .hud .hud-cards .th-tray button.primary { background: var(--c); color: #fff; border-color: var(--c); font-weight: 650; }
-.hud .hud-cards .th-chips { display: none; }
+html[data-theme="dark"] .hud .hud-cards .th-card button.primary { color: #04131a; }
+
+/* a mission: its plan, then each step ticking with its real time */
+.hud-mission header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hud-mission header b { flex: 1; min-width: 0; font-size: 14.5px; }
+.hud-mission header small { flex: none; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.hud-mission header .ic { color: var(--c); }
+.hud-mission ol { margin: 0 0 10px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; }
+.hud-mission li { display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); }
+.hud-mission li > span { flex: 1; min-width: 0; }
+.hud-mission li small { flex: none; font-size: 12px; }
+.hud-mission .tick { flex: none; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line); font-style: normal; font-size: 10px; line-height: 1; color: #fff; }
+.hud-mission li.running { color: var(--ink); font-weight: 600; }
+.hud-mission li.running .tick { border-color: var(--c); border-top-color: transparent; animation: hud-turn 1s linear infinite; }
+.hud-mission li.done { color: var(--ink); }
+.hud-mission li.done .tick { background: var(--c); border-color: var(--c); }
+.hud-mission li.skipped { text-decoration: line-through; opacity: .7; }
+.hud-mission li.failed { color: var(--amber); }
+.hud-mission li.failed .tick { background: var(--amber); border-color: var(--amber); }
+.hud-mission[lang="ta"] ol, .hud-mission [lang="ta"] { font-size: 16px; line-height: 1.5; }
+@keyframes hud-turn { to { transform: rotate(360deg); } }
+
+/* something Jarvis noticed: one line, then Tell me or Later */
+.hud-int p { display: flex; align-items: flex-start; gap: 8px; font-size: 14.5px; }
+.hud-int p .ic { margin-top: 3px; color: var(--c); }
+.hud .hud-cards .hud-int.sev-high { border-left: 4px solid var(--amber); }
+.hud .hud-cards .hud-int.sev-high p .ic { color: var(--amber); }
+.hud-int p[lang="ta"] { font-size: 16px; line-height: 1.6; }
 
 .hud-first { position: absolute; left: 50%; bottom: 96px; width: min(600px, calc(100vw - 32px)); transform: translateX(-50%); background: var(--glass); border: 1px solid var(--c-line); border-radius: 14px; box-shadow: var(--shade); padding: 12px 14px; display: flex; gap: 12px; align-items: center; z-index: 2; }
 .hud-first p { margin: 0; font-size: 14px; }
 .hud-first button { flex: none; background: var(--c); color: #fff; border: 0; border-radius: 10px; padding: 8px 14px; font-weight: 650; }
 html[data-theme="dark"] .hud-first button { color: #04131a; }
 
-/* the power-on: the core ignites, once a session (transform and opacity only) */
+/* the power-on: the core ignites in the bar, once a session (transform and opacity only) */
 .hud.powering .hud-core { animation: hud-ignite 1.2s cubic-bezier(.2, .8, .2, 1) both; }
-@keyframes hud-ignite { 0% { opacity: 0; transform: scale(.05); } 45% { opacity: 1; transform: scale(.82); } 100% { transform: scale(.4); } }
+@keyframes hud-ignite { 0% { opacity: 0; transform: scale(.1); } 45% { opacity: 1; transform: scale(1.35); } 100% { transform: scale(1); } }
 
-/* with a screen open: the core docks inside the bar, and the screen leaves room for the bar */
-.hud.with-stage .hud-core { left: 8px; bottom: 6px; margin-left: 0; transform: scale(.2); transform-origin: bottom left; z-index: 1; }
-.hud.with-stage .hud-bar { padding-left: 66px; }
+/* with a screen open: the screen leaves room for the bar, and the bar keeps its captions */
 html.jv-hud .st-root { z-index: 2147482992; }
 html.jv-hud .st-frame { margin: 14px 14px 88px; max-height: calc(100dvh - 102px); }
 /* at 1366x768 a screen is short: rows keep their facts and the list scrolls */
@@ -126,7 +198,7 @@ html.jv-hud .st-frame { margin: 14px 14px 88px; max-height: calc(100dvh - 102px)
 @keyframes hud-ping { from { opacity: .9; transform: var(--at) scale(.3); } to { opacity: 0; transform: var(--at) scale(1.1); } }
 
 /* phones: the words in the buttons stay; the answer sits above the bar */
-@media (max-width: 760px) { .hud-ans { top: 64px; max-height: 38dvh; } .hud-acts { flex-basis: 100%; } .hud-btn { flex: 1; justify-content: center; padding: 0 8px; } }
+@media (max-width: 760px) { .hud-ans { top: 64px; max-height: 38dvh; } .hud-pill { top: 64px; } .hud-acts { flex-basis: 100%; } .hud-btn { flex: 1; justify-content: center; padding: 0 8px; } }
 
 .hud-levelbar { display: none; }
 @media (prefers-reduced-motion: reduce) {

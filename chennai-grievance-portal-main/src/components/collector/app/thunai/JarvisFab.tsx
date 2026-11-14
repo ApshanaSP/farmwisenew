@@ -1,8 +1,9 @@
 "use client";
 /**
  * Jarvis's own button, above the chatbot's at the bottom right: the light-blue core and its name. A click starts it, and once it
- * is running the same button closes it. Saying "Hi Jarvis" opens it too (Thunai.tsx). Joined to it, a clock with the number of
- * questions asked: a click lists them, with what Jarvis answered (JarvisQuestions.tsx).
+ * is running the same button closes it. Saying "Hi Jarvis" opens it too (Thunai.tsx). Joined to it while Jarvis is closed, a
+ * clock with the number of questions asked: a click lists them, with what Jarvis answered (JarvisQuestions.tsx). While Jarvis is
+ * open the bar's "Questions" button is the one way to them (v4: one entry point at a time, not three); both open this list.
  */
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -32,10 +33,12 @@ export default function JarvisFab() {
       {list && createPortal(<JarvisQuestions lang={ta ? "ta" : "en"} place={on ? "bar" : "fab"} onClose={close} />, document.body)}
       {s.denied && !on && <span className="jvf-note" role="alert">{ta ? "மைக் தடுக்கப்பட்டுள்ளது: முகவரிப் பட்டியில் அனுமதியுங்கள்" : "Microphone blocked: allow it in the address bar"}</span>}
       <div className="jvf-pair">
-        <button className={`jvf-q${list ? " on" : ""}`} data-jq-toggle onClick={() => setList((v) => !v)} aria-expanded={list}
-          title={ta ? "முந்தைய கேள்விகள்" : "Earlier questions"} aria-label={ta ? `முந்தைய கேள்விகள் (${n})` : `Earlier questions (${n})`}>
-          <I n="clock" />{n > 0 && <em>{n > 99 ? "99+" : n}</em>}
-        </button>
+        {!on && (
+          <button className={`jvf-q${list ? " on" : ""}`} data-jq-toggle onClick={() => setList((v) => !v)} aria-expanded={list}
+            title={ta ? "முந்தைய கேள்விகள்" : "Earlier questions"} aria-label={ta ? `முந்தைய கேள்விகள் (${n})` : `Earlier questions (${n})`}>
+            <I n="clock" />{n > 0 && <em>{n > 99 ? "99+" : n}</em>}
+          </button>
+        )}
         <button className={`jvf${on ? " on" : ""}`} onClick={() => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } }))}
           aria-pressed={on} title={on ? (ta ? "ஜார்விஸை மூடு" : "Close Jarvis") : (ta ? "ஜார்விஸைத் தொடங்கு, அல்லது \"ஹாய் ஜார்விஸ்\" என்று சொல்லுங்கள்" : "Start Jarvis, or say \"Hi Jarvis\"")}>
           <i className="jvf-core" aria-hidden="true"><b /></i>

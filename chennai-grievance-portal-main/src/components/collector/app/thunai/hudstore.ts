@@ -37,11 +37,29 @@ export interface HudState {
   strip: { lastMs: number | null; ackMs: number | null; findingMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null };
   /** the place being discussed, for the map's reticle */
   focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null;
+
+  // ---- v4, Pillar 6 (lane H2): what the bar shows besides the state. Thunai.tsx writes these, the HUD only reads them.
+  /** a plan step runs in the console (the turn's phase is "acting"), not only thinking: the core and the bar's glow say so */
+  acting: boolean;
+  /** the words being said now and the character the voice is on (the speech engine's word boundary), for the bar's captions */
+  caption: HudCaption | null;
+  /** where the answer on screen came from, every value from code (evidenceOf in hudview.ts), shown as one chip under it */
+  evidence: HudEvidence | null;
+  /** a mission's plan (Start / Edit), then its steps ticking with their real times */
+  mission: HudMission | null;
+  /** a signal Jarvis raises unprompted: one line, after the chime, with Tell me and Later */
+  interjection: HudInterjection | null;
+  /** the signals waiting in the queue, shown as a badge */
+  queue: number;
+  /** what the HUD's v4 buttons call: Thunai.tsx sets them (hud.actions) */
+  actions: HudActions;
 }
 
 const START: HudState = {
   mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", asked: "", doing: "", engagedUntil: 0, typing: false, steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
-  strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null
+  strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null,
+  // ---- v4, Pillar 6 (lane H2)
+  acting: false, caption: null, evidence: null, mission: null, interjection: null, queue: 0, actions: {}
 };
 
 let state: HudState = START;
@@ -65,7 +83,21 @@ export const hud = {
   // one answer at a time: earlier ones go to the chatbot's Jarvis tab, they never stack over the dashboard
   panel: (p: HudPanel) => hud.set({ panels: [p] }),
   level: () => micLevel,
-  setLevel: (v: number) => { micLevel = v; }
+  setLevel: (v: number) => { micLevel = v; },
+
+  // ---- v4, Pillar 6 (lane H2): setters for the bar's captions, the cards and their buttons
+  /** a new piece of speech starts (the exact text the voice says): its word comes with captionWord; null clears the line */
+  caption: (text: string | null, lang: "en" | "ta" = "en") => hud.set({ caption: text ? { text, char: null, lang } : null }),
+  /** the voice reached this character of the caption's text (SpeechSynthesisUtterance's boundary charIndex) */
+  captionWord: (char: number) => { if (state.caption && state.caption.char !== char) hud.set({ caption: { ...state.caption, char } }); },
+  /** the callbacks the cards and the evidence chip call; merged, so each can be set on its own */
+  actions: (p: Partial<HudActions>) => hud.set({ actions: { ...state.actions, ...p } }),
+  /** one mission step moves on (by index), with the time code measured */
+  missionStep: (i: number, p: Partial<HudMissionStep>) => {
+    const m = state.mission;
+    if (!m || !m.steps[i]) return;
+    hud.set({ mission: { ...m, steps: m.steps.map((x, k) => (k === i ? { ...x, ...p } : x)) } });
+  }
 };
 
 /** the core's shape, from the mode and whose turn it is */
@@ -118,3 +150,44 @@ export function tabStop<T>(stage: T[], hudControls: T[], at: T | null, back: boo
 
 /** the saved theme, what html goes back to when Jarvis mode ends: it may have changed while the mode was on */
 export const savedTheme = (saved: string | null): "dark" | "light" => (saved === "dark" ? "dark" : "light");
+
+// ---- v4, Pillar 6 (lane H2): the shapes of the bar's captions, the evidence chip, the mission and interjection cards
+
+/** the piece of speech being said, exactly as the voice says it, and the character the voice is on (null: no word boundaries) */
+export interface HudCaption { text: string; char: number | null; lang: "en" | "ta" }
+/** where an answer came from: every value is set by code (hudview.ts evidenceOf), never from a model's words */
+export interface HudEvidence {
+  /** who understood the question: the built-in rules, an instant local command, or a model */
+  by: "rules" | "ai" | "instant";
+  /** the model's short id, for "ai" only */
+  model: string | null;
+  /** end of the question to the answer, measured */
+  ms: number | null;
+  /** how the figure was found (the screen's method, from screens.ts or stats.ts) */
+  method: string | null;
+  /** how many records it rests on */
+  n: number | null;
+  period: "daily" | "weekly" | "monthly" | "quarterly" | null;
+  sources: string[];
+  asOf: string | null;
+}
+export type HudMissionStepState = "pending" | "running" | "done" | "skipped" | "failed";
+export interface HudMissionStep { label: string; state: HudMissionStepState; ms: number | null }
+export interface HudMission { id: string; title: string; steps: HudMissionStep[]; running: boolean }
+export interface HudInterjection { id: string; text: string; severity: "high" | "medium" | "low" }
+export interface HudActions {
+  /** the evidence chip: open the rows or the visual the answer rests on */
+  onEvidence?: () => void;
+  onMissionStart?: () => void;
+  onMissionEdit?: () => void;
+  /** stop a running mission, or put away a plan or a finished one */
+  onMissionStop?: () => void;
+  onTellMe?: (id: string) => void;
+  onLater?: (id: string) => void;
+  /** "not about this": shown only when set */
+  onNotAbout?: (id: string) => void;
+  /** the queue's badge: hear what is waiting */
+  onQueue?: () => void;
+  /** the existing earcon, played once when an interjection card comes up */
+  chime?: () => void;
+}
