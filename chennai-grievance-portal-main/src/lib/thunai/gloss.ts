@@ -75,7 +75,24 @@ const LEX: [string[], string][] = [
   [["பில்டர்"], "filter"], [["சேவ்"], "save"], [["கிலோமீட்டர்"], "kilometre"], [["ஸ்பாட்"], "spot"], [["சைடு"], "side"], [["மந்த்"], "month"],
   [["வீக்"], "week"], [["ரேட்"], "rate"], [["ஓபன்"], "open"], [["போன", "கடந்த"], "last/past"], [["நிலவரம்", "nilavaram"], "situation"],
   [["மாறு", "மாத்து", "maathu", "mathu"], "change to"], [["சுத்தி", "சுற்றி", "suthi"], "around"], [["குடிநீர்"], "drinking water"], [["பட்டியல்"], "list"],
-  [["கூடி", "koodi"], "has risen"], [["குறைஞ்", "குறைந்"], "has fallen"], [["mosam", "mosama", "மோசம்", "மோசமா"], "bad"], [["aagala", "ஆகல"], "not done"], [["kooda", "கூட"], "with/compared to"]
+  [["கூடி", "koodi"], "has risen"], [["குறைஞ்", "குறைந்"], "has fallen"], [["mosam", "mosama", "மோசம்", "மோசமா"], "bad"], [["aagala", "ஆகல"], "not done"], [["kooda", "கூட"], "with/compared to"],
+  // Jarvis v4 (lane D2): the console's verbs and topics as Tanglish is spelt (Tanglish was the weakest language: 9/15 on Groq)
+  [["kaatunga", "kaattunga", "kattunga", "katunga", "kaami", "kaamiga", "kami", "katu"], "show"],
+  [["thira", "thora", "thiranga", "thirandhu", "thirakka", "thorandhu", "திறங்க"], "open"], [["moodu", "moodunga", "மூடு"], "close"],
+  [["podu", "podunga", "போடு", "போடுங்க"], "put up/show"], [["edu", "eduthu", "edunga", "எடுத்து"], "take/get"], [["kudu", "kodu", "kudunga", "kodunga", "குடு", "கொடு", "கொடுங்க"], "give"],
+  [["paaru", "paarunga", "paru", "பாரு", "பாருங்க"], "look/check"], [["sollunga", "solluga", "solra", "solreenga", "solringa", "சொல்லுங்க"], "tell"],
+  [["vilakkunga", "vilakkam", "vilakkama", "vilakki", "விளக்கம்", "விளக்குங்க", "விளக்கமா"], "explain"], [["puriyala", "puriyalai", "புரியல"], "don't understand"],
+  [["theriyum", "therinjudhu", "தெரியும்"], "know"], [["theriyala", "therila", "தெரியல"], "don't know"], [["irundhu", "irunthu", "lerndhu", "lerundhu", "லேர்ந்து"], "from"],
+  [["vandhuchu", "vanthuchu", "vandhadhu", "வந்துச்சு", "வந்தது"], "came"], [["venum", "vendum", "வேணும்", "வேண்டும்"], "want/need"], [["venam", "vendaam", "vendam", "வேணாம்", "வேண்டாம்"], "don't/no"],
+  [["illa", "illai", "இல்ல", "இல்லை"], "no/not"], [["innum", "இன்னும்"], "still/more"], [["apram", "appuram", "aprom", "அப்புறம்"], "then/after"], [["neraya", "niraya", "நிறைய"], "many"],
+  [["yaaru", "யாரு"], "who"], [["edhu", "ethu"], "which one"], [["eppo", "eppodhu", "எப்போ"], "when"], [["pona", "poana"], "last/past"], [["indha", "intha", "idha", "idhu", "ithu"], "this"], [["andha", "antha", "adha", "adhu", "athu"], "that/it"],
+  [["samibathula", "samibathil", "சமீபத்தில்", "சமீபத்துல"], "recently"], [["innaiki", "inaikku", "inaiku"], "today"], [["vaarathu", "vaarathula"], "week's"], [["maasathu", "maasathula"], "month's"],
+  [["saakkadai", "sakkadai", "saakadai", "சாக்கடை"], "sewage/drain"], [["vadikaal", "vadikal", "வடிகால்"], "drain"], [["kalvai", "கால்வாய்"], "canal"], [["pallam", "kuzhi", "பள்ளம்", "குழி"], "pothole/pit"],
+  [["maram", "மரம்"], "tree"], [["naai", "naaigal", "நாய்"], "dog"], [["kaaichal", "kaichal", "காய்ச்சல்"], "fever"], [["minsaram", "karent", "மின்சாரம்", "கரண்ட்"], "electricity"],
+  [["rodu", "ரோடு", "சாலை"], "road"], [["sandai", "சண்டை"], "fight"], [["thiruttu", "திருட்டு"], "theft"], [["kudineer"], "drinking water"], [["thirai", "திரை"], "screen"], [["varaipadam", "வரைபடம்"], "map"],
+  [["rendavadhu", "rendaavadhu", "irandavadhu", "rendavathu", "இரண்டாவது", "ரெண்டாவது"], "second"], [["moonavadhu", "moonaavadhu", "moonavathu", "மூணாவது", "மூன்றாவது"], "third"], [["kadaisi", "kadasi", "கடைசி"], "last"],
+  [["nyabagam", "gnabagam", "ஞாபகம்"], "remember"], [["marandhudu", "maranthudu", "மறந்துடு", "மறந்துவிடு"], "forget"], [["niruthu", "nirutthu", "நிறுத்து"], "stop"], [["podhum", "போதும்"], "enough"],
+  [["vechu", "vachu", "வச்சு"], "based on/using"], [["ennachu", "ennaachu", "என்னாச்சு"], "what happened"], [["la", "le", "lae"], "in"], [["ku", "kku"], "to/for"]
 ];
 
 const LATIN = new Map<string, string>();
@@ -104,9 +121,58 @@ export function gloss(text: string): string | null {
     const lw = w.toLowerCase();
     const loc = lw.match(/^(.{3,}?)-?(la|le|lla|leh)$/);
     if (LATIN.has(lw)) { hits++; return `⟨${LATIN.get(lw)}⟩`; }
+    // the object ending glued on with a hyphen ("case-a thira", "rendavadhu-a"): the word, then the ending (v4)
+    const obj = lw.match(/^(.{3,}?)-(a|ai|aa|ah)$/);
+    if (obj && LATIN.has(obj[1])) { hits++; return `⟨${LATIN.get(obj[1])}⟩`; }
     if (loc && LATIN.has(loc[1])) { hits++; return `⟨${LATIN.get(loc[1])}⟩ ⟨in⟩`; }
     if (loc && /-(la|le)$/i.test(w)) return `${w.replace(/-(la|le)$/i, "")} ⟨in⟩`;
     return raw;
   });
   return hits >= 2 ? out.join(" ").replace(/[⟨⟩]/g, (c) => (c === "⟨" ? "[" : "]")) : null;
+}
+
+/** words that only Tanglish uses: its grammar and its commonest verbs (an English sentence holds none of these) */
+const TG_STRONG = new Set(("la le lae ku kku pannu pannunga panni pannidu kaattu kaatu kattu kaatunga kaattunga kattunga sollu sollunga solunga solra enna ennanga evlo evalo evvalavu ethana " +
+  "irukku iruku irukka irukkaa irukkudhu mattum podu podunga aachu ennachu venum venam vendaam illa illai theriyum theriyala therila epdi eppadi enga engey yen endha entha " +
+  "thira thora moodu maathu mathu paaru paarunga kudu kodu edu eduthu nyabagam marandhudu niruthu nirutthu podhum vechu vachu pona indha intha andha antha innum apram appuram " +
+  "inniki innaiku innaikku innaiki nethu naalaiku vaaram maasam mazhai thanni kuppai pugar seithi vilakkunga vilakkam vilakkama puriyala rendavadhu moonavadhu kadaisi oppidu").split(" "));
+/** a word with a Tanglish case ending glued on ("Adyarla", "Velacheryku", "policeoda") */
+const TG_GLUED = /^[a-z]{4,}(?:la|lae|ku|kku|ukku|oda|ode|ulla|ilirundhu|lerndhu)$/;
+
+/**
+ * Is this Tanglish (Tamil spoken in Latin letters)? No Tamil script, and at least one word only Tanglish uses, or two words glossed: "Adyar la kuppai
+ * complaints kaattu" is; "show the severe cases in Adyar" is not.
+ */
+export function tanglishIn(text: string): boolean {
+  const s = String(text ?? "");
+  if (!/[a-z]/i.test(s) || /[஀-௿]/.test(s)) return false;
+  const ws = s.toLowerCase().replace(/-(la|le|ku|kku|a|ah|oda|ode|nu)\b/g, " $1").split(/[^a-z]+/).filter(Boolean);
+  const strong = ws.filter((w) => TG_STRONG.has(w)).length;
+  const glued = ws.filter((w) => TG_GLUED.test(w) && !/(?:ula|ala|ola|ila|ela)$/.test(w.slice(-3)) && !LATIN.has(w)).length;
+  const glossed = ws.filter((w) => LATIN.has(w)).length;
+  return strong >= 1 || glossed >= 2 || (glued >= 1 && glossed >= 1);
+}
+
+/** Written for this prompt (none is a test or held-out sentence): Tanglish requests and the screen each means, in the planner's own terms. */
+const TANGLISH_EXAMPLES = [
+  `"Perungudi la kuppai complaints kaattunga" -> cases zones [14], cat SOLID_WASTE`,
+  `"indha vaaram Anna Nagar la thanni thengudhu, yen?" -> why zones [8], cat FLOOD_WATERLOGGING, period weekly`,
+  `"Teynampet um Kodambakkam um compare pannunga" -> compare zones [9,10]`,
+  `"pona maasam dengue epdi erangiyirukku" -> trend cat VECTOR_DISEASE, period monthly`,
+  `"Alandur la current illa nu evlo complaints" -> cases zones [12], q "power cut"`,
+  `"rendavadhu-a open pannu" (a Stage is open) -> stage op open n 2`
+];
+
+/**
+ * What the planner should read with a Tanglish sentence: the word-by-word gloss (when there is one) and a few Tanglish examples of the screens.
+ * null for a sentence that is not Tanglish, so English prompts stay as they are. The coordinator appends it to the planner's prompt (round.ts).
+ */
+export function tanglishHints(text: string): string | null {
+  if (!tanglishIn(text)) return null;
+  const g = gloss(text);
+  return [
+    "Tanglish (Tamil in Latin letters): the endings la/le (in), ku/kku (to), nu (that), um (and), -a (the) are grammar; the verbs kaattu/kaattunga (show), sollu (tell), pannu (do), thira (open), paaru (look) ask for a screen. Reply in Tamil script.",
+    g ? `Gloss: ${g}` : "",
+    `Tanglish examples: ${TANGLISH_EXAMPLES.join("; ")}`
+  ].filter(Boolean).join("\n");
 }

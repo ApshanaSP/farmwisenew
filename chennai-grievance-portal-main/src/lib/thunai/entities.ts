@@ -20,7 +20,7 @@ import { outsideIn, soundsOutside, taOutside } from "./outside";
 import { AREA_WORDS } from "./areas";
 import { LOCALITY_WORDS } from "./areas.localities";
 import { isEnglishWord } from "./english";
-import { calendarWindowIn, isListedExact, listedWord, periodIn } from "./quick";
+import { calendarWindowIn, isListedExact, listedWord, periodIn, quickScreen } from "./quick";
 import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 
@@ -72,6 +72,24 @@ const TA_TERMS: [string, string][] = [["மின்சார", "electricity"], 
   ["நிலவரம்", "status"], ["சுருக்கம்", "brief"], ["அப்டேட்", "update"], ["கிரேட்டர்", "greater"], ["கிரேட்டர", "greater"], ["சென்னை", "chennai"], ["மெட்ராஸ்", "madras"], ["மாநகராட்சி", "corporation"], ["கார்ப்பரேஷன்", "corporation"],
   ["மாநகர", "city"], ["நகர", "city"], ["சிட்டி", "city"], ["குடிநீர் வாரியம்", "metrowater"], ["மெட்ரோ வாட்டர்", "metrowater"], ["பொதுப்பணித்துறை", "pwd"], ["பொதுப்பணி", "pwd"], ["மின்வாரியம்", "tangedco"], ["மின் வாரியம்", "tangedco"],
   ["துறை", "department"], ["வாரியம்", "board"], ["ஆணையர்", "commissioner"], ["கமிஷனர்", "commissioner"], ["என்ன", "enna"], ["சொல்லு", "sollu"], ["கோயம்புத்தூர்", "coimbatore"], ["கோவை", "coimbatore"], ["தாம்பரம்", "tambaram"], ["ஆவடி", "avadi"], ["மும்பை", "mumbai"]];
+/**
+ * Spoken names of a body that lexicon.ts does not list (Jarvis v4, lane D2). The electricity board is TANGEDCO in the reference table ("Electricity Distribution",
+ * a body with no incident records in this build): people call it the EB, TNEB, the current office, மின்சார வாரியம், minsara vaariyam. It is not the
+ * Corporation's Street Lighting & Electrical (GCC-ELE), which keeps the word "electricity" alone.
+ */
+const EXTRA_ALIASES: Record<string, string[]> = {
+  TANGEDCO: ["tneb", "eb", "electricity board", "eb office", "eb department", "tamil nadu electricity board", "power board", "மின்சார வாரியம்", "மின்வாரியம்", "தமிழ்நாடு மின்வாரியம்", "மின் பகிர்மானக் கழகம்", "minsara vaariyam", "minsaara vaariyam", "minsara variyam", "minvaariyam", "tangedco"]
+};
+/** phrases said in Latin letters that name one body as a whole (their words alone are grammar or another body's): read as that body's code word first */
+const LATIN_TERMS: [RegExp, string][] = [
+  // "current office", "karent office", "power office": the electricity board, in Chennai's English and Tanglish ("current" alone is filler: "the current status")
+  [/\b(?:current|karent|karant|power)\s+(?:office|offices|aapis|aafees|board|department|dept)\b/g, " tangedco "],
+  [/\bminsaa?ra?m?\s*vaa?r[iy]+a?m\w*/g, " tangedco "],
+  [/\bmin\s?vaa?r[iy]+a?m\w*/g, " tangedco "]
+];
+/** the Tamil name with any case ending (மின்சார வாரியத்தின், மின்வாரியத்துக்கு) */
+const TA_BODY_TERMS: [RegExp, string][] = [[/மின்(?:சார)?\s*வாரிய[஀-௿]*/g, " tangedco "]];
+
 /** the bodies above the departments, by code prefix */
 const ORGS: Record<string, { name: string; ta: string; aliases: string[] }> = {
   GCC: { name: "Greater Chennai Corporation", ta: "பெருநகர சென்னை மாநகராட்சி", aliases: ["corporation", "gcc", "corp", "municipal corporation", "chennai corporation", "municipality"] },
@@ -100,6 +118,9 @@ export function registry(w: World): Registry {
       const key = c.join(" ");
       if (!c.length || seen.has(key)) continue;
       seen.add(key); aliases.push(c);
+      // a name whose qualifier is what makes it a name ("metro water": "water" alone is a topic, dropped below) is kept as said too, and matches as said
+      const said = ws.filter((x) => x !== "the" && x !== "of" && x !== "and");
+      if (c.length === 1 && said.length === 2 && QUAL.has(said[0]) && !seen.has(said.join(" "))) { seen.add(said.join(" ")); aliases.push(said); }
     }
     // a one-word alias that is only the first word of the same entity's longer name ("anna" of "anna nagar") is ambiguous: Anna Salai, Anna University (RC-02)
     if (kind === "zone") for (let i = aliases.length - 1; i >= 0; i--) { const a = aliases[i]; if (a.length === 1 && a[0].length <= 5 && aliases.some((o) => o.length >= 2 && o[0] === a[0])) aliases.splice(i, 1); }
@@ -112,12 +133,18 @@ export function registry(w: World): Registry {
     const suffix = d.code.includes("-") ? d.code.split("-")[1].toLowerCase() : d.code.toLowerCase();
     // a code suffix is an alias only when it is a word people say (SWD, SWM), not a filing code (ENG, REV)
     const said = (DEPT_ALIASES[d.code] ?? []).some((a) => a.toLowerCase() === suffix) || initials(d.name) === suffix;
-    add(d.code, "dept", d.name, DEPT_TA[d.code] ?? null, [d.name, d.code.toLowerCase(), initials(d.name), said ? suffix : "", DEPT_TA[d.code] ?? "", ...(DEPT_ALIASES[d.code] ?? [])]);
+    add(d.code, "dept", d.name, DEPT_TA[d.code] ?? null, [d.name, d.code.toLowerCase(), initials(d.name), said ? suffix : "", DEPT_TA[d.code] ?? "", ...(DEPT_ALIASES[d.code] ?? []), ...(EXTRA_ALIASES[d.code] ?? [])]);
   }
   // the bodies with no records in this build (TANGEDCO): known by name, so Jarvis can say it has nothing from them, not "who?"
   for (const b of w.bodies ?? []) {
     if (w.depts.some((d) => d.code === b.code) || !/^[A-Z][A-Z-]+$/.test(b.code)) continue;
-    add(b.code, "dept", b.name, DEPT_TA[b.code] ?? null, [b.name, b.code.toLowerCase(), initials(b.name), DEPT_TA[b.code] ?? "", ...(DEPT_ALIASES[b.code] ?? [])]);
+    add(b.code, "dept", b.name, DEPT_TA[b.code] ?? null, [b.name, b.code.toLowerCase(), initials(b.name), DEPT_TA[b.code] ?? "", ...(DEPT_ALIASES[b.code] ?? []), ...(EXTRA_ALIASES[b.code] ?? [])]);
+    entities[entities.length - 1].noRecords = true;
+  }
+  // the electricity board is in the reference table (TANGEDCO, "Electricity Distribution") but not every World is given that table (a test world, the
+  // database down): its spoken names (the EB, TNEB, the current office) then still reach it, and Jarvis says plainly that it holds no records from it
+  if (!entities.some((e) => e.id === "TANGEDCO")) {
+    add("TANGEDCO", "dept", "Electricity Distribution", DEPT_TA.TANGEDCO ?? null, ["Electricity Distribution", "tangedco", DEPT_TA.TANGEDCO ?? "", ...EXTRA_ALIASES.TANGEDCO]);
     entities[entities.length - 1].noRecords = true;
   }
   for (const o of orgs) add(o, "org", ORGS[o].name, ORGS[o].ta, [ORGS[o].name, ORGS[o].ta, ...ORGS[o].aliases]);
@@ -157,6 +184,8 @@ function toRoman(text: string): string[] {
 /** The sentence as roman words (Tamil terms mapped first, two-word Tamil terms included). */
 export function sentenceWords(text: string): string[] {
   let t = text.normalize("NFC");
+  for (const [re, en] of TA_BODY_TERMS) t = t.replace(re, en);
+  if (/[a-z]/i.test(t)) { const low = t.toLowerCase(); if (LATIN_TERMS.some(([re]) => { re.lastIndex = 0; return re.test(low); })) { t = low; for (const [re, en] of LATIN_TERMS) t = t.replace(re, en); } }
   for (const [ta, en] of TA_TERMS) if (ta.includes(" ")) t = t.split(ta).join(` ${en} `);
   // letters spelled out one at a time ("C M W S S B", "P W D") are the one word they spell
   const out: string[] & { spelled?: string } = [];
@@ -480,12 +509,20 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
+    // a body of ours said loosely ("the water department", "drainage department", "hospital department"): asked, with the best matches by the
+    // registry's ladder, before saying there is no data on it. Another place's body is never one of ours (r.outside).
+    const near = !r.outside ? deptChoices(text, w, 3) : [];
+    if (near.length >= 2) return { kind: "clarify", conf: 0.5, via: "loose", options: near.map((e) => ({ label: e.name, request: `brief me on ${e.name}` })), text: whichOf(near) };
+    if (near.length === 1) return { kind: "clarify", conf: 0.5, via: "loose", options: [{ label: near[0].name, request: `brief me on ${near[0].name}` }],
+      text: { en: `I heard "${nameAsSaid(text, cap(r.heard))}". Did you mean ${near[0].name}?`, ta: `"${nameAsSaid(text, cap(r.heard))}" என்று கேட்டேன். ${near[0].ta ?? near[0].name} என்றா?` } };
     return { kind: "reply", conf: 0, via: "unknown", text: noData(nameAsSaid(text, cap(r.heard)), r.near) };
   }
   if (r.kind === "ambiguous") {
+    // the two rivals, and the next best by the ladder as a third choice
+    const opts = [...r.options, ...deptChoices(text, w, 4).filter((e) => !r.options.some((o) => o.id === e.id))].slice(0, 3);
     const [a, b] = r.options;
-    return { kind: "clarify", conf: 0.5, via: "ambiguous", options: [{ label: a.name, request: `brief me on ${a.name}` }, { label: b.name, request: `brief me on ${b.name}` }],
-      text: { en: `Did you mean ${a.name} or ${b.name}?`, ta: `${a.ta ?? a.name} அல்லது ${b.ta ?? b.name}?` } };
+    return { kind: "clarify", conf: 0.5, via: "ambiguous", options: opts.map((e) => ({ label: e.name, request: `brief me on ${e.name}` })),
+      text: opts.length > 2 ? whichOf(opts) : { en: `Did you mean ${a.name} or ${b.name}?`, ta: `${a.ta ?? a.name} அல்லது ${b.ta ?? b.name}?` } };
   }
   const e = r.entity;
   // a zone with a topic beside it ("rain report for Adyar", "Adyar drainage status") is that topic's question
@@ -506,6 +543,110 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   // today is held by the console's last 24 hours (the briefing tool's window); any other span is counted over its own dates (screens.ts spanBrief)
   const own = needsDates(spec) && !(spec.kind === "day" && spec.back === 0);
   return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? keyOf(spec) ?? "daily", ...(own ? { span: spec } : {}), fresh: true } };
+}
+
+// ------------------------------------------------------------------ clarifying one slot (Jarvis v4, lane D2) --
+
+/** a heard word against one word of a body's name, by the registry's ladder (and a shared stem: "drainage" and "drains"): its score, or 0 */
+function partWord(heard: string, want: string): number {
+  if (heard === want) return 1;
+  if (heard.length >= 5 && want.length >= 5) {
+    let k = 0;
+    while (k < heard.length && k < want.length && heard[k] === want[k]) k++;
+    if (k >= 5 && k >= 0.7 * Math.min(heard.length, want.length)) return 0.9;
+  }
+  const r = wordScoreRaw(heard, want);
+  return r ? r.s : 0;
+}
+/**
+ * The departments (and bodies) a sentence most likely means, best first, by how much of each one's names the sentence's words cover, on the
+ * registry's ladder: exact, one edit, the same sound, a shared stem. Grammar, qualifiers and the agency words themselves (department, board) say
+ * nothing about which. Zones are not departments. At most `n`.
+ */
+export function deptChoices(text: string, w: World, n = 3): Entity[] {
+  const reg = registry(w);
+  const content = sentenceWords(text.slice(0, 300)).filter((x) => !FILLER.has(x) && !BRIEF_WORDS.has(x) && !QUAL.has(x) && !HEADS.has(x) && !POSTS.has(x) && x.length >= 2);
+  if (!content.length) return [];
+  const scored: { e: Entity; s: number; hits: number }[] = [];
+  for (const e of reg.entities) {
+    if (e.kind === "zone") continue;
+    let best = { s: 0, hits: 0 };
+    for (const a of e.aliases) {
+      const own = a.filter((x) => !HEADS.has(x) && !QUAL.has(x));
+      if (!own.length) continue;
+      let sum = 0, hits = 0;
+      for (const x of own) {
+        // an acronym (three letters or fewer) only as said
+        const m = Math.max(0, ...content.map((y) => (x.length <= 3 || y.length <= 3 ? (x === y ? 1 : 0) : partWord(y, x))));
+        if (m > 0) { sum += m; hits++; }
+      }
+      const s = sum / own.length;
+      if (s > best.s || (s === best.s && hits > best.hits)) best = { s, hits };
+    }
+    if (best.s >= 0.3) scored.push({ e, s: best.s, hits: best.hits });
+  }
+  // a department with records before a body with none, at the same score
+  return scored.sort((a, b) => b.s - a.s || b.hits - a.hits || Number(!!a.e.noRecords) - Number(!!b.e.noRecords)).slice(0, n).map((x) => x.e);
+}
+
+/** "Metrowater, PWD Water Resources or Storm Water Drain?": the choices said as one short question, in either language */
+function whichOf(es: Entity[]): { en: string; ta: string } {
+  const en = es.map((e) => e.name), ta = es.map((e) => e.ta ?? e.name);
+  const join = (xs: string[], or: string) => (xs.length <= 1 ? xs[0] ?? "" : `${xs.slice(0, -1).join(", ")} ${or} ${xs[xs.length - 1]}`);
+  return { en: `Which one: ${join(en, "or")}?`, ta: `எது: ${join(ta, "அல்லது")}?` };
+}
+
+export type SlotClarify = { kind: "clarify"; slot: "dept" | "period"; text: { en: string; ta: string }; options: { label: string; request: string }[] };
+
+/** time said loosely: "lately", "recently", "these days", சமீபத்தில், konja naala */
+const VAGUE_TIME = /\b(?:recently|recent|lately|of late|these days|nowadays|now a days|past few days|last few days|samibathula|samibathil|samibathile|samibaththula|konja naala|konja naalaa|konja naalaa|ippo ellam|ippolaam|ippolam)\b|சமீபத்தில்|சமீபத்துல|சமீபமா|இப்போதெல்லாம்|இப்பல்லாம்|கொஞ்ச நாளா|கொஞ்ச நாட்களாக/i;
+const PERIOD_CHOICE: { key: "daily" | "weekly" | "monthly"; en: string; ta: string; label: { en: string; ta: string } }[] = [
+  { key: "daily", en: "today", ta: "இன்னைக்கு", label: { en: "Today", ta: "இன்று" } },
+  { key: "weekly", en: "this week", ta: "இந்த வாரம்", label: { en: "This week", ta: "இந்த வாரம்" } },
+  { key: "monthly", en: "this month", ta: "இந்த மாசம்", label: { en: "This month", ta: "இந்த மாதம்" } }
+];
+/** the agency words that, said with a topic, leave the department open ("the water department", "drainage board") */
+const AGENCY_WORD = /\b(?:department|departments|dept|board|office|team|wing|section|agency)\b|துறை|வாரியம்|அலுவலகம்|டிபார்ட்மென்ட்/i;
+
+/**
+ * Ask about the one slot that is unclear, with three tap-able choices, each a full request. A department said loosely ("the water department",
+ * "drainage department complaints in Adyar") gets the best-matching departments by the registry's ladder; a time said loosely ("lately",
+ * "சமீபத்தில்") gets today, this week, this month. null when nothing is unclear, or more than one slot is (the planner then decides).
+ */
+export function clarifySlot(text: string, w: World): SlotClarify | null {
+  const raw = text.trim().slice(0, 300);
+  if (!raw || foreignIn(raw, w)) return null;
+  const low = raw.toLowerCase();
+  const tamil = /[஀-௿]/.test(raw);
+  const r = resolveEntity(raw, w);
+  // the department is unclear only when an agency word was said and no body was named surely
+  // (a zone found first means no body was: the resolver ranks a body above a zone when both are said)
+  const deptOpen = AGENCY_WORD.test(raw) && (r.kind === "ambiguous" || (r.kind === "unknown" && !r.outside) || (r.kind === "entity" && (r.entity.kind === "zone" || r.conf < 0.86)) || (r.kind === "none" && !NOT_A_BRIEF.test(` ${low} `)));
+  const choices = deptOpen ? deptChoices(raw, w, 3) : [];
+  const spec = readPeriod(raw);
+  const timeOpen = VAGUE_TIME.test(raw) && (spec.kind === "none" || spec.kind === "now");
+  const deptUnclear = choices.length >= 2;
+  if (deptUnclear && timeOpen) return null;
+  if (deptUnclear) {
+    const zone = r.kind === "entity" && r.entity.kind === "zone" ? r.entity : r.kind === "entity" && r.second?.kind === "zone" ? r.second : registry(w).entities.find((e) => e.kind === "zone" && sentenceWords(raw).some((x) => e.aliases.some((a) => a.length === 1 && a[0] === x)));
+    const where = zone ? ` in ${zone.name}` : "";
+    const when = periodIn(` ${low} `);
+    const whenSaid = when ? ` ${PERIOD_CHOICE.find((p) => p.key === when)?.en ?? (when === "quarterly" ? "this quarter" : "")}`.trimEnd() : "";
+    const brief = asksBrief(raw);
+    return { kind: "clarify", slot: "dept", text: whichOf(choices),
+      options: choices.map((e) => ({ label: tamil ? e.ta ?? e.name : e.name, request: brief ? `brief me on ${e.name}${where}` : `show ${e.name} complaints${where}${whenSaid}` })) };
+  }
+  if (timeOpen) {
+    const m = VAGUE_TIME.exec(raw);
+    if (!m) return null;
+    // the rest must be a request the rules can read: only the time is missing
+    const rest = `${raw.slice(0, m.index)} ${raw.slice(m.index + m[0].length)}`.replace(/\s+/g, " ").trim();
+    if (!rest || !quickScreen(rest, w, { noBail: true })) return null;
+    const put = (p: (typeof PERIOD_CHOICE)[number]) => `${raw.slice(0, m.index)}${tamil && /[஀-௿]/.test(m[0]) ? p.ta : p.en}${raw.slice(m.index + m[0].length)}`.replace(/\s+/g, " ").trim();
+    return { kind: "clarify", slot: "period", text: { en: "Over what time: today, this week or this month?", ta: "எந்தக் காலத்துக்கு: இன்னைக்கா, இந்த வாரமா, இந்த மாசமா?" },
+      options: PERIOD_CHOICE.map((p) => ({ label: tamil ? p.label.ta : p.label.en, request: put(p) })) };
+  }
+  return null;
 }
 
 /** Words that make a sentence something other than a request for a brief on a body. */

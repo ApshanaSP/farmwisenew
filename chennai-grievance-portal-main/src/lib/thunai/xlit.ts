@@ -49,6 +49,12 @@ function near(a: string, b: string, max: number): boolean {
 }
 
 /**
+ * The Tanglish case endings a place name takes when it is spoken (-la, -le, -ku, -kku, -ukku, -oda, -ode, -ulla, -lerndhu, -ilirundhu, -kitta, -pakkam), longest first,
+ * so "Adyarukku" loses "ukku" and not only "kku".
+ */
+export const TG_END = /(?:ilirundhu|lerndhu|lerundhu|irundhu|pakkam|kitta|ukku|ulla|oda|ode|kku|lla|lae|ile|la|le|ku|il)$/i;
+
+/**
  * Names in the text that match by key. `names` is [id, name]; a name's key must be long enough to mean something, and one edit is
  * allowed only on keys of 6 letters or more. Whole-word (or two-word) matches only: nothing is found inside a longer word.
  */
@@ -58,7 +64,8 @@ export function fuzzyNames<T>(text: string, names: [T, string][]): T[] {
   for (let i = 0; i < words.length; i++) {
     // Tamil and Tanglish case endings on a name: "Adyar-la", "அடையாறில்"
     const w = words[i];
-    for (const g of [w, w.replace(/(la|le|ku|lla|il|ile|kku)$/i, ""), w.replace(/(இல்|ில்|க்கு|ல்)$/, "")]) grams.add(g);
+    // (Tanglish as it is spelt: "Adyarukku", "Velacheryoda", "Perungudilerndhu", "Manalikitta"; Tamil as it is spoken: "அடையாறுல", "மணலிக்கு")
+    for (const g of [w, w.replace(TG_END, ""), w.replace(/(இல்|ில்|க்கு|ுக்கு|ல்|ல|லே|லேர்ந்து|லிருந்து|ோட|ோட்ட)$/, "")]) grams.add(g);
     // "Vela Cherry", "Anna Nagar": a name Whisper split in two, or wrote as one
     if (i + 1 < words.length) { grams.add(`${w} ${words[i + 1]}`); grams.add(`${w}${words[i + 1]}`); }
   }

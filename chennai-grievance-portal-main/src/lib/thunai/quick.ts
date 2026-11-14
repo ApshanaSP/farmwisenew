@@ -14,7 +14,7 @@ import { fuzzyNames, romanise } from "./xlit";
 import { normalise } from "./normalise";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
-import { asksForbidden } from "./privacy";
+import { asksForbiddenOrder } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
@@ -320,7 +320,8 @@ export function unreadClauseIn(t: string, w: World): boolean {
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
-  if (asksForbidden(text)) return "forbidden-order";
+  // (a question about how fast things are closed is a question, not the order to close them: privacy.ts asksForbiddenOrder)
+  if (asksForbiddenOrder(text)) return "forbidden-order";
   const all = t.trim().split(" ");
   // the words a slot reader reads are not unknown: a status said as a phrase ("காலக்கெடு தாண்டிய", "past the deadline") and the time the sentence names
   // ("கடந்த வாரம்", "pona vaaram"); counted as unknown, "last week's overdue complaints" in Tamil fell to the model (pass4-open-14)
@@ -405,6 +406,8 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (foreignIn(text, w)) return null;
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
+  // the new intents are flows of their own: "what changed this week" is not this week's list, "build me a flood board for Adyar" is not Adyar's cases (v4)
+  if (!o.noBail && leavesFastLane(text)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   // "open" is the verb of a follow-up ("open 3", "open the first one") unless it is the status of the cases ("open cases in Adyar", "cases open now": OPEN_RE), and "that" and "those" point back at
   // an earlier answer unless they open a relative clause ("complaints that are open"): a status said in the sentence is applied in the slots, not handed on (g-review 4)
@@ -485,3 +488,98 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, ATTENTION) && !zones.length) return { recipe: "brief", slots: { period: period ?? "daily" } };
   return null;
 }
+
+// ------------------------------------------------------------------ the new intents (Jarvis v4, lane D2) --
+
+/**
+ * "How do you know?", "where's that from?", "what is this based on?", "how sure are you?", "source?", in English, Tamil and Tanglish: the whole
+ * sentence asks where the answer came from (never "how do you know him", never "why", which asks for the reasons).
+ */
+const HOWKNOW_EN = /^ (?:(?:so|ok|okay|and|but|wait|hmm|jarvis|sir) )*(?:how do you know(?: (?:that|this|it|so|for sure|all this|those numbers|these numbers))?|how did you (?:get|work out|figure out|come up with|arrive at|find) (?:that|this|it|those|these|those numbers|these numbers)|how (?:was|is|were|are) (?:this|that|these|those)(?: numbers?| figures?)? (?:calculated|computed|worked out|counted|arrived at)|where (?:is|does|did) (?:that|this|it) (?:come from|coming from|from|get from)|wheres (?:that|this|it) (?:from|coming from)|where did you get (?:that|this|it|those numbers|these numbers)(?: from)?|what (?:is|s) (?:this|that|it) based on|whats (?:this|that|it) based on|based on what|what are you basing (?:that|this|it) on|how sure are you|how confident are you|how reliable is (?:this|that)|whats your source|what is your source|what are your sources|whats the source(?: of (?:this|that))?|what is the source(?: of (?:this|that))?|sources? please|show me your sources)(?: (?:jarvis|sir|exactly|then|please))* $/;
+const HOWKNOW_TG = /^ (?:(?:jarvis|sari|seri|ok) )*(?:(?:idhu|ithu|adhu|athu) )?(?:epdi|eppadi|yepdi) (?:theriyum|therinjudhu|therinjuthu|therinjathu|kandupidicheenga|kandupidichinga|solreenga|solringa|solra|sonneenga|sonninga)|^ (?:(?:jarvis|sari) )*(?:idhu|ithu|adhu|athu|indha (?:number|data|figure)|intha (?:number|data|figure)) (?:enga|engey|engirundhu) (?:irundhu|irunthu)?(?: ?(?:vandhuchu|vanthuchu|vandhadhu|vandhudhu|kedachudhu|kidaichadhu|eduththeenga|edutheenga))?|^ (?:(?:idhu|ithu|adhu) )?(?:source|sources|aadharam|adharam|aadhaaram|moolam) (?:enna|ennanga|enna sir|edhu)|^ (?:edha|edhai|etha|ethai) (?:vechu|vachu|vaichu) (?:solreenga|solringa|solra|sollreenga|sonneenga|sonninga)|^ (?:evlo|evvalavu) (?:sure|uruthi|urudhi)/;
+const HOWKNOW_TA = /எப்படித் தெரியும்|எப்படி தெரியும்|எப்படித் தெரிஞ்சது|எப்படி தெரிஞ்சது|எப்படிக் கண்டுபிடிச்ச|(?:^|\s)(?:இது|அது|இந்த எண்|இந்தத் தரவு)\s*(?:எங்கிருந்து|எங்கேருந்து|எங்க இருந்து|எங்கே இருந்து)|ஆதாரம் என்ன|மூலம் என்ன|எதை வச்சு(?:ச்)? சொல்ற|எதை வைத்து(?:ச்)? சொல்ற|எவ்வளவு உறுதி|சோர்ஸ் என்ன/;
+/** Does the sentence ask where the last answer came from? (EN, Tamil, Tanglish; at most ten words, so a longer sentence that only holds the words is not one) */
+export function asksHowKnow(text: string): boolean {
+  const t = norm(text);
+  if (t.trim().split(" ").length > 10) return false;
+  if (HOWKNOW_EN.test(t) || HOWKNOW_TG.test(t) || HOWKNOW_TA.test(text)) return true;
+  // "source?" alone is the question only when asked: the bare word opens the sources panel (understand.ts)
+  return /^ (?:the )?sources?(?: jarvis)? $/.test(t) && /\?\s*$/.test(text.trim());
+}
+
+/**
+ * The new intents, as markers only: which flow a sentence asks for, and the words that flow needs (the note to keep, the place a board is for, what
+ * to do instead). The recipes and flows themselves (explain, changed, situation, missions, memory) are other lanes'; these readers only name them so the
+ * coordinator can route. They never act, and they are not "the rules are sure" for the address gate: side talk that holds one of them still needs
+ * the name or an engaged turn (addressed.ts). Each reads the whole sentence (a sentence with one of these words inside it is not one).
+ */
+export type IntentKind = "explain" | "changed" | "howknow" | "brief" | "remember" | "recall" | "forget" | "mission" | "stop" | "skip" | "instead";
+export interface IntentMarker { intent: IntentKind; rest: string | null }
+
+const LEAD = String.raw`^ (?:(?:jarvis|hey jarvis|ok|okay|so|now|please|pls|kindly|can you|could you|sari|seri|konjam) )*`;
+const END = String.raw`(?: (?:please|pls|jarvis|sir|now|for me|konjam|nga))* $`;
+/** "explain this one", "explain the second one", "what's going on with that one", "idha vilakkunga", "இதை விளக்குங்க" (the item on screen, not a topic: quick.ts EXPLAIN reads those) */
+const EXPLAIN_THIS_EN = new RegExp(`${LEAD}(?:explain|tell me (?:more )?about|walk me through|break down|whats going on with|what is going on with|whats wrong with|what is wrong with|what happened (?:with|to)) (this|that|it|this one|that one|these|those|the (?:first|second|third|fourth|fifth|last|top|next|previous) one|the \\w+ one|this case|that case|this chart|that chart|this screen|this graph|that graph)(?: (?:simply|in simple words|in detail|briefly|again))?${END}`);
+const EXPLAIN_THIS_TG = /^ (?:(?:jarvis|sari|konjam) )*(?:idha|idhai|adha|adhai|indha|andha|ithu|idhu|adhu|rendavadhu|rendavadha|mudhal|kadaisi)(?: \w+){0,2} (?:konjam )?(?:vilakkunga|vilakku|vilakki sollu|vilakki sollunga|vilakkama sollu|vilakkama sollunga|explain pannu|explain pannunga|explain panni sollu|enna nu sollu|ennanu sollu|enna aachu)(?: nga| please)? $/;
+const EXPLAIN_THIS_TA = /^\s*(?:இதை|அதை|இது|அது|இந்த|அந்த|இரண்டாவதை|முதலாவதை|கடைசியை)(?:\s+\S+){0,2}\s+(?:கொஞ்சம்\s+)?(?:விளக்குங்க|விளக்குங்கள்|விளக்கு|விளக்கமா சொல்லுங்க|விளக்கமா சொல்லு|விளக்கிச் சொல்லுங்க|விளக்கி சொல்லு|என்னன்னு சொல்லுங்க|என்னன்னு சொல்லு)\s*[.!?]*\s*$/;
+/** "what changed since yesterday / this week", "what's new since Monday", "nethu lerndhu enna maarichu", "இந்த வாரம் என்ன மாறியிருக்கு" */
+const CHANGED_EN = new RegExp(`${LEAD}(?:what|whats|what has|what have|anything|has anything|did anything|what all)(?: has| have)? (?:changed|is new|s new|new) ?(since (?:yesterday|last night|this morning|morning|last week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|the last (?:brief|briefing|update)|i last asked|my last brief|last time)|(?:today|this week|this month|overnight|in the last (?:day|week|month))|(?:in|for|at) [a-z ]{3,30}(?: since (?:yesterday|last week|this morning))?)?${END}`);
+const CHANGED_TG = /(?:^| )(?:enna|yenna|ennalam|enna ellam) (?:maarichu|maaruchu|maaridhu|maariyirukku|maari irukku|maarirukku|change aachu|change aagirukku|maattram|maatram|changes|puthusa|pudhusa)(?: \w+){0,3} $|^ (?:nethu|nethiku|nethu lerndhu|nethulerndhu|indha vaaram|intha vaaram|ippo varaikkum|kaalaila irundhu|morning lerndhu) (?:\w+ ){0,3}(?:enna|yenna) (?:maarichu|maaruchu|maaridhu|maariyirukku|change|changes|puthusa|pudhusa)/;
+const CHANGED_TA = /என்ன\s*(?:மாறியிருக்கு|மாறியிருக்கிறது|மாறிருக்கு|மாறுச்சு|மாறியது|மாற்றம்|மாற்றங்கள்|புதுசா|புதிதாக)|(?:நேத்து|நேற்று|இந்த வாரம்|காலையிலிருந்து|காலைலேர்ந்து)\S*\s+(?:\S+\s+){0,3}(?:என்ன\s+)?(?:மாற்றம்|மாறியிருக்கு|மாறுச்சு|மாறியது|மாற்றங்கள்)/;
+/** "brief me", "catch me up", "what do I need to know", "brief sollunga", "இன்றைய சுருக்கம் சொல்லுங்க" (a brief on a body is entities.ts briefTurn's) */
+const BRIEF_ME = new RegExp(`${LEAD}(?:brief me|give me (?:the|my|a|today s|todays) (?:brief|briefing|morning brief)|(?:the |my |todays |today s )?morning brief(?:ing)?|catch me up|bring me up to speed|what do i need to know(?: today)?|what should i know(?: today)?|whats my brief|what is my brief|brief pannu|brief pannunga|brief sollu|brief sollunga|innaiku brief|innaikku brief|inniki brief)( (?:on|about|for) .+)?${END}`);
+const BRIEF_TA = /^\s*(?:இன்றைய\s+)?சுருக்கம்\s*(?:சொல்லு|சொல்லுங்க|சொல்லுங்கள்|கொடு|கொடுங்க|தா)?\s*[.!?]*\s*$|^\s*இன்னைக்கு\s+(?:என்ன\s+)?(?:தெரிஞ்சுக்கணும்|சுருக்கம்)/;
+/** "remember …" (the note), "note that …", "<note> nyabagam vechukko", "<note> ஞாபகம் வச்சுக்கோ" */
+const REMEMBER_EN = /^ (?:(?:jarvis|please|ok|okay) )*(?:remember|note|make a note|keep in mind|dont forget)(?: that)? (.{3,})$/;
+const REMEMBER_TG = /^ (.{3,}?) (?:nu |nnu )?(?:nyabagam|gnabagam|nyabagama|ninaivula|ninaivil) (?:vechukko|vechuko|vachukko|vachuko|vechukonga|vachukonga|vai|vechiko)(?: \w+)? $/;
+const REMEMBER_TA = /^\s*(.{3,}?)\s*(?:ன்னு|னு|என்று)?\s*(?:ஞாபகம்|நினைவில்|நினைவுல)\s*(?:வச்சுக்கோ|வச்சுக்கோங்க|வெச்சுக்கோ|வைத்துக்கொள்|வை|வச்சுக்கங்க)[஀-௿]*\s*[.!?]*\s*$/;
+/** "what do you remember (about me)?", "what do you know about me", "show my memory", "enna nyabagam vechirukka", "என்னைப் பத்தி என்ன ஞாபகம் இருக்கு" */
+const RECALL_EN = new RegExp(`${LEAD}(?:what do you remember(?: about me)?|what have you remembered|what did you remember|what do you know about me|what do you have on me|show (?:me )?(?:my )?memory|show (?:me )?what you remember|whats in your memory|what is in your memory|memory kaattu|memory kaatu)${END}`);
+const RECALL_TG = /(?:enna|ennalam|enna ellam) (?:nyabagam|gnabagam) (?:vechirukka|vechirukeenga|vachirukka|irukku)|en(?:na)? pathi (?:enna|ennalam) (?:theriyum|nyabagam)/;
+const RECALL_TA = /(?:என்ன|என்னென்ன)\s*(?:ஞாபகம்|நினைவு)\s*(?:வச்சிருக்க|வச்சிருக்கீங்க|இருக்கு|வைத்திருக்கிறாய்)|என்னைப்\s*(?:பத்தி|பற்றி)\s*என்ன\s*(?:தெரியும்|ஞாபகம்|நினைவு)|உனக்கு என்ன நினைவிருக்கு/;
+/** "forget that", "forget everything", "adha marandhudu", "அதை மறந்துடு" */
+const FORGET_EN = /^ (?:(?:jarvis|please|ok|okay) )*(?:forget (?:that|it|this|the last one|the last thing|what i (?:just )?said|everything|all|all of it|about it)|never ?mind that note|scratch that note|delete that note|drop that note)(?: (?:please|jarvis))* $/;
+const FORGET_TG = /^ (?:(?:adha|adhai|idha|ellaam|ellathaiyum|ellathayum) )?(?:marandhudu|maranthudu|marandhurunga|marandhudunga|marandhidu)(?: nga| please)? $/;
+const FORGET_TA = /^\s*(?:அதை|இதை|எல்லாத்தையும்|எல்லாவற்றையும்)?\s*(?:மறந்துடு|மறந்துவிடு|மறந்துடுங்க|மறந்துவிடுங்கள்)\s*[.!?]*\s*$/;
+/** "build me a water-crisis board for Velachery", "set up a war room for the floods", "Velachery ku oru board ready pannu" (a board of several steps: a mission, not one dashboard) */
+const MISSION_EN = /^ (?:(?:jarvis|please|ok|okay|can you|could you) )*(?:build|make|create|set up|setup|put together|prepare|assemble|start|run|plan) (?:me |us )?(?:a |an |the )?(.{0,40}?)(?:board|war room|control room|mission|game plan|action plan|command centre|command center)(?: (?:for|on|about|in|around) (.{2,40}))?(?: (?:please|jarvis|now))* $/;
+const MISSION_TG = /^ (.{2,40}?) (?:ku|kku|ukku) (?:oru )?(.{0,30}?)(?:board|war room|mission|plan) (?:ready |set |thayar |tayar )?(?:pannu|pannunga|panni kudu|podu|podunga)(?: nga)? $/;
+const MISSION_TA = /^\s*(.{2,40}?)(?:க்கு|ுக்கு)\s+(?:ஒரு\s+)?(.{0,30}?)(?:போர்டு|போர்ட்|திட்டம்|மிஷன்)\s+(?:தயார்\s+)?(?:பண்ணு|பண்ணுங்க|செய்|செய்யுங்க|போடு)\s*[.!?]*\s*$/;
+/** "stop", "cancel that", "abort the plan", "niruthu", "நிறுத்து" (also addressed.ts isStopWord, which needs no name) */
+const STOP_ANY = /^ (?:(?:jarvis|please|ok|okay) )*(?:stop|stop it|stop that|stop this|stop now|cancel|cancel that|cancel it|cancel the plan|cancel the mission|abort|abort the plan|abort the mission|halt|stop the plan|stop the mission|enough|niruthu|nirutthu|niruthunga|nirutthunga|stop pannu|stop pannunga|cancel pannu|podhum|நிறுத்து|நிறுத்துங்க|போதும்|ரத்து செய்|கேன்சல்)(?: (?:please|jarvis|now))* $/;
+/** "skip that", "skip this step", "move on", "adha vidu", "அதை விடு" */
+const SKIP_ANY = /^ (?:(?:jarvis|please|ok|okay) )*(?:skip|skip that|skip this|skip it|skip this one|skip that one|skip this step|skip that step|skip the step|next step|move on|leave that|leave it|leave that one|vidu|adha vidu|adhai vidu|idha vidu|skip pannu|skip pannunga|அதை விடு|இதை விடு|விடு|ஸ்கிப்)(?: (?:please|jarvis|now))* $/;
+/** "instead do X", "actually, show X instead", "rather X", "adhukku badhila X", "அதுக்கு பதிலா X" */
+const INSTEAD_EN = /^ (?:(?:jarvis|no|ok|okay|actually) )*(?:instead|rather|do this instead|instead of that)(?: of that)?,? (?:do |show |make |use |go with |try )?(.{3,})$|^ (?:(?:jarvis|no|actually) )*(.{3,}?) instead(?: of that| of this)?(?: please)? $/;
+const INSTEAD_TG = /^ (?:(?:jarvis|illa|venam) )*(?:adhukku|athukku|idhukku|ithukku) (?:badhila|bathila|badhilaa|bathilaa) (.{3,})$/;
+const INSTEAD_TA = /^\s*(?:அதுக்கு|இதுக்கு|அதற்கு|இதற்கு)\s+(?:பதிலா|பதிலாக|பதில்)\s+(.{3,})$/;
+
+/** Which new intent a whole sentence asks for (English, Tamil, Tanglish), with the words its flow needs; null for anything else. */
+export function intentMarker(text: string): IntentMarker | null {
+  const raw = String(text ?? "").trim().slice(0, 300);
+  if (!raw) return null;
+  const t = norm(raw);
+  const restOf = (m: RegExpExecArray | null, ...ks: number[]): string | null => { if (!m) return null; for (const k of ks) if (m[k] && m[k].trim()) return m[k].trim(); return null; };
+  if (STOP_ANY.test(t)) return { intent: "stop", rest: null };
+  if (SKIP_ANY.test(t)) return { intent: "skip", rest: null };
+  if (asksHowKnow(raw)) return { intent: "howknow", rest: null };
+  let m: RegExpExecArray | null;
+  if ((m = FORGET_EN.exec(t)) || FORGET_TG.test(t) || FORGET_TA.test(raw)) return { intent: "forget", rest: /everything|all|ellaam|ellath|எல்லா/.test(t) ? "all" : null };
+  if (RECALL_EN.test(t) || RECALL_TG.test(t) || RECALL_TA.test(raw)) return { intent: "recall", rest: null };
+  // the note is kept as said (the Collector's own words, with their casing), never the normalised text
+  if ((m = /^\s*(?:(?:jarvis|please|ok|okay)[\s,]+)*(?:remember|note|make a note|keep in mind|don'?t forget)(?:\s+that)?[\s,:]+(.{3,})$/i.exec(raw)) && REMEMBER_EN.test(t)) return { intent: "remember", rest: m[1].trim() };
+  if ((m = REMEMBER_TG.exec(t))) return { intent: "remember", rest: restOf(m, 1) };
+  if ((m = REMEMBER_TA.exec(raw))) return { intent: "remember", rest: restOf(m, 1) };
+  if ((m = CHANGED_EN.exec(t)) || CHANGED_TG.test(t) || CHANGED_TA.test(raw)) return { intent: "changed", rest: restOf(m, 1) };
+  if ((m = BRIEF_ME.exec(t)) || BRIEF_TA.test(raw)) return { intent: "brief", rest: restOf(m, 1) };
+  if (EXPLAIN_THIS_EN.test(t) || EXPLAIN_THIS_TG.test(t) || EXPLAIN_THIS_TA.test(raw)) { const e = EXPLAIN_THIS_EN.exec(t); return { intent: "explain", rest: restOf(e, 1) }; }
+  if ((m = MISSION_EN.exec(t)) && !/\bdashboard\b/.test(t)) return { intent: "mission", rest: [restOf(m, 1), restOf(m, 2)].filter(Boolean).join(" for ") || null };
+  if ((m = MISSION_TG.exec(t))) return { intent: "mission", rest: [restOf(m, 2), restOf(m, 1)].filter(Boolean).join(" for ") || null };
+  if ((m = MISSION_TA.exec(raw))) return { intent: "mission", rest: [restOf(m, 2), restOf(m, 1)].filter(Boolean).join(" ") || null };
+  if ((m = INSTEAD_EN.exec(t)) || (m = INSTEAD_TG.exec(t))) return { intent: "instead", rest: restOf(m, 1, 2) };
+  if ((m = INSTEAD_TA.exec(raw))) return { intent: "instead", rest: restOf(m, 1) };
+  return null;
+}
+/** the intents the fast lane must leave alone: a screen read from one of their words would answer another question ("what changed this week" is not this week's list) */
+const NOT_A_SCREEN = new Set<IntentKind>(["changed", "howknow", "recall", "forget", "remember", "mission", "skip", "instead", "stop"]);
+export const leavesFastLane = (text: string): boolean => { const m = intentMarker(text); return !!m && NOT_A_SCREEN.has(m.intent); };

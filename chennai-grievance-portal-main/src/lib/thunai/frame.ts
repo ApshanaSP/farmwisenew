@@ -5,27 +5,36 @@
  * correction refines the request that was cut off. Pure.
  */
 import { EXPLAIN_TA } from "./lexicon";
-import { foreignIn } from "./entities";
+import { foreignIn, resolveEntity } from "./entities";
 import { singlePosition } from "./ordinal";
-import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
-import type { Recipe } from "./stage";
-import type { StageContext } from "./stage";
+import { asksHowKnow, catIn, periodIn, placesIn, quickScreen, sevIn, zonesIn } from "./quick";
+export { asksHowKnow };
+import { buildRegister, entitiesNamed, entityAt, howKnow, pickList, type RegEntity, type Register, type RegTurn, type StageInput } from "./register";
+import { RECIPES, type Recipe } from "./stage";
 import type { World } from "./types";
+import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
 
 export interface FrameInput {
   text: string;
-  /** the open Stage, if any */
-  stage: StageContext | null;
-  /** recent turns, oldest first */
-  turns: { heard: string; did: string }[];
+  /** the open Stage, if any (with the labels of its items when the browser sends them) */
+  stage: StageInput | null;
+  /** recent turns, oldest first (recipe, slots and result when the browser keeps them) */
+  turns: RegTurn[];
   lastPlace: string | null;
   /** the last request said, kept after a cancel */
   lastText: string | null;
   world: World;
+  /** the dialogue state register (register.ts); built here from the Stage and the turns when not given, without the last answer's provenance */
+  register?: Register | null;
+  /** now, for saying how old the records are ("how do you know?"); null leaves the age out */
+  now?: number | null;
 }
 export type Frame =
   | { kind: "screen"; recipe: Recipe; slots: Record<string, unknown>; why: string }
-  | { kind: "stageOp"; op: "open" | "view" | "sort" | "filter" | "read" | "explain"; n: number | null; text: string | null; why: string }
+  /** an operation on the open Stage; `id` is the item the register resolved ("the second one", "that Velachery one"), when it knows it */
+  | { kind: "stageOp"; op: "open" | "view" | "sort" | "filter" | "read" | "explain"; n: number | null; text: string | null; why: string; id?: string | null }
+  /** a line built by code, said as it is: "how do you know?" (the screen's provenance), or a question back when the words name several items */
+  | { kind: "reply"; text: { en: string; ta: string }; why: "howknow" | "pick-several" }
   | { kind: "none" };
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
@@ -42,6 +51,9 @@ export function isElliptical(text: string): boolean {
 /** the last recipe and slots: the open Stage's, else what the last sentence would have been */
 function lastFrame(i: FrameInput): { recipe: Recipe; slots: Record<string, unknown>; source: "stage" | "text" } | null {
   if (i.stage) return { recipe: i.stage.recipe, slots: { ...i.stage.slots }, source: "stage" };
+  // a turn that kept its recipe and slots says what it was, better than reading its words again (unless a cancelled request came after it)
+  const kept = i.turns[i.turns.length - 1];
+  if (!i.lastText && kept?.recipe && (RECIPES as readonly string[]).includes(kept.recipe) && kept.slots && typeof kept.slots === "object") return { recipe: kept.recipe as Recipe, slots: { ...kept.slots }, source: "text" };
   const heard = i.lastText ?? i.turns[i.turns.length - 1]?.heard ?? null;
   if (!heard) return null;
   const q = quickScreen(heard, i.world, { noBail: true });
@@ -63,20 +75,99 @@ const COMPARE_LAST = /(compare|versus|vs|against|ஒப்பிடு|oppidu|co
 const COMPARE = /(compare|versus| vs |against|ஒப்பிடு|oppidu|compare pannu)/;
 const VIEW = /(as a|as|into a|in a|to a|la|-a|ஆக)?\s*(table|chart|graph|map|டேபிள்|அட்டவணை|வரைபடம்)/;
 
+/** the words that point at an item and the verbs of explaining: taken out before a position is read ("that second one", "explain the third one") */
+const POINTING = new Set(["that", "this", "the", "andha", "antha", "indha", "intha", "anda", "adhu", "idhu", "athu", "ithu", "அந்த", "இந்த", "அது", "இது"]);
+// (விளக்கு after தெரு or மின் is a street light, not "explain": BUG-032)
+const EXPLAIN_PICK = / (?<!(?:theru|street|min|current|kambam|lamp|தெரு|மின்) )(explain|vilakku|vilakkunga|vilakkam|vilakkama|vilakki|tell me about|tell me more about|whats wrong with|what is wrong with|whats going on with|what is going on with|enna aachu|ennachu)(?= )|(?<!(?:தெரு|மின்) )(?<![஀-௿])(விளக்கு|விளக்குங்க|விளக்குங்கள்|விளக்கம்|விளக்கமா|விளக்கி)(?![஀-௿])/;
+const EXPLAIN_WORDS = /\b(explain|vilakku|vilakkunga|vilakkam|vilakkama|vilakki|pannu|pannunga|tell me about|tell me more about|whats wrong with|what is wrong with|whats going on with|what is going on with|enna aachu|ennachu)\b|(?<![஀-௿])(விளக்கு|விளக்குங்க|விளக்குங்கள்|விளக்கம்|விளக்கமா|விளக்கி)(?![஀-௿])/g;
+const stripPointing = (raw: string): string => raw.toLowerCase().replace(/[’']/g, "").replace(EXPLAIN_WORDS, " ").split(/[^\p{L}\p{M}\p{N}-]+/u).filter((w) => w && !POINTING.has(w)).join(" ");
+/** a position, the last one too ("the last one", "kadaisi", "கடைசி"): 1-based, -1 the last */
+// (the Tanglish ordinal with an object ending, "rendavadha", "moonavadhai", read as its plain form, "rendavadhu")
+const tgOrdinal = (s: string) => s.replace(/(aa?vadh|aa?vath)(?:a|ai|ae|e)(?![a-z])/g, "$1u");
+const positionIn = (s0: string): number | null => { const s = tgOrdinal(s0); return /^(?:one|onnu|onu|ஒன்னு|ஒண்ணு|ஒன்று)$/.test(s.trim()) ? null : singlePosition(s) ?? (/^(?:last|final|kadaisi|kadasi|கடைசி|கடைசியை)(?: (?:one|onnu|case|ஒன்னு|கேஸ்))?$/.test(s.trim()) ? -1 : null); };
+/** "that Velachery one", "andha Velachery onnu", "the Adyar case", "the one in Velachery", "வேளச்சேரி ஒன்னு": the words between the pointer and the noun */
+// (read on the sentence with the pointing words and the verb of explaining taken out)
+const NAMED_ONE = /^ (.{3,40}?) (?:one|onnu|onu|ஒன்னு|ஒண்ணு|ஒன்று|case|complaint|incident|wala|vala|வாலா)(?: (?:pls|please|jarvis))? $|^ (?:one|case|complaint|incident) (?:in|at|from|near|of) (.{3,40}) $|^ (.{3,40}?)(?: la| le)? (?:irukura|irukkura|ulla|iruka|இருக்குற|இருக்கிற|உள்ள) (?:onnu|case|ஒன்னு|கேஸ்) $/;
+/** "that one", "this one", "andha onnu", "அது": the item in focus, or the only one */
+const THAT_ONE = /^ (?:that|this|that one|this one|andha onnu|indha onnu|antha onnu|intha onnu|adhu|idhu|athu|ithu|அது|இது|அந்த ஒன்னு|இந்த ஒன்னு|அந்த ஒண்ணு|இந்த ஒண்ணு|அதை|இதை) $/;
+
+/** What an item that is not a case means when picked: a zone's or a department's cases, a gauge's reading; a why for a zone explained. */
+function pickScreen(e: RegEntity, explain: boolean, slots: Record<string, unknown>, w: World): Frame | null {
+  const zone = e.zone ?? zonesIn(norm(e.label), w)[0] ?? null;
+  const named = e.dept || e.zone != null ? null : resolveEntity(e.label, w);
+  const dept = e.dept ?? w.depts.find((d) => d.code === e.id)?.code ?? (named?.kind === "entity" && named.entity.kind === "dept" && !named.entity.noRecords ? named.entity.id : null);
+  const period = (slots.period as string | undefined) ?? "weekly";
+  if (e.kind === "Readings") return { kind: "screen", recipe: "readings", slots: { ...slots, name: e.label }, why: "pick-reading" };
+  if (zone != null) return explain
+    ? { kind: "screen", recipe: "why", slots: { zones: [zone], cat: slots.cat ?? null, period }, why: "pick-explain" }
+    : { kind: "screen", recipe: "cases", slots: { zones: [zone], cat: slots.cat ?? null, period, sort: "priority", n: 15, fresh: true }, why: "pick-zone" };
+  if (dept) return { kind: "screen", recipe: "cases", slots: { dept, status: "open", period, sort: "priority", n: 15, fresh: true }, why: "pick-dept" };
+  return null;
+}
+/** an item picked on the Stage: a case (or a news item) is opened or explained there; anything else becomes the screen it stands for */
+function picked(reg: Register, e: RegEntity | null, n: number, explain: boolean, slots: Record<string, unknown>, w: World, why: string): Frame | null {
+  if (e && (e.kind === "Ranking" || e.kind === "Compare" || e.kind === "Readings")) return pickScreen(e, explain, slots, w);
+  if (!e && reg.primary && reg.primary !== "CaseList" && reg.primary !== "CaseDetail" && reg.primary !== "NewsReader") return null;
+  return { kind: "stageOp", op: explain ? "explain" : "open", n, text: null, why, id: e?.id ?? null };
+}
+
+/** The time a follow-up names that is not one of the console's windows (last week, yesterday, last month): its slots, or "none" when no lane can count it there. */
+function spanSlots(raw: string, recipe: Recipe): Record<string, unknown> | "none" | null {
+  const spec = readPeriod(raw);
+  if (spec.kind === "none" || spec.kind === "window") return null;
+  if (spec.kind === "unheld" || !needsDates(spec)) return "none";
+  if (spec.kind === "day" && spec.back === 0) return { period: "daily" };
+  // a list and a brief are counted over the span's own dates (the fast lane's rule, quick.ts withSpan); any other screen is the planner's
+  return recipe === "cases" || recipe === "brief" ? { period: keyOf(spec), span: spec } : "none";
+}
+
 /** The follow-up, resolved; or none: the sentence stands on its own. */
 export function resolveFrame(i: FrameInput): Frame {
   const raw = i.text.trim();
   if (foreignIn(raw, i.world)) return { kind: "none" }; // a follow-up about another place is a new question, which the brief turn answers (RC-01)
   const t = norm(raw);
+  const reg = i.register ?? buildRegister(i.stage, i.turns, null);
+  // "how do you know?": the last answer's provenance, read aloud; with nothing shown yet it is not a follow-up
+  if (asksHowKnow(raw) && (i.stage || reg.last)) return { kind: "reply", text: howKnow(reg, i.now ?? null), why: "howknow" };
   const last = lastFrame(i);
   const words = t.trim().split(" ").filter(Boolean);
   if (!words.length || words.length > 12) return { kind: "none" };
 
-  // "the second one": an item on the open Stage
-  if (i.stage && (PICK_NOUN.test(t) || words.length <= 3 || /^ (open|thira) |திற/.test(t))) {
-    // one position read from the whole sentence: a place or any other word beside the number means this is not "open the Nth" (RC-42)
-    const n = singlePosition(raw);
-    if (n && i.stage.blocks.some((b) => b.ids.length >= n)) return { kind: "stageOp", op: "open", n, text: null, why: "ordinal" };
+  // "the second one", "andha rendavadhu", "explain the third one": an item on the open Stage
+  const explain = EXPLAIN_PICK.test(t);
+  if (i.stage && (PICK_NOUN.test(t) || words.length <= 3 || /^ (open|thira) |திற/.test(t) || explain)) {
+    // one position read from the whole sentence (the pointing words and the verb of explaining aside): a place or any other word beside the number
+    // means this is not "open the Nth" (RC-42)
+    const n = positionIn(stripPointing(raw)) ?? (explain ? null : singlePosition(raw));
+    if (n && (pickList(reg).length >= Math.abs(n) || i.stage.blocks.some((b) => b.ids.length >= Math.abs(n)))) {
+      const f = picked(reg, entityAt(reg, n), n, explain, last?.slots ?? {}, i.world, "ordinal");
+      if (f) return f;
+    }
+    // "that one", "explain this one": the item in focus, or the only one on screen (an open case is "it" already)
+    const bare = ` ${stripPointing(raw).replace(/\b(open|thira|one|onnu|ஒன்னு|ஒண்ணு)\b/g, " ").trim()} `;
+    if (THAT_ONE.test(t) || THAT_ONE.test(` ${t.replace(/^ (open|thira|explain|vilakku) /, " ").trim()} `) || (explain && bare.trim() === "")) {
+      if (reg.recipe === "case") { if (explain) return { kind: "stageOp", op: "explain", n: null, text: null, why: "deictic", id: pickList(reg)[0]?.id ?? null }; }
+      else {
+        const list = pickList(reg);
+        const k = list.length === 1 ? 1 : reg.focus != null && reg.focus >= 1 && reg.focus <= list.length ? reg.focus : null;
+        if (k) { const f = picked(reg, list[k - 1], k, explain, last?.slots ?? {}, i.world, "deictic"); if (f) return f; }
+      }
+    }
+    // "that Velachery one", "the one in Adyar": an item named by its place or kind, when the words name exactly one on screen
+    const named = NAMED_ONE.exec(` ${stripPointing(raw).replace(/^(open|thira) /, "").trim()} `);
+    const part = named ? (named[1] ?? named[2] ?? named[3] ?? "").trim() : "";
+    // a few words that name it, never a request of its own ("show me the flooding case" is a new question)
+    if (part && !positionIn(part) && part.split(" ").length <= 4 && !LIKE_NEW_REQUEST.test(part)) {
+      const byWords = entitiesNamed(reg, part);
+      const hits = byWords.length ? byWords : entitiesNamed(reg, "", zonesIn(` ${part} `, i.world));
+      if (hits.length === 1) { const f = picked(reg, hits[0], hits[0].n, explain, last?.slots ?? {}, i.world, "named"); if (f) return f; }
+      if (hits.length > 1) return { kind: "reply", why: "pick-several", text: {
+        en: `Several of these are about ${part}. Say the number of the one you want.`,
+        ta: `இதுல ${part} பத்தி பல இருக்கு. எந்த எண்ணுன்னு சொல்லுங்க.` } };
+      // a place no item on screen is about: not "and in X?", which would re-scope the whole screen to it
+      // (only for a place: "the severe one" with nothing to pick by still narrows the screen as before)
+      if (pickList(reg).length && (zonesIn(` ${part} `, i.world).length || placesIn(` ${part} `, i.world).length)) return { kind: "none" };
+    }
   }
   if (!last) return { kind: "none" };
 
@@ -121,14 +212,20 @@ export function resolveFrame(i: FrameInput): Frame {
     const named = (i.world.reservoirs.length ? i.world.reservoirs.map((r) => r.name) : ["Chembarambakkam", "Puzhal", "Poondi", "Cholavaram", "Veeranam", "Red Hills"]).find((n) => t.includes(` ${n.toLowerCase().split(" ")[0]} `));
     if (named) return { kind: "screen", recipe: "readings", slots: { ...slots, name: named }, why: "new-station" };
   }
+  // "same for last week", "and yesterday?": a time with its own dates is counted over them where a lane can (a list, a brief); anywhere else it is
+  // the planner's, never answered with the nearest window (RC-06)
+  const nextRecipe: Recipe = last.recipe === "case" ? "cases" : last.recipe;
+  const span = !periodIn(t) ? spanSlots(raw, nextRecipe) : null;
   // "and in Adyar?", "same for Ambattur", "no, Anna Nagar"
   if (hasNewPlace.length) {
+    if (span === "none") return { kind: "none" };
     if (last.recipe === "compare") return { kind: "screen", recipe: "compare", slots: { ...slots, zones: [...((slots.zones as number[]) ?? []), ...hasNewPlace].slice(0, 4) }, why: "add-place" };
-    return { kind: "screen", recipe: last.recipe === "case" ? "cases" : last.recipe, slots: { ...slots, zones: hasNewPlace.slice(0, 1), name: null, fresh: true, ...withTopic(t, slots) }, why: "new-place" };
+    return { kind: "screen", recipe: nextRecipe, slots: { ...slots, zones: hasNewPlace.slice(0, 1), name: null, fresh: true, ...withTopic(t, slots), ...(span ?? {}) }, why: "new-place" };
   }
   // "only severe", "and severe?"
   const sev = sevIn(t);
-  if (sev) return { kind: "screen", recipe: last.recipe === "case" || last.recipe === "news" ? "cases" : last.recipe, slots: { ...slots, sev, ...withTopic(t, slots) }, why: "narrow-severity" };
+  if (sev) return span === "none" ? { kind: "none" } : { kind: "screen", recipe: last.recipe === "case" || last.recipe === "news" ? "cases" : last.recipe, slots: { ...slots, sev, ...withTopic(t, slots), ...(span ?? {}) }, why: "narrow-severity" };
+  if (short && span && !catIn(t)) return span === "none" ? { kind: "none" } : { kind: "screen", recipe: nextRecipe, slots: { ...slots, ...span }, why: "span" };
   if (short && periodIn(t) && !catIn(t)) {
     const period = periodIn(t);
     if (period) return { kind: "screen", recipe: last.recipe, slots: { ...slots, period }, why: "period" };
