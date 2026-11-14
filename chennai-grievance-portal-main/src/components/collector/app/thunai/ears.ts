@@ -1,5 +1,6 @@
 /**
- * Jarvis's ears in the browser: one microphone for the whole of Jarvis mode, opened with the browser's echo canceller, noise
+ * Jarvis's ears in the browser: one microphone for the whole of Jarvis mode, opened with the browser's echo canceller (asked for
+ * as "all" of the system's playout where the browser has it, Chromium/Edge 141+, else the classic one; echoMode says which), noise
  * suppression and gain control, an AudioWorklet that cuts it into 20 ms frames, the voice detectors of lib/thunai/vad.ts on
  * every frame, and a short rolling recording so a sentence can be cut out from just before it began and sent to Whisper as
  * a 16 kHz WAV. Nothing is decided here: events go to the turn machine (lib/thunai/turn.ts), driven by the conductor.
@@ -35,7 +36,41 @@ declare global {
 const KEEP_S = 25;
 const PREROLL_MS = 350;
 
-interface Silero { run: (x: Float32Array) => Promise<number> }
+/** Which echo canceller the microphone got: "all" removes all of the system's playout, speechSynthesis too (Chromium/Edge 141+). */
+export type EchoMode = "all" | "remote-only" | "on" | "off" | "unknown" | "test";
+
+/**
+ * The microphone's constraints. `echoCancellation: "all"` is asked for wherever the browser knows the constraint at all: a
+ * browser that does not know the string value reads it as true (WebIDL turns a string into a boolean for ConstrainBoolean), and
+ * one that rejects it is asked again with true (Ears.start). Unverified on a real Edge 141 here: no browser is run in this lane.
+ */
+export function echoAudio(supported: MediaTrackSupportedConstraints | undefined, echo: "all" | true): MediaTrackConstraints {
+  return { ...(supported?.echoCancellation ? { echoCancellation: echo as unknown as ConstrainBoolean } : {}), noiseSuppression: true, autoGainControl: true, channelCount: 1 };
+}
+/** What the track says it got (its settings), for the strip. */
+export function echoApplied(settings: MediaTrackSettings | Record<string, unknown> | undefined): EchoMode {
+  const v = (settings as { echoCancellation?: unknown } | undefined)?.echoCancellation;
+  return v === "all" ? "all" : v === "remote-only" ? "remote-only" : v === true ? "on" : v === false ? "off" : "unknown";
+}
+
+interface Silero { run: (x: Float32Array) => Promise<number>; reset: () => void }
+interface OrtLike { Tensor: new (type: string, data: Float32Array | BigInt64Array, dims: number[]) => { data: unknown } }
+interface SessLike { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: unknown }>> }
+/** Silero v5 on one session: its recurrent state carries from frame to frame, and reset() zeroes it (a new session of Jarvis mode). */
+export function sileroRunner(ort: OrtLike, sess: SessLike): Silero {
+  const sr = new ort.Tensor("int64", BigInt64Array.from([BigInt(16000)]), []);
+  const zero = () => new ort.Tensor("float32", new Float32Array(256), [2, 1, 128]);
+  let state = zero();
+  return {
+    run: async (x: Float32Array) => {
+      const r = await sess.run({ input: new ort.Tensor("float32", x, [1, 512]), state, sr });
+      state = r.stateN;
+      return Number((r.output.data as Float32Array)[0]);
+    },
+    reset: () => { state = zero(); }
+  };
+}
+
 let sileroLoad: Promise<Silero | null> | null = null;
 /** Load Silero VAD once per page (the runtime's files come from /thunai-ort, the model from /thunai). */
 export function loadSilero(): Promise<Silero | null> {
@@ -47,15 +82,7 @@ export function loadSilero(): Promise<Silero | null> {
       ort.env.wasm.wasmPaths = "/thunai-ort/";
       ort.env.wasm.numThreads = 1; // no SharedArrayBuffer, no COOP/COEP
       const sess = await ort.InferenceSession.create("/thunai/silero_vad_v5.onnx", { executionProviders: ["wasm"] });
-      const sr = new ort.Tensor("int64", BigInt64Array.from([BigInt(16000)]), []);
-      let state = new ort.Tensor("float32", new Float32Array(256), [2, 1, 128]);
-      return {
-        run: async (x: Float32Array) => {
-          const r = await sess.run({ input: new ort.Tensor("float32", x, [1, 512]), state, sr });
-          state = r.stateN;
-          return Number((r.output.data as Float32Array)[0]);
-        }
-      };
+      return sileroRunner(ort as OrtLike, sess as SessLike);
     } catch (e) {
       console.warn("Jarvis: Silero VAD unavailable, using the energy gate", e);
       return null;
@@ -87,6 +114,8 @@ export class Ears {
   p = 0;
   /** Jarvis's own voice is playing (the detectors raise their bar) */
   echo = false;
+  /** which echo canceller the microphone got (null before it opens) */
+  echoMode: EchoMode | null = null;
   level = 0;
   rate = 48000;
 
@@ -105,21 +134,32 @@ export class Ears {
     if (!AC) throw new Error("unsupported");
     const my = ++this.gen;
     const test = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1" ? window.__jarvisTestStream : undefined;
-    if (test) this.stream = await test();
+    if (test) { this.stream = await test(); this.echoMode = "test"; }
     else {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");
+      const md = navigator.mediaDevices;
+      const supported = (() => { try { return md.getSupportedConstraints?.(); } catch { return undefined; } })();
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+        // all of the system's playout out of the microphone, the browser's own voices too, where the browser can; else the classic canceller
+        try { this.stream = await md.getUserMedia({ audio: echoAudio(supported, "all") }); }
+        catch (e) {
+          const n = (e as DOMException).name;
+          if (n !== "OverconstrainedError" && n !== "TypeError") throw e;
+          this.stream = await md.getUserMedia({ audio: echoAudio(supported, true) });
+        }
       } catch (e) {
         const n = (e as DOMException).name;
         throw new Error(n === "NotAllowedError" || n === "SecurityError" ? "blocked" : n === "NotFoundError" || n === "OverconstrainedError" ? "nomic" : "failed");
       }
+      this.echoMode = echoApplied(this.stream?.getAudioTracks()[0]?.getSettings?.());
     }
     // stopped while the browser's prompt was open: the microphone goes straight back
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
     const silero = await loadSilero();
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
     this.stream?.getTracks().forEach((t) => { t.onended = () => { if (my === this.gen) this.hooks.onDead?.(); }; });
+    // a new session of Jarvis mode: the model's memory of the last session's audio is gone
+    silero?.reset();
     this.silero = silero;
     this.kind = this.silero ? "silero" : "energy";
     const ctx = new AC();
@@ -188,6 +228,8 @@ export class Ears {
   get capturing() { return this.capFrom != null; }
   /** Listen longer before the sentence ends (a hold word). */
   extend(ms: number) { this.vad.extend(ms); this.prob.extend(ms); }
+  /** The quiet that ends the current sentence, from its live words (eou.ts); null: the fixed value. */
+  endAfter(ms: number | null) { this.vad.endAfter(ms); this.prob.endAfter(ms); }
 
   /** The captured sentence as a 16 kHz mono 16-bit WAV (null when nothing was captured). */
   take(): Blob | null {

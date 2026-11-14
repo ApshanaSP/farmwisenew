@@ -234,3 +234,27 @@ const CATEGORY_TOPICS: Record<string, string[]> = {
  */
 export const WEAK_SEV = new Set(["high", "medium", "moderate", "low"]);
 export const SEV_NOUN = new Set(["priority", "severity", "risk", "level", "urgency", "cases", "complaints", "incidents", "issues", "problems", "ones", "case", "complaint", "incident", "issue"]);
+
+// ---- speech-to-text vocabulary (stt.ts): names in the script each forced Whisper decode writes ----
+
+/**
+ * The names the speech-to-text prompts carry, most important first (a prompt that runs out of room drops from the end): the
+ * zones, the localities and reservoirs the console's prompt always carried, the departments by the short names people say. The
+ * English decode gets English spellings; the Tamil decode gets Tamil script, with the acronyms in Latin letters as Tamil text
+ * writes them.
+ */
+export const STT_NAMES: { en: string[]; ta: string[] } = {
+  en: [...ZONE_NAMES, "Velachery", "Mylapore", "Chembarambakkam", "Puzhal", "Poondi", "GCC", "CMWSSB", "TNEB", "TANGEDCO", "IMD", "AQI", "storm water drain", "waterlogging", "dengue"],
+  ta: [...Object.keys(ZONES).map((n) => ZONE_TA_NAME[Number(n)]), "வேளச்சேரி", "மயிலாப்பூர்", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "மழைநீர் வடிகால்", "குடிநீர் வாரியம்", "வெள்ளம்", "மழை", "புகார்", "GCC", "TNEB"]
+};
+
+/** A place or department name in English letters, in Tamil script when the lexicon knows it (zones, reservoirs, departments); else null. */
+export function sttTamilName(name: string): string | null {
+  const k = name.trim().toLowerCase().replace(/[-.]/g, " ").replace(/\s+/g, " ");
+  if (!k || /[஀-௿]/.test(k)) return null;
+  for (const z of Object.values(ZONES)) if (z.en.includes(k) || z.en.includes(k.replace(/ zone$/, ""))) return z.ta[0];
+  const res = RESERVOIR_ALIASES.find(([a]) => a === k)?.[1];
+  if (res) { const ta = RESERVOIR_ALIASES.find(([a, c]) => c === res && /[஀-௿]/.test(a)); if (ta) return ta[0]; }
+  for (const [code, al] of Object.entries(DEPT_ALIASES)) if (al.includes(k) && DEPT_TA[code]) return DEPT_TA[code];
+  return null;
+}

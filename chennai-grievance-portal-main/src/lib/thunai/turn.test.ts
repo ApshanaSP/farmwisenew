@@ -34,35 +34,36 @@ describe("turn-taking", () => {
 });
 
 describe("two-stage barge-in", () => {
-  it("the energy gate pauses at once; only Silero-confirmed speech held 200 ms cancels the turn", () => {
+  // v4 (ULTIMATE_JARVIS Pillar 5): the onset DUCKS instead of pausing, and only speech held 600 ms (not 200) stops the voice
+  it("the energy gate ducks at once; only Silero-confirmed speech held 600 ms cancels the turn", () => {
     const r = play(SPEAKING);
     const p = turn(r.m, { type: "quickOnset", at: 5000 });
     expect(p.m.state).toBe("paused");
-    expect(p.act).toEqual([{ a: "pauseVoice" }, { a: "capture" }]);
+    expect(p.act).toEqual([{ a: "duckVoice" }, { a: "capture" }]);
     // energy alone never cancels, however long
-    expect(turn(p.m, { type: "tick", at: 5400, heldMs: 400 }).act).toEqual([]);
+    expect(turn(p.m, { type: "tick", at: 5700, heldMs: 700 }).act).toEqual([]);
     const conf = turn(p.m, { type: "vadStart", at: 5040 });
     expect(conf.m.confirmed).toBe(true);
-    const early = turn(conf.m, { type: "tick", at: 5100, heldMs: 100 });
+    const early = turn(conf.m, { type: "tick", at: 5220, heldMs: 220 });
     expect(early.act).toEqual([]);
-    const c = turn(early.m, { type: "tick", at: 5220, heldMs: 220 });
+    const c = turn(early.m, { type: "tick", at: 5620, heldMs: 620 });
     expect(c.m.state).toBe("interrupted");
     expect(c.act).toEqual([{ a: "cancelVoice" }, { a: "cancelTurn" }]);
     expect(c.m.bargeIns).toBe(1);
   });
-  it("a cough at the VAD end event resumes from where it stopped (noise-resume)", () => {
+  it("a cough at the VAD end event brings the voice back up from where it was (noise-resume)", () => {
     const { m, acts } = play([...SPEAKING, { type: "vadStart", at: 3000 }, { type: "tick", at: 3080, heldMs: 80 }, { type: "vadEnd", at: 3400, ms: 120, short: true }]);
     expect(m.state).toBe("speaking");
-    expect(acts[acts.length - 1]).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
+    expect(acts[acts.length - 1]).toEqual([{ a: "dropCapture" }, { a: "unduckVoice" }]);
   });
   it("speech under 250 ms at the end event resumes even if the flag says otherwise", () => {
     const { m } = play([...SPEAKING, { type: "vadStart", at: 3000 }, { type: "vadEnd", at: 3400, ms: 240, short: false }]);
     expect(m.state).toBe("speaking");
   });
-  it("an energy onset Silero never confirms resumes at the gate's end", () => {
+  it("an energy onset Silero never confirms comes back up at the gate's end", () => {
     const { m, acts } = play([...SPEAKING, { type: "quickOnset", at: 3000 }, { type: "quickEnd", at: 3300 }]);
     expect(m.state).toBe("speaking");
-    expect(acts[acts.length - 1]).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
+    expect(acts[acts.length - 1]).toEqual([{ a: "dropCapture" }, { a: "unduckVoice" }]);
   });
   it("a sentence said over Jarvis cancels and is transcribed; the generation moves on", () => {
     const { m, acts } = play([...SPEAKING, { type: "vadStart", at: 5000 }, { type: "tick", at: 5220, heldMs: 220 }, { type: "vadEnd", at: 6200, ms: 1200, short: false }]);
@@ -123,8 +124,9 @@ describe("late transcripts and old answers", () => {
 });
 
 describe("holding", () => {
+  // speech held long enough to be a barge-in: 620 ms since v4 (was 220; turn.v4.test.ts has the same words said briefly over the voice)
   const hold = (word: string) => {
-    const r = play([...SPEAKING, { type: "vadStart", at: 5000 }, { type: "tick", at: 5220, heldMs: 220 }, { type: "vadEnd", at: 5600, ms: 500, short: false }]);
+    const r = play([...SPEAKING, { type: "vadStart", at: 5000 }, { type: "tick", at: 5620, heldMs: 620 }, { type: "vadEnd", at: 5900, ms: 700, short: false }]);
     return turn(r.m, { type: "text", text: word, gen: r.m.gen });
   };
   for (const w of ["wait", "Stop.", "one second", "hold on", "இரு", "நில்லு", "ஒரு நிமிஷம்"]) {
@@ -222,10 +224,10 @@ describe("what the independent review found", () => {
     expect(turn(base.m, { type: "vadEnd", at: 2400, ms: 120, short: true }).m.state).toBe("speaking");
     expect(turn(base.m, { type: "tick", at: 2300, heldMs: 220 }).act).toEqual([{ a: "cancelVoice" }, { a: "cancelTurn" }]);
   });
-  it("an empty transcript or a stray continue while paused resumes the voice", () => {
+  it("an empty transcript or a stray continue while ducked brings the voice back up", () => {
     const paused = play([...SPEAKING, { type: "ttsEnd" }, { type: "vadStart", at: 1 }, { type: "vadEnd", at: 900, ms: 700, short: false }, { type: "ttsStart", ack: true }, { type: "quickOnset", at: 950 }]);
     expect(paused.m.state).toBe("paused");
-    expect(turn(paused.m, { type: "text", text: "", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
-    expect(turn(paused.m, { type: "text", text: "continue", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
+    expect(turn(paused.m, { type: "text", text: "", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "unduckVoice" }]);
+    expect(turn(paused.m, { type: "text", text: "continue", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "unduckVoice" }]);
   });
 });

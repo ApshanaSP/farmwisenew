@@ -15,16 +15,26 @@ export const TUNING = {
   marginDb: 12,
   /** extra margin while Jarvis speaks, dB: raise this if Jarvis stops itself */
   echoMarginDb: 8,
-  /** a sentence ends after this much quiet, ms */
+  /** a sentence ends after this much quiet, ms (also the value whenever the browser's captions are not running) */
   endOfUtteranceMs: 300,
+  /** the captions' words already read as a whole command (the rules are sure, or it ends on a place or a department): ends after this much quiet, ms */
+  eouCompleteMs: 300,
+  /** the words end on "and", "matrum", "apram", "um", a preposition or an article: the sentence is still going, ends after this much quiet, ms */
+  eouOpenMs: 650,
   /** after a hold word the sentence may rest this much longer, ms */
   holdExtendMs: 4000,
   /** the longest single sentence, ms */
   maxUtteranceMs: 14_000,
   /** shorter than this at the end event is a cough, not a sentence, ms */
   minSpeechMs: 250,
-  /** speech held this long while Jarvis talks cancels the turn, ms */
+  /** speech held this long while Jarvis thinks (no voice yet) cancels the question in flight, ms */
   bargeMs: 200,
+  /** speech over Jarvis's voice ducks it; held this long it stops the voice and the turn, ms (shorter speech is read first: "mm-hmm" is not a barge-in) */
+  bargeHoldMs: 600,
+  /** ...or as soon as the captions' live words hold this many words that are not backchannels ("mm-hmm", "okay", சரி, "seri") */
+  bargeWords: 2,
+  /** the browser gives up on /hear after this long and the sentence counts as not heard, ms */
+  hearTimeoutMs: 6000,
   /** an ambient sentence shorter than this is never sent to transcription, ms */
   ambientMinMs: 400
 } as const;
@@ -73,6 +83,8 @@ export class EnergyVad {
   private startAt = 0;
   /** a hold word gave the Collector longer to think: the end of this sentence waits this much more */
   private extraMs = 0;
+  /** the quiet that ends this sentence, set from its live words (eou.ts); null: the fixed hangover */
+  private eou: number | null = null;
   speaking = false;
   /** the current noise floor, dB */
   floor = -60;
@@ -104,10 +116,11 @@ export class EnergyVad {
     // in speech: a lower gate to stay in (hysteresis), so soft word endings do not cut the sentence
     this.quietMs = db > gate - 4 ? 0 : this.quietMs + o.frameMs;
     const len = at - this.startAt;
-    if (this.quietMs >= o.hangoverMs + this.extraMs || len >= o.maxSpeechMs) {
+    if (this.quietMs >= (this.eou ?? o.hangoverMs) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
       this.above = 0;
       this.extraMs = 0;
+      this.eou = null;
       const ms = len - this.quietMs;
       return { type: "end", at, ms, short: ms < o.minSpeechMs };
     }
@@ -118,7 +131,9 @@ export class EnergyVad {
   heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
   /** Listen longer before ending the current or next sentence (a hold word). */
   extend(ms: number) { this.extraMs = ms; }
-  reset() { this.speaking = false; this.above = 0; this.quietMs = 0; this.extraMs = 0; }
+  /** The quiet that ends the current sentence, from its live words (null: the fixed value). It lasts until that sentence ends. */
+  endAfter(ms: number | null) { this.eou = ms; }
+  reset() { this.speaking = false; this.above = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; }
 }
 
 /**
@@ -136,6 +151,7 @@ export class ProbVad {
   private quietMs = 0;
   private startAt = 0;
   private extraMs = 0;
+  private eou: number | null = null;
   speaking = false;
   constructor(o: Partial<ProbOpts> = {}) { this.o = { ...PROB_DEFAULTS, ...o }; }
   /** One frame's speech probability (0..1) ending at `at` ms. */
@@ -149,9 +165,10 @@ export class ProbVad {
     }
     this.quietMs = p >= o.neg ? 0 : this.quietMs + o.frameMs;
     const len = at - this.startAt;
-    if (this.quietMs >= o.hangoverMs + this.extraMs || len >= o.maxSpeechMs) {
+    if (this.quietMs >= (this.eou ?? o.hangoverMs) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
       this.extraMs = 0;
+      this.eou = null;
       const ms = len - this.quietMs;
       return { type: "end", at, ms, short: ms < o.minSpeechMs };
     }
@@ -159,5 +176,6 @@ export class ProbVad {
   }
   heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
   extend(ms: number) { this.extraMs = ms; }
-  reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; }
+  endAfter(ms: number | null) { this.eou = ms; }
+  reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; }
 }

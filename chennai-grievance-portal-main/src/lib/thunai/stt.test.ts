@@ -49,7 +49,8 @@ describe("hearing an utterance", () => {
   beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), "jv-stt-")); vi.stubEnv("THUNAI_DIR", dir); vi.stubEnv("GROQ_API_KEY", "x"); resetLedger(); });
   afterEach(() => { vi.unstubAllEnvs(); resetLedger(); });
 
-  it("an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with the prompt", async () => {
+  // v4 (ULTIMATE_JARVIS Pillar 5): one prompt per language, so the Tamil decode's names are in Tamil script (was: one prompt, "Adyar" in both)
+  it("an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with its own language's prompt", async () => {
     const seen: { model: string; lang: string; prompt: string }[] = [];
     const fetcher = (async (_u: string, init: RequestInit) => {
       const f = init.body as FormData;
@@ -58,7 +59,8 @@ describe("hearing an utterance", () => {
     }) as unknown as typeof fetch;
     const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(seen.map((x) => `${x.lang}:${x.model}`).sort()).toEqual(["en:whisper-large-v3-turbo", "ta:whisper-large-v3"]);
-    expect(seen.every((x) => x.prompt.includes("Adyar"))).toBe(true);
+    expect(seen.find((x) => x.lang === "en")?.prompt).toContain("Adyar");
+    expect(seen.find((x) => x.lang === "ta")?.prompt).toContain("அடையாறு");
     expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta", noise: false });
   });
   it("each model's budget is its own: turbo cooling leaves a named turn on large-v3; large-v3 cooling stops Tamil ambient with no post", async () => {
