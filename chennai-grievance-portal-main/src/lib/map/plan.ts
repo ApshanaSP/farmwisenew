@@ -5,6 +5,9 @@
  *
  * Differences from the prompt's sketch, each needed by a question shape it lists:
  * - `last_days` carries `offset` (1 = the window before), for "this week vs last week";
+ * - `day`, `week` (Monday to Sunday), `month` and `quarter` are calendar periods on the IST wall clock, `offset` 0 the current one up to now and 1 the
+ *   one before: "today" is since midnight and "last week" the calendar week before, as Jarvis and Ask District IQ read them (src/lib/period/read.ts,
+ *   fixall3-map-today);
  * - `take` has `where.kinds` (hospital, clinic, health centre...), so "hospitals" can leave out private clinics;
  * - `within.near` is a list, so "add hospitals" widens "near schools" to "near schools or hospitals";
  * - `nearest.from` may be `place:<ref>` (a resolved place), for "5 nearest police stations to Marina";
@@ -18,6 +21,9 @@ export const LIMITS = { steps: 8, minM: 10, maxM: 5000, k: 20, days: 365, featur
 export const PeriodSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("last_days"), days: z.number().int(), offset: z.number().int() }),
   z.object({ kind: z.literal("month"), offset: z.number().int() }),
+  z.object({ kind: z.literal("day"), offset: z.number().int() }),
+  z.object({ kind: z.literal("week"), offset: z.number().int() }),
+  z.object({ kind: z.literal("quarter"), offset: z.number().int() }),
   z.object({ kind: z.literal("range"), from: z.string(), to: z.string() })
 ]);
 export type Period = z.infer<typeof PeriodSchema>;
@@ -73,10 +79,15 @@ export type Plan = z.infer<typeof PlanSchema>;
 
 export const OPEN_FILTER: Filter = { category: null, family: null, severity: null, status: "open", dept: null, overdue: null, citizen: null, period: null, text: null };
 
-/** Days a period covers (a month counts 31), for the 365-day limit. */
+/** The calendar periods, with their most days and how far back an offset may reach. */
+export const CALENDAR = { day: { days: 1, max: 365 }, week: { days: 7, max: 52 }, month: { days: 31, max: 12 }, quarter: { days: 92, max: 4 } } as const;
+export type CalendarKind = keyof typeof CALENDAR;
+export const isCalendar = (p: Period | null | undefined): p is Extract<Period, { kind: CalendarKind }> => !!p && Object.prototype.hasOwnProperty.call(CALENDAR, p.kind);
+
+/** Days a period covers (a month counts 31, a quarter 92), for the 365-day limit. */
 export function periodDays(p: Period): number {
   if (p.kind === "last_days") return p.days;
-  if (p.kind === "month") return 31;
+  if (isCalendar(p)) return CALENDAR[p.kind].days;
   const a = Date.parse(p.from.replace(" ", "T") + "Z"), b = Date.parse(p.to.replace(" ", "T") + "Z");
   return Number.isFinite(a) && Number.isFinite(b) ? Math.ceil((b - a) / 86_400_000) : Infinity;
 }
@@ -121,7 +132,7 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
     const d = periodDays(p);
     if (!(d >= 1 && d <= LIMITS.days)) problems.push(`a period of ${Number.isFinite(d) ? d : "?"} days is outside 1–${LIMITS.days} days`);
     if (p.kind === "last_days" && (p.offset < 0 || (p.offset + 1) * p.days > LIMITS.days * 2)) problems.push("a period reaches too far back");
-    if (p.kind === "month" && (p.offset < 0 || p.offset > 12)) problems.push("a month offset is outside 0–12");
+    if (isCalendar(p) && (p.offset < 0 || p.offset > CALENDAR[p.kind].max)) problems.push(`a ${p.kind} offset is outside 0–${CALENDAR[p.kind].max}`);
   }
   return problems.length ? { ok: false, problems } : { ok: true, plan };
 }

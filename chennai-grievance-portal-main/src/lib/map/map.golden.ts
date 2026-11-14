@@ -145,15 +145,16 @@ describe.skipIf(!haveStore())("Ask the Map on the frozen store", () => {
 
   it("10 questions: the Map's count equals the console's incident list for the same filters", async () => {
     const { list } = await import("@/lib/collector/intel");
+    // the console's Daily is the last 24 hours; "today" on the map is the calendar day since midnight (fixall3-map-today), as in Jarvis and Ask
     const pairs: [string, Parameters<typeof list>[0]][] = [
       ["open incidents in Zone 13 this week", { period: "weekly", zone: 13, dept: null, sev: null, status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open waterlogging in zone 5 this month", { period: "monthly", zone: 5, dept: null, sev: null, cat: "FLOOD_WATERLOGGING", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
-      ["severe incidents in zone 9 today", { period: "daily", zone: 9, dept: null, sev: "Severe", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
+      ["severe incidents in zone 9 in the last 24 hours", { period: "daily", zone: 9, dept: null, sev: "Severe", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open incidents in Velachery taluk this week", { period: "weekly", zone: null, dept: null, sev: null, taluk: "TLK-VLC", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open garbage in zone 10 this month", { period: "monthly", zone: 10, dept: null, sev: null, cat: "SOLID_WASTE", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open road accidents in zone 3 this week", { period: "weekly", zone: 3, dept: null, sev: null, cat: "ROAD_ACCIDENT", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open streetlight problems in zone 7 this month", { period: "monthly", zone: 7, dept: null, sev: null, cat: "STREETLIGHT_ELECTRICAL", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
-      ["open incidents in zone 1 today", { period: "daily", zone: 1, dept: null, sev: null, status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
+      ["open incidents in zone 1 in the last 24 hours", { period: "daily", zone: 1, dept: null, sev: null, status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["open drainage in zone 12 this month", { period: "monthly", zone: 12, dept: null, sev: null, cat: "DRAINAGE_SEWAGE", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }],
       ["severe incidents in zone 13 this month", { period: "monthly", zone: 13, dept: null, sev: "Severe", status: "open", q: null, sort: "t", dir: -1, page: 0, scope: "period" }]
     ];

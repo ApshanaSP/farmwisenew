@@ -20,7 +20,7 @@ import { PlanError, areaLabel, runMapPlan, drawnRadius, type Ctx, type Place, ty
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { mapLang, rulesRoute, type RouteEnv } from "./route";
+import { mapLang, rulesRoute, withSaidPeriod, type RouteEnv } from "./route";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
@@ -250,7 +250,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
           hint: r.plan, unread: r.unread, zones: w.zones }).catch(() => null);
-        if (a && "plan" in a) { plan = a.plan; aiUsed = true; defaults = []; }
+        if (a && "plan" in a) { plan = withSaidPeriod(a.plan, input.text); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
     } else {
@@ -259,7 +259,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
         const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones });
         aiUsed = true;
-        if ("plan" in a) plan = a.plan;
+        if ("plan" in a) plan = withSaidPeriod(a.plan, input.text);
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);

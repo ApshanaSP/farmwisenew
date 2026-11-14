@@ -87,7 +87,7 @@ const EN: [string, string][] = [
   ["accidents near metro stations", `${RA}:open:7 | rail_metro | within:500`],
   ["garbage near schools and colleges", `${SW}:open:7 | schools | colleges | within:500`],
   ["waterlogging within half a km of government hospitals", `${FW}:open:7 | hospitals(gov) | within:500`],
-  ["all incidents in Mylapore taluk today", "inc:-:any:1 | in:taluk:TLK-MYL"],
+  ["all incidents in Mylapore taluk today", "inc:-:any:day | in:taluk:TLK-MYL"], // today: since midnight IST (fixall3-map-today)
   ["closed garbage complaints in zone 1", `${SW}:closed:7:cit | in:zone1`],
   ["road accidents by zone", `${RA}:open:7 | by:zone`],
   ["theft hotspots", `${TH}:any:90 | hot`],
@@ -110,7 +110,7 @@ const TA: [string, string][] = [
   ["இந்த மாதம் திருட்டு கொத்து", `${TH}:any:30 | hot`],
   ["தீயணைப்பு நிலையங்கள் அருகே தீ விபத்து", "inc:FIRE_EXPLOSION:open:7 | fire_stations | within:500"],
   ["காவல் நிலையங்கள் அருகே திருட்டு", `${TH}:open:7 | police | within:500`],
-  ["இன்று வெள்ளம் அடையாறு மண்டலம்", `${FL}:open:1 | in:zone13`],
+  ["இன்று வெள்ளம் அடையாறு மண்டலம்", `${FL}:open:day | in:zone13`],
   ["கடந்த 7 நாட்களில் குப்பை புகார்கள் வார்டு 170", `${SW}:open:7:cit | in:ward170`],
   ["டெங்கு பள்ளிகள் அருகே", "inc:VECTOR_DISEASE:open:7 | schools | within:500"],
   ["கழிவுநீர் புகார்கள் மருத்துவமனைகள் அருகே", "inc:DRAINAGE_SEWAGE:open:7:cit | hospitals | within:500"],
@@ -125,7 +125,7 @@ const TA: [string, string][] = [
   ["குப்பை எங்கே அதிகம் குவிந்த", `${SW}:any:90 | hot`],
   ["சாலை விபத்துகள் கொத்து", `${RA}:any:90 | hot`],
   ["மயிலாப்பூர் வட்டத்தில் கடுமையான சம்பவங்கள்", "inc:-:open:7:Severe | in:taluk:TLK-MYL"],
-  ["இன்று திறந்த சம்பவங்கள் மண்டலம் 1", "inc:-:open:1 | in:zone1"],
+  ["இன்று திறந்த சம்பவங்கள் மண்டலம் 1", "inc:-:open:day | in:zone1"],
   ["ரயில் நிலையங்கள் அருகே விபத்து", `${RA}:open:7 | rail_metro | within:500`],
   ["1 கி.மீ க்குள் பள்ளிகள் அருகே குப்பை", `${SW}:open:7 | schools | within:1000`],
   ["அரசு மருத்துவமனைகள் அருகே வெள்ளம்", `${FL}:open:7 | hospitals(gov) | within:500`],
@@ -163,7 +163,7 @@ const TG: [string, string][] = [
   ["dengue school kitta", "inc:VECTOR_DISEASE:open:7 | schools | within:500"],
   ["fire station pakkathula fire accident", "inc:FIRE_EXPLOSION:open:7 | fire_stations | within:500"],
   ["police station kitta thiruttu", `${TH}:open:7 | police | within:500`],
-  ["innaiki vellam adyar zone", `${FL}:open:1 | in:zone13`],
+  ["innaiki vellam adyar zone", `${FL}:open:day | in:zone13`],
   ["mylapore taluk la severe incidents", "inc:-:open:7:Severe | in:taluk:TLK-MYL"],
   ["metro station pakkathula vibathu", `${RA}:open:7 | rail_metro | within:500`],
   ["closed kuppai complaints zone 1 la", `${SW}:closed:7:cit | in:zone1`],
@@ -336,7 +336,7 @@ describe("the places themselves, or incidents near them", () => {
   it("no period in the question: the last 7 days; a period said is used", () => {
     expect(route("garbage complaints")).toBe(`${SW}:open:7:cit`);
     expect(route("garbage complaints this month")).toBe(`${SW}:open:30:cit`);
-    expect(route("garbage complaints today")).toBe(`${SW}:open:1:cit`);
+    expect(route("garbage complaints today")).toBe(`${SW}:open:day:cit`);
   });
 });
 

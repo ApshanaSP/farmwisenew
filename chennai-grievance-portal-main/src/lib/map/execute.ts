@@ -9,7 +9,7 @@
  *   (PIN_PRECISION_M); the others are counted in the trace as "left out: no exact place".
  */
 import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, haversineM, inBbox, mPerDegLon, pointInPolygon, type LatLon, type Pair } from "./geom";
-import type { AreaRef, Filter, Period, Plan, Step } from "./plan";
+import { isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
 import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, isTa, nOf, periodWords, type Lang } from "./words";
 import { fmtDistance } from "./geom";
@@ -77,11 +77,18 @@ export function shiftWall(wall: string, hours: number): string {
 /** A period as (from, to]: the console's own window (periodWindow in intel.ts), ending at `now`. */
 export function periodRange(p: Period, now: string): { from: string; to: string; fromOpen: boolean } {
   if (p.kind === "last_days") return { from: shiftWall(now, -24 * p.days * (p.offset + 1)), to: shiftWall(now, -24 * p.days * p.offset), fromOpen: true };
-  if (p.kind === "month") {
-    const y = Number(now.slice(0, 4)), m = Number(now.slice(5, 7)) - 1 - p.offset;
-    const start = new Date(Date.UTC(y, m, 1)), end = new Date(Date.UTC(y, m + 1, 1));
-    const f = (d: Date) => d.toISOString().slice(0, 19).replace("T", " ");
-    return { from: f(start), to: shiftWall(f(end), -1 / 3600), fromOpen: false };
+  if (isCalendar(p)) {
+    // calendar bounds on the IST wall clock, as src/lib/period/read.ts puts them for Jarvis and Ask District IQ (fixall3-map-today): a day from
+    // midnight, a week from Monday, a month or quarter from its 1st; offset 0 is the current one up to now, 1 the one before, and so on
+    const y = Number(now.slice(0, 4)), m = Number(now.slice(5, 7)) - 1, d = Number(now.slice(8, 10));
+    let start: number, end: number;
+    if (p.kind === "day") { start = Date.UTC(y, m, d - p.offset); end = Date.UTC(y, m, d - p.offset + 1); }
+    else if (p.kind === "week") { const monday = d - ((new Date(Date.UTC(y, m, d)).getUTCDay() + 6) % 7); start = Date.UTC(y, m, monday - 7 * p.offset); end = Date.UTC(y, m, monday - 7 * p.offset + 7); }
+    else if (p.kind === "month") { start = Date.UTC(y, m - p.offset, 1); end = Date.UTC(y, m - p.offset + 1, 1); }
+    else { const q0 = Math.floor(m / 3) * 3 - 3 * p.offset; start = Date.UTC(y, q0, 1); end = Date.UTC(y, q0 + 3, 1); }
+    const f = (t: number) => new Date(t).toISOString().slice(0, 19).replace("T", " ");
+    const last = f(end - 1000);
+    return { from: f(start), to: last > now ? now : last, fromOpen: false };
   }
   return { from: p.from.length === 10 ? `${p.from} 00:00:00` : p.from, to: p.to.length === 10 ? `${p.to} 23:59:59` : p.to, fromOpen: false };
 }

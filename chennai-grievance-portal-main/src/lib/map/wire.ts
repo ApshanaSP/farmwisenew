@@ -5,7 +5,7 @@
  * plan in the same form, for the examples, the rules' hint and the current plan of a follow-up. Pure.
  */
 import { z } from "zod";
-import type { AreaRef, Filter, Period, Plan, Step } from "./plan";
+import { CALENDAR, isCalendar, type AreaRef, type CalendarKind, type Filter, type Period, type Plan, type Step } from "./plan";
 import { LAYER_IDS, SEVS } from "./types";
 
 const AreaW = { kind: z.enum(["ward", "zone", "taluk", "point"]).nullable(), id: z.number().nullable(), code: z.string().nullable(), ref: z.string().nullable(), radius_m: z.number().nullable() };
@@ -17,6 +17,8 @@ export const WireStep = z.object({
   status: z.enum(["open", "closed", "any"]).nullable(), dept: z.array(z.string()).nullable(), overdue: z.boolean().nullable(), citizen: z.boolean().nullable(),
   news: z.boolean().nullable().describe("true = only incidents a news outlet reported"),
   period_days: z.number().nullable().describe("last N days; null = any time"), period_offset: z.number().nullable().describe("0 = ending now, 1 = the window before"),
+  period_calendar: z.enum(["day", "week", "month", "quarter"]).nullable()
+    .describe("a calendar day (from midnight), week (Monday to Sunday), month or quarter, with period_offset (0 = the current one up to now, 1 = the one before) and period_days null; null = period_days counts back from now"),
   government: z.boolean().nullable(), kinds: z.array(z.string()).nullable(),
   of: z.string().nullable(), near: z.array(z.string()).nullable(), meters: z.number().nullable(), line: z.string().nullable(),
   from: z.string().nullable(), to: z.string().nullable(), k: z.number().nullable(), areas: z.enum(["ward", "zone"]).nullable(), beyond_m: z.number().nullable(),
@@ -34,7 +36,7 @@ export const WirePlan = z.object({
 export type WirePlan = z.infer<typeof WirePlan>;
 
 const EMPTY: Omit<WireStep, "op" | "as"> = {
-  layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null,
+  layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null, period_calendar: null,
   government: null, kinds: null, of: null, near: null, meters: null, line: null, from: null, to: null, k: null, areas: null, beyond_m: null, by: null,
   area_kind: null, area_id: null, area_code: null, area_ref: null, area_radius_m: null, b_kind: null, b_id: null, b_code: null, b_ref: null, b_radius_m: null,
   before_days: null, before_offset: null
@@ -49,7 +51,12 @@ function areaIn(s: WireStep, p: "area" | "b"): AreaRef | null {
   if (k === "point") return s[`${p}_ref`] ? { kind: "point", ref: s[`${p}_ref`]!, radius_m: s[`${p}_radius_m`] ?? 1000 } : null;
   return null;
 }
-const periodOut = (p: Period | null) => (p && p.kind === "last_days" ? { period_days: p.days, period_offset: p.offset } : {});
+// a calendar period ("today", "last week") travels as period_calendar, so a follow-up's current plan keeps it (fixall3-map-today)
+const periodOut = (p: Period | null) => (p && p.kind === "last_days" ? { period_days: p.days, period_offset: p.offset }
+  : isCalendar(p) ? { period_calendar: p.kind, period_offset: p.offset } : {});
+type CalendarPeriod = Extract<Period, { kind: CalendarKind }>;
+const calendarIn = (k: WireStep["period_calendar"], offset: number | null | undefined): CalendarPeriod | null =>
+  k && Object.prototype.hasOwnProperty.call(CALENDAR, k) ? ({ kind: k, offset: Math.round(offset ?? 0) } as CalendarPeriod) : null;
 
 export function toWire(plan: Plan): WirePlan {
   return {
@@ -70,7 +77,8 @@ export function toWire(plan: Plan): WirePlan {
         case "count_by": return { ...base, of: s.of, by: s.by };
         case "hotspot": return { ...base, of: s.of };
         case "compare": return { ...base, of: s.of, ...areaOut(s.a, "area"), ...areaOut(s.b, "b") } as WireStep;
-        case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null, before_offset: s.before.kind === "last_days" ? s.before.offset : null };
+        case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null,
+          before_offset: s.before.kind === "last_days" || isCalendar(s.before) ? s.before.offset : null };
       }
     })
   };
@@ -79,7 +87,8 @@ export function toWire(plan: Plan): WirePlan {
 /** The typed plan from the form (unchecked: the caller runs checkPlan on it). */
 export function fromWire(w: WirePlan): Plan {
   const steps = w.steps.map((s): Step => {
-    const period: Period | null = s.period_days != null ? { kind: "last_days", days: Math.round(s.period_days), offset: Math.round(s.period_offset ?? 0) } : null;
+    const cal = calendarIn(s.period_calendar, s.period_offset);
+    const period: Period | null = cal ?? (s.period_days != null ? { kind: "last_days", days: Math.round(s.period_days), offset: Math.round(s.period_offset ?? 0) } : null);
     switch (s.op) {
       case "take": {
         const layer = s.layer ?? "incidents";
@@ -96,7 +105,8 @@ export function fromWire(w: WirePlan): Plan {
       case "hotspot": return { op: "hotspot", as: s.as, of: s.of ?? "" };
       case "compare": return { op: "compare", as: s.as, of: s.of ?? "", a: areaIn(s, "area") ?? { kind: "zone", id: 0 }, b: areaIn(s, "b") ?? { kind: "zone", id: 0 } };
       case "change": return { op: "change", as: s.as, of: s.of ?? "", now: period ?? { kind: "last_days", days: 7, offset: 0 },
-        before: { kind: "last_days", days: Math.round(s.before_days ?? s.period_days ?? 7), offset: Math.round(s.before_offset ?? 1) } };
+        before: cal ? ({ kind: cal.kind, offset: Math.round(s.before_offset ?? cal.offset + 1) } as CalendarPeriod)
+          : { kind: "last_days", days: Math.round(s.before_days ?? s.period_days ?? 7), offset: Math.round(s.before_offset ?? 1) } };
     }
   });
   // a model sometimes names the first step as the answer: the answer is the last step unless that one only takes a layer

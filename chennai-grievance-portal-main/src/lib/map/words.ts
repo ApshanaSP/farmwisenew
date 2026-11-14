@@ -67,6 +67,19 @@ export function periodWords(p: Period | null, lang: Lang): string {
     return ta ? `அதற்கு முந்தைய ${p.days} நாட்கள்` : p.offset === 1 ? `the ${p.days} days before` : `${p.days} days, ${p.offset} periods back`;
   }
   if (p.kind === "month") return ta ? (p.offset === 0 ? "இந்த மாதம்" : `${p.offset} மாதம் முன்`) : p.offset === 0 ? "this calendar month" : p.offset === 1 ? "last calendar month" : `${p.offset} months back`;
+  // the calendar periods Jarvis and Ask District IQ say the same way (src/lib/period/read.ts): today since midnight, the calendar week before
+  if (p.kind === "day") {
+    if (ta) return p.offset === 0 ? "இன்று, நள்ளிரவு முதல்" : p.offset === 1 ? "நேற்று" : p.offset === 2 ? "நேற்று முன்தினம்" : `${p.offset} நாட்கள் முன்`;
+    return p.offset === 0 ? "today, since midnight" : p.offset === 1 ? "yesterday" : p.offset === 2 ? "the day before yesterday" : `the calendar day ${p.offset} days back`;
+  }
+  if (p.kind === "week") {
+    if (ta) return p.offset === 0 ? "இந்த வாரம், திங்கள் முதல்" : p.offset === 1 ? "கடந்த வாரம் (திங்கள் முதல் ஞாயிறு வரை)" : `${p.offset} வாரங்கள் முன்`;
+    return p.offset === 0 ? "this calendar week, since Monday" : p.offset === 1 ? "last calendar week (Monday to Sunday)" : `the calendar week ${p.offset} weeks back`;
+  }
+  if (p.kind === "quarter") {
+    if (ta) return p.offset === 0 ? "இந்த காலாண்டு" : p.offset === 1 ? "கடந்த காலாண்டு" : `${p.offset} காலாண்டுகள் முன்`;
+    return p.offset === 0 ? "this calendar quarter" : p.offset === 1 ? "last calendar quarter" : `the calendar quarter ${p.offset} quarters back`;
+  }
   return ta ? `${p.from.slice(0, 10)} முதல் ${p.to.slice(0, 10)} வரை` : `${p.from.slice(0, 10)} to ${p.to.slice(0, 10)}`;
 }
 

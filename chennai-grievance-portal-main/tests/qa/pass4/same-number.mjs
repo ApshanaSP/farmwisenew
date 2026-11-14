@@ -24,8 +24,9 @@ const APP_ROOT = path.resolve(here, "..", "..", "..");
 export const EVIDENCE_DIR = path.resolve(APP_ROOT, "..", "docs", "qa", "pass4", "evidence");
 const WHEN = { daily: "today", weekly: "this week", monthly: "this month", quarterly: "this quarter" };
 // The console's windows in the words of the rules lanes (Jarvis, Ask District IQ): since pass 7 (P6-022, src/lib/period/read.ts) "today" is the
-// calendar day since midnight IST in both, and the console's Daily (the last 24 hours) is "in the last 24 hours". Ask the Map reads "today" as
-// the last 24 hours still, so its own questions keep WHEN. The calendar day is read on its own below (readToday), against the oracle's day.
+// calendar day since midnight IST in both, and the console's Daily (the last 24 hours) is "in the last 24 hours". Since fix-all round 4
+// (fixall3-map-today) Ask the Map reads its period words with the same reader, so its questions use SAID too. The calendar day is read on its
+// own below (readToday, and the map's "today" in readMap), against the oracle's day.
 const SAID = { ...WHEN, daily: "in the last 24 hours" };
 const LAST_DAYS = { daily: 1, weekly: 7, monthly: 30, quarterly: 90 };
 
@@ -871,7 +872,7 @@ async function readMap(h, b, s, who = "collector") {
     b.line(s, sv, `(plan: open, ${s.period})`, open.answer.headline, { meaning: open.answer.meaning });
   }
   if (who !== "collector") return;
-  const words = [s.zone ? `in ${ZONE_WORDS[s.zone]}` : "", WHEN[s.period] === "today" ? "today" : WHEN[s.period]].filter(Boolean).join(" ");
+  const words = [s.zone ? `in ${ZONE_WORDS[s.zone]}` : "", SAID[s.period]].filter(Boolean).join(" ");
   if (!s.dept) {
     const t = await ask({ text: `open incidents ${words}` });
     b.line(s, sv, `open incidents ${words}`, t?.answer?.headline ?? t?.kind, { plan: t?.plan ? JSON.stringify(t.plan).slice(0, 400) : null });
@@ -879,6 +880,16 @@ async function readMap(h, b, s, who = "collector") {
     const t2 = await ask({ text: `severe incidents ${words}` });
     b.line(s, sv, `severe incidents ${words}`, t2?.answer?.headline ?? t2?.kind);
     if (t2?.answer) b.add(s, `${sv}:text`, `severe incidents ${words}`, t2.answer.count, "severe_open", { filter: (x) => x.lat != null, label: "severe" });
+  }
+  // "today" on the map is the calendar day since midnight IST, as in Jarvis and Ask District IQ (readToday): the oracle's open rows reported since
+  // midnight that have a map point
+  if (!s.dept && s.period === "daily") {
+    const o = b.o, where = s.zone ? ` in ${ZONE_WORDS[s.zone]}` : "";
+    const day = o.inStretch(`${o.now.slice(0, 10)} 00:00:00`, fmtWall(o.nowMs + 1000), s).filter((x) => x.open && !x.routed && x.lat != null);
+    const t3 = await ask({ text: `open incidents${where} today` });
+    b.line(s, sv, `open incidents${where} today`, t3?.answer?.headline ?? t3?.kind, { plan: t3?.plan ? JSON.stringify(t3.plan).slice(0, 400) : null });
+    if (t3?.answer) b.add(s, `${sv}:today`, `open incidents${where} today`, t3.answer.count, "custom",
+      { custom: () => ({ value: day.length, ids: day.map((x) => x.id) }), label: "still open, reported since midnight, with a map point" });
   }
 }
 

@@ -7,7 +7,7 @@
 import type { AskResponse } from "./ask";
 import type { Brief } from "./brief";
 import { runMapPlan, type Ctx, type RunResult } from "./execute";
-import type { Plan, Step } from "./plan";
+import { periodDays, type Plan, type Step } from "./plan";
 import { rulesRoute, type RouteEnv } from "./route";
 import { WORDS } from "./suggest";
 import type { World } from "./types";
@@ -86,7 +86,8 @@ function answerCands(res: AskResponse, r: RunResult, fe: FollowEnv, ta: boolean)
     return out;
   }
   if (!r.hits.length) {
-    if (f?.period?.kind === "last_days" && f.period.days < 30) edit("This month", "இந்த மாதம்");
+    // nothing in a short window ("today, since midnight" included): offer the month
+    if (f?.period && f.period.kind !== "range" && periodDays(f.period) < 30) edit("This month", "இந்த மாதம்");
     if (f?.status === "open") edit("Include closed ones", "மூடியவையும் சேர்த்து");
     return out;
   }

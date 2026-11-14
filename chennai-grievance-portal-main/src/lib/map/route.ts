@@ -9,7 +9,8 @@ import { tokens, hasPhrase, topicOf, OVERDUE } from "@/lib/assistant/intent";
 import { zoneNosIn } from "@/lib/zone-no";
 import { detectLanguage } from "@/lib/assistant/lang";
 import { classify } from "@/lib/collector/nlp";
-import { LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
+import { readPeriod, type PeriodKey } from "@/lib/period/read";
+import { isCalendar, LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import { areaFor, isLine, type Found, type Verb } from "./resolve";
 import type { LayerId } from "./types";
 import type { Lang } from "./words";
@@ -112,19 +113,68 @@ function kOf(text: string): number | null {
   return n >= 1 ? Math.min(LIMITS.k, n) : null;
 }
 
-/** Period words: "today", "this week", "last 10 days", "இந்த மாதம்", "indha vaaram". Null when none. */
+/** The console's rolling windows in days. */
+const KEY_DAYS: Record<PeriodKey, number> = { daily: 1, weekly: 7, monthly: 30, quarterly: 90 };
+/** A calendar period's rolling window of about the same length, for a change between two equal windows. */
+const ROLLING_DAYS = { day: 1, week: 7, month: 30, quarter: 90 } as const;
+
+/**
+ * Period words: "today", "this week", "last 10 days", "இந்த மாதம்", "indha vaaram". Null when none. Read by the one reader of Jarvis and Ask District
+ * IQ (src/lib/period/read.ts, fixall3-map-today), so a phrase means one window on the whole console: "today" is the calendar day since midnight
+ * IST, "yesterday" the day before, "last week / month / quarter" the calendar one before; "this week", "last 7 days", "this month" are the console's
+ * rolling windows and "last 10 days" that much back; "right now" is the current state, whatever day it was reported (no reporting window). Before,
+ * the map read "today" as the last 24 hours and "last month" as the last 30 days. A named month, day or holiday, and a time the records cannot
+ * answer ("two weeks ago"), have no window here: null, and the map's default (the last 7 days, said on the answer) stands, as before.
+ */
 export function periodOf(text: string): Period | null | "all" {
   const t = text.toLowerCase();
   if (/\b(all time|ever|since may|whole period|all dates|any time)\b|எல்லா காலமும்/.test(t)) return "all";
+  const s = readPeriod(text);
+  switch (s.kind) {
+    case "window": case "compare": return { kind: "last_days", days: KEY_DAYS[s.key], offset: 0 };
+    // the map counts whole days: "last 6 hours" has no window here
+    case "hours": return s.hours >= 24 ? { kind: "last_days", days: Math.min(LIMITS.days, Math.round(s.hours / 24)), offset: 0 } : null;
+    case "day": return { kind: "day", offset: s.back };
+    case "last": return { kind: s.unit, offset: 1 };
+    case "now": return "all";
+    case "none": break;
+    default: return null;
+  }
+  // the map's own words the reader does not hold ("5 naal kulla"); calendar words keep the reader's meaning here too
   const n = t.match(/\b(?:last|past|previous)\s+(\d{1,3})\s+days?\b|கடந்த\s*(\d{1,3})\s*நா(?:ள்|ட்)|(\d{1,3})\s*(?:naal|naatkal|days)\s*(?:la|kulla)/);
   if (n) return { kind: "last_days", days: Math.min(365, Number(n[1] ?? n[2] ?? n[3])), offset: 0 };
   const mo = t.match(/\b(?:last|past)\s+(\d{1,2})\s+months?\b/);
   if (mo) return { kind: "last_days", days: Math.min(365, Number(mo[1]) * 30), offset: 0 };
-  if (/\b(today|last 24 hours|past 24 hours|since yesterday)\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
-  if (/\b(this week|last 7 days|past 7 days|past week|last week|7 days|one week|a week)\b|இந்த வாரம்|கடந்த வாரம்|indha vaaram|intha vaaram|indha week|intha week|this vaaram/.test(t)) return { kind: "last_days", days: 7, offset: 0 };
-  if (/\b(this quarter|last quarter|last 3 months|past 3 months|90 days|three months)\b/.test(t)) return { kind: "last_days", days: 90, offset: 0 };
-  if (/\b(this month|last 30 days|past 30 days|past month|last month|30 days|one month)\b|இந்த மாதம்|கடந்த மாதம்|indha maasam|intha maasam|indha month|intha month/.test(t)) return { kind: "last_days", days: 30, offset: 0 };
+  if (/\btoday\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "day", offset: 0 };
+  if (/\b(last 24 hours|past 24 hours|since yesterday)\b/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
+  if (/\blast week\b|கடந்த வாரம்/.test(t)) return { kind: "week", offset: 1 };
+  if (/\blast month\b|கடந்த மாதம்/.test(t)) return { kind: "month", offset: 1 };
+  if (/\blast quarter\b/.test(t)) return { kind: "quarter", offset: 1 };
+  if (/\b(this week|last 7 days|past 7 days|past week|7 days|one week|a week)\b|இந்த வாரம்|indha vaaram|intha vaaram|indha week|intha week|this vaaram/.test(t)) return { kind: "last_days", days: 7, offset: 0 };
+  if (/\b(this quarter|last 3 months|past 3 months|90 days|three months)\b/.test(t)) return { kind: "last_days", days: 90, offset: 0 };
+  if (/\b(this month|last 30 days|past 30 days|past month|30 days|one month)\b|இந்த மாதம்|indha maasam|intha maasam|indha month|intha month/.test(t)) return { kind: "last_days", days: 30, offset: 0 };
   return null;
+}
+
+/**
+ * A model's plan with the question's own calendar words on its incident filters (fixall3-map-today). The model is told the calendar periods, but
+ * a rolling "period_days 1" for "today" would bring back the last 24 hours, so the words win. Only a calendar period the text names; a change
+ * keeps its two windows.
+ */
+export function withSaidPeriod(plan: Plan, text: string): Plan {
+  const said = periodOf(text);
+  if (!said || said === "all" || !isCalendar(said) || plan.steps.some((s) => s.op === "change")) return plan;
+  return { ...plan, steps: plan.steps.map((s) => (s.op === "take" && s.layer === "incidents" && s.filter ? { ...s, filter: { ...s.filter, period: said } } : s)) };
+}
+
+/**
+ * The two windows of a change, of equal length, the one before ending where this one starts (read.ts's comparison). A calendar period so far
+ * (today since midnight, this calendar week) is compared as its rolling window, never against the whole period before it.
+ */
+export function changeWindows(said: Period | null): { now: Period; before: Period } {
+  const now: Period = !said || said.kind === "range" ? { kind: "last_days", days: 7, offset: 0 }
+    : isCalendar(said) && said.offset === 0 ? { kind: "last_days", days: ROLLING_DAYS[said.kind], offset: 0 } : said;
+  return { now, before: { ...now, offset: (now as { offset: number }).offset + 1 } as Period };
 }
 
 // ---------------------------------------------------------------- types --
@@ -392,10 +442,10 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
   if (hot) next({ op: "hotspot", as: "hot", of: cur });
   else if (p.shape.countBy) next({ op: "count_by", as: "by", of: cur, by: p.shape.countBy });
   else if (p.shape.change) {
-    const per = p.period && p.period !== "all" ? p.period : { kind: "last_days" as const, days: 7, offset: 0 };
+    const { now: per, before } = changeWindows(p.period && p.period !== "all" ? p.period : null);
     const t = steps[0] as Extract<Step, { op: "take" }>;
     t.filter = { ...t.filter!, period: per };
-    next({ op: "change", as: "chg", of: cur, now: per, before: { ...per, offset: 1 } as Period });
+    next({ op: "change", as: "chg", of: cur, now: per, before });
   }
   // nothing to ask about: no category, place, facility or shape
   if (!subject && !p.facilities.length && !lines.length && !areas.length && !p.keep?.area && !p.keep?.line && !hot && !p.shape.countBy) return null;
