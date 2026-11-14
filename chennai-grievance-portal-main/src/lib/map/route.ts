@@ -9,7 +9,7 @@ import { tokens, hasPhrase, topicOf, OVERDUE } from "@/lib/assistant/intent";
 import { zoneNosIn } from "@/lib/zone-no";
 import { detectLanguage } from "@/lib/assistant/lang";
 import { classify } from "@/lib/collector/nlp";
-import { readPeriod, type PeriodKey } from "@/lib/period/read";
+import { periodWordsOut, readPeriod, type PeriodKey } from "@/lib/period/read";
 import { isCalendar, LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import { areaFor, isLine, type Found, type Verb } from "./resolve";
 import type { LayerId } from "./types";
@@ -329,9 +329,12 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const status = any(rtoks, ANY_STATUS) ? "any" : any(rtoks, CLOSED) ? "closed" : any(rtoks, OPEN) ? "open" : null;
   const overdue = OVERDUE.test(rest) || /காலக்கெடு\s*(தாண்டி|கடந்த)|past[- ]deadline/i.test(rest) ? true : null;
   const classified = classify(rest)?.terms ?? [];
+  // a period the map read is read: "hours" in "in the last 24 hours" and "since yesterday" sent a question the rules had read whole to the AI
+  // (fixall3-map-today). A time the map has no window for ("in September") keeps its words unread, so the AI may still read them.
+  const period = periodOf(text);
   return {
-    unread: unreadWords(rtoks, classified),
-    lang, toks, facilities, cats, family, citizen, news, severity, status, period: periodOf(text), dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
+    unread: unreadWords(period ? tokens(periodWordsOut(rest)) : rtoks, classified),
+    lang, toks, facilities, cats, family, citizen, news, severity, status, period, dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
     facNear: facilityIsNear(free, facWords),
     shape: {
       countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),

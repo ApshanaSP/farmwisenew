@@ -135,6 +135,16 @@ describe("the map's answers", () => {
     expect(changeWindows({ kind: "week", offset: 1 })).toEqual({ now: { kind: "week", offset: 1 }, before: { kind: "week", offset: 2 } });
     expect(changeWindows({ kind: "day", offset: 0 })).toEqual({ now: { kind: "last_days", days: 1, offset: 0 }, before: { kind: "last_days", days: 1, offset: 1 } });
   });
+  it.each(["open incidents in the last 24 hours", "severe incidents past 24 hours", "open incidents since yesterday", "flooding yesterday", "open incidents today",
+    "garbage in the last 3 weeks"])("%s: the period's words are read, so the rules answer it whole (no AI call)", (q) => {
+    const r = rulesRoute(q, null, env);
+    expect(r?.kind).toBe("plan");
+    expect(r && r.kind === "plan" ? r.unread : null).toEqual([]);
+  });
+  it("a time the map holds no window for keeps its words unread, so the AI may read them", () => {
+    const r = rulesRoute("open incidents in September", null, env);
+    expect(r && r.kind === "plan" ? r.unread : null).toContain("september");
+  });
   it("a model's plan keeps the question's calendar words: 'today' is never its rolling 24 hours", () => {
     const model: Plan = { language: "en", show: "a", steps: [{ op: "take", as: "a", layer: "incidents", filter: F({ kind: "last_days", days: 1, offset: 0 }), where: null },
       { op: "take", as: "f1", layer: "schools", filter: null, where: null }] };
