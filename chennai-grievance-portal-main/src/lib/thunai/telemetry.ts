@@ -86,13 +86,16 @@ export interface TelemetryFields {
   // ---- entity resolution (round.ts)
   entity?: string;
   via?: string;
+  // ---- speculative reads (round.ts)
+  hit?: boolean;
+  tool?: string;
 }
 
 type Scalar = string | number | boolean | null | undefined;
 
 const KEYS: (keyof TelemetryFields)[] = ["ms", "provider", "model", "tokens", "lane", "round", "calls", "ok", "why", "turn", "lang", "bytes", "hop", "cached", "count", "kind",
   "path", "cacheRead", "cacheWrite", "aborted", "hedged", "winner", "into", "after", "decode", "conf", "sttWinner", "chars", "status", "fallback", "barge", "selfHeard",
-  "tier", "act", "signal", "spoken", "severity", "entity", "via"];
+  "tier", "act", "signal", "spoken", "severity", "entity", "via", "hit", "tool"];
 /** Only these keys are written: a stray `text` field cannot reach the file. */
 export const FIELDS: ReadonlySet<string> = new Set<string>(["event", ...KEYS]);
 

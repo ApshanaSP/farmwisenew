@@ -19,7 +19,7 @@ export interface MemTurn { heard: string; did: string; recipe?: string; slots?: 
 export const RESULT_MAX = 120;
 /** slots the model fills with its own words: their figures are dropped, and a slot still holding a number word is dropped */
 const FREE_TEXT = new Set(["q", "name", "text", "title", "label", "request", "topic", "query", "what", "about"]);
-const DIGITS = /[0-9௦-௯]+(?:[.,][0-9௦-௯]+)*\s*%?/g;
+const DIGITS = /\p{Nd}+(?:[.,]\p{Nd}+)*\s*%?/gu;
 
 const clip = (s: string, n: number) => {
   const t = s.replace(/\s+/g, " ").trim();

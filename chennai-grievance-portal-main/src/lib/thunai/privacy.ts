@@ -252,3 +252,18 @@ export function redactHands<H extends { tool: (n: string, a: Record<string, unkn
     ...(h.compare ? { compare: (...a: never[]) => h.compare!(...a).then((r) => redact(r)) } : {})
   } as H;
 }
+
+/**
+ * How fast or how often something is closed, asked as a measure ("which department is slowest to close drainage complaints", "how long does
+ * it take to close a case", "the closing rate of complaints"): a question about the data, not an order to close anything.
+ */
+const CLOSING_MEASURE = /\b(?:slow|slower|slowest|fast|faster|fastest|quick|quicker|quickest|long|longer|longest|time|times|days|hours|rate|rates|speed|average|median|late|later|latest)\b(?:\s+[\w-]+){0,3}?\s+(?:to\s+)?(?:close|closing)\b|\b(?:clos(?:e|ing)|closure)\s+(?:rates?|times?|speed|performance|percentage|ratio)\b|\bhow\s+(?:long|fast|quickly|soon|often|many\s+days)\b.{0,40}?\bclos(?:e|es|ing|ed)\b/gi;
+/**
+ * The never rule (asksForbidden above) for a sentence, with a question about how fast things are closed read as the question it is:
+ * the measure's words are taken out and the rest is asked again, so "how long to close cases, then delete them all" is still refused.
+ */
+export function asksForbiddenOrder(text: string): boolean {
+  if (!asksForbidden(text)) return false;
+  const rest = text.replace(CLOSING_MEASURE, " ");
+  return rest === text || asksForbidden(rest);
+}
