@@ -111,9 +111,11 @@ describe("Claude provider", () => {
     delete process.env.JARVIS_CLAUDE_MODEL;
   });
 
+  // v4 (defect 11): 20 nullable strings now fit (rewritten as "" for none, see claude.v4.test.ts); 26 nullable numbers become 26
+  // optional parameters, over the API's 24, so they still go as plain JSON
   it("a schema with more optional fields than the API takes goes as plain JSON from the start", async () => {
-    const S = z.object(Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`f${i}`, z.string().nullable()])));
-    const create = fake(async () => ({ model: "claude-opus-5-5", stop_reason: "end_turn", usage, content: [{ type: "text", text: JSON.stringify(Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`f${i}`, null]))) }] }));
+    const S = z.object(Object.fromEntries(Array.from({ length: 26 }, (_, i) => [`f${i}`, z.number().nullable()])));
+    const create = fake(async () => ({ model: "claude-opus-5-5", stop_reason: "end_turn", usage, content: [{ type: "text", text: JSON.stringify(Object.fromEntries(Array.from({ length: 26 }, (_, i) => [`f${i}`, null]))) }] }));
     await claudeJson({ ...call, schema: S });
     expect((create.mock.calls[0][0] as Record<string, any>).output_config.format).toBeUndefined();
   });

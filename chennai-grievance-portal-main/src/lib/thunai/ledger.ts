@@ -15,7 +15,7 @@ import path from "path";
 import type { DatabaseSync as DB } from "node:sqlite";
 
 export type Org = "groq" | "gemini" | "bedrock" | "azure" | "anthropic";
-export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hedge" | "tts" | "eval" | "other";
+export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hedge" | "tts" | "eval" | "warm" | "other";
 
 export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number; ash?: number; asd?: number; minAudioS?: number }
 

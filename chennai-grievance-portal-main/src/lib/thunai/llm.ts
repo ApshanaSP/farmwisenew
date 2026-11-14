@@ -1,10 +1,12 @@
 /**
  * Jarvis's way to a model: a ladder over organisations and models, under the ledger, with a hedge. Server only.
  *   Claude if ANTHROPIC_API_KEY is set -> Groq with the most budget -> next Groq -> flash-lite -> Bedrock if its keys work -> null
- *   (the caller's rules-only answer). With no Claude key the ladder is what it always was.
- * Each hop is logged. The hedge: when the first model has not answered by its observed p95 (never under 1 s), one more model
- * is asked and the loser is aborted; never into gemini-3.8-flash (20 a day), and never with under 40 % of a minute's budget
- * left on the hedge's model. Everything inside the caller's deadline and signal.
+ *   (the caller's rules-only answer). With no Claude key (or a refused one) the ladder is what it always was.
+ * Each hop is logged. The hedge: when the first model has not answered by its own observed p95, one more model is asked and the
+ * loser is aborted. A rung with fewer than 8 times of its own waits its provider's default instead (Claude 6 s: it thinks before
+ * it answers, p50 about 3.9 s; others 3.5 s). The hedge goes only into Groq, and never with under 40 % of a minute's budget left
+ * on that model. The loser's time is kept too, as aborted at the moment it was stopped (a lower bound, apart from completed
+ * answers), so a model that often loses is not read as fast. Everything inside the caller's deadline and signal.
  */
 import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { generateJson, type JsonCall, type JsonResult, type ProviderName } from "@/lib/ai/gateway";
@@ -31,15 +33,52 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
   return [...first, ...groq, ...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
 }
 
-const samples = new Map<string, number[]>();
-/** Observed p95 for a model (at least 1 s; 3.5 s until there are enough answers to say) */
-export function hedgeAfter(model: string): number {
-  const s = samples.get(model) ?? [];
-  if (s.length < 8) return 3500;
-  const sorted = [...s].sort((a, b) => a - b);
-  return Math.max(1000, sorted[Math.floor(sorted.length * 0.95)]);
+// ---- each rung's own record of how long it takes
+
+/** Times a rung needs of its own before its p95 sets its hedge */
+export const OWN_SAMPLES = 8;
+/** The hedge's wait for a rung without 8 times of its own: Claude thinks before it answers, so it gets at least 6 s */
+const HEDGE_DEFAULT: Partial<Record<ProviderName, number>> = { anthropic: 6000 };
+const HEDGE_DEFAULT_OTHER = 3500;
+/** The hedge never fires later than this before the turn's deadline, so the rung it goes to has time to answer */
+const RESCUE_MS = 1500;
+const KEEP = 50;
+
+interface Book { done: number[]; aborted: number[] }
+const books = new Map<string, Book>();
+const keyOf = (provider: string, model: string) => `${provider}/${model.split("#")[0]}`;
+const bookOf = (provider: string, model: string): Book => {
+  const k = keyOf(provider, model);
+  let b = books.get(k);
+  if (!b) { b = { done: [], aborted: [] }; books.set(k, b); }
+  return b;
+};
+const push = (a: number[], ms: number) => { a.push(Math.max(0, Math.round(ms))); if (a.length > KEEP) a.shift(); };
+
+/** A completed answer's time */
+export function observeDone(provider: string, model: string, ms: number) { push(bookOf(provider, model).done, ms); }
+/** A call Jarvis stopped (a hedge's loser, or the deadline) after `ms`: its real time is at least that */
+export function observeAborted(provider: string, model: string, ms: number) { push(bookOf(provider, model).aborted, ms); }
+/** Forget every record (tests only) */
+export function resetLatency() { books.clear(); }
+
+/**
+ * A rung's times: completed and aborted kept apart. p50 and p95 are read over both, an aborted time standing in as a lower bound
+ * (its real time was at least that); `censored` says the p95 is such a lower bound.
+ */
+export function latencyStats(provider: string, model: string) {
+  const b = books.get(keyOf(provider, model)) ?? { done: [], aborted: [] };
+  const all = [...b.done.map((ms) => ({ ms, cut: false })), ...b.aborted.map((ms) => ({ ms, cut: true }))].sort((x, y) => x.ms - y.ms || Number(x.cut) - Number(y.cut));
+  const at = (q: number) => all[Math.min(all.length - 1, Math.floor(all.length * q))];
+  return { done: [...b.done], aborted: [...b.aborted], n: all.length, p50: all.length ? at(0.5).ms : null, p95: all.length ? at(0.95).ms : null, censored: all.length ? at(0.95).cut : false };
 }
-const observe = (model: string, ms: number) => { const s = samples.get(model) ?? []; s.push(ms); if (s.length > 50) s.shift(); samples.set(model, s); };
+
+/** How long the hedge waits on this rung: its own p95 (at least 1 s) once it has 8 times of its own, else its provider's default */
+export function hedgeAfter(provider: string, model: string): number {
+  const s = latencyStats(provider, model);
+  if (s.n < OWN_SAMPLES || s.p95 == null) return HEDGE_DEFAULT[provider as ProviderName] ?? HEDGE_DEFAULT_OTHER;
+  return Math.max(1000, s.p95);
+}
 
 export interface LlmCall<T> {
   name: string;
@@ -62,14 +101,21 @@ export interface LlmDeps { generate?: Generate; ledger?: Ledger; now?: () => num
 
 const bedrockReady = () => !!(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.AWS_ACCESS_KEY_ID) && process.env.JARVIS_BEDROCK === "1";
 
-/** One rung's call. The caller's signal and the turn's deadline both stop it. */
-function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop: AbortSignal): Promise<JsonResult<T>> {
+/**
+ * One rung's call. The caller's signal and the turn's deadline both stop it. A Groq or Gemini call gets at most 6 s; Claude, which
+ * thinks first, runs to the deadline while a hedge can still rescue the turn, and otherwise leaves the next rung its 1.5 s.
+ */
+function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop: AbortSignal, raceable: boolean): Promise<JsonResult<T>> {
+  const left = c.until - now();
+  const cap = rung.provider === "anthropic" ? (raceable ? left : Math.max(6000, left - RESCUE_MS)) : 6000;
   return g<T>({
     role: "fast", name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, temperature: 0, maxOutputTokens: c.maxOutputTokens, user: c.user,
-    lane: c.lane, timeoutMs: Math.max(800, Math.min(6000, c.until - now())), abortSignal: AbortSignal.any([stop, AbortSignal.timeout(Math.max(1, c.until - now()))]),
+    lane: c.lane, timeoutMs: Math.max(800, Math.min(cap, left)), abortSignal: AbortSignal.any([stop, AbortSignal.timeout(Math.max(1, left))]),
     only: { provider: rung.provider, models: rung.model ? [rung.model] : [] }
   });
 }
+
+type Who = "main" | "hedge";
 
 /** Up the ladder until one answers. null: nothing could, inside the deadline: the caller answers from the rules. */
 export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmResult<T> | null> {
@@ -78,21 +124,34 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
   const now = d.now ?? Date.now;
   const t0 = now();
   const need = estimate(c.system, c.prompt, c.maxOutputTokens);
+  const inputGuess = Math.ceil((c.system.length + c.prompt.length) / 3.5);
   // a test's own model stands alone: a key in the developer's .env does not change what it asks
   const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))());
   const hops: string[] = [];
+  /** a call Jarvis stopped: its time is a lower bound, and the request still counts against the model's allowance */
+  const stopped = (rung: Rung, ms: number, why: string) => {
+    observeAborted(rung.provider, rung.model, ms);
+    if (rung.provider !== "bedrock") l.record(rung.provider as Org, rung.model, { tokens: inputGuess, lane: c.lane });
+    telemetry("llm", { model: rung.model, provider: rung.provider, ms, lane: c.lane, hop: hops.length, ok: false, aborted: true, why });
+  };
   for (let i = 0; i < rungs.length; i++) {
     if (c.signal?.aborted) throw new DOMException("aborted", "AbortError");
     if (now() >= c.until) { hops.push("deadline"); break; }
     const rung = rungs[i];
+    const label = `${rung.provider}/${rung.model}`;
+    // the hedge goes only into Groq, only with budget to spare on that model, and only with time for it to answer
+    const next = rungs[i + 1];
+    const left = c.until - now();
+    const canHedge = c.hedge !== false && !!next && next.provider === "groq" && left > RESCUE_MS / 2
+      && l.room(next.provider as Org, next.model, { tokens: need }).frac >= 0.4;
+    const own = hedgeAfter(rung.provider, rung.model);
+    const wait = canHedge ? Math.max(0, Math.min(own, left - RESCUE_MS)) : 0;
+    const why = wait < own ? "rescue" : latencyStats(rung.provider, rung.model).n >= OWN_SAMPLES ? "p95" : "default";
     const a = new AbortController();
     const stopA = c.signal ? AbortSignal.any([c.signal, a.signal]) : a.signal;
-    const main = ask(c, rung, g, now, stopA);
-    const label = `${rung.provider}/${rung.model}`;
-    // the hedge waits for the model's own p95, and goes only with budget to spare and a rung to go to
-    const next = rungs[i + 1];
-    const canHedge = c.hedge !== false && !!next && next.model !== "gemini-3.8-flash" && next.provider !== "bedrock"
-      && l.room(next.provider as Org, next.model, { tokens: need }).frac >= 0.4;
+    const tMain = now();
+    let mainSettled = false, hedgeSettled = false, tHedge = 0;
+    const main = ask(c, rung, g, now, stopA, canHedge).finally(() => { mainSettled = true; });
     let timer: ReturnType<typeof setTimeout> | null = null;
     let hedged = false;
     const b = new AbortController();
@@ -100,34 +159,46 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       ? new Promise<JsonResult<T>>((res, rej) => {
         timer = setTimeout(() => {
           hedged = true;
+          tHedge = now();
           hops.push(`hedge:${next.provider}/${next.model}`);
-          console.info(`[jarvis llm] ${c.name}: hedging ${label} into ${next.provider}/${next.model}`);
-          ask(c, next, g, now, c.signal ? AbortSignal.any([c.signal, b.signal]) : b.signal).then(res, rej);
-        }, hedgeAfter(rung.model));
+          console.info(`[jarvis llm] ${c.name}: hedging ${label} into ${next.provider}/${next.model} after ${wait} ms (${why})`);
+          ask(c, next, g, now, c.signal ? AbortSignal.any([c.signal, b.signal]) : b.signal, false).finally(() => { hedgeSettled = true; }).then(res, rej);
+        }, wait);
         // a main that fails before the timer goes to the next rung now: the timer is only for a main that is slow
         main.catch((e) => { if (!hedged) { if (timer) clearTimeout(timer); rej(e); } });
       })
       : null;
+    const tagged = (p: Promise<JsonResult<T>>, who: Who) => p.then((r) => ({ r, who }));
     try {
-      const r = await (hedge ? Promise.any([main, hedge]) : main);
+      const { r, who } = await (hedge ? Promise.any([tagged(main, "main"), tagged(hedge, "hedge")]) : tagged(main, "main"));
       if (timer) clearTimeout(timer);
-      a.abort(); b.abort(); // the loser stops spending
+      // the loser stops spending, and its time so far is kept as a lower bound
+      const loserRunning = hedged && (who === "main" ? !hedgeSettled : !mainSettled);
+      a.abort(); b.abort();
       main.catch(() => undefined); hedge?.catch(() => undefined);
-      observe(r.info.model.split("#")[0], r.info.ms);
+      const winner = who === "main" ? rung : next;
+      observeDone(winner.provider, r.info.model, r.info.ms);
+      if (loserRunning) stopped(who === "main" ? next : rung, now() - (who === "main" ? tHedge : tMain), "hedge-lost");
       const tokens = r.info.inputTokens + r.info.outputTokens;
-      hops.push(label);
-      telemetry("llm", { model: r.info.model, provider: r.info.provider, ms: r.info.ms, tokens, lane: c.lane, hop: hops.length, ok: true });
+      hops.push(who === "main" ? label : `${next.provider}/${next.model}`);
+      if (hedged) telemetry("hedge", { provider: rung.provider, model: rung.model, into: `${next.provider}/${next.model}`, after: wait, why, winner: who, lane: c.lane });
+      telemetry("llm", { model: r.info.model, provider: r.info.provider, ms: r.info.ms, tokens, lane: c.lane, hop: hops.length, ok: true, hedged, winner: hedged ? who : undefined,
+        path: r.info.path, cacheRead: r.info.cacheReadTokens, cacheWrite: r.info.cacheWriteTokens });
       return { object: r.object, model: r.info.model, tokens, ms: now() - t0, hops, hedged };
     } catch (x) {
       // Promise.any wraps its losers; the first is main's own reason
       const e = x instanceof AggregateError ? x.errors[0] : x;
       if (timer) clearTimeout(timer);
+      const cut = now() >= c.until;
       a.abort(); b.abort();
       main.catch(() => undefined); hedge?.catch(() => undefined);
       if (c.signal?.aborted) throw e;
       hops.push(`${label}:failed`);
       console.warn(`[jarvis llm] ${c.name}: ${label} failed: ${(e as Error).message?.slice(0, 120)}`);
-      telemetry("llm", { model: rung.model, provider: rung.provider, ms: now() - t0, lane: c.lane, hop: hops.length, ok: false });
+      // stopped by the turn's deadline: a lower bound on its time, not a failure of the model
+      if (cut) { stopped(rung, now() - tMain, "deadline"); if (hedged) stopped(next, now() - tHedge, "deadline"); }
+      else telemetry("llm", { model: rung.model, provider: rung.provider, ms: now() - t0, lane: c.lane, hop: hops.length, ok: false });
+      if (hedged) telemetry("hedge", { provider: rung.provider, model: rung.model, into: `${next.provider}/${next.model}`, after: wait, why, winner: "none", lane: c.lane });
       // a hedge that already ran took the next rung with it
       if (hedged) i++;
     }

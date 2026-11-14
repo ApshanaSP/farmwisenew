@@ -123,11 +123,12 @@ function anthropic(): Provider | null {
       // a Jarvis turn keeps its own, and its model and effort (no role)
       const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
         timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal });
-      const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1 };
+      const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1,
+        path: r.path, cacheReadTokens: r.cacheReadTokens, cacheWriteTokens: r.cacheWriteTokens };
       charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
       // the ledger's Claude ceiling is Jarvis's own: the console's steps must not use it up (they have the per-user daily budget)
       if (jarvis) ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
-      console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache)`);
+      console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache, ${r.cacheWriteTokens} written), ${r.path}`);
       return { object: r.object, info };
     }
   };
@@ -271,7 +272,14 @@ export interface JsonCall<T> {
   only?: { provider: ProviderName; models: string[] };
 }
 
-export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
+export interface CallInfo {
+  step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number;
+  /** Claude only: how the answer was asked for (structured outputs "format", or plain "json") */
+  path?: "format" | "tool" | "json";
+  /** Claude only: usage.cache_read_input_tokens and usage.cache_creation_input_tokens */
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+}
 export interface JsonResult<T> { object: T; info: CallInfo }
 
 const sleep = (ms: number, signal?: AbortSignal) =>
