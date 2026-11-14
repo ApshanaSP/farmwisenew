@@ -1,8 +1,23 @@
-# Jarvis build log (brief: docs/jarvis/OPUS_BUILD_PROMPT_V3.md)
+# Jarvis build log
+
+## v4: Ultimate Jarvis (brief: docs/jarvis/ULTIMATE_JARVIS.md)
+
+One session, 15 Nov 2026, in the worktree branch `claude/priceless-bouman-2fe7f8`, cut from `main` at `38d96d2f`. Times are IST on this laptop. The v3 log follows below, unchanged.
+
+| Time | Phase | What happened |
+|---|---|---|
+| 00:19 | 0 | Brief read in full and committed (`43f85324`). `.env` copied (gitignored, values never printed). `data/thunai/` (ledger, memory, telemetry: shares the main checkout's quota record) and `data/aws-cache/` (121 MB, gitignored, the dry-run store's data) copied. `npm ci` clean apart from the expected EBADENGINE and install-script warnings. |
+| 00:27 | 0 | Baselines run on a pristine detached worktree of `main` (`.claude/worktrees/jv4-base`, node_modules and data junctioned to this one) so the builders' edits cannot touch them: vitest, tsc, next build, the Jarvis Playwright specs, and the live-60 Claude-first baseline. The QA gate is not re-run on `main`: `main` (`38d96d2f`) differs from the last gated commit `5b8c5d76` only in documents and gate evidence, and that gate was green (docs/qa/pass7/evidence). |
+| 00:28 | 0 | **STT probe: blocked, fallback taken.** The 100 SLR65 clips are not on this machine (only `manifest.json` hashes are committed; the audio was never kept). Downloading the share-alike corpus in an unattended run was not done. Brief's fallback: keep Whisper first, apply the "first good decode" rule, and keep Gemini as a parallel third racer within budget. `gemini-3.5-transcribe-live` and its daily limit: unverified. |
+| 00:30 | 0 | `eval/holdout3/` drafting started by a subagent that never prints a row (Gemini drafts, a second model labels blind). |
+| 00:34 | 2 | Contract for the streamed turn written first (`src/lib/thunai/events.ts`, AG-UI event names, no package) so the server and browser lanes can build against it in parallel. |
+
 
 One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be9b7`. Times are IST on this laptop.
 
-## Timeline
+## v3 (brief: docs/jarvis/OPUS_BUILD_PROMPT_V3.md)
+
+### Timeline
 
 | Time | Phase | What happened |
 |---|---|---|
