@@ -1,4 +1,34 @@
-# Thunai: references checked
+# Thunai and Jarvis: references checked
+
+## v4, 15 Nov 2026 (brief: docs/jarvis/ULTIMATE_JARVIS.md, section 10)
+
+**No npm dependency was added in v4** (`package.json` and `package-lock.json` are unchanged from `main` `38d96d2f`). Each source below is used as a pattern, written in our own code, or is listed as decided against. "Checked" says what this build itself read. Where it says "brief", the line is taken from the brief's own research of 14 Nov and was not re-read here.
+
+| Source | What it is | Licence | Checked | Used how |
+|---|---|---|---|---|
+| AG-UI (`ag-ui-protocol/ag-ui`) | Event vocabulary for agent UIs | MIT (brief) | brief | Event names only (`RUN_STARTED`, `STEP_STARTED`, `TEXT_MESSAGE_CONTENT`, `STATE_SNAPSHOT`, `RUN_FINISHED`) in `src/lib/thunai/events.ts`; `@ag-ui/core` not added |
+| LLMCompiler (arXiv 2312.04511), ReWOO (arXiv 2305.18323) | Plan all tool calls at once, run in parallel, avoid a second model pass | papers; LLMCompiler code MIT (brief) | brief | One planner call emits up to 3 reads, `Promise.allSettled`, code fills the answer ("stop at tools") in `round.ts` |
+| OpenAI Agents SDK `StopAtTools` | Finish a run on a tool's result with no further model turn | SDK docs (brief) | brief | Pattern only, as above |
+| ReALM (arXiv 2403.20329) | Reference resolution over on-screen entities | paper | brief | `register.ts`: ordered on-screen entities, carried slots and provenance; "the second one" resolved in code |
+| Adtributor (Bhagwan et al., NSDI 2014) | Root-cause localisation by explanatory power and surprise | paper | brief | `recipes/adtributor.ts`: share of change and a Jensen-Shannon surprise per segment; thresholds (10 %, 67 %, 3 segments) are this build's choice, not the paper's |
+| Noufaily et al. 2013, improved Farrington algorithm | Count-aware outbreak detection with a negative-binomial threshold and down-weighted past outbreaks | paper | brief; the 99.5 % quantile used here is this build's choice, the paper's default unverified | `detect.ts`, written from the idea, no R code copied |
+| dbt, semantic layer vs text-to-SQL (Apr 2026) | Evidence that named metrics beat generated queries | blog (brief) | brief | Why `metrics.ts` exists: the planner names metric ids, code computes values |
+| MINJA memory poisoning (arXiv 2503.03704) | Injected instructions persisted through an agent's memory | paper | brief | `store.ts`: only the Collector's own Level-B "remember" sentences are written; notes that read as orders are refused |
+| τ-bench pass^k | Reliability over k repeated runs | paper (brief) | brief | pass^3 reported in `eval/RESULTS.md` |
+| Pipecat `MinWordsInterruptionStrategy`, LiveKit false-interruption resume | Barge-in only on real words; resume after a non-interruption | Pipecat BSD-2 (brief); LiveKit pattern only | brief | Pattern only in `turn.ts`/`backchannel.ts`: duck, stop on 2 non-backchannel words or 600 ms held, resume otherwise. Neither library added |
+| Chromium/Edge 141 `echoCancellation: "all"` | Removes all system playout from the mic, including `speechSynthesis` | Chrome 141 beta blog, Edge 141 notes (brief) | brief; whether `getSettings()` reports it: unverified (no browser run) | `ears.ts` asks for it and falls back to `true` |
+| Claude API structured outputs | `output_config.format` limits: 16 union-typed, 24 optional parameters, 20 strict tools, shared between format and strict tools; a changed format invalidates the prompt cache | Anthropic docs | **read 15 Nov** by the ladder lane | `claude.ts` rewrites schemas for the wire under the limits |
+| Anthropic SDK 1.4.0 types | `max_tokens: 0` warms the cache and is rejected with `output_config.format`; `between_tools` thinking exists | MIT | **read 15 Nov** (installed package types) | `claudeWarm()`; per-model thinking settings |
+| Gemini speech generation docs | Streaming TTS over `interactions?alt=sse`, 24 kHz L16 | Google docs | **read 15 Nov** by the mouth lane; the docs disagree on the voice field | Built behind `JARVIS_TTS_STREAM=1`, off by default, unverified |
+| Pipecat Smart Turn v3.2, `santhosh-005/smart-turn-tamil` | Turn-completion models | BSD-2 (cards, brief) | not downloaded | **Not shipped**: WASM latency above the 120 ms budget, Worker deferred, Tamil provenance unverified |
+| sherpa-onnx keyword spotting, microWakeWord | On-device wake word | Apache-2.0 (brief) | not downloaded | **Not shipped** (optional item) |
+| openWakeWord pre-trained models, Porcupine | Wake word | CC BY-NC-SA 4.0 / proprietary | brief | Excluded by licence |
+| Horvitz 1999; Amershi et al. 2019; Nielsen response-time limits | Mixed-initiative principles; human-AI guidelines; 0.1/1/10 s | papers and articles | brief | The interjection policy (`watch.ts`), the honest ack and the 10 s Stop card |
+| ChatGPT Pulse, Gemini Daily Brief | Finite daily briefs with a source per item | product pages (brief) | brief | The brief always ends ("That's everything for now") |
+| OpenSLR SLR65 (Tamil) | Read Tamil speech | CC BY-SA 4.0, test only | not on this machine this session | The STT probe was not run (see BUILD_LOG) |
+
+The earlier sections below are kept as they were.
+
 
 Checked on 29 Oct 2026 with web searches and the sources' own pages, where they could be reached. **No new npm
 dependency was added**: every idea below is used as a pattern, written in our own code. Licences matter only if a
