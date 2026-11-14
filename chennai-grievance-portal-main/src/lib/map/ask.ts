@@ -16,15 +16,15 @@ import { compose, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
 import { planChips, type PlanChip } from "./chips";
-import { PlanError, areaLabel, runMapPlan, drawnRadius, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
+import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { mapLang, rulesRoute, withSaidPeriod, type RouteEnv } from "./route";
+import { fitModelPlan, mapLang, rulesRoute, type RouteEnv } from "./route";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
-import { LAYER_WORD, type Lang } from "./words";
+import { LAYER_WORD, periodWords, type Lang } from "./words";
 import { syncEpoch } from "@/lib/collector/epoch";
 
 export interface AskInput {
@@ -191,7 +191,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
   const names = await refNames().catch(() => null);
-  const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang };
+  const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; logQuestion(input, r); return r; };
@@ -250,7 +250,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
           hint: r.plan, unread: r.unread, zones: w.zones }).catch(() => null);
-        if (a && "plan" in a) { plan = withSaidPeriod(a.plan, input.text); aiUsed = true; defaults = []; }
+        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
     } else {
@@ -259,7 +259,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
         const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones });
         aiUsed = true;
-        if ("plan" in a) plan = withSaidPeriod(a.plan, input.text);
+        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev);
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);
@@ -528,7 +528,7 @@ function logQuestion(input: AskInput, r: AskResponse) {
 // ------------------------------------------------------------------ actions --
 
 /** Every row of a plan's answer (not capped at the list's 200), for Export and Send to department. */
-export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ rows: Row[]; asOf: string; feats: Map<string, Feat> }> {
+export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ rows: Row[]; asOf: string; now: string; feats: Map<string, Feat> }> {
   const c = checkPlan(plan);
   if (!c.ok) throw new PlanError(c.problems[0]);
   const { world: w, resolver: data } = await world();
@@ -545,19 +545,32 @@ export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ 
   }));
   const feats = new Map(r.hits.map((h, k) => [h.inc.id, { id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat, pinnable: h.inc.pinnable,
     prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 }]));
-  return { rows, asOf: w.dataAsOf || w.now, feats };
+  return { rows, asOf: w.dataAsOf || w.now, now: w.now, feats };
+}
+
+/**
+ * The reporting window an export was counted on, in dates (CONSUMERS-04): a calendar plan ("yesterday", "last week") re-run after midnight or on a
+ * Monday counts another day or week than the answer did, so the file says which one it holds.
+ */
+function windowLine(plan: Plan, now: string): string {
+  const take = plan.steps.find((s) => s.op === "take" && s.layer === "incidents") as Extract<Plan["steps"][number], { op: "take" }> | undefined;
+  const p = take?.filter?.period ?? null;
+  if (!p) return "any time";
+  const r = periodRange(p, now);
+  return `${periodWords(p, "en")}: reported ${r.fromOpen ? "after" : "from"} ${r.from} to ${r.to} IST`;
 }
 
 const csvCell = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 /** CSV or GeoJSON of exactly the answer's rows (the count equals the headline). No personal data; the as-of and the plan go in the header. */
 export async function exportAnswer(plan: Plan, question: string | null, user: AskInput["user"], format: "csv" | "geojson"): Promise<{ body: string; type: string; name: string; rows: number }> {
-  const { rows, asOf, feats } = await answerRows(plan, user);
+  const { rows, asOf, now, feats } = await answerRows(plan, user);
+  const counted = windowLine(plan, now);
   const stamp = asOf.slice(0, 16).replace(/[: ]/g, "-");
   if (format === "geojson") {
     const fc = {
       type: "FeatureCollection",
-      properties: { source: "District IQ · Ask the Map", question, as_of: asOf, rows: rows.length, plan, note: "Straight-line distances. Incidents with no exact place have no geometry." },
+      properties: { source: "District IQ · Ask the Map", question, as_of: asOf, window: counted, rows: rows.length, plan, note: "Straight-line distances. Incidents with no exact place have no geometry." },
       features: rows.map((r) => {
         const f = feats.get(r.id)!;
         return { type: "Feature", geometry: r.pinnable ? { type: "Point", coordinates: [f.lon, f.lat] } : null,
@@ -573,7 +586,7 @@ export async function exportAnswer(plan: Plan, question: string | null, user: As
     return [r.id, r.title, r.catLabel, r.sev, r.status, r.open ? "yes" : "no", r.ward, r.zoneName, r.deptName, r.first, r.place, r.near?.name ?? "", r.near?.m ?? "",
       r.pinnable ? f.lat : "", r.pinnable ? f.lon : "", r.prec ?? ""].map(csvCell).join(",");
   });
-  const meta = [`# District IQ · Ask the Map export`, `# Question: ${question ?? "(edited with chips)"}`, `# As of: ${asOf} · ${rows.length} rows · straight-line distances`,
+  const meta = [`# District IQ · Ask the Map export`, `# Question: ${question ?? "(edited with chips)"}`, `# As of: ${asOf} · ${rows.length} rows · straight-line distances`, `# Window: ${counted}`,
     `# Plan: ${JSON.stringify(plan)}`];
   return { body: [...meta, head.join(","), ...lines].join("\n") + "\n", type: "text/csv; charset=utf-8", name: `ask-the-map-${stamp}.csv`, rows: rows.length };
 }

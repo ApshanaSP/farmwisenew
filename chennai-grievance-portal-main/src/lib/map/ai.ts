@@ -52,6 +52,7 @@ function system(cats: string[], depts: string[]): string {
     "Each step is one flat object with every field; fields a step does not use are null. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
     "Calendar periods (period_calendar, period_days null): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
     "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar null.",
+    "A change compares two equal windows counted back from now: period_days with period_offset 0, before_days the same, before_offset 1; never a calendar period so far (today, this week) against a whole one.",
     ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(toWire(p as Plan))}`)
   ].join("\n");
 }

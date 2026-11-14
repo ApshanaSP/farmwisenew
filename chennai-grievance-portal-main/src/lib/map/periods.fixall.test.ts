@@ -9,7 +9,7 @@ import { readPeriod, spanOf } from "@/lib/period/read";
 import { matches, periodRange, shiftWall } from "./execute";
 import { INCIDENTS, fixtureResolver, fixtureWorld } from "./fixture";
 import { checkPlan, type Filter, type Period, type Plan } from "./plan";
-import { changeWindows, periodOf, rulesRoute, withSaidPeriod, type RouteEnv } from "./route";
+import { changeWindows, fitModelPlan, periodOf, rulesRoute, type RouteEnv } from "./route";
 import { fromWire, toWire } from "./wire";
 import { periodWords } from "./words";
 
@@ -54,7 +54,7 @@ describe("the map reads period words as Jarvis and Ask District IQ do", () => {
   });
 
   it("'right now' is the current state, whatever day it was reported: no reporting window", () => {
-    expect(periodOf("open incidents right now")).toBe("all");
+    expect(periodOf("open incidents right now")).toBe("now");
     expect(periodOf("all time")).toBe("all");
     expect(periodOf("garbage")).toBeNull();
   });
@@ -104,7 +104,7 @@ describe("words, the model's form and the checks", () => {
     expect(periodWords({ kind: "day", offset: 0 }, "en")).toBe("today, since midnight");
     expect(periodWords({ kind: "day", offset: 0 }, "ta")).toBe("இன்று, நள்ளிரவு முதல்");
     expect(periodWords({ kind: "day", offset: 1 }, "en")).toBe("yesterday");
-    expect(periodWords({ kind: "week", offset: 1 }, "en")).toBe("last calendar week (Monday to Sunday)");
+    expect(periodWords({ kind: "week", offset: 1 }, "en")).toBe("last calendar week, Monday to Sunday");
     expect(periodWords({ kind: "quarter", offset: 1 }, "en")).toBe("last calendar quarter");
     expect(periodWords({ kind: "last_days", days: 1, offset: 0 }, "en")).toBe("last 24 hours");
   });
@@ -148,11 +148,13 @@ describe("the map's answers", () => {
   it("a model's plan keeps the question's calendar words: 'today' is never its rolling 24 hours", () => {
     const model: Plan = { language: "en", show: "a", steps: [{ op: "take", as: "a", layer: "incidents", filter: F({ kind: "last_days", days: 1, offset: 0 }), where: null },
       { op: "take", as: "f1", layer: "schools", filter: null, where: null }] };
-    const out = withSaidPeriod(model, "flooding near kids' schools today");
+    const out = fitModelPlan(model, "flooding near kids' schools today");
     expect((out.steps[0] as Extract<Plan["steps"][number], { op: "take" }>).filter?.period).toEqual({ kind: "day", offset: 0 });
     expect(out.steps[1]).toEqual(model.steps[1]);
     // no calendar words: the model's period stands
-    expect(withSaidPeriod(model, "flooding near kids' schools in the last 24 hours")).toBe(model);
+    expect(fitModelPlan(model, "flooding near kids' schools in the last 24 hours")).toEqual(model);
+    // no time words at all: the model's period stands
+    expect(fitModelPlan(model, "flooding near kids' schools")).toBe(model);
   });
   it("'open incidents today' is asked as today since midnight, and the answer says so", async () => {
     expect(takeOf(rulesRoute("open flooding today", null, env))?.filter?.period).toEqual({ kind: "day", offset: 0 });

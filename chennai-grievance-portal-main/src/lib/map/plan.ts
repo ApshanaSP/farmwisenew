@@ -24,7 +24,8 @@ export const PeriodSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("day"), offset: z.number().int() }),
   z.object({ kind: z.literal("week"), offset: z.number().int() }),
   z.object({ kind: z.literal("quarter"), offset: z.number().int() }),
-  z.object({ kind: z.literal("range"), from: z.string(), to: z.string() })
+  /** IST wall clock, both ends inclusive; `label` is how the question named it ("September", "last 36 hours"), from src/lib/period/read.ts */
+  z.object({ kind: z.literal("range"), from: z.string(), to: z.string(), label: z.object({ en: z.string(), ta: z.string() }).nullable().optional() })
 ]);
 export type Period = z.infer<typeof PeriodSchema>;
 

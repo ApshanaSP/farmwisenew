@@ -104,7 +104,8 @@ function keepTurns(turns: Turn[]) {
 const READY = / · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/;
 /** "160 open flooding incidents (last 7 days)" -> big "160", then "open flooding incidents · last 7 days" */
 export function splitHead(h: string): { big: string | null; rest: string } {
-  const clean = h.replace(READY, "").replace(/\.$/, "").replace(/ \(([^()]+)\)$/, " · $1");
+  // the period in brackets at the end may hold brackets of its own ("today (6 Nov, since midnight)", from the shared period reader)
+  const clean = h.replace(READY, "").replace(/\.$/, "").replace(/ \(((?:[^()]|\([^()]*\))+)\)$/, " · $1");
   const m = clean.match(/^([\d,]+(?:\.\d+)?)\s+(.+)$/);
   return m ? { big: m[1], rest: m[2] } : { big: null, rest: clean };
 }

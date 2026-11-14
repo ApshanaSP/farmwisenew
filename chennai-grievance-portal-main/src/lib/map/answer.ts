@@ -8,7 +8,7 @@ import { fmtDistance, haversineM } from "./geom";
 import { areaLabel, filterWords, runMapPlan, type Ctx, type Hit, type Near, type RunResult } from "./execute";
 import type { Plan, Step } from "./plan";
 import type { World } from "./types";
-import { CAT_TA, LAYER_WORD, isTa, periodWords, type Lang } from "./words";
+import { CAT_TA, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
 import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
 
 export const LAYER_READY = { en: "map layer ready", ta: "வரைபட அடுக்கு தயார்", tanglish: "map layer ready" } as const;
@@ -288,8 +288,9 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       const subjNoPer = subject(plan, w, lang);
       const dir = a > b ? (ta ? "அதிகரிப்பு" : "up") : a < b ? (ta ? "குறைவு" : "down") : ta ? "மாற்றமில்லை" : "no change";
       headline = ta ? `${subjNoPer}: ${periodWords(show.now.period, "ta")} ${n(a)}, ${periodWords(show.before.period, "ta")} ${n(b)} (${dir}${pc != null && a !== b ? ` ${Math.abs(Math.round(pc))}%` : ""}) · ${ready}.`
-        : a === b ? `${n(a)} ${subjNoPer} in the ${periodWords(show.now.period, "en")}, the same as the ${periodWords(show.before.period, "en")} · ${ready}.`
-          : `${n(a)} ${subjNoPer} in the ${periodWords(show.now.period, "en")}, ${dir} from ${n(b)} in ${periodWords(show.before.period, "en")}${pc != null ? ` (${pc > 0 ? "+" : "−"}${Math.abs(Math.round(pc))} %)` : ""} · ${ready}.`;
+        // the period words read after a count for every kind ("yesterday", "in the last calendar month", "in September"), never "in the yesterday"
+        : a === b ? `${n(a)} ${subjNoPer} ${inPeriodWords(show.now.period)}, the same as ${inPeriodWords(show.before.period)} · ${ready}.`
+          : `${n(a)} ${subjNoPer} ${inPeriodWords(show.now.period)}, ${dir} from ${n(b)} ${inPeriodWords(show.before.period)}${pc != null ? ` (${pc > 0 ? "+" : "−"}${Math.abs(Math.round(pc))} %)` : ""} · ${ready}.`;
       if (pc == null && a !== b) meaning = ta ? `ஒப்பிட எண்ணிக்கை குறைவு (${MIN_PCT_BASE} க்குக் கீழ்), எனவே சதவீதம் காட்டப்படவில்லை.` : `Too few before (under ${MIN_PCT_BASE}) for a fair percentage, so counts are given instead.`;
       break;
     }

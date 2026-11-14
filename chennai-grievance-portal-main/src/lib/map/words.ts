@@ -66,21 +66,37 @@ export function periodWords(p: Period | null, lang: Lang): string {
     if (p.offset === 0) return p.days === 1 ? (ta ? "கடந்த 24 மணி நேரம்" : "last 24 hours") : ta ? `கடந்த ${p.days} நாட்கள்` : `last ${p.days} days`;
     return ta ? `அதற்கு முந்தைய ${p.days} நாட்கள்` : p.offset === 1 ? `the ${p.days} days before` : `${p.days} days, ${p.offset} periods back`;
   }
-  if (p.kind === "month") return ta ? (p.offset === 0 ? "இந்த மாதம்" : `${p.offset} மாதம் முன்`) : p.offset === 0 ? "this calendar month" : p.offset === 1 ? "last calendar month" : `${p.offset} months back`;
+  if (p.kind === "month") return ta ? (p.offset === 0 ? "இந்த மாதம்" : `${p.offset} மாதம் முன்`) : p.offset === 0 ? "this calendar month" : p.offset === 1 ? "last calendar month" : `the calendar month ${p.offset} months back`;
   // the calendar periods Jarvis and Ask District IQ say the same way (src/lib/period/read.ts): today since midnight, the calendar week before
   if (p.kind === "day") {
     if (ta) return p.offset === 0 ? "இன்று, நள்ளிரவு முதல்" : p.offset === 1 ? "நேற்று" : p.offset === 2 ? "நேற்று முன்தினம்" : `${p.offset} நாட்கள் முன்`;
     return p.offset === 0 ? "today, since midnight" : p.offset === 1 ? "yesterday" : p.offset === 2 ? "the day before yesterday" : `the calendar day ${p.offset} days back`;
   }
   if (p.kind === "week") {
-    if (ta) return p.offset === 0 ? "இந்த வாரம், திங்கள் முதல்" : p.offset === 1 ? "கடந்த வாரம் (திங்கள் முதல் ஞாயிறு வரை)" : `${p.offset} வாரங்கள் முன்`;
-    return p.offset === 0 ? "this calendar week, since Monday" : p.offset === 1 ? "last calendar week (Monday to Sunday)" : `the calendar week ${p.offset} weeks back`;
+    if (ta) return p.offset === 0 ? "இந்த வாரம், திங்கள் முதல்" : p.offset === 1 ? "கடந்த வாரம், திங்கள் முதல் ஞாயிறு வரை" : `${p.offset} வாரங்கள் முன்`;
+    return p.offset === 0 ? "this calendar week, since Monday" : p.offset === 1 ? "last calendar week, Monday to Sunday" : `the calendar week ${p.offset} weeks back`;
   }
   if (p.kind === "quarter") {
     if (ta) return p.offset === 0 ? "இந்த காலாண்டு" : p.offset === 1 ? "கடந்த காலாண்டு" : `${p.offset} காலாண்டுகள் முன்`;
     return p.offset === 0 ? "this calendar quarter" : p.offset === 1 ? "last calendar quarter" : `the calendar quarter ${p.offset} quarters back`;
   }
+  // a range the question named ("September", "last 36 hours", "reported more than 30 days ago") keeps the reader's words
+  if (p.label) return ta ? p.label.ta : p.label.en;
   return ta ? `${p.from.slice(0, 10)} முதல் ${p.to.slice(0, 10)} வரை` : `${p.from.slice(0, 10)} to ${p.to.slice(0, 10)}`;
+}
+
+/**
+ * The period as it reads after a count in an English sentence ("12 flooding incidents <in the last 7 days>, up from 9 <in the 7 days before>"):
+ * "yesterday", not "in the yesterday"; "in the last calendar month"; "in September". Tamil puts the period first and needs no such words.
+ */
+export function inPeriodWords(p: Period | null): string {
+  const w = periodWords(p, "en");
+  if (!p) return "at any time";
+  if (p.kind === "day") return p.offset <= 2 ? w.replace(", since midnight", " since midnight") : `on ${w}`;
+  if (p.kind === "last_days" && p.offset === 0) return `in the ${w}`;
+  if (p.kind === "range") return /^(today|yesterday|the day before|since|between|from|reported|on|in)\b/.test(w) ? w : /^(last|past)\b/.test(w) ? `in the ${w}` : /^\d/.test(w) ? `on ${w}` : `in ${w}`;
+  if (p.offset === 0 && p.kind !== "last_days") return `in ${w}`;
+  return /^the\b/.test(w) ? `in ${w}` : `in the ${w}`;
 }
 
 export const word = (lang: Lang, en: string, ta: string) => (isTa(lang) ? ta : en);

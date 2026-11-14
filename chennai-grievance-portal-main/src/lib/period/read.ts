@@ -117,7 +117,7 @@ const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaara|ma
 const AGO_TA = /(?:நாள்|நாட்க|நாளு|வார|மாத|மாச|ஆண்டு|வருட|வருஷ)[஀-௿]*\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்|நாள்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)|(?<!(?:ஒரு|முந்தைய|அந்த|அதே|எந்த) )(?<![஀-௿])நாளை(?![஀-௿])(?!\s*(?:விட|காட்டிலும்))/;
 
 /** an age, not a period: "open for more than 7 days", "pending over 30 days" */
-const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\b(pending|open|unresolved|stuck|lying|waiting)\s+(?:for\s+)(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi;
+export const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\b(pending|open|unresolved|stuck|lying|waiting)\s+(?:for\s+)(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi;
 
 // the previous calendar unit: English, Tanglish, Tamil (with no Tamil case ending after it: "கடந்த வாரத்தில்", "in the past week", is the rolling week)
 const LAST_EN = /\b(?:last|previous|prior|pona|poona|ponna|kadandha|kadantha|kadanda|munthaiya|mundhaiya) (week|month|quarter|vaaram|varam|maasam|masam|maatham|kaalaandu|maasathu|vaarathu|maathathu|maasathin|vaarathin)(?:'s|s)?\b(?!\s*(?:\d|of\b))/i;

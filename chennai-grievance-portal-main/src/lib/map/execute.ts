@@ -11,7 +11,7 @@
 import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, haversineM, inBbox, mPerDegLon, pointInPolygon, type LatLon, type Pair } from "./geom";
 import { isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
-import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, isTa, nOf, periodWords, type Lang } from "./words";
+import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang } from "./words";
 import { fmtDistance } from "./geom";
 
 // ------------------------------------------------------------- results --
@@ -661,7 +661,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         };
         const now = rerun(s.now), before = rerun(s.before);
         out = { type: "change", now: { period: s.now, hits: now }, before: { period: s.before, hits: before }, hits: now };
-        n = note(`Counted the same in the ${periodWords(s.now, "en")} (${now.length}) and in ${periodWords(s.before, "en")} (${before.length}).`,
+        n = note(`Counted the same ${inPeriodWords(s.now)} (${now.length}) and ${inPeriodWords(s.before)} (${before.length}).`,
           `${periodWords(s.now, "ta")} (${now.length}), ${periodWords(s.before, "ta")} (${before.length}).`);
         break;
       }
