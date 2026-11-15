@@ -20,6 +20,47 @@ function provider(answer: (model: string) => Response) {
   return asked;
 }
 
+describe("A5: a strict-mode 400 is a schema failure: one retry on the same model, then the next model", () => {
+  let events: AttemptEvent[] = [];
+  let stop = () => {};
+  beforeEach(() => {
+    vi.stubEnv("THUNAI_DIR", fs.mkdtempSync(path.join(os.tmpdir(), "jv-gw5a5-")));
+    vi.stubEnv("GROQ_API_KEY", "k1"); vi.stubEnv("GROQ_API_KEY_2", "k2"); vi.stubEnv("GROQ_API_KEY_3", "k3");
+    vi.stubEnv("AI_PROVIDER", "groq"); vi.stubEnv("AI_FALLBACK_PROVIDER", "none"); vi.stubEnv("AI_FORCE_PROVIDER", "");
+    events = [];
+    stop = onAttempt((e) => events.push(e));
+  });
+  afterEach(() => { stop(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+  const jvf = (draft?: string) => json(400, { error: { message: "Failed to generate JSON. Please adjust your prompt.", type: "invalid_request_error", code: "json_validate_failed", ...(draft ? { failed_generation: draft } : {}) } });
+
+  it("no usable draft: the same model is asked once more, its other pooled keys are not, and the next model answers", async () => {
+    vi.stubEnv("AI_MODEL_FAST", "test/strict,test/next");
+    const asked = provider((m) => (m === "test/strict" ? jvf() : done(m, null)));
+    const r = await generateJson(call("test/strict", { only: { provider: "groq", models: ["test/strict", "test/next"] } }));
+    expect(r.info.model.split("#")[0]).toBe("test/next");
+    expect(asked).toEqual(["test/strict", "test/strict", "test/next"]);
+    expect(events.filter((e) => e.outcome === "json_validate_failed")).toHaveLength(2);
+    expect(events.some((e) => e.outcome === "rate_limited" || e.outcome === "busy")).toBe(false);
+  });
+
+  it("a ladder rung pins one model: a strict-mode 400 costs it two calls at most, never one a pooled key (production shape)", async () => {
+    vi.stubEnv("AI_MODEL_FAST", "test/rung");
+    const asked = provider(() => jvf());
+    await expect(generateJson(call("test/rung"))).rejects.toThrow();
+    expect(asked).toEqual(["test/rung", "test/rung"]);
+    const asked2 = provider(() => jvf("{\"ok\":\"not a boolean\"}"));
+    await expect(generateJson(call("test/rung"))).rejects.toThrow();
+    expect(asked2).toEqual(["test/rung", "test/rung"]);
+  });
+
+  it("a draft our schema refuses too: the same, one retry and then the next model", async () => {
+    vi.stubEnv("AI_MODEL_FAST", "test/bad,test/next");
+    const asked = provider((m) => (m === "test/bad" ? jvf("{\"ok\":\"not a boolean\"}") : done(m, null)));
+    await generateJson(call("test/bad", { only: { provider: "groq", models: ["test/bad", "test/next"] } }));
+    expect(asked).toEqual(["test/bad", "test/bad", "test/next"]);
+  });
+});
+
 describe("the per-attempt record (v5 6.2 and A2 b)", () => {
   let events: AttemptEvent[] = [];
   let stop = () => {};
