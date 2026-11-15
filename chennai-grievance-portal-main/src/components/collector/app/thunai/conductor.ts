@@ -27,6 +27,8 @@
  * v5 build (lane 2):
  *  - C3: inWindow() is the one test of "woken or engaged": within ENGAGED_MS (addressed.ts) of the wake or of Jarvis's last turn,
  *    or while Jarvis speaks. The console's captions start only inside it (captions.ts asks it before every start).
+ *  - C4: a sentence begun or ended inside that window goes to /hear with ?engaged=1. With NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 a
+ *    sentence outside it is never uploaded (and the route refuses audio without the mark); default off, as before.
  */
 import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
@@ -38,6 +40,11 @@ import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, set
 import { canWake, startWake } from "./wake";
 
 export const AMBIENT_PER_MIN = 8;
+/**
+ * v5 (C4): NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 sends no audio to /hear unless Jarvis is woken or engaged (inWindow). Default off:
+ * the capped ambient lane still uploads, so a name said late in a sentence is found in the transcript.
+ */
+const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 
@@ -173,6 +180,8 @@ export class Conductor {
   private lastLang: "en" | "ta" | null = null;
   /** speech is being heard (between onSpeechStart and onSpeechEnd) */
   private speechOpen = false;
+  /** the speech being heard (or just ended) began inside the window (inWindow at its onset): a sentence begun engaged stays so (C4) */
+  private onsetInWindow = false;
   private partialText = "";
   private eou: EouWhy | null = null;
   starting = false;
@@ -339,6 +348,7 @@ export class Conductor {
   private speechBegan() {
     if (this.speechOpen) return;
     this.speechOpen = true;
+    this.onsetInWindow = this.inWindow();
     this.partialText = "";
     this.eou = null;
     const engaged = this.laneNow() === "engaged";
@@ -499,8 +509,12 @@ export class Conductor {
     const first = this.carry;
     this.carry = null;
     const lane = this.laneNow();
+    // woken or engaged (C4), by the captions' own test, as this speech began or now: the request carries the mark, and with the strict
+    // audio gate on nothing else leaves this browser (the route refuses audio without the mark)
+    const engaged = this.inWindow() || this.onsetInWindow;
     let wav: Blob | null = null;
-    if (lane === "ambient") {
+    if (strictAudioGate() && !engaged) e.drop();
+    else if (lane === "ambient") {
       // an ambient sentence too short to be a request, or over the budget, never leaves this browser
       const now = Date.now();
       this.ambient = this.ambient.filter((t) => now - t < 60_000);
@@ -512,7 +526,7 @@ export class Conductor {
     this.h.onHearing?.("reading");
     const ctl = new AbortController();
     let own: Own = "ok";
-    const mine = wav ? this.post(wav, lane, ctl.signal).catch((err: unknown) => {
+    const mine = wav ? this.post(wav, lane, ctl.signal, engaged).catch((err: unknown) => {
       own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
       return null;
     }) : Promise.resolve(null);
@@ -558,7 +572,7 @@ export class Conductor {
   }
 
   /** One POST to /hear, given up after TUNING.hearTimeoutMs. The open Stage's names go with the audio (multipart) when there are any. */
-  private async post(wav: Blob, lane: string, signal: AbortSignal): Promise<HearReply> {
+  private async post(wav: Blob, lane: string, signal: AbortSignal, engaged = false): Promise<HearReply> {
     const ctl = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, TUNING.hearTimeoutMs);
@@ -569,7 +583,8 @@ export class Conductor {
       // the last line's language, so the server's first good decode in the site's language does not win over a Tamil sentence that it
       // only translated (stt.ts readHear `lastLang`: a field of the multipart body, or ?lastLang= with the bare WAV; an older server ignores it)
       const last = this.lastLang;
-      let url = `${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}`;
+      // the engaged mark (C4): set only when Jarvis is woken or engaged; a server with the strict audio gate refuses audio without it
+      let url = `${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}${engaged ? "&engaged=1" : ""}`;
       let init: RequestInit;
       if (vocab.length) {
         const f = new FormData();

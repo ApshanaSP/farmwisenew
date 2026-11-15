@@ -4,6 +4,10 @@
  * cap of 8 a minute; engaged and named turns get the parallel forced decodes. The body is the WAV itself, or multipart with
  * `audio` and `vocab` (the open Stage's names, at most 30, cleaned again in stt.ts) and `lastLang` (en|ta: the language of the last
  * line heard; with the bare WAV it goes as ?lastLang=). The audio is not kept, and an ambient transcript is not logged.
+ *
+ * v5 (C4): ?engaged=1 is the console's mark that Jarvis was woken or engaged when the sentence was said. With
+ * NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 audio without it is refused (403, "not-engaged") before its body is read. Default off: as before.
+ * The transcriber's JSON goes back unchanged (its `timing`, offsets for the browser's per-stage trace, included).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession } from "@/lib/collector/guard";
@@ -18,6 +22,7 @@ const LANES: Lane[] = ["ambient", "engaged", "named"];
 export async function POST(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
+  if (process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1" && req.nextUrl.searchParams.get("engaged") !== "1") return NextResponse.json({ error: "not-engaged" }, { status: 403 });
   if (!sttAvailable()) return NextResponse.json({ error: "no-stt" }, { status: 503 });
   if (!checkRateLimit(`jarvis-hear:${s.email}`, 60, 60).allowed) return NextResponse.json({ error: "Too many utterances in a minute." }, { status: 429 });
   const body = await readHear(req);
