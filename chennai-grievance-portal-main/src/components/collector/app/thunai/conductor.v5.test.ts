@@ -219,3 +219,22 @@ describe("the trace's stamps (section 6.4): zero is the last voiced sample, not 
     c.close();
   });
 });
+
+describe("B2's context reaches the echo guard: the speech span, and a clarifying question pending", () => {
+  it("the upload carries the detector's speech span (ms), and clarify=1 only while a question is pending", async () => {
+    const pending = { q: false };
+    const { c, e } = await boot({ clarifyPending: () => pending.q } as Partial<ConductorHooks>);
+    say(e, 1000, 450);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "speechMs")).toBe("450");
+    expect(param(posts[0], "clarify")).toBeNull();
+    posts[0].res(reply({ text: "", lang: "en" }));
+    await flush();
+    pending.q = true;
+    say(e, 5000, 600);
+    expect(posts.length).toBe(2);
+    expect(param(posts[1], "clarify")).toBe("1");
+    expect(param(posts[1], "speechMs")).toBe("600");
+    c.close();
+  });
+});

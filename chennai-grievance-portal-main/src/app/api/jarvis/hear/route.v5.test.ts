@@ -5,14 +5,14 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const m = vi.hoisted(() => ({ read: 0, heard: 0 }));
+const m = vi.hoisted(() => ({ read: 0, heard: 0, opts: null as null | Record<string, unknown> }));
 vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email: "lane2@example.invalid" }) }));
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: () => ({ allowed: true }) }));
 vi.mock("@/lib/thunai/stt", () => ({
   MAX_AUDIO_BYTES: 1_000_000,
   sttAvailable: () => true,
-  readHear: async (req: Request) => { m.read++; return { buf: await req.arrayBuffer(), vocab: [], lastLang: null }; },
-  hearUtterance: async () => { m.heard++; return { text: "", lang: "en", conf: { speech: 0.9, logprob: -0.2 }, timing: { sttSent: 3, sttBack: 250 } }; }
+  readHear: async (req: Request) => { m.read++; const u = new URL(req.url); return { buf: await req.arrayBuffer(), vocab: [], lastLang: null, clarify: u.searchParams.get("clarify") === "1", speechMs: u.searchParams.has("speechMs") ? Number(u.searchParams.get("speechMs")) : null }; },
+  hearUtterance: async (_b: unknown, o: Record<string, unknown>) => { m.heard++; m.opts = o; return { text: "", lang: "en", conf: { speech: 0.9, logprob: -0.2 }, timing: { sttSent: 3, sttBack: 250 } }; }
 }));
 
 import { NextRequest } from "next/server";
@@ -45,5 +45,14 @@ describe("C4: the route's half of the strict audio gate", () => {
     const r = await POST(req("lane=ambient&lang=en"));
     expect(r.status).toBe(200);
     expect(m.heard).toBe(1);
+  });
+});
+
+describe("B2: the route hands the echo guard its context", () => {
+  it("a pending clarifying question and the speech span go on to hearUtterance", async () => {
+    await POST(req("lane=engaged&lang=en&clarify=1&speechMs=450"));
+    expect(m.opts).toMatchObject({ clarify: true, speechMs: 450 });
+    await POST(req("lane=engaged&lang=en"));
+    expect(m.opts).toMatchObject({ clarify: false, speechMs: null });
   });
 });
