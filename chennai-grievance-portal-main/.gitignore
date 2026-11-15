@@ -39,3 +39,6 @@ playwright-report/
 .stryker-tmp/
 coverage/
 reports/
+
+# Complaint exports carry names, mobile numbers and addresses: made locally by scripts/export-complaints.js, never committed
+exports/

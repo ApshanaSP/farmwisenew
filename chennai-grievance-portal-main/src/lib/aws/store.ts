@@ -24,6 +24,8 @@ import zlib from "zlib";
 import type { DatabaseSync as DB } from "node:sqlite";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { decryptRow, installPii, registerPii } from "@/lib/pii";
+import { legacyDecrypt } from "@/lib/crypto";
 
 // node:sqlite is loaded at run time, and only when this store is used: Next.js 14's bundler does not know the
 // node:sqlite scheme (and rewrites createRequire), and the MySQL backend never needs it
@@ -69,6 +71,8 @@ declare global {
   var __awsStore: {
     state: State | null; loading: Promise<State> | null; checking: boolean;
     durable: Durable | null; durableLoading: Promise<Durable> | null; lock: Lock; flushing: Promise<void>;
+    /** failed sends in a row, the time the next send may go, and the timer that sends then (flush) */
+    failures?: number; retryAt?: number; retryTimer?: ReturnType<typeof setTimeout> | null;
     reloading?: boolean; reference?: { id: string; gz: Buffer };
     /** the durable store alone, read until the first build is in (sign-in need not wait for the build) */ early?: { db: DB; file: string } | null;
     hooks?: Map<string, BuildHook>;
@@ -288,6 +292,12 @@ function catalog(db: DB): void {
 const DURABLE_FILE = process.env.AWS_DURABLE_FILE || path.join(CACHE_DIR, "durable.sqlite");
 const BATCH = 400;          // changed rows per POST /store/write
 const RETRY_MS = 60_000;    // a failed send is retried this often (and after the next write)
+const BACKOFF_MS = 5_000;   // the wait after a failed send, doubled after each failure in a row, up to RETRY_MS
+/**
+ * How long nothing is sent after `failures` failed sends in a row: 5 s, 10 s, 20 s, 40 s, then 60 s. AWS answers a burst of
+ * POST /store/write with HTTP 429 Too Many Requests; sending again at once, on every write, only kept it over the limit.
+ */
+export const retryDelay = (failures: number): number => Math.min(RETRY_MS, BACKOFF_MS * 2 ** Math.max(0, failures - 1));
 // Only the one PC whose .env says AWS_STORE_SAVE=1 sends changes to AWS. Every other copy (a teammate's clone, a test
 // server) keeps them in its own durable.sqlite until it restarts: two saving copies would give new rows the same ids
 // and overwrite each other's rows in DynamoDB. AWS_STORE_DRY_RUN=1 turns saving off even with AWS_STORE_SAVE=1.
@@ -408,6 +418,8 @@ function ensureSiteTables(d: Durable): void {
       d.keys[t] = s.key;
       made = true;
     }
+    registerPii(d.conn); // again: a durable loaded by an older version of this module (dev hot reload) has no pii functions
+    installPii(d.conn, legacyDecrypt); // a table made just now gets its triggers too
     if (made && g.state) catalog(g.state.db);
     if (!DRY_RUN)
       void api("/store/write", { gz: zlib.gzipSync(JSON.stringify({ put: [], del: [], schema: WEBSITE_TABLES })).toString("base64") })
@@ -469,14 +481,34 @@ async function send(d: Pick<Durable, "conn" | "keys">): Promise<void> {
   }
 }
 
-/** Sends whatever is waiting, one send at a time. Never throws: a failure stays in _changes for the retry. */
+/**
+ * Sends whatever is waiting, one send at a time. Never throws: a failure stays in _changes for the retry.
+ * After a failed send nothing goes until retryDelay is over: the writes made meanwhile stay noted in _changes and go
+ * together in one send when the wait ends, instead of each write sending its own POST (and its own 429) straight away.
+ */
 function flush(): Promise<void> {
   if (DRY_RUN) return g.flushing; // a copy that does not save keeps its changes noted, to carry them over each reload
+  if (Date.now() < (g.retryAt ?? 0)) return g.flushing; // waiting after a failure: the timer sends when the wait is over
   g.flushing = g.flushing
-    .then(() => (g.durable ? send(g.durable) : undefined))
-    .catch((e) => console.warn(`[aws-store] saving to AWS failed, will retry: ${e.message}`));
+    .then(async () => {
+      if (!g.durable || Date.now() < (g.retryAt ?? 0)) return; // a send queued before the failure waits too
+      await send(g.durable);
+      g.failures = 0;
+    })
+    .catch((e) => {
+      g.failures = (g.failures ?? 0) + 1;
+      const wait = retryDelay(g.failures);
+      g.retryAt = Date.now() + wait;
+      if (g.retryTimer) clearTimeout(g.retryTimer);
+      g.retryTimer = setTimeout(() => { g.retryTimer = null; void flush(); }, wait);
+      g.retryTimer.unref?.();
+      const waiting = (() => { try { return (g.durable?.conn.prepare("SELECT count(*) AS n FROM _changes").get() as { n: number }).n; } catch { return "?"; } })();
+      console.warn(`[aws-store] saving to AWS failed (${waiting} changes kept on this PC), trying again in ${wait / 1000}s: ${e.message}`);
+    });
   return g.flushing;
 }
+/** flush, for store.backoff.test.ts */
+export const flushForTests = flush;
 
 /**
  * The reference tables do not change between loads: a copy that reloads keeps their compressed file, not the parsed
@@ -503,6 +535,7 @@ async function fetchDurable(file: string): Promise<Loaded> {
   for (const [t, s] of Object.entries(WEBSITE_TABLES)) rows.schema[t] ??= s;
   for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(file + f, { force: true });
   const conn = new (sqlite().DatabaseSync)(file);
+  registerPii(conn); // the triggers that lock personal data call it (lib/pii.ts)
   conn.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000");
   conn.exec("BEGIN");
   conn.exec("CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)");
@@ -512,6 +545,10 @@ async function fetchDurable(file: string): Promise<Loaded> {
   const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
   const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
   for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
+  // personal columns are locked on every save from now on; rows AWS still holds unlocked are locked here, and their changes
+  // go back to AWS with the next send, so DynamoDB and the S3 copies hold ciphertext too (lib/pii.ts)
+  const locked = installPii(conn, legacyDecrypt);
+  if (locked) console.log(`[aws-store] encrypted the personal details of ${locked} saved rows${DRY_RUN ? " (in this local copy only)" : "; sending them to AWS"}`);
   if (DRY_RUN)
     conn.exec(`UPDATE sqlite_sequence SET seq = ${LOCAL_IDS} WHERE seq < ${LOCAL_IDS} AND name <> '_changes';
                INSERT INTO sqlite_sequence (name, seq) SELECT name, ${LOCAL_IDS} FROM sqlite_master
@@ -704,7 +741,8 @@ function run(db: DB, sql: string | { sql: string; values?: unknown[] }, params?:
   try {
     const st = db.prepare(sqlite);
     if (READ.test(expanded)) {
-      const rows = (st.all(...(flat as any[])) as Record<string, unknown>[]).map((r) => ({ ...r }));
+      // personal values are saved locked (lib/pii.ts) and unlocked here, the one place every query result passes
+      const rows = (st.all(...(flat as any[])) as Record<string, unknown>[]).map((r) => decryptRow({ ...r }));
       // StatementSync.columns() arrived after Node 22.14; the first row's keys give the same names
       const fields = Object.keys(rows[0] ?? {}).map((name) => ({ name }));
       return [rows, fields];

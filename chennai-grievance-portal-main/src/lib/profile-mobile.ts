@@ -10,6 +10,7 @@
 import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import { checkRateLimit, type RateLimitResult } from "@/lib/rate-limit";
+import { piiMatch, piiParams } from "@/lib/pii";
 
 /** codes asked for and numbers tried, per account and hour, whichever route */
 export const MOBILE_TRIES_PER_HOUR = 5;
@@ -18,9 +19,12 @@ export const mobileTry = (userId: number): RateLimitResult => checkRateLimit(`mo
 /** The code is the account's for this number: another account asking for the same number neither replaces it nor waits for it. */
 export const mobileOtpId = (userId: number, mobile: string): string => `mobile:${userId}:${mobile}`;
 
-/** Is the number on another account's profile? (user_profiles.mobile_number is unique) */
+/**
+ * Is the number on another account's profile? The column's UNIQUE cannot see two locked copies of one number (each is locked with
+ * its own random IV: lib/pii.ts), so this check, by the number's fingerprint, is what keeps a number on one account.
+ */
 export async function onAnotherAccount(userId: number, mobile: string): Promise<boolean> {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT 1 AS x FROM user_profiles WHERE mobile_number = ? AND user_id <> ? LIMIT 1", [mobile, userId]);
+  const [rows] = await pool.query<RowDataPacket[]>(`SELECT 1 AS x FROM user_profiles WHERE ${piiMatch("mobile_number")} AND user_id <> ? LIMIT 1`, [...piiParams("mobile", mobile), userId]);
   return rows.length > 0;
 }
 
