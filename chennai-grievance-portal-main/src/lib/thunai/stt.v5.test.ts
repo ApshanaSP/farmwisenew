@@ -135,3 +135,41 @@ describe("B2: the prompt-echo guard weighs the decode's own confidence", () => {
     expect(none).toMatchObject({ clarify: false, speechMs: null });
   });
 });
+
+describe("the server's trace of speech to text (section 6.4): timings only", () => {
+  type T = { timing?: Record<string, unknown> };
+  it("hearUtterance's result carries timing: sttSent when the decodes go out, sttBack when the winner is in hand, sttSent <= sttBack", async () => {
+    const { fetcher } = fake({ en: { ms: 60, text: "open the rainfall page", logprob: -0.1 }, ta: { ms: 90, text: "ஓபன் த ரெயின்ஃபால் பேஜ்", logprob: -0.3 } });
+    const h = (await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher })) as T;
+    const t = h.timing!;
+    expect(t).toBeDefined();
+    expect(typeof t.sttSent).toBe("number");
+    expect(typeof t.sttBack).toBe("number");
+    expect(t.sttSent as number).toBeLessThanOrEqual(t.sttBack as number);
+    // the winner answered after 60 ms: sttBack is not stamped before it was back
+    expect((t.sttBack as number) - (t.sttSent as number)).toBeGreaterThanOrEqual(40);
+    // timings only: stage names and numbers, no words
+    expect(Object.keys(t).sort()).toEqual(["sttBack", "sttSent"]);
+    expect(JSON.stringify(t)).not.toMatch(/rainfall|ரெயின்/);
+  });
+  it("an ambient sentence read once more: sttBack is stamped when the second read is in hand", async () => {
+    const { fetcher } = fake({ en: { ms: 10, text: "Jarvis, pump status near the canal", logprob: -0.9 }, ta: { ms: 80, text: "ஜார்விஸ், கால்வாய் பம்ப் நிலை", logprob: -0.3 } });
+    const h = (await hearUtterance(wav(), { lane: "ambient", site: "en", fetcher })) as T;
+    expect((h.timing!.sttBack as number) - (h.timing!.sttSent as number)).toBeGreaterThanOrEqual(70);
+  });
+  it("no request sent (the budget is spent): no sttSent and no sttBack", async () => {
+    const { fetcher } = fake({ en: { ms: 0, text: "the file is on the table", logprob: -0.2 } });
+    for (let i = 0; i < 8; i++) await hearUtterance(wav(), { lane: "ambient", site: "en", fetcher });
+    const h = (await hearUtterance(wav(), { lane: "ambient", site: "en", fetcher })) as T;
+    expect(h).toMatchObject({ budget: "low" });
+    expect(h.timing?.sttSent).toBeUndefined();
+    expect(h.timing?.sttBack).toBeUndefined();
+  });
+  it("nothing usable came back: sttSent is stamped, sttBack is not", async () => {
+    const { fetcher } = fake({ en: { ms: 10, text: "", logprob: -0.2 }, ta: { ms: 10, text: "", logprob: -0.2 } });
+    const h = (await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher })) as T;
+    expect(h).toMatchObject({ noise: true });
+    expect(typeof h.timing?.sttSent).toBe("number");
+    expect(h.timing?.sttBack).toBeUndefined();
+  });
+});
