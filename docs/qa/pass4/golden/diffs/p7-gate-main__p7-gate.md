@@ -4,7 +4,7 @@ Compared 3273 requests with 3298. **56 changed, 25 added, 0 removed.**
 
 ## What differs around the requests
 
-- next_build_id: SWKEUJgzHqBCQjD1NS_2D to gaZnMIjiSOkRkp31HVyT-
+- next_build_id: SWKEUJgzHqBCQjD1NS_2D to gHR3BFmOy-ZlzNqzROSBX
 
 ## By route
 
@@ -661,32 +661,32 @@ Session ask, id a3a0280ab58d2130, 15983 bytes to 16253 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1251 bytes to 1252 bytes.
+Session writes, id cd47878c4defdb30, 1251 bytes to 1251 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.01596568627451 | 13.015746078431373 |
-| $.incidents[0].lon | 80.20999249019607 | 80.21069837254902 |
+| $.incidents[0].lat | 13.01596568627451 | 13.01607549019608 |
+| $.incidents[0].lon | 80.20999249019607 | 80.20996111764705 |
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235192 bytes.
+Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235191 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.severity.rows[32].lat | 13.01596568627451 | 13.015746078431373 |
-| $.severity.rows[32].lon | 80.20999249019607 | 80.21069837254902 |
+| $.severity.rows[32].lat | 13.01596568627451 | 13.01607549019608 |
+| $.severity.rows[32].lon | 80.20999249019607 | 80.20996111764705 |
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 139122 bytes to 139124 bytes.
+Session writes, id 3f54c3ecc14de285, 139122 bytes to 139122 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.map.pins[64].lat | 13.01596568627451 | 13.015746078431373 |
-| $.map.pins[64].lon | 80.20999249019607 | 80.21069837254902 |
-| $.severity.rows[27].lat | 13.01596568627451 | 13.015746078431373 |
-| $.severity.rows[27].lon | 80.20999249019607 | 80.21069837254902 |
+| $.map.pins[64].lat | 13.01596568627451 | 13.01607549019608 |
+| $.map.pins[64].lon | 80.20999249019607 | 80.20996111764705 |
+| $.severity.rows[27].lat | 13.01596568627451 | 13.01607549019608 |
+| $.severity.rows[27].lon | 80.20999249019607 | 80.20996111764705 |
 
 ### collector POST /api/collector/thunai/memory
 
@@ -721,7 +721,7 @@ Session writes, id d7a191781f17de43, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | 1wfcCyqG0tRlWsR6QfUsSyN85y0zmynT | 3Ji_P6WgOEUSWVwaqomWnYD_zZ0ksl9B |
+| $.confirm.scope | 1wfcCyqG0tRlWsR6QfUsSyN85y0zmynT | w1mgvCRyq9cCso_KV9aQhDFw5spNmN8s |
 
 ### collector GET /api/collector/studio/<dataset-1>?export=xlsx
 
@@ -729,7 +729,7 @@ Session writes, id be094a0c735be649, 188 bytes to 188 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | 9HNmUU5dObht-lldN0rgspM-_0IgZ1xY | aUB-JhMU3T8qg6ue9gyAkaMxKFcMd3m2 |
+| $.confirm.scope | 9HNmUU5dObht-lldN0rgspM-_0IgZ1xY | mLJ8MYsLHes9w6zMibq3JjKg-pj5qcWX |
 
 ### collector GET /api/collector/studio/<dataset-1>?f=[{"col"%3A"c0"%2C"op"%3A"neq"%2C"values"%3A["no such value"]}]&export=csv
 
@@ -737,5 +737,5 @@ Session writes, id a91af3219ee7b0a3, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | B4hyM3nVSIdmHMBgb1M_LQqBxB9Phm2n | DsxupLJ5cgvsJX1_lVf-7b4JfukGZFgj |
+| $.confirm.scope | B4hyM3nVSIdmHMBgb1M_LQqBxB9Phm2n | dwqnWX1lj-8y2s7C25uDE-25rk40tI9T |
 

@@ -42,7 +42,7 @@ Branch `claude/priceless-bouman-2fe7f8`, cut from `main` at `38d96d2f`. The brie
   - "What changed since yesterday / this week", split by zone, kind and department, with share of change, a surprise score and a band. It says "linked with", never "caused".
   - "Explain this one".
   - A situation view of a place.
-  - A dialogue register: "the second one", "that Velachery one", "same for last week".
+  - A dialogue register: "the second one", "that Velachery one", "and in Adyar?". A past window said as a follow-up ("same for last week") goes on to the planner, as on `main`.
   - "How do you know?", which reads method, n, period, sources and caveat.
   - A one-slot clarify with three options.
   - About 120 more Tanglish forms, and TNEB/EB → TANGEDCO.
@@ -104,7 +104,7 @@ Exactly as before: `start-fast.bat` from the repository root opens Edge. See `do
 - **Tamil spoken-register lines are unchecked** by a native speaker (PERSONA.md lists them).
 - **Quota:** the Groq keys are one organisation. One evaluation day used about 300K Groq tokens. Do not demo within 24 hours of a heavy run.
 - **The ledger is a local SQLite file.** A multi-process host needs a shared store.
-- **One QA open-baseline row regressed:** open-baseline-11, a Tamil follow-up that names the WRD flood-monitoring body and asks for this week. It was green on `main`; on v4 it gets a flooding-cases list instead of that body's brief. The diagnosis so far is in `docs/qa/pass7/V4_EXPECTED_CHANGES.md` (the brief resolver is unchanged, so the first turn's routing differs). It is the first thing to fix before a merge.
+- **Two QA open-baseline rows regressed on v4 and were fixed:** open-baseline-46 (a zone's situation is its brief again, `c8b0fb1e`) and open-baseline-11 (a past week said as a follow-up goes on to the planner, `6edad240`). In both cases v4 now behaves as `main` did. Details are in `docs/qa/pass7/V4_EXPECTED_CHANGES.md`.
 - **Running the QA gate in a new worktree** needs the gitignored QA data: `data/aws-cache/qa/pinned`, `golden`, `durable.sqlite` and the matching `test-collector.txt`. Copy them from a worktree that gated before; the main checkout has none.
 
 ### What a key would add (not signed up; the owner's call)

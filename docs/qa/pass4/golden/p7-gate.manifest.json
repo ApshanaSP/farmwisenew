@@ -5,7 +5,7 @@
  "frozen_now": "2026-11-06T06:30:00.000Z",
  "build_id": "2026-11-06 18:21:19|76734f481810",
  "dist": ".next-qa",
- "next_build_id": "gaZnMIjiSOkRkp31HVyT-",
+ "next_build_id": "gHR3BFmOy-ZlzNqzROSBX",
  "fixtures": {
   "aibrief.json": "f56ae871a3b1b21f",
   "analysis.json": null,
@@ -36,7 +36,7 @@
  ],
  "problems": [],
  "five_xx": 0,
- "seconds": 243,
+ "seconds": 227,
  "sessions": [
   {
    "name": "reads",
@@ -51,28 +51,28 @@
     "www.newindianexpress.com",
     "www.thanthitv.com"
    ],
-   "seconds": 114
+   "seconds": 85
   },
   {
    "name": "reads2",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 69
+   "seconds": 82
   },
   {
    "name": "ask",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 34
+   "seconds": 33
   },
   {
    "name": "writes",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 22
+   "seconds": 23
   }
  ]
 },
@@ -3277,7 +3277,7 @@
   {"id":"fa88cd4b9204becc","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints","route":"/api/complaints","status":200,"bytes":462,"sha256":"75f07e4945d9486c9ee17944cd7011933847d7942ff05ed8f7a807db4920c5e7","type":"application/json"},
   {"id":"1a74f77c3d8d08f6","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints/<new-complaint-code-1>","route":"/api/complaints/[code]","status":200,"bytes":1458,"sha256":"868a83557c0e3b050390b136eb9aa08cea4522876967474104a20078d9166053","type":"application/json"},
   {"id":"eaa57c0fb9b28bbd","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints?code=<new-complaint-code-1>","route":"/api/complaints","status":200,"bytes":462,"sha256":"75f07e4945d9486c9ee17944cd7011933847d7942ff05ed8f7a807db4920c5e7","type":"application/json"},
-  {"id":"cd47878c4defdb30","session":"writes","role":"collector","method":"GET","url":"/api/collector/search?q=<new-complaint-code-1>","route":"/api/collector/search","status":200,"bytes":1252,"sha256":"0352fae2e8e258cea5d72eae20ad18f7da405a266ad16f394efbb5b92b46b71c","type":"application/json"},
+  {"id":"cd47878c4defdb30","session":"writes","role":"collector","method":"GET","url":"/api/collector/search?q=<new-complaint-code-1>","route":"/api/collector/search","status":200,"bytes":1251,"sha256":"3643956a91fd60424fdc04cb855d21644f7b9a1c92741572cf71daddf3301ee6","type":"application/json"},
   {"id":"3b289ebaec799b4a","session":"writes","role":"officerA","method":"GET","url":"/api/complaints/<new-complaint-code-1>","route":"/api/complaints/[code]","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"c36bb8980c05bc66","session":"writes","role":"collector","method":"POST","url":"/api/collector/decisions","route":"/api/collector/decisions","status":201,"bytes":100,"sha256":"59cdd0c634453020b2e28cff0b605c5af3ec7b7fcd24298826b9d40dac7433cd","request":"{\"incidentId\":\"INC-20260926-EB3B79\",\"decision\":\"note\",\"note\":\"Golden master note.\"}","type":"application/json"},
   {"id":"afc98c033d1a5398","session":"writes","role":"collector","method":"GET","url":"/api/collector/incidents/INC-20260926-EB3B79","route":"/api/collector/incidents/[id]","status":200,"bytes":7089,"sha256":"cdc8406a93dad6c2668af853a37f9fe29b7a49dc7ced2cd4ed154619150212e6","type":"application/json"},
@@ -3300,8 +3300,8 @@
   {"id":"5fe0b0ed335c49e4","session":"writes","role":"collector","method":"GET","url":"/api/collector/list","route":"/api/collector/list","status":200,"bytes":16484,"sha256":"19015aceb5112e631ec755153fedbd3f45122d31d6b30fa87e3b6911e9da4918","type":"application/json"},
   {"id":"c8d3fd2aa1ff2e9c","session":"writes","role":"collector","method":"GET","url":"/api/collector/list?status=awaiting","route":"/api/collector/list","status":200,"bytes":50,"sha256":"9921d2a68e5956e4169added0be67026b939709f48b5c47fd300bfa386e0ca8a","type":"application/json"},
   {"id":"50228dd8087cb116","session":"writes","role":"collector","method":"GET","url":"/api/collector/list?status=verified&period=quarterly","route":"/api/collector/list","status":200,"bytes":15173,"sha256":"a3ede69aabbdc6abeda1fcc83a79e42619b279af5783cd3c77385d5c1fa539e1","type":"application/json"},
-  {"id":"ea0ab3f25bc17c26","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview","route":"/api/collector/overview","status":200,"bytes":235192,"sha256":"23df7365e86c71f1638d24ec4de6acc14eef6f7a2ada69a756a24244a5363490","type":"application/json","cache":"private, no-cache"},
-  {"id":"3f54c3ecc14de285","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview?period=weekly&zone=13","route":"/api/collector/overview","status":200,"bytes":139124,"sha256":"9e74d6fa1e3074724be5e7312e1e86745ffbc20301d691d403a48678256d3f92","type":"application/json","cache":"private, no-cache"},
+  {"id":"ea0ab3f25bc17c26","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview","route":"/api/collector/overview","status":200,"bytes":235191,"sha256":"84cb2c431cdeb89d4cf0a15cf42f1d3c52f9be75affd1045a2eb7f1739ee56bd","type":"application/json","cache":"private, no-cache"},
+  {"id":"3f54c3ecc14de285","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview?period=weekly&zone=13","route":"/api/collector/overview","status":200,"bytes":139122,"sha256":"fb7a6b408aa1f39b84686098eb39d502ee1463c6493d46be06bc6aca966d5697","type":"application/json","cache":"private, no-cache"},
   {"id":"78f15c9fa2f5ce11","session":"writes","role":"officerA","method":"GET","url":"/api/officer/grievances?tab=new&per=4","route":"/api/officer/grievances","status":200,"bytes":2693,"sha256":"547311d96dd6afd10c785f8e7ff0795559e5a5fabe0e7c621bdb079372a86850","type":"application/json","cache":"no-store, max-age=0"},
   {"id":"c923b5b87143a8e7","session":"writes","role":"officerA","method":"POST","url":"/api/officer/grievances/INC-20261106-0B725B","route":"/api/officer/grievances/[id]","status":201,"bytes":36,"sha256":"43052bfbd64f7842c3d09b8d18f9fc82a335a64e61821940c5a746ffcb498f2f","request":"{\"step\":\"approve\"}","type":"application/json","cache":"no-store, max-age=0"},
   {"id":"f5f598220fa678b3","session":"writes","role":"officerA","method":"GET","url":"/api/officer/grievances/INC-20261106-0B725B","route":"/api/officer/grievances/[id]","status":200,"bytes":1853,"sha256":"5355f95bbc11a5d4ee14add0e19d692efe6508a633c7653449d4e7b52b0c60b2","type":"application/json","cache":"no-store, max-age=0"},
@@ -3359,10 +3359,10 @@
   {"id":"f847d86616ba78a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":200,"bytes":236,"sha256":"aafc5f908c7d93fc6da40f11266c380747c6e37ffca57b4c0ec5313bcb3a547b","type":"application/json"},
   {"id":"626c21acd6f3dd1a","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>","route":"/api/collector/studio/[id]","status":200,"bytes":37657,"sha256":"9f816a658e3e945eb438f1797df3e3c1d4fa1fe4403349a3fb024456ed7dc536","type":"application/json"},
   {"id":"5d6f98b7dd30a96e","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?rows=1","route":"/api/collector/studio/[id]","status":200,"bytes":22816,"sha256":"0ad4d24a0954f5a989763339a2a83684905946de2993b2b0e3d72dca6629b051","type":"application/json"},
-  {"id":"d7a191781f17de43","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"38545888584d0dbc0c74d9409ed47aa47801ed95c094fe881b7d4ab560d6f1e5","type":"application/json"},
-  {"id":"be094a0c735be649","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=xlsx","route":"/api/collector/studio/[id]","status":428,"bytes":188,"sha256":"96dd395bb9d598ee85b063f6b4bfd0fc1523bcc64a723da0d76ec31898310022","type":"application/json"},
+  {"id":"d7a191781f17de43","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"8f3bc65938ca617755e1da7920399efc6654259ee7c22dfef0bfcc91780b874e","type":"application/json"},
+  {"id":"be094a0c735be649","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=xlsx","route":"/api/collector/studio/[id]","status":428,"bytes":188,"sha256":"b1bd9b714c0e23d79f0e0b5e21a92e2061744b87df99409e4f82e6d5efc4b233","type":"application/json"},
   {"id":"e10fa66e56c0b98e","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]","route":"/api/collector/studio/[id]","status":200,"bytes":38182,"sha256":"ad8f72d8e7ab7780eccfe754f1d6be3f99a52caf1fa1a155b52cbe4bd5d622e8","type":"application/json"},
-  {"id":"a91af3219ee7b0a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]&export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"1fa3efe3927b7a17d8b862a8924fc1a703f686c73df0214d7888eff112fa4b07","type":"application/json"},
+  {"id":"a91af3219ee7b0a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]&export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"cd5b414c8802485386db7cbabf9fc9ccb6b1ab2d3bcf93b62fef79e32310b01b","type":"application/json"},
   {"id":"83707acfa20f18e0","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=bad","route":"/api/collector/studio/[id]","status":200,"bytes":37657,"sha256":"9f816a658e3e945eb438f1797df3e3c1d4fa1fe4403349a3fb024456ed7dc536","type":"application/json"},
   {"id":"bd31b047000ea0c6","session":"writes","role":"officerA","method":"GET","url":"/api/collector/studio/<dataset-1>","route":"/api/collector/studio/[id]","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"b04132e2370bfb8e","session":"writes","role":"anonymous","method":"GET","url":"/api/collector/audit","route":"/api/collector/audit","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
