@@ -307,3 +307,29 @@ describe("A7: the compact plan, sent and read back inside claudeJson", () => {
     expect(formatOf(console_[0])).toBe(JSON.stringify(claudeWire(SCHEMAS.screens as z.ZodTypeAny).schema));
   });
 });
+
+// ---- A6 (d): what the deploy check reads of each call (cost, timing, outcome), without the text
+
+describe("A6 (d): each Claude call's outcome and usage, for the deploy check", () => {
+  it("onClaudeCall hears every request (a turn, a warm, a refusal, a 429) with numbers and codes only; the result carries stop_reason", async () => {
+    const mod = await import("./claude") as unknown as { onClaudeCall: (fn: (e: Json) => void) => () => void };
+    const heard: Json[] = [];
+    const stop = mod.onClaudeCall((e) => heard.push(e));
+    try {
+      fake((b) => message(b, '{"ok":true}'));
+      const r = await ask({ prompt: "Said: \"a private sentence\"" });
+      expect((r as unknown as Json).stopReason).toBe("end_turn");
+      await claudeWarm({ system: SYSTEM, schema: S });
+      fake((b) => message(b, "", "refusal"));
+      await ask().catch(() => undefined);
+      fake(() => { throw new Anthropic.RateLimitError(429, {}, "rate limited", new Headers()); });
+      await ask().catch(() => undefined);
+    } finally { stop(); }
+    expect(heard.map((e) => [e.outcome, e.warm])).toEqual([["ok", false], ["ok", true], ["refusal", false], ["rate_limited", false]]);
+    expect(heard[0]).toMatchObject({ name: "jarvis_screens0", model: HAIKU, stopReason: "end_turn", path: "format", compact: false, input_tokens: 40, output_tokens: 30, cache_read_input_tokens: 1800, cache_creation_input_tokens: 0 });
+    expect(typeof heard[0].ms).toBe("number");
+    expect(heard[3]).toMatchObject({ input_tokens: 0, output_tokens: 0 });
+    const all = JSON.stringify(heard);
+    for (const s of ["private sentence", SYSTEM, KEY, "ok\":true"]) expect(all).not.toContain(s);
+  });
+});
