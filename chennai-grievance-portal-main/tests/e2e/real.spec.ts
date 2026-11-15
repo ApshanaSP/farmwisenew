@@ -52,7 +52,10 @@ test("real providers, end to end", async ({ page }) => {
   await modeOn(page);
   const out: Record<string, unknown>[] = [];
   // the rules lane: a plain move, a screen; the planner lane: a sentence the rules leave to it
-  for (const [clip, lane] of [["cmd_trends", "rules"], ["cmd_adyar", "rules"], ["b6", "rules"], ["b3", "rules"], ["open_ended", "planner"], ["open_ended2", "planner"]] as const) {
+  // v5 C1: an unnamed command with Jarvis not engaged is refused, so the run opens with a clip that names Jarvis ("Jarvis, ..."); the
+  // others follow inside the 20 s follow-up window, as a Collector's next sentences do
+  const traces: { lane: string | null; stages: Record<string, number> }[] = [];
+  for (const [clip, lane] of [["b6", "rules"], ["cmd_trends", "rules"], ["cmd_adyar", "rules"], ["b3", "rules"], ["open_ended", "planner"], ["open_ended2", "planner"]] as const) {
     await clearMarks(page);
     await page.waitForTimeout(600);
     await say(page, clip);
@@ -68,13 +71,25 @@ test("real providers, end to end", async ({ page }) => {
     const hud = await page.evaluate(() => (window as unknown as { __jv: { hud(): { ribbon: string; strip: { provider: string | null; tokens: number | null; path: string | null } } } }).__jv.hud());
     out.push({ clip, lane, heard: hud.ribbon, ack: Math.round(at("ack") - end), answer: Math.round(at("answer") - end), firstAudio: Math.round(at("firstAudio") - end), finding: Math.round(at("finding") - end), provider: hud.strip.provider, tokens: hud.strip.tokens, path: hud.strip.path });
     console.log(JSON.stringify(out[out.length - 1]));
+    // the v5 per-stage trace of this turn (section 6.4): timings only, zero at the last voiced sample; the lane the page itself took
+    const tr = await page.evaluate(() => {
+      const ts = ((window as unknown as { __jv: { trace?: { zero: number; at: Record<string, number>; lane: string | null }[] } }).__jv.trace ?? []).filter((t) => t.lane);
+      const t = ts[ts.length - 1];
+      return t ? { lane: t.lane, stages: Object.fromEntries(Object.entries(t.at).map(([k, v]) => [k, Math.round(v - t.zero)])) } : null;
+    });
+    if (tr) traces.push(tr);
     await page.keyboard.press("Escape");
     await page.waitForTimeout(500);
   }
   const col = (lane: string, k: string) => out.filter((x) => x.lane === lane).map((x) => x[k] as number).filter((x) => Number.isFinite(x));
   const r = { runs: out, rules: { ack_p50: pct(col("rules", "ack"), 0.5), firstAudio_p50: pct(col("rules", "firstAudio"), 0.5), finding_p50: pct(col("rules", "finding"), 0.5), answer_p50: pct(col("rules", "answer"), 0.5) }, planner: { ack_p50: pct(col("planner", "ack"), 0.5), firstAudio_p50: pct(col("planner", "firstAudio"), 0.5), finding_p50: pct(col("planner", "finding"), 0.5), answer_p50: pct(col("planner", "answer"), 0.5) },
     note: process.env.SPEC_PROD ? "real Whisper, real planner, real voice ladder, injected audio, production bundle. firstAudio can be the acknowledgement; finding is the first spoken answer" : "real Whisper, real planner, real voice ladder, injected audio, next dev server" };
-  saveResult(process.env.SPEC_PROD ? "latency-real-prod" : "latency-real", { ...r, heard });
+  // p50/p90 of each trace stage by the lane the page took, with n (timings only)
+  const by = new Map<string, Map<string, number[]>>();
+  for (const t of traces) { const l = by.get(t.lane ?? "none") ?? new Map<string, number[]>(); by.set(t.lane ?? "none", l); for (const [k, v] of Object.entries(t.stages)) l.set(k, [...(l.get(k) ?? []), v]); }
+  const trace = Object.fromEntries([...by].map(([lane, m]) => [lane, Object.fromEntries([...m].map(([k, xs]) => [k, { n: xs.length, p50: Math.round(pct(xs, 0.5)), p90: Math.round(pct(xs, 0.9)) }]))]));
+  saveResult(process.env.SPEC_PROD ? "latency-real-prod" : "latency-real", { ...r, heard: heard.map((h) => { const x = h as Record<string, unknown>; return { lane: x.lane, status: x.status, lang: x.lang, timing: x.timing }; }), trace, traces });
+  console.log(JSON.stringify({ trace }));
   console.log(JSON.stringify(r.rules), JSON.stringify(r.planner));
   expect(out.length).toBe(6);
 });

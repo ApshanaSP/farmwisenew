@@ -107,12 +107,14 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await page.waitForFunction(() => (localStorage.getItem("thunai-pins") ?? "").includes("Severe today"), null, { timeout: 15_000 });
   });
 
-  test("three commands with no click and no name: the console acts", async ({ page }) => {
+  // v5 C1: an unnamed command with Jarvis not engaged is refused; the first command carries the name, and the next two, inside the
+  // follow-up window, need no name (docs/qa/pass7/V5_EXPECTED_CHANGES.md)
+  test("three commands with no click: the first with the name, the next two without it inside the window: the console acts", async ({ page }) => {
     const ctx = await setup(page, {
       agent: (t) => /Adyar/.test(t) ? { result: steps([{ a: "view", view: { zone: 13 } }]) } : /Anna Nagar/.test(t) ? { result: steps([{ a: "view", view: { zone: 8 } }]) } : { result: chat("Done.") }
     });
     await modeOn(page);
-    ctx.hear.push({ text: "Go to the trends page." });
+    ctx.hear.push({ text: "Jarvis, go to the trends page." });
     await say(page, "cmd_trends");
     await expect(page.getByTestId("harness-state")).toContainText('"page": "trends"', { timeout: 15_000 });
     await page.waitForTimeout(800);
@@ -140,12 +142,16 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     expect(ctx.hearCalls[0].lane).toBe("ambient");
   });
 
+  // v5 C1: with no name and Jarvis not engaged the whole sentence is now ignored (a faint line), so its level B part cannot run; before,
+  // its level A part acted and the save was answered "Say Jarvis first" (docs/qa/pass7/V5_EXPECTED_CHANGES.md)
   test("the name works anywhere; a level B request with no name does not run", async ({ page }) => {
     const ctx = await setup(page, { agent: () => ({ result: steps([{ a: "workspace", op: "save", name: "Daily" }]) }) });
     await modeOn(page);
     ctx.hear.push({ text: "show Adyar and save this workspace as Daily" });
     await say(page, "cmd_adyar");
-    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { answer: string } } }).__jv.hud().answer.includes("Say Jarvis first"), null, { timeout: 15_000 });
+    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint.includes("save this workspace"), null, { timeout: 15_000 });
+    expect(ctx.agentCalls.length).toBe(0);
+    await expect(page.getByRole("dialog").filter({ hasText: /Daily/ })).toHaveCount(0);
     await page.waitForTimeout(600);
     ctx.hear.push({ text: "Jarvis, save this workspace as Daily" });
     await say(page, "cmd_trends");
