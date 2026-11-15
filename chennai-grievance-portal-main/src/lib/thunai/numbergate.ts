@@ -85,7 +85,12 @@ function taNumber(w: string): number | null {
   for (const [re, v] of TA_PEOPLE) { const m = re.exec(w); if (m && TA_PEOPLE_END.test(w.slice(m[0].length))) return v; }
   if (/ாம்$|ாவத/.test(w) || /^(இரண்|ரெண்)(டும்|டையும்|டிலும்)$/.test(w)) return null;
   const k = w.indexOf("ாயிர");
-  if (k > 0) { const head = taNumber(`${w.slice(0, k)}ு`); if (head) return head * 1000; }
+  if (k > 0) {
+    // "…ஓர்" before a thousand is one: இருபத்தோராயிரம் (21,000), பதினோராயிரம் (11,000), ஓராயிரம் (1,000) (v5 F1)
+    const stem = w.slice(0, k), or = "ோர";
+    const head = stem === "ஓர" ? 1 : taNumber(stem.endsWith(or) ? `${stem.slice(0, -or.length)}ொன்று` : `${stem}ு`);
+    if (head) return head * 1000;
+  }
   for (const [re, v] of TA_TENS) {
     const m = re.exec(w);
     if (m) return v + (TA_UNITS.find(([u]) => u.test(w.slice(m[0].length)))?.[1] ?? 0);
