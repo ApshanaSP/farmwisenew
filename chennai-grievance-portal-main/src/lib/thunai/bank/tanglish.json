@@ -1,0 +1,1935 @@
+[
+ {
+  "recipe": "cases",
+  "text": "Severe cases ellaam kaattu",
+  "slots": {
+   "sev": "Severe"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Sholinganallur la pending kuppai complaints list podu",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "cat": "SOLID_WASTE",
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Teynampet la police complaints innum pending irukkuradhu kaattu",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "dept": "POL-GCP",
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Metro water overdue cases indha vaaram enna",
+  "slots": {
+   "dept": "CMWSSB",
+   "status": "overdue",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Madhavaram la dengue cases konjam kaattunga please",
+  "slots": {
+   "zones": [
+    3
+   ],
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Innaikku top three severe incidents, complaints order la",
+  "slots": {
+   "sev": "Severe",
+   "n": 3,
+   "period": "daily",
+   "sort": "complaints"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Anna Nagar streetlight problems, latest first podu",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "sort": "time"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Koyambedu market pakkam enna cases irukku",
+  "slots": {
+   "q": "Koyambedu market"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Adyar la thanni nikkudhu complaints, illa wait, Perungudi",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Indha maasam Kodambakkam la resolve aana road damage cases",
+  "slots": {
+   "status": "resolved",
+   "cat": "ROAD_DAMAGE",
+   "period": "monthly",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Perambur taluk la medium cases mattum kaattu",
+  "slots": {
+   "sev": "Medium",
+   "taluk": "TLK-PRB"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Tondiarpet la chain snatching cases priority order la",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "cat": "CRIME_PROPERTY",
+   "sort": "priority"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Innaikku news padinga",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Saidapet flooding pathi news enna",
+  "slots": {
+   "q": "flooding Saidapet"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Indha vaaram papers enna solraanga",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Malaria pathi vandha news ellaam padinga",
+  "slots": {
+   "q": "malaria"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Ennore oil spill news podu",
+  "slots": {
+   "q": "Ennore oil spill"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Indha maasam bus strike news",
+  "slots": {
+   "q": "bus strike",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Metro rail work pathi enna news vandhirukku",
+  "slots": {
+   "q": "metro rail work"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Thiruvanmiyur beach erosion pathi latest news",
+  "slots": {
+   "q": "Thiruvanmiyur beach erosion"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Innaikku Poondi dam pathi news padichu kaattu",
+  "slots": {
+   "q": "Poondi dam",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Cyclone alert pathi news enna",
+  "slots": {
+   "q": "cyclone alert"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Indha moonu maasam water shortage news mattum",
+  "slots": {
+   "q": "water shortage",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Valluvar Kottam protest headlines kaattu",
+  "slots": {
+   "q": "protest Valluvar Kottam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Poondi dam la evlo thanni irukku",
+  "slots": {
+   "metric": "lakes",
+   "name": "Poondi"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Ella lakes oda level um kaattu",
+  "slots": {
+   "metric": "lakes"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Arumbakkam la air quality eppadi",
+  "slots": {
+   "metric": "aqi",
+   "name": "Arumbakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Ennore la mazhai evlo peidhuchu",
+  "slots": {
+   "metric": "rain",
+   "name": "Ennore"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Chembarambakkam full aagidicha",
+  "slots": {
+   "metric": "lakes",
+   "name": "Chembarambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "City fulla temperature enna",
+  "slots": {
+   "metric": "temp"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Humidity ellaa stations layum kaattu",
+  "slots": {
+   "metric": "humidity"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Royapuram AQI check pannu",
+  "slots": {
+   "metric": "aqi",
+   "name": "Royapuram"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Taramani la rain gauge enna kaattudhu",
+  "slots": {
+   "metric": "rain",
+   "name": "Taramani"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Puzhal... illa, Kannankottai level sollu",
+  "slots": {
+   "metric": "lakes",
+   "name": "Kannankottai"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Meenambakkam la veyil evlo",
+  "slots": {
+   "metric": "temp",
+   "name": "Meenambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Velachery la humidity romba irukka",
+  "slots": {
+   "metric": "humidity",
+   "name": "Velachery"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Top three mazhai adhigam peidha places",
+  "slots": {
+   "measure": "rain",
+   "n": 3
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Indha vaaram worst zones edhu",
+  "slots": {
+   "measure": "zone_attention",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Backlog adhigam irukkura departments list pannu",
+  "slots": {
+   "measure": "dept_backlog"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Severe cases adhigam irukkura top five zones",
+  "slots": {
+   "measure": "zone_severe",
+   "n": 5
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Open cases adhigam irukkura departments rank pannu",
+  "slots": {
+   "measure": "dept_open"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Kammiyaana open cases irukkura zones",
+  "slots": {
+   "measure": "zone_open",
+   "order": "bottom"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Hotspots top seven kaattu",
+  "slots": {
+   "measure": "hotspots",
+   "n": 7
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "AQI worst-aa irukkura top four stations",
+  "slots": {
+   "measure": "aqi",
+   "n": 4
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Indha quarter la road accident adhigam aana zones",
+  "slots": {
+   "measure": "zone_incidents",
+   "cat": "ROAD_ACCIDENT",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Taluk wise open incidents ranking podu",
+  "slots": {
+   "measure": "taluk_open"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Lakes la thanni adhigam irukkuradhu edhu edhu",
+  "slots": {
+   "measure": "lakes"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Complaints adhigam irukkura zones... illa, kuppai complaints mattum, top three",
+  "slots": {
+   "measure": "zone_complaints",
+   "cat": "SOLID_WASTE",
+   "n": 3
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Thiruvottiyur um Manali um compare pannu",
+  "slots": {
+   "zones": [
+    1,
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Adyar vs Sholinganallur indha vaaram",
+  "slots": {
+   "zones": [
+    13,
+    15
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Kodambakkam, Teynampet, Alandur moonaiyum oppittu kaattu",
+  "slots": {
+   "zones": [
+    10,
+    9,
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Storm water drains vs PWD buildings compare pannunga",
+  "slots": {
+   "depts": [
+    "GCC-SWD",
+    "PWD-BLD"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Severe cases la Perungudi vs Valasaravakkam",
+  "slots": {
+   "zones": [
+    14,
+    11
+   ],
+   "sev": "Severe"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Revenue and general administration rendaiyum compare pannu",
+  "slots": {
+   "depts": [
+    "GCC-REV",
+    "GCC-GAD"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Indha quarter Royapuram vs Thiru-Vi-Ka Nagar",
+  "slots": {
+   "zones": [
+    5,
+    6
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Anna Nagar and Ambattur eppadi irukku nu compare panni sollunga",
+  "slots": {
+   "zones": [
+    8,
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Innaikku Madhavaram vs Tondiarpet",
+  "slots": {
+   "zones": [
+    3,
+    4
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Adyar um Perungudi um... illa, Adyar um Alandur um compare pannu",
+  "slots": {
+   "zones": [
+    13,
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Metro water, solid waste, public health moonu departments compare",
+  "slots": {
+   "depts": [
+    "CMWSSB",
+    "GCC-SWM",
+    "GCC-HLT"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Indha maasam high severity la Kodambakkam vs Valasaravakkam",
+  "slots": {
+   "zones": [
+    10,
+    11
+   ],
+   "period": "monthly",
+   "sev": "High"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Indha quarter la dengue eppadi move aagirukku Adyar la",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    13
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Kuppai complaints trend indha maasam",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Kodambakkam la flooding over time eppadi",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Indha vaaram Perungudi la road damage yeri irukka",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "zones": [
+    14
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Last three months la drinking water problems trend",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Streetlight complaints trend, Tondiarpet",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Indha maasam Teynampet la incidents eppadi yeri irangirukku",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Air pollution complaints trend kaattunga",
+  "slots": {
+   "cat": "AIR_POLLUTION"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Manali la sewage problem trend, quarterly",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    2
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Fire accidents trend... illa, chain snatching trend indha vaaram",
+  "slots": {
+   "cat": "CRIME_PROPERTY",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Sholinganallur la kosu problem trend eppadi",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Valasaravakkam la stray dogs complaints indha maasam eppadi poyirukku",
+  "slots": {
+   "cat": "STRAY_ANIMALS",
+   "zones": [
+    11
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Thiruvottiyur la yen ivlo problem indha vaaram",
+  "slots": {
+   "zones": [
+    1
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Perungudi la kuppai complaints yeranadhukku kaaranam enna",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "cat": "SOLID_WASTE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Innaikku Adyar la flooding yen jaasthi aachu",
+  "slots": {
+   "zones": [
+    13
+   ],
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Kodambakkam la dengue yen adhigama irukku",
+  "slots": {
+   "zones": [
+    10
+   ],
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Madhavaram yen ippo romba mosama irukku",
+  "slots": {
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Indha maasam road accidents yen yeridhu",
+  "slots": {
+   "cat": "ROAD_ACCIDENT",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Anna Nagar yen spike aagudhu",
+  "slots": {
+   "zones": [
+    8
+   ]
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Royapuram la drainage complaints ku reason sollunga",
+  "slots": {
+   "zones": [
+    5
+   ],
+   "cat": "DRAINAGE_SEWAGE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Indha vaaram Alandur la streetlight issues yen adhigam",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Teynampet... illa, Sholinganallur, indha quarter la yen high",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Tondiarpet la water supply problem yen thideer nu yeridhu",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "cat": "WATER_SUPPLY"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "City fulla stray dog complaints yen kooduchu",
+  "slots": {
+   "cat": "STRAY_ANIMALS"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Department wise performance eppadi irukku",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Indha maasam zone wise performance kaattu",
+  "slots": {
+   "by": "zone",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Edhu department romba slow-aa close panranga",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Ovvoru zone um complaints close panradhula eppadi",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Quarter ku departments resolution rate podu",
+  "slots": {
+   "by": "dept",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Solid waste team work eppadi poguthu",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Innaikku zones evlo fast-aa clear panranga",
+  "slots": {
+   "by": "zone",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Departments la yaaru pinnaadi irukkaanga",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Zone wise performance please, quarterly",
+  "slots": {
+   "by": "zone",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Department performance... illa, zone wise maathi kaattu",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Indha vaaram departments time ku close panraangala",
+  "slots": {
+   "by": "dept",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Indha vaaram zones oda scorecard",
+  "slots": {
+   "by": "zone",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Indha vaaram Thiruvottiyur flooding dashboard ready pannu",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    1
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Kosu problem ku oru dashboard podu",
+  "slots": {
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Kodambakkam ku dashboard venum",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Anna Nagar kuppai dashboard indha vaaram",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "zones": [
+    8
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Quarter ku road damage dashboard senju kudunga",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Drinking water dashboard, Tondiarpet",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "zones": [
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Innaikku Teynampet ku full dashboard",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Fire accidents ku dashboard onnu podunga",
+  "slots": {
+   "cat": "FIRE_EXPLOSION"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Perungudi ku... illa, Sholinganallur ku dashboard podu",
+  "slots": {
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Indha maasam Ambattur streetlight dashboard",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    7
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Manali sewage problems ku quarterly dashboard",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    2
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Flood relief dashboard indha maasam",
+  "slots": {
+   "cat": "FLOOD_RELIEF",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Severe cases ellaam map la podu",
+  "slots": {
+   "what": "severe"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Hotspots map la kaattu",
+  "slots": {
+   "what": "hotspots"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Madhavaram flooding map pannu",
+  "slots": {
+   "what": "cases",
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Perungudi kuppai complaints map la plot pannu",
+  "slots": {
+   "what": "cases",
+   "cat": "SOLID_WASTE",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Medium severity incidents map la overlay pannu",
+  "slots": {
+   "what": "cases",
+   "sev": "Medium"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Teynampet dengue, map",
+  "slots": {
+   "what": "cases",
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Ambattur hotspots map la kaatta mudiyuma",
+  "slots": {
+   "what": "hotspots",
+   "zones": [
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Ella fire accidents um map la mark pannu",
+  "slots": {
+   "what": "cases",
+   "cat": "FIRE_EXPLOSION"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Alandur severe... illa, Manali severe cases map la",
+  "slots": {
+   "what": "severe",
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Royapuram, Tondiarpet drainage complaints map la podu",
+  "slots": {
+   "what": "cases",
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    5,
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Theft cases enga enga nu map la kaattu",
+  "slots": {
+   "what": "cases",
+   "cat": "CRIME_PROPERTY"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Severe road damage cases map la overlay pannu",
+  "slots": {
+   "what": "severe",
+   "cat": "ROAD_DAMAGE"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Nungambakkam la irundhu oru km kulla schools enga",
+  "slots": {
+   "q": "Nungambakkam la irundhu oru km kulla schools enga"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Anna Nagar tower pakkathula hospitals",
+  "slots": {
+   "q": "Anna Nagar tower pakkathula hospitals"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Washermanpet la irundhu rendu kilometre kulla shelters irukka",
+  "slots": {
+   "q": "Washermanpet la irundhu rendu kilometre kulla shelters irukka"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Besant Nagar ku pakkathula irukkura wards edhu",
+  "slots": {
+   "q": "Besant Nagar ku pakkathula irukkura wards edhu"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Ashok Nagar ku nearest relief camp enga",
+  "slots": {
+   "q": "Ashok Nagar ku nearest relief camp enga"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Virugambakkam thanni thekkam pakkam schools irukka",
+  "slots": {
+   "q": "Virugambakkam thanni thekkam pakkam schools irukka"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Korukkupet fire spot la irundhu half km kulla hospital irukka",
+  "slots": {
+   "q": "Korukkupet fire spot la irundhu half km kulla hospital irukka"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Thiruvanmiyur beach pakkam shelters enga",
+  "slots": {
+   "q": "Thiruvanmiyur beach pakkam shelters enga"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Thoraipakkam la irundhu nearest hospital evlo dooram",
+  "slots": {
+   "q": "Thoraipakkam la irundhu nearest hospital evlo dooram"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Buckingham canal la irundhu moonu km kulla schools",
+  "slots": {
+   "q": "Buckingham canal la irundhu moonu km kulla schools"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Ramapuram suththi irukkura wards kaattunga",
+  "slots": {
+   "q": "Ramapuram suththi irukkura wards kaattunga"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Mylapore pakkam... illa, Royapettah pakkam shelters",
+  "slots": {
+   "q": "Royapettah pakkam shelters"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Brief pannu",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Innaikku district nilavaram summary sollu",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Morning brief padinga",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Indha vaaram summary kudu",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Innaikku naan therinjukka vendiyadhu enna",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Indha maasam oda summary",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Quick-aa oru overview kudunga",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Today briefing read pannu",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Overall-aa eppadi poguthu",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Indha vaaram... illa, innaikku mattum brief",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Quarter summary district ku",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Enna nadakkudhu nu oru rundown kudu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Approval tray open pannu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Drafts ellaam kaattu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "En approval ku enna wait panudhu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Pending drafts periya screen la kaattu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Drafts konjam kaattunga",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Ready aana letters paakanum",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Naan sign panna vendiyadhu edhaavadhu irukka",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Draft tray kondu vaa",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Innum approve pannaadha notices",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Drafts... illa, full approval tray open pannu",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Ippo varaikkum enna draft panni vechirukka",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Approval queue kaattu",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Kodambakkam zonal officer yaaru",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "IMD warning edhaavadhu ippo irukka",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Data sources ellaam update aagudha",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Verification queue la evlo pending",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "News la vandhu console la case illaadha stories edhu",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Thoraipakkam endha zone la varudhu",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Ennore pakkam edhaavadhu develop aagitu irukka",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Egmore la irundhu endha maadhiri complaints varudhu",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Indha maasam incidents la evlo per irandhanga",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Valasaravakkam ku metro water la yaara contact pannanum",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "News feed last-aa eppo refresh aachu",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Innaikku incidents la severe evlo percent",
+  "slots": {}
+ },
+ {
+  "recipe": "prices",
+  "text": "Koyambedu la vengaayam rate enna",
+  "slots": {
+   "q": "onion Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Thakkaali vilai ippo evlo",
+  "slots": {
+   "q": "tomato"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Vellarikkaai price sollu",
+  "slots": {
+   "q": "cucumber"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Vaazhaikkaai market rate enna",
+  "slots": {
+   "q": "raw banana"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Milagaai vilai yeriruka",
+  "slots": {
+   "q": "chilli"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Malli poo rate Koyambedu flower market la",
+  "slots": {
+   "q": "jasmine Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Kothamalli vilai enna",
+  "slots": {
+   "q": "coriander"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Sakkaravalli kizhangu price check pannu",
+  "slots": {
+   "q": "sweet potato"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Apple rate konjam paarunga",
+  "slots": {
+   "q": "apple"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Carrot vilai... illa, potato vilai sollu",
+  "slots": {
+   "q": "potato"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Indha vaaram pudhina rate",
+  "slots": {
+   "q": "mint"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Grapes wholesale price enna",
+  "slots": {
+   "q": "grapes"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Mudhalla naan edha paakanum",
+  "slots": {}
+ },
+ {
+  "recipe": "advise",
+  "text": "Adyar la first enna gavanikkanum",
+  "slots": {
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Innaikku edhula focus pannanum",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Indha vaaram kuppai vishayathula mudhalla enna pannanum",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Teynampet la urgent-aa enna irukku",
+  "slots": {
+   "zones": [
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Sewage problem la naan first edha edukkanum nu sollunga",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Indha maasam Ambattur la en priorities enna",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Innaikku Thiru-Vi-Ka Nagar la naan enna action edukkalaam",
+  "slots": {
+   "zones": [
+    6
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Dengue la Perungudi ku first velai enna",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Kodambakkam la... illa, Royapuram la ennoda gavanam enga venum",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Indha vaaram oru vishayam mattum panna mudinja, edhu",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Streetlight problem la Sholinganallur la mudhalla edha sari pannanum",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Indha vaaram enna stand out aagudhu",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Teynampet la outliers edhaavadhu irukka",
+  "slots": {
+   "zones": [
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Innaikku edhaavadhu unusual-aa irukka",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Indha maasam Madhavaram la enna odd-aa irukku",
+  "slots": {
+   "zones": [
+    3
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Quarter ku insights kudunga",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Alandur la enna kannula padudhu",
+  "slots": {
+   "zones": [
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Anomalies edhaavadhu naan therinjukkanuma",
+  "slots": {}
+ },
+ {
+  "recipe": "insight",
+  "text": "Perungudi um Sholinganallur um outliers kaattu",
+  "slots": {
+   "zones": [
+    14,
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Insights, Anna Nagar, indha vaaram",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Manali la... illa, Thiruvottiyur la innaikku enna stand out aagudhu",
+  "slots": {
+   "zones": [
+    1
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Indha maasam city fulla edhaavadhu out of the ordinary-aa irukka",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Valasaravakkam pathi surprises enna",
+  "slots": {
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Innum resolve aagaadhadhu enna",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Missing data ellaam fill pannu",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Pending work list podu",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Mudikkaama vitta velai edhu",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Shelter register-a complete pannu",
+  "slots": {
+   "name": "shelter register"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Pump set inventory la gaps fill pannunga",
+  "slots": {
+   "name": "pump set inventory"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Innum izhuthukittu irukkura cases edhu",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Alandur la innum enna work baakki",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Tree cutting list la blank-aa irukkuradha fill panna mudiyuma",
+  "slots": {
+   "name": "tree cutting list"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Pannaama vittadhu ellaam kaattu",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Desilting... illa, culvert repair tracker-a fill pannu",
+  "slots": {
+   "name": "culvert repair tracker"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Unresolved items please kaattunga",
+  "slots": {}
+ },
+ {
+  "recipe": "changed",
+  "text": "Nethula irundhu enna maariyirukku",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Indha vaaram enna new",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Nethula irundhu Sholinganallur la enna change",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Indha maasam endha vagai incidents romba maaruchu",
+  "slots": {
+   "metricId": "cat_incidents",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Electrical department la indha vaaram enna maaruchu",
+  "slots": {
+   "dept": "GCC-ELE",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Kuppai vishayathula nethula irundhu enna change",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Severe incidents maariyirukka",
+  "slots": {
+   "metricId": "severe_reported"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Madhavaram la pudhusaa edhaavadhu",
+  "slots": {
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Mazhai alavu eppadi maariyirukku",
+  "slots": {
+   "metricId": "rain"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Indha maasam Tondiarpet la... illa, quarter la enna maaruchu",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Zone wise incidents indha vaaram eppadi maariyirukku",
+  "slots": {
+   "metricId": "zone_incidents",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Indha vaaram Alandur la police vishayathula enna maaruchu",
+  "slots": {
+   "dept": "POL-GCP",
+   "zones": [
+    12
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "Indha change la Kodambakkam part-a explain pannu",
+  "slots": {
+   "what": "change",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "Indha change la metro water oda pangu enna, vilakkunga",
+  "slots": {
+   "what": "change",
+   "dept": "CMWSSB"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "Indha screen la kuppai row-a explain pannu",
+  "slots": {
+   "what": "change",
+   "cat": "SOLID_WASTE"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Adyar la ippo situation enna",
+  "slots": {
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Innaikku Madhavaram eppadi irukku",
+  "slots": {
+   "zones": [
+    3
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Royapuram oda full picture kudunga",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Indha vaaram Anna Nagar nilaimai",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Thiruvottiyur la ippo enna nadakkudhu",
+  "slots": {
+   "zones": [
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Indha maasam Alandur eppadi irukku",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Valasaravakkam, nilavaram eppadi",
+  "slots": {
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Sholinganallur pathi oru full update sollunga",
+  "slots": {
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Manali quarterly situation report",
+  "slots": {
+   "zones": [
+    2
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Kodambakkam... illa, Teynampet nilavaram enna",
+  "slots": {
+   "zones": [
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Innaikku Ambattur oda full nilai",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Indha vaaram Tondiarpet eppadi samaalikkudhu",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "period": "weekly"
+  }
+ }
+]

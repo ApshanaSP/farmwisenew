@@ -1,0 +1,1925 @@
+[
+ {
+  "recipe": "cases",
+  "text": "கடுமையான வழக்குகள் எல்லாம் காட்டுங்க",
+  "slots": {
+   "sev": "Severe"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "தண்டையார்பேட்டையில் நிலுவையில் இருக்கிற குப்பை புகார்களைப் பட்டியலிடு",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "cat": "SOLID_WASTE",
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "பெருங்குடி பக்கம் போலீஸ் நிலுவைப் புகார்கள்",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "dept": "POL-GCP",
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "இந்த வாரம் காலக்கெடு தாண்டிய மழைநீர் வடிகால் வேலைகள்",
+  "slots": {
+   "dept": "GCC-SWD",
+   "status": "overdue",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "வளசரவாக்கத்துல கொசு, டெங்கு கேஸ்களைக் கொஞ்சம் காட்டுங்க",
+  "slots": {
+   "zones": [
+    11
+   ],
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "இன்னைக்கு உயர் தீவிர சம்பவங்களில் முதல் ஐந்து, புகார் எண்ணிக்கைப்படி வரிசையா",
+  "slots": {
+   "sev": "High",
+   "n": 5,
+   "period": "daily",
+   "sort": "complaints"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "ஆலந்தூர் தெருவிளக்கு புகார்கள், புதுசு முதல்ல",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "sort": "time"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "தி.நகர் ரங்கநாதன் தெரு சம்பந்தமான சம்பவங்கள்",
+  "slots": {
+   "q": "T. Nagar Ranganathan Street"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "திருவொற்றியூர்ல தண்ணீர் தேக்கம்... இல்ல இல்ல, மணலி",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "இந்த மாதம் அம்பத்தூரில் சரிசெய்யப்பட்ட சாலை சேதப் புகார்கள்",
+  "slots": {
+   "status": "resolved",
+   "cat": "ROAD_DAMAGE",
+   "period": "monthly",
+   "zones": [
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "கிண்டி வட்டத்தில் குறைந்த தீவிர சம்பவங்கள் மட்டும்",
+  "slots": {
+   "sev": "Low",
+   "taluk": "TLK-GND"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "மெரினா பக்கம் தெருநாய் தொல்லை புகார் ஏதாவது இருக்கா",
+  "slots": {
+   "cat": "STRAY_ANIMALS",
+   "q": "Marina"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "இன்றைய செய்திகளைப் படி",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "வேளச்சேரி வெள்ளம் பற்றிய செய்தி ஏதாவது இருக்கா",
+  "slots": {
+   "q": "flooding Velachery"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "இந்த வாரம் பத்திரிகைகள் என்ன சொல்றாங்க",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "டெங்கு பரவல் பற்றிய செய்திகளைப் படிங்க",
+  "slots": {
+   "q": "dengue"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "கூவம் ஆறு சுத்தம் பற்றிய செய்திகள்",
+  "slots": {
+   "q": "Cooum river cleanup"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "இந்த மாதம் குப்பை வேலைநிறுத்தம் பற்றிய செய்தி",
+  "slots": {
+   "q": "garbage strike",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "பள்ளிக்கரணை சதுப்பு நிலம் பற்றி என்ன செய்தி வந்திருக்கு",
+  "slots": {
+   "q": "Pallikaranai marshland"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "கொடுங்கையூர் குப்பைக் கிடங்கு தீ பற்றிய சமீபத்திய செய்தி",
+  "slots": {
+   "q": "Kodungaiyur dump yard fire"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "இன்னைக்கு புழல் ஏரி பற்றிய செய்திகளைப் படிச்சுக் காட்டு",
+  "slots": {
+   "q": "Puzhal lake",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "மின்வெட்டு பற்றி இன்று என்ன செய்தி",
+  "slots": {
+   "q": "power cut",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "இந்த வாரச் சாலை விபத்துச் செய்திகள் மட்டும் படி",
+  "slots": {
+   "q": "road accidents",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "மெரினாவில் நடந்த போராட்டம் பற்றிய தலைப்புச் செய்திகள்",
+  "slots": {
+   "q": "protest Marina"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "செம்பரம்பாக்கம் ஏரி எவ்வளவு நிரம்பியிருக்கு",
+  "slots": {
+   "metric": "lakes",
+   "name": "Chembarambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "எல்லா நீர்த்தேக்கங்களின் நிலவரம் காட்டு",
+  "slots": {
+   "metric": "lakes"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "கொடுங்கையூர்ல காற்றின் தரம் எப்படி இருக்கு",
+  "slots": {
+   "metric": "aqi",
+   "name": "Kodungaiyur"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "மீனம்பாக்கத்தில் எவ்வளவு மழை பெய்தது",
+  "slots": {
+   "metric": "rain",
+   "name": "Meenambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "புழல் ஏரி நிலை என்ன",
+  "slots": {
+   "metric": "lakes",
+   "name": "Puzhal"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "நகரம் முழுக்க வெப்பநிலை என்ன",
+  "slots": {
+   "metric": "temp"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "நுங்கம்பாக்கத்தில் ஈரப்பதம் எவ்வளவு",
+  "slots": {
+   "metric": "humidity",
+   "name": "Nungambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "எல்லா நிலையங்களிலும் காற்று மாசு அளவு",
+  "slots": {
+   "metric": "aqi"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "பெருங்குடியில் மழைமானி என்ன காட்டுது",
+  "slots": {
+   "metric": "rain",
+   "name": "Perungudi"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "பூண்டி... இல்ல, வீராணம் ஏரியில் எவ்வளவு தண்ணீர் இருக்கு",
+  "slots": {
+   "metric": "lakes",
+   "name": "Veeranam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "ஆலந்தூர்ல வெயில் எவ்வளவு",
+  "slots": {
+   "metric": "temp",
+   "name": "Alandur"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "மழைமானி அளவுகளைக் காட்டுங்க",
+  "slots": {
+   "metric": "rain"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "அதிக மழை பெய்த ஐந்து இடங்கள்",
+  "slots": {
+   "measure": "rain",
+   "n": 5
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "மோசமான மண்டலங்கள் எவை",
+  "slots": {
+   "measure": "zone_attention"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "நிலுவை அதிகம் உள்ள துறைகள் வரிசையா",
+  "slots": {
+   "measure": "dept_open"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "கடுமையான சம்பவங்கள் அதிகம் உள்ள முதல் மூன்று மண்டலங்கள்",
+  "slots": {
+   "measure": "zone_severe",
+   "n": 3
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "காலக்கெடு தாண்டிய வேலைகள் அதிகம் உள்ள துறைகள்",
+  "slots": {
+   "measure": "dept_overdue"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "குறைவான நிலுவைப் புகார்கள் உள்ள மண்டலங்கள்",
+  "slots": {
+   "measure": "zone_complaints",
+   "order": "bottom"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "முக்கியமான நெருக்கடி இடங்கள், முதல் பத்து",
+  "slots": {
+   "measure": "hotspots",
+   "n": 10
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "காற்று மாசு அதிகமுள்ள நிலையங்கள்",
+  "slots": {
+   "measure": "aqi"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "இந்த மாதம் டெங்கு அதிகம் பதிவான மண்டலங்கள்",
+  "slots": {
+   "measure": "zone_incidents",
+   "cat": "VECTOR_DISEASE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "நிலுவைச் சம்பவங்கள் அதிகம் உள்ள வட்டங்கள்",
+  "slots": {
+   "measure": "taluk_open"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "தண்ணீர் குறைவா இருக்கிற ஏரிகள் எவை",
+  "slots": {
+   "measure": "lakes",
+   "order": "bottom"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "சராசரி முடிக்கும் நாட்கள் அடிப்படையில் துறைகளை வரிசைப்படுத்து",
+  "slots": {
+   "measure": "dept_resolution"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "அம்பத்தூரையும் மாதவரத்தையும் ஒப்பிடு",
+  "slots": {
+   "zones": [
+    7,
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "இந்த வாரம் அடையாறு, பெருங்குடி ஒப்பீடு",
+  "slots": {
+   "zones": [
+    13,
+    14
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "ராயபுரம், தண்டையார்பேட்டை, திருவொற்றியூர் மூணையும் ஒப்பிட்டுக் காட்டு",
+  "slots": {
+   "zones": [
+    5,
+    4,
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "மழைநீர் வடிகால் துறையையும் பொதுப்பணித்துறை நீர்வளத்தையும் ஒப்பிடுங்க",
+  "slots": {
+   "depts": [
+    "GCC-SWD",
+    "PWD-WRD"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "கடுமையான சம்பவங்களில் சோழிங்கநல்லூர் எதிர் ஆலந்தூர்",
+  "slots": {
+   "zones": [
+    15,
+    12
+   ],
+   "sev": "Severe"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "காவல்துறை, மின் துறை இரண்டையும் ஒப்பிடு",
+  "slots": {
+   "depts": [
+    "POL-GCP",
+    "GCC-ELE"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "இந்தக் காலாண்டில் கோடம்பாக்கம் எதிர் வளசரவாக்கம்",
+  "slots": {
+   "zones": [
+    10,
+    11
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "தேனாம்பேட்டையும் அண்ணா நகரும் எப்படி இருக்குன்னு ஒப்பிட்டுச் சொல்லுங்க",
+  "slots": {
+   "zones": [
+    9,
+    8
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "இன்னைக்கு மணலியும் மாதவரமும் ஒப்பீடு",
+  "slots": {
+   "zones": [
+    2,
+    3
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "அடையாறையும் அம்பத்தூரையும்... இல்ல, அடையாறையும் தேனாம்பேட்டையையும் ஒப்பிடு",
+  "slots": {
+   "zones": [
+    13,
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "குடிநீர் வாரியம், திடக்கழிவு, பூங்காக்கள் மூன்று துறைகளையும் ஒப்பிடு",
+  "slots": {
+   "depts": [
+    "CMWSSB",
+    "GCC-SWM",
+    "GCC-PRK"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "இந்த மாதம் திரு.வி.க. நகர் எதிர் அண்ணா நகர்",
+  "slots": {
+   "zones": [
+    6,
+    8
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "மலேரியா போக்கு இந்தக் காலாண்டில் எப்படி",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "குப்பை புகார்களின் போக்கு இந்த மாதம்",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "பெருங்குடியில் வெள்ளப் புகார்கள் காலப்போக்கில் எப்படி மாறியிருக்கு",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "இந்த வாரம் வளசரவாக்கத்தில் சாலைக் குழிகள் ஏறியிருக்கா",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "zones": [
+    11
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "கடந்த மூன்று மாதங்களில் குடிநீர் பிரச்சினைகளின் போக்கு",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "திருவொற்றியூர் தெருவிளக்குப் புகார்களின் போக்கு",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "இந்த மாதம் ஆலந்தூரில் சம்பவங்கள் எப்படி ஏறி இறங்கின",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "காற்று மாசு புகார்கள் காலப்போக்கில் எப்படி",
+  "slots": {
+   "cat": "AIR_POLLUTION"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "தண்டையார்பேட்டை கழிவுநீர் பிரச்சினை போக்கு, காலாண்டு அளவில்",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    4
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "சாலை விபத்துகளின் போக்கு... இல்ல, போக்குவரத்து நெரிசல், இந்த வாரம்",
+  "slots": {
+   "cat": "TRAFFIC_OBSTRUCTION",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "மாதவரத்தில் காய்ச்சல் போக்கு எப்படி",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "அண்ணா நகரில் மரம் விழுந்த புகார்கள் இந்த மாதம் எப்படி போயிருக்கு",
+  "slots": {
+   "cat": "TREES_PARKS",
+   "zones": [
+    8
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "சோழிங்கநல்லூர்ல ஏன் இவ்வளவு புகார்கள்",
+  "slots": {
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "மணலியில் குப்பை புகார்கள் அதிகமானதற்குக் காரணம் என்ன",
+  "slots": {
+   "zones": [
+    2
+   ],
+   "cat": "SOLID_WASTE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "இன்னைக்கு கோடம்பாக்கத்தில் வெள்ளப் புகார் ஏன் கூடியது",
+  "slots": {
+   "zones": [
+    10
+   ],
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "அடையாறில் டெங்கு ஏன் அதிகமாகுது",
+  "slots": {
+   "zones": [
+    13
+   ],
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "இந்த வாரம் பெருங்குடி ஏன் மோசமா இருக்கு",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "இந்த மாதம் தீ விபத்துகள் ஏன் அதிகமாயின",
+  "slots": {
+   "cat": "FIRE_EXPLOSION",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "ராயபுரம் ஏன் இப்படி ஏறுது",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "தேனாம்பேட்டையில் கழிவுநீர் புகார்களுக்குக் காரணம் என்ன",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "cat": "DRAINAGE_SEWAGE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "இந்த வாரம் அண்ணா நகரில் தெருவிளக்குப் புகார்கள் ஏன் கூடின",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "ஆலந்தூர்... இல்ல, வளசரவாக்கம், இந்தக் காலாண்டில் ஏன் அதிகம்",
+  "slots": {
+   "zones": [
+    11
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "திரு.வி.க. நகரில் குடிநீர் பிரச்சினை திடீர்னு ஏன் கூடுச்சு",
+  "slots": {
+   "zones": [
+    6
+   ],
+   "cat": "WATER_SUPPLY"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "நகரம் முழுக்க சாலை சேதம் ஏன் அதிகரிச்சிருக்கு",
+  "slots": {
+   "cat": "ROAD_DAMAGE"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "துறைவாரியான செயல்பாடு காட்டு",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "மண்டலவாரியான செயல்பாடு இந்த வாரம்",
+  "slots": {
+   "by": "zone",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "எந்தத் துறை வேலை முடிக்கிறதில மெதுவா இருக்கு",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "ஒவ்வொரு மண்டலமும் புகார்களைத் தீர்ப்பதில் எப்படி",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "இந்தக் காலாண்டில் துறைகளின் தீர்வு விகிதம்",
+  "slots": {
+   "by": "dept",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "மெட்ரோ வாட்டர் டீம் வேலை எப்படி போகுது",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "இன்னைக்கு மண்டலங்கள் எவ்வளவு வேகமா வேலை முடிக்கிறாங்க",
+  "slots": {
+   "by": "zone",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "எந்தத் துறைகள் பின்தங்கியிருக்கு",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "இந்த மாதம் மண்டலவாரியா செயல்திறன் எப்படி",
+  "slots": {
+   "by": "zone",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "துறைவாரியா... இல்ல, மண்டலவாரியா செயல்பாடு காட்டு",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "இந்த மாதம் துறைகள் காலக்கெடுக்குள் வேலையை முடிக்கிறாங்களா",
+  "slots": {
+   "by": "dept",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "காலாண்டு மண்டல மதிப்பீட்டு அட்டை",
+  "slots": {
+   "by": "zone",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "இந்த வாரத்துக்கு வெள்ள டாஷ்போர்டு போடு",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "அடையாறுக்கு ஒரு டெங்கு டாஷ்போர்டு",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "மாதவரத்துக்கு ஒரு டாஷ்போர்டு உருவாக்கு",
+  "slots": {
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "சோழிங்கநல்லூர் குப்பை டாஷ்போர்டு இந்த மாதம்",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "zones": [
+    15
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "காலாண்டுக்கான சாலை சேத டாஷ்போர்டு தயார் பண்ணுங்க",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "குடிநீர் டாஷ்போர்டு, வளசரவாக்கம்",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "இன்னைக்கு ஆலந்தூருக்கு முழு டாஷ்போர்டு",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "காற்று மாசுக்கு ஒரு டாஷ்போர்டு வேணும்",
+  "slots": {
+   "cat": "AIR_POLLUTION"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "தேனாம்பேட்டைக்கு... இல்ல, திருவொற்றியூருக்கு டாஷ்போர்டு போடு",
+  "slots": {
+   "zones": [
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "இந்த மாதம் பெருங்குடி தெருவிளக்கு டாஷ்போர்டு",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    14
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "ராயபுரம் கழிவுநீர் பிரச்சினைகளுக்கு காலாண்டு டாஷ்போர்டு",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    5
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "ஏரிகள், மதகுகள் பற்றி இந்த வாரம் ஒரு டாஷ்போர்டு",
+  "slots": {
+   "cat": "WATERBODY_INFRA",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "கடுமையான சம்பவங்களை வரைபடத்தில் காட்டு",
+  "slots": {
+   "what": "severe"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "நெருக்கடி இடங்களை மேப்பில் போடு",
+  "slots": {
+   "what": "hotspots"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "சோழிங்கநல்லூர் வெள்ளப் புகார்களை மேப்பில் காட்டு",
+  "slots": {
+   "what": "cases",
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "மணலி குப்பை புகார்களை வரைபடத்தில் போடு",
+  "slots": {
+   "what": "cases",
+   "cat": "SOLID_WASTE",
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "உயர் தீவிர சம்பவங்களை மேப்பில் காட்டுங்க",
+  "slots": {
+   "what": "cases",
+   "sev": "High"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "வளசரவாக்கம் டெங்கு, மேப்",
+  "slots": {
+   "what": "cases",
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "அடையாறு நெருக்கடி இடங்களை வரைபடத்தில் காட்ட முடியுமா",
+  "slots": {
+   "what": "hotspots",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "எல்லா சாலை விபத்துகளையும் மேப்பில் குறி",
+  "slots": {
+   "what": "cases",
+   "cat": "ROAD_ACCIDENT"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "ராயபுரத்தில் கடுமையானவை... இல்ல, திருவொற்றியூர், மேப்பில் போடு",
+  "slots": {
+   "what": "severe",
+   "zones": [
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "அண்ணா நகர், அம்பத்தூர் தெருவிளக்குப் புகார்கள் மேப்பில்",
+  "slots": {
+   "what": "cases",
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    8,
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "தெருநாய் புகார்கள் எங்கெங்கே, மேப்பில் காட்டு",
+  "slots": {
+   "what": "cases",
+   "cat": "STRAY_ANIMALS"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "கடுமையான வெள்ளச் சம்பவங்களை வரைபடத்தில் போடுங்க",
+  "slots": {
+   "what": "severe",
+   "cat": "FLOOD_WATERLOGGING"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "அம்பத்தூர் தொழிற்பேட்டையிலிருந்து ஒரு கிலோமீட்டருக்குள் பள்ளிகள் எவை",
+  "slots": {
+   "q": "அம்பத்தூர் தொழிற்பேட்டையிலிருந்து ஒரு கிலோமீட்டருக்குள் பள்ளிகள் எவை"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "மயிலாப்பூர் அருகே மருத்துவமனைகள்",
+  "slots": {
+   "q": "மயிலாப்பூர் அருகே மருத்துவமனைகள்"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "எழும்பூர் ரயில் நிலையத்திலிருந்து இரண்டு கிலோமீட்டருக்குள் தங்குமிடங்கள்",
+  "slots": {
+   "q": "எழும்பூர் ரயில் நிலையத்திலிருந்து இரண்டு கிலோமீட்டருக்குள் தங்குமிடங்கள்"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "கிண்டிக்கு பக்கத்து வார்டுகள் எவை",
+  "slots": {
+   "q": "கிண்டிக்கு பக்கத்து வார்டுகள் எவை"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "பெரம்பூருக்கு அருகிலுள்ள நிவாரண முகாம் எது",
+  "slots": {
+   "q": "பெரம்பூருக்கு அருகிலுள்ள நிவாரண முகாம் எது"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "கொளத்தூர் தண்ணீர் தேக்கம் அருகே பள்ளிகள் இருக்கா",
+  "slots": {
+   "q": "கொளத்தூர் தண்ணீர் தேக்கம் அருகே பள்ளிகள் இருக்கா"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "வியாசர்பாடி தீ விபத்து இடத்திலிருந்து அரை கிலோமீட்டருக்குள் மருத்துவமனை இருக்கா",
+  "slots": {
+   "q": "வியாசர்பாடி தீ விபத்து இடத்திலிருந்து அரை கிலோமீட்டருக்குள் மருத்துவமனை இருக்கா"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "நீலாங்கரை கடற்கரை பக்கத்துல தங்குமிடம் எங்கே",
+  "slots": {
+   "q": "நீலாங்கரை கடற்கரை பக்கத்துல தங்குமிடம் எங்கே"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "மடிப்பாக்கத்திலிருந்து பக்கத்து மருத்துவமனை எவ்வளவு தூரம்",
+  "slots": {
+   "q": "மடிப்பாக்கத்திலிருந்து பக்கத்து மருத்துவமனை எவ்வளவு தூரம்"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "அடையாறு ஆற்றின் கரையிலிருந்து மூன்று கிலோமீட்டருக்குள் பள்ளிகள்",
+  "slots": {
+   "q": "அடையாறு ஆற்றின் கரையிலிருந்து மூன்று கிலோமீட்டருக்குள் பள்ளிகள்"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "போரூர் ஏரியைச் சுற்றியுள்ள வார்டுகளைக் காட்டுங்க",
+  "slots": {
+   "q": "போரூர் ஏரியைச் சுற்றியுள்ள வார்டுகளைக் காட்டுங்க"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "சைதாப்பேட்டை பக்கம்... இல்ல, கே.கே. நகர் பக்கம் தங்குமிடங்கள்",
+  "slots": {
+   "q": "கே.கே. நகர் பக்கம் தங்குமிடங்கள்"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "இன்றைய நிலவரத்தைச் சுருக்கமா சொல்லு",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "காலை அறிக்கையைப் படி",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "மாவட்டம் முழுக்க இன்னைக்கு எப்படி இருக்கு",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "இந்த வாரச் சுருக்கம்",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "இன்று காலை நான் தெரிஞ்சுக்க வேண்டியது என்ன",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "இந்த மாதத்தோட சுருக்கம் கொடுங்க",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "சுருக்கமா ஒரு பிரீஃப் கொடு",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "இன்றைய பிரீஃபிங்கைப் படிங்க",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "மொத்தமா நிலைமை எப்படி",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "இந்த வாரம்... இல்ல, இன்னைக்கு மட்டும் சுருக்கம்",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "மாவட்டத்துக்கு காலாண்டுச் சுருக்கம்",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "என்ன நடக்குது, ஒரு மேலோட்டம் சொல்லுங்க",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "ஒப்புதல் தட்டைத் திற",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "வரைவுகளைக் காட்டு",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "என் ஒப்புதலுக்காக என்ன காத்திருக்கு",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "நிலுவையில் உள்ள வரைவுகளைப் பெரிசா காட்டு",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "வரைவுகள், ப்ளீஸ்",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "தயாரான கடிதங்களைப் பார்க்கணும்",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "நான் கையெழுத்துப் போட வேண்டியது ஏதாவது இருக்கா",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "டிராஃப்ட் தட்டைக் கொண்டு வா",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "இன்னும் ஒப்புதல் தராத அறிவிப்புகள்",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "வரைவுகள்... இல்ல, முழு ஒப்புதல் தட்டைத் திற",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "இதுவரை என்ன வரைவு செய்திருக்கே",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "ஒப்புதல் வரிசை",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "தேனாம்பேட்டை மண்டல அலுவலர் யார்",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "இப்போது வானிலை மையத்தின் எச்சரிக்கை ஏதாவது இருக்கா",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "எல்லா தரவு மூலங்களும் சரியா வேலை செய்யுதா",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "சரிபார்ப்பு வரிசையில் எவ்வளவு காத்திருக்கு",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "செய்திகளில் வந்த ஆனால் கன்சோலில் பதிவாகாத விஷயங்கள் எவை",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "மடிப்பாக்கம் எந்த மண்டலத்தில் வருது",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "வியாசர்பாடி பக்கம் ஏதாவது பெரிசா உருவாகிட்டு இருக்கா",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "மயிலாப்பூரிலிருந்து எந்த வகையான புகார்கள் வருது",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "இந்த வாரம் சம்பவங்களில் எத்தனை பேர் இறந்திருக்காங்க",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "அம்பத்தூருக்கு காவல்துறையில் யாரைத் தொடர்பு கொள்ளணும்",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "செய்தி ஊட்டம் கடைசியா எப்போ புதுப்பிக்கப்பட்டது",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "இன்றைய சம்பவங்களில் கடுமையானவை எந்த அளவு",
+  "slots": {}
+ },
+ {
+  "recipe": "prices",
+  "text": "கோயம்பேட்டில் இஞ்சி விலை என்ன",
+  "slots": {
+   "q": "ginger Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "வெள்ளைப் பூண்டு விலை",
+  "slots": {
+   "q": "garlic"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "எலுமிச்சை இப்போ என்ன விலைக்குப் போகுது",
+  "slots": {
+   "q": "lemon"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "முட்டைக்கோஸ் சந்தை விலை சொல்லுங்க",
+  "slots": {
+   "q": "cabbage"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "காலிஃபிளவர் விலை எப்படி இருக்கு",
+  "slots": {
+   "q": "cauliflower"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "புளி மொத்த விலை என்ன",
+  "slots": {
+   "q": "tamarind"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "வெண்டைக்காய் விலை ஏறியிருக்கா",
+  "slots": {
+   "q": "ladies finger"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "தக்காளி மண்டி விலை",
+  "slots": {
+   "q": "tomato"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "மாம்பழம் விலை, கோயம்பேடு",
+  "slots": {
+   "q": "mango Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "கேரட் விலை... இல்ல, பீட்ரூட் விலை பாரு",
+  "slots": {
+   "q": "beetroot"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "பூசணிக்காய் விலை இந்த வாரம்",
+  "slots": {
+   "q": "pumpkin"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "பழங்களின் சந்தை விலைகளைக் காட்டு",
+  "slots": {
+   "q": "fruits"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "முதல்ல நான் எதைக் கவனிக்கணும்",
+  "slots": {}
+ },
+ {
+  "recipe": "advise",
+  "text": "பெருங்குடியில் முதலில் என்ன பார்க்கணும்",
+  "slots": {
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "இன்னைக்கு எதில் கவனம் செலுத்தணும்",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "இந்த வாரம் வெள்ள விஷயத்தில் முதல்ல எதைச் செய்யணும்",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "தண்டையார்பேட்டையில் அவசரமானது எது",
+  "slots": {
+   "zones": [
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "குடிநீர் பிரச்சினையில் நான் முதல்ல எதை எடுக்கணும்னு சொல்லுங்க",
+  "slots": {
+   "cat": "WATER_SUPPLY"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "இந்த மாதம் கோடம்பாக்கத்தில் என் முன்னுரிமைகள் என்ன",
+  "slots": {
+   "zones": [
+    10
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "இன்று அண்ணா நகரில் நான் என்ன நடவடிக்கை எடுக்கலாம்",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "டெங்கு விஷயத்தில் வளசரவாக்கத்தில் முதல் வேலை என்ன",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "திருவொற்றியூர்ல... இல்ல, மணலியில என் கவனம் எங்கே தேவை",
+  "slots": {
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "இந்த வாரம் ஒரே ஒரு விஷயம் மட்டும் செய்ய முடிஞ்சா எது",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "சாலை சேதத்தில் ஆலந்தூரில் முதலில் எதைச் சரி பண்ணணும்",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "zones": [
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "இந்த வாரம் எது தனித்துத் தெரியுது",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "சோழிங்கநல்லூரில் வழக்கத்துக்கு மாறானது ஏதாவது",
+  "slots": {
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "இன்னைக்கு ஏதாவது அசாதாரணமா இருக்கா",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "இந்த மாதம் தேனாம்பேட்டையில் விசித்திரமா என்ன இருக்கு",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "காலாண்டுக்கான முக்கியக் கண்டுபிடிப்புகள்",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "வளசரவாக்கத்தில் கண்ணில் படுவது என்ன",
+  "slots": {
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "நான் தெரிஞ்சுக்க வேண்டிய முரண்பாடுகள் ஏதாவது இருக்கா",
+  "slots": {}
+ },
+ {
+  "recipe": "insight",
+  "text": "அம்பத்தூர், மணலி இரண்டிலும் விதிவிலக்கானவை எவை",
+  "slots": {
+   "zones": [
+    7,
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "இந்த வாரம் தண்டையார்பேட்டை பகுப்பாய்வு",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "அடையாறில்... இல்ல, கோடம்பாக்கத்தில் இன்று என்ன தனித்துத் தெரியுது",
+  "slots": {
+   "zones": [
+    10
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "இந்த மாதம் நகரம் முழுக்க வழக்கத்துக்கு மாறானது ஏதாவது",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "திரு.வி.க. நகர் பற்றி ஆச்சரியமான விஷயங்கள் என்ன",
+  "slots": {
+   "zones": [
+    6
+   ]
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "இன்னும் தீர்க்கப்படாதவை என்ன",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "விடுபட்ட தரவுகளை நிரப்பு",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "பாக்கி வேலைகளைப் பட்டியலிடு",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "முடிக்காம விட்ட வேலைகள் எவை",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "நிவாரண முகாம் பதிவேட்டை நிரப்பு",
+  "slots": {
+   "name": "relief camp register"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "வார்டு தொடர்புப் பட்டியலில் உள்ள இடைவெளிகளை நிரப்புங்க",
+  "slots": {
+   "name": "ward contacts list"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "இன்னும் இழுத்துக்கிட்டு இருக்கிற கேஸ்கள் எவை",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "அம்பத்தூரில் இன்னும் என்ன வேலை பாக்கி இருக்கு",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "மழைக்கால தயார்நிலைப் பட்டியலில் காலியா இருக்கிறதை நிரப்ப முடியுமா",
+  "slots": {
+   "name": "monsoon preparedness list"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "செய்யாம விட்டது எல்லாம் காட்டு",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "தூர்வாரும் பணி... இல்ல, கால்வாய் சுத்தப் பட்டியலை நிரப்பு",
+  "slots": {
+   "name": "canal cleaning list"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "தீர்வாகாத விஷயங்கள், ப்ளீஸ்",
+  "slots": {}
+ },
+ {
+  "recipe": "changed",
+  "text": "நேத்துலேர்ந்து என்ன மாறியிருக்கு",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "இந்த வாரம் புதுசா என்ன",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "நேற்றிலிருந்து பெருங்குடியில் என்ன மாற்றம்",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "இந்த மாதம் கடுமையான சம்பவங்கள் எப்படி மாறியிருக்கு",
+  "slots": {
+   "metricId": "severe_reported",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "திடக்கழிவு மேலாண்மையில் இந்த வாரம் என்ன மாறியது",
+  "slots": {
+   "dept": "GCC-SWM",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "டெங்கு விஷயத்தில் நேத்துலேர்ந்து என்ன மாற்றம்",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "நிலுவைப் புகார்கள் மாறியிருக்கா",
+  "slots": {
+   "metricId": "complaints_open"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "ராயபுரத்தில் புதுசா ஏதாவது",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "காற்றின் தரம் எப்படி மாறியிருக்கு",
+  "slots": {
+   "metricId": "aqi"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "இந்த மாதம் வளசரவாக்கத்தில்... இல்ல, காலாண்டு அளவில் என்ன மாறியது",
+  "slots": {
+   "zones": [
+    11
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "முடிக்க ஆகும் சராசரி நாட்கள் இந்த மாதம் எப்படி மாறியிருக்கு",
+  "slots": {
+   "metricId": "dept_resolution",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "இந்த வாரம் அண்ணா நகரில் மெட்ரோ வாட்டர் விஷயத்தில் என்ன மாறியது",
+  "slots": {
+   "dept": "CMWSSB",
+   "zones": [
+    8
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "இந்த மாற்றத்தில் பெருங்குடி பகுதியை விளக்கு",
+  "slots": {
+   "what": "change",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "இந்த மாற்றத்தில் காவல்துறை பங்கு என்ன, விளக்குங்க",
+  "slots": {
+   "what": "change",
+   "dept": "POL-GCP"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "இந்தத் திரையில் இருக்கிற டெங்கு வரியை விளக்கு",
+  "slots": {
+   "what": "change",
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "தண்டையார்பேட்டையில் நிலவரம் என்ன",
+  "slots": {
+   "zones": [
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "இன்னைக்கு அம்பத்தூர் எப்படி இருக்கு",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "திரு.வி.க. நகரின் முழுப் படம் கொடுங்க",
+  "slots": {
+   "zones": [
+    6
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "இந்த வாரம் சோழிங்கநல்லூர் நிலைமை",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "மணலியில இப்போ என்ன நடக்குது",
+  "slots": {
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "இந்த மாதம் கோடம்பாக்கம் எப்படி இருக்கு",
+  "slots": {
+   "zones": [
+    10
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "ஆலந்தூர், நிலைமை எப்படி",
+  "slots": {
+   "zones": [
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "வளசரவாக்கம் பற்றி ஒரு முழு நிலவரம் சொல்லுங்க",
+  "slots": {
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "திருவொற்றியூர் காலாண்டு நிலவர அறிக்கை",
+  "slots": {
+   "zones": [
+    1
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "ராயபுரம்... இல்ல, அண்ணா நகர் நிலவரம் என்ன",
+  "slots": {
+   "zones": [
+    8
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "இன்னைக்கு தேனாம்பேட்டையின் முழு நிலை",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "இந்த வாரம் பெருங்குடி எப்படி சமாளிக்குது",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "weekly"
+  }
+ }
+]
