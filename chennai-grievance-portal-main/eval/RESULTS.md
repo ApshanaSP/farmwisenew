@@ -1,5 +1,200 @@
 # Jarvis mode: results
 
+## v4, "Ultimate Jarvis" (15 Nov 2026)
+
+Measured on this Windows laptop, on branch `claude/priceless-bouman-2fe7f8` (from `main` `38d96d2f`). The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. "Base" means `main` itself, run in a detached worktree of `38d96d2f` with no v4 code. Raw files are in `eval/holdout/results/`, `eval/holdout2/results/` and `eval/holdout3/results/`, with tags `v4base-*` and `v4final-*`. The older sections below are kept as they were.
+
+**In short.**
+- **Built and tested.** Every rule-level gate holds and is tested: the 1,000-case figure property test, the number gate on every chunk, the never-send refusals, privacy, the no-keys path, the proactive limits and the three scripted missions. The unit suite grew from 4,568 to 5,489 tests and all pass; all 30 Jarvis browser specs pass, as do the 8 HUD screenshot specs.
+- **Measured faster.** Barge-in pause p90 is 84 ms on the PCM path. Engaged speech-to-text runs at 513 ms p50 on the server.
+- **Understanding did not improve, and Claude never ran.** The Anthropic key is refused (401), so every live figure is the Groq ladder. On live-60 the score fell from 44 to 39 of 60 (not significant). On the new holdout3 set, the new intents were not reached from loose phrasing: 6/29 on base and 6/29 on v4.
+- **Side talk.** On holdout3's look-alike side lines the address gate acts on 17 of 40, as `main` does, though never at Level B or C.
+- **Nothing was tried with a real microphone in a real room.**
+
+### Capacity and blocks, before any number
+
+- **Claude: blocked.** `GET /v1/models` with the `.env` key returns 401 `invalid x-api-key`. No new key or account may be made. So:
+  - the live-60 "Claude-first" baseline ran on the Groq ladder;
+  - the Opus 5.5 low / Sonnet 5.5 `between_tools` / Haiku 5.5 table was not run;
+  - the structured-output proof and the cache-hit check ran as unit tests only.
+- **The base live-60 run met four Groq 429s** (gpt-oss-20b and -120b) and 15 "busy, next model" hops. By the brief's rule it is a capacity failure, not a score. It is kept as the labelled baseline because it is the only run on `main` today, and it stays comparable because the final run used the same ladder.
+- **The STT probe was not run.** The SLR65 clips are not on this machine, so the fallback was taken.
+- **Groq spend today:** about 300K tokens across the three Groq models, plus about 170K on flash-lite (ledger), plus the holdout3 labelling on `gpt-oss-120b` (outside the ledger).
+
+### Understanding
+
+**live-60 (eval/holdout2, frozen 4 Nov, still unread), the Groq ladder both times**
+
+| | Base (`main`, 00:30) | Final (v4, `e12b470b`, 09:18) |
+|---|---|---|
+| **All 60** | 44 (73.3 %, 61-82.9) | **39 (65 %, 52.4-75.8)** |
+| English, 15 | 12 (80 %) | 10 (66.7 %) |
+| Tamil, 30 | 20 (66.7 %, 48.8-80.8) | 18 (60 %, 42.3-75.4) |
+| Tanglish, 15 | 12 (80 %) | 11 (73.3 %) |
+| Capacity | four 429s in the log | 0 counted |
+| Model turn p50 / p90 | 1,108 / 2,453 ms | 1,231 / 3,476 ms |
+| Tokens a model turn | 1,977 | 2,878 (+46 %) |
+
+- **Paired on the same 60:** 36 right both times, 13 wrong both times, 3 right only on v4, 8 right only on base. That gives a sign test p ≈ 0.23. So the drop is not significant, but it points the wrong way.
+- **Where the wrong answers went (counts only):** readings 5, cases 4, clarify 3, chat 2, none 2, general-fallback 2, and one each of nearby, changed and brief.
+- The brief's targets (Claude-first ≥ 52/60, Groq ≥ 47/60) are **not met**, and Claude's could not be run. A likely factor: every bundle now carries `calls`, memory, the register, Tanglish hints and the metric line. The prompt grew by about 900 tokens a turn, and the small Groq models read it less well. This was not tuned, because the only sets that could show it are held out.
+- The final runs were on `e12b470b`. The review fixes after it (`2c335f82`, `2558f28c`, `c717ec08`) change safety paths, not the planner prompt. They were not re-measured, to keep quota for the latency run.
+
+**holdout3 (frozen 15 Nov 09:10, unread; 120 sentences, live sample of 30)**
+
+| | Base (`main`) | Final (v4) |
+|---|---|---|
+| live30 through the planner | **6/29 (20.7 %, 9.8-38.4)**, 1 capacity | **6/29 (20.7 %, 9.8-38.4)**, 1 capacity |
+| English / Tamil / Tanglish | 3/9 · 2/11 · 1/9 | 3/9 · 2/12 · 1/8 |
+| explain / changed / howknow / mission | 0/5 · 0/3 · 0/2 · 0/2 | 0/5 · 0/3 · 0/2 · 0/2 |
+| brief / remember / recall / follow-ups | 1/3 · 1/4 · 0/2 · 4/9 | 1/3 · 0/4 · 0/2 · 5/9 |
+| rules3, all 120, no model | 10 right, 95 left to the planner | 12 right, 92 left to the planner |
+
+- Paired on live30: 4 right both times, 2 only on v4, 2 only on base.
+- **Explain on holdout3 is 0/5 against a 75 % target: not met.**
+- **The new paths do work when asked plainly.** This probe uses sentences written for it, none from any held-out set, run through the same harness with no model: "what changed since yesterday" → changed; "நேத்துல இருந்து என்ன மாறியிருக்கு" → changed; "how do you know" after a screen → howknow; "explain the second one" on a list → explain; "build me a water-crisis board for Velachery" → mission; "remember that I follow Adyar closely" → remember; "what do you remember about me" → recall; "brief me" → brief; "what's the situation in Adyar" → situation.
+- **What failed in the probe:** "what's different this week in Adyar" and "explain this drain issue in Velachery" went to the planner. The held-out phrasing is looser still, and the Groq planner does not pick the new recipes from it. That is the honest state.
+
+**pass^3** (τ-bench style; the old `eval/holdout` 20-sentence sample, which has already been read, run three times; the brief asked for 15)
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Right | 15/20 | 14/20 (1 capacity) | 16/20 |
+
+Mean pass@1 is 75 %. **pass^3 = 14/20** (right all three times); 16/20 were right at least once. Model turn p50 is 1,285 ms, p90 2,951 ms.
+
+### Side talk (address gate, no model)
+
+| | Base | v4 |
+|---|---|---|
+| holdout2, 60 side sentences | 4/60 acted (6.7 %) | 4/60 |
+| holdout2, 40 unnamed commands accepted | 35/40 | 35/40 |
+| **holdout3, 40 look-alike side lines** | **17/40 acted (42.5 %;** EN 2/12, TA 7/16, Tanglish 8/12) | **17/40** |
+| Of those, Level B or C | 0 | **0** |
+
+- The B/C gate holds.
+- The ≤ 5 % target is **not met**. On holdout3's look-alike lines it is far off.
+- The gate was not changed or tuned: tuning it on holdout3 would spend the set.
+
+### Latency and voice
+
+**End of speech to …, mocked providers** (`e2e-latency.spec.ts`; hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium, PCM path; `latency-mocked.json`)
+
+| | p50 | p90 |
+|---|---|---|
+| Earcon (audible) | at the VAD end mark, by construction (≤ 120 ms tone; audio output latency unmeasured) | |
+| Acknowledgement on screen | 807 ms | 3,232 ms |
+| Answer on screen | 2,053 ms | 4,485 ms |
+| First audio = first spoken finding | 2,059 ms | 5,008 ms |
+
+The mock alone costs 2,050 ms (450 + 1,200 + 400), so the p50 is the floor the mocks allow. The p90 is one turn in six and was not investigated.
+
+**One real run** (`real.spec.ts`, production bundle with `NEXT_PUBLIC_JARVIS_SPEC=1`, Edge 157, real Whisper, the real planner on the Groq ladder and the real voice ladder, injected audio; six clips, not the twelve the brief asked for; `latency-real-prod.json`)
+
+| Clip | Ack on screen | First audio | First spoken finding |
+|---|---|---|---|
+| "Go to the trends page" | — | — | — (a navigation) |
+| "Show the severe cases in Adyar" (heard "Udyar") | 1,006 | 1,525 | — |
+| "flooding complaints in Velachery" (heard "Vela Cherry") | 895 | 1,141 | **1,141** |
+| Tamil, Perungudi | 919 | 2,846 | 2,846 (`qwen`) |
+| Tamil, open-ended | 1,683 | 2,291 | 2,291 (`qwen`) |
+| "how is the metro water backlog looking overall?" | 3,693 | 4,439 | — |
+
+**Engaged-turn STT, server time** (telemetry of the same run): p50 **513 ms** over 7 engaged turns (374-1,314). The race's winner was English 4 times and Tamil 3. The Gemini third racer returned nothing usable on any of the 7.
+
+Targets:
+
+| Target | Result |
+|---|---|
+| Acknowledgement ≤ 0.7 s p50 | Met only by the earcon. The words come after STT, at 0.8-1.0 s |
+| First finding, rules lane, ≤ 1.0 s | Not met: 1.14 s on the one clean rules clip |
+| Planner lane ≤ 2.2 s p50 / 3.5 s p90 | 2.3-2.8 s on the two planner clips |
+| Engaged STT ≤ 700 ms p50 | Met |
+
+Two Whisper misreadings ("Udyar", "Vela Cherry") are in the run, as heard.
+
+**Barge-in, PCM path** (`bargein.spec.ts`, 8 clips, injected audio; `bargein.json`)
+
+| | p50 | p90 |
+|---|---|---|
+| Pause (v4: the duck to 20 %) | **76 ms** | **84 ms** (gate ≤ 250: **met**) |
+| Cancel (2 real words, or 600 ms held) | 905 ms | |
+
+The cut came from the words in 2 of 8 clips and from held speech in 6. The **browser-voice path** (Edge natural voices) was not measured: Chromium in the specs has no natural voice, and whether Edge honours `pause()` was not tested.
+
+**HUD fps** (`hud.spec.ts` fps, headless Edge 157, this laptop's 144 Hz screen, 20 s each, `hud-fps.json`)
+
+The page itself ran at about 144 frames a second throughout. The core's own canvas draws are what the targets measure:
+
+| State | Core draws a second | Target |
+|---|---|---|
+| Listening, idle | 14.3 | ≤ 15: **met** |
+| Speaking | 72 | ≥ 55: **met** |
+| Reduced motion | 0 (one still frame per state change) | |
+
+The first measurement found 16 and 143 draws a second; the second, after a 15 ms cap, found 47. Both were fixed, in `c717ec08` and `de40dd26`.
+
+### Gates
+
+| Gate | Result |
+|---|---|
+| Vitest | **5,489 passed, 16 skipped**, 442 files + 3 skipped, plain and `--sequence.shuffle` (`main`: 4,568) |
+| `tsc --noEmit --incremental false` | clean |
+| `next build` | green, and the measuring build too |
+| `next lint` | exit 0, warnings only |
+| Jarvis Playwright specs on the measuring build | **30/30**: mode, bargein, hold, vad, vadfake, e2e-latency. Seven of these were red on `main` before any v4 change (the specs predated the teammate's redo: since it, Chromium's SAPI voices took the place of the PCM path the specs mock). hud.spec screens 8/8 in Edge on the dev server |
+| QA gate `tests/qa/pass7/gate-fast.sh` | see the end of this section |
+| Finding 51, 1,000-case property test | **passes**. On the old code: 456 leaks; with glued forms ("deaths-300") added after review, 78 on the pre-fix code |
+| Number gate on every spoken chunk | tested: server `spokenSentences`, browser `SayQueue`, mouth per chunk, the brief, interjections, mission narration, how-do-you-know, the thin-data line, the ack |
+| Never send, approve, delete; privacy adversarial 50 and 10 | green, plus 7 new never-rule cases after review |
+| No interjection while the Collector speaks or a turn runs; a brief always ends | unit tests (`watch.v4`, `aide.f1.v4`) |
+| Three scripted missions (plan card, Start, narrated real times, stop, redirect, C to the tray) | `missions.v4`, 32 tests; not run in a browser spec |
+| Every model key removed | `nokeys.v4`: the turn ends "can't reason right now" in about 0.1 s |
+| Side talk Level B/C = 0 | 0 on both sets |
+
+### Proactive (`scripts/proactive-replay.cjs`, the cached store's history)
+
+- **History:** 8 May to 4 Nov 2026 (181 days). 146 days were replayed, each with 35 days before it.
+- **Alerts:** 102, or 0.70 a day (median 1, maximum 6, 69 days with none). By kind: reservoir 60, rise 26, gap 8, rain 5, warning 3.
+- **Rises:** 25 of 26 (96.2 %) pass a plain rule ("count ≥ 2× baseline and ≥ 5"). The other kinds are true by construction.
+- **The data:** the reservoir data in the cache is simulated, and rain readings start on 25 Sep.
+- **Interjections a demo hour** (the Collector idle all hour): mean 0.54, maximum 3 without the brief. With the brief at power-on, mean 0.01, maximum 1.
+- **The detector on synthetic data:** 3 false alarms in 85,000 flat Poisson series-days. A step from 5 to 20 a day was caught within 4 days in 200 of 200 seeds.
+
+### The independent review (Phase 7)
+
+Five read-only reviewers, one per area: numbers and privacy, voice and barge-in, planner and quota, proactive and memory, UI and accessibility. Each tried to refute its own findings before reporting; the brief asked for separate skeptics, and they were folded in after two usage-limit stops.
+
+**22 high findings were upheld and all 22 are fixed**, each with a test that failed first. The most serious:
+- a send, approve or delete inside a "how fast … close" question passed the never rule;
+- "time to close all these cases" was no longer refused;
+- glued figures ("deaths-300") passed the number gate;
+- case titles reached the planner's prompt through the register;
+- the end-of-speech earcon dropped the Collector's next words for 400 ms;
+- the ducked voice's own echo could cut it off;
+- the brief could speak after the Collector had moved on;
+- the plan cache was shared across users.
+
+The specs found three more code bugs, all fixed: a level-B save in a compound sentence, the mode coming back muted, and 143 core draws a second on a 144 Hz screen. The full list is in `docs/thunai/BUILD_LOG.md`.
+
+### Not verified
+
+- **Anything with a real microphone in a real room.** That includes echo cancellation `"all"`, self-cancels per ten answers, the duck thresholds, backchannels, the end-of-utterance timing and the barge-in figures. All come from injected audio.
+- **Claude, entirely:** structured outputs on the wire, prompt-cache hits, the warm-up, and the Opus/Sonnet/Haiku trade-off. The key is refused.
+- **Streaming Gemini TTS** (`JARVIS_TTS_STREAM=1`): the docs disagree on the voice field.
+- **The Gemini third STT racer:** it returned nothing usable in the real run (daily quota or the text instruction; not told apart).
+- **Edge's `speechSynthesis.pause()` with natural voices**, and the browser-voice barge-in path.
+- **The live-60 drop's cause.** The prompt-size explanation is a hypothesis.
+- **Live mission planning by a model** (template plans and a fake model only).
+- **The Tamil spoken-register lines**: not checked by a native speaker.
+- **The 1366×768 card overflow and the Stage live-region timing**: checked in code only.
+- **The rain thresholds** (IMD 64.5 / 115.6 / 204.5 mm, from memory) and the detector's 99.5 % quantile.
+- **The holdout3 labels.** One labeller family (`gpt-oss-120b`) agreed with the drafter; no human label.
+
+---
+
+## v3 (4 Nov 2026)
+
 Measured on 4 Nov 2026 on this Windows laptop, on branch `claude/jarvis-agentic-voice-5be9b7`. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Raw results are in `eval/holdout/results/`. The frozen sets were checked against `eval/holdout/HASHES.txt` before the final run, and all hashes match.
 
 **In short, after the second pass below:** on a new frozen set of the same kind, the full pipeline went from 24/60 (40 %) on its first run to **44/60 (73.3 %)** on the finished code, and Tamil from 9/30 to **22/30**. It costs 64 % more tokens a sentence. That final run met four refusals from a Groq limit, so read the caveat in the section before quoting the figure. With Claude answering first, the same 60 sentences scored **49/60 (81.7 %)**, with Tamil at **25/30**, in a clean run; a model turn then takes about 3.9 s rather than 1.2 s. Side-talk false acts are unchanged, at 4/60 (6.7 %) against a 5 % target. **Nothing has been tried with a real microphone in a real room, and these sentences are typed text, not what Whisper hears.**
