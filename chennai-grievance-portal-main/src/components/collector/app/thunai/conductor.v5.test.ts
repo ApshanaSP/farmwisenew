@@ -104,3 +104,51 @@ describe("C3: the window the captions may run in", () => {
     c.close();
   });
 });
+
+const param = (p: Post, k: string) => new URL(p.url, "http://x").searchParams.get(k);
+
+describe("C4: the strict audio gate, NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 (default off)", () => {
+  it("on: a sentence neither woken nor in the window makes no /hear request at all, and Jarvis listens on", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE", "1");
+    const { c, e } = await boot({ lastTurnAt: () => null });
+    say(e, 1000, 900);
+    await flush();
+    expect(posts.length).toBe(0);
+    expect(e.takes).toBe(0);
+    expect(c.state).toBe("listening");
+    c.close();
+  });
+  it("on: inside the window the sentence goes, carrying the engaged mark", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE", "1");
+    const { c, e } = await boot({ lastTurnAt: () => Date.now() - 5_000 });
+    say(e, 1000);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "engaged")).toBe("1");
+    c.close();
+  });
+  it("on: over Jarvis's voice, long after its last turn, the sentence still goes (speaking is inside the window)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE", "1");
+    const { c, e } = await boot({ lastTurnAt: () => Date.now() - 10 * ENGAGED_MS });
+    mouth.speaking = true; mouth.saying = "an invented answer being read out";
+    say(e, 1000);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "engaged")).toBe("1");
+    c.close();
+  });
+  it("off (the default): side talk still goes on the capped ambient lane, with no engaged mark", async () => {
+    const { c, e } = await boot({ lastTurnAt: () => null });
+    say(e, 1000, 900);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "lane")).toBe("ambient");
+    expect(param(posts[0], "engaged")).toBeNull();
+    c.close();
+  });
+  it("off: an engaged sentence carries the mark as well (a strict server takes it); the body is as before", async () => {
+    const { c, e } = await boot({ vocab: () => ["Velachery"] });
+    say(e, 1000);
+    expect(param(posts[0], "engaged")).toBe("1");
+    expect(param(posts[0], "lane")).toBe("engaged");
+    expect(posts[0].init.body).toBeInstanceOf(FormData);
+    c.close();
+  });
+});
