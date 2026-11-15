@@ -184,14 +184,23 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
   });
 });
 
-test("a sentence that goes on after a pause reaches Whisper whole, with its first part still there", async ({ page }) => {
+test("a sentence that goes on after a pause is handled whole, its first part read once and never posted again", async ({ page }) => {
   test.setTimeout(90_000);
   const ctx = await setup(page);
   await modeOn(page);
-  ctx.hear.push({ text: "Jarvis, show", delay: 4000 }, { text: "Jarvis, show the trends page" });
+  // v4 (conductor.ts carryLive and transcribe, heard.ts joinHeard; ULTIMATE_JARVIS.md section 5: "never re-post the first half of a
+  // split sentence"): the first part's reading, still at Whisper when the second part begins, is kept and joined to the second
+  // part's. So the second post carries the second part only, and what is handled is the whole sentence. (Before v4 the second post
+  // re-sent the whole audio, and this spec asserted bytes[1] > 1.5 x bytes[0].)
+  ctx.hear.push({ text: "Jarvis, show", delay: 4000 }, { text: "the trends page" });
   await say(page, "cmd_trends");
   await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(1);
   await say(page, "cmd_trends");
   await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(2);
-  expect(ctx.hearCalls[1].bytes).toBeGreaterThan(ctx.hearCalls[0].bytes * 1.5);
+  // what handle() took, as the Questions list keeps it (jarvislog.ts; a dashboard move leaves no answer card to read it from)
+  const asked = () => page.evaluate(() => (JSON.parse(localStorage.getItem("jarvis-log") ?? "[]") as { who: string; text: string }[]).filter((x) => x.who === "you").map((x) => x.text));
+  await expect.poll(asked, { timeout: 15_000 }).toEqual(["show the trends page"]);
+  await expect(page.getByTestId("harness-state")).toContainText('"page": "trends"', { timeout: 15_000 });
+  // the same clip both times: a second post of the second part alone is about the first's size, never the two together
+  expect(ctx.hearCalls[1].bytes).toBeLessThan(ctx.hearCalls[0].bytes * 1.5);
 });

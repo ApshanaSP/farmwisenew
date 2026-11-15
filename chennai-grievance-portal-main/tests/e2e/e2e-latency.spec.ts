@@ -12,7 +12,8 @@ async function oneTurn(page: Parameters<typeof setup>[0], ctx: Ctx, clip: string
   // (a clip can split at a pause, and its second part is then posted with the first: both get the sentence)
   ctx.hear.push({ text, delay: 450 }, { text, delay: 450 });
   await say(page, clip);
-  await page.waitForFunction(() => (window as unknown as { __jv: { marks: { name: string }[] } }).__jv.marks.some((m) => m.name === "finding"), null, { timeout: 15_000 });
+  await page.waitForFunction(() => (window as unknown as { __jv: { marks: { name: string }[] } }).__jv.marks.some((m) => m.name === "finding"), null, { timeout: 15_000 })
+    .catch(async (e) => { console.log("on failure, what the page had:", clip, JSON.stringify({ marks: (await marks(page)).map((x) => x.name), hear: ctx.hearCalls.slice(-4), agent: ctx.agentCalls.slice(-3), left: ctx.hear.length })); throw e; });
   const m = await marks(page);
   const at = (n: string) => m.find((x) => x.name === n)?.t ?? NaN;
   // SAPI leaves a variable tail of silence after the words, so the end of speech is taken as the VAD's end event less its
