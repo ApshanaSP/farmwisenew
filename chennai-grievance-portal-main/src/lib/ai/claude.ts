@@ -342,6 +342,8 @@ export interface ClaudeJsonResult<T> {
   cacheWriteTokens: number;
   /** structured outputs (format), or the plain-JSON ask (json) */
   path: "format" | "json";
+  /** the answer's stop_reason (end_turn, as a rule; v5 A6 d: the deploy check logs it per call) */
+  stopReason: string | null;
 }
 
 const COOL_BUSY_MS = 60_000, COOL_NO_CREDIT_MS = 3_600_000;
@@ -406,6 +408,39 @@ export function billedOf(e: unknown): ClaudeBilled | null {
 }
 
 /**
+ * v5 A6 (d): one Claude API request as the deploy check (lib/thunai/deploy.live.ts) reads it: its outcome, time and usage, for its
+ * cost cap and timings. Codes and counts only: never a prompt, a reply or a key. The app adds no listener.
+ */
+export type ClaudeOutcome = "ok" | "refusal" | "max_tokens" | "off_schema" | "schema_refused" | "rate_limited" | "busy" | "timeout" | "key_refused" | "no_credit" | "aborted" | "error";
+export interface ClaudeCallEvent {
+  name: string; model: string; outcome: ClaudeOutcome; ms: number; stopReason: string | null; path: "format" | "json"; compact: boolean; warm: boolean;
+  input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number;
+}
+const callListeners = new Set<(e: ClaudeCallEvent) => void>();
+/** Listen to every Claude request; returns the way to stop listening. */
+export function onClaudeCall(fn: (e: ClaudeCallEvent) => void): () => void {
+  callListeners.add(fn);
+  return () => { callListeners.delete(fn); };
+}
+function heard(base: Omit<ClaudeCallEvent, "stopReason" | "input_tokens" | "output_tokens" | "cache_read_input_tokens" | "cache_creation_input_tokens">, res?: Anthropic.Beta.BetaMessage) {
+  if (!callListeners.size) return;
+  const u = res?.usage;
+  const e: ClaudeCallEvent = { ...base, stopReason: res?.stop_reason ?? null, input_tokens: u?.input_tokens ?? 0, output_tokens: u?.output_tokens ?? 0,
+    cache_read_input_tokens: u?.cache_read_input_tokens ?? 0, cache_creation_input_tokens: u?.cache_creation_input_tokens ?? 0 };
+  for (const f of callListeners) try { f(e); } catch { /* a listener never breaks a call */ }
+}
+/** What an API error was, as an outcome (a time-out before a connection failure: it is one) */
+function outcomeOf(e: unknown): ClaudeOutcome {
+  if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) return "key_refused";
+  if (e instanceof Anthropic.RateLimitError) return "rate_limited";
+  if (e instanceof Anthropic.APIConnectionTimeoutError) return "timeout";
+  if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) return "no_credit";
+  if (e instanceof Anthropic.APIError && typeof e.status === "number" && e.status >= 500) return "busy";
+  if (e instanceof Anthropic.APIConnectionError) return "busy";
+  return "error";
+}
+
+/**
  * One structured answer from Claude. Throws ClaudeBusyError (rate limit, overload, too slow) or a plain Error, and the caller moves on.
  * An error thrown after Claude answered (a refusal, an off-schema reply, a failed second try) carries the usage it was billed (billedOf).
  */
@@ -435,10 +470,14 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     const useFormat = sch.strict != null && !tooHard.has(sent);
     const prompt = attempt === 0 ? a.prompt : `${a.prompt}\n\nYour previous reply did not match the schema (${lastIssue}). Reply again with one complete, valid JSON object.`;
     let res: Anthropic.Beta.BetaMessage;
+    const tA = Date.now();
+    const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: a.name, model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: !!plan, warm: false }, r);
     try {
       res = await client().beta.messages.create(requestBody(a, model, sch, useFormat ? "format" : "json", prompt), { timeout, signal: a.abortSignal });
     } catch (e) {
-      if (a.abortSignal?.aborted) throw e;
+      if (a.abortSignal?.aborted) { ev("aborted"); throw e; }
+      const schemaRefused = useFormat && e instanceof Anthropic.BadRequestError && !/credit balance/i.test(e.message) && /schema|output_config|format|compil/i.test(e.message);
+      ev(schemaRefused ? "schema_refused" : outcomeOf(e));
       if (e instanceof Anthropic.BadRequestError) {
         if (/credit balance/i.test(e.message)) {
           ledger().cool("anthropic", model, COOL_NO_CREDIT_MS);
@@ -479,12 +518,16 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     // v5 A6 (c): a stop the reply cannot be trusted after is logged with the model and the reason only (never the text)
     if (res.stop_reason === "refusal" || res.stop_reason === "max_tokens") telemetry("claude_stop", { model, why: res.stop_reason });
     // a decline the fallback model declined too
-    if (res.stop_reason === "refusal") throw new Error(`Claude declined ${a.name}${res.stop_details?.category ? ` (${res.stop_details.category})` : ""}`);
+    if (res.stop_reason === "refusal") { ev("refusal", res); throw new Error(`Claude declined ${a.name}${res.stop_details?.category ? ` (${res.stop_details.category})` : ""}`); }
     // a spoken turn never takes a reply that was cut off, even one that reads as a whole object: the next rung answers
-    if (res.stop_reason === "max_tokens" && !a.role) throw new Error(`Claude's ${a.name} was cut off (max_tokens)`);
+    if (res.stop_reason === "max_tokens" && !a.role) { ev("max_tokens", res); throw new Error(`Claude's ${a.name} was cut off (max_tokens)`); }
     // only the answer's text: thinking and fallback markers are not part of it
     const raw = firstJson(res.content.map((b) => (b.type === "text" ? b.text : "")).join(""));
-    const done = (object: T): ClaudeJsonResult<T> => ({ object, model, ms: Date.now() - t0, inputTokens: usage.input, outputTokens: usage.output, cacheReadTokens: usage.cacheRead, cacheWriteTokens: usage.cacheWrite, path: useFormat ? "format" : "json" });
+    const answered = res;
+    const done = (object: T): ClaudeJsonResult<T> => {
+      ev("ok", answered);
+      return { object, model, ms: Date.now() - t0, inputTokens: usage.input, outputTokens: usage.output, cacheReadTokens: usage.cacheRead, cacheWriteTokens: usage.cacheWrite, path: useFormat ? "format" : "json", stopReason: answered.stop_reason ?? null };
+    };
     if (raw != null) {
       // the wire said "" or left a field out where the schema says null
       restore(raw, sch.undo);
@@ -500,6 +543,7 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     } else {
       lastIssue = res.stop_reason === "max_tokens" ? "the reply was cut off" : "no JSON object";
     }
+    ev("off_schema", res);
     console.warn(`[claude] ${a.name} ${model}: off-schema reply (${lastIssue})${attempt + 1 < attempts ? "; asking again" : ""}`);
   }
   throw new Error(`Claude's ${a.name} did not match its schema: ${lastIssue}`);
@@ -529,9 +573,12 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
   const mode = useFormat ? "format" : w.schema ? "json" : "bare";
   let maxTokens = useFormat ? 1 : 0;
   for (let attempt = 0; attempt < 2; attempt++) {
+    const tA = Date.now();
+    const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: "warm", model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: sent !== w.schema, warm: true }, r);
     try {
       const body = requestBody({ system: w.system }, model, sch, mode, "warm", maxTokens);
-      const res = await client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 });
+      const res = await client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 }).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
+      ev("ok", res);
       keyWorks("anthropic");
       const u = res.usage;
       const input = u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);

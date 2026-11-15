@@ -39,6 +39,9 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
   const lite: Rung[] = l.room("gemini", LITE_MODEL, { tokens: need }).ok ? [{ provider: "gemini", model: LITE_MODEL }] : [];
   const first: Rung[] = claude && l.room("anthropic", claudeModel(), { tokens: need }).ok ? [{ provider: "anthropic", model: claudeModel() }] : [];
   const rest: Rung[] = [...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
+  // v5 A6 (d), eval only: the deploy check's live-60 (deploy.live.ts) sets JARVIS_LADDER_PIN=anthropic, so every scored turn is Claude's
+  // or nobody's (the rules then answer, and the turn is scored as such). Unset in the app.
+  if ((process.env.JARVIS_LADDER_PIN ?? "").trim().toLowerCase() === "anthropic") return first;
   // v5 A6: Haiku leads by default (the owner's plan at deploy); JARVIS_PLANNER_LEAD=groq puts it after the Groq ladder
   return plannerLead() === "groq" ? [...groq, ...first, ...rest] : [...first, ...groq, ...rest];
 }
