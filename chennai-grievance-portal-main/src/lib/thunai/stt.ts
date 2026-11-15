@@ -133,20 +133,50 @@ export function repeats(t: string): boolean {
 }
 
 const flat = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{M}\s]/gu, " ").replace(/\s+/g, " ").trim();
+
 /**
- * Whisper on near-silence sometimes writes its own prompt back; that is not what was said. A short run of the prompt's words
- * ("storm water drain") can be a real sentence: it counts as echo only when the decode also looks like silence (`unsure`).
+ * A speech span (or a clip) this short, in seconds, is very short. Whisper's invented fillers (`invented`) and its prompt echoes
+ * (`promptEcho`) are judged on it. The value is the bar `invented` already used; it is not a new one.
  */
-export function promptEcho(t: string, unsure = true, prompt: string = PROMPT): boolean {
-  const s = flat(t);
-  if (s.length < 12) return false;
-  const p = ` ${flat(prompt)} `;
-  if (p.includes(s) && (unsure || s.length >= 40)) return true;
-  const hits = ["chennai district collector console", "storm water drain waterlogging", "chembarambakkam puzhal poondi", "gcc cmwssb tneb"].filter((x) => s.includes(x));
-  return hits.length >= 1;
+export const SHORT_S = 0.8;
+
+/**
+ * What the echo guard knows about the turn (v5 B2). `clarify`: a clarifying question is pending in the browser. `spanS`: the
+ * detector's speech span, in seconds (null when the browser did not say).
+ */
+export interface EchoCtx { clarify?: boolean; spanS?: number | null }
+
+/** The prompt's names, in order: its items between commas and full stops, flattened ("jarvis", "chennai district collector console", "adyar"...). */
+const promptNames = (prompt: string): string[] => prompt.split(/[,.]/).map(flat).filter(Boolean);
+/** Three or more of the prompt's names back to back, in the prompt's order. */
+function namesInOrder(s: string, prompt: string): boolean {
+  const names = promptNames(prompt), padded = ` ${s} `;
+  for (let i = 0; i + 2 < names.length; i++) if (padded.includes(` ${names[i]} ${names[i + 1]} ${names[i + 2]} `)) return true;
+  return false;
 }
 
-export function scoreDecode(d: Decode): Scored {
+/**
+ * Whisper on near-silence sometimes writes its own prompt back; that is not what was said. v5 (B2): a transcript is dropped as an
+ * echo only when it is a run of the prompt's words (all of it, as Whisper writes its prompt back) and
+ *   (a) three or more of the prompt's names come back in it in the prompt's order, or
+ *   (b) no clarifying question is pending, the detector's speech span is very short (SHORT_S; a span the browser did not send
+ *       counts as short, as in v4) and the decode looks like silence (`unsure`: scoreDecode's own bars, no_speech_prob >= 0.3 or
+ *       avg_logprob < -0.6).
+ * So a short run of the prompt's words ("storm water drain") said with confidence or at length is a sentence, a sentence that holds
+ * prompt names among its own words ("Chembarambakkam, Puzhal, Poondi levels") is a sentence, and a one-word answer to a pending
+ * question ("Sholinganallur") is never dropped. (v4 also dropped any text holding one of four fixed phrases, even a confident
+ * sentence, and any prompt run of 40 or more letters, confident or not.)
+ */
+export function promptEcho(t: string, unsure = true, prompt: string = PROMPT, ctx: EchoCtx = {}): boolean {
+  const s = flat(t);
+  if (!s || !` ${flat(prompt)} `.includes(s)) return false;
+  if (namesInOrder(s, prompt)) return true;
+  const short = ctx.spanS == null || ctx.spanS < SHORT_S;
+  return s.length >= 12 && !ctx.clarify && short && unsure;
+}
+
+/** `ctx`: what the echo guard knows about the turn (EchoCtx); left out, as in v4: no question pending and the span not known. */
+export function scoreDecode(d: Decode, ctx: EchoCtx = {}): Scored {
   const text = d.text.replace(/\s+/g, " ").trim();
   const logprob = mean(d.segments.map((x) => x.avg_logprob ?? 0));
   const noSpeech = mean(d.segments.map((x) => x.no_speech_prob ?? 0));
@@ -156,7 +186,7 @@ export function scoreDecode(d: Decode): Scored {
   else if (noSpeech >= 0.6) why = "no-speech";
   else if (compression >= 2.4) why = "compression";
   else if (repeats(text)) why = "repeats";
-  else if (promptEcho(text, noSpeech >= 0.3 || logprob < -0.6, d.prompt ?? PROMPT)) why = "echo";
+  else if (promptEcho(text, noSpeech >= 0.3 || logprob < -0.6, d.prompt ?? PROMPT, ctx)) why = "echo";
   // a forced Tamil decode must come back mostly in Tamil letters, a forced English one mostly in Latin
   else if (d.lang === "ta" && tamilShare(text) < 0.5) why = "script";
   else if (d.lang === "en" && latinShare(text) < 0.6) why = "script";
@@ -198,10 +228,10 @@ export function translated(ta: Scored, en: Scored): boolean {
 /**
  * The better of the decodes. Both languages are forced, so each comes back in its own script; Whisper's logprob decides, with
  * a small lean to the site's language (Tanglish scores close on both). An English decode that translated confident Tamil speech
- * is refused. Nothing acceptable: null.
+ * is refused. Nothing acceptable: null. `ctx`: what the echo guard knows about the turn.
  */
-export function choose(ds: Decode[], site: "en" | "ta"): Scored | null {
-  const all = ds.map(scoreDecode);
+export function choose(ds: Decode[], site: "en" | "ta", ctx: EchoCtx = {}): Scored | null {
+  const all = ds.map((d) => scoreDecode(d, ctx));
   const ta = all.find((x) => x.lang === "ta" && x.ok);
   const scored = all.map((x) => (ta && x.lang === "en" && translated(ta, x) ? { ...x, ok: false, why: "translated" } : x)).filter((x) => x.ok);
   if (!scored.length) return null;
@@ -252,7 +282,7 @@ const heard = (o: Partial<Heard> & { lane: Lane; lang: "en" | "ta"; ms: number }
 
 /** A filler Whisper is known to invent counts as noise when it is unsure of it, or always for an ambient sentence. */
 function invented(c: Scored, lane: Lane): boolean {
-  return INVENTED.test(c.text) && (lane === "ambient" || c.logprob < -0.6 || (c.duration ?? 1) < 0.8);
+  return INVENTED.test(c.text) && (lane === "ambient" || c.logprob < -0.6 || (c.duration ?? 1) < SHORT_S);
 }
 
 /** What the ledger says about the lane's budget, model by model: `models` keeps those with room; low only when none is left. */
@@ -288,14 +318,14 @@ const letGo = (r: Racer | null) => { if (r && !r.done) { r.aborted = true; r.ctl
  * has run (then the rest are let go). `guard`: the grace instead when that first good decode is English and the Tamil one is still
  * running (TRANSLATE_GRACE_MS on a turn someone waits on; 0 keeps `grace`).
  */
-async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, guard = 0): Promise<void> {
+async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, guard = 0, ctx: EchoCtx = {}): Promise<void> {
   if (!rs.length) return;
   const want = rs.some((r) => r.kind === expected) ? expected : rs[0].kind;
   await new Promise<void>((done) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const check = () => {
       if (rs.every((r) => r.done)) { if (timer) clearTimeout(timer); done(); return; }
-      const first = timer ? null : rs.find((r) => r.done && r.d && r.kind === want && good(scoreDecode(r.d)));
+      const first = timer ? null : rs.find((r) => r.done && r.d && r.kind === want && good(scoreDecode(r.d, ctx)));
       if (first) timer = setTimeout(done, first.kind === "en" && rs.some((r) => r.kind === "ta" && !r.done) ? Math.max(grace, guard) : grace);
     };
     for (const r of rs) void r.p.then(check);
@@ -315,6 +345,10 @@ export interface HearOpts {
    * good decode in this language rather than the site's, so a Collector who has just spoken Tamil on the English site is heard in Tamil
    */
   lastLang?: "en" | "ta" | null;
+  /** v5 B2: a clarifying question is pending in the browser; a short answer to it is never taken for a prompt echo */
+  clarify?: boolean;
+  /** v5 B2: the detector's speech span for this sentence, ms (the voice detector's end event). Not sent: the echo guard counts it as short */
+  speechMs?: number | null;
   /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace */
   ms?: { whisper?: number; grace?: number; translate?: number };
 }
@@ -337,12 +371,15 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     return racer(a.lang, a.model, o.signal, (s) => decode(audio, a.lang, a.model, s, o.fetcher, sttPrompt(a.lang, vocab), wMs));
   };
 
+  // what the echo guard knows about the turn (B2): a clarifying question pending, and the detector's speech span when the browser sent it
+  const echo: EchoCtx = { clarify: o.clarify === true, spanS: typeof o.speechMs === "number" && Number.isFinite(o.speechMs) && o.speechMs >= 0 ? o.speechMs / 1000 : null };
+
   let lane = o.lane;
   const whisper = wanted.filter((a) => b.models.includes(a.model)).map((a) => whisperOf(a, lane));
   // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
   const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
-  await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0);
-  let c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site);
+  await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0, echo);
+  let c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site, echo);
 
   // an ambient sentence that names Jarvis, read unsure: once more, in the other language only
   if (lane === "ambient" && c && NAMED.test(c.text) && c.logprob < -0.7) {
@@ -351,8 +388,8 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
       lane = "named";
       const more = whisperOf({ lang: other, model }, lane);
       whisper.push(more);
-      await whisperRace([more], other, 0);
-      c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site);
+      await whisperRace([more], other, 0, 0, echo);
+      c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site, echo);
     }
   }
 
@@ -360,7 +397,7 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   const used: Kind | null = c ? c.lang : null;
   const ms = Date.now() - t0;
   for (const r of whisper) {
-    const s = r.d ? scoreDecode(r.d) : null;
+    const s = r.d ? scoreDecode(r.d, echo) : null;
     telemetry("stt_decode", { lane, provider: "groq", model: r.model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
   }
   telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
@@ -374,22 +411,38 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
 }
 
 const langOf = (v: unknown): "en" | "ta" | null => (v === "en" || v === "ta" ? v : null);
+/** a yes mark: "1" or "true"; anything else is no */
+const flagOf = (v: unknown): boolean => v === "1" || v === "true";
+/** a speech span in ms: a whole number of ms, not negative; anything else is null */
+const spanOf = (v: unknown): number | null => {
+  if (typeof v !== "string" || !v.trim()) return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+};
+
+export interface HearBody { buf: ArrayBuffer; vocab: string[]; lastLang: "en" | "ta" | null; clarify: boolean; speechMs: number | null }
 
 /**
  * The /hear request's body: the WAV as it is (the old form), or multipart with `audio` and an optional `vocab` (JSON list of names).
  * `lastLang` ("en" or "ta"): the language of the last line the browser heard, as a multipart field or, with the bare WAV, a query
- * parameter (?lastLang=ta); anything else is null.
+ * parameter (?lastLang=ta); anything else is null. The same for v5 B2's `clarify` ("1": a clarifying question is pending; anything
+ * else is no) and `speechMs` (the detector's speech span, ms; anything that is not a number is null). These are a mark and a number
+ * only, never words.
  */
-export async function readHear(req: Request): Promise<{ buf: ArrayBuffer; vocab: string[]; lastLang: "en" | "ta" | null } | null> {
+export async function readHear(req: Request): Promise<HearBody | null> {
   const len = Number(req.headers.get("content-length") ?? 0);
   if (len > MAX_AUDIO_BYTES + 16_000) return null;
-  let fromQuery: "en" | "ta" | null = null;
-  try { fromQuery = langOf(new URL(req.url).searchParams.get("lastLang")); } catch { /* no URL to read */ }
+  let q: URLSearchParams | null = null;
+  try { q = new URL(req.url).searchParams; } catch { /* no URL to read */ }
+  const fromQuery = langOf(q?.get("lastLang"));
   if (/^multipart\/form-data/i.test(req.headers.get("content-type") ?? "")) {
     const f = await req.formData().catch(() => null);
     const a = f?.get("audio");
     if (!a || typeof a === "string") return null;
-    return { buf: await a.arrayBuffer(), vocab: cleanVocab(f?.get("vocab") ?? null), lastLang: langOf(f?.get("lastLang")) ?? fromQuery };
+    return {
+      buf: await a.arrayBuffer(), vocab: cleanVocab(f?.get("vocab") ?? null), lastLang: langOf(f?.get("lastLang")) ?? fromQuery,
+      clarify: flagOf(f?.get("clarify") ?? q?.get("clarify")), speechMs: spanOf(f?.get("speechMs") ?? q?.get("speechMs"))
+    };
   }
-  return { buf: await req.arrayBuffer(), vocab: [], lastLang: fromQuery };
+  return { buf: await req.arrayBuffer(), vocab: [], lastLang: fromQuery, clarify: flagOf(q?.get("clarify")), speechMs: spanOf(q?.get("speechMs")) };
 }
