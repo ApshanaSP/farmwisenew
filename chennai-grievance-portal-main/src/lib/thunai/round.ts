@@ -709,8 +709,10 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
 
     // 2b. who it is about: a report, brief or status on a body ("chennai city police report", "GCP status", "corporation update")
     // is decided in code: the body is resolved by the registry's ladder, an unknown body is said to be unknown, and a close call is asked
-    // (a place's situation, "what's the situation in Adyar", is the situation screen of the fast lane, not the zone's brief)
-    const who = quickScreen(b.text, world, { analysis: true })?.recipe === "situation" ? null : briefTurn(b.text, world);
+    // A zone's situation, said in any of the ways the brief always took, stays the zone's brief, as on main: QA pass 4's open-baseline-46
+    // holds the brief's language and figures for it. The situation screen answers what the brief does not take (the fast lane and the
+    // planner, below). When unsure, behave as before (v4 QA gate, round 4's lesson)
+    const who = briefTurn(b.text, world);
     if (who) {
       telemetry("resolve", { kind: who.kind, entity: who.kind === "screen" ? String(who.slots.dept ?? who.slots.org ?? (who.slots.zones as number[] | undefined)?.[0] ?? "") : "", conf: who.conf, via: who.via, turn: b.turnId });
       if (who.kind === "reply") return out(plainReply("chat", lang, who.text[lang], t0, "unknown-entity"), "resolve");
