@@ -64,7 +64,9 @@ afterAll(() => { vi.useRealTimers(); });
 describe("BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store)", () => {
   it.each(["explain the flooding complaint in Adyar", "Adyar flooding enna aachu", "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க"])("%s reads no field out", async (text) => {
     const r = (await said(text)).result!;
-    expect(r.stage?.recipe).toBe("case");
+    // v4 (docs/jarvis/ULTIMATE_JARVIS.md Pillar 3): one issue is retold by the explain recipe, on the case's own CaseDetail (V4_EXPECTED_CHANGES.md)
+    expect(r.stage?.recipe).toBe("explain");
+    expect(r.stage!.blocks.some((b) => b.kind === "CaseDetail")).toBe(true);
     const { en, ta } = r.stage!.say;
     expect(labelIn(en)).toBeNull();
     expect(`${en} ${ta}`).not.toMatch(/\bstatus\b|handles it|INC-|Severe,|High,/);

@@ -42,7 +42,18 @@ const slotsOf = (r: RoundOut) => (stageOf(r)?.slots ?? {}) as Record<string, unk
 const zonesOf = (r: RoundOut) => (slotsOf(r).zones ?? []) as number[];
 const listOf = (r: RoundOut) => stageOf(r)?.blocks.find((b) => b.kind === "CaseList") as Extract<StageDocT["blocks"][number], { kind: "CaseList" }> | undefined;
 const caseOf = (r: RoundOut) => stageOf(r)?.blocks.find((b) => b.kind === "CaseDetail") as Extract<StageDocT["blocks"][number], { kind: "CaseDetail" }> | undefined;
-const kpi = (r: RoundOut, key: string) => (stageOf(r)?.blocks.find((b) => b.kind === "Kpis") as { items: { key: string; value: number }[] } | undefined)?.items.find((x) => x.key === key)?.value;
+// v4 (docs/jarvis/ULTIMATE_JARVIS.md Pillar 3, the explain recipe): one issue retold is the explain screen, which holds the case's CaseDetail; one case is either
+// that or the case screen, so "not one case" reads both (docs/qa/pass7/V4_EXPECTED_CHANGES.md)
+const isOneCase = (r: RoundOut) => stageOf(r)?.recipe === "case" || (stageOf(r)?.recipe === "explain" && !!caseOf(r));
+// v4 (Pillar 1, bilingual titles): `title` is in the screen's own language and `titles` holds both, so the period is read from the English title, and a
+// Tamil screen's own title must say the same period in Tamil
+const titleEn = (d: StageDocT | null | undefined) => d?.titles?.en ?? d?.title ?? "";
+const PERIOD_TA: Record<string, string> = { "the last 24 hours": "கடந்த 24 மணி நேரத்தில்", "this week": "இந்த வாரம்", "the last 30 days": "கடந்த 30 நாட்களில்", "the last 90 days": "கடந்த 90 நாட்களில்" };
+const saysPeriod = (d: StageDocT, want: string) => {
+  expect(titleEn(d)).toContain(want);
+  if (d.lang === "ta" && PERIOD_TA[want]) expect(d.title).toContain(PERIOD_TA[want]);
+};
+const kpi =(r: RoundOut, key: string) => (stageOf(r)?.blocks.find((b) => b.kind === "Kpis") as { items: { key: string; value: number }[] } | undefined)?.items.find((x) => x.key === key)?.value;
 const isPoliceBrief = (r: RoundOut) => stageOf(r)?.recipe === "brief" && slotsOf(r).dept === "POL-GCP";
 const rules = (text: string) => understand(text, { ...START, list: [], lastFilter: null, now: Date.now() } as never, world) as { kind: string; confidence?: number; steps?: { a: string; view?: { dept?: string } }[] };
 /** the police filter would go on at once, with no model and nothing said: what the console does with the rules' answer */
@@ -85,7 +96,7 @@ describe("BUG-003 holds where the period is read: the brief says its own period"
   for (const [s, title] of [["district brief this week", "this week"], ["give me the brief for this month", "the last 30 days"], ["brief me on the last quarter", "last quarter (July to September)"], ["indha maasam brief sollu", "the last 30 days"], ["indha vaaram brief sollu", "this week"], ["இந்த மாதம் சுருக்கம்", "the last 30 days"], ["police report this week", "this week"], ["போலீஸ் அறிக்கை இந்த மாதம்", "the last 30 days"], ["today's brief", "the last 24 hours"]] as const)
     it(s, async () => {
       const d = stageOf(await round(s))!;
-      expect(d.title).toContain(title);
+      saysPeriod(d, title);
       expect(d.say.en).not.toMatch(/\btoday's brief\b|in the brief for today|came in today/);
     });
 });
@@ -112,7 +123,7 @@ describe("BUG-020 holds for the original words", () => {
   });
   const turns = [{ heard: "chennai city police report", did: "brief" }];
   for (const s of ["explain the flooding complaint in Adyar", "tell me about the flooding complaint in Adyar", "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", "அடையாறு வெள்ளம் பற்றி விளக்குங்க", "Adyar flooding complaint pathi explain pannu", "Adyar flooding complaint ah simple ah sollu"])
-    it(s, async () => { const r = await round(s, { stage, turns }); expect(stageOf(r)?.recipe).toBe("case"); expect(caseOf(r)?.incident.zoneName).toBe("Adyar"); expect(String(caseOf(r)?.incident.cat)).toMatch(/Flooding/); });
+    it(s, async () => { const r = await round(s, { stage, turns }); expect(stageOf(r)?.recipe).toBe("explain"); expect(caseOf(r)?.incident.zoneName).toBe("Adyar"); expect(String(caseOf(r)?.incident.cat)).toMatch(/Flooding/); });
   for (const s of ["and in Adyar", "what about Adyar", "same for Adyar", "அடையாறு மட்டும்"])
     it(`a real follow-up still re-scopes: ${s}`, async () => { const r = await round(s, { stage, turns }); expect(isPoliceBrief(r)).toBe(true); expect(zonesOf(r)).toEqual([13]); });
 
@@ -125,7 +136,9 @@ describe("audit-understanding-7, other screens open", () => {
   it("the original words hold with a corporation brief open", async () => {
     const d = stageOf(await round("give me the corporation update"))!;
     const stage = { recipe: d.recipe, title: d.title, focus: null, slots: d.slots, blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 30) })) } as StageContext;
-    expect(stageOf(await round("explain the flooding complaint in Adyar", { stage, turns: [{ heard: "give me the corporation update", did: "brief" }] }))?.recipe).toBe("case");
+    const r = await round("explain the flooding complaint in Adyar", { stage, turns: [{ heard: "give me the corporation update", did: "brief" }] });
+    expect(stageOf(r)?.recipe).toBe("explain");
+    expect(caseOf(r)?.incident.zoneName).toBe("Adyar");
   });
   for (const [open, s] of [["give me the corporation update", "describe the flooding complaint in Adyar"], ["give me the corporation update", "அடையாறு வெள்ள புகார் பத்தி சொல்லு"], ["Metrowater report", "Adyar flooding complaint pathi sollu"], ["சென்னை காவல்துறை அறிக்கை", "describe the flooding complaint in Adyar"]] as const)
     it(`audit-understanding-7 ${open} open, ${s}: not that body's brief re-scoped`, async () => {
@@ -168,11 +181,11 @@ describe("BUG-032 holds for the original words", () => {
   for (const s of ["tell me about the severe cases in Adyar", "explain the severe cases in Adyar", "அடையாறு கடுமையான புகார்கள் விளக்குங்க", "Adyar la severe cases explain pannu"])
     it(`${s} is the severe list`, async () => { const r = await round(s); expect(stageOf(r)?.recipe).toBe("cases"); expect(slotsOf(r).sev).toBe("Severe"); });
   for (const s of ["explain the rise in dengue", "explain the rise in dengue cases in Adyar", "explain the dengue spike", "explain why dengue went up", "explain the jump in flooding in Adyar", "டெங்கு அதிகரிப்பு விளக்குங்க", "டெங்கு ஏன் அதிகமாச்சு விளக்குங்க"])
-    it(`${s} is not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`${s} is not one case`, async () => expect(isOneCase(await round(s))).toBe(false));
   for (const s of ["அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", "அடையாறு வெள்ள புகார் விளக்கமாக சொல்லுங்கள்", "அடையாறு வெள்ள புகார் விளக்கி சொல்லு", "Adyar flooding complaint vilakkama sollu"])
     it(`${s} is the flooding case in Adyar`, async () => { const c = caseOf(await round(s)); expect(c?.incident.zoneName).toBe("Adyar"); expect(String(c?.incident.cat)).toMatch(/Flooding/); });
   for (const s of ["explain the power cut complaint in Ambattur", "tell me about the power cut complaint in Ambattur", "அம்பத்தூர் மின்வெட்டு புகார் விளக்கமா சொல்லுங்க", "அம்பத்தூர் பவர் கட் புகார் என்ன ஆச்சு", "Ambattur power cut complaint ah simple ah sollu", "explain the tanker complaint in Adyar"])
-    it(`${s} is not the zone's top case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`${s} is not the zone's top case`, async () => expect(isOneCase(await round(s))).toBe(false));
 });
 
 describe("BUG-033 holds: every category keeps its own name, on real records", () => {
@@ -246,7 +259,7 @@ describe("audit-understanding-8 P0: a place with no zone is dropped from 'explai
     it.fails(`audit-understanding-8 ${s}: the case told is in that place`, async () => expect(String(caseOf(await round(s))?.incident.place ?? "(no case)")).toMatch(place));
   it.fails("audit-understanding-8 explain the accident on OMR: the case told is on OMR", async () => expect(String(caseOf(await round("explain the accident on OMR"))?.incident.place ?? "(no case)")).toMatch(/\bOMR\b|Rajiv Gandhi|Old Mahabalipuram/i));
   for (const s of ["explain the flooding complaint in Madurai", "explain the flooding complaint in Anna Salai"])
-    it(`audit-understanding-8 ${s}: no case from somewhere else`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`audit-understanding-8 ${s}: no case from somewhere else`, async () => expect(isOneCase(await round(s))).toBe(false));
 });
 
 describe("audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022)", () => {
@@ -268,14 +281,14 @@ describe("audit-understanding-10 P1: a locality the reference does not spell is 
 
 describe("audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003)", () => {
   for (const [s, want] of [["quarterly brief", "the last 90 days"], ["police report last quarter", "last quarter (July to September)"], ["police report for the last 90 days", "the last 90 days"], ["police report quarterly", "the last 90 days"], ["இந்த வார நிலவரம்", "this week"], ["இந்த மாத சுருக்கம்", "the last 30 days"], ["வாராந்திர சுருக்கம்", "this week"], ["இந்த வார போலீஸ் அறிக்கை", "this week"], ["இந்த மாத காவல்துறை அறிக்கை", "the last 30 days"], ["last week's brief", "last week (26 Oct to 1 Nov)"], ["police report for the last 7 days", "this week"], ["இந்த வாரத்தின் சுருக்கம்", "this week"], ["இந்த மாதத்தின் சுருக்கம்", "the last 30 days"], ["மாதாந்திர சுருக்கம்", "the last 30 days"], ["மாதாந்திர போலீஸ் அறிக்கை", "the last 30 days"]] as const)
-    it(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
+    it(`audit-understanding-11 ${s}: ${want}`, async () => saysPeriod(stageOf(await round(s))!, want));
   for (const s of ["yesterday's brief", "நேற்றைய சுருக்கம்", "netru brief sollu", "police report yesterday", "நேற்று நிலவரம்"])
-    it(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));
+    it(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(titleEn(stageOf(await round(s)))).not.toMatch(/\btoday\b/));
 });
 
 describe("audit-understanding-11, another week asked for: this week is given as if it were the one", () => {
   for (const s of ["கடந்த வாரம் நிலவரம்", "அடுத்த வாரம் நிலவரம்", "pona vaaram brief sollu"])
-    it(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/this week/));
+    it(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => { const d = stageOf(await round(s)); expect(titleEn(d)).not.toMatch(/this week/); expect(d?.lang === "ta" ? d.title : "").not.toMatch(/இந்த வாரம்/); });
 });
 
 describe("audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023)", () => {
@@ -290,7 +303,7 @@ describe("audit-understanding-13 P1: other deadline words list every severe case
 
 describe("audit-understanding-14 P1: other words for a rise still give one case (BUG-032)", () => {
   for (const s of ["explain the surge in dengue", "explain the growth in dengue", "explain how dengue went up in Adyar", "டெங்கு உயர்வு விளக்குங்க", "dengue athigam aana reason vilakkam sollu"])
-    it(`audit-understanding-14 ${s}: not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`audit-understanding-14 ${s}: not one case`, async () => expect(isOneCase(await round(s))).toBe(false));
 });
 
 describe("audit-understanding-15 P1: a body's brief for one zone does not say which zone", () => {

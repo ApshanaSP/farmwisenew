@@ -18,6 +18,7 @@
  * kept; a line that fails falls back to the same line with no figure. The pure part (buildSignals) is what the proactive replay
  * runs day by day; loadWatchInput reads the store (dynamic imports, so the replay can load this file without a database).
  */
+import { syncEpoch } from "@/lib/collector/epoch";
 import { DEFAULTS, latestAlarm, methodOf, stockGrowth, type DetectOpts } from "./detect";
 import { allowedSet, gateChunk } from "./numbergate";
 import { labelIn } from "./speechcheck";
@@ -502,14 +503,16 @@ export function seriesFromRows(rows: { b: number; zone: number | null; cat: stri
 // ------------------------------------------------------------- per Collector --
 
 const cache = new Map<string, { at: number; p: Promise<WatchInput> }>();
-/** The store's part of the input is the same for every Collector for a minute; the follows differ. */
-function cachedInput(follows: Follow[]): Promise<WatchInput> {
+/** The store's part of the input is the same for every Collector for a minute; the follows differ. (`load` is the store's reader; a test passes its own.) */
+export function cachedInput(follows: Follow[], load: (follows: Follow[]) => Promise<WatchInput> = loadWatchInput): Promise<WatchInput> {
+  // the past-deadline stock carries the Collector's decisions: a decision or an officer's step empties it at once (RC-35, lib/collector/epoch.ts)
+  syncEpoch(cache);
   const key = JSON.stringify(follows.map((f) => [f.kind, f.ref]));
   const now = Date.now();
   for (const [k, v] of cache) if (now - v.at > 60_000) cache.delete(k);
   const hit = cache.get(key);
   if (hit) return hit.p;
-  const p = loadWatchInput(follows);
+  const p = load(follows);
   cache.set(key, { at: now, p });
   p.catch(() => cache.delete(key));
   return p;

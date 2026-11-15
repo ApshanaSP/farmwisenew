@@ -74,6 +74,9 @@ describe("RC-35 class guard: a timed cache over the store follows the epoch or s
     "lib/map/followups.ts": "a time budget for a loop, not a cache",
     "lib/studio/pipeline.ts": "Data Studio refresh schedule, not incident status",
     "components/collector/app/CollectorApp.tsx": "a browser timer, not a server cache",
+    // v4 (docs/jarvis/ULTIMATE_JARVIS.md Pillar 2, pre-warm on mode-on): Jarvis's browser component throttles its warm-up to once a minute, and its
+    // per-tick map of due reminders is a local; neither is a server cache (V4_EXPECTED_CHANGES.md)
+    "components/collector/app/thunai/Thunai.tsx": "a browser throttle (the mode-on warm-up, once a minute) and a per-tick local map: not a server cache",
     "lib/aws/store.ts": "is the store itself (it is what bumps the epoch)",
     "lib/rehearsal/cfmlive.ts": "rain rehearsal feed: external",
     "lib/rehearsal/traffic.ts": "rain rehearsal traffic feed: external",
@@ -94,7 +97,8 @@ describe("RC-35 class guard: a timed cache over the store follows the epoch or s
       else if (/\.tsx?$/.test(e.name) && !/\.(test|live)\.tsx?$/.test(e.name)) files.push(p);
     }
   })(root);
-  const timedCache = (s: string) => /Date\.now\(\) - [\w.[\]?]+ *[<>]|Date\.now\(\) - [\w.[\]?]+\.at\b/.test(s) && /new Map|global\.__\w+/.test(s);
+  // (v4: also a cache that reads the clock into `now` first, "now - v.at > 60_000": signals.ts kept the watch's store input that way, out of the guard's sight)
+  const timedCache = (s: string) => /Date\.now\(\) - [\w.[\]?]+ *[<>]|Date\.now\(\) - [\w.[\]?]+\.at\b|\bnow(?:Ms)? - \w+\.at *[<>]/.test(s) && /new Map|global\.__\w+/.test(s);
   it("finds the cached readers", () => {
     expect(files.filter((f) => timedCache(fs.readFileSync(f, "utf8"))).length).toBeGreaterThan(15);
   });
