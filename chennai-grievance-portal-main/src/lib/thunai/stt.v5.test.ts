@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { resetLedger } from "./ledger";
 import { ZONE_TA_NAME } from "./lexicon";
+import { serverClock } from "./stagetime";
 import { hearUtterance, readHear, scoreDecode, sttPrompt, type Decode } from "./stt";
 
 /** the third argument of scoreDecode (v5): a clarifying question pending, and the detector's speech span in seconds */
@@ -164,6 +165,14 @@ describe("the server's trace of speech to text (section 6.4): timings only", () 
     expect(h).toMatchObject({ budget: "low" });
     expect(h.timing?.sttSent).toBeUndefined();
     expect(h.timing?.sttBack).toBeUndefined();
+  });
+  it("the route's own clock, started when the request arrived, is the one the timings are read from", async () => {
+    const clock = serverClock();
+    await new Promise((r) => setTimeout(r, 40));
+    const { fetcher } = fake({ en: { ms: 10, text: "open the rainfall page", logprob: -0.1 }, ta: { ms: 10, text: "ஓபன் த ரெயின்ஃபால் பேஜ்", logprob: -0.3 } });
+    const h = (await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher, clock } as Parameters<typeof hearUtterance>[1])) as T;
+    expect(h.timing!.sttSent as number).toBeGreaterThanOrEqual(30);
+    expect(clock.timing()).toEqual(h.timing);
   });
   it("nothing usable came back: sttSent is stamped, sttBack is not", async () => {
     const { fetcher } = fake({ en: { ms: 10, text: "", logprob: -0.2 }, ta: { ms: 10, text: "", logprob: -0.2 } });

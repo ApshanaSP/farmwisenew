@@ -22,6 +22,7 @@
  */
 import { ledger, type Lane } from "./ledger";
 import { STT_NAMES, sttTamilName } from "./lexicon";
+import { serverClock, type ServerTiming } from "./stagetime";
 import { telemetry } from "./telemetry";
 import { phonetic } from "./xlit";
 
@@ -276,7 +277,12 @@ export async function decode(audio: Blob, lang: "en" | "ta", model: string, sign
 }
 export class SttBusy extends Error { constructor() { super("busy"); } }
 
-export interface Heard { text: string; lang: "en" | "ta"; noise: boolean; ms: number; lane: Lane; conf: { speech: number; logprob: number }; model: string | null; budget?: "low" }
+/**
+ * `timing` (v5 trace, section 6.4): ms from the request's receipt (the route's clock, HearOpts.clock) or else from the start of
+ * hearUtterance. `sttSent`: the decode request(s) went out; `sttBack`: the
+ * winning decode is in hand (the race decided, so any grace given to the other decode is inside it). Timings only, never words.
+ */
+export interface Heard { text: string; lang: "en" | "ta"; noise: boolean; ms: number; lane: Lane; conf: { speech: number; logprob: number }; model: string | null; budget?: "low"; timing?: ServerTiming }
 
 const heard = (o: Partial<Heard> & { lane: Lane; lang: "en" | "ta"; ms: number }): Heard => ({ text: "", noise: true, conf: { speech: 0, logprob: 0 }, model: null, ...o });
 
@@ -349,6 +355,8 @@ export interface HearOpts {
   clarify?: boolean;
   /** v5 B2: the detector's speech span for this sentence, ms (the voice detector's end event). Not sent: the echo guard counts it as short */
   speechMs?: number | null;
+  /** v5 trace: the route's serverClock(), started when the request arrived; left out, a clock is started when hearUtterance begins */
+  clock?: ReturnType<typeof serverClock>;
   /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace */
   ms?: { whisper?: number; grace?: number; translate?: number };
 }
@@ -356,6 +364,7 @@ export interface HearOpts {
 /** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes. */
 export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Heard> {
   const t0 = Date.now();
+  const clock = o.clock ?? serverClock();
   const audio = new Blob([buf], { type: "audio/wav" });
   const secs = wavSeconds(buf);
   const l = ledger();
@@ -365,7 +374,7 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     ? [{ lang: o.site, model: o.site === "ta" ? MODEL_TA() : MODEL_EN() }]
     : [{ lang: "ta", model: MODEL_TA() }, { lang: "en", model: MODEL_EN() }];
   const b = budget(o.lane, wanted.map((a) => a.model));
-  if (!b.ok) { telemetry("stt_budget", { lane: o.lane, why: b.why }); return heard({ lane: o.lane, lang: o.site, ms: 0, budget: "low" }); }
+  if (!b.ok) { telemetry("stt_budget", { lane: o.lane, why: b.why }); return heard({ lane: o.lane, lang: o.site, ms: 0, budget: "low", timing: clock.timing() }); }
   const whisperOf = (a: { lang: "en" | "ta"; model: string }, lane: Lane) => {
     l.record("groq", a.model, { audioS: secs, lane });
     return racer(a.lang, a.model, o.signal, (s) => decode(audio, a.lang, a.model, s, o.fetcher, sttPrompt(a.lang, vocab), wMs));
@@ -376,6 +385,8 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
 
   let lane = o.lane;
   const whisper = wanted.filter((a) => b.models.includes(a.model)).map((a) => whisperOf(a, lane));
+  // each racer's request has gone out by now (decode() calls fetch before its first await)
+  if (whisper.length) clock.mark("sttSent");
   // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
   const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
   await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0, echo);
@@ -393,6 +404,10 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     }
   }
 
+  // the winning decode is in hand (after the ambient lane's second read, when there was one)
+  if (c) clock.mark("sttBack");
+  const timing = clock.timing();
+
   const got = whisper.filter((r) => r.d);
   const used: Kind | null = c ? c.lang : null;
   const ms = Date.now() - t0;
@@ -403,11 +418,11 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
   if (!c) {
     const nothing = !got.length;
-    if (nothing && whisper.some((r) => r.err instanceof SttBusy)) return heard({ lane, lang: o.site, ms, budget: "low" });
+    if (nothing && whisper.some((r) => r.err instanceof SttBusy)) return heard({ lane, lang: o.site, ms, budget: "low", timing });
     if (nothing && whisper.length && whisper.every((r) => r.err)) throw new Error("stt-failed");
   }
-  if (!c || invented(c, lane)) return heard({ lane, lang: c?.lang ?? o.site, ms, model: c?.model ?? null });
-  return { text: c.text, lang: c.lang, noise: false, ms, lane, conf: { speech: Math.round((1 - c.noSpeech) * 100) / 100, logprob: Math.round(c.logprob * 100) / 100 }, model: c.model };
+  if (!c || invented(c, lane)) return heard({ lane, lang: c?.lang ?? o.site, ms, model: c?.model ?? null, timing });
+  return { text: c.text, lang: c.lang, noise: false, ms, lane, conf: { speech: Math.round((1 - c.noSpeech) * 100) / 100, logprob: Math.round(c.logprob * 100) / 100 }, model: c.model, timing };
 }
 
 const langOf = (v: unknown): "en" | "ta" | null => (v === "en" || v === "ta" ? v : null);
