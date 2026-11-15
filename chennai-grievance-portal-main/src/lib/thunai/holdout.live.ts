@@ -35,6 +35,13 @@ import type { StageContext } from "./stage";
 import os from "os";
 import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { runItem3, summary3, type Item3, type Row3 } from "./holdout3";
+import { groqOnly, liveSummary, recordTurn, type TurnRecord } from "./liverecord";
+import { modelCounts, pairRows, resultRows, resultTotal } from "./evalpair";
+import { ENGAGED_MS } from "./addressed";
+import { scoreLine } from "./evalstats";
+
+// v5: no live Claude call in this build (owner): every run in this file pins Groq before any model is asked
+groqOnly();
 
 const world = { ...WORLD, ...referenceWorld(), zones: WORLD.zones.map((z) => ({ ...z, ta: ZONE_TA_NAME[z.n] ?? null })), depts: WORLD.depts };
 // HOLDOUT_DIR=holdout2 is the set frozen on 4 Nov 2026 after eval/holdout had been read; a run refuses it if a hash has changed
@@ -156,20 +163,61 @@ it.runIf(mode === "rules2")("rules and router on all 150, the shipped pipeline: 
   expect(rows.length).toBe(items().length);
 });
 
-it.runIf(mode === "ambient")("the address gate on 40 side conversations and 40 unnamed commands", () => {
+/**
+ * The address gate on a set's side lines and unnamed commands, with no model. `lastAgo`: Jarvis's last turn that many ms ago (null:
+ * never, the unengaged case). `commandTier`: the v4 unengaged command tier on (true) or off (v5 default, C1); undefined leaves the
+ * gate's own default. Counts and the tier that fired only: never a sentence (11.4).
+ */
+function gateRun(lastAgo: number | null, commandTier?: boolean, engagedMs?: number) {
   const rows = fs.readFileSync(path.join(DIR, "ambient.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as { id: string; text: string; lang: string; kind: "side" | "command" });
+  const now = Date.now();
   const out = rows.map((x) => {
     const q = quickScreen(x.text, world);
     const u = q ? null : understand(x.text, START, world, { speechConf: 0.95 });
-    const g = addressed({ text: x.text, lastTurnAt: null, now: Date.now(), rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(x.text, world) });
+    // engaged by the window: a shorter or longer ENGAGED_MS is modelled by moving the last turn out of (or into) the gate's own window
+    const last = lastAgo == null ? null : engagedMs != null && lastAgo > engagedMs ? now - ENGAGED_MS - 1 : now - lastAgo;
+    const input = { text: x.text, lastTurnAt: last, now, rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(x.text, world), ...(commandTier === undefined ? {} : { commandTier }) };
+    const g = addressed(input as Parameters<typeof addressed>[0]);
     return { id: x.id, kind: x.kind, lang: x.lang, act: g.act, tier: g.tier, why: g.why };
   });
   const side = out.filter((x) => x.kind === "side"), cmd = out.filter((x) => x.kind === "command");
   const summary = { sideFalseActs: side.filter((x) => x.act).length, sideN: side.length, sideLevelBC: side.filter((x) => x.act && x.tier !== 3).length, commandsAccepted: cmd.filter((x) => x.act).length, commandsN: cmd.length,
+    sideInterval: scoreLine(side.filter((x) => x.act).length, side.length), commandsRefused: cmd.filter((x) => !x.act).length,
+    byTier: Object.fromEntries([...new Set(side.filter((x) => x.act).map((x) => x.why))].map((w) => [w, side.filter((x) => x.act && x.why === w).length])),
     byLang: Object.fromEntries(["en", "ta", "tanglish"].map((l) => [l, { sideFalseActs: side.filter((x) => x.lang === l && x.act).length, side: side.filter((x) => x.lang === l).length, accepted: cmd.filter((x) => x.lang === l && x.act).length, commands: cmd.filter((x) => x.lang === l).length }])) };
-  write("ambient", { at: new Date().toISOString(), summary, rows: out });
-  console.log(JSON.stringify(summary));
-  expect(summary.sideLevelBC).toBe(0);
+  return { summary, rows: out };
+}
+
+it.runIf(mode === "ambient")("the address gate on the side conversations and the unnamed commands", () => {
+  // C1 is reported beside the v4 behaviour: the unengaged command tier off (shipped) and on (JARVIS_GATE_COMMAND_TIER=1)
+  const shipped = gateRun(null), v4tier = gateRun(null, true);
+  write("ambient", { at: new Date().toISOString(), summary: shipped.summary, withCommandTier: v4tier.summary, rows: shipped.rows });
+  console.log(JSON.stringify({ ...shipped.summary, withCommandTier: { sideFalseActs: v4tier.summary.sideFalseActs, sideLevelBC: v4tier.summary.sideLevelBC, commandsAccepted: v4tier.summary.commandsAccepted, commandsN: v4tier.summary.commandsN } }));
+  expect(shipped.summary.sideLevelBC).toBe(0);
+});
+
+// C2: the same side lines with Jarvis's last turn 5 s ago (inside the follow-up window), and at windows of 8 s and 20 s
+it.runIf(mode === "ambient-engaged")("the address gate on the side lines inside the engaged window", () => {
+  const at5 = gateRun(5_000);
+  // a window of 8 s: a last turn 10 s ago is outside it; 20 s (the shipped ENGAGED_MS): 10 s ago is inside
+  const win8 = gateRun(10_000, undefined, 8_000), win20 = gateRun(10_000, undefined, 20_000);
+  const pick = (s: ReturnType<typeof gateRun>["summary"]) => ({ sideFalseActs: s.sideFalseActs, sideN: s.sideN, sideInterval: s.sideInterval, sideLevelBC: s.sideLevelBC, commandsAccepted: s.commandsAccepted, commandsN: s.commandsN });
+  const summary = { lastTurn5sAgo: at5.summary, lastTurn10sAgo: { windowMs8000: pick(win8.summary), windowMs20000: pick(win20.summary) }, shippedEngagedMs: ENGAGED_MS };
+  write("ambient-engaged", { at: new Date().toISOString(), summary, rows: at5.rows });
+  console.log(JSON.stringify({ lastTurn5sAgo: pick(at5.summary), lastTurn10sAgo: summary.lastTurn10sAgo }));
+});
+
+// Step 0 (6.3) and every paired comparison on a frozen set: b, c and p only, never ids, gold, got or text
+it.runIf(mode === "pair")("two result files of the same sentences, paired", () => {
+  const fx = path.join(DIR, "results", process.env.PAIR_X ?? ""), fy = path.join(DIR, "results", process.env.PAIR_Y ?? "");
+  const expectTotals = (process.env.PAIR_EXPECT ?? "").split(",").filter(Boolean).map(Number);
+  if (expectTotals.length === 2) {
+    const tx = resultTotal(fx), ty = resultTotal(fy);
+    if (tx !== expectTotals[0] || ty !== expectTotals[1]) { console.log(JSON.stringify({ skipped: true, why: "a file's total is not the one expected", totals: [tx, ty], expected: expectTotals })); return; }
+  }
+  const x = resultRows(fx), y = resultRows(fy);
+  const out = pairRows(x, y);
+  console.log(JSON.stringify({ ...out, modelsX: modelCounts(x), modelsY: modelCounts(y) }));
 });
 
 // a trial, not the shipped gate: would a small model, asked only about what the rules would already act on, cut the false acts? It can
@@ -242,12 +290,13 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
   const left = models.reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
   if (left < set.length * 3000) { write(`planner-${which}`, { refused: true, left }); console.log(`not started: ${left} tokens left`); return; }
-  const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null })[] = [];
+  const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null; rec: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
     const gold = goldIntent(x);
     const turnId = `h-${x.id}-${Date.now()}`;
     const t0 = Date.now();
+    const recorder = recordTurn();
     let r = null, tokens = 0, calls = 0, lane = "", failed = false;
     try {
       for (let round = 0; round < 3; round++) {
@@ -258,9 +307,11 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
         if (o.done) { r = o.result; break; }
       }
     } catch (e) { failed = true; console.warn(x.id, (e as Error).message.slice(0, 160)); }
-    const capacity = failed || !r || (r.kind === "none" && r.note === "no-model");
+    const rec = recorder.stop(r?.model ?? null);
+    // a turn that met a 429 is a capacity failure, never a plain right or wrong (6.2)
+    const capacity = failed || !r || (r.kind === "none" && r.note === "no-model") || rec.rate_limited;
     const got = r ? (r.note === "general-fallback" ? "general-fallback" : resultIntent(r)) : "error";
-    rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null });
+    rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null, rec });
     if (SET_DIR === "holdout") console.log(x.id, gold, "->", got, lane, capacity ? "(capacity)" : "", tokens, "tokens", calls, "calls");
     // kept as it goes: a run cut off by a lost connection still says how far it got, and is marked as not finished
     write(`planner-${which}`, { at: new Date().toISOString(), partial: true, done: rows.length, of: set.length, rows });
@@ -270,8 +321,9 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const used = rows.filter((x) => x.calls > 0);
   const avg = (k: "tokens" | "calls") => (used.length ? Math.round((used.reduce((a, x) => a + x[k], 0) / used.length) * 10) / 10 : 0);
   const tokensAll = rows.reduce((a, x) => a + x.tokens, 0);
-  write(`planner-${which}`, { at: new Date().toISOString(), summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
-  console.log(JSON.stringify({ summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
+  const v5 = liveSummary(rows.map((r) => ({ ok: r.ok, capacity: r.capacity, lang: r.lang, rec: r.rec })));
+  write(`planner-${which}`, { at: new Date().toISOString(), summary, v5, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
+  console.log(JSON.stringify({ summary, v5, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
 });
 void FINAL;
 
@@ -296,10 +348,14 @@ it.runIf(mode === "planner3")("the v4 set through the browser's routing and the 
   const left = room ? Math.min(room.left.tpd, room.left.rpd * 3000) : ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"].reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
   if (left < need) { write3("planner3", [], { refused: true, left, need }); console.log(`not started: ${left} left, ${need} needed`); return; }
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
-  const rows: Row3[] = [];
+  const rows: (Row3 & { rec?: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
-    const row = await runItem3(x, { world, hands: () => fakeHands(), user: "holdout" });
+    const recorder = recordTurn();
+    const row0 = await runItem3(x, { world, hands: () => fakeHands(), user: "holdout" });
+    const rec = recorder.stop();
+    // a turn that met a 429 is a capacity failure, never a plain right or wrong (6.2)
+    const row = rec.rate_limited ? { ...row0, capacity: true, ok: false, rec } : { ...row0, rec };
     rows.push(row);
     // ids, gold and got only: never a sentence
     console.log(row.id, row.gold, "->", row.got, row.lane, row.capacity ? "(capacity)" : "");
@@ -307,8 +363,9 @@ it.runIf(mode === "planner3")("the v4 set through the browser's routing and the 
     if (row.calls > 0) await sleep(gap);
   }
   const s = summary3(rows);
-  write3("planner3", rows, { tokensAll: rows.reduce((a, r) => a + r.tokens, 0), modelTurns: rows.filter((r) => r.calls > 0).length });
-  console.log(JSON.stringify({ all: s.byLang.all, byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n}`])) }));
+  const v5 = liveSummary(rows.map((r) => ({ ok: r.ok, capacity: r.capacity, lang: r.lang, rec: r.rec })));
+  write3("planner3", rows, { v5, tokensAll: rows.reduce((a, r) => a + r.tokens, 0), modelTurns: rows.filter((r) => r.calls > 0).length });
+  console.log(JSON.stringify({ all: s.byLang.all, v5, byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n}`])) }));
 });
 
 it.runIf(mode === "rules3")("the v4 set through the browser's routing, rules, frames and the fast lane, with no model", async () => {
