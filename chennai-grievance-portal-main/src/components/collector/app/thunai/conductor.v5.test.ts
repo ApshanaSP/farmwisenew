@@ -4,6 +4,8 @@
  *  - C3: the window the captions may run in (inWindow): within ENGAGED_MS of the wake or of Jarvis's last turn, or while it speaks.
  *  - C4: the strict audio gate, and the engaged mark on the request.
  *  - Section 6.4: the trace's stamps (voicedEnd as zero, eou, uploadSent, the server's offsets, hearBack), timings only.
+ *  - E2: early speech-to-text (NEXT_PUBLIC_JARVIS_EARLY_STT): an engaged sentence goes to /hear at the ears' pause (150 ms of quiet),
+ *    before its end is decided; aborted if the voice comes back, and then the whole sentence is read; at most 2 requests a sentence.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ENGAGED_MS } from "@/lib/thunai/addressed";
@@ -13,19 +15,28 @@ const box = vi.hoisted(() => ({ e: null as null | FakeEars }));
 const mouth = vi.hoisted(() => ({ hooks: {} as { onStart?: (p: string, ack: boolean) => void; onEnd?: (ack: boolean) => void }, speaking: false, saying: null as string | null }));
 
 interface FakeEars {
-  hooks: { onVad: (e: unknown, wall: number, voicedEnd?: number) => void; onQuickOnset?: (w: number) => void; onQuickEnd?: (w: number) => void; onFrame?: (l: number, h: number) => void };
-  takes: number;
+  hooks: {
+    onVad: (e: unknown, wall: number, voicedEnd?: number) => void; onQuickOnset?: (w: number) => void; onQuickEnd?: (w: number) => void; onFrame?: (l: number, h: number) => void;
+    /** E2: the deciding detector heard 150 ms of quiet inside a sentence that has not ended (speech so far `ms`) */
+    onPause?: (wall: number, voicedEnd: number, ms: number) => void;
+    /** E2: the voice came back before the sentence ended */
+    onResume?: (wall: number) => void;
+  };
+  takes: number; peeks: number; capturing: boolean;
 }
 
 vi.mock("./ears", () => {
   class Ears {
-    hooks: unknown; kind = "silero"; live = true; needsGesture = false; echoMode = "on"; echo = false; takes = 0;
+    hooks: unknown; kind = "silero"; live = true; needsGesture = false; echoMode = "on"; echo = false; takes = 0; peeks = 0;
     private cap = false;
     constructor(h: unknown) { this.hooks = h; box.e = this as unknown as FakeEars; }
     async start() { /* the microphone is open */ }
     stop() { this.live = false; }
     capture() { this.cap = true; }
     drop() { this.cap = false; }
+    get capturing() { return this.cap; }
+    // the sentence so far (1000 bytes) while the capture goes on; take() gives the whole of it (2000 bytes)
+    peek() { if (!this.cap) return null; this.peeks++; return new Blob([new Uint8Array(1000)], { type: "audio/wav" }); }
     take() { if (!this.cap) return null; this.cap = false; this.takes++; return new Blob([new Uint8Array(2000)], { type: "audio/wav" }); }
     extend() { /* hold */ }
     endAfter() { /* eou */ }
@@ -236,5 +247,274 @@ describe("B2's context reaches the echo guard: the speech span, and a clarifying
     expect(param(posts[1], "clarify")).toBe("1");
     expect(param(posts[1], "speechMs")).toBe("600");
     c.close();
+  });
+});
+
+describe("E2: early speech-to-text, NEXT_PUBLIC_JARVIS_EARLY_STT (default on)", () => {
+  const conf = { speech: 0.98, logprob: -0.1 };
+  afterEach(() => vi.restoreAllMocks());
+  /** a sentence begins (the deciding detector's start) */
+  const begin = (e: FakeEars, start = 1000) => e.hooks.onVad({ type: "start", at: start }, 0);
+  /** the ears' pause: 150 ms of quiet inside the sentence, `ms` of speech so far (today's ears never send it) */
+  const pause = (e: FakeEars, ms: number, wall = 0, voiced = 0) => e.hooks.onPause?.(wall, voiced, ms);
+  /** the voice came back before the sentence ended */
+  const resume = (e: FakeEars) => e.hooks.onResume?.(0);
+  /** the end of utterance, decided as today (300 ms of quiet, or eou.ts's 650 ms) */
+  const end = (e: FakeEars, ms: number, wall = 0, voiced?: number) => e.hooks.onVad({ type: "end", at: 9000, ms, short: false }, wall, voiced);
+
+  it("(1) engaged: the upload starts at the pause, before the end event; the end makes no second request, and its words are the sentence's", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e);
+    pause(e, 700);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "lane")).toBe("engaged");
+    expect(param(posts[0], "engaged")).toBe("1");
+    expect(param(posts[0], "speechMs")).toBe("700");
+    // the sentence so far, the capture going on: nothing is decided yet
+    expect(e.peeks).toBe(1);
+    expect(e.takes).toBe(0);
+    expect(e.capturing).toBe(true);
+    expect(c.state).toBe("hearing");
+    expect(sentences).toEqual([]);
+    end(e, 700);
+    expect(posts.length).toBe(1);
+    expect(e.takes).toBe(0);
+    expect(e.capturing).toBe(false);
+    expect(c.state).toBe("thinking");
+    posts[0].res(reply({ text: "show the trends page", lang: "en", conf }));
+    await flush();
+    expect(sentences.map((s) => s.text)).toEqual(["show the trends page"]);
+    c.close();
+  });
+  it("(1) a reply back before the end is decided (eou.ts's 650 ms) waits for the end: nothing is handed on until then", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e);
+    pause(e, 900);
+    posts[0].res(reply({ text: "show the severe cases", lang: "en", conf }));
+    await flush();
+    expect(sentences).toEqual([]);
+    expect(c.state).toBe("hearing");
+    end(e, 900);
+    await flush();
+    expect(posts.length).toBe(1);
+    expect(sentences.map((s) => s.text)).toEqual(["show the severe cases"]);
+    c.close();
+  });
+  it("(2) the voice resumes after the early upload: that request is aborted, and the sentence is the whole utterance's, read by one more request", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e);
+    pause(e, 600);
+    expect(posts.length).toBe(1);
+    resume(e);
+    expect(posts[0].init.signal?.aborted).toBe(true);
+    // the capture goes on: the whole sentence is still kept
+    expect(e.capturing).toBe(true);
+    end(e, 1500);
+    expect(posts.length).toBe(2);
+    expect(e.takes).toBe(1);
+    // the whole utterance (take: 2000 bytes), not the part sent early (peek: 1000)
+    expect((posts[1].init.body as Blob).size).toBe(2000);
+    expect(param(posts[1], "speechMs")).toBe("1500");
+    posts[1].res(reply({ text: "show the trends page for Adyar zone", lang: "en", conf }));
+    await flush();
+    expect(sentences.map((s) => s.text)).toEqual(["show the trends page for Adyar zone"]);
+    c.close();
+  });
+  it("(2) a reply already back when the voice resumes is never used: the whole utterance's words are", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e);
+    pause(e, 600);
+    posts[0].res(reply({ text: "show the trends", lang: "en", conf }));
+    await flush();
+    resume(e);
+    end(e, 1400);
+    await flush();
+    expect(sentences).toEqual([]);
+    expect(posts.length).toBe(2);
+    posts[1].res(reply({ text: "show the trends page for Adyar zone", lang: "en", conf }));
+    await flush();
+    expect(sentences.map((s) => s.text)).toEqual(["show the trends page for Adyar zone"]);
+    c.close();
+  });
+  it("(3) never more than 2 requests a sentence: after one early request is aborted, the rest waits for the end", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e);
+    for (let i = 0; i < 4; i++) { pause(e, 500 + i * 400); resume(e); }
+    expect(posts.length).toBe(1);
+    pause(e, 2400);
+    expect(posts.length).toBe(1);
+    end(e, 2400);
+    expect(posts.length).toBe(2);
+    expect(e.peeks).toBe(1);
+    expect(e.takes).toBe(1);
+    posts[1].res(reply({ text: "show the trends page for Adyar zone", lang: "en", conf }));
+    await flush();
+    expect(sentences.length).toBe(1);
+    c.close();
+  });
+  it("(3) each sentence has its own two: said in two parts, each part goes early, the first part's reading is kept and joined", async () => {
+    const { c, e, sentences } = await boot();
+    begin(e, 1000);
+    pause(e, 700);
+    end(e, 700);
+    expect(posts.length).toBe(1);
+    // the sentence goes on while its first part is at Whisper
+    e.hooks.onVad({ type: "start", at: 2300 }, 0);
+    e.hooks.onFrame?.(0.5, 300);
+    pause(e, 800);
+    expect(posts.length).toBe(2);
+    expect(posts[0].init.signal?.aborted).toBe(false);
+    end(e, 800);
+    expect(posts.length).toBe(2);
+    posts[1].res(reply({ text: "the trends page", lang: "en", conf }));
+    await flush();
+    expect(sentences).toEqual([]);
+    posts[0].res(reply({ text: "Jarvis, show", lang: "en", conf }));
+    await flush();
+    expect(sentences.map((s) => s.text)).toEqual(["show the trends page"]);
+    c.close();
+  });
+  it("(4) an utterance over 10 s takes today's path: no early request, one at the end", async () => {
+    const { c, e } = await boot();
+    begin(e);
+    pause(e, 10_001);
+    expect(posts.length).toBe(0);
+    expect(e.peeks).toBe(0);
+    end(e, 10_001);
+    expect(posts.length).toBe(1);
+    expect(e.takes).toBe(1);
+    c.close();
+  });
+  it("(4) at 10 s exactly it still goes early", async () => {
+    const { c, e } = await boot();
+    begin(e);
+    pause(e, 10_000);
+    expect(posts.length).toBe(1);
+    c.close();
+  });
+  it("(5) unengaged (idle, never woken): no early request; the capped ambient lane at the end, as today", async () => {
+    const { c, e } = await boot({ lastTurnAt: () => null });
+    begin(e);
+    pause(e, 900);
+    expect(posts.length).toBe(0);
+    expect(e.peeks).toBe(0);
+    end(e, 900);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "lane")).toBe("ambient");
+    expect(param(posts[0], "engaged")).toBeNull();
+    c.close();
+  });
+  it("(5) a millisecond past the follow-up window: no early request", async () => {
+    const { c, e } = await boot({ lastTurnAt: () => Date.now() - ENGAGED_MS - 1 });
+    begin(e);
+    pause(e, 900);
+    expect(posts.length).toBe(0);
+    end(e, 900);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "lane")).toBe("ambient");
+    c.close();
+  });
+  it("(5) inside the window it goes (the same test as the captions and the strict gate)", async () => {
+    const { c, e } = await boot({ lastTurnAt: () => Date.now() - ENGAGED_MS + 1_000 });
+    begin(e);
+    pause(e, 900);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "engaged")).toBe("1");
+    c.close();
+  });
+  it("over Jarvis's ducked voice the sentence is read after its end, as today (its words decide the duck)", async () => {
+    const { c, e } = await boot();
+    mouth.speaking = true; mouth.saying = "an invented answer being read out";
+    mouth.hooks.onStart?.("browser", false);
+    begin(e);
+    expect(c.state).toBe("paused");
+    pause(e, 500);
+    expect(posts.length).toBe(0);
+    c.close();
+  });
+  it("speech too short to be a sentence (under 250 ms so far) sends nothing early", async () => {
+    const { c, e } = await boot();
+    begin(e);
+    pause(e, 200);
+    expect(posts.length).toBe(0);
+    c.close();
+  });
+  it("Esc during the pause, or the microphone closing, aborts the early request; nothing is handed on", async () => {
+    const a = await boot();
+    begin(a.e);
+    pause(a.e, 700);
+    a.c.stop();
+    expect(posts[0].init.signal?.aborted).toBe(true);
+    a.c.close();
+    posts = [];
+    const b = await boot();
+    begin(b.e);
+    pause(b.e, 700);
+    b.c.close();
+    expect(posts[0].init.signal?.aborted).toBe(true);
+    expect(b.sentences).toEqual([]);
+  });
+  it("(6) flag off (NEXT_PUBLIC_JARVIS_EARLY_STT=0): exactly today's behaviour, one request at the end with the whole sentence", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_EARLY_STT", "0");
+    const { c, e, sentences } = await boot();
+    begin(e);
+    pause(e, 600);
+    resume(e);
+    pause(e, 900);
+    expect(posts.length).toBe(0);
+    expect(e.peeks).toBe(0);
+    end(e, 900);
+    expect(posts.length).toBe(1);
+    expect(e.takes).toBe(1);
+    expect((posts[0].init.body as Blob).size).toBe(2000);
+    posts[0].res(reply({ text: "show the trends page", lang: "en", conf }));
+    await flush();
+    expect(sentences.map((s) => s.text)).toEqual(["show the trends page"]);
+    c.close();
+  });
+  describe("the trace stays honest: zero at the last voiced sample, uploadSent at the request the words came from", () => {
+    beforeEach(() => resetTrace());
+    it("used early: no turn opens at the pause; at the end it opens at the last voiced sample, with uploadSent at the early upload (before eou)", async () => {
+      let clock = 1_000;
+      vi.spyOn(performance, "now").mockImplementation(() => clock);
+      const { c, e, sentences } = await boot();
+      begin(e);
+      clock = 4_860;
+      pause(e, 700, 4_860, 4_700);
+      expect(traces().length).toBe(0);
+      clock = 5_000;
+      end(e, 700, 5_000, 4_700);
+      expect(traces().length).toBe(1);
+      const t = traces()[0];
+      expect(t.zero).toBe(4_700);
+      expect(t.at.uploadSent).toBe(4_860);
+      expect(t.at.eou).toBe(5_000);
+      clock = 5_400;
+      posts[0].res(reply({ text: "show the trends page", lang: "en", conf, timing: { sttSent: 4, sttBack: 290 } }));
+      await flush();
+      expect(t.at.sttSent).toBe(4_864);
+      expect(t.at.sttBack).toBe(5_150);
+      expect(t.at.hearBack).toBe(5_400);
+      expect(sentences[0].trace).toBe(t.n);
+      expect(JSON.stringify(traces())).not.toMatch(/trends/);
+      c.close();
+    });
+    it("resumed: uploadSent is the whole utterance's upload at its end, never the aborted one's", async () => {
+      let clock = 1_000;
+      vi.spyOn(performance, "now").mockImplementation(() => clock);
+      const { c, e } = await boot();
+      begin(e);
+      clock = 3_000;
+      pause(e, 600, 3_000, 2_840);
+      clock = 3_100;
+      resume(e);
+      clock = 6_000;
+      end(e, 1_800, 6_000, 5_700);
+      const t = traces()[0];
+      expect(traces().length).toBe(1);
+      expect(t.zero).toBe(5_700);
+      expect(t.at.uploadSent).toBe(6_000);
+      c.close();
+    });
   });
 });

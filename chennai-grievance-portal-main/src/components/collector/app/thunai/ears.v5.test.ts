@@ -203,3 +203,85 @@ describe("the trace's zero (section 6.4): the ears give the end of the last voic
     e.stop();
   });
 });
+
+describe("E2: the pause inside a sentence (the early upload's moment), and the sentence so far", () => {
+  /** the ears on a stand-in browser, the page's clock driven by the frames: 20 ms frames at 48 kHz, each 980 ms after its audio began */
+  async function rig() {
+    const b = stubBrowser();
+    let clock = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => clock);
+    const log: string[] = [];
+    const h = {
+      onVad: vi.fn((ev: { type: string }) => log.push(ev.type)),
+      onPause: vi.fn(() => log.push("pause")),
+      onResume: vi.fn(() => log.push("resume"))
+    };
+    const e = new Ears(h);
+    await e.start();
+    const n = 960;
+    let total = 0, i = 0;
+    const push = (frames: number, amp: number) => { for (const last = i + frames; i < last; i++) { total += n; clock = 1000 + 20 * i; b.port.onmessage?.({ data: { frame: new Float32Array(n).fill(amp), total } }); } };
+    return { e, h, log, push, now: () => clock };
+  }
+  it("the energy gate: onPause at the first frame with 150 ms or more of quiet (160 ms on 20 ms frames), before the end, with the last voiced sample and the speech so far", async () => {
+    const { e, h, log, push } = await rig();
+    push(50, 0); // a second of quiet: the floor
+    push(20, 0.5); // 400 ms of voice, frames 50..69: the last voiced sample at 1400 ms of audio, 2380 on the page's clock
+    push(7, 0); // 140 ms of quiet: no pause yet
+    expect(h.onPause).not.toHaveBeenCalled();
+    push(1, 0); // 160 ms
+    expect(h.onPause).toHaveBeenCalledTimes(1);
+    const [wall, voiced, ms] = h.onPause.mock.calls[0] as unknown as [number, number, number];
+    expect(voiced).toBe(2380);
+    expect(wall).toBe(voiced + 160);
+    push(30, 0);
+    expect(log).toEqual(["start", "pause", "end"]);
+    // the end is decided as today (300 ms of quiet), and its speech span is the pause's
+    const end = h.onVad.mock.calls.find((c) => (c[0] as { type: string }).type === "end") as unknown as [{ ms: number }, number, number];
+    expect(end[1]).toBe(voiced + 300);
+    expect(end[0].ms).toBe(ms);
+    e.stop();
+  });
+  it("the voice back before the end: onResume, the pause comes again in the next quiet, one end", async () => {
+    const { e, log, push } = await rig();
+    push(50, 0);
+    push(20, 0.5);
+    push(10, 0); // 200 ms of quiet: the pause
+    push(10, 0.5); // the voice is back before 300 ms of quiet
+    push(30, 0);
+    expect(log).toEqual(["start", "pause", "resume", "pause", "end"]);
+    e.stop();
+  });
+  it("a quiet shorter than 150 ms inside the sentence gives neither", async () => {
+    const { e, log, push } = await rig();
+    push(50, 0);
+    push(20, 0.5);
+    push(5, 0); // 100 ms
+    push(10, 0.5);
+    push(30, 0);
+    expect(log).toEqual(["start", "pause", "end"]);
+    e.stop();
+  });
+  it("peek(): the sentence so far as a WAV while the capture goes on; take() then gives the whole sentence", async () => {
+    const { e, h, push } = await rig();
+    let early: Blob | null = null;
+    h.onPause.mockImplementation(() => { early = e.peek(); return 0; });
+    expect(e.peek()).toBeNull();
+    push(50, 0);
+    push(3, 0.5);
+    const start = (h.onVad.mock.calls[0][0] as unknown as { at: number }).at;
+    e.capture(start);
+    push(17, 0.5);
+    push(8, 0); // the pause, 78 frames in
+    expect(early).toBeInstanceOf(Blob);
+    expect(e.capturing).toBe(true);
+    push(7, 0); // the end, 85 frames in
+    const whole = e.take();
+    expect(e.capturing).toBe(false);
+    // from 350 ms before the start (48 kHz), cut to 16 kHz 16-bit: 44 bytes of header and 2 bytes a sample
+    const from = Math.round(((start - 350) / 1000) * 48000);
+    expect(early!.size).toBe(44 + 2 * Math.floor((78 * 960 - from) / 3));
+    expect(whole!.size).toBe(44 + 2 * Math.floor((85 * 960 - from) / 3));
+    e.stop();
+  });
+});
