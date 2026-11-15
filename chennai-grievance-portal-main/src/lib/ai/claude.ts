@@ -25,6 +25,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodSchema } from "ai";
 import type { z } from "zod";
 import { keyRefused, keyWorks } from "@/lib/ai/keyhealth";
+import { compactPlan, type CompactPlan } from "@/lib/thunai/compact";
 import { ledger } from "@/lib/thunai/ledger";
 import { telemetry } from "@/lib/thunai/telemetry";
 
@@ -276,6 +277,15 @@ export function claudeWire(schema: z.ZodTypeAny): { path: "format" | "json"; uni
 /** Schemas the API refused after all: asked for as plain JSON from then on. */
 const tooHard = new WeakSet<object>();
 
+/**
+ * v5 A7: a Jarvis call (no role) for a planner bundle with a screen, with JARVIS_PLAN_COMPACT=1, is asked for the compact plan (recipe
+ * and the slots that have a value; lib/thunai/compact.ts), and its reply is read back to the full plan before the step's own check.
+ * Flag off (the default), a console step, or any other schema: null, and the step's schema goes out as it always did.
+ */
+function compactFor(schema: z.ZodTypeAny, role?: ClaudeRole): CompactPlan | null {
+  return !role && env("JARVIS_PLAN_COMPACT") === "1" ? compactPlan(schema) : null;
+}
+
 /** The models that take server-side refusal fallbacks (Haiku 5.5 has none). */
 const FALLBACKS = /^claude-(opus-5-5|opus-5|fable-5-1|sonnet-5-5)$/;
 /** Haiku 5.5 turns thinking off with `disabled` (at effort high or below) */
@@ -417,9 +427,12 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
   const timeout = a.timeoutMs ?? (a.role ? Number(env("AI_CLAUDE_TIMEOUT_MS")) || 25_000 : 6000);
   const attempts = a.role ? 2 : 1;
   let lastIssue = "";
+  // v5 A7: what goes out (the compact plan, or the step's own schema)
+  const plan = compactFor(a.schema, a.role);
+  const sent: z.ZodTypeAny = plan?.schema ?? a.schema;
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const sch = outputSchema(a.schema);
-    const useFormat = sch.strict != null && !tooHard.has(a.schema);
+    const sch = outputSchema(sent);
+    const useFormat = sch.strict != null && !tooHard.has(sent);
     const prompt = attempt === 0 ? a.prompt : `${a.prompt}\n\nYour previous reply did not match the schema (${lastIssue}). Reply again with one complete, valid JSON object.`;
     let res: Anthropic.Beta.BetaMessage;
     try {
@@ -434,7 +447,7 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
         }
         // not taken after all: this same call asks again as plain JSON, so one refused schema does not cost the turn
         if (useFormat && /schema|output_config|format|compil/i.test(e.message)) {
-          tooHard.add(a.schema);
+          tooHard.add(sent);
           console.warn(`[claude] ${a.name}: schema not taken, plain JSON from now on: ${e.message.slice(0, 160)}`);
           // v5 A6 (c): logged with the path the call now takes (the model and a code only)
           telemetry("claude_schema", { provider: "anthropic", model, why: "schema-refused", path: "json" });
@@ -475,11 +488,14 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     if (raw != null) {
       // the wire said "" or left a field out where the schema says null
       restore(raw, sch.undo);
-      const ok = a.schema.safeParse(raw);
-      if (ok.success) return done(ok.data);
-      const loose = a.lenient?.safeParse(raw);
+      // v5 A7: a compact reply is checked as sent (an unknown slot key is off-schema, never dropped), then read back to the full plan
+      const asSent = plan ? plan.schema.safeParse(raw) : null;
+      const full = plan ? plan.toFull(raw) : raw;
+      const ok = a.schema.safeParse(full);
+      if (ok.success && (!asSent || asSent.success)) return done(ok.data);
+      const loose = a.lenient?.safeParse(full);
       if (loose?.success) return done(loose.data);
-      const issue = ok.error.issues[0];
+      const issue = (asSent && !asSent.success ? asSent.error : ok.error)?.issues[0];
       lastIssue = `${issue?.path.join(".") || "(root)"}: ${issue?.message}`;
     } else {
       lastIssue = res.stop_reason === "max_tokens" ? "the reply was cut off" : "no JSON object";
@@ -505,8 +521,10 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
   const model = w.model || claudeModel(), t0 = Date.now();
   const l = ledger();
   if (!l.room("anthropic", model, { tokens: Math.ceil(w.system.length / 3.5) }).ok) return null;
-  const sch: Wire = w.schema ? outputSchema(w.schema) : { strict: null, shape: "", undo: null, unions: 0, optionals: 0, rewritten: false };
-  const useFormat = !!w.schema && sch.strict != null && !tooHard.has(w.schema);
+  // v5 A7: the format a spoken turn sends (the compact plan when JARVIS_PLAN_COMPACT=1), so the warm compiles and caches the same one
+  const sent = w.schema ? compactFor(w.schema)?.schema ?? w.schema : undefined;
+  const sch: Wire = sent ? outputSchema(sent) : { strict: null, shape: "", undo: null, unions: 0, optionals: 0, rewritten: false };
+  const useFormat = !!sent && sch.strict != null && !tooHard.has(sent);
   // with no schema, the system block as the format path sends it; a schema asked for as plain JSON adds its shape line, as its turns do
   const mode = useFormat ? "format" : w.schema ? "json" : "bare";
   let maxTokens = useFormat ? 1 : 0;
