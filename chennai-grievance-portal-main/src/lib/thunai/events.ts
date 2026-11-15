@@ -41,6 +41,8 @@ export type TurnEvent =
 export interface RoundOutWire {
   done: boolean; result: AgentResult | null; steps: Step[]; trace: { label: string; ms: number; ok: boolean }[];
   tokens: number; calls: number; hops: string[]; lane: string; cached: boolean;
+  /** v5 trace: the server's stage times (epoch ms), timings only */
+  timing?: Partial<Record<string, number>>;
 }
 
 export const NDJSON = "application/x-ndjson";

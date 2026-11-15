@@ -19,6 +19,9 @@ export const TRACE_STAGES = [
 ] as const;
 export type TraceStage = (typeof TRACE_STAGES)[number];
 
+/** Absolute times (epoch ms) of server stages: on one machine the browser places them exactly (performance.timeOrigin); across machines, clock skew applies. */
+export type EpochTiming = Partial<Record<TraceStage, number>>;
+
 /** Offsets in ms from the server's receipt of the request, as a route returns them (timings only). */
 export type ServerTiming = Partial<Record<TraceStage, number>>;
 

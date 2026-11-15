@@ -45,3 +45,12 @@ describe("the per-stage trace (v5 6.4)", () => {
     expect(t.sttSent).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe("the server's stage times on the browser clock", () => {
+  it("epoch times are placed at their offset from the time origin; unknown stages and non-numbers are left out", async () => {
+    const { stampEpoch } = await import("./trace");
+    traceStart(100);
+    stampEpoch({ plannerSent: 1_000_200, plannerBack: 1_001_400, bogus: 5, toolsDone: Number.NaN } as Record<string, number>, 1_000_000);
+    expect(traceRows(traces()[0]).map((r) => [r.stage, r.ms])).toEqual([["voicedEnd", 0], ["plannerSent", 100], ["plannerBack", 1300]]);
+  });
+});

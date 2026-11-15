@@ -44,6 +44,7 @@ import { ackFor, ackTemplated } from "./stagelocal";
 import { spokenSentences } from "./streamturn";
 import { telemetry } from "./telemetry";
 import type { TurnEvent } from "./events";
+import type { EpochTiming } from "./stagetime";
 import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
@@ -90,7 +91,11 @@ export const RoundBody = AgentBody.extend({
 export type RoundBodyT = z.infer<typeof RoundBody>;
 
 export interface TraceItem { label: string; ms: number; ok: boolean }
-export interface RoundOut { done: boolean; result: AgentResult | null; steps: Step[]; trace: TraceItem[]; tokens: number; calls: number; hops: string[]; lane: string; cached: boolean }
+export interface RoundOut {
+  done: boolean; result: AgentResult | null; steps: Step[]; trace: TraceItem[]; tokens: number; calls: number; hops: string[]; lane: string; cached: boolean;
+  /** v5 trace (6.4): when the planner call went and came back and when the answer was built, as epoch ms (timings only) */
+  timing?: EpochTiming;
+}
 
 // ---- two speeds: a command answers inside 8 s; an analysis question or a mission may take 25 s, saying it is still working
 
@@ -590,6 +595,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   const lang: Lang = replyLang(b.text, b.heard);
   const stage = (b.stage ?? null) as StageContext | null;
   const trace: TraceItem[] = [];
+  // the v5 trace's server stages (6.4), epoch ms: the planner call sent and back, the answer built (timings only, no words)
+  const stagesAt: EpochTiming = {};
   const ids = { turnId: b.turnId, round: b.round };
   const speed = turnSpeed(b.text, world);
   const budget = budgetFor(speed);
@@ -617,6 +624,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     } finally { if (tick) clearInterval(tick); }
   };
   const out = (result: AgentResult | null, lane: string, o: Partial<RoundOut> = {}): RoundOut => {
+    stagesAt.toolsDone ??= Date.now();
     if (result) {
       const l = readLabel(result, lang);
       if (l) {
@@ -628,7 +636,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     }
     const tokens = o.tokens ?? turns.get(b.turnId)?.tokens ?? 0, calls = o.calls ?? turns.get(b.turnId)?.calls ?? 0;
     if (result) { telemetry("turn", { lane, ms: Date.now() - t0, tokens, calls, ok: result.kind !== "none", round: b.round, turn: b.turnId }); }
-    return { done: true, result, steps: [], trace, tokens, calls, hops: [], lane, cached: false, ...o };
+    return { done: true, result, steps: [], trace, tokens, calls, hops: [], lane, cached: false, timing: { ...stagesAt }, ...o };
   };
   // every rules-lane screen keeps the time its request named (spanned.ts: the checker alone would drop it)
   const screenFrom = async (recipe: (typeof RECIPES)[number], slots: Record<string, unknown>, label: string) =>
@@ -818,7 +826,9 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   // the likely reads start now, while the planner thinks
   const spec = b.round === 0 && deps.speculate ? speculate(b, world, rawHands, state, lang, stage, signal) : null;
   const ask = (s: string, sch: PlanSchema) => timed(lang === "ta" ? "யோசிக்கிறேன்" : "Thinking", () => callLlm({ name: `jarvis_${b.round === 0 ? bundle : "later"}${b.round}`, system: s, prompt, schema: sch, lenient: AgentPlanLenient as never, maxOutputTokens: 500, user, lane: "planner", until: t.until, signal }, deps.llm));
+  stagesAt.plannerSent ??= Date.now();
   let r = await ask(system, schema);
+  stagesAt.plannerBack ??= Date.now();
   if (!r) return out(none(lang, t0, "no-model"), "no-model");
   t.tokens += r.tokens; t.calls++; t.model = r.model;
   let plan = toPlan(r.object);

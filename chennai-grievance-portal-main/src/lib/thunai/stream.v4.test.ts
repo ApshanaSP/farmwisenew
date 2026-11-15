@@ -57,7 +57,7 @@ describe("the streamed turn", () => {
   });
   it("without emit the reply is what it was: the same shape, no stream", async () => {
     const plain = await planRound(body("severe cases in Adyar this week", { turnId: "p1" }), WORLD, fakeHands(), "u", undefined, undefined, deps(model(() => PLAN)));
-    expect(Object.keys(plain).sort()).toEqual(["cached", "calls", "done", "hops", "lane", "result", "steps", "tokens", "trace"]);
+    expect(Object.keys(plain).sort()).toEqual(["cached", "calls", "done", "hops", "lane", "result", "steps", "timing", "tokens", "trace"]);
   });
   it("a look-first round streams its console steps and no screen", async () => {
     const events: TurnEvent[] = [];

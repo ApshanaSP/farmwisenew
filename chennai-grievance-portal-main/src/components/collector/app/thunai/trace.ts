@@ -11,9 +11,9 @@
  * memory only, for the measurement view and the specs (window.__jv.trace when the spec hooks are on).
  */
 
-import { TRACE_STAGES, type ServerTiming, type TraceStage } from "@/lib/thunai/stagetime";
+import { TRACE_STAGES, type EpochTiming, type ServerTiming, type TraceStage } from "@/lib/thunai/stagetime";
 
-export { TRACE_STAGES, type ServerTiming, type TraceStage };
+export { TRACE_STAGES, type EpochTiming, type ServerTiming, type TraceStage };
 
 export interface TurnTrace {
   /** a running number, never a turn's words */
@@ -61,6 +61,17 @@ export function stampServer(base: TraceStage, timing: ServerTiming | null | unde
   const at = cur.at[base];
   if (at == null) return;
   for (const [k, v] of Object.entries(timing)) if (typeof v === "number" && Number.isFinite(v)) stamp(k as TraceStage, at + v);
+}
+
+/**
+ * Place a server's absolute stage times (epoch ms) on the browser clock (performance.timeOrigin): exact on one machine, off by the
+ * clock skew across machines. A time that is not a number is left out.
+ */
+export function stampEpoch(timing: EpochTiming | Partial<Record<string, number>> | null | undefined, origin?: number): void {
+  if (!cur || !timing) return;
+  const o = origin ?? (typeof performance !== "undefined" && Number.isFinite(performance.timeOrigin) ? performance.timeOrigin : null);
+  if (o == null) return;
+  for (const [k, v] of Object.entries(timing)) if ((TRACE_STAGES as readonly string[]).includes(k) && typeof v === "number" && Number.isFinite(v)) stamp(k as TraceStage, v - o);
 }
 
 /** Which lane the current turn took. */

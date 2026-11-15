@@ -11,6 +11,7 @@ import { NDJSON, readEvents, type RoundOutWire, type TurnEvent } from "@/lib/thu
 import type { StageDocT } from "@/lib/thunai/stage";
 import type { Lang, Step } from "@/lib/thunai/types";
 import type { VoicePath } from "./mouth";
+import { stamp, stampEpoch } from "./trace";
 
 /**
  * Are a streamed answer's sentences spoken as they come (SayQueue)? Only on the browser's own voice, which is free and at once. On the
@@ -63,6 +64,9 @@ export async function readRound(res: Response, o: { turnId: string; live: () => 
   if (!(res.ok && res.body && ct.toLowerCase().includes(NDJSON))) {
     const j = await res.json().catch(() => ({})) as RoundOutWire & { error?: string };
     if (!res.ok) throw new Error(j.error || "Request failed.");
+    // the v5 trace: the answer is here (a plain JSON reply is its own first event), and the server's stage times
+    stamp("firstEvent");
+    stampEpoch(j.timing);
     return { out: j, streamed: false, timeline: false, stepsSent: false, screen: null, sentences: [] };
   }
   const h = o.hooks ?? {};
@@ -74,12 +78,14 @@ export async function readRound(res: Response, o: { turnId: string; live: () => 
     if (finished || error != null || stale) return;
     if (!o.live()) { stale = true; return; }
     if (e.turnId !== o.turnId) return;
+    // the v5 trace (6.4): the first event of this turn in the browser (first stamp wins)
+    stamp("firstEvent");
     switch (e.type) {
       case "STEP_STARTED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: "running", ms: null })); return;
       case "STEP_FINISHED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: e.ok ? "done" : "failed", ms: Number.isFinite(e.ms) ? Math.round(e.ms) : null })); return;
       case "STATE_SNAPSHOT": if (e.snapshot?.stage) { r.screen = e.snapshot.stage; safe(() => h.screen?.(e.snapshot.stage)); } return;
       case "TEXT_MESSAGE_CONTENT": if (e.delta?.trim()) { r.sentences.push(e.delta); safe(() => h.sentence?.(e.delta, e.lang)); } return;
-      case "RUN_FINISHED": r.out = e.out; finished = true; return;
+      case "RUN_FINISHED": r.out = e.out; finished = true; stampEpoch(e.out?.timing); return;
       case "RUN_ERROR": error = e.message || "The round failed."; return;
       case "CUSTOM":
         if (e.name === "steps") { r.stepsSent = true; safe(() => h.steps?.(e.value.steps ?? [])); }
