@@ -23,7 +23,9 @@ const Op = z.discriminatedUnion("op", [
     slots: z.record(z.unknown()).refine((x) => JSON.stringify(x).length < 2000, "too large"), at: z.string().max(40) }) }),
   z.object({ op: z.literal("unpin"), id: z.string().max(20) }),
   // v4, Level B: each needs the Collector's yes (a spoken or typed "yes", or a tap), sent as yes: true
-  z.object({ op: z.literal("remember"), text: z.string().trim().min(1).max(300), said: z.string().max(600).optional(), yes }),
+  // v5 G3: the turn that asked (kept with the note) and the Stage's news or complaint text (for the copy check only, never kept)
+  z.object({ op: z.literal("remember"), text: z.string().trim().min(1).max(300), said: z.string().max(600).optional(), turn: z.string().max(40).optional(),
+    shown: z.array(z.string().max(300)).max(60).optional(), yes }),
   z.object({ op: z.literal("forgetLast"), yes }),
   z.object({ op: z.literal("reset"), yes }),
   z.object({ op: z.literal("watchPref"), pref: z.enum(["later", "mute", "tell", "unmute"]), target: z.string().trim().min(1).max(120),

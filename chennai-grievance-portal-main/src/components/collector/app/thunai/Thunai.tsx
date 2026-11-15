@@ -65,6 +65,7 @@ import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import { confirmLine } from "@/lib/thunai/say";
 import { isDangerButton } from "@/lib/thunai/skeleton";
+import { stageShownText } from "@/lib/thunai/shown";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
   // a Tamil line with no Tamil voice on this device is shown, not read out by an English voice
@@ -796,7 +797,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       case "clearText": typeInto("", true); return null;
       // Level B (v4, Pillar 4): these steps run only after the Collector's yes (gateB), so the server is told yes; only the Collector's own
       // sentence is kept, and the server refuses a note holding a citizen's details (said back in its own words)
-      case "remember": return memoryOp({ op: "remember", text: step.text, said: heardText.slice(0, 600), yes: true }, lang, line("remembered", lang));
+      // v5 G3: the turn that asked, and what the Stage showed (the store refuses a note copied off it; that text is never kept)
+      case "remember": return memoryOp({ op: "remember", text: step.text, said: heardText.slice(0, 600), yes: true, turn: `t${turnGen.current}`, shown: stageShownText(stageRef.current) }, lang, line("remembered", lang));
       case "recall": return (await recallMemory(lang)).text; // eslint-disable-line @typescript-eslint/no-use-before-define
       case "forget": return memoryOp(step.all ? { op: "reset", yes: true } : { op: "forgetLast", yes: true }, lang, line(step.all ? "forgottenAll" : "forgotten", lang));
       case "remind": return (await changeMemory({ op: "remind", text: step.text, at: step.at })) ? line("reminder", lang, { when: whenOf(step.at) }) : line("memoryFail", lang);
