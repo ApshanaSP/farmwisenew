@@ -1,4 +1,27 @@
-# Jarvis: a two-minute demo, and the five-minute room check
+# Jarvis: the five-minute real-room check (v5), then the demo
+
+## v5: the five-minute real-room check (do this first)
+
+Edge, the real laptop, speakers on, no headset. **Nothing is recorded.** Note pass or fail and the counts; read the timings and the applied echo value in the measurement view: open Jarvis's log (`JarvisLogView`, its folded "Measurements" section), or run a build with `NEXT_PUBLIC_JARVIS_SPEC=1`. The bottom bar itself is unchanged (rule 6). A flag below is set in `chennai-grievance-portal-main/.env` (a `NEXT_PUBLIC_` one needs a rebuild or a dev-server restart); a `TUNING` key is in `src/lib/thunai/vad.ts`.
+
+| # | Do | Should happen | If it does not |
+|---|---|---|---|
+| 1 | From off, say "Hi Jarvis" three times, then bare "Jarvis" three times. | Wakes each time (the browser wake, unchanged). Note hits out of three for each. If the on-device wake shipped, repeat both with `NEXT_PUBLIC_JARVIS_WAKE=device` and note hits out of three (that model was trained on "hey jarvis"). | Keep the browser wake (the default). |
+| 2 | Say one named Tamil command with a Chennai place name, one Tanglish, one English ("Jarvis, ..."). | The right screen each time. Read "end of speech → first spoken finding" in the measurement view's trace (zero is your last voiced sample). | Note which language failed and the sentence's shape (not the sentence) for the owner. |
+| 3 | Within 20 s of the answer, a follow-up without the name. | Acts. | The window is `ENGAGED_MS` (20 s) in `src/lib/thunai/addressed.ts`; do not change it without the owner. |
+| 4 | After 30 s of silence, a command without the name. | **Refused** (a faint line; this is the price of C1). Say it again with "Jarvis": acts. | To bring back v4's behaviour: `JARVIS_GATE_COMMAND_TIER=1` and `NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1` (owner's decision). |
+| 5 | Two people talk about lunch and a meeting for one minute, once with Jarvis idle and once just after an answer. | No act. Count any. | Idle acts: report. Acts just after an answer are the engaged window's (C2 measured 30-50 % of look-alike lines there); report the count for the owner. |
+| 6 | Let Jarvis give five long answers with nobody speaking, at normal speaker volume, with echo `true` (default), then with `NEXT_PUBLIC_JARVIS_ECHO=all`; once with the Edge online natural voice and once with a local (non-natural) Windows voice. | Jarvis does not duck or stop itself. Count self-ducks for each of the four cases; the measurement view shows the applied echo value. | Chromium's source says `true` can miss local SAPI voices and `"all"` adds 170 ms of microphone delay. If it stops itself: raise `echoMarginDb` (8 → 12). |
+| 7 | Say "mm", "sari", "okay" over an answer; then a real interruption ("no, show Royapuram"). | The voice carries on for the first three; stops for the interruption. | Stops on a backchannel: raise `bargeWords` (2 → 3). Talks over you: lower `bargeHoldMs` (600 → 450). |
+| 8 | Say "stop" with no name while Jarvis is silent and while it speaks. | Stops (the bare stop word still acts at level A). | Report. |
+| 9 | Ask, in Tamil, a question whose answer has a number. | The number is spoken as Tamil words (F1: no digit reaches a voice) and matches the screen. | The Tamil number words are model-drafted, not checked by a Tamil speaker: note any that sound wrong. |
+| 10 | Leave the room idle for the rest of the five minutes. | No wake, no act. Count any. | Report. |
+
+The v4 check below is kept as it was; the v5 one above replaces it for the room check.
+
+**The demo script** is v4's, below: a loose Tamil follow-up chain, "what changed" with drivers, "explain this one", "how do you know?", side talk ignored, the never-send refusal, "go to sleep". One v5 difference: **with Jarvis idle, a command needs "Jarvis" first** (C1); its follow-ups within 20 s do not.
+
+## v4 (kept as it was)
 
 Open the console in **Microsoft Edge** (`start-fast.bat` does), because Edge has the natural Tamil and Indian English voices. Do not demo within 24 hours of a heavy evaluation run: Groq's daily caps reset 24 hours after use. With a valid `ANTHROPIC_API_KEY` in `.env`, Claude answers first; without one, Groq does, and the demo still runs.
 
