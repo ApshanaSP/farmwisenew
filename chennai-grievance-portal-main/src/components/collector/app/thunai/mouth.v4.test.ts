@@ -167,21 +167,26 @@ describe("the duck for barge-in", () => {
     expect(mouth.speaking()).toBe(true);
   });
 
-  it("browser voice, flag on: speechSynthesis.pause(), how soon it reports paused is measured, unduck resumes", async () => {
+  // v5 D3 (V5_EXPECTED_CHANGES.md): the flag's duck cuts the browser voice with cancel() and says the cut piece again; never pause()/resume()
+  it("browser voice, flag on: the duck cuts it (cancel, never pause), how soon is measured; unduck says the cut piece again from its start", async () => {
     env({ voices: [NEERJA] });
     const mouth = await load();
     mouth.setDuckPause(true);
     mouth.speakLines([LONG], "en-IN");
     await vi.waitFor(() => expect(synth!.said.length).toBe(1));
+    const cancels = synth!.cancels;
     mouth.duckVoice();
-    expect(synth!.paused).toBe(true);
-    expect(mouth.lastDuck()?.how).toBe("pause");
+    expect(synth!.paused).toBe(false);
+    expect(synth!.cancels).toBe(cancels + 1);
+    expect(mouth.lastDuck()?.how).toBe("cut");
     expect(typeof mouth.lastDuck()?.ms).toBe("number");
     mouth.unduckVoice();
+    await vi.waitFor(() => expect(synth!.said).toHaveLength(2));
+    expect(synth!.said[1]).toBe(synth!.said[0]);
     expect(synth!.paused).toBe(false);
   });
 
-  it("browser voice, flag on, a voice that ignores pause(): reported with no time, and stop still leaves it able to speak", async () => {
+  it("browser voice, flag on, a voice that ignores pause(): the cut does not depend on it, and stop still leaves it able to speak", async () => {
     env({ voices: [NEERJA] });
     synth!.pauseMode = "ignore";
     const mouth = await load();
@@ -189,9 +194,11 @@ describe("the duck for barge-in", () => {
     mouth.speakLines([LONG], "en-IN");
     await vi.waitFor(() => expect(synth!.said.length).toBe(1));
     mouth.duckVoice();
-    await vi.waitFor(() => expect(mouth.lastDuck()).toEqual({ path: "browser", how: "pause", ms: null, outMs: null }), { timeout: 2000 });
+    expect(mouth.lastDuck()).toMatchObject({ path: "browser", how: "cut", outMs: null });
     mouth.stopVoice();
     expect(synth!.paused).toBe(false);
+    mouth.speakText("The list is on screen.", "en-IN");
+    await vi.waitFor(() => expect(synth!.said[synth!.said.length - 1]).toBe("The list is on screen."));
   });
 });
 
