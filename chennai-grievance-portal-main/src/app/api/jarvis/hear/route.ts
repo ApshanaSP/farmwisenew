@@ -14,12 +14,15 @@ import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { Lane } from "@/lib/thunai/ledger";
 import { hearUtterance, MAX_AUDIO_BYTES, readHear, sttAvailable } from "@/lib/thunai/stt";
+import { serverClock } from "@/lib/thunai/stagetime";
 
 export const dynamic = "force-dynamic";
 
 const LANES: Lane[] = ["ambient", "engaged", "named"];
 
 export async function POST(req: NextRequest) {
+  // the v5 trace: offsets from the request's receipt, so the session check, the rate limit and the body read are inside them
+  const clock = serverClock();
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   if (process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1" && req.nextUrl.searchParams.get("engaged") !== "1") return NextResponse.json({ error: "not-engaged" }, { status: 403 });
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("lane") as Lane | null;
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
   try {
-    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang }));
+    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang, clarify: body.clarify, speechMs: body.speechMs, clock }));
   } catch (e) {
     if (req.signal.aborted) return NextResponse.json({ error: "aborted" }, { status: 499 });
     console.warn("[jarvis] hear failed:", (e as Error).message);

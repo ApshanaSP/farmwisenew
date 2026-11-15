@@ -77,6 +77,8 @@ export interface HeardLine {
 
 export interface ConductorHooks {
   hearUrl: () => string;
+  /** v5 B2: a clarifying question is pending on the page: a short answer to it is never taken for a prompt echo (stt.ts) */
+  clarifyPending?: () => boolean;
   siteLang: () => "en" | "ta";
   /** a sentence that passed the gate */
   onSentence: (h: HeardLine) => void;
@@ -546,7 +548,8 @@ export class Conductor {
     this.h.onHearing?.("reading");
     const ctl = new AbortController();
     let own: Own = "ok";
-    const mine = wav ? this.post(wav, lane, ctl.signal, engaged, tr).catch((err: unknown) => {
+    const speechMs = Math.max(0, Math.round(this.lastEnd.ms));
+    const mine = wav ? this.post(wav, lane, ctl.signal, engaged, tr, speechMs).catch((err: unknown) => {
       own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
       return null;
     }) : Promise.resolve(null);
@@ -594,7 +597,7 @@ export class Conductor {
   }
 
   /** One POST to /hear, given up after TUNING.hearTimeoutMs. The open Stage's names go with the audio (multipart) when there are any. */
-  private async post(wav: Blob, lane: string, signal: AbortSignal, engaged = false, tr: TurnTrace | null = null): Promise<HearReply> {
+  private async post(wav: Blob, lane: string, signal: AbortSignal, engaged = false, tr: TurnTrace | null = null, speechMs: number | null = null): Promise<HearReply> {
     const ctl = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, TUNING.hearTimeoutMs);
@@ -607,6 +610,9 @@ export class Conductor {
       const last = this.lastLang;
       // the engaged mark (C4): set only when Jarvis is woken or engaged; a server with the strict audio gate refuses audio without it
       let url = `${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}${engaged ? "&engaged=1" : ""}`;
+      // B2: the echo guard's context, a mark and a number (never words): a clarifying question pending, and the detector's speech span
+      if (this.h.clarifyPending?.()) url += "&clarify=1";
+      if (speechMs != null) url += `&speechMs=${speechMs}`;
       let init: RequestInit;
       if (vocab.length) {
         const f = new FormData();

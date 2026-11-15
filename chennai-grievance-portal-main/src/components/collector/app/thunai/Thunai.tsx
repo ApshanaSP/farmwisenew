@@ -2193,6 +2193,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (conductor.current) return conductor.current;
     const c = new Conductor({
       hearUrl: () => hostRef.current.hearUrl ?? "/api/jarvis/hear",
+      clarifyPending: () => !!askOnceRef.current,
       siteLang: () => listenLangRef.current,
       onSentence: (h) => onSentenceRef.current(h),
       cancelTurn: () => cancelTurn(),
