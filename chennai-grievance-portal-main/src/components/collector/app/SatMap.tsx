@@ -36,6 +36,8 @@ interface Props {
   taluk: string | null;
   /** incident to fly to and ring */
   focus: { id: string; lat: number; lon: number } | null;
+  /** "Back to previous view" pressed: the incident is no longer the focus */
+  onClearFocus?: () => void;
   onZone: (zone: number) => void;
   onTaluk: (taluk: string) => void;
   onPin: (id: string) => void;
@@ -362,17 +364,33 @@ export default function SatMap(props: Props) {
     }
   }, [ready, added, layers.added]);
 
-  // ---- the incident chosen in a list: fly to it and ring it
+  // ---- the incident chosen in a list: fly to it and ring it. The view before the first fly is kept, so "Back to previous
+  // view" returns to exactly where the Collector was (picking another incident meanwhile keeps that first view).
+  const before = useRef<{ c: Leaflet.LatLng; z: number } | null>(null);
+  const [canGoBack, setCanGoBack] = useState(false);
   useEffect(() => {
     const s = st.current;
     if (!s) return;
     s.focus.clearLayers();
-    if (!focus) return;
+    if (!focus) { before.current = null; setCanGoBack(false); return; }
     s.L.marker([focus.lat, focus.lon], {
       icon: s.L.divIcon({ className: "", html: `<div class="mfocus"></div>`, iconSize: [44, 44], iconAnchor: [22, 22] }), interactive: false, zIndexOffset: 1000
     }).addTo(s.focus);
+    if (!before.current) before.current = { c: s.map.getCenter(), z: s.map.getZoom() };
+    setCanGoBack(true);
     s.map.flyTo([focus.lat, focus.lon], Math.max(s.map.getZoom(), 14.5), { duration: 0.7 });
   }, [ready, focus]);
+  const goBack = () => {
+    const s = st.current;
+    if (!s) return;
+    s.focus.clearLayers();
+    const b = before.current;
+    before.current = null;
+    setCanGoBack(false);
+    if (b) s.map.flyTo(b.c, b.z, { duration: 0.6 });
+    else s.map.flyToBounds(s.district, { padding: [8, 8], duration: 0.5 });
+    cb.current.onClearFocus?.();
+  };
 
   // ---- environment stations
   useEffect(() => {
@@ -703,6 +721,7 @@ export default function SatMap(props: Props) {
     const s = st.current;
     if (!s) return;
     s.focus.clearLayers();
+    if (before.current) { before.current = null; setCanGoBack(false); cb.current.onClearFocus?.(); }
     const b = mode === "taluks" && taluk ? s.talukBounds.get(taluk) : zone ? s.zoneBounds.get(zone) : undefined;
     s.map.flyToBounds(b ?? s.district, { padding: [8, 8], duration: 0.5 });
   };
@@ -711,6 +730,11 @@ export default function SatMap(props: Props) {
     <>
       <div ref={el} style={{ position: "absolute", inset: 0 }} aria-label="Satellite map of Chennai district. Click a zone or taluk to filter, a pin to open the incident." />
       {!geo && <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--text-3)" }}>Loading the map…</div>}
+      {canGoBack && focus && (
+        <button type="button" className="map-back" onClick={goBack} title="Return the map to where it was before this incident">
+          <I n="chevl" />Back to previous view
+        </button>
+      )}
       <div className="map-tools">
         <button onClick={() => m()?.zoomIn()} title="Zoom in" aria-label="Zoom in">+</button>
         <button onClick={() => m()?.zoomOut()} title="Zoom out" aria-label="Zoom out">−</button>

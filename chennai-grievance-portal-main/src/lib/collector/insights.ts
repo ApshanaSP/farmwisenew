@@ -15,6 +15,7 @@ import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
 import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metrics";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -117,7 +118,27 @@ const CAT_NOUN: Record<string, [string, string]> = {
   CIVIC_FACILITIES: ["civic facility complaint", "civic facility complaints"], ADMIN_SERVICES: ["tax or certificate complaint", "tax and certificate complaints"]
 };
 
+/**
+ * Insights kept for INSIGHTS_KEEP_MS per scope: the 17 queries took about 3.5 s on every view (15 Nov 2026), so the Overview, the
+ * Briefing, Trends and Jarvis each paid it again for the same answer. The key holds the console's "now" (asOf, itself kept 30 s), and a
+ * decision or an officer step empties the cache at once (syncEpoch), so this is never staler than asOf already is. A caller gets
+ * its own copy: one that edits the result cannot change what the next one reads.
+ */
+const INSIGHTS_KEEP_MS = 30_000;
+const insightsCache = new Map<string, { at: number; p: Promise<Awaited<ReturnType<typeof insightsFresh>>> }>();
 export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {
+  syncEpoch(insightsCache);
+  const key = JSON.stringify([period, zone, dept, focus.cat ?? null, focus.taluk ?? null, part, await asOf()]);
+  const hit = insightsCache.get(key);
+  if (hit && Date.now() - hit.at < INSIGHTS_KEEP_MS) return structuredClone(await hit.p);
+  const p = insightsFresh(period, zone, dept, focus, part);
+  insightsCache.set(key, { at: Date.now(), p });
+  p.catch(() => { if (insightsCache.get(key)?.p === p) insightsCache.delete(key); }); // a failure is not kept
+  if (insightsCache.size > 60) for (const [k, v] of insightsCache) if (Date.now() - v.at >= INSIGHTS_KEEP_MS || insightsCache.size > 60) insightsCache.delete(k);
+  return structuredClone(await p);
+}
+
+async function insightsFresh(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {
   const now = await asOf();
   const s: Scope = { period, zone, dept, cat: focus.cat ?? null, taluk: focus.taluk ?? null };
   const w = where(s, now), pw = where(s, now, { offset: 1 });

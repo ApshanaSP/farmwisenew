@@ -51,6 +51,9 @@ describe("P5-032: the live notice is not rewritten while nothing about it change
     for (const f of listeners.pointerdown ?? []) f({ button: 0, target: btn });
     for (const f of listeners.click ?? []) f({ target: btn, detail: 1 });
     void (g.window as typeof globalThis).fetch("/api/collector/decisions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ incidentId: "INC-1", decision: "verify" }) });
+    // nothing for the first second: quick work shows no notice at all (install.ts SHOW_AFTER_MS)
+    expect(pill.dataset.state).toBe("off");
+    vi.advanceTimersByTime(1010);
     expect(pill.dataset.state).toBe("busy");
     const words = main.textContent;
     expect(words.length).toBeGreaterThan(0);
@@ -72,6 +75,7 @@ describe("P5-032: the live notice is not rewritten while nothing about it change
     for (const f of listeners.pointerdown ?? []) f({ button: 0, target: btn2 });
     for (const f of listeners.click ?? []) f({ target: btn2, detail: 1 });
     void (g.window as typeof globalThis).fetch("/api/collector/decisions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ incidentId: "INC-2", decision: "verify" }) });
+    vi.advanceTimersByTime(1010);
     expect(main.textContent).toBe(words);
     const second = main.writes;
     expect(second).toBeGreaterThan(start.main);

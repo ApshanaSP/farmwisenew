@@ -147,7 +147,7 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
               <div className="map-wrap">
                 <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={d.map.pins} zone={d.zone} layers={c.layers} stations={env.mapStations}
                   added={addedPins} onItem={(i) => c.openItem(i)}
-                  mode={c.mapMode} taluk={c.taluk} focus={c.focus}
+                  mode={c.mapMode} taluk={c.taluk} focus={c.focus} onClearFocus={c.clearFocus}
                   onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)} onPin={(id) => c.openInc(id)} zoneTip={c.zoneTip}
                   onStation={(st) => { c.setEnvSel(st.kind, st.id); c.setPage("environment"); c.toast(`${st.name} selected on the Environment page.`); }}
                   ask={rv ? null : c.mapAsk} grown={!!rv || !!c.mapAsk?.grown} extraTools={!rv && c.mapAsk?.grown ? chrome.tools : undefined}

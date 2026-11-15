@@ -127,6 +127,8 @@ export interface Console {
   focus: { id: string; lat: number; lon: number } | null;
   locate: (i: Row) => void;
   highlight: (i: Row) => void;
+  /** the map's "Back to previous view": no incident is highlighted any more */
+  clearFocus?: () => void;
   layers: Record<string, boolean>;
   toggleLayer: (k: string) => void;
   sevTab: string | null;
@@ -617,6 +619,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
       setFocus({ id: i.id, lat: Number(i.lat), lon: Number(i.lon) });
     },
     highlight: (i) => { if (i.lat != null) setFocus({ id: i.id, lat: Number(i.lat), lon: Number(i.lon) }); },
+    clearFocus: () => setFocus(null),
     layers, toggleLayer: (k) => setLayers((l) => ({ ...l, [k]: !l[k] })),
     sevTab, setSevTab,
     envSel, setEnvSel: (card, id) => setEnvSelState((m) => ({ ...m, [card]: id })),

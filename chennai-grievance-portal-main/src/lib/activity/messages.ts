@@ -160,7 +160,8 @@ export function noticeFor(method: string, path: string, body?: unknown): Notice 
   for (const [rm, re, n] of RULES) {
     if ((rm === "*" || rm === m) && re.test(path)) return typeof n === "function" ? n(parsed) : n;
   }
-  return m === "GET" ? said("Retrieving the requested information") : said("Processing your request", "Your request has been completed.");
+  // a request with no words of its own says it is working only if it is slow (install.ts SHOW_AFTER_MS), and nothing when done
+  return m === "GET" ? said("Retrieving the requested information") : said("Processing your request");
 }
 
 export const SIGNING_OUT = RULES[0][2] as Notice;
