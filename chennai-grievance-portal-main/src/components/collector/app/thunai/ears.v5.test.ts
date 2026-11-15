@@ -2,9 +2,12 @@
  * The ears' v5 items, in node, with stand-ins for the model's runtime (no model file is loaded, nothing leaves the process).
  *  - D1: Silero v5 at 16 kHz is fed [1, 576]: the last 64 samples of the frame before (zeros at the start) and then the 512-sample
  *    frame, as upstream does (silero-vad utils_vad.py, vad-web silero.ts). NEXT_PUBLIC_JARVIS_VAD_CONTEXT=0 restores [1, 512].
+ *  - D2: the echo canceller asked for is the classic one (true) by default; NEXT_PUBLIC_JARVIS_ECHO=all asks for "all" first (a
+ *    plain value, never exact) and true where the browser refuses it. What the track reports is what is stored and shown.
+ * The browser (getUserMedia, AudioContext, the worklet) is a stand-in too: no microphone is opened.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { sileroRunner } from "./ears";
+import { echoApplied, echoAsks, echoAudio, Ears, sileroRunner } from "./ears";
 
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -72,5 +75,88 @@ describe("D1: Silero's 64-sample context", () => {
     await s.run(frame(2));
     expect(feeds.map((f) => f.dims)).toEqual([[1, 512], [1, 512]]);
     expect(arr(feeds[1].data)).toEqual(arr(frame(2)));
+  });
+});
+
+/** a browser with a microphone, an AudioContext and the worklet node, all stand-ins; `refuse` names the error for a constraint it will not take */
+function stubBrowser(o: { refuse?: (c: MediaTrackConstraints) => string | null; settings?: Record<string, unknown> } = {}) {
+  const asked: MediaTrackConstraints[] = [];
+  const track = { readyState: "live", onended: null as unknown, stop: vi.fn(), getSettings: () => o.settings ?? { echoCancellation: true } };
+  const stream = { getTracks: () => [track], getAudioTracks: () => [track] };
+  const getUserMedia = vi.fn(async (c: { audio: MediaTrackConstraints }) => {
+    asked.push(c.audio);
+    const n = o.refuse?.(c.audio);
+    if (n) throw Object.assign(new Error(n), { name: n });
+    return stream;
+  });
+  const port = { onmessage: null as null | ((ev: { data: { frame: Float32Array; total: number } }) => void) };
+  class AC {
+    state = "running"; sampleRate = 48000; audioWorklet = { addModule: async () => undefined };
+    createMediaStreamSource() { return { connect: () => undefined, disconnect: () => undefined }; }
+    resume() { return Promise.resolve(); }
+    close() { return Promise.resolve(); }
+  }
+  class Node { port = port; disconnect() { /* gone */ } }
+  vi.stubGlobal("window", { AudioContext: AC });
+  vi.stubGlobal("navigator", { mediaDevices: { getUserMedia, getSupportedConstraints: () => ({ echoCancellation: true }) } });
+  vi.stubGlobal("AudioWorkletNode", Node);
+  // the model's runtime is not served in node: the energy gate decides, and the warning is not printed
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  return { asked, port, getUserMedia };
+}
+const hooks = () => ({ onVad: vi.fn() });
+
+describe("D2: which echo canceller is asked for, by NEXT_PUBLIC_JARVIS_ECHO", () => {
+  it("unset (the default) or anything but \"all\": the classic canceller, true, alone", () => {
+    for (const f of [undefined, "", "true", "on", "ALL ", "1"]) expect(echoAsks(f)).toEqual([true]);
+  });
+  it("\"all\": all of the system's playout first, then true", () => expect(echoAsks("all")).toEqual(["all", true]));
+  it("each ask is a plain value in the constraints, never { exact }", () => {
+    expect(echoAudio({ echoCancellation: true }, echoAsks(undefined)[0]).echoCancellation).toBe(true);
+    expect(echoAudio({ echoCancellation: true }, echoAsks("all")[0]).echoCancellation).toBe("all");
+  });
+});
+
+describe("D2: the microphone as Ears.start opens it", () => {
+  it("default: one ask, echoCancellation true; the track's own reading is stored", async () => {
+    const b = stubBrowser({ settings: { echoCancellation: true } });
+    const e = new Ears(hooks());
+    await e.start();
+    expect(b.asked.map((a) => a.echoCancellation)).toEqual([true]);
+    expect(e.echoMode).toBe("on");
+    e.stop();
+  });
+  it("NEXT_PUBLIC_JARVIS_ECHO=all: \"all\" is asked for, and stored when the track says so", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_ECHO", "all");
+    const b = stubBrowser({ settings: { echoCancellation: "all" } });
+    const e = new Ears(hooks());
+    await e.start();
+    expect(b.asked.map((a) => a.echoCancellation)).toEqual(["all"]);
+    expect(e.echoMode).toBe("all");
+    e.stop();
+  });
+  it("\"all\" refused by the browser: asked again with true", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_ECHO", "all");
+    const b = stubBrowser({ refuse: (c) => (c.echoCancellation === ("all" as unknown) ? "OverconstrainedError" : null) });
+    const e = new Ears(hooks());
+    await e.start();
+    expect(b.asked.map((a) => a.echoCancellation)).toEqual(["all", true]);
+    expect(e.echoMode).toBe("on");
+    e.stop();
+  });
+  it("\"all\" asked, but the track reads true: it is a true run, and says so", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_ECHO", "all");
+    stubBrowser({ settings: { echoCancellation: true } });
+    const e = new Ears(hooks());
+    await e.start();
+    expect(e.echoMode).toBe("on");
+    expect(echoApplied({ echoCancellation: true })).toBe("on");
+    e.stop();
+  });
+  it("a blocked microphone is still \"blocked\", not asked again", async () => {
+    const b = stubBrowser({ refuse: () => "NotAllowedError" });
+    const e = new Ears(hooks());
+    await expect(e.start()).rejects.toThrow("blocked");
+    expect(b.asked.length).toBe(1);
   });
 });
