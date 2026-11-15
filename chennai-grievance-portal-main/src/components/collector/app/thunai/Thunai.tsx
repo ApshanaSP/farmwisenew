@@ -45,6 +45,7 @@ import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, nowSaying, pathFor, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, warmVoice, warmVoices } from "./mouth";
 import { Conductor, type HeardLine } from "./conductor";
+import { stamp, traceLane, traces } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
 import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
@@ -308,6 +309,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const pushMsg = (m: Omit<JLog, "id" | "at">) => jarvisLog.add(m);
   /** it takes the next sentence without its name for 20 s from now (the address gate's rule), and the bar says so */
   const engagedNow = () => { lastTurnAt.current = Date.now(); hud.set({ engagedUntil: Date.now() + ENGAGED_MS }); };
+  /** the trace (trace.ts) of the spoken sentence handle() is deciding now; null for typed text and once stamped (v5, section 6.4) */
+  const traceOf = useRef<number | null>(null);
+  /** the address gate and the rules have decided: "gateDone" and the turn's lane, on that sentence's own trace only, once */
+  const traceDecided = (lane: "rules" | "planner" | "other") => { const n = traceOf.current; traceOf.current = null; if (n != null && traces().at(-1)?.n === n) { stamp("gateDone"); traceLane(lane); } };
   const [chips, setChips] = useState<Chip[]>([]);
   const [wrong, setWrong] = useState<string | null>(null);
   const [askOnce, setAskOnce] = useState<AskCard | null>(null);
@@ -1562,11 +1567,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // instant controls never wait for the network; sending only ever happens here, from the Collector's own words
     if (rules.kind === "do" && isReflex(rules.steps, st)) {
       if (needsName(planRisk(rules.steps), rules.lang)) return;
+      traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 }); await run(rules.steps, rules.lang, said, "rules"); return;
     }
     // a plain move the rules are sure of ("go to trends", "open the map") is done at once, with no model
     // and so is a command to move around the dashboard ("go to trends and show only Adyar", "switch to weekly", "open the news")
     if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && (isPlainMove(rules.steps) || isNavCommand(said, rules.steps))) {
+      traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);
       return;
@@ -1579,6 +1586,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // "complete this data" with a list on the screen means those rows, not whatever the console's filters hold
     const openRows = (stageRef.current?.blocks ?? []).flatMap((b) => (b.kind === "CaseList" ? b.rows.map((r) => r.id) : []));
     if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+    // the rules could not settle it: the planner's turn (the trace's lane, before its call is made)
+    traceDecided("planner");
     // what it is doing shows in the bar at once; it is not said aloud (a spoken "one moment" was cut off mid-word whenever the
     // answer came quickly). With the mode on the core shows the work, with it off a soft heartbeat does
     const ack = ackTemplated(said, rules.lang, worldRef.current) || ackFor(said, rules.lang);
@@ -2171,7 +2180,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
     // the ears' own confidence and language go to the rules and the planner (v4, defect 6: it was a fixed 0.95 and the language was dropped)
     // (an older turn finishing says nothing about the one now running)
-    void handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source, lang: h.lang }).finally(() => { if (conductor.current?.generation === h.gen) conductor.current.answered(); });
+    // the trace (v5): handle() decides rules or planner before it first waits; anything else it decided by then is "other"
+    traceOf.current = h.trace ?? null;
+    const handled = handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source, lang: h.lang });
+    traceDecided("other");
+    void handled.finally(() => { if (conductor.current?.generation === h.gen) conductor.current.answered(); });
   };
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;

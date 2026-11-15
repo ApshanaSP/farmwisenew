@@ -18,7 +18,11 @@ import { EnergyVad, frameDb, ProbVad, type VadEvent } from "@/lib/thunai/vad";
 export type EarsError = "blocked" | "nomic" | "unsupported" | "failed";
 
 export interface EarsHooks {
-  onVad: (e: Exclude<VadEvent, null>, wall: number) => void;
+  /**
+   * the deciding detector's start or end, at `wall` (performance.now() of the decision); an end also gives `voicedEnd`, the
+   * performance.now() of its last voiced sample (the v5 trace's zero, section 6.4)
+   */
+  onVad: (e: Exclude<VadEvent, null>, wall: number, voicedEnd?: number) => void;
   /** while Jarvis talks: the fast energy gate heard a possible voice (pause now; the model confirms or it resumes) */
   onQuickOnset?: (wall: number) => void;
   /** the energy gate fell quiet again */
@@ -135,6 +139,13 @@ export class Ears {
   private t16 = 0;
   private busy = false;
   private gen = 0;
+  /**
+   * The audio clock on the page's clock (v5 trace, section 6.4): performance.now() minus the audio time (ms) at each frame's arrival,
+   * at its smallest (a frame that reaches the page late is not the clock), let up by 0.02 ms a frame so a slow drift is followed.
+   */
+  private off: number | null = null;
+  /** the deciding detector's last speech start, ms of audio: with an end's `ms`, the end of its last voiced frame */
+  private vStart = 0;
   /** which detector is deciding */
   kind: "silero" | "energy" = "energy";
   /** the model's last speech probability (dev metrics) */
@@ -214,12 +225,14 @@ export class Ears {
     // keep the last KEEP_S seconds, but never drop what a capture still needs (and never more than KEEP_S + 16 s)
     const keepFrom = Math.max(this.total - (KEEP_S + 16) * this.rate, Math.min(this.total - KEEP_S * this.rate, this.capFrom ?? Infinity));
     while (this.ring.length && this.ringStart + this.ring[0].length < keepFrom) { this.ringStart += this.ring[0].length; this.ring.shift(); }
+    const at = (this.total / this.rate) * 1000;
+    const off = performance.now() - at;
+    this.off = this.off == null ? off : Math.min(off, this.off + 0.02);
     if (this.silero) { this.to16(x); this.pump(); }
     const db = frameDb(x);
-    const at = (this.total / this.rate) * 1000;
     this.level = Math.max(0, Math.min(1, (db + 60) / 45));
     const e = this.vad.push(db, at, this.echo);
-    if (e && !this.silero) this.hooks.onVad(e, performance.now());
+    if (e && !this.silero) this.decided(e);
     // with the model deciding, the energy gate's onset (faster than 2 model frames) only pauses Jarvis's voice
     else if (e?.type === "start" && this.silero && this.echo) this.hooks.onQuickOnset?.(performance.now());
     else if (e?.type === "end" && this.silero) this.hooks.onQuickEnd?.(performance.now());
@@ -245,8 +258,18 @@ export class Ears {
       this.t16 += 512;
       this.p = p;
       const e = this.prob.push(p, this.t16 / 16, this.echo);
-      if (e) this.hooks.onVad(e, performance.now());
+      if (e) this.decided(e);
     }).catch(() => { this.silero = null; this.kind = "energy"; }).finally(() => { this.busy = false; this.pump(); });
+  }
+  /**
+   * The deciding detector's event, with the decision's time; an end also carries its last voiced sample on the page's clock (the
+   * start plus the speech's length is the end of its last voiced frame, before the quiet that ended it): the trace's zero.
+   */
+  private decided(e: Exclude<VadEvent, null>) {
+    const wall = performance.now();
+    if (e.type === "start") { this.vStart = e.at; this.hooks.onVad(e, wall); return; }
+    const voiced = this.off == null ? wall : Math.min(wall, this.vStart + e.ms + this.off);
+    this.hooks.onVad(e, wall, voiced);
   }
 
   /** Start keeping the sentence from just before the voice began. */
@@ -288,6 +311,7 @@ export class Ears {
     this.ctx?.close().catch(() => undefined);
     this.ctx = null; this.stream = null; this.node = null; this.src = null; this.ring = []; this.ringStart = 0; this.total = 0; this.capFrom = null;
     this.vad.reset(); this.prob.reset(); this.s16 = []; this.t16 = 0; this.acc = { sum: 0, n: 0, pos: 0 }; this.busy = false; this.level = 0; this.echo = false;
+    this.off = null; this.vStart = 0;
   }
 }
 

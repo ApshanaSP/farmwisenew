@@ -29,6 +29,9 @@
  *    or while Jarvis speaks. The console's captions start only inside it (captions.ts asks it before every start).
  *  - C4: a sentence begun or ended inside that window goes to /hear with ?engaged=1. With NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 a
  *    sentence outside it is never uploaded (and the route refuses audio without the mark); default off, as before.
+ *  - The trace (section 6.4, trace.ts): a sentence sent to /hear opens a turn whose zero is its last voiced sample (the ears give
+ *    it), then "eou" (the detector's decision), "uploadSent", the server's sttSent/sttBack offsets and "hearBack". The HeardLine
+ *    carries the trace's number so the console stamps "gateDone" and the lane on that turn only. Timings only, never words.
  */
 import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
@@ -37,7 +40,11 @@ import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from 
 import { TUNING } from "@/lib/thunai/vad";
 import { Ears, type EarsError, type EchoMode } from "./ears";
 import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, setMouthHooks, speaking, stopVoice, unduckVoice, type VoicePath } from "./mouth";
+import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
+
+/** this turn's trace is still the open one: a stamp for an older turn never lands on a newer turn's trace */
+const isCurrent = (tr: TurnTrace | null): boolean => !!tr && traces().at(-1) === tr;
 
 export const AMBIENT_PER_MIN = 8;
 /**
@@ -64,6 +71,8 @@ export interface HeardLine {
   gen: number;
   /** a question cancelled for speech that turned out not to be for Jarvis, asked again with its own gate */
   again?: boolean;
+  /** the number of this sentence's own trace (trace.ts): the console stamps "gateDone" and the lane on it, and on no other */
+  trace?: number;
 }
 
 export interface ConductorHooks {
@@ -121,6 +130,8 @@ interface Post {
   lane: "engaged" | "ambient";
   /** its words go with the next part of the sentence (that part's transcription joins them) */
   carried: boolean; done: boolean; delivered: boolean;
+  /** the trace opened for this part of the sentence (null: nothing of its own was uploaded) */
+  tr: TurnTrace | null;
   out: { j: HearReply | null; own: Own } | null;
 }
 class HearTimeout extends Error { constructor() { super("timeout"); this.name = "HearTimeout"; } }
@@ -182,6 +193,8 @@ export class Conductor {
   private speechOpen = false;
   /** the speech being heard (or just ended) began inside the window (inWindow at its onset): a sentence begun engaged stays so (C4) */
   private onsetInWindow = false;
+  /** the sentence just ended: its last voiced sample and the end-of-utterance decision (performance.now()), for its trace */
+  private endMark: { voiced: number; eou: number } | null = null;
   private partialText = "";
   private eou: EouWhy | null = null;
   starting = false;
@@ -213,7 +226,7 @@ export class Conductor {
     if (this.ears) return;
     this.starting = true;
     const e = new Ears({
-      onVad: (ev, wall) => {
+      onVad: (ev, wall, voicedEnd) => {
         if (!ev) return;
         if (ev.type === "start") {
           // Jarvis's own earcon is not the Collector's voice; Silero's onset after it is (earconDrops)
@@ -224,6 +237,8 @@ export class Conductor {
           this.h.mark?.("vadStart", wall); this.noteOnset(); this.speechBegan(); this.dispatch({ type: "vadStart", at: ev.at }); this.h.onHearing?.("speech");
         } else {
           this.spokeAt = Date.now();
+          // the trace's zero is the last voiced sample (the ears give it; older ears only the decision), its "eou" the decision
+          this.endMark = { voiced: voicedEnd ?? wall, eou: wall };
           this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short, strong: ev.strong });
           this.speechEnded();
         }
@@ -522,20 +537,27 @@ export class Conductor {
       else if (this.budgetLow || this.ambient.length >= AMBIENT_PER_MIN) { e.drop(); this.setBudgetLow(this.ambient.length); }
       else { this.ambient.push(now); this.h.onBudget?.({ low: false, ambient: this.ambient.length }); wav = e.take(); }
     } else wav = e.take();
+    const mark = this.endMark;
+    this.endMark = null;
     if (!wav && !first) { this.dispatch({ type: "text", text: "", gen }); this.h.onHearing?.("idle"); return; }
+    // a sentence that goes to the transcriber is a turn: its trace opens at its last voiced sample (section 6.4; timings only)
+    const tr = wav && mark ? traceStart(mark.voiced) : null;
+    if (tr && mark) stamp("eou", mark.eou);
     this.h.onHearing?.("reading");
     const ctl = new AbortController();
     let own: Own = "ok";
-    const mine = wav ? this.post(wav, lane, ctl.signal, engaged).catch((err: unknown) => {
+    const mine = wav ? this.post(wav, lane, ctl.signal, engaged, tr).catch((err: unknown) => {
       own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
       return null;
     }) : Promise.resolve(null);
-    const rec: Post = { gen, ctl, lane, carried: false, done: false, delivered: false, out: null, p: Promise.resolve(null) };
+    const rec: Post = { gen, ctl, lane, carried: false, done: false, delivered: false, out: null, p: Promise.resolve(null), tr };
     rec.p = Promise.all([first ? first.p : Promise.resolve(null), mine]).then(([a, b]) => joinHeard(a, b));
     this.inflight = ctl;
     this.live = rec;
     this.posts.add(rec);
     const j = await rec.p;
+    // the sentence's words are here (both parts of one said in two); a newer turn's trace is not this one's
+    if (j && isCurrent(tr)) stamp("hearBack");
     rec.done = true;
     rec.out = { j, own };
     this.posts.delete(rec);
@@ -568,11 +590,11 @@ export class Conductor {
     if (own === "ok") { this.h.onReach?.(true); this.whisperOut = false; this.abortFallback(); }
     if (j.budget === "low" && !j.text?.trim()) { this.setBudgetLow(this.ambient.length); this.dispatch({ type: "text", text: "", gen }); return; }
     this.h.mark?.("transcribed", performance.now());
-    this.accept(j.text ?? "", j.lang ?? this.h.siteLang(), gen, "whisper", confOf(j.conf));
+    this.accept(j.text ?? "", j.lang ?? this.h.siteLang(), gen, "whisper", confOf(j.conf), rec.tr?.n);
   }
 
   /** One POST to /hear, given up after TUNING.hearTimeoutMs. The open Stage's names go with the audio (multipart) when there are any. */
-  private async post(wav: Blob, lane: string, signal: AbortSignal, engaged = false): Promise<HearReply> {
+  private async post(wav: Blob, lane: string, signal: AbortSignal, engaged = false, tr: TurnTrace | null = null): Promise<HearReply> {
     const ctl = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, TUNING.hearTimeoutMs);
@@ -596,10 +618,14 @@ export class Conductor {
         if (last) url += `&lastLang=${last}`;
         init = { method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav, signal: ctl.signal };
       }
+      if (isCurrent(tr)) stamp("uploadSent");
       const r = await fetch(url, init);
       if (r.status === 429) return { text: "", lang: this.h.siteLang(), budget: "low" };
       if (!r.ok) throw new HearHttp(r.status);
-      return (await r.json()) as HearReply;
+      const j = (await r.json()) as HearReply & { timing?: ServerTiming };
+      // the server's own stages (speech-to-text sent and back), as offsets from its receipt, placed at this upload (trace.ts)
+      if (isCurrent(tr)) stampServer("uploadSent", j.timing);
+      return j;
     } catch (err) {
       if (timedOut) throw new HearTimeout();
       throw err;
@@ -609,7 +635,7 @@ export class Conductor {
     }
   }
 
-  private accept(text: string, lang: "en" | "ta", gen: number, source: "whisper" | "captions", conf: number) {
+  private accept(text: string, lang: "en" | "ta", gen: number, source: "whisper" | "captions", conf: number, trace?: number) {
     const saying = this.sayingAtOnset ?? nowSaying();
     const interrupted = !!this.sayingAtOnset;
     this.sayingAtOnset = null;
@@ -633,7 +659,7 @@ export class Conductor {
       this.backOn(interrupted);
       return;
     }
-    this.pending = { lang, source, gate, conf };
+    this.pending = { lang, source, gate, conf, ...(trace != null ? { trace } : {}) };
     this.forgetCancelled();
     this.dispatch({ type: "text", text: gate.text, gen, yesWanted: this.h.wantsYes?.() ?? false });
   }

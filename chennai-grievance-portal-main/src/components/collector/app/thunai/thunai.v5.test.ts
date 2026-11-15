@@ -31,7 +31,8 @@ describe("gateDone and the lane, after the gate and the rules", () => {
     expect(planner).toBeGreaterThan(-1);
     expect(agent).toBeGreaterThan(planner);
     // the rules' lanes are stamped before their run(), not after it
-    const reflex = between("if (rules.kind === \"do\" && isReflex(rules.steps, st)) {", "return; }");
+    const reflex = between("if (rules.kind === \"do\" && isReflex(rules.steps, st)) {", "\n    }");
+    expect(reflex.indexOf("traceDecided(\"rules\")")).toBeGreaterThan(-1);
     expect(reflex.indexOf("traceDecided(\"rules\")")).toBeLessThan(reflex.indexOf("await run("));
   });
 });
