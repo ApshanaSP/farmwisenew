@@ -1,5 +1,59 @@
 # Jarvis mode: results
 
+## v5 (15-16 Nov 2026)
+
+Measured on this Windows laptop, branch `claude/jarvis-v5-build-dfece7`, START `f830efbd` (`origin/main`: the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. "Base" means START itself, run in a detached worktree with no v5 code. Raw files: `eval/holdout/results/grid-*.json`, `eval/holdout*/results/v5*`, `tests/e2e/results/`. Every interval is a 95 % Wilson interval; every paired comparison is an exact two-sided McNemar on the same sentences (b = right only in the first, c = right only in the second). The older sections below are unchanged.
+
+### Capacity and blocks, before any number
+
+- **Claude: not called, by design.** The owner's instruction is to build and test on Groq and add the Haiku 5.5 key at deploy. Every Claude path is tested with a mocked client; every live runner removes the Anthropic key from its own process first (`liverecord.ts` `groqOnly()`), and live servers run with `JARVIS_CLAUDE_OFF=1`. No result file of this build has a Claude row.
+- **Groq is on the free plan.** First calls' headers: `x-ratelimit-limit-tokens: 8000` (a minute), `x-ratelimit-limit-requests: 1000` (a day) on all three models. `x-ratelimit-remaining-requests` read 999 with `x-ratelimit-reset-requests: 1m26.4s` (86,400 s / 1,000), although the copied ledger held 33-59 requests a model from the v4 build in the last 24 h. **Inferred, not verified:** the day's limits refill continuously, so the ledger's rolling 24 h window understates what is left. This build still obeyed the ledger.
+- **The browser specs spend Groq** through the console's own translator (base spec run: gpt-oss-120b about 10.7K tokens, gpt-oss-20b 11.3K, qwen 2.2K, flash-lite 8.5K, logged only in the spec ledger, with per-minute 429s). Every later spec server ran with the console's AI providers off.
+
+### v5 baseline, re-measured on START (no quota unless said)
+
+| # | Measure | Command (app folder) | Result |
+|---|---|---|---|
+| 1 | Unit suite | `npx vitest run` | **5,515 passed, 13 skipped, 0 failed** (5,528), 73 s |
+| 2 | Type check | `npx tsc --noEmit --incremental false` | clean, 38 s |
+| 3 | Build | `npx next build` | green, 131 s |
+| 4 | Jarvis browser specs (7 files) | `npx playwright test tests/e2e/mode.spec.ts … hud.spec.ts` (dev server 3011) | **39/39** (mode 14, bargein 5, hold 5, vad 2, vadfake 1, e2e-latency 3, HUD 9: 8 screens and fps), 15.3 min |
+| 5 | Side talk, holdout3 | `HOLDOUT=ambient HOLDOUT_DIR=holdout3 HOLDOUT_TAG=v5base … holdout.live.ts` | **17/40 acted** (EN 2/12, TA 7/16, Tanglish 8/12), level B/C 0 |
+| 6 | Side talk, holdout2 | the same with `HOLDOUT_DIR=holdout2` | **4/60 acted**, B/C 0; unnamed commands accepted 35/40 |
+| 7 | New intents, no model | `HOLDOUT=rules3 HOLDOUT_DIR=holdout3 HOLDOUT_SET=all HOLDOUT_TAG=v5base …` | **12/120 right, 92 left to the planner** (EN 8/35, TA 2/50, Tanglish 2/35) |
+| 8 | Prompt and schema size, characters / 4 | `GRID=sizes … grid.live.ts` | screens: v4 system 1,180 + schema 1,025 + bare user 38; v3 927 + 686 + 38. wide: v4 1,837 + 1,742 + 55; v3 1,488 + 1,403 + 55. v4 console 901 + 1,030; stage 824 + 1,116; data 1,352 + 1,035; memory 779 + 1,121 |
+| 9 | Barge-in duck; mocked latency | from 4 | pause p50 70 / **p90 82 ms** (8 clips); mocked first spoken finding p50 2,040 / p90 4,925 ms, ack 786 / 3,221 |
+| 10 | QA gate | not re-run on the base | the last gate was green on `6edad240` (v4 build log); START adds v4's evidence, one fix and two non-Jarvis commits |
+
+**Not re-measured on day 1, quoted from the v4 build (taken 15 Nov by the v4 build, not re-run):** live-60 39/60 (65 %, 52.4-75.8; Tamil 18/30), new intents 6/29 on holdout3's live30 (1 capacity), 14/20 right three times out of three on the old 20-sentence sample, engaged speech-to-text p50 513 ms, real first spoken finding 2.3-2.8 s on the planner lane. Each with the caveats in the v4 section below. Tamil Whisper word error rate (about 0.50, older run): not re-measured, the clips are not on this machine.
+
+### Step 0: is the drop from 44 to 39 real?
+
+By script, b, c and p only: `final-planner-live60.json` (44/60, the pre-v4 final run, which met four Groq 429s) against `v4final-groq-planner-live60.json` (39/60). **n 60, b 9, c 4, exact p 0.267, mid-p 0.180: not significant.** Who answered (counts only): the 44 run: no model 20, qwen 24, gpt-oss-20b 9, gpt-oss-120b 7; the 39 run: no model 23, qwen 13, gpt-oss-20b 9, gpt-oss-120b 5, **gemini-3.5-flash-lite 10**. In the 39 run 10 of 37 model turns fell to the ladder's bottom rung (none of the 44 run's 40). The ladder order is not recorded in either file.
+
+### The diagnosis grid (first planner call, pinned Groq models, `eval/holdout/tuning24.jsonl`)
+
+The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-120b 115K tokens left against 163-186K a model), so by the brief's rule cells A and B ran first on every model, then cell G on gpt-oss-20b with what was left. Sentences: a seeded (20261115), language-balanced order; 15, 18, 15. Right = `kind` and recipe match gold. **Direction only: with 10-13 pairs only very large effects show (six discordant pairs all one way is p 0.03).**
+
+| Model | A (v3 prose, v3 schema) | B (v4, today) | G (route-then-fill) |
+|---|---|---|---|
+| gpt-oss-20b | 9/15 (60.0 %, 35.7-80.2) | 9/14 (64.3 %, 38.8-83.7), 1 capacity | 9/14 (64.3 %, 38.8-83.7), 1 capacity |
+| gpt-oss-120b | 11/18 (61.1 %, 38.6-79.7) | 15/17 (88.2 %, 65.7-96.7), 1 capacity | not run |
+| qwen3.8-27b | 9/14 (64.3 %, 38.8-83.7), 1 capacity | 12/15 (80.0 %, 54.8-93.0) | not run |
+
+| Pair (same model, same sentences; A, C, D, E only on recipes both schemas hold) | n | b | c | exact p | Reading |
+|---|---|---|---|---|---|
+| A vs B, gpt-oss-20b | 10 | 3 | 0 | 0.25 | A beats B by the direction rule (b - c >= 3) |
+| A vs B, gpt-oss-120b | 12 | 0 | 1 | 1.0 | about equal |
+| A vs B, qwen | 10 | 2 | 0 | 0.5 | about equal |
+| G vs A, gpt-oss-20b | 10 | 0 | 2 | 0.5 | about equal |
+| G vs B, gpt-oss-20b | 13 | 4 | 3 | 1.0 | about equal |
+
+- **Cells C, D, E (on gpt-oss-120b) and F (on qwen) did not fit the ledger: owed** (commands in the handover).
+- **Strict-mode 400s:** on both gpt-oss models most first calls came back `json_validate_failed` with a draft the lenient schema accepted (as production does): A 11/15 and 13/18, B 11/14 and 14/17, G 12/15. qwen: 1 and 2. Those calls carry no provider token count. Cached input tokens: none on gpt-oss-20b's A and B; 120b's B averaged 100 a call, G 119.
+- **Reading against 7.5:** A beat B on gpt-oss-20b only, about equal on the other two, no model the other way by 3. The rows that would say why (A against C, D, E; F against B) are owed. G does not beat A. **No row that selects a planner change holds, so Phase 4 ships the capacity items (A2, A5) and builds A1/A1b behind `JARVIS_PLANNER_DIET`, default off; A3 (route-then-fill) stays built and unwired.**
+- The grid's own tokens (ledger): qwen 49.8K, gpt-oss-20b 68.9K plus G about 34K (estimate), gpt-oss-120b 77.3K.
+
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 
 Measured on this Windows laptop, on branch `claude/priceless-bouman-2fe7f8` (from `main` `38d96d2f`). The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. "Base" means `main` itself, run in a detached worktree of `38d96d2f` with no v4 code. Raw files are in `eval/holdout/results/`, `eval/holdout2/results/` and `eval/holdout3/results/`, with tags `v4base-*` and `v4final-*`. The older sections below are kept as they were.
