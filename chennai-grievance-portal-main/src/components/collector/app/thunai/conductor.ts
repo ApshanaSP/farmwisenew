@@ -243,8 +243,11 @@ export class Conductor {
     } catch (err) {
       // the microphone may already be open when a later step fails: its tracks stop here
       e.stop();
-      if (this.ears === e) this.ears = null;
       this.starting = false;
+      // closed while it was still starting (Jarvis turned off as the microphone opened): the closed audio context's rejection is not a
+      // microphone failure, so nothing is said and the mode is not turned to muted (v4 spec finding: mode.spec "off and muted")
+      if (this.ears !== e) return;
+      this.ears = null;
       this.h.onFail?.((err as Error).message as EarsError);
       throw err;
     }

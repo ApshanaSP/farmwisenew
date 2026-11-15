@@ -46,6 +46,8 @@ const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia
 const isTa = (t: string) => /[஀-௿]/.test(t);
 /** the core's size in the bar, in CSS pixels: the canvas is drawn at this size, not scaled down from a bigger one */
 export const CORE_PX = 40;
+/** the core's shortest frame: about 66 fps at most, whatever the screen's refresh rate */
+export const MIN_FRAME_MS = 15;
 const toneNow = (): "light" | "dark" => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
 
 /**
@@ -67,7 +69,7 @@ function Core({ v, anchor, glow }: { v: VisualState; anchor: RefObject<HTMLSpanE
     c.width = c.height = Math.round(CORE_PX * dpr);
     const g = c.getContext("2d", { alpha: true });
     if (!g) return;
-    let raf = 0, timer: ReturnType<typeof setTimeout> | null = null, alive = true;
+    let raf = 0, timer: ReturnType<typeof setTimeout> | null = null, alive = true, lastPaint = 0;
     let smooth = 0, ph = 0, last = 0;
     const paint = (t: number) => {
       const st = vs.current;
@@ -85,6 +87,10 @@ function Core({ v, anchor, glow }: { v: VisualState; anchor: RefObject<HTMLSpanE
     const frame = (t: number) => {
       raf = 0;
       if (!alive) return;
+      // a 144 Hz screen calls this 144 times a second: the core draws at most about 60 times (the fps spec measured 143 draws a second
+      // while speaking); the calls in between are skipped, not drawn
+      if (lastPaint && t - lastPaint < MIN_FRAME_MS) { raf = requestAnimationFrame(frame); return; }
+      lastPaint = t;
       const vis = paint(t);
       const d = frameDelay(vis, { hidden: document.hidden, reduced: still, sinceMs: t - since.current });
       if (d == null) { last = 0; return; }

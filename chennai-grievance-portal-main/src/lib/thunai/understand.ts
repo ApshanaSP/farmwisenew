@@ -319,6 +319,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // the new intents that are flows of their own (Jarvis v4): "what changed since yesterday" is not a question about a window the console holds, "build me a
   // water-crisis board for Velachery" is not a taluk filter, "how do you know?" is not a question for Ask District IQ. Handed on, never acted on by the rules
   // (and so never "sure" for the address gate); quick.ts intentMarker names them for the coordinator
+  // a save said after another request ("show Adyar and save this workspace as Daily") is a level-B request in the same breath: the rules
+  // would act on the first half and read the name as a period, so the whole sentence goes on, where the save waits for the name and a
+  // yes (v4 spec finding, mode.spec "a level B request with no name does not run")
+  if (!/^save\b/.test(s) && /\bsave\s+(?:(?:this|the|my|current|it)\s+)?(?:(?:view|screen|layout|workspace|page|dashboard)\s+)?as\b/.test(s)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   const marker = intentMarker(heard);
   if (marker && (marker.intent === "changed" || marker.intent === "mission" || (marker.intent === "howknow" && !/^(the )?sources?$/.test(s)))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
 
