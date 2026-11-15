@@ -21,6 +21,7 @@
  * Whisper bills a 10 s minimum per request: the ledger is told, so the listening budget is what Groq will really count.
  */
 import { correctTranscript, gazetteerOn } from "./gazetteer";
+import { groqFetch } from "./keepalive";
 import { ledger, type Lane } from "./ledger";
 import { STT_NAMES, sttTamilName } from "./lexicon";
 import { serverClock, type ServerTiming } from "./stagetime";
@@ -256,8 +257,12 @@ export function wavSeconds(b: ArrayBuffer | Uint8Array): number {
 
 export type Fetcher = typeof fetch;
 
-/** One decode. Keys are tried in turn for a refused key; a 429 is the organisation's, so another key will not help. */
-export async function decode(audio: Blob, lang: "en" | "ta", model: string, signal: AbortSignal | undefined, fetcher: Fetcher = fetch, prompt: string = sttPrompt(lang), ms: number = WHISPER_MS): Promise<Decode> {
+/**
+ * One decode. Keys are tried in turn for a refused key; a 429 is the organisation's, so another key will not help. With no fetcher
+ * given, the request goes through keepalive.ts (v5 E3: undici's fetch on a keep-alive Agent with JARVIS_KEEPALIVE on, else the
+ * built-in fetch).
+ */
+export async function decode(audio: Blob, lang: "en" | "ta", model: string, signal: AbortSignal | undefined, fetcher: Fetcher = groqFetch, prompt: string = sttPrompt(lang), ms: number = WHISPER_MS): Promise<Decode> {
   let last: Error = new Error("no-key");
   for (const key of keys()) {
     const f = new FormData();

@@ -21,6 +21,7 @@ import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrock
 import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
+import { groqFetch } from "@/lib/thunai/keepalive";
 
 export type Role = "fast" | "reasoning";
 export type ProviderName = "gemini" | "bedrock" | "groq" | "openai" | "anthropic";
@@ -145,7 +146,8 @@ function anthropic(): Provider | null {
 function groq(): Provider | null {
   const apiKey = env("GROQ_API_KEY");
   if (!apiKey) return null;
-  const p = createGroq({ apiKey });
+  // v5 E3: groqFetch is undici's fetch on a keep-alive Agent with JARVIS_KEEPALIVE on (keepalive.ts), else the built-in fetch
+  const p = createGroq({ apiKey, fetch: groqFetch });
   // more keys (GROQ_API_KEY_2 ... GROQ_API_KEY_5) bring their own allowance: each key's models join the pool after the one
   // before, so they answer once those are rate-limited or out for the day. Their model ids carry "#2", "#3"... (logs, cooling,
   // per-minute use). A key given twice counts once.
@@ -154,7 +156,7 @@ function groq(): Provider | null {
     const key = env(`GROQ_API_KEY_${k}`);
     if (!key || seen.has(key)) return [];
     seen.add(key);
-    return [{ tag: `#${k}`, p: createGroq({ apiKey: key }) }];
+    return [{ tag: `#${k}`, p: createGroq({ apiKey: key, fetch: groqFetch }) }];
   });
   // three free models, 8,000 tokens a minute each (about 1 s a call when not rate-limited); qwen also writes strict JSON
   const ids = {

@@ -24,7 +24,7 @@ vi.mock("undici", async (importOriginal) => {
 });
 
 import { Agent } from "undici";
-import { groqFetch, KEEPALIVE_OPTIONS, keepAliveAgent, keepAliveOn, warmFetch } from "./keepalive";
+import { groqFetch, KEEPALIVE_DEFAULT, KEEPALIVE_OPTIONS, keepAliveAgent, keepAliveOn, warmFetch } from "./keepalive";
 import { resetLedger } from "./ledger";
 import { hearUtterance } from "./stt";
 import { generateJson } from "@/lib/ai/gateway";
@@ -87,7 +87,7 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     expect(body).toBeInstanceOf(UFormData);
     expect(body.get("model")).toBe("whisper-large-v3-turbo");
     expect(body.get("language")).toBe("ta");
-    const file = body.get("file") as File;
+    const file = body.get("file") as unknown as File;
     expect(file.name).toBe("speech.wav");
     expect(file.type).toBe("audio/wav");
     expect([...new Uint8Array(await file.arrayBuffer())]).toEqual([1, 2, 3]);
@@ -109,6 +109,14 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     await groqFetch("https://api.groq.com/x", {});
     expect(builtin).toHaveBeenCalledTimes(1);
     expect(seen.calls).toHaveLength(1);
+  });
+  it("unset: on by default (the measured gain), but off under the unit-test runner so a stubbed global fetch sees every call", () => {
+    expect(KEEPALIVE_DEFAULT).toBe(true);
+    vi.stubEnv("JARVIS_KEEPALIVE", "");
+    expect(process.env.VITEST).toBeTruthy();
+    expect(keepAliveOn()).toBe(false);
+    vi.stubEnv("VITEST", "");
+    expect(keepAliveOn()).toBe(true);
   });
 });
 
