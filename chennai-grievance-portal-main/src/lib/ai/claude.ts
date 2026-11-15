@@ -49,7 +49,13 @@ export function claudeProblem(): string | null {
   return f && f.key === env("ANTHROPIC_API_KEY") && (f.until == null || Date.now() < f.until) ? f.reason : null;
 }
 
-export const claudeConfigured = (): boolean => !!env("ANTHROPIC_API_KEY") && !claudeProblem();
+/**
+ * The hard switch (v5 build): JARVIS_CLAUDE_OFF=1 and nothing reaches Anthropic (no ladder rung, no warm-up, no console step, no direct
+ * call), whatever ANTHROPIC_API_KEY says: Next loads .env itself, so an emptied key in the shell may not stop it. Default off.
+ */
+export const claudeOff = (): boolean => env("JARVIS_CLAUDE_OFF") === "1";
+
+export const claudeConfigured = (): boolean => !claudeOff() && !!env("ANTHROPIC_API_KEY") && !claudeProblem();
 
 /** A console step's model by its role; with no role, Jarvis's. */
 export function claudeModel(role?: ClaudeRole): string {
@@ -61,6 +67,8 @@ export function claudeModel(role?: ClaudeRole): string {
 
 /** No retries inside the SDK: the gateway and the ladder decide what comes next. */
 function client(): Anthropic {
+  // every request is built through here: the switch holds even for a caller that did not ask claudeConfigured()
+  if (claudeOff()) throw new Error("Claude is switched off (JARVIS_CLAUDE_OFF=1).");
   const key = env("ANTHROPIC_API_KEY");
   if (global.__claude?.key !== key) global.__claude = { key, client: new Anthropic({ apiKey: key, maxRetries: 0 }) };
   return global.__claude.client;
@@ -445,6 +453,7 @@ function outcomeOf(e: unknown): ClaudeOutcome {
  * An error thrown after Claude answered (a refusal, an off-schema reply, a failed second try) carries the usage it was billed (billedOf).
  */
 export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonResult<T>> {
+  if (claudeOff()) throw new Error("Claude is switched off (JARVIS_CLAUDE_OFF=1).");
   const model = a.model || claudeModel(a.role);
   const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   try {
