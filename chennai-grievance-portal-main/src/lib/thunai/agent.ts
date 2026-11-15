@@ -19,7 +19,7 @@ import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { detectLang } from "./normalise";
 import { figuresIn, stripFigures, zoneLabelsOut } from "./numbergate";
-import { AiStep, checkPlan, codesText, stateCard, type AiPlan, type Context } from "./plan";
+import { AiStep, checkPlan, codesText, ownWords, stateCard, type AiPlan, type Context } from "./plan";
 import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
 import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
 import type { Lang, PeriodKey, ScreenState, Sev, Step, View, World } from "./types";
@@ -497,6 +497,32 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
   return finish(plan, input, d, { t0, rounds, model, results, clock, until });
 }
 
+/** v5 G3 (a): the Stage's blocks that hold news or complaint text (headlines, complaint titles, a case's what and timeline, brief points) */
+const NEWS_OR_COMPLAINT = new Set<string>(["NewsReader", "CaseList", "CaseDetail", "Brief", "Filled", "MapView"]);
+/**
+ * v5 G3 (a): the news or complaint text the Stage showed in this turn, or null when it showed none. Read from the Stage's blocks of those
+ * kinds (their labels, when the browser sent them), the screen digest's "news:" and "cases(N):" items (stagelocal.ts stageDigest), and,
+ * when there is any, what the tools returned this turn. The Stage's own title is code's wording and is not counted.
+ */
+function newsOrComplaintShown(input: AgentInput, results: { result: ToolResult }[]): string[] | null {
+  const blocks = (input.stage?.blocks ?? []).filter((b) => NEWS_OR_COMPLAINT.has(b.kind) && (b.ids.length > 0 || (b.labels?.length ?? 0) > 0));
+  const texts: string[] = blocks.flatMap((b) => (b.labels ?? []).filter((x) => typeof x === "string"));
+  let fromDigest = false;
+  for (const raw of input.screen ?? []) {
+    let items: unknown = null;
+    try { items = (JSON.parse(raw) as { items?: unknown })?.items; } catch { continue; }
+    if (typeof items !== "string") continue;
+    for (const seg of items.split(" | ")) {
+      const m = /^(?:news|cases\(\d+\)):\s*/.exec(seg);
+      if (!m) continue;
+      fromDigest = true;
+      texts.push(...seg.slice(m[0].length).split(/;\s*(?=\d+=)/).map((x) => x.replace(/^\d+=/, "").trim()).filter(Boolean));
+    }
+  }
+  if (!blocks.length && !fromDigest) return null;
+  return [...texts, ...recordText(results)];
+}
+
 export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
   const w = d.world;
   // after a data round, every line Jarvis says as its own states one of the results' figures, as the answer screen's must: a line with
@@ -529,6 +555,13 @@ export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, 
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
   // 3: steps beyond showing data (typing, the voice mode, theme, language, memory, drafts, presses) only when the Collector's own words asked
   let modelSteps = stepsAskedFor((v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? ""))), input.text);
+  // v5 G3 (a): the Stage showed news or complaint text this turn: a note is kept only in the Collector's own words, from his sentence
+  // and not read off the screen (plan.ts ownWords); store.ts checks the same again at the write, given what the Stage showed
+  const shownNews = newsOrComplaintShown(input, run.results);
+  if (shownNews) {
+    const places = w.zones.flatMap((z) => [z.name, z.ta ?? ""]).filter(Boolean);
+    modelSteps = modelSteps.filter((s) => s.a !== "remember" || ownWords(s.text, input.text, shownNews, places));
+  }
   const reply = v1.kind === "do" && !bad(v1.reply) && cites(v1.reply) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
   // a body of another city ("Mumbai police", "Coimbatore corporation") is not ours: whatever the model made of it, our department filter is not put on

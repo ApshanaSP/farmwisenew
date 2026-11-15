@@ -10,10 +10,20 @@ import { brokenAt, chain, GENESIS, type AuditEvent, type AuditLine } from "./aud
 import { redactText } from "./privacy";
 import { emptyWatch, withPref, withSeen, withSpoken, type WatchPref, type WatchState } from "./watch";
 import type { Follow, Snapshot } from "./signals";
+import { fromSaid, NOTE_SOURCE, ownWords, promptable } from "./plan";
+
+export { fromSaid };
 
 const dir = () => process.env.THUNAI_DIR || path.join(process.cwd(), "data", "thunai");
 
-export interface Note { id: string; text: string; at: string }
+/**
+ * A kept note. v5 G3 (c): `source` "collector-spoken" (the Collector's own words, written through changeMemory's checks), `at` when it
+ * was written and `turn` the turn id that wrote it (null when the client sent none). A note saved before v5 has no source: it stays on
+ * disk and in the Collector's own list ("what do you remember", the memory panel) where he can forget it, and never reaches a prompt.
+ */
+export interface Note { id: string; text: string; at: string; source?: typeof NOTE_SOURCE; turn?: string | null }
+/** a list entry that is a note at all (an object with text), whatever its source: what the Collector's own list may show */
+const isNote = (n: unknown): n is Note => !!n && typeof n === "object" && !Array.isArray(n) && typeof (n as Note).text === "string";
 export interface Reminder { id: string; text: string; at: string; done: boolean }
 export interface Memory {
   notes: Note[];
@@ -64,14 +74,21 @@ function load(user: number): { m: Memory; damaged: boolean; unreadable?: boolean
   } catch { return { m: blank(), damaged: true }; }
 }
 
-/** For the prompt-building routes: never throws; a damaged file reads as empty here but stays on disk untouched until a write keeps it aside. */
-export function readMemory(user: number): Memory { return load(user).m; }
+/**
+ * For the prompt-building routes: never throws; a damaged file reads as empty here but stays on disk untouched until a write keeps it aside.
+ * v5 G3 (c): only notes with source "collector-spoken" (plan.ts promptable): the plan, agent and round routes map these notes to their text
+ * for the planner, so a note saved before v5, or anything in the list that is not a note, never reaches a prompt. Nothing is removed from disk.
+ */
+export function readMemory(user: number): Memory { const m = load(user).m; return { ...m, notes: m.notes.filter(promptable) as Note[] }; }
 
-/** For answering the person: throws MemoryDamagedError instead of showing empty lists for a file that still holds their notes. */
+/**
+ * For answering the person: throws MemoryDamagedError instead of showing empty lists for a file that still holds their notes. Every note
+ * is shown, a pre-v5 one without a source too (he can forget it); an entry in the list that is not a note at all is left out of the answer.
+ */
 export function readMemoryStrict(user: number): Memory {
   const r = load(user);
   if (r.damaged) throw new MemoryDamagedError(user);
-  return r.m;
+  return { ...r.m, notes: r.m.notes.filter(isNote) };
 }
 
 /** Copies a damaged file beside itself before anything is written over it. Returns the copy's name, or null when the file is fine. */
@@ -96,7 +113,7 @@ const id = () => crypto.randomBytes(6).toString("hex");
 const clip = (s: string, n: number) => s.replace(/\s+/g, " ").trim().slice(0, n);
 
 export type MemoryOp =
-  | { op: "note"; text: string }
+  | { op: "note"; text: string; turn?: string }
   | { op: "forget"; id?: string; all?: boolean }
   | { op: "remind"; text: string; at: string }
   | { op: "reminderDone"; id: string }
@@ -107,8 +124,13 @@ export type MemoryOp =
   | { op: "pin"; pin: Pin }
   | { op: "unpin"; id: string }
   // v4, Level B: each carries the Collector's yes (a spoken or typed "yes", or a tap), checked here as well as in the route
-  /** "remember …": only the Collector's own sentence (`said`, when given, must hold the note's words), cleaned, never an order to Jarvis */
-  | { op: "remember"; text: string; said?: string; yes: true }
+  /**
+   * "remember …": only the Collector's own sentence (`said`, when given, must hold the note's words), cleaned, never an order to Jarvis.
+   * v5 G3: `turn` is the id of the turn that asked (stored with the note); `shown` is the news or complaint text the Stage showed in that
+   * turn (headlines, complaint titles and summaries), sent only for this check and never kept: when there is any, the note must be the
+   * Collector's own words (plan.ts ownWords), else it is refused ("not-said" with no sentence, "copied" when read off the screen).
+   */
+  | { op: "remember"; text: string; said?: string; yes: true; turn?: string; shown?: string[] }
   /** "forget that": the last note */
   | { op: "forgetLast"; yes: true }
   /** "reset": everything, follows and the watch's choices too */
@@ -125,9 +147,10 @@ const LEVEL_B = new Set(["remember", "forgetLast", "reset", "follow", "unfollow"
 
 /** A note the store will not keep, and why, in both languages. */
 export class NoteRefusedError extends Error {
-  constructor(public why: "instruction" | "empty" | "link" | "not-said" | "no-yes", public reply: { en: string; ta: string }) { super(`note refused: ${why}`); this.name = "NoteRefusedError"; }
+  constructor(public why: "instruction" | "empty" | "link" | "not-said" | "copied" | "no-yes", public reply: { en: string; ta: string }) { super(`note refused: ${why}`); this.name = "NoteRefusedError"; }
 }
 const REFUSE: Record<NoteRefusedError["why"], { en: string; ta: string }> = {
+  copied: { en: "That reads like the screen's own words. Tell me the note in your own words and I'll keep it.", ta: "அது திரையில் உள்ள வார்த்தைகள் மாதிரி இருக்கு. உங்க சொந்த வார்த்தைகளில் சொல்லுங்க, வச்சுக்குவேன்." },
   instruction: { en: "I won't keep that: it reads like a standing order to me, and I only keep notes about your work, never rules for what I do.", ta: "அதை நான் சேமிக்க மாட்டேன்: அது எனக்கான கட்டளை மாதிரி இருக்கு. உங்க வேலை பற்றிய குறிப்புகளை மட்டும்தான் வச்சுக்குவேன்." },
   empty: { en: "There was nothing left to keep once numbers and quoted words were taken out.", ta: "எண்களும் மேற்கோள் வார்த்தைகளும் நீக்கிய பிறகு சேமிக்க எதுவும் இல்லை." },
   link: { en: "I don't keep links in my notes.", ta: "குறிப்புகளில் இணைப்புகளை நான் சேமிப்பதில்லை." },
@@ -157,7 +180,6 @@ const ORDERS: RegExp[] = [
 ];
 const QUOTED = /"[^"]*"|“[^”]*”|„[^“”]*[“”]|«[^»]*»|‘[^’]*’|(?<![\p{L}\p{N}])'[^']{2,}'(?![\p{L}\p{N}])/gu;
 const LINK = /\bhttps?:\/\/|\bwww\.|\b[\w-]+\.(?:com|in|org|net|io|gov|co)\b/i;
-const words = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean);
 
 /**
  * A note as the store keeps it: phone numbers, Aadhaar-like numbers and e-mails taken out, quoted words (a citizen's own) taken out,
@@ -174,16 +196,16 @@ export function safeNote(text: string): { ok: true; text: string; stripped: bool
   return { ok: true, text: clip(cleaned, 300), stripped: cleaned !== raw };
 }
 
-/** Is the note drawn from the Collector's own sentence? At least four-fifths of its words are in what was said. */
-export function fromSaid(note: string, said: string): boolean {
-  const s = new Set(words(said)), n = words(note);
-  return n.length > 0 && n.filter((w) => s.has(w)).length >= Math.ceil(0.8 * n.length);
-}
-
-function noteOrRefuse(text: string, said?: string): string {
+function noteOrRefuse(text: string, said?: string, shown?: unknown): string {
   const r = safeNote(text);
   if (!r.ok) throw new NoteRefusedError(r.why, REFUSE[r.why]);
   if (said != null && !fromSaid(r.text, said)) throw new NoteRefusedError("not-said", REFUSE["not-said"]);
+  // v5 G3 (a): the Stage showed news or complaint text in this turn: the note is kept only in the Collector's own words (plan.ts ownWords)
+  const onStage = Array.isArray(shown) ? shown.filter((x): x is string => typeof x === "string" && !!x.trim()).slice(0, 60) : [];
+  if (onStage.length) {
+    if (said == null) throw new NoteRefusedError("not-said", REFUSE["not-said"]);
+    if (!ownWords(r.text, said, onStage)) throw new NoteRefusedError("copied", REFUSE.copied);
+  }
   return r.text;
 }
 
@@ -192,17 +214,22 @@ export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memo
   // a Level B change with no yes is refused before anything is read or written (the route checks it too)
   if (LEVEL_B.has(op.op) && (op as { yes?: unknown }).yes !== true) throw new NoteRefusedError("no-yes", REFUSE["no-yes"]);
   // a note is checked before anything is written, so a refused one leaves the file as it was
-  const noteText = op.op === "note" ? noteOrRefuse(op.text) : op.op === "remember" ? noteOrRefuse(op.text, op.said) : null;
+  const noteText = op.op === "note" ? noteOrRefuse(op.text) : op.op === "remember" ? noteOrRefuse(op.text, op.said, op.shown) : null;
   keepDamagedAside(user); // RC-51: a half-written file is copied aside before the new note replaces it
-  const m = readMemory(user);
+  const m = load(user).m; // every note, a pre-v5 one without a source too: a write never drops what the prompt read leaves out
   const at = now.toISOString();
   const t = now.getTime();
   const watch = (): WatchState => ({ ...emptyWatch(), ...(m.watch ?? {}) });
   switch (op.op) {
-    case "note": case "remember": m.notes = [...m.notes, { id: id(), text: noteText as string, at }].slice(-100); break;
+    // v5 G3 (c): who said it, when, and the turn that asked (the client's turn id, else null: never one made up here)
+    case "note": case "remember": {
+      const turn = typeof op.turn === "string" && op.turn.trim() ? clip(op.turn, 40) : null;
+      m.notes = [...m.notes, { id: id(), text: noteText as string, at, source: NOTE_SOURCE, turn }].slice(-100);
+      break;
+    }
     case "forget":
       if (op.all) { Object.assign(m, { ...EMPTY, habits: {}, pending: {}, prefs: {}, notes: [], reminders: [], recent: [], pins: [] }); delete m.follows; delete m.watch; }
-      else if (op.id) { m.notes = m.notes.filter((n) => n.id !== op.id); m.reminders = m.reminders.filter((r) => r.id !== op.id); delete m.habits[op.id]; if (m.follows) m.follows = m.follows.filter((f) => f.id !== op.id); }
+      else if (op.id) { m.notes = m.notes.filter((n) => n?.id !== op.id); m.reminders = m.reminders.filter((r) => r.id !== op.id); delete m.habits[op.id]; if (m.follows) m.follows = m.follows.filter((f) => f.id !== op.id); }
       else m.notes = m.notes.slice(0, -1);
       break;
     case "forgetLast": m.notes = m.notes.slice(0, -1); break;
@@ -247,14 +274,14 @@ const TOPIC_WORDS: Record<string, string> = { rise: "unusual rises", overdue: "c
  */
 export function rememberList(m: Memory): { items: RememberedItem[]; spoken: { en: string; ta: string }; values: Record<string, number> } {
   const items: RememberedItem[] = [
-    ...m.notes.map((n) => ({ kind: "note" as const, id: n.id, text: n.text, at: n.at })),
+    ...m.notes.filter(isNote).map((n) => ({ kind: "note" as const, id: n.id, text: n.text, at: n.at })),
     ...(m.follows ?? []).map((f) => ({ kind: "follow" as const, id: f.id, text: f.kind === "zone" ? `zone ${f.ref}` : `incident ${f.ref}`, at: f.at })),
     ...Object.entries(m.watch?.mute ?? {}).map(([k, at]) => ({ kind: "mute" as const, id: k, text: `not about ${TOPIC_WORDS[k.split(":")[0]] ?? "this"}`, at })),
     ...Object.entries(m.watch?.tell ?? {}).map(([k, at]) => ({ kind: "tell" as const, id: k, text: `tell me about ${TOPIC_WORDS[k.split(":")[0]] ?? "this"}`, at })),
     ...Object.entries(m.habits).map(([k, v]) => ({ kind: "habit" as const, id: k, text: `"${k}" means ${v}`, at: null })),
     ...m.reminders.filter((r) => !r.done).map((r) => ({ kind: "reminder" as const, id: r.id, text: r.text, at: r.at }))
   ];
-  const notes = m.notes.length, follows = (m.follows ?? []).length, choices = items.filter((i) => i.kind === "mute" || i.kind === "tell").length;
+  const notes = m.notes.filter(isNote).length, follows = (m.follows ?? []).length, choices = items.filter((i) => i.kind === "mute" || i.kind === "tell").length;
   const values = { notes, follows, choices };
   if (!items.length) return { items, values, spoken: { en: "I don't remember anything about you yet: I keep only what you ask me to.", ta: "உங்களைப் பற்றி இன்னும் எதுவும் வச்சுக்கல: நீங்க சொல்றதை மட்டும்தான் வச்சுக்குவேன்." } };
   return { items, values, spoken: {
