@@ -79,7 +79,8 @@ describe("Thunai.tsx makes the captions only inside the conductor's window", () 
     expect(open).toMatch(/new Captions\([^]*?,\s*may\)/);
   });
   it("the engaged window is ENGAGED_MS, one constant (no 20_000 of its own)", () => {
-    expect(src).not.toMatch(/20_000/);
-    expect(src).toMatch(/ENGAGED_MS/);
+    // (the watch's first tick at 20 s and its 120 s interval are not the window)
+    expect(src).not.toMatch(/(?:<=|\+)\s*20_000\b/);
+    expect(between("const engagedNow = ", "\n")).toContain("ENGAGED_MS");
   });
 });

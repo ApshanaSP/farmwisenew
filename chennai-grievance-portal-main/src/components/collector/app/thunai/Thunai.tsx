@@ -49,7 +49,7 @@ import { Captions, canCaption } from "./captions";
 import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
 import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
-import { levelAllowed, type Addressed } from "@/lib/thunai/addressed";
+import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
@@ -307,7 +307,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** what was asked and answered goes to the chatbot's Jarvis tab: nothing stacks over the dashboard */
   const pushMsg = (m: Omit<JLog, "id" | "at">) => jarvisLog.add(m);
   /** it takes the next sentence without its name for 20 s from now (the address gate's rule), and the bar says so */
-  const engagedNow = () => { lastTurnAt.current = Date.now(); hud.set({ engagedUntil: Date.now() + 20_000 }); };
+  const engagedNow = () => { lastTurnAt.current = Date.now(); hud.set({ engagedUntil: Date.now() + ENGAGED_MS }); };
   const [chips, setChips] = useState<Chip[]>([]);
   const [wrong, setWrong] = useState<string | null>(null);
   const [askOnce, setAskOnce] = useState<AskCard | null>(null);
@@ -2223,7 +2223,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       wantsYes: () => !!pendingBRef.current,
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
-      // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service)
+      // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service);
+      // either way never outside the conductor's window (v5, C3: openMic's maker asks inWindow)
       onSpeechStart: (o: { engaged: boolean; fallback?: boolean }) => {
         speechEngaged.current = o.engaged;
         // Whisper is out and the conductor's own recogniser hears this speech: the live captions stand aside (one recogniser at a time)
@@ -2253,7 +2254,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           utterEnd.current = t; utterEnd2.current = t;
           // the end of a sentence said to Jarvis is heard at once: a short earcon (the ears are told first, so it never counts as
           // speech: mouth.ts earconEnd), not a word it has not earned. Never for side talk
-          const engaged = speechEngaged.current ?? (lastTurnAt.current != null && Date.now() - lastTurnAt.current <= 20_000);
+          const engaged = speechEngaged.current ?? (lastTurnAt.current != null && Date.now() - lastTurnAt.current <= ENGAGED_MS);
           speechEngaged.current = null;
           // a sentence to Jarvis ended: what is read and done from here is a new turn, and an older turn's steps leave the progress line
           if (engaged || pendingBRef.current) { earconEnd(); hud.set({ turnAt: t }); }
@@ -2319,12 +2320,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (c.needsGesture) hud.set({ needsResume: true });
       }).catch(() => undefined);
       if (!captions.current) {
-        captions.current = new HearingCaptions(() => (canCaption() ? new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => {
+        // v5 (C3): only while Jarvis is woken or engaged (the conductor's inWindow: ENGAGED_MS of the wake or of its last turn, or while
+        // it speaks), a spoken yes awaited included: outside it no recogniser is made, and one running is not restarted (captions.ts)
+        const may = () => !!conductor.current?.inWindow();
+        captions.current = new HearingCaptions(() => (canCaption() && may() ? new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => {
           if (modeRef.current !== "on") return;
           // the partials help the conductor tell a finished command from a pause (its end of utterance); the ribbon shows them
           conductor.current?.partial(t);
           if (conductor.current?.state === "hearing") { captionRibbon.current = true; hud.set({ ribbon: t }); setInterim(t); }
-        }) : null));
+        }, may) : null));
       }
   };
   const setModeRef = useRef(setMode);

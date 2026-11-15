@@ -23,8 +23,12 @@
  *  - The browser's recogniser stands in for Whisper only on a real outage (a network error or a 503, hearOutage), and only from the
  *    speech start to the speech end of an engaged turn, as HearingCaptions runs: never continuously, never for side talk.
  *  - Every onset and end (side talk too) is when the Collector last spoke (lastSpeechAt): nothing unprompted lands in a pause.
+ *
+ * v5 build (lane 2):
+ *  - C3: inWindow() is the one test of "woken or engaged": within ENGAGED_MS (addressed.ts) of the wake or of Jarvis's last turn,
+ *    or while Jarvis speaks. The console's captions start only inside it (captions.ts asks it before every start).
  */
-import { addressed, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
+import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
 import { confOf, joinHeard, type HearReply } from "@/lib/thunai/heard";
 import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from "@/lib/thunai/turn";
@@ -416,8 +420,23 @@ export class Conductor {
   }
 
   private laneNow(): "engaged" | "ambient" {
-    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged), spokenOver = !!this.sayingAtOnset || this.m.bargeIns > 0 && canContinue();
-    return spokenOver || (last > 0 && Date.now() - last <= 20_000) ? "engaged" : "ambient";
+    const last = this.engagedAt ?? 0, spokenOver = !!this.sayingAtOnset || this.m.bargeIns > 0 && canContinue();
+    return spokenOver || (last > 0 && Date.now() - last <= ENGAGED_MS) ? "engaged" : "ambient";
+  }
+
+  /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
+  get engagedAt(): number | null {
+    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged);
+    return t > 0 ? t : null;
+  }
+  /**
+   * Woken or engaged (v5, C3 and C4): within ENGAGED_MS of the wake or of Jarvis's last turn, or while Jarvis is speaking (or was
+   * as this speech began). The browser's captions run only then; with the strict audio gate nothing goes to /hear otherwise.
+   */
+  inWindow(now: number = Date.now()): boolean {
+    if (speaking() || this.sayingAtOnset) return true;
+    const at = this.engagedAt;
+    return at != null && now - at <= ENGAGED_MS;
   }
 
   /** A low budget: tell the user once, and for a minute the browser's free recognition listens for the name only. */
