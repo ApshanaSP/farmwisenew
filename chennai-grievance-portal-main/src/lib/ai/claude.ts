@@ -4,9 +4,10 @@
  *   the console's AI steps, when AI_PROVIDER names claude (gateway.ts): model AI_CLAUDE_MODEL (default Claude Opus 5.5), the fast
  *     steps may use another (AI_CLAUDE_MODEL_FAST, e.g. claude-haiku-5-5); effort low for the fast steps, AI_CLAUDE_EFFORT or medium
  *     for the write-ups; an off-schema reply is asked for once more.
- *   Jarvis's ladder (lib/thunai/llm.ts), first when the key is set, whatever AI_PROVIDER says: model JARVIS_CLAUDE_MODEL, effort low
- *     (a spoken turn cannot wait, and code fetches every figure anyway), one try: any failure goes straight to the next rung. The
- *     ledger caps Jarvis's day (LIMITS in lib/thunai/ledger.ts).
+ *   Jarvis's ladder (lib/thunai/llm.ts), first when the key is set (JARVIS_PLANNER_LEAD=groq puts it after Groq), whatever AI_PROVIDER
+ *     says: model JARVIS_CLAUDE_MODEL (default Haiku 5.5), one try: any failure goes straight to the next rung. On Haiku 5.5 (v5 A6):
+ *     thinking always disabled, effort JARVIS_HAIKU_EFFORT (low, or medium), max_tokens 600; on another model effort low (a spoken
+ *     turn cannot wait, and code fetches every figure anyway). The ledger caps Jarvis's day (LIMITS in lib/thunai/ledger.ts).
  *
  * Each step asks for one JSON object matching the step's zod schema (structured outputs: output_config.format), checked again with
  * zod here. A schema over structured outputs' limits (16 union-typed, 24 optional parameters) goes out rewritten without nullable
@@ -14,8 +15,10 @@
  * free-form map, is asked for as plain JSON. Each answer says which (`path`) and what it read from the prompt cache. Opus 5.5
  * always thinks before it answers (depth is set with effort), so a console step has its own longer deadline (AI_CLAUDE_TIMEOUT_MS).
  * A request the model declines for policy reasons runs again server-side on Anthropic's recommended fallback (fallbacks: "default").
- * A busy API (429, 529, 5xx) throws ClaudeBusyError; a refused key is remembered until .env holds another (the ladder then skips
- * Claude at once). The long, fixed instructions go in the system block with a cache point. The prompt is never logged.
+ * A busy API (429, 529, 5xx) throws ClaudeBusyError (a 429 is logged as capacity: fallback_429); a refused key (401, 403) is
+ * remembered for 10 minutes or until .env holds another (the ladder skips Claude at once meanwhile). A Jarvis reply that stopped on
+ * "refusal" or "max_tokens" is never used: the next rung answers, and the stop is logged with the model and the reason only. The long,
+ * fixed instructions go in the system block with a cache point. The prompt is never logged.
  * claudeWarm writes a planner prefix into the cache on mode-on (/api/jarvis/warm).
  */
 import Anthropic from "@anthropic-ai/sdk";
@@ -33,13 +36,16 @@ declare global {
   // eslint-disable-next-line no-var
   var __claude: { key: string; client: Anthropic } | undefined;
   // eslint-disable-next-line no-var
-  var __claudeRefused: { key: string; reason: string } | undefined;
+  var __claudeRefused: { key: string; reason: string; until?: number } | undefined;
 }
 
-/** Why Claude is not being used ("key refused"), while .env still holds the refused key. */
+/** v5 A6 (c): a refused key rests this long; then one call may try it again (a key fixed in the console works without a restart) */
+export const KEY_REFUSED_MS = 10 * 60_000;
+
+/** Why Claude is not being used ("key refused"), while .env still holds the refused key and its 10 minutes are not over. */
 export function claudeProblem(): string | null {
   const f = global.__claudeRefused;
-  return f && f.key === env("ANTHROPIC_API_KEY") ? f.reason : null;
+  return f && f.key === env("ANTHROPIC_API_KEY") && (f.until == null || Date.now() < f.until) ? f.reason : null;
 }
 
 export const claudeConfigured = (): boolean => !!env("ANTHROPIC_API_KEY") && !claudeProblem();
@@ -279,14 +285,25 @@ const BETWEEN_TOOLS = /^claude-sonnet-5-5$/;
 
 type Effort = "low" | "medium" | "high";
 /**
+ * v5 A6 (b): a Jarvis call's effort on Haiku 5.5, from JARVIS_HAIKU_EFFORT: low (default) or medium; anything else is low (with
+ * thinking disabled, xhigh and max are a 400; high is not offered). Effort is part of the cached prefix: it is fixed per process.
+ */
+export function haikuEffort(): "low" | "medium" {
+  return env("JARVIS_HAIKU_EFFORT").toLowerCase() === "medium" ? "medium" : "low";
+}
+/** v5 A6 (b): a Jarvis call's room on Haiku 5.5 with thinking off (a plan is about 230 tokens); a caller that asks for more gets more */
+const HAIKU_MAX_TOKENS = 600;
+/**
  * The thinking setting, per model (rule 7, verified 14 Nov 2026): Opus 5.5 never gets one (`disabled` is a 400 there at every
- * effort; it thinks adaptively and effort low keeps that short). A spoken turn on Sonnet 5.5 (between_tools) or Haiku 5.5 (disabled)
- * answers without thinking first, allowed at effort high or below; JARVIS_CLAUDE_THINK=1 keeps the thinking. A console step keeps it.
+ * effort; it thinks adaptively and effort low keeps that short). A spoken turn on Haiku 5.5 is always sent `disabled` (v5 A6: leaving
+ * the field out turns adaptive thinking on; JARVIS_CLAUDE_THINK no longer changes that). On Sonnet 5.5 (between_tools) it answers
+ * without thinking first unless JARVIS_CLAUDE_THINK=1. Both are allowed at effort high or below. A console step keeps its thinking.
  */
 function thinkingFor(model: string, jarvis: boolean, effort: Effort): { thinking?: { type: "disabled" } | { type: "between_tools" } } {
-  if (!jarvis || env("JARVIS_CLAUDE_THINK") === "1" || !["low", "medium", "high"].includes(effort)) return {};
-  if (BETWEEN_TOOLS.test(model)) return { thinking: { type: "between_tools" as const } };
+  if (!jarvis || !["low", "medium", "high"].includes(effort)) return {};
   if (NO_THINK.test(model)) return { thinking: { type: "disabled" as const } };
+  if (env("JARVIS_CLAUDE_THINK") === "1") return {};
+  if (BETWEEN_TOOLS.test(model)) return { thinking: { type: "between_tools" as const } };
   return {};
 }
 
@@ -340,13 +357,15 @@ type Body = Anthropic.Beta.MessageCreateParamsNonStreaming;
  * fixed per model and route, so a warm-up writes the very prefix a spoken turn reads.
  */
 function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: number; images?: ClaudeJsonArgs<unknown>["images"] }, model: string, wire: Wire, mode: "format" | "json" | "bare", prompt: string, maxTokens?: number): Body {
-  const effort: Effort = a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as Effort) : "low";
+  // v5 A6 (b): a Jarvis call on Haiku 5.5 answers with thinking disabled, at JARVIS_HAIKU_EFFORT
+  const haiku = !a.role && NO_THINK.test(model);
+  const effort: Effort = a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as Effort) : haiku ? haikuEffort() : "low";
   const useFormat = mode === "format" && wire.strict != null;
   const how = mode !== "json" ? "" : `\n\nReply with only one JSON object, no prose and no code fences, every field present (null or [] where unused), in this shape:\n${wire.shape}`;
   return {
     model,
-    // thinking shares this budget with the answer; a console write-up gets more room than a spoken turn
-    max_tokens: maxTokens ?? (a.role ? Math.max(4000, (a.maxOutputTokens ?? 1500) * 3) : Math.max(2000, a.maxOutputTokens ?? 0)),
+    // thinking shares this budget with the answer; a console write-up gets more room than a spoken turn; Haiku with thinking off needs no more than the plan
+    max_tokens: maxTokens ?? (a.role ? Math.max(4000, (a.maxOutputTokens ?? 1500) * 3) : Math.max(haiku ? HAIKU_MAX_TOKENS : 2000, a.maxOutputTokens ?? 0)),
     system: [{ type: "text", text: a.system + how, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: a.images?.length
       ? [...a.images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: prompt }]
@@ -359,9 +378,12 @@ function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: n
   } as Body;
 }
 
-/** A 401 or 403: remembered for this key, so no more waiting on Anthropic until a new key is pasted (the ladder skips Claude at once) */
+/**
+ * A 401 or 403: remembered for this key for 10 minutes (v5 A6 c), so no turn waits on Anthropic meanwhile (the ladder skips Claude at
+ * once); after that one call may try it again, and a new key in .env is tried at once
+ */
 function refusedKey(e: InstanceType<typeof Anthropic.APIError>) {
-  global.__claudeRefused = { key: env("ANTHROPIC_API_KEY"), reason: e.status === 401 ? "key not accepted" : "key refused" };
+  global.__claudeRefused = { key: env("ANTHROPIC_API_KEY"), reason: e.status === 401 ? "key not accepted" : "key refused", until: Date.now() + KEY_REFUSED_MS };
   keyRefused("anthropic", e.status ?? 401, e.message);
 }
 
@@ -414,6 +436,8 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
         if (useFormat && /schema|output_config|format|compil/i.test(e.message)) {
           tooHard.add(a.schema);
           console.warn(`[claude] ${a.name}: schema not taken, plain JSON from now on: ${e.message.slice(0, 160)}`);
+          // v5 A6 (c): logged with the path the call now takes (the model and a code only)
+          telemetry("claude_schema", { provider: "anthropic", model, why: "schema-refused", path: "json" });
           attempt--;
           continue;
         }
@@ -424,6 +448,8 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
       }
       if (e instanceof Anthropic.RateLimitError) {
         ledger().cool("anthropic", model, COOL_BUSY_MS);
+        // v5 A6 (c): a capacity failure (the next rung answers), never a refused key
+        telemetry("fallback_429", { provider: "anthropic", model, status: 429, fallback: "next-rung" });
         throw new ClaudeBusyError(retryAfter(e, 20), "rate limited");
       }
       if (e instanceof Anthropic.APIConnectionTimeoutError) throw new ClaudeBusyError(10, `no answer in ${Math.round(timeout / 1000)} s`);
@@ -437,8 +463,12 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     usage.output += res.usage.output_tokens;
     usage.cacheRead += res.usage.cache_read_input_tokens ?? 0;
     usage.cacheWrite += res.usage.cache_creation_input_tokens ?? 0;
+    // v5 A6 (c): a stop the reply cannot be trusted after is logged with the model and the reason only (never the text)
+    if (res.stop_reason === "refusal" || res.stop_reason === "max_tokens") telemetry("claude_stop", { model, why: res.stop_reason });
     // a decline the fallback model declined too
     if (res.stop_reason === "refusal") throw new Error(`Claude declined ${a.name}${res.stop_details?.category ? ` (${res.stop_details.category})` : ""}`);
+    // a spoken turn never takes a reply that was cut off, even one that reads as a whole object: the next rung answers
+    if (res.stop_reason === "max_tokens" && !a.role) throw new Error(`Claude's ${a.name} was cut off (max_tokens)`);
     // only the answer's text: thinking and fallback markers are not part of it
     const raw = firstJson(res.content.map((b) => (b.type === "text" ? b.text : "")).join(""));
     const done = (object: T): ClaudeJsonResult<T> => ({ object, model, ms: Date.now() - t0, inputTokens: usage.input, outputTokens: usage.output, cacheReadTokens: usage.cacheRead, cacheWriteTokens: usage.cacheWrite, path: useFormat ? "format" : "json" });
