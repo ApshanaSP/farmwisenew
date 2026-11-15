@@ -41,8 +41,11 @@ export interface SpeakOpts {
   onPiece?: (text: string, line: number) => void;
 }
 export type VoicePath = "browser" | "pcm" | "text";
-/** What a duck did: on which path, how (the gain to 20 %, speechSynthesis.pause(), or the voice kept speaking), and in how many ms. */
-export interface DuckInfo { path: VoicePath; how: "gain" | "pause" | "kept"; ms: number | null; outMs: number | null }
+/**
+ * What a duck did: on which path, how (the gain to 20 %, the browser's voice cut with cancel() to be said again from the cut piece
+ * (v5 D3; v4 paused the synthesiser here), or the voice kept speaking), and in how many ms.
+ */
+export interface DuckInfo { path: VoicePath; how: "gain" | "cut" | "kept"; ms: number | null; outMs: number | null }
 export interface MouthHooks {
   onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void;
   /**
@@ -63,7 +66,8 @@ interface Raw { text: string; line: number; first: boolean }
 interface Piece extends Raw { voice: Aloud }
 /** a run of the answer asked for in one request, and its audio once it is in */
 interface Group { from: number; to: number; text: string; buf: AudioBuffer | null; pending: Promise<AudioBuffer | null> | null }
-interface Speech { raw: Raw[]; pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null }
+/** `fin`: the last piece the browser's voice finished (-1: none yet), so a cut between two pieces says the next one, not the last again */
+interface Speech { raw: Raw[]; pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null; fin?: number }
 
 const SAY = "/api/jarvis/say";
 /** the most of an answer sent in one request (the route takes 2,400 characters): a longer narration is asked for in runs */
@@ -100,14 +104,23 @@ let analyser: AnalyserNode | null = null;
 let player: Player | null = null;
 let answerGain: GainNode | null = null;
 let paused = false;
-/** how the voice is ducked now: not, by its gain, by speechSynthesis.pause(), or not at all (the browser voice keeps speaking) */
+/** how the voice is ducked now: not, by its gain, cut (the browser's voice, to be said again), or not at all (the browser voice keeps speaking) */
 let ducked: false | DuckInfo["how"] = false;
 /**
- * Pause the browser's voice on a duck. Whether Edge's natural voices honour speechSynthesis.pause() is not verified, so it is off
- * unless NEXT_PUBLIC_JARVIS_DUCK_PAUSE=1 (or setDuckPause(true)); off, the voice keeps speaking until the barge-in is confirmed.
- * A duck never cancels.
+ * Stop the browser's voice on a duck. Off unless NEXT_PUBLIC_JARVIS_DUCK_PAUSE=1 (or setDuckPause(true)); off, the voice keeps
+ * speaking until the barge-in is confirmed. v5 D3: on, the voice is CUT with cancel() and the piece it was on is kept; a false
+ * interruption (unduckVoice) or no bid for the turn within FALSE_CUT_MS says that piece again from its start. The synthesiser's pause
+ * and resume are never the mechanism (whether Edge's natural voices honour them is not verified; cancel() works on every voice).
  */
 let duckPause = process.env.NEXT_PUBLIC_JARVIS_DUCK_PAUSE === "1";
+/**
+ * v5 D3: how long a cut browser voice waits for a bid for the turn before it says the cut piece again, ms. A bid (two live words that
+ * are not backchannels, or speech held 600 ms: turn.ts) stops the voice through stopVoice() first, which keeps the piece for "continue".
+ * NEXT_PUBLIC_JARVIS_FALSE_CUT_MS, default 2,000 (as LiveKit Agents' false-interruption timeout, 2.0 s, from memory and not re-checked),
+ * at most 10,000.
+ */
+export const FALSE_CUT_MS = (() => { const n = Number(process.env.NEXT_PUBLIC_JARVIS_FALSE_CUT_MS); return Number.isFinite(n) && n > 0 ? Math.min(n, 10_000) : 2000; })();
+let cutT: ReturnType<typeof setTimeout> | null = null;
 let lastDuckInfo: DuckInfo | null = null;
 /** the earcons' own context: a paused voice (its context suspended) never swallows one */
 let fx: AudioContext | null = null;
@@ -422,6 +435,7 @@ async function run(s: Speech, my: number) {
       s.o.onPiece?.(piece.text, piece.line);
       await byBrowser(piece, s.lang, s.o, my, s.path, s.ack);
       if (my !== token) return;
+      s.fin = s.at;
       while (paused && my === token) await new Promise((r) => setTimeout(r, 30));
       if (my !== token) return;
       if (s.at < s.pieces.length - 1) await new Promise((r) => setTimeout(r, s.ack ? 0 : 120));
@@ -517,10 +531,39 @@ function reportDuck(d: DuckInfo) {
 }
 
 /**
+ * v5 D3: the browser's voice, cut for a duck: cancel() the utterance and keep the speech with its place at the piece that was being
+ * said (between two pieces, the next one). The run that was saying it is left behind (its token is old). False when nothing is being
+ * said or nothing is left to say: the duck then keeps the voice as it is.
+ */
+function cutForDuck(): boolean {
+  const s = cur;
+  if (!s || !s.gated) return false;
+  const at = (s.fin ?? -1) >= s.at ? s.at + 1 : s.at;
+  if (at >= s.pieces.length) return false;
+  token++;
+  cur = { ...s, at };
+  browser.stopVoice();
+  return true;
+}
+
+/**
+ * v5 D3: say the cut speech again from the start of the piece it was cut on, as a fresh utterance (never resume()). For a false
+ * interruption (unduckVoice) or when no bid for the turn came within FALSE_CUT_MS.
+ */
+function respeak() {
+  if (cutT) { clearTimeout(cutT); cutT = null; }
+  ducked = false;
+  const s = cur;
+  if (!s || !speakingNow) return;
+  const my = ++token;
+  void run(s, my);
+}
+
+/**
  * Speech began over Jarvis: the voice drops, it does not stop. PCM: the duck gain to 20 % in 30 ms (a linear ramp on the audio
- * clock). The browser's voice: speechSynthesis.pause() when the flag is on (setDuckPause; how soon `paused` reads true is
- * reported, which is what the browser says, not what the speaker did), else it keeps speaking. Never a cancel: stopVoice()
- * is the conductor's, once the speech holds two real words or 600 ms.
+ * clock). The browser's voice, when the flag is on (setDuckPause): cut with cancel() at once (v5 D3: how soon is reported), to be
+ * said again from the cut piece on a false interruption or after FALSE_CUT_MS with no bid for the turn; else it keeps speaking.
+ * Never pause()/resume(); the final stop (stopVoice) is the conductor's, once the speech holds two real words or 600 ms.
  */
 export function duckVoice(): void {
   if (!speakingNow || !cur || ducked) return;
@@ -538,23 +581,21 @@ export function duckVoice(): void {
     return;
   }
   if (p !== "browser") return;
-  if (duckPause && browser.pause()) {
-    ducked = "pause";
-    const poll = () => {
-      if (ducked !== "pause") return;
-      const ms = performance.now() - t0;
-      if (browser.isPaused()) reportDuck({ path: "browser", how: "pause", ms: Math.round(ms), outMs: null });
-      else if (ms > 300) reportDuck({ path: "browser", how: "pause", ms: null, outMs: null });
-      else setTimeout(poll, 10);
-    };
-    poll();
+  if (duckPause && cutForDuck()) {
+    ducked = "cut";
+    if (cutT) clearTimeout(cutT);
+    cutT = setTimeout(() => { cutT = null; if (ducked === "cut") respeak(); }, FALSE_CUT_MS);
+    reportDuck({ path: "browser", how: "cut", ms: Math.round(performance.now() - t0), outMs: null });
     return;
   }
   ducked = "kept";
   reportDuck({ path: "browser", how: "kept", ms: null, outMs: null });
 }
 
-/** The speech over Jarvis was a backchannel or a noise: the voice comes back to full (PCM in 60 ms; the browser's resumes). */
+/**
+ * The speech over Jarvis was a backchannel or a noise: the voice comes back to full (PCM in 60 ms). A cut browser voice says the
+ * piece it was cut on again, from its start (v5 D3).
+ */
 export function unduckVoice(): void {
   if (!ducked) return;
   const was = ducked;
@@ -565,11 +606,11 @@ export function unduckVoice(): void {
     g.setValueAtTime(g.value, now);
     g.linearRampToValueAtTime(1, now + 0.06);
   }
-  if (was === "pause") browser.resume();
+  if (was === "cut") respeak();
 }
 
 function clearDuck() {
-  if (ducked === "pause") browser.resume();
+  if (cutT) { clearTimeout(cutT); cutT = null; }
   ducked = false;
   if (ctx && master) { const now = ctx.currentTime; master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(1, now); }
 }
@@ -669,7 +710,7 @@ export function warmVoice(lang: string): void {
  * envelope driven by the state (a syllable-rate pulse while speaking). The HUD shows which one it has (voicePath).
  */
 export function voiceLevel(now = performance.now()): number {
-  if (!speakingNow || paused) return 0;
+  if (!speakingNow || paused || ducked === "cut") return 0;
   if (path === "pcm" && analyser) {
     analyser.getFloatTimeDomainData(levelBuf);
     let s = 0;
