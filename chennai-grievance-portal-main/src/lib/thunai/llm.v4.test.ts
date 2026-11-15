@@ -16,7 +16,7 @@ import { Ledger, MemoryStore, resetLedger } from "./ledger";
 
 const S = z.object({ ok: z.boolean() });
 const fresh = () => new Ledger(new MemoryStore());
-const CLAUDE = "claude-opus-5-5";
+const CLAUDE = "claude-haiku-5-5"; // v5 A6: Jarvis's default Claude model is Haiku 5.5 (was Opus 5.5)
 const base = (over = {}) => ({ name: "t", system: "s", prompt: "p", schema: S, maxOutputTokens: 100, user: "u", lane: "planner" as const, until: Date.now() + 8000, ...over });
 
 /** a scripted model per id: how long it takes (on the fake clock), whether it fails; when each was asked */

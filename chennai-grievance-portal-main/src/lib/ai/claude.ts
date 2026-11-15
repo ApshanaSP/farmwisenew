@@ -46,7 +46,8 @@ export const claudeConfigured = (): boolean => !!env("ANTHROPIC_API_KEY") && !cl
 
 /** A console step's model by its role; with no role, Jarvis's. */
 export function claudeModel(role?: ClaudeRole): string {
-  if (!role) return env("JARVIS_CLAUDE_MODEL") || "claude-opus-5-5";
+  // v5 A6: Haiku 5.5 leads Jarvis's planner (the owner's plan); Opus 5.5 only by explicit JARVIS_CLAUDE_MODEL, never on the voice lane by default
+  if (!role) return env("JARVIS_CLAUDE_MODEL") || "claude-haiku-5-5";
   const main = env("AI_CLAUDE_MODEL") || "claude-opus-5-5";
   return role === "fast" ? env("AI_CLAUDE_MODEL_FAST") || main : main;
 }

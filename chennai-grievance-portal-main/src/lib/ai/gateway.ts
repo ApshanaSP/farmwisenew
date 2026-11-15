@@ -351,7 +351,8 @@ export function retryAfterSeconds(e: APICallError): number | null {
 }
 
 /** One call's rough tokens, before it is made or when the provider does not say. */
-const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: number }) => Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
+/** (v5 A2 a: the schema the provider is sent counts too) */
+const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: number; schema?: z.ZodTypeAny }) => Math.ceil((c.system.length + c.prompt.length + (c.schema ? schemaText(c.schema).length : 0)) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {

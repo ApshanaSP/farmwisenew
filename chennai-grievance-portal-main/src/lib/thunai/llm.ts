@@ -10,15 +10,22 @@
  * cancels (and a hedge still running then) is recorded in the ledger at its estimated input tokens, as a lost hedge is.
  */
 import { billedOf, claudeConfigured, claudeModel } from "@/lib/ai/claude";
-import { generateJson, type JsonCall, type JsonResult, type ProviderName } from "@/lib/ai/gateway";
+import { generateJson, schemaText, type JsonCall, type JsonResult, type ProviderName } from "@/lib/ai/gateway";
 import type { z } from "zod";
 import { ledger, type Lane, type Ledger, type Org } from "./ledger";
 import { telemetry } from "./telemetry";
 
 export const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 export const LITE_MODEL = "gemini-3.5-flash-lite";
-/** one call's rough tokens, before it is made */
-export const estimate = (system: string, prompt: string, maxOut: number) => Math.ceil((system.length + prompt.length) / 3.5) + Math.round(maxOut * 0.4);
+/**
+ * One call's rough tokens, before it is made. The schema the provider is sent counts too, at the same characters a token (v5 A2 a:
+ * on the grid's first calls the provider's prompt_tokens were far above an estimate that left it out).
+ */
+export const estimate = (system: string, prompt: string, maxOut: number, schema?: z.ZodTypeAny) =>
+  Math.ceil((system.length + prompt.length + (schema ? schemaText(schema).length : 0)) / 3.5) + Math.round(maxOut * 0.4);
+
+/** Who leads the planner when a Claude key works: Haiku (default) or the Groq ladder (JARVIS_PLANNER_LEAD=groq; Haiku goes after Groq) */
+export const plannerLead = (): "haiku" | "groq" => ((process.env.JARVIS_PLANNER_LEAD ?? "").trim().toLowerCase() === "groq" ? "groq" : "haiku");
 
 export interface Rung { provider: ProviderName; model: string }
 
@@ -31,7 +38,9 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
     .map((x): Rung => ({ provider: "groq", model: x.model }));
   const lite: Rung[] = l.room("gemini", LITE_MODEL, { tokens: need }).ok ? [{ provider: "gemini", model: LITE_MODEL }] : [];
   const first: Rung[] = claude && l.room("anthropic", claudeModel(), { tokens: need }).ok ? [{ provider: "anthropic", model: claudeModel() }] : [];
-  return [...first, ...groq, ...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
+  const rest: Rung[] = [...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
+  // v5 A6: Haiku leads by default (the owner's plan at deploy); JARVIS_PLANNER_LEAD=groq puts it after the Groq ladder
+  return plannerLead() === "groq" ? [...groq, ...first, ...rest] : [...first, ...groq, ...rest];
 }
 
 // ---- each rung's own record of how long it takes
@@ -137,7 +146,7 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
   const l = d.ledger ?? ledger();
   const now = d.now ?? Date.now;
   const t0 = now();
-  const need = estimate(c.system, c.prompt, c.maxOutputTokens);
+  const need = estimate(c.system, c.prompt, c.maxOutputTokens, c.schema as z.ZodTypeAny);
   const inputGuess = Math.ceil((c.system.length + c.prompt.length) / 3.5);
   // a test's own model stands alone: a key in the developer's .env does not change what it asks
   const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))());

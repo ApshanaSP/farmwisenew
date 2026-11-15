@@ -121,8 +121,10 @@ describe("Claude settings per model (rule 7) and the prompt cache", () => {
   const ask = () => claudeJson({ name: "t", schema: S, system: "A long, fixed system prompt.", prompt: "Said: \"what changed today\" at 10:42" });
 
   it("Opus 5.5: effort low, adaptive thinking left on (no thinking field), no sampling fields, no prefill", async () => {
+    // v5 A6: Opus 5.5 only by explicit JARVIS_CLAUDE_MODEL (the default is Haiku 5.5)
+    process.env.JARVIS_CLAUDE_MODEL = "claude-opus-5-5";
     const bodies = fake(() => ({ ok: true }));
-    await ask();
+    try { await ask(); } finally { delete process.env.JARVIS_CLAUDE_MODEL; }
     const b = bodies[0];
     expect(b.model).toBe("claude-opus-5-5");
     expect(b.output_config.effort).toBe("low");
