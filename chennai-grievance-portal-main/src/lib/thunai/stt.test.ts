@@ -33,7 +33,6 @@ describe("choosing between forced decodes", () => {
     expect(scoreDecode(dec("en", "Storm water drain", -0.9)).why).toBe("echo");
     expect(scoreDecode(dec("en", "Storm water drain", -0.3, { no_speech_prob: 0.4 })).why).toBe("echo");
     expect(scoreDecode(dec("en", "storm water drain, waterlogging, dengue", -0.3)).why).toBe("echo");
-    expect(scoreDecode({ ...dec("ta", "அண்ணா நகர் வெள்ளம்", -0.75), via: "gemini" }).ok).toBe(true);
   });
   it("reads a clip's length from the WAV header", () => {
     const b = new ArrayBuffer(44 + 32000), v = new DataView(b);
@@ -91,20 +90,17 @@ describe("hearing an utterance", () => {
     expect(calls).toBe(8);
     expect(h).toMatchObject({ budget: "low", text: "" });
   });
-  it("Whisper unsure of an engaged turn: the third racer is asked, and is not asked for an ambient sentence or a sure one", async () => {
+  // v5 B1: the Gemini third racer is gone; Whisper unsure of an engaged turn is answered by Whisper alone (stt.v5.test.ts)
+  it("Whisper unsure of an engaged turn: no third racer is asked, with or without GEMINI_API_KEY", async () => {
     vi.stubEnv("GEMINI_API_KEY", "g");
     const urls: string[] = [];
     const fetcher = (async (u: string) => {
       urls.push(u);
-      if (u.includes("generativelanguage")) return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ audioTranscription: { text: "அடையாறு புகார்கள் காட்டு" } }] } }] }), { status: 200 });
       return new Response(JSON.stringify({ text: "adhe arru", segments: [{ avg_logprob: -1.3, no_speech_prob: 0.1, compression_ratio: 1.2 }] }), { status: 200 });
     }) as unknown as typeof fetch;
-    const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
-    expect(urls.some((u) => u.includes("gemini-3.5-transcribe"))).toBe(true);
-    expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta" });
-    urls.length = 0;
-    await hearUtterance(wav(), { lane: "ambient", site: "en", fetcher });
+    await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(urls.some((u) => u.includes("generativelanguage"))).toBe(false);
+    expect(urls.length).toBe(2);
   });
   it("a 429 is reported as low budget, not as a transcript or a crash", async () => {
     const fetcher = (async () => new Response("{}", { status: 429 })) as unknown as typeof fetch;

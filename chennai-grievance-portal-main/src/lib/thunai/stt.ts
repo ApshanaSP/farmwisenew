@@ -10,9 +10,8 @@
  *     echo), the other gets at most 250 ms more and is then let go; when that first decode is English and the Tamil one is still
  *     running, the Tamil one gets 700 ms, so a forced-English translation of Tamil speech meets the translation check.
  *     Each Whisper request gives up after 5 s.
- *   a third racer, gemini-3.5-transcribe, the Phase 0 probe's winner by CER on Tamil clips (0.127 against large-v3's 0.151 on 12
- *     clips, but p50 2.6 s against 0.4 s): started IN PARALLEL with Whisper on an engaged or named turn when the ledger has room
- *     for it, used only when Whisper is unsure, let go as soon as Whisper is sure. It is told the same names as Whisper.
+ *   (v5, B1: the third racer, gemini-3.5-transcribe, is gone. It returned nothing usable at about 28 calls a day; the two forced
+ *     Whisper decodes are the whole race.)
  *   ambient (unengaged) sentences: one decode in the site's language, at most 8 a minute in the ledger. One that names Jarvis
  *     and is unsure is read once more here, in the other language only (the browser no longer posts it a second time).
  *
@@ -116,7 +115,7 @@ export const INVENTED = /^(thank you\.?|thanks( for watching)?\.?|you\.?|bye\.?|
 
 export interface Seg { no_speech_prob?: number; avg_logprob?: number; compression_ratio?: number; text?: string }
 /** `prompt`: the prompt or vocabulary this decode was given (checked for an echo of it) */
-export interface Decode { lang: "en" | "ta"; model: string; text: string; segments: Seg[]; duration?: number; via?: "whisper" | "gemini"; prompt?: string }
+export interface Decode { lang: "en" | "ta"; model: string; text: string; segments: Seg[]; duration?: number; via?: "whisper"; prompt?: string }
 export interface Scored extends Decode { logprob: number; noSpeech: number; compression: number; ok: boolean; why: string | null; score: number }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -157,16 +156,15 @@ export function scoreDecode(d: Decode): Scored {
   else if (noSpeech >= 0.6) why = "no-speech";
   else if (compression >= 2.4) why = "compression";
   else if (repeats(text)) why = "repeats";
-  // the third racer's logprob is a stand-in, so it is never "unsure" for this
-  else if (promptEcho(text, d.via !== "gemini" && (noSpeech >= 0.3 || logprob < -0.6), d.prompt ?? PROMPT)) why = "echo";
+  else if (promptEcho(text, noSpeech >= 0.3 || logprob < -0.6, d.prompt ?? PROMPT)) why = "echo";
   // a forced Tamil decode must come back mostly in Tamil letters, a forced English one mostly in Latin
   else if (d.lang === "ta" && tamilShare(text) < 0.5) why = "script";
   else if (d.lang === "en" && latinShare(text) < 0.6) why = "script";
   return { ...d, text, logprob, noSpeech, compression, ok: !why, why, score: logprob };
 }
 
-/** Good enough to stop waiting: Whisper's own confidence clears the bar (the third racer's stand-in never does). */
-export const good = (s: Scored): boolean => s.ok && s.via !== "gemini" && s.logprob > GOOD_LOGPROB && s.noSpeech < 0.6;
+/** Good enough to stop waiting: Whisper's own confidence clears the bar. */
+export const good = (s: Scored): boolean => s.ok && s.logprob > GOOD_LOGPROB && s.noSpeech < 0.6;
 
 // ---- the forced English decode may not translate Tamil speech ----
 
@@ -204,8 +202,8 @@ export function translated(ta: Scored, en: Scored): boolean {
  */
 export function choose(ds: Decode[], site: "en" | "ta"): Scored | null {
   const all = ds.map(scoreDecode);
-  const ta = all.find((x) => x.lang === "ta" && x.via !== "gemini" && x.ok);
-  const scored = all.map((x) => (ta && x.lang === "en" && x.via !== "gemini" && translated(ta, x) ? { ...x, ok: false, why: "translated" } : x)).filter((x) => x.ok);
+  const ta = all.find((x) => x.lang === "ta" && x.ok);
+  const scored = all.map((x) => (ta && x.lang === "en" && translated(ta, x) ? { ...x, ok: false, why: "translated" } : x)).filter((x) => x.ok);
   if (!scored.length) return null;
   return scored.sort((a, b) => (b.score + (b.lang === site ? 0.1 : 0)) - (a.score + (a.lang === site ? 0.1 : 0)))[0];
 }
@@ -225,44 +223,6 @@ export function wavSeconds(b: ArrayBuffer | Uint8Array): number {
 }
 
 export type Fetcher = typeof fetch;
-
-export const THIRD_MODEL = () => env("JARVIS_STT_THIRD") || "gemini-3.5-transcribe";
-/** below this average logprob Whisper is unsure enough to use the third racer */
-const UNSURE = -0.8;
-const THIRD_MS = 3000;
-/** the transcriber refused a request with the instruction in it (400): it is asked with the audio alone from then on */
-let thirdPlain = false;
-
-/** The instruction the third racer is given: transcribe, do not translate, and the names it may hear. */
-export function thirdInstruction(vocab: string[] = []): string {
-  const names: string[] = [], seen = new Set<string>();
-  for (const n of [...vocab, ...STT_NAMES.en, ...STT_NAMES.ta]) { const k = n.toLowerCase(); if (!seen.has(k)) { seen.add(k); names.push(n); } }
-  return `Transcribe the speech exactly as it is spoken. Write Tamil words in Tamil script and English words in English letters. Do not translate. Names that may be said: ${names.join(", ").slice(0, 900)}.`;
-}
-
-/** The third racer: Gemini's transcriber, inside its own deadline. null when it is out of budget, slow or refuses. */
-export async function third(audio: Blob, signal: AbortSignal | undefined, fetcher: Fetcher = fetch, o: { lane?: Lane; vocab?: string[]; ms?: number } = {}): Promise<Decode | null> {
-  const key = env("GEMINI_API_KEY"), model = THIRD_MODEL();
-  if (!key || !ledger().room("gemini", model).ok) return null;
-  ledger().record("gemini", model, { lane: o.lane ?? "engaged" });
-  const instr = thirdInstruction(o.vocab);
-  const withText = !thirdPlain;
-  try {
-    const data = Buffer.from(await audio.arrayBuffer()).toString("base64");
-    const deadline = AbortSignal.timeout(o.ms ?? THIRD_MS);
-    const r = await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
-      body: JSON.stringify({ contents: [{ parts: [{ inlineData: { mimeType: "audio/wav", data } }, ...(withText ? [{ text: instr }] : [])] }], generationConfig: { temperature: 0 } })
-    });
-    if (r.status === 429) { ledger().cool("gemini", model, 60_000); telemetry("fallback_429", { provider: "gemini", model, status: 429, fallback: "whisper" }); return null; }
-    // a transcriber that will not take the instruction (unverified whether it does): the next request sends the audio alone
-    if (r.status === 400 && withText) { thirdPlain = true; return null; }
-    if (!r.ok) return null;
-    const j = (await r.json()) as { candidates?: { content?: { parts?: { text?: string; audioTranscription?: { text?: string } }[] } }[] };
-    const text = (j.candidates?.[0]?.content?.parts ?? []).map((p) => p.audioTranscription?.text ?? p.text ?? "").join("").trim();
-    return text ? { lang: tamilShare(text) >= 0.5 ? "ta" : "en", model, text, segments: [{ avg_logprob: UNSURE + 0.05 }], via: "gemini", prompt: withText ? instr : undefined } : null;
-  } catch { return null; }
-}
 
 /** One decode. Keys are tried in turn for a refused key; a 429 is the organisation's, so another key will not help. */
 export async function decode(audio: Blob, lang: "en" | "ta", model: string, signal: AbortSignal | undefined, fetcher: Fetcher = fetch, prompt: string = sttPrompt(lang), ms: number = WHISPER_MS): Promise<Decode> {
@@ -309,7 +269,7 @@ export function budget(lane: Lane, want: string[] = [MODEL_EN(), MODEL_TA()]): {
 
 // ---- the race ----
 
-type Kind = "ta" | "en" | "gemini";
+type Kind = "ta" | "en";
 interface Racer { kind: Kind; model: string; t0: number; ctl: AbortController; done: boolean; aborted: boolean; ms: number; d: Decode | null; err: unknown; p: Promise<void> }
 
 /** One decode in the race: its own abort, its own clock; it never throws (the error is kept). */
@@ -355,18 +315,18 @@ export interface HearOpts {
    * good decode in this language rather than the site's, so a Collector who has just spoken Tamil on the English site is heard in Tamil
    */
   lastLang?: "en" | "ta" | null;
-  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace, the third racer's limit */
-  ms?: { whisper?: number; grace?: number; translate?: number; third?: number };
+  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace */
+  ms?: { whisper?: number; grace?: number; translate?: number };
 }
 
-/** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes and the third racer. */
+/** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes. */
 export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Heard> {
   const t0 = Date.now();
   const audio = new Blob([buf], { type: "audio/wav" });
   const secs = wavSeconds(buf);
   const l = ledger();
   const vocab = cleanVocab(o.vocab ?? []);
-  const wMs = o.ms?.whisper ?? WHISPER_MS, grace = o.ms?.grace ?? GRACE_MS, tMs = o.ms?.third ?? THIRD_MS, guard = o.ms?.translate ?? TRANSLATE_GRACE_MS;
+  const wMs = o.ms?.whisper ?? WHISPER_MS, grace = o.ms?.grace ?? GRACE_MS, guard = o.ms?.translate ?? TRANSLATE_GRACE_MS;
   const wanted: { lang: "en" | "ta"; model: string }[] = o.lane === "ambient"
     ? [{ lang: o.site, model: o.site === "ta" ? MODEL_TA() : MODEL_EN() }]
     : [{ lang: "ta", model: MODEL_TA() }, { lang: "en", model: MODEL_EN() }];
@@ -376,24 +336,20 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     l.record("groq", a.model, { audioS: secs, lane });
     return racer(a.lang, a.model, o.signal, (s) => decode(audio, a.lang, a.model, s, o.fetcher, sttPrompt(a.lang, vocab), wMs));
   };
-  const geminiOf = (lane: Lane) => (env("GEMINI_API_KEY") && l.room("gemini", THIRD_MODEL()).ok ? racer("gemini", THIRD_MODEL(), o.signal, (s) => third(audio, s, o.fetcher, { lane, vocab, ms: tMs })) : null);
 
   let lane = o.lane;
   const whisper = wanted.filter((a) => b.models.includes(a.model)).map((a) => whisperOf(a, lane));
-  // the third racer runs beside Whisper from the start on a turn someone is waiting on (third() checks the ledger itself)
-  let gem = lane !== "ambient" ? geminiOf(lane) : null;
   // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
   const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
   await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0);
   let c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site);
 
-  // an ambient sentence that names Jarvis, read unsure: once more, in the other language only, with the third racer beside it
+  // an ambient sentence that names Jarvis, read unsure: once more, in the other language only
   if (lane === "ambient" && c && NAMED.test(c.text) && c.logprob < -0.7) {
     const other = c.lang === "ta" ? "en" : "ta", model = other === "ta" ? MODEL_TA() : MODEL_EN();
     if (l.room("groq", model, { audioS: 10 }).ok) {
       lane = "named";
       const more = whisperOf({ lang: other, model }, lane);
-      gem = geminiOf(lane) ?? gem;
       whisper.push(more);
       await whisperRace([more], other, 0);
       c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site);
@@ -401,24 +357,15 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   }
 
   const got = whisper.filter((r) => r.d);
-  const loneOther = !!c && got.length === 1 && c.lang !== o.site && c.logprob < -0.45;
-  let used: Kind | null = c ? (c.lang as Kind) : null;
-  if (gem) {
-    if (!c || c.logprob < UNSURE || loneOther) {
-      // Whisper is unsure, or only the other language's decode came back unsure: the third racer, inside its own deadline
-      await gem.p;
-      const g = gem.d ? scoreDecode(gem.d) : null;
-      if (g?.ok) { c = g; used = "gemini"; }
-    } else letGo(gem);
-  }
+  const used: Kind | null = c ? c.lang : null;
   const ms = Date.now() - t0;
-  for (const r of [...whisper, ...(gem ? [gem] : [])]) {
+  for (const r of whisper) {
     const s = r.d ? scoreDecode(r.d) : null;
-    telemetry("stt_decode", { lane, provider: r.kind === "gemini" ? "gemini" : "groq", model: r.model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s && r.kind !== "gemini" ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
+    telemetry("stt_decode", { lane, provider: "groq", model: r.model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
   }
-  telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length + (gem ? 1 : 0), model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
+  telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
   if (!c) {
-    const nothing = !got.length && !gem?.d;
+    const nothing = !got.length;
     if (nothing && whisper.some((r) => r.err instanceof SttBusy)) return heard({ lane, lang: o.site, ms, budget: "low" });
     if (nothing && whisper.length && whisper.every((r) => r.err)) throw new Error("stt-failed");
   }

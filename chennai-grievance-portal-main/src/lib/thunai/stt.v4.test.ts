@@ -78,34 +78,17 @@ describe("first good decode wins", () => {
   });
 });
 
-describe("Gemini, the third racer, runs beside Whisper", () => {
-  it("it starts with the Whisper decodes, not after them, and wins when Whisper is unsure", async () => {
+// v5 B1: the Gemini third racer is gone (it returned nothing usable at about 28 calls a day); its tests went with it.
+// stt.v5.test.ts checks that no Gemini request is made on any lane, even with GEMINI_API_KEY set.
+describe("no third racer (v5 B1)", () => {
+  it("Whisper unsure of an engaged turn: only the two forced decodes are asked, and the race ends when they are back", async () => {
     vi.stubEnv("GEMINI_API_KEY", "g");
-    const { fetcher, calls } = fake({ en: { ms: 300, text: "adhe arru", logprob: -1.3 }, ta: { ms: 300, text: "அதே ஆறு", logprob: -1.3 }, gemini: { ms: 300, text: "அடையாறு புகார்கள் காட்டு" } });
+    const { fetcher, calls } = fake({ en: { ms: 300, text: "adhe arru", logprob: -1.3 }, ta: { ms: 300, text: "அதே ஆறு", logprob: -1.3 }, gemini: { ms: 3000, text: "unused" } });
     const t0 = Date.now();
-    const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
-    expect(calls.find((c) => c.kind === "gemini")!.at).toBeLessThan(100);
-    expect(Date.now() - t0).toBeLessThan(560);
-    expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta", noise: false });
-  });
-  it("it is let go when Whisper is sure", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "g");
-    const { fetcher, calls } = fake({ en: { ms: 30, text: "show the severe cases", logprob: -0.1 }, ta: { ms: 40, text: "ஷோ த சிவியர் கேசஸ்", logprob: -0.9 }, gemini: { ms: 2500, text: "show the severe cases" } });
-    const t0 = Date.now();
-    const h = await hearUtterance(wav(), { lane: "named", site: "en", fetcher });
-    // well short of the slower decode's 3 s: it did not wait for it (the margin is for a loaded machine running the whole suite)
+    await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
+    expect(calls.map((c) => c.kind).sort()).toEqual(["en", "ta"]);
+    // the margin is for a loaded machine running the whole suite
     expect(Date.now() - t0).toBeLessThan(2500);
-    expect(h.text).toBe("show the severe cases");
-    const g = calls.find((c) => c.kind === "gemini");
-    if (g) expect(g.signal?.aborted).toBe(true);
-  });
-  it("it hears the same names as Whisper, as an instruction", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "g");
-    const { fetcher, calls } = fake({ en: { ms: 30, text: "x", logprob: -1.4 }, ta: { ms: 30, text: "எக்ஸ்", logprob: -1.4 }, gemini: { ms: 30, text: "Velachery drains" } });
-    await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher, vocab: ["Velachery", "Storm Water Drains"] });
-    const body = calls.find((c) => c.kind === "gemini")!.body;
-    expect(body).toContain("Velachery");
-    expect(body).toMatch(/do not translate/i);
   });
 });
 
