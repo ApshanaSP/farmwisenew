@@ -12,14 +12,21 @@
  * Every chunk (lib/thunai/chunker.ts) passes the number gate before it is spoken or sent: a chunk that fails stays on screen and
  * is neither said nor sent. Grouped figures from a lakh up are said in lakh and crore (lib/thunai/numberwords.ts), and the gate
  * checks the line again as it will be said. What was said is kept, so "continue" goes on with the same audio and no request.
+ * v5 F1, no digit reaches any voice: after the gate, every number in the chunk is put in words in the sentence's language
+ * (numberwords.ts aloud: "one point two lakh", "நாற்பத்தேழு"), and only those words go to speechSynthesis or /api/jarvis/say. A chunk
+ * that still holds a number sign is not said (a count is logged, never the text). The caption and "what is being said" keep the
+ * chunk as shown, with its figures; a voice's word boundary is mapped back into it.
  * The barge-in's duck (duckVoice, unduckVoice), the end-of-speech earcon (earconEnd), the numberless acknowledgement (speakAck)
  * and the warm-up on mode-on (warmVoice) live here; the conductor and Thunai.tsx decide when.
+ * Trace (section 6.4): "speakCalled" when an answer's first sentence is handed to speak, "voiceStart" when the browser's voice starts
+ * (its start event where voice.ts passes one, else its first word) or the PCM path schedules its first sample. Not for an acknowledgement.
  */
 import { chunks } from "@/lib/thunai/chunker";
 import { figuresIn, gateChunk } from "@/lib/thunai/numbergate";
-import { speakNumbers, spokenAllowed } from "@/lib/thunai/numberwords";
+import { aloud, holdsDigit, sentenceLang, shownIndex, speakNumbers, spokenAllowed, type Aloud } from "@/lib/thunai/numberwords";
 import type { JarvisVoice } from "@/lib/jarvis/voices";
 import { joinSamples, l16ToFloat, pieceStarts, Player, toBuffer } from "./pcmplay";
+import { stamp } from "./trace";
 import * as browser from "./voice";
 
 export interface SpeakOpts {
@@ -27,9 +34,9 @@ export interface SpeakOpts {
   /** the figures this speech may use; omitted only for text built by code from the data */
   allowed?: Set<string>;
   /**
-   * a piece of the answer is now being said: its text exactly as the voice says it (after the gate and the lakh/crore wording), for the
-   * bar's caption (v4, Pillar 6). onWord's charIndex counts within this piece. Browser voice: just before the piece is spoken; server
-   * voice: when the audio reaches the piece.
+   * a piece of the answer is now being said: its text as shown (after the gate and the lakh/crore wording; the voice says the same with
+   * its numbers in words, v5 F1), for the bar's caption (v4, Pillar 6). onWord's charIndex counts within this piece (a boundary inside
+   * a number's words is put at the number). Browser voice: just before the piece is spoken; server voice: when the audio reaches the piece.
    */
   onPiece?: (text: string, line: number) => void;
 }
@@ -50,10 +57,13 @@ export interface MouthHooks {
 let hooks: MouthHooks = {};
 export function setMouthHooks(h: MouthHooks) { hooks = h; }
 
-interface Piece { text: string; line: number; first: boolean }
+/** a chunk as code wrote it, before the gate */
+interface Raw { text: string; line: number; first: boolean }
+/** a chunk the gate passed: `text` as shown (the caption, "what is being said"), `voice` what the voice gets (numbers in words) */
+interface Piece extends Raw { voice: Aloud }
 /** a run of the answer asked for in one request, and its audio once it is in */
 interface Group { from: number; to: number; text: string; buf: AudioBuffer | null; pending: Promise<AudioBuffer | null> | null }
-interface Speech { pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null }
+interface Speech { raw: Raw[]; pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null }
 
 const SAY = "/api/jarvis/say";
 /** the most of an answer sent in one request (the route takes 2,400 characters): a longer narration is asked for in runs */
@@ -136,8 +146,15 @@ export const voicePath = () => path;
 export const hasVoice = (lang: string) => (serverUp() ? true : browser.hasVoice(lang));
 export const warmVoices = browser.warmVoices;
 export const voicesFor = browser.voicesFor;
-/** the words being said right now (the self-hearing guard) */
-export const nowSaying = (): string | null => (speakingNow && cur ? cur.pieces.map((p) => p.text).join(" ") : null);
+/** the words being said right now (the self-hearing guard), as shown */
+export const nowSaying = (): string | null => (speakingNow && cur ? (cur.gated ? cur.pieces : cur.raw).map((p) => p.text).join(" ") : null);
+/** v5 F1: chunks not said because a number sign was left in them after the words (a count only, never the text) */
+let digitRefusals = 0;
+export const digitRefused = () => digitRefusals;
+function refuseDigit() {
+  digitRefusals++;
+  console.warn(`[jarvis] voice: a chunk still held a number sign after the words and was not said (${digitRefusals} so far)`);
+}
 /** The last duck: its path, how, and ms (null until one happened). */
 export const lastDuck = () => lastDuckInfo;
 /** Turn the browser voice's pause-on-duck on or off (see duckPause). */
@@ -175,15 +192,26 @@ export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "brows
   return v && v.lang.toLowerCase().startsWith(lang) ? { name: v.name, how: "browser" } : { name: null, how: "none" };
 }
 
-function pieces(lines: string[]): Piece[] {
+function pieces(lines: string[]): Raw[] {
   return lines.flatMap((raw, line) => chunks(raw).map((text, k) => ({ text, line, first: k === 0 })));
 }
 
 /**
- * The gate on every chunk: a figure code did not supply is not said (the chunk stays on screen). The chunk is then put as it
- * will be said (lakh and crore), and that is gated again, with the rounded values the spoken forms say.
+ * A chunk the gate has passed, as the voice gets it: every number in words in the sentence's language (v5 F1). It runs after the gate
+ * and keeps its verdict (numberwords.ts says why). Null, with a count logged, when a number sign is still in it: such a chunk is not said.
  */
-function gate(raw: Piece[], allowed: Set<string> | undefined, l: "ta" | "en"): Piece[] {
+function voiced(text: string, line: number, first: boolean, l: "ta" | "en"): Piece | null {
+  const voice = aloud(text, sentenceLang(text, l));
+  if (holdsDigit(voice.text)) { refuseDigit(); return null; }
+  return { text, line, first, voice };
+}
+
+/**
+ * The gate on every chunk: a figure code did not supply is not said (the chunk stays on screen). The chunk is then put as it
+ * will be said (lakh and crore), and that is gated again, with the rounded values the spoken forms say. Last, its numbers go into
+ * words for the voice (voiced).
+ */
+function gate(raw: Raw[], allowed: Set<string> | undefined, l: "ta" | "en"): Piece[] {
   const kept: Piece[] = [];
   const lines = new Set<number>();
   for (const p of raw) {
@@ -191,21 +219,23 @@ function gate(raw: Piece[], allowed: Set<string> | undefined, l: "ta" | "en"): P
       const g = gateChunk(p.text, allowed);
       if (!g.ok) { hooks.onGateRefused?.(g.bad); continue; }
     }
-    const said = speakNumbers(p.text, l);
+    const said = speakNumbers(p.text, sentenceLang(p.text, l));
     if (allowed && said.values.length) {
       const g = gateChunk(said.text, spokenAllowed(allowed, said.values));
       if (!g.ok) { hooks.onGateRefused?.(g.bad); continue; }
     }
-    kept.push({ text: said.text, line: p.line, first: !lines.has(p.line) });
+    const v = voiced(said.text, p.line, !lines.has(p.line), l);
+    if (!v) continue;
+    kept.push(v);
     lines.add(p.line);
   }
   return kept;
 }
 
-/** a run of pieces as one text, as code rendered it: sentences of a line by a space, lines by a newline */
+/** a run of pieces as one text, as the voice gets it: sentences of a line by a space, lines by a newline */
 function joinText(ps: Piece[], from: number, to: number): string {
   let t = "";
-  for (let i = from; i <= to; i++) t += (i > from ? (ps[i].line !== ps[i - 1].line ? "\n" : " ") : "") + ps[i].text;
+  for (let i = from; i <= to; i++) t += (i > from ? (ps[i].line !== ps[i - 1].line ? "\n" : " ") : "") + ps[i].voice.text;
   return t;
 }
 function groupsFrom(ps: Piece[], from: number): Group[] {
@@ -213,7 +243,7 @@ function groupsFrom(ps: Piece[], from: number): Group[] {
   let start = from, len = 0;
   const add = (a: number, b: number) => gs.push({ from: a, to: b, text: joinText(ps, a, b), buf: null, pending: null });
   for (let i = from; i < ps.length; i++) {
-    const n = ps[i].text.length + 1;
+    const n = ps[i].voice.text.length + 1;
     if (i > start && len + n > GROUP_MAX) { add(start, i - 1); start = i; len = 0; }
     len += n;
   }
@@ -233,6 +263,8 @@ const estimate = (text: string, l: "ta" | "en") => text.length / (l === "ta" ? 1
  * many); resolves with the whole of it, or null when the server could not say it all.
  */
 async function fetchAudio(text: string, l: "ta" | "en", c: AudioContext, feed: (b: AudioBuffer) => void): Promise<AudioBuffer | null> {
+  // the last check before the server's voice: no number sign is ever sent (F1; the route refuses one too)
+  if (holdsDigit(text)) { refuseDigit(); return null; }
   const key = `${jarvisVoice}|${l}|${text}`;
   const have = audioCache.get(key);
   if (have) { feed(have); return have; }
@@ -298,20 +330,22 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
     }
   };
   const iv = setInterval(tick, 50);
+  // the trace: the first sample of an answer (not an acknowledgement) is scheduled
+  const scheduled = () => { if (!s.ack) stamp("voiceStart"); };
   try {
     ensureGroups(s);
     let broke = false;
     for (const gr of s.groups ?? []) {
       if (gr.to < s.at) continue;
       const from = Math.max(gr.from, s.at);
-      const lengths = s.pieces.slice(gr.from, gr.to + 1).map((x) => x.text.length + 1);
+      const lengths = s.pieces.slice(gr.from, gr.to + 1).map((x) => x.voice.text.length + 1);
       const base = p.scheduled;
       const place = (dur: number, skip: number) => { const st = pieceStarts(lengths, dur); for (let i = from; i <= gr.to; i++) tl[i] = base + st[i - gr.from] - skip; };
       if (!gr.buf && !gr.pending) {
         // the one request for this run (the whole answer, unless it is a long narration)
         place(estimate(gr.text, l), 0);
         tick();
-        gr.pending = fetchAudio(gr.text, l, c, (b) => { if (my === token) { start("pcm"); p.push(b); } }).then((b) => { gr.buf = b; gr.pending = null; return b; });
+        gr.pending = fetchAudio(gr.text, l, c, (b) => { if (my === token) { start("pcm"); p.push(b); scheduled(); } }).then((b) => { gr.buf = b; gr.pending = null; return b; });
         const b = await gr.pending;
         if (my !== token) return "cut";
         if (!b) { broke = true; break; }
@@ -326,6 +360,7 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
       place(b.duration, skip);
       start("pcm");
       p.push(b, skip);
+      scheduled();
     }
     if (broke && !p.started) return "failed";
     p.end();
@@ -341,11 +376,24 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
   }
 }
 
-/** The browser speaks one chunk, or nothing is said and the words wait on screen. */
-function byBrowser(text: string, lang: string, o: SpeakOpts, line: number, my: number, how: VoicePath): Promise<void> {
+/**
+ * The browser speaks one chunk, its numbers in words (F1), or nothing is said and the words wait on screen. A word boundary is
+ * mapped back into the chunk as shown. voiceStart is stamped at the utterance's start where voice.ts passes `onStart` on, else at
+ * its first word.
+ */
+function byBrowser(p: Piece, lang: string, o: SpeakOpts, my: number, how: VoicePath, ack: boolean): Promise<void> {
   return new Promise((done) => {
-    if (how === "text" || !browser.canSpeak()) { setTimeout(done, Math.min(6000, 600 + text.length * 45)); return; }
-    const ok = browser.speakText(text, short(lang) === "ta" ? "ta-IN" : "en-IN", { rate: o.rate, voice: o.voice, onWord: (_, ch) => { if (my === token) o.onWord?.(line, ch); }, onEnd: () => done() });
+    if (how === "text" || !browser.canSpeak()) { setTimeout(done, Math.min(6000, 600 + p.text.length * 45)); return; }
+    const text = p.voice.text;
+    // the last check before the browser's voice: no number sign ever reaches it (F1)
+    if (holdsDigit(text)) { refuseDigit(); done(); return; }
+    const started = () => { if (!ack && my === token) stamp("voiceStart"); };
+    const vo: browser.SpeakOpts & { onStart?: () => void } = {
+      rate: o.rate, voice: o.voice, onStart: started,
+      onWord: (_, ch) => { if (my !== token) return; started(); o.onWord?.(p.line, shownIndex(p.voice, ch)); },
+      onEnd: () => done()
+    };
+    const ok = browser.speakText(text, short(lang) === "ta" ? "ta-IN" : "en-IN", vo);
     if (!ok) done();
   });
 }
@@ -355,7 +403,7 @@ async function run(s: Speech, my: number) {
   // the choice of voice waits until the browser has said which voices it has: deciding early changed the voice later
   await browser.voicesReady();
   if (my !== token) return;
-  if (!s.gated) { s.pieces = gate(s.pieces, s.o.allowed, l); s.gated = true; }
+  if (!s.gated) { s.pieces = gate(s.raw, s.o.allowed, l); s.gated = true; }
   if (!s.path) s.path = choosePath(l);
   let started = false;
   const start = (p: VoicePath) => { path = p; if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
@@ -372,7 +420,7 @@ async function run(s: Speech, my: number) {
       if (piece.first) s.o.onLine?.(piece.line);
       start(s.path);
       s.o.onPiece?.(piece.text, piece.line);
-      await byBrowser(piece.text, s.lang, s.o, piece.line, my, s.path);
+      await byBrowser(piece, s.lang, s.o, my, s.path, s.ack);
       if (my !== token) return;
       while (paused && my === token) await new Promise((r) => setTimeout(r, 30));
       if (my !== token) return;
@@ -398,10 +446,12 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
   bookmark = null;
   const list = pieces(lines);
   if (!list.length) { o.onEnd?.(); return false; }
+  // the trace: the turn's first sentence is handed to speak (the first stamp of a turn wins, so later sentences leave it)
+  stamp("speakCalled");
   const my = ++token;
   speakingNow = true;
   paused = false;
-  cur = { pieces: list, lang, o, at: 0, ack: false, gated: false, path: null, groups: null };
+  cur = { raw: list, pieces: [], lang, o, at: 0, ack: false, gated: false, path: null, groups: null };
   void run(cur, my);
   return true;
 }
@@ -421,12 +471,15 @@ export function speakAck(text: string, lang: string): boolean {
   if (!t || figuresIn(t).length) return false;
   if (speakingNow || browser.speaking()) return false;
   const l = short(lang);
+  // said in words like any chunk (a code's digits: "Covid-19"); one that would still hold a number sign is not said
+  const piece = voiced(t, 0, true, l);
+  if (!piece) return false;
   const nat = natural(l);
-  if (!nat && !audioCache.has(`${jarvisVoice}|${l}|${t}`)) return false;
+  if (!nat && !audioCache.has(`${jarvisVoice}|${l}|${piece.voice.text}`)) return false;
   const my = ++token;
   speakingNow = true;
   paused = false;
-  cur = { pieces: [{ text: t, line: 0, first: true }], lang, o: {}, at: 0, ack: true, gated: true, path: nat ? "browser" : "pcm", groups: null };
+  cur = { raw: [], pieces: [piece], lang, o: {}, at: 0, ack: true, gated: true, path: nat ? "browser" : "pcm", groups: null };
   void run(cur, my);
   return true;
 }
@@ -521,11 +574,14 @@ function clearDuck() {
   if (ctx && master) { const now = ctx.currentTime; master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(1, now); }
 }
 
+/** how many chunks a speech has to say: before the gate has run (the voices were still being listed), its chunks as written */
+const left = (s: Speech) => (s.gated ? s.pieces.length : s.raw.length);
+
 /** Everything stops; what was being said is kept for "continue". */
 export function stopVoice() {
   token++;
   const was = speakingNow, ack = !!cur?.ack;
-  if (cur && !cur.ack && cur.at < cur.pieces.length) bookmark = cur;
+  if (cur && !cur.ack && cur.at < left(cur)) bookmark = cur;
   cur = null;
   speakingNow = false;
   paused = false;
@@ -549,9 +605,11 @@ export function stopVoice() {
 export function continueAnswer(): boolean {
   const s = bookmark;
   bookmark = null;
-  if (!s || s.at >= s.pieces.length) return false;
+  if (!s || s.at >= left(s)) return false;
   stopVoice();
   bookmark = null;
+  // "continue" is a turn of its own: its answer is handed to speak here
+  stamp("speakCalled");
   const my = ++token;
   speakingNow = true;
   cur = { ...s };

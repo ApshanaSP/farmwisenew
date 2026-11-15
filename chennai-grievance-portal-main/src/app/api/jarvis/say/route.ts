@@ -13,6 +13,10 @@
  * The Azure branch runs only behind AZURE_SPEECH_KEY and AZURE_SPEECH_REGION (ta-IN Pallavi, en-IN Neerja); no such key exists
  * yet, so that branch has never run: Not verified (it type-checks). TTS_PROVIDER: auto (the default, and what the older value
  * "browser" now means), azure or gemini.
+ *
+ * v5 F1, defence in depth: the mouth puts every number in words before it asks for a voice (lib/thunai/numberwords.ts aloud), so
+ * text that still holds a number sign of any script (47, ௪௭, ௰) is refused here with 400 "digit" before any model is asked; one
+ * "tts" telemetry row says so, with counts only.
  */
 import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,6 +25,7 @@ import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { JARVIS_VOICES } from "@/lib/jarvis/voices";
 import { ledger } from "@/lib/thunai/ledger";
+import { holdsDigit } from "@/lib/thunai/numberwords";
 import { telemetry } from "@/lib/thunai/telemetry";
 import { SseAudio, STREAM_RATE, streamBody } from "@/lib/thunai/ttsstream";
 
@@ -30,6 +35,9 @@ const MODELS = (process.env.JARVIS_TTS_MODELS || "gemini-3.8-flash-lite-tts,gemi
 const provider = () => { const p = (process.env.TTS_PROVIDER ?? "auto").trim().toLowerCase(); return p === "azure" || p === "gemini" ? p : "auto"; };
 const streamOn = () => process.env.JARVIS_TTS_STREAM === "1";
 const Body = z.object({ text: z.string().trim().min(1).max(2400), lang: z.enum(["en", "ta"]), voice: z.enum(JARVIS_VOICES).optional(), stream: z.boolean().optional() });
+
+/** how many texts holding a digit were refused since the server started (F1) */
+let digitRefusals = 0;
 
 /** what was said, as WAV, by voice, language and text: at most 48 MB (a whole answer is about 0.7 MB for 15 s) */
 const cache = new Map<string, Buffer>();
@@ -146,6 +154,11 @@ export async function POST(req: NextRequest) {
   const b = Body.safeParse(capped.body);
   if (!b.success) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const { text, lang } = b.data;
+  // F1: no digit reaches a voice; the count of refusals is logged, never the text
+  if (holdsDigit(text)) {
+    telemetry("tts", { ok: false, path: "refused", why: "digit", chars: text.length, lang, count: ++digitRefusals });
+    return NextResponse.json({ error: "digit" }, { status: 400 });
+  }
   const voice = b.data.voice ?? "Despina";
   const key = `${voice}|${lang}|${text}`;
   const t0 = Date.now();

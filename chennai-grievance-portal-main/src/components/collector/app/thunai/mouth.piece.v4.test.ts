@@ -19,14 +19,14 @@ beforeEach(() => { FakeCtx.all = []; FakeCtx.decodedSeconds = 2; vi.stubGlobal("
 afterEach(() => { m?.stopVoice(); m = null; vi.unstubAllGlobals(); });
 
 describe("SpeakOpts.onPiece", () => {
-  it("browser voice: each gated piece, just before it is spoken, as the voice says it (lakh wording, a refused chunk never)", async () => {
+  it("browser voice: each gated piece, just before it is spoken, as shown (lakh wording; v5 F1: the voice says its numbers in words), a refused chunk never", async () => {
     env([NEERJA]);
     const mouth = await load();
     const pieces: [string, number][] = [];
     mouth.speakLines(["There are 1,23,456 complaints this month. Flood deaths 300.", "The list is on the screen."], "en-IN", { allowed: allowedSet([123_456]), onPiece: (t, l) => pieces.push([t, l]) });
     await vi.waitFor(() => expect(synth!.said.length).toBe(1));
     expect(pieces).toEqual([["There are 1.2 lakh complaints this month.", 0]]);
-    expect(synth!.said[0]).toBe(pieces[0][0]);
+    expect(synth!.said[0]).toBe("There are one point two lakh complaints this month.");
     synth!.finish();
     await vi.waitFor(() => expect(synth!.said.length).toBe(2));
     expect(pieces).toEqual([["There are 1.2 lakh complaints this month.", 0], ["The list is on the screen.", 1]]);

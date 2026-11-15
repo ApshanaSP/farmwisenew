@@ -71,10 +71,11 @@ describe("TTS, one request per answer (Pillar 5)", () => {
     const mouth = await load();
     mouth.speakLines(["There are 1,23,456 complaints this month."], "en-IN", { allowed: allowedSet([123_456]) });
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(sent(0).text).toBe("There are 1.2 lakh complaints this month.");
+    // v5 F1: the "1.2" of "1.2 lakh" now reaches the voice in words (mouth.v5.test.ts)
+    expect(sent(0).text).toBe("There are one point two lakh complaints this month.");
     mouth.speakLines(["இந்த மாதம் 1,23,456 புகார்கள் வந்தன."], "ta-IN", { allowed: allowedSet([123_456]) });
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(sent(1).text).toBe("இந்த மாதம் 1.2 லட்சம் புகார்கள் வந்தன.");
+    expect(sent(1).text).toBe("இந்த மாதம் ஒன்று புள்ளி இரண்டு லட்சம் புகார்கள் வந்தன.");
   });
 
   it("a streamed reply plays piece by piece as it arrives, end to end, in one voice", async () => {
