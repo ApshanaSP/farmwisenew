@@ -265,5 +265,9 @@ const CLOSING_MEASURE = /\b(?:slow|slower|slowest|fast|faster|fastest|quick|quic
 export function asksForbiddenOrder(text: string): boolean {
   if (!asksForbidden(text)) return false;
   const rest = text.replace(CLOSING_MEASURE, " ");
-  return rest === text || asksForbidden(rest);
+  if (rest === text || asksForbidden(rest)) return true;
+  // the measure's own words may hold an order ("how fast can you delete the old ones and close the rest"): what was taken out is asked
+  // too, with the closing word itself left out, so only an order inside it refuses (v4 review, planner finding 1)
+  const cut = text.match(CLOSING_MEASURE) ?? [];
+  return cut.some((m) => asksForbidden(m.replace(/\bclos(?:e|es|ing|ed|ure)\b/gi, " ")));
 }
