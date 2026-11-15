@@ -37,7 +37,10 @@ export interface HudState {
   firstUse: boolean;
   /** the system strip: real numbers only */
   strip: { lastMs: number | null; ackMs: number | null; findingMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null;
-    /** the echo cancellation the microphone really got (ears.ts echoApplied: "all", "remote-only", "on", "off", "unknown"), once it opened */
+    /**
+     * the echo cancellation the microphone really got (ears.ts echoApplied: "all", "remote-only", "on", "off", "unknown"), once it
+     * opened; shown only in the measurement view (measureLines), never in the bottom bar
+     */
     echo: string | null };
   /** the place being discussed, for the map's reticle */
   focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null;
@@ -136,6 +139,19 @@ export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing
     case "offline": return { word: t("Offline", "இணைப்பு இல்லை"), hint: t("I can't hear right now. You can still type.", "இப்போது கேட்க முடியவில்லை. தட்டச்சு செய்யலாம்.") };
     default: return s.firstUse ? { word: t("Mic closed", "மைக் மூடியது"), hint: "" } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
   }
+}
+
+/**
+ * v5 (D2): the measurement view's lines (JarvisLogView; never the bottom bar, rule 6): the echo canceller the microphone really got
+ * (strip.echo, from the track's settings) and the last turn's trace, ms from its last voiced sample (trace.ts traceRows). Timings and
+ * the setting only, no words; nothing when nothing was measured.
+ */
+export function measureLines(echo: string | null, last: { rows: { stage: string; ms: number }[]; lane: string | null } | null, ta: boolean): string[] {
+  const out: string[] = [];
+  if (echo) out.push(`${ta ? "எதிரொலி நீக்கம்" : "Echo cancellation"}: ${echo}`);
+  const rows = (last?.rows ?? []).filter((r) => r.stage !== "voicedEnd");
+  if (last && rows.length) out.push(`${ta ? "கடைசி முறை" : "Last turn"}${last.lane ? ` (${last.lane})` : ""}: ${rows.map((r) => `${r.stage} ${r.ms} ms`).join(" · ")}`);
+  return out;
 }
 
 /** the power-on plays once a session, never with reduced motion */

@@ -1,7 +1,7 @@
 /**
- * Jarvis's ears in the browser: one microphone for the whole of Jarvis mode, opened with the browser's echo canceller (asked for
- * as "all" of the system's playout where the browser has it, Chromium/Edge 141+, else the classic one; echoMode says which), noise
- * suppression and gain control, an AudioWorklet that cuts it into 20 ms frames, the voice detectors of lib/thunai/vad.ts on
+ * Jarvis's ears in the browser: one microphone for the whole of Jarvis mode, opened with the browser's echo canceller (the classic
+ * one, true, by default; with NEXT_PUBLIC_JARVIS_ECHO=all, "all" of the system's playout where the browser has it, Chromium/Edge
+ * 141+, else true: echoAsks; echoMode is what the track reports it got), noise suppression and gain control, an AudioWorklet that cuts it into 20 ms frames, the voice detectors of lib/thunai/vad.ts on
  * every frame, and a short rolling recording so a sentence can be cut out from just before it began and sent to Whisper as
  * a 16 kHz WAV. Nothing is decided here: events go to the turn machine (lib/thunai/turn.ts), driven by the conductor.
  *
@@ -40,8 +40,17 @@ const PREROLL_MS = 350;
 export type EchoMode = "all" | "remote-only" | "on" | "off" | "unknown" | "test";
 
 /**
- * The microphone's constraints. `echoCancellation: "all"` is asked for wherever the browser knows the constraint at all: a
- * browser that does not know the string value reads it as true (WebIDL turns a string into a boolean for ConstrainBoolean), and
+ * v5 (D2): the echo cancellation to ask for, in order. The classic canceller (true) by default: on Windows 11 "all" selects a
+ * system-loopback canceller that delays the microphone (about 170 ms by default). NEXT_PUBLIC_JARVIS_ECHO=all asks for "all" first
+ * (a plain value, never `exact`), then true where the browser refuses it. Whatever is asked, the track's own reading is what counts.
+ */
+export function echoAsks(flag: string | undefined): ("all" | true)[] {
+  return flag === "all" ? ["all", true] : [true];
+}
+
+/**
+ * The microphone's constraints, with one echo ask (echoAsks) as a plain value wherever the browser knows the constraint at all: a
+ * browser that does not know the string "all" reads it as true (WebIDL turns a string into a boolean for ConstrainBoolean), and
  * one that rejects it is asked again with true (Ears.start). Unverified on a real Edge 141 here: no browser is run in this lane.
  */
 export function echoAudio(supported: MediaTrackSupportedConstraints | undefined, echo: "all" | true): MediaTrackConstraints {
@@ -158,13 +167,18 @@ export class Ears {
       const md = navigator.mediaDevices;
       const supported = (() => { try { return md.getSupportedConstraints?.(); } catch { return undefined; } })();
       try {
-        // all of the system's playout out of the microphone, the browser's own voices too, where the browser can; else the classic canceller
-        try { this.stream = await md.getUserMedia({ audio: echoAudio(supported, "all") }); }
-        catch (e) {
-          const n = (e as DOMException).name;
-          if (n !== "OverconstrainedError" && n !== "TypeError") throw e;
-          this.stream = await md.getUserMedia({ audio: echoAudio(supported, true) });
+        // the classic canceller by default; with NEXT_PUBLIC_JARVIS_ECHO=all, all of the system's playout (the browser's own voices too)
+        // where the browser can, and the classic one where it refuses that (D2)
+        const asks = echoAsks(process.env.NEXT_PUBLIC_JARVIS_ECHO);
+        let got: MediaStream | null = null;
+        for (let i = 0; !got; i++) {
+          try { got = await md.getUserMedia({ audio: echoAudio(supported, asks[i]) }); }
+          catch (e) {
+            const n = (e as DOMException).name;
+            if (i + 1 >= asks.length || (n !== "OverconstrainedError" && n !== "TypeError")) throw e;
+          }
         }
+        this.stream = got;
       } catch (e) {
         const n = (e as DOMException).name;
         throw new Error(n === "NotAllowedError" || n === "SecurityError" ? "blocked" : n === "NotFoundError" || n === "OverconstrainedError" ? "nomic" : "failed");
