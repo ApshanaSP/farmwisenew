@@ -52,7 +52,7 @@ beforeEach(() => {
   seen.calls.length = 0; seen.answer = null;
   vi.stubEnv("THUNAI_DIR", fs.mkdtempSync(path.join(os.tmpdir(), "jv-ka-")));
   vi.stubEnv("GROQ_API_KEY", "x");
-  vi.stubEnv("AI_PROVIDER", "groq"); vi.stubEnv("AI_FALLBACK_PROVIDER", "none"); vi.stubEnv("AI_FORCE_PROVIDER", "");
+  vi.stubEnv("AI_PROVIDER", "groq"); vi.stubEnv("AI_FALLBACK_PROVIDER", "none"); vi.stubEnv("AI_FORCE_PROVIDER", ""); vi.stubEnv("AI_MODEL_FAST", "test/ka");
   resetLedger();
 });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); resetLedger(); });
@@ -73,6 +73,27 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     expect(seen.calls).toHaveLength(1);
     expect(seen.calls[0].init.dispatcher).toBe(keepAliveAgent());
     expect(seen.calls[0].init.method).toBe("GET");
+  });
+  it("a built-in FormData body (stt.ts's Whisper upload) reaches undici as undici's own FormData, every field and the file kept", async () => {
+    // npm undici's fetch brand-checks its own FormData class: given the built-in one it would send the text "[object FormData]"
+    // (the live measurement met exactly that: Groq answered 400), so warmFetch copies the fields into undici's FormData
+    const { FormData: UFormData } = await vi.importActual<typeof import("undici")>("undici");
+    const f = new FormData();
+    f.append("file", new Blob([new Uint8Array([1, 2, 3])], { type: "audio/wav" }), "speech.wav");
+    f.append("model", "whisper-large-v3-turbo");
+    f.append("language", "ta");
+    await warmFetch("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", body: f });
+    const body = seen.calls[0].init.body as InstanceType<typeof UFormData>;
+    expect(body).toBeInstanceOf(UFormData);
+    expect(body.get("model")).toBe("whisper-large-v3-turbo");
+    expect(body.get("language")).toBe("ta");
+    const file = body.get("file") as File;
+    expect(file.name).toBe("speech.wav");
+    expect(file.type).toBe("audio/wav");
+    expect([...new Uint8Array(await file.arrayBuffer())]).toEqual([1, 2, 3]);
+    // a string body (the gateway's JSON) is passed as it is
+    await warmFetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", body: "{\"a\":1}" });
+    expect(seen.calls[1].init.body).toBe("{\"a\":1}");
   });
   it("JARVIS_KEEPALIVE=1: groqFetch goes through undici with the Agent; =0: the built-in fetch, looked up at call time", async () => {
     const builtin = vi.fn(async () => new Response("{}"));
