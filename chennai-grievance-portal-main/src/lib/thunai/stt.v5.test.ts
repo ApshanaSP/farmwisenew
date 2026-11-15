@@ -111,6 +111,14 @@ describe("B2: the prompt-echo guard weighs the decode's own confidence", () => {
     expect(score(dec("en", "show the storm water drain waterlogging complaints near the canal", -0.2)).ok).toBe(true);
     expect(score(dec("en", "pump status at Chembarambakkam and Puzhal today", -0.25)).ok).toBe(true);
   });
+  it("a sentence with three prompt names in order among its own words is a sentence: only a run of the prompt itself is an echo", () => {
+    expect(score(dec("en", "Chembarambakkam Puzhal Poondi water levels now", -0.3)).ok).toBe(true);
+    expect(score(dec("en", "send the GCC CMWSSB TNEB numbers for the week", -0.3)).ok).toBe(true);
+    // the Tamil prompt ends on common words (rain, complaint, GCC): a Tanglish sentence that holds them in that order is kept
+    expect(score(dec("ta", "இந்த மழை புகார் GCC கிட்ட அனுப்பு", -0.4)).ok).toBe(true);
+    // the run alone, as Whisper writes its prompt back, is still an echo, sure or not
+    expect(score(dec("en", "Chembarambakkam, Puzhal, Poondi.", -0.2)).why).toBe("echo");
+  });
   it("readHear takes the clarify mark and the speech span from the multipart body or the query; anything else is none", async () => {
     const f = new FormData();
     f.append("audio", new Blob([wav()], { type: "audio/wav" }), "speech.wav");
