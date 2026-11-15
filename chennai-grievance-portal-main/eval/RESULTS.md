@@ -54,6 +54,21 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 - **Reading against 7.5:** A beat B on gpt-oss-20b only, about equal on the other two, no model the other way by 3. The rows that would say why (A against C, D, E; F against B) are owed. G does not beat A. **No row that selects a planner change holds, so Phase 4 ships the capacity items (A2, A5) and builds A1/A1b behind `JARVIS_PLANNER_DIET`, default off; A3 (route-then-fill) stays built and unwired.**
 - The grid's own tokens (ledger): qwen 49.8K, gpt-oss-20b 68.9K plus G about 34K (estimate), gpt-oss-120b 77.3K.
 
+### Side talk and the address gate (C1, C2; no model)
+
+`HOLDOUT=ambient` and `HOLDOUT=ambient-engaged`, `HOLDOUT_TAG=v5`, on the v5 tree. Counts and the tier that fired only. **On the unengaged harness C1 gives 0 by construction** (the harness passes no last turn, and C1 cuts exactly the tier the old false acts came through): that is not evidence about a room.
+
+| Set | Side talk acted, C1 (shipped) | Unnamed commands refused, C1 | Level B/C acts, unengaged | With the old command tier (`JARVIS_GATE_COMMAND_TIER=1`) | Engaged window: Jarvis's last turn 5 s ago |
+|---|---|---|---|---|---|
+| holdout2 (60 side, 40 commands) | **0/60** (0.0-6.0 %) | **40/40** | 0 | 4/60 acted; 35/40 commands accepted | 18/60 acted (30.0 %, 19.9-42.5), 14 of them at tier 2; 39/40 commands accepted |
+| holdout3 (40 look-alike side lines) | **0/40** (0.0-8.8 %) | (no commands in the set) | 0 | 17/40 acted | 20/40 acted (50.0 %, 35.2-64.8), 6 at tier 2 |
+| sidetalk200 (200 side, 60 commands; frozen in this build) | **0/200** (0.0-1.9 %) | **60/60** | 0 | 21/200 acted; 55/60 commands accepted | 75/200 acted (37.5 %, 31.1-44.4), 58 at tier 2; 59/60 commands accepted |
+
+- **The trade, side by side:** C1 takes side talk said while Jarvis is idle to 0 on every set, and refuses every unnamed command said while Jarvis is idle (they need "Jarvis" first, or must come within 20 s of its last turn). That refusal is the price the owner's default accepts.
+- **Inside the follow-up window the gate is as permissive as v4:** a third to a half of the look-alike side lines said within 5 s of Jarvis's turn are taken as addressed, most at tier 2, which allows a level B or C plan (B still waits for a spoken yes; C is a draft only; nothing is ever sent, approved or deleted). With an 8 s window a line 10 s after the turn is unengaged (0 acted); with the shipped 20 s window it is engaged. `ENGAGED_MS` stays 20,000.
+- **"≤ 5 %" on side talk, unengaged:** 0/200 has an upper bound of 1.9 %, so it is met on the drafted set by construction of the harness. Not claimed for a real room, or for the engaged window (37.5 % there).
+- The lane kept the two command returns inside the engaged window (a sure line with no request shape relies on them there) and cut them outside it.
+
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 
 Measured on this Windows laptop, on branch `claude/priceless-bouman-2fe7f8` (from `main` `38d96d2f`). The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. "Base" means `main` itself, run in a detached worktree of `38d96d2f` with no v4 code. Raw files are in `eval/holdout/results/`, `eval/holdout2/results/` and `eval/holdout3/results/`, with tags `v4base-*` and `v4final-*`. The older sections below are kept as they were.
