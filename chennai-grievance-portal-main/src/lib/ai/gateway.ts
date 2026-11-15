@@ -290,6 +290,32 @@ export interface CallInfo {
 }
 export interface JsonResult<T> { object: T; info: CallInfo }
 
+/**
+ * One attempt on one model, as the evaluation runs record it (v5 build, 6.2): what happened, the provider's own token counts
+ * (cached input tokens included: Groq's prompt cache), and the provider's x-ratelimit-* response headers (names and values
+ * only). No prompt, no reply, no key. Listeners are for the live runners and telemetry; the app adds none by default.
+ */
+export type AttemptOutcome = "ok" | "rate_limited" | "json_validate_failed" | "draft_used" | "timeout" | "busy" | "error";
+export interface AttemptEvent {
+  name: string; provider: ProviderName; model: string; outcome: AttemptOutcome; status?: number; ms: number; lane?: Lane;
+  inputTokens?: number; outputTokens?: number; cachedTokens?: number; rateHeaders?: Record<string, string>
+}
+const attemptListeners = new Set<(e: AttemptEvent) => void>();
+/** Listen to every model attempt; returns the way to stop listening. */
+export function onAttempt(fn: (e: AttemptEvent) => void): () => void {
+  attemptListeners.add(fn);
+  return () => { attemptListeners.delete(fn); };
+}
+function emitAttempt(e: AttemptEvent) {
+  for (const f of attemptListeners) try { f(e); } catch { /* a listener never breaks a call */ }
+}
+/** Only the x-ratelimit-* and retry-after headers, names and values. */
+const rateHeaders = (h: Record<string, string> | undefined): Record<string, string> | undefined => {
+  if (!h) return undefined;
+  const out = Object.fromEntries(Object.entries(h).filter(([k]) => /^x-ratelimit-|^retry-after$/i.test(k)));
+  return Object.keys(out).length ? out : undefined;
+};
+
 const sleep = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const t = setTimeout(resolve, ms);
@@ -517,19 +543,25 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
         output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
+      // Groq's prompt cache (gpt-oss): cached input tokens do not count toward its limits; logged per call (v5 A2 b)
+      const cached = r.usage?.inputTokenDetails?.cacheReadTokens;
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
-        inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
+        inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0, ...(cached != null ? { cacheReadTokens: cached } : {}) };
       charge(c.user, info.inputTokens + info.outputTokens);
       recordUse(key, info.inputTokens + info.outputTokens, c.lane);
       strikes.delete(key);
       keyWorks(p.name);
-      console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
+      emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "ok", ms: info.ms, lane: c.lane, inputTokens: info.inputTokens, outputTokens: info.outputTokens,
+        cachedTokens: cached ?? undefined, rateHeaders: rateHeaders((r.response as { headers?: Record<string, string> } | undefined)?.headers) });
+      console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens${cached ? ` (${cached} cached)` : ""}`);
       return { result: { object: r.output as T, info }, longBusy: false };
     } catch (e) {
       if (c.abortSignal?.aborted) throw e;
       state.lastError = e;
       // too slow: this model rests (longer each time in a row) and the next one answers
+      const errHeaders = APICallError.isInstance(e) ? rateHeaders(e.responseHeaders) : undefined;
       if (deadline.aborted) {
+        emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "timeout", ms: Date.now() - t0, lane: c.lane });
         console.warn(`[assistant] ${c.name} ${p.name}/${id} took over ${(limit / 1000).toFixed(1)} s; next model`);
         cooling.set(key, Date.now() + restFor(key));
         state.busyFor = Math.max(state.busyFor ?? 0, 10);
@@ -545,10 +577,12 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
             const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts, inputTokens: need, outputTokens: 0 };
             charge(c.user, need);
             recordUse(key, need, c.lane);
+            emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "draft_used", status: 400, ms: info.ms, lane: c.lane, rateHeaders: errHeaders });
             console.info(`[assistant] ${c.name} ${p.name}/${id}: provider rejected the draft; it passed our schema, used it`);
             return { result: { object: parsed.data, info }, longBusy: false };
           }
           const issue = parsed.error.issues[0];
+          emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "json_validate_failed", status: 400, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
           console.warn(`[assistant] ${c.name} draft off-schema at ${issue?.path.join(".")}: ${issue?.message}`);
           state.lastError = new Error(`off-schema output at ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
           if (attempt === 0) continue;
@@ -563,6 +597,8 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         continue;
       }
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
+      const jvf = status === 400 && /json_validate_failed|does not match the expected schema/i.test(`${APICallError.isInstance(e) ? e.responseBody ?? "" : ""} ${(e as Error).message ?? ""}`);
+      emitAttempt({ name: c.name, provider: p.name, model: id, outcome: status === 429 ? "rate_limited" : jvf ? "json_validate_failed" : busy ? "busy" : "error", status, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
       // a refused or expired key is remembered for the console's admin banner (keyhealth.ts), not only logged
       if (isKeyRefusal(status, (e as Error).message ?? "") || /refused the AWS keys/.test((e as Error).message ?? "")) keyRefused(p.name, status ?? (e as Error).name, (e as Error).message);

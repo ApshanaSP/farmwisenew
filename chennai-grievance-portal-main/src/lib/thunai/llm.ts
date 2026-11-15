@@ -97,6 +97,19 @@ export interface LlmCall<T> {
 }
 export interface LlmResult<T> { object: T; model: string; tokens: number; ms: number; hops: string[]; hedged: boolean }
 
+/**
+ * One ladder walk, as the evaluation runs record it (v5 build, 6.2): the order of rungs it had, the hops it took and which
+ * model answered (null: none did). Timings, ids and counts only.
+ */
+export interface LlmCallEvent { name: string; lane: Lane; ladder: string[]; hops: string[]; model: string | null; ms: number; tokens: number }
+const callListeners = new Set<(e: LlmCallEvent) => void>();
+/** Listen to every ladder walk; returns the way to stop listening. */
+export function onLlmCall(fn: (e: LlmCallEvent) => void): () => void {
+  callListeners.add(fn);
+  return () => { callListeners.delete(fn); };
+}
+const emitCall = (e: LlmCallEvent) => { for (const f of callListeners) try { f(e); } catch { /* never breaks a turn */ } };
+
 type Generate = <U>(c: JsonCall<U>) => Promise<JsonResult<U>>;
 export interface LlmDeps { generate?: Generate; ledger?: Ledger; now?: () => number; bedrockOk?: () => boolean; claudeOk?: () => boolean; gapMs?: number }
 
@@ -189,6 +202,7 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       if (hedged) telemetry("hedge", { provider: rung.provider, model: rung.model, into: `${next.provider}/${next.model}`, after: wait, why, winner: who, lane: c.lane });
       telemetry("llm", { model: r.info.model, provider: r.info.provider, ms: r.info.ms, tokens, lane: c.lane, hop: hops.length, ok: true, hedged, winner: hedged ? who : undefined,
         path: r.info.path, cacheRead: r.info.cacheReadTokens, cacheWrite: r.info.cacheWriteTokens });
+      emitCall({ name: c.name, lane: c.lane, ladder: rungs.map((x) => `${x.provider}/${x.model}`), hops: [...hops], model: r.info.model, ms: now() - t0, tokens });
       return { object: r.object, model: r.info.model, tokens, ms: now() - t0, hops, hedged };
     } catch (x) {
       // Promise.any wraps its losers; the first is main's own reason
@@ -218,5 +232,6 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
     }
   }
   console.warn(`[jarvis llm] ${c.name}: no model answered (${hops.join(" > ") || "no rungs"})`);
+  emitCall({ name: c.name, lane: c.lane, ladder: rungs.map((x) => `${x.provider}/${x.model}`), hops: [...hops], model: null, ms: now() - t0, tokens: 0 });
   return null;
 }
