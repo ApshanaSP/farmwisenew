@@ -28,6 +28,8 @@ export interface HudState {
   /** the keyboard's box is open */
   typing: boolean;
   steps: WorkStep[];
+  /** when the turn now running began (performance.now(): a sentence to Jarvis ended, or a turn started): only its steps show */
+  turnAt: number;
   panels: HudPanel[];
   notice: string | null;
   needsResume: boolean;
@@ -58,7 +60,7 @@ export interface HudState {
 }
 
 const START: HudState = {
-  mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", asked: "", doing: "", engagedUntil: 0, typing: false, steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
+  mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", asked: "", doing: "", engagedUntil: 0, typing: false, steps: [], turnAt: 0, panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
   strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null, echo: null }, focus: null,
   // ---- v4, Pillar 6 (lane H2)
   acting: false, caption: null, evidence: null, mission: null, interjection: null, queue: 0, actions: {}

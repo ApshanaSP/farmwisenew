@@ -67,6 +67,12 @@ export function fmtMs(ms: number, ta = false): string {
   return `${(v / 1000).toFixed(v < 10_000 ? 1 : 0)} ${ta ? "வி" : "s"}`;
 }
 
+/**
+ * The steps of the turn now running: those that began at or after its start (HudState.turnAt, set when a sentence to Jarvis ends and
+ * when a turn begins). An earlier turn's steps never show on this one's progress line.
+ */
+export const currentSteps = (steps: WorkStep[], since: number): WorkStep[] => steps.filter((s) => s.at >= since);
+
 /** The progress line's steps: the real ones from the store, the last few that fit, and how many earlier ones are not shown. */
 export function progressItems(steps: WorkStep[], max = 4): { shown: WorkStep[]; earlier: number } {
   const shown = steps.slice(-max);
@@ -76,6 +82,15 @@ export function progressItems(steps: WorkStep[], max = 4): { shown: WorkStep[]; 
 // ------------------------------------------------------------------ evidence --
 
 const short = (m: string) => m.replace(/^.*\//, "").replace(/#\d+$/, "");
+
+/**
+ * The time the evidence chip may show for the answer of turn `gen`: what was measured for that turn (to its first audio, else to its
+ * answer on screen), never another turn's. The rules and the instant controls have no brain time of their own (0).
+ */
+export function turnMs(m: { gen: number; findingMs: number | null; lastMs: number | null } | null, gen: number): number | null {
+  if (!m || m.gen !== gen) return null;
+  return m.findingMs ?? m.lastMs ?? null;
+}
 
 /**
  * The evidence for an answer, from code only: who understood it (the turn's brain), how long it took, and, when a screen was
@@ -148,6 +163,9 @@ export function missionMs(m: HudMission): number | null {
 }
 
 // ------------------------------------------------------------------ screen reader --
+
+/** a live region says what it holds only once that has stood this long: an answer growing sentence by sentence is read once */
+export const SETTLE_MS = 500;
 
 export interface Heard { word: string; answer: string; alert?: string }
 /**

@@ -90,6 +90,18 @@ export function screenResult(doc: Pick<StageDocT, "recipe" | "title" | "slots" |
   return clip(line, RESULT_MAX);
 }
 
+/**
+ * A screen opened from a control, a pin, an offer or a "Tell me" (no sentence was heard): the turn's "heard" in memory is this code
+ * label, never the screen's title (a case's title can be a citizen's own words, and the turns go to the planner). Codes only: the
+ * recipe, an incident's id, the scope's zone number, department and category codes, and the period.
+ */
+export function screenLabel(doc: Pick<StageDocT, "recipe" | "slots"> & { scope?: Partial<StageDocT["scope"]> | null }): string {
+  if (doc.recipe === "case") return clip(`opened incident ${String(doc.slots?.id ?? "").slice(0, 40)}`, RESULT_MAX);
+  const s = doc.scope ?? {};
+  const parts = [s.zone ? `zone ${s.zone}` : null, s.dept ? `department ${s.dept}` : null, s.cat ? `category ${s.cat}` : null, s.period ?? null].filter(Boolean);
+  return clip(`a ${doc.recipe} screen${parts.length ? ` (${parts.join(", ")})` : ""}`, RESULT_MAX);
+}
+
 /** A turn as the planner may see it. */
 export function memTurn(heard: string, did: string, o: { doc?: Pick<StageDocT, "recipe" | "slots"> | null; result?: string | null } = {}): MemTurn {
   const t: MemTurn = { heard: heard.slice(0, 300), did: did.slice(0, 300) };

@@ -32,8 +32,8 @@ import { provenanceOf } from "@/lib/thunai/register";
 import { nextQuestion } from "@/lib/thunai/next";
 import { explainSlots, explainTargetOf } from "@/lib/thunai/recipes/explain";
 import type { WatchSignal } from "@/lib/thunai/signals";
-import { asksWhatToday, briefCard, editIds, followAsk, heldBack, hudMissionOf, interjectNow, lowFx, missStep, NOT_CAUGHT, OFFER_KEYS, plainYes, signalLine, signalScreen, vocabOf, withLabels, zoneSafe, type BriefCard, type FollowAsk, type Live } from "./aide";
-import { evidenceOf, isListenKey } from "./hudview";
+import { asksWhatToday, briefCard, briefGo, briefStale, clientSignal, confirmAsk, editIds, followAsk, greetingOk, heldBack, hudMissionOf, interjectNow, lowFx, missStep, NOT_CAUGHT, OFFER_KEYS, plainYes, signalLine, signalScreen, vocabOf, withinHour, withLabels, zoneSafe, type BriefCard, type FollowAsk, type Live } from "./aide";
+import { currentSteps, evidenceOf, isListenKey, turnMs } from "./hudview";
 import { followLayout, samePlaces } from "./layoutwatch";
 import { speakableFigures } from "@/lib/thunai/speakable";
 import { spokenPart as spoken } from "@/lib/thunai/chunker";
@@ -43,11 +43,11 @@ import type { Console } from "../CollectorApp";
 import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
-import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, nowSaying, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, warmVoice, warmVoices } from "./mouth";
+import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, nowSaying, pathFor, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, warmVoice, warmVoices } from "./mouth";
 import { Conductor, type HeardLine } from "./conductor";
 import { Captions, canCaption } from "./captions";
-import { budgetOf, COMMAND_MS, readRound, SayQueue, settleStream } from "./turnstream";
-import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
+import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
+import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
@@ -125,8 +125,12 @@ interface MemoryView { notes: { id: string; text: string; at: string }[]; habits
   follows?: { id: string; kind: "incident" | "zone"; ref: string; at: string }[] }
 interface Station { id: string; name: string; zone: number | null; times: string[]; series: number[]; capacity?: number; storage?: number[] }
 interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] }; lakes?: { stations: Station[]; asOn: string | null } }
-/** a turn's stream (v4): the screen it put up, the sentences it said, the voice saying them */
-interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null }
+/**
+ * a turn's stream (v4): the screen it put up, the sentences that came (shown as they came), the voice saying them. `speaks`: decided at
+ * the first sentence, whether they are said as they come (the browser's own voice only: turnstream.ts queuesSentences); when not,
+ * none of them was said, and the whole answer is said once at RUN_FINISHED
+ */
+interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null; speaks?: boolean }
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
@@ -269,10 +273,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** when the last answer appeared, and when the last answer's voice (not an acknowledgement) began: the spoken ack waits on both */
   const answerAt = useRef(0);
   const findingAt = useRef(0);
+  /**
+   * the turn's own clock (the evidence chip shows only this, hudview.ts turnMs): its generation, when its sentence ended (null for a
+   * typed one), and what was measured from there to the answer on screen and to its first audio
+   */
+  const measured = useRef<{ gen: number; end: number | null; findingMs: number | null; lastMs: number | null } | null>(null);
   /** the answer exists: it is on screen now, whatever the voice is doing */
   const markAnswer = () => {
     answerAt.current = performance.now();
     jvMark("answer");
+    const m = measured.current;
+    if (m && m.gen === turnGen.current && m.end != null && m.lastMs == null) m.lastMs = Math.round(performance.now() - m.end);
     if (utterEnd.current) { hud.strip({ lastMs: Math.round(performance.now() - utterEnd.current) }); utterEnd.current = null; }
   };
   /** how the sentence being handled came: said (the ears) or typed */
@@ -338,6 +349,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [reading, setReading] = useState<{ key: string; char: number | null; lead?: string } | null>(null);
   const [narrating, setNarrating] = useState(false);
+  /** a turn's words are still streaming in (the Stage's live region waits for the whole answer, then reads it once) */
+  const [streaming, setStreaming] = useState(false);
   const [pins, setPins] = useState<PinnedScreen[]>([]);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [saveAsk, setSaveAsk] = useState<string | null>(null);
@@ -358,7 +371,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * and slots, and a one-line result (turnstate.ts memTurn: no citizen's words, no figure a model wrote); all four go to the round */
   const turns = useRef<MemTurn[]>([]);
   const remember = (heardText: string, did: string, o: { doc?: StageDocT | null; result?: string | null } = {}) => { turns.current = keepTurns(turns.current, memTurn(heardText, did, o)); };
-  const lastSpoken = useRef<{ text: string; lang: Lang } | null>(null);
+  /** the last thing said, with the figures it was allowed to say: "repeat" says it again through the same gate, never ungated */
+  const lastSpoken = useRef<{ text: string; lang: Lang; allowed?: Set<string> } | null>(null);
   const lastFilter = useRef<ScreenState["lastFilter"]>(null);
   const lastPlace = useRef<string | null>(null);
   const numbersRef = useRef(numbers);
@@ -384,6 +398,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   offerRef.current = offer;
   /** the brief (GET /brief): its card, and whether it is being fetched or said (it always comes before any interjection) */
   const [briefShown, setBriefShown] = useState<BriefCard | null>(null);
+  /** the brief's card folds to its bottom line once it has been said, so stacked cards never push the bar's others off a short screen */
+  const [briefFolded, setBriefFolded] = useState(false);
   const briefState = useRef<{ fetching: boolean; saying: boolean }>({ fetching: false, saying: false });
   /** misunderstandings in a row (PERSONA.md rule 8), and whether the last turn was one */
   const misses = useRef(0);
@@ -449,7 +465,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     markAnswer();  // eslint-disable-line @typescript-eslint/no-use-before-define
     setReply(text);
     showAlt(text, lang); // eslint-disable-line @typescript-eslint/no-use-before-define
-    lastSpoken.current = { text, lang };
+    lastSpoken.current = { text, lang, allowed };
     if (!text) { setPhase(ph); return; }
     if (outMode === "voice") {
       setPhase("speaking");
@@ -740,7 +756,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       case "stop": stopSpeaking(); abortMission.current = true; stopMission({ say: true, drop: false }); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
       case "off": setModeRef.current("off"); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
-      case "repeat": { const l = lastSpoken.current; if (l) out(l.text, lang === l.lang ? l.lang : lang); return null; }
+      // said again in its own language, through the same number gate it was first said with (an answer's model words never get past it on a repeat)
+      case "repeat": { const l = lastSpoken.current; if (l) out(l.text, l.lang, "ready", l.allowed); return null; }
       case "whatDid": {
         const s = lastSteps.current;
         return s.length ? line("did", lang, { what: s.map((x) => describeStep(x, worldRef.current, lang)).join(", ") }) : line("didNothing", lang);
@@ -916,10 +933,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind");
     // a plan with something outward in it (level C) and nothing to keep: run() only drafts to the tray, never sends
     if (!s) { void run(steps, lang, said, "ai"); return; }
-    const q = confirmLine(s as Parameters<typeof confirmLine>[0], lang) ?? ""; // one builder with the test copy of this code (say.ts), the reminder's time in Chennai time
-    setPendingB({ text: q, steps, heard: said, lang });
+    // one builder with the test copy of this code (say.ts confirmLine), the reminder's time in Chennai time; its line is then gated: it
+    // may say and show only the Collector's own figures (and the reminder's time as code writes it), so a note or name the model wrote
+    // with any other figure is not offered, and is neither said, nor shown, nor kept (aide.ts confirmAsk)
+    const q = confirmAsk(confirmLine(s as Parameters<typeof confirmLine>[0], lang), s, said, lang, zoneNos());
+    if (!q) {
+      earcon("blocked");
+      audit(said, steps, "Level-B step not offered: its words held a figure the Collector did not say");
+      out(s.a === "workspace" ? cannotLine(lang) : line("memoryFail", lang), lang, "ready", NO_FIGURES);
+      return;
+    }
+    setPendingB({ text: q.text, steps, heard: said, lang });
     earcon("need");
-    out(q, lang, "asking");
+    out(q.text, lang, "asking", q.allowed);
   };
 
 
@@ -964,7 +990,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
   /**
    * A sentence arrived: with the screen up, the first is spoken at once and the rest queue (each chunk through the number gate,
-   * with the screen's speakable figures). Words with no screen wait for the round's whole answer, which says them as before.
+   * with the screen's speakable figures). Words with no screen wait for the round's whole answer, which says them as before. On the
+   * server's voice the words only show: each queued run would be its own speech request and could come back in another voice, so the
+   * whole answer is said once, at RUN_FINISHED (showStage).
    */
   const streamSay = (gen: number, text: string, lang: Lang) => {
     const sx = streamOf(gen);
@@ -972,7 +1000,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     sx.said.push(text);
     // the words show as they come; the turn's card in the conversation is written once, when the whole answer is in
     setReply(sx.said.join(" "));
-    if (outMode !== "voice") return;
+    setStreaming(true);
+    if (sx.speaks == null) sx.speaks = outMode === "voice" && queuesSentences(pathFor(lang === "ta" ? "ta-IN" : "en-IN"));
+    if (!sx.speaks) return;
     if (!sx.queue) {
       const allowed = speakableFigures(sx.screen, lang), voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
       sx.queue = new SayQueue((t, end) => {
@@ -1056,7 +1086,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       finishStep("failed");
       return null;
-    } catch { finishStep("failed"); return null; }
+    } catch { finishStep("failed"); return null; } finally { if (!direct) setStreaming(false); }
   };
 
   const stopNarration = () => { stopVoice(); hud.caption(null); setNarrating(false); setReading(null); };
@@ -1071,7 +1101,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     narrIndex.current = 0;
     const lines = [...(say ? [spoken(say)] : []), ...list.map((x) => x.text), ...(then && !figuresIn(then).length ? [then] : [])];
     const offset = say ? 1 : 0;
-    if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang }; }
+    if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang, allowed: speakableFigures(doc, lang) }; }
     const voiceLang = lang === "ta" && hasVoice("ta-IN") ? "ta-IN" : "en-IN";
     if (outMode !== "voice" || !lines.length || (lang === "ta" && voiceLang !== "ta-IN")) { setPhase(tray.length ? "waiting" : "ready"); return; }
     setNarrating(true);
@@ -1145,13 +1175,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    */
   const showStage = (doc: StageDocT, say: string | null, lang: Lang, brainInfo: BrainInfo, opts: { push?: boolean; drafts?: boolean; heard?: string; stream?: Streamed | null } = {}) => {
     const sx = opts.stream?.screen ? opts.stream : null;
-    const plan = settleStream({ screenId: sx?.screen?.id ?? null, said: sx?.said ?? [] }, { stage: doc, say });
+    setStreaming(false);
+    // only the sentences the voice really said count as said: on the server's voice none was (streamSay), so the whole answer is said now, once
+    const plan = settleStream({ screenId: sx?.screen?.id ?? null, said: sx?.speaks ? sx.said : [] }, { stage: doc, say });
     // the conversation keeps a card of this screen (a click opens it again)
     const scr = { title: doc.title, recipe: doc.recipe, slots: doc.slots };
     // the screen carries its words in both languages, every figure from the data: no translation needed
     if (say) givenAlt.current = { text: say, alt: doc.say[lang === "ta" ? "en" : "ta"] ?? "" };
-    // the turn's memory: its recipe and slots, and a line of what it showed (never an incident's own words, only code's figures)
-    remember(opts.heard ?? doc.title, `showed a ${doc.recipe} screen`, { doc, result: screenResult(doc, speakableFigures(doc, lang)) });
+    // the turn's memory: its recipe and slots, and a line of what it showed (never an incident's own words, only code's figures). A
+    // screen opened from a control has no sentence: its "heard" is the screen's code label, never its title (a case's title can be a
+    // citizen's own words, and the turns go to the planner)
+    remember(opts.heard ?? screenLabel(doc), `showed a ${doc.recipe} screen`, { doc, result: screenResult(doc, speakableFigures(doc, lang)) });
     // after the answer, one next step offered (D2, next.ts): shown as a tap-able card, and said only after a short answer that reads no
     // list of items; a tap or a plain yes builds it directly (no model). Numberless by construction (nextQuestion skips any figure)
     const nq = nextQuestion(doc);
@@ -1164,7 +1198,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (say || sx.said.length) pendingScreen.current = scr; else { pendingScreen.current = null; pushMsg({ who: "jarvis", text: doc.title, lang, screen: scr }); }
       const auto = shown.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
       if (plan.speak === "all") { narrate(shown, say, lang, auto, offerLine(auto)); return; }
-      if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang }; }
+      if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang, allowed: speakableFigures(shown, lang) }; }
       if (plan.speak === "rest" && outMode === "voice") sx.queue?.push(plan.rest);
       const then = offerLine(auto);
       if (then && sx.queue) sx.queue.push(then);
@@ -1421,8 +1455,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const heardInfo = heardOf(sourceRef.current, opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLangRef.current), conf);
     forgetBookmark();
     if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
-    // a new question replaces the last answer's card: earlier ones are in the chatbot's Jarvis tab
-    hud.set({ ribbon: said, answer: "", panels: [], asked: original ?? said, doing: "", focus: null });
+    // a new question replaces the last answer's card: earlier ones are in the chatbot's Jarvis tab; its progress line starts empty (an
+    // earlier turn's steps never show on this one: hudview.ts currentSteps)
+    hud.set({ ribbon: said, answer: "", panels: [], asked: original ?? said, doing: "", focus: null, turnAt: performance.now() });
+    // no time measured for an earlier turn is shown as this one's (the evidence chip); a typed question is not timed from an old end of speech
+    if (sourceRef.current === "typed") { utterEnd.current = null; utterEnd2.current = null; }
+    measured.current = { gen, end: sourceRef.current === "typed" ? null : utterEnd.current, findingMs: null, lastMs: null };
     navTurn.current = false;
     captionRibbon.current = false;
     lastUserSpeech.current = Date.now();
@@ -1770,14 +1808,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const bs = briefState.current;
     if (bs.fetching) return;
     bs.fetching = true;
+    // the moment it was asked for: after the fetch it is said only if that moment still holds (aide.ts briefStale), so a brief that
+    // comes back late never cuts a newer answer, nor speaks after Jarvis was closed
+    const gen0 = turnGen.current, mode0 = modeRef.current;
     let card: BriefCard | null = null;
     try { const r = await fetch("/api/collector/thunai/brief"); card = r.ok ? briefCard(await r.json(), lang, worldRef.current) : null; } catch { card = null; } finally { bs.fetching = false; }
+    if (briefStale({ gen0, gen: turnGen.current, mode0, mode: modeRef.current, asked, live: liveNow() })) return; // eslint-disable-line @typescript-eslint/no-use-before-define
     if (!card) { if (asked) { earcon("blocked"); out(line("briefNone", lang), lang, "ready"); } return; }
     briefedPage = true;
     setBriefShown(card);
+    setBriefFolded(false);
     markAnswer();
     const text = card.lines.join(" ");
-    setReply(text); lastSpoken.current = { text, lang };
+    setReply(text); lastSpoken.current = { text, lang, allowed: card.allowed };
     const voiceLang = lang === "ta" && hasVoice("ta-IN") ? "ta-IN" : "en-IN";
     if (outModeRef.current !== "voice" || (lang === "ta" && voiceLang !== "ta-IN")) { setPhase(tray.length ? "waiting" : "ready"); return; }
     const z = zoneSafe(card.lines, card.allowed, zoneNos());
@@ -1785,12 +1828,21 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setPhase("speaking");
     const ok = speakLines(z.lines, voiceLang, {
       rate, voice: voiceName, allowed: z.allowed, onPiece: (t) => hud.caption(t, lang), onWord: (_, ch) => hud.captionWord(ch),
-      onEnd: () => { bs.saying = false; hud.caption(null); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); }
+      // said: its card folds to the bottom line (Show all opens it again)
+      onEnd: () => { bs.saying = false; hud.caption(null); setBriefFolded(true); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); }
     });
     if (!ok) { bs.saying = false; setPhase("ready"); }
   };
   const briefRef = useRef(briefMe);
   briefRef.current = briefMe;
+  /**
+   * When anyone last spoke to the room's microphone: a sentence handled, or any VAD onset or end the conductor saw, side talk the gate
+   * turned away too, so nothing unprompted lands in the pause of a conversation that was never meant for Jarvis.
+   */
+  const userSpokeAt = (): number | null => {
+    const a = lastUserSpeech.current, b = conductor.current?.lastSpeechAt ?? null;
+    return a == null ? b : b == null ? a : Math.max(a, b);
+  };
   /** What the moment is, for anything Jarvis would say unprompted (aide.ts heldBack, interjectNow). */
   const liveNow = (): Live => {
     const s = conductor.current?.state, bs = briefState.current, ph = phaseRef.current;
@@ -1799,21 +1851,41 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       busy: ph === "thinking" || ph === "acting" || !!stageBusyRef.current || s === "thinking",
       speaking: speaking(), briefing: bs.fetching || (bs.saying && speaking()),
       waiting: !!askOnceRef.current || !!pendingBRef.current || !!missionRef.current,
-      lastUserSpeech: lastUserSpeech.current, quiet: outModeRef.current === "quiet"
+      lastUserSpeech: userSpokeAt(), quiet: outModeRef.current === "quiet"
     };
   };
-  /** The brief on power-on: once a session, after the power-on (1.2 s), and only into a quiet moment (a question asked with the name comes first). */
-  const powerOnBrief = () => {
+  /**
+   * When this browser said something unprompted in the last hour: the server watch's interjections and the old watch's lines, one
+   * ledger, so both channels together stay within the one policy (three an hour, ten minutes apart). Kept across a reload.
+   */
+  const unpromptedTimes = (): number[] => {
+    try { const v = JSON.parse(store.get("jarvis-unprompted") ?? "[]"); return Array.isArray(v) ? withinHour(v.map(Number), Date.now()) : []; } catch { return []; }
+  };
+  const noteUnprompted = (t: number) => store.set("jarvis-unprompted", JSON.stringify([...unpromptedTimes(), t].slice(-12)));
+  /** the brief has been given in this tab's session (a reload keeps it), or on this page where storage is blocked */
+  const briefSeen = () => {
     let seen = briefedPage;
     try { seen = seen || sessionStorage.getItem("jarvis-briefed") === "1"; } catch { /* no storage: this page's own flag */ }
-    if (seen) return;
+    return seen;
+  };
+  /**
+   * The brief on power-on: once a session, after the power-on (1.2 s), and only into a quiet moment (a question asked with the name
+   * comes first, and drops it). When the only reason to wait is Jarvis speaking (an unprompted line it is finishing), it tries again
+   * every 1.5 s for half a minute (aide.ts briefGo). It replaces the old morning greeting (greetingOk).
+   */
+  const powerOnBrief = () => {
+    if (briefSeen()) return;
     const gen = turnGen.current;
-    setTimeout(() => {
-      if (modeRef.current !== "on" || gen !== turnGen.current || heldBack({ ...liveNow(), briefing: false })) return;
+    const at = (tries: number) => setTimeout(() => {
+      if (modeRef.current !== "on" || gen !== turnGen.current) return;
+      const go = briefGo(liveNow());
+      if (go === "retry" && tries < 20) { at(tries + 1); return; }
+      if (go !== "go") return;
       briefedPage = true;
       try { sessionStorage.setItem("jarvis-briefed", "1"); } catch { /* the page's flag holds */ }
       void briefRef.current(listenLangRef.current, false);
-    }, 1400);
+    }, tries ? 1500 : 1400);
+    at(0);
   };
 
   /** "What do you remember about me?": the list (store.ts rememberList) on the memory panel, and its one line with its counts. */
@@ -1881,10 +1953,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const interject = (sig: WatchSignal | null) => {
     if (!sig || hud.get().interjection) return;
     const lang = listenLangRef.current;
-    if (!interjectNow(sig, liveNow(), Date.now()).ok) return;
+    // the one budget for both channels: what the old watch said this hour counts here too (aide.ts interjectNow)
+    if (!interjectNow(sig, liveNow(), Date.now(), unpromptedTimes()).ok) return;
     const l = signalLine(sig, lang, worldRef.current);
     if (!l) return;
     interjected.current = sig;
+    noteUnprompted(Date.now());
     hud.set({ interjection: { id: sig.key, text: l.text, severity: sig.severity } });
     post("/api/collector/thunai/watch", { op: "spoken", key: sig.key, level: sig.level }).catch(() => undefined);
     if (sig.kind === "followed" && sig.topic.startsWith("followed:")) post("/api/collector/thunai/watch", { op: "followSeen", id: sig.topic.slice(9) }).catch(() => undefined);
@@ -1969,10 +2043,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onTellMe: (id) => a().tellMe(id), onLater: (id) => a().later(id), onNotAbout: (id) => a().notAbout(id), onQueue: () => a().queue(), chime: () => earcon("need")
     });
   }, []);
-  // the evidence chip under the answer: who understood it, how long it took, and the screen's method, n, period and sources (all code's)
+  // the evidence chip under the answer: who understood it, how long it took, and the screen's method, n, period and sources (all code's).
+  // A time only when it was measured for this turn (the rules and the instant controls have none of their own): never another turn's
   useEffect(() => {
-    const s = hud.get().strip;
-    hud.set({ evidence: evidenceOf(brain, stage, s.findingMs ?? s.lastMs) });
+    hud.set({ evidence: evidenceOf(brain, stage, turnMs(measured.current, turnGen.current)) });
   }, [brain, stage]);
 
   // --------------------------------------------------------------- the analyst --
@@ -2076,7 +2150,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     turnCtl.current = null;
     abortMission.current = true;
     setStageBusy(null);
-    setNarrating(false); setReading(null);
+    setNarrating(false); setReading(null); setStreaming(false);
     hud.caption(null);
     // a barge-in over a running mission: its words decide (skip that, instead X, stop) before anything is stopped (handle(), onState)
     const ms = missionRef.current;
@@ -2150,8 +2224,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
       // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service)
-      onSpeechStart: (o: { engaged: boolean }) => {
+      onSpeechStart: (o: { engaged: boolean; fallback?: boolean }) => {
         speechEngaged.current = o.engaged;
+        // Whisper is out and the conductor's own recogniser hears this speech: the live captions stand aside (one recogniser at a time)
+        if (o.fallback) return;
         captions.current?.speechStart({ on: modeRef.current === "on", engaged: o.engaged, awaitingYes: !!pendingBRef.current });
       },
       onSpeechEnd: () => { captions.current?.speechEnd(); },
@@ -2159,7 +2235,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (e === "start") {
           hud.strip({ path: p ?? null });
           jvMark("firstAudio");
-          if (!ack) { findingAt.current = performance.now(); jvMark("finding"); if (utterEnd2.current) { hud.strip({ findingMs: Math.round(performance.now() - utterEnd2.current) }); utterEnd2.current = null; } }
+          if (!ack) {
+            findingAt.current = performance.now(); jvMark("finding");
+            if (utterEnd2.current) { hud.strip({ findingMs: Math.round(performance.now() - utterEnd2.current) }); utterEnd2.current = null; }
+            // this turn's first audio, timed from its own sentence's end (and only soon after it: a later voice is not this answer's)
+            const m = measured.current, now = performance.now();
+            if (m && m.gen === turnGen.current && m.end != null && m.findingMs == null && now - m.end < 30_000) {
+              m.findingMs = Math.round(now - m.end);
+              hud.set({ evidence: evidenceOf(brainRef.current, stageRef.current, turnMs(m, turnGen.current)) });
+            }
+          }
         }
         engagedNow();
       },
@@ -2170,7 +2255,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           // speech: mouth.ts earconEnd), not a word it has not earned. Never for side talk
           const engaged = speechEngaged.current ?? (lastTurnAt.current != null && Date.now() - lastTurnAt.current <= 20_000);
           speechEngaged.current = null;
-          if (engaged || pendingBRef.current) earconEnd();
+          // a sentence to Jarvis ended: what is read and done from here is a new turn, and an older turn's steps leave the progress line
+          if (engaged || pendingBRef.current) { earconEnd(); hud.set({ turnAt: t }); }
         }
         if (SPEC) (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t });
       }
@@ -2475,15 +2561,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         signals.push({ key: `bell:${b.id}`, kind: "severe", lifeSafety: false, impact: 1, urgency: 1, confidence: 0.9, novelty: 1, actionability: 0.8, level: 1,
           text: { en: `New severe incident: ${b.type ?? "incident"}, ${where}.`, ta: `புதிய கடுமையான நிகழ்வு: ${b.type ?? ""}, ${where}.` } }); // never the title: titles can be a citizen's own words
       }
+      const due = new Map<string, string>();
       for (const r of memoryRef.current?.reminders ?? []) {
         if (r.done || Date.parse(r.at) > now) continue;
         signals.push({ key: `rem:${r.id}`, kind: "reminder", lifeSafety: false, impact: 0.8, urgency: 1, confidence: 1, novelty: 1, actionability: 1, level: 1,
           text: { en: line("reminderDue", "en", { text: r.text }), ta: line("reminderDue", "ta", { text: r.text }) } });
-        void changeMemory({ op: "reminderDone", id: r.id });
+        due.set(`rem:${r.id}`, r.id);
       }
       const today = new Date().toDateString();
       const hr = new Date().getHours();
-      if (hr >= 7 && hr < 10 && store.get("thunai-greeted") !== today && !briefedPage) {
+      // the power-on brief replaces the morning greeting: none while the brief is due or once it was given on this page (aide.ts greetingOk)
+      let sessionBriefed = false;
+      try { sessionBriefed = sessionStorage.getItem("jarvis-briefed") === "1"; } catch { /* no storage: the brief is due, so no greeting */ }
+      if (hr >= 7 && hr < 10 && store.get("thunai-greeted") !== today && greetingOk({ briefedPage, sessionBriefed })) {
         store.set("thunai-greeted", today);
         const counts = (h.ov.severity?.counts ?? {}) as Record<string, number>;
         const g = { severe: counts.Severe ?? 0, alerts: bell.length };
@@ -2491,9 +2581,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           text: { en: line("greet", "en", g), ta: line("greet", "ta", g) } });
       }
       for (const s of signals.sort((a, b) => band(b).localeCompare(band(a)))) {
-        if (watchMaySpeak(s, mem, now, { quiet: outMode === "quiet", lastUserSpeech: lastUserSpeech.current }) && phase !== "listening" && phase !== "acting" && !heldBack(liveNow())) {
+        // its own rules (four a day, twenty minutes apart), then the same interjection gate as the server's watch, with one hourly
+        // budget for everything said unprompted in this browser (aide.ts interjectNow, clientSignal)
+        if (watchMaySpeak(s, mem, now, { quiet: outMode === "quiet", lastUserSpeech: userSpokeAt() }) && phase !== "listening" && phase !== "acting"
+          && interjectNow(clientSignal(s), liveNow(), now, unpromptedTimes()).ok) {
           mem = watchRemember(s, mem, now);
           store.set("thunai-watch", JSON.stringify(mem));
+          noteUnprompted(now);
+          // the server's budget counts it too
+          post("/api/collector/thunai/watch", { op: "spoken", key: s.key.slice(0, 120), level: Math.max(0, Math.min(10, Math.round(s.level))) }).catch(() => undefined);
+          // a reminder is done once it has been said (one held back now is said at a later tick, never lost)
+          const rid = due.get(s.key);
+          if (rid) void changeMemory({ op: "reminderDone", id: rid });
           earcon("need");
           out(s.text[listenLang], listenLang);
           break;
@@ -2545,13 +2644,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // past 10 s: the turn's real steps (the plan's while it acts, else the work timeline) and a Stop that cancels it, as Esc does
   const progress: ProgressRow[] = phase === "acting" && chips.length
     ? chips.map((c) => ({ id: String(c.id), label: c.label, state: c.state, ms: null }))
-    : hud.get().steps.map((s) => ({ id: s.id, label: s.label, state: s.state, ms: s.ms }));
+    : currentSteps(hud.get().steps, hud.get().turnAt).map((s) => ({ id: s.id, label: s.label, state: s.state, ms: s.ms }));
   const long = longTurn(longBusy ? longMs : 0, progress);
+  // only "Still working" is announced, once: the seconds tick in a part screen readers skip, and the steps sit outside the live region
+  // (it was re-read every second). Tamil rows at the cards' 16 px (thunai.css), English a little smaller
   const longCard = long.show ? (
-    <div className="th-card" role="status" aria-live="polite" data-testid="long-turn" lang={listenLang}>
-      <p>{ta ? `இன்னும் வேலை செய்கிறேன் · ${long.seconds} வி` : `Still working · ${long.seconds} s`}</p>
+    <div className="th-card" data-testid="long-turn" lang={listenLang}>
+      <p role="status" aria-live="polite">{ta ? "இன்னும் வேலை செய்கிறேன்" : "Still working"}<span aria-hidden="true">{ta ? ` · ${long.seconds} வி` : ` · ${long.seconds} s`}</span></p>
       {long.rows.length > 0 && (
-        <ol style={{ margin: "4px 0 8px", paddingLeft: 18, fontSize: 13 }}>
+        <ol className="th-rows">
           {long.rows.map((r) => <li key={r.id}>{r.state === "done" ? "✓ " : r.state === "failed" ? "✕ " : r.state === "running" ? "… " : ""}{r.label}{r.ms != null ? ` (${(r.ms / 1000).toFixed(1)} s)` : ""}</li>)}
         </ol>
       )}
@@ -2563,15 +2664,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {longCard}
       {steps}
       {briefShown && (
-        <section className="th-card" role="group" aria-label={ta ? "சுருக்கம்" : "The brief"} data-testid="brief" lang={listenLang}>
+        <section className={`th-card${briefFolded ? " folded" : ""}`} role="group" aria-label={ta ? "சுருக்கம்" : "The brief"} data-testid="brief" data-folded={briefFolded ? "1" : undefined} lang={listenLang}>
           {briefShown.bottom && <p><b>{briefShown.bottom}</b></p>}
-          {briefShown.items.length > 0 && (
-            <ol style={{ margin: "4px 0 8px", paddingLeft: 18, fontSize: 13, lineHeight: 1.5 }}>
+          {!briefFolded && briefShown.items.length > 0 && (
+            <ol className="th-rows">
               {briefShown.items.map((x) => <li key={x.id} data-sev={x.severity}>{x.text}{x.source && <small style={{ display: "block", opacity: 0.75 }}>{x.source}{x.fresh ? ` · ${x.fresh}` : ""}</small>}</li>)}
             </ol>
           )}
-          <p style={{ opacity: 0.8 }}>{briefShown.end}</p>
-          <div className="row"><button onClick={() => setBriefShown(null)}>{ta ? "மூடு" : "Close"}</button></div>
+          {!briefFolded && <p style={{ opacity: 0.8 }}>{briefShown.end}</p>}
+          <div className="row">
+            <button onClick={() => setBriefFolded(!briefFolded)} aria-expanded={!briefFolded}>{briefFolded ? (ta ? "முழுதும் காட்டு" : "Show all") : (ta ? "சுருக்கு" : "Fold")}</button>
+            <button onClick={() => setBriefShown(null)}>{ta ? "மூடு" : "Close"}</button>
+          </div>
         </section>
       )}
       {offer && !askOnce && !pendingB && (
@@ -2584,7 +2688,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </div>
       )}
       {askOnce && (
-        <div className="th-card" role="dialog" aria-label={askOnce.question}>
+        <div className="th-card" role="dialog" aria-label={askOnce.question} lang={askOnce.lang}>
           <p>{askOnce.question}</p>
           <div className="row">
             {askOnce.choices.map((c, i) => (
@@ -2594,7 +2698,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </div>
       )}
       {pendingB && (
-        <div className="th-card amber" role="dialog" aria-label={pendingB.text}>
+        <div className="th-card amber" role="dialog" aria-label={pendingB.text} lang={pendingB.lang}>
           <p>{pendingB.text}</p>
           <div className="row">
             <button className="primary" onClick={() => { const p = pendingB; setPendingB(null); if (p.act) p.act(); else void run(p.steps, p.lang, p.heard, "rules"); }}>{ta ? "ஆம்" : "Yes"}</button>
@@ -2603,7 +2707,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </div>
       )}
       {tray.length > 0 && (
-        <div className="th-tray" role="region" aria-label="Approval tray">
+        <div className="th-tray" role="region" aria-label="Approval tray" lang={listenLang}>
           <header><b>{ta ? "ஒப்புதலுக்காக" : "Waiting for approval"}</b><span>{tray.length}</span></header>
           <ol>{tray.map((d) => <li key={d.incidentId}><b>{d.title}</b><small>{d.to ?? (ta ? "பெறுநர் இல்லை" : "no recipient")}{d.sandbox ? (ta ? " · சோதனை வழி" : " · sandbox") : (ta ? " · பலகையிலிருந்து அனுப்பவும்" : " · send from the panel")}</small></li>)}</ol>
           <p className="hint">{ta ? "அனுப்ப கீழே தட்டுங்கள். குரலால் அனுப்ப முடியாது." : "Tap Approve to send. Jarvis cannot send by voice."}</p>
@@ -2634,7 +2738,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       )}
 
       {on && panel && (
-        <aside className="th-panel" aria-label={panel}>
+        <aside className="th-panel" aria-label={panel} lang={listenLang}>
           <header>
             <b>{panel === "memory" ? (ta ? "ஜார்விஸின் நினைவு" : "What Jarvis remembers") : panel === "trail" ? (ta ? "தணிக்கைப் பதிவு" : "Audit trail") : (ta ? "சொல்லக்கூடியவை" : "Things to say")}</b>
             <button aria-label="Close" onClick={() => setPanel(null)}>×</button>
@@ -2675,7 +2779,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {on && stage && (
         <Stage doc={stage} lang={listenLang} theme={host.theme ?? "light"} busy={stageBusy} reading={reading} narrating={narrating} views={stageViews} pins={pins} geo={geo ?? host.c.geo}
           tray={tray.map((d) => ({ incidentId: d.incidentId, title: d.title, to: d.to, sandbox: d.sandbox }))} brain={stageBrain} filtered={stageFilter} saveAsk={pendingB ? saveAsk : null}
-          caption={{ heard: interim || heard, reply: phase === "listening" ? "" : reply, alt: phase === "listening" ? "" : alt, interim: !!interim,
+          caption={{ heard: interim || heard, reply: phase === "listening" ? "" : reply, alt: phase === "listening" ? "" : alt, interim: !!interim, streaming,
             by: brain && phase !== "thinking" && phase !== "listening" ? (brain.by === "ai" ? `${ta ? "AI" : "Understood by AI"}${brain.model ? ` · ${brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")}` : ""}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}` : brain.by === "instant" ? (ta ? "உடனடி" : "Instant, no model") : (ta ? "விதிகள்" : "Built-in rules")) : null }}
           a={stageActions} />
       )}

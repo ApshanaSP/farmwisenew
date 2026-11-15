@@ -79,6 +79,10 @@ html[data-theme="dark"] .thunai {
 .thunai .th-tray ol { margin: 0 0 8px; padding-left: 18px; max-height: 180px; overflow: auto; font-size: 13px; }
 .thunai .th-tray li small { display: block; color: var(--th-muted); }
 .thunai .th-tray .hint { margin: 0 0 8px; font-size: 12.5px; color: var(--th-muted); }
+/* a card's list of rows (the brief's items, a long turn's steps) */
+.thunai .th-rows { margin: 4px 0 8px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+/* Tamil in the cards and the tray: at least 16 px, line-height 1.6 */
+.thunai .th-card[lang="ta"] p, .thunai .th-card[lang="ta"] .th-rows, .thunai .th-card[lang="ta"] small, .thunai .th-tray[lang="ta"] ol, .thunai .th-tray[lang="ta"] small, .thunai .th-tray[lang="ta"] .hint { font-size: 16px; line-height: 1.6; }
 
 /* memory, trail, help */
 .thunai .th-panel { position: fixed; right: 18px; top: 70px; bottom: 228px; z-index: 2147483001; width: min(380px, calc(100vw - 36px)); background: var(--th-bg);
@@ -93,6 +97,9 @@ html[data-theme="dark"] .thunai {
 .thunai .th-panel .danger { margin-top: 12px; border: 1px solid var(--th-red); color: var(--th-red); background: transparent; border-radius: 14px; height: 28px; padding: 0 12px; }
 .thunai .th-panel .muted { color: var(--th-muted); }
 .thunai .th-panel .ok { color: var(--th-green); } .thunai .th-panel .bad { color: var(--th-red); }
+/* Tamil in the memory, trail and help panel: at least 16 px; its headings are never letter-spaced or upper-cased */
+.thunai .th-panel[lang="ta"] .body, .thunai .th-panel[lang="ta"] li button, .thunai .th-panel[lang="ta"] .help button, .thunai .th-panel[lang="ta"] .help > p { font-size: 16px; line-height: 1.6; }
+.thunai .th-panel[lang="ta"] h4 { font-size: 16px; letter-spacing: normal; text-transform: none; }
 .thunai .th-panel ol.trail { margin: 0; padding: 0; list-style: none; }
 .thunai .th-panel ol.trail li { display: grid; grid-template-columns: auto auto 1fr; gap: 6px; align-items: baseline; }
 .thunai .th-panel ol.trail time { color: var(--th-muted); font-size: 11.5px; }

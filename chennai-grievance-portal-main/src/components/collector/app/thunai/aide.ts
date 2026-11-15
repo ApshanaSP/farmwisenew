@@ -9,6 +9,9 @@
  *   - a spoken line whose "Zone 13" names a zone, not a figure (numbergate.ts zoneLabelsOut), made safe for the voice's own gate;
  *   - the open Stage's names for the ears (the conductor's vocab) and its labels for the round (register.ts labelsOf);
  *   - follow and unfollow, "what did you do today?", a plain yes to an offer, and the screen a "Tell me" on a signal opens.
+ * Phase 7 review (lane F1): the brief re-checked after its fetch (briefStale), the power-on brief's moment (briefGo) and the greeting
+ * it replaces (greetingOk), one hourly budget for both unprompted channels (interjectNow's `spoken`, clientSignal), and the Level-B
+ * question's figures (confirmAsk).
  * Every figure said or shown comes from code: nothing here writes one.
  */
 import { chunks } from "@/lib/thunai/chunker";
@@ -16,9 +19,10 @@ import { asciiDigits } from "@/lib/thunai/digits";
 import type { MissionCard, StepState } from "@/lib/thunai/missions.run";
 import { allowedSet, figuresIn, gateChunk, zoneLabelsOut } from "@/lib/thunai/numbergate";
 import { labelsOf } from "@/lib/thunai/register";
+import { whenText } from "@/lib/thunai/say";
 import type { Recipe, StageContext, StageDocT } from "@/lib/thunai/stage";
 import type { Lang, World } from "@/lib/thunai/types";
-import { emptyWatch, mayInterject } from "@/lib/thunai/watch";
+import { band, emptyWatch, mayInterject, type Signal } from "@/lib/thunai/watch";
 // types only: these modules read the store on the server
 import type { Brief } from "@/lib/thunai/briefing";
 import type { WatchSignal } from "@/lib/thunai/signals";
@@ -91,6 +95,7 @@ export interface Live {
   quiet: boolean;
 }
 
+const SPEAKING_WHY = "Jarvis is speaking";
 /** Why Jarvis must not raise anything now, from the live state alone; null: the signal's own rules decide. */
 export function heldBack(l: Live): string | null {
   if (l.mode !== "on") return "Jarvis is not listening";
@@ -98,21 +103,62 @@ export function heldBack(l: Live): string | null {
   if (l.waiting) return "the Collector has a card to answer";
   if (l.collectorSpeaking) return "the Collector is speaking";
   if (l.busy) return "a turn is in flight";
-  if (l.speaking) return "Jarvis is speaking";
+  if (l.speaking) return SPEAKING_WHY;
   return null;
 }
 
+/** What the interjection gate reads of a signal: the server's, or the old client watch's as clientSignal puts it. */
+export type InterjectSignal = Pick<WatchSignal, "key" | "topic" | "severity" | "level"> & { lifeSafety?: boolean };
+
+/** the times (ms) in the last hour, oldest first as given: the ledger of what was said unprompted */
+export const withinHour = (times: number[], now: number): number[] => times.filter((t) => Number.isFinite(t) && now - t < 3_600_000);
+
 /**
- * May the server's candidate be said now? The live state first (never during the brief, a card, the Collector's speech, a turn or
- * Jarvis's own voice), then mayInterject with the same state (high severity, quiet mode and hours, the hourly budget: the server applied
- * the Collector's own later / not-about-this choices when it chose the candidate, so the watch passed here is empty).
+ * May this be said now, unprompted? The live state first (never during the brief, a card, the Collector's speech, a turn or Jarvis's
+ * own voice), then mayInterject with the same state (high severity, quiet mode and hours, ten minutes apart, three an hour). `spoken`:
+ * when this browser said something unprompted, from either channel (the server's watch and the old client watch), so the hour's total
+ * stays within the one policy. The server applied the Collector's own later / not-about-this choices when it chose its candidate.
  */
-export function interjectNow(sig: WatchSignal | null | undefined, l: Live, now: number): { ok: boolean; why: string } {
+export function interjectNow(sig: InterjectSignal | null | undefined, l: Live, now: number, spoken: number[] = []): { ok: boolean; why: string } {
   if (!sig) return { ok: false, why: "nothing to tell" };
   const held = heldBack(l);
   if (held) return { ok: false, why: held };
-  return mayInterject({ now, signal: sig, collectorSpeaking: l.collectorSpeaking, turnInFlight: l.busy, jarvisSpeaking: l.speaking, lastUserSpeech: l.lastUserSpeech, quiet: l.quiet, watch: emptyWatch() });
+  const recent = withinHour(spoken, now);
+  const watch = recent.length ? { ...emptyWatch(), spoken: recent.map((t) => new Date(t).toISOString()) } : emptyWatch();
+  return mayInterject({ now, signal: sig, collectorSpeaking: l.collectorSpeaking, turnInFlight: l.busy, jarvisSpeaking: l.speaking, lastUserSpeech: l.lastUserSpeech, quiet: l.quiet, watch });
 }
+
+/**
+ * The old client watch's signal (a new severe bell, a reminder due, the morning greeting) as the interjection gate reads it: only
+ * what that watch would speak (band "speak" or "interrupt") is high severity, and only "interrupt" is life safety.
+ */
+export function clientSignal(s: Signal): InterjectSignal {
+  const b = band(s);
+  return { key: s.key, topic: s.key, severity: b === "speak" || b === "interrupt" ? "high" : b === "chip" ? "medium" : "low", level: s.level, lifeSafety: b === "interrupt" };
+}
+
+// ------------------------------------------------------------------ the brief, unprompted --
+
+/**
+ * The brief, its fetch done: is it still wanted? Not after a newer turn began (it would cut that answer), not once Jarvis was closed
+ * or muted (a brief asked for by typing with the mode muted still comes), and the power-on brief only into a quiet moment (its own
+ * fetch is no reason to wait). Null: say it; else why not.
+ */
+export function briefStale(o: { gen0: number; gen: number; mode0: JarvisMode; mode: JarvisMode; asked: boolean; live: Live }): string | null {
+  if (o.gen !== o.gen0) return "a newer turn began";
+  if (o.mode === "off" || (o.mode0 === "on" && o.mode !== "on")) return "Jarvis is not listening";
+  return o.asked ? null : heldBack({ ...o.live, briefing: false });
+}
+/** The power-on brief at its moment: go; wait and try again when the only reason is Jarvis speaking (a line it will finish); else drop it. */
+export function briefGo(l: Live): "go" | "retry" | "drop" {
+  const why = heldBack({ ...l, briefing: false });
+  return why == null ? "go" : why === SPEAKING_WHY ? "retry" : "drop";
+}
+/**
+ * The old watch's morning greeting: the brief replaces it. None while the brief is due on this page (it has not been given in this
+ * tab's session) or once it was given here; only where it was given earlier in the session (a reload), so it is not due again.
+ */
+export const greetingOk = (o: { briefedPage: boolean; sessionBriefed: boolean }): boolean => o.sessionBriefed && !o.briefedPage;
 
 const zoneNos = (w: Pick<World, "zones"> | null | undefined) => (w?.zones ?? []).map((z) => z.n);
 /** A line passes the number gate with these figures, a real zone's label ("Zone 13") read as its name. */
@@ -265,6 +311,20 @@ export function withLabels(ctx: StageContext, doc: Pick<StageDocT, "blocks">): S
 }
 
 // ------------------------------------------------------------------ words for the Level-B flows --
+
+/**
+ * The Level-B question before a step that keeps something (a note, a reminder, a saved view, a forget), as the one builder wrote it
+ * (say.ts confirmLine: the browser and the grader's copy both call it), gated: the figures it may say and show are only the Collector's
+ * own (the sentence they said) and, for a reminder, its time as code writes it from its date. A note or a name the model wrote with any
+ * other figure is not offered at all (null): it would be said and shown, and then kept.
+ */
+export function confirmAsk(text: string | null | undefined, step: { a: string; at?: unknown }, said: string, lang: Lang, zones: Iterable<number>): { text: string; allowed: Set<string> } | null {
+  if (!text) return null;
+  const own = figuresIn(said).map((f) => f.value);
+  const when = step.a === "remind" ? figuresIn(whenText(step.at, lang)).map((f) => f.value) : [];
+  const allowed = allowedSet([...own, ...when]);
+  return lineOk(text, allowed, zones) ? { text, allowed } : null;
+}
 
 /** a plain yes to an offer ("Shall I put these on the map?"); Level A, so the captions' yes counts too */
 export const plainYes = (t: string): boolean =>

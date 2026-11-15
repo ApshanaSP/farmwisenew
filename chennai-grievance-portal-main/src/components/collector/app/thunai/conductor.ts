@@ -14,6 +14,15 @@
  *    stop and on close, so the browser's recogniser runs only then. Its live words come back through partial(): they set when the
  *    sentence ends (eou.ts) and can stop Jarvis's voice (two words that are not backchannels).
  *  - Barge-in ducks the voice (mouth.ts duckVoice) and stops it only for a real bid for the turn (turn.ts). Earcons never count.
+ *
+ * Phase 7 review (lane F1):
+ *  - The earcon's guard drops only what the earcon itself can cause (earconDrops): the energy gate's onset, any onset over the voice,
+ *    and the energy gate's onset while the tone sounds. Silero's onset elsewhere is the Collector's, so a sentence that goes on after
+ *    a short pause is captured whole (the guard used to drop every onset for 400 ms after an engaged sentence ended).
+ *  - A /hear timeout is said ("I didn't catch that") only for an engaged sentence: side talk that timed out is silent.
+ *  - The browser's recogniser stands in for Whisper only on a real outage (a network error or a 503, hearOutage), and only from the
+ *    speech start to the speech end of an engaged turn, as HearingCaptions runs: never continuously, never for side talk.
+ *  - Every onset and end (side talk too) is when the Collector last spoke (lastSpeechAt): nothing unprompted lands in a pause.
  */
 import { addressed, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
@@ -79,22 +88,53 @@ export interface ConductorHooks {
   vocab?: () => string[];
   /** an ask card is waiting for a yes: a "yes" said over Jarvis's voice is then an answer, not a backchannel */
   wantsYes?: () => boolean;
-  /** speech began (VAD onset): the browser's captions may start now. `engaged`: the turn is engaged by the lane's reckoning */
-  onSpeechStart?: (o: { engaged: boolean }) => void;
+  /**
+   * speech began (VAD onset): the browser's captions may start now. `engaged`: the turn is engaged by the lane's reckoning;
+   * `fallback`: Whisper is out and the conductor's own recogniser hears this speech (the console's live captions stand aside)
+   */
+  onSpeechStart?: (o: { engaged: boolean; fallback?: boolean }) => void;
   /** the speech ended (also on stop and close): the captions stop */
   onSpeechEnd?: () => void;
-  /** a sentence the transcriber did not answer in time: it counts as not heard (a calm "I didn't catch that" is the console's) */
-  onMissed?: (why: "timeout") => void;
+  /**
+   * an engaged sentence the transcriber did not answer in time, or could not read (a 502, a 401): it counts as not heard (a calm "I
+   * didn't catch that" is the console's). Never for side talk
+   */
+  onMissed?: (why: "timeout" | "error") => void;
 }
 
+type Own = "ok" | "timeout" | "abort" | "error" | "outage";
 /** one sentence's transcription: its own request, and the reading of the part before it when the sentence was said in two */
 interface Post {
   gen: number; ctl: AbortController; p: Promise<HearReply | null>;
+  /** the lane it was posted on: a timeout is said only for an engaged sentence */
+  lane: "engaged" | "ambient";
   /** its words go with the next part of the sentence (that part's transcription joins them) */
   carried: boolean; done: boolean; delivered: boolean;
-  out: { j: HearReply | null; own: "ok" | "timeout" | "abort" | "error" } | null;
+  out: { j: HearReply | null; own: Own } | null;
 }
 class HearTimeout extends Error { constructor() { super("timeout"); this.name = "HearTimeout"; } }
+/** /hear answered, but not with words */
+class HearHttp extends Error { constructor(readonly status: number) { super(String(status)); this.name = "HearHttp"; } }
+
+/**
+ * Whisper is really out: the network failed (fetch rejects with a TypeError), or the server has no transcriber (503). A 401, a 502
+ * (the transcriber failed on this audio) or a 500 is not an outage: the next sentence goes to Whisper as usual.
+ */
+export function hearOutage(err: unknown): boolean {
+  if (err instanceof TypeError) return true;
+  return (err as { status?: unknown } | null)?.status === 503;
+}
+
+/**
+ * What the earcon's guard drops (it is Jarvis's own sound, never a barge-in): the energy gate's quick onset; any onset over the
+ * voice; and the energy gate's onset (no Silero) while the tone itself sounds. Silero's onset anywhere else is a voice (a sine is
+ * not speech), so a sentence that goes on after a short pause is never cut in half.
+ */
+export function earconDrops(kind: "quickOnset" | "vadStart", o: { guard: boolean; tone: boolean; state: TurnState; detector: "silero" | "energy" | null }): boolean {
+  if (!o.guard) return false;
+  if (kind === "quickOnset" || o.state === "speaking") return true;
+  return o.detector !== "silero" && o.tone;
+}
 
 export class Conductor {
   private m: TurnModel = turnStart();
@@ -114,8 +154,19 @@ export class Conductor {
   private wakeStop: (() => void) | null = null;
   private budgetLow = false;
   private budgetT: ReturnType<typeof setTimeout> | null = null;
-  private captionsStop: (() => void) | null = null;
+  /** Whisper is out (hearOutage): the browser's recogniser hears each engaged speech instead, until a transcription comes back */
+  private whisperOut = false;
+  /** the recogniser for the speech being heard, while Whisper is out */
+  private fb: SR | null = null;
+  /** every recogniser still alive (one that was stopped still sends its last words) */
+  private fbAll = new Set<SR>();
   private earconUntil = 0;
+  /** the earcon's own tone (with the output's latency): the energy gate cannot tell it from a voice */
+  private toneUntil = 0;
+  /** when the Collector (or anyone in the room) last began or ended speaking: a VAD onset or end, whatever the gate said */
+  private spokeAt: number | null = null;
+  /** the language of the last line heard (Whisper's, or the captions' script): /hear's translation guard expects it (stt.ts lastLang) */
+  private lastLang: "en" | "ta" | null = null;
   /** speech is being heard (between onSpeechStart and onSpeechEnd) */
   private speechOpen = false;
   private partialText = "";
@@ -127,7 +178,7 @@ export class Conductor {
       onStart: (p, ack) => { this.h.onVoice?.("start", p, ack); this.dispatch({ type: "ttsStart", ack }); },
       onEnd: (ack) => { this.h.onVoice?.("end"); this.dispatch({ type: "ttsEnd", ack }); },
       // the end-of-speech earcon plays only once the ears know it is Jarvis's own sound
-      onEarcon: (ms) => this.earcon(ms),
+      onEarcon: (ms, tone) => this.earcon(ms, tone),
       onDuck: (d) => this.h.mark?.(`duck:${d.path}:${d.how}`, performance.now())
     });
   }
@@ -141,6 +192,8 @@ export class Conductor {
   /** what decided the end of the current or last sentence: the captions' words (open, complete, neutral) or none */
   get endReason(): EouWhy | null { return this.eou; }
   get generation(): number { return this.m.gen; }
+  /** when speech last began or ended in the room (Date.now()), side talk too; null before any */
+  get lastSpeechAt(): number | null { return this.spokeAt; }
 
   /** Open the microphone. Throws an EarsError message when it cannot. */
   async open(): Promise<void> {
@@ -150,19 +203,22 @@ export class Conductor {
       onVad: (ev, wall) => {
         if (!ev) return;
         if (ev.type === "start") {
-          // Jarvis's own earcon is not the Collector's voice
-          if (this.earconOn()) return;
+          // Jarvis's own earcon is not the Collector's voice; Silero's onset after it is (earconDrops)
+          if (earconDrops("vadStart", { guard: this.earconOn(), tone: performance.now() < this.toneUntil, state: this.m.state, detector: this.ears?.kind ?? null })) return;
+          this.spokeAt = Date.now();
           // each part of a sentence is captured from its own start: a part still at Whisper is joined, never posted again
           this.speechStart = ev.at;
           this.h.mark?.("vadStart", wall); this.noteOnset(); this.speechBegan(); this.dispatch({ type: "vadStart", at: ev.at }); this.h.onHearing?.("speech");
         } else {
-          this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short });
+          this.spokeAt = Date.now();
+          this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short, strong: ev.strong });
           this.speechEnded();
         }
       },
       // speech over the voice: the capture starts here, not at the start of the sentence before
       onQuickOnset: (wall) => {
-        if (this.earconOn()) return;
+        if (earconDrops("quickOnset", { guard: this.earconOn(), tone: performance.now() < this.toneUntil, state: this.m.state, detector: this.ears?.kind ?? null })) return;
+        this.spokeAt = Date.now();
         const was = this.m.state;
         if (was === "speaking") this.speechStart = 0;
         this.h.mark?.("quickOnset", wall); this.noteOnset(); this.dispatch({ type: "quickOnset", at: wall });
@@ -215,7 +271,7 @@ export class Conductor {
     for (const p of this.posts) p.ctl.abort();
     this.posts.clear(); this.carry = null; this.live = null;
     this.wakeStop?.(); this.wakeStop = null;
-    this.captionsStop?.(); this.captionsStop = null;
+    this.abortFallback();
     if (this.holdT) { clearTimeout(this.holdT); this.holdT = null; }
     if (this.budgetT) { clearTimeout(this.budgetT); this.budgetT = null; }
     if (this.pruneT) { clearInterval(this.pruneT); this.pruneT = null; }
@@ -231,12 +287,21 @@ export class Conductor {
   stop() {
     if (this.m.state !== "off") this.dispatch({ type: "stop" });
     this.speechEnded();
+    // what the stand-in recogniser still holds was said before the stop: it is not acted on
+    this.abortFallback();
     this.cancelled = null;
     if (this.holdT) { clearTimeout(this.holdT); this.holdT = null; }
     this.ears?.extend(0);
   }
-  /** An earcon is playing: it must not count as speech (VAD onsets inside the window are ignored). */
-  earcon(ms: number = EARCON_GUARD_MS) { this.earconUntil = performance.now() + ms; }
+  /**
+   * An earcon is playing: it must not count as speech. For `ms` the energy gate's onset and any onset over the voice are taken as
+   * the earcon's; for `toneMs` (the tone with the output's latency) the energy gate's onset is, wherever it comes (earconDrops).
+   */
+  earcon(ms: number = EARCON_GUARD_MS, toneMs: number = ms) {
+    const now = performance.now();
+    this.earconUntil = Math.max(this.earconUntil, now + ms);
+    this.toneUntil = Math.max(this.toneUntil, now + Math.min(ms, toneMs));
+  }
   private earconOn() { return performance.now() < this.earconUntil; }
   /** The answer had nothing to say. */
   answered() { this.dispatch({ type: "answered" }); }
@@ -269,12 +334,16 @@ export class Conductor {
     this.speechOpen = true;
     this.partialText = "";
     this.eou = null;
-    this.h.onSpeechStart?.({ engaged: this.laneNow() === "engaged" });
+    const engaged = this.laneNow() === "engaged";
+    // Whisper out: the browser's recogniser hears this speech, an engaged one only, from here to its end
+    const fallback = this.whisperOut && engaged && this.startFallback();
+    this.h.onSpeechStart?.(fallback ? { engaged, fallback } : { engaged });
   }
   private speechEnded() {
     if (!this.speechOpen) return;
     this.speechOpen = false;
     this.partialText = "";
+    this.stopFallback();
     this.h.onSpeechEnd?.();
   }
 
@@ -384,6 +453,7 @@ export class Conductor {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
     // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())
     if (selfHeard(text.trim(), this.sayingAtOnset ?? nowSaying())) return;
+    this.lastLang = lang;
     // the same gate as Whisper's words: side talk goes no further than this browser
     const gate = this.gateFor(text);
     if (!gate.act) { this.h.onIgnored(text); return; }
@@ -419,12 +489,12 @@ export class Conductor {
     if (!wav && !first) { this.dispatch({ type: "text", text: "", gen }); this.h.onHearing?.("idle"); return; }
     this.h.onHearing?.("reading");
     const ctl = new AbortController();
-    let own: "ok" | "timeout" | "abort" | "error" = "ok";
+    let own: Own = "ok";
     const mine = wav ? this.post(wav, lane, ctl.signal).catch((err: unknown) => {
-      own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : "error";
+      own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
       return null;
     }) : Promise.resolve(null);
-    const rec: Post = { gen, ctl, carried: false, done: false, delivered: false, out: null, p: Promise.resolve(null) };
+    const rec: Post = { gen, ctl, lane, carried: false, done: false, delivered: false, out: null, p: Promise.resolve(null) };
     rec.p = Promise.all([first ? first.p : Promise.resolve(null), mine]).then(([a, b]) => joinHeard(a, b));
     this.inflight = ctl;
     this.live = rec;
@@ -449,15 +519,17 @@ export class Conductor {
     // cancelled: a newer sentence, a stop or a close took over
     if (own === "abort") return;
     if (!j) {
-      // too slow: not heard, and Jarvis listens again (the console says so calmly)
-      if (own === "timeout") { this.h.onMissed?.("timeout"); this.dispatch({ type: "text", text: "", gen }); return; }
-      // Whisper is not reachable: the browser's recogniser hears in the site's language, typed text always works
-      if (own === "error") { this.h.onReach?.(false); this.startCaptions(); }
+      // too slow, or unreadable (a 502, a 401): not heard, and Jarvis listens again. The console says so calmly for an engaged
+      // sentence only: side talk that was not transcribed is nobody's business
+      if ((own === "timeout" || own === "error") && rec.lane === "engaged") this.h.onMissed?.(own);
+      // Whisper is not reachable (the network, or no transcriber): from the next engaged speech the browser's recogniser hears it,
+      // in the site's language, only while it is said (speechBegan); typed text always works
+      if (own === "outage") { this.whisperOut = true; this.h.onReach?.(false); }
       this.dispatch({ type: "text", text: "", gen });
       return;
     }
     // Whisper is back: the fallback stops, or a sentence would be handled twice
-    if (own === "ok") { this.h.onReach?.(true); this.captionsStop?.(); this.captionsStop = null; }
+    if (own === "ok") { this.h.onReach?.(true); this.whisperOut = false; this.abortFallback(); }
     if (j.budget === "low" && !j.text?.trim()) { this.setBudgetLow(this.ambient.length); this.dispatch({ type: "text", text: "", gen }); return; }
     this.h.mark?.("transcribed", performance.now());
     this.accept(j.text ?? "", j.lang ?? this.h.siteLang(), gen, "whisper", confOf(j.conf));
@@ -472,17 +544,24 @@ export class Conductor {
     if (signal.aborted) ctl.abort(); else signal.addEventListener("abort", off, { once: true });
     try {
       const vocab = (this.h.vocab?.() ?? []).filter((s): s is string => typeof s === "string" && !!s.trim()).map((s) => s.trim().slice(0, 40)).slice(0, 30);
-      const url = `${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}`;
+      // the last line's language, so the server's first good decode in the site's language does not win over a Tamil sentence that it
+      // only translated (stt.ts readHear `lastLang`: a field of the multipart body, or ?lastLang= with the bare WAV; an older server ignores it)
+      const last = this.lastLang;
+      let url = `${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}`;
       let init: RequestInit;
       if (vocab.length) {
         const f = new FormData();
         f.append("audio", wav, "speech.wav");
         f.append("vocab", JSON.stringify(vocab));
+        if (last) f.append("lastLang", last);
         init = { method: "POST", body: f, signal: ctl.signal };
-      } else init = { method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav, signal: ctl.signal };
+      } else {
+        if (last) url += `&lastLang=${last}`;
+        init = { method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav, signal: ctl.signal };
+      }
       const r = await fetch(url, init);
       if (r.status === 429) return { text: "", lang: this.h.siteLang(), budget: "low" };
-      if (!r.ok) throw new Error(String(r.status));
+      if (!r.ok) throw new HearHttp(r.status);
       return (await r.json()) as HearReply;
     } catch (err) {
       if (timedOut) throw new HearTimeout();
@@ -501,6 +580,7 @@ export class Conductor {
     // Jarvis's own voice, heard back: not a sentence
     if (t && selfHeard(t, saying)) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
     if (!t) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
+    this.lastLang = lang;
     // "Jarvis" and a pause: the end of utterance is short, so the name often arrives alone. It is not a request (said over the
     // voice, it stops the voice and listens: turn.ts)
     if (namedIn(t) === "") {
@@ -535,33 +615,50 @@ export class Conductor {
   /** Tell the turn machine a new sentence was taken: nothing cancelled earlier comes back after it. */
   private forgetCancelled() { this.cancelled = null; }
 
-  /** Whisper unavailable: the browser's recogniser, in the site's language, for as long as the mic is open. Its "yes" never counts. */
-  private startCaptions() {
-    if (this.captionsStop) return;
-    const W = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
+  /**
+   * Whisper out: the browser's recogniser, in the site's language, for this one engaged speech (speechBegan to speechEnded, as
+   * HearingCaptions runs), never continuously: room audio goes to the browser's service only while a sentence to Jarvis is said. Its
+   * words go through the same gate as Whisper's, and its "yes" never counts. False where the browser has no recogniser.
+   */
+  private startFallback(): boolean {
+    if (this.fb) return true;
+    const W = (typeof window === "undefined" ? {} : window) as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
     const R = W.SpeechRecognition ?? W.webkitSpeechRecognition;
-    if (!R) return;
-    let stopped = false;
-    const go = () => {
-      if (stopped) return;
-      const r = new R();
-      r.lang = this.h.siteLang() === "ta" ? "ta-IN" : "en-IN";
-      r.continuous = true; r.interimResults = false;
-      r.onresult = (e) => {
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript.trim();
-          if (e.results[i].isFinal && t.length > 1 && !speaking()) this.fromCaptions(t);
-        }
-      };
-      r.onend = () => { if (!stopped) setTimeout(go, 300); };
-      r.onerror = () => undefined;
-      try { r.start(); } catch { /* already */ }
-      this.captionsStop = () => { stopped = true; try { r.abort(); } catch { /* ended */ } };
+    if (!R) return false;
+    let r: SR;
+    try { r = new R(); } catch { return false; }
+    r.lang = this.h.siteLang() === "ta" ? "ta-IN" : "en-IN";
+    r.continuous = true; r.interimResults = false;
+    r.onresult = (e) => {
+      if (!this.fbAll.has(r)) return;
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript.trim();
+        if (e.results[i].isFinal && t.length > 1 && !speaking()) this.fromCaptions(t);
+      }
     };
-    go();
+    r.onend = () => { this.fbAll.delete(r); if (this.fb === r) this.fb = null; };
+    r.onerror = () => undefined;
+    this.fb = r;
+    this.fbAll.add(r);
+    try { r.start(); } catch { /* already */ }
+    return true;
+  }
+  /** The speech ended: the recogniser stops listening and sends its last words (it is let go after a few seconds if it never ends). */
+  private stopFallback() {
+    const r = this.fb;
+    this.fb = null;
+    if (!r) return;
+    try { r.stop(); } catch { /* ended */ }
+    setTimeout(() => { if (this.fbAll.delete(r)) { try { r.abort(); } catch { /* ended */ } } }, 4000);
+  }
+  /** Whisper is back, or the microphone closed: every recogniser goes, and nothing it still holds is heard. */
+  private abortFallback() {
+    this.fb = null;
+    for (const r of this.fbAll) { try { r.abort(); } catch { /* ended */ } }
+    this.fbAll.clear();
   }
 }
 export { levelAllowed };
 
-type SR = { lang: string; continuous: boolean; interimResults: boolean; start: () => void; abort: () => void;
+type SR = { lang: string; continuous: boolean; interimResults: boolean; start: () => void; stop: () => void; abort: () => void;
   onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null };

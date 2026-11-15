@@ -135,9 +135,15 @@ html:has(.hud-ans) .dic .toasts, html:has(.hud-pill) .dic .toasts { right: auto;
 /* Tamil body text at least 16 px, line-height at least 1.5 */
 .hud-a[lang="ta"], .hud-q[lang="ta"], .hud[lang="ta"] .hud-hint, .hud-ribbon[lang="ta"] { font-size: 16px; line-height: 1.6; }
 
-/* the waiting cards (a question, a yes, the tray, a mission, something noticed) sit above the bar */
-.hud-cards { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; position: relative; z-index: 1; }
+/* the waiting cards (a question, a yes, the tray, a mission, something noticed) sit above the bar. Stacked, they scroll inside the
+   screen's height instead of pushing the top ones (the mission's Stop) off it at 1366x768; the padding keeps their shadows. The
+   whole stack takes its own taps: a tap between two cards never lands on a console control hidden under them */
+.hud-cards { display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; max-height: calc(100dvh - 160px); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; padding: 6px 8px 14px; margin: -6px -8px -6px; }
 .hud-cards:empty { display: none; }
+/* Tamil in the cards: at least 16 px, line-height 1.6 (their English is a little smaller) */
+.hud .hud-cards .th-card[lang="ta"] :is(p, li, small, b), .hud .hud-cards .th-tray[lang="ta"] :is(li, small, .hint) { font-size: 16px; line-height: 1.6; }
+/* the brief, once said, folds to its bottom line */
+.hud .hud-cards .th-card.folded p { margin-bottom: 6px; }
 .hud .hud-cards .th-card, .hud .hud-cards .th-tray { position: static; width: auto; background: var(--glass); color: var(--ink); border: 1px solid var(--c-line); border-radius: 12px; box-shadow: var(--shade); animation: hud-show .2s ease both; }
 .hud .hud-cards .th-card button, .hud .hud-cards .th-tray button { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); background: var(--glass-2); border: 1px solid var(--line); border-radius: 8px; }
 .hud .hud-cards .th-card button.primary, .hud .hud-cards .th-tray button.primary { background: var(--c); color: #fff; border-color: var(--c); font-weight: 650; }

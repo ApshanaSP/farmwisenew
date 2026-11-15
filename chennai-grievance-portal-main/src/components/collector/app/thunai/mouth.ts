@@ -38,8 +38,11 @@ export type VoicePath = "browser" | "pcm" | "text";
 export interface DuckInfo { path: VoicePath; how: "gain" | "pause" | "kept"; ms: number | null; outMs: number | null }
 export interface MouthHooks {
   onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void;
-  /** an earcon is about to sound for about `ms`: the ears must take it as Jarvis's own sound (Conductor.earcon(ms)) */
-  onEarcon?: (ms: number) => void;
+  /**
+   * an earcon is about to sound: the ears must take it as Jarvis's own sound for `ms`, the tone itself (with the output's latency)
+   * lasting `toneMs` (Conductor.earcon)
+   */
+  onEarcon?: (ms: number, toneMs?: number) => void;
   /** a duck took effect, or could not: for the HUD strip and the barge-in telemetry */
   onDuck?: (d: DuckInfo) => void;
 }
@@ -61,6 +64,11 @@ export const DUCK_MS = 30;
 /** the end-of-speech earcon's length, and how long the ears take it as Jarvis's own sound */
 export const EARCON_MS = 110;
 export const EARCON_GUARD_MS = 400;
+/**
+ * the tone as the microphone can hear it: its 110 ms, its edges, and the output's and the input's latency. Only the energy gate needs
+ * this (Silero does not take a sine for speech): its onset inside this window is the tone's (conductor.ts earconDrops)
+ */
+export const EARCON_TONE_MS = EARCON_MS + 150;
 
 let token = 0;
 let cur: Speech | null = null;
@@ -152,6 +160,12 @@ function choosePath(l: "ta" | "en"): VoicePath {
   if (serverUp() && AC()) return "pcm";
   return browserCan(l) ? "browser" : "text";
 }
+
+/**
+ * The path an answer in this language would take if it began now (the same choice run() makes once the voices are listed): the
+ * streamed turn speaks its sentences as they come only on the browser's own voice (turnstream.ts queuesSentences).
+ */
+export const pathFor = (lang: string): VoicePath => choosePath(short(lang));
 
 /** Which voice Jarvis speaks the language with on this browser, for its settings ("Microsoft Pallavi · Edge"). */
 export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "browser" | "server" | "none" } {
@@ -558,7 +572,7 @@ export function earconEnd(): boolean {
   if (!hooks.onEarcon || (speakingNow && !paused)) return false;
   const c = fxOut();
   if (!c) return false;
-  hooks.onEarcon(EARCON_GUARD_MS);
+  hooks.onEarcon(EARCON_GUARD_MS, EARCON_TONE_MS);
   try {
     if (c.state === "suspended") void c.resume().catch(() => undefined);
     const o = c.createOscillator(), g = c.createGain();

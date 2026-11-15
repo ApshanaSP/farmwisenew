@@ -10,6 +10,14 @@
 import { NDJSON, readEvents, type RoundOutWire, type TurnEvent } from "@/lib/thunai/events";
 import type { StageDocT } from "@/lib/thunai/stage";
 import type { Lang, Step } from "@/lib/thunai/types";
+import type { VoicePath } from "./mouth";
+
+/**
+ * Are a streamed answer's sentences spoken as they come (SayQueue)? Only on the browser's own voice, which is free and at once. On the
+ * server's voice each queued run would be its own speech request (3 a minute) and could come back in another voice mid-answer, so
+ * there the words show as they stream and the whole answer is said once, at RUN_FINISHED (Phase 7 review, Planner 3).
+ */
+export const queuesSentences = (path: VoicePath | null): boolean => path === "browser";
 
 export interface RoundHooks {
   /** the work timeline: a step began, or ended with the time it really took (the server's ms) */

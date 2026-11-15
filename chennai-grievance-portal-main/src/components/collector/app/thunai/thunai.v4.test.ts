@@ -153,7 +153,8 @@ describe("P2 proactive: the brief, the watch, interjections, Level-B memory, fol
     expect(src).toMatch(/\/api\/collector\/thunai\/watch\?quiet=/);
     expect(src).toMatch(/setInterval\(\(\) => void tick\(\), 120_000\)/);
     const i = between("const interject = ", "const interjectRef");
-    expect(i).toContain("interjectNow(sig, liveNow(), Date.now()).ok");
+    // Phase 7 review (F1): with the one ledger of everything said unprompted, both channels together
+    expect(i).toContain("interjectNow(sig, liveNow(), Date.now(), unpromptedTimes()).ok");
     expect(i).toMatch(/op: "spoken"/);
     expect(src).toMatch(/watchPref\("later", id\)/);
     expect(src).toMatch(/watchPref\("mute", s\.topic\)/);
@@ -190,7 +191,8 @@ describe("H2 HUD: captions, evidence, acting, mode-off reset, the listen key, ba
     expect(between("const interrupt = ", "\n")).toContain("hud.caption(null)");
   });
   it("the evidence chip from evidenceOf, and its tap", () => {
-    expect(src).toMatch(/evidence: evidenceOf\(brain, stage, s\.findingMs \?\? s\.lastMs\)/);
+    // Phase 7 review (F1, UI 2): only a time measured for this turn, never the strip's last one (another turn's)
+    expect(src).toMatch(/evidence: evidenceOf\(brain, stage, turnMs\(measured\.current, turnGen\.current\)\)/);
     expect(src).toContain("onEvidence: () =>");
   });
   it("the acting flag, and everything v4 shows goes with mode off", () => {

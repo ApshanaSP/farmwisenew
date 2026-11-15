@@ -16,7 +16,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { drawCore, frameDelay, glowAt, smoothLevel, visualOf, visualStateOf, type VisualState } from "./hudcore";
 import { coreOf, hud, micOpen, powerOnDue, statusOf, type HudPanel } from "./hudstore";
-import { announcement, type Heard } from "./hudview";
+import { announcement, currentSteps, SETTLE_MS, type Heard } from "./hudview";
 import { Caption, EvidenceChip, InterjectionCard, MissionCard, ProgressLine, QueueBadge } from "./HudCards";
 import { useQuestionCount } from "./JarvisQuestions";
 import { voiceLevel } from "./mouth";
@@ -200,7 +200,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
       const a = announcement(heard.current, next);
       heard.current = next;
       if (a) setSaid(a);
-    }, 500);
+    }, SETTLE_MS);
     return () => clearTimeout(t);
   }, [word, s.answer, alert]);
   const muted = s.mode === "muted";
@@ -210,8 +210,10 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   const showWords = !!s.ribbon && (s.core === "hearing" || s.core === "thinking");
   const line = showWords ? (s.ribbon.length > 130 ? `…${s.ribbon.slice(-130)}` : s.ribbon) : "";
   const panel = s.panels[0] ?? null;
-  // the turn's real steps while it works (a plan's own chips, when the console shows them, take the line's place: hud.css)
-  const working = s.core === "thinking" && s.steps.length > 0;
+  // the turn's real steps while it works (a plan's own chips, when the console shows them, take the line's place: hud.css); only this
+  // turn's: an earlier turn's steps never show while the next sentence is read or answered
+  const steps = currentSteps(s.steps, s.turnAt);
+  const working = s.core === "thinking" && steps.length > 0;
   // what Jarvis is saying, while it says it (and while it waits to go on)
   const saying = !!s.caption?.text && (s.core === "speaking" || s.core === "holding");
   const evidence = s.evidence && (s.answer || panel) && s.core !== "hearing" && s.core !== "thinking" ? s.evidence : null;
@@ -234,7 +236,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
               <b>{word}</b>
               {hint && !showWords && <span className="hud-hint">{hint}</span>}
             </div>
-            {working && <ProgressLine steps={s.steps} lang={lang} />}
+            {working && <ProgressLine steps={steps} lang={lang} />}
             {reducedMotion() && <span className="hud-levelbar" aria-hidden="true"><span ref={level} /></span>}
             {showWords && <div className="hud-ribbon" lang={isTa(s.ribbon) ? "ta" : "en"} data-testid="ribbon">{line}</div>}
             {!showWords && <div data-testid="ribbon" hidden>{s.ribbon}</div>}

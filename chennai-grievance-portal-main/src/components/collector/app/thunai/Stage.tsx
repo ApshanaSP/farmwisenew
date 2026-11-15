@@ -22,6 +22,7 @@ import "leaflet/dist/leaflet.css";
 import "../studio/studio.css";
 import { CountUp } from "./countup";
 import { tabStop } from "./hudstore";
+import { SETTLE_MS } from "./hudview";
 import "./stage.css";
 
 /** Jarvis mode is on: the tiles count up */
@@ -74,8 +75,11 @@ interface Props {
   brain: { model: string | null; ms: number; rounds: number; calls: number } | null;
   filtered: string | null;
   saveAsk: string | null;
-  /** the subtitles: what was heard and what Thunai is saying (the console's dock hides while the Stage is open) */
-  caption: { heard: string; reply: string; alt?: string; interim: boolean; by: string | null };
+  /**
+   * the subtitles: what was heard and what Thunai is saying (the console's dock hides while the Stage is open). `streaming`: the
+   * answer's words are still arriving (the live region waits for all of them, then reads the answer once)
+   */
+  caption: { heard: string; reply: string; alt?: string; interim: boolean; by: string | null; streaming?: boolean };
   a: StageActions;
 }
 
@@ -190,6 +194,15 @@ function Stage(p: Props) {
   const setPeriod = (period: string) => a.direct(doc.recipe, { ...slots, period }, `${doc.title} (${period})`);
   const setZone = (z: number | null) => a.direct(doc.recipe, doc.recipe === "compare" ? slots : { ...slots, zones: z ? [z] : [] }, doc.title);
   const metric = typeof slots.metric === "string" ? slots.metric : typeof slots.measure === "string" && ["rain", "aqi", "lakes", "temp"].includes(slots.measure as string) ? (slots.measure as string) : null;
+  // for screen readers: what the screen is doing, or the answer once it has stopped growing (half a second settled, and never while
+  // its words are still streaming in), so an answer is read once, not again with every sentence
+  const liveNow = p.busy ?? (p.caption.streaming ? null : p.caption.reply);
+  const [announced, setAnnounced] = useState(liveNow ?? "");
+  useEffect(() => {
+    if (liveNow == null) return;
+    const t = setTimeout(() => setAnnounced(liveNow), SETTLE_MS);
+    return () => clearTimeout(t);
+  }, [liveNow]);
 
   return createPortal(
     <div className="st-root" lang={p.lang} data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
@@ -293,7 +306,7 @@ function Stage(p: Props) {
           {p.busy && <div className="st-busy"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
         </main>
 
-        <p className="st-sr" role="status" aria-live="polite">{p.busy ?? p.caption.reply}</p>
+        <p className="st-sr" role="status" aria-live="polite">{announced}</p>
         <footer className="st-foot">
           {doc.asOf && <span title={`${T(lang, "From", "ஆதாரம்")}: ${doc.sources.join(", ") || "-"}`}><I n="clock" />{T(lang, "Data as of", "தரவு நேரம்")} {when(doc.asOf)}</span>}
           {/* the notes in the reader's language; a note with nothing in it is not shown as a blank */}

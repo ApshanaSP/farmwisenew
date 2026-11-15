@@ -65,7 +65,12 @@ export const VAD_DEFAULTS: VadOpts = {
   minSpeechMs: TUNING.minSpeechMs, maxSpeechMs: TUNING.maxUtteranceMs
 };
 
-export type VadEvent = { type: "start"; at: number } | { type: "end"; at: number; ms: number; short: boolean } | null;
+/**
+ * `strong` (end): how much of the sentence was a voice even over Jarvis's own (frames over the full gate, or Silero at its echo bar,
+ * while the voice played; any speech frame when it did not). A ducked voice's residue keeps a detector "in speech" without being a
+ * person: only the strong part may stop the voice (turn.ts).
+ */
+export type VadEvent = { type: "start"; at: number } | { type: "end"; at: number; ms: number; short: boolean; strong?: number } | null;
 
 /** RMS of a frame of samples, in dBFS (-100 for silence). */
 export function frameDb(samples: ArrayLike<number>): number {
@@ -85,6 +90,9 @@ export class EnergyVad {
   private extraMs = 0;
   /** the quiet that ends this sentence, set from its live words (eou.ts); null: the fixed hangover */
   private eou: number | null = null;
+  /** the strong part of this sentence (VadEvent's `strong`), and whether Jarvis's voice played at the last frame */
+  private strong = 0;
+  private echoNow = false;
   speaking = false;
   /** the current noise floor, dB */
   floor = -60;
@@ -102,6 +110,7 @@ export class EnergyVad {
       this.floor = Math.max(o.minFloorDb, sorted[Math.floor(sorted.length * 0.1)] ?? db);
     }
     const gate = this.floor + o.margin + (echo ? o.echoMargin : 0);
+    this.echoNow = echo;
     if (!this.speaking) {
       this.above = db > gate ? this.above + 1 : 0;
       if (this.above >= o.onsetFrames) {
@@ -109,12 +118,15 @@ export class EnergyVad {
         this.quietMs = 0;
         // speech began when the level first crossed the gate
         this.startAt = at - (o.onsetFrames - 1) * o.frameMs;
+        this.strong = at - this.startAt;
         return { type: "start", at: this.startAt };
       }
       return null;
     }
     // in speech: a lower gate to stay in (hysteresis), so soft word endings do not cut the sentence
     this.quietMs = db > gate - 4 ? 0 : this.quietMs + o.frameMs;
+    // over Jarvis's voice only a frame over the full gate is a voice: the band below it is where the voice's own residue sits
+    if (echo ? db > gate : db > gate - 4) this.strong += o.frameMs;
     const len = at - this.startAt;
     if (this.quietMs >= (this.eou ?? o.hangoverMs) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
@@ -122,18 +134,22 @@ export class EnergyVad {
       this.extraMs = 0;
       this.eou = null;
       const ms = len - this.quietMs;
-      return { type: "end", at, ms, short: ms < o.minSpeechMs };
+      return { type: "end", at, ms, short: ms < o.minSpeechMs, strong: Math.min(ms, this.strong) };
     }
     return null;
   }
 
-  /** The speech so far, ms (0 when quiet). */
-  heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
+  /** The speech so far, ms (0 when quiet); while Jarvis's voice plays, only its strong part (VadEvent's `strong`). */
+  heldMs(at: number): number {
+    if (!this.speaking) return 0;
+    const all = at - this.startAt - this.quietMs;
+    return this.echoNow ? Math.min(all, this.strong) : all;
+  }
   /** Listen longer before ending the current or next sentence (a hold word). */
   extend(ms: number) { this.extraMs = ms; }
   /** The quiet that ends the current sentence, from its live words (null: the fixed value). It lasts until that sentence ends. */
   endAfter(ms: number | null) { this.eou = ms; }
-  reset() { this.speaking = false; this.above = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; }
+  reset() { this.speaking = false; this.above = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; this.strong = 0; this.echoNow = false; }
 }
 
 /**
@@ -152,30 +168,42 @@ export class ProbVad {
   private startAt = 0;
   private extraMs = 0;
   private eou: number | null = null;
+  /** the strong part of this sentence (VadEvent's `strong`), and whether Jarvis's voice played at the last frame */
+  private strong = 0;
+  private echoNow = false;
   speaking = false;
   constructor(o: Partial<ProbOpts> = {}) { this.o = { ...PROB_DEFAULTS, ...o }; }
   /** One frame's speech probability (0..1) ending at `at` ms. */
   push(p: number, at: number, echo = false): VadEvent {
     const o = this.o;
+    this.echoNow = echo;
     if (!this.speaking) {
       const pos = echo ? o.echoPos : o.pos;
       if (p >= pos) { if (!this.run) this.runStart = at - o.frameMs; this.run++; } else if (p < o.neg) this.run = 0;
-      if (this.run >= (echo ? o.echoOnsetFrames : o.onsetFrames)) { this.speaking = true; this.quietMs = 0; this.startAt = this.runStart; this.run = 0; return { type: "start", at: this.startAt }; }
+      if (this.run >= (echo ? o.echoOnsetFrames : o.onsetFrames)) { this.speaking = true; this.quietMs = 0; this.startAt = this.runStart; this.strong = at - this.runStart; this.run = 0; return { type: "start", at: this.startAt }; }
       return null;
     }
     this.quietMs = p >= o.neg ? 0 : this.quietMs + o.frameMs;
+    // over Jarvis's voice (ducked to 20 % on the PCM path, its residue still reads as speech at 0.35 to 0.7) only a frame at the echo
+    // bar is a voice over it; with no voice playing, any speech frame counts, as before
+    if (p >= (echo ? o.echoPos : o.neg)) this.strong += o.frameMs;
     const len = at - this.startAt;
     if (this.quietMs >= (this.eou ?? o.hangoverMs) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
       this.extraMs = 0;
       this.eou = null;
       const ms = len - this.quietMs;
-      return { type: "end", at, ms, short: ms < o.minSpeechMs };
+      return { type: "end", at, ms, short: ms < o.minSpeechMs, strong: Math.min(ms, this.strong) };
     }
     return null;
   }
-  heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
+  /** The speech so far, ms (0 when quiet); while Jarvis's voice plays, only its strong part, so the voice's own residue never adds up to a barge-in. */
+  heldMs(at: number): number {
+    if (!this.speaking) return 0;
+    const all = at - this.startAt - this.quietMs;
+    return this.echoNow ? Math.min(all, this.strong) : all;
+  }
   extend(ms: number) { this.extraMs = ms; }
   endAfter(ms: number | null) { this.eou = ms; }
-  reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; }
+  reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; this.strong = 0; this.echoNow = false; }
 }

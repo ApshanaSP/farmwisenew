@@ -6,7 +6,7 @@
  * Barge-in that ignores "mm-hmm" (v4; the patterns of Pipecat's MinWordsInterruptionStrategy and LiveKit's false-interruption
  * resume, no dependency): while Jarvis talks, an onset (the energy gate's, or Silero's) DUCKS the voice at once; it is never
  * paused. The voice stops, and the turn with it, only when the speech is a bid for the turn: Silero-confirmed speech held
- * TUNING.bargeHoldMs (600 ms), or live caption words with at least TUNING.bargeWords words that are not backchannels
+ * TUNING.bargeHoldMs (600 ms; over the voice only frames a voice over it gives count, vad.ts `strong`), or live caption words with at least TUNING.bargeWords words that are not backchannels
  * (backchannel.ts), or a sentence that lasted that long. A cough, or an energy onset Silero never confirms, brings the voice
  * back up where it was. A shorter sentence is read by Whisper while the voice stays ducked ("overVoice"): "mm-hmm", சரி,
  * "seri" or nothing at all bring it back up and it carries on; a hold word, the name alone or a request stop it. Earcons never
@@ -29,7 +29,8 @@ export type TurnEvent =
   | { type: "quickOnset"; at: number; earcon?: boolean }
   /** the energy gate fell quiet and Silero never confirmed */
   | { type: "quickEnd"; at: number }
-  | { type: "vadStart"; at: number; earcon?: boolean } | { type: "vadEnd"; at: number; ms: number; short: boolean }
+  /** `strong`: how much of it was a voice even over Jarvis's own (vad.ts): over the voice, only that part may stop it */
+  | { type: "vadStart"; at: number; earcon?: boolean } | { type: "vadEnd"; at: number; ms: number; short: boolean; strong?: number }
   /** time passes with speech held (for barge-in confirmation) */
   | { type: "tick"; at: number; heldMs: number }
   /** the browser captions' live words for the speech being heard (never acted on; they only decide a barge-in) */
@@ -158,16 +159,18 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
       const short = e.short || e.ms < m.minSpeechMs;
       if (m.state === "paused") {
         const gen = m.gen + 1;
-        // a sentence held long enough is a barge-in, whatever the ticks said: the voice and the turn stop, and it is read
+        // a sentence held long enough is a barge-in, whatever the ticks said: the voice and the turn stop, and it is read. Only its
+        // strong part counts: the ducked voice's own residue can keep a detector in speech for as long as the answer lasts
+        const held = e.strong ?? e.ms;
         const cut = () => to("thinking", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "transcribe", gen }], { bargeAt: null, bargeIns: m.bargeIns + 1, awaiting: true, confirmed: false, held: false, canContinue: true, gen, handling: false, voice: false, parked: null, overVoice: false });
         if (m.overVoice) {
           // a cough while the short sentence is read: the voice stays ducked until its words come back
           if (short) return to("paused", [{ a: "dropCapture" }], { confirmed: false });
-          if (e.ms >= m.bargeHoldMs) return cut();
+          if (held >= m.bargeHoldMs) return cut();
           return to("paused", [{ a: "transcribe", gen }], { gen, awaiting: true, confirmed: false });
         }
         if (short) return unduck();
-        if (e.ms >= m.bargeHoldMs) return cut();
+        if (held >= m.bargeHoldMs) return cut();
         // shorter, and no live words claimed the turn: Whisper reads it while the voice plays on, ducked (LiveKit's false-interruption resume)
         return to("paused", [{ a: "transcribe", gen }], { gen, awaiting: true, overVoice: true, confirmed: false, bargeAt: null });
       }
