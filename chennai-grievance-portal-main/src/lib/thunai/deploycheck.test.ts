@@ -99,7 +99,8 @@ describe("Step 3: pairing, ids both runs have, clean outcomes only", () => {
     expect(p.p).toBe(1);
   });
   it("a grid file's rows: id, ok and outcome only", () => {
-    expect(gridRows({ rows: [{ id: "t1", ok: true, outcome: "ok", recipe: "cases", ms: 9 }] })).toEqual([{ id: "t1", ok: true, outcome: "ok" }]);
+    const file = JSON.parse('{"rows":[{"id":"t1","ok":true,"outcome":"ok","recipe":"cases","ms":9}]}') as Parameters<typeof gridRows>[0];
+    expect(gridRows(file)).toEqual([{ id: "t1", ok: true, outcome: "ok" }]);
     expect(gridRows({})).toEqual([]);
   });
 });
