@@ -20,6 +20,7 @@
  *
  * Whisper bills a 10 s minimum per request: the ledger is told, so the listening budget is what Groq will really count.
  */
+import { correctTranscript, gazetteerOn } from "./gazetteer";
 import { ledger, type Lane } from "./ledger";
 import { STT_NAMES, sttTamilName } from "./lexicon";
 import { serverClock, type ServerTiming } from "./stagetime";
@@ -422,7 +423,10 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     if (nothing && whisper.length && whisper.every((r) => r.err)) throw new Error("stt-failed");
   }
   if (!c || invented(c, lane)) return heard({ lane, lang: c?.lang ?? o.site, ms, model: c?.model ?? null, timing });
-  return { text: c.text, lang: c.lang, noise: false, ms, lane, conf: { speech: Math.round((1 - c.noSpeech) * 100) / 100, logprob: Math.round(c.logprob * 100) / 100 }, model: c.model, timing };
+  // v5 B3: after the decode, and only with JARVIS_GAZETTEER=1 (default off), a misheard place name is put back from the console's own
+  // lists (gazetteer.ts); counts only to telemetry. Off, the transcript is exactly Whisper's.
+  const text = gazetteerOn() ? correctTranscript(c.text, { lane, lang: c.lang }) : c.text;
+  return { text, lang: c.lang, noise: false, ms, lane, conf: { speech: Math.round((1 - c.noSpeech) * 100) / 100, logprob: Math.round(c.logprob * 100) / 100 }, model: c.model, timing };
 }
 
 const langOf = (v: unknown): "en" | "ta" | null => (v === "en" || v === "ta" ? v : null);

@@ -80,13 +80,13 @@ describe("B3: ordinary words are never 'fixed'", () => {
     unchanged(TAMIL.join(" "));
     unchanged([...ENGLISH, ...TANGLISH].reverse().join(" "));
   });
-  it("every ordered pair of the Latin words comes back unchanged (no two ordinary words merge into a name)", () => {
+  it("every ordered pair of the Latin words comes back unchanged (no two ordinary words merge into a name), but the brief's own 'vela cherry'", () => {
+    // "vela" (Tanglish, work) and "cherry" are each in the lists, so their pair is the invented misspelling the brief requires fixed:
+    // it must be the one and only pair of the 70,000+ that changes
     const latin = [...ENGLISH, ...TANGLISH];
-    let fixed = 0;
-    const bad: string[] = [];
-    for (const a of latin) for (const b of latin) { const s = `${a} ${b}`, r = correctNames(s); if (r.text !== s) { fixed++; if (bad.length < 10) bad.push(`${s} -> ${r.text}`); } }
-    expect(bad).toEqual([]);
-    expect(fixed).toBe(0);
+    const changed: string[] = [];
+    for (const a of latin) for (const b of latin) { const s = `${a} ${b}`, r = correctNames(s); if (r.text !== s) changed.push(`${s} -> ${r.text}`); }
+    expect(changed).toEqual(["vela cherry -> Velachery"]);
   });
   it("every ordered pair of the Tamil words comes back unchanged", () => {
     const bad: string[] = [];
