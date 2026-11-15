@@ -264,10 +264,24 @@ const CLOSING_MEASURE = /\b(?:slow|slower|slowest|fast|faster|fastest|quick|quic
  */
 export function asksForbiddenOrder(text: string): boolean {
   if (!asksForbidden(text)) return false;
-  const rest = text.replace(CLOSING_MEASURE, " ");
+  // only a question about the data is read as a measure: "which department is slowest to close…", "how long does it take to close a
+  // case". An order said with a time word ("time to close all these cases", "later close all the open cases") or put as a request
+  // ("how soon can you close all the Adyar cases") is not a question about the data, so only the noun forms ("the closing rate") are
+  // taken out of it (v4 review, numbers finding 4)
+  const question = (ASKS_DATA.test(text) || STAT_WORD.test(text)) && !ASKS_YOU.test(text);
+  const re = question ? CLOSING_MEASURE : CLOSING_NOUN;
+  const rest = text.replace(re, " ");
   if (rest === text || asksForbidden(rest)) return true;
   // the measure's own words may hold an order ("how fast can you delete the old ones and close the rest"): what was taken out is asked
   // too, with the closing word itself left out, so only an order inside it refuses (v4 review, planner finding 1)
-  const cut = text.match(CLOSING_MEASURE) ?? [];
+  const cut = text.match(re) ?? [];
   return cut.some((m) => asksForbidden(m.replace(/\bclos(?:e|es|ing|ed|ure)\b/gi, " ")));
 }
+/** a question's opening or its mark: what a question about the data looks like */
+const ASKS_DATA = /^\s*(?:how|which|what|who|when|where|why|is|are|does|do|did|has|have)\b|\?\s*$/i;
+/** a statistic said as a noun phrase is a measure too: "average time to close complaints", "slowest department to close cases" */
+const STAT_WORD = /\b(?:slower|slowest|faster|fastest|quicker|quickest|longer|longest|average|median|mean|typical)\b/i;
+/** a request put as a question: "can you close…", "could Jarvis close…", "please close…" */
+const ASKS_YOU = /\b(?:can|could|will|would|should)\s+(?:you|u|jarvis|we)\b|\bplease\b|\bpls\b/i;
+/** the closing measure as a noun ("closing rate", "closure time"): never an order */
+const CLOSING_NOUN = /\b(?:clos(?:e|ing)|closure)\s+(?:rates?|times?|speed|performance|percentage|ratio)\b/gi;
