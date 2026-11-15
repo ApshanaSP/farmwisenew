@@ -104,6 +104,8 @@ Exactly as before: `start-fast.bat` from the repository root opens Edge. See `do
 - **Tamil spoken-register lines are unchecked** by a native speaker (PERSONA.md lists them).
 - **Quota:** the Groq keys are one organisation. One evaluation day used about 300K Groq tokens. Do not demo within 24 hours of a heavy run.
 - **The ledger is a local SQLite file.** A multi-process host needs a shared store.
+- **One QA open-baseline row regressed:** open-baseline-11, a Tamil follow-up that names the WRD flood-monitoring body and asks for this week. It was green on `main`; on v4 it gets a flooding-cases list instead of that body's brief. The diagnosis so far is in `docs/qa/pass7/V4_EXPECTED_CHANGES.md` (the brief resolver is unchanged, so the first turn's routing differs). It is the first thing to fix before a merge.
+- **Running the QA gate in a new worktree** needs the gitignored QA data: `data/aws-cache/qa/pinned`, `golden`, `durable.sqlite` and the matching `test-collector.txt`. Copy them from a worktree that gated before; the main checkout has none.
 
 ### What a key would add (not signed up; the owner's call)
 

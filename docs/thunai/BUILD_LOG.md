@@ -40,6 +40,17 @@ One session, 15 Nov 2026, in the worktree branch `claude/priceless-bouman-2fe7f8
 | 11:13 | 8 | QA gate (`tests/qa/pass7/gate-fast.sh`) started on `de40dd26`. RESULTS v4, HANDOVER, DEMO, PERSONA and REFERENCES written. |
 | 11:13-11:29 | 8 | QA gate, first try: not a real run. This worktree lacked the QA harness's gitignored data (`data/aws-cache/qa/pinned`, `golden`, the seeded `durable.sqlite`: the main checkout has none; the last gated worktree `elated-yalow-26931a` has them). The pinned API, the 3106 server and every real-path lane failed to start; the four unit runs passed (5,492/5,508, 0 failed). |
 | 11:31-11:53 | 8 | Those three copied from `elated-yalow-26931a` (read-only; 100 MB, gitignored). Baseline worktree `jv4-base` removed (its junctions first, so nothing behind them was touched). **QA gate rerun on `de40dd26`:** tsc, lint, build green; 4 shuffled unit runs 5,495/5,508, 0 failed; pass 7 tests and collector-ops green; src guards 39/39; access matrix exit 0; drive 28 pages, 0 problems; j1 exit 0. **Red:** pass 4's whole real-path suite (2,482 passed, 33 failed in 12 files, more files errored on a Collector sign-in 401) and the golden master (its sessions stopped on the same 401; the previous gate's `p7-gate-r3` manifest is not in this worktree). The coordinator's read: part environment (sign-in), part oracles that pin behaviour the brief told v4 to change (Tamil periods in Tamil titles; explain → the explain recipe), and some to be judged (g2-cache epoch guard, g2-real brief, grader open-baseline). A QA lane (Q1) started to fix the environment, update only brief-mandated oracles with a documented list, fix any real regression, and rerun the red files and the golden master. |
+| 11:58-12:20 | 8 | Lane Q1 (QA gate):
+  - **Environment fix:** the 401s came from a fresh `test-collector.txt` that no longer matched the copied hashes; the matching one was copied from `elated-yalow-26931a`, and the `p7-gate-r3` manifest was rebuilt from `fe7c15d7`.
+  - **Brief-mandated oracle changes only,** each listed with its bug id in `docs/qa/pass7/V4_EXPECTED_CHANGES.md`: Tamil periods in Tamil titles, explain → the explain recipe, situation.
+  - **One real regression fixed:** v4's 60 s watch cache missed the decisions epoch (RC-35's class), with a failing-first test.
+  - **Result:** the red pass 4 files pass alone, and the golden master is green with every change explained.
+  - **Still red:** open-baseline-11 and -46, both green on main, so v4 regressions. |
+| 12:20-12:30 | 8 | The coordinator:
+  - **open-baseline-46 fixed** (`c8b0fb1e`): a zone's situation is the zone's brief again, as on main.
+  - **open-baseline-11 left open.** Main's brief resolver gives the same answer on its row, so the cause is upstream in v4's routing of the first turn. A second try (let the brief take a frame follow-up that names a body) did not fix it and was reverted.
+  - **A QA-open-set sentence quoted in a comment** tripped `pass4.noleak.test.ts`; the quote was removed.
+  - **Whole vitest:** 5,496 passed, 13 skipped, shuffled, green; tsc clean. Gate evidence committed (`3dcb68df`). |
 
 
 One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be9b7`. Times are IST on this laptop.

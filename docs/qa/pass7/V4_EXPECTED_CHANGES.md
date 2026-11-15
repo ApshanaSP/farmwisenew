@@ -97,3 +97,12 @@ any shared route. The golden master is green for v4.
 
 The golden master ran on the gate's build, which does not include the signals.ts fix. That fix only affects the watch and brief routes
 within 60 s of a decision, and the golden master's writes session does not read either of them.
+
+## After the gate (coordinator, 15 Nov 12:30, `c8b0fb1e`)
+
+- **open-baseline-46 is green again.** A zone's "situation" is the zone's brief again, as on main: the brief resolver answers before the situation screen (round.ts). The two g2-real rows above still pass, because their oracle accepts either screen.
+- **open-baseline-11 (ta-followup-06) is still red, and is a v4 regression:** it was green in main's round 4 gate. What is known:
+  - The brief resolver gives the same answer on main and v4 for both turns of the row (checked by running main's `entities.ts` against the row).
+  - So the difference is upstream, in how the first turn is routed in v4: frame, fast lane or clarify. The follow-up then carries the topic instead of the WRD-CFM body.
+  - To reproduce: `npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/grader/open-baseline.findings.test.ts`.
+  - Left open for the owner; not hidden.
