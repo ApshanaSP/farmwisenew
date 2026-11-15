@@ -1,0 +1,381 @@
+{
+ "at": "2026-11-15T03:57:27.088Z",
+ "summary": {
+  "all": {
+   "n": 20,
+   "right": 14,
+   "deferred": 0,
+   "wrong": 5,
+   "capacity": 1,
+   "pct": {
+    "p": 73.7,
+    "lo": 51.2,
+    "hi": 88.2
+   }
+  },
+  "en": {
+   "n": 8,
+   "right": 7,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 87.5,
+    "lo": 52.9,
+    "hi": 97.8
+   }
+  },
+  "ta": {
+   "n": 7,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 3,
+   "capacity": 1,
+   "pct": {
+    "p": 50,
+    "lo": 18.8,
+    "hi": 81.2
+   }
+  },
+  "tanglish": {
+   "n": 5,
+   "right": 4,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 80,
+    "lo": 37.6,
+    "hi": 96.4
+   }
+  }
+ },
+ "byLane": {
+  "frame": {
+   "n": 2,
+   "right": 2
+  },
+  "planner": {
+   "n": 11,
+   "right": 7
+  },
+  "quick": {
+   "n": 5,
+   "right": 4
+  },
+  "resolve": {
+   "n": 1,
+   "right": 1
+  },
+  "no-model": {
+   "n": 1,
+   "right": 0
+  }
+ },
+ "tokensAll": 25945,
+ "tokensPerModelTurn": 2358.6,
+ "callsPerModelTurn": 1,
+ "modelTurns": 11,
+ "rows": [
+  {
+   "id": "u060",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 205,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "frame",
+   "note": "frame:new-place"
+  },
+  {
+   "id": "u041",
+   "lang": "en",
+   "gold": "complete",
+   "got": "complete",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1476,
+   "tokens": 1525,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u016",
+   "lang": "en",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 64,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "quick",
+   "note": "quick"
+  },
+  {
+   "id": "u015",
+   "lang": "en",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 685,
+   "tokens": 1526,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u046",
+   "lang": "en",
+   "gold": "insight",
+   "got": "insight",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 898,
+   "tokens": 1735,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u014",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 643,
+   "tokens": 1521,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u045",
+   "lang": "en",
+   "gold": "compare",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 1132,
+   "tokens": 2832,
+   "calls": 1,
+   "lane": "planner",
+   "note": "rules-after-clarify"
+  },
+  {
+   "id": "u058",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 59,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "frame",
+   "note": "frame:new-place"
+  },
+  {
+   "id": "u102",
+   "lang": "ta",
+   "gold": "general",
+   "got": "chat",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 108,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "resolve",
+   "note": "unknown-entity"
+  },
+  {
+   "id": "u075",
+   "lang": "ta",
+   "gold": "save",
+   "got": "clarify",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-120b",
+   "ms": 1409,
+   "tokens": 1140,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u071",
+   "lang": "ta",
+   "gold": "nearby",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-120b",
+   "ms": 1334,
+   "tokens": 2375,
+   "calls": 1,
+   "lane": "planner",
+   "note": "checker"
+  },
+  {
+   "id": "u088",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 1201,
+   "tokens": 2351,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u090",
+   "lang": "ta",
+   "gold": "map",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "model": null,
+   "ms": 3577,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "no-model",
+   "note": "no-model"
+  },
+  {
+   "id": "u073",
+   "lang": "ta",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 28,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "quick",
+   "note": "quick"
+  },
+  {
+   "id": "u093",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "gemini-3.5-flash-lite",
+   "ms": 4534,
+   "tokens": 4146,
+   "calls": 1,
+   "lane": "planner",
+   "note": "checker"
+  },
+  {
+   "id": "u142",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 37,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "quick",
+   "note": "quick"
+  },
+  {
+   "id": "u119",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "gemini-3.5-flash-lite",
+   "ms": 1951,
+   "tokens": 4418,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u123",
+   "lang": "tanglish",
+   "gold": "nearby",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 30,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "quick",
+   "note": "quick"
+  },
+  {
+   "id": "u133",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-120b",
+   "ms": 1093,
+   "tokens": 2376,
+   "calls": 1,
+   "lane": "planner",
+   "note": null
+  },
+  {
+   "id": "u114",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": null,
+   "ms": 23,
+   "tokens": 0,
+   "calls": 0,
+   "lane": "quick",
+   "note": "quick"
+  }
+ ]
+}
