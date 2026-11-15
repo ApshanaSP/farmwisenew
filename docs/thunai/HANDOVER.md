@@ -1,5 +1,139 @@
 # Jarvis mode: handover
 
+## v4, "Ultimate Jarvis" (15 Nov 2026)
+
+Branch `claude/priceless-bouman-2fe7f8`, cut from `main` at `38d96d2f`. The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. **Not merged and no PR: the owner decides.** Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md` (v4 section on top), the day's record is in `docs/thunai/BUILD_LOG.md`, how Jarvis speaks is in `docs/jarvis/PERSONA.md`, and the demo with its five-minute room check is in `docs/jarvis/DEMO.md`.
+
+**Read this first.**
+- **The Anthropic key on this machine is refused** (401 `invalid x-api-key`, 15 Nov). Claude never answered a single live call in this build, so every live figure is Groq first. Put a valid `ANTHROPIC_API_KEY` in `.env` and Claude goes first again with no code change. The ladder skips a refused key after one fast call.
+- **Nothing has been tried with a real microphone in a real room**, again. All voice figures come from injected audio.
+- **Understanding did not improve on the frozen sets, and the live-60 score fell.** On live-60 the Groq ladder scored 39/60 against `main`'s 44/60 (both runs on the same Groq ladder; paired 3 newly right, 8 newly wrong, not significant). On the new holdout3 set, a sample of 30 scored 6/29 on `main` and 6/29 on v4. The new abilities work when asked plainly (see the probe in RESULTS), but loose held-out phrasing does not reach them. Read the RESULTS section before quoting anything.
+
+### What shipped
+
+- **Truth first.** The speakable figure set is built only from block data and code text (`speakable.ts`). Model text slots have their figures stripped. A 1,000-case property test failed with 456 leaks on the old code and passes now. A line chart is a line. Tamil screens carry Tamil titles, block titles, notes and units.
+- **The planner.**
+  - Every bundle can look facts up.
+  - Reads run in parallel, and code fills the answer with no second model pass unless a read failed ("stop at tools").
+  - Console steps come back for act, observe, act. The screen's digest goes back too, scrubbed of phones, Aadhaar, e-mails and quoted words.
+  - Memory and the last four turns reach the prompt as untrusted text.
+  - Speech confidence and language steer the reply.
+  - Commands get 8 s; analysis questions and missions get 25 s, with progress.
+  - Likely reads start while the planner thinks.
+- **A streamed turn.** `/agent/round` answers NDJSON with AG-UI event names (`events.ts`). The browser puts the screen up and speaks sentence 1 as soon as they arrive.
+- **The ears.**
+  - First good decode wins, and Whisper gives up at 5 s.
+  - Gemini races in parallel only when the ledger allows.
+  - Each language gets its own prompt, built from the lexicon and the open screen's names.
+  - An English decode that translated confident Tamil cannot win.
+  - `/hear` gives up after 6 s, and a split sentence is never posted twice.
+  - End of utterance adapts: 300 ms when the words read complete, 650 ms after a connective.
+  - The browser asks for `echoCancellation: "all"`, with a fallback.
+  - Captions run only while an engaged turn is heard.
+  - Barge-in ducks the voice and stops it only on two real words or 600 ms of held speech. Backchannels let it carry on, in EN, TA and Tanglish.
+- **The mouth.**
+  - One TTS request per answer, and one voice per turn.
+  - A short earcon at the end of speech.
+  - A numberless acknowledgement, spoken only if nothing is ready by 1.2 s.
+  - Lakh and crore in speech.
+  - Gemini TTS streaming is built behind `JARVIS_TTS_STREAM=1`, off and unverified.
+- **Understanding.**
+  - A typed metric registry: the planner names metrics, code computes them.
+  - "What changed since yesterday / this week", split by zone, kind and department, with share of change, a surprise score and a band. It says "linked with", never "caused".
+  - "Explain this one".
+  - A situation view of a place.
+  - A dialogue register: "the second one", "that Velachery one", "same for last week".
+  - "How do you know?", which reads method, n, period, sources and caveat.
+  - A one-slot clarify with three options.
+  - About 120 more Tanglish forms, and TNEB/EB → TANGEDCO.
+- **Behaves like an aide.**
+  - A count-aware rise detector (after Noufaily et al. 2013) and real server-side signals.
+  - The brief on power-on and on "brief me". It is finite and always ends.
+  - Interjections only when nobody is speaking and no turn runs, at most three an hour.
+  - Tell me / Later / Not about this.
+  - Follow an incident or zone.
+  - Composable missions with a plan card, Start, narrated steps with real times, stop, skip and instead-do-X. Drafts go to the tray only.
+  - A decision record and "what did you do today?".
+  - Memory that is opt-in, viewable and resettable. It refuses notes that read as orders (MINJA).
+- **The HUD, on the teammate's light bar.**
+  - One visual state machine and a mic-hot cue.
+  - The core is docked and throttled to 15 fps when idle.
+  - Captions in the bar, one progress line with real times, and an evidence chip.
+  - Mission and interjection cards, and one history entry point.
+  - Polite, debounced announcements.
+  - The listen key is now `Ctrl+Shift+Space`, because Alt+Space opens the Windows window menu.
+
+### What was cut, and why
+
+| Item | What happened | Why |
+|---|---|---|
+| STT probe of `gemini-3.5-transcribe-live` | Not run | The 100 SLR65 clips are not on this machine; downloading the share-alike corpus unattended was not done. Fallback taken: Whisper first, first good decode, Gemini as a parallel third racer |
+| Turn-completion model (Smart Turn v3.2, smart-turn-tamil) | Not shipped | WASM latency above the 120 ms budget, the Worker deferred by the brief's cut line, the Tamil model's provenance unverified. The adaptive text rules end every turn |
+| On-device wake word, "Jarvis knows your voice" | Not built | Optional items; no model download in an unattended run |
+| Silero in a Worker, 64-sample context, resampling | Deferred | The brief's Phase 2 cut line. The Silero state is now reset per session |
+| Outlook band, spoken map tour | Outlook not built; the tour exists in the mission planner only | Phase 4 cut line |
+| Live Claude runs (model table, structured-output proof, cache hits) | Not run | The key is refused; the code is unit-tested |
+| A separate skeptic per review area | Folded into each reviewer | Two usage-limit stops during the run |
+
+### Environment variables added
+
+- `JARVIS_TTS_STREAM=1` (server): Gemini TTS streaming. Off by default, unverified.
+- `NEXT_PUBLIC_JARVIS_DUCK_PAUSE=1` (browser): on duck, pause Edge's natural voices instead of letting them speak on. Off by default; whether Edge honours `pause()` with natural voices is unmeasured.
+- `JARVIS_LIVE` (live harness only).
+- The model is still `JARVIS_CLAUDE_MODEL`, default `claude-opus-5-5`. Sonnet 5.5 and Haiku 5.5 get the right thinking settings, but they were never measured.
+
+New `TUNING` keys in `src/lib/thunai/vad.ts`, the first places to look after a real-room try:
+
+| Key | Value |
+|---|---|
+| `eouCompleteMs` | 300 |
+| `eouOpenMs` | 650 |
+| `bargeHoldMs` | 600 |
+| `bargeWords` | 2 |
+| `hearTimeoutMs` | 6000 |
+
+### How to run the demo in Edge
+
+Exactly as before: `start-fast.bat` from the repository root opens Edge. See `docs/jarvis/DEMO.md`, which starts with the five-minute room check.
+
+### Known limits
+
+- **No speaker identification.** Anyone in the room can command Jarvis. Level B and C need the name and a yes, but anyone can say those.
+- **Side talk that looks like a command still acts.** On holdout3's look-alike side lines (they mention places, numbers, "remember", "explain"), the address gate acted on 17 of 40. That is the same on `main` and on v4, all at Level A, never B or C. holdout2's side talk stays at 4/60. The gate was not tuned, because tuning it on holdout3 would spend the set. The v3 report's model veto is still the owner's call.
+- **Loose phrasing of the new intents goes to the planner.** On the Groq models, the planner rarely picks the new recipes from it. Plain phrasings work. The planner prompt grew by about 900 tokens a turn, which may also explain the live-60 drop.
+- **Tamil spoken-register lines are unchecked** by a native speaker (PERSONA.md lists them).
+- **Quota:** the Groq keys are one organisation. One evaluation day used about 300K Groq tokens. Do not demo within 24 hours of a heavy run.
+- **The ledger is a local SQLite file.** A multi-process host needs a shared store.
+
+### What a key would add (not signed up; the owner's call)
+
+- **Sarvam** `saaras:v3-realtime` with `codemix`: the best measured Tamil on the independent Josh Talks "Voice of India" set, at ₹0.49 a minute. Bulbul v4 Flash TTS for voice.
+- **ElevenLabs Flash v2.5**: Tamil voice with fast first audio.
+- **Azure Speech**: 0.5M characters a month free, the ta-IN Pallavi and Valluvar voices, and an exact pause on the PCM path. The Azure branch in `say/route.ts` still compiles and has still never run.
+- **A valid Anthropic key** is the cheapest win of all. The code is ready.
+
+### Tests
+
+From `chennai-grievance-portal-main/`:
+
+```bash
+npx vitest run
+```
+
+```bash
+npx tsc --noEmit --incremental false
+```
+
+```bash
+npx playwright test tests/e2e/mode.spec.ts tests/e2e/bargein.spec.ts tests/e2e/hold.spec.ts tests/e2e/vad.spec.ts tests/e2e/vadfake.spec.ts tests/e2e/e2e-latency.spec.ts tests/e2e/hud.spec.ts
+```
+
+Live evaluation: `HOLDOUT=planner3 HOLDOUT_DIR=holdout3 HOLDOUT_SET=live30` (and `rules3`, `ambient`) in `src/lib/thunai/holdout.live.ts`. It spends quota; check the ledger first. The holdout3 set is frozen in `eval/holdout3/HASHES.txt` and is still unread: only totals have been looked at.
+
+---
+
+## v3 (4 Nov 2026)
+
 Pushed to `main` by fast-forward on the owner's request, 4 Nov 2026, from branch `claude/jarvis-agentic-voice-5be9b7`. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md`, the day's record is in `docs/thunai/BUILD_LOG.md`, and pictures are in `docs/jarvis/screens/`.
 
 **Read this first.** Nothing has been tried with a real microphone in a real room. Barge-in, the address gate and the latency figures come from injected or recorded audio. Do the five-minute check at the top of `docs/jarvis/DEMO.md` before showing it to anyone.
