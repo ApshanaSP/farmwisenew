@@ -117,8 +117,10 @@ function spanSlots(raw: string, recipe: Recipe): Record<string, unknown> | "none
   if (spec.kind === "none" || spec.kind === "window") return null;
   if (spec.kind === "unheld" || !needsDates(spec)) return "none";
   if (spec.kind === "day" && spec.back === 0) return { period: "daily" };
-  // a list and a brief are counted over the span's own dates (the fast lane's rule, quick.ts withSpan); any other screen is the planner's
-  return recipe === "cases" || recipe === "brief" ? { period: keyOf(spec), span: spec } : "none";
+  // a past window (yesterday, last week, last month) said as a follow-up goes on to the planner, as on main: carried onto the last list, the
+  // list's tiles said the current window's figures for it (QA pass 4, open-baseline-11: "open" 32 where the week holds 0). When unsure, as before
+  void recipe; void keyOf;
+  return "none";
 }
 
 /** The follow-up, resolved; or none: the sentence stands on its own. */

@@ -60,10 +60,13 @@ describe("references to what is on screen, resolved in code (EN, Tamil, Tanglish
   it("follow-ups keep working: and in Adyar?, only severe, same for last week", () => {
     expect(f("and in Adyar?", { stage: bare })).toMatchObject({ kind: "screen", recipe: "cases", slots: { zones: [13], sev: "Severe" } });
     expect(f("only severe", { stage: { ...bare, slots: { zones: [13], period: "daily" } } })).toMatchObject({ kind: "screen", slots: { sev: "Severe", zones: [13] } });
-    // a week with its own dates, counted over them: never this week's window under last week's name
-    expect(f("same for last week", { stage: bare })).toMatchObject({ kind: "screen", recipe: "cases", slots: { zones: [5], period: "weekly", span: { kind: "last", unit: "week" } }, why: "span" });
-    expect(f("and yesterday?", { stage: bare })).toMatchObject({ kind: "screen", recipe: "cases", slots: { span: { kind: "day", back: 1 } } });
-    expect(f("same for Ambattur last week", { stage: bare })).toMatchObject({ kind: "screen", slots: { zones: [7], span: { kind: "last" } } });
+    // a past window said as a follow-up goes on to the planner, as on main: carried onto the last list, the list's tiles said the current
+    // window's figures for it (QA pass 4 open-baseline-11). Never this week's window under last week's name
+    expect(f("same for last week", { stage: bare })).toEqual({ kind: "none" });
+    expect(f("and yesterday?", { stage: bare })).toEqual({ kind: "none" });
+    expect(f("same for Ambattur last week", { stage: bare })).toEqual({ kind: "none" });
+    // today's own window is still resolved in code
+    expect(f("and today?", { stage: { ...bare, slots: { zones: [5], period: "weekly" } } })).not.toMatchObject({ slots: { span: expect.anything() } });
     // a screen that cannot count a span leaves it to the planner
     const trend: StageContext = { ...bare, recipe: "trend", blocks: [{ kind: "Trend", ids: [] }] };
     expect(f("same for last week", { stage: trend })).toEqual({ kind: "none" });
