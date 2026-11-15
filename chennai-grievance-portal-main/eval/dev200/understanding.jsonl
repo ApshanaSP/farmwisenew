@@ -1,0 +1,200 @@
+{"id":"d122","text":"Tondiarpet against Thiruvottiyur, drainage this month, how do they stack up","intent":"compare","places":["Tondiarpet","Thiruvottiyur"],"lang":"en"}
+{"id":"d006","text":"டெங்கு போர்டு, போன மாசம், எல்லா மண்டலமும்","intent":"dashboard","places":[],"lang":"ta"}
+{"id":"d193","text":"முகப்பு பக்கத்துக்கு போ","intent":"navigate","places":[],"lang":"ta"}
+{"id":"d072","text":"மேப்ல போடு அதை","intent":"followup","places":[],"lang":"ta","after":"கொடுங்கையூர்ல சீரியஸ் கேஸ் எவ்ளோ","expect":{"intent":"map"}}
+{"id":"d095","text":"morning brief","intent":"brief","places":[],"lang":"en"}
+{"id":"d165","text":"what's the difference between a cyclone and a depression, just curious","intent":"general","places":[],"lang":"en"}
+{"id":"d002","text":"send this list to the commissioner on WhatsApp","intent":"refuse","places":[],"lang":"en"}
+{"id":"d017","text":"any news on the Buckingham canal desilting","intent":"news","places":[],"lang":"en"}
+{"id":"d100","text":"save this view","intent":"save","places":[],"lang":"en"}
+{"id":"d014","text":"garbage ku oru dashboard podu, last two weeks","intent":"dashboard","places":[],"lang":"tanglish"}
+{"id":"d109","text":"since yesterday, Anna Nagar, what's different","intent":"changed","places":["Anna Nagar"],"lang":"en"}
+{"id":"d196","text":"idha explain pannu","intent":"explain","places":[],"lang":"tanglish"}
+{"id":"d185","text":"காற்று தரம் இந்த மாசம் முழுக்க எப்படி மாறிச்சு","intent":"trend","places":[],"lang":"ta"}
+{"id":"d137","text":"scroll down a bit, more, okay stop","intent":"navigate","places":[],"lang":"en"}
+{"id":"d029","text":"this week water supply la puthusa enna","intent":"changed","places":[],"lang":"tanglish"}
+{"id":"d229","text":"put the severe cases on the map","intent":"map","places":[],"lang":"en"}
+{"id":"d123","text":"andha red one, explain pannu","intent":"followup","places":[],"lang":"tanglish","after":"zone wise backlog kaattu","expect":{"intent":"explain"}}
+{"id":"d224","text":"துறை வாரியா செயல்திறன், எவ்வளவு வேகமா முடிக்கிறாங்க","intent":"performance","places":[],"lang":"ta"}
+{"id":"d188","text":"செம்பரம்பாக்கம் லெவல் என்ன இருக்கு","intent":"readings","places":[],"lang":"ta"}
+{"id":"d048","text":"mosquito, dengu, whatever's open in Kodungaiyur","intent":"cases","places":["Kodungaiyur"],"lang":"en"}
+{"id":"d198","text":"and over the last three months?","intent":"followup","places":[],"lang":"en","after":"dengue cases in Perambur","expect":{"intent":"trend"}}
+{"id":"d117","text":"relief shelters close to Saidapet, say one kilometre","intent":"nearby","places":["Saidapet"],"lang":"en"}
+{"id":"d194","text":"overdue garbage complaints Madhavaram la, konjam kaattu","intent":"cases","places":["Madhavaram"],"lang":"tanglish"}
+{"id":"d054","text":"humidity, roughly, what are we at","intent":"readings","places":[],"lang":"en"}
+{"id":"d206","text":"andha fourth one open pannu, details venum","intent":"case","places":[],"lang":"tanglish"}
+{"id":"d007","text":"anything new this week on power cuts","intent":"changed","places":[],"lang":"en"}
+{"id":"d058","text":"idha overview la pin pannu","intent":"save","places":[],"lang":"tanglish"}
+{"id":"d071","text":"storm water drain work pathi news edhavadhu irukka","intent":"news","places":[],"lang":"tanglish"}
+{"id":"d051","text":"சைதாப்பேட்டை வெள்ளப் புகார் வாரா வாரம் எப்படி","intent":"trend","places":["Saidapet"],"lang":"ta"}
+{"id":"d141","text":"Manali air quality yen ivlo mosam, sollunga","intent":"why","places":["Manali"],"lang":"tanglish"}
+{"id":"d055","text":"bottom five taluks on water supply, by resolution","intent":"ranking","places":[],"lang":"en"}
+{"id":"d008","text":"anything unusual today?","intent":"insight","places":[],"lang":"en"}
+{"id":"d218","text":"rainfall column has gaps, complete them","intent":"complete","places":[],"lang":"en"}
+{"id":"d011","text":"Kodungaiyur air, why is it this bad","intent":"why","places":["Kodungaiyur"],"lang":"en"}
+{"id":"d231","text":"how's solid waste doing on resolution speed, honestly","intent":"performance","places":[],"lang":"en"}
+{"id":"d068","text":"the third one, open it","intent":"case","places":[],"lang":"en"}
+{"id":"d154","text":"okay, department wise performance, how fast are they closing things","intent":"performance","places":[],"lang":"en"}
+{"id":"d174","text":"மேம்பால வேலை பத்தி இந்த வாரம் நியூஸ்","intent":"news","places":[],"lang":"ta"}
+{"id":"d142","text":"மழை கம்மியா பெஞ்ச கடைசி அஞ்சு ஸ்டேஷன்","intent":"ranking","places":[],"lang":"ta"}
+{"id":"d163","text":"மெட்ரோவாட்டர் வெர்சஸ் மின்வாரியம், ஓப்பன் கேஸ் ஒப்பிடு","intent":"compare","places":[],"lang":"ta"}
+{"id":"d063","text":"கொடுங்கையூர்ல காத்து ஏன் இவ்ளோ மோசமா இருக்கு","intent":"why","places":["Kodungaiyur"],"lang":"ta"}
+{"id":"d112","text":"Metrowater and the electricity board, open cases, side by side","intent":"compare","places":[],"lang":"en"}
+{"id":"d120","text":"Puzhal level kadandha rendu vaaram epdi maariruku","intent":"trend","places":[],"lang":"tanglish"}
+{"id":"d099","text":"flooding hotspots on the map, Adyar and Alandur","intent":"map","places":["Adyar","Alandur"],"lang":"en"}
+{"id":"d103","text":"go back to the overview page","intent":"navigate","places":[],"lang":"en"}
+{"id":"d098","text":"திரு வி க நகர்ல ஏன் இவ்வளவு கழிவுநீர் புகார்","intent":"why","places":["Thiru-Vi-Ka Nagar"],"lang":"ta"}
+{"id":"d150","text":"வேளச்சேரில நிலவரம் என்ன","intent":"situation","places":["Velachery"],"lang":"ta"}
+{"id":"d135","text":"ஆங்கிலத்துக்கு மாத்திடு","intent":"navigate","places":[],"lang":"ta"}
+{"id":"d019","text":"mazhai pathi inniki news enna","intent":"news","places":[],"lang":"tanglish"}
+{"id":"d205","text":"ஈரப்பதம் எவ்ளோ இப்போ","intent":"readings","places":[],"lang":"ta"}
+{"id":"d005","text":"கிண்டில?","intent":"followup","places":["Guindy"],"lang":"ta","after":"அடையாறுல மழை அளவு என்ன","expect":{"intent":"readings"}}
+{"id":"d053","text":"morning brief podu","intent":"brief","places":[],"lang":"tanglish"}
+{"id":"d121","text":"indha data la key ah enna theriyudhu","intent":"insight","places":[],"lang":"tanglish"}
+{"id":"d041","text":"switch it to Tamil","intent":"navigate","places":[],"lang":"en"}
+{"id":"d074","text":"வளசரவாக்கம் தண்ணீர் புகார் திடீர்னு ஏறிருக்கு, காரணம் என்ன","intent":"why","places":["Valasaravakkam"],"lang":"ta"}
+{"id":"d131","text":"tomato and drumstick rates, what are they","intent":"prices","places":[],"lang":"en"}
+{"id":"d057","text":"oru joke sollu Jarvis","intent":"general","places":[],"lang":"tanglish"}
+{"id":"d149","text":"make me a board on flooding, this week","intent":"dashboard","places":[],"lang":"en"}
+{"id":"d186","text":"முதல் ரெண்டையும் ஒப்பிடு","intent":"followup","places":[],"lang":"ta","after":"குப்பை புகார் அதிகம் வந்த மூணு மண்டலம்","expect":{"intent":"compare"}}
+{"id":"d114","text":"அண்ணா நகர்?","intent":"followup","places":["Anna Nagar"],"lang":"ta","after":"அம்பத்தூர்ல ஓப்பன் புகார் காட்டு","expect":{"intent":"cases"}}
+{"id":"d222","text":"hospitals near this incident","intent":"nearby","places":[],"lang":"en"}
+{"id":"d035","text":"now compare the first two","intent":"followup","places":[],"lang":"en","after":"top five zones by garbage complaints","expect":{"intent":"compare"}}
+{"id":"d175","text":"Anna Nagar vs Ambattur, garbage complaints, side by side podu","intent":"compare","places":["Anna Nagar","Ambattur"],"lang":"tanglish"}
+{"id":"d106","text":"இந்த வாரம் மின்வெட்டுல புதுசா என்ன","intent":"changed","places":[],"lang":"ta"}
+{"id":"d062","text":"dengue dashboard last month, all zones","intent":"dashboard","places":[],"lang":"en"}
+{"id":"d156","text":"Tambaram situation enna overall","intent":"situation","places":["Tambaram"],"lang":"tanglish"}
+{"id":"d144","text":"கோயம்பேட்டுல வெங்காயம் விலை","intent":"prices","places":["Koyambedu"],"lang":"ta"}
+{"id":"d161","text":"water supply complaints this month for Ambatur please","intent":"cases","places":["Ambattur"],"lang":"en"}
+{"id":"d211","text":"காலை சுருக்கம் படி","intent":"brief","places":[],"lang":"ta"}
+{"id":"d026","text":"தக்காளி இன்னைக்கு என்ன ரேட்","intent":"prices","places":[],"lang":"ta"}
+{"id":"d050","text":"settings open pannu","intent":"navigate","places":[],"lang":"tanglish"}
+{"id":"d176","text":"இன்னைக்கு மழை செய்திகள் என்ன","intent":"news","places":[],"lang":"ta"}
+{"id":"d158","text":"top three zones, complaints adhigama vandhadhu","intent":"ranking","places":[],"lang":"tanglish"}
+{"id":"d183","text":"reservoir levels past four weeks, going up or down","intent":"trend","places":[],"lang":"en"}
+{"id":"d013","text":"பக்கிங்ஹாம் கால்வாய் தூர்வாரல் பத்தி செய்தி ஏதாவது","intent":"news","places":[],"lang":"ta"}
+{"id":"d102","text":"worst three departments, pending cases","intent":"ranking","places":[],"lang":"en"}
+{"id":"d078","text":"இந்த சிவப்பு குறி என்ன அர்த்தம்","intent":"explain","places":[],"lang":"ta"}
+{"id":"d097","text":"Adyar versus Sholinga nallur on flooding","intent":"compare","places":["Adyar","Sholinganallur"],"lang":"en"}
+{"id":"d081","text":"what changed in Mylapore since yesterday","intent":"changed","places":["Mylapore"],"lang":"en"}
+{"id":"d107","text":"Manali la?","intent":"followup","places":["Manali"],"lang":"tanglish","after":"inniki AQI evlo","expect":{"intent":"readings"}}
+{"id":"d043","text":"blanks ellam fill pannidu, AQI column la","intent":"complete","places":[],"lang":"tanglish"}
+{"id":"d016","text":"top five zones, by open complaints, quick","intent":"ranking","places":[],"lang":"en"}
+{"id":"d170","text":"fill in the blanks in this table","intent":"complete","places":[],"lang":"en"}
+{"id":"d101","text":"pin this to the overview","intent":"save","places":[],"lang":"en"}
+{"id":"d113","text":"Saidapet incident pakkathula schools enna irukku, oru km kulla","intent":"nearby","places":["Saidapet"],"lang":"tanglish"}
+{"id":"d132","text":"headlines today, rain","intent":"news","places":[],"lang":"en"}
+{"id":"d036","text":"இந்த வியூவ சேவ் பண்ணு","intent":"followup","places":[],"lang":"ta","after":"இந்த வாரம் வெள்ள புகார் எல்லாம் காட்டு","expect":{"intent":"save"}}
+{"id":"d091","text":"இத கமிஷனருக்கு அனுப்பிடு","intent":"followup","places":[],"lang":"ta","after":"தெருவிளக்கு புகார் லிஸ்ட் போடு","expect":{"intent":"refuse"}}
+{"id":"d015","text":"சோழிங்கநல்லூர் இப்போ மொத்தமா எப்படி இருக்கு","intent":"situation","places":["Sholinganallur"],"lang":"ta"}
+{"id":"d027","text":"Metrowater kitta pending la irukura cases ellam","intent":"cases","places":[],"lang":"tanglish"}
+{"id":"d180","text":"AQI Manali right now?","intent":"readings","places":["Manali"],"lang":"en"}
+{"id":"d067","text":"andha petitioner phone number enna","intent":"refuse","places":[],"lang":"tanglish"}
+{"id":"d153","text":"கொசு டெங்கு புகார், பெரம்பூர் பக்கம், தாமதமானது மட்டும்","intent":"cases","places":["Perambur"],"lang":"ta"}
+{"id":"d162","text":"uh, drainage complaints, Adyar, only the overdue ones","intent":"cases","places":["Adyar"],"lang":"en"}
+{"id":"d124","text":"மார்க்கெட் விலை, அரிசி பருப்பு எவ்ளோ","intent":"prices","places":[],"lang":"ta"}
+{"id":"d204","text":"பூண்டி ஏரில தண்ணி எவ்வளவு இருக்கு","intent":"readings","places":[],"lang":"ta"}
+{"id":"d181","text":"put those on the map","intent":"followup","places":[],"lang":"en","after":"overdue power complaints in Alandur","expect":{"intent":"map"}}
+{"id":"d134","text":"Perambur la dengue yen ivlo jaasthi","intent":"why","places":["Perambur"],"lang":"tanglish"}
+{"id":"d207","text":"third one details sollu","intent":"followup","places":[],"lang":"tanglish","after":"severe cases list pannu","expect":{"intent":"case"}}
+{"id":"d046","text":"ரெண்டாவது புகார பத்தி இன்னும் கொஞ்சம் சொல்லு","intent":"case","places":[],"lang":"ta"}
+{"id":"d237","text":"language English ku maathunga","intent":"navigate","places":[],"lang":"tanglish"}
+{"id":"d233","text":"andha orange mark enna artham","intent":"explain","places":[],"lang":"tanglish"}
+{"id":"d066","text":"Ambattur oda compare pannu","intent":"followup","places":["Ambattur"],"lang":"tanglish","after":"Kodambakkam garbage complaints evlo","expect":{"intent":"compare"}}
+{"id":"d010","text":"nethu la irundhu Guindy la enna maariruku","intent":"changed","places":["Guindy"],"lang":"tanglish"}
+{"id":"d219","text":"Puzhal lake current storage, quick","intent":"readings","places":[],"lang":"en"}
+{"id":"d133","text":"Kodambakkam epdi irukku ippo, overall ah","intent":"situation","places":["Kodambakkam"],"lang":"tanglish"}
+{"id":"d080","text":"streetlight complaint ellam this week, T Nagar","intent":"cases","places":["T Nagar"],"lang":"tanglish"}
+{"id":"d140","text":"inniki briefing padi Jarvis","intent":"brief","places":[],"lang":"tanglish"}
+{"id":"d164","text":"hospitals near Mylapore, rendu kilometre range","intent":"nearby","places":["Mylapore"],"lang":"tanglish"}
+{"id":"d049","text":"which stations got the most rain, top ten","intent":"ranking","places":[],"lang":"en"}
+{"id":"d039","text":"department wise performance kaattu, close panra speed epdi","intent":"performance","places":[],"lang":"tanglish"}
+{"id":"d169","text":"dark mode please","intent":"navigate","places":[],"lang":"en"}
+{"id":"d187","text":"Adyar la open drainage complaints evlo irukku, list pannu","intent":"cases","places":["Adyar"],"lang":"tanglish"}
+{"id":"d025","text":"தேனாம்பேட்டைல நேத்தைக்கும் இன்னைக்கும் என்ன வித்தியாசம்","intent":"changed","places":["Teynampet"],"lang":"ta"}
+{"id":"d159","text":"INC four zero seven two, full details","intent":"case","places":[],"lang":"en"}
+{"id":"d227","text":"pakkathula shelters irukka","intent":"followup","places":[],"lang":"tanglish","after":"Velachery lake level enna","expect":{"intent":"nearby"}}
+{"id":"d235","text":"INC one nine eight three, adhu pathi full ah sollu","intent":"case","places":[],"lang":"tanglish"}
+{"id":"d179","text":"டார்க் மோட் போடு","intent":"navigate","places":[],"lang":"ta"}
+{"id":"d172","text":"மழை நெடுவரிசைல விட்டுப்போனதெல்லாம் நிரப்பிடு","intent":"complete","places":[],"lang":"ta"}
+{"id":"d129","text":"approve all the closures in Adyar, go","intent":"refuse","places":["Adyar"],"lang":"en"}
+{"id":"d223","text":"Kodungaiyur AQI enna ippo","intent":"readings","places":["Kodungaiyur"],"lang":"tanglish"}
+{"id":"d136","text":"Anna Nagar, Teynampet, Kodam backam, garbage, put them next to each other","intent":"compare","places":["Anna Nagar","Teynampet","Kodambakkam"],"lang":"en"}
+{"id":"d116","text":"dengue hotspots map la kaattu, Perambur Madhavaram","intent":"map","places":["Perambur","Madhavaram"],"lang":"tanglish"}
+{"id":"d128","text":"இதுல முக்கியமா என்ன தெரியுது","intent":"insight","places":[],"lang":"ta"}
+{"id":"d226","text":"indha view save pannidu","intent":"save","places":[],"lang":"tanglish"}
+{"id":"d127","text":"இன்னைக்கு வித்தியாசமா ஏதாவது இருக்கா","intent":"insight","places":[],"lang":"ta"}
+{"id":"d130","text":"schools within two kilometres of Velachery lake","intent":"nearby","places":["Velachery"],"lang":"en"}
+{"id":"d146","text":"தீர்வு வேகத்துல கடைசி நாலு மண்டலம் எது","intent":"ranking","places":[],"lang":"ta"}
+{"id":"d040","text":"Valasarawakkam water complaints shot up, what's behind it","intent":"why","places":["Valasaravakkam"],"lang":"en"}
+{"id":"d155","text":"இந்த ஸ்கோர் என்னன்னு விளக்கமா சொல்லு","intent":"explain","places":[],"lang":"ta"}
+{"id":"d239","text":"rainfall Nungambakkam, now","intent":"readings","places":["Nungambakkam"],"lang":"en"}
+{"id":"d115","text":"தண்டையார்பேட்டை ராயபுரம் ரெண்டும் கழிவுநீர்ல எப்படி, ஒப்பிட்டு காட்டு","intent":"compare","places":["Tondiarpet","Royapuram"],"lang":"ta"}
+{"id":"d201","text":"மோசமான மூணு துறை, நிலுவை வெச்சு","intent":"ranking","places":[],"lang":"ta"}
+{"id":"d190","text":"இந்த மனுதாரர் ஆதார் நம்பர் சொல்லு","intent":"refuse","places":[],"lang":"ta"}
+{"id":"d105","text":"கொஞ்சம் கீழ ஸ்க்ரோல் பண்ணு","intent":"navigate","places":[],"lang":"ta"}
+{"id":"d157","text":"situation in T Nagar, overall","intent":"situation","places":["T Nagar"],"lang":"en"}
+{"id":"d031","text":"that red badge on the card, what does it mean","intent":"explain","places":[],"lang":"en"}
+{"id":"d177","text":"konjam mela scroll pannu","intent":"navigate","places":[],"lang":"tanglish"}
+{"id":"d210","text":"zone wise backlog for this month","intent":"performance","places":[],"lang":"en"}
+{"id":"d217","text":"வெள்ளிக்கிழமை பெருங்குடி வடிகால் பாக்கணும்னு ஞாபகம் வெச்சுக்கோ","intent":"save","places":["Perungudi"],"lang":"ta"}
+{"id":"d215","text":"show me garbage hotspots on the map, Perambur side","intent":"map","places":["Perambur"],"lang":"en"}
+{"id":"d075","text":"read me today's briefing, go ahead","intent":"brief","places":[],"lang":"en"}
+{"id":"d024","text":"மண்டல வாரியா நிலுவை, இந்த மாசம்","intent":"performance","places":[],"lang":"ta"}
+{"id":"d184","text":"zone wise pending backlog, overall epdi irukku","intent":"performance","places":[],"lang":"tanglish"}
+{"id":"d238","text":"வளசரவாக்கம் போரூர் வெள்ள ஹாட்ஸ்பாட் மேப்ல காட்டு","intent":"map","places":["Valasaravakkam","Porur"],"lang":"ta"}
+{"id":"d001","text":"இன்னைக்கு வெயில் எவ்ளோ, டிகிரி சொல்லு","intent":"readings","places":[],"lang":"ta"}
+{"id":"d037","text":"மூணாவது கேஸ திற","intent":"case","places":[],"lang":"ta"}
+{"id":"d038","text":"avar enna ezhudhinaaru, exact ah padichu kaattu","intent":"refuse","places":[],"lang":"tanglish"}
+{"id":"d003","text":"indha complaints ellam approve pannidu","intent":"refuse","places":[],"lang":"tanglish"}
+{"id":"d234","text":"dengue cases adhigama irukra top five zones","intent":"ranking","places":[],"lang":"tanglish"}
+{"id":"d216","text":"Tenampet la yen ivlo garbage complaints","intent":"why","places":["Teynampet"],"lang":"tanglish"}
+{"id":"d191","text":"அதிக புகார் வந்த முதல் அஞ்சு மண்டலம்","intent":"ranking","places":[],"lang":"ta"}
+{"id":"d148","text":"மணலி காற்று தரம் இப்ப எப்படி","intent":"readings","places":["Manali"],"lang":"ta"}
+{"id":"d084","text":"AQI trend this week, Manali","intent":"trend","places":["Manali"],"lang":"tanglish"}
+{"id":"d004","text":"அந்த புகார டெலீட் பண்ணிடு","intent":"refuse","places":[],"lang":"ta"}
+{"id":"d085","text":"how are you doing today","intent":"general","places":[],"lang":"en"}
+{"id":"d076","text":"Thiruvottiyur nilamai enna","intent":"situation","places":["Thiruvottiyur"],"lang":"tanglish"}
+{"id":"d077","text":"temperature evlo inniki, Meenambakkam station","intent":"readings","places":["Meenambakkam"],"lang":"tanglish"}
+{"id":"d214","text":"what's in the news about the metro work this week","intent":"news","places":[],"lang":"en"}
+{"id":"d160","text":"what's the complainant's phone number on this one","intent":"refuse","places":[],"lang":"en"}
+{"id":"d096","text":"Valasaravakkam um?","intent":"followup","places":["Valasaravakkam"],"lang":"tanglish","after":"Porur la drainage complaints kaattu","expect":{"intent":"cases"}}
+{"id":"d065","text":"Sholinganallur, give me the overall picture right now","intent":"situation","places":["Sholinganallur"],"lang":"en"}
+{"id":"d090","text":"இந்த டேபிள்ல காலியா இருக்குறத நிரப்பு","intent":"complete","places":[],"lang":"ta"}
+{"id":"d089","text":"ராயபுரம் குப்பை ஹாட்ஸ்பாட் வரைபடத்துல காட்டு","intent":"map","places":["Royapuram"],"lang":"ta"}
+{"id":"d034","text":"dengue, trend since August","intent":"trend","places":[],"lang":"en"}
+{"id":"d209","text":"இத ஓவர்வியூல பின் பண்ணு","intent":"save","places":[],"lang":"ta"}
+{"id":"d200","text":"இந்த வாரத்துக்கு வெள்ளம் பத்தி ஒரு டாஷ்போர்டு போடு","intent":"dashboard","places":[],"lang":"ta"}
+{"id":"d118","text":"கோடம்பாக்கம் குப்பை புகார் ஆறு மாசமா எப்படி போயிருக்கு","intent":"trend","places":["Kodambakkam"],"lang":"ta"}
+{"id":"d056","text":"இந்த லிஸ்ட்ட கமிஷனருக்கு வாட்ஸ்அப்ல அனுப்பு","intent":"refuse","places":[],"lang":"ta"}
+{"id":"d119","text":"power cut complaints suddenly yeriruku, reason enna","intent":"why","places":[],"lang":"tanglish"}
+{"id":"d042","text":"Royapuram Tondiarpet rendu zone um, drainage, edhu mosam nu pakkathula vechu kaattu","intent":"compare","places":["Royapuram","Tondiarpet"],"lang":"tanglish"}
+{"id":"d213","text":"garbage in Madhavaram over the last six months, how's it moved","intent":"trend","places":["Madhavaram"],"lang":"en"}
+{"id":"d079","text":"kadandha six weeks la epdi maarichu","intent":"followup","places":[],"lang":"tanglish","after":"Sholinganallur flooding cases kaattu","expect":{"intent":"trend"}}
+{"id":"d020","text":"and Velachery?","intent":"followup","places":["Velachery"],"lang":"en","after":"open drainage complaints in Adyar","expect":{"intent":"cases"}}
+{"id":"d033","text":"இந்த மாசம் தண்ணி வரலன்னு வந்த புகார், போரூர்","intent":"cases","places":["Porur"],"lang":"ta"}
+{"id":"d212","text":"நீ எப்படி இருக்க","intent":"general","places":[],"lang":"ta"}
+{"id":"d104","text":"schools near it, within one kilometre","intent":"followup","places":[],"lang":"en","after":"INC two two zero nine, details","expect":{"intent":"nearby"}}
+{"id":"d232","text":"road pothole complaints last ten days, Porur side","intent":"cases","places":["Porur"],"lang":"tanglish"}
+{"id":"d069","text":"remember, Perungudi drains review on Friday","intent":"save","places":["Perungudi"],"lang":"en"}
+{"id":"d047","text":"இன்னைக்கு ப்ரீஃபிங் சொல்லு","intent":"brief","places":[],"lang":"ta"}
+{"id":"d059","text":"critical ones ellam map la mark pannu","intent":"map","places":[],"lang":"tanglish"}
+{"id":"d086","text":"water supply complaints month by month eppadi maariruku","intent":"trend","places":[],"lang":"tanglish"}
+{"id":"d152","text":"critical cases mattum kaattu, Kodambakkam... illa illa, Valasaravakkam","intent":"cases","places":["Valasaravakkam"],"lang":"tanglish"}
+{"id":"d073","text":"severe ones in Velachery, no wait, Perungudi zone, show those","intent":"cases","places":["Perungudi"],"lang":"en"}
+{"id":"d208","text":"ஏன் இப்படி","intent":"followup","places":[],"lang":"ta","after":"மணலி காற்று தரம் எப்படி இருக்கு","expect":{"intent":"why"}}
+{"id":"d143","text":"திடக்கழிவு துறை தீர்வு வேகம் எப்படி இருக்கு","intent":"performance","places":[],"lang":"ta"}
+{"id":"d221","text":"flooding board, this monsoon, ellam zones","intent":"dashboard","places":[],"lang":"tanglish"}
+{"id":"d197","text":"quick dashboard, water supply, past fortnight","intent":"dashboard","places":[],"lang":"en"}
+{"id":"d082","text":"தண்டையார்பேட்டை மொத்த நிலைமை எப்படி","intent":"situation","places":["Tondiarpet"],"lang":"ta"}
+{"id":"d030","text":"flooding complaints in Velachery, week by week","intent":"trend","places":["Velachery"],"lang":"en"}
+{"id":"d195","text":"okay that fifth one","intent":"followup","places":[],"lang":"en","after":"list the garbage complaints in Royapuram","expect":{"intent":"case"}}
+{"id":"d032","text":"Chembarambakkam level enna, full aaiducha","intent":"readings","places":[],"lang":"tanglish"}
+{"id":"d060","text":"table la missing values fill pannu","intent":"complete","places":[],"lang":"tanglish"}
+{"id":"d088","text":"எழும்பூர் பக்கத்துல நிவாரண முகாம் எங்க","intent":"nearby","places":["Egmore"],"lang":"ta"}
+{"id":"d138","text":"ஏரி லெவல் கடந்த நாலு வாரமா ஏறுதா இறங்குதா","intent":"trend","places":[],"lang":"ta"}
+{"id":"d125","text":"இந்த சம்பவம் பக்கத்துல ஆஸ்பத்திரி இருக்கா","intent":"nearby","places":[],"lang":"ta"}
+{"id":"d230","text":"அண்ணா நகர், அம்பத்தூர், மாதவரம் மூணையும் கம்பேர் பண்ணு, குப்பை விஷயத்துல","intent":"compare","places":["Anna Nagar","Ambattur","Madhavaram"],"lang":"ta"}
+{"id":"d018","text":"இத விளக்கிச் சொல்லு","intent":"explain","places":[],"lang":"ta"}
+{"id":"d083","text":"நுங்கம்பாக்கம் மழை அளவு இப்போ","intent":"readings","places":["Nungambakkam"],"lang":"ta"}
+{"id":"d171","text":"zoom in on the map, closer","intent":"navigate","places":[],"lang":"en"}
