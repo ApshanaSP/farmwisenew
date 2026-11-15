@@ -1,21 +1,21 @@
 {
  "listening": {
-  "pageFps": 142.8,
-  "worstGapMs": 56,
-  "coreFps": 14.3
+  "pageFps": 32.5,
+  "worstGapMs": 83,
+  "coreFps": 11.5
  },
  "speaking": {
-  "pageFps": 144,
-  "worstGapMs": 28,
-  "coreFps": 72
+  "pageFps": 32.1,
+  "worstGapMs": 83,
+  "coreFps": 32.1
  },
  "reducedMotion": {
-  "pageFps": 143.6,
-  "worstGapMs": 35,
+  "pageFps": 34.8,
+  "worstGapMs": 50,
   "coreFps": 0
  },
  "browser": "chromium",
- "channel": "msedge",
- "version": "157.0.4341.46",
+ "channel": "chromium",
+ "version": "153.0.8010.12",
  "note": "headless, software rendering unless the channel says otherwise; 20 s each with the HUD on the console (/dev/collector). pageFps: a requestAnimationFrame count (the page's frame rate, not the HUD's); coreFps: frames the core's canvas drew (hudcore.ts drawCore, counted by its clearRect)"
 }

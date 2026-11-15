@@ -1,25 +1,70 @@
 {
  "planner": {
   "ack": {
-   "p50": 807,
-   "p90": 3232
+   "p50": 784,
+   "p90": 3167
   },
   "answer": {
-   "p50": 2053,
-   "p90": 4485
+   "p50": 2017,
+   "p90": 4415
   },
   "firstAudio": {
-   "p50": 2059,
-   "p90": 5008
+   "p50": 2029,
+   "p90": 4893
   },
   "finding": {
-   "p50": 2059,
-   "p90": 5008
+   "p50": 2029,
+   "p90": 4893
   },
   "vadEnd": {
    "p50": 300,
    "p90": 300
   }
  },
+ "trace": {
+  "planner": {
+   "voicedEnd": {
+    "n": 6,
+    "p50": 0,
+    "p90": 0
+   },
+   "eou": {
+    "n": 6,
+    "p50": 342,
+    "p90": 342
+   },
+   "uploadSent": {
+    "n": 6,
+    "p50": 344,
+    "p90": 347
+   },
+   "hearBack": {
+    "n": 6,
+    "p50": 812,
+    "p90": 819
+   },
+   "gateDone": {
+    "n": 6,
+    "p50": 821,
+    "p90": 830
+   },
+   "firstEvent": {
+    "n": 6,
+    "p50": 2032,
+    "p90": 2057
+   },
+   "speakCalled": {
+    "n": 6,
+    "p50": 2053,
+    "p90": 2080
+   },
+   "voiceStart": {
+    "n": 6,
+    "p50": 2061,
+    "p90": 2556
+   }
+  }
+ },
+ "traceNote": "v5 trace: ms from the last voiced sample (the detector's own speech end, not its decision); server stages placed on the page clock (same machine); mocked providers, so the planner and voice figures are the mocks'; n = turns with a trace",
  "note": "from the end of speech (VAD end less 300 ms); mocked: hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium has no natural voice here, so first audio is the PCM path and the ack is on screen, not spoken"
 }
