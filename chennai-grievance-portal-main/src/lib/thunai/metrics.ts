@@ -11,6 +11,7 @@ import type { ToolResult } from "@/lib/assistant/types";
 import { MIN_PCT_BASE } from "@/lib/reference/metrics";
 import type { Hands } from "./screens";
 import type { ScopeT } from "./stage";
+import { normalise } from "./normalise";
 
 type Row = Record<string, unknown>;
 type Filter = "period" | "zone" | "dept" | "cat" | "taluk";
@@ -50,6 +51,8 @@ export interface MetricDef {
   agg: Agg;
   /** which way is worse, for a tile's tone */
   worse: "up" | "down" | null;
+  /** v5 A4: its spoken names (METRIC_NAMES), when a what-changed question may name it */
+  names?: { en: string[]; ta: string[]; tanglish: string[] };
 }
 
 const ALL: readonly Filter[] = ["period", "zone", "dept", "cat", "taluk"];
@@ -123,6 +126,43 @@ export const METRIC_DEFS: readonly MetricDef[] = [
 ];
 
 const BY_ID = new Map(METRIC_DEFS.map((d) => [d.id, d]));
+
+/**
+ * v5 A4: the spoken names of the district metrics a "what changed" question can name, matched in code before the planner (whole
+ * normalised phrases only). English from the registry's labels and their everyday forms; Tamil from the Tamil labels; Tanglish forms
+ * are MODEL-DRAFTED, NOT CHECKED BY A TAMIL SPEAKER. The owner's list replaces this one when there is one.
+ */
+export const METRIC_NAMES: Record<string, { en: string[]; ta: string[]; tanglish: string[] }> = {
+  incidents_reported: { en: ["incidents reported", "new incidents", "incidents"], ta: ["பதிவான சம்பவங்கள்", "சம்பவங்கள்"], tanglish: ["incidents", "pudhu incidents"] },
+  severe_reported: { en: ["severe incidents", "severe cases", "serious incidents", "serious cases", "critical cases"], ta: ["கடுமையான சம்பவங்கள்", "கடுமையான கேஸ்"], tanglish: ["severe cases", "serious cases", "mosamana cases"] },
+  open_now: { en: ["still open", "open incidents", "open cases", "pending cases", "pending incidents"], ta: ["நிலுவைச் சம்பவங்கள்", "நிலுவையில்"], tanglish: ["pending cases", "open cases"] },
+  overdue_open: { en: ["overdue cases", "overdue incidents", "overdue", "past their deadline", "past the deadline"], ta: ["காலக்கெடு தாண்டியவை", "தாமதமான கேஸ்"], tanglish: ["overdue cases", "deadline thaandina cases"] },
+  deaths: { en: ["deaths", "fatalities", "people died"], ta: ["மரணங்கள்", "இறப்புகள்", "மரணம்"], tanglish: ["deaths", "death count"] },
+  rain_linked: { en: ["rain linked incidents", "rain related incidents", "incidents during rain"], ta: ["மழையின் போது பதிவானவை"], tanglish: ["mazhai time incidents"] },
+  rain_days: { en: ["rain days", "rainy days", "days of rain"], ta: ["மழை நாட்கள்"], tanglish: ["rain days", "mazhai naatkal"] },
+  complaints_open: { en: ["open complaints", "pending complaints", "citizen complaints", "complaints"], ta: ["நிலுவைப் புகார்கள்", "புகார்கள்"], tanglish: ["complaints", "pending complaints"] },
+  imd_warning: { en: ["imd warning", "weather warning", "warning level", "alert level"], ta: ["வானிலை எச்சரிக்கை", "எச்சரிக்கை நிலை"], tanglish: ["warning level", "imd alert"] }
+};
+for (const d of METRIC_DEFS) if (METRIC_NAMES[d.id]) (d as MetricDef).names = METRIC_NAMES[d.id];
+
+const phrase = (s: string) => ` ${normalise(s).text} `;
+const NAME_PHRASES = Object.entries(METRIC_NAMES).flatMap(([id, n]) => [...n.en, ...n.ta, ...n.tanglish].map((p) => ({ id, p: phrase(p) })));
+
+/**
+ * The one metric a sentence names (A4): whole normalised phrases; a name inside a longer matched name does not count ("severe
+ * incidents" is severe_reported, not incidents_reported too). null: none named; "ambiguous": two or more (the planner decides).
+ */
+export function metricNamedIn(text: string): string | "ambiguous" | null {
+  const t = phrase(text);
+  const hits: { id: string; at: number; end: number }[] = [];
+  for (const { id, p } of NAME_PHRASES) {
+    if (p.trim() === "") continue;
+    for (let at = t.indexOf(p); at >= 0; at = t.indexOf(p, at + 1)) hits.push({ id, at, end: at + p.length });
+  }
+  const kept = hits.filter((h) => !hits.some((o) => o !== h && o.at <= h.at && o.end >= h.end && o.end - o.at > h.end - h.at));
+  const ids = [...new Set(kept.map((h) => h.id))];
+  return ids.length === 0 ? null : ids.length === 1 ? ids[0] : "ambiguous";
+}
 
 /** The metric of that id, or null (never a near match: the planner must name one that exists). */
 export function metricById(id: string): MetricDef | null {

@@ -18,6 +18,7 @@ import { asksForbiddenOrder } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
+import { metricNamedIn } from "./metrics";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -610,7 +611,10 @@ function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Qui
   const zones = zonesIn(t, w);
   if (zones.length > 1 || isComparing(t)) return null;
   const period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
-  return { recipe: "changed", slots: { zones, cat: catIn(t), period: period ?? "daily", fresh: true } };
+  // v5 A4: one metric named in code sets metricId; two named: the planner decides (no screen from the rules); none: the incidents change
+  const metric = metricNamedIn(text);
+  if (metric === "ambiguous") return null;
+  return { recipe: "changed", slots: { zones, cat: catIn(t), period: period ?? "daily", fresh: true, ...(metric ? { metricId: metric } : {}) } };
 }
 
 /** the intents the fast lane must leave alone: a screen read from one of their words would answer another question ("what changed this week" is not this week's list) */
