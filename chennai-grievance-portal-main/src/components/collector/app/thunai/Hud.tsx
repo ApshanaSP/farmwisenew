@@ -46,8 +46,8 @@ const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia
 const isTa = (t: string) => /[஀-௿]/.test(t);
 /** the core's size in the bar, in CSS pixels: the canvas is drawn at this size, not scaled down from a bigger one */
 export const CORE_PX = 40;
-/** the core's shortest frame: about 66 fps at most, whatever the screen's refresh rate */
-export const MIN_FRAME_MS = 15;
+/** the core's shortest frame: every second frame on a 144 Hz screen (about 72 fps), every frame at 60 Hz (measured: 15 ms gave 47 fps at 144 Hz) */
+export const MIN_FRAME_MS = 12;
 const toneNow = (): "light" | "dark" => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
 
 /**
@@ -95,7 +95,9 @@ function Core({ v, anchor, glow }: { v: VisualState; anchor: RefObject<HTMLSpanE
       const d = frameDelay(vis, { hidden: document.hidden, reduced: still, sinceMs: t - since.current });
       if (d == null) { last = 0; return; }
       if (d <= 20) raf = requestAnimationFrame(frame);
-      else timer = setTimeout(() => { timer = null; if (alive) raf = requestAnimationFrame(frame); }, d - 8);
+      // the wait is the whole delay: the frame that follows the timer only adds to it, so the idle core stays at or under its rate
+      // (measured: d - 8 drew 16 a second against the 15 the brief allows)
+      else timer = setTimeout(() => { timer = null; if (alive) raf = requestAnimationFrame(frame); }, d);
     };
     kick.current = () => { if (alive && !raf && !timer) raf = requestAnimationFrame(frame); };
     kick.current();

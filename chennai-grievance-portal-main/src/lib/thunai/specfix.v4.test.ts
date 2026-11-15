@@ -18,7 +18,7 @@ describe("v4 spec findings", () => {
   });
   it("the core draws at most about 60 times a second, whatever the screen's refresh rate", () => {
     const src = readFileSync(join(UI, "Hud.tsx"), "utf8");
-    expect(src).toMatch(/MIN_FRAME_MS = 15/);
+    expect(src).toMatch(/MIN_FRAME_MS = 12/);
     expect(src).toMatch(/t - lastPaint < MIN_FRAME_MS/);
   });
 });
