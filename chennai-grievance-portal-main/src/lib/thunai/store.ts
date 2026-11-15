@@ -224,7 +224,8 @@ export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memo
     // v5 G3 (c): who said it, when, and the turn that asked (the client's turn id, else null: never one made up here)
     case "note": case "remember": {
       const turn = typeof op.turn === "string" && op.turn.trim() ? clip(op.turn, 40) : null;
-      m.notes = [...m.notes, { id: id(), text: noteText as string, at, source: NOTE_SOURCE, turn }].slice(-100);
+      const note: Note = { id: id(), text: noteText as string, at, source: NOTE_SOURCE, turn };
+      m.notes = [...m.notes, note].slice(-100);
       break;
     }
     case "forget":
