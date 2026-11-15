@@ -3,7 +3,10 @@
  * in the room can command it; this decides only whether a sentence was addressed to it.
  *   1 named:    contains "Jarvis" or ஜார்விஸ் -> act
  *   2 engaged:  within 20 s of Jarvis's last turn, and it parses as a request or follow-up -> act
- *   3 command:  the rules resolve a sure intent with slots, or an imperative plus a district noun -> act, level A only
+ *   3 command:  the bare stop word -> act, level A only. Inside the 20 s, a line the rules resolve with confidence and slots, or
+ *               an imperative plus a district noun, that tier 2's shape test passed by -> act, level A only. v5 (C1) cut this
+ *               tier outside the 20 s: unnamed and unengaged, a console-shaped line is most often said to someone else.
+ *               JARVIS_GATE_COMMAND_TIER=1 (NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1 in the browser) or `commandTier` brings v4 back
  *   0 ignored:  a faint line on screen for 2 s, not logged, and the planner never sees it
  * Levels B and C need tier 1 or 2. When unsure, do not act: a wrong silent ignore is put right by saying "Jarvis"; acting on
  * someone's side conversation is not.
@@ -21,9 +24,25 @@ export interface GateInput {
   rulesSure: boolean;
   /** a zone, department or topic the district knows is in the sentence */
   districtNoun: boolean;
+  /** v4's command tier outside the engaged window: true brings it back, false keeps it cut; unset, the env decides (commandTierOn) */
+  commandTier?: boolean;
 }
 
 export const ENGAGED_MS = 20_000;
+
+/**
+ * v4's unengaged command tier, cut in v5 (C1). JARVIS_GATE_COMMAND_TIER=1 on the server or in a harness;
+ * NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1 in the browser, where only NEXT_PUBLIC_ is inlined at build time (read first: it never
+ * touches `process` once inlined). Default off.
+ */
+export const commandTierOn = (o?: boolean): boolean => {
+  if (o !== undefined) return o;
+  try {
+    return process.env.NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER === "1" || process.env.JARVIS_GATE_COMMAND_TIER === "1";
+  } catch {
+    return false;
+  }
+};
 
 /** a bare stop: it only ever stops Jarvis, so it needs no name and no recent turn (a typed question, or a long answer, is stopped by it) */
 const STOP_CORE = "stop|stop it|stop that|stop this|enough|nirutthu|niruthu|nirutha|nirutthunga|niruthunga|nirutthungal|stop pannu|stop pannunga|stop pannungal|நிறுத்து|நிறுத்துங்க|நிறுத்துங்கள்|நிறுத்துங்கோ|நிறுத்தவும்|போதும் நிறுத்து";
@@ -120,8 +139,12 @@ export function addressed(i: GateInput): Addressed {
   if (engaged && looksRequest(text) && !looksSide(text, true, i.districtNoun) && !chore(text, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text, false, i.districtNoun)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };
   if (chore(text) || statement(text, norm(text))) return { tier: 0, act: false, text, maxLevel: null, why: "aside" };
-  if (i.rulesSure && (isImperative(text) || i.districtNoun)) return { tier: 3, act: true, text, maxLevel: "A", why: "rules" };
-  if (isImperative(text) && i.districtNoun) return { tier: 3, act: true, text, maxLevel: "A", why: "imperative" };
+  // the command tier: inside the window as in v4; outside it only with the switch (C1: no name and no recent turn, a command-shaped
+  // line is someone else's, and saying "Jarvis" puts a wrong ignore right)
+  if (engaged || commandTierOn(i.commandTier)) {
+    if (i.rulesSure && (isImperative(text) || i.districtNoun)) return { tier: 3, act: true, text, maxLevel: "A", why: "rules" };
+    if (isImperative(text) && i.districtNoun) return { tier: 3, act: true, text, maxLevel: "A", why: "imperative" };
+  }
   return { tier: 0, act: false, text, maxLevel: null, why: "unaddressed" };
 }
 

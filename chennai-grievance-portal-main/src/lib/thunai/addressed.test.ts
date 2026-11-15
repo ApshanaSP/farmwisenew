@@ -24,10 +24,15 @@ describe("the address gate", () => {
     expect(gate("and in Adyar?", { lastTurnAt: NOW - ENGAGED_MS - 1 })).toMatchObject({ tier: 0, act: false });
   });
   it("tier 3: a sure rule or imperative plus a district noun acts, level A only", () => {
-    expect(gate("show Adyar's cases", { districtNoun: true })).toMatchObject({ tier: 3, act: true, maxLevel: "A" });
-    expect(gate("அடையாறு புகார்கள் காட்டு", { districtNoun: true })).toMatchObject({ tier: 3, act: true });
-    expect(gate("Adyar la complaints kaattu", { districtNoun: true })).toMatchObject({ tier: 3, act: true });
-    expect(gate("severe cases in Adyar this week", { rulesSure: true, districtNoun: true })).toMatchObject({ tier: 3, act: true, maxLevel: "A" });
+    // v5 (C1): unnamed and unengaged, only with the command tier switched on (JARVIS_GATE_COMMAND_TIER=1); by default it is refused
+    const on = { commandTier: true };
+    expect(gate("show Adyar's cases", { districtNoun: true, ...on })).toMatchObject({ tier: 3, act: true, maxLevel: "A" });
+    expect(gate("அடையாறு புகார்கள் காட்டு", { districtNoun: true, ...on })).toMatchObject({ tier: 3, act: true });
+    expect(gate("Adyar la complaints kaattu", { districtNoun: true, ...on })).toMatchObject({ tier: 3, act: true });
+    expect(gate("severe cases in Adyar this week", { rulesSure: true, districtNoun: true, ...on })).toMatchObject({ tier: 3, act: true, maxLevel: "A" });
+    for (const [t, o] of [["show Adyar's cases", {}], ["அடையாறு புகார்கள் காட்டு", {}], ["Adyar la complaints kaattu", {}], ["severe cases in Adyar this week", { rulesSure: true }]] as const) {
+      expect(gate(t, { districtNoun: true, ...o }), t).toMatchObject({ tier: 0, act: false });
+    }
   });
   it("tier 0: everything else is ignored", () => {
     expect(gate("the Adyar file is on your table", { districtNoun: true, rulesSure: true })).toMatchObject({ tier: 0, act: false });
@@ -47,7 +52,7 @@ describe("the address gate", () => {
     expect(looksSide("show me what he said")).toBe(true);
   });
   it("levels B and C need tier 1 or 2", () => {
-    const three = gate("show Adyar's cases", { districtNoun: true });
+    const three = gate("show Adyar's cases", { districtNoun: true, commandTier: true });
     expect(levelAllowed(three, "A")).toBe(true);
     expect(levelAllowed(three, "B")).toBe(false);
     expect(levelAllowed(three, "C")).toBe(false);
@@ -85,7 +90,9 @@ describe("side talk that used to act", () => {
   });
   it("tier 3: the same words as work still act", () => {
     for (const t of ["give me a summary of the Adyar cases", "show water complaints in Adyar", "தண்ணீர் புகார்கள் கொடு", "take me to the trends page", "show cases that are open in Adyar"]) {
-      expect(gate(t, { districtNoun: true }), t).toMatchObject({ tier: 3, act: true });
+      // v5 (C1): with the command tier switched on; by default, unnamed and unengaged, refused
+      expect(gate(t, { districtNoun: true, commandTier: true }), t).toMatchObject({ tier: 3, act: true });
+      expect(gate(t, { districtNoun: true }), t).toMatchObject({ tier: 0, act: false });
     }
   });
   it("tier 2: first person and questions about the room do not act", () => {
@@ -104,7 +111,9 @@ describe("real commands that used to be ignored when engaged", () => {
   });
   it("traffic and tea are topics once a district noun is there, chatter before", () => {
     expect(gate("Show traffic complaints in Adyar", { ...near, districtNoun: true })).toMatchObject({ tier: 2, act: true });
-    expect(gate("Show traffic complaints in Adyar", { districtNoun: true })).toMatchObject({ tier: 3, act: true });
+    // v5 (C1): unengaged, only with the command tier switched on
+    expect(gate("Show traffic complaints in Adyar", { districtNoun: true, commandTier: true })).toMatchObject({ tier: 3, act: true });
+    expect(gate("Show traffic complaints in Adyar", { districtNoun: true })).toMatchObject({ tier: 0, act: false });
     expect(gate("how is the traffic", near)).toMatchObject({ tier: 0, act: false });
     expect(gate("anna is coming later", near)).toMatchObject({ tier: 0, act: false });
     // the past stays side talk with nobody engaged, and with no request shape
