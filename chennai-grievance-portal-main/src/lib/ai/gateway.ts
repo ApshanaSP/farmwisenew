@@ -401,11 +401,15 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       };
       // keep the preferred order while a model has room; models that would go over this minute's allowance go last
       const order = [...models].sort((a, b) => Number(room(b) < 0) - Number(room(a) < 0) || a.rank - b.rank);
+      // a model whose reply strict mode refused (after its one retry) is not asked again on another pooled key (v5 A5)
+      const schemaFailed = new Set<string>();
       for (const m of order) {
         if (Date.now() >= state.until) break;
+        if (schemaFailed.has(m.bare)) continue;
         if (room(m) < 0 && order.some((x) => room(x) >= 0)) continue;
         const r = await tryModel(c, p, m.id, m.lm, state);
         if (r.result) return r.result;
+        if (r.schemaFailed) schemaFailed.add(m.bare);
         if (r.longBusy) console.warn(`[assistant] ${c.name}: ${m.key} is busy or rate-limited; next model`);
       }
       // every model is out of this minute's allowance, but one frees up within seconds: waiting for it beats a template answer
@@ -500,7 +504,7 @@ export function jsonIn(text: string): unknown {
 }
 
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
-  state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
+  state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean; schemaFailed?: boolean }> {
   const key = `${p.name}/${id}`;
   // a 429 cools the bare model: the organisation's, so the other pooled keys are out too, even with this call's order already built
   if ((cooling.get(key) ?? 0) > Date.now() || (cooling.get(key.split("#")[0]) ?? 0) > Date.now()) return { longBusy: true };
@@ -586,8 +590,9 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
           emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "json_validate_failed", status: 400, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
           console.warn(`[assistant] ${c.name} draft off-schema at ${issue?.path.join(".")}: ${issue?.message}`);
           state.lastError = new Error(`off-schema output at ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
+          // v5 A5: a schema failure, not a capacity one: one retry on this model, then the next model (never its other pooled keys)
           if (attempt === 0) continue;
-          return { longBusy: false };
+          return { longBusy: false, schemaFailed: true };
         }
       }
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
@@ -600,6 +605,13 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
       const jvf = status === 400 && /json_validate_failed|does not match the expected schema/i.test(`${APICallError.isInstance(e) ? e.responseBody ?? "" : ""} ${(e as Error).message ?? ""}`);
       emitAttempt({ name: c.name, provider: p.name, model: id, outcome: status === 429 ? "rate_limited" : jvf ? "json_validate_failed" : busy ? "busy" : "error", status, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
+      // v5 A5: strict mode refused the reply and left no usable draft: one retry on this model, then the next model (not its other
+      // pooled keys: the same model would refuse the same way), recorded as a schema failure, never as a capacity one
+      if (jvf) {
+        console.warn(`[assistant] ${c.name} ${p.name}/${id}: strict mode refused the reply (json_validate_failed)${attempt === 0 ? "; asking once more" : "; next model"}`);
+        if (attempt === 0) continue;
+        return { longBusy: false, schemaFailed: true };
+      }
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
       // a refused or expired key is remembered for the console's admin banner (keyhealth.ts), not only logged
       if (isKeyRefusal(status, (e as Error).message ?? "") || /refused the AWS keys/.test((e as Error).message ?? "")) keyRefused(p.name, status ?? (e as Error).name, (e as Error).message);
