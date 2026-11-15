@@ -236,3 +236,74 @@ describe("A6 (c): failures on the Claude rung", () => {
     expect(rows().find((x) => x.event === "claude_schema")).toMatchObject({ model: HAIKU, path: "json" });
   });
 });
+
+// ---- A7: the compact plan on the Claude rung (JARVIS_PLAN_COMPACT=1, default off); the Groq schemas are untouched
+
+/** round.ts is another lane's file: read it inside each test, so a half-edited round.ts cannot stop the A6 tests above */
+const round = () => import("@/lib/thunai/round");
+const formatOf = (b: Json) => JSON.stringify(b.output_config?.format?.schema ?? null);
+
+describe("A7: the compact plan, sent and read back inside claudeJson", () => {
+  it("flag off (unset or 0): every planner schema goes out as v4's, byte for byte", async () => {
+    const { SCHEMAS, EVERYTHING_SCHEMA, LATER_ACT_SCHEMA } = await round();
+    const { claudeWire } = await import("./claude");
+    const all: Record<string, z.ZodTypeAny> = { ...(SCHEMAS as Record<string, z.ZodTypeAny>), everything: EVERYTHING_SCHEMA as z.ZodTypeAny, laterAct: LATER_ACT_SCHEMA as z.ZodTypeAny };
+    for (const flag of ["", "0"]) {
+      vi.stubEnv("JARVIS_PLAN_COMPACT", flag);
+      for (const [name, schema] of Object.entries(all)) {
+        const bodies = fake((b) => message(b, "{}"));
+        await ask({ name: `jarvis_${name}0`, schema: schema as never }).catch(() => undefined);
+        expect(formatOf(bodies[0]), `${name}, JARVIS_PLAN_COMPACT=${flag}`).toBe(JSON.stringify(claudeWire(schema).schema));
+      }
+    }
+    // and on: the bundles with a screen change, the others do not
+    vi.stubEnv("JARVIS_PLAN_COMPACT", "1");
+    for (const [name, schema] of Object.entries(all)) {
+      const bodies = fake((b) => message(b, "{}"));
+      await ask({ name: `jarvis_${name}0`, schema: schema as never }).catch(() => undefined);
+      const same = formatOf(bodies[0]) === JSON.stringify(claudeWire(schema).schema);
+      expect(same, name).toBe(!["screens", "stage", "wide", "everything"].includes(name));
+    }
+  });
+
+  it("flag on: the compact format goes out, and the compact reply comes back as the full plan the v4 schema accepts", async () => {
+    vi.stubEnv("JARVIS_PLAN_COMPACT", "1");
+    const { SCHEMAS } = await round();
+    const bodies = fake((b) => message(b, JSON.stringify({ kind: "do", recipe: "cases", slots: [{ key: "zones", value: "13" }, { key: "sev", value: "Severe" }, { key: "period", value: "weekly" }], lang: "en", reply: null, options: [] })));
+    const r = await ask({ schema: SCHEMAS.screens as never });
+    const sent = bodies[0].output_config.format.schema as Json;
+    expect(Object.keys(sent.properties).slice(0, 3)).toEqual(["kind", "recipe", "slots"]);
+    for (const k of ["screen", "calls", "done"]) expect(sent.properties[k]).toBeUndefined();
+    expect(r.path).toBe("format");
+    const plan = r.object as Json;
+    expect(plan.screen).toMatchObject({ recipe: "cases", zones: [13], sev: "Severe", period: "weekly", dept: null, depts: [], q: null, n: null, metricId: null });
+    expect(plan).toMatchObject({ kind: "do", lang: "en", reply: null, options: [], calls: [], done: true });
+    expect(SCHEMAS.screens.safeParse(plan).success).toBe(true);
+  });
+
+  it("flag on: an unknown slot key is off-schema (the next rung answers), not silently dropped", async () => {
+    vi.stubEnv("JARVIS_PLAN_COMPACT", "1");
+    const { SCHEMAS } = await round();
+    fake((b) => message(b, JSON.stringify({ kind: "do", recipe: "cases", slots: [{ key: "colour", value: "red" }], lang: "en", reply: null, options: [] })));
+    await expect(ask({ schema: SCHEMAS.screens as never })).rejects.toThrow(/did not match/);
+  });
+
+  it("flag on: the warm writes the same output_config as the compact turn; a console step (a role) and a plain schema are untouched", async () => {
+    vi.stubEnv("JARVIS_PLAN_COMPACT", "1");
+    const { SCHEMAS } = await round();
+    const { claudeWire } = await import("./claude");
+    const bodies = fake((b) => message(b, JSON.stringify({ kind: "chat", recipe: null, slots: [], lang: "en", reply: "Hi.", options: [] })));
+    await claudeWarm({ system: SYSTEM, schema: SCHEMAS.screens as z.ZodTypeAny });
+    await ask({ schema: SCHEMAS.screens as never });
+    expect(bodies[0].max_tokens).toBe(1);
+    expect(JSON.stringify(bodies[0].output_config)).toBe(JSON.stringify(bodies[1].output_config));
+    expect(formatOf(bodies[0])).not.toBe(JSON.stringify(claudeWire(SCHEMAS.screens as z.ZodTypeAny).schema));
+    const more = fake((b) => message(b, '{"ok":true}'));
+    await ask();
+    expect(formatOf(more[0])).toBe(JSON.stringify(claudeWire(S).schema));
+    vi.stubEnv("AI_CLAUDE_MODEL_FAST", HAIKU);
+    const console_ = fake((b) => message(b, "{}"));
+    await ask({ role: "fast", schema: SCHEMAS.screens as never }).catch(() => undefined);
+    expect(formatOf(console_[0])).toBe(JSON.stringify(claudeWire(SCHEMAS.screens as z.ZodTypeAny).schema));
+  });
+});
