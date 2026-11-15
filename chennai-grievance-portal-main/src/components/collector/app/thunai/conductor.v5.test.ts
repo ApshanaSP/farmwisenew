@@ -2,9 +2,12 @@
  * The conductor's v5 items, in node: the microphone (./ears) and the voice (./mouth) are stand-ins; the turn machine and the address
  * gate are real. No model and no network: /hear is a stub that records its requests. Sentences are invented.
  *  - C3: the window the captions may run in (inWindow): within ENGAGED_MS of the wake or of Jarvis's last turn, or while it speaks.
+ *  - C4: the strict audio gate, and the engaged mark on the request.
+ *  - Section 6.4: the trace's stamps (voicedEnd as zero, eou, uploadSent, the server's offsets, hearBack), timings only.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ENGAGED_MS } from "@/lib/thunai/addressed";
+import { resetTrace, traces } from "./trace";
 
 const box = vi.hoisted(() => ({ e: null as null | FakeEars }));
 const mouth = vi.hoisted(() => ({ hooks: {} as { onStart?: (p: string, ack: boolean) => void; onEnd?: (ack: boolean) => void }, speaking: false, saying: null as string | null }));
@@ -149,6 +152,70 @@ describe("C4: the strict audio gate, NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 (def
     expect(param(posts[0], "engaged")).toBe("1");
     expect(param(posts[0], "lane")).toBe("engaged");
     expect(posts[0].init.body).toBeInstanceOf(FormData);
+    c.close();
+  });
+});
+
+describe("the trace's stamps (section 6.4): zero is the last voiced sample, not the detector's decision", () => {
+  beforeEach(() => resetTrace());
+  const conf = { speech: 0.98, logprob: -0.1 };
+  it("an utterance's end opens a turn at its last voiced sample; then eou, the upload, the server's offsets and the transcript", async () => {
+    const { c, e, sentences } = await boot();
+    e.hooks.onVad({ type: "start", at: 1000 }, 0);
+    e.hooks.onVad({ type: "end", at: 2000, ms: 700, short: false }, 5000, 4700);
+    expect(traces().length).toBe(1);
+    const t = traces()[0];
+    expect(t.zero).toBe(4700);
+    expect(t.at.voicedEnd).toBe(4700);
+    expect(t.at.eou).toBe(5000);
+    expect(typeof t.at.uploadSent).toBe("number");
+    expect(t.at.hearBack).toBeUndefined();
+    posts[0].res(reply({ text: "show the trends page", lang: "en", conf, timing: { sttSent: 4, sttBack: 290 } }));
+    await flush();
+    expect(t.at.sttSent).toBe((t.at.uploadSent as number) + 4);
+    expect(t.at.sttBack).toBe((t.at.uploadSent as number) + 290);
+    expect(t.at.hearBack).toBeGreaterThanOrEqual(t.at.uploadSent as number);
+    expect(sentences.length).toBe(1);
+    expect(sentences[0].trace).toBe(t.n);
+    // timings only: no words in the trace
+    expect(JSON.stringify(traces())).not.toMatch(/trends/);
+    c.close();
+  });
+  it("ears that give no last voiced sample: zero is the decision itself", async () => {
+    const { c, e } = await boot();
+    e.hooks.onVad({ type: "start", at: 1000 }, 0);
+    e.hooks.onVad({ type: "end", at: 2000, ms: 700, short: false }, 5000);
+    expect(traces()[0].zero).toBe(5000);
+    c.close();
+  });
+  it("a cough, and side talk too short to send, open no turn", async () => {
+    const { c, e } = await boot({ lastTurnAt: () => null });
+    e.hooks.onVad({ type: "start", at: 1000 }, 0);
+    e.hooks.onVad({ type: "end", at: 1400, ms: 100, short: true }, 3000, 2900);
+    say(e, 5000, 300);
+    expect(posts.length).toBe(0);
+    expect(traces().length).toBe(0);
+    c.close();
+  });
+  it("a sentence said in two parts: the second part's turn gets only its own reading's stamps", async () => {
+    const { c, e, sentences } = await boot();
+    e.hooks.onVad({ type: "start", at: 1000 }, 0);
+    e.hooks.onVad({ type: "end", at: 2000, ms: 700, short: false }, 5000, 4700);
+    e.hooks.onVad({ type: "start", at: 2300 }, 0);
+    e.hooks.onFrame?.(0.5, 300);
+    e.hooks.onVad({ type: "end", at: 3400, ms: 800, short: false }, 6400, 6100);
+    expect(posts.length).toBe(2);
+    const [t1, t2] = traces();
+    expect(t2.zero).toBe(6100);
+    posts[0].res(reply({ text: "Jarvis, show", lang: "en", conf, timing: { sttSent: 1, sttBack: 999 } }));
+    await flush();
+    expect(t2.at.sttBack).toBeUndefined();
+    expect(t1.at.sttBack).toBeUndefined();
+    posts[1].res(reply({ text: "the trends page", lang: "en", conf, timing: { sttSent: 2, sttBack: 250 } }));
+    await flush();
+    expect(t2.at.sttBack).toBe((t2.at.uploadSent as number) + 250);
+    expect(typeof t2.at.hearBack).toBe("number");
+    expect(sentences.map((s) => s.trace)).toEqual([t2.n]);
     c.close();
   });
 });

@@ -160,3 +160,46 @@ describe("D2: the microphone as Ears.start opens it", () => {
     expect(b.asked.length).toBe(1);
   });
 });
+
+describe("the trace's zero (section 6.4): the ears give the end of the last voiced frame, on the browser's clock", () => {
+  it("the end event carries the last voiced sample's time, not the decision's (300 ms of quiet later)", async () => {
+    const b = stubBrowser();
+    let clock = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => clock);
+    const h = hooks();
+    const e = new Ears(h);
+    await e.start();
+    const n = 960; // 20 ms at 48 kHz
+    let total = 0;
+    const push = (i: number, amp: number) => { total += n; clock = 1000 + 20 * i; b.port.onmessage?.({ data: { frame: new Float32Array(n).fill(amp), total } }); };
+    let i = 0;
+    for (; i < 50; i++) push(i, 0); // a second of quiet: the floor
+    for (; i < 70; i++) push(i, 0.5); // 400 ms of voice: frames 50..69, the last ends at 1400 ms of audio
+    for (; i < 100; i++) push(i, 0);
+    const ends = h.onVad.mock.calls.filter((c) => (c[0] as { type: string }).type === "end");
+    expect(ends.length).toBe(1);
+    const [, wall, voiced] = ends[0] as [unknown, number, number];
+    // each frame arrives 980 ms after its audio began on this clock: the last voiced sample is at 1400 + 980
+    expect(voiced).toBe(2380);
+    expect(wall).toBe(voiced + 300);
+    e.stop();
+  });
+  it("a frame that reaches the page late (a busy main thread) does not move the clock later", async () => {
+    const b = stubBrowser();
+    let clock = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => clock);
+    const h = hooks();
+    const e = new Ears(h);
+    await e.start();
+    const n = 960;
+    let total = 0;
+    const push = (i: number, amp: number, late = 0) => { total += n; clock = 1000 + 20 * i + late; b.port.onmessage?.({ data: { frame: new Float32Array(n).fill(amp), total } }); };
+    let i = 0;
+    for (; i < 50; i++) push(i, 0);
+    for (; i < 70; i++) push(i, 0.5, i === 69 ? 150 : 0);
+    for (; i < 100; i++) push(i, 0);
+    const end = h.onVad.mock.calls.find((c) => (c[0] as { type: string }).type === "end") as [unknown, number, number];
+    expect(Math.abs(end[2] - 2380)).toBeLessThanOrEqual(1);
+    e.stop();
+  });
+});
