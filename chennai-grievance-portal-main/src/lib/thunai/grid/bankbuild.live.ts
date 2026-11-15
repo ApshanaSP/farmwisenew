@@ -30,7 +30,7 @@ export function bankCheck(x: { recipe?: unknown; lang?: unknown; text?: unknown;
   if (!checked || checked.recipe !== x.recipe) return "checkScreen";
   for (const [k, v] of Object.entries(slots)) {
     if (v == null || (Array.isArray(v) && !v.length)) continue;
-    if (!same((checked.slots as Record<string, unknown>)[k], v)) return "slots";
+    if (!same((checked.slots as unknown as Record<string, unknown>)[k], v)) return "slots";
   }
   return null;
 }
