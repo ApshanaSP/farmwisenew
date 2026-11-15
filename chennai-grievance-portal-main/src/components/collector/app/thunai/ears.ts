@@ -6,8 +6,8 @@
  * a 16 kHz WAV. Nothing is decided here: events go to the turn machine (lib/thunai/turn.ts), driven by the conductor.
  *
  * Two detectors. The energy gate's onset is the fastest thing there is (60 ms): while Jarvis talks it only pauses the voice.
- * Silero VAD v5 (run here by onnxruntime-web on 32 ms frames at 16 kHz) decides what is speech; where the model cannot load
- * the energy gate decides alone.
+ * Silero VAD v5 (run here by onnxruntime-web on 32 ms frames at 16 kHz, each with the 64 samples before it: sileroRunner) decides
+ * what is speech; where the model cannot load the energy gate decides alone.
  *
  * stop() stops the microphone's tracks: off and muted mean nothing listens. Audio is never stored: the ring holds the last
  * 25 seconds in memory and is dropped at stop(). On the dev console a test stream can stand in for the microphone, so the
@@ -56,18 +56,36 @@ export function echoApplied(settings: MediaTrackSettings | Record<string, unknow
 interface Silero { run: (x: Float32Array) => Promise<number>; reset: () => void }
 interface OrtLike { Tensor: new (type: string, data: Float32Array | BigInt64Array, dims: number[]) => { data: unknown } }
 interface SessLike { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: unknown }>> }
-/** Silero v5 on one session: its recurrent state carries from frame to frame, and reset() zeroes it (a new session of Jarvis mode). */
-export function sileroRunner(ort: OrtLike, sess: SessLike): Silero {
+/** Silero v5 at 16 kHz looks back this many samples before each 512-sample frame (upstream utils_vad.py and vad-web silero.ts) */
+export const SILERO_CONTEXT = 64;
+/**
+ * Silero v5 on one session: its recurrent state carries from frame to frame, and reset() zeroes it (a new session of Jarvis mode).
+ * v5 (D1): each frame goes in as [1, 576], the last 64 samples of the frame before (zeros at the start and after reset()) and then
+ * the frame itself, as upstream feeds it; v4 fed [1, 512] with no context. NEXT_PUBLIC_JARVIS_VAD_CONTEXT=0 feeds [1, 512] again.
+ * A reset() while a frame is still at the model is not undone when that frame comes back.
+ */
+export function sileroRunner(ort: OrtLike, sess: SessLike, context: boolean = process.env.NEXT_PUBLIC_JARVIS_VAD_CONTEXT !== "0"): Silero {
   const sr = new ort.Tensor("int64", BigInt64Array.from([BigInt(16000)]), []);
   const zero = () => new ort.Tensor("float32", new Float32Array(256), [2, 1, 128]);
   let state = zero();
+  let ctx = new Float32Array(SILERO_CONTEXT);
+  let gen = 0;
   return {
     run: async (x: Float32Array) => {
-      const r = await sess.run({ input: new ort.Tensor("float32", x, [1, 512]), state, sr });
-      state = r.stateN;
+      const my = gen;
+      let input: Float32Array = x;
+      if (context) {
+        input = new Float32Array(SILERO_CONTEXT + x.length);
+        input.set(ctx, 0);
+        input.set(x, SILERO_CONTEXT);
+        // the next frame's context is this frame's tail (set now: a reset() while this frame is at the model wins)
+        ctx = input.slice(input.length - SILERO_CONTEXT);
+      }
+      const r = await sess.run({ input: new ort.Tensor("float32", input, [1, input.length]), state, sr });
+      if (my === gen) state = r.stateN;
       return Number((r.output.data as Float32Array)[0]);
     },
-    reset: () => { state = zero(); }
+    reset: () => { gen++; state = zero(); ctx = new Float32Array(SILERO_CONTEXT); }
   };
 }
 
