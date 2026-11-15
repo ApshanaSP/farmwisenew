@@ -2,8 +2,8 @@
  * Jarvis's ears on the server: one spoken utterance (a WAV the console cut out with its voice detector) becomes text, with
  * the language it was spoken in (lib/thunai/stt.ts). ?lane=ambient is one decode in the site's language under the ledger's
  * cap of 8 a minute; engaged and named turns get the parallel forced decodes. The body is the WAV itself, or multipart with
- * `audio` and `vocab` (the open Stage's names, at most 30, cleaned again in stt.ts). The audio is not kept, and an ambient
- * transcript is not logged.
+ * `audio` and `vocab` (the open Stage's names, at most 30, cleaned again in stt.ts) and `lastLang` (en|ta: the language of the last
+ * line heard; with the bare WAV it goes as ?lastLang=). The audio is not kept, and an ambient transcript is not logged.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession } from "@/lib/collector/guard";
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("lane") as Lane | null;
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
   try {
-    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab }));
+    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang }));
   } catch (e) {
     if (req.signal.aborted) return NextResponse.json({ error: "aborted" }, { status: 499 });
     console.warn("[jarvis] hear failed:", (e as Error).message);

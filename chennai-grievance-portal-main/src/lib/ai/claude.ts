@@ -364,12 +364,35 @@ function refusedKey(e: InstanceType<typeof Anthropic.APIError>) {
   keyRefused("anthropic", e.status ?? 401, e.message);
 }
 
-/** One structured answer from Claude. Throws ClaudeBusyError (rate limit, overload, too slow) or a plain Error, and the caller moves on. */
+/** What a failed Claude call was billed for: a refused or off-schema reply still cost its tokens (review, Planner 4) */
+export interface ClaudeBilled { model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number }
+const BILLED = Symbol.for("thunai.claude.billed");
+/** The usage a claudeJson error carries when Claude answered (and billed) before it was refused: the caller records it before it moves on */
+export function billedOf(e: unknown): ClaudeBilled | null {
+  return e && typeof e === "object" && BILLED in e ? ((e as Record<symbol, unknown>)[BILLED] as ClaudeBilled) : null;
+}
+
+/**
+ * One structured answer from Claude. Throws ClaudeBusyError (rate limit, overload, too slow) or a plain Error, and the caller moves on.
+ * An error thrown after Claude answered (a refusal, an off-schema reply, a failed second try) carries the usage it was billed (billedOf).
+ */
 export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonResult<T>> {
-  const model = a.model || claudeModel(a.role), t0 = Date.now();
+  const model = a.model || claudeModel(a.role);
+  const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  try {
+    return await claudeAsk(a, model, usage);
+  } catch (e) {
+    if (usage.input + usage.output > 0 && e && typeof e === "object") {
+      try { Object.defineProperty(e, BILLED, { value: { model, inputTokens: usage.input, outputTokens: usage.output, cacheReadTokens: usage.cacheRead, cacheWriteTokens: usage.cacheWrite } satisfies ClaudeBilled }); } catch { /* a frozen error: not recorded */ }
+    }
+    throw e;
+  }
+}
+
+async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input: number; output: number; cacheRead: number; cacheWrite: number }): Promise<ClaudeJsonResult<T>> {
+  const t0 = Date.now();
   const timeout = a.timeoutMs ?? (a.role ? Number(env("AI_CLAUDE_TIMEOUT_MS")) || 25_000 : 6000);
   const attempts = a.role ? 2 : 1;
-  const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   let lastIssue = "";
   for (let attempt = 0; attempt < attempts; attempt++) {
     const sch = outputSchema(a.schema);

@@ -198,7 +198,8 @@ describe("L1: the turn's language, the reply's figures, a clarifying request", (
   it("a reply's figure from a step's own text is refused; one the Collector said, or a step's number, is kept; number words are figures too", () => {
     const plan = (reply: string, steps: unknown[]): AiPlan => ({ kind: "do", lang: "en", reply, steps, options: [] } as never);
     const STEP = { action: "remember", page: null, period: null, zone: null, dept: null, cat: null, taluk: null, sev: null, panel: null, mapMode: null, layer: null, on: null, item: null, which: null, option: null, n: null, when: null };
-    expect(checkPlan(plan("Noted: 300 deaths.", [{ ...STEP, text: "300 deaths in Adyar" }]), world, "remember the Adyar note", Date.now())).toMatchObject({ kind: "do", reply: null });
+    // (a type step: a remember step whose text holds a figure the Collector never said is now dropped whole, keepsteps.v4.test.ts)
+    expect(checkPlan(plan("Noted: 300 deaths.", [{ ...STEP, action: "type", text: "300 deaths in Adyar" }]), world, "remember the Adyar note", Date.now())).toMatchObject({ kind: "do", reply: null });
     expect(checkPlan(plan("Noted: three hundred.", [{ ...STEP, text: "the Adyar note" }]), world, "remember the Adyar note", Date.now())).toMatchObject({ kind: "do", reply: null });
     expect(checkPlan(plan("Zone 7 now.", [{ ...STEP, action: "view", text: null, zone: 7 }]), world, "zone 7", Date.now())).toMatchObject({ kind: "do", reply: "Zone 7 now." });
   });

@@ -218,7 +218,11 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     if (real) out.change = { dim: ch!.dim as "zone" | "dept" | "cat", key };
   }
   // what changed: a metric registry id is a code (letters and underscores), never words or a figure; an id not in the registry is the recipe's error
-  if (recipe === "changed" && typeof s.metricId === "string" && /^[A-Za-z_]{1,40}$/.test(s.metricId.trim())) out.metricId = s.metricId.trim();
+  // (letters and underscores can still spell a figure, "three_hundred_deaths": its number words go, as in q and name; review, Numbers 5)
+  if (recipe === "changed" && typeof s.metricId === "string" && /^[A-Za-z_]{1,40}$/.test(s.metricId.trim())) {
+    const id = stripFigures(s.metricId.trim().replace(/_+/g, " "), [])?.trim().replace(/\s+/g, "_");
+    if (id) out.metricId = id;
+  }
   if (s.sort === "priority" || s.sort === "complaints" || s.sort === "time") out.sort = s.sort;
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;

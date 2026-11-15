@@ -6,9 +6,10 @@
  * loser is aborted. A rung with fewer than 8 times of its own waits its provider's default instead (Claude 6 s: it thinks before
  * it answers, p50 about 3.9 s; others 3.5 s). The hedge goes only into Groq, and never with under 40 % of a minute's budget left
  * on that model. The loser's time is kept too, as aborted at the moment it was stopped (a lower bound, apart from completed
- * answers), so a model that often loses is not read as fast. Everything inside the caller's deadline and signal.
+ * answers), so a model that often loses is not read as fast. Everything inside the caller's deadline and signal. A call the turn
+ * cancels (and a hedge still running then) is recorded in the ledger at its estimated input tokens, as a lost hedge is.
  */
-import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
+import { billedOf, claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { generateJson, type JsonCall, type JsonResult, type ProviderName } from "@/lib/ai/gateway";
 import type { z } from "zod";
 import { ledger, type Lane, type Ledger, type Org } from "./ledger";
@@ -154,6 +155,10 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
     const main = ask(c, rung, g, now, stopA, canHedge).finally(() => { mainSettled = true; });
     let timer: ReturnType<typeof setTimeout> | null = null;
     let hedged = false;
+    // which calls were still running when the turn was cancelled: each is recorded at its estimate (review, Planner 4)
+    const cancelled = { main: false, hedge: false };
+    const onCancel = () => { cancelled.main = !mainSettled; cancelled.hedge = hedged && !hedgeSettled; };
+    c.signal?.addEventListener("abort", onCancel, { once: true });
     const b = new AbortController();
     const hedge = canHedge
       ? new Promise<JsonResult<T>>((res, rej) => {
@@ -192,7 +197,14 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       const cut = now() >= c.until;
       a.abort(); b.abort();
       main.catch(() => undefined); hedge?.catch(() => undefined);
-      if (c.signal?.aborted) throw e;
+      if (c.signal?.aborted) {
+        // cancelled by the turn: each call still running then was asked and still counts against its model's allowance, at its estimate
+        // (a Claude reply that was billed before the cancel was recorded with its own usage by the gateway: not counted twice)
+        const whose = x instanceof AggregateError ? x.errors : [x];
+        if (cancelled.main && !billedOf(whose[0])) stopped(rung, now() - tMain, "cancelled");
+        if (cancelled.hedge && !billedOf(whose[1])) stopped(next, now() - tHedge, "cancelled");
+        throw e;
+      }
       hops.push(`${label}:failed`);
       console.warn(`[jarvis llm] ${c.name}: ${label} failed: ${(e as Error).message?.slice(0, 120)}`);
       // stopped by the turn's deadline: a lower bound on its time, not a failure of the model
@@ -201,6 +213,8 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       if (hedged) telemetry("hedge", { provider: rung.provider, model: rung.model, into: `${next.provider}/${next.model}`, after: wait, why, winner: "none", lane: c.lane });
       // a hedge that already ran took the next rung with it
       if (hedged) i++;
+    } finally {
+      c.signal?.removeEventListener("abort", onCancel);
     }
   }
   console.warn(`[jarvis llm] ${c.name}: no model answered (${hops.join(" > ") || "no rungs"})`);

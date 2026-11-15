@@ -163,33 +163,53 @@ export function zoneLabelsOut(text: string, zones: Iterable<number>): string {
   return text.replace(/(?<![\p{L}])(zone|மண்டலம்)\s*(\d{1,2})(?![\d\p{L}])/giu, (m, _w: string, n: string) => (real.has(Number(n)) ? " " : m));
 }
 
-/** a letter-led code (INC-2026-004, Covid-19) or a real zone's label ("Zone 13"): kept whole when the figures around it are taken out */
-const KEEP_CODE = /\p{L}[\p{L}\p{M}\d]*(?:-[\p{L}\p{M}\d]*\d[\p{L}\p{M}\d]*)+/gu;
+/** an incident's id (INC-2026-004): with a real zone's label ("Zone 13"), the one code with digits a model's words keep whole */
+const INC_ID = /(?<![\p{L}\p{M}\d])INC(?:-[A-Za-z0-9_]+)+/gu;
+/** a digit run glued to a word, which figuresIn leaves out on purpose: "deaths-300" is masked as a code, "x300" is not read */
+const GLUED = /(?<=[\p{L}\p{M}]|[\p{L}\p{M}\d]-)\d+(?:[.,]\d+)*/gu;
+
+/**
+ * The figures glued to a word in a model's words ("deaths-300", "x300", "Velachery-300", "deaths-٣٠٠"; review, Numbers 1). figuresIn masks
+ * a letter-led code whole and does not read a digit run after a letter, which suits code's own lines (PM2.5, a station's code) but lets a
+ * model's figure through. Outside an incident's id and a real zone's label (`zones`), each such run is a figure. For a model's words only.
+ */
+export function gluedFigures(text: string, zones: Iterable<number> = []): Figure[] {
+  const t = zoneLabelsOut(forGate(text).replace(INC_ID, " "), zones);
+  return [...t.matchAll(GLUED)].map((m) => ({ raw: m[0], value: Number(m[0].replace(/,/g, "")) }));
+}
+
+/** Every figure in a model's words: the gate's reading (figuresIn) and the glued ones, a real zone's label and an incident's id left out. */
+export function modelFiguresIn(text: string, zones: Iterable<number> = []): Figure[] {
+  const real = [...zones];
+  return [...figuresIn(zoneLabelsOut(text, real)), ...gluedFigures(text, real)];
+}
 const PERCENT_WORD = /(?<![\p{L}\p{M}])(?:per\s?cent|percentage|சதவீத[஀-௿]*|sadhaveedham|sathaveetham)(?![\p{L}\p{M}])/giu;
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * A model's words with every figure taken out (Finding 51): digits of every script, lakh/crore, percentages and number words in English,
- * Tamil and Tanglish, by the gate's own reading (figuresIn). A real zone's label ("Zone 13", `zones`) and a letter-led code (INC-2026-004)
- * stay. Returns the text unchanged when it holds no figure, and null when a figure could not be taken out, so the caller drops the slot.
- * For words a screen shows or says: never for a lookup, which keeps what the Collector asked for.
+ * Tamil and Tanglish, by the gate's own reading (figuresIn), and any digit run glued to a word (gluedFigures: "deaths-300", "x300"). A real
+ * zone's label ("Zone 13", `zones`) and an incident's id (INC-2026-004) stay. Returns the text unchanged when it holds no figure, and null
+ * when a figure could not be taken out, so the caller drops the slot. For words a screen shows or says: never for a lookup, which keeps what
+ * the Collector asked for.
  */
 export function stripFigures(text: string, zones: Iterable<number> = []): string | null {
   const real = [...zones];
-  const has = (t: string) => figuresIn(zoneLabelsOut(t, real)).length > 0;
+  const has = (t: string) => figuresIn(zoneLabelsOut(t, real)).length > 0 || gluedFigures(t, real).length > 0;
   if (!has(text)) return text;
   const kept: string[] = [];
   // a private-use mark stands in for each kept code or label while the figures around it are taken out (it is neither a letter nor a digit)
   const keep = (m: string) => { kept.push(m); return String.fromCharCode(0xe000 + kept.length - 1); };
-  let t = forGate(text).replace(KEEP_CODE, keep).replace(/(?<![\p{L}])(?:zone|மண்டலம்)\s*(\d{1,2})(?![\d\p{L}])/giu, (m: string, n: string) => (real.includes(Number(n)) ? keep(m) : m));
+  let t = forGate(text).replace(INC_ID, (m: string) => (/\d/.test(m) ? keep(m) : m)).replace(/(?<![\p{L}])(?:zone|மண்டலம்)\s*(\d{1,2})(?![\d\p{L}])/giu, (m: string, n: string) => (real.includes(Number(n)) ? keep(m) : m));
   for (let round = 0; round < 12; round++) {
     const figs = figuresIn(t);
     if (!figs.length) break;
     const before = t;
     for (const f of [...figs].sort((a, b) => b.raw.length - a.raw.length)) {
       if (f.raw === "percent") { t = t.replace(PERCENT_WORD, " "); continue; }
-      // a count said in a phrase ("oru maranam", "a single death", "ஒரு புகார் மட்டும்") loses its number word, not the words it counts
-      const raw = f.words && /\s/.test(f.raw) ? f.raw.split(/\s+/)[0] : f.raw;
+      // a count said in a phrase ("oru maranam", "a single death", "ஒரு புகார் மட்டும்") loses its number word, not the words it counts;
+      // "ore oru" and "ஒரே ஒரு" are one number said twice, so both words go (else the "oru" left reads as a count again)
+      const raw = f.words && /\s/.test(f.raw) ? (/^(?:ore|orey|ஒரே)\s+(?:oru|ஒரு)(?![\p{L}\p{M}])/iu.exec(f.raw)?.[0] ?? f.raw.split(/\s+/)[0]) : f.raw;
       const re = /\p{L}/u.test(raw) && !/^\d/.test(raw)
         ? new RegExp(`(?<![\\p{L}\\p{M}])${escapeRe(raw)}(?![\\p{L}\\p{M}])`, "giu")
         // a figure in digits goes with its sign, its percent and a scale word after it ("45%", "3.5 lakh")
@@ -198,6 +218,8 @@ export function stripFigures(text: string, zones: Iterable<number> = []): string
     }
     if (t === before) break;
   }
+  // what figuresIn leaves on purpose: a digit run glued to a word ("deaths-300", "x300", "Velachery-300"), with the hyphen that glues it
+  t = t.replace(/-?\d+(?:[.,]\d+)*%?(?:-(?=[\p{L}\p{M}]))?/gu, " ");
   t = t.replace(/[-]/g, (c) => kept[c.charCodeAt(0) - 0xe000] ?? "").replace(/\s+([,.;:!?])/g, "$1").replace(/\s+/g, " ").replace(/^[\s,.;:–-]+|[\s,;:–-]+$/g, "").trim();
   return has(t) ? null : t;
 }
@@ -228,7 +250,8 @@ export function gateChunk(chunk: string, allowed: Set<string>): GateResult {
  */
 export function fillTemplate(tpl: string, values: Record<string, number | string>, zones: Iterable<number> = []): string | null {
   const literal = zoneLabelsOut(tpl.replace(/\{n:[a-zA-Z0-9_]+\}(\s*(percent|per cent|சதவீத[஀-௿]*))?/gi, " "), zones);
-  if (figuresIn(literal).length) return null;
+  // the template is the model's words: a figure glued to a word ("Velachery-300") is its figure too (gluedFigures)
+  if (figuresIn(literal).length || gluedFigures(literal, zones).length) return null;
   let ok = true;
   const out = tpl.replace(/\{n:([a-zA-Z0-9_]+)\}/g, (_, k: string) => {
     if (!Object.prototype.hasOwnProperty.call(values, k)) { ok = false; return ""; }

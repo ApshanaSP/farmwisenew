@@ -4,7 +4,8 @@
  *   rise       an unusual rise in daily reports by zone, department, category, or zone and category (detect.ts, the count-aware
  *              negative-binomial threshold with a minimum count, two days running and a cooldown)
  *   overdue    the stock of cases open past their deadline growing against a week before, two days running
- *   rain       a rain gauge's last 24 hours at or above IMD's "heavy" line (64.5 mm; 115.6 mm "very heavy" is high severity)
+ *   rain       a rain gauge's last 24 hours at or above IMD's "heavy" line (64.5 mm; 115.6 mm "very heavy" is high severity), said
+ *              for the 24 hours the gauge measured (a reading up to 48 hours old); life-safety only for one of the last 24 hours
  *   reservoir  a reservoir 80 % full or more (90 % is high severity): a line set in this code, not an official trigger
  *   warning    an IMD district warning of orange or red in force
  *   followed   an incident or a zone the Collector asked Jarvis to follow (Level B) changed status, deadline or count
@@ -198,9 +199,16 @@ function rainSignal(rain: Reading[], asOf: string): WatchSignal | null {
   const values = { value: mm, hours: 24, stations: heavy.length };
   const place = noDigits(top.place);
   const others = heavy.length > 1 ? { en: ` ${heavy.length} gauges are at heavy rain or more.`, ta: ` ${heavy.length} மழைமானிகள்ல கனமழை அல்லது அதுக்கு மேல.` } : { en: "", ta: "" };
+  // a gauge's 24 hours end when it was read: "the last 24 hours" only for a reading of the last few hours, else the day they ended (review)
+  const age = (IST(asOf) - IST(top.t)) / 3_600_000;
+  const daysBack = Math.round((Date.parse(asOf.slice(0, 10)) - Date.parse(top.t.slice(0, 10))) / 86_400_000);
+  const window: Bi = age < 3 ? { en: "in the last 24 hours", ta: "கடந்த 24 மணி நேரத்துல" }
+    : daysBack <= 0 ? { en: "in the 24 hours to earlier today", ta: "இன்னைக்கு முடிஞ்ச 24 மணி நேரத்துல" }
+      : daysBack === 1 ? { en: "in the 24 hours to yesterday", ta: "நேத்து வரைக்குமான 24 மணி நேரத்துல" }
+        : { en: "in the 24 hours to the day before yesterday", ta: "முந்தாநேத்து வரைக்குமான 24 மணி நேரத்துல" };
   const line: Bi = {
-    en: `${word.en} rain at ${place}: ${mm} millimetres in the last 24 hours.${others.en}`,
-    ta: `${place} நிலையத்துல ${word.ta}: கடந்த 24 மணி நேரத்துல ${mm} மில்லிமீட்டர்.${others.ta}`
+    en: `${word.en} rain at ${place}: ${mm} millimetres ${window.en}.${others.en}`,
+    ta: `${place} நிலையத்துல ${word.ta}: ${window.ta} ${mm} மில்லிமீட்டர்.${others.ta}`
   };
   const plain: Bi = { en: `${word.en} rain at ${place}.`, ta: `${place} நிலையத்துல ${word.ta}.` };
   return {
@@ -208,7 +216,8 @@ function rainSignal(rain: Reading[], asOf: string): WatchSignal | null {
     method: "Latest 24-hour reading per gauge against IMD's heavy (64.5 mm), very heavy (115.6 mm) and extremely heavy (204.5 mm) lines",
     caveat: { en: "One gauge's reading; rain is patchy, and the gauge positions are approximate.", ta: "ஒரு மழைமானியின் அளவு; மழை இடத்துக்கு இடம் மாறும்." },
     sources: [chip("rain", top.t, asOf)], severity: top.value >= 115.6 ? "high" : "medium", level: top.value >= 204.5 ? 3 : top.value >= 115.6 ? 2 : 1,
-    lifeSafety: top.value >= 204.5, text: keep(line, plain, values), values, weight: top.value / 10
+    // only a reading of the last 24 hours may interrupt quiet hours: an older one is told, never forced through
+    lifeSafety: top.value >= 204.5 && age <= 24, text: keep(line, plain, values), values, weight: top.value / 10
   };
 }
 
@@ -402,6 +411,15 @@ type Row = Record<string, unknown>;
 async function query(): Promise<(sql: string, params?: unknown[]) => Promise<Row[]>> {
   const { default: pool } = await import("@/lib/collector/db");
   return async (sql, params = []) => (await pool.query(sql, params))[0] as unknown as Row[];
+}
+
+/**
+ * The follows whose change a list of told signal keys holds (a followed signal's key is followed:<kind>:<ref>:...): what the brief told
+ * is marked seen with these, as the card's followSeen does, so the same change is not raised again (review, proactive).
+ */
+export function followsTold(keys: string[], follows: Follow[]): Follow[] {
+  const told = keys.filter((k) => k.startsWith("followed:"));
+  return told.length ? follows.filter((f) => told.some((k) => k.startsWith(`followed:${f.kind}:${f.ref}:`))) : [];
 }
 
 /**

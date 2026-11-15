@@ -17,8 +17,11 @@ import { narrationOf } from "./stagelocal";
 import type { StageDocT } from "./stage";
 import type { Lang } from "./types";
 
-/** The Screen schema's free-text slots (agent.ts `Screen`): the only words of a model's that a screen builder can be handed. */
-export const MODEL_TEXT_SLOTS = ["q", "name", "id"] as const;
+/**
+ * The Screen schema's free-text slots (agent.ts `Screen`): the only words of a model's that a screen builder can be handed. metricId is a
+ * code of letters and underscores, but those can spell a figure ("three_hundred_deaths"; review, Numbers 5), so it is one of them.
+ */
+export const MODEL_TEXT_SLOTS = ["q", "name", "id", "metricId"] as const;
 
 /** Keys whose numbers are never a figure anyone says: a point's coordinates (13.08, 80.26 would let "13" and "80" through). */
 const NOT_FIGURES = new Set(["lat", "lon"]);
@@ -54,7 +57,8 @@ export function modelFigures(doc: Pick<StageDocT, "slots">): Set<string> {
   const vals: number[] = [];
   for (const k of MODEL_TEXT_SLOTS) {
     const v = slots[k];
-    for (const s of Array.isArray(v) ? v : [v]) if (typeof s === "string") vals.push(...figuresOfText(s));
+    // read as written and with its underscores as spaces ("forty_seven" is forty-seven too)
+    for (const s of Array.isArray(v) ? v : [v]) if (typeof s === "string") vals.push(...figuresOfText(s), ...(s.includes("_") ? figuresOfText(s.replace(/_+/g, " ")) : []));
   }
   return allowedSet(vals);
 }

@@ -11,7 +11,7 @@ import { checkScreen } from "./agent";
 import { chunks } from "./chunker";
 import { WORLD } from "./fixture";
 import { ZONE_TA_NAME } from "./lexicon";
-import { figuresIn, gateChunk, stripFigures, zoneLabelsOut } from "./numbergate";
+import { figuresIn, forGate, gateChunk, stripFigures, zoneLabelsOut } from "./numbergate";
 import { buildScreen } from "./screens";
 import { modelFigures, speakableFigures } from "./speakable";
 import { RECIPES, type StageDocT } from "./stage";
@@ -35,8 +35,15 @@ const FIGURES = [
   "three hundred and forty-seven", "seventy-three", "eight hundred", "a dozen", "nine thousand", "twice", "eleven", "half", "one death", "a single death",
   "முந்நூற்று", "எண்ணூறு", "இருபத்தேழு", "பதினொன்று", "லட்சம்", "நாற்பத்தொன்று", "எழுபத்து மூன்று", "ஒரே ஒரு",
   "munnooru", "ettunooru", "irubathu", "pathinonnu", "ore oru", "oru maranam",
-  "௩௪௭", "௭௩", "௲", "३४७", "３４７", "٣٤٧", "முப்பது சதவீதம்"
+  "௩௪௭", "௭௩", "௲", "३४७", "３４７", "٣٤٧", "முப்பது சதவீதம்",
+  // glued to a word: the gate's reader masks a letter-led code and skips a digit run after a letter (review, Numbers 1)
+  "deaths-347", "x613", "Velachery-347", "deaths-٣٤٧", "flood7351", "Adyar-௭௩", "km-418"
 ];
+/** an incident's id: the one code a model's words may keep digits in */
+const INC_ID = /(?<![\p{L}\p{M}\d])INC(?:-[A-Za-z0-9_]+)+/gu;
+/** the digit runs the gate's reader leaves out, glued to a word, outside an incident's id and a real zone's label */
+const gluedRuns = (s: string): string[] => [...zoneLabelsOut(forGate(s).replace(INC_ID, " "), ZONES).matchAll(/(?<=[\p{L}\p{M}]|[\p{L}\p{M}\d]-)\d+(?:[.,]\d+)*/gu)].map((m) => m[0]);
+const notAllowed = (s: string, allowed: Set<string>) => gluedRuns(s).filter((r) => !allowed.has(String(Number(r.replace(/,/g, "")))));
 const WORDS = ["flood", "deaths", "Velachery", "schools within", "km of flooding in", "Adyar", "cases", "drain", "tomato", "Chembarambakkam", "வெள்ளம்", "மரணம்",
   "kuppai", "near", "Zone 13", "Ambattur", "dengue", "pending", "garbage", "சம்பவங்கள்"];
 const pick = <T,>(r: () => number, xs: readonly T[]) => xs[Math.floor(r() * xs.length)];
@@ -80,8 +87,9 @@ function shownLines(doc: StageDocT, lang: Lang): string[] {
 function leaks(doc: StageDocT, lang: Lang): [string, string, string[]][] {
   const allowed = speakableFigures(doc, lang);
   const out: [string, string, string[]][] = [];
-  for (const c of chunks(doc.say[lang])) { const g = gateChunk(zoneLabelsOut(c, ZONES), allowed); if (!g.ok) out.push(["say", c, g.bad]); }
-  if ((doc.lang ?? "en") === lang) for (const s of shownLines(doc, lang)) { const g = gateChunk(zoneLabelsOut(s, ZONES), allowed); if (!g.ok) out.push(["shown", s, g.bad]); }
+  const bad = (s: string) => [...gateChunk(zoneLabelsOut(s, ZONES), allowed).bad, ...notAllowed(s, allowed)];
+  for (const c of chunks(doc.say[lang])) { const b = bad(c); if (b.length) out.push(["say", c, b]); }
+  if ((doc.lang ?? "en") === lang) for (const s of shownLines(doc, lang)) { const b = bad(s); if (b.length) out.push(["shown", s, b]); }
   return out;
 }
 
@@ -172,6 +180,12 @@ describe("stripFigures: a model's words without its figures", () => {
       const t = slotText(r).dirty;
       const s = stripFigures(t, ZONES);
       if (s != null) expect(figuresIn(zoneLabelsOut(s, ZONES)), `${t} -> ${s}`).toEqual([]);
+      if (s != null) expect(gluedRuns(s), `${t} -> ${s}`).toEqual([]);
     }
+  });
+  it("a figure glued to a word goes too; an incident's id and a real zone's label stay", () => {
+    expect(stripFigures("flood deaths-300", ZONES)).toBe("flood deaths");
+    expect(stripFigures("x300 cases in Velachery-300", ZONES)).toBe("x cases in Velachery");
+    expect(stripFigures("deaths-٣٠٠ near INC-2026-004 in Zone 13", ZONES)).toBe("deaths near INC-2026-004 in Zone 13");
   });
 });

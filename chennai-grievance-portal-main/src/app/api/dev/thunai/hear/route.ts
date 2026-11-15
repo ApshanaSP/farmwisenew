@@ -18,6 +18,6 @@ export async function POST(req: NextRequest) {
   if (!body || !body.buf.byteLength || body.buf.byteLength > MAX_AUDIO_BYTES) return NextResponse.json({ error: "Bad audio." }, { status: 400 });
   const q = req.nextUrl.searchParams.get("lane") as Lane | null;
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
-  try { return NextResponse.json(await hearUtterance(body.buf, { lane, site: req.nextUrl.searchParams.get("lang") === "ta" ? "ta" : "en", signal: req.signal, vocab: body.vocab })); }
+  try { return NextResponse.json(await hearUtterance(body.buf, { lane, site: req.nextUrl.searchParams.get("lang") === "ta" ? "ta" : "en", signal: req.signal, vocab: body.vocab, lastLang: body.lastLang })); }
   catch { return NextResponse.json({ error: "stt-failed" }, { status: 502 }); }
 }

@@ -8,7 +8,8 @@
  * spoken flood-risk tour), then, for a redirect ("instead show me Adyar's drains"), the fast lane's reading of it; only then one
  * model call (callLlm) with the mission schema, checked step by step: an unknown recipe or slot is dropped (agent.ts checkScreen),
  * a console move that is not Level A is dropped, a step that would send, approve or delete refuses the whole plan, and a figure
- * in a model's label is taken out. Every label the plan carries is code-written or checked, and every sentence said while it runs
+ * in a model's label is taken out, and a label or title that says a link as a cause gives way to code's own (recipes/common.ts
+ * causalIn). Every label the plan carries is code-written or checked, and every sentence said while it runs
  * is a code template (missions.words.ts): no model figure reaches speech.
  */
 import { z } from "zod";
@@ -28,7 +29,13 @@ import {
   type Bilingual, type ConsoleMoveT, type MissionPlaceT, type MissionPlanT, type MissionStepT
 } from "./missions.schema";
 import { consoleLabel, draftLabel, focusLabel, missionIntent, placeIn, placeSlots, screenLabel, TITLES, zonePlace, type MissionTemplate } from "./missions.words";
+import { PERSONA_LINE } from "./persona";
+// after ./agent and ./screens: recipes/common.ts and screens.ts import each other, and screens.ts must load first
+import { causalIn } from "./recipes/common";
 import type { Lang, ScreenState, Step, World } from "./types";
+
+/** A model's label or title as Jarvis may say it: no figure (cleanLabel), and no link said as a cause (JARVIS_VOICE), else code's own. */
+const saidLabel = (raw: unknown, code: string): string => { const s = cleanLabel(raw, code); return causalIn(s) ? code : s; };
 
 export const MISSION_V = "thunai-mission-v1";
 const FLOOD = "FLOOD_WATERLOGGING";
@@ -214,6 +221,7 @@ const ModelPlanLenient = z.object({ kind: z.string(), title: z.string().nullish(
 
 export function missionSystem(w: World): string {
   return `You plan a mission for Jarvis, the voice aide of the Chennai District Collector's console: ${MIN_STEPS} to ${MAX_STEPS} steps that code runs in order after the Collector says start. Code fetches every figure: you never write a number in a label or title.
+${PERSONA_LINE}
 Step kinds:
 - screen: a screen code builds. screen.recipe and only its slots: cases[sev,status open|overdue,q,zones,dept,cat,taluk,period,sort,n] | readings[metric rain|aqi|lakes|temp|humidity,name] | ranking[measure,n,order,period] measure zone_attention|zone_severe|zone_open|rain|lakes|dept_open|dept_overdue|hotspots | compare[zones 2-4,period] | trend[cat,zones,period] | why[zones,cat,period] | performance[by dept|zone,dept,period] | dashboard[cat,zones,period] | map[what severe|hotspots|cases,cat,zones,period] | news[q,period] | brief[period] | advise[zones,cat,period] | insight[zones,period].
 - console: 1-3 moves on the console, only page, period, view (zone,dept,cat,taluk,sev), panel, mapMode, layer.
@@ -263,7 +271,7 @@ export function checkModelPlan(raw: ModelPlanT, w: World, lang: Lang, heard: str
   for (const [k, s] of rawSteps.slice(0, MAX_STEPS + 2).entries()) {
     if (!s || typeof s !== "object" || out.length >= MAX_STEPS) continue;
     const id = `s${out.length + 1}`;
-    const own = (code: Bilingual): Bilingual => ({ ...code, [lang]: cleanLabel(s.label, code[lang]) });
+    const own = (code: Bilingual): Bilingual => ({ ...code, [lang]: saidLabel(s.label, code[lang]) });
     let step: MissionStepT | null = null;
     if (s.kind === "screen" && s.screen && typeof s.screen === "object") {
       const sc = s.screen as Record<string, unknown>;
@@ -284,7 +292,7 @@ export function checkModelPlan(raw: ModelPlanT, w: World, lang: Lang, heard: str
     if (step) { out.push(step); byNumber.set(k + 1, step.id); }
   }
   if (out.length < (o.redirect ? 1 : MIN_STEPS)) return { kind: "none", why: "thin", reply: NONE_REPLY };
-  const title = { ...TITLES.model(), [lang]: cleanLabel(raw.title, TITLES.model()[lang]) } as Bilingual;
+  const title = { ...TITLES.model(), [lang]: saidLabel(raw.title, TITLES.model()[lang]) } as Bilingual;
   const plan = wrap(title, out, lang, "model", o.now ?? Date.now(), !!o.redirect);
   return plan ? { kind: "plan", plan, via: "model", model: null } : { kind: "none", why: "schema", reply: NONE_REPLY };
 }

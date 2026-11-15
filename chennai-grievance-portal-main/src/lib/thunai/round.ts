@@ -14,6 +14,7 @@
  * the last four turns reach the first prompt as untrusted text; speech confidence and language steer the turn; the round streams as
  * NDJSON events (events.ts) when asked; the likely reads start while the planner thinks.
  */
+import { createHash } from "crypto";
 import { z } from "zod";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { AGENT_TOOLS, AgentPlanLenient, callArgs, finish, MAX_ROUNDS, DEADLINE_MS, type AgentCallT, type AgentPlan, type AgentResult, Call, Screen, zonesNamed } from "./agent";
@@ -154,7 +155,8 @@ function turnOf(id: string, bundle: Bundle, t0: number, budget: number = COMMAND
   return t;
 }
 
-// ---- caches: tool results 30 s, plans 10 minutes keyed by (the sentence, its language, bundle, data_version). No semantic cache
+// ---- caches: tool results 30 s, plans 10 minutes keyed by (the sentence, its language, bundle, data_version, the user and a hash of their
+// memory lines and register line). No semantic cache
 
 const PLAN_MS = 600_000;
 /** `spec`: started while the planner was thinking; `used`: a real read asked for it since (counted once in telemetry) */
@@ -206,10 +208,18 @@ const LEANS = /\b(this|these|that|those|it|them|again|idha|idhu|adhu|andha)\b|�
  * the departments, the measure, so a different question got the last one's plan. null when the sentence has no plain intent, or
  * an open Stage or a recent turn changes what it means.
  */
-function planKey(text: string, lang: Lang, bundle: Bundle, stage: StageContext | null, recent: boolean, version: string): string | null {
+function planKey(text: string, lang: Lang, bundle: Bundle, stage: StageContext | null, recent: boolean, version: string, scope: string): string | null {
   if (stage || (recent && (isElliptical(text) || LEANS.test(text)))) return null;
   if (!INTENTS.some(([, re]) => re.test(text))) return null;
-  return [text.toLowerCase().replace(/[^a-z0-9஀-௿]+/g, " ").trim(), lang, bundle, version].join("|");
+  return [text.toLowerCase().replace(/[^a-z0-9஀-௿]+/g, " ").trim(), lang, bundle, version, scope].join("|");
+}
+/**
+ * Whose plan it is (review, Planner 2): the user, and a hash of what of theirs the planner read beside the sentence (their notes and
+ * habits as memoryLines gives them, and the register line). A plan made with one Collector's notes or screen is never another's.
+ */
+function planScope(user: string, mem: { notes: string[]; habits: Record<string, string> }, reg: Register | null): string {
+  const ctx = [...memoryLines(mem.notes, mem.habits, MEMORY_CHARS), hasRegister(reg) ? registerLine(reg) : ""].filter(Boolean).join("\n");
+  return `${createHash("sha256").update(user).digest("hex").slice(0, 16)}:${ctx ? createHash("sha256").update(ctx).digest("hex").slice(0, 24) : "-"}`;
 }
 
 // ---- the prompts: five small bundles. Nothing per-turn above the prompt (no time, no memory): the system prompt is a stable cache prefix
@@ -768,7 +778,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     // 5. the plan cache
     const version = deps.dataVersion ? await deps.dataVersion().catch(() => "") : "";
     const bundle0 = route.bundle ?? "screens";
-    const key = planKey(b.text, lang, bundle0, stage, !!b.turns?.length, version);
+    const key = planKey(b.text, lang, bundle0, stage, !!b.turns?.length, version, planScope(user, mem, reg));
     const hit = key ? planCache.get(key) : null;
     if (hit && Date.now() - hit.at < PLAN_MS) {
       const t = turnOf(b.turnId, bundle0, t0, budget);
@@ -848,7 +858,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
       return later;
     }
   }
-  const key = b.round === 0 && deps.dataVersion ? planKey(b.text, lang, bundle, stage, !!b.turns?.length, await deps.dataVersion().catch(() => "")) : null;
+  const key = b.round === 0 && deps.dataVersion ? planKey(b.text, lang, bundle, stage, !!b.turns?.length, await deps.dataVersion().catch(() => ""), planScope(user, mem, reg)) : null;
   const res = await finishWith(plan);
   if (res.result?.kind === "none") { const f = await rulesRead("checker"); if (f) return f; }
   if (key && res.result && res.result.kind === "do" && plan.calls.length === 0) {

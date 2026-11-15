@@ -8,10 +8,11 @@
 import { z } from "zod";
 import { PANELS, type Lang, type PageKey, type PeriodKey, type ScreenState, type Sev, type Step, type View, type World } from "./types";
 import { detectLang } from "./normalise";
-import { figuresIn, zoneLabelsOut } from "./numbergate";
+import { figuresIn, gluedFigures, modelFiguresIn } from "./numbergate";
 import { parseWhen } from "./understand";
 import { isDangerButton } from "./skeleton";
 import { redactText } from "./privacy";
+import { scrubDigest } from "./digestscrub";
 
 const PAGES = ["overview", "briefing", "trends", "environment", "studio"] as const;
 const PERIODS = ["daily", "weekly", "monthly", "quarterly"] as const;
@@ -78,11 +79,16 @@ export function slotsText(s: Record<string, unknown> | null | undefined, max = 1
   return j === "{}" ? "" : j.slice(0, max);
 }
 
-/** One earlier turn for the planner (untrusted data): what was heard, the screen's recipe and slots (else what was done), its one-line result. */
+/**
+ * One earlier turn for the planner (untrusted data): what was heard, the screen's recipe and slots (else what was done), its one-line result.
+ * The words go through scrubDigest as the screen's digest does (review, Numbers 2): what was heard or shown can hold a case's title, a
+ * citizen's own words, a phone.
+ */
 export function turnLine(t: Turn): string {
   const slots = slotsText(t.slots);
-  const did = t.recipe ? `${t.recipe}${slots ? ` ${slots}` : ""}` : t.did.slice(0, 80);
-  return `- ${JSON.stringify(t.heard.slice(0, 120))} -> ${did}${t.result ? ` => ${JSON.stringify(t.result.slice(0, 100))}` : ""}`;
+  const did = t.recipe ? `${t.recipe}${slots ? ` ${slots}` : ""}` : scrubDigest(t.did, 80);
+  const result = t.result ? scrubDigest(t.result, 100) : "";
+  return `- ${JSON.stringify(scrubDigest(t.heard, 120))} -> ${did}${result ? ` => ${JSON.stringify(result)}` : ""}`;
 }
 
 /** about 300 tokens: the most the Collector's notes and habits take of a planner call */
@@ -197,6 +203,8 @@ export function userPrompt(text: string, s: ScreenState, w: World, ctx: Context 
 }
 
 const clip = (s: unknown, n: number) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, n) : "");
+/** a step's text that is said back to the Collector: every figure in it is theirs, or a real zone's label (requestOk) */
+const keepable = (text: string, heard: string, w: World) => requestOk(text, heard, w.zones.map((z) => z.n));
 
 /** One model step, checked: a Step, or null when anything in it is not real. */
 function checkStep(s: AiStepT, w: World, heard: string, now: number): Step | null {
@@ -250,11 +258,12 @@ function checkStep(s: AiStepT, w: World, heard: string, now: number): Step | nul
       return { a: "read", what, name: what === "reservoir" ? clip(s.text, 60) || null : null };
     }
     case "mission": return s.option === "brief" || s.option === "rain" ? { a: "mission", name: s.option } : null;
-    case "remember": { const t = clip(s.text, 300); return t ? { a: "remember", text: t } : null; }
+    // the text of a step kept for the Collector is said back in the confirm ("Shall I remember ...?"): a figure in it must be their own (review, Numbers 3)
+    case "remember": { const t = clip(s.text, 300); return t && keepable(t, heard, w) ? { a: "remember", text: t } : null; }
     case "recall": return { a: "recall" };
     case "remind": {
       const t = clip(s.text, 200);
-      if (!t) return null;
+      if (!t || !keepable(t, heard, w)) return null;
       // the model's local time, else the rules' reading of the sentence; never a time in the past
       const fromModel = s.when && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s.when) ? Date.parse(`${s.when.slice(0, 16)}:00+05:30`) : NaN;
       const at = Number.isFinite(fromModel) ? fromModel : parseWhen(heard, now)?.getTime() ?? NaN;
@@ -262,7 +271,7 @@ function checkStep(s: AiStepT, w: World, heard: string, now: number): Step | nul
     }
     case "forget": return { a: "forget", all: false };
     case "undo": return { a: "undo", n: Math.min(Math.max(s.n ?? 1, 1), 10) };
-    case "saveWorkspace": return { a: "workspace", op: "save", name: clip(s.text, 60) || null };
+    case "saveWorkspace": { const name = clip(s.text, 60) || null; return name && !keepable(name, heard, w) ? null : { a: "workspace", op: "save", name }; }
     case "openWorkspace": return { a: "workspace", op: "open", name: clip(s.text, 60) || null };
     case "send": return { a: "send" };
     case "help": return { a: "help" };
@@ -317,13 +326,18 @@ function stepNumbers(v: unknown, out: number[] = []): number[] {
  * words and lends none: JSON.stringify(steps) let "remember 300 deaths" put 300 in the reply.
  */
 export function replyOk(reply: string, heard: string, steps: Step[], zones: Iterable<number> = []): boolean {
-  const allowed = new Set([...figuresIn(heard).map((f) => String(f.value)), ...stepNumbers(steps).map(String)]);
-  return figuresIn(zoneLabelsOut(reply, zones)).every((f) => allowed.has(String(f.value)));
+  const allowed = new Set([...heardFigures(heard), ...stepNumbers(steps).map(String)]);
+  return modelFiguresIn(reply, zones).every((f) => allowed.has(String(f.value)));
 }
+/**
+ * The figures the Collector said, as values: the gate's reading and a digit run glued to a word (review, Numbers 1: a model's "deaths-300"
+ * or "x300" is a figure in its words, so the same form in the Collector's own words is theirs).
+ */
+const heardFigures = (heard: string): string[] => [...figuresIn(heard), ...gluedFigures(heard)].map((f) => String(f.value));
 /** A clarifying option's request: it becomes what was heard when tapped, so a figure in it must be the Collector's own or a real zone's label. */
 export function requestOk(request: string, heard: string, zones: Iterable<number> = []): boolean {
-  const said = new Set(figuresIn(heard).map((f) => String(f.value)));
-  return figuresIn(zoneLabelsOut(request, zones)).every((f) => said.has(String(f.value)));
+  const said = new Set(heardFigures(heard));
+  return modelFiguresIn(request, zones).every((f) => said.has(String(f.value)));
 }
 
 export type Checked =
@@ -347,8 +361,8 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
   if (p.kind === "refuse") return { kind: "refuse", reply: reply && !/\p{Nd}/u.test(reply) ? reply : lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.", lang };
   if (p.kind === "clarify") {
     // labels are shown as buttons: a figure in one must be the Collector's own or a real zone's number
-    const said = new Set(figuresIn(heard).map((f) => String(f.value)));
-    const labelOk = (l: string) => figuresIn(zoneLabelsOut(l, w.zones.map((z) => z.n))).every((f) => said.has(String(f.value)));
+    const said = new Set(heardFigures(heard));
+    const labelOk = (l: string) => modelFiguresIn(l, w.zones.map((z) => z.n)).every((f) => said.has(String(f.value)));
     // and the request a tap sends back as heard: a figure the model wrote there would become the Collector's own words (v4, lane L1)
     const zoneNs = w.zones.map((z) => z.n);
     const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request && labelOk(o.label) && requestOk(o.request, heard, zoneNs)).slice(0, 3);

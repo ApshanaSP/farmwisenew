@@ -18,7 +18,7 @@ import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
-import { ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
+import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 
@@ -122,7 +122,15 @@ function anthropic(): Provider | null {
       // Claude thinks before it answers: a console step's short deadline (5 s, set for the free models) gets at least 10 s here;
       // a Jarvis turn keeps its own, and its model and effort (no role)
       const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
-        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal });
+        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
+        // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
+        const b = billedOf(e);
+        if (b) {
+          charge(c.user, b.inputTokens - b.cacheReadTokens + b.outputTokens);
+          if (jarvis) ledger().record("anthropic", b.model, { tokens: b.inputTokens + b.outputTokens, lane: c.lane ?? "other" });
+        }
+        throw e;
+      });
       const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1,
         path: r.path, cacheReadTokens: r.cacheReadTokens, cacheWriteTokens: r.cacheWriteTokens };
       charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);

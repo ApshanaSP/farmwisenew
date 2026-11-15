@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 
 const yes = z.literal(true);
 const Op = z.discriminatedUnion("op", [
+  // a note kept and everything forgotten wait for the Collector's yes too (needsYes, below); the yes is not passed on
   z.object({ op: z.literal("note"), text: z.string().trim().min(1).max(300) }),
   z.object({ op: z.literal("forget"), id: z.string().max(80).optional(), all: z.boolean().optional() }),
   z.object({ op: z.literal("remind"), text: z.string().trim().min(1).max(200), at: z.string().datetime() }),
@@ -29,6 +30,15 @@ const Op = z.discriminatedUnion("op", [
     minutes: z.number().int().min(5).max(1440).optional(), yes })
 ]);
 const LEVEL_B = new Set(["remember", "forgetLast", "reset", "watchPref"]);
+/**
+ * A change that keeps or wipes what Jarvis remembers needs the Collector's yes: the Level B ops, the legacy `note` (a note kept) and
+ * `forget` with all: true (everything wiped). Forgetting one item by its own button in the memory panel is the Collector's own tap.
+ */
+const needsYes = (b: unknown): boolean => {
+  if (!b || typeof b !== "object") return false;
+  const x = b as { op?: unknown; all?: unknown; yes?: unknown };
+  return x.yes !== true && (LEVEL_B.has(String(x.op)) || x.op === "note" || (x.op === "forget" && x.all === true));
+};
 
 /** The memory as the page shows it: the watch's own bookkeeping stays on the server. */
 const shown = (m: Memory) => { const { watch: _w, ...rest } = m; return rest; };
@@ -56,8 +66,8 @@ export async function POST(req: NextRequest) {
   const gate = checkRateLimit(`thunai-memory:${s.userId}`, 60, 60);
   if (!gate.allowed) return NextResponse.json({ error: "Too many changes at once; try again in a minute." }, { status: 429 });
   const body = await req.json().catch(() => null);
-  // a Level B change with no yes is refused with its reason, not as an unreadable body
-  if (body && typeof body === "object" && LEVEL_B.has(String((body as { op?: unknown }).op)) && (body as { yes?: unknown }).yes !== true)
+  // a Level B change (a note, forgetting everything) with no yes is refused with its reason, not as an unreadable body
+  if (needsYes(body))
     return NextResponse.json({ error: "That needs your yes first.", needsYes: true, reply: { en: "That needs your yes first.", ta: "அதுக்கு முதல்ல உங்க சம்மதம் வேணும்." } }, { status: 403 });
   const parsed = Op.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "That change could not be read." }, { status: 400 });

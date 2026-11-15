@@ -207,8 +207,8 @@ export function readMetric(def: MetricDef, r: ToolResult, s: ScopeT): MetricResu
  */
 export async function computeMetric(id: string, scope: ScopeT, hands: Pick<Hands, "tool">): Promise<MetricResult> {
   const def = metricById(id);
-  // the id came from a model: echoed with letters and underscores only, so no figure of its own reaches a screen (Finding 51)
-  if (!def) return fail(id, "unknown_metric", `No metric "${String(id ?? "").replace(/[^A-Za-z_]+/g, "").slice(0, 40)}". Known: ${METRIC_DEFS.map((x) => x.id).join(", ")}.`);
+  // the id came from a model and is never echoed: letters and underscores can still spell a figure ("three_hundred_deaths"; review, Numbers 5)
+  if (!def) return fail(id, "unknown_metric", `No metric by that id. Known: ${METRIC_DEFS.map((x) => x.id).join(", ")}.`);
   let r: ToolResult;
   try {
     r = await hands.tool(def.source.tool, metricArgs(def, scope));

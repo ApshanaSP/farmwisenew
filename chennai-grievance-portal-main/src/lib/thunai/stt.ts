@@ -5,8 +5,10 @@
  *   engaged and named turns: parallel forced decodes, ta on whisper-large-v3 with the Tamil-script prompt, en on turbo with the
  *     English prompt, chosen by Whisper's own confidence plus a repetition, a script and a translation check. Auto-detect on
  *     Tanglish was about 97 % WER on thunai/v3; a fixed language plus the prompt did far better.
- *     FIRST GOOD DECODE WINS (v4): as soon as a decode in the expected language (the site's) clears the bar (mean log-probability
- *     above -0.35, no-speech below 0.6, its own script, no loop or echo), the other gets at most 250 ms more and is then let go.
+ *     FIRST GOOD DECODE WINS (v4): as soon as a decode in the expected language (the last heard line's when the browser sends
+ *     `lastLang`, else the site's) clears the bar (mean log-probability above -0.35, no-speech below 0.6, its own script, no loop or
+ *     echo), the other gets at most 250 ms more and is then let go; when that first decode is English and the Tamil one is still
+ *     running, the Tamil one gets 700 ms, so a forced-English translation of Tamil speech meets the translation check.
  *     Each Whisper request gives up after 5 s.
  *   a third racer, gemini-3.5-transcribe, the Phase 0 probe's winner by CER on Tamil clips (0.127 against large-v3's 0.151 on 12
  *     clips, but p50 2.6 s against 0.4 s): started IN PARALLEL with Whisper on an engaged or named turn when the ledger has room
@@ -33,6 +35,12 @@ export const MAX_AUDIO_BYTES = 2_500_000;
 export const WHISPER_MS = 5000;
 /** after the first good decode, the other decode is given this much longer, ms */
 export const GRACE_MS = 250;
+/**
+ * When the first good decode is English and the Tamil one is still running (an engaged or named turn), the Tamil one gets this long
+ * instead: a fluent English decode may be Whisper translating Tamil speech, and only the Tamil decode lets `translated` see it (review,
+ * Voice 2). large-v3 is usually back within this of turbo; the wait ends as soon as it is.
+ */
+export const TRANSLATE_GRACE_MS = 700;
 /** Whisper's own confidence that clears the bar */
 export const GOOD_LOGPROB = -0.35;
 
@@ -317,16 +325,18 @@ const letGo = (r: Racer | null) => { if (r && !r.done) { r.aborted = true; r.ctl
 
 /**
  * Wait for the Whisper decodes: until all are back, or until one in the expected language clears the bar and the grace after it
- * has run (then the rest are let go).
+ * has run (then the rest are let go). `guard`: the grace instead when that first good decode is English and the Tamil one is still
+ * running (TRANSLATE_GRACE_MS on a turn someone waits on; 0 keeps `grace`).
  */
-async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number): Promise<void> {
+async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, guard = 0): Promise<void> {
   if (!rs.length) return;
   const want = rs.some((r) => r.kind === expected) ? expected : rs[0].kind;
   await new Promise<void>((done) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const check = () => {
       if (rs.every((r) => r.done)) { if (timer) clearTimeout(timer); done(); return; }
-      if (!timer && rs.some((r) => r.done && r.d && r.kind === want && good(scoreDecode(r.d)))) timer = setTimeout(done, grace);
+      const first = timer ? null : rs.find((r) => r.done && r.d && r.kind === want && good(scoreDecode(r.d)));
+      if (first) timer = setTimeout(done, first.kind === "en" && rs.some((r) => r.kind === "ta" && !r.done) ? Math.max(grace, guard) : grace);
     };
     for (const r of rs) void r.p.then(check);
   });
@@ -340,8 +350,13 @@ export interface HearOpts {
   lane: Lane; site: "en" | "ta"; signal?: AbortSignal; fetcher?: Fetcher;
   /** names on the open Stage, from the browser (cleaned here again) */
   vocab?: string[];
-  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the third racer's limit */
-  ms?: { whisper?: number; grace?: number; third?: number };
+  /**
+   * the language of the last line the browser heard (readHear `lastLang`), when it says: on an engaged or named turn the race waits for a
+   * good decode in this language rather than the site's, so a Collector who has just spoken Tamil on the English site is heard in Tamil
+   */
+  lastLang?: "en" | "ta" | null;
+  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace, the third racer's limit */
+  ms?: { whisper?: number; grace?: number; translate?: number; third?: number };
 }
 
 /** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes and the third racer. */
@@ -351,7 +366,7 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   const secs = wavSeconds(buf);
   const l = ledger();
   const vocab = cleanVocab(o.vocab ?? []);
-  const wMs = o.ms?.whisper ?? WHISPER_MS, grace = o.ms?.grace ?? GRACE_MS, tMs = o.ms?.third ?? THIRD_MS;
+  const wMs = o.ms?.whisper ?? WHISPER_MS, grace = o.ms?.grace ?? GRACE_MS, tMs = o.ms?.third ?? THIRD_MS, guard = o.ms?.translate ?? TRANSLATE_GRACE_MS;
   const wanted: { lang: "en" | "ta"; model: string }[] = o.lane === "ambient"
     ? [{ lang: o.site, model: o.site === "ta" ? MODEL_TA() : MODEL_EN() }]
     : [{ lang: "ta", model: MODEL_TA() }, { lang: "en", model: MODEL_EN() }];
@@ -367,7 +382,9 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   const whisper = wanted.filter((a) => b.models.includes(a.model)).map((a) => whisperOf(a, lane));
   // the third racer runs beside Whisper from the start on a turn someone is waiting on (third() checks the ledger itself)
   let gem = lane !== "ambient" ? geminiOf(lane) : null;
-  await whisperRace(whisper, o.site, grace);
+  // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
+  const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
+  await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0);
   let c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site);
 
   // an ambient sentence that names Jarvis, read unsure: once more, in the other language only, with the third racer beside it
@@ -409,15 +426,23 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   return { text: c.text, lang: c.lang, noise: false, ms, lane, conf: { speech: Math.round((1 - c.noSpeech) * 100) / 100, logprob: Math.round(c.logprob * 100) / 100 }, model: c.model };
 }
 
-/** The /hear request's body: the WAV as it is (the old form), or multipart with `audio` and an optional `vocab` (JSON list of names). */
-export async function readHear(req: Request): Promise<{ buf: ArrayBuffer; vocab: string[] } | null> {
+const langOf = (v: unknown): "en" | "ta" | null => (v === "en" || v === "ta" ? v : null);
+
+/**
+ * The /hear request's body: the WAV as it is (the old form), or multipart with `audio` and an optional `vocab` (JSON list of names).
+ * `lastLang` ("en" or "ta"): the language of the last line the browser heard, as a multipart field or, with the bare WAV, a query
+ * parameter (?lastLang=ta); anything else is null.
+ */
+export async function readHear(req: Request): Promise<{ buf: ArrayBuffer; vocab: string[]; lastLang: "en" | "ta" | null } | null> {
   const len = Number(req.headers.get("content-length") ?? 0);
   if (len > MAX_AUDIO_BYTES + 16_000) return null;
+  let fromQuery: "en" | "ta" | null = null;
+  try { fromQuery = langOf(new URL(req.url).searchParams.get("lastLang")); } catch { /* no URL to read */ }
   if (/^multipart\/form-data/i.test(req.headers.get("content-type") ?? "")) {
     const f = await req.formData().catch(() => null);
     const a = f?.get("audio");
     if (!a || typeof a === "string") return null;
-    return { buf: await a.arrayBuffer(), vocab: cleanVocab(f?.get("vocab") ?? null) };
+    return { buf: await a.arrayBuffer(), vocab: cleanVocab(f?.get("vocab") ?? null), lastLang: langOf(f?.get("lastLang")) ?? fromQuery };
   }
-  return { buf: await req.arrayBuffer(), vocab: [] };
+  return { buf: await req.arrayBuffer(), vocab: [], lastLang: fromQuery };
 }
