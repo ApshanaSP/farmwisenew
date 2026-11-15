@@ -135,6 +135,28 @@ export function heardOf(source: HeardInfo["source"], lang: Lang, conf: number | 
 /** The rules' reading is put as a question before it runs: below 0.6 always, below 0.85 when the speech itself was unsure. */
 export const asksFirst = (ruleConf: number, speechConf: number) => ruleConf < 0.6 || (speechConf < LOW_SPEECH_CONF && ruleConf < 0.85);
 
+/** a clean Whisper decode starts here (lib/thunai/heard.ts confOf: about 0.73-0.89) */
+export const CLEAN_DECODE = 0.73;
+/** what understand()'s thresholds were tuned on: the old fixed value every sentence carried */
+export const TUNED_CONF = 0.95;
+/** at or below this the ears were unsure (Whisper's own unsure line 0.45, the third racer 0.47, the captions 0.5): kept as it is */
+export const UNSURE_DECODE = 0.5;
+/**
+ * The ears' confidence as understand() reads it (v4, lane L4's note). understand()'s thresholds (0.9 for a plain move, 0.85 for a sure
+ * reading) were tuned on a fixed 0.95, but a clean decode scores 0.73-0.89, which alone took a sure command under the bar. So the map is
+ * monotone and keeps both ends: a clean decode (and the 0.95 a server with no confidence sends) reads exactly 0.95, as before; above it
+ * stays as it is; an unsure decode (0.5 and below) stays as it is, so its reading is put as a question first; in between it rises in a line.
+ * Only understand() reads this: the round and asksFirst keep the raw value (round.ts LOW_CONF is on the raw scale).
+ */
+export function rulesConf(raw: number | null | undefined): number {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return TUNED_CONF;
+  const c = Math.max(0, Math.min(1, raw));
+  if (c >= TUNED_CONF) return c;
+  if (c >= CLEAN_DECODE) return TUNED_CONF;
+  if (c <= UNSURE_DECODE) return c;
+  return Math.round((UNSURE_DECODE + ((c - UNSURE_DECODE) * (TUNED_CONF - UNSURE_DECODE)) / (CLEAN_DECODE - UNSURE_DECODE)) * 1000) / 1000;
+}
+
 // ---------------------------------------------------------------- two speeds --
 /** Nielsen's 10 s: past this a turn shows what it is doing and how to stop it */
 export const LONG_TURN_MS = 10_000;

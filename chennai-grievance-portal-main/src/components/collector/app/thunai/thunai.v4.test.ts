@@ -5,7 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const src = fs.readFileSync(path.join(__dirname, "Thunai.tsx"), "utf8").replace(/\r\n/g, "\n");
+// THUNAI_UNDER_TEST points the same checks at another copy (how the failing-first run of the integration checks was made)
+const src = fs.readFileSync(process.env.THUNAI_UNDER_TEST ?? path.join(__dirname, "Thunai.tsx"), "utf8").replace(/\r\n/g, "\n");
 const between = (from: string, to: string) => { const a = src.indexOf(from); expect(a, from).toBeGreaterThan(-1); const b = src.indexOf(to, a + from.length); return src.slice(a, b < 0 ? undefined : b); };
 
 describe("the streamed turn (Pillar 2)", () => {
@@ -97,5 +98,143 @@ describe("the honest ack, the warm-up, the two speeds", () => {
   });
   it("the keyboard comment names the real keys", () => {
     expect(src).not.toMatch(/Alt\+T/);
+  });
+});
+
+// ---- the client's integration of the v4 lanes (each check failed on 26a68ab6, before this wiring)
+describe("L4 ears: the conductor's hooks, the echo strip, the mapped confidence", () => {
+  it("the open Stage's names, a yes awaited, a calm not-heard line", () => {
+    expect(src).toMatch(/vocab: \(\) => vocabOf\(stageRef\.current\)/);
+    expect(src).toMatch(/wantsYes: \(\) => !!pendingBRef\.current/);
+    expect(src).toMatch(/onMissed: \(\) =>/);
+    expect(src).toContain("NOT_CAUGHT[lang]");
+  });
+  it("the echo cancellation the microphone got goes on the strip", () => expect(src).toMatch(/echo: c\.echoCancel/));
+  it("understand() reads the mapped confidence; the round keeps the raw one", () => {
+    expect(src).toMatch(/understand\(said, st, worldRef\.current, \{ speechConf: rulesConf\(conf\) \}\)/);
+    expect(src).not.toMatch(/understand\(said, st, worldRef\.current, \{ speechConf: conf \}\)/);
+  });
+});
+
+describe("M2 missions: the runner replaces the two hard-coded missions", () => {
+  it("mission(name) is gone; startMission posts the sentence and runs the plan through the hooks and the control", () => {
+    expect(src).not.toMatch(/const mission = async \(name/);
+    const m = between("const startMission = async", "// --------------------------------------------------------------- the brief");
+    expect(m).toContain("/api/collector/thunai/mission");
+    expect(m).toContain("missionControl()");
+    expect(m).toContain("runMission(");
+    for (const k of ["showScreen:", "runStep:", "focusMap:", "draft:", "say:", "progress:", "card:", "plan:", "now:"]) expect(m, k).toContain(k);
+    expect(m).toContain("redirect: true");
+    expect(m).toContain("hudMissionOf(c, lang)");
+    // Level C only into the tray
+    expect(between("draft: async (ids, sig)", "say:")).toContain("addToTray(ds)");
+  });
+  it("a sentence that names a mission reaches it before the planner; the old step names map to the brief and monsoon readiness", () => {
+    expect(between("const handle = async", "const st = buildState();")).toMatch(/missionIntent\(said, worldRef\.current\)/);
+    expect(src).toMatch(/case "mission": if \(step\.name === "brief"\) await briefMe\(lang, true\); else await startMission\(lang === "ta" \? "[^"]+" : "monsoon readiness", lang\)/);
+  });
+  it("stop, skip that and instead X reach the controller during a run, before a new turn starts; the HUD's buttons are wired", () => {
+    const top = between("const handle = async", "const gen = ++turnGen.current;");
+    expect(top).toContain("missionCommand(said)");
+    for (const k of ["ms.ctl.start()", "ms.ctl.skip()", "ms.ctl.instead(cmd.text)", "stopMission({ say: true, drop: false })", "ms.ctl.edit(ids)"]) expect(top, k).toContain(k);
+    for (const k of ["onMissionStart:", "onMissionEdit:", "onMissionStop:"]) expect(src, k).toContain(k);
+    expect(between("const interrupt = ", "\n")).toContain("stopMission(");
+  });
+});
+
+describe("P2 proactive: the brief, the watch, interjections, Level-B memory, follows, the decision record", () => {
+  it("the brief from GET /brief, said in order, once a session after the power-on", () => {
+    expect(src).toContain('fetch("/api/collector/thunai/brief")');
+    expect(src).toContain("briefCard(");
+    expect(src).toMatch(/sessionStorage\.getItem\("jarvis-briefed"\)/);
+    expect(between("hud.strip({ detector: c.detector", "\n      });")).toContain("powerOnBrief()");
+  });
+  it("the watch every two minutes sets the badge; an interjection only when interjectNow says so, then POST spoken", () => {
+    expect(src).toMatch(/\/api\/collector\/thunai\/watch\?quiet=/);
+    expect(src).toMatch(/setInterval\(\(\) => void tick\(\), 120_000\)/);
+    const i = between("const interject = ", "const interjectRef");
+    expect(i).toContain("interjectNow(sig, liveNow(), Date.now()).ok");
+    expect(i).toMatch(/op: "spoken"/);
+    expect(src).toMatch(/watchPref\("later", id\)/);
+    expect(src).toMatch(/watchPref\("mute", s\.topic\)/);
+    expect(src).toContain("chime: () => earcon(\"need\")");
+  });
+  it("remember is the Level-B op with the yes, not op note; forget is forgetLast or reset; the list and today's record are read", () => {
+    expect(src).not.toMatch(/op: "note"/);
+    expect(src).toMatch(/op: "remember", text: step\.text, said: heardText\.slice\(0, 600\), yes: true/);
+    expect(src).toMatch(/op: "forgetLast", yes: true/);
+    expect(src).toMatch(/op: "reset", yes: true/);
+    expect(src).not.toMatch(/op: "forget", all: true/);
+    expect(src).toContain("/api/collector/thunai/memory?view=list");
+    expect(src).toContain("/api/collector/thunai/audit?today=1");
+    expect(src).toContain("/api/collector/thunai/follow");
+  });
+  it("D2's intentMarker routes the memory flows and the brief before the planner, with the address gate's Level B rule", () => {
+    const flows = between("const im = intentMarker(said);", "const st = buildState();");
+    expect(flows).toMatch(/intent === "remember" && im\.rest\) \{ if \(needsName\("B", lg\)\) return;/);
+    expect(flows).toMatch(/intent === "forget"\) \{ if \(needsName\("B", lg\)\) return;/);
+    expect(flows).toMatch(/if \(fa\) \{ if \(needsName\("B", lg\)\) return;/);
+  });
+  it("rules-lane answers and tray approvals are posted as decisions", () => {
+    expect(src).toMatch(/decision: \{ kind: d\.kind/);
+    expect(between("const sendTray = async", "// --------------------------------------------------------------- one step")).toMatch(/decide\(\{ kind: "approval"/);
+    expect(between("const run = async", "const missed = ")).toMatch(/if \(by === "rules"[^\n]*decide\(\{ kind: "answer"/);
+  });
+});
+
+describe("H2 HUD: captions, evidence, acting, mode-off reset, the listen key, badges on change", () => {
+  it("speak() and both narrations feed the caption piece by piece, word by word, and clear it", () => {
+    expect(between("const speak = (", "\n};")).toMatch(/onPiece: \(t\) => hud\.caption\(t, l\), onWord: \(_, ch\) => hud\.captionWord\(ch\)/);
+    expect((between("const narrate = (", "const ensureGeo").match(/onPiece: \(t\) => hud\.caption\(t, lang\)/g) ?? []).length).toBe(2);
+    expect(between("const stopNarration = ", "\n")).toContain("hud.caption(null)");
+    expect(between("const interrupt = ", "\n")).toContain("hud.caption(null)");
+  });
+  it("the evidence chip from evidenceOf, and its tap", () => {
+    expect(src).toMatch(/evidence: evidenceOf\(brain, stage, s\.findingMs \?\? s\.lastMs\)/);
+    expect(src).toContain("onEvidence: () =>");
+  });
+  it("the acting flag, and everything v4 shows goes with mode off", () => {
+    expect(src).toMatch(/acting: phase === "acting"/);
+    expect(src).toMatch(/acting: false, caption: null, evidence: null, mission: null, interjection: null/);
+  });
+  it("Ctrl+Shift+Space listens (isListenKey); Alt+Space is no longer the key", () => {
+    expect(src).toContain("isListenKey(e)");
+    expect(src).not.toMatch(/e\.altKey && e\.code === "Space"/);
+    expect(src).not.toMatch(/Alt\+Space turns it on/);
+  });
+  it("the numbered badges follow the page's changes (followLayout, samePlaces), not a 1.2 s timer", () => {
+    expect(src).not.toMatch(/clickables\(\) \} : n\)\), 1200\)/);
+    expect(src).toContain("followLayout(");
+    expect(src).toContain("samePlaces(n.items, items)");
+  });
+});
+
+describe("D2 dialogue, A2 explain, L1 zone labels, persona, performance", () => {
+  it("each round carries the screen's provenance and per-block labels; a said screen offers nextQuestion as a tap-able direct step", () => {
+    const call = between("const callAgent = async", "const stopNarration");
+    expect(call).toMatch(/provenance: doc \? provenanceOf\(doc, \{ by: /);
+    expect(call).toContain("withLabels(stageContext(doc, stageFocus.current), doc)");
+    expect(between("const showStage = ", "const closeStage")).toContain("nextQuestion(doc)");
+    expect(between("const takeOffer = ", "const closeStage")).toMatch(/directStage\(o\.step\.recipe/);
+    expect(src).toMatch(/data-testid="next-step"/);
+  });
+  it("explain on an open Stage builds the explain recipe for its target (the register's id first); again only when there is none", () => {
+    const e = between("const explainOnStage = async", "const applyStageOp");
+    expect(e).toContain("explainTargetOf(doc, n)");
+    expect(e).toMatch(/directStage\("explain", \{ \.\.\.explainSlots\(t\)/);
+    expect(between("const applyStageOp = async", "const askSave")).toMatch(/op\.op === "explain" && \(await explainOnStage\(op\.n \?\? null, lang, op\.id \?\? null\)\)/);
+  });
+  it("every chunk gated with the speakable set first reads a real zone's label as its name (zoneSafe, numbergate.ts zoneLabelsOut)", () => {
+    expect((src.match(/zoneSafe\(/g) ?? []).length).toBeGreaterThanOrEqual(5);
+    expect(between("const narrate = (", "const ensureGeo")).not.toMatch(/allowed: speakableFigures\(doc, lang\),/);
+  });
+  it("two misunderstandings in a row offer the screen and the keyboard and open the typing box", () => {
+    expect(between("const missed = ", "const offerKeys")).toContain("hud.set({ typing: true })");
+    expect(src).toContain("OFFER_KEYS[");
+    expect((src.match(/NO_FIGURES, true\)|undefined, true\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
+  });
+  it("the viewport blur goes on four cores or fewer, or reduced motion: a class on the root, set once", () => {
+    expect(src).toMatch(/classList\.toggle\("jv-lowfx", lowFx\(navigator\.hardwareConcurrency/);
+    expect(fs.readFileSync(path.join(__dirname, "stage.css"), "utf8")).toMatch(/\.jv-lowfx \.st-frame \{ backdrop-filter: none;/);
   });
 });

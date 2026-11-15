@@ -26,6 +26,12 @@ export interface SpeakOpts {
   rate?: number; voice?: string | null; onLine?: (i: number) => void; onWord?: (line: number, charIndex: number) => void; onEnd?: () => void;
   /** the figures this speech may use; omitted only for text built by code from the data */
   allowed?: Set<string>;
+  /**
+   * a piece of the answer is now being said: its text exactly as the voice says it (after the gate and the lakh/crore wording), for the
+   * bar's caption (v4, Pillar 6). onWord's charIndex counts within this piece. Browser voice: just before the piece is spoken; server
+   * voice: when the audio reaches the piece.
+   */
+  onPiece?: (text: string, line: number) => void;
 }
 export type VoicePath = "browser" | "pcm" | "text";
 /** What a duck did: on which path, how (the gain to 20 %, speechSynthesis.pause(), or the voice kept speaking), and in how many ms. */
@@ -274,6 +280,7 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
       said++;
       s.at = said;
       if (s.pieces[said].first) s.o.onLine?.(s.pieces[said].line);
+      s.o.onPiece?.(s.pieces[said].text, s.pieces[said].line);
     }
   };
   const iv = setInterval(tick, 50);
@@ -350,6 +357,7 @@ async function run(s: Speech, my: number) {
       const piece = s.pieces[s.at];
       if (piece.first) s.o.onLine?.(piece.line);
       start(s.path);
+      s.o.onPiece?.(piece.text, piece.line);
       await byBrowser(piece.text, s.lang, s.o, piece.line, my, s.path);
       if (my !== token) return;
       while (paused && my === token) await new Promise((r) => setTimeout(r, 30));

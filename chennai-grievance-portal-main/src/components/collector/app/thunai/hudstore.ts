@@ -34,7 +34,9 @@ export interface HudState {
   denied: boolean;
   firstUse: boolean;
   /** the system strip: real numbers only */
-  strip: { lastMs: number | null; ackMs: number | null; findingMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null };
+  strip: { lastMs: number | null; ackMs: number | null; findingMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null;
+    /** the echo cancellation the microphone really got (ears.ts echoApplied: "all", "remote-only", "on", "off", "unknown"), once it opened */
+    echo: string | null };
   /** the place being discussed, for the map's reticle */
   focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null;
 
@@ -57,7 +59,7 @@ export interface HudState {
 
 const START: HudState = {
   mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", asked: "", doing: "", engagedUntil: 0, typing: false, steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
-  strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null,
+  strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null, echo: null }, focus: null,
   // ---- v4, Pillar 6 (lane H2)
   acting: false, caption: null, evidence: null, mission: null, interjection: null, queue: 0, actions: {}
 };
