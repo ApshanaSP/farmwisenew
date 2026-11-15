@@ -3,7 +3,7 @@
   {
    "clip": "cmd_trends",
    "lane": "rules",
-   "heard": "Go to the trends page",
+   "heard": "Go to the trends page.",
    "ack": null,
    "answer": null,
    "firstAudio": null,
@@ -16,22 +16,22 @@
    "clip": "cmd_adyar",
    "lane": "rules",
    "heard": "Show the severe cases in Udyar.",
-   "ack": 760,
-   "answer": 781,
-   "firstAudio": 896,
-   "finding": 896,
+   "ack": 1006,
+   "answer": null,
+   "firstAudio": 1525,
+   "finding": null,
    "provider": null,
-   "tokens": 0,
+   "tokens": null,
    "path": "browser"
   },
   {
    "clip": "b6",
    "lane": "rules",
    "heard": "Show me the flooding complaints in Vela Cherry.",
-   "ack": 827,
-   "answer": 864,
-   "firstAudio": 875,
-   "finding": 875,
+   "ack": 895,
+   "answer": 1013,
+   "firstAudio": 1141,
+   "finding": 1141,
    "provider": null,
    "tokens": 0,
    "path": "browser"
@@ -39,64 +39,64 @@
   {
    "clip": "b3",
    "lane": "rules",
-   "heard": "What about the rain in Peringudi today?",
-   "ack": 825,
-   "answer": 850,
-   "firstAudio": 857,
-   "finding": 857,
-   "provider": null,
-   "tokens": 0,
-   "path": "browser"
+   "heard": "பெருங்குடியில் என்னைப் பற்றிப் பார்க்கலாமா?",
+   "ack": 919,
+   "answer": 2714,
+   "firstAudio": 2846,
+   "finding": 2846,
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2445,
+   "path": "text"
   },
   {
    "clip": "open_ended",
    "lane": "planner",
-   "heard": "put together something useful for my morning.",
-   "ack": 788,
-   "answer": 2820,
-   "firstAudio": 2826,
-   "finding": 2826,
+   "heard": "என்றால் என்னுடைய தயார்களை ஏற்பார்த்துக்கொள்ள வரையில் விரும்புகிறேன்.",
+   "ack": 1683,
+   "answer": 2237,
+   "firstAudio": 2291,
+   "finding": 2291,
    "provider": "qwen/qwen3.8-27b",
-   "tokens": 1265,
-   "path": "browser"
+   "tokens": 294,
+   "path": "text"
   },
   {
    "clip": "open_ended2",
    "lane": "planner",
    "heard": "how is the metro water backlog looking overall?",
-   "ack": 726,
-   "answer": 751,
-   "firstAudio": 755,
-   "finding": 755,
+   "ack": 3693,
+   "answer": null,
+   "firstAudio": 4439,
+   "finding": null,
    "provider": "qwen/qwen3.8-27b",
-   "tokens": 0,
+   "tokens": 294,
    "path": "browser"
   }
  ],
  "rules": {
-  "ack_p50": 825,
-  "firstAudio_p50": 875,
-  "finding_p50": 875,
-  "answer_p50": 850
+  "ack_p50": 919,
+  "firstAudio_p50": 1525,
+  "finding_p50": 2846,
+  "answer_p50": 2714
  },
  "planner": {
-  "ack_p50": 788,
-  "firstAudio_p50": 2826,
-  "finding_p50": 2826,
-  "answer_p50": 2820
+  "ack_p50": 3693,
+  "firstAudio_p50": 4439,
+  "finding_p50": 2291,
+  "answer_p50": 2237
  },
  "note": "real Whisper, real planner, real voice ladder, injected audio, production bundle. firstAudio can be the acknowledgement; finding is the first spoken answer",
  "heard": [
   {
    "lane": "ambient",
    "status": 200,
-   "text": "Go to the trends page",
+   "text": "Go to the trends page.",
    "lang": "en",
    "noise": false,
-   "ms": 375,
+   "ms": 676,
    "conf": {
     "speech": 1,
-    "logprob": -0.24
+    "logprob": -0.42
    },
    "model": "whisper-large-v3-turbo"
   },
@@ -106,10 +106,10 @@
    "text": "Show the severe cases in Udyar.",
    "lang": "en",
    "noise": false,
-   "ms": 434,
+   "ms": 550,
    "conf": {
     "speech": 1,
-    "logprob": -0.29
+    "logprob": -0.23
    },
    "model": "whisper-large-v3-turbo"
   },
@@ -119,25 +119,25 @@
    "text": "Show me the flooding complaints in Vela Cherry.",
    "lang": "en",
    "noise": false,
-   "ms": 501,
+   "ms": 502,
    "conf": {
     "speech": 1,
-    "logprob": -0.6
+    "logprob": -0.38
    },
    "model": "whisper-large-v3-turbo"
   },
   {
    "lane": "engaged",
    "status": 200,
-   "text": "What about the rain in Peringudi today?",
-   "lang": "en",
+   "text": "பெருங்குடியில் என்னைப் பற்றிப் பார்க்கலாமா?",
+   "lang": "ta",
    "noise": false,
-   "ms": 498,
+   "ms": 513,
    "conf": {
-    "speech": 1,
-    "logprob": -0.27
+    "speech": 0.99,
+    "logprob": -0.45
    },
-   "model": "whisper-large-v3-turbo"
+   "model": "whisper-large-v3"
   },
   {
    "lane": "engaged",
@@ -145,9 +145,35 @@
    "text": "ஜார்விஸ்",
    "lang": "ta",
    "noise": false,
-   "ms": 310,
+   "ms": 396,
    "conf": {
-    "speech": 0.95,
+    "speech": 0.97,
+    "logprob": -0.26
+   },
+   "model": "whisper-large-v3"
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "text": "என்றால் என்னுடைய தயார்களை ஏற்பார்த்துக்கொள்ள வரையில் விரும்புகிறேன்.",
+   "lang": "ta",
+   "noise": false,
+   "ms": 1314,
+   "conf": {
+    "speech": 0.99,
+    "logprob": -0.49
+   },
+   "model": "whisper-large-v3"
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "text": "ஜார்விஸ்",
+   "lang": "ta",
+   "noise": false,
+   "ms": 571,
+   "conf": {
+    "speech": 0.98,
     "logprob": -0.12
    },
    "model": "whisper-large-v3"
@@ -155,26 +181,13 @@
   {
    "lane": "engaged",
    "status": 200,
-   "text": "JARVIS, PUT TOGETHER SOMETHING USEFUL FOR MY MORNING.",
+   "text": "How is the Metro water backlog looking overall?",
    "lang": "en",
    "noise": false,
-   "ms": 463,
+   "ms": 374,
    "conf": {
     "speech": 1,
-    "logprob": -0.21
-   },
-   "model": "whisper-large-v3-turbo"
-  },
-  {
-   "lane": "engaged",
-   "status": 200,
-   "text": "JARVIS, HOW IS THE METRO WATER BACKLOG LOOKING OVERALL?",
-   "lang": "en",
-   "noise": false,
-   "ms": 399,
-   "conf": {
-    "speech": 1,
-    "logprob": -0.25
+    "logprob": -0.3
    },
    "model": "whisper-large-v3-turbo"
   }
