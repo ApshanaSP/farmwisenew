@@ -333,3 +333,37 @@ describe("A6 (d): each Claude call's outcome and usage, for the deploy check", (
     for (const s of ["private sentence", SYSTEM, KEY, "ok\":true"]) expect(all).not.toContain(s);
   });
 });
+
+// ---- the hard switch for this build's live Groq runs and spec servers: JARVIS_CLAUDE_OFF=1 (default off)
+
+describe("JARVIS_CLAUDE_OFF=1: nothing reaches Anthropic, whatever ANTHROPIC_API_KEY says", () => {
+  it("not configured; a turn, a warm, a console step and a direct call make no request; the ladder has no anthropic rung", async () => {
+    vi.stubEnv("JARVIS_CLAUDE_OFF", "1");
+    const bodies = fake((b) => message(b, '{"ok":true}'));
+    expect(claudeConfigured()).toBe(false);
+    expect(await claudeWarm({ system: SYSTEM, schema: S })).toBeNull();
+    const asked: string[] = [];
+    const r = await callLlm(base(), deps(asked));
+    expect(r?.model).toBe("qwen/qwen3.8-27b");
+    expect(r?.hops).toEqual(["groq/qwen/qwen3.8-27b"]);
+    const { ladder } = await import("@/lib/thunai/llm");
+    expect(ladder(2000, fresh(), false, claudeConfigured()).some((x) => x.provider === "anthropic")).toBe(false);
+    // a console step with AI_PROVIDER=claude and nothing else configured: no provider at all, no request
+    for (const k of ["GROQ_API_KEY", "GEMINI_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "AWS_ACCESS_KEY_ID", "AWS_PROFILE", "AI_FORCE_PROVIDER", "AI_CHAT_PROVIDER", "AI_FALLBACK_PROVIDER"]) vi.stubEnv(k, "");
+    vi.stubEnv("AI_PROVIDER", "claude");
+    await expect(generateJson({ role: "fast", name: "t", schema: S, system: "s", prompt: "p", temperature: 0, user: "u" })).rejects.toThrow();
+    // a direct call (the deploy check, or any other caller) is refused before a request is built
+    await expect(ask()).rejects.toThrow(/JARVIS_CLAUDE_OFF/);
+    expect(bodies.length).toBe(0);
+  });
+
+  it("unset or 0: the key is used as before", async () => {
+    for (const v of ["", "0"]) {
+      vi.stubEnv("JARVIS_CLAUDE_OFF", v);
+      const bodies = fake((b) => message(b, '{"ok":true}'));
+      expect(claudeConfigured()).toBe(true);
+      await ask();
+      expect(bodies.length).toBe(1);
+    }
+  });
+});
