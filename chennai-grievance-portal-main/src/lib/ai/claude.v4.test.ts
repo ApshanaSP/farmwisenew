@@ -81,8 +81,8 @@ beforeEach(() => { vi.stubEnv("ANTHROPIC_API_KEY", KEY); vi.stubEnv("JARVIS_CLAU
 afterEach(() => { global.__claude = undefined; global.__claudeRefused = undefined; global.__keyProblems?.clear(); vi.unstubAllEnvs(); });
 
 describe("v4 defect 11: structured outputs apply to every planner schema", () => {
-  it("counts the unions: Screen has 17 nullable fields, every planner bundle is over the API's 16", () => {
-    expect(unions(zodSchema(Screen).jsonSchema)).toBe(17);
+  it("counts the unions: Screen has 18 nullable fields (17, and v4's metricId), every planner bundle is over the API's 16", () => {
+    expect(unions(zodSchema(Screen).jsonSchema)).toBe(18);
     for (const [name, s] of Object.entries(BUNDLES)) expect(unions(zodSchema(s as never).jsonSchema), name).toBeGreaterThan(16);
   });
 
@@ -101,7 +101,7 @@ describe("v4 defect 11: structured outputs apply to every planner schema", () =>
   }
 
   it("puts null back where the wire said \"\" or left a number out", async () => {
-    fake(() => ({ kind: "do", lang: "en", reply: "", options: [], screen: { recipe: "cases", period: "", zones: [5], dept: "", depts: [], cat: "SOLID_WASTE", taluk: "", sev: "Severe", status: "", q: "", metric: "", measure: "", by: "", order: "", id: "", name: "", what: "", sort: "" } }));
+    fake(() => ({ kind: "do", lang: "en", reply: "", options: [], screen: { recipe: "cases", period: "", zones: [5], dept: "", depts: [], cat: "SOLID_WASTE", taluk: "", sev: "Severe", status: "", q: "", metric: "", measure: "", by: "", order: "", id: "", name: "", what: "", sort: "", metricId: "" } }));
     const r = await claudeJson({ name: "jarvis_screens0", schema: BUNDLES.screens as z.ZodType<Json, z.ZodTypeDef, unknown>, system: "Plan.", prompt: "p" });
     expect(r.object.reply).toBeNull();
     expect(r.object.screen).toMatchObject({ recipe: "cases", period: null, n: null, item: null, sev: "Severe", cat: "SOLID_WASTE", zones: [5], q: null });

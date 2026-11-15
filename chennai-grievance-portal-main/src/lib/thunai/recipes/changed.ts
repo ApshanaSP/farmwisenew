@@ -13,7 +13,7 @@ import { computeMetric, deltaOf, metricById } from "../metrics";
 import { caseRow } from "../screens";
 import type { BlockT, Bilingual, NextStepT } from "../stage";
 import { explanatorySet, rankSets, scoreSplit, unusual, type Band, type Dim, type ExplanatorySet, type Scored, type Segment } from "./adtributor";
-import { RAIN_KINDS, bi, call, catName, clip, inTa, langOf, num, pick, scopeArg, segIn, segName, segSpoken, stepFor, windowWords, zoneName,
+import { RAIN_KINDS, bi, call, catName, clip, inTa, langFor, num, pick, scopeArg, segIn, segName, segSpoken, stepFor, windowWords, zoneName,
   type Lang, type RecipeCtx, type RecipePart, type Row } from "./common";
 
 /** how many departments are split out (each costs one change_drivers read); the rest are "other departments" */
@@ -98,7 +98,7 @@ export async function analyseChange(c: RecipeCtx): Promise<ChangeAnalysis> {
       said: x.other ? bi("the others", "மற்றவை") : segSpoken(w, x.dim, x.key, r.labels.get(x.key)) }));
     return { dim: r.dim, segs, set: explanatorySet(segs), dropped: null };
   });
-  for (const sp of splits) if (sp.dropped) c.notes.push(pick(langOf(c.heard), sp.dropped));
+  for (const sp of splits) if (sp.dropped) c.notes.push(pick(langFor(c), sp.dropped));
 
   const ranked = rankSets(splits.map((x) => x.set));
   const drivers: Seg[] = [];
@@ -237,7 +237,7 @@ export function changeBlocks(a: ChangeAnalysis, c: Pick<RecipeCtx, "w" | "s">, l
 
 /** Any other registry metric with a figure before: its change, and where it moved when it has rows. No split, no guess. */
 async function metricChange(c: RecipeCtx, id: string): Promise<RecipePart> {
-  const lang = langOf(c.heard);
+  const lang = langFor(c);
   const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
   const def = metricById(id);
   const res = await computeMetric(id, c.s, c.h);
@@ -277,7 +277,7 @@ export async function changedRecipe(c: RecipeCtx): Promise<RecipePart> {
   // the metric: a registry id in `metricId` (a slot the coordinator adds) or in `measure` (the ranking ids are registry ids too)
   const id = String((c.slots as { metricId?: unknown }).metricId ?? c.slots.measure ?? "").trim();
   if (id && id !== "incidents_reported") return metricChange(c, id);
-  const lang = langOf(c.heard);
+  const lang = langFor(c);
   const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
   const a = await analyseChange(c);
   const win = windowWords(c.s.period);

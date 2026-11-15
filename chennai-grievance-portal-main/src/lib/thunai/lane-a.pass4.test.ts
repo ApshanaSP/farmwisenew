@@ -188,7 +188,7 @@ describe("RC-05: topic, status and filters are read the same in every language a
   });
   it("a second topic word is not answered as the first (flood relief is not standing water)", () => {
     for (const s of ["explain the flood relief need in Adyar", "அடையாறு வெள்ள நிவாரணம் விளக்குங்க"]) expect(quickScreen(s, world as never), s).toBeNull();
-    expect(quickScreen("explain the flooding complaint in Adyar", world as never)?.recipe).toBe("case");
+    expect(quickScreen("explain the flooding complaint in Adyar", world as never)?.recipe).toBe("explain");
   });
 });
 

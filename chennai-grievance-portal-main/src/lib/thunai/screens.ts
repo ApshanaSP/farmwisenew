@@ -21,6 +21,12 @@ import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } fr
 import { conditionsTa, reasonTa } from "./reasons";
 import { stripFigures } from "./numbergate";
 import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
+// the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
+import { changedRecipe } from "./recipes/changed";
+import { explainRecipe } from "./recipes/explain";
+import { situationRecipe } from "./recipes/situation";
+import type { RecipeCtx, RecipePart } from "./recipes/common";
+import { thinLine } from "./persona";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -50,8 +56,13 @@ export interface Slots {
   id: string | null;
   /** a station or reservoir name (readings) */
   name: string | null;
-  what: "severe" | "hotspots" | "cases" | null;
+  /** map: what to put on it; explain: "change" explains one part of a change (the one zone, department or kind named) */
+  what: "severe" | "hotspots" | "cases" | "change" | null;
   sort: "priority" | "complaints" | "time" | null;
+  /** changed: a metric registry id (metrics.ts); absent, incidents reported */
+  metricId?: string | null;
+  /** explain: one part of a change, by its dimension and key (recipes/explain.ts explainSlots) */
+  change?: { dim: "zone" | "dept" | "cat"; key: string } | null;
   /** start clean: the console's own filters are not inherited (a Stage control's "All of Chennai") */
   fresh?: boolean;
   /** complete: the open Stage's incident ids; those rows are completed, not the console's list */
@@ -277,10 +288,26 @@ async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<num
 /** a screen as a recipe builds it: its title in both languages (a plain string is the same in both: a name, the Collector's own words) */
 type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
 
+/**
+ * The analysis recipes (recipes/*.ts, lane A2) take the same context with their notes as plain lines in the screen's language and the
+ * language as `ta`: the runs and sources are shared, the notes and the data's time are handed back. Called lazily (the recipes import
+ * this file's helpers, so the import is a cycle that only works at call time).
+ */
+const analysis = (run: (c: RecipeCtx) => Promise<RecipePart>) => async (c: Ctx): Promise<Part> => {
+  const rc: RecipeCtx = { w: c.w, h: c.h, s: c.s, slots: c.slots, heard: c.heard, runs: c.runs, sources: c.sources, notes: [], asOf: c.asOf, ta: c.ta };
+  try {
+    return await run(rc);
+  } finally {
+    c.asOf ??= rc.asOf;
+    for (const n of rc.notes) c.notes.push(bi(n, n));
+  }
+};
+
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
-  }
+  },
+  changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c))
 };
 
 /**
@@ -315,6 +342,9 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
     slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
     lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
+  // the persona pushes back when the data is thin: a finding resting on a handful of cases says so, with code's own count (persona.ts)
+  const thin = thinLine(doc);
+  if (thin) doc.say = { en: fit(`${doc.say.en} ${thin.en}`.trim(), 600), ta: fit(`${doc.say.ta} ${thin.ta}`.trim(), 900) };
   return { runs: c.runs, doc };
 }
 

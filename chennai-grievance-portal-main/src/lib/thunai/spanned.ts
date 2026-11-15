@@ -18,7 +18,7 @@ export async function spanScreen(recipe: Recipe, rawSlots: unknown, state: Scree
   const sc = checkScreen({ ...(rawSlots as object), recipe }, w, null);
   if (!sc) return directScreen(recipe, rawSlots, state, w, hands, heard, lang);
   const slots = { ...sc.slots, span };
-  const stage = (await buildScreen(sc.recipe, slots, scopeAfter(state, []), w, hands, heard)).doc;
+  const stage = (await buildScreen(sc.recipe, slots, scopeAfter(state, []), w, hands, heard, undefined, lang)).doc;
   // the console keeps its own window: a span is none of its four, so no period step mirrors it (the filter steps still do)
   const steps = syncSteps(sc.recipe, slots, stage.scope, state).filter((x) => x.a !== "period");
   return { kind: "do", lang, reply: null, steps, stage, stageOp: null, say: stage.say[lang], options: [], rounds: 0, calls: [], model: null, ms: Date.now() - t0, note: null };

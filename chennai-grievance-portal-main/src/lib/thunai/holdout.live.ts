@@ -3,6 +3,9 @@
  *   HOLDOUT=rules    all 150 through rules and router, no model
  *   HOLDOUT=planner  the frozen sample through the planner (HOLDOUT_SET=baseline20|final40); checks the ledger first and
  *                    refuses to start a run that cannot finish; a 429 is a capacity failure, not a wrong answer
+ *   HOLDOUT=planner3 (HOLDOUT_DIR=holdout3) the v4 set through the browser's routing and planRound, three-turn scripts played first
+ *                    (holdout3.ts); HOLDOUT_SET=live30 (default) or all; checks the ledger first; prints ids, gold and got only
+ *   HOLDOUT=rules3   the same routing with no model at all: rules, frames and the fast lane; what is left to the planner is "defer"
  * Results go to eval/holdout/results/<HOLDOUT_TAG>-<mode>.json. Run with:
  *   set HOLDOUT=rules&& npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts
  */
@@ -16,7 +19,7 @@ import { callLlm } from "./llm";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
-import { ledger } from "./ledger";
+import { Ledger, MemoryStore, ledger } from "./ledger";
 import { ZONE_TA_NAME } from "./lexicon";
 import { isPlainMove } from "./plan";
 import { offTopic, quickScreen } from "./quick";
@@ -29,15 +32,19 @@ import { clearCaches, planRound, RoundBody } from "./round";
 import { districtNounIn } from "./quick";
 import { resolveFrame } from "./frame";
 import type { StageContext } from "./stage";
+import os from "os";
+import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
+import { runItem3, summary3, type Item3, type Row3 } from "./holdout3";
 
 const world = { ...WORLD, ...referenceWorld(), zones: WORLD.zones.map((z) => ({ ...z, ta: ZONE_TA_NAME[z.n] ?? null })), depts: WORLD.depts };
 // HOLDOUT_DIR=holdout2 is the set frozen on 4 Nov 2026 after eval/holdout had been read; a run refuses it if a hash has changed
 const SET_DIR = process.env.HOLDOUT_DIR ?? "holdout";
-const DIR = path.join(process.cwd(), "eval", SET_DIR);
+// (resolve: an absolute HOLDOUT_DIR is a set elsewhere, as the harness's own check on a synthetic set in a temporary folder uses)
+const DIR = path.resolve(process.cwd(), "eval", SET_DIR);
 if (SET_DIR !== "holdout") for (const line of fs.readFileSync(path.join(DIR, "HASHES.txt"), "utf8").trim().split(/\r?\n/)) {
   const [hash, rel] = line.split(" *");
   // git may change the line endings on checkout: the hash is of the text
-  const now = crypto.createHash("sha256").update(fs.readFileSync(path.join(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n")).digest("hex");
+  const now = crypto.createHash("sha256").update(fs.readFileSync(path.resolve(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n")).digest("hex");
   if (now !== hash) throw new Error(`${rel} no longer matches its frozen hash`);
 }
 const items = () => fs.readFileSync(path.join(DIR, "understanding.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as HoldoutItem);
@@ -267,3 +274,55 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   console.log(JSON.stringify({ summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
 });
 void FINAL;
+
+// ------------------------------------------------------------------ the third set (v4) --
+
+/** the v4 set's rows: live30 (default) or all of them; never printed */
+function set3(): Item3[] {
+  const which = process.env.HOLDOUT_SET ?? "live30";
+  const all = items() as Item3[];
+  if (which === "all") return all;
+  const ids = (JSON.parse(fs.readFileSync(path.join(DIR, "live30.json"), "utf8")) as Record<string, string[]>)[which] ?? [];
+  return ids.map((id) => all.find((x) => x.id === id)).filter((x): x is Item3 => !!x);
+}
+const write3 = (name: string, rows: Row3[], extra: Record<string, unknown> = {}) =>
+  write(`${name}-${process.env.HOLDOUT_SET ?? "live30"}`, { at: new Date().toISOString(), ...extra, ...summary3(rows), rows });
+
+it.runIf(mode === "planner3")("the v4 set through the browser's routing and the shipped planner", async () => {
+  const set = set3();
+  // a run that cannot finish is not started: up to three planner turns an item (a script of two, then the sentence), about 3K tokens each
+  const need = set.length * 3 * 3000;
+  const room = claudeConfigured() ? ledger().room("anthropic", claudeModel()) : null;
+  const left = room ? Math.min(room.left.tpd, room.left.rpd * 3000) : ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"].reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
+  if (left < need) { write3("planner3", [], { refused: true, left, need }); console.log(`not started: ${left} left, ${need} needed`); return; }
+  const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
+  const rows: Row3[] = [];
+  clearCaches();
+  for (const x of set) {
+    const row = await runItem3(x, { world, hands: () => fakeHands(), user: "holdout" });
+    rows.push(row);
+    // ids, gold and got only: never a sentence
+    console.log(row.id, row.gold, "->", row.got, row.lane, row.capacity ? "(capacity)" : "");
+    write3("planner3", rows, { partial: true, done: rows.length, of: set.length });
+    if (row.calls > 0) await sleep(gap);
+  }
+  const s = summary3(rows);
+  write3("planner3", rows, { tokensAll: rows.reduce((a, r) => a + r.tokens, 0), modelTurns: rows.filter((r) => r.calls > 0).length });
+  console.log(JSON.stringify({ all: s.byLang.all, byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n}`])) }));
+});
+
+it.runIf(mode === "rules3")("the v4 set through the browser's routing, rules, frames and the fast lane, with no model", async () => {
+  // nothing of this run reaches the shared telemetry or the ledger: no model is asked
+  if (!process.env.THUNAI_DIR) process.env.THUNAI_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "jv-rules3-"));
+  const noModel = { generate: async () => { throw new Error("no model in rules3"); }, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false, claudeOk: () => false } as never;
+  const set = set3();
+  const rows: Row3[] = [];
+  clearCaches();
+  for (const x of set) rows.push(await runItem3(x, { world, hands: () => fakeHands(), user: "holdout", deps: { llm: noModel }, rulesOnly: true }));
+  const s = summary3(rows);
+  write3("rules3", rows);
+  // totals only
+  console.log(JSON.stringify({ all: s.byLang.all, en: s.byLang.en, ta: s.byLang.ta, tanglish: s.byLang.tanglish,
+    byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n} (defer ${t.deferred})`])), byLane: s.byLane }));
+  expect(rows.length).toBe(set.length);
+});

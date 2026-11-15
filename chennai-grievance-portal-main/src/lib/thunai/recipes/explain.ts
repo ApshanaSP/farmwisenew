@@ -9,14 +9,16 @@
  * thing that happened nearby, in time, never as the cause.
  */
 import { spoken } from "../insight";
-import { closedAs, explainIssue, factSheet, hoursOf } from "../narrate";
+import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, hoursOf } from "../narrate";
 import { caseRow, metres, recordsOf, when, type Slots } from "../screens";
 import { speechProblem } from "../speechcheck";
 import { hoursBetween } from "../stagelocal";
-import type { BlockT, Bilingual, CaseRowT, StageDocT } from "../stage";
+import type { BlockT, Bilingual, CaseRowT, StageContext, StageDocT } from "../stage";
+import type { World } from "../types";
+import { DEPT_TA, ZONE_TA_NAME } from "../lexicon";
 import { unusual, type Dim } from "./adtributor";
 import { analyseChange, type Seg } from "./changed";
-import { RAIN_KINDS, WATER_KINDS, bi, call, catName, clip, inTa, langOf, num, pick, scopeArg, segIn, stepFor, timeWords, windowWords, zoneName,
+import { RAIN_KINDS, WATER_KINDS, bi, call, catName, clip, inTa, langFor, num, pick, scopeArg, segIn, stepFor, timeWords, windowWords, zoneName,
   type Lang, type RecipeCtx, type RecipePart, type Row } from "./common";
 
 export type ExplainTarget = { kind: "case"; id: string } | { kind: "change"; dim: Dim; key: string } | { kind: "scope" };
@@ -59,6 +61,33 @@ export function explainTargetOf(doc: Pick<StageDocT, "blocks">, n?: number | nul
   const list = doc.blocks.find((b) => b.kind === "CaseList");
   if (list?.kind === "CaseList" && list.rows[at]) return { kind: "case", id: list.rows[at].id };
   return null;
+}
+
+/**
+ * The same, on the server, from the open Stage as the round is sent it (stage.ts StageContext: each block's kind and ids, the labels when the
+ * browser sends them): an INC- id the register resolved, the case a CaseDetail shows, the nth mover of a "what changed" screen (its ids are the
+ * movers' names, read back to a zone, department or kind of this World), else the nth case of the list. Null when nothing there can be explained.
+ */
+export function explainTargetOfStage(stage: StageContext, n: number | null | undefined, id: string | null | undefined, w: World): ExplainTarget | null {
+  if (id && /^INC-[A-Za-z0-9_-]{2,60}$/.test(id)) return { kind: "case", id };
+  const at = Math.max(1, Math.round(n ?? 1)) - 1;
+  const detail = stage.blocks.find((b) => b.kind === "CaseDetail" && b.ids.length);
+  if (detail) return { kind: "case", id: detail.ids[0] };
+  if (stage.recipe === "changed") {
+    const movers = stage.blocks.find((b) => b.kind === "Ranking" && b.ids.length);
+    const name = movers?.ids[at]?.trim().toLowerCase();
+    if (name) {
+      const zone = w.zones.find((z) => z.name.toLowerCase() === name || (z.ta ?? "").toLowerCase() === name || (ZONE_TA_NAME[z.n] ?? "").toLowerCase() === name);
+      if (zone) return { kind: "change", dim: "zone", key: String(zone.n) };
+      const dept = w.depts.find((d) => d.code.toLowerCase() === name || d.name.toLowerCase() === name || d.name.replace(/\s*\([^)]*\)\s*/g, " ").trim().toLowerCase() === name || (DEPT_TA[d.code] ?? "").toLowerCase() === name);
+      if (dept) return { kind: "change", dim: "dept", key: dept.code };
+      const cat = w.cats.find((c) => c.code.toLowerCase() === name || c.label.toLowerCase() === name || (CAT_LABEL_TA[c.code] ?? "").toLowerCase() === name);
+      if (cat) return { kind: "change", dim: "cat", key: cat.code };
+    }
+  }
+  const list = stage.blocks.find((b) => (b.kind === "CaseList" || b.kind === "MapView") && b.ids.length);
+  const row = list?.ids[at];
+  return row && /^INC-/.test(row) ? { kind: "case", id: row } : null;
 }
 
 /** The slots that build the explain screen for a target (for Thunai.tsx's direct call). */
@@ -169,7 +198,7 @@ async function topCaseId(c: RecipeCtx): Promise<string | null> {
 }
 
 async function explainCase(c: RecipeCtx, id: string): Promise<RecipePart> {
-  const lang = langOf(c.heard);
+  const lang = langFor(c);
   const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
   const r = await call(c, "incident_detail", { id });
   const d = r.data as { incident: Row; reports?: Row[]; officials?: Row[] } | null;
@@ -231,7 +260,7 @@ async function explainCase(c: RecipeCtx, id: string): Promise<RecipePart> {
 // ------------------------------------------------------------------ one part of a change --
 
 async function explainChange(c: RecipeCtx, dim: Dim, key: string): Promise<RecipePart> {
-  const lang = langOf(c.heard);
+  const lang = langFor(c);
   const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
   const a = await analyseChange(c);
   const seg = a.splits.find((x) => x.dim === dim)?.segs.find((x) => x.key === key && !x.other) as Seg | undefined;
@@ -327,7 +356,7 @@ export async function explainRecipe(c: RecipeCtx): Promise<RecipePart> {
   const t = explainTarget(c.slots);
   if (t.kind === "change") return explainChange(c, t.dim, t.key);
   const id = t.kind === "case" ? t.id : c.s.zone || c.s.cat || c.slots.q ? await topCaseId(c).catch(() => null) : null;
-  const lang: Lang = langOf(c.heard);
+  const lang: Lang = langFor(c);
   if (!id) return { title: lang === "ta" ? "விளக்கம்" : "Explain", takeaway: null,
     say: t.kind === "scope" && !(c.s.zone || c.s.cat || c.slots.q) ? bi("Which one? Say its number on the list, or the place and the kind of issue.", "எதை? பட்டியலில் அதன் எண்ணையோ, இடத்தையும் பிரச்சினையின் வகையையுமோ சொல்லுங்கள்.")
       : bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."), blocks: [] };

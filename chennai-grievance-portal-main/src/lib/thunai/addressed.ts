@@ -52,7 +52,8 @@ const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaatunga|kattung
 /** the shape of a request or a follow-up: for tier 2 */
 const REQUEST_EN = /^ (and|what|whats|why|how|which|where|who|when|same|also|now|only|just|no|not|then|next|compare|show|open|go|list|read|tell|give|filter|sort|zone|in|for|at|more|less|top|worst|best|first|second|third|last|today|please|ok|okay|yes|can|could|would|is|are|was|were|do|does|did(?! you| i )|put|make|build|create|get|bring|check|look|find|pull|prepare|summarise|summarize|brief|run|add|change|set|switch|draft|export|map|rank|save|pin|remember|remind) /;
 const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத்தனை|எவ்வளவு|எது|(?:^|\s)யார்|எப்படி|எப்போ|ஆ\?|ஆ *$)/;
-const QUESTION_TG = /\b(enna|enga|yen|ethana|evvalavu|edhu|yaaru|eppadi|eppo)\b/;
+// (epdi: the clipped "how" of spoken Tanglish, "idhu epdi theriyum": lane D2's how-do-you-know forms)
+const QUESTION_TG = /\b(enna|enga|yen|ethana|evvalavu|edhu|yaaru|eppadi|epdi|eppo)\b/;
 /** what the console talks about: with one of these, a sentence with a chore's shape is still work */
 const WORK_EN = /\b(complaints?|grievances?|cases?|incidents?|accidents?|reports?|status|situation|news|levels?|counts?|numbers?|figures?|totals?|data|trends?|charts?|graphs?|maps?|lists?|pages?|panels?|screens?|dashboard|overview|briefing|brief|summary|update|forecast|readings?|rainfall|alerts?|zones?|wards?|taluks?|departments?|dept|officers?|severe|overdue|backlog|prices?|markets?|environment|aqi|lakes?|reservoirs?|pugar|nilavaram|alavu|evvalavu|ethana|seidhi)\b/;
 const WORK_TA = /(புகார்|சம்பவ|நிலவரம்|அளவு|எத்தனை|எவ்வளவு|செய்தி|பக்கம்|வரைபடம்|பட்டியல்|மண்டல|துறை|சுருக்கம்|விலை|அறிக்கை|அதிகாரி)/;

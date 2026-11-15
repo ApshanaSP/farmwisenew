@@ -304,11 +304,26 @@ function merge(steps: Step[]): Step[] {
   return out;
 }
 
-/** Figures the reply may contain: those in what was said and in the plan itself (zone 7, item 2). */
-function replyOk(reply: string, heard: string, steps: Step[]): boolean {
-  const nums = (t: string) => t.match(/\d+(?:[.,]\d+)?/g) ?? [];
-  const allowed = new Set([...nums(heard), ...nums(JSON.stringify(steps))]);
-  return nums(reply).every((x) => allowed.has(x));
+/** The numbers a step holds in its own numeric fields (a zone, an item, an undo count), never the figures inside its text (v4, lane L1). */
+function stepNumbers(v: unknown, out: number[] = []): number[] {
+  if (typeof v === "number" && Number.isFinite(v)) out.push(v);
+  else if (Array.isArray(v)) for (const x of v) stepNumbers(x, out);
+  else if (v && typeof v === "object") for (const x of Object.values(v)) stepNumbers(x, out);
+  return out;
+}
+/**
+ * Figures the reply may contain: those the Collector said and the plan's own numeric fields (zone 7, item 2), read by the number gate's own
+ * reader (number words, Tamil numerals, lakh and crore too). A figure inside a step's text (a typed search, a note to keep) is the model's
+ * words and lends none: JSON.stringify(steps) let "remember 300 deaths" put 300 in the reply.
+ */
+export function replyOk(reply: string, heard: string, steps: Step[], zones: Iterable<number> = []): boolean {
+  const allowed = new Set([...figuresIn(heard).map((f) => String(f.value)), ...stepNumbers(steps).map(String)]);
+  return figuresIn(zoneLabelsOut(reply, zones)).every((f) => allowed.has(String(f.value)));
+}
+/** A clarifying option's request: it becomes what was heard when tapped, so a figure in it must be the Collector's own or a real zone's label. */
+export function requestOk(request: string, heard: string, zones: Iterable<number> = []): boolean {
+  const said = new Set(figuresIn(heard).map((f) => String(f.value)));
+  return figuresIn(zoneLabelsOut(request, zones)).every((f) => said.has(String(f.value)));
 }
 
 export type Checked =
@@ -334,7 +349,9 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
     // labels are shown as buttons: a figure in one must be the Collector's own or a real zone's number
     const said = new Set(figuresIn(heard).map((f) => String(f.value)));
     const labelOk = (l: string) => figuresIn(zoneLabelsOut(l, w.zones.map((z) => z.n))).every((f) => said.has(String(f.value)));
-    const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request && labelOk(o.label)).slice(0, 3);
+    // and the request a tap sends back as heard: a figure the model wrote there would become the Collector's own words (v4, lane L1)
+    const zoneNs = w.zones.map((z) => z.n);
+    const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request && labelOk(o.label) && requestOk(o.request, heard, zoneNs)).slice(0, 3);
     if (options.length >= 2) return { kind: "clarify", question: reply && !/\p{Nd}/u.test(reply) ? reply : lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?", options, lang };
     return { kind: "none", lang };
   }
@@ -343,7 +360,7 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
   if (!ok.length) return { kind: "none", lang };
   // what the console reads out itself (the screen, a chart, a reservoir) is never pre-empted by the model's guess
   const speaksForItself = ok.some((x) => SELF_SPEAKING.has(x.a));
-  return { kind: "do", steps: ok, reply: reply && !speaksForItself && replyOk(reply, heard, ok) ? reply : null, lang, dropped: raw.length - ok.length };
+  return { kind: "do", steps: ok, reply: reply && !speaksForItself && replyOk(reply, heard, ok, w.zones.map((z) => z.n)) ? reply : null, lang, dropped: raw.length - ok.length };
 }
 
 /**

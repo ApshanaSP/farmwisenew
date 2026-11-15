@@ -9,7 +9,7 @@ import { ZONES } from "../lexicon";
 import { caseRow, when } from "../screens";
 import type { BlockT, Bilingual } from "../stage";
 import { unusual } from "./adtributor";
-import { RAIN_KINDS, WATER_KINDS, bi, call, catName, clip, inTa, langOf, num, scopeArg, stepFor, windowWords, zoneName, type RecipeCtx, type RecipePart, type Row } from "./common";
+import { RAIN_KINDS, WATER_KINDS, bi, call, catName, clip, inTa, langFor, num, scopeArg, stepFor, windowWords, zoneName, type RecipeCtx, type RecipePart, type Row } from "./common";
 
 const LEVEL: Record<number, Bilingual> = { 1: bi("yellow", "மஞ்சள்"), 2: bi("orange", "ஆரஞ்சு"), 3: bi("red", "சிவப்பு") };
 const LAKE_TA: [string, string][] = [["chembarambakkam", "செம்பரம்பாக்கம்"], ["puzhal", "புழல்"], ["red hills", "புழல்"], ["poondi", "பூண்டி"], ["cholavaram", "சோழவரம்"], ["veeranam", "வீராணம்"], ["kannankottai", "கண்ணன்கோட்டை"]];
@@ -27,7 +27,7 @@ function zoneWords(c: RecipeCtx, zone: number): string[] {
 
 export async function situationRecipe(c: RecipeCtx): Promise<RecipePart> {
   const { s, w } = c;
-  const lang = langOf(c.heard);
+  const lang = langFor(c);
   const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
   const win = windowWords(s.period);
   const zone = zoneName(w, s.zone);

@@ -1,0 +1,130 @@
+/**
+ * The third held-out set (eval/holdout3, frozen by hash): what each sentence is routed to and how a result is read as the set's intents,
+ * and the runner the live harness (holdout.live.ts, HOLDOUT=planner3 and HOLDOUT=rules3) and its test share. The set's intents are explain,
+ * changed, howknow, mission, brief, remember, recall (which holds "forget that" too) and followup (the third turn of a script of three, its
+ * `expect` naming what it asks for: one of the set's intents or an older recipe name).
+ *
+ * The browser routes some sentences before the planner sees them (Thunai.tsx handle(), the M2, P2 and D2 integration notes): a mission sentence
+ * goes to the mission route (missions.words.ts missionIntent; its "brief" template is the brief), a note to keep and a question about memory go
+ * to the memory route (quick.ts intentMarker). The runner does the same, then plans the rest through planRound exactly as the round route does,
+ * round after round. Nothing here prints or stores a sentence: rows hold ids, labels and counts only.
+ */
+import type { AgentResult } from "./agent";
+import { byLang, goldIntent, tally, type HoldoutItem, type Scored, type Tally } from "./holdout";
+import { missionIntent } from "./missions.words";
+import { intentMarker } from "./quick";
+import { provenanceOf, labelsOf, type Provenance } from "./register";
+import { planRound, RoundBody, type RoundDeps } from "./round";
+import type { Hands } from "./screens";
+import { idsOf, type StageContext, type StageDocT } from "./stage";
+import type { World } from "./types";
+
+export interface Item3 extends HoldoutItem { script?: string[] }
+export interface Row3 extends Scored { intent: string; lane: string; model: string | null; ms: number; tokens: number; calls: number }
+
+/** the set's own intents */
+export const SET3 = ["explain", "changed", "howknow", "mission", "brief", "remember", "recall"] as const;
+
+/** Where the browser sends a sentence before the planner: "mission", "brief" (the mission route's brief template), "remember", "recall"; null: the round. */
+export function browserRoute(text: string, w: World): string | null {
+  const mi = missionIntent(text, w);
+  if (mi) return mi.template === "brief" ? "brief" : "mission";
+  const m = intentMarker(text);
+  if (m?.intent === "remember") return "remember";
+  if (m?.intent === "recall" || m?.intent === "forget") return "recall";
+  return null;
+}
+
+/** The intent a round's result carries, in the set's names first (explain, changed, howknow, brief, remember, recall, mission), else the older names. */
+export function intentOf3(r: AgentResult | null | undefined): string {
+  if (!r) return "error";
+  if (r.note === "frame:howknow") return "howknow";
+  const recipe = r.stage?.recipe;
+  if (recipe === "explain" || r.stageOp?.op === "explain") return "explain";
+  if (recipe === "changed") return "changed";
+  if (recipe === "brief") return "brief";
+  const steps = r.steps ?? [];
+  if (steps.some((s) => s.a === "remember")) return "remember";
+  if (steps.some((s) => s.a === "recall" || s.a === "forget")) return "recall";
+  const mission = steps.find((s): s is Extract<typeof s, { a: "mission" }> => s.a === "mission");
+  if (mission) return mission.name === "brief" ? "brief" : "mission";
+  if (steps.some((s) => s.a === "page" && s.page === "briefing")) return "brief";
+  if (r.kind === "refuse") return "refuse";
+  if (r.kind === "chat") return "chat";
+  if (r.kind === "clarify") return "clarify";
+  if (r.stage) return recipe === "answer" ? "answer" : String(recipe);
+  if (r.stageOp) return r.stageOp.op === "save" || r.stageOp.op === "pin" ? "save" : "stage_op";
+  if (steps.some((s) => s.a === "workspace")) return "save";
+  if (steps.length) return "navigate";
+  return "none";
+}
+
+/** an older recipe name that answers a follow-up's `expect` as well (the same leniency the earlier sets allowed) */
+const SAME: Record<string, string[]> = { insight: ["insight", "answer", "why", "ranking", "trend"], case: ["case", "stage_op"], stage_op: ["stage_op", "case"], cases: ["cases"], dashboard: ["dashboard"] };
+export const hits3 = (gold: string, got: string): boolean => got === gold || (SAME[gold] ?? []).includes(got);
+
+const STATE = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } as const;
+
+/** The open Stage as the browser sends it with the next sentence: its ids and their labels (register.ts labelsOf), nothing else. */
+export function stageOf(d: StageDocT): StageContext {
+  return { recipe: d.recipe, title: d.title, focus: null, slots: d.slots, blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 30), labels: labelsOf(b).slice(0, 30) })) };
+}
+
+/** `rulesOnly`: no model at all (HOLDOUT=rules3): what is left to the planner is "defer", not a capacity failure */
+export interface Run3 { world: World; hands: () => Hands; deps?: RoundDeps; user?: string; now?: () => number; rulesOnly?: boolean }
+interface Said { result: AgentResult | null; routed: string | null; lane: string; tokens: number; calls: number; failed: boolean }
+
+/**
+ * One item: the script's two sentences first (each through the browser's routing and planRound, keeping the turns and the Stage they leave as
+ * the browser would), then the sentence scored. Returns the row with no text. A thrown error is a failed row, never its message.
+ */
+export async function runItem3(x: Item3, o: Run3): Promise<Row3> {
+  const now = o.now ?? Date.now;
+  const turns: { heard: string; did: string; recipe?: string | null; slots?: Record<string, unknown> | null; result?: string | null }[] = [];
+  let stage: StageContext | null = null, provenance: Provenance | null = null, lastText: string | null = null;
+  const say = async (text: string, k: number): Promise<Said> => {
+    const routed = browserRoute(text, o.world);
+    if (routed) return { result: null, routed, lane: "browser", tokens: 0, calls: 0, failed: false };
+    const turnId = `h3-${x.id}-${k}-${now().toString(36)}`.slice(0, 40);
+    let r: AgentResult | null = null, lane = "", failed = false, tokens = 0, calls = 0;
+    try {
+      for (let round = 0; round < 3; round++) {
+        const body = RoundBody.parse({ turnId, round, text: text.slice(0, 300), turns: turns.slice(-4), lastText, stage, direct: null, provenance, state: STATE });
+        const out = await planRound(body, o.world, o.hands(), o.user ?? "holdout", undefined, undefined, o.deps ?? {});
+        // the turn's own totals so far (round.ts keeps them per turn)
+        tokens = out.tokens; calls = out.calls; lane = out.lane;
+        if (out.done) { r = out.result; break; }
+      }
+    } catch { failed = true; }
+    return { result: r, routed: null, lane, tokens, calls, failed };
+  };
+  const script = (x.script ?? []).slice(0, 2);
+  for (const [k, text] of script.entries()) {
+    const s = await say(text, k);
+    const r = s.result;
+    // what the browser keeps of a turn: the recipe, its slots and a one-line result (the screen's title), and the Stage the turn left open
+    turns.push({ heard: text.slice(0, 300), did: s.routed ? `routed to ${s.routed}` : r?.stage ? `showed ${r.stage.recipe}` : r?.kind ?? "nothing",
+      recipe: r?.stage?.recipe ?? null, slots: (r?.stage?.slots as Record<string, unknown> | undefined) ?? null, result: r?.stage?.title?.slice(0, 120) ?? null });
+    if (r?.stage) { stage = stageOf(r.stage); provenance = provenanceOf(r.stage, { by: s.lane === "planner" || s.lane === "cache" ? "ai" : "rules", model: r.model }); }
+    lastText = text.slice(0, 300);
+  }
+  const t0 = now();
+  const s = await say(x.text, script.length);
+  const gold = goldIntent(x);
+  const noModel = !s.routed && !s.failed && (!s.result || (s.result.kind === "none" && s.result.note === "no-model"));
+  // with no model at all, what was left to the planner is deferred; with a model, no answer at all is a capacity failure, not a score
+  const deferred = !!o.rulesOnly && noModel;
+  const capacity = !o.rulesOnly && (s.failed || noModel);
+  const got = s.routed ?? (s.failed ? "error" : deferred ? "defer" : intentOf3(s.result));
+  return { id: x.id, lang: x.lang, intent: x.intent, gold, got, ok: !capacity && !deferred && hits3(gold, got), deferred, capacity, lane: s.routed ? "browser" : s.lane,
+    model: s.result?.model ?? null, ms: now() - t0, tokens: s.tokens, calls: s.calls };
+}
+
+/** The tallies a report may look at: by language and by the set's intent (Wilson intervals, holdout.ts), and by lane. */
+export function summary3(rows: Row3[]): { byLang: Record<string, Tally>; byIntent: Record<string, Tally>; byLane: Record<string, { n: number; right: number }> } {
+  const intents = [...new Set([...SET3, "followup", ...rows.map((r) => r.intent)])];
+  const byIntent = Object.fromEntries(intents.map((k) => [k, tally(rows.filter((r) => r.intent === k))]).filter(([, t]) => (t as Tally).n > 0));
+  const lanes = [...new Set(rows.map((r) => r.lane))];
+  const byLane = Object.fromEntries(lanes.map((l) => { const x = rows.filter((r) => r.lane === l); return [l, { n: x.length, right: x.filter((r) => r.ok).length }]; }));
+  return { byLang: byLang(rows), byIntent, byLane };
+}

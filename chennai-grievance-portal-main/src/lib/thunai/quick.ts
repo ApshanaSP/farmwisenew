@@ -211,6 +211,8 @@ const DASHBOARD = ["dashboard", "டாஷ்போர்டு", "டேஷ்�
 const ON_MAP = ["on a map", "on the map", "on map", "map the", "map of", "plot", "map la", "வரைபடத்தில்", "மேப்ல", "மேப்பில்"];
 const NEARBY = /\b(within|near|nearby|close to|around|km|kilometre|kilometer|metres?)\b|அருகில்|பக்கத்தில்|கிமீ|கி\.மீ|pakkathula|kitta/;
 const FACILITY = /(school|hospital|shelter|fire station|police station|பள்ளி|மருத்துவமனை|முகாம்|hospitals|schools|shelters)/;
+/** asking how things stand in one place, all of it at once */
+const SITUATION = ["situation", "the situation", "ground situation", "how are things", "overall picture", "big picture", "whole picture", "nilavaram", "nelavaram", "nilamai", "நிலவரம்", "நிலைமை", "சூழ்நிலை"];
 const ATTENTION = ["attention", "priority", "priorities", "what is happening", "whats happening", "brief", "briefing", "summary", "update", "கவனம்", "சுருக்கம்", "நிலவரம்", "என்ன நடக்குது", "என்ன நடக்கிறது"];
 
 /** words that tie a question to the district and this console (any one of them keeps the question in) */
@@ -258,7 +260,7 @@ const PLAIN = new Set(("a an the this that these those is are was were be been a
   + "la le ku kku lla ah a nu oru enna ennaa epdi eppadi enga yen evlo evvalavu ethana irukku iruku irukka irukkaa sollu sollunga kaattu kaatu kattu katu kaami kaatunga kattunga paaru paarunga pannu pannunga podu eduthu vaa konjam inga anga ellam ella "
   + "என்ன என்னென்ன எங்க எங்கே எப்படி ஏன் எத்தனை எவ்வளவு இருக்கு இருக்கா இருக்கிறது உள்ள காட்டு காட்டுங்க காட்டுங்கள் சொல்லு சொல்லுங்க பாரு பாருங்க போடு எல்லாம் ஒரு இந்த அந்த கொஞ்சம் இப்போ இப்போது").split(" "));
 const words = (list: string[]) => list.flatMap((x) => norm(x).trim().split(" ")).filter(Boolean);
-const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
+const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...SITUATION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
 /**
  * Is this (roman) word one the fast lane knows, in any of the three languages: a word of its lists, the sentence's grammar, a topic, a place or a body of ours, in Tamil letters
  * or romanised, with a case ending? A word nothing here knows, in front of an agency word, is another place's or body's name (RC-01).
@@ -361,7 +363,12 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).text} `)?.[1]) || 5;
 
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
-export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
+/**
+ * `analysis`: also read the analysis questions (what changed, a place's situation) as screens. The server's fast lane asks for them; the
+ * address gate's "are the rules sure?" does not, so side talk that holds these words ("what changed since yesterday in Adyar", said to a
+ * colleague) is never acted on without the name (lane D2's rule). `noBail` readers get them too.
+ */
+export function quickScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean } = {}): Quick | null {
   const spec = readPeriod(text);
   // a time no lane can answer ("two weeks ago", "next week") is never answered with the current window (RC-06)
   // (also for the readings that skip the bail-outs, noBail: the rules read after a planner miss and a follow-up's frame; review break A1)
@@ -381,6 +388,12 @@ export const asksCount = (text: string): boolean => /\b(how many|how much|count|
  */
 function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   if (!needsDates(spec)) return q;
+  // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the last 24 hours
+  // against the 24 before, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
+  if (q.recipe === "changed" || q.recipe === "explain" || q.recipe === "situation") {
+    const key = spec.kind === "day" ? "daily" : spec.kind === "compare" || spec.kind === "last" || spec.kind === "lastWeekOf" ? keyOf(spec) : null;
+    return key ? { ...q, slots: { ...q.slots, period: key } } : null;
+  }
   if (spec.kind === "compare") {
     if (q.recipe !== "cases" || q.slots.status === "resolved") return null;
     return { recipe: "trend", slots: { cat: q.slots.cat ?? null, zones: q.slots.zones ?? [], sev: q.slots.sev ?? null, status: q.slots.status ?? null, period: spec.key, span: spec, fresh: true } };
@@ -399,14 +412,18 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
 const ZONE_WORDS = ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "மண்டலத்", "மண்டலங்களி", "பகுதி", "பகுதிகள்"];
 
 /** The fast lane's reading of one sentence, before the time it named is put on it. */
-function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: PeriodSpec): Quick | null {
+function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean }, spec: PeriodSpec): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
   // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
   if (foreignIn(text, w)) return null;
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
-  // the new intents are flows of their own: "what changed this week" is not this week's list, "build me a flood board for Adyar" is not Adyar's cases (v4)
+  // "what changed since yesterday", "what's new in Adyar", "Adyar la enna maarichu": the change and where it sits (recipes/changed.ts), never this window's list
+  const analysis = !!(o.noBail || o.analysis);
+  const changed = changedScreen(text, t, w, spec);
+  if (changed) return analysis ? changed : null;
+  // the other new intents are flows of their own: "build me a flood board for Adyar" is not Adyar's cases, "how do you know" is no screen (v4)
   if (!o.noBail && leavesFastLane(text)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   // "open" is the verb of a follow-up ("open 3", "open the first one") unless it is the status of the cases ("open cases in Adyar", "cases open now": OPEN_RE), and "that" and "those" point back at
@@ -432,7 +449,8 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
     const isSevWord = (x: string) => SEV_WORDS.some(([s]) => x === s.toLowerCase() || (/[஀-௿]/.test(s) && x.startsWith(s)));
     const isCatWord = (x: string) => isSevWord(x) || catWords.some((c) => x === c || (/[஀-௿]/.test(c) && c.length >= 3 && x.startsWith(c.replace(/[்ுூ]$/, ""))));
     const namedOther = t.trim().split(" ").some((x) => !ASKING.has(x) && !LISTED.has(x) && !isZoneWord(x) && !isCatWord(x));
-    if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
+    // the explain recipe (recipes/explain.ts): with no id, the most urgent open case of what was named, told the way an aide would (v4)
+    if (!namedOther) return { recipe: "explain", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
     if (!o.noBail) return null;
   }
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
@@ -457,6 +475,9 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, AIR)) return { recipe: "readings", slots: { metric: "aqi", zones: zones.slice(0, 1), name: zones.length ? w.zones.find((z) => z.n === zones[0])?.name ?? null : null } };
   const reservoir = reservoirIn(t);
   if (reservoir) return { recipe: "readings", slots: { metric: "lakes", name: reservoir } };
+  // "what's the situation in Adyar", "Perungudi la nilavaram enna", "அடையாறு நிலவரம் என்ன": everything about one place at once (recipes/situation.ts).
+  // A kind named with it ("the flooding situation") stays with the screens that read that kind; the whole district's day is the brief
+  if (analysis && has(t, SITUATION) && zones.length === 1 && !cat && !sev && !has(t, RAIN)) return { recipe: "situation", slots: { zones, period: period ?? "daily", fresh: true } };
   if (has(t, LAKE) && !cat) return { recipe: "readings", slots: { metric: "lakes" } };
   if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   // a comparison the rules cannot fill (two departments, a period against another) is the planner's, never a plain list
@@ -580,6 +601,18 @@ export function intentMarker(text: string): IntentMarker | null {
   if ((m = INSTEAD_TA.exec(raw))) return { intent: "instead", rest: restOf(m, 1) };
   return null;
 }
+/** "what has changed in Adyar since last week", beyond intentMarker's whole-sentence forms: a question about change, never about the news */
+const CHANGED_LOOSE = /^ (?:(?:jarvis|so|ok|okay|and|now|tell me|show me) )*(?:what|whats|what all|anything|has anything|did anything)(?: has| have| all)? (?:changed|is new|new) /;
+/** The change and where it sits, when that is what was asked (intentMarker's "changed", or the plain English question): its place, kind and window. */
+function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Quick | null {
+  if (intentMarker(text)?.intent !== "changed" && !(CHANGED_LOOSE.test(t) && !has(t, NEWS))) return null;
+  // two places or a comparison is another question; a window no lane holds ("two weeks ago") was refused before this
+  const zones = zonesIn(t, w);
+  if (zones.length > 1 || isComparing(t)) return null;
+  const period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  return { recipe: "changed", slots: { zones, cat: catIn(t), period: period ?? "daily", fresh: true } };
+}
+
 /** the intents the fast lane must leave alone: a screen read from one of their words would answer another question ("what changed this week" is not this week's list) */
 const NOT_A_SCREEN = new Set<IntentKind>(["changed", "howknow", "recall", "forget", "remember", "mission", "skip", "instead", "stop"]);
 export const leavesFastLane = (text: string): boolean => { const m = intentMarker(text); return !!m && NOT_A_SCREEN.has(m.intent); };

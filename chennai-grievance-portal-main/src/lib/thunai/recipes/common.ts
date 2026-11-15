@@ -16,8 +16,11 @@ import type { Dim } from "./adtributor";
 export type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 export type Lang = "en" | "ta";
 
-/** The builder's context: structurally the one screens.ts gives every recipe (its Ctx), so a recipe here registers as it is. */
-export interface RecipeCtx { w: World; h: Hands; s: ScopeT; slots: Slots; heard: string; runs: string[]; sources: Set<string>; notes: string[]; asOf: string | null }
+/**
+ * The builder's context: screens.ts hands every recipe here its own Ctx through an adapter (screens.ts `analysis`), with the notes as
+ * plain lines and `ta` the turn's language (agent.ts and spanned.ts pass it to buildScreen). Without `ta`, the words heard decide.
+ */
+export interface RecipeCtx { w: World; h: Hands; s: ScopeT; slots: Slots; heard: string; runs: string[]; sources: Set<string>; notes: string[]; asOf: string | null; ta?: boolean }
 /** What a recipe returns: screens.ts's Part. */
 export interface RecipePart { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] }
 
@@ -26,6 +29,8 @@ export const clip = (s: unknown, n: number) => String(s ?? "").replace(/\s+/g, "
 export const num = (v: unknown): number | null => (v == null || v === "" || typeof v === "boolean" || !Number.isFinite(Number(v)) ? null : Number(v));
 /** The language the screen's own words are in: Tamil for Tamil script and for Tanglish (JARVIS_VOICE rule 10). */
 export const langOf = (heard: string): Lang => (detectLang(heard) === "ta" ? "ta" : "en");
+/** The screen's language: the turn's when the builder was told it (a Tamil turn heard as "Ambattur kuppai" is Tamil), else the words'. */
+export const langFor = (c: Pick<RecipeCtx, "heard" | "ta">): Lang => (c.ta === undefined ? langOf(c.heard) : c.ta ? "ta" : "en");
 export const pick = (lang: Lang, b: Bilingual) => (lang === "ta" ? b.ta : b.en);
 
 /** One read tool through the hands, recorded as screens.ts records it. */
