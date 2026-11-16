@@ -1,5 +1,6 @@
 // v5 F1 (no digit reaches any voice) and the voice's trace stamps (section 6.4), on the mouth. Invented sentences only.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { spoken } from "@/lib/thunai/insight";
 import { allowedSet, gateChunk } from "@/lib/thunai/numbergate";
 import { FakeCtx, FakeSynth, FakeUtterance, wavReply, type FakeVoice } from "./fakeaudio.testkit";
 
@@ -102,6 +103,22 @@ describe("F1: no digit reaches any voice", () => {
     expect(sent(1).text).toBe("பட்டியல் திரையில் உள்ளது.");
     expect(refused).toEqual([["47"], ["47"]]);
     for (const i of [0, 1]) expect(sent(i).text).not.toMatch(/forty|நாற்பத்/u);
+  });
+
+  it("review numbers-privacy-1: a count code wrote with spoken() (no grouping commas) is said as a number, English and Tamil", async () => {
+    const mouth = await load();
+    const shown = `Open complaints went up: ${spoken(12345)} now against ${spoken(11800)} before.`;
+    expect(shown).toContain("12345");
+    mouth.speakLines([shown], "en-IN", { allowed: allowedSet([12345, 11800]) });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sent(0).text).toBe("Open complaints went up: twelve thousand three hundred and forty-five now against eleven thousand eight hundred before.");
+    mouth.speakLines([`${spoken(120000)} cases this quarter.`], "en-IN");
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(sent(1).text).toBe("one lakh twenty thousand cases this quarter.");
+    mouth.speakLines([`இந்த மாதம் ${spoken(28420)} சம்பவங்கள் பதிவாயின.`], "ta-IN", { allowed: allowedSet([28420]) });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(sent(2).text).toBe("இந்த மாதம் இருபத்தெட்டாயிரத்து நானூற்று இருபது சம்பவங்கள் பதிவாயின.");
+    for (const i of [0, 1, 2]) expect(sent(i).text).not.toMatch(DIGIT);
   });
 
   it("text built by code (no allowed set) is said in words too", async () => {

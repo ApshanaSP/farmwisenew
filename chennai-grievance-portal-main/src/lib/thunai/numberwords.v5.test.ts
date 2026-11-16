@@ -164,3 +164,76 @@ describe("F1: the sentence's language, and where a word the voice is saying sits
     expect(nw.shownIndex(a, 0)).toBe(0);
   });
 });
+
+// review numbers-privacy-1: code writes its counts with no grouping commas (insight.ts spoken() is String(v)), and F1 read every such
+// run of five digits or more one digit at a time ("one two three four five"). A count is said as a number; only a clear code is read
+// digit by digit. The gate reads the text in digits, as before.
+describe("review numbers-privacy-1: an ungrouped count is said as a number; a code is still read digit by digit", () => {
+  it("English: a count of five digits or more with no grouping commas", () => {
+    const cases: [string, string][] = [
+      ["Open complaints went up: 12345 now against 11800 before.", "Open complaints went up: twelve thousand three hundred and forty-five now against eleven thousand eight hundred before."],
+      ["120000 cases this quarter.", "one lakh twenty thousand cases this quarter."],
+      ["The ward had 15560 first reports.", "The ward had fifteen thousand five hundred and sixty first reports."],
+      ["There are 12345678 rows.", "There are one crore twenty-three lakh forty-five thousand six hundred and seventy-eight rows."],
+      ["It was the 10000th complaint.", "It was the ten thousandth complaint."],
+      ["Closed (-12345) since May.", "Closed (minus twelve thousand three hundred and forty-five) since May."]
+    ];
+    for (const [t, w] of cases) {
+      expect(aloud(t, "en"), t).toBe(w);
+      expect(aloud(t, "en"), t).not.toMatch(DIGIT);
+    }
+  });
+  it("Tamil: a count of five digits or more with no grouping commas", () => {
+    const cases: [string, string][] = [
+      ["இந்த மாதம் 28420 சம்பவங்கள்.", "இந்த மாதம் இருபத்தெட்டாயிரத்து நானூற்று இருபது சம்பவங்கள்."],
+      ["120000 புகார்கள் வந்தன.", "ஒரு லட்சத்து இருபதாயிரம் புகார்கள் வந்தன."],
+      ["இன்று 15560 புகார்கள் 90 நாட்களில்.", "இன்று பதினைந்தாயிரத்து ஐந்நூற்று அறுபது புகார்கள் தொண்ணூறு நாட்களில்."]
+    ];
+    for (const [t, w] of cases) {
+      expect(aloud(t, "ta"), t).toBe(w);
+      expect(aloud(t, "ta"), t).not.toMatch(DIGIT);
+    }
+  });
+  it("property: 600 seeded ungrouped counts of 5 to 13 digits, said in words that read back to the same value; the gate's verdict on the digits is unchanged", () => {
+    let seed = 2207;
+    const rnd = (n: number) => { seed = (seed * 1664525 + 1013904223) % 2 ** 32; return seed % n; };
+    for (let i = 0; i < 600; i++) {
+      const n = 10_000 + [rnd(90_000), rnd(10_000_000), rnd(2 ** 31) * 1000 + rnd(1000)][i % 3];
+      const en = `There are ${n} open cases.`, ta = `${n} புகார்கள் வந்தன.`;
+      for (const t of [en, ta]) {
+        // the gate reads the figure in digits as it did: passed with it allowed, refused without
+        expect(gateChunk(t, allowedSet([n])).ok, t).toBe(true);
+        expect(gateChunk(t, new Set()).ok, t).toBe(false);
+      }
+      const we = aloud(en, "en"), wt = aloud(ta, "ta");
+      expect(we, en).not.toMatch(DIGIT);
+      expect(wt, ta).not.toMatch(DIGIT);
+      expect(readEn(we.slice("There are ".length, -" open cases.".length)), `${n}: ${we}`).toBe(n);
+      expect(readTa(wt.slice(0, -" புகார்கள் வந்தன.".length)), `${n}: ${wt}`).toBe(n);
+    }
+  });
+  it("a code is still read digit by digit: a PIN after a place name or the word PIN, a leading zero, more than 15 digits, an id after a number word (English and Tamil)", () => {
+    const en: [string, string][] = [
+      ["Velachery 600042.", "Velachery six zero zero zero four two."],
+      ["Adyar, Chennai - 600020.", "Adyar, Chennai - six zero zero zero two zero."],
+      ["The PIN 600042 is on the form.", "The PIN six zero zero zero four two is on the form."],
+      ["pincode: 600042.", "pincode: six zero zero zero four two."],
+      ["Ward 00123.", "Ward zero zero one two three."],
+      ["The figure 1234567890123456 is too long.", "The figure one two three four five six seven eight nine zero one two three four five six is too long."],
+      ["Complaint number 12345 is open.", "Complaint number one two three four five is open."],
+      ["Ticket No. 54321 was closed.", "Ticket No. five four three two one was closed."]
+    ];
+    for (const [t, w] of en) expect(aloud(t, "en"), t).toBe(w);
+    const ta: [string, string][] = [
+      ["சென்னை 600020.", "சென்னை ஆறு பூஜ்ஜியம் பூஜ்ஜியம் பூஜ்ஜியம் இரண்டு பூஜ்ஜியம்."],
+      ["அஞ்சல் குறியீடு 600020 உள்ளது.", "அஞ்சல் குறியீடு ஆறு பூஜ்ஜியம் பூஜ்ஜியம் பூஜ்ஜியம் இரண்டு பூஜ்ஜியம் உள்ளது."],
+      ["புகார் எண் 12345 திறந்துள்ளது.", "புகார் எண் ஒன்று இரண்டு மூன்று நான்கு ஐந்து திறந்துள்ளது."]
+    ];
+    for (const [t, w] of ta) expect(aloud(t, "ta"), t).toBe(w);
+  });
+  it("a count next to a place name is a count: only a Tamil Nadu PIN's shape after a place is read as a PIN", () => {
+    expect(aloud("Adyar 120000 complaints.", "en")).toBe("Adyar one lakh twenty thousand complaints.");
+    expect(aloud("Total 54321.", "en")).toBe("Total fifty-four thousand three hundred and twenty-one.");
+    expect(aloud("மொத்தம் 120000.", "ta")).toBe("மொத்தம் ஒரு லட்சத்து இருபதாயிரம்.");
+  });
+});
