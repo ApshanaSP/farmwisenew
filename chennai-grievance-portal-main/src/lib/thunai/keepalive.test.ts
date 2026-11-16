@@ -12,8 +12,9 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const seen = vi.hoisted(() => ({ calls: [] as { url: string; init: Record<string, unknown> }[], answer: null as null | ((url: string, init: Record<string, unknown>) => Response) }));
-vi.mock("undici", async (importOriginal) => {
-  const real = await importOriginal<typeof import("undici")>();
+/** npm undici with its fetch replaced by a fake that records its calls (also what a test that counts undici's loads registers again) */
+const fakeUndici = vi.hoisted(() => async (importOriginal: () => Promise<unknown>) => {
+  const real = (await importOriginal()) as typeof import("undici");
   return {
     ...real,
     fetch: vi.fn(async (url: string, init: Record<string, unknown>) => {
@@ -22,9 +23,10 @@ vi.mock("undici", async (importOriginal) => {
     })
   };
 });
+vi.mock("undici", fakeUndici);
 
 import { Agent } from "undici";
-import { groqFetch, KEEPALIVE_DEFAULT, KEEPALIVE_OPTIONS, keepAliveAgent, keepAliveOn, warmFetch } from "./keepalive";
+import { groqFetch, KEEPALIVE_DEFAULT, KEEPALIVE_OPTIONS, keepAliveAgent, keepAliveOn, nodeFitsUndici, warmFetch } from "./keepalive";
 import { resetLedger } from "./ledger";
 import { hearUtterance } from "./stt";
 import { generateJson } from "@/lib/ai/gateway";
@@ -117,6 +119,63 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     expect(keepAliveOn()).toBe(false);
     vi.stubEnv("VITEST", "");
     expect(keepAliveOn()).toBe(true);
+  });
+});
+
+// review planner-quota-9: npm undici 8.12.4's own package.json says engines node >= 22.19.0; the app declares node 22.x
+describe("an older Node (22.0-22.18): the built-in fetch, said once in the log, and undici never loaded", () => {
+  /** runs `f` as if this were Node `v` (process.versions.node is configurable), and puts the real one back */
+  async function onNode<T>(v: string, f: () => Promise<T>): Promise<T> {
+    const real = Object.getOwnPropertyDescriptor(process.versions, "node")!;
+    Object.defineProperty(process.versions, "node", { ...real, value: v });
+    try { return await f(); } finally { Object.defineProperty(process.versions, "node", real); }
+  }
+  it("which Node versions undici's engines allow", () => {
+    for (const v of ["22.19.0", "22.19.1", "22.20.0", "23.0.0", "24.21.0", "v24.1.0"]) expect(nodeFitsUndici(v), v).toBe(true);
+    for (const v of ["22.18.9", "22.18.0", "22.0.0", "20.19.0", "v22.18.0"]) expect(nodeFitsUndici(v), v).toBe(false);
+  });
+  it("JARVIS_KEEPALIVE=1 or unset: keep-alive is off, groqFetch is the built-in fetch, and the log says so once", async () => {
+    const builtin = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", builtin);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      await onNode("22.18.0", async () => {
+        vi.stubEnv("JARVIS_KEEPALIVE", "1");
+        expect(keepAliveOn()).toBe(false);
+        await groqFetch("https://api.groq.com/x", {});
+        vi.stubEnv("JARVIS_KEEPALIVE", "");
+        vi.stubEnv("VITEST", "");
+        expect(keepAliveOn()).toBe(false);
+        await groqFetch("https://api.groq.com/x", {});
+      });
+      expect(builtin).toHaveBeenCalledTimes(2);
+      expect(seen.calls).toHaveLength(0);
+      const said = warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("22.19.0"));
+      expect(said).toHaveLength(1);
+      expect(said[0]).toMatch(/22\.18\.0/);
+      expect(said[0]).toMatch(/built-in fetch/);
+    } finally { warn.mockRestore(); }
+  });
+  it("on an older Node undici is never even loaded (it is loaded on first use only); on a newer one the first warm request loads it", async () => {
+    const builtin = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", builtin);
+    vi.stubEnv("JARVIS_KEEPALIVE", "1");
+    let loads = 0;
+    vi.resetModules();
+    vi.doMock("undici", async (importOriginal) => { loads++; return fakeUndici(importOriginal); });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      const fresh = await onNode("22.18.0", async () => {
+        const k = await import("./keepalive");
+        await k.groqFetch("https://api.groq.com/x", {});
+        return k;
+      });
+      expect(loads).toBe(0);
+      expect(builtin).toHaveBeenCalledTimes(1);
+      await fresh.groqFetch("https://api.groq.com/x", {});
+      expect(loads).toBe(1);
+      expect(seen.calls).toHaveLength(1);
+    } finally { warn.mockRestore(); vi.doMock("undici", fakeUndici); }
   });
 });
 
