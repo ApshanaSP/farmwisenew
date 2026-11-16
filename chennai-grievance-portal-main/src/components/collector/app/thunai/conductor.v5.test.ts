@@ -12,7 +12,7 @@ import { ENGAGED_MS } from "@/lib/thunai/addressed";
 import { resetTrace, traces } from "./trace";
 
 const box = vi.hoisted(() => ({ e: null as null | FakeEars }));
-const mouth = vi.hoisted(() => ({ hooks: {} as { onStart?: (p: string, ack: boolean) => void; onEnd?: (ack: boolean) => void }, speaking: false, saying: null as string | null }));
+const mouth = vi.hoisted(() => ({ hooks: {} as { onStart?: (p: string, ack: boolean) => void; onEnd?: (ack: boolean) => void }, speaking: false, saying: null as string | null, bookmark: false }));
 
 interface FakeEars {
   hooks: {
@@ -49,7 +49,8 @@ vi.mock("./mouth", () => ({
   setMouthHooks: (h: typeof mouth.hooks) => { mouth.hooks = h; },
   speaking: () => mouth.speaking,
   nowSaying: () => mouth.saying,
-  canContinue: () => false,
+  // a cut answer's bookmark (mouth.ts stopVoice keeps it for "continue"): set by the test that needs one
+  canContinue: () => mouth.bookmark,
   continueAnswer: () => false,
   stopVoice: () => { mouth.speaking = false; mouth.saying = null; },
   duckVoice: () => undefined,
@@ -65,7 +66,7 @@ const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve()
 
 beforeEach(() => {
   posts = [];
-  mouth.speaking = false; mouth.saying = null;
+  mouth.speaking = false; mouth.saying = null; mouth.bookmark = false;
   vi.stubGlobal("fetch", (url: string, init: RequestInit) => new Promise<Response>((res, rej) => {
     posts.push({ url, init, res });
     init.signal?.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" })), { once: true });
@@ -227,6 +228,66 @@ describe("the trace's stamps (section 6.4): zero is the last voiced sample, not 
     expect(t2.at.sttBack).toBe((t2.at.uploadSent as number) + 250);
     expect(typeof t2.at.hearBack).toBe("number");
     expect(sentences.map((s) => s.trace)).toEqual([t2.n]);
+    c.close();
+  });
+});
+
+/**
+ * Review gate-captions-wake-3: talking over Jarvis's answer cuts it and keeps its bookmark (mouth.ts) until Jarvis speaks again, and
+ * bargeIns never falls back. The lane counted every later sentence as engaged on that alone (uncapped, two forced decodes, "didn't
+ * catch that" on a timeout, and the stand-in recogniser in an outage). Now that reckoning lasts ENGAGED_MS from the cut.
+ */
+describe("the engaged lane after a cut answer lasts ENGAGED_MS from the cut, not until Jarvis speaks again", () => {
+  const conf = { speech: 0.98, logprob: -0.1 };
+  afterEach(() => vi.restoreAllMocks());
+  /** Jarvis reads a long answer, the Collector talks over it ("okay show trends"), the voice is cut and its bookmark kept */
+  async function cutAnswer() {
+    const clock = { t: 5_000_000 };
+    vi.spyOn(Date, "now").mockImplementation(() => clock.t);
+    const starts: boolean[] = [];
+    // the console's last turn is left out (null): this is the lane's own reckoning of having been spoken over
+    const b = await boot({ lastTurnAt: () => null, onSpeechStart: (o) => { starts.push(o.engaged); } });
+    mouth.speaking = true; mouth.saying = "an invented long answer about the drains near the bridge being read out";
+    mouth.hooks.onStart?.("browser", false);
+    b.e.hooks.onQuickOnset?.(0);
+    b.c.partial("okay show trends");
+    expect(b.c.state).toBe("interrupted");
+    // mouth.ts stopVoice kept what was being said for "continue"
+    mouth.bookmark = true;
+    b.e.hooks.onVad({ type: "end", at: 2000, ms: 700, short: false }, 0);
+    expect(posts.length).toBe(1);
+    expect(param(posts[0], "lane")).toBe("engaged");
+    // the words were not for Jarvis after all: nothing comes of them, and the bookmark stays (nothing was said since)
+    posts[0].res(reply({ text: "", lang: "en", conf }));
+    await flush();
+    return { ...b, clock, starts };
+  }
+  it("30 s after the cut, with the bookmark still kept, room speech goes on the capped ambient lane, unengaged", async () => {
+    const { c, e, clock, starts } = await cutAnswer();
+    clock.t += 30_000;
+    expect(c.inWindow()).toBe(false);
+    say(e, 9000, 900);
+    expect(posts.length).toBe(2);
+    expect(param(posts[1], "lane")).toBe("ambient");
+    expect(param(posts[1], "engaged")).toBeNull();
+    // the speech start told the console it was not engaged (no captions, no stand-in recogniser)
+    expect(starts.at(-1)).toBe(false);
+    c.close();
+  });
+  it("inside ENGAGED_MS of the cut it is still engaged, as in v4 (the bookmark is kept for \"continue\")", async () => {
+    const { c, e, clock, starts } = await cutAnswer();
+    clock.t += ENGAGED_MS - 1_000;
+    say(e, 9000, 900);
+    expect(posts.length).toBe(2);
+    expect(param(posts[1], "lane")).toBe("engaged");
+    expect(starts.at(-1)).toBe(true);
+    c.close();
+  });
+  it("a millisecond past ENGAGED_MS from the cut it is ambient", async () => {
+    const { c, e, clock } = await cutAnswer();
+    clock.t += ENGAGED_MS + 1;
+    say(e, 9000, 900);
+    expect(param(posts[1], "lane")).toBe("ambient");
     c.close();
   });
 });
