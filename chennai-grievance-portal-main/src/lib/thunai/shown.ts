@@ -13,6 +13,8 @@ export function stageShownText(doc: StageDocT | null | undefined): string[] {
     else if (b.kind === "CaseDetail") out.push(b.incident.title, ...b.incident.what, ...(b.incident.why ? [b.incident.why] : []), ...b.timeline.map((t) => t.text));
     else if (b.kind === "NewsReader") out.push(...b.items.map((i) => i.title));
     else if (b.kind === "Brief") out.push(...b.points.map((p) => p.text));
+    // (review numbers-privacy-2) the complete screen lists unresolved complaints by title
+    else if (b.kind === "Filled") out.push(...b.rows.map((r) => r.title));
   }
   return out.filter((x) => typeof x === "string" && x.trim()).map((x) => x.slice(0, 300)).slice(0, 60);
 }
