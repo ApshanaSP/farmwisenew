@@ -37,9 +37,11 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 
 | Model | A (v3 prose, v3 schema) | B (v4, today) | G (route-then-fill) |
 |---|---|---|---|
-| gpt-oss-20b | 9/15 (60.0 %, 35.7-80.2) | 9/14 (64.3 %, 38.8-83.7), 1 capacity | 9/14 (64.3 %, 38.8-83.7), 1 capacity |
-| gpt-oss-120b | 11/18 (61.1 %, 38.6-79.7) | 15/17 (88.2 %, 65.7-96.7), 1 capacity | not run |
-| qwen3.8-27b | 9/14 (64.3 %, 38.8-83.7), 1 capacity | 12/15 (80.0 %, 54.8-93.0) | not run |
+| gpt-oss-20b | 9/15 (60.0 %, 35.7-80.2) | 9/14 (64.3 %, 38.8-83.7); all turns 9/15; one 429 | 9/13 (69.2 %, 42.4-87.3); all turns 9/15; one 429, one strict-mode 400 with no usable draft |
+| gpt-oss-120b | 11/18 (61.1 %, 38.6-79.7) | 15/17 (88.2 %, 65.7-96.7); all turns 15/18; one 429 | not run |
+| qwen3.8-27b | 9/13 (69.2 %, 42.4-87.3); all turns 9/15; one 429, one strict-mode 400 with no usable draft | 12/13 (92.3 %, 66.7-98.6); all turns 12/15; two strict-mode 400s with no usable draft | not run |
+
+Scored turns: a call that answered, or a draft the lenient schema accepted (as production does); a 429 and a strict-mode 400 with no usable draft are their own outcomes, not wrong answers (the files as rescored after the review). Compare pairs, not cells.
 
 | Pair (same model, same sentences; A, C, D, E only on recipes both schemas hold) | n | b | c | exact p | Reading |
 |---|---|---|---|---|---|
@@ -76,13 +78,13 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 | Run | Code | Gap between turns | Label | Right, all turns | Right, clean turns | EN | TA | Tanglish |
 |---|---|---|---|---|---|---|---|---|
 | First (16 Nov 23:20) | `6831ef74` | 12 s | **capacity failure** (19 turns no model answered; one 429) | 30/60 (50.0 %, 37.7-62.3) | 30/41 (73.2 %, 58.1-84.3) | 10/15 | 13/30 | 7/15 |
-| **Final** (16 Nov 23:37) | `e48f98d8` | 20 s | **clean** (no 429, every turn answered) | **36/60 (60.0 %, 47.4-71.4)** | the same | **12/15** | **14/30 (46.7 %, 30.2-63.9)** | **10/15** |
+| **Final** (16 Nov 23:37) | `e48f98d8` | 20 s | **clean** (no 429, no capacity row; 4 general-lane turns ended on the canned general line: below) | **36/60 (60.0 %, 47.4-71.4)** | the same | **12/15** | **14/30 (46.7 %, 30.2-63.9)** | **10/15** |
 
 - **Why the first run is a capacity failure:** with A2's honest estimate (the schema counted), the ladder refused Groq calls it knew would pass a model's minute allowance at a 12 s pace, so on most of the 19 turns only the last rung was left, and gemini-3.5-flash-lite refused the wide planner schema with 400 "too many states", which the gateway did not read as a schema refusal: no model answered. Fixed with a failing-first test (`febc7ccb`, `e48f98d8`: the refusal now falls back to plain JSON). The final run used a 20 s gap; the shipped code is the same at both gaps.
-- **Who answered, final run:** rules 16/25, qwen 15/20, gpt-oss-120b 4/8, gpt-oss-20b 0/6, flash-lite 1/1. 21 turns met a strict-mode 400 (`json_validate_failed`); 12 of them were answered from the provider's draft. One turn fell back a rung.
+- **Who answered, final run:** code lanes with no model (quick, refusals, frames, resolve) 16/21, qwen 15/20, gpt-oss-120b 4/8, gpt-oss-20b 0/6, flash-lite 1/1; 4 general-lane turns made 2 model calls each, and the reply was refused by code (a digit, figure or line check) and replaced by the canned general line, with no model credited: 0/4. 21 turns met a strict-mode 400 (`json_validate_failed`); 12 of them were answered from the provider's draft. One turn fell back a rung.
 - **Paired, by script (exact McNemar, same 60 sentences):** v5 final against v4's final (`v4final-groq-planner-live60.json`, 39/60): **b 4, c 7, p 0.55** (v4 right on 7 v5 misses, v5 right on 4 v4 misses): not significant either way. Against the pre-v4 run (`final-planner-live60.json`, 44/60): b 5, c 13, p 0.096. v5 first against v5 final: b 4, c 10, p 0.18 (19 of the first run's turns are capacity rows).
 - **Against the targets:** ≥ 52/60 **not met** (36); Tamil ≥ 26/30 **not met** (14). v5 did not move understanding on Groq: the grid selected no planner change (above), so the planner prompt is v4's, and the score sits inside v4's interval.
-- **Tokens a model turn, final run:** provider-reported input + output on the 23 answered turns that report usage: p50 1,803, p90 4,126; 4 over 2,500, all Tamil (the wide bundle). The 12 turns answered from a draft report no usage. The runner's own charge (its estimate, the schema counted, hedges and stopped calls included): p50 2,633 a model turn. Whole run: 51,058 prompt, 6,169 completion, 7,680 cached (Groq's prompt cache: 3,840 on a gpt-oss-20b answer, 3,840 on a turn no model answered in the end).
+- **Tokens a model turn, final run:** provider-reported input + output on the 23 answered turns that report usage: p50 1,803, p90 4,126; 4 over 2,500, all Tamil (the wide bundle). The 12 turns answered from a draft report no usage. The runner's own charge (its estimate, the schema counted, hedges and stopped calls included): p50 2,633 a model turn. Whole run: 51,058 prompt, 6,169 completion, 7,680 cached (Groq's prompt cache: 3,840 on a gpt-oss-20b answer, 3,840 on one of the general-lane turns whose reply code replaced).
 - **Turn time in the runner** (no voice, no speech-to-text): p50 1,165 ms, p90 3,414 ms.
 
 ### New intents: holdout3's live30 on the shipped Groq ladder (final code)
@@ -190,8 +192,8 @@ A measurement lane outside the app (its own scratch folder; models and clips dow
 | First spoken finding, planner lane | p50 ≤ 2.2 s | report | about 2.2-2.4 s on 3 planner turns (real run 2, E2 on); 6.7 s on the one turn of real run 1 (a stalled qwen call); mocked 2.0 s |
 | First spoken finding, rules lane | ≤ 1.0 s | report | 1.47 s on one clean clip: not met |
 | Speech-to-text, server, engaged | p50 ≤ 700 ms | report | 442 ms per turn, n 6 (real run 2) |
-| Planner tokens a turn | ≤ 2,500 | report, three counts | code's own count (system + user, no schema): screens about 1,220, wide about 1,890; provider input with schema (grid cell B, answered calls): about 1,600-2,200 a call; input + output a model turn on the final live-60: provider-reported p50 1,803, p90 4,126 on the 23 answered turns that report usage (4 over 2,500, all Tamil); the runner's charge p50 2,633. English screens may meet 2,500; Tamil (wide) does not |
-| Capacity failures in each live run | count | report | grid: one 429 in five of nine cell-model files; live-60 first run 19 turns with no model, final run clean (0 turns); new-intents run 2 turns no model answered (no 429) |
+| Planner tokens a turn | ≤ 2,500 | report, three counts | code's own count (system + user, no schema): screens about 1,220, wide about 1,890; provider input with schema (grid cell B, the 19 answered calls that report usage): 1,344-4,121 a call (qwen about 1,350 on screens and 2,130-2,280 on wide; gpt-oss-120b 2,418-2,567; gpt-oss-20b on wide 3,987-4,121); input + output a model turn on the final live-60: provider-reported p50 1,803, p90 4,126 on the 23 answered turns that report usage (4 over 2,500, all Tamil); the runner's charge p50 2,633. English screens may meet 2,500; Tamil (wide) does not |
+| Capacity failures in each live run | count | report | grid: one 429 in six of nine cell-model files (A on qwen; B on both gpt-oss; G, D, E on gpt-oss-20b); live-60 first run 19 turns with no model, final run clean (0 capacity turns; 4 general-lane turns ended on the canned general line); new-intents run 2 turns no model answered (no 429) |
 | The per-stage trace: where the unexplained time sits | found or not | report | in the planner's round 0 (a slow qwen call held by the 3.5 s default hedge wait) and second, lookup rounds; not in the voice start (n small) |
 | The grid: every cell run, every pair | complete | report | A, B on three models; G, D, E on gpt-oss-20b; C, F owed; pairs above |
 | No live Claude call | none in any log or result | gate | none: every live run pinned Groq with the key removed; `JARVIS_CLAUDE_OFF=1` on every live server |

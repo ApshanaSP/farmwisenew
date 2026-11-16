@@ -9,7 +9,7 @@ This page is what you do on deploy day. It takes about 20 minutes.
 The Anthropic key in `chennai-grievance-portal-main/.env` returned 401 (not accepted) on 15 Nov 2026.
 
 1. Make a new key at https://console.anthropic.com (Settings, API keys).
-2. In `chennai-grievance-portal-main`, run `npm run ai:key` and paste it. Or set `ANTHROPIC_API_KEY=...` in `.env` yourself.
+2. In `chennai-grievance-portal-main/.env`, set `ANTHROPIC_API_KEY=...` yourself. (`npm run ai:key` takes only AWS and Groq keys: it does not write an Anthropic key.)
 3. Make sure `JARVIS_CLAUDE_OFF` is not set, in `.env` or in your shell. While it is `1`, nothing reaches Anthropic.
 
 Never paste the key into a chat, a file in git, or a screenshot.
@@ -35,7 +35,7 @@ What it does:
 1. **Key.** One tiny call. If it prints `key refused`, it stopped at once and cost nothing. Go back to step 1.
 2. **Timing.** Three settings, 40 calls each: effort low; effort medium; effort low with the compact plan. Thinking is off in all three.
 3. **Accuracy.** The 24 tuning sentences in each setting, scored as the Groq grid was, and compared with each Groq model.
-4. **Live-60.** The 60 frozen test sentences through the real planner, with Haiku alone, in the setting step 3 picked. It is compared with this build's final Groq run: the file `eval/holdout2/results/v5final-planner-live60.json`, which this command writes (run it first, from `chennai-grievance-portal-main`):
+4. **Live-60.** The 60 frozen test sentences through the real planner, with Haiku alone, in the setting step 3 picked. It is compared with this build's final Groq run, `eval/holdout2/results/v5final-planner-live60.json` (36/60), which is already in the branch. **Do not run its command again**: it would overwrite that file with a new run (about 170K Groq tokens). For the record, it was made with (from `chennai-grievance-portal-main`, plus `JARVIS_CLAUDE_OFF=1 LIVE_GAP_MS=20000`):
 
    ```
    HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v5final npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts
@@ -105,4 +105,4 @@ https://platform.claude.com/docs/en/manage-claude/api-and-data-retention
 
 We did not find whether the flagged-chat retention can be turned off. Read the page again before you deploy, and ask Anthropic if you need zero retention.
 
-Jarvis is built never to send audio, a citizen's own words, a phone number or an Aadhaar number to any model. It sends the Collector's sentence as text and the console's state.
+Jarvis is built never to send audio, a citizen's own words, a phone number or an Aadhaar number to Claude. Audio goes only to Groq's Whisper, for speech-to-text. It sends the Collector's sentence as text and the console's state.

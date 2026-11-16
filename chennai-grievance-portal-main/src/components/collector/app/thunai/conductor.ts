@@ -32,7 +32,7 @@
  *  - The trace (section 6.4, trace.ts): a sentence sent to /hear opens a turn whose zero is its last voiced sample (the ears give
  *    it), then "eou" (the detector's decision), "uploadSent", the server's sttSent/sttBack offsets and "hearBack". The HeardLine
  *    carries the trace's number so the console stamps "gateDone" and the lane on that turn only. Timings only, never words.
- *  - E2, early speech-to-text (NEXT_PUBLIC_JARVIS_EARLY_STT, on unless "0"): at the ears' pause (TUNING.earlySttMs, 150 ms of quiet
+ *  - E2, early speech-to-text (NEXT_PUBLIC_JARVIS_EARLY_STT, off unless "1"): at the ears' pause (TUNING.earlySttMs, 150 ms of quiet
  *    inside a sentence whose end is not decided yet) an engaged sentence goes to /hear at once. The end of utterance is decided as
  *    before (300 ms, or eou.ts's values) and the turn machine is unchanged: at the end, that request is the sentence's transcription
  *    (the audio is not sent again). If the voice comes back first it is aborted and the whole sentence goes at its end, so a
@@ -60,7 +60,7 @@ export const AMBIENT_PER_MIN = 8;
  * the capped ambient lane still uploads, so a name said late in a sentence is found in the transcript.
  */
 const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1";
-/** v5 (E2): NEXT_PUBLIC_JARVIS_EARLY_STT=0 sends every sentence at its end, as before; anything else (unset too) sends it at its pause */
+/** v5 (E2): NEXT_PUBLIC_JARVIS_EARLY_STT=1 sends a sentence at its pause; anything else (unset too) sends every sentence at its end, as before */
 // E2 ships OFF: in the second real run (16 Nov, Edge, synthetic English clips) two clips that Whisper's race reads right whole came
 // back as Tamil when their early upload was used, and right in the run before E2; until the real-room check clears it, "1" turns it on
 const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT === "1";
