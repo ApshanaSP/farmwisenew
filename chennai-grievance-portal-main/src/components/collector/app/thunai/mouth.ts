@@ -220,6 +220,19 @@ function voiced(text: string, line: number, first: boolean, l: "ta" | "en"): Pie
 }
 
 /**
+ * Text for a voice outside this mouth (review voice-detector-latency-5: the read-aloud on an answer card, assistant/AnswerCard.tsx, which
+ * the Jarvis tab shows for Jarvis's answers): the same step as an answer's chunks (voiced). It is cut into the same chunks, each with its
+ * numbers in words in its sentence's language; a chunk that still holds a number sign is not said (a count is logged, never the text).
+ * The chunks are joined by a space; null when none is left. No gate here: the card's figures are its own (its verifier checked them);
+ * this keeps every digit from the voice (F1).
+ */
+export function wordsAloud(text: string, lang: string): string | null {
+  const l = short(lang);
+  const said = chunks(text).map((c) => voiced(c, 0, false, l)?.voice.text).filter((t): t is string => !!t);
+  return said.length ? said.join(" ") : null;
+}
+
+/**
  * The gate on every chunk: a figure code did not supply is not said (the chunk stays on screen). The chunk is then put as it
  * will be said (lakh and crore), and that is gated again, with the rounded values the spoken forms say. Last, its numbers go into
  * words for the voice (voiced).
