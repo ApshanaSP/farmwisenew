@@ -3,10 +3,11 @@
  * in the room can command it; this decides only whether a sentence was addressed to it.
  *   1 named:    contains "Jarvis" or ஜார்விஸ் -> act
  *   2 engaged:  within 20 s of Jarvis's last turn, and it parses as a request or follow-up -> act
- *   3 command:  the bare stop word -> act, level A only. Inside the 20 s, a line the rules resolve with confidence and slots, or
- *               an imperative plus a district noun, that tier 2's shape test passed by -> act, level A only. v5 (C1) cut this
- *               tier outside the 20 s: unnamed and unengaged, a console-shaped line is most often said to someone else.
- *               JARVIS_GATE_COMMAND_TIER=1 (NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1 in the browser) or `commandTier` brings v4 back
+ *   3 command:  the bare stop word -> act, level A only. v4 also took, at level A, a line the rules resolve with confidence and
+ *               slots, or an imperative plus a district noun, that tier 2 did not take. v5 (C1) cut those two returns, inside the
+ *               20 s and outside it: unnamed, a console-shaped line that is not asked as a request is most often said to someone
+ *               else. JARVIS_GATE_COMMAND_TIER=1 (NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1 in the browser) or `commandTier` brings
+ *               them back
  *   0 ignored:  a faint line on screen for 2 s, not logged, and the planner never sees it
  * Levels B and C need tier 1 or 2. When unsure, do not act: a wrong silent ignore is put right by saying "Jarvis"; acting on
  * someone's side conversation is not.
@@ -24,14 +25,14 @@ export interface GateInput {
   rulesSure: boolean;
   /** a zone, department or topic the district knows is in the sentence */
   districtNoun: boolean;
-  /** v4's command tier outside the engaged window: true brings it back, false keeps it cut; unset, the env decides (commandTierOn) */
+  /** v4's command tier (both returns, in the engaged window and out of it): true brings it back, false keeps it cut; unset, the env decides (commandTierOn) */
   commandTier?: boolean;
 }
 
 export const ENGAGED_MS = 20_000;
 
 /**
- * v4's unengaged command tier, cut in v5 (C1). JARVIS_GATE_COMMAND_TIER=1 on the server or in a harness;
+ * v4's command tier, cut in v5 (C1) in the engaged window and out of it. JARVIS_GATE_COMMAND_TIER=1 on the server or in a harness;
  * NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1 in the browser, where only NEXT_PUBLIC_ is inlined at build time (read first: it never
  * touches `process` once inlined). Default off.
  */
@@ -67,7 +68,7 @@ const SIDE_TOPIC = /\b(tea|coffee|traffic)\b/;
 const SIDE_TOPIC_TA = /(டீ |காபி|டிராபிக்)/;
 const IMPERATIVE_EN = /^ (please )?(show|open|go to|go|list|display|compare|pull up|bring up|read|filter|switch|change|set|zoom|sort|give me|tell me|get me|take me|find|map|rank|build|make|create|draft|export|close|summarise|summarize|brief me|update me) /;
 const IMPERATIVE_TA = /(?:^|\s)(காட்டு|காட்டுங்க|காட்டுங்கள்|காமி|காமிங்க|திற|திறங்க|திறந்து|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|ஒப்பிடு|ஒப்பிடுங்க|ஒப்பிட்டு|பாரு|பாருங்க|போங்க|மாத்து|மாத்துங்க|மாற்று|படி|படிங்க|வாசி|போடு|போடுங்க|கொடு|கொடுங்க|தா) *$/;
-const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaatunga|kattunga|katunga|thira|thiranga|thirandhu|sollu|sollunga|oppidu|oppidunga|paaru|paarunga|ponga|maathu|mathu|maathunga|padi|padinga|podu|podunga|kudu|kudunga|show pannu|open pannu|compare pannu|list pannu|filter pannu|map pannu|sort pannu)\s*$/;
+const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaattunga|kaatunga|kattunga|katunga|thira|thiranga|thirandhu|sollu|sollunga|oppidu|oppidunga|paaru|paarunga|ponga|maathu|mathu|maathunga|padi|padinga|podu|podunga|kudu|kudunga|show pannu|open pannu|compare pannu|list pannu|filter pannu|map pannu|sort pannu)\s*$/;
 /** the shape of a request or a follow-up: for tier 2 */
 const REQUEST_EN = /^ (and|what|whats|why|how|which|where|who|when|same|also|now|only|just|no|not|then|next|compare|show|open|go|list|read|tell|give|filter|sort|zone|in|for|at|more|less|top|worst|best|first|second|third|last|today|please|ok|okay|yes|can|could|would|is|are|was|were|do|does|did(?! you| i )|put|make|build|create|get|bring|check|look|find|pull|prepare|summarise|summarize|brief|run|add|change|set|switch|draft|export|map|rank|save|pin|remember|remind) /;
 const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத்தனை|எவ்வளவு|எது|(?:^|\s)யார்|எப்படி|எப்போ|ஆ\?|ஆ *$)/;
@@ -139,9 +140,9 @@ export function addressed(i: GateInput): Addressed {
   if (engaged && looksRequest(text) && !looksSide(text, true, i.districtNoun) && !chore(text, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text, false, i.districtNoun)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };
   if (chore(text) || statement(text, norm(text))) return { tier: 0, act: false, text, maxLevel: null, why: "aside" };
-  // the command tier: inside the window as in v4; outside it only with the switch (C1: no name and no recent turn, a command-shaped
-  // line is someone else's, and saying "Jarvis" puts a wrong ignore right)
-  if (engaged || commandTierOn(i.commandTier)) {
+  // the command tier, cut in v5 (C1), inside the 20 s window and outside it: only the switch brings both returns back. Unnamed, a
+  // command-shaped line that tier 2 did not take is most often someone else's, and saying "Jarvis" puts a wrong ignore right
+  if (commandTierOn(i.commandTier)) {
     if (i.rulesSure && (isImperative(text) || i.districtNoun)) return { tier: 3, act: true, text, maxLevel: "A", why: "rules" };
     if (isImperative(text) && i.districtNoun) return { tier: 3, act: true, text, maxLevel: "A", why: "imperative" };
   }
