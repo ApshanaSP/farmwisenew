@@ -75,3 +75,24 @@ describe("A2: a stopped call is recorded with the schema counted, as estimate() 
     expect(recorded.reduce((a, s) => a + s.tokens, 0)).toBe(Math.ceil((system.length + prompt.length + schemaText(schema).length) / 3.5));
   });
 });
+
+// review planner-quota-7: nothing in the default spec config kept a spec server off Claude (only the shell did), and the dev server's
+// console translator (/api/i18n through AI_PROVIDER) spent Groq quota during specs. No spec asserts on a live translation: the
+// helpers-based specs and vadfake mock /api/i18n, hud.spec only takes screens, pass4-client runs on its own server (QA_BASE).
+vi.mock("@playwright/test", () => ({ defineConfig: (c: unknown) => c }));
+describe("the spec servers (playwright.config.ts): never Claude; the dev one asks no console AI provider", () => {
+  afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
+  const serverEnv = async (prod: boolean) => {
+    vi.stubEnv("SPEC_PROD", prod ? "1" : "");
+    vi.resetModules();
+    return ((await import("../../../playwright.config")).default as unknown as { webServer: { env: Record<string, string> } }).webServer.env;
+  };
+  it("both webServer env blocks (dev, and SPEC_PROD's production bundle) set JARVIS_CLAUDE_OFF=1", async () => {
+    expect((await serverEnv(false)).JARVIS_CLAUDE_OFF).toBe("1");
+    expect((await serverEnv(true)).JARVIS_CLAUDE_OFF).toBe("1");
+  });
+  it("the dev server's console AI is none: AI_PROVIDER, AI_FORCE_PROVIDER, AI_FALLBACK_PROVIDER and AI_CHAT_PROVIDER", async () => {
+    const env = await serverEnv(false);
+    for (const k of ["AI_PROVIDER", "AI_FORCE_PROVIDER", "AI_FALLBACK_PROVIDER", "AI_CHAT_PROVIDER"]) expect(env[k], k).toBe("none");
+  });
+});
