@@ -85,6 +85,20 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 - **Tokens a model turn, final run:** provider-reported input + output on the 23 answered turns that report usage: p50 1,803, p90 4,126; 4 over 2,500, all Tamil (the wide bundle). The 12 turns answered from a draft report no usage. The runner's own charge (its estimate, the schema counted, hedges and stopped calls included): p50 2,633 a model turn. Whole run: 51,058 prompt, 6,169 completion, 7,680 cached (Groq's prompt cache: 3,840 on a gpt-oss-20b answer, 3,840 on a turn no model answered in the end).
 - **Turn time in the runner** (no voice, no speech-to-text): p50 1,165 ms, p90 3,414 ms.
 
+### New intents: holdout3's live30 on the shipped Groq ladder (final code)
+
+`JARVIS_CLAUDE_OFF=1 LIVE_GAP_MS=20000 HOLDOUT=planner3 HOLDOUT_DIR=holdout3 HOLDOUT_SET=live30 HOLDOUT_TAG=v5final … holdout.live.ts`, 16 Nov 23:44-23:52 on `cc6d4622` (code as `e48f98d8`). The runner checked the ledger first (about 293K Groq tokens left against the 270K it needs). Only the runner's printed summary was read; no row of holdout3. Raw file: `eval/holdout3/results/v5final-planner3-live30.json`.
+
+| | v4 final (15 Nov, quoted) | **v5 final** |
+|---|---|---|
+| live30 through the planner | 6/29 (20.7 %, 9.8-38.4), 1 capacity | **7/28 clean (25.0 %, 12.7-43.4); 7/30 all turns (23.3 %, 11.8-40.9)**; 2 turns no model answered (no 429; 7 strict-mode 400s in the run) |
+| explain / changed / howknow / mission | 0/5 · 0/3 · 0/2 · 0/2 | 2/5 · 0/3 · 0/2 · 0/2 |
+| brief / remember / recall / follow-ups | 1/3 · 0/4 · 0/2 · 5/9 | 1/3 · 0/4 · 1/2 · 3/9 |
+| rules3, all 120, no model | 12 right, 92 left to the planner | **12 right, 92 left** (EN 8/35, TA 2/50, Tanglish 2/35; `v5final-rules3-all.json`) |
+
+- **≥ 75 % not met** (25.0 %). Who answered: qwen 2/10, gpt-oss-20b 2/5, gpt-oss-120b 0/4, flash-lite 2/4, no model 1/7. Tokens: 42,622 prompt, 5,131 completion, 4,864 cached.
+- **Not paired with v4's run:** v4's result file is not named in its docs, and this build does not list holdout3. The by-intent rows above are unpaired counts on the same 30 sentences; the difference (one more right) is within either interval.
+
 ### Latency and the per-stage trace
 
 Every trace time is ms from the **last voiced sample** (the detector's own end of speech, not its decision), timings only. Server stages are placed on the page clock (one machine: the browser and the server share the clock).
