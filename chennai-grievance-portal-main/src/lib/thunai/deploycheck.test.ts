@@ -4,13 +4,15 @@
  * the decision and the env lines it prints, the Groq file Step 4 pairs against, the ledger check, and the eval-only ladder pin.
  * No model call. Invented values only.
  */
+import fs from "fs";
+import os from "os";
 import path from "path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  ARMS, CAP_USD, PRICE, Spend, armEnv, armP50, costUsd, cycleTo, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm,
-  pickLead, quantile, rateLimitHeaders, timingSets, type TimingRow
+  ARMS, CAP_USD, HAIKU, PRICE, Spend, armEnv, armP50, callTokens, costUsd, cycleTo, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, ownLedger,
+  pairTuning, pickArm, pickLead, quantile, rateLimitHeaders, timingSets, type TimingRow
 } from "./deploycheck";
-import { Ledger, MemoryStore } from "./ledger";
+import { Ledger, MemoryStore, ledger, resetLedger } from "./ledger";
 import { ladder } from "./llm";
 
 describe("cost: Haiku 5.5's prices, and the run stops before US$0.50", () => {
@@ -129,8 +131,25 @@ describe("the decision", () => {
     expect(pickLead(900, { b: 2, c: 4 }).lead).toBe("haiku");
     expect(pickLead(900, { b: 1, c: 4 }).lead).toBe("groq");
     expect(pickLead(1501, { b: 5, c: 0 }).lead).toBe("groq");
-    expect(pickLead(1500, null).lead).toBe("haiku");
-    expect(pickLead(null, null).lead).toBe("haiku");
+    expect(pickLead(1500, { b: 0, c: 0 }).lead).toBe("haiku");
+  });
+
+  // review planner-quota-5: a Step 4 that did not run (refused by its ledger check, the cost cap, a stop, no file to pair with) used to
+  // print JARVIS_PLANNER_LEAD=haiku all the same
+  it("Step 4 did not run: the lead is undecided, never haiku by default (the p50 rule alone can still say groq)", () => {
+    expect(pickLead(1500, null).lead).toBe("undecided");
+    expect(pickLead(null, null).lead).toBe("undecided");
+    expect(pickLead(900, null).why.join(" ")).toMatch(/undecided/);
+    expect(pickLead(1501, null).lead).toBe("groq");
+  });
+  it("undecided: no JARVIS_PLANNER_LEAD line is set; the lines say it is undecided and give both lines to set by hand", () => {
+    const low = ARMS.find((a) => a.id === "low")!;
+    const lines = envLines(low, "undecided");
+    expect(lines.filter((l) => /^\s*(set\s+)?JARVIS_PLANNER_LEAD=/.test(l))).toEqual([]);
+    expect(lines.some((l) => l.startsWith("#") && /undecided/.test(l))).toBe(true);
+    expect(lines.some((l) => l.startsWith("#") && /JARVIS_PLANNER_LEAD=groq/.test(l))).toBe(true);
+    expect(lines.some((l) => l.startsWith("#") && /JARVIS_PLANNER_LEAD=haiku/.test(l))).toBe(true);
+    expect(lines.slice(-2)).toEqual(["JARVIS_HAIKU_EFFORT=low", "JARVIS_PLAN_COMPACT=0"]);
   });
 
   it("the env lines to set, and the groq line when Groq should lead; it never writes .env", () => {
@@ -142,6 +161,7 @@ describe("the decision", () => {
 });
 
 describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
+  afterEach(() => { vi.unstubAllEnvs(); resetLedger(); });
   it("this build's final Groq live-60 file when it exists, else v4's, and says which", () => {
     const has = (names: string[]) => (f: string) => names.some((n) => f.endsWith(n));
     expect(liveBaseline("R", has(["v5final-groq-planner-live60.json", "v4final-groq-planner-live60.json"]))).toMatchObject({ which: "v5final" });
@@ -181,6 +201,50 @@ describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
     expect(ledgerCheck({ ok: true, left: { rpd: 100, tpd: 1_000_000 } }, 60).ok).toBe(false);
     expect(ledgerCheck({ ok: true, left: { rpd: 400, tpd: 100_000 } }, 60).ok).toBe(false);
     expect(ledgerCheck({ ok: false, left: { rpd: 400, tpd: 1_000_000 } }, 60).ok).toBe(false);
+  });
+
+  // review planner-quota-5: Steps 2-3 put about 200 calls in the ledger, 72 of them back to back, so the ledger's minute (rpm 50,
+  // tpm 50K) was always full when Step 4's check ran, and the day could be too short for the live-60
+  it("the minute just after Step 3 does not refuse Step 4 (Step 4 waits for the minute, sentence by sentence); cooling still does", () => {
+    let now = 1_800_000_000_000;
+    const l = new Ledger(new MemoryStore(), () => now);
+    for (let i = 0; i < 60; i++) { l.record("anthropic", HAIKU, { tokens: 4000, lane: "eval" }); now += 900; }
+    const r = l.room("anthropic", HAIKU);
+    expect(r.ok).toBe(false);
+    expect(["rpm", "tpm"]).toContain(r.why);
+    expect(ledgerCheck(r, 60)).toMatchObject({ ok: true });
+    expect(ledgerCheck({ ok: false, why: "cooling", left: { rpd: 400, tpd: 1_000_000 } }, 60).ok).toBe(false);
+  });
+  it("Step 4's need is sized from the tokens a call took in Step 2 (never under 3,000 a call), the ledger's way: cache reads in full", () => {
+    const room = { ok: true, why: null, left: { rpd: 500, tpd: 1_000_000 } };
+    expect(ledgerCheck(room, 60).ok).toBe(true); // 60 x 4 x 3,000 = 720,000
+    expect(ledgerCheck(room, 60, 4_800)).toMatchObject({ ok: false }); // 60 x 4 x 4,800 = 1,152,000
+    expect(ledgerCheck(room, 60, 4_800).line).toMatch(/1152000/);
+    expect(ledgerCheck(room, 60, 1_000).ok).toBe(true);
+    expect(ledgerCheck({ ...room, left: { rpd: 500, tpd: 1_500_000 } }, 60, 4_800).ok).toBe(true);
+    const t = (ms: number, u: Partial<TimingRow>): TimingRow => ({ arm: "low", bundle: "screens", cold: false, ms, outcome: "ok", output_tokens: 0, input_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, stop_reason: "end_turn", path: "format", ...u });
+    const rows = [t(800, { input_tokens: 600, cache_read_input_tokens: 2000, output_tokens: 200 }), t(900, { input_tokens: 1000, cache_read_input_tokens: 3000, cache_creation_input_tokens: 500, output_tokens: 300 }),
+      t(50, { outcome: "rate_limited" })];
+    expect(callTokens(rows)).toBe(3800);
+    expect(callTokens([])).toBeNull();
+  });
+  it("the check keeps its calls in a ledger of its own, never Jarvis's; Step 4 starts on a fresh one, so Steps 1-3 do not take its day", () => {
+    const jarvis = fs.mkdtempSync(path.join(os.tmpdir(), "jv-dc-jarvis-"));
+    vi.stubEnv("THUNAI_DIR", jarvis);
+    resetLedger();
+    const first = ownLedger("steps1-3");
+    expect(first).not.toBe(jarvis);
+    expect(process.env.THUNAI_DIR).toBe(first);
+    for (let i = 0; i < 200; i++) ledger().record("anthropic", HAIKU, { tokens: 4500, lane: "eval" });
+    expect(ledger().room("anthropic", HAIKU).left.tpd).toBe(1_500_000 - 900_000);
+    const step4 = ownLedger("step4");
+    expect(step4).not.toBe(first);
+    const r = ledger().room("anthropic", HAIKU);
+    expect(r.left).toMatchObject({ rpd: 500, tpd: 1_500_000 });
+    expect(ledgerCheck(r, 60, 4500).ok).toBe(true);
+    vi.stubEnv("THUNAI_DIR", jarvis);
+    resetLedger();
+    expect(ledger().spent("anthropic", HAIKU, 86_400_000).requests).toBe(0);
   });
 });
 
