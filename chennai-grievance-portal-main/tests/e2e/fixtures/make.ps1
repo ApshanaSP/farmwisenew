@@ -16,6 +16,9 @@ $clips = @{
   "b6" = "Show me the flooding complaints in Velachery."
   "b7" = "Actually read me the news from this morning."
   "b8" = "Change it to the weekly view for the whole district."
+  # v5: one clip that names Jarvis, so a run opens engaged (C1 refuses an unnamed command while Jarvis is idle); made once with
+  # Microsoft David Desktop and prepare.py's lead-in (seed 5), not by re-running this whole script
+  "named_b6" = "Jarvis, show me the flooding complaints in Velachery."
   "answer" = "Adyar has nine severe cases today, most of them waterlogging on the main roads near the bridge. Perungudi is second with blocked drains and four severe cases. The Storm Water Drains department has the most of them open, and two are past their deadline. I have put the list on the screen beside the map."
 }
 $voices = @("Microsoft David Desktop", "Microsoft Zira Desktop")

@@ -62,5 +62,9 @@
  "open_ended2": {
   "speechMs": 600,
   "durMs": 5160
+ },
+ "named_b6": {
+  "speechMs": 600,
+  "durMs": 4935
  }
 }

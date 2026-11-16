@@ -55,7 +55,7 @@ test("real providers, end to end", async ({ page }) => {
   // v5 C1: an unnamed command with Jarvis not engaged is refused, so the run opens with a clip that names Jarvis ("Jarvis, ..."); the
   // others follow inside the 20 s follow-up window, as a Collector's next sentences do
   const traces: { lane: string | null; stages: Record<string, number> }[] = [];
-  for (const [clip, lane] of [["b6", "rules"], ["cmd_trends", "rules"], ["cmd_adyar", "rules"], ["b3", "rules"], ["open_ended", "planner"], ["open_ended2", "planner"]] as const) {
+  for (const [clip, lane] of [["named_b6", "rules"], ["cmd_trends", "rules"], ["cmd_adyar", "rules"], ["b3", "rules"], ["open_ended", "planner"], ["open_ended2", "planner"]] as const) {
     await clearMarks(page);
     await page.waitForTimeout(600);
     await say(page, clip);

@@ -884,7 +884,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   const moves = plan.kind === "do" && plan.done === false && !real ? lookSteps(plan, b.text, world, state.now) : [];
   if ((wantsLook || moves.length) && b.round < MAX_ROUNDS - 1 && now() < t.until) {
     const ran = wantsLook ? await timed(lang === "ta" ? "தரவைப் படிக்கிறேன்" : `Reading ${plan.calls.map((c) => c.tool).join(", ").slice(0, 60)}`, () => executeCalls(plan.calls, { period: state.period }, hands, t, signal)) : 0;
-    const later: RoundOut = { done: false, result: null, steps: moves, trace, tokens: t.tokens, calls: t.calls, hops: r.hops, lane: "planner", cached: false };
+    // (the trace: this round's planner call too, so a turn's first planner call is the one the browser stamps; first stamp wins)
+    const later: RoundOut = { done: false, result: null, steps: moves, trace, tokens: t.tokens, calls: t.calls, hops: r.hops, lane: "planner", cached: false, timing: { ...stagesAt } };
     // the browser runs the steps and posts how they went, with the screen they made; the next round sees them
     if (moves.length) return later;
     if (ran) {
