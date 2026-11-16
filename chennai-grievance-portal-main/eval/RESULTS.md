@@ -151,6 +151,23 @@ Trace (n 6, p50 / p90): upload sent 187 / 338 (the early upload, before the end 
 - **Inside the follow-up window** a sixth to under a third of the look-alike side lines said within 5 s of Jarvis's turn are taken as addressed (request-shaped lines, tier 2), which allows a level B or C plan (B still waits for a spoken yes; C is a draft only; nothing is ever sent, approved or deleted). The first build kept the two command returns inside the window; the review (gate-captions-wake-1) held that C1 says to remove both, so they now fire only with `JARVIS_GATE_COMMAND_TIER=1`. The price: a sure line with no request shape said inside the window ("severe cases in Perungudi this week") is refused unless named or said as a request. With an 8 s window a line 10 s after the turn is unengaged (0 acted); with the shipped 20 s window it is engaged. `ENGAGED_MS` stays 20,000.
 - **"≤ 5 %" on side talk, unengaged:** 0/200 has an upper bound of 1.9 %, so it is met on the drafted set by construction of the harness. Not claimed for a real room, or for the engaged window (29.0 % there).
 
+### Free local Tamil decode (B5): measured, not wired
+
+A measurement lane outside the app (its own scratch folder; models and clips downloaded there, deleted after, never in git). Figures, hashes and licences only: `eval/b5/b5-results.json` (no sentence; 0 Tamil characters). **Clips:** 200 of FLEURS `ta_in` test (read Tamil, CC-BY-4.0, test use only), seed 20261115. **Reference system:** Groq `whisper-large-v3`, `language=ta`, no prompt (200 requests, all answered). One normaliser on both sides. Runtime `sherpa-onnx-node` 2.0.1 on the CPU (Ryzen 5 5600H: AVX2, no AVX-512, no AVX-VNNI). Speed on the 50 natural 5-7 s clips at 4 threads, one decoder at a time.
+
+| System | WER | CER | WER below Groq, paired (95 % bootstrap) | 6 s clip p50 / p90, 4 threads | Peak RSS (short clips) | Gates: WER / p50 / p90 / RSS |
+|---|---|---|---|---|---|---|
+| Groq forced Tamil | 56.4 | 18.9 | - | - | - | - |
+| IndicConformer 120M int8 (csndhanasekar) | 30.9 | 12.5 | 25.5 (21.7-29.2) | 1,020 / 1,137 ms | 486 MB | pass / FAIL / pass / pass |
+| **IndicConformer 120M fp32 (OpenVoiceOS), metadata appended** | **29.1** | **12.1** | **27.3 (23.5-31.0)** | **270 / 317 ms** | 674 MB | **pass / pass / pass / pass** |
+| IndicConformer 120M int8 (OpenVoiceOS), metadata appended | 31.6 | 12.7 | 24.8 (21.0-28.6) | 1,477 / 1,742 ms | 396 MB | pass / FAIL / FAIL / pass |
+| IndicConformer 600M int8, Tamil-masked (Docglasses) | 31.0 | 12.4 | 25.4 (21.7-29.0) | 2,750 / 2,967 ms | 845 MB | pass / FAIL / FAIL / pass |
+
+- **One option passes every gate, with two catches:** the OpenVoiceOS fp32 file does not load in sherpa-onnx as published (`'vocab_size' does not exist in the metadata`); the measured copy had four metadata entries appended (108 bytes; graph and weights untouched). And it is a community export with a `license: mit` tag and no licence file. **Nothing is wired** (the brief: measure only; `JARVIS_LOCAL_TAMIL_STT` is not built). The weights' licence is the owner's decision.
+- **int8 is not the fast choice on this CPU:** on the same export int8 was 5.5 times slower than fp32 and 2.5 WER points worse.
+- **Accuracy is not the problem:** every local model beats forced-Tamil Groq by about 25 WER points and about 6 CER points (better on 169-171 of 200 clips; sign test p ≤ 2e-30). Much of Whisper's Tamil WER is word splitting.
+- **Not measured:** Tanglish or code-mixed speech, a laptop microphone or a room, Groq with the app's own prompt, loading under Next 15, streaming. Output is Tamil script only (Tanglish English words would come out transliterated); CTC takes no hotwords. Another process (this build's browser specs) loaded the machine during some runs (1-93 % CPU before a run; the decoder still had about 3.8 cores).
+
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 
 Measured on this Windows laptop, on branch `claude/priceless-bouman-2fe7f8` (from `main` `38d96d2f`). The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. "Base" means `main` itself, run in a detached worktree of `38d96d2f` with no v4 code. Raw files are in `eval/holdout/results/`, `eval/holdout2/results/` and `eval/holdout3/results/`, with tags `v4base-*` and `v4final-*`. The older sections below are kept as they were.
