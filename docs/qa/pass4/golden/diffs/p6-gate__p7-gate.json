@@ -5,13 +5,13 @@
   "a": 3277,
   "b": 3298
  },
- "changed": 359,
+ "changed": 375,
  "added": 42,
  "removed": 21,
  "context": {
   "next_build_id": {
    "a": "7W1366w-32VU0Pwhed8Oy",
-   "b": "gHR3BFmOy-ZlzNqzROSBX"
+   "b": "gOaz5kv5105q8dYtVtW5R"
   }
  },
  "routes": [
@@ -77,6 +77,64 @@
    ]
   },
   {
+   "route": "/api/collector/thunai/agent/round",
+   "requests": 52,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.timing",
+     "count": 52
+    },
+    {
+     "path": "$.result.stage.lang",
+     "count": 33
+    },
+    {
+     "path": "$.result.stage.titles",
+     "count": 33
+    },
+    {
+     "path": "$.result.stage.notesBi",
+     "count": 33
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "count": 28
+    },
+    {
+     "path": "$.result.stage.blocks[*].title",
+     "count": 27
+    },
+    {
+     "path": "$.result.say",
+     "count": 23
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*]",
+     "count": 17
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "count": 16
+    },
+    {
+     "path": "$.result.stage.blocks[*].items[*].label",
+     "count": 16
+    },
+    {
+     "path": "$.result.stage.title",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].id",
+     "count": 12
+    }
+   ]
+  },
+  {
    "route": "/api/map/ask",
    "requests": 47,
    "roles": [
@@ -133,64 +191,6 @@
     {
      "path": "$.features[*].lat",
      "count": 33
-    }
-   ]
-  },
-  {
-   "route": "/api/collector/thunai/agent/round",
-   "requests": 36,
-   "roles": [
-    "collector"
-   ],
-   "status_changes": [],
-   "top_paths": [
-    {
-     "path": "$.result.stage.lang",
-     "count": 33
-    },
-    {
-     "path": "$.result.stage.titles",
-     "count": 33
-    },
-    {
-     "path": "$.result.stage.notesBi",
-     "count": 33
-    },
-    {
-     "path": "$.result.stage.say.ta",
-     "count": 28
-    },
-    {
-     "path": "$.result.stage.blocks[*].title",
-     "count": 27
-    },
-    {
-     "path": "$.result.say",
-     "count": 23
-    },
-    {
-     "path": "$.result.stage.blocks[*].points[*]",
-     "count": 17
-    },
-    {
-     "path": "$.result.stage.say.en",
-     "count": 16
-    },
-    {
-     "path": "$.result.stage.blocks[*].items[*].label",
-     "count": 16
-    },
-    {
-     "path": "$.result.stage.title",
-     "count": 12
-    },
-    {
-     "path": "$.result.stage.blocks[*].rows[*].id",
-     "count": 12
-    },
-    {
-     "path": "$.result.stage.blocks[*].rows[*].title",
-     "count": 12
     }
    ]
   },
@@ -56952,9 +56952,9 @@
    "fields": {},
    "bytes": {
     "a": 309,
-    "b": 15296
+    "b": 15333
    },
-   "path_count": 10,
+   "path_count": 11,
    "paths": [
     {
      "path": "$.result.kind",
@@ -57005,6 +57005,11 @@
      "path": "$.lane",
      "a": "no-model",
      "b": "quick"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57018,9 +57023,9 @@
    "fields": {},
    "bytes": {
     "a": 3537,
-    "b": 3735
+    "b": 3772
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -57036,6 +57041,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57049,9 +57059,9 @@
    "fields": {},
    "bytes": {
     "a": 7475,
-    "b": 7593
+    "b": 7630
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -57082,6 +57092,11 @@
      "path": "$.result.say",
      "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)",
      "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57095,9 +57110,9 @@
    "fields": {},
    "bytes": {
     "a": 4388,
-    "b": 5131
+    "b": 5168
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -57123,6 +57138,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 1]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "37d0cd78d6587370",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -57136,9 +57177,9 @@
    "fields": {},
    "bytes": {
     "a": 2742,
-    "b": 2932
+    "b": 2969
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -57154,6 +57195,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57167,9 +57213,9 @@
    "fields": {},
    "bytes": {
     "a": 4095,
-    "b": 4539
+    "b": 4576
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -57200,6 +57246,32 @@
      "path": "$.result.say",
      "a": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars)",
      "b": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "63dfe3dee1ac56e0",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -57213,9 +57285,9 @@
    "fields": {},
    "bytes": {
     "a": 3551,
-    "b": 3701
+    "b": 3738
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.say.ta",
@@ -57236,6 +57308,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57249,9 +57326,9 @@
    "fields": {},
    "bytes": {
     "a": 1154,
-    "b": 1252
+    "b": 1289
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -57277,6 +57354,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57290,9 +57372,9 @@
    "fields": {},
    "bytes": {
     "a": 3924,
-    "b": 4076
+    "b": 4113
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.say.ta",
@@ -57313,6 +57395,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57326,9 +57413,9 @@
    "fields": {},
    "bytes": {
     "a": 2558,
-    "b": 309
+    "b": 402
    },
-   "path_count": 10,
+   "path_count": 11,
    "paths": [
     {
      "path": "$.result.kind",
@@ -57379,6 +57466,11 @@
      "path": "$.lane",
      "a": "quick",
      "b": "no-model"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -57392,9 +57484,9 @@
    "fields": {},
    "bytes": {
     "a": 3691,
-    "b": 4139
+    "b": 4176
    },
-   "path_count": 11,
+   "path_count": 12,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -57450,6 +57542,95 @@
      "path": "$.result.say",
      "a": "Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars)",
      "b": "Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "1d6314d83173a46a",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "a2346a02ae7c8845",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 420,
+    "b": 457
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "7255cb0e3505beda",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 351,
+    "b": 388
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "a453571182cf725c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 449,
+    "b": 486
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57463,9 +57644,9 @@
    "fields": {},
    "bytes": {
     "a": 12469,
-    "b": 16209
+    "b": 16246
    },
-   "path_count": 217,
+   "path_count": 218,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -58551,6 +58732,11 @@
      "path": "$.trace[1].label",
      "a": "23 சம்பவங்களைப் படித்தேன்",
      "b": "17 சம்பவங்களைப் படித்தேன்"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -58564,9 +58750,9 @@
    "fields": {},
    "bytes": {
     "a": 12391,
-    "b": 4624
+    "b": 4661
    },
-   "path_count": 105,
+   "path_count": 106,
    "paths": [
     {
      "path": "$.result.steps.length",
@@ -59092,6 +59278,11 @@
      "path": "$.trace[1].label",
      "a": "52 சம்பவங்களைப் படித்தேன்",
      "b": "5 வரிசைப்படுத்தினேன்"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59105,9 +59296,9 @@
    "fields": {},
    "bytes": {
     "a": 11437,
-    "b": 11688
+    "b": 11725
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -59148,6 +59339,11 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)",
      "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59161,9 +59357,9 @@
    "fields": {},
    "bytes": {
     "a": 6197,
-    "b": 6394
+    "b": 6431
    },
-   "path_count": 7,
+   "path_count": 8,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -59199,6 +59395,32 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)",
      "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். \"படி\" அல்லத... (175 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "22ca9732094d9994",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -59212,9 +59434,9 @@
    "fields": {},
    "bytes": {
     "a": 3654,
-    "b": 3928
+    "b": 3965
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59255,6 +59477,53 @@
      "path": "$.result.say",
      "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
      "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "28f22571a1767a13",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "14927ecce74c7a51",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -59268,9 +59537,9 @@
    "fields": {},
    "bytes": {
     "a": 2021,
-    "b": 2417
+    "b": 2454
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].text",
@@ -59291,6 +59560,74 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "7ee55bdb05ba2342",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "26e6e07a67a03b48",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "3f81a784548e2a8c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 709,
+    "b": 746
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59304,9 +59641,9 @@
    "fields": {},
    "bytes": {
     "a": 11073,
-    "b": 11493
+    "b": 11530
    },
-   "path_count": 13,
+   "path_count": 14,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59372,6 +59709,11 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars)",
      "b": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. \"... (185 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59385,9 +59727,9 @@
    "fields": {},
    "bytes": {
     "a": 337,
-    "b": 4624
+    "b": 4661
    },
-   "path_count": 10,
+   "path_count": 11,
    "paths": [
     {
      "path": "$.result.kind",
@@ -59438,6 +59780,11 @@
      "path": "$.lane",
      "a": "no-model",
      "b": "quick"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59451,9 +59798,9 @@
    "fields": {},
    "bytes": {
     "a": 10951,
-    "b": 11688
+    "b": 11725
    },
-   "path_count": 14,
+   "path_count": 15,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59524,6 +59871,11 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)",
      "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59537,9 +59889,9 @@
    "fields": {},
    "bytes": {
     "a": 6116,
-    "b": 7063
+    "b": 7100
    },
-   "path_count": 14,
+   "path_count": 15,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59610,6 +59962,32 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars)",
      "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Mogappair, அம்பத்தூர். தெருவிள... (217 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "bcf00976700038f4",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -59623,9 +60001,9 @@
    "fields": {},
    "bytes": {
     "a": 3654,
-    "b": 3928
+    "b": 3965
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59666,6 +60044,53 @@
      "path": "$.result.say",
      "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
      "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "21e564f32b745b4f",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "0f560ec72f462bb0",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -59679,9 +60104,9 @@
    "fields": {},
    "bytes": {
     "a": 1252,
-    "b": 1680
+    "b": 1717
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59722,6 +60147,11 @@
      "path": "$.result.say",
      "a": "within 1 km of Velachery-la 13 hospitals irukku.",
      "b": "வரைபடத்தில் முடிவுகள் உள்ளன."
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59735,9 +60165,9 @@
    "fields": {},
    "bytes": {
     "a": 8200,
-    "b": 9033
+    "b": 9070
    },
-   "path_count": 14,
+   "path_count": 15,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -59808,6 +60238,32 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, Periyar 5Th Salai, அடையாறு. Storm Water Drain வசம் 7. \"... (185 chars)",
      "b": "இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, அடையாறு. மழைநீர் வடிகால் துறை வசம் 7. \"படி\" அல்லது \"திற... (169 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "377b43d3f4637d99",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -59822,9 +60278,9 @@
    "fields": {},
    "bytes": {
     "a": 3489,
-    "b": 3687
+    "b": 3724
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -59840,6 +60296,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59854,9 +60315,9 @@
    "fields": {},
    "bytes": {
     "a": 7427,
-    "b": 7545
+    "b": 7582
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -59887,6 +60348,11 @@
      "path": "$.result.say",
      "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)",
      "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59901,9 +60367,9 @@
    "fields": {},
    "bytes": {
     "a": 4340,
-    "b": 5083
+    "b": 5120
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -59929,6 +60395,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 1]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59943,9 +60414,9 @@
    "fields": {},
    "bytes": {
     "a": 2694,
-    "b": 2884
+    "b": 2921
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -59961,6 +60432,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -59975,9 +60451,9 @@
    "fields": {},
    "bytes": {
     "a": 4047,
-    "b": 4491
+    "b": 4528
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -60008,6 +60484,11 @@
      "path": "$.result.say",
      "a": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars)",
      "b": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60022,9 +60503,9 @@
    "fields": {},
    "bytes": {
     "a": 3503,
-    "b": 3653
+    "b": 3690
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.say.ta",
@@ -60045,6 +60526,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60059,9 +60545,9 @@
    "fields": {},
    "bytes": {
     "a": 1107,
-    "b": 1205
+    "b": 1242
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -60087,6 +60573,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60101,9 +60592,9 @@
    "fields": {},
    "bytes": {
     "a": 3876,
-    "b": 4028
+    "b": 4065
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.say.ta",
@@ -60124,6 +60615,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60138,9 +60634,9 @@
    "fields": {},
    "bytes": {
     "a": 3624,
-    "b": 4072
+    "b": 4109
    },
-   "path_count": 11,
+   "path_count": 12,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -60196,6 +60692,11 @@
      "path": "$.result.say",
      "a": "Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars)",
      "b": "Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60210,9 +60711,9 @@
    "fields": {},
    "bytes": {
     "a": 11353,
-    "b": 11604
+    "b": 11641
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -60253,6 +60754,11 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)",
      "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60267,9 +60773,9 @@
    "fields": {},
    "bytes": {
     "a": 6113,
-    "b": 6310
+    "b": 6347
    },
-   "path_count": 7,
+   "path_count": 8,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -60305,6 +60811,11 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)",
      "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். \"படி\" அல்லத... (175 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60319,9 +60830,9 @@
    "fields": {},
    "bytes": {
     "a": 3570,
-    "b": 3844
+    "b": 3881
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -60362,6 +60873,11 @@
      "path": "$.result.say",
      "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
      "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -63035,19 +63551,19 @@
    "fields": {},
    "bytes": {
     "a": 1202,
-    "b": 1251
+    "b": 1252
    },
    "path_count": 5,
    "paths": [
     {
      "path": "$.incidents[0].lat",
      "a": 13.016499019607844,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21072974509804,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     },
     {
      "path": "$.incidents[0].sev",
@@ -63343,7 +63859,7 @@
    "fields": {},
    "bytes": {
     "a": 232509,
-    "b": 235191
+    "b": 235192
    },
    "path_count": 837,
    "paths": [
@@ -65570,12 +66086,12 @@
     {
      "path": "$.severity.rows[32].lat",
      "a": 12.99715,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.197346,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     },
     {
      "path": "$.severity.rows[32].status",
@@ -65859,7 +66375,7 @@
    "fields": {},
    "bytes": {
     "a": 140493,
-    "b": 139122
+    "b": 139124
    },
    "path_count": 765,
    "paths": [
@@ -67026,12 +67542,12 @@
     {
      "path": "$.map.pins[64].lat",
      "a": 13.0002073,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.2172367,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     },
     {
      "path": "$.map.pins[64].title",
@@ -67116,12 +67632,12 @@
     {
      "path": "$.severity.rows[27].lat",
      "a": 12.9795268,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.2184424,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     },
     {
      "path": "$.severity.rows[27].status",

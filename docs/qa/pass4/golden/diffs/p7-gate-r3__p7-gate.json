@@ -5,24 +5,28 @@
   "a": 3273,
   "b": 3298
  },
- "changed": 73,
+ "changed": 91,
  "added": 35,
  "removed": 10,
  "context": {
   "next_build_id": {
    "a": "CBdQM0A0VtrCiiuGe8KNC",
-   "b": "gHR3BFmOy-ZlzNqzROSBX"
+   "b": "gOaz5kv5105q8dYtVtW5R"
   }
  },
  "routes": [
   {
    "route": "/api/collector/thunai/agent/round",
-   "requests": 41,
+   "requests": 59,
    "roles": [
     "collector"
    ],
    "status_changes": [],
    "top_paths": [
+    {
+     "path": "$.timing",
+     "count": 59
+    },
     {
      "path": "$.result.stage.lang",
      "count": 41
@@ -65,10 +69,6 @@
     },
     {
      "path": "$.result.say",
-     "count": 3
-    },
-    {
-     "path": "$.result.stage.blocks[*].method",
      "count": 3
     }
    ]
@@ -10973,9 +10973,9 @@
    "fields": {},
    "bytes": {
     "a": 15055,
-    "b": 15296
+    "b": 15333
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -10991,6 +10991,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11004,9 +11009,9 @@
    "fields": {},
    "bytes": {
     "a": 3537,
-    "b": 3735
+    "b": 3772
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11022,6 +11027,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11035,9 +11045,9 @@
    "fields": {},
    "bytes": {
     "a": 7308,
-    "b": 7593
+    "b": 7630
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11053,6 +11063,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11066,9 +11081,9 @@
    "fields": {},
    "bytes": {
     "a": 4388,
-    "b": 5131
+    "b": 5168
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -11094,6 +11109,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 1]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "37d0cd78d6587370",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11107,9 +11148,9 @@
    "fields": {},
    "bytes": {
     "a": 2742,
-    "b": 2932
+    "b": 2969
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11125,6 +11166,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11138,9 +11184,9 @@
    "fields": {},
    "bytes": {
     "a": 4095,
-    "b": 4539
+    "b": 4576
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -11171,6 +11217,32 @@
      "path": "$.result.say",
      "a": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars)",
      "b": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "63dfe3dee1ac56e0",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11184,9 +11256,9 @@
    "fields": {},
    "bytes": {
     "a": 3577,
-    "b": 3701
+    "b": 3738
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11202,6 +11274,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11215,9 +11292,9 @@
    "fields": {},
    "bytes": {
     "a": 1154,
-    "b": 1252
+    "b": 1289
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -11243,6 +11320,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11256,9 +11338,9 @@
    "fields": {},
    "bytes": {
     "a": 3950,
-    "b": 4076
+    "b": 4113
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11274,6 +11356,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "091763a4e6e28326",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11287,9 +11395,9 @@
    "fields": {},
    "bytes": {
     "a": 3874,
-    "b": 4139
+    "b": 4176
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -11305,6 +11413,95 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "1d6314d83173a46a",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "a2346a02ae7c8845",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 420,
+    "b": 457
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "7255cb0e3505beda",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 351,
+    "b": 388
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "a453571182cf725c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 449,
+    "b": 486
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11318,9 +11515,9 @@
    "fields": {},
    "bytes": {
     "a": 15939,
-    "b": 16209
+    "b": 16246
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -11341,6 +11538,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11354,9 +11556,9 @@
    "fields": {},
    "bytes": {
     "a": 3732,
-    "b": 4624
+    "b": 4661
    },
-   "path_count": 17,
+   "path_count": 18,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11442,6 +11644,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11455,9 +11662,9 @@
    "fields": {},
    "bytes": {
     "a": 11374,
-    "b": 11688
+    "b": 11725
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -11478,6 +11685,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11491,9 +11703,9 @@
    "fields": {},
    "bytes": {
     "a": 6056,
-    "b": 6394
+    "b": 6431
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -11514,6 +11726,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "22ca9732094d9994",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11527,9 +11765,9 @@
    "fields": {},
    "bytes": {
     "a": 3706,
-    "b": 3928
+    "b": 3965
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11560,6 +11798,53 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "28f22571a1767a13",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "14927ecce74c7a51",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11573,9 +11858,9 @@
    "fields": {},
    "bytes": {
     "a": 2021,
-    "b": 2417
+    "b": 2454
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].text",
@@ -11596,6 +11881,74 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "7ee55bdb05ba2342",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "26e6e07a67a03b48",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "3f81a784548e2a8c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 709,
+    "b": 746
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11609,9 +11962,9 @@
    "fields": {},
    "bytes": {
     "a": 10939,
-    "b": 11493
+    "b": 11530
    },
-   "path_count": 10,
+   "path_count": 11,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11662,6 +12015,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11675,9 +12033,9 @@
    "fields": {},
    "bytes": {
     "a": 3732,
-    "b": 4624
+    "b": 4661
    },
-   "path_count": 17,
+   "path_count": 18,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11763,6 +12121,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11776,9 +12139,9 @@
    "fields": {},
    "bytes": {
     "a": 10836,
-    "b": 11688
+    "b": 11725
    },
-   "path_count": 11,
+   "path_count": 12,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11834,6 +12197,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -11847,9 +12215,9 @@
    "fields": {},
    "bytes": {
     "a": 6165,
-    "b": 7063
+    "b": 7100
    },
-   "path_count": 11,
+   "path_count": 12,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11905,6 +12273,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "bcf00976700038f4",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11918,9 +12312,9 @@
    "fields": {},
    "bytes": {
     "a": 3706,
-    "b": 3928
+    "b": 3965
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -11951,6 +12345,53 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "21e564f32b745b4f",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    }
+   ]
+  },
+  {
+   "id": "0f560ec72f462bb0",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -11964,9 +12405,9 @@
    "fields": {},
    "bytes": {
     "a": 1252,
-    "b": 1680
+    "b": 1717
    },
-   "path_count": 8,
+   "path_count": 9,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -12007,6 +12448,11 @@
      "path": "$.result.say",
      "a": "within 1 km of Velachery-la 13 hospitals irukku.",
      "b": "வரைபடத்தில் முடிவுகள் உள்ளன."
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12020,9 +12466,9 @@
    "fields": {},
    "bytes": {
     "a": 8219,
-    "b": 9033
+    "b": 9070
    },
-   "path_count": 11,
+   "path_count": 12,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -12078,6 +12524,32 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "377b43d3f4637d99",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 430
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -12092,9 +12564,9 @@
    "fields": {},
    "bytes": {
     "a": 15007,
-    "b": 15248
+    "b": 15285
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12110,6 +12582,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12124,9 +12601,9 @@
    "fields": {},
    "bytes": {
     "a": 3489,
-    "b": 3687
+    "b": 3724
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12142,6 +12619,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12156,9 +12638,9 @@
    "fields": {},
    "bytes": {
     "a": 7260,
-    "b": 7545
+    "b": 7582
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12174,6 +12656,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12188,9 +12675,9 @@
    "fields": {},
    "bytes": {
     "a": 4340,
-    "b": 5083
+    "b": 5120
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -12216,6 +12703,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 1]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12230,9 +12722,9 @@
    "fields": {},
    "bytes": {
     "a": 2694,
-    "b": 2884
+    "b": 2921
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12248,6 +12740,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12262,9 +12759,9 @@
    "fields": {},
    "bytes": {
     "a": 4047,
-    "b": 4491
+    "b": 4528
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.say.en",
@@ -12295,6 +12792,11 @@
      "path": "$.result.say",
      "a": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars)",
      "b": "2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars)"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12309,9 +12811,9 @@
    "fields": {},
    "bytes": {
     "a": 3529,
-    "b": 3653
+    "b": 3690
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12327,6 +12829,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12341,9 +12848,9 @@
    "fields": {},
    "bytes": {
     "a": 1107,
-    "b": 1205
+    "b": 1242
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -12369,6 +12876,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12383,9 +12895,9 @@
    "fields": {},
    "bytes": {
     "a": 3902,
-    "b": 4028
+    "b": 4065
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12401,6 +12913,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12415,9 +12932,9 @@
    "fields": {},
    "bytes": {
     "a": 3807,
-    "b": 4072
+    "b": 4109
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12433,6 +12950,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12447,9 +12969,9 @@
    "fields": {},
    "bytes": {
     "a": 15855,
-    "b": 16125
+    "b": 16162
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -12470,6 +12992,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12484,9 +13011,9 @@
    "fields": {},
    "bytes": {
     "a": 3648,
-    "b": 4540
+    "b": 4577
    },
-   "path_count": 17,
+   "path_count": 18,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -12572,6 +13099,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12586,9 +13118,9 @@
    "fields": {},
    "bytes": {
     "a": 11290,
-    "b": 11604
+    "b": 11641
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -12609,6 +13141,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12623,9 +13160,9 @@
    "fields": {},
    "bytes": {
     "a": 5972,
-    "b": 6310
+    "b": 6347
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -12646,6 +13183,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12660,9 +13202,9 @@
    "fields": {},
    "bytes": {
     "a": 3622,
-    "b": 3844
+    "b": 3881
    },
-   "path_count": 6,
+   "path_count": 7,
    "paths": [
     {
      "path": "$.result.stage.title",
@@ -12693,6 +13235,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12707,9 +13254,9 @@
    "fields": {},
    "bytes": {
     "a": 15083,
-    "b": 15324
+    "b": 15361
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.result.stage.lang",
@@ -12725,6 +13272,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12739,9 +13291,9 @@
    "fields": {},
    "bytes": {
     "a": 5824,
-    "b": 6242
+    "b": 6279
    },
-   "path_count": 5,
+   "path_count": 6,
    "paths": [
     {
      "path": "$.result.stage.takeaway.ta",
@@ -12767,6 +13319,33 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
+    }
+   ]
+  },
+  {
+   "id": "8d795db10bedf844",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "follow-on",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 402
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
     }
    ]
   },
@@ -12781,9 +13360,9 @@
    "fields": {},
    "bytes": {
     "a": 15983,
-    "b": 16253
+    "b": 16290
    },
-   "path_count": 4,
+   "path_count": 5,
    "paths": [
     {
      "path": "$.result.stage.blocks[0].title",
@@ -12804,6 +13383,11 @@
      "path": "$.result.stage.notesBi",
      "a": "(absent)",
      "b": "[array of 0]"
+    },
+    {
+     "path": "$.timing",
+     "a": "(absent)",
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -12848,19 +13432,19 @@
    "fields": {},
    "bytes": {
     "a": 1251,
-    "b": 1251
+    "b": 1252
    },
    "path_count": 2,
    "paths": [
     {
      "path": "$.incidents[0].lat",
      "a": 13.01767549019608,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21344347058823,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     }
    ]
   },
@@ -12874,19 +13458,19 @@
    "fields": {},
    "bytes": {
     "a": 235191,
-    "b": 235191
+    "b": 235192
    },
    "path_count": 2,
    "paths": [
     {
      "path": "$.severity.rows[32].lat",
      "a": 13.01767549019608,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.21344347058823,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     }
    ]
   },
@@ -12900,29 +13484,29 @@
    "fields": {},
    "bytes": {
     "a": 139122,
-    "b": 139122
+    "b": 139124
    },
    "path_count": 4,
    "paths": [
     {
      "path": "$.map.pins[64].lat",
      "a": 13.01767549019608,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.21344347058823,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     },
     {
      "path": "$.severity.rows[27].lat",
      "a": 13.01767549019608,
-     "b": 13.01607549019608
+     "b": 13.015369607843137
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.21344347058823,
-     "b": 80.20996111764705
+     "b": 80.21077680392156
     }
    ]
   },
@@ -13040,7 +13624,7 @@
     {
      "path": "$.confirm.scope",
      "a": "Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg",
-     "b": "w1mgvCRyq9cCso_KV9aQhDFw5spNmN8s"
+     "b": "AV_wPXRepPxaGGg7cZmGnoj-xyJTDixs"
     }
    ]
   },
@@ -13061,7 +13645,7 @@
     {
      "path": "$.confirm.scope",
      "a": "X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA",
-     "b": "mLJ8MYsLHes9w6zMibq3JjKg-pj5qcWX"
+     "b": "lXPNCQcFkjGgdvlT9LeCXk1Xbu-LaLTA"
     }
    ]
   },
@@ -13082,7 +13666,7 @@
     {
      "path": "$.confirm.scope",
      "a": "AeRzc1H2quqCdMD52ABXqL7MBEAPwo03",
-     "b": "dwqnWX1lj-8y2s7C25uDE-25rk40tI9T"
+     "b": "A_Bno-e6AObOdDV5eVHA9nffoHqbj9AS"
     }
    ]
   }

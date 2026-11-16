@@ -1,18 +1,18 @@
 # Golden-master diff: p6-gate to p7-gate
 
-Compared 3277 requests with 3298. **359 changed, 42 added, 21 removed.**
+Compared 3277 requests with 3298. **375 changed, 42 added, 21 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to gHR3BFmOy-ZlzNqzROSBX
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to gOaz5kv5105q8dYtVtW5R
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
 | /api/officer/grievances | 75 | officerA, officerB | 200 -> 400 | $.rows[*].breached (404), $.rows[*] (24), $.rows[*].id (14), $.rows[*].title (14), $.rows[*].zone (14) |
+| /api/collector/thunai/agent/round | 52 | collector | none | $.timing (52), $.result.stage.lang (33), $.result.stage.titles (33), $.result.stage.notesBi (33), $.result.stage.say.ta (28) |
 | /api/map/ask | 47 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
-| /api/collector/thunai/agent/round | 36 | collector | none | $.result.stage.lang (33), $.result.stage.titles (33), $.result.stage.notesBi (33), $.result.stage.say.ta (28), $.result.stage.blocks[*].title (27) |
 | /api/collector/overview | 31 | collector | none | $.stories.threads[*].records (261), $.stories.threads[*].placed (261), $.map.pins[*].id (120), $.map.pins[*].lat (120), $.map.pins[*].lon (120) |
 | /api/officer/overview | 29 | officerA, officerB | none | $.map.pins[*].stage (152), $.queue.new[*].breached (150), $.queue.action[*].breached (140), $.board.bell[*] (64), $.queue.action[*].id (59) |
 | /api/collector/insights | 21 | collector | none | $.gaps[*].open_now (273), $.review.unplaced[*].open_now (91), $.deptActions[*].awaiting (50), $.book.departments[*].ai.asOf (24), $.book.health.ai.asOf (20) |
@@ -5379,7 +5379,7 @@ Session ask, id c0fbdcc5b3a3252d, 3358 bytes to 3444 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 8213db3c1be53f5d, 309 bytes to 15296 bytes.
+Session ask, id 8213db3c1be53f5d, 309 bytes to 15333 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5393,20 +5393,22 @@ Session ask, id 8213db3c1be53f5d, 309 bytes to 15296 bytes.
 | $.trace[0].label | Thinking | Reading the data |
 | $.trace[1] | (absent) | {object with 3 keys} |
 | $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id eb1562d1e045703b, 3537 bytes to 3735 bytes.
+Session ask, id eb1562d1e045703b, 3537 bytes to 3772 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id bc94a14cdfe5ac48, 7475 bytes to 7593 bytes.
+Session ask, id bc94a14cdfe5ac48, 7475 bytes to 7630 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5416,10 +5418,11 @@ Session ask, id bc94a14cdfe5ac48, 7475 bytes to 7593 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 3d1d878d45cabe62, 4388 bytes to 5131 bytes.
+Session ask, id 3d1d878d45cabe62, 4388 bytes to 5168 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5428,20 +5431,30 @@ Session ask, id 3d1d878d45cabe62, 4388 bytes to 5131 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 915af0152152346b, 2742 bytes to 2932 bytes.
+Session ask, id 37d0cd78d6587370, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 915af0152152346b, 2742 bytes to 2969 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4539 bytes.
+Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4576 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5451,10 +5464,19 @@ Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4539 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a00a263949adc0de, 3551 bytes to 3701 bytes.
+Session ask, id 63dfe3dee1ac56e0, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a00a263949adc0de, 3551 bytes to 3738 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5462,10 +5484,11 @@ Session ask, id a00a263949adc0de, 3551 bytes to 3701 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 47837972a243c09b, 1154 bytes to 1252 bytes.
+Session ask, id 47837972a243c09b, 1154 bytes to 1289 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5474,10 +5497,11 @@ Session ask, id 47837972a243c09b, 1154 bytes to 1252 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 157508256127d2ef, 3924 bytes to 4076 bytes.
+Session ask, id 157508256127d2ef, 3924 bytes to 4113 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5485,10 +5509,11 @@ Session ask, id 157508256127d2ef, 3924 bytes to 4076 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 091763a4e6e28326, 2558 bytes to 309 bytes.
+Session ask, id 091763a4e6e28326, 2558 bytes to 402 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5502,10 +5527,11 @@ Session ask, id 091763a4e6e28326, 2558 bytes to 309 bytes.
 | $.trace[0].label | Reading the data | Thinking |
 | $.trace[1] | {object with 3 keys} | (absent) |
 | $.lane | quick | no-model |
+| $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 1959186f8ccc0a1e, 3691 bytes to 4139 bytes.
+Session ask, id 1959186f8ccc0a1e, 3691 bytes to 4176 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5520,10 +5546,43 @@ Session ask, id 1959186f8ccc0a1e, 3691 bytes to 4139 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars) | Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id ac136777a4aee429, 12469 bytes to 16209 bytes.
+Session ask, id 1d6314d83173a46a, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a2346a02ae7c8845, 420 bytes to 457 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 7255cb0e3505beda, 351 bytes to 388 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a453571182cf725c, 449 bytes to 486 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ac136777a4aee429, 12469 bytes to 16246 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5553,11 +5612,11 @@ Session ask, id ac136777a4aee429, 12469 bytes to 16209 bytes.
 | $.result.stage.blocks[1].rows[1].title | Two-wheeler skids near Ekkattuthangal Metro Station; rider injured | Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan |
 | $.result.stage.blocks[1].rows[1].sev | High | Medium |
 
-...and 192 more paths (see the JSON file).
+...and 193 more paths (see the JSON file).
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f1e6ac2ad90ac282, 12391 bytes to 4624 bytes.
+Session ask, id f1e6ac2ad90ac282, 12391 bytes to 4661 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5587,11 +5646,11 @@ Session ask, id f1e6ac2ad90ac282, 12391 bytes to 4624 bytes.
 | $.result.stage.blocks[1].kind | CaseList | Ranking |
 | $.result.stage.blocks[1].id | cases | rank |
 
-...and 80 more paths (see the JSON file).
+...and 81 more paths (see the JSON file).
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 484c3e63acc4f70c, 11437 bytes to 11688 bytes.
+Session ask, id 484c3e63acc4f70c, 11437 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5603,10 +5662,11 @@ Session ask, id 484c3e63acc4f70c, 11437 bytes to 11688 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 0401451bde1ac789, 6197 bytes to 6394 bytes.
+Session ask, id 0401451bde1ac789, 6197 bytes to 6431 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5617,10 +5677,19 @@ Session ask, id 0401451bde1ac789, 6197 bytes to 6394 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 2941e2ef55b91f8b, 3654 bytes to 3928 bytes.
+Session ask, id 22ca9732094d9994, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 2941e2ef55b91f8b, 3654 bytes to 3965 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5632,10 +5701,27 @@ Session ask, id 2941e2ef55b91f8b, 3654 bytes to 3928 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 6f62837a7c869338, 2021 bytes to 2417 bytes.
+Session ask, id 28f22571a1767a13, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 14927ecce74c7a51, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 6f62837a7c869338, 2021 bytes to 2454 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5643,10 +5729,35 @@ Session ask, id 6f62837a7c869338, 2021 bytes to 2417 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id fa394469d1d31521, 11073 bytes to 11493 bytes.
+Session ask, id 7ee55bdb05ba2342, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 26e6e07a67a03b48, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 3f81a784548e2a8c, 709 bytes to 746 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id fa394469d1d31521, 11073 bytes to 11530 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5663,10 +5774,11 @@ Session ask, id fa394469d1d31521, 11073 bytes to 11493 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars) | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. "... (185 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9f079c06d08640a4, 337 bytes to 4624 bytes.
+Session ask, id 9f079c06d08640a4, 337 bytes to 4661 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5680,10 +5792,11 @@ Session ask, id 9f079c06d08640a4, 337 bytes to 4624 bytes.
 | $.trace[0].label | யோசிக்கிறேன் | தரவைப் படிக்கிறேன் |
 | $.trace[1] | (absent) | {object with 3 keys} |
 | $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f09bcf697432c0ab, 10951 bytes to 11688 bytes.
+Session ask, id f09bcf697432c0ab, 10951 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5701,10 +5814,11 @@ Session ask, id f09bcf697432c0ab, 10951 bytes to 11688 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f025856d46a1ca5f, 6116 bytes to 7063 bytes.
+Session ask, id f025856d46a1ca5f, 6116 bytes to 7100 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5722,10 +5836,19 @@ Session ask, id f025856d46a1ca5f, 6116 bytes to 7063 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars) | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Mogappair, அம்பத்தூர். தெருவிள... (217 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9ef6d6c5b729a804, 3654 bytes to 3928 bytes.
+Session ask, id bcf00976700038f4, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 9ef6d6c5b729a804, 3654 bytes to 3965 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5737,10 +5860,27 @@ Session ask, id 9ef6d6c5b729a804, 3654 bytes to 3928 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id ea1f39f6c1384abd, 1252 bytes to 1680 bytes.
+Session ask, id 21e564f32b745b4f, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 0f560ec72f462bb0, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ea1f39f6c1384abd, 1252 bytes to 1717 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5752,10 +5892,11 @@ Session ask, id ea1f39f6c1384abd, 1252 bytes to 1680 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | within 1 km of Velachery-la 13 hospitals irukku. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a3c117ff746b0a57, 8200 bytes to 9033 bytes.
+Session ask, id a3c117ff746b0a57, 8200 bytes to 9070 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5773,20 +5914,30 @@ Session ask, id a3c117ff746b0a57, 8200 bytes to 9033 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, Periyar 5Th Salai, அடையாறு. Storm Water Drain வசம் 7. "... (185 chars) | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, அடையாறு. மழைநீர் வடிகால் துறை வசம் 7. "படி" அல்லது "திற... (169 chars) |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 377b43d3f4637d99, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 1)
 
-Session ask, id a88392c79b867872, 3489 bytes to 3687 bytes.
+Session ask, id a88392c79b867872, 3489 bytes to 3724 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 2)
 
-Session ask, id 374abbf925411872, 7427 bytes to 7545 bytes.
+Session ask, id 374abbf925411872, 7427 bytes to 7582 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5796,10 +5947,11 @@ Session ask, id 374abbf925411872, 7427 bytes to 7545 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 3)
 
-Session ask, id 78433e1b88e12ccf, 4340 bytes to 5083 bytes.
+Session ask, id 78433e1b88e12ccf, 4340 bytes to 5120 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5808,20 +5960,22 @@ Session ask, id 78433e1b88e12ccf, 4340 bytes to 5083 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 5)
 
-Session ask, id 04eb4463a66d39c9, 2694 bytes to 2884 bytes.
+Session ask, id 04eb4463a66d39c9, 2694 bytes to 2921 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 6)
 
-Session ask, id 224b008e8bbe8b08, 4047 bytes to 4491 bytes.
+Session ask, id 224b008e8bbe8b08, 4047 bytes to 4528 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5831,10 +5985,11 @@ Session ask, id 224b008e8bbe8b08, 4047 bytes to 4491 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 8)
 
-Session ask, id be3f567754865da5, 3503 bytes to 3653 bytes.
+Session ask, id be3f567754865da5, 3503 bytes to 3690 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5842,10 +5997,11 @@ Session ask, id be3f567754865da5, 3503 bytes to 3653 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 9)
 
-Session ask, id fe4f72a16d13d08f, 1107 bytes to 1205 bytes.
+Session ask, id fe4f72a16d13d08f, 1107 bytes to 1242 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5854,10 +6010,11 @@ Session ask, id fe4f72a16d13d08f, 1107 bytes to 1205 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 10)
 
-Session ask, id 72847463243eb5f3, 3876 bytes to 4028 bytes.
+Session ask, id 72847463243eb5f3, 3876 bytes to 4065 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5865,10 +6022,11 @@ Session ask, id 72847463243eb5f3, 3876 bytes to 4028 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 12)
 
-Session ask, id 555df8086cdb06ba, 3624 bytes to 4072 bytes.
+Session ask, id 555df8086cdb06ba, 3624 bytes to 4109 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5883,10 +6041,11 @@ Session ask, id 555df8086cdb06ba, 3624 bytes to 4072 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars) | Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 19)
 
-Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11604 bytes.
+Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11641 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5898,10 +6057,11 @@ Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11604 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 20)
 
-Session ask, id f0ed9bee243901b3, 6113 bytes to 6310 bytes.
+Session ask, id f0ed9bee243901b3, 6113 bytes to 6347 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5912,10 +6072,11 @@ Session ask, id f0ed9bee243901b3, 6113 bytes to 6310 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 22)
 
-Session ask, id 75892bd131e3b8c5, 3570 bytes to 3844 bytes.
+Session ask, id 75892bd131e3b8c5, 3570 bytes to 3881 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5927,6 +6088,7 @@ Session ask, id 75892bd131e3b8c5, 3570 bytes to 3844 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### officerA POST /api/collector/assistant/chat
 
@@ -6008,12 +6170,12 @@ Session writes, id 1a74f77c3d8d08f6, 1435 bytes to 1458 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1202 bytes to 1251 bytes.
+Session writes, id cd47878c4defdb30, 1202 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.01607549019608 |
-| $.incidents[0].lon | 80.21072974509804 | 80.20996111764705 |
+| $.incidents[0].lat | 13.016499019607844 | 13.015369607843137 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21077680392156 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |
@@ -6100,7 +6262,7 @@ Session writes, id 312d7e3e75cbc3a0, 3536 bytes to 3257 bytes.
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
+Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -6134,7 +6296,7 @@ Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 140493 bytes to 139122 bytes.
+Session writes, id 3f54c3ecc14de285, 140493 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|

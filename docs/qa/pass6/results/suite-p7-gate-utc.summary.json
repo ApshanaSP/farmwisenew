@@ -3,12 +3,14 @@
   "tz": "UTC",
   "seed": "7204",
   "config": "vitest.config.ts",
-  "exit": 0,
-  "secs": 64,
-  "numTotalTests": 5509,
-  "numPassedTests": 5496,
-  "numFailedTests": 0,
+  "exit": 1,
+  "secs": 138,
+  "numTotalTests": 5914,
+  "numPassedTests": 5900,
+  "numFailedTests": 1,
   "numPendingTests": 13,
-  "numFailedTestSuites": 0,
-  "failed": []
+  "numFailedTestSuites": 2,
+  "failed": [
+    "src\\lib\\thunai\\stt.v4.test.ts :: no third racer (v5 B1) Whisper unsure of an engaged turn: only the two forced decodes are asked, and the race ends when they are back"
+  ]
 }

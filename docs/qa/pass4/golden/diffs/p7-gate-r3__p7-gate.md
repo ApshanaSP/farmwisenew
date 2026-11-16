@@ -1,16 +1,16 @@
 # Golden-master diff: p7-gate-r3 to p7-gate
 
-Compared 3273 requests with 3298. **73 changed, 35 added, 10 removed.**
+Compared 3273 requests with 3298. **91 changed, 35 added, 10 removed.**
 
 ## What differs around the requests
 
-- next_build_id: CBdQM0A0VtrCiiuGe8KNC to gHR3BFmOy-ZlzNqzROSBX
+- next_build_id: CBdQM0A0VtrCiiuGe8KNC to gOaz5kv5105q8dYtVtW5R
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
-| /api/collector/thunai/agent/round | 41 | collector | none | $.result.stage.lang (41), $.result.stage.titles (41), $.result.stage.notesBi (41), $.result.stage.blocks[*].title (34), $.result.stage.blocks[*].items[*].label (20) |
+| /api/collector/thunai/agent/round | 59 | collector | none | $.timing (59), $.result.stage.lang (41), $.result.stage.titles (41), $.result.stage.notesBi (41), $.result.stage.blocks[*].title (34) |
 | /api/map/ask | 12 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
 | /api/collector/thunai/agent | 7 | collector | none | $.result.stage.lang (7), $.result.stage.titles (7), $.result.stage.notesBi (7), $.result.stage.blocks[*].items[*].sub (5), $.result.stage.say.ta (3) |
 | /api/map/export | 4 | collector | none | $.line[*] (67), $.lines (2), $.properties.window (2) |
@@ -489,37 +489,40 @@ Session ask, id c0fbdcc5b3a3252d, 3358 bytes to 3444 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 8213db3c1be53f5d, 15055 bytes to 15296 bytes.
+Session ask, id 8213db3c1be53f5d, 15055 bytes to 15333 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id eb1562d1e045703b, 3537 bytes to 3735 bytes.
+Session ask, id eb1562d1e045703b, 3537 bytes to 3772 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id bc94a14cdfe5ac48, 7308 bytes to 7593 bytes.
+Session ask, id bc94a14cdfe5ac48, 7308 bytes to 7630 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 3d1d878d45cabe62, 4388 bytes to 5131 bytes.
+Session ask, id 3d1d878d45cabe62, 4388 bytes to 5168 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -528,20 +531,30 @@ Session ask, id 3d1d878d45cabe62, 4388 bytes to 5131 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 915af0152152346b, 2742 bytes to 2932 bytes.
+Session ask, id 37d0cd78d6587370, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 915af0152152346b, 2742 bytes to 2969 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4539 bytes.
+Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4576 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -551,20 +564,30 @@ Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4539 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a00a263949adc0de, 3577 bytes to 3701 bytes.
+Session ask, id 63dfe3dee1ac56e0, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a00a263949adc0de, 3577 bytes to 3738 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 47837972a243c09b, 1154 bytes to 1252 bytes.
+Session ask, id 47837972a243c09b, 1154 bytes to 1289 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -573,30 +596,73 @@ Session ask, id 47837972a243c09b, 1154 bytes to 1252 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 157508256127d2ef, 3950 bytes to 4076 bytes.
+Session ask, id 157508256127d2ef, 3950 bytes to 4113 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 1959186f8ccc0a1e, 3874 bytes to 4139 bytes.
+Session ask, id 091763a4e6e28326, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 1959186f8ccc0a1e, 3874 bytes to 4176 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id ac136777a4aee429, 15939 bytes to 16209 bytes.
+Session ask, id 1d6314d83173a46a, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a2346a02ae7c8845, 420 bytes to 457 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 7255cb0e3505beda, 351 bytes to 388 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a453571182cf725c, 449 bytes to 486 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ac136777a4aee429, 15939 bytes to 16246 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -604,10 +670,11 @@ Session ask, id ac136777a4aee429, 15939 bytes to 16209 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f1e6ac2ad90ac282, 3732 bytes to 4624 bytes.
+Session ask, id f1e6ac2ad90ac282, 3732 bytes to 4661 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -628,10 +695,11 @@ Session ask, id f1e6ac2ad90ac282, 3732 bytes to 4624 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 484c3e63acc4f70c, 11374 bytes to 11688 bytes.
+Session ask, id 484c3e63acc4f70c, 11374 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -639,10 +707,11 @@ Session ask, id 484c3e63acc4f70c, 11374 bytes to 11688 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 0401451bde1ac789, 6056 bytes to 6394 bytes.
+Session ask, id 0401451bde1ac789, 6056 bytes to 6431 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -650,10 +719,19 @@ Session ask, id 0401451bde1ac789, 6056 bytes to 6394 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 2941e2ef55b91f8b, 3706 bytes to 3928 bytes.
+Session ask, id 22ca9732094d9994, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 2941e2ef55b91f8b, 3706 bytes to 3965 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -663,10 +741,27 @@ Session ask, id 2941e2ef55b91f8b, 3706 bytes to 3928 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 6f62837a7c869338, 2021 bytes to 2417 bytes.
+Session ask, id 28f22571a1767a13, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 14927ecce74c7a51, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 6f62837a7c869338, 2021 bytes to 2454 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -674,10 +769,35 @@ Session ask, id 6f62837a7c869338, 2021 bytes to 2417 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id fa394469d1d31521, 10939 bytes to 11493 bytes.
+Session ask, id 7ee55bdb05ba2342, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 26e6e07a67a03b48, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 3f81a784548e2a8c, 709 bytes to 746 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id fa394469d1d31521, 10939 bytes to 11530 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -691,10 +811,11 @@ Session ask, id fa394469d1d31521, 10939 bytes to 11493 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9f079c06d08640a4, 3732 bytes to 4624 bytes.
+Session ask, id 9f079c06d08640a4, 3732 bytes to 4661 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -715,10 +836,11 @@ Session ask, id 9f079c06d08640a4, 3732 bytes to 4624 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f09bcf697432c0ab, 10836 bytes to 11688 bytes.
+Session ask, id f09bcf697432c0ab, 10836 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -733,10 +855,11 @@ Session ask, id f09bcf697432c0ab, 10836 bytes to 11688 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f025856d46a1ca5f, 6165 bytes to 7063 bytes.
+Session ask, id f025856d46a1ca5f, 6165 bytes to 7100 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -751,10 +874,19 @@ Session ask, id f025856d46a1ca5f, 6165 bytes to 7063 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9ef6d6c5b729a804, 3706 bytes to 3928 bytes.
+Session ask, id bcf00976700038f4, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 9ef6d6c5b729a804, 3706 bytes to 3965 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -764,10 +896,27 @@ Session ask, id 9ef6d6c5b729a804, 3706 bytes to 3928 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id ea1f39f6c1384abd, 1252 bytes to 1680 bytes.
+Session ask, id 21e564f32b745b4f, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 0f560ec72f462bb0, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ea1f39f6c1384abd, 1252 bytes to 1717 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -779,10 +928,11 @@ Session ask, id ea1f39f6c1384abd, 1252 bytes to 1680 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | within 1 km of Velachery-la 13 hospitals irukku. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a3c117ff746b0a57, 8219 bytes to 9033 bytes.
+Session ask, id a3c117ff746b0a57, 8219 bytes to 9070 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -797,40 +947,52 @@ Session ask, id a3c117ff746b0a57, 8219 bytes to 9033 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 377b43d3f4637d99, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 0)
 
-Session ask, id 15912c26bef9ca15, 15007 bytes to 15248 bytes.
+Session ask, id 15912c26bef9ca15, 15007 bytes to 15285 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 1)
 
-Session ask, id a88392c79b867872, 3489 bytes to 3687 bytes.
+Session ask, id a88392c79b867872, 3489 bytes to 3724 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 2)
 
-Session ask, id 374abbf925411872, 7260 bytes to 7545 bytes.
+Session ask, id 374abbf925411872, 7260 bytes to 7582 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 3)
 
-Session ask, id 78433e1b88e12ccf, 4340 bytes to 5083 bytes.
+Session ask, id 78433e1b88e12ccf, 4340 bytes to 5120 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -839,20 +1001,22 @@ Session ask, id 78433e1b88e12ccf, 4340 bytes to 5083 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 5)
 
-Session ask, id 04eb4463a66d39c9, 2694 bytes to 2884 bytes.
+Session ask, id 04eb4463a66d39c9, 2694 bytes to 2921 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 6)
 
-Session ask, id 224b008e8bbe8b08, 4047 bytes to 4491 bytes.
+Session ask, id 224b008e8bbe8b08, 4047 bytes to 4528 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -862,20 +1026,22 @@ Session ask, id 224b008e8bbe8b08, 4047 bytes to 4491 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 8)
 
-Session ask, id be3f567754865da5, 3529 bytes to 3653 bytes.
+Session ask, id be3f567754865da5, 3529 bytes to 3690 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 9)
 
-Session ask, id fe4f72a16d13d08f, 1107 bytes to 1205 bytes.
+Session ask, id fe4f72a16d13d08f, 1107 bytes to 1242 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -884,30 +1050,33 @@ Session ask, id fe4f72a16d13d08f, 1107 bytes to 1205 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 10)
 
-Session ask, id 72847463243eb5f3, 3902 bytes to 4028 bytes.
+Session ask, id 72847463243eb5f3, 3902 bytes to 4065 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 12)
 
-Session ask, id 555df8086cdb06ba, 3807 bytes to 4072 bytes.
+Session ask, id 555df8086cdb06ba, 3807 bytes to 4109 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 17)
 
-Session ask, id a1cc51848f7bb9a1, 15855 bytes to 16125 bytes.
+Session ask, id a1cc51848f7bb9a1, 15855 bytes to 16162 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -915,10 +1084,11 @@ Session ask, id a1cc51848f7bb9a1, 15855 bytes to 16125 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 18)
 
-Session ask, id 93bf66819951ca90, 3648 bytes to 4540 bytes.
+Session ask, id 93bf66819951ca90, 3648 bytes to 4577 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -939,10 +1109,11 @@ Session ask, id 93bf66819951ca90, 3648 bytes to 4540 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 19)
 
-Session ask, id 61ed15dc04e17ba5, 11290 bytes to 11604 bytes.
+Session ask, id 61ed15dc04e17ba5, 11290 bytes to 11641 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -950,10 +1121,11 @@ Session ask, id 61ed15dc04e17ba5, 11290 bytes to 11604 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 20)
 
-Session ask, id f0ed9bee243901b3, 5972 bytes to 6310 bytes.
+Session ask, id f0ed9bee243901b3, 5972 bytes to 6347 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -961,10 +1133,11 @@ Session ask, id f0ed9bee243901b3, 5972 bytes to 6310 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 22)
 
-Session ask, id 75892bd131e3b8c5, 3622 bytes to 3844 bytes.
+Session ask, id 75892bd131e3b8c5, 3622 bytes to 3881 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -974,20 +1147,22 @@ Session ask, id 75892bd131e3b8c5, 3622 bytes to 3844 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (follow-on)
 
-Session ask, id f8461f953dc4cad9, 15083 bytes to 15324 bytes.
+Session ask, id f8461f953dc4cad9, 15083 bytes to 15361 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (follow-on)
 
-Session ask, id 507ff072d9b4a836, 5824 bytes to 6242 bytes.
+Session ask, id 507ff072d9b4a836, 5824 bytes to 6279 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -996,10 +1171,19 @@ Session ask, id 507ff072d9b4a836, 5824 bytes to 6242 bytes.
 | $.result.stage.lang | (absent) | en |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (follow-on)
 
-Session ask, id a3a0280ab58d2130, 15983 bytes to 16253 bytes.
+Session ask, id 8d795db10bedf844, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round (follow-on)
+
+Session ask, id a3a0280ab58d2130, 15983 bytes to 16290 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -1007,6 +1191,7 @@ Session ask, id a3a0280ab58d2130, 15983 bytes to 16253 bytes.
 | $.result.stage.lang | (absent) | ta |
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector GET /api/collector/audit
 
@@ -1020,32 +1205,32 @@ Session ask, id a39eb5710e1b812a, 70972 bytes to 70921 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1251 bytes to 1251 bytes.
+Session writes, id cd47878c4defdb30, 1251 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.01767549019608 | 13.01607549019608 |
-| $.incidents[0].lon | 80.21344347058823 | 80.20996111764705 |
+| $.incidents[0].lat | 13.01767549019608 | 13.015369607843137 |
+| $.incidents[0].lon | 80.21344347058823 | 80.21077680392156 |
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235191 bytes.
+Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.severity.rows[32].lat | 13.01767549019608 | 13.01607549019608 |
-| $.severity.rows[32].lon | 80.21344347058823 | 80.20996111764705 |
+| $.severity.rows[32].lat | 13.01767549019608 | 13.015369607843137 |
+| $.severity.rows[32].lon | 80.21344347058823 | 80.21077680392156 |
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 139122 bytes to 139122 bytes.
+Session writes, id 3f54c3ecc14de285, 139122 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.map.pins[64].lat | 13.01767549019608 | 13.01607549019608 |
-| $.map.pins[64].lon | 80.21344347058823 | 80.20996111764705 |
-| $.severity.rows[27].lat | 13.01767549019608 | 13.01607549019608 |
-| $.severity.rows[27].lon | 80.21344347058823 | 80.20996111764705 |
+| $.map.pins[64].lat | 13.01767549019608 | 13.015369607843137 |
+| $.map.pins[64].lon | 80.21344347058823 | 80.21077680392156 |
+| $.severity.rows[27].lat | 13.01767549019608 | 13.015369607843137 |
+| $.severity.rows[27].lon | 80.21344347058823 | 80.21077680392156 |
 
 ### collector POST /api/collector/thunai/memory
 
@@ -1080,7 +1265,7 @@ Session writes, id d7a191781f17de43, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | w1mgvCRyq9cCso_KV9aQhDFw5spNmN8s |
+| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | AV_wPXRepPxaGGg7cZmGnoj-xyJTDixs |
 
 ### collector GET /api/collector/studio/<dataset-1>?export=xlsx
 
@@ -1088,7 +1273,7 @@ Session writes, id be094a0c735be649, 188 bytes to 188 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | mLJ8MYsLHes9w6zMibq3JjKg-pj5qcWX |
+| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | lXPNCQcFkjGgdvlT9LeCXk1Xbu-LaLTA |
 
 ### collector GET /api/collector/studio/<dataset-1>?f=[{"col"%3A"c0"%2C"op"%3A"neq"%2C"values"%3A["no such value"]}]&export=csv
 
@@ -1096,5 +1281,5 @@ Session writes, id a91af3219ee7b0a3, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | dwqnWX1lj-8y2s7C25uDE-25rk40tI9T |
+| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | A_Bno-e6AObOdDV5eVHA9nffoHqbj9AS |
 
