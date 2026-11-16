@@ -39,11 +39,20 @@ describe("A6: the planner's lead", () => {
     expect(o[3]).toBe("anthropic/claude-haiku-5-5");
     expect(o[4]).toBe("gemini/gemini-3.5-flash-lite");
   });
-  it("Opus only by explicit env, never first by default; no key: the ladder is what it always was", () => {
+  it("no key: the ladder is what it always was", () => {
     vi.stubEnv("JARVIS_PLANNER_LEAD", "");
-    vi.stubEnv("JARVIS_CLAUDE_MODEL", "claude-opus-5-5");
-    expect(order()[0]).toBe("anthropic/claude-opus-5-5");
     vi.stubEnv("JARVIS_CLAUDE_MODEL", "");
     expect(ladder(2000, l(), false, false).map((r) => r.provider)).toEqual(["groq", "groq", "groq", "gemini"]);
+  });
+  // review planner-quota-6, brief 3.1: "Take claude-opus-5-5 off the first rung in every case; keep it selectable by env"
+  it("Opus is never on the first rung: named by JARVIS_CLAUDE_MODEL it is a rung, after the Groq ladder, whatever JARVIS_PLANNER_LEAD says", () => {
+    vi.stubEnv("JARVIS_CLAUDE_MODEL", "claude-opus-5-5");
+    for (const lead of ["", "haiku", "groq"]) {
+      vi.stubEnv("JARVIS_PLANNER_LEAD", lead);
+      const o = order();
+      expect(o.slice(0, 3).every((x) => x.startsWith("groq/"))).toBe(true);
+      expect(o[3]).toBe("anthropic/claude-opus-5-5");
+      expect(o[4]).toBe("gemini/gemini-3.5-flash-lite");
+    }
   });
 });
