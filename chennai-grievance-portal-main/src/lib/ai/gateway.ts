@@ -599,7 +599,8 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       }
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
       // Gemini refusing the schema itself: put it in the instructions and try again at once (remembered)
-      if (p.name === "gemini" && status === 400 && /invalid argument/i.test((e as Error).message ?? "") && !plain) {
+      // (v5: also "too many states for serving", Gemini's refusal of a schema whose constraint is too large: the wide planner schema)
+      if (p.name === "gemini" && status === 400 && /invalid argument|too many states/i.test((e as Error).message ?? "") && !plain) {
         console.warn(`[assistant] ${c.name} ${p.name}/${id} refused the schema; sending it as instructions instead`);
         schemaInPrompt.add(plainKey);
         continue;
