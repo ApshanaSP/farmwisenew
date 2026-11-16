@@ -55,6 +55,13 @@ describe("the turn the console is answering (trace.ts traceAnswer)", () => {
     const on = between("const onSentence = ", "const onSentenceRef");
     expect(on).toMatch(/handled\.finally\(\(\) => \{[^\n]*traceAnswerDone\(h\.trace\)/);
   });
+  it("a question cancelled by side talk and asked again (again: true) carries the same trace: the cancelled handling, ending late, never lets the re-ask's turn go", () => {
+    const on = between("const onSentence = ", "const onSentenceRef");
+    // each spoken sentence handed to handle() is counted; only the latest one's ending lets its turn go
+    expect(on).toMatch(/const mine = \+\+spokenSeq\.current;/);
+    expect(on).toMatch(/if \(mine === spokenSeq\.current && h\.trace != null\) traceAnswerDone\(h\.trace\)/);
+    expect(on.indexOf("++spokenSeq.current")).toBeLessThan(on.indexOf("handleRef.current(h.text"));
+  });
   it("the planner's round carries the turn it was asked for, taken when the call starts (as its generation is)", () => {
     const call = between("const callAgent = async (", "const stopNarration = ");
     const take = call.indexOf("traceAnswering()");
