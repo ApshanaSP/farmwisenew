@@ -312,6 +312,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const engagedNow = () => { lastTurnAt.current = Date.now(); hud.set({ engagedUntil: Date.now() + ENGAGED_MS }); };
   /** the trace (trace.ts) of the spoken sentence handle() is deciding now; null for typed text and once stamped (v5, section 6.4) */
   const traceOf = useRef<number | null>(null);
+  /** spoken sentences handed to handle(), counted: only the latest one's ending lets the turn being answered go (traceAnswerDone) */
+  const spokenSeq = useRef(0);
   /**
    * the address gate and the rules have decided: "gateDone" and the turn's lane, on that sentence's own trace only (by its number: side
    * talk uploaded meanwhile opens a newer trace, which must not take them), once
@@ -2191,10 +2193,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // (an older turn finishing says nothing about the one now running)
     // the trace (v5): handle() decides rules or planner before it first waits; anything else it decided by then is "other"
     traceOf.current = h.trace ?? null;
+    const mine = ++spokenSeq.current;
     const handled = handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source, lang: h.lang });
     traceDecided("other");
-    // its handling over, nothing said later (an interjection, a tap) is this turn's answer (traceAnswerDone keeps a newer turn's claim)
-    void handled.finally(() => { if (h.trace != null) traceAnswerDone(h.trace); if (conductor.current?.generation === h.gen) conductor.current.answered(); });
+    // its handling over, nothing said later (an interjection, a tap) is this turn's answer (traceAnswerDone keeps a newer turn's claim);
+    // a question cancelled by side talk and asked again carries the same trace, so only the latest spoken sentence's ending counts
+    void handled.finally(() => { if (mine === spokenSeq.current && h.trace != null) traceAnswerDone(h.trace); if (conductor.current?.generation === h.gen) conductor.current.answered(); });
   };
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;
