@@ -250,9 +250,18 @@ describe("B2's context reaches the echo guard: the speech span, and a clarifying
   });
 });
 
-describe("E2: early speech-to-text, NEXT_PUBLIC_JARVIS_EARLY_STT (default on)", () => {
+describe("E2: early speech-to-text, NEXT_PUBLIC_JARVIS_EARLY_STT=1 (default off since the second real run)", () => {
   const conf = { speech: 0.98, logprob: -0.1 };
+  beforeEach(() => vi.stubEnv("NEXT_PUBLIC_JARVIS_EARLY_STT", "1"));
   afterEach(() => vi.restoreAllMocks());
+  it("unset: off, today's path (one request at the end)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_EARLY_STT", "");
+    const { c, e } = await boot({ lastTurnAt: () => Date.now() - 5_000 });
+    begin(e);
+    pause(e, 900);
+    expect(posts.length).toBe(0);
+    c.close();
+  });
   /** a sentence begins (the deciding detector's start) */
   const begin = (e: FakeEars, start = 1000) => e.hooks.onVad({ type: "start", at: start }, 0);
   /** the ears' pause: 150 ms of quiet inside the sentence, `ms` of speech so far (today's ears never send it) */

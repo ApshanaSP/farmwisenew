@@ -61,7 +61,9 @@ export const AMBIENT_PER_MIN = 8;
  */
 const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1";
 /** v5 (E2): NEXT_PUBLIC_JARVIS_EARLY_STT=0 sends every sentence at its end, as before; anything else (unset too) sends it at its pause */
-const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT !== "0";
+// E2 ships OFF: in the second real run (16 Nov, Edge, synthetic English clips) two clips that Whisper's race reads right whole came
+// back as Tamil when their early upload was used, and right in the run before E2; until the real-room check clears it, "1" turns it on
+const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT === "1";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 
