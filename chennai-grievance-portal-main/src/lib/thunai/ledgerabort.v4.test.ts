@@ -8,7 +8,7 @@ import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import type { JsonCall, JsonResult } from "@/lib/ai/gateway";
+import { schemaText, type JsonCall, type JsonResult } from "@/lib/ai/gateway";
 import { claudeModel } from "@/lib/ai/claude";
 import * as llm from "./llm";
 import { callLlm } from "./llm";
@@ -16,7 +16,8 @@ import { ledger, Ledger, MemoryStore, resetLedger } from "./ledger";
 
 const S = z.object({ ok: z.boolean() });
 const base = (over = {}) => ({ name: "t", system: "a system prompt of some length", prompt: "the prompt", schema: S, maxOutputTokens: 100, user: "u", lane: "planner" as const, until: Date.now() + 8000, ...over });
-const GUESS = Math.ceil(("a system prompt of some length".length + "the prompt".length) / 3.5);
+// v5 A2 (review planner-quota-8): a stopped call is recorded at an estimate that counts the schema, as estimate() does
+const GUESS = Math.ceil(("a system prompt of some length".length + "the prompt".length + schemaText(S).length) / 3.5);
 
 /** a model per id that answers after `ms`, or waits until it is aborted */
 function script(ms: Record<string, number>) {
