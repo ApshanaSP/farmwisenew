@@ -1,0 +1,38 @@
+{
+ "clips": 8,
+ "pause_ms": [
+  70,
+  65,
+  82,
+  67,
+  82,
+  68,
+  66,
+  77
+ ],
+ "pause_p50": 70.09999999403954,
+ "pause_p90": 82.30000001192093,
+ "detector_fire_p50": 69.69999998807907,
+ "cancel_p50": 889.7999999821186,
+ "cancel_ms": [
+  679,
+  887,
+  700,
+  953,
+  952,
+  890,
+  931,
+  856
+ ],
+ "cut_by": [
+  "words",
+  "held",
+  "held",
+  "held",
+  "words",
+  "held",
+  "held",
+  "held"
+ ],
+ "note": "injected audio through WebAudio into the real worklet and Silero; PCM path (browser voices hidden, helpers.ts); the pause is the duck (v4: the voice drops to 20 %, it is cut later); no echo canceller, no real microphone"
+}

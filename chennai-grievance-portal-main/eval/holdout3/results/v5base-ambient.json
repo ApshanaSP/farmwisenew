@@ -1,0 +1,352 @@
+{
+ "at": "2026-11-15T16:12:59.780Z",
+ "summary": {
+  "sideFalseActs": 17,
+  "sideN": 40,
+  "sideLevelBC": 0,
+  "commandsAccepted": 0,
+  "commandsN": 0,
+  "byLang": {
+   "en": {
+    "sideFalseActs": 2,
+    "side": 12,
+    "accepted": 0,
+    "commands": 0
+   },
+   "ta": {
+    "sideFalseActs": 7,
+    "side": 16,
+    "accepted": 0,
+    "commands": 0
+   },
+   "tanglish": {
+    "sideFalseActs": 8,
+    "side": 12,
+    "accepted": 0,
+    "commands": 0
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "c001",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c002",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c003",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c004",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c005",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c006",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c007",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c008",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c009",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c010",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c011",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c012",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c013",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c014",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c015",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c016",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c017",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c018",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c019",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c020",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c021",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c022",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c023",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c024",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c025",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c026",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c027",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c028",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c029",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c030",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c031",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c032",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c033",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c034",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c035",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c036",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c037",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "c038",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  },
+  {
+   "id": "c039",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "c040",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 3,
+   "why": "rules"
+  }
+ ]
+}

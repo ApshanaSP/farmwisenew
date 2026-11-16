@@ -1,0 +1,621 @@
+{
+ "at": "2026-11-15T16:13:05.691Z",
+ "byLang": {
+  "all": {
+   "n": 30,
+   "right": 2,
+   "deferred": 23,
+   "wrong": 5,
+   "capacity": 0,
+   "pct": {
+    "p": 6.7,
+    "lo": 1.8,
+    "hi": 21.3
+   }
+  },
+  "en": {
+   "n": 9,
+   "right": 2,
+   "deferred": 5,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 22.2,
+    "lo": 6.3,
+    "hi": 54.7
+   }
+  },
+  "ta": {
+   "n": 12,
+   "right": 0,
+   "deferred": 11,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 24.3
+   }
+  },
+  "tanglish": {
+   "n": 9,
+   "right": 0,
+   "deferred": 7,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 29.9
+   }
+  }
+ },
+ "byIntent": {
+  "explain": {
+   "n": 5,
+   "right": 0,
+   "deferred": 4,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 43.4
+   }
+  },
+  "changed": {
+   "n": 3,
+   "right": 0,
+   "deferred": 3,
+   "wrong": 0,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 56.2
+   }
+  },
+  "howknow": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "mission": {
+   "n": 2,
+   "right": 0,
+   "deferred": 1,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "brief": {
+   "n": 3,
+   "right": 1,
+   "deferred": 2,
+   "wrong": 0,
+   "capacity": 0,
+   "pct": {
+    "p": 33.3,
+    "lo": 6.1,
+    "hi": 79.2
+   }
+  },
+  "remember": {
+   "n": 4,
+   "right": 0,
+   "deferred": 4,
+   "wrong": 0,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 49
+   }
+  },
+  "recall": {
+   "n": 2,
+   "right": 0,
+   "deferred": 2,
+   "wrong": 0,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "followup": {
+   "n": 9,
+   "right": 1,
+   "deferred": 7,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 11.1,
+    "lo": 2,
+    "hi": 43.5
+   }
+  }
+ },
+ "byLane": {
+  "no-model": {
+   "n": 23,
+   "right": 0
+  },
+  "resolve": {
+   "n": 3,
+   "right": 0
+  },
+  "quick": {
+   "n": 3,
+   "right": 1
+  },
+  "browser": {
+   "n": 1,
+   "right": 1
+  }
+ },
+ "rows": [
+  {
+   "id": "w065",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w087",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 23,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w023",
+   "lang": "ta",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 11,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w038",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 13,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w097",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 24,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w115",
+   "lang": "ta",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 34,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w068",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 18,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w117",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w090",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w040",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 16,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w110",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 21,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w089",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 18,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w072",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w018",
+   "lang": "en",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 24,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w051",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w035",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "howknow",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 8,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w001",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 5,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w046",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 9,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w113",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "browser",
+   "model": null,
+   "ms": 0,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w092",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 10,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w057",
+   "lang": "en",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w073",
+   "lang": "tanglish",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 26,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w020",
+   "lang": "tanglish",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w049",
+   "lang": "tanglish",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 22,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w026",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w005",
+   "lang": "tanglish",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w045",
+   "lang": "tanglish",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 12,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w118",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "remember",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 13,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w085",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "capacity": false,
+   "lane": "no-model",
+   "model": null,
+   "ms": 49,
+   "tokens": 0,
+   "calls": 0
+  },
+  {
+   "id": "w060",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 30,
+   "tokens": 0,
+   "calls": 0
+  }
+ ]
+}
