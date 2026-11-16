@@ -157,7 +157,9 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
   const now = d.now ?? Date.now;
   const t0 = now();
   const need = estimate(c.system, c.prompt, c.maxOutputTokens, c.schema as z.ZodTypeAny);
-  const inputGuess = Math.ceil((c.system.length + c.prompt.length) / 3.5);
+  // what a stopped call (cancelled, a lost hedge, the deadline) is recorded at: its input, the schema counted as estimate() counts it
+  // (review planner-quota-8, A2: on Groq the schema is about 1,000-1,750 tokens of an 8,000-a-minute budget)
+  const inputGuess = Math.ceil((c.system.length + c.prompt.length + schemaText(c.schema as z.ZodTypeAny).length) / 3.5);
   // a test's own model stands alone: a key in the developer's .env does not change what it asks
   const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))());
   const hops: string[] = [];
