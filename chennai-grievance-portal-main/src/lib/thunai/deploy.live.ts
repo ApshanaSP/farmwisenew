@@ -13,8 +13,9 @@
  *           each Groq model's eval/holdout/results/grid-B-<model>.json (b, c, exact p; ids both have, clean outcomes only)
  *   Step 4  after the ledger check: the live-60 through planRound pinned to Haiku (JARVIS_LADDER_PIN=anthropic) with the arm Step 3
  *           picks, the planner2 loop of holdout.live.ts (RoundBody per sentence, up to 3 rounds, recordTurn); written to
- *           eval/holdout2/results/deploy-haiku-planner-live60.json and paired against this build's final Groq live-60 file (v5final),
- *           else v4final (it says which): n, b, c and p only
+ *           eval/holdout2/results/deploy-haiku-planner-live60.json and paired against this build's final Groq live-60 file
+ *           (v5final-planner-live60.json, which the brief's HOLDOUT_TAG=v5final run writes; deploycheck.ts LIVE_BASELINES has the order),
+ *           else v4's (v4final-groq-planner-live60.json): it prints the file's name, and why when it is not this build's: n, b, c and p only
  *   Decision  printed (deploycheck.ts), with the env lines to set; .env is never edited
  *
  * Cost: every request's usage at Haiku 5.5's prices; a call that could take the run over US$0.50 is not made. Expected about $0.15.
@@ -30,7 +31,7 @@ import type { z } from "zod";
 import { claudeJson, claudeOff, claudeWarm, onClaudeCall, type ClaudeCallEvent } from "@/lib/ai/claude";
 import { AgentPlanLenient, type AgentResult } from "./agent";
 import {
-  ARMS, CAP_USD, HAIKU, Spend, armEnv, armP50, cleanOutcome, envLines, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm, pickLead,
+  ARMS, CAP_USD, HAIKU, LIVE_BASELINES, Spend, armEnv, armP50, cleanOutcome, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm, pickLead,
   quantile, rateLimitHeaders, timingSets, type Arm, type ArmId, type TimingRow, type TuneRow
 } from "./deploycheck";
 import { pairRows, resultRows } from "./evalpair";
@@ -270,17 +271,20 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
       const v5 = liveSummary(rows.map((r) => ({ ok: r.ok, capacity: r.capacity, lang: r.lang, rec: r.rec })));
       write(LIVE_OUT, LIVE_FILE, { at, arm: picked.arm.id, summary: byLang(rows), v5, rows, stopped, costUsd: usd(spend.spent) });
       say({ step: 4, arm: picked.arm.id, score: scoreLine(v5.allTurns.k, v5.allTurns.n), cleanTurns: scoreLine(v5.cleanTurns.k, v5.cleanTurns.n), capacityFailures: v5.capacityFailures, label: v5.label, stopped, costUsd: usd(spend.spent) });
-      const base = liveBaseline(LIVE_OUT, fs.existsSync);
-      if (!base) say({ step: 4, paired: false, why: "no Groq live-60 file (v5final or v4final) in eval/holdout2/results" });
-      else if (stopped) say({ step: 4, paired: false, against: base.which, why: `stopped (${stopped})` });
+      // review planner-quota-4, evaluation-honesty-1: the brief's final run is v5final-planner-live60.json; a cut-off or refused file is passed over
+      const finished = (f: string) => { try { return finishedRun(JSON.parse(fs.readFileSync(f, "utf8"))); } catch { return false; } };
+      const base = liveBaseline(LIVE_OUT, fs.existsSync, finished);
+      if (base?.note) console.log(`Step 4: ${base.note}`);
+      if (!base) say({ step: 4, paired: false, why: `no finished Groq live-60 file (${LIVE_BASELINES.map((x) => x.name).join(", ")}) in eval/holdout2/results` });
+      else if (stopped) say({ step: 4, paired: false, against: base.which, file: base.name, why: `stopped (${stopped})` });
       else {
-        against = base.which;
+        against = base.name;
         try {
           const p = pairRows(resultRows(path.join(LIVE_OUT, LIVE_FILE)), resultRows(base.file));
           live = { b: p.b, c: p.c };
           // b = right only with Haiku, c = right only with Groq
-          say({ step: 4, against: base.which, n: p.n, b: p.b, c: p.c, p: p3(p.p) });
-        } catch { say({ step: 4, paired: false, against: base.which, why: "the two files are not on the same sentences" }); }
+          say({ step: 4, against: base.which, file: base.name, n: p.n, b: p.b, c: p.c, p: p3(p.p) });
+        } catch { say({ step: 4, paired: false, against: base.which, file: base.name, why: "the two files are not on the same sentences" }); }
       }
     }
 

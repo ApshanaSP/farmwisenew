@@ -191,11 +191,45 @@ export function ledgerCheck(room: { ok: boolean; left: { rpd: number; tpd: numbe
   return { ok, line: ok ? "the ledger holds the run" : `not started: the ledger's Claude day has ${room.left.rpd} requests and ${room.left.tpd} tokens left; the run needs ${needR} and ${needT}` };
 }
 
-/** This build's final Groq live-60 file if it exists, else v4's (and which one it is). */
-export function liveBaseline(dir: string, exists: (file: string) => boolean): { file: string; which: "v5final" | "v4final" } | null {
-  for (const which of ["v5final", "v4final"] as const) {
-    const file = path.join(dir, `${which}-groq-planner-live60.json`);
-    if (exists(file)) return { file, which };
+/** the command the brief gives for this build's final Groq live-60 (JARVIS_V5_BUILD_2.md 11.3, day 2) */
+export const V5_FINAL_COMMAND = "HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v5final";
+/**
+ * The Groq live-60 files Step 4 may pair against, in order. holdout.live.ts writes `${HOLDOUT_TAG}-planner-${HOLDOUT_SET}.json`, so
+ * the brief's command writes v5final-planner-live60.json (review planner-quota-4, evaluation-honesty-1); the name this check looked
+ * for at first (tag v5final-groq) and the brief's name for the first of its three repeats (v5final-r1) are this build's run too.
+ * v4's run (v4 code, 15 Nov) comes last.
+ */
+export const LIVE_BASELINES: readonly { name: string; which: "v5final" | "v4final" }[] = [
+  { name: "v5final-planner-live60.json", which: "v5final" },
+  { name: "v5final-groq-planner-live60.json", which: "v5final" },
+  { name: "v5final-r1-planner-live60.json", which: "v5final" },
+  { name: "v4final-groq-planner-live60.json", which: "v4final" }
+];
+
+/** A live runner's result file that is a finished run: rows, and neither cut off (`partial`) nor refused by its ledger check. */
+export function finishedRun(j: unknown): boolean {
+  if (!j || typeof j !== "object") return false;
+  const x = j as { rows?: unknown; partial?: unknown; refused?: unknown };
+  return Array.isArray(x.rows) && x.rows.length > 0 && !x.partial && !x.refused;
+}
+
+/**
+ * This build's final Groq live-60 file if there is a finished one, else v4's: the file, its name and which run it is. `note` says
+ * why, whenever it is not this build's run (the v5 file is missing, or there but not a finished run). null: none.
+ */
+export function liveBaseline(dir: string, exists: (file: string) => boolean, finished: (file: string) => boolean = () => true):
+  { file: string; name: string; which: "v5final" | "v4final"; note: string | null } | null {
+  const passedOver: string[] = [];
+  for (const { name, which } of LIVE_BASELINES) {
+    const file = path.join(dir, name);
+    if (!exists(file)) continue;
+    if (!finished(file)) { passedOver.push(name); continue; }
+    const v5 = LIVE_BASELINES[0].name;
+    const why = passedOver.length ? `${passedOver.join(" and ")} ${passedOver.length > 1 ? "are" : "is"} there but not a finished run (cut off, or refused)` : `${v5} is not in ${dir}`;
+    const note = which === "v5final" && !passedOver.length ? null
+      : which === "v5final" ? `${why}: paired against ${name}, this build's run all the same`
+      : `${why}: Haiku is paired against v4's Groq run (${name}, v4 code), not this build's. For the comparison A6 asks for, run this build's final Groq live-60 first (${V5_FINAL_COMMAND}, which writes ${v5}), then this check again`;
+    return { file, name, which, note };
   }
   return null;
 }

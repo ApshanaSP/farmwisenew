@@ -35,7 +35,15 @@ What it does:
 1. **Key.** One tiny call. If it prints `key refused`, it stopped at once and cost nothing. Go back to step 1.
 2. **Timing.** Three settings, 40 calls each: effort low; effort medium; effort low with the compact plan. Thinking is off in all three.
 3. **Accuracy.** The 24 tuning sentences in each setting, scored as the Groq grid was, and compared with each Groq model.
-4. **Live-60.** The 60 frozen test sentences through the real planner, with Haiku alone, in the setting step 3 picked. It is compared with this build's final Groq run (or v4's, if that run is not there; it says which). It prints only counts: never a sentence.
+4. **Live-60.** The 60 frozen test sentences through the real planner, with Haiku alone, in the setting step 3 picked. It is compared with this build's final Groq run: the file `eval/holdout2/results/v5final-planner-live60.json`, which this command writes (run it first, from `chennai-grievance-portal-main`):
+
+   ```
+   HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v5final npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts
+   ```
+
+   On Windows (cmd): `set HOLDOUT=planner2&& set HOLDOUT_DIR=holdout2&& set HOLDOUT_SET=live60&& set HOLDOUT_TAG=v5final&& npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts`
+
+   If that file is not there, or the run was cut off, it is compared with v4's Groq run (`v4final-groq-planner-live60.json`, older code) instead, and it prints the file's name and why. The Groq-or-Haiku decision is then made against v4's run, not this build's. It prints only counts: never a sentence.
 
 It writes its results to `eval/holdout/results/deploy-haiku-*.json` and `eval/holdout2/results/deploy-haiku-planner-live60.json`.
 
