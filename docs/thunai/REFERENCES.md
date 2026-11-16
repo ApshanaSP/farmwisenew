@@ -1,5 +1,50 @@
 # Thunai and Jarvis: references checked
 
+## v5, 15-16 Nov 2026 (brief: docs/jarvis/JARVIS_V5_BUILD_2.md, section 17)
+
+"Verified" and "unverified" are as the research graded them on 15 Nov 2026 unless this build checked a line itself (marked "checked in this build"). No grade was raised without opening the source. Licences of dependencies were read from the licence file in the installed package.
+
+### Dependencies and models
+
+| Item | Exact value | Licence (file read) | Status | Shipped? |
+|---|---|---|---|---|
+| undici (E3, keep-alive connection) | 8.12.4, exact (`package.json`); used with its own `fetch` and `Agent({ keepAliveTimeout: 60_000, keepAliveMaxTimeout: 600_000 })` (`keepalive.ts`); loaded on first use only, and on a Node older than its engines (>= 22.19) the built-in fetch is kept | MIT (`node_modules/undici/LICENSE` read: "MIT License, Copyright (c) Matteo Collina and Undici contributors") | option names `keepAliveTimeout`, `keepAliveMaxTimeout` as the brief states (verified for v8.10.0 by the research); behaviour under Next 15 measured in this build (see RESULTS) | yes (`JARVIS_KEEPALIVE`, default on) |
+| @livekit/wakeword (C5) | 2.1.2 tried, **not installed**: `npm install` moved `onnxruntime-web` out of the top-level `node_modules`, which the page's `/thunai-ort/` route reads; reverted | Apache-2.0 (research; LICENSE and NOTICE); not re-read because nothing shipped | package and licence verified by the research; accuracy on our phrases unverified | no (C5 cut) |
+| sherpa-onnx-node (B5 measurement only) | 2.0.1, outside the repo | Apache-2.0 (read in the spike's own folder) | measured in a scratch folder; never installed in the app | no |
+| IndicConformer Tamil exports (B5, test only) | see B5 in RESULTS | code MIT (AI4Bharat's GitHub LICENSE); HF weights gated, tag only; community exports tag only | test only, deleted after, never committed | no |
+| FLEURS `ta_in` test (B5 clips) | Hugging Face `google/fleurs` | CC-BY-4.0 (YAML header; no standalone licence file) | test only, deleted after | no |
+| Silero VAD v5 (D1) | `silero_vad_v5.onnx` as shipped, now fed `[1, 576]` | MIT (https://raw.githubusercontent.com/snakers4/silero-vad/master/LICENSE) | the 64-sample context matches upstream `utils_vad.py` and `vad-web`'s `silero.ts` (research, code read) | yes (already in the app) |
+| ONNX runtime in the page | `/thunai-ort/`, onnxruntime-web 1.31.0-dev.20260914-8d85527a0, one copy | MIT | unchanged | yes (already) |
+
+### Hosted services (no new one added)
+
+| Item | Exact value | Status | Source |
+|---|---|---|---|
+| Groq planner ids | `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.8-27b` (Preview) | verified; all three answered in this build | B, https://console.groq.com/docs/models |
+| Groq limits, free plan | 8K tokens and 30 requests a minute, 200K tokens and 1K requests a day, per model, per organisation | **checked in this build:** `x-ratelimit-limit-tokens: 8000`, `x-ratelimit-limit-requests: 1000` on the first calls; the request allowance refills one request every 86.4 s (inferred) | B, https://console.groq.com/docs/rate-limits |
+| Groq strict structured outputs | `json_schema`, `strict: true` | verified; **in this build most gpt-oss first calls came back `json_validate_failed` with a usable draft** | B, https://console.groq.com/docs/structured-outputs |
+| Groq prompt cache | automatic on gpt-oss; `usage.prompt_tokens_details.cached_tokens` | verified; surfaced by `ai 7.0.122` as `inputTokenDetails.cacheReadTokens` (checked in this build); hits were rare at this traffic | B, https://console.groq.com/docs/prompt-caching |
+| Groq Whisper | `whisper-large-v3` (forced Tamil), `whisper-large-v3-turbo` (forced English) | verified | B, https://console.groq.com/docs/speech-to-text |
+| Anthropic | `claude-haiku-5-5` leads at deploy; `claude-opus-5-5` by explicit env only | **not called in this build**; the key returned 401 on 15 Nov 2026 | B, https://platform.claude.com/docs/en/about-claude/models/overview |
+| Haiku 5.5 price | $0.10 / $0.50 per million input / output; cache write $0.125, read $0.01 | verified by the research; used for the deploy check's US$0.50 cap | B, https://platform.claude.com/docs/en/about-claude/pricing |
+| Anthropic request fields | `thinking: {type: "disabled"}` always on Haiku's voice lane; `output_config.effort` low (medium allowed); no temperature, top_p, top_k or prefill | verified by the research; tested with a mocked client in this build | B, https://platform.claude.com/docs/en/build-with-claude/thinking ; https://platform.claude.com/docs/en/build-with-claude/effort ; https://platform.claude.com/docs/en/build-with-claude/structured-outputs |
+| Claude audio input | none | verified (absence) | B, https://platform.claude.com/docs/en/api/messages |
+| Gemini ids in `gateway.ts` | `gemini-3.5-flash-lite` verified; `gemini-3.5-flash` and `gemini-flash-lite-latest` unverified, left as they were | as stated | research area A2 |
+
+### Methods
+
+| Item | Source |
+|---|---|
+| Wilson interval at small n (no bootstrap, no normal approximation) | A/B, https://arxiv.org/html/2503.01747v3 ; https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval |
+| Exact McNemar with mid-p | https://en.wikipedia.org/wiki/McNemar%27s_test |
+| pass^k | https://arxiv.org/html/2406.12045 |
+| Run-to-run variation of API models set to be deterministic (up to 15 % accuracy) | https://arxiv.org/html/2408.04667v5 |
+| Text-only address gates near 11-20 % error | B, https://arxiv.org/abs/1808.02504 ; https://arxiv.org/html/2411.00023v2 |
+| Shortlist gains at many tools (+2.3 to +6.5 F1) and example order | B, https://arxiv.org/html/2606.17519 ; https://arxiv.org/html/2309.10954v2 |
+| Context rot (more prompt text hurts) | B, https://trychroma.com/research/context-rot |
+| Memory write rules (G3, rules a and c) | B, https://arxiv.org/html/2605.01970v4 |
+
+
 ## v4, 15 Nov 2026 (brief: docs/jarvis/ULTIMATE_JARVIS.md, section 10)
 
 **No npm dependency was added in v4** (`package.json` and `package-lock.json` are unchanged from `main` `38d96d2f`). Each source below is used as a pattern, written in our own code, or is listed as decided against. "Checked" says what this build itself read. Where it says "brief", the line is taken from the brief's own research of 14 Nov and was not re-read here.
