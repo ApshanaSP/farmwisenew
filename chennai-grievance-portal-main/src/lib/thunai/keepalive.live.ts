@@ -11,6 +11,8 @@
  * at p50 139 ms, so JARVIS_KEEPALIVE defaults on (keepalive.ts). An earlier try stopped after 2 requests: undici's fetch was given
  * the built-in FormData and sent "[object FormData]" (400); keepalive.ts now copies it into undici's own FormData.
  */
+import fs from "fs";
+import path from "path";
 import { expect, it } from "vitest";
 import { groqOnly } from "./liverecord";
 import { warmFetch } from "./keepalive";
@@ -59,4 +61,10 @@ it.runIf(!!process.env.GROQ_API_KEY)("E3: Whisper request time, built-in fetch a
   }
   for (const arm of ["builtin", "keepalive"] as const) console.log(`${arm}: n ${times[arm].length}, p50 ${pct(times[arm], 0.5)} ms, p90 ${pct(times[arm], 0.9)} ms, all [${times[arm].join(", ")}]`);
   console.log(`gain at p50: ${pct(times.builtin, 0.5) - pct(times.keepalive, 0.5)} ms; at p90: ${pct(times.builtin, 0.9) - pct(times.keepalive, 0.9)} ms`);
+  // review evaluation-honesty-6: the measurement that sets JARVIS_KEEPALIVE's default has its own result file (timings only)
+  const out = { at: new Date().toISOString(), model: "whisper-large-v3-turbo", clip: "a synthetic 1 s tone", spacingMs: 10_000,
+    builtin: { n: times.builtin.length, p50: pct(times.builtin, 0.5), p90: pct(times.builtin, 0.9), all: times.builtin },
+    keepalive: { n: times.keepalive.length, p50: pct(times.keepalive, 0.5), p90: pct(times.keepalive, 0.9), all: times.keepalive } };
+  fs.mkdirSync(path.join(process.cwd(), "eval", "holdout", "results"), { recursive: true });
+  fs.writeFileSync(path.join(process.cwd(), "eval", "holdout", "results", "keepalive.json"), JSON.stringify(out, null, 1));
 });
