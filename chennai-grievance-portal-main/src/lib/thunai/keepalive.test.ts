@@ -60,12 +60,12 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); resetLedger(); });
 
 describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
-  it("the Agent is npm undici's, with keepAliveTimeout 60 s and keepAliveMaxTimeout 600 s, made once", () => {
+  it("the Agent is npm undici's, with keepAliveTimeout 60 s and keepAliveMaxTimeout 600 s, made once", async () => {
     expect(KEEPALIVE_OPTIONS).toEqual({ keepAliveTimeout: 60_000, keepAliveMaxTimeout: 600_000 });
-    const a = keepAliveAgent();
+    const a = await keepAliveAgent();
     expect(a).toBeInstanceOf(Agent);
     expect(optionsOf(a)).toMatchObject({ keepAliveTimeout: 60_000, keepAliveMaxTimeout: 600_000 });
-    expect(keepAliveAgent()).toBe(a);
+    expect(await keepAliveAgent()).toBe(a);
   });
   it("warmFetch calls undici's own fetch (not the built-in one) with that Agent as the dispatcher", async () => {
     const builtin = vi.fn(async () => new Response("{}"));
@@ -73,7 +73,7 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     await warmFetch("https://api.groq.com/openai/v1/models", { method: "GET" });
     expect(builtin).not.toHaveBeenCalled();
     expect(seen.calls).toHaveLength(1);
-    expect(seen.calls[0].init.dispatcher).toBe(keepAliveAgent());
+    expect(seen.calls[0].init.dispatcher).toBe(await keepAliveAgent());
     expect(seen.calls[0].init.method).toBe("GET");
   });
   it("a built-in FormData body (stt.ts's Whisper upload) reaches undici as undici's own FormData, every field and the file kept", async () => {
@@ -104,7 +104,7 @@ describe("E3: keepalive.ts's fetch is undici's, on undici's own Agent", () => {
     expect(keepAliveOn()).toBe(true);
     await groqFetch("https://api.groq.com/x", {});
     expect(seen.calls).toHaveLength(1);
-    expect(seen.calls[0].init.dispatcher).toBe(keepAliveAgent());
+    expect(seen.calls[0].init.dispatcher).toBe(await keepAliveAgent());
     expect(builtin).not.toHaveBeenCalled();
     vi.stubEnv("JARVIS_KEEPALIVE", "0");
     expect(keepAliveOn()).toBe(false);
@@ -188,7 +188,8 @@ describe("E3: stt.ts's Whisper requests and gateway.ts's Groq calls use it", () 
     const h = await hearUtterance(wav(), { lane: "engaged", site: "en" });
     expect(h).toMatchObject({ text: "show the drain status", noise: false });
     expect(seen.calls.map((c) => c.url)).toEqual(["https://api.groq.com/openai/v1/audio/transcriptions", "https://api.groq.com/openai/v1/audio/transcriptions"]);
-    expect(seen.calls.every((c) => c.init.dispatcher === keepAliveAgent())).toBe(true);
+    const ka = await keepAliveAgent();
+    expect(seen.calls.every((c) => c.init.dispatcher === ka)).toBe(true);
     expect(builtin).not.toHaveBeenCalled();
   });
   it("JARVIS_KEEPALIVE=0: the Whisper requests go to the built-in fetch, undici's is never called", async () => {
@@ -209,7 +210,8 @@ describe("E3: stt.ts's Whisper requests and gateway.ts's Groq calls use it", () 
     expect(r.object).toEqual({ ok: true });
     expect(seen.calls.length).toBeGreaterThanOrEqual(1);
     expect(seen.calls[0].url).toContain("api.groq.com");
-    expect(seen.calls.every((c) => c.init.dispatcher === keepAliveAgent())).toBe(true);
+    const ka = await keepAliveAgent();
+    expect(seen.calls.every((c) => c.init.dispatcher === ka)).toBe(true);
     expect(builtin).not.toHaveBeenCalled();
   });
   it("JARVIS_KEEPALIVE=0: the gateway's Groq call goes to the built-in fetch (a test's stub still sees it)", async () => {
