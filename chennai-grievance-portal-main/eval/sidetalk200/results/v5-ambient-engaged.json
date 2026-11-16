@@ -1,35 +1,34 @@
 {
- "at": "2026-11-15T17:05:13.976Z",
+ "at": "2026-11-16T17:42:42.057Z",
  "summary": {
   "lastTurn5sAgo": {
-   "sideFalseActs": 75,
+   "sideFalseActs": 58,
    "sideN": 200,
    "sideLevelBC": 58,
-   "commandsAccepted": 59,
+   "commandsAccepted": 54,
    "commandsN": 60,
-   "sideInterval": "75/200 (37.5 %, 31.1-44.4)",
-   "commandsRefused": 1,
+   "sideInterval": "58/200 (29.0 %, 23.2-35.6)",
+   "commandsRefused": 6,
    "byTier": {
-    "rules": 17,
     "engaged": 58
    },
    "byLang": {
     "en": {
-     "sideFalseActs": 18,
+     "sideFalseActs": 17,
      "side": 67,
      "accepted": 20,
      "commands": 20
     },
     "ta": {
-     "sideFalseActs": 33,
+     "sideFalseActs": 22,
      "side": 67,
-     "accepted": 20,
+     "accepted": 18,
      "commands": 20
     },
     "tanglish": {
-     "sideFalseActs": 24,
+     "sideFalseActs": 19,
      "side": 66,
-     "accepted": 19,
+     "accepted": 16,
      "commands": 20
     }
    }
@@ -44,11 +43,11 @@
     "commandsN": 60
    },
    "windowMs20000": {
-    "sideFalseActs": 75,
+    "sideFalseActs": 58,
     "sideN": 200,
-    "sideInterval": "75/200 (37.5 %, 31.1-44.4)",
+    "sideInterval": "58/200 (29.0 %, 23.2-35.6)",
     "sideLevelBC": 58,
-    "commandsAccepted": 59,
+    "commandsAccepted": 54,
     "commandsN": 60
    }
   },
@@ -83,9 +82,9 @@
    "id": "s175",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s052",
@@ -123,9 +122,9 @@
    "id": "s056",
    "kind": "command",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s133",
@@ -187,9 +186,9 @@
    "id": "s033",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s244",
@@ -387,9 +386,9 @@
    "id": "s039",
    "kind": "command",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s286",
@@ -571,9 +570,9 @@
    "id": "s311",
    "kind": "command",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s194",
@@ -635,9 +634,9 @@
    "id": "s297",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s308",
@@ -667,9 +666,9 @@
    "id": "s049",
    "kind": "side",
    "lang": "en",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s280",
@@ -763,9 +762,9 @@
    "id": "s135",
    "kind": "command",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s287",
@@ -1123,33 +1122,33 @@
    "id": "s015",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s028",
    "kind": "command",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s146",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s026",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s089",
@@ -1163,9 +1162,9 @@
    "id": "s014",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s234",
@@ -1243,9 +1242,9 @@
    "id": "s240",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s170",
@@ -1483,9 +1482,9 @@
    "id": "s168",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s169",
@@ -1547,9 +1546,9 @@
    "id": "s025",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s159",
@@ -1587,9 +1586,9 @@
    "id": "s262",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s001",
@@ -1795,17 +1794,17 @@
    "id": "s167",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s223",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s317",
@@ -1907,9 +1906,9 @@
    "id": "s130",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s205",
@@ -1995,9 +1994,9 @@
    "id": "s270",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s166",
@@ -2035,9 +2034,9 @@
    "id": "s320",
    "kind": "side",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "s276",

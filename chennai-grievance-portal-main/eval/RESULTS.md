@@ -113,14 +113,13 @@ Trace (n 6, p50 / p90): upload sent 187 / 338 (the early upload, before the end 
 
 | Set | Side talk acted, C1 (shipped) | Unnamed commands refused, C1 | Level B/C acts, unengaged | With the old command tier (`JARVIS_GATE_COMMAND_TIER=1`) | Engaged window: Jarvis's last turn 5 s ago |
 |---|---|---|---|---|---|
-| holdout2 (60 side, 40 commands) | **0/60** (0.0-6.0 %) | **40/40** | 0 | 4/60 acted; 35/40 commands accepted | 18/60 acted (30.0 %, 19.9-42.5), 14 of them at tier 2; 39/40 commands accepted |
-| holdout3 (40 look-alike side lines) | **0/40** (0.0-8.8 %) | (no commands in the set) | 0 | 17/40 acted | 20/40 acted (50.0 %, 35.2-64.8), 6 at tier 2 |
-| sidetalk200 (200 side, 60 commands; frozen in this build) | **0/200** (0.0-1.9 %) | **60/60** | 0 | 21/200 acted; 55/60 commands accepted | 75/200 acted (37.5 %, 31.1-44.4), 58 at tier 2; 59/60 commands accepted |
+| holdout2 (60 side, 40 commands) | **0/60** (0.0-6.0 %) | **40/40** | 0 | 4/60 acted; 35/40 commands accepted | 14/60 acted (23.3 %, 14.4-35.4), all at tier 2; 37/40 commands accepted (before the review fix: 18/60 and 39/40) |
+| holdout3 (40 look-alike side lines) | **0/40** (0.0-8.8 %) | (no commands in the set) | 0 | 17/40 acted | 6/40 acted (15.0 %, 7.1-29.1), all at tier 2 (before the review fix: 20/40) |
+| sidetalk200 (200 side, 60 commands; frozen in this build) | **0/200** (0.0-1.9 %) | **60/60** | 0 | 21/200 acted; 55/60 commands accepted | 58/200 acted (29.0 %, 23.2-35.6), all at tier 2; 54/60 commands accepted (before the review fix: 75/200 and 59/60) |
 
 - **The trade, side by side:** C1 takes side talk said while Jarvis is idle to 0 on every set, and refuses every unnamed command said while Jarvis is idle (they need "Jarvis" first, or must come within 20 s of its last turn). That refusal is the price the owner's default accepts.
-- **Inside the follow-up window the gate is as permissive as v4:** a third to a half of the look-alike side lines said within 5 s of Jarvis's turn are taken as addressed, most at tier 2, which allows a level B or C plan (B still waits for a spoken yes; C is a draft only; nothing is ever sent, approved or deleted). With an 8 s window a line 10 s after the turn is unengaged (0 acted); with the shipped 20 s window it is engaged. `ENGAGED_MS` stays 20,000.
-- **"≤ 5 %" on side talk, unengaged:** 0/200 has an upper bound of 1.9 %, so it is met on the drafted set by construction of the harness. Not claimed for a real room, or for the engaged window (37.5 % there).
-- The lane kept the two command returns inside the engaged window (a sure line with no request shape relies on them there) and cut them outside it.
+- **Inside the follow-up window** a sixth to under a third of the look-alike side lines said within 5 s of Jarvis's turn are taken as addressed (request-shaped lines, tier 2), which allows a level B or C plan (B still waits for a spoken yes; C is a draft only; nothing is ever sent, approved or deleted). The first build kept the two command returns inside the window; the review (gate-captions-wake-1) held that C1 says to remove both, so they now fire only with `JARVIS_GATE_COMMAND_TIER=1`. The price: a sure line with no request shape said inside the window ("severe cases in Perungudi this week") is refused unless named or said as a request. With an 8 s window a line 10 s after the turn is unengaged (0 acted); with the shipped 20 s window it is engaged. `ENGAGED_MS` stays 20,000.
+- **"≤ 5 %" on side talk, unengaged:** 0/200 has an upper bound of 1.9 %, so it is met on the drafted set by construction of the harness. Not claimed for a real room, or for the engaged window (29.0 % there).
 
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 

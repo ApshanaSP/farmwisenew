@@ -1,17 +1,16 @@
 {
- "at": "2026-11-15T17:03:25.016Z",
+ "at": "2026-11-16T17:41:40.481Z",
  "summary": {
   "lastTurn5sAgo": {
-   "sideFalseActs": 18,
+   "sideFalseActs": 14,
    "sideN": 60,
    "sideLevelBC": 14,
-   "commandsAccepted": 39,
+   "commandsAccepted": 37,
    "commandsN": 40,
-   "sideInterval": "18/60 (30.0 %, 19.9-42.5)",
-   "commandsRefused": 1,
+   "sideInterval": "14/60 (23.3 %, 14.4-35.4)",
+   "commandsRefused": 3,
    "byTier": {
-    "engaged": 14,
-    "rules": 4
+    "engaged": 14
    },
    "byLang": {
     "en": {
@@ -23,13 +22,13 @@
     "ta": {
      "sideFalseActs": 6,
      "side": 20,
-     "accepted": 15,
+     "accepted": 14,
      "commands": 16
     },
     "tanglish": {
-     "sideFalseActs": 8,
+     "sideFalseActs": 4,
      "side": 20,
-     "accepted": 12,
+     "accepted": 11,
      "commands": 12
     }
    }
@@ -44,11 +43,11 @@
     "commandsN": 40
    },
    "windowMs20000": {
-    "sideFalseActs": 18,
+    "sideFalseActs": 14,
     "sideN": 60,
-    "sideInterval": "18/60 (30.0 %, 19.9-42.5)",
+    "sideInterval": "14/60 (23.3 %, 14.4-35.4)",
     "sideLevelBC": 14,
-    "commandsAccepted": 39,
+    "commandsAccepted": 37,
     "commandsN": 40
    }
   },
@@ -515,9 +514,9 @@
    "id": "b058",
    "kind": "command",
    "lang": "ta",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b059",
@@ -603,17 +602,17 @@
    "id": "b069",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b070",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b071",
@@ -627,9 +626,9 @@
    "id": "b072",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b073",
@@ -675,9 +674,9 @@
    "id": "b078",
    "kind": "side",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b079",
@@ -811,9 +810,9 @@
    "id": "b095",
    "kind": "command",
    "lang": "tanglish",
-   "act": true,
-   "tier": 3,
-   "why": "rules"
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
   },
   {
    "id": "b096",
