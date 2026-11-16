@@ -140,13 +140,17 @@ export const METRIC_NAMES: Record<string, { en: string[]; ta: string[]; tanglish
   deaths: { en: ["deaths", "fatalities", "people died"], ta: ["மரணங்கள்", "இறப்புகள்", "மரணம்"], tanglish: ["deaths", "death count"] },
   rain_linked: { en: ["rain linked incidents", "rain related incidents", "incidents during rain"], ta: ["மழையின் போது பதிவானவை"], tanglish: ["mazhai time incidents"] },
   rain_days: { en: ["rain days", "rainy days", "days of rain"], ta: ["மழை நாட்கள்"], tanglish: ["rain days", "mazhai naatkal"] },
-  complaints_open: { en: ["open complaints", "pending complaints", "citizen complaints", "complaints"], ta: ["நிலுவைப் புகார்கள்", "புகார்கள்"], tanglish: ["complaints", "pending complaints"] },
+  // (review planner-quota-3: bare "complaints" means incidents on every other screen; only "citizen complaints" names this figure)
+  complaints_open: { en: ["citizen complaints"], ta: ["குடிமக்கள் புகார்கள்"], tanglish: ["citizen complaints"] },
   imd_warning: { en: ["imd warning", "weather warning", "warning level", "alert level"], ta: ["வானிலை எச்சரிக்கை", "எச்சரிக்கை நிலை"], tanglish: ["warning level", "imd alert"] }
 };
 for (const d of METRIC_DEFS) if (METRIC_NAMES[d.id]) (d as MetricDef).names = METRIC_NAMES[d.id];
 
 const phrase = (s: string) => ` ${normalise(s).text} `;
-const NAME_PHRASES = Object.entries(METRIC_NAMES).flatMap(([id, n]) => [...n.en, ...n.ta, ...n.tanglish].map((p) => ({ id, p: phrase(p) })));
+// (review planner-quota-2) only a metric that can show a change is named: one with a figure before it (comparison not "none"); the others
+// (open now, overdue, deaths, rain-linked, the warning level) keep their names for the owner's list but are left to v4's incidents change
+const CAN_CHANGE = new Set(METRIC_DEFS.filter((d) => d.comparison !== "none").map((d) => d.id));
+const NAME_PHRASES = Object.entries(METRIC_NAMES).filter(([id]) => CAN_CHANGE.has(id)).flatMap(([id, n]) => [...n.en, ...n.ta, ...n.tanglish].map((p) => ({ id, p: phrase(p) })));
 
 /**
  * The one metric a sentence names (A4): whole normalised phrases; a name inside a longer matched name does not count ("severe

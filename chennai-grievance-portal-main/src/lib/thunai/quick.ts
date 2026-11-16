@@ -423,6 +423,7 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   // "what changed since yesterday", "what's new in Adyar", "Adyar la enna maarichu": the change and where it sits (recipes/changed.ts), never this window's list
   const analysis = !!(o.noBail || o.analysis);
   const changed = changedScreen(text, t, w, spec);
+  if (changed === "planner") return null;
   if (changed) return analysis ? changed : null;
   // the other new intents are flows of their own: "build me a flood board for Adyar" is not Adyar's cases, "how do you know" is no screen (v4)
   if (!o.noBail && leavesFastLane(text)) return null;
@@ -605,7 +606,7 @@ export function intentMarker(text: string): IntentMarker | null {
 /** "what has changed in Adyar since last week", beyond intentMarker's whole-sentence forms: a question about change, never about the news */
 const CHANGED_LOOSE = /^ (?:(?:jarvis|so|ok|okay|and|now|tell me|show me) )*(?:what|whats|what all|anything|has anything|did anything)(?: has| have| all)? (?:changed|is new|new) /;
 /** The change and where it sits, when that is what was asked (intentMarker's "changed", or the plain English question): its place, kind and window. */
-function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Quick | null {
+function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Quick | "planner" | null {
   if (intentMarker(text)?.intent !== "changed" && !(CHANGED_LOOSE.test(t) && !has(t, NEWS))) return null;
   // two places or a comparison is another question; a window no lane holds ("two weeks ago") was refused before this
   const zones = zonesIn(t, w);
@@ -613,7 +614,8 @@ function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Qui
   const period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
   // v5 A4: one metric named in code sets metricId; two named: the planner decides (no screen from the rules); none: the incidents change
   const metric = metricNamedIn(text);
-  if (metric === "ambiguous") return null;
+  // (review planner-quota-1) two metrics named: no screen from the rules at all, so the planner decides (not this window's cases list)
+  if (metric === "ambiguous") return "planner";
   return { recipe: "changed", slots: { zones, cat: catIn(t), period: period ?? "daily", fresh: true, ...(metric ? { metricId: metric } : {}) } };
 }
 
