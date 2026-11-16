@@ -2,7 +2,7 @@
 
 ## v5 (15-16 Nov 2026)
 
-Measured on this Windows laptop, branch `claude/jarvis-v5-build-dfece7`, START `f830efbd` (`origin/main`: the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. "Base" means START itself, run in a detached worktree with no v5 code. Raw files: `eval/holdout/results/grid-*.json`, `eval/holdout*/results/v5*`, `tests/e2e/results/`. Every interval is a 95 % Wilson interval; every paired comparison is an exact two-sided McNemar on the same sentences (b = right only in the first, c = right only in the second). The older sections below are unchanged.
+Measured on this Windows laptop, branch `claude/jarvis-v5-build-dfece7`, START `f830efbd` (`origin/main`: the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. "Base" means START itself, run in a detached worktree with no v5 code. Raw files: `eval/holdout/results/grid-*.json`, `eval/holdout*/results/v5*`, `tests/e2e/results/`. Every interval is a 95 % Wilson interval. A grid or live run that met any 429 is a capacity failure: its clean-turn score (429 rows left out) is printed beside its all-turn score (429 rows counted wrong), and a strict-mode 400 with no usable draft, a 5xx or a timeout is its own outcome, not a wrong answer (grid files rescored so after review). Every paired comparison is an exact two-sided McNemar on the same sentences (b = right only in the first, c = right only in the second). The older sections below are unchanged.
 
 ### Capacity and blocks, before any number
 
@@ -49,23 +49,23 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 | G vs A, gpt-oss-20b | 10 | 0 | 2 | 0.5 | about equal |
 | G vs B, gpt-oss-20b | 13 | 4 | 3 | 1.0 | about equal |
 
-- **Cells C, D, E (on gpt-oss-120b) and F (on qwen) did not fit the ledger: owed** (commands in the handover).
+- **On 15 Nov, cells C, D, E (planned on gpt-oss-120b) and F (on qwen) did not fit the ledger.** D and E ran on day 2 on gpt-oss-20b (below); C and F are owed, with their commands in `docs/thunai/HANDOVER.md`.
 - **Strict-mode 400s:** on both gpt-oss models most first calls came back `json_validate_failed` with a draft the lenient schema accepted (as production does): A 11/15 and 13/18, B 11/14 and 14/17, G 12/15. qwen: 1 and 2. Those calls carry no provider token count. Cached input tokens: none on gpt-oss-20b's A and B; 120b's B averaged 100 a call, G 119.
 - **Reading against 7.5:** A beat B on gpt-oss-20b only, about equal on the other two, no model the other way by 3. The rows that would say why (A against C, D, E; F against B) are owed. G does not beat A. **No row that selects a planner change holds, so Phase 4 ships the capacity items (A2, A5) and builds A1/A1b behind `JARVIS_PLANNER_DIET`, default off; A3 (route-then-fill) stays built and unwired.**
 - The grid's own tokens (ledger): qwen 49.8K, gpt-oss-20b 68.9K plus G about 34K (estimate), gpt-oss-120b 77.3K.
 
-**Day 2 (16 Nov), on the refilled allowance: cells D and E on gpt-oss-20b**, the same 15 sentences (the model where A beat B; the plan had put C, D, E on gpt-oss-120b, where A and B were about equal). They ran with A5's gateway (one retry on a strict-mode 400); A and B's misses were not of that kind (their rows hold no `json_validate_failed` without a draft), so that difference does not bear on the pairs.
+**Day 2 (16 Nov), on the refilled allowance: cells D and E on gpt-oss-20b** (the model where A beat B; the plan had put C, D, E on gpt-oss-120b, where A and B were about equal). They ran on 15 of the 18 sentences both schemas can express: 11 shared with A and B, 4 not; A and B's 4 new-intent sentences are left out of these pairs. Different day, same seeded order. They ran with A5's gateway (one retry on a strict-mode 400); A and B's misses were not of that kind (their rows hold no `json_validate_failed` without a draft), so that difference does not bear on the pairs.
 
 | Model | D (v4 prose, v3 schema) | E (v3 prose, v4 schema) |
 |---|---|---|
-| gpt-oss-20b | 14/14 (100.0 %, 78.5-100.0), 1 capacity | 12/14 (85.7 %, 60.1-96.0), 1 capacity |
+| gpt-oss-20b | clean turns 14/14 (100.0 %, 78.5-100.0); all turns 14/15; capacity failure (one 429) | clean turns 12/14 (85.7 %, 60.1-96.0); all turns 12/15; capacity failure (one 429) |
 
 | Pair | n | b | c | exact p | Reading |
 |---|---|---|---|---|---|
 | A vs D, gpt-oss-20b | 11 | 0 | 2 | 0.5 | about equal |
 | A vs E, gpt-oss-20b | 10 | 2 | 2 | 1.0 | about equal |
 
-- **Neither the v4 prose (D) nor the v4 schema (E) does worse than v3 (A)** on the model where B fell behind A. So H1 and H2 are not supported; B's shortfall on 20b on 15 Nov is not explained by either part of the v4 additions, which leaves day-to-day variation and the model mix (H3; Step 0's 10 flash-lite turns). Cell C (length alone) and F (a `why` field on qwen) were not run: owed.
+- **A harm from the v4 prose (D) or the v4 schema (E) is not shown** on 10-11 pairs across two days (direction only): neither does worse than v3 (A) on the model where B fell behind A. The per-cell D and E scores above are on a partly different set and day: compare pairs, not cells. B's shortfall on 20b on 15 Nov is not explained by either part of the v4 additions; day-to-day variation and the model mix (H3; Step 0's 10 flash-lite turns) remain. A same-day rerun of B on 20b is owed. Cell C (length alone) and F (a `why` field on qwen) were not run: owed.
 - **The reading stands: no row of 7.5 selects a planner change; A1/A1b ship off, A3 unwired.**
 
 
@@ -88,9 +88,9 @@ Every trace time is ms from the **last voiced sample** (the detector's own end o
 
 The stages add up to the mocks plus about 100 ms of the page's own work; nothing unexplained in the mocked lane.
 
-**Real run 1** (16 Nov 22:02; production bundle with `NEXT_PUBLIC_JARVIS_SPEC=1` built from a clean worktree at `8a9d1e69`, before E2 and E3; Edge; real Whisper, the real Groq ladder with Claude off, the real voice ladder; injected synthetic clips; `latency-real-prod-v5first.json`). **The four rules-lane clips were refused by C1** (none names Jarvis, Jarvis was idle): they measure nothing. One planner turn ("how is the metro water backlog looking overall?") answered: first spoken finding **6,674 ms**. Its trace: upload 348, transcript back 894, gate 972, first event 1,132, planner sent 5,869, back 6,614, voice start 6,987. **E1, what held the time:** round 0's qwen call had not answered after the ladder's 3.5 s default hedge wait; the hedge's gpt-oss-120b answered in 1.1 s; the plan asked for a lookup, and a second round (qwen, 722 ms) followed. A not-done round did not report its server times, so round 0 was missing from the trace: fixed. n = 1: not a rate.
+**Real run 1** (16 Nov 22:02; production bundle with `NEXT_PUBLIC_JARVIS_SPEC=1` built from a clean worktree at `8a9d1e69`, before E2 and E3; Edge; real Whisper, the real Groq ladder with Claude off, the real voice ladder; injected synthetic clips; `latency-real-prod-v5first.json`). **The four rules-lane clips were refused by C1** (none names Jarvis, Jarvis was idle): they measure nothing. One planner turn ("how is the metro water backlog looking overall?") answered: first spoken finding **6,674 ms**. Its own trace: end of utterance 332, upload 340, STT sent 347, STT back 844, transcript 894, gate 972, first event 1,132, planner sent 5,869, back 6,614, voice start 6,987. **E1, what held the time:** round 0's qwen call had not answered after the ladder's 3.5 s default hedge wait; the hedge's gpt-oss-120b answered in 1.1 s; the plan asked for a lookup, and a second round (qwen, 722 ms) followed. A not-done round did not report its server times, so round 0 was missing from the trace: fixed. n = 1: not a rate.
 
-**Real run 2** (16 Nov 22:20; the same set-up built at `2af986c5`, with E2 and E3 on, the run opened by a synthetic named clip; `latency-real-prod-v5early.json`): 5 of 6 clips answered.
+**Real run 2** (16 Nov 22:20; the same set-up built at `2af986c5`, with E2 and E3 on, the run opened by a synthetic named clip; `latency-real-prod-v5early.json`): 4 of 6 clips spoke a finding.
 
 | Clip (what Whisper returned) | Lane | First spoken finding (ms) |
 |---|---|---|
@@ -104,8 +104,8 @@ The stages add up to the mocks plus about 100 ms of the page's own work; nothing
 Trace (n 6, p50 / p90): upload sent 187 / 338 (the early upload, before the end of utterance at 332 / 343), STT sent 207 / 343, back 680 / 1,215, transcript 773 / 1,245, gate 835 / 1,281, first event 1,261 / 2,212, planner sent (n 3) 918 / 1,429, back 2,328 / 4,733, tools done 2,156 / 4,742, speak 2,229 / 2,409.
 
 - **The language finding, and why E2 ships off.** Three of the English clips came back as Tamil. By direct decodes of the same clip files: "Go to the trends page" comes back Tamil on START too (pre-existing: Whisper's race picks the forced-Tamil decode on that clip); "What about the rain in Perungudi today?" and "Jarvis, put together something useful for my morning" come back English when decoded whole (with the last line English or Tamil), and the second was heard in English in real run 1, before E2. So the early upload's audio (the sentence up to its first 150 ms pause) is the likely cause. **E2 ships default off** (`NEXT_PUBLIC_JARVIS_EARLY_STT=1` turns it on); the measured run is not the shipped default. Owed: a real run with the shipped defaults, and the room check.
-- **Targets, honestly:** rules lane first finding 1,467 ms on one clean clip (target 1.0 s: **not met**; v4: 1.14 s); planner lane 2.2-2.4 s on the three planner turns that spoke (target p50 2.2 s: about at it, n 3, with E2 on); engaged speech-to-text server time (STT sent to back) p50 about 470 ms (target 700: met). The unexplained 300-800 ms of the brief: in these runs the time sat in the planner's round 0 (a slow qwen call held by the 3.5 s default hedge wait) and in second, lookup rounds, not in the voice start.
-- **E3 (keep-alive):** measured apart, 12 Whisper requests 10 s apart: built-in fetch p50 374 / p90 457 ms; keep-alive p50 235 / p90 858 ms (the p90 is its first, cold request). Ships on.
+- **Targets, honestly:** rules lane first finding 1,467 ms on one clean clip (target 1.0 s: **not met**; v4: 1.14 s); planner lane 2.2-2.4 s on the three planner turns that spoke (target p50 2.2 s: about at it, n 3, with E2 on); engaged speech-to-text server time (STT sent to back, per turn) p50 442 ms, n 6 (337-1,020; target 700: met). The unexplained 300-800 ms of the brief: in these runs the time sat in the planner's round 0 (a slow qwen call held by the 3.5 s default hedge wait) and in second, lookup rounds, not in the voice start.
+- **E3 (keep-alive):** measured apart, 6 + 6 Whisper requests 10 s apart, twice: 15 Nov built-in p50 374 / p90 457 ms, keep-alive 235 / 858 (its first, cold request); 16 Nov (`keepalive.json`) built-in 316 / 377, keep-alive 245 / 344. Gain at p50 139 and 71 ms, over the 30 ms bar: ships on.
 
 ### Side talk and the address gate (C1, C2; no model)
 
