@@ -178,6 +178,21 @@ describe("the voice's trace stamps (section 6.4)", () => {
     synth!.queue[0].onboundary?.({ name: "word", charIndex: 0 });
     expect(t.at.voiceStart!).toBeGreaterThanOrEqual(t.at.speakCalled!);
   });
+  // review voice-detector-latency-3: the browser voice's start is its utterance's onstart, not its first word
+  it("the browser's voice: voiceStart at the utterance's onstart, before any word boundary", async () => {
+    env([NEERJA]);
+    const mouth = await load();
+    const trace = await loadTrace();
+    trace.resetTrace();
+    trace.traceStart(performance.now());
+    mouth.speakLines([LONG], "en-IN");
+    await vi.waitFor(() => expect(synth!.said.length).toBe(1));
+    const t = trace.traces().at(-1)!;
+    expect(t.at.voiceStart).toBeUndefined();
+    (synth!.queue[0] as unknown as { onstart?: (() => void) | null }).onstart?.();
+    expect(typeof t.at.voiceStart).toBe("number");
+    expect(t.at.voiceStart!).toBeGreaterThanOrEqual(t.at.speakCalled!);
+  });
 
   it("the acknowledgement stamps neither: the trace measures the answer", async () => {
     env([NEERJA]);
