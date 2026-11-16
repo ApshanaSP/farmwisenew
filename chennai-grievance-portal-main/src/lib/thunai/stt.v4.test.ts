@@ -83,13 +83,14 @@ describe("first good decode wins", () => {
 describe("no third racer (v5 B1)", () => {
   it("Whisper unsure of an engaged turn: only the two forced decodes are asked, and the race ends when they are back", async () => {
     vi.stubEnv("GEMINI_API_KEY", "g");
-    const { fetcher, calls } = fake({ en: { ms: 300, text: "adhe arru", logprob: -1.3 }, ta: { ms: 300, text: "அதே ஆறு", logprob: -1.3 }, gemini: { ms: 3000, text: "unused" } });
+    const { fetcher, calls } = fake({ en: { ms: 300, text: "adhe arru", logprob: -1.3 }, ta: { ms: 300, text: "அதே ஆறு", logprob: -1.3 }, gemini: { ms: 7000, text: "unused" } });
     const t0 = Date.now();
     await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(calls.map((c) => c.kind).sort()).toEqual(["en", "ta"]);
-    // the margin is for a loaded machine running the whole suite
-    expect(Date.now() - t0).toBeLessThan(2500);
-  });
+    // the margin is for a loaded machine: the v5 QA gate's two lanes took this 300 ms race to 3,050 ms (alone: about 340 ms).
+    // Waiting on the third racer (7 s) or on a Whisper request's limit would pass 4.5 s.
+    expect(Date.now() - t0).toBeLessThan(4500);
+  }, 12000);
 });
 
 describe("one prompt per language", () => {
