@@ -193,13 +193,38 @@ const latinNext = (after: string) => /^[\p{L}\p{M}]/u.test(after) && !/^\p{Scrip
 
 interface Said { from: number; to: number; say: string; code: boolean }
 
-/** A figure in digits (no clock), as the gate reads it: grouped Indian or Western with a decimal, else each comma or dot part on its own. */
-function figureWords(s: string, l: SpokenLang): { words: string; value: number; whole: boolean } {
+/*
+ * review numbers-privacy-1: code writes its counts with no grouping commas (insight.ts spoken() is String(v); screens.ts and the recipes
+ * build their say lines with it), so a bare run of digits is a count unless what stands right before it makes it a code. These do:
+ */
+/** the word PIN (pincode, postal code) right before a six-digit figure, in English or Tamil ("PIN 600042", "அஞ்சல் குறியீடு 600020") */
+const PIN_WORD = /(?<![\p{L}\p{M}])(?:pin\s?code|pincode|pin|postal\s+code|zip\s?code|zip|அஞ்சல்\s+குறியீடு|அஞ்சல்\s+எண்|பின்\s?கோடு)\s*[:#.\-–]?\s*$/iu;
+/** a Tamil Nadu PIN code's shape (600xxx to 643xxx): after a place name it is a PIN, not a count of six lakh */
+const TN_PIN = /^6[0-4]\d{4}$/;
+/** a place's name right before the figure, capitalised or in Tamil letters, with a space, a comma or a dash between ("Velachery 600042", "Chennai - 600020", "சென்னை 600020") */
+const PLACE_BEFORE = /(?:^|[^\p{L}\p{M}])(?:\p{Lu}|[அ-ஹ])[\p{L}\p{M}]*[ \t]*,?[ \t]*(?:[-–—][ \t]*)?$/u;
+/** a word that names the figure after it as an id or a phone number ("complaint number 12345", "No. 54321", "#12345", "புகார் எண் 12345") */
+const ID_WORD = /(?:(?<![\p{L}\p{M}])(?:id|no\.|number|ref|ticket|phone|mobile|helpline|tel|எண்|தொலைபேசி|கைபேசி|அலைபேசி)\s*[:.\-–]?|#)\s*$/iu;
+
+/** A bare run of five digits or more that the text right before it makes a code (read one by one): a PIN after the word PIN or a place name, an id. */
+function codeByContext(before: string, digits: string): boolean {
+  const b = before.slice(-48);
+  if (/^[1-9]\d{5}$/.test(digits) && PIN_WORD.test(b)) return true;
+  if (TN_PIN.test(digits) && PLACE_BEFORE.test(b)) return true;
+  return ID_WORD.test(b);
+}
+
+/**
+ * A figure in digits (no clock), as the gate reads it: grouped Indian or Western with a decimal, else each comma or dot part on its own.
+ * `before` is the text right before it, which can make a bare run of digits a code.
+ */
+function figureWords(s: string, l: SpokenLang, before = ""): { words: string; value: number; whole: boolean } {
   const g = /^(\d{1,3}(?:,\d{2,3})+|\d+)(?:\.(\d+))?$/.exec(s);
   if (!g) return { words: s.split(",").map((p) => p.split(".").map((q) => figureWords(q, l).words).join(` ${POINT[l]} `)).join(", "), value: NaN, whole: false };
-  const ip = g[1].replace(/,/g, ""), fp = g[2];
-  // a bare run of five or more digits (a PIN code, a phone), a leading zero, or more digits than a number holds exactly: one by one
-  const byOne = ip.length > 15 || (!g[1].includes(",") && !fp && (ip.length >= 5 || (ip.length > 1 && ip[0] === "0")));
+  const ip = g[1].replace(/,/g, ""), fp = g[2], bare = !g[1].includes(",") && !fp;
+  // one by one: more digits than a number holds exactly, a leading zero, or a bare run of five or more that what stands before it makes
+  // a code (codeByContext). Any other bare run is a count, said as a number ("12345": "twelve thousand three hundred and forty-five").
+  const byOne = ip.length > 15 || (bare && ip.length > 1 && ip[0] === "0") || (bare && ip.length >= 5 && codeByContext(before, ip));
   const words = (byOne ? oneByOne(ip, l) : numberInWords(Number(ip), l)) + (fp ? ` ${POINT[l]} ${oneByOne(fp, l)}` : "");
   return { words, value: Number(`${ip}${fp ? `.${fp}` : ""}`), whole: !byOne && !fp };
 }
@@ -239,7 +264,7 @@ function sayNumber(text: string, i: number, run: string, l: SpokenLang, last: { 
   const dash = last && !last.code && /^\s?[-–—]\s?$/u.test(text.slice(last.end, i));
   // a sign: "-3" at the start of a word ("by -3", "(-3)")
   const sign = !dash && /[-−+]/u.test(before) && (i === 1 || /[\s([]/u.test(before2)) ? before : "";
-  const f = s.includes(":") ? { words: s.split(":").map((x) => figureWords(x, l).words).join(" "), value: NaN, whole: false } : figureWords(s, l);
+  const f = s.includes(":") ? { words: s.split(":").map((x) => figureWords(x, l).words).join(" "), value: NaN, whole: false } : figureWords(s, l, text.slice(Math.max(0, i - 48), i));
   let words = f.words, to = to0;
   const pct = /^\s?%/u.exec(after), kilo = /^k(?![\p{L}\p{M}\p{N}])/iu.exec(after), enOrd = /^(?:st|nd|rd|th)(?![\p{L}\p{M}])/iu.exec(after);
   const taOrd = /^-?(?:ஆவது|வது)/u.exec(after), taAm = /^-?(?:ஆம்|ம்)(?![\p{L}\p{M}])/u.exec(after);
