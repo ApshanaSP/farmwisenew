@@ -104,3 +104,27 @@ describe("the per-attempt record (v5 6.2 and A2 b)", () => {
     expect(events[0].outcome).toBe("json_validate_failed");
   });
 });
+
+// v5 final run (16 Nov): with every Groq rung out of its minute, the ladder's last rung (gemini-3.5-flash-lite) refused the wide planner
+// schema with 400 "too many states", which the gateway did not read as a schema it cannot take, so no model answered
+describe("Gemini refusing a schema as too complex ('too many states'): asked again with the schema as instructions", () => {
+  beforeEach(() => {
+    vi.stubEnv("THUNAI_DIR", fs.mkdtempSync(path.join(os.tmpdir(), "jv-gw5-gem-")));
+    vi.stubEnv("GEMINI_API_KEY", "g1");
+    vi.stubEnv("AI_PROVIDER", "gemini"); vi.stubEnv("AI_FALLBACK_PROVIDER", "none"); vi.stubEnv("AI_FORCE_PROVIDER", "");
+  });
+  afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+  it("the second request carries no response schema and its plain JSON reply is used", async () => {
+    const bodies: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", async (_u: string, init: RequestInit) => {
+      const b = JSON.parse(String(init.body)) as Record<string, unknown>;
+      bodies.push(b);
+      const gc = (b.generationConfig ?? {}) as Record<string, unknown>;
+      if (gc.responseSchema || gc.responseJsonSchema) return json(400, { error: { code: 400, message: "The specified schema produces a constraint that has too many states for serving. Typical causes of this error are schemas with lots of text.", status: "INVALID_ARGUMENT" } });
+      return json(200, { candidates: [{ content: { parts: [{ text: "{\"ok\":true}" }], role: "model" }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 50, candidatesTokenCount: 5, totalTokenCount: 55 } });
+    });
+    const r = await generateJson(call("gemini-3.5-flash-lite", { only: { provider: "gemini", models: ["gemini-3.5-flash-lite"] } }));
+    expect(r.object).toEqual({ ok: true });
+    expect(bodies.length).toBe(2);
+  });
+});
