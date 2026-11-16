@@ -4,9 +4,10 @@
  * the decision and the env lines it prints, the Groq file Step 4 pairs against, the ledger check, and the eval-only ladder pin.
  * No model call. Invented values only.
  */
+import path from "path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  ARMS, CAP_USD, PRICE, Spend, armEnv, armP50, costUsd, cycleTo, envLines, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm,
+  ARMS, CAP_USD, PRICE, Spend, armEnv, armP50, costUsd, cycleTo, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm,
   pickLead, quantile, rateLimitHeaders, timingSets, type TimingRow
 } from "./deploycheck";
 import { Ledger, MemoryStore } from "./ledger";
@@ -146,6 +147,34 @@ describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
     expect(liveBaseline("R", has(["v5final-groq-planner-live60.json", "v4final-groq-planner-live60.json"]))).toMatchObject({ which: "v5final" });
     expect(liveBaseline("R", has(["v4final-groq-planner-live60.json"]))).toMatchObject({ which: "v4final" });
     expect(liveBaseline("R", has([]))).toBeNull();
+  });
+  // review planner-quota-4, evaluation-honesty-1: holdout.live.ts writes `${HOLDOUT_TAG}-planner-${HOLDOUT_SET}.json`, so the brief's final
+  // run (HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v5final) is v5final-planner-live60.json
+  const named = (names: string[]) => (f: string) => names.includes(path.basename(f));
+  it("the brief's final-run file, v5final-planner-live60.json, is found first; v4's run only when no v5 run is there", () => {
+    const v5 = liveBaseline("R", named(["v5final-planner-live60.json", "v4final-groq-planner-live60.json"]));
+    expect(v5).toMatchObject({ which: "v5final", name: "v5final-planner-live60.json", file: path.join("R", "v5final-planner-live60.json"), note: null });
+    // the name this check looked for before still counts, and so does the brief's name for the first of the three repeats
+    expect(liveBaseline("R", named(["v5final-groq-planner-live60.json", "v4final-groq-planner-live60.json"]))).toMatchObject({ which: "v5final", name: "v5final-groq-planner-live60.json" });
+    expect(liveBaseline("R", named(["v5final-r1-planner-live60.json", "v4final-groq-planner-live60.json"]))).toMatchObject({ which: "v5final", name: "v5final-r1-planner-live60.json" });
+  });
+  it("paired against v4's run, it says which file and why: the v5 run's file name and the command that writes it", () => {
+    const v4 = liveBaseline("R", named(["v4final-groq-planner-live60.json"]));
+    expect(v4).toMatchObject({ which: "v4final", name: "v4final-groq-planner-live60.json" });
+    expect(v4!.note).toMatch(/v5final-planner-live60\.json/);
+    expect(v4!.note).toMatch(/HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v5final/);
+    expect(v4!.note).toMatch(/v4/);
+  });
+  it("a v5 file that is not a finished run (cut off, or refused) is passed over, and the note names it", () => {
+    const files = named(["v5final-planner-live60.json", "v4final-groq-planner-live60.json"]);
+    const b = liveBaseline("R", files, (f) => path.basename(f) !== "v5final-planner-live60.json");
+    expect(b).toMatchObject({ which: "v4final" });
+    expect(b!.note).toMatch(/v5final-planner-live60\.json is there but not a finished run/);
+    expect(finishedRun({ at: "x", summary: {}, rows: [{ id: "a", ok: true }] })).toBe(true);
+    expect(finishedRun({ at: "x", partial: true, done: 3, of: 60, rows: [{ id: "a", ok: true }] })).toBe(false);
+    expect(finishedRun({ refused: true, left: 1000 })).toBe(false);
+    expect(finishedRun({ rows: [] })).toBe(false);
+    expect(finishedRun(null)).toBe(false);
   });
   it("the run starts only when the ledger's Claude day holds it", () => {
     expect(ledgerCheck({ ok: true, left: { rpd: 400, tpd: 1_000_000 } }, 60).ok).toBe(true);
