@@ -71,6 +71,7 @@ export class FakeCtx {
 export interface FakeVoice { name: string; lang: string; localService?: boolean }
 export class FakeUtterance {
   lang = ""; voice: FakeVoice | null = null; rate = 1; pitch = 1;
+  onstart: (() => void) | null = null;
   onend: (() => void) | null = null; onerror: ((e: { error: string }) => void) | null = null; onboundary: ((e: { name: string; charIndex: number }) => void) | null = null;
   constructor(public text: string) {}
 }

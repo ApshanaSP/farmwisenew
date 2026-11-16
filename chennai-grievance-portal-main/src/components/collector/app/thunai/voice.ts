@@ -90,7 +90,9 @@ export function voicesReady(): Promise<void> {
 /** Can this device speak the language at all (a Tamil line read by an English voice is noise)? */
 export const hasVoice = (lang: string) => !!bestVoice(lang);
 
-export interface SpeakOpts { rate?: number; voice?: string | null; onLine?: (i: number) => void; onWord?: (line: number, charIndex: number) => void; onEnd?: () => void }
+export interface SpeakOpts { rate?: number; voice?: string | null; onLine?: (i: number) => void; onWord?: (line: number, charIndex: number) => void; onEnd?: () => void;
+  /** the voice started an utterance (its onstart): the trace's voiceStart (v5, review voice-detector-latency-3) */
+  onStart?: () => void }
 
 let token = 0;
 /**
@@ -118,6 +120,7 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
     u.rate = o.rate ?? 1;
     // a woman's voice as it is; where the device has only a man's voice for the language, a little lighter
     u.pitch = voice && voiceGender(voice.name) === "m" ? 1.18 : 1.04;
+    u.onstart = () => { if (my === token) o.onStart?.(); };
     u.onboundary = (e) => { if (my === token && e.name === "word") o.onWord?.(q.line, e.charIndex); };
     u.onend = () => setTimeout(next, q.first && queue[at]?.first ? 260 : 40);
     u.onerror = (e) => { if ((e as SpeechSynthesisErrorEvent).error === "interrupted" || (e as SpeechSynthesisErrorEvent).error === "canceled") return; next(); };
