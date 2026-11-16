@@ -103,18 +103,18 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 
 Every trace time is ms from the **last voiced sample** (the detector's own end of speech, not its decision), timings only. Server stages are placed on the page clock (one machine: the browser and the server share the clock).
 
-**Mocked providers** (`e2e-latency.spec.ts`, hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium, PCM path; n 6; `latency-mocked.json`):
+**Mocked providers** (`e2e-latency.spec.ts`, hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium, PCM path; n 6; `latency-mocked.json` from the final spec run, 17 Nov 00:12 on `53ed4a3d`, code as `e48f98d8`):
 
 | | p50 | p90 |
 |---|---|---|
-| End of utterance decided | 342 | 342 |
-| Upload sent | 344 | 347 |
-| Transcript back | 812 | 819 |
-| Gate and rules done | 821 | 830 |
-| First streamed event | 2,032 | 2,057 |
-| speak() called | 2,053 | 2,080 |
-| Voice start | 2,061 | 2,556 |
-| First spoken finding (spec's own clock) | 2,029 | 4,893 |
+| End of utterance decided | 332 | 342 |
+| Upload sent | 335 | 346 |
+| Transcript back | 814 | 823 |
+| Gate and rules done | 818 | 826 |
+| First streamed event | 2,034 | 2,043 |
+| speak() called | 2,054 | 2,064 |
+| Voice start | 2,062 | 2,537 |
+| First spoken finding (spec's own clock) | 2,029 | 4,874 |
 
 The stages add up to the mocks plus about 100 ms of the page's own work; nothing unexplained in the mocked lane.
 
@@ -167,6 +167,52 @@ A measurement lane outside the app (its own scratch folder; models and clips dow
 - **int8 is not the fast choice on this CPU:** on the same export int8 was 5.5 times slower than fp32 and 2.5 WER points worse.
 - **Accuracy is not the problem:** every local model beats forced-Tamil Groq by about 25 WER points and about 6 CER points (better on 169-171 of 200 clips; sign test p ≤ 2e-30). Much of Whisper's Tamil WER is word splitting.
 - **Not measured:** Tanglish or code-mixed speech, a laptop microphone or a room, Groq with the app's own prompt, loading under Next 15, streaming. Output is Tamil script only (Tanglish English words would come out transliterated); CTC takes no hotwords. Another process (this build's browser specs) loaded the machine during some runs (1-93 % CPU before a run; the decoder still had about 3.8 cores).
+
+### Acceptance (section 14)
+
+| Measure | Target | Gate or report | Result |
+|---|---|---|---|
+| Unit suite; `tsc`; `next build`; Jarvis browser specs | all green | gate | **met** on the final code (17 Nov, `39858001`): unit suite **5,901 passed, 13 skipped, 0 failed** (5,914; START 5,515); `tsc` clean; `next build` green; Jarvis browser specs **39/39** (14.4 min, 17 Nov 00:12, on `53ed4a3d`) |
+| QA gate `gate-fast.sh` | green, or red proven red on START | gate | **green apart from known items** on `6831ef74` (`39858001`): tsc, lint, build; unit runs 5,901 ×3, UTC 5,900 with one timing flake (the B1 race test under both lanes, 3,050 ms; alone about 340 ms; margin widened, listed); pass 4 suite 2,648/2,670 with RC-35's 180 s load timeout (alone 9/9), as in v4's gate; access matrix the same two cells as v4's green gate; drive 0 problems; j1 exit 0; golden master: the only new path is `$.timing` (listed), the rest v4's or noise. The seeding script's `pii_enc` error is START's (its PII commit) |
+| Every QA oracle change listed and justified | complete | gate | `docs/qa/pass7/V5_EXPECTED_CHANGES.md`: C1, A6, the trace's `timing`, F1, B1, D3, A2 |
+| Every spoken number from code; no digit to a voice (F1) | tested on every chunk | gate | met: numbers to words after the gate, a chunk with a number sign refused (tests; the review's high finding on 5+ digit counts fixed) |
+| Never send, approve, delete; level B/C from side talk | 0 | gate | 0 unengaged on all three sets (inside the window side talk can reach tier 2, which allows B/C with a spoken yes: reported above) |
+| Frozen sets untouched | clean | gate | hashes checked by the runner on every run; `git diff --stat f830efbd..HEAD -- eval/holdout2 eval/holdout3` shows only new files under `results/` |
+| No audio, overheard transcript or citizen text written | none | gate | none found by the review; the trace and records hold timings, ids, counts and model names only |
+| Every defect fixed has a failing-first test | all | gate | met: the commit order shows each test before its fix (D1 included) |
+| Barge-in duck p90 | ≤ 250 ms | gate | **95.9 ms** on the final spec run (p50 88.8; 94.5 earlier in the build; base 82) |
+| No model keys: the turn ends within 8 s | `nokeys.v4.test.ts` | gate | green in the unit suite |
+| Understanding, live-60, shipped Groq ladder | ≥ 52/60 | report | **36/60 (60.0 %, 47.4-71.4), clean: not met**; first run a capacity failure (30/41 clean, 19 turns no model answered). Paired with v4's 39/60: b 4, c 7, p 0.55 |
+| Tamil on that set | ≥ 26/30 | report | **14/30 (46.7 %, 30.2-63.9): not met** (v4 18/30) |
+| New intents (holdout3 live sample) | ≥ 75 % | report | **7/28 clean (25.0 %, 12.7-43.4)**, 7/30 all turns, 2 turns no model answered (no 429): **not met** (v4: 6/29) |
+| pass^1 and pass^3 | reported | report | owed (the `rep20` harness is built; command in the handover) |
+| Side talk that acted | ≤ 5 % | report | unengaged 0/200 (0.0-1.9 %), 0/60, 0/40 (by construction of the harness); engaged window 58/200 (29.0 %), 14/60, 6/40; unnamed commands refused 60/60 and 40/40 |
+| First spoken finding, planner lane | p50 ≤ 2.2 s | report | about 2.2-2.4 s on 3 planner turns (real run 2, E2 on); 6.7 s on the one turn of real run 1 (a stalled qwen call); mocked 2.0 s |
+| First spoken finding, rules lane | ≤ 1.0 s | report | 1.47 s on one clean clip: not met |
+| Speech-to-text, server, engaged | p50 ≤ 700 ms | report | 442 ms per turn, n 6 (real run 2) |
+| Planner tokens a turn | ≤ 2,500 | report, three counts | code's own count (system + user, no schema): screens about 1,220, wide about 1,890; provider input with schema (grid cell B, answered calls): about 1,600-2,200 a call; input + output a model turn on the final live-60: provider-reported p50 1,803, p90 4,126 on the 23 answered turns that report usage (4 over 2,500, all Tamil); the runner's charge p50 2,633. English screens may meet 2,500; Tamil (wide) does not |
+| Capacity failures in each live run | count | report | grid: one 429 in five of nine cell-model files; live-60 first run 19 turns with no model, final run clean (0 turns); new-intents run 2 turns no model answered (no 429) |
+| The per-stage trace: where the unexplained time sits | found or not | report | in the planner's round 0 (a slow qwen call held by the 3.5 s default hedge wait) and second, lookup rounds; not in the voice start (n small) |
+| The grid: every cell run, every pair | complete | report | A, B on three models; G, D, E on gpt-oss-20b; C, F owed; pairs above |
+| No live Claude call | none in any log or result | gate | none: every live run pinned Groq with the key removed; `JARVIS_CLAUDE_OFF=1` on every live server |
+| Haiku-ready ladder, deploy check, `DEPLOY_HAIKU.md`, pure parts tested | complete | gate | met (mocked client; the check never run) |
+| Groq `x-ratelimit-*` on the first call | recorded | report | free-plan figures (8K tokens a minute, 1K requests a day) |
+| Free local Tamil decode (B5) | measured or not run | report | measured, not wired: the OpenVoiceOS 120M fp32 export passes all four gates (WER 29.1 against forced-Tamil Groq 56.4 on 200 FLEURS clips; 6 s clip p50 270 / p90 317 ms; 674 MB) once four metadata entries are appended; every int8 export fails the speed gate (p50 1,020-2,750 ms) |
+
+### Not verified
+
+- **Anything with a real microphone in a real room**: the address gate in a room, echo `true` against `"all"`, self-ducks, backchannels, barge-in on the browser voice, the wake phrases, Tamil number words spoken aloud. All voice figures come from injected or synthetic audio.
+- **Claude, entirely**: Haiku 5.5's speed, accuracy on Tamil and Tanglish, the compact plan, the prompt cache, the effort setting. The deploy check measures these; it has never run.
+- **Understanding owed:** the three repeats (pass^1, pass^3), the dev set (`eval/dev200`), the grid's cells C and F and a same-day rerun of B, and the new-intents run paired with v4's (unpaired counts only).
+- **E2's language flips**: whether the early upload truly causes them (two clips, one run).
+- **A real run on the shipped defaults** (E2 off): the real figures above are from runs before E2 and E3, or with E2 on.
+- **Groq's daily window**: inferred from the request headers to refill continuously; the ledger still assumes a rolling 24 h.
+- **The drafted sets' labels**: drafter and blind labeller are one model family and agreed on every row.
+- **The Tamil number words, the Tanglish metric names, the gazetteer's Tamil spellings**: model-drafted, not checked by a Tamil speaker.
+- **`NEXT_PUBLIC_JARVIS_FALSE_CUT_MS` = 2,000 ms**: a figure not checked.
+- **Gemini ids `gemini-3.5-flash` and `gemini-flash-lite-latest`**: unverified, left as they were.
+- **The HUD fps under Edge**: measured only headless in Chromium (final spec run: 60.1 a second speaking and listening, 58.8 with reduced motion; 32 a second earlier in the build under memory pressure).
+- **B5**: read Tamil (FLEURS) only: no Tanglish, no microphone or room, Groq without the app's prompt, not loaded under Next 15, no streaming; the passing file is a community export with a tag-only licence that loads only once its metadata is added
 
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 
