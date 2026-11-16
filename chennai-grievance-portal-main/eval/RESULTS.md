@@ -69,6 +69,22 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 - **The reading stands: no row of 7.5 selects a planner change; A1/A1b ship off, A3 unwired.**
 
 
+### Understanding: live-60 on the shipped Groq ladder (holdout2, final code)
+
+`JARVIS_CLAUDE_OFF=1 HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=<tag> … holdout.live.ts` (the runner pins Groq and removes the Anthropic key from its own process). Raw files: `eval/holdout2/results/v5first-planner-live60.json`, `v5final-planner-live60.json`. The 60 sentences are the v4 build's live-60; their rows were not read by this build.
+
+| Run | Code | Gap between turns | Label | Right, all turns | Right, clean turns | EN | TA | Tanglish |
+|---|---|---|---|---|---|---|---|---|
+| First (16 Nov 23:20) | `6831ef74` | 12 s | **capacity failure** (19 turns no model answered; one 429) | 30/60 (50.0 %, 37.7-62.3) | 30/41 (73.2 %, 58.1-84.3) | 10/15 | 13/30 | 7/15 |
+| **Final** (16 Nov 23:37) | `e48f98d8` | 20 s | **clean** (no 429, every turn answered) | **36/60 (60.0 %, 47.4-71.4)** | the same | **12/15** | **14/30 (46.7 %, 30.2-63.9)** | **10/15** |
+
+- **Why the first run is a capacity failure:** with A2's honest estimate (the schema counted), the ladder refused Groq calls it knew would pass a model's minute allowance at a 12 s pace, so on most of the 19 turns only the last rung was left, and gemini-3.5-flash-lite refused the wide planner schema with 400 "too many states", which the gateway did not read as a schema refusal: no model answered. Fixed with a failing-first test (`febc7ccb`, `e48f98d8`: the refusal now falls back to plain JSON). The final run used a 20 s gap; the shipped code is the same at both gaps.
+- **Who answered, final run:** rules 16/25, qwen 15/20, gpt-oss-120b 4/8, gpt-oss-20b 0/6, flash-lite 1/1. 21 turns met a strict-mode 400 (`json_validate_failed`); 12 of them were answered from the provider's draft. One turn fell back a rung.
+- **Paired, by script (exact McNemar, same 60 sentences):** v5 final against v4's final (`v4final-groq-planner-live60.json`, 39/60): **b 4, c 7, p 0.55** (v4 right on 7 v5 misses, v5 right on 4 v4 misses): not significant either way. Against the pre-v4 run (`final-planner-live60.json`, 44/60): b 5, c 13, p 0.096. v5 first against v5 final: b 4, c 10, p 0.18 (19 of the first run's turns are capacity rows).
+- **Against the targets:** ≥ 52/60 **not met** (36); Tamil ≥ 26/30 **not met** (14). v5 did not move understanding on Groq: the grid selected no planner change (above), so the planner prompt is v4's, and the score sits inside v4's interval.
+- **Tokens a model turn, final run:** provider-reported input + output on the 23 answered turns that report usage: p50 1,803, p90 4,126; 4 over 2,500, all Tamil (the wide bundle). The 12 turns answered from a draft report no usage. The runner's own charge (its estimate, the schema counted, hedges and stopped calls included): p50 2,633 a model turn. Whole run: 51,058 prompt, 6,169 completion, 7,680 cached (Groq's prompt cache: 3,840 on a gpt-oss-20b answer, 3,840 on a turn no model answered in the end).
+- **Turn time in the runner** (no voice, no speech-to-text): p50 1,165 ms, p90 3,414 ms.
+
 ### Latency and the per-stage trace
 
 Every trace time is ms from the **last voiced sample** (the detector's own end of speech, not its decision), timings only. Server stages are placed on the page clock (one machine: the browser and the server share the clock).
