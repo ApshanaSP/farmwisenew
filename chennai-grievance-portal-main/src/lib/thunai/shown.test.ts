@@ -16,3 +16,10 @@ describe("the Stage's news and complaint text (G3 a)", () => {
   });
   it("no Stage: nothing", () => { expect(stageShownText(null)).toEqual([]); });
 });
+
+describe("review numbers-privacy-2: the Filled (complete) screen's row titles count as shown complaint text", () => {
+  it("lists a Filled block's row titles", () => {
+    const doc = { blocks: [{ kind: "Filled", rows: [{ id: "r1", title: "an invented unresolved complaint", cells: [] }] }] } as never;
+    expect(stageShownText(doc)).toEqual(["an invented unresolved complaint"]);
+  });
+});
