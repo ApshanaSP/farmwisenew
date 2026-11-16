@@ -1,8 +1,9 @@
 /**
- * v5 C1: the unengaged command tier is cut. With no name and outside the 20 s after Jarvis's last turn, a sentence the rules
- * resolve, or an imperative with a district noun, no longer acts: in a room, an officer saying a console-shaped line to a colleague
- * is side talk. Only the bare stop word still acts there (level A). JARVIS_GATE_COMMAND_TIER=1 (in the browser
- * NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1), or the gate's own input `commandTier`, brings v4's tier 3 back.
+ * v5 C1: the command tier is cut. With no name, a sentence the rules resolve, or an imperative with a district noun, no longer acts
+ * at tier 3, outside the 20 s after Jarvis's last turn or inside it: in a room, an officer saying a console-shaped line to a colleague
+ * is side talk. Only the bare stop word still acts at tier 3 (level A); inside the window a request-shaped line still acts at tier 2.
+ * JARVIS_GATE_COMMAND_TIER=1 (in the browser NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1), or the gate's own input `commandTier`, brings
+ * v4's tier 3 back.
  * Every sentence here is invented for this test: none is a row of any eval set.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +31,8 @@ const SURE = [
   "மாதவரம் புகார்கள் காட்டுங்க",
   "Ambattur la garbage complaints kaattunga"
 ];
+/** six words and no request word: tier 2's shape test passes it by, and v4's command tier took it ("rules"), engaged or not */
+const SHAPELESS = SURE[2];
 /** an imperative and a district noun, with the rules not sure: v4's second command return */
 const IMPERATIVE = ["compare Alandur and Kodambakkam", "pull up the Sholinganallur flooding list", "பெருங்குடி பட்டியல் காட்டு"];
 
@@ -110,19 +113,66 @@ describe("C1: what the cut leaves alone", () => {
     // and just outside the window it is refused again
     expect(gate(t, { lastTurnAt: NOW - ENGAGED_MS - 1 })).toMatchObject({ tier: 0, act: false });
   });
-  it("each look-alike still acts when engaged, and with the name", () => {
+  it("each request-shaped look-alike still acts when engaged (tier 2), and every one acts with the name", () => {
     for (const t of [...SURE, ...IMPERATIVE]) {
-      const g = gate(t, { lastTurnAt: NOW - 5000 });
-      expect(g.act, t).toBe(true);
-      expect([2, 3], t).toContain(g.tier);
       expect(gate(`Jarvis, ${t}`), t).toMatchObject({ tier: 1, act: true, maxLevel: "C" });
+      if (t === SHAPELESS) continue;
+      expect(gate(t, { lastTurnAt: NOW - 5000 }), t).toMatchObject({ tier: 2, act: true, maxLevel: "C", why: "engaged" });
     }
   });
-  it("inside the window, a sure line with no request shape keeps v4's command reading (level A); outside it, refused", () => {
-    // six words and no request word: tier 2's shape test passes it by, and the command tier took it while engaged in v4
-    const t = "severe cases in Perungudi this week";
-    expect(gate(t, { lastTurnAt: NOW - 5000 })).toMatchObject({ tier: 3, act: true, maxLevel: "A", why: "rules" });
-    expect(gate(t, { lastTurnAt: NOW - ENGAGED_MS - 1 })).toMatchObject({ tier: 0, act: false });
-    expect(gate(t, { lastTurnAt: NOW - 5000, commandTier: false })).toMatchObject({ tier: 3, act: true, maxLevel: "A" });
+});
+
+/**
+ * Review gate-captions-wake-1: C1 cuts both command returns everywhere, inside the 20 s window too (the brief's item text); only the
+ * command tier (JARVIS_GATE_COMMAND_TIER=1, NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1, or `commandTier: true`) brings them back. Inside the
+ * window a line that tier 2's shape test passes by was the "rules" return's only way in (an imperative is request-shaped, so tier 2
+ * takes it or the side and chore tests refuse it first): such a line is now refused unless it is named or asked as a request.
+ */
+describe("C1 inside the window: the command tier is cut there too", () => {
+  const near = { lastTurnAt: NOW - 5000 };
+  it("a sure line with a district noun and no request shape, said 5 s after Jarvis's turn, is refused by default", () => {
+    const t = SHAPELESS;
+    expect(rules(t)).toEqual({ rulesSure: true, districtNoun: true });
+    const g = gate(t, near);
+    expect(g).toMatchObject({ tier: 0, act: false, maxLevel: null, why: "unaddressed" });
+    expect(levelAllowed(g, "A")).toBe(false);
+    // the input field set to false, and the env set to anything but "1", leave it cut
+    expect(gate(t, { ...near, commandTier: false })).toMatchObject({ tier: 0, act: false });
+    vi.stubEnv("JARVIS_GATE_COMMAND_TIER", "0");
+    expect(gate(t, near)).toMatchObject({ tier: 0, act: false });
+  });
+  it("named, or asked as a request, the same words act inside the window", () => {
+    expect(gate(`Jarvis, ${SHAPELESS}`, near)).toMatchObject({ tier: 1, act: true, maxLevel: "C" });
+    expect(gate(`show ${SHAPELESS}`, near)).toMatchObject({ tier: 2, act: true, maxLevel: "C", why: "engaged" });
+    expect(gate(`${SHAPELESS}?`, near)).toMatchObject({ tier: 2, act: true });
+  });
+  it("the command tier brings v4's in-window reading back (level A only): the field, and either env flag", () => {
+    const v4 = { tier: 3, act: true, maxLevel: "A", why: "rules" };
+    expect(gate(SHAPELESS, { ...near, commandTier: true })).toMatchObject(v4);
+    expect(levelAllowed(gate(SHAPELESS, { ...near, commandTier: true }), "B")).toBe(false);
+    vi.stubEnv("JARVIS_GATE_COMMAND_TIER", "1");
+    expect(gate(SHAPELESS, near)).toMatchObject(v4);
+    vi.stubEnv("JARVIS_GATE_COMMAND_TIER", "");
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER", "1");
+    expect(gate(SHAPELESS, near)).toMatchObject(v4);
+    // and the field still overrides the env
+    expect(gate(SHAPELESS, { ...near, commandTier: false })).toMatchObject({ tier: 0, act: false });
+  });
+  it("rule 4: the Tanglish \"kaattunga\" (show, please) is a request's shape, so the cut never refuses it in the window where English \"show\" acts", () => {
+    // v4's list had kaattu, kaatunga and kattunga but not this spelling: the line reached the console only by the command tier
+    const t = "Ambattur la garbage complaints kaattunga";
+    expect(isImperative(t)).toBe(true);
+    expect(gate(t, near)).toMatchObject({ tier: 2, act: true, why: "engaged" });
+    // unengaged and unnamed it stays refused (C1), as its English twin does
+    expect(gate(t)).toMatchObject({ tier: 0, act: false });
+    expect(gate("show garbage complaints in Ambattur")).toMatchObject({ tier: 0, act: false });
+  });
+  it("the stop word still acts inside the window and out of it, whatever the switch", () => {
+    for (const commandTier of [undefined, false, true]) {
+      for (const lastTurnAt of [null, NOW - 5000]) expect(gate("stop", { lastTurnAt, commandTier })).toMatchObject({ tier: 3, act: true, maxLevel: "A", why: "stop" });
+    }
+  });
+  it("outside the window it stays refused, as before", () => {
+    expect(gate(SHAPELESS, { lastTurnAt: NOW - ENGAGED_MS - 1 })).toMatchObject({ tier: 0, act: false });
   });
 });
