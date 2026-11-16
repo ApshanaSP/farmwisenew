@@ -29,3 +29,24 @@ describe("evalpair: b, c and p only", () => {
     expect(() => pairRows(x, y.slice(0, 3))).toThrow(/same sentences/);
   });
 });
+
+describe("the repeats (11.3): a seeded subset and pass^k over three runs", () => {
+  it("the subset is seeded, fixed and a subset", async () => {
+    const { seededIds } = await import("./evalpair");
+    const ids = Array.from({ length: 60 }, (_, i) => `x${i}`);
+    const a = seededIds(ids, 20, 20261116), b = seededIds(ids, 20, 20261116);
+    expect(a).toEqual(b);
+    expect(a).toHaveLength(20);
+    expect(new Set(a).size).toBe(20);
+    expect(a.every((x) => ids.includes(x))).toBe(true);
+  });
+  it("pass^1, pass^3 and the majority, a capacity failure counting as wrong", async () => {
+    const { repeatStats } = await import("./evalpair");
+    const run = (oks: boolean[], cap: boolean[] = []) => oks.map((ok, i) => ({ id: `s${i}`, ok, capacity: !!cap[i] }));
+    const s = repeatStats([run([true, true, false]), run([true, false, false]), run([true, true, true], [false, false, true])]);
+    expect(s).toMatchObject({ n: 3, rightAll: 1, rightOnce: 2, majority: 2, capacityRows: 1 });
+    expect(s.pass1).toBeCloseTo((3 / 3 + 2 / 3 + 0) / 3, 10);
+    expect(s.pass3).toBeCloseTo(1 / 3, 10);
+    expect(() => repeatStats([run([true]), run([true])])).toThrow();
+  });
+});

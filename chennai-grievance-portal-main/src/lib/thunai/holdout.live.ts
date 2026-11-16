@@ -36,7 +36,7 @@ import os from "os";
 import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { runItem3, summary3, type Item3, type Row3 } from "./holdout3";
 import { groqOnly, liveSummary, recordTurn, type TurnRecord } from "./liverecord";
-import { modelCounts, pairRows, resultRows, resultTotal } from "./evalpair";
+import { modelCounts, pairRows, repeatStats, resultRows, resultTotal, seededIds } from "./evalpair";
 import { ENGAGED_MS } from "./addressed";
 import { scoreLine } from "./evalstats";
 
@@ -207,6 +207,15 @@ it.runIf(mode === "ambient-engaged")("the address gate on the side lines inside 
   console.log(JSON.stringify({ lastTurn5sAgo: pick(at5.summary), lastTurn10sAgo: summary.lastTurn10sAgo }));
 });
 
+// the repeats (11.3): pass^1, pass^3 and the majority of three result files of the same sentences, by script, counts only
+//   HOLDOUT=passk HOLDOUT_DIR=holdout2 PASSK_FILES=v5final-r1-planner-rep20.json,v5final-r2-planner-rep20.json,v5final-r3-planner-rep20.json
+it.runIf(mode === "passk")("three runs of the same sentences: pass^1, pass^3, majority", () => {
+  const files = (process.env.PASSK_FILES ?? "").split(",").map((f) => f.trim()).filter(Boolean);
+  expect(files).toHaveLength(3);
+  const s = repeatStats(files.map((f) => resultRows(path.join(DIR, "results", f))));
+  console.log(JSON.stringify({ ...s, pass1: Math.round(s.pass1 * 1000) / 10, pass3: Math.round(s.pass3 * 1000) / 10, note: "percent; a capacity failure counts as wrong" }));
+});
+
 // Step 0 (6.3) and every paired comparison on a frozen set: b, c and p only, never ids, gold, got or text
 it.runIf(mode === "pair")("two result files of the same sentences, paired", () => {
   const fx = path.join(DIR, "results", process.env.PAIR_X ?? ""), fy = path.join(DIR, "results", process.env.PAIR_Y ?? "");
@@ -284,7 +293,9 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const lists = JSON.parse(fs.readFileSync(path.join(DIR, sample), "utf8")) as Record<string, string[]>;
   const all = items();
   // for tuning, on the old set only: the Tamil sentences outside the 40, which no planner change was made against
-  const ids = which === "tamilrest" ? all.filter((x) => x.lang === "ta" && !lists.final40.includes(x.id)).map((x) => x.id) : lists[which];
+  // rep20 (11.3's fallback for the repeats): 20 of the live-60 by a fixed seeded shuffle done here, ids never printed
+  const ids = which === "tamilrest" ? all.filter((x) => x.lang === "ta" && !lists.final40.includes(x.id)).map((x) => x.id)
+    : which === "rep20" ? seededIds(lists.live60, 20, Number(process.env.REP_SEED ?? 20261116)) : lists[which];
   const set = ids.map((id) => all.find((x) => x.id === id)!);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
   const models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];

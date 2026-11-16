@@ -5,7 +5,7 @@
  * A result file is what the live runners write: { summary?: { all?: { right } }, rows: [{ id, ok, capacity?, model? }] }.
  */
 import fs from "fs";
-import { mcnemar, pairs } from "./evalstats";
+import { majority3, mcnemar, pairs, passK } from "./evalstats";
 
 export interface ResultRow { id: string; ok: boolean; capacity?: boolean; model?: string | null }
 
@@ -36,4 +36,27 @@ export function modelCounts(rows: ResultRow[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const r of rows) { const k = r.model ?? "none"; out[k] = (out[k] ?? 0) + 1; }
   return out;
+}
+
+/** A seeded subset of ids (mulberry32 shuffle, first n): the 11.3 fallback repeats take 20 of the live-60 this way. Ids are never printed. */
+export function seededIds(ids: string[], n: number, seed: number): string[] {
+  let a = seed >>> 0;
+  const r = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const x = [...ids];
+  for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; }
+  return x.slice(0, n);
+}
+
+export interface RepeatStats { n: number; pass1: number; pass3: number; majority: number; rightAll: number; rightOnce: number; capacityRows: number }
+
+/** pass^1, pass^3 and the majority of three runs of the same sentences (rows matched by id; a capacity failure counts as wrong). */
+export function repeatStats(runs: ResultRow[][]): RepeatStats {
+  if (runs.length !== 3) throw new Error("repeatStats: three runs");
+  const ids = runs[0].map((r) => r.id);
+  for (const run of runs) if (run.length !== ids.length || run.some((r) => !ids.includes(r.id))) throw new Error("repeatStats: the runs are not on the same sentences");
+  const okOf = (run: ResultRow[], id: string) => { const r = run.find((x) => x.id === id)!; return r.ok && !r.capacity; };
+  const counts = ids.map((id) => runs.filter((run) => okOf(run, id)).length);
+  const maj = majority3(runs.map((run) => ids.map((id) => okOf(run, id))));
+  return { n: ids.length, pass1: passK(counts, 3, 1), pass3: passK(counts, 3, 3), majority: maj.right, rightAll: counts.filter((c) => c === 3).length, rightOnce: counts.filter((c) => c >= 1).length,
+    capacityRows: runs.reduce((a, run) => a + run.filter((r) => r.capacity).length, 0) };
 }
