@@ -54,6 +54,21 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 - **Reading against 7.5:** A beat B on gpt-oss-20b only, about equal on the other two, no model the other way by 3. The rows that would say why (A against C, D, E; F against B) are owed. G does not beat A. **No row that selects a planner change holds, so Phase 4 ships the capacity items (A2, A5) and builds A1/A1b behind `JARVIS_PLANNER_DIET`, default off; A3 (route-then-fill) stays built and unwired.**
 - The grid's own tokens (ledger): qwen 49.8K, gpt-oss-20b 68.9K plus G about 34K (estimate), gpt-oss-120b 77.3K.
 
+**Day 2 (16 Nov), on the refilled allowance: cells D and E on gpt-oss-20b**, the same 15 sentences (the model where A beat B; the plan had put C, D, E on gpt-oss-120b, where A and B were about equal). They ran with A5's gateway (one retry on a strict-mode 400); A and B's misses were not of that kind (their rows hold no `json_validate_failed` without a draft), so that difference does not bear on the pairs.
+
+| Model | D (v4 prose, v3 schema) | E (v3 prose, v4 schema) |
+|---|---|---|
+| gpt-oss-20b | 14/14 (100.0 %, 78.5-100.0), 1 capacity | 12/14 (85.7 %, 60.1-96.0), 1 capacity |
+
+| Pair | n | b | c | exact p | Reading |
+|---|---|---|---|---|---|
+| A vs D, gpt-oss-20b | 11 | 0 | 2 | 0.5 | about equal |
+| A vs E, gpt-oss-20b | 10 | 2 | 2 | 1.0 | about equal |
+
+- **Neither the v4 prose (D) nor the v4 schema (E) does worse than v3 (A)** on the model where B fell behind A. So H1 and H2 are not supported; B's shortfall on 20b on 15 Nov is not explained by either part of the v4 additions, which leaves day-to-day variation and the model mix (H3; Step 0's 10 flash-lite turns). Cell C (length alone) and F (a `why` field on qwen) were not run: owed.
+- **The reading stands: no row of 7.5 selects a planner change; A1/A1b ship off, A3 unwired.**
+
+
 ### Side talk and the address gate (C1, C2; no model)
 
 `HOLDOUT=ambient` and `HOLDOUT=ambient-engaged`, `HOLDOUT_TAG=v5`, on the v5 tree. Counts and the tier that fired only. **On the unengaged harness C1 gives 0 by construction** (the harness passes no last turn, and C1 cuts exactly the tier the old false acts came through): that is not evidence about a room.

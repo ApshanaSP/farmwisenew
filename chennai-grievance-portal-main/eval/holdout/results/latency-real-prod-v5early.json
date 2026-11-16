@@ -1,0 +1,331 @@
+{
+ "runs": [
+  {
+   "clip": "named_b6",
+   "lane": "rules",
+   "heard": "show me the flooding complaints in vela cherry.",
+   "ack": 956,
+   "answer": 1231,
+   "firstAudio": 1467,
+   "finding": 1467,
+   "provider": null,
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_trends",
+   "lane": "rules",
+   "heard": "சென்று பார்த்துக் கொள்ளுங்கள்.",
+   "ack": 675,
+   "answer": null,
+   "firstAudio": null,
+   "finding": null,
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4620,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_adyar",
+   "lane": "rules",
+   "heard": "Show the severe cases in Udyar.",
+   "ack": 748,
+   "answer": 2191,
+   "firstAudio": 1530,
+   "finding": 2292,
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "b3",
+   "lane": "rules",
+   "heard": "பெருங்குடியில் ராய்ப்பும் என்னைப் பார்க்கலாமா?",
+   "ack": 814,
+   "answer": 2061,
+   "firstAudio": 2197,
+   "finding": 2197,
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2700,
+   "path": "text"
+  },
+  {
+   "clip": "open_ended",
+   "lane": "planner",
+   "heard": "என்னை மாதம் செய்து கொண்டிருந்தால் ஏதாவது தயாராக இருந்து கொண்டிருந்தேன்.",
+   "ack": 1239,
+   "answer": 2365,
+   "firstAudio": 2405,
+   "finding": 2405,
+   "provider": "openai/gpt-oss-20b",
+   "tokens": 4547,
+   "path": "text"
+  },
+  {
+   "clip": "open_ended2",
+   "lane": "planner",
+   "heard": "how is the metro water backlog looking overall?",
+   "ack": 3551,
+   "answer": null,
+   "firstAudio": 4442,
+   "finding": null,
+   "provider": "openai/gpt-oss-20b",
+   "tokens": 4547,
+   "path": "browser"
+  }
+ ],
+ "rules": {
+  "ack_p50": 814,
+  "firstAudio_p50": 1530,
+  "finding_p50": 2197,
+  "answer_p50": 2061
+ },
+ "planner": {
+  "ack_p50": 3551,
+  "firstAudio_p50": 4442,
+  "finding_p50": 2405,
+  "answer_p50": 2365
+ },
+ "note": "real Whisper, real planner, real voice ladder, injected audio, production bundle. firstAudio can be the acknowledgement; finding is the first spoken answer",
+ "heard": [
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 33,
+    "sttBack": 749
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 5,
+    "sttBack": 342
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 22,
+    "sttBack": 412
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 23,
+    "sttBack": 465
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 18,
+    "sttBack": 576
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 9,
+    "sttBack": 329
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 8,
+    "sttBack": 1028
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 6,
+    "sttBack": 308
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 10,
+    "sttBack": 395
+   }
+  }
+ ],
+ "trace": {
+  "planner": {
+   "voicedEnd": {
+    "n": 6,
+    "p50": 0,
+    "p90": 0
+   },
+   "eou": {
+    "n": 6,
+    "p50": 332,
+    "p90": 343
+   },
+   "uploadSent": {
+    "n": 6,
+    "p50": 187,
+    "p90": 338
+   },
+   "sttSent": {
+    "n": 6,
+    "p50": 207,
+    "p90": 343
+   },
+   "sttBack": {
+    "n": 6,
+    "p50": 680,
+    "p90": 1215
+   },
+   "hearBack": {
+    "n": 6,
+    "p50": 773,
+    "p90": 1245
+   },
+   "gateDone": {
+    "n": 6,
+    "p50": 835,
+    "p90": 1281
+   },
+   "firstEvent": {
+    "n": 6,
+    "p50": 1261,
+    "p90": 2212
+   },
+   "speakCalled": {
+    "n": 4,
+    "p50": 2229,
+    "p90": 2409
+   },
+   "toolsDone": {
+    "n": 5,
+    "p50": 2156,
+    "p90": 4742
+   },
+   "plannerSent": {
+    "n": 3,
+    "p50": 918,
+    "p90": 1429
+   },
+   "plannerBack": {
+    "n": 3,
+    "p50": 2328,
+    "p90": 4733
+   }
+  }
+ },
+ "traces": [
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 332,
+    "uploadSent": 338,
+    "sttSent": 343,
+    "sttBack": 680,
+    "hearBack": 874,
+    "gateDone": 987,
+    "firstEvent": 1261,
+    "speakCalled": 1303,
+    "toolsDone": 1215
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 342,
+    "uploadSent": 188,
+    "sttSent": 210,
+    "sttBack": 600,
+    "hearBack": 635,
+    "gateDone": 717,
+    "firstEvent": 967,
+    "plannerSent": 843,
+    "plannerBack": 4733,
+    "toolsDone": 4742
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 322,
+    "uploadSent": 184,
+    "sttSent": 207,
+    "sttBack": 649,
+    "hearBack": 699,
+    "gateDone": 769,
+    "firstEvent": 2212,
+    "speakCalled": 2229,
+    "toolsDone": 2156
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 321,
+    "uploadSent": 167,
+    "sttSent": 185,
+    "sttBack": 743,
+    "hearBack": 773,
+    "gateDone": 835,
+    "firstEvent": 1006,
+    "plannerSent": 918,
+    "plannerBack": 1771,
+    "toolsDone": 2051,
+    "speakCalled": 2108
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 343,
+    "uploadSent": 187,
+    "sttSent": 195,
+    "sttBack": 1215,
+    "hearBack": 1245,
+    "gateDone": 1281,
+    "firstEvent": 1459,
+    "plannerSent": 1429,
+    "plannerBack": 2328,
+    "toolsDone": 2349,
+    "speakCalled": 2409
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 332,
+    "uploadSent": 178,
+    "sttSent": 188,
+    "sttBack": 573,
+    "hearBack": 608,
+    "gateDone": 650,
+    "firstEvent": 800
+   }
+  }
+ ]
+}
