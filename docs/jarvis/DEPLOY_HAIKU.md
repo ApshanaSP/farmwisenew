@@ -47,6 +47,8 @@ What it does:
 
 It writes its results to `eval/holdout/results/deploy-haiku-*.json` and `eval/holdout2/results/deploy-haiku-planner-live60.json`.
 
+The check's own calls are counted in a ledger of its own (a temporary folder), never in Jarvis's daily Claude allowance in `data/thunai`. So the check does not use up Jarvis's Claude day on deploy day, and steps 1 to 3 do not take the room step 4 needs. Its own cap is the US$0.50 above.
+
 ## 3. Read the decision
 
 At the end it prints `Decision:`, the reasons, and three lines like these:
@@ -62,6 +64,7 @@ How it decides:
 - **Effort.** `medium` only if it got at least 3 more sentences right than `low`, and its middle call time is 1.2 s or less. Otherwise `low`.
 - **Compact plan.** On if it is not worse than the full plan (fewer than 3 sentences lost) and it saves at least 0.2 s a call.
 - **Who leads.** Haiku stays first, unless Groq got at least 3 more of the live-60 right, or Haiku's middle call time is over 1.5 s. Then it also prints `set JARVIS_PLANNER_LEAD=groq`.
+- **Who leads, when step 4 did not run** (or found no Groq run to compare with). The check does not choose. It prints `lead undecided` and, in place of the `JARVIS_PLANNER_LEAD` line, three comment lines (starting with `#`) that give both choices. Pick one and set it yourself: `JARVIS_PLANNER_LEAD=groq` (Groq first, as this build measured it) or `JARVIS_PLANNER_LEAD=haiku` (Haiku first, not measured on the live-60). If you leave it unset, Jarvis puts Haiku first. If Haiku's middle call time was over 1.5 s, it still prints `groq`.
 
 ## 4. Set the lines and restart
 

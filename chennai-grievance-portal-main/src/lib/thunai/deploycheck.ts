@@ -1,6 +1,7 @@
 /**
  * The pure parts of the Haiku deploy check (v5 build, item A6 d; the runner is deploy.live.ts, which the owner runs once the Anthropic
- * key works: docs/jarvis/DEPLOY_HAIKU.md). No model call, no file, no clock here: each piece is unit-tested (deploycheck.test.ts).
+ * key works: docs/jarvis/DEPLOY_HAIKU.md). No model call and no clock here, and no file but ownLedger's temporary folder: each piece
+ * is unit-tested (deploycheck.test.ts).
  *
  *   cost        Haiku 5.5's prices (input $0.10, output $0.50, 5-minute cache write $0.125, cache read $0.01, a million tokens:
  *               platform pricing page, read 15 Nov 2026); the run stops before a call that could take it over US$0.50
@@ -10,10 +11,14 @@
  *   pairing     b and c on the ids both runs have, clean outcomes only, exact McNemar p (evalstats.ts)
  *   decision    effort medium only if it beats low by b - c >= 3 on the tuning set and its p50 <= 1,200 ms; compact on if not worse than
  *               full (c - b < 3) and it saves >= 200 ms p50 (measured at effort low, so only with low); Haiku leads unless worse than
- *               Groq on the live-60 by c - b >= 3 or its p50 for the chosen arm is over 1,500 ms. It prints env lines; never edits .env
+ *               Groq on the live-60 by c - b >= 3 or its p50 for the chosen arm is over 1,500 ms; with no live-60 pairing the lead is
+ *               undecided unless the p50 says Groq. It prints env lines; never edits .env
  */
+import fs from "fs";
+import os from "os";
 import path from "path";
 import { mcnemar } from "./evalstats";
+import { resetLedger } from "./ledger";
 
 export const HAIKU = "claude-haiku-5-5";
 
@@ -163,32 +168,77 @@ export function pickArm(i: ArmInput): { arm: Arm; why: string[] } {
   return { arm: by(compact ? "compact" : "low"), why };
 }
 
-/** Haiku first unless Groq beats it on the live-60 by c - b >= 3 (b = right only with Haiku) or its p50 is over 1,500 ms. */
-export function pickLead(armP50Ms: number | null, live60: { b: number; c: number } | null): { lead: "haiku" | "groq"; why: string[] } {
+export type Lead = "haiku" | "groq" | "undecided";
+
+/**
+ * Haiku first unless Groq beats it on the live-60 by c - b >= 3 (b = right only with Haiku) or its p50 is over 1,500 ms. With no
+ * live-60 pairing (Step 4 did not run, or had nothing to pair with) only the p50 rule can decide: else the lead is "undecided", never
+ * Haiku by default (review planner-quota-5).
+ */
+export function pickLead(armP50Ms: number | null, live60: { b: number; c: number } | null): { lead: Lead; why: string[] } {
   const why: string[] = [];
   const worse = live60 ? live60.c - live60.b : null;
   const slow = armP50Ms != null && armP50Ms > LEAD_P50_MAX_MS;
-  const lead = (worse != null && worse >= LEAD_WORSE) || slow ? "groq" : "haiku";
+  const lead: Lead = (worse != null && worse >= LEAD_WORSE) || slow ? "groq" : live60 ? "haiku" : "undecided";
   why.push(`lead ${lead}: live-60 Groq vs Haiku c - b = ${worse ?? "not run"} (Groq leads at >= ${LEAD_WORSE}), chosen arm p50 ${armP50Ms ?? "none"} ms (Groq leads over ${LEAD_P50_MAX_MS})`);
+  if (lead === "undecided") why.push("lead undecided: the live-60 comparison did not run, so the check does not choose; set JARVIS_PLANNER_LEAD by hand");
   return { lead, why };
 }
 
-/** The lines to set in the portal's .env (printed only). */
-export function envLines(arm: Arm, lead: "haiku" | "groq"): string[] {
+/** The lines to set in the portal's .env (printed only). Undecided: comment lines only for the lead (unset, Jarvis puts Haiku first). */
+export function envLines(arm: Arm, lead: Lead): string[] {
   const e = armEnv(arm);
-  return [...(lead === "groq" ? ["set JARVIS_PLANNER_LEAD=groq"] : []), `JARVIS_PLANNER_LEAD=${lead}`, `JARVIS_HAIKU_EFFORT=${e.JARVIS_HAIKU_EFFORT}`, `JARVIS_PLAN_COMPACT=${e.JARVIS_PLAN_COMPACT}`];
+  const leadLines = lead === "undecided"
+    ? ["# JARVIS_PLANNER_LEAD is undecided: Step 4 (the live-60 against Groq) did not run. Set one of these two by hand (left unset, Jarvis puts Haiku first):",
+      "#   JARVIS_PLANNER_LEAD=groq    the Groq ladder first, as this build measured it; Haiku after it",
+      "#   JARVIS_PLANNER_LEAD=haiku   Haiku first: not measured on the live-60"]
+    : [...(lead === "groq" ? ["set JARVIS_PLANNER_LEAD=groq"] : []), `JARVIS_PLANNER_LEAD=${lead}`];
+  return [...leadLines, `JARVIS_HAIKU_EFFORT=${e.JARVIS_HAIKU_EFFORT}`, `JARVIS_PLAN_COMPACT=${e.JARVIS_PLAN_COMPACT}`];
 }
 
 // ---- Step 4
 
-/** Requests and tokens one live-60 sentence may take on Claude (router, up to three planner rounds), for the ledger check */
-export const STEP4_REQUESTS_PER_SENTENCE = 4, STEP4_TOKENS_PER_SENTENCE = 12_000;
+/**
+ * Requests one live-60 sentence may take on Claude (router, up to three planner rounds), and the fewest tokens a call is counted at
+ * (the ledger's way: input, cache reads and writes in full, and output), for the ledger check
+ */
+export const STEP4_REQUESTS_PER_SENTENCE = 4, STEP4_TOKENS_PER_CALL = 3_000, STEP4_TOKENS_PER_SENTENCE = STEP4_REQUESTS_PER_SENTENCE * STEP4_TOKENS_PER_CALL;
 
-/** Does the ledger's Claude day hold the whole live-60 run? A run that cannot finish is not started. */
-export function ledgerCheck(room: { ok: boolean; left: { rpd: number; tpd: number } }, n: number): { ok: boolean; line: string } {
-  const needR = n * STEP4_REQUESTS_PER_SENTENCE, needT = n * STEP4_TOKENS_PER_SENTENCE;
-  const ok = room.ok && room.left.rpd >= needR && room.left.tpd >= needT;
-  return { ok, line: ok ? "the ledger holds the run" : `not started: the ledger's Claude day has ${room.left.rpd} requests and ${room.left.tpd} tokens left; the run needs ${needR} and ${needT}` };
+/** The mean tokens a Claude call took (the ledger's way), over the calls the model answered; null for none. Step 2's rows size Step 4. */
+export function callTokens(rows: Pick<TimingRow, "outcome" | "input_tokens" | "output_tokens" | "cache_read_input_tokens" | "cache_creation_input_tokens">[]): number | null {
+  const t = rows.filter((r) => cleanOutcome(r.outcome)).map((r) => r.input_tokens + r.output_tokens + r.cache_read_input_tokens + r.cache_creation_input_tokens);
+  return t.length ? Math.ceil(t.reduce((a, x) => a + x, 0) / t.length) : null;
+}
+
+/** the ledger's own minute: Step 4 waits for it sentence by sentence (deploy.live.ts), so it never stops the run from starting */
+const MINUTE = new Set(["rpm", "tpm"]);
+
+/**
+ * Does the ledger's Claude day hold the whole live-60 run? A run that cannot finish is not started. Sized from `perCall`, the
+ * tokens a call took in Step 2 (callTokens), never under STEP4_TOKENS_PER_CALL. The minute alone never refuses it (review
+ * planner-quota-5: right after Step 3's 72 calls back to back it was always full); cooling does.
+ */
+export function ledgerCheck(room: { ok: boolean; why?: string | null; left: { rpd: number; tpd: number } }, n: number, perCall?: number | null): { ok: boolean; line: string } {
+  const each = Math.max(STEP4_TOKENS_PER_CALL, Math.ceil(perCall ?? 0));
+  const needR = n * STEP4_REQUESTS_PER_SENTENCE, needT = needR * each;
+  const blocked = !room.ok && !MINUTE.has(room.why ?? "");
+  const ok = !blocked && room.left.rpd >= needR && room.left.tpd >= needT;
+  const sized = `${n} sentences x ${STEP4_REQUESTS_PER_SENTENCE} calls x ${each} tokens`;
+  return { ok, line: ok ? `the ledger holds the run (${needR} requests and ${needT} tokens: ${sized})`
+    : blocked && room.why ? `not started: the ledger has Claude ${room.why === "cooling" ? "resting after a refusal or a 429 (cooling)" : `out of room (${room.why})`}`
+    : `not started: the ledger's Claude day has ${room.left.rpd} requests and ${room.left.tpd} tokens left; the run needs ${needR} and ${needT} (${sized})` };
+}
+
+/**
+ * Points the shared ledger at a fresh temporary folder of the check's own (THUNAI_DIR, returned) and reopens it there, so the check's
+ * calls never count against Jarvis's Claude day in data/thunai/ledger.sqlite, and Step 4, given one of its own, starts on a whole
+ * day that Steps 1-3 did not take (review planner-quota-5). The check's spend has its own cap (Spend, US$0.50). The one file here.
+ */
+export function ownLedger(step: string, root: string = os.tmpdir()): string {
+  const dir = fs.mkdtempSync(path.join(root, `jv-deploy-${step}-`));
+  process.env.THUNAI_DIR = dir;
+  resetLedger();
+  return dir;
 }
 
 /** the command the brief gives for this build's final Groq live-60 (JARVIS_V5_BUILD_2.md 11.3, day 2) */

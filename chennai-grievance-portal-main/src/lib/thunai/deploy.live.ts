@@ -31,7 +31,8 @@ import type { z } from "zod";
 import { claudeJson, claudeOff, claudeWarm, onClaudeCall, type ClaudeCallEvent } from "@/lib/ai/claude";
 import { AgentPlanLenient, type AgentResult } from "./agent";
 import {
-  ARMS, CAP_USD, HAIKU, LIVE_BASELINES, Spend, armEnv, armP50, cleanOutcome, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, pairTuning, pickArm, pickLead,
+  ARMS, CAP_USD, HAIKU, LIVE_BASELINES, Spend, armEnv, armP50, callTokens, cleanOutcome, envLines, finishedRun, gridRows, keyVerdict, ledgerCheck, liveBaseline, ownLedger, pairTuning,
+  pickArm, pickLead,
   quantile, rateLimitHeaders, timingSets, type Arm, type ArmId, type TimingRow, type TuneRow
 } from "./deploycheck";
 import { pairRows, resultRows } from "./evalpair";
@@ -39,7 +40,7 @@ import { scoreLine } from "./evalstats";
 import { WORLD } from "./fixture";
 import { cellCall, scorePlan, type TuningItem } from "./grid/cells";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
-import { ledger } from "./ledger";
+import { ledger, resetLedger } from "./ledger";
 import { ZONE_TA_NAME } from "./lexicon";
 import { liveSummary, recordTurn, type TurnRecord } from "./liverecord";
 import { clearCaches, planRound, RoundBody, SCHEMAS, systemFor } from "./round";
@@ -56,7 +57,8 @@ const OUT = path.join(TUNE_DIR, "results");
 const LIVE_DIR = path.join(ROOT, "eval", "holdout2");
 const LIVE_OUT = path.join(LIVE_DIR, "results");
 const LIVE_FILE = "deploy-haiku-planner-live60.json";
-const ENV_KEYS = ["JARVIS_CLAUDE_MODEL", "JARVIS_HAIKU_EFFORT", "JARVIS_PLAN_COMPACT", "JARVIS_LADDER_PIN", "JARVIS_PLANNER_LEAD"];
+// THUNAI_DIR: the check runs on ledgers of its own (ownLedger), and gives the folder back when it ends
+const ENV_KEYS = ["JARVIS_CLAUDE_MODEL", "JARVIS_HAIKU_EFFORT", "JARVIS_PLAN_COMPACT", "JARVIS_LADDER_PIN", "JARVIS_PLANNER_LEAD", "THUNAI_DIR"];
 
 const write = (dir: string, name: string, data: unknown) => { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(path.join(dir, name), JSON.stringify(data, null, 1)); };
 const say = (x: unknown) => console.log(JSON.stringify(x));
@@ -138,7 +140,9 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
   const at = new Date().toISOString();
   const saved = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
   const spend = new Spend(CAP_USD);
-  // Steps 2 and 3 call Claude directly: their usage goes into the ledger here (claudeWarm and Step 4's gateway calls record their own)
+  // Steps 2 and 3 call Claude directly: their usage goes into the ledger here (claudeWarm and Step 4's gateway calls record their own).
+  // Every ledger the check writes is its own (ownLedger, review planner-quota-5): never Jarvis's data/thunai, so Jarvis's Claude day
+  // on deploy day is whole; the check's spend has its own cap (Spend)
   let direct = true;
   const stopSpend = onClaudeCall((e) => {
     spend.add(e);
@@ -146,6 +150,7 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
     if (direct && !e.warm && tokens > 0) ledger().record("anthropic", e.model, { tokens, lane: "eval" });
   });
   try {
+    ownLedger("steps1-3");
     process.env.JARVIS_CLAUDE_MODEL = HAIKU;
 
     // ---- Step 1: the key
@@ -227,7 +232,9 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
     let live: { b: number; c: number } | null = null;
     let against: string | null = null;
     const set = live60();
-    const lc = ledgerCheck(ledger().room("anthropic", HAIKU), set.length);
+    // a fresh ledger of its own: Steps 1-3 (about 200 calls) do not take Step 4's day, and the need is sized from Step 2's tokens a call
+    ownLedger("step4");
+    const lc = ledgerCheck(ledger().room("anthropic", HAIKU), set.length, callTokens(timing));
     if (!lc.ok) say({ step: 4, started: false, why: lc.line });
     else if (!spend.room(set.length * 2)) say({ step: 4, started: false, why: `cost cap: ${usd(spend.spent)} of ${CAP_USD} US$ spent` });
     else {
@@ -238,7 +245,8 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
       const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null; rec: TurnRecord; claude: Record<string, number> })[] = [];
       for (const x of set) {
         if (!spend.room(4)) { stopped = "cost cap"; break; }
-        // the ledger's own minute (Jarvis's Claude ceiling): wait for room rather than score a turn the ladder could not ask (at most 2 min)
+        // the ledger's own minute (Jarvis's Claude ceiling, on the check's own ledger): wait for room rather than score a turn the ladder
+        // could not ask (at most 2 min)
         for (let waited = 0, r = ledger().room("anthropic", HAIKU, { tokens: 8000 }); !r.ok && (r.why === "tpm" || r.why === "rpm") && waited < 120_000; waited += 1500, r = ledger().room("anthropic", HAIKU, { tokens: 8000 })) await sleep(1500);
         const gold = goldIntent(x);
         const turnId = `deploy-${x.id}-${Date.now()}`;
@@ -302,5 +310,6 @@ it.runIf(RUN)("the Haiku deploy check: key, timing, tuning accuracy, live-60, de
   } finally {
     stopSpend();
     for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    resetLedger();
   }
 });
