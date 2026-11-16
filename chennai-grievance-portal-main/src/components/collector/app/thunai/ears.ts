@@ -12,8 +12,12 @@
  * stop() stops the microphone's tracks: off and muted mean nothing listens. Audio is never stored: the ring holds the last
  * 25 seconds in memory and is dropped at stop(). On the dev console a test stream can stand in for the microphone, so the
  * detector and barge-in are exercised end to end from a known speech start.
+ *
+ * v5 (E2, early speech-to-text): onPause when the deciding detector has heard TUNING.earlySttMs (150 ms) of quiet inside a sentence
+ * whose end is not decided yet, onResume if the voice comes back first, and peek() gives the sentence so far without ending the
+ * capture. The conductor decides what to do with them; the end of utterance is decided here exactly as before.
  */
-import { EnergyVad, frameDb, ProbVad, type VadEvent } from "@/lib/thunai/vad";
+import { EnergyVad, frameDb, ProbVad, TUNING, type VadEvent } from "@/lib/thunai/vad";
 
 export type EarsError = "blocked" | "nomic" | "unsupported" | "failed";
 
@@ -27,6 +31,13 @@ export interface EarsHooks {
   onQuickOnset?: (wall: number) => void;
   /** the energy gate fell quiet again */
   onQuickEnd?: (wall: number) => void;
+  /**
+   * v5 (E2): the deciding detector has heard TUNING.earlySttMs of quiet inside a sentence whose end is not decided yet (once a quiet
+   * run): `voicedEnd` is its last voiced sample (performance.now()), `ms` the speech so far (as an end event's `ms` would give it)
+   */
+  onPause?: (wall: number, voicedEnd: number, ms: number) => void;
+  /** v5 (E2): after onPause the voice came back before the sentence ended */
+  onResume?: (wall: number) => void;
   /** every frame: the level (0..1) for the HUD, and the speech held so far (ms) */
   onFrame?: (level: number, heldMs: number) => void;
   /** the microphone went away (unplugged, permission taken back) */
@@ -146,6 +157,8 @@ export class Ears {
   private off: number | null = null;
   /** the deciding detector's last speech start, ms of audio: with an end's `ms`, the end of its last voiced frame */
   private vStart = 0;
+  /** v5 (E2): onPause was given for the quiet run going on now (onResume or the end clears it) */
+  private inPause = false;
   /** which detector is deciding */
   kind: "silero" | "energy" = "energy";
   /** the model's last speech probability (dev metrics) */
@@ -236,6 +249,7 @@ export class Ears {
     // with the model deciding, the energy gate's onset (faster than 2 model frames) only pauses Jarvis's voice
     else if (e?.type === "start" && this.silero && this.echo) this.hooks.onQuickOnset?.(performance.now());
     else if (e?.type === "end" && this.silero) this.hooks.onQuickEnd?.(performance.now());
+    if (!this.silero) this.quietWatch(this.vad, at);
     this.hooks.onFrame?.(this.level, this.silero ? this.prob.heldMs(this.t16 / 16) : this.vad.heldMs(at));
   }
 
@@ -259,6 +273,7 @@ export class Ears {
       this.p = p;
       const e = this.prob.push(p, this.t16 / 16, this.echo);
       if (e) this.decided(e);
+      this.quietWatch(this.prob, this.t16 / 16);
     }).catch(() => { this.silero = null; this.kind = "energy"; }).finally(() => { this.busy = false; this.pump(); });
   }
   /**
@@ -270,6 +285,23 @@ export class Ears {
     if (e.type === "start") { this.vStart = e.at; this.hooks.onVad(e, wall); return; }
     const voiced = this.off == null ? wall : Math.min(wall, this.vStart + e.ms + this.off);
     this.hooks.onVad(e, wall, voiced);
+  }
+  /**
+   * v5 (E2): the deciding detector's quiet inside a sentence whose end is not decided yet. At TUNING.earlySttMs of it, onPause (once a
+   * quiet run) with the last voiced sample and the speech so far, both as the end event would give them; the voice back first,
+   * onResume. Nothing here decides the end: the detector does, as before.
+   */
+  private quietWatch(d: { speaking: boolean; quiet: number }, at: number) {
+    if (!d.speaking) { this.inPause = false; return; }
+    const q = d.quiet;
+    if (q <= 0) {
+      if (this.inPause) { this.inPause = false; this.hooks.onResume?.(performance.now()); }
+      return;
+    }
+    if (this.inPause || q < TUNING.earlySttMs) return;
+    this.inPause = true;
+    const wall = performance.now();
+    this.hooks.onPause?.(wall, this.off == null ? wall - q : Math.min(wall, at - q + this.off), Math.max(0, at - q - this.vStart));
   }
 
   /** Start keeping the sentence from just before the voice began. */
@@ -291,6 +323,16 @@ export class Ears {
     if (this.capFrom == null) return null;
     const from = this.capFrom;
     this.capFrom = null;
+    return this.wavFrom(from);
+  }
+  /**
+   * v5 (E2): the sentence captured so far, as take() would give it now, while the capture goes on (an early upload): take() at the
+   * end still gives the whole sentence. Null when nothing is being captured.
+   */
+  peek(): Blob | null {
+    return this.capFrom == null ? null : this.wavFrom(this.capFrom);
+  }
+  private wavFrom(from: number): Blob | null {
     const n = this.total - from;
     if (n <= 0) return null;
     const pcm = new Float32Array(n);
@@ -311,7 +353,7 @@ export class Ears {
     this.ctx?.close().catch(() => undefined);
     this.ctx = null; this.stream = null; this.node = null; this.src = null; this.ring = []; this.ringStart = 0; this.total = 0; this.capFrom = null;
     this.vad.reset(); this.prob.reset(); this.s16 = []; this.t16 = 0; this.acc = { sum: 0, n: 0, pos: 0 }; this.busy = false; this.level = 0; this.echo = false;
-    this.off = null; this.vStart = 0;
+    this.off = null; this.vStart = 0; this.inPause = false;
   }
 }
 

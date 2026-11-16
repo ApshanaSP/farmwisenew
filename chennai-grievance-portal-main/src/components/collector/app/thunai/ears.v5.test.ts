@@ -264,8 +264,9 @@ describe("E2: the pause inside a sentence (the early upload's moment), and the s
   });
   it("peek(): the sentence so far as a WAV while the capture goes on; take() then gives the whole sentence", async () => {
     const { e, h, push } = await rig();
-    let early: Blob | null = null;
-    h.onPause.mockImplementation(() => { early = e.peek(); return 0; });
+    // a holder, not a let: tsc would narrow a let assigned only inside the hook to null
+    const got: { early: Blob | null } = { early: null };
+    h.onPause.mockImplementation(() => { got.early = e.peek(); return 0; });
     expect(e.peek()).toBeNull();
     push(50, 0);
     push(3, 0.5);
@@ -273,14 +274,14 @@ describe("E2: the pause inside a sentence (the early upload's moment), and the s
     e.capture(start);
     push(17, 0.5);
     push(8, 0); // the pause, 78 frames in
-    expect(early).toBeInstanceOf(Blob);
+    expect(got.early).toBeInstanceOf(Blob);
     expect(e.capturing).toBe(true);
     push(7, 0); // the end, 85 frames in
     const whole = e.take();
     expect(e.capturing).toBe(false);
     // from 350 ms before the start (48 kHz), cut to 16 kHz 16-bit: 44 bytes of header and 2 bytes a sample
     const from = Math.round(((start - 350) / 1000) * 48000);
-    expect(early!.size).toBe(44 + 2 * Math.floor((78 * 960 - from) / 3));
+    expect(got.early!.size).toBe(44 + 2 * Math.floor((78 * 960 - from) / 3));
     expect(whole!.size).toBe(44 + 2 * Math.floor((85 * 960 - from) / 3));
     e.stop();
   });

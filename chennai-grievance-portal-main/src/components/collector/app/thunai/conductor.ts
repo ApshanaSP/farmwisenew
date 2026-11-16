@@ -32,6 +32,14 @@
  *  - The trace (section 6.4, trace.ts): a sentence sent to /hear opens a turn whose zero is its last voiced sample (the ears give
  *    it), then "eou" (the detector's decision), "uploadSent", the server's sttSent/sttBack offsets and "hearBack". The HeardLine
  *    carries the trace's number so the console stamps "gateDone" and the lane on that turn only. Timings only, never words.
+ *  - E2, early speech-to-text (NEXT_PUBLIC_JARVIS_EARLY_STT, on unless "0"): at the ears' pause (TUNING.earlySttMs, 150 ms of quiet
+ *    inside a sentence whose end is not decided yet) an engaged sentence goes to /hear at once. The end of utterance is decided as
+ *    before (300 ms, or eou.ts's values) and the turn machine is unchanged: at the end, that request is the sentence's transcription
+ *    (the audio is not sent again). If the voice comes back first it is aborted and the whole sentence goes at its end, so a
+ *    sentence makes at most TUNING.earlySttAttempts (2) requests: 0 extra when the voice does not come back, 1 when it does. Only
+ *    when woken or engaged (inWindow, the engaged lane: rule 3), heard fresh or after a barge-in (over the ducked voice its words
+ *    decide the duck after its end, as before), 250 ms to TUNING.earlySttMaxMs (10 s) of speech so far, with Whisper reachable.
+ *    The trace still opens at the last voiced sample; its "uploadSent" is the request the words came from.
  */
 import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
@@ -52,6 +60,8 @@ export const AMBIENT_PER_MIN = 8;
  * the capped ambient lane still uploads, so a name said late in a sentence is found in the transcript.
  */
 const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE === "1";
+/** v5 (E2): NEXT_PUBLIC_JARVIS_EARLY_STT=0 sends every sentence at its end, as before; anything else (unset too) sends it at its pause */
+const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT !== "0";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 
@@ -136,9 +146,23 @@ interface Post {
   tr: TurnTrace | null;
   out: { j: HearReply | null; own: Own } | null;
 }
+type HearJson = HearReply & { timing?: ServerTiming };
+/** v5 (E2): a sentence sent to /hear at its pause, before its end was decided */
+interface Early {
+  ctl: AbortController;
+  /** never rejects: the reply (null when none) and how the request went */
+  p: Promise<{ j: HearJson | null; own: Own }>;
+  /** performance.now() as the request went: the trace's "uploadSent" when its words are the sentence's */
+  sentAt: number;
+  lane: "engaged";
+  /** the speech span it carried: the end's is the same when the voice did not come back */
+  speechMs: number;
+}
 class HearTimeout extends Error { constructor() { super("timeout"); this.name = "HearTimeout"; } }
 /** /hear answered, but not with words */
 class HearHttp extends Error { constructor(readonly status: number) { super(String(status)); this.name = "HearHttp"; } }
+/** how a /hear request that threw went */
+const ownOf = (err: unknown): Own => err instanceof HearTimeout ? "timeout" : (err as Error)?.name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
 
 /**
  * Whisper is really out: the network failed (fetch rejects with a TypeError), or the server has no transcriber (503). A 401, a 502
@@ -199,6 +223,10 @@ export class Conductor {
   private endMark: { voiced: number; eou: number } | null = null;
   private partialText = "";
   private eou: EouWhy | null = null;
+  /** v5 (E2): the sentence being heard went to /hear at its pause; null when it did not (or that request was dropped) */
+  private early: Early | null = null;
+  /** v5 (E2): the /hear requests made early for the sentence being heard (an aborted one counts) */
+  private tries = 0;
   starting = false;
 
   constructor(private h: ConductorHooks) {
@@ -234,6 +262,8 @@ export class Conductor {
           // Jarvis's own earcon is not the Collector's voice; Silero's onset after it is (earconDrops)
           if (earconDrops("vadStart", { guard: this.earconOn(), tone: performance.now() < this.toneUntil, state: this.m.state, detector: this.ears?.kind ?? null })) return;
           this.spokeAt = Date.now();
+          // a new sentence: its own early request and its own count (E2)
+          this.earlyAbort(); this.tries = 0;
           // each part of a sentence is captured from its own start: a part still at Whisper is joined, never posted again
           this.speechStart = ev.at;
           this.h.mark?.("vadStart", wall); this.noteOnset(); this.speechBegan(); this.dispatch({ type: "vadStart", at: ev.at }); this.h.onHearing?.("speech");
@@ -242,9 +272,14 @@ export class Conductor {
           // the trace's zero is the last voiced sample (the ears give it; older ears only the decision), its "eou" the decision
           this.endMark = { voiced: voicedEnd ?? wall, eou: wall };
           this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short, strong: ev.strong });
+          // E2: an early request the end did not take as the sentence's transcription (transcribe adopts it at once) goes no further
+          this.earlyAbort();
           this.speechEnded();
         }
       },
+      // E2: 150 ms of quiet inside the sentence: an engaged one goes to /hear now; the voice back before its end aborts that request
+      onPause: (_wall, _voiced, ms) => this.earlyUpload(ms),
+      onResume: () => this.earlyAbort(),
       // speech over the voice: the capture starts here, not at the start of the sentence before
       onQuickOnset: (wall) => {
         if (earconDrops("quickOnset", { guard: this.earconOn(), tone: performance.now() < this.toneUntil, state: this.m.state, detector: this.ears?.kind ?? null })) return;
@@ -303,6 +338,7 @@ export class Conductor {
     this.inflight = null;
     for (const p of this.posts) p.ctl.abort();
     this.posts.clear(); this.carry = null; this.live = null;
+    this.earlyAbort(); this.tries = 0;
     this.wakeStop?.(); this.wakeStop = null;
     this.abortFallback();
     if (this.holdT) { clearTimeout(this.holdT); this.holdT = null; }
@@ -397,7 +433,7 @@ export class Conductor {
           if (wasHandling && this.current) this.cancelled = this.current;
           break;
         case "capture": this.carryLive(); this.ears?.capture(this.speechStart || null); break;
-        case "dropCapture": this.ears?.drop(); this.h.onHearing?.("idle"); this.sayingAtOnset = null; this.uncarry(); break;
+        case "dropCapture": this.ears?.drop(); this.h.onHearing?.("idle"); this.sayingAtOnset = null; this.uncarry(); this.earlyAbort(); break;
         case "transcribe": void this.transcribe(a.gen); break;
         case "hold":
           this.ears?.extend(a.ms);
@@ -529,8 +565,12 @@ export class Conductor {
     // woken or engaged (C4), by the captions' own test, as this speech began or now: the request carries the mark, and with the strict
     // audio gate on nothing else leaves this browser (the route refuses audio without the mark)
     const engaged = this.inWindow() || this.onsetInWindow;
+    // E2: the sentence went to /hear at its pause and the voice did not come back: that request is its transcription, and the audio
+    // is not sent again. Otherwise it was dropped already, or is dropped here, and the sentence goes as before
+    const early = this.adoptEarly(lane, engaged);
     let wav: Blob | null = null;
-    if (strictAudioGate() && !engaged) e.drop();
+    if (early) e.drop();
+    else if (strictAudioGate() && !engaged) e.drop();
     else if (lane === "ambient") {
       // an ambient sentence too short to be a request, or over the budget, never leaves this browser
       const now = Date.now();
@@ -541,18 +581,19 @@ export class Conductor {
     } else wav = e.take();
     const mark = this.endMark;
     this.endMark = null;
-    if (!wav && !first) { this.dispatch({ type: "text", text: "", gen }); this.h.onHearing?.("idle"); return; }
+    if (!wav && !early && !first) { this.dispatch({ type: "text", text: "", gen }); this.h.onHearing?.("idle"); return; }
     // a sentence that goes to the transcriber is a turn: its trace opens at its last voiced sample (section 6.4; timings only)
-    const tr = wav && mark ? traceStart(mark.voiced) : null;
+    const tr = (wav || early) && mark ? traceStart(mark.voiced) : null;
     if (tr && mark) stamp("eou", mark.eou);
+    // sent early, its words come from the request made at the pause, before the end was decided: "uploadSent" is then
+    if (tr && early) stamp("uploadSent", early.sentAt);
     this.h.onHearing?.("reading");
-    const ctl = new AbortController();
+    const ctl = early?.ctl ?? new AbortController();
     let own: Own = "ok";
     const speechMs = Math.max(0, Math.round(this.lastEnd.ms));
-    const mine = wav ? this.post(wav, lane, ctl.signal, engaged, tr, speechMs).catch((err: unknown) => {
-      own = err instanceof HearTimeout ? "timeout" : (err as Error).name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
-      return null;
-    }) : Promise.resolve(null);
+    const mine: Promise<HearReply | null> = early
+      ? early.p.then((o) => { own = o.own; if (o.j && isCurrent(tr)) stampServer("uploadSent", o.j.timing); return o.j; })
+      : wav ? this.post(wav, lane, ctl.signal, engaged, tr, speechMs).catch((err: unknown) => { own = ownOf(err); return null; }) : Promise.resolve(null);
     const rec: Post = { gen, ctl, lane, carried: false, done: false, delivered: false, out: null, p: Promise.resolve(null), tr };
     rec.p = Promise.all([first ? first.p : Promise.resolve(null), mine]).then(([a, b]) => joinHeard(a, b));
     this.inflight = ctl;
@@ -594,6 +635,54 @@ export class Conductor {
     if (j.budget === "low" && !j.text?.trim()) { this.setBudgetLow(this.ambient.length); this.dispatch({ type: "text", text: "", gen }); return; }
     this.h.mark?.("transcribed", performance.now());
     this.accept(j.text ?? "", j.lang ?? this.h.siteLang(), gen, "whisper", confOf(j.conf), rec.tr?.n);
+  }
+
+  /**
+   * E2: the ears heard TUNING.earlySttMs of quiet inside the sentence. It goes to /hear now, before its end is decided, only when it
+   * is engaged (inWindow, the captions' and the strict gate's test, and the engaged lane: never unengaged room audio, rule 3), heard
+   * fresh or after a barge-in (state hearing or interrupted; over the ducked voice it is read after its end, as before), 250 ms to
+   * TUNING.earlySttMaxMs of speech so far, with Whisper reachable, and while a request is left for the whole sentence at its end.
+   */
+  private earlyUpload(ms: number) {
+    const e = this.ears;
+    if (!earlyStt() || !e || this.early || !this.speechOpen || this.whisperOut) return;
+    if (this.m.state !== "hearing" && this.m.state !== "interrupted") return;
+    if (!(this.inWindow() || this.onsetInWindow) || this.laneNow() !== "engaged") return;
+    if (ms < TUNING.minSpeechMs || ms > TUNING.earlySttMaxMs || this.tries + 1 >= TUNING.earlySttAttempts) return;
+    const wav = e.peek();
+    if (!wav) return;
+    this.tries++;
+    const ctl = new AbortController();
+    const speechMs = Math.max(0, Math.round(ms));
+    const sentAt = performance.now();
+    // no trace yet (the end is not decided): transcribe stamps "uploadSent" at sentAt, and the server's offsets, if it is adopted
+    const p = this.post(wav, "engaged", ctl.signal, true, null, speechMs).then(
+      (j) => ({ j: j as HearJson, own: "ok" as Own }),
+      (err: unknown) => ({ j: null, own: ownOf(err) })
+    );
+    this.early = { ctl, p, sentAt, lane: "engaged", speechMs };
+    this.h.mark?.("sttEarly", sentAt);
+  }
+  /**
+   * E2, at the end of the sentence: the early request is its transcription when the voice did not come back after it (the end's
+   * speech span is the one it carried) and the sentence is still engaged on the same lane. Otherwise it is aborted (null).
+   */
+  private adoptEarly(lane: "engaged" | "ambient", engaged: boolean): Early | null {
+    const x = this.early;
+    if (!x) return null;
+    this.early = null;
+    if (lane === x.lane && engaged && Math.max(0, Math.round(this.lastEnd.ms)) === x.speechMs) { this.h.mark?.("sttEarlyUsed", performance.now()); return x; }
+    x.ctl.abort();
+    this.h.mark?.("sttEarlyAbort", performance.now());
+    return null;
+  }
+  /** E2: the voice came back, or the sentence was dropped, stopped or closed, before its early request was taken: it is aborted. */
+  private earlyAbort() {
+    const x = this.early;
+    if (!x) return;
+    this.early = null;
+    x.ctl.abort();
+    this.h.mark?.("sttEarlyAbort", performance.now());
   }
 
   /** One POST to /hear, given up after TUNING.hearTimeoutMs. The open Stage's names go with the audio (multipart) when there are any. */

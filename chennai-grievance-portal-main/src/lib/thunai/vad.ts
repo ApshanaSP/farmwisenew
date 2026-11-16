@@ -36,7 +36,16 @@ export const TUNING = {
   /** the browser gives up on /hear after this long and the sentence counts as not heard, ms */
   hearTimeoutMs: 6000,
   /** an ambient sentence shorter than this is never sent to transcription, ms */
-  ambientMinMs: 400
+  ambientMinMs: 400,
+  /**
+   * v5 (E2, NEXT_PUBLIC_JARVIS_EARLY_STT): an engaged sentence goes to /hear after this much quiet inside it, before its end is decided
+   * (the end itself is still endOfUtteranceMs, or eou.ts's values); if the voice comes back first, that request is aborted, ms
+   */
+  earlySttMs: 150,
+  /** ...never for a sentence longer than this so far: it goes at its end, as before, ms */
+  earlySttMaxMs: 10_000,
+  /** ...and a sentence makes at most this many /hear requests: the last one is kept for the whole sentence at its end */
+  earlySttAttempts: 2
 } as const;
 
 export interface VadOpts {
@@ -145,6 +154,8 @@ export class EnergyVad {
     const all = at - this.startAt - this.quietMs;
     return this.echoNow ? Math.min(all, this.strong) : all;
   }
+  /** v5 (E2): the quiet heard so far inside a sentence that has not ended, ms (0 outside speech, and when the voice is back) */
+  get quiet(): number { return this.speaking ? this.quietMs : 0; }
   /** Listen longer before ending the current or next sentence (a hold word). */
   extend(ms: number) { this.extraMs = ms; }
   /** The quiet that ends the current sentence, from its live words (null: the fixed value). It lasts until that sentence ends. */
@@ -203,6 +214,8 @@ export class ProbVad {
     const all = at - this.startAt - this.quietMs;
     return this.echoNow ? Math.min(all, this.strong) : all;
   }
+  /** v5 (E2): the quiet heard so far inside a sentence that has not ended, ms (0 outside speech, and when the voice is back) */
+  get quiet(): number { return this.speaking ? this.quietMs : 0; }
   extend(ms: number) { this.extraMs = ms; }
   endAfter(ms: number | null) { this.eou = ms; }
   reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; this.eou = null; this.strong = 0; this.echoNow = false; }
