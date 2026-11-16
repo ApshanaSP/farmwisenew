@@ -1,9 +1,11 @@
 {
- "at": "2026-11-15T16:36:28.211Z",
+ "at": "2026-11-16T17:14:58.873Z",
  "cell": "A",
  "model": "openai/gpt-oss-20b",
  "seed": 20261115,
  "summary": {
+  "label": "clean",
+  "allTurns": "9/15 (60.0 %, 35.7-80.2)",
   "n": 15,
   "right": 9,
   "scored": 15,

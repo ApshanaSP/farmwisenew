@@ -1,9 +1,11 @@
 {
- "at": "2026-11-15T16:46:02.585Z",
+ "at": "2026-11-16T17:14:58.876Z",
  "cell": "B",
  "model": "openai/gpt-oss-20b",
  "seed": 20261115,
  "summary": {
+  "label": "CAPACITY FAILURE (a 429 was met: not a plain score)",
+  "allTurns": "9/15 (60.0 %, 35.7-80.2)",
   "n": 15,
   "right": 9,
   "scored": 14,

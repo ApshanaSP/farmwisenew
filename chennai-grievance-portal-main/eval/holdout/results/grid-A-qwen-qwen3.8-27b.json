@@ -1,13 +1,15 @@
 {
- "at": "2026-11-15T16:32:29.567Z",
+ "at": "2026-11-16T17:14:58.874Z",
  "cell": "A",
  "model": "qwen/qwen3.8-27b",
  "seed": 20261115,
  "summary": {
+  "label": "CAPACITY FAILURE (a 429 was met: not a plain score)",
+  "allTurns": "9/15 (60.0 %, 35.7-80.2)",
   "n": 15,
   "right": 9,
-  "scored": 14,
-  "score": "9/14 (64.3 %, 38.8-83.7)",
+  "scored": 13,
+  "score": "9/13 (69.2 %, 42.4-87.3)",
   "slotsRight": 9,
   "capacity": 1,
   "jsonValidateFailed": 1,

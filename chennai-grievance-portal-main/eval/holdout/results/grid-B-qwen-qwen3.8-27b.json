@@ -1,13 +1,15 @@
 {
- "at": "2026-11-15T16:38:38.993Z",
+ "at": "2026-11-16T17:14:58.877Z",
  "cell": "B",
  "model": "qwen/qwen3.8-27b",
  "seed": 20261115,
  "summary": {
+  "label": "clean",
+  "allTurns": "12/15 (80.0 %, 54.8-93.0)",
   "n": 15,
   "right": 12,
-  "scored": 15,
-  "score": "12/15 (80.0 %, 54.8-93.0)",
+  "scored": 13,
+  "score": "12/13 (92.3 %, 66.7-98.6)",
   "slotsRight": 12,
   "capacity": 0,
   "jsonValidateFailed": 2,

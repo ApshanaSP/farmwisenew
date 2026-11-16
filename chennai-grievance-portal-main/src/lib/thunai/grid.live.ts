@@ -40,6 +40,13 @@ const items = (): TuningItem[] => fs.readFileSync(path.join(DIR, "tuning24.jsonl
 const fileOf = (cell: string, model: string) => path.join(OUT, `grid-${cell}-${model.replace(/[^a-z0-9.]+/gi, "-")}.json`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * A row's outcome is scored only when the model gave a plan to score (review evaluation-honesty-2): a 429 is a capacity failure, and a
+ * strict-mode 400 with no usable draft, a 5xx, a timeout or an error are their own outcomes, never a wrong answer. (A strict-mode 400
+ * whose draft our lenient schema took, "draft_used", is scored: production answers from that draft too.)
+ */
+const SCORED = (r: { outcome: string }) => r.outcome === "ok" || r.outcome === "draft_used";
+
 interface Row { id: string; lang: string; cell: string; model: string; bundle: string; via: string; ok: boolean; slotsOk: boolean; kind: string | null; recipe: string | null; outcome: string; prompt_tokens: number; completion_tokens: number; cached_tokens: number; ms: number; est: number; at: string }
 
 const estimateOf = (c: ReturnType<typeof cellCall>) => Math.ceil((c.system.length + schemaText(c.schema).length + c.prompt.length) / 4) + 300;
@@ -49,9 +56,11 @@ function readRows(cell: string, model: string): Row[] {
 }
 function writeRows(cell: string, model: string, rows: Row[], extra: Record<string, unknown> = {}) {
   fs.mkdirSync(OUT, { recursive: true });
-  const scored = rows.filter((r) => r.outcome !== "rate_limited" && r.outcome !== "timeout" && r.outcome !== "error");
+  const scored = rows.filter(SCORED);
   const ms = rows.map((r) => r.ms).sort((a, b) => a - b);
-  const summary = { n: rows.length, right: scored.filter((r) => r.ok).length, scored: scored.length, score: scoreLine(scored.filter((r) => r.ok).length, scored.length), slotsRight: scored.filter((r) => r.slotsOk).length,
+  const any429 = rows.some((r) => r.outcome === "rate_limited");
+  const summary = { label: any429 ? "CAPACITY FAILURE (a 429 was met: not a plain score)" : "clean", allTurns: scoreLine(rows.filter((r) => SCORED(r) && r.ok).length, rows.length),
+    n: rows.length, right: scored.filter((r) => r.ok).length, scored: scored.length, score: scoreLine(scored.filter((r) => r.ok).length, scored.length), slotsRight: scored.filter((r) => r.slotsOk).length,
     capacity: rows.filter((r) => r.outcome === "rate_limited").length, jsonValidateFailed: rows.filter((r) => r.outcome === "json_validate_failed" || r.outcome === "draft_used").length,
     timeouts: rows.filter((r) => r.outcome === "timeout").length, errors: rows.filter((r) => r.outcome === "error").length,
     meanPrompt: Math.round(rows.reduce((a, r) => a + r.prompt_tokens, 0) / Math.max(1, rows.length)), meanCompletion: Math.round(rows.reduce((a, r) => a + r.completion_tokens, 0) / Math.max(1, rows.length)),
@@ -139,6 +148,17 @@ it.runIf(mode === "run")("the diagnosis grid: first planner call, pinned Groq mo
   console.log(JSON.stringify({ done: true, report }));
 });
 
+// rewrite every grid file's summary from its own rows under the scoring rule above (no model call)
+it.runIf(mode === "resummarize")("the grid files' summaries, from their rows", () => {
+  const files = fs.existsSync(OUT) ? fs.readdirSync(OUT).filter((f) => /^grid-[A-G]-.+\.json$/.test(f)) : [];
+  for (const f of files) {
+    const j = JSON.parse(fs.readFileSync(path.join(OUT, f), "utf8")) as { cell: string; model: string; rows: Row[]; [k: string]: unknown };
+    const { rows, cell, model, at: _at, summary: _s, ...rest } = j;
+    const s = writeRows(cell, model, rows, rest);
+    console.log(JSON.stringify({ file: f, label: s.label, allTurns: s.allTurns, cleanTurns: s.score, capacity: s.capacity, ownOutcome: rows.filter((r) => !SCORED(r) && r.outcome !== "rate_limited").length }));
+  }
+});
+
 /** the pairs the grid reads (7.5), on one model */
 const PAIRS: [CellId, CellId][] = [["A", "B"], ["A", "C"], ["A", "D"], ["A", "E"], ["F", "B"], ["G", "A"], ["G", "B"], ["C", "D"]];
 
@@ -151,7 +171,7 @@ it.runIf(mode === "pairs")("every pair of grid cells on the same model and sente
     for (const [x, y] of PAIRS) {
       const rx = runs.find((r) => r.model === model && r.cell === x), ry = runs.find((r) => r.model === model && r.cell === y);
       if (!rx || !ry) continue;
-      const clean = (r: Row) => r.outcome !== "rate_limited" && r.outcome !== "timeout" && r.outcome !== "error";
+      const clean = (r: Row) => SCORED(r);
       const ym = new Map(ry.rows.filter(clean).map((r) => [r.id, r]));
       const both = rx.rows.filter(clean).filter((r) => ym.has(r.id) && pairable(gold.get(r.id)!, [x, y]));
       const b = both.filter((r) => r.ok && !ym.get(r.id)!.ok).length, c = both.filter((r) => !r.ok && ym.get(r.id)!.ok).length;
