@@ -428,7 +428,7 @@ export class Conductor {
         // the barge-in specs time the first reaction under its old name, "paused"
         case "duckVoice": { duckVoice(); const t = performance.now(); this.h.mark?.("paused", t); this.h.mark?.("ducked", t); break; }
         case "unduckVoice": unduckVoice(); this.sayingAtOnset = null; break;
-        case "cancelVoice": stopVoice(); this.h.mark?.("cancelled", performance.now()); break;
+        case "cancelVoice": stopVoice(); this.cutAt = Date.now(); this.h.mark?.("cancelled", performance.now()); break;
         case "cancelTurn":
           this.inflight?.abort(); this.inflight = null; this.h.cancelTurn();
           if (this.live?.ctl.signal.aborted) this.live = null;
@@ -484,10 +484,19 @@ export class Conductor {
     queueMicrotask(() => { if (this.m.gen === p.gen && this.m.awaiting) this.finish(p); });
   }
 
+  /**
+   * The speech being heard is engaged: it began over Jarvis's voice, or it comes within ENGAGED_MS of the wake or of Jarvis's last
+   * turn, or of the moment Jarvis's answer was cut while its bookmark is kept for "continue". The bookmark lasts until Jarvis speaks
+   * again and bargeIns never falls back, so that last reckoning is bounded by the same window (review gate-captions-wake-3): room
+   * talk after it goes on the capped ambient lane, unengaged (no stand-in recogniser, no "didn't catch that").
+   */
   private laneNow(): "engaged" | "ambient" {
-    const last = this.engagedAt ?? 0, spokenOver = !!this.sayingAtOnset || this.m.bargeIns > 0 && canContinue();
-    return spokenOver || (last > 0 && Date.now() - last <= ENGAGED_MS) ? "engaged" : "ambient";
+    const now = Date.now(), last = this.engagedAt ?? 0;
+    const cutKept = this.m.bargeIns > 0 && canContinue() && this.cutAt > 0 && now - this.cutAt <= ENGAGED_MS;
+    return !!this.sayingAtOnset || cutKept || (last > 0 && now - last <= ENGAGED_MS) ? "engaged" : "ambient";
   }
+  /** when the turn machine last cut Jarvis's voice (Date.now()); 0 before any */
+  private cutAt = 0;
 
   /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
   get engagedAt(): number | null {
