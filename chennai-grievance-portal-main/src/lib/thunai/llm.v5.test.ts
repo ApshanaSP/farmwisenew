@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { schemaText } from "@/lib/ai/gateway";
+import { schemaText, type JsonCall, type JsonResult } from "@/lib/ai/gateway";
 import { Ledger, MemoryStore } from "./ledger";
-import { estimate, ladder } from "./llm";
+import { callLlm, estimate, GROQ_MODELS, ladder } from "./llm";
 
 // A2 (a): the provider's prompt_tokens on the grid's first calls were far above estimate(), which left the schema out
 describe("A2: the estimate counts the schema the provider is sent", () => {
@@ -54,5 +54,24 @@ describe("A6: the planner's lead", () => {
       expect(o[3]).toBe("anthropic/claude-opus-5-5");
       expect(o[4]).toBe("gemini/gemini-3.5-flash-lite");
     }
+  });
+});
+
+// review planner-quota-8 (A2): a call Jarvis stopped (cancelled, a lost hedge, the deadline) is recorded at its estimated input, and
+// that estimate leaves the schema out while estimate() counts it
+describe("A2: a stopped call is recorded with the schema counted, as estimate() counts it", () => {
+  it("a turn cancelled mid-call records its rung at (system + prompt + schema) / 3.5 tokens", async () => {
+    const led = new Ledger(new MemoryStore());
+    const schema = z.object({ kind: z.enum(["do", "clarify", "chat"]), reply: z.string().nullable(), zones: z.array(z.number().int()).max(4), note: z.string().nullable() });
+    const system = "s".repeat(700), prompt = "p".repeat(70);
+    const generate = <U,>(c: JsonCall<U>) => new Promise<JsonResult<U>>((_, rej) => { c.abortSignal?.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError"))); });
+    const ctl = new AbortController();
+    const p = callLlm({ name: "t", system, prompt, schema, maxOutputTokens: 100, user: "u", lane: "planner", until: Date.now() + 8000, signal: ctl.signal, hedge: false },
+      { generate: generate as never, ledger: led, bedrockOk: () => false });
+    setTimeout(() => ctl.abort(), 20);
+    await expect(p).rejects.toThrow();
+    const recorded = GROQ_MODELS.map((m) => led.spent("groq", m, 60_000));
+    expect(recorded.reduce((a, s) => a + s.requests, 0)).toBe(1);
+    expect(recorded.reduce((a, s) => a + s.tokens, 0)).toBe(Math.ceil((system.length + prompt.length + schemaText(schema).length) / 3.5));
   });
 });
