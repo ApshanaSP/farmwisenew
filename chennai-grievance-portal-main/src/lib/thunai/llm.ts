@@ -1,7 +1,8 @@
 /**
  * Jarvis's way to a model: a ladder over organisations and models, under the ledger, with a hedge. Server only.
- *   Claude if ANTHROPIC_API_KEY is set -> Groq with the most budget -> next Groq -> flash-lite -> Bedrock if its keys work -> null
- *   (the caller's rules-only answer). With no Claude key (or a refused one) the ladder is what it always was.
+ *   Claude Haiku if ANTHROPIC_API_KEY is set -> Groq with the most budget -> next Groq -> flash-lite -> Bedrock if its keys work -> null
+ *   (the caller's rules-only answer). JARVIS_PLANNER_LEAD=groq, or a Claude model other than Haiku, puts the Claude rung after Groq.
+ *   With no Claude key (or a refused one) the ladder is what it always was.
  * Each hop is logged. The hedge: when the first model has not answered by its own observed p95, one more model is asked and the
  * loser is aborted. A rung with fewer than 8 times of its own waits its provider's default instead (Claude 6 s: it thinks before
  * it answers, p50 about 3.9 s; others 3.5 s). The hedge goes only into Groq, and never with under 40 % of a minute's budget left
@@ -24,7 +25,10 @@ export const LITE_MODEL = "gemini-3.5-flash-lite";
 export const estimate = (system: string, prompt: string, maxOut: number, schema?: z.ZodTypeAny) =>
   Math.ceil((system.length + prompt.length + (schema ? schemaText(schema).length : 0)) / 3.5) + Math.round(maxOut * 0.4);
 
-/** Who leads the planner when a Claude key works: Haiku (default) or the Groq ladder (JARVIS_PLANNER_LEAD=groq; Haiku goes after Groq) */
+/**
+ * Who leads the planner when a Claude key works: Haiku (default) or the Groq ladder (JARVIS_PLANNER_LEAD=groq; Haiku goes after Groq).
+ * A Claude model other than Haiku (JARVIS_CLAUDE_MODEL=claude-opus-5-5) never leads: ladder() puts it after the Groq ladder.
+ */
 export const plannerLead = (): "haiku" | "groq" => ((process.env.JARVIS_PLANNER_LEAD ?? "").trim().toLowerCase() === "groq" ? "groq" : "haiku");
 
 export interface Rung { provider: ProviderName; model: string }
@@ -42,8 +46,11 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
   // v5 A6 (d), eval only: the deploy check's live-60 (deploy.live.ts) sets JARVIS_LADDER_PIN=anthropic, so every scored turn is Claude's
   // or nobody's (the rules then answer, and the turn is scored as such). Unset in the app.
   if ((process.env.JARVIS_LADDER_PIN ?? "").trim().toLowerCase() === "anthropic") return first;
-  // v5 A6: Haiku leads by default (the owner's plan at deploy); JARVIS_PLANNER_LEAD=groq puts it after the Groq ladder
-  return plannerLead() === "groq" ? [...groq, ...first, ...rest] : [...first, ...groq, ...rest];
+  // v5 A6: Haiku leads by default (the owner's plan at deploy); JARVIS_PLANNER_LEAD=groq puts it after the Groq ladder. Only a Haiku
+  // may lead: any other Claude model JARVIS_CLAUDE_MODEL names (Opus: p50 3.9 s here, over the lane) is a rung after the Groq ladder,
+  // whatever the lead says (review planner-quota-6, brief 3.1: Opus off the first rung in every case, selectable by env)
+  const haikuLeads = plannerLead() === "haiku" && /haiku/i.test(claudeModel());
+  return haikuLeads ? [...first, ...groq, ...rest] : [...groq, ...first, ...rest];
 }
 
 // ---- each rung's own record of how long it takes
