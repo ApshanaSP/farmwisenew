@@ -45,7 +45,7 @@ import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, nowSaying, pathFor, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, warmVoice, warmVoices } from "./mouth";
 import { Conductor, type HeardLine } from "./conductor";
-import { stamp, traceLane, traces } from "./trace";
+import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
 import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
@@ -312,8 +312,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const engagedNow = () => { lastTurnAt.current = Date.now(); hud.set({ engagedUntil: Date.now() + ENGAGED_MS }); };
   /** the trace (trace.ts) of the spoken sentence handle() is deciding now; null for typed text and once stamped (v5, section 6.4) */
   const traceOf = useRef<number | null>(null);
-  /** the address gate and the rules have decided: "gateDone" and the turn's lane, on that sentence's own trace only, once */
-  const traceDecided = (lane: "rules" | "planner" | "other") => { const n = traceOf.current; traceOf.current = null; if (n != null && traces().at(-1)?.n === n) { stamp("gateDone"); traceLane(lane); } };
+  /**
+   * the address gate and the rules have decided: "gateDone" and the turn's lane, on that sentence's own trace only (by its number: side
+   * talk uploaded meanwhile opens a newer trace, which must not take them), once
+   */
+  const traceDecided = (lane: "rules" | "planner" | "other") => { const n = traceOf.current; traceOf.current = null; if (n != null) { stamp("gateDone", undefined, n); traceLane(lane, n); } };
   const [chips, setChips] = useState<Chip[]>([]);
   const [wrong, setWrong] = useState<string | null>(null);
   const [askOnce, setAskOnce] = useState<AskCard | null>(null);
@@ -1030,6 +1033,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the turn this call answers: a newer sentence, a barge-in or Esc moves the generation on, and nothing of this one shows or speaks after
     const gen = turnGen.current;
     const live = () => gen === turnGen.current && !signal?.aborted;
+    // the trace (v5): the turn this round answers, taken now as its generation is (null: a turn with no trace of its own)
+    const trace = traceAnswering() ?? null;
     if (!direct) {
       streamed.current = { gen, lang: heard?.lang ?? listenLangRef.current, screen: null, said: [], queue: null };
       hud.clearSteps(); hud.step({ id: stepId, label: listenLangRef.current === "ta" ? "புரிந்துகொள்கிறேன்" : "Understanding" });
@@ -1072,7 +1077,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             }
           });
         };
-        const r = await readRound(res, { turnId, live, hooks: direct ? {} : {
+        const r = await readRound(res, { turnId, live, trace, hooks: direct ? {} : {
           // the work timeline: only what really ran, with the time it took
           step: (x) => timeline(`${turnId}-${x.id}`, x.label, x.state, x.ms),
           steps: runSteps,
@@ -1422,6 +1427,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const handle = async (text: string, conf = 0.95, original?: string, opts: { gate?: Addressed | null; source?: "whisper" | "captions" | "typed"; lang?: Lang } = {}) => {
     const said = text.trim();
     if (!said) return;
+    // the trace (v5): the turn this answers, for the answer's own stamps (the spoken sentence's trace; none for typed text)
+    traceAnswer(traceOf.current);
     // a mission's own words while its card waits or it runs (missions.words.ts): start (or a plain yes to the card), stop, skip that,
     // instead X, or an edit of the card before Start ("without 3"). They steer the mission and start no new turn: a new turn would
     // cancel the screen its step is building. Anything else means the Collector has moved on, and the mission gives way quietly.
@@ -2186,13 +2193,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     traceOf.current = h.trace ?? null;
     const handled = handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source, lang: h.lang });
     traceDecided("other");
-    void handled.finally(() => { if (conductor.current?.generation === h.gen) conductor.current.answered(); });
+    // its handling over, nothing said later (an interjection, a tap) is this turn's answer (traceAnswerDone keeps a newer turn's claim)
+    void handled.finally(() => { if (h.trace != null) traceAnswerDone(h.trace); if (conductor.current?.generation === h.gen) conductor.current.answered(); });
   };
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;
 
   const conductorOf = () => {
     if (conductor.current) return conductor.current;
+    // the trace (v5): no turn is being answered yet, so the power-on brief's voice stamps no trace the ears open
+    traceAnswer(null);
     const c = new Conductor({
       hearUrl: () => hostRef.current.hearUrl ?? "/api/jarvis/hear",
       clarifyPending: () => !!askOnceRef.current,

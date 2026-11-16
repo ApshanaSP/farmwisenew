@@ -58,15 +58,17 @@ export class StaleRound extends Error { constructor() { super("stale"); this.nam
  * Read one round's reply. NDJSON: every event of this turn is handed on in order while `live()` holds; resolves with
  * RUN_FINISHED's answer, rejects on RUN_ERROR, on a stream that ends without one, or when the turn went stale. Anything else
  * is read as JSON, as `post()` did: a reply that is not ok rejects with its error.
+ * `trace`: the trace number of the turn this round answers (null: a turn with no trace, typed text): firstEvent and the planner's
+ * stages land on that turn only, never on a trace that side talk opened while the round ran (trace.ts; review voice-detector-latency-1).
  */
-export async function readRound(res: Response, o: { turnId: string; live: () => boolean; hooks?: RoundHooks }): Promise<RoundRead> {
+export async function readRound(res: Response, o: { turnId: string; live: () => boolean; hooks?: RoundHooks; trace?: number | null }): Promise<RoundRead> {
   const ct = res.headers.get("content-type") ?? "";
   if (!(res.ok && res.body && ct.toLowerCase().includes(NDJSON))) {
     const j = await res.json().catch(() => ({})) as RoundOutWire & { error?: string };
     if (!res.ok) throw new Error(j.error || "Request failed.");
     // the v5 trace: the answer is here (a plain JSON reply is its own first event), and the server's stage times
-    stamp("firstEvent");
-    stampEpoch(j.timing);
+    stamp("firstEvent", undefined, o.trace);
+    stampEpoch(j.timing, undefined, o.trace);
     return { out: j, streamed: false, timeline: false, stepsSent: false, screen: null, sentences: [] };
   }
   const h = o.hooks ?? {};
@@ -78,14 +80,14 @@ export async function readRound(res: Response, o: { turnId: string; live: () => 
     if (finished || error != null || stale) return;
     if (!o.live()) { stale = true; return; }
     if (e.turnId !== o.turnId) return;
-    // the v5 trace (6.4): the first event of this turn in the browser (first stamp wins)
-    stamp("firstEvent");
+    // the v5 trace (6.4): the first event of this turn in the browser (first stamp wins), on this turn's own trace
+    stamp("firstEvent", undefined, o.trace);
     switch (e.type) {
       case "STEP_STARTED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: "running", ms: null })); return;
       case "STEP_FINISHED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: e.ok ? "done" : "failed", ms: Number.isFinite(e.ms) ? Math.round(e.ms) : null })); return;
       case "STATE_SNAPSHOT": if (e.snapshot?.stage) { r.screen = e.snapshot.stage; safe(() => h.screen?.(e.snapshot.stage)); } return;
       case "TEXT_MESSAGE_CONTENT": if (e.delta?.trim()) { r.sentences.push(e.delta); safe(() => h.sentence?.(e.delta, e.lang)); } return;
-      case "RUN_FINISHED": r.out = e.out; finished = true; stampEpoch(e.out?.timing); return;
+      case "RUN_FINISHED": r.out = e.out; finished = true; stampEpoch(e.out?.timing, undefined, o.trace); return;
       case "RUN_ERROR": error = e.message || "The round failed."; return;
       case "CUSTOM":
         if (e.name === "steps") { r.stepsSent = true; safe(() => h.steps?.(e.value.steps ?? [])); }
