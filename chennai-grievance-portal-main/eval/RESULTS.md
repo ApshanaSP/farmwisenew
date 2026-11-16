@@ -69,6 +69,44 @@ The ledger could not fit the whole grid (qwen 101K, gpt-oss-20b 111K, gpt-oss-12
 - **The reading stands: no row of 7.5 selects a planner change; A1/A1b ship off, A3 unwired.**
 
 
+### Latency and the per-stage trace
+
+Every trace time is ms from the **last voiced sample** (the detector's own end of speech, not its decision), timings only. Server stages are placed on the page clock (one machine: the browser and the server share the clock).
+
+**Mocked providers** (`e2e-latency.spec.ts`, hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium, PCM path; n 6; `latency-mocked.json`):
+
+| | p50 | p90 |
+|---|---|---|
+| End of utterance decided | 342 | 342 |
+| Upload sent | 344 | 347 |
+| Transcript back | 812 | 819 |
+| Gate and rules done | 821 | 830 |
+| First streamed event | 2,032 | 2,057 |
+| speak() called | 2,053 | 2,080 |
+| Voice start | 2,061 | 2,556 |
+| First spoken finding (spec's own clock) | 2,029 | 4,893 |
+
+The stages add up to the mocks plus about 100 ms of the page's own work; nothing unexplained in the mocked lane.
+
+**Real run 1** (16 Nov 22:02; production bundle with `NEXT_PUBLIC_JARVIS_SPEC=1` built from a clean worktree at `8a9d1e69`, before E2 and E3; Edge; real Whisper, the real Groq ladder with Claude off, the real voice ladder; injected synthetic clips; `latency-real-prod-v5first.json`). **The four rules-lane clips were refused by C1** (none names Jarvis, Jarvis was idle): they measure nothing. One planner turn ("how is the metro water backlog looking overall?") answered: first spoken finding **6,674 ms**. Its trace: upload 348, transcript back 894, gate 972, first event 1,132, planner sent 5,869, back 6,614, voice start 6,987. **E1, what held the time:** round 0's qwen call had not answered after the ladder's 3.5 s default hedge wait; the hedge's gpt-oss-120b answered in 1.1 s; the plan asked for a lookup, and a second round (qwen, 722 ms) followed. A not-done round did not report its server times, so round 0 was missing from the trace: fixed. n = 1: not a rate.
+
+**Real run 2** (16 Nov 22:20; the same set-up built at `2af986c5`, with E2 and E3 on, the run opened by a synthetic named clip; `latency-real-prod-v5early.json`): 5 of 6 clips answered.
+
+| Clip (what Whisper returned) | Lane | First spoken finding (ms) |
+|---|---|---|
+| "Jarvis, show me the flooding complaints in Velachery" (heard "vela cherry") | rules | **1,467** |
+| "Go to the trends page" (heard as Tamil) | planner, no answer | — |
+| "Show the severe cases in Adyar" (heard "Udyar") | planner | 2,292 |
+| "What about the rain in Perungudi today?" (heard as Tamil) | planner | 2,197 |
+| "Jarvis, put together something useful for my morning" (heard as Tamil) | planner | 2,405 |
+| "how is the metro water backlog looking overall?" | planner, no finding spoken | — |
+
+Trace (n 6, p50 / p90): upload sent 187 / 338 (the early upload, before the end of utterance at 332 / 343), STT sent 207 / 343, back 680 / 1,215, transcript 773 / 1,245, gate 835 / 1,281, first event 1,261 / 2,212, planner sent (n 3) 918 / 1,429, back 2,328 / 4,733, tools done 2,156 / 4,742, speak 2,229 / 2,409.
+
+- **The language finding, and why E2 ships off.** Three of the English clips came back as Tamil. By direct decodes of the same clip files: "Go to the trends page" comes back Tamil on START too (pre-existing: Whisper's race picks the forced-Tamil decode on that clip); "What about the rain in Perungudi today?" and "Jarvis, put together something useful for my morning" come back English when decoded whole (with the last line English or Tamil), and the second was heard in English in real run 1, before E2. So the early upload's audio (the sentence up to its first 150 ms pause) is the likely cause. **E2 ships default off** (`NEXT_PUBLIC_JARVIS_EARLY_STT=1` turns it on); the measured run is not the shipped default. Owed: a real run with the shipped defaults, and the room check.
+- **Targets, honestly:** rules lane first finding 1,467 ms on one clean clip (target 1.0 s: **not met**; v4: 1.14 s); planner lane 2.2-2.4 s on the three planner turns that spoke (target p50 2.2 s: about at it, n 3, with E2 on); engaged speech-to-text server time (STT sent to back) p50 about 470 ms (target 700: met). The unexplained 300-800 ms of the brief: in these runs the time sat in the planner's round 0 (a slow qwen call held by the 3.5 s default hedge wait) and in second, lookup rounds, not in the voice start.
+- **E3 (keep-alive):** measured apart, 12 Whisper requests 10 s apart: built-in fetch p50 374 / p90 457 ms; keep-alive p50 235 / p90 858 ms (the p90 is its first, cold request). Ships on.
+
 ### Side talk and the address gate (C1, C2; no model)
 
 `HOLDOUT=ambient` and `HOLDOUT=ambient-engaged`, `HOLDOUT_TAG=v5`, on the v5 tree. Counts and the tier that fired only. **On the unengaged harness C1 gives 0 by construction** (the harness passes no last turn, and C1 cuts exactly the tier the old false acts came through): that is not evidence about a room.
