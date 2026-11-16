@@ -1,5 +1,126 @@
 # Jarvis mode: handover
 
+## v5 (15-17 Nov 2026)
+
+Branch `claude/jarvis-v5-build-dfece7`, cut from `origin/main` at START `f830efbd` (the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v5 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. Deploying Haiku: `docs/jarvis/DEPLOY_HAIKU.md`. The room check and demo: `docs/jarvis/DEMO.md`. Oracle changes: `docs/qa/pass7/V5_EXPECTED_CHANGES.md`. Review: `docs/jarvis/BUILD_REVIEW_FINDINGS.md`.
+
+**Read this first.**
+- **Claude was not called at all, by design** (owner: build and test on Groq, add the Haiku key at deploy). The Haiku-first ladder is built and tested with mocks; the deploy check is built and never run.
+- **Understanding did not move on Groq.** Final live-60 on the shipped ladder: **36/60** (60.0 %, 47.4-71.4), Tamil 14/30, against v4's 39/60 on the same sentences (paired b 4, c 7, p 0.55: no difference shown either way); new intents 7/28 clean (25.0 %, 12.7-43.4) against v4's 6/29. The targets (52/60, Tamil 26/30, new intents 75 %) are **not met**. The grid selected no planner change, so the planner prompt is v4's.
+- **Nothing was tried with a real microphone in a real room**, again.
+
+### Owner actions (first)
+
+1. **Turn on Groq Zero Data Retention** (console, Data Controls). This build assumed it is off. Groq keeps nothing by default but may keep logs up to 30 days (B, https://console.groq.com/docs/your-data).
+2. **Fix the Anthropic key** (it returned 401 on 15 Nov 2026), make sure `JARVIS_CLAUDE_OFF` is not set, then run the deploy check exactly as `docs/jarvis/DEPLOY_HAIKU.md` says and set the env lines it prints. It stops at $0 if the key is refused and caps itself at US$0.50.
+3. **Know the free-tier ceiling:** Groq's free plan (8K tokens a minute, 200K a day per model, checked from the response headers) carries about 69 planner calls a model a day at about 2,880 tokens a call, about 208 over the three models: **it cannot carry 300 planner turns a day.** Haiku at deploy is the capacity answer (a 429 is a capacity failure, never a wrong answer).
+4. **Decide on IndicConformer's weights** (free local Tamil hearing, B5): the MIT licence file is in AI4Bharat's GitHub repository; the Hugging Face weights are gated with only a `license:mit` tag, and every runnable export is an individual's. Measured, not wired: on 200 FLEURS read-Tamil clips the OpenVoiceOS fp32 export of the 120M Tamil IndicConformer passes every B5 gate (WER 29.1 against forced-Tamil Groq's 56.4; a 6 s clip in p50 270 / p90 317 ms at 4 threads; 674 MB), but it loads in sherpa-onnx only after four metadata entries are appended to a copy, and it has a `license: mit` tag and no licence file. Every int8 export failed the speed gate on this CPU (p50 1,020-2,750 ms). Figures: `eval/RESULTS.md`, "Free local Tamil decode (B5)".
+5. **Decide whether to open a free Cloudflare Workers AI account** as an overflow speech pool (zero retention by default: B, https://developers.cloudflare.com/workers-ai/platform/data-usage/). Not created, not built.
+6. **Decide whether Gemini TTS may stay on the free tier** (the app's second voice): free-tier content is used to improve Google's products (B, https://aistudio.google.com/docs/pricing). Unchanged.
+7. **The decisions of section 3.1**, with what was measured: 
+
+| Decision | Built with (the brief's default) | What was measured, for the choice |
+|---|---|---|
+| Drop the unengaged command tier | Dropped; `JARVIS_GATE_COMMAND_TIER=1` restores it | Shipped: side talk with Jarvis idle 0/60, 0/40, 0/200; unnamed commands refused 40/40 and 60/60. With the old tier: 4/60, 17/40, 21/200 acted; commands accepted 35/40 and 55/60 |
+| A small-model veto on the gate | Off, not built | Engaged window (5 s after Jarvis's turn): 14/60, 6/40, 58/200 side lines acted, all at tier 2 (no model) |
+| Licence tag in place of a licence file (embedding routers) | Not accepted; the n-gram router is the only one | Route-then-fill (G) on the n-gram shortlist did not beat the v3 prompt (A) on the grid |
+| Which Claude model leads | `claude-haiku-5-5`, thinking disabled; `JARVIS_PLANNER_LEAD=groq` puts it after Groq; Opus never first | Nothing live (no Claude call by design); the deploy check measures it |
+| IndicConformer weights (B5) | Measure only; nothing wired | The OpenVoiceOS 120M fp32 passes all four gates (WER 29.1 against Groq's 56.4; p50 270 ms; 674 MB) after its metadata is appended; every int8 export fails the speed gate here |
+| Cloudflare Workers AI account | Not created, not built | — |
+| Gemini TTS on the free tier | Unchanged | — |
+| Groq Zero Data Retention | Assumed off | — |
+| On-device wake word | Not shipped (the install broke Silero's runtime path: see "What was cut") | — |
+| `echoCancellation: "all"` | Default `true`; `NEXT_PUBLIC_JARVIS_ECHO=all` | Nothing in a room; the room check compares them |
+| Groq ladder order | Unchanged | Not ranked: the grid compared prompts on each model, not the models. On the final live-60 the model that answered scored qwen 15/20, gpt-oss-120b 4/8, gpt-oss-20b 0/6 (small n, different sentences: not a ranking) |
+| Whether "≤ 2,500 planner tokens" counts the schema | Three counts reported | Code's count without the schema: screens about 1,220, wide about 1,890. Provider input with the schema: about 1,600-2,200 a call. Final live-60, provider input + output a turn: p50 1,803, p90 4,126 (4 over 2,500, all Tamil) |
+| Sets, gazetteer, spoken metric names | Model-drafted (no owner file at the paths) | Labelled "model-drafted, not checked by a Tamil speaker" |
+
+
+### What shipped (each with a test that failed first where it fixes a defect)
+
+- **The address gate (C1):** with Jarvis idle, an unnamed command is refused; the bare stop word still acts. Both command-tier returns come back only with `JARVIS_GATE_COMMAND_TIER=1` (and `NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER=1` in the browser). Side talk with Jarvis idle: 0/60, 0/40, 0/200 acted; unnamed commands refused 40/40 and 60/60. Inside the 20 s window after an answer, request-shaped lines still act (side talk there: 14/60, 6/40, 58/200).
+- **Captions only while engaged (C3)**; a strict audio gate behind a flag, off (C4); Silero's 64-sample context (D1); echo cancellation `true` by default, `"all"` by flag, shown only in the measurement view (D2).
+- **Speech-to-text:** the Gemini third racer is gone (B1); the echo guard uses the decode's own confidence and never drops a one-word answer to a pending question (B2, wired end to end); a keep-alive connection to Groq (E3, on: p50 316 → 245 ms on 6 + 6 Whisper requests); a gazetteer corrector, off (B3).
+- **No digit reaches any voice (F1):** numbers are said in words in the sentence's language after the number gate (Tamil number words model-drafted, not checked by a Tamil speaker); counts are said as numbers, codes digit by digit.
+- **Capacity honesty:** the token estimate counts the schema (A2); a strict-mode 400 gets one retry on the same model, then the next (A5); Gemini's "too many states" schema refusal falls back to plain JSON so the last rung can answer.
+- **Haiku-ready (A6):** `claude-haiku-5-5` leads when a working key is present (`JARVIS_PLANNER_LEAD=groq` puts it after Groq); thinking always disabled, effort `low` (or `medium`), no sampling fields, `max_tokens` 600; a 401/403 skips Claude for 10 minutes; Opus only by explicit env and never first; the compact plan for the Claude rung (A7, off); the deploy check and `docs/jarvis/DEPLOY_HAIKU.md`. **No live Claude call was made.**
+- **Planner prompt:** unchanged by default. The grid selected no prompt change, so the schema diet and conditional context (A1/A1b) ship behind `JARVIS_PLANNER_DIET`, off; route-then-fill (A3) is built and not wired. Metric names in code (A4) for the four metrics that can show a change.
+- **Memory (G3):** notes carry their source, time and turn; a note copied off the Stage's news or complaint text, or not said by the Collector, is refused; old notes without a source stay listed but never reach a prompt.
+- **D3:** with `NEXT_PUBLIC_JARVIS_DUCK_PAUSE=1` the duck no longer uses `pause()`/`resume()`; a backchannel after a cut resumes the answer.
+- **Measurement:** the per-stage trace (timings only, zero at the last voiced sample) in the specs and the measurement view; the statistics module; the per-turn record of every live run; the diagnosis grid; frozen `eval/dev200` and `eval/sidetalk200`.
+
+### What was cut, and why
+
+| Item | What happened | Why |
+|---|---|---|
+| E2 early speech-to-text | Built, **default off** (`NEXT_PUBLIC_JARVIS_EARLY_STT=1`) | In real run 2, two English clips that decode right whole came back as Tamil when their early upload was used; owed: a real run and the room check |
+| C5 on-device wake word | Not shipped | Installing `@livekit/wakeword@2.1.2` moved `onnxruntime-web` out of the top-level `node_modules`, which the page's `/thunai-ort/` route reads: Silero would not load. Today's browser wake stays |
+| A3 route-then-fill | Built, not wired | Grid cell G did not beat cell A |
+| A1/A1b | Built, default off | No row of the grid's reading selects them |
+| F2 Edge voice start | Moved to the room check | The Playwright-launched Edge lists no natural voice and no Tamil voice |
+| B5 wiring | Not wired | The brief says measure only; the one model that passes needs its metadata added before it loads and has a tag-only licence (the owner's decision). Not tried on Tanglish or a microphone |
+| Grid cells C and F, a same-day rerun of B | Owed | The ledger could not fit the whole grid; D and E ran on day 2 |
+
+### Environment variables (v5)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `JARVIS_GATE_COMMAND_TIER` / `NEXT_PUBLIC_JARVIS_GATE_COMMAND_TIER` | off | `1` restores v4's unengaged command tier |
+| `NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE` | off | `1`: no audio leaves the browser unless Jarvis is woken or engaged (then only "Jarvis" said inside the window is heard: keep off until an on-device wake ships) |
+| `NEXT_PUBLIC_JARVIS_VAD_CONTEXT` | on | `0` turns off Silero's 64-sample context |
+| `NEXT_PUBLIC_JARVIS_ECHO` | `true` | `all` asks for `echoCancellation: "all"` |
+| `NEXT_PUBLIC_JARVIS_EARLY_STT` | off | `1` turns on the early upload (E2) |
+| `NEXT_PUBLIC_JARVIS_FALSE_CUT_MS` | 2000 | with the duck-pause flag, how long a cut voice waits before it re-speaks (a figure not checked) |
+| `JARVIS_GAZETTEER` | off | `1` corrects place names after the decode |
+| `JARVIS_KEEPALIVE` | on | `0` uses the built-in fetch for Groq |
+| `JARVIS_PLANNER_DIET` | off | `1`: the schema diet and conditional context |
+| `JARVIS_PLANNER_LEAD` | `haiku` | `groq` puts Groq first and Haiku after it |
+| `JARVIS_CLAUDE_MODEL` | `claude-haiku-5-5` | Opus only by naming it; it then goes after the Groq ladder |
+| `JARVIS_HAIKU_EFFORT` | `low` | `medium` allowed |
+| `JARVIS_PLAN_COMPACT` | off | `1`: the compact plan on the Claude rung |
+| `JARVIS_CLAUDE_OFF` | off | `1` stops every call to Anthropic (the build's live runs used it) |
+| `JARVIS_LADDER_PIN` | unset | evaluation only: `anthropic` gives the Claude rung alone |
+
+### What each hosted service retains
+
+- **Groq:** nothing by default; logs up to 30 days; a Zero Data Retention switch in the console (B, https://console.groq.com/docs/your-data). Assumed off.
+- **Anthropic API:** prompts and outputs not retained by default for Haiku 5.5; flagged chats up to 2 years (B, https://platform.claude.com/docs/en/manage-claude/api-and-data-retention). Whether that can be turned off: not found.
+- **Edge online voices:** text and audio deleted after conversion (B, https://learn.microsoft.com/en-us/microsoft-edge/privacy-whitepaper).
+- **Gemini free tier:** used to improve Google's products (B, https://aistudio.google.com/docs/pricing).
+
+### Runs owed (each with its exact command, from `chennai-grievance-portal-main/`)
+
+1. **The deploy check** (the owner, once the Haiku key works; Claude, at most US$0.50): `HOLDOUT=deploy-haiku npx vitest run --config vitest.live.config.ts src/lib/thunai/deploy.live.ts` (see `docs/jarvis/DEPLOY_HAIKU.md`).
+2. **Pair the new-intents run with v4's** (the owner, who may look in `eval/holdout3/results/`: this build did not): `HOLDOUT=pair HOLDOUT_DIR=holdout3 PAIR_X=v5final-planner3-live30.json PAIR_Y=<v4's planner3 live30 file> npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts` (no model; counts only).
+3. **The repeats for pass^3** (20 of the live-60 by a seeded shuffle; about 173K Groq tokens): `JARVIS_CLAUDE_OFF=1 HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=rep20 HOLDOUT_TAG=v5final-r1 npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts`, then `-r2` and `-r3`, then `HOLDOUT=passk HOLDOUT_DIR=holdout2 PASSK_FILES=v5final-r1-planner-rep20.json,v5final-r2-planner-rep20.json,v5final-r3-planner-rep20.json npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts`.
+4. **The dev set** (575,600 tokens a pass: more than a free day; the runner refuses a run that cannot finish): `JARVIS_CLAUDE_OFF=1 HOLDOUT=planner2 HOLDOUT_DIR=dev200 HOLDOUT_SET=live60 HOLDOUT_TAG=v5dev npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts`.
+5. **Grid cells owed** (diagnosis; about 50K tokens each): `GRID=run GRID_RUN="openai/gpt-oss-20b:C" GRID_N=15 npx vitest run --config vitest.live.config.ts src/lib/thunai/grid.live.ts`; `GRID_RUN="qwen/qwen3.8-27b:F" GRID_N=15`; a same-day rerun of B: `GRID_RUN="openai/gpt-oss-20b:B" GRID_N=15` (copy `grid-B-openai-gpt-oss-20b.json` aside first: the run replaces its rows); then `GRID=pairs`.
+6. **A real run on the shipped defaults** (E2 off; about 15K Groq tokens and 12 Whisper requests): build `NEXT_DIST_DIR=.next-agentbuild NEXT_PUBLIC_JARVIS_SPEC=1 npx next build`, start `npx next start -H 127.0.0.1 -p 3012` with `NEXT_DIST_DIR=.next-agentbuild NEXT_PUBLIC_JARVIS_SPEC=1 JARVIS_CLAUDE_OFF=1 JARVIS_PLANNER_LEAD=groq AI_PROVIDER=none AI_FORCE_PROVIDER=none AI_FALLBACK_PROVIDER=none AI_CHAT_PROVIDER=none` and the dry-run store settings of `playwright.config.ts`, then `SPEC_PROD=1 REAL=1 PW_CHANNEL=msedge npx playwright test tests/e2e/real.spec.ts`. Then the same with `NEXT_PUBLIC_JARVIS_EARLY_STT=1` built in, to see whether E2's language flips hold.
+7. **The five-minute real-room check** at the top of `docs/jarvis/DEMO.md`.
+
+### Monthly cost with Haiku leading (300 turns a day)
+
+About **$3.42-$4.45** (2,650 tokens in and 230 out a turn; floor and +30 % tokenizer), about $2.75-$3.57 with the compact plan (prices: B, https://platform.claude.com/docs/en/about-claude/pricing). The deploy check's own cost is capped at US$0.50 (about $0.15 expected).
+
+### Running the gates in a new worktree
+
+- Copy `data/aws-cache/qa/` (`pinned/`, `golden/`, `durable.sqlite` **and the matching `test-collector.txt`**) and `data/thunai/` from a worktree that gated; the main checkout has none of them.
+- `tests/qa/pass7/gate-fast.sh` waits on a lock folder from an earlier session (`gate-fast.sh:21`): its parent must exist and no stale `vitest-4599.lock` may be left.
+- Commit everything first: the gate checks out `tsconfig.json`, `next-env.d.ts` and evidence files.
+- `g2-cache` RC-35 can time out at 180 s under the full gate; alone it passes.
+- `tests/qa/seed-local-users.mjs` stops with `no such function: pii_enc` on a server database since START's PII commit (`f830efbd`, before v5): the encrypting triggers call a function only the app registers. The access matrix still gave the same cells as v4's gate. Not fixed here (not Jarvis).
+- Under both lanes the machine is loaded: one unit test's time bound (the B1 race) met 3,050 ms in the UTC run; its margin is now 4.5 s.
+- **The Jarvis browser specs spend Groq quota through the console's translator** unless the dev server runs with `AI_PROVIDER=none` (now set in `playwright.config.ts`, with `JARVIS_CLAUDE_OFF=1`). Nothing else may hold port 3011.
+- **Never run `npm ci` while a vitest or esbuild process is alive** (a locked `esbuild.exe` stops it after it has deleted part of `node_modules`; `npm install` from the lockfile restores it).
+
+### Known limits
+
+- **Nothing was tried with a real microphone in a real room**, again.
+- **Inside the 20 s window after an answer, request-shaped side talk still acts** (up to 29 % of look-alike lines), and level B or C needs only a spoken yes. No speaker identification.
+- **The free Groq tier cannot carry 300 planner turns a day**; under load the ladder now refuses a call it knows would pass the minute's allowance (A2), and the turn falls to flash-lite or to "can't reason right now".
+- **Whisper's race picks Tamil for some English sentences** ("Go to the trends page", on START too).
+- **Tamil number words, Tanglish metric names and the gazetteer's Tamil spellings are model-drafted**, not checked by a Tamil speaker.
+
 ## v4, "Ultimate Jarvis" (15 Nov 2026)
 
 Branch `claude/priceless-bouman-2fe7f8`, cut from `main` at `38d96d2f`. The brief is `docs/jarvis/ULTIMATE_JARVIS.md`. **Not merged and no PR: the owner decides.** Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md` (v4 section on top), the day's record is in `docs/thunai/BUILD_LOG.md`, how Jarvis speaks is in `docs/jarvis/PERSONA.md`, and the demo with its five-minute room check is in `docs/jarvis/DEMO.md`.

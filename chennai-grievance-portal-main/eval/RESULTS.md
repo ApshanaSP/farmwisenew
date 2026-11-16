@@ -1,6 +1,6 @@
 # Jarvis mode: results
 
-## v5 (15-16 Nov 2026)
+## v5 (15-17 Nov 2026)
 
 Measured on this Windows laptop, branch `claude/jarvis-v5-build-dfece7`, START `f830efbd` (`origin/main`: the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. "Base" means START itself, run in a detached worktree with no v5 code. Raw files: `eval/holdout/results/grid-*.json`, `eval/holdout*/results/v5*`, `tests/e2e/results/`. Every interval is a 95 % Wilson interval. A grid or live run that met any 429 is a capacity failure: its clean-turn score (429 rows left out) is printed beside its all-turn score (429 rows counted wrong), and a strict-mode 400 with no usable draft, a 5xx or a timeout is its own outcome, not a wrong answer (grid files rescored so after review). Every paired comparison is an exact two-sided McNemar on the same sentences (b = right only in the first, c = right only in the second). The older sections below are unchanged.
 
