@@ -433,7 +433,8 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   for (const m of text.matchAll(MULT_EN)) { const v = MULT_WORDS.find(([re]) => re.test(m[0]))?.[1]; if (v) mults.push(v); }
   for (const [re, v] of MULT_TA) if (re.test(text)) mults.push(v);
   for (const k of mults) {
-    const ok = cited.some((c) => c.ratios.some((r) => (r >= k * 0.85 && r <= k * 1.18) || (r > 0 && 1 / r >= k * 0.85 && 1 / r <= k * 1.18)));
+    // within a tenth of the multiple: 1.7 is not "nearly twice" (the round-2 Haiku dev run's grounding judge, 17 Nov; was 0.85-1.18)
+    const ok = cited.some((c) => c.ratios.some((r) => (r >= k * 0.9 && r <= k * 1.12) || (r > 0 && 1 / r >= k * 0.9 && 1 / r <= k * 1.12)));
     if (!ok) p("multiplier", `"${k === 0.5 ? "half" : `${k} times`}" matches no ratio in the cited facts`);
   }
 

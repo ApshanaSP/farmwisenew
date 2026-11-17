@@ -132,7 +132,7 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
         add({ src: "dashboard", text: `${m.label}: ${vals.map((s) => `${s.l} ${fmt(s.v)}`).join(", ")}`, ratios: r ? [r] : [] });
       }
       for (const d of b.diffs.slice(0, 2)) add({ src: "dashboard", text: `The biggest gap is in ${d.label.toLowerCase()}: ${d.hi} is ${fmt(d.gap)} higher than ${d.lo}${d.ratio ? ` (${fmt(d.ratio)} times)` : ""}`, rank: true, ratios: d.ratio ? [d.ratio] : [] });
-      for (const s of b.sides) if (s.cats.length) add({ src: "dashboard", text: `${s.label}'s commonest kinds: ${s.cats.slice(0, 2).map((c) => `${c.label} ${fmt(c.n)}`).join(", ")}`, rank: true });
+      for (const s of b.sides) if (s.cats.length) add({ src: "dashboard", text: `${s.label}'s commonest kinds: ${[...s.cats].sort((a, c) => c.n - a.n).slice(0, 2).map((c) => `${c.label} ${fmt(c.n)}`).join(", ")}`, rank: true });
       return;
     }
     case "Trend": {

@@ -205,3 +205,13 @@ describe("v7 (the tuned Haiku dev run, 17 Nov): two measures side by side howeve
     expect(checkSentence("Teynampet reported 141, the highest of the 10 zones compared, with 11 severe and 108 open. [F9]", s).problems).toEqual([]);
   });
 });
+
+describe("v7 (the round-2 Haiku dev run's grounding judge, 17 Nov): 'almost twice' is no word for 1.7", () => {
+  const s = (r: number): Sheet7 => ({ ...sheet(), facts: [{ id: "F1", src: "dashboard", text: "Teynampet against Adyar: 53 against 31", ratios: [r] }] });
+  it("a multiple within a tenth of the ratio code computed; 1.7 is not 'nearly twice', 1.9 is", () => {
+    fails2(s(53 / 31), "Teynampet's score is almost twice Adyar's. [F1]", "multiplier");
+    fails2(s(53 / 31), "தேனாம்பேட்டையின் மதிப்பெண் அடையாறைவிட கிட்டத்தட்ட இரு மடங்கு அதிகம். [F1]", "multiplier");
+    expect(checkSentence("Teynampet's score is nearly twice Adyar's. [F1]", s(1.9)).problems.map((p) => p.kind)).not.toContain("multiplier");
+  });
+});
+function fails2(sh: Sheet7, line: string, kind: string) { expect(checkSentence(line, sh).problems.map((p) => p.kind), line).toContain(kind); }

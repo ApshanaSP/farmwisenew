@@ -101,3 +101,12 @@ describe("v7 (the tuned Haiku dev run, 17 Nov): a period pair says its direction
     expect(s.facts.find((f) => /^Flooding/.test(f.text))?.text).toBe("Flooding & waterlogging in Teynampet: 8 in the last 7 days, 21 the 7 days before; down 13 (A count of reports)");
   });
 });
+
+describe("v7 (the round-2 Haiku dev run, 17 Nov): a side's commonest kinds, most first", () => {
+  it("'Traffic 3, Flooding 10' is said 'Flooding 10, Traffic 3' (the model read the first as the commonest)", () => {
+    const s = buildSheet(doc([{ kind: "Compare", id: "c", title: "Adyar vs Anna Nagar", metrics: [{ key: "open", label: "Open" }],
+      sides: [{ key: "8", label: "Anna Nagar", zone: 8, values: { open: 90 }, cats: [{ code: "TRAFFIC", label: "Traffic obstruction & parking", n: 3 }, { code: "FLOOD_WATERLOGGING", label: "Flooding & waterlogging", n: 10 }], series: [] },
+        { key: "13", label: "Adyar", zone: 13, values: { open: 88 }, cats: [], series: [] }], seriesLabels: [], diffs: [] }]), "en", gaz, NOW);
+    expect(s.facts.find((f) => /commonest/.test(f.text))?.text).toBe("Anna Nagar's commonest kinds: Flooding & waterlogging 10, Traffic obstruction & parking 3");
+  });
+});

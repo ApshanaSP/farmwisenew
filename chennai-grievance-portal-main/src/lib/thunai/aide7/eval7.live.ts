@@ -197,8 +197,10 @@ it.runIf(MODE === "run")("run: v7 and v6 answers, live on the free ladder", asyn
   // out of the comparison); V6_FROM=<tag>: v6's answers taken from an earlier run of the same set (v6 does not change)
   const v6mode = process.env.V6 ?? "all";
   const earlier = process.env.V6_FROM ? new Map((JSON.parse(fs.readFileSync(path.join(DIR, "results", `${process.env.V6_FROM}.json`), "utf8")) as { rows: Row[] }).rows.map((r) => [r.id, r.v6])) : null;
+  // V7_FROM=<tag>: v7's answers taken from an earlier run (only v6 is answered live: a judge needs v6's every answer)
+  const earlier7 = process.env.V7_FROM ? new Map((JSON.parse(fs.readFileSync(path.join(DIR, "results", `${process.env.V7_FROM}.json`), "utf8")) as { rows: Row[] }).rows.map((r) => [r.id, r.v7])) : null;
   for (const it of list) {
-    const v7 = await answer(c, it, "v7", false);
+    const v7 = earlier7?.get(it.id) ?? await answer(c, it, "v7", false);
     let v6 = earlier?.get(it.id) ?? null;
     if (!v6) {
       v6 = await answer(c, it, "v6", v6mode === "code");
@@ -207,7 +209,7 @@ it.runIf(MODE === "run")("run: v7 and v6 answers, live on the free ladder", asyn
     rows.push({ id: it.id, kind: it.kind, lang: it.lang, text: it.text, before: it.before, v7, v6, at: new Date().toISOString() });
     save(rows);
     console.log(`[aide7] ${it.id} v7 ${v7.by ?? "-"} ${v7.model ?? "-"} hops ${v7.hops.join(">") || "-"} first ${v7.firstMs ?? "-"} ms, ${v7.said.length} sentences, ${v7.rejected.length} rejected${v7.gap ? `, gap "${v7.gap}" ${v7.gapStatus}` : ""}${v7.error ? ` ERROR ${v7.error}` : ""} | v6 ${v6.said.length} lines`);
-    if (v7.calls + v6.calls > 0) await sleep(GAP);
+    if ((earlier7 ? 0 : v7.calls) + v6.calls > 0) await sleep(GAP);
   }
   expect(rows.length).toBeGreaterThan(0);
 });
