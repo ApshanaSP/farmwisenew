@@ -475,10 +475,13 @@ export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonRes
  * request that was sent but never answered (aborted, timed out: it may still be billed) is counted at its worst case. The independent
  * check, 17 Nov, found both uncounted.
  */
-async function billed<R>(model: string, body: { max_tokens: number }, send: () => Promise<R>): Promise<R> {
+async function billed<R>(model: string, body: { max_tokens: number }, send: (c: Anthropic) => Promise<R>): Promise<R> {
+  // the client (and its ceiling check) first, then this call's margin: held before the check, its own margin closed the ceiling at
+  // $4.50, and every call between $4.50 and $4.75 threw instead of going out or going to Groq. Nothing was sent, so nothing to count.
+  const c = client();
   beginClaude();
   try {
-    return await send();
+    return await send(c);
   } catch (e) {
     if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError") recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
     throw e;
@@ -504,7 +507,7 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: a.name, model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: !!plan, warm: false }, r);
     try {
       const body = requestBody(a, model, sch, useFormat ? "format" : "json", prompt);
-      res = await billed(model, body, () => client().beta.messages.create(body, { timeout, signal: a.abortSignal }));
+      res = await billed(model, body, (c) => c.beta.messages.create(body, { timeout, signal: a.abortSignal }));
     } catch (e) {
       if (a.abortSignal?.aborted) { ev("aborted"); throw e; }
       const schemaRefused = useFormat && e instanceof Anthropic.BadRequestError && !/credit balance/i.test(e.message) && /schema|output_config|format|compil/i.test(e.message);
@@ -610,7 +613,7 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
     const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: "warm", model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: sent !== w.schema, warm: true }, r);
     try {
       const body = requestBody({ system: w.system }, model, sch, mode, "warm", maxTokens);
-      const res = await billed(model, body, () => client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 })).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
+      const res = await billed(model, body, (c) => c.beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 })).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
       ev("ok", res);
       keyWorks("anthropic");
       recordClaude(res.model || model, res.usage);

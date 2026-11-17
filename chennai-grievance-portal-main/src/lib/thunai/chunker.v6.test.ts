@@ -22,6 +22,25 @@ describe("v6: a Tamil answer starts with a short chunk", () => {
     expect(chunks(EN, { lang: "en" })).toEqual(chunks(EN));
     expect(chunks(TA)[0].length).toBeGreaterThan(FIRST_MAX_TA);
   });
+  it("the first Tamil chunk is never cut inside a number written with commas", () => {
+    // each has a digit-group comma at or before character 48, so a cut at the last comma would split the number
+    const cases = [
+      "அடையாறு பகுதியில் இந்த வாரம் 1,234 புகார்கள் பதிவாகியுள்ளன.",
+      "சுகாதாரச் சேவைகள் பற்றி, அடையாறில் 1,234 புகார்கள் பதிவாகியுள்ளன.",
+      "சென்னை முழுவதும் இந்த ஆண்டு 1,23,456 புகார்கள் பதிவாகியுள்ளன.",
+    ];
+    for (const s of cases) {
+      const c = chunks(s, { lang: "ta" });
+      expect(c.length).toBeGreaterThan(1);
+      expect(c[0].length).toBeLessThanOrEqual(FIRST_MAX_TA);
+      for (let i = 0; i + 1 < c.length; i++) {
+        expect(/\d,?$/.test(c[i]) && /^,?\d/.test(c[i + 1]), `${c[i]} | ${c[i + 1]}`).toBe(false);
+      }
+      expect(c.join(" ")).toBe(s);
+    }
+    // a real comma before the number still wins over a space
+    expect(chunks(cases[1], { lang: "ta" })[0]).toBe("சுகாதாரச் சேவைகள் பற்றி,");
+  });
   it("a short Tamil answer stays whole", () => {
     expect(chunks("ராயபுரம் இப்போது அமைதியாக இருக்கிறது.", { lang: "ta" })).toEqual(["ராயபுரம் இப்போது அமைதியாக இருக்கிறது."]);
   });

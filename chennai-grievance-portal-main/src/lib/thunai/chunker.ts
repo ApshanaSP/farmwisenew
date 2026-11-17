@@ -20,11 +20,15 @@ const firstMaxTa = (): number => {
   const n = v == null || v.trim() === "" ? FIRST_MAX_TA : Number(v);
   return Number.isFinite(n) && n >= 0 ? n : FIRST_MAX_TA;
 };
-/** the first chunk cut short at a comma, else a space, at most max characters and at least MIN_FIRST */
+/**
+ * the first chunk cut short at a comma, else a space, at most max characters and at least MIN_FIRST. Not at a comma between two
+ * digits: "1,234" cut there is spoken by the number gate as 1 and 234.
+ */
 function shortFirst(c: string[], max: number): string[] {
   if (!max || !c.length || c[0].length <= max) return c;
-  const head = c[0].slice(0, max + 1);
+  const s = c[0], head = s.slice(0, max + 1);
   let cut = head.lastIndexOf(",");
+  while (cut >= MIN_FIRST && /\d/.test(s[cut - 1] ?? "") && /\d/.test(s[cut + 1] ?? "")) cut = head.lastIndexOf(",", cut - 1);
   if (cut < MIN_FIRST) cut = head.lastIndexOf(" ");
   if (cut < MIN_FIRST) return c;
   const a = c[0].slice(0, cut + (c[0][cut] === "," ? 1 : 0)).trim(), b = c[0].slice(cut + 1).trim();
