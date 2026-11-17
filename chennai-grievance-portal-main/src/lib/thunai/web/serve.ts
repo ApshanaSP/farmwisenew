@@ -16,11 +16,14 @@ import { type WebDeps, listOf, tele } from "./fetch";
 import { type LookupAnswer, webLookup } from "./lookup";
 import { type ArticleRead, readArticle } from "./read";
 import { type NewsItemInput, relatedCoverage } from "./related";
+import { coverageLine, type NewsAide } from "../aide7/news";
 
+/** v7: the sentence the Collector said and its language, so the aide answers the question asked (aide7/news.ts); never sent anywhere */
+const Ask = z.object({ q: z.string().trim().min(1).max(400), lang: z.enum(["en", "ta"]) }).strict();
 export const NewsBody = z.union([
-  z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/) }).strict(),
+  z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
   // v6: an incident on Jarvis's screen: its own newest news report (from a news medium) is read; none, and the answer says so
-  z.object({ incident: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/) }).strict(),
+  z.object({ incident: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
   z.object({ question: z.string().trim().min(2).max(500) }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
@@ -44,6 +47,8 @@ export interface ServeDeps extends WebDeps, CompareOptions {
   incidentDoc?: (incident: string) => Promise<string | null>;
   /** look for other outlets' coverage too (default true) */
   related?: boolean;
+  /** v7: the aide writes the spoken brief from the article (aide7/news.ts); absent, the code brief (v6) is said */
+  aide?: NewsAide;
 }
 
 const STORED_MIN = 200;
@@ -55,11 +60,12 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   const t0 = performance.now();
   const ms = () => Math.round(performance.now() - t0);
   let body: Exclude<NewsBodyT, { incident: string }>;
+  const ask = "ask" in asked ? asked.ask ?? null : null;
   if ("incident" in asked) {
     let id: string | null = null;
     try { id = d.incidentDoc ? await d.incidentDoc(asked.incident) : null; } catch { yield { type: "error", why: "failed" }; return; }
     if (!id) { yield { type: "error", why: "no_news" }; return; }
-    body = { id };
+    body = { id, ...(ask ? { ask } : {}) };
   } else body = asked;
   if ("question" in body) {
     yield { type: "first", en: "Looking that up on the web...", ta: "இணையத்தில் தேடுகிறேன்..." };
@@ -97,7 +103,17 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   const pText = primary.status === "ok" || primary.status === "stored" ? primary.text : "";
   const first = await compareCoverage(pText ? [asSource({ outlet: pOutlet, outletTa: pOutletTa, url: primary.url, title: pTitle, publishedAt: pWhen, text: pText })] : [], { ...d, model: false });
   const pBrief = { outlet: pOutlet, outletTa: pOutletTa, url: primary.url || doc.url || "", title: pTitle, publishedAt: pWhen, status: primary.status };
-  yield { type: "brief", stage: "article", status: primary.status, brief: briefFromCoverage({ primary: pBrief, comparison: first }, d), ms: ms() };
+  const codeBrief = briefFromCoverage({ primary: pBrief, comparison: first }, d);
+  // v7: the aide writes the brief in the asked language from the article's own sentences, each sentence sent as it passes its check; the other
+  // language keeps the code brief (shown, not said)
+  let aideLines: string[] | null = null;
+  if (d.aide && ask) {
+    for await (const lines of d.aide({ question: ask.q, lang: ask.lang, outlet: pOutlet, outletTa: pOutletTa, title: pTitle, publishedAt: pWhen, text: pText, fallback: codeBrief[ask.lang].join(" ") })) {
+      aideLines = lines;
+      yield { type: "brief", stage: "article", status: primary.status, brief: { ...codeBrief, [ask.lang]: lines }, ms: ms() };
+    }
+  }
+  if (!aideLines) yield { type: "brief", stage: "article", status: primary.status, brief: codeBrief, ms: ms() };
 
   if (relP) {
     const rel = await relP;
@@ -107,7 +123,10 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
       const sources = [...(pText ? [asSource({ outlet: pOutlet, outletTa: pOutletTa, url: primary.url, title: pTitle, publishedAt: pWhen, text: pText })] : []),
         ...rel.items.map((x) => asSource(x))];
       const cmp = await compareCoverage(sources, d);
-      yield { type: "brief", stage: "coverage", status: primary.status, brief: briefFromCoverage({ primary: pBrief, related: rel.items, comparison: cmp }, d), ms: ms() };
+      const cov = briefFromCoverage({ primary: pBrief, related: rel.items, comparison: cmp }, d);
+      // v7: after the aide's answer, one line names the other outlets (their links are on the screen); nothing said twice
+      const line = aideLines && ask ? coverageLine(rel.items.map((x) => ({ outlet: x.outlet, outletTa: x.outletTa ?? null })), ask.lang) : null;
+      yield { type: "brief", stage: "coverage", status: primary.status, brief: aideLines && ask ? { ...cov, [ask.lang]: [...aideLines, ...(line ? [line] : [])] } : cov, ms: ms() };
     }
   }
   tele(d, "web_news", { ms: ms(), why: primary.status, count: 0 });

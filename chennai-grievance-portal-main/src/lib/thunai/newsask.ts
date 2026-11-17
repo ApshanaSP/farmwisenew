@@ -59,6 +59,19 @@ const READ_TG = [
   /\b(?:news|paper|papers|article|report)\s*(?:la|le|il)\s*enna\s*(?:solr|solraanga|sollirukaanga|potrukaanga|pottirukanga|vandhirukku|irukku)\b/,
   /\bmatha (?:papers|paper|news|channels)\b/
 ];
+/**
+ * v7: "tell me about this news", "what is this story about", "explain that article": a request to be told about ONE report on the screen (the one
+ * in focus, the one named by its place or outlet, else the first), said with "this/that" or an ordinal. "Tell me about the news" in general is
+ * not this lane's: the news screen answers it, and the aide summarises it.
+ */
+const TELL_EN = [
+  new RegExp(`${LEAD}(?:tell me|tell us|talk me through|brief me|fill me in)(?: (?:more|a bit|briefly))? (?:about|on) (?:this|that|the (?:first|second|third|fourth|fifth|last|top)) ?(?:news|story|article|report|headline|item|piece)\\b`),
+  new RegExp(`${LEAD}(?:explain|summari[sz]e|sum up)(?: me)? (?:this|that|the (?:first|second|third|fourth|fifth|last|top)) ?(?:news|story|article|report|headline|item|piece)\\b`),
+  /\bwhat(?:'s| is| was) (?:this|that) (?:news|story|article|report|headline|piece)(?: (?:item|report))? (?:about|saying)\b/,
+  /\bwhat (?:is|does) (?:this|that) (?:news|story|article|report) (?:say|mean)\b/
+];
+const TELL_TA = [/(?:இந்த|இந்தச்|அந்த|அந்தச்)\s*(?:செய்தி|சேதி|கட்டுரை|ரிப்போர்ட்)(?:யை|யைப்|யின்)?\s*(?:பற்றி|பத்தி)?\s*(?:சொல்|விளக்கு|சுருக்கமா)/u];
+const TELL_TG = [/\b(?:indha|andha|intha|antha)\s+(?:news|story|article|report|seithi)\s*(?:a\s*|ah\s*)?(?:pathi|patthi|paththi)?\s*(?:sollu|sollunga|explain pannu|enna)\b/];
 const NEWSY = /\b(?:article|news report|news item|coverage|papers|newspapers?|press|outlets?|hindu|times of india|dt ?next|indian express|dinamani|dinamalar|thanthi)\b/;
 const ORD: [RegExp, number][] = [
   [/\b(?:first|1st|mudhal)\b|முதல்/u, 1], [/\b(?:second|2nd|rendavathu|rendaavadhu)\b|இரண்டாவது|ரெண்டாவது/u, 2], [/\b(?:third|3rd|moonavathu|moonaavadhu)\b|மூன்றாவது/u, 3],
@@ -104,9 +117,19 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
 export function newsAsk(raw: string, on: NewsOnScreen = {}): NewsAskT | null {
   const t = norm(raw);
   if (!t || t.length > 300) return null;
-  // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov)
-  if (NEGATED.test(t) || NEGATED.test(raw) || MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) return null;
+  // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov); "brief me on this news" names one report (v7)
+  const thisReport = TELL_EN.some((re) => re.test(t)) && /\b(?:this|that)\b/.test(t);
+  if (NEGATED.test(t) || NEGATED.test(raw) || ((MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) && !thisReport)) return null;
   const reads = !OWN_REPORT.test(t) && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
+  // v7: "tell me about this news" is a read of the report on the screen, when there is one (else the news screen and its summary answer it)
+  const tells = !reads && !OWN_REPORT.test(t) && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
+  if (tells) {
+    const item = pickItem(t, on);
+    if (item && "id" in item) return { kind: "read", body: item };
+    if (item) return { kind: "which", ...item };
+    if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident } };
+    return null;
+  }
   if (reads) {
     const item = pickItem(t, on);
     if (item && "id" in item) return { kind: "read", body: item };

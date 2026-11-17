@@ -1323,7 +1323,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     };
     const url = `${(hostRef.current.agentUrl ?? "/api/collector/thunai/agent").replace(/\/agent$/, "")}/news`;
     try {
-      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(na.body), signal });
+      // v7: a read carries the sentence said and its language, so the server's aide answers what was asked (a web question is its own sentence)
+      const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang } } : na.body;
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sent), signal });
       if (!alive()) return;
       if (!res.ok || !res.body) st.fail = "failed";
       else await readNdjson(res.body, (e) => {

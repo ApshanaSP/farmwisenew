@@ -3,6 +3,9 @@ import { newsDoc } from "@/lib/collector/intel";
 import { localOnly } from "@/lib/thunai/devguard";
 import { incidentNewsDoc } from "@/lib/thunai/newsdoc";
 import { NewsBody, ndjson, newsEvents, type StoredDoc } from "@/lib/thunai/web/serve";
+import { aideReady, answerStyle } from "@/lib/thunai/aide7";
+import { newsAide } from "@/lib/thunai/aide7/news";
+import { serverWorld } from "@/lib/thunai/world";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,5 +16,7 @@ export async function POST(req: NextRequest) {
   if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const parsed = NewsBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Send { id }, { incident } or { question }." }, { status: 400 });
-  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: "dev" }));
+  // v7: the aide writes the spoken brief from the article (JARVIS_ANSWER=v6, or no model configured: the code brief, as v6)
+  const aide = answerStyle() === "v7" && aideReady() ? newsAide(await serverWorld(), { user: "dev", signal: req.signal }) : undefined;
+  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: "dev", aide }));
 }
