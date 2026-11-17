@@ -9,6 +9,27 @@ const END = /[.!?।॥\n]/;
 const MIN_FIRST = 20;
 const COMMA_ABOVE = 120;
 const HARD_MAX = 220;
+/**
+ * v6: a Tamil answer's first chunk, at most this many characters (cut at a comma, else a space): Edge's online Tamil voice takes longer
+ * to start the longer the utterance (eval/v6/latency/voiceprobe.json: 33 characters 0.8 s, 109 characters 2.2 s, 236 characters about 3 s;
+ * English about 0.2-0.3 s at any length), so the first words go first. NEXT_PUBLIC_JARVIS_TA_FIRST_CHUNK=0 turns it off.
+ */
+export const FIRST_MAX_TA = 48;
+const firstMaxTa = (): number => {
+  const v = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_JARVIS_TA_FIRST_CHUNK : undefined;
+  const n = v == null || v.trim() === "" ? FIRST_MAX_TA : Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : FIRST_MAX_TA;
+};
+/** the first chunk cut short at a comma, else a space, at most max characters and at least MIN_FIRST */
+function shortFirst(c: string[], max: number): string[] {
+  if (!max || !c.length || c[0].length <= max) return c;
+  const head = c[0].slice(0, max + 1);
+  let cut = head.lastIndexOf(",");
+  if (cut < MIN_FIRST) cut = head.lastIndexOf(" ");
+  if (cut < MIN_FIRST) return c;
+  const a = c[0].slice(0, cut + (c[0][cut] === "," ? 1 : 0)).trim(), b = c[0].slice(cut + 1).trim();
+  return b ? [a, b, ...c.slice(1)] : c;
+}
 
 /** a clause with no comma still has to fit one utterance: cut at the last space before the limit (or at the limit, in a word with none) */
 function hardCap(s: string): string[] {
@@ -50,7 +71,11 @@ function splitLong(s: string): string[] {
   return out;
 }
 
-export function chunks(text: string): string[] {
+export function chunks(text: string, o: { lang?: "ta" | "en" } = {}): string[] {
+  const c = chunksOf(text);
+  return o.lang === "ta" ? shortFirst(c, firstMaxTa()) : c;
+}
+function chunksOf(text: string): string[] {
   const t = text.replace(/[ \t]+/g, " ").trim();
   if (!t) return [];
   const sentences: string[] = [];

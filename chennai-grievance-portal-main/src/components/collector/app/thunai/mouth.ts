@@ -210,8 +210,9 @@ export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "brows
   return v && v.lang.toLowerCase().startsWith(lang) ? { name: v.name, how: "browser" } : { name: null, how: "none" };
 }
 
-function pieces(lines: string[]): Raw[] {
-  return lines.flatMap((raw, line) => chunks(raw).map((text, k) => ({ text, line, first: k === 0 })));
+function pieces(lines: string[], l: "ta" | "en" = "en"): Raw[] {
+  // v6: a Tamil answer's first chunk is short (chunker.ts FIRST_MAX_TA): only the answer's first line
+  return lines.flatMap((raw, line) => chunks(raw, { lang: line === 0 ? l : "en" }).map((text, k) => ({ text, line, first: k === 0 })));
 }
 
 /**
@@ -476,7 +477,7 @@ async function run(s: Speech, my: number) {
 export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): boolean {
   stopVoice();
   bookmark = null;
-  const list = pieces(lines);
+  const list = pieces(lines, short(lang));
   if (!list.length) { o.onEnd?.(); return false; }
   // the trace: the turn's first sentence is handed to speak (the first stamp of a turn wins, so later sentences leave it)
   stamp("speakCalled");
