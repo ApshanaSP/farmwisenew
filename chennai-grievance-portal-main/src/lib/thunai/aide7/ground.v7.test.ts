@@ -129,3 +129,16 @@ describe("v7 (the dev run, 17 Nov): what a figure dump is not, and what a name i
     expect(checkSentence("A wall collapsed on 4Th Main Road in Madipakkam, and 2 citizens have complained. [F1]", e).problems).toEqual([]);
   });
 });
+
+describe("v7 (the dev run, 17 Nov): one report is one source", () => {
+  const art: Sheet7 = { lang: "ta", gaz, shown: [], facts: [
+    { id: "F1", src: "The Hindu", text: "The Hindu reported this afternoon: Charges in one POCSO Act case against Veeramani to be framed on November 20" },
+    { id: "F2", src: "The Hindu", text: "The Hindu wrote: The Special Court furnished copies of a 720-page charge sheet to Gem Granites owner R. Veeramani" },
+    { id: "F3", src: "dashboard", text: "Severe cases in Adyar: 31" }] };
+  it("a figure of the same report, cited by another of its sentences, is the report's", () => {
+    expect(checkSentence("தி இந்து செய்தியின்படி Veeramaniக்கு எதிரான POCSO வழக்கில் 720 பக்கக் குற்றப்பத்திரிகை வழங்கப்பட்டது. [F1]", art).problems).toEqual([]);
+  });
+  it("never a figure of the dashboard's by citing a report", () => {
+    expect(checkSentence("தி இந்து செய்தியின்படி அடையாறில் 31 கடுமையான வழக்குகள் உள்ளன. [F1]", art).problems.map((p) => p.kind)).toEqual(expect.arrayContaining(["misbound"]));
+  });
+});

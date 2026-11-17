@@ -24,10 +24,13 @@ export interface ArticleAsk {
 }
 export type NewsAide = (a: ArticleAsk) => AsyncGenerator<string[]>;
 
-/** A minimal screen for the article: its facts come from the extras (facts.ts), the screen note says the links are on screen. */
+/**
+ * A minimal screen for the article: its facts come from the extras (facts.ts) alone. No block and no window (the dev run, 17 Nov: a note that the
+ * links are on the screen, and the news screen's "last 24 hours", came back as filler sentences); the writer's screen note says it once.
+ */
 const articleDoc = (a: ArticleAsk): StageDocT => ({
-  v: 1, id: `aide-news-${Date.now().toString(36)}`, recipe: "news", title: a.outlet ? `${a.outlet}'s report` : "The news report", takeaway: null, say: { en: a.fallback, ta: a.fallback },
-  blocks: [{ kind: "Note", id: "src", text: "The report's link and the other outlets' links are on the screen." }],
+  v: 1, id: `aide-news-${Date.now().toString(36)}`, recipe: "answer", title: a.outlet ? `${a.outlet}'s report` : "The news report", takeaway: null, say: { en: a.fallback, ta: a.fallback },
+  blocks: [],
   scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: {}, sources: [], asOf: null, notes: [], lang: a.lang
 });
 

@@ -269,7 +269,10 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const prep = prepared(sheet);
   const bad = cites.filter((c) => !prep.has(c));
   if (bad.length) p("cite", `unknown fact ${bad.join(", ")}`);
-  const cited = cites.map((c) => prep.get(c)).filter((x): x is Prepared => !!x);
+  // one report is one source: citing one of an outlet's sentences cites that report's others (never the dashboard's facts: those stay bound)
+  const direct = cites.map((c) => prep.get(c)).filter((x): x is Prepared => !!x);
+  const outlets = new Set(direct.map((c) => c.f.src).filter((s) => s !== "dashboard"));
+  const cited = [...direct, ...[...prep.values()].filter((x) => !direct.includes(x) && outlets.has(x.f.src))];
   const others = [...prep.values()].filter((x) => !cites.includes(x.f.id));
   const lang = sheet.lang;
 
@@ -302,7 +305,8 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   for (const m of tokens) {
     const at = m.index ?? 0;
     if (spans.some(([a, b]) => at >= a && at < b)) continue;
-    const raw = m[0].replace(/[.'’-]+$/u, "").replace(/['’]s$/u, "");
+    // a Latin name with a Tamil case ending ("Veeramaniக்கு") is the name
+    const raw = m[0].replace(/[஀-௿].*$/u, "").replace(/[.'’-]+$/u, "").replace(/['’]s$/u, "");
     const w = raw.toLowerCase();
     if (!w || PLAIN_CAPS.has(w) || WEEKDAYS.includes(w) || MONTHS.includes(w)) continue;
     const first = text.slice(0, at).trim() === "" || /[.!?:"“]\s*$/.test(text.slice(0, at));
