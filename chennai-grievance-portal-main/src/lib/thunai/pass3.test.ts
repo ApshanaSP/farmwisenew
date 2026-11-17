@@ -85,7 +85,9 @@ describe("a closed case is told as closed (BUG-031)", () => {
   });
   it("a reopened case is told as open", async () => {
     const b = await buildScreen("case", { ...emptySlots(), id: "INC-7" }, scope, world, detail("Open", 1), "explain INC-7");
-    expect(b.doc.say.en).toMatch(/^There's /);
+    // v6 (Phase 3, brief6.ts): an open case is briefed (headline first, an offer of more), never told as closed
+    expect(b.doc.say.en).not.toMatch(/^There was |marked resolved/);
+    expect(b.doc.say.en).toMatch(/Want the details\?$/);
   });
 });
 

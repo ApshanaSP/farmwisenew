@@ -48,7 +48,9 @@ describe("explaining one issue", () => {
     const say = b.doc.say.en;
     expect(labelIn(say)).toBeNull();
     expect(say).not.toMatch(/status |handles it/);
-    expect(say).toMatch(/^There's /);
+    // v6 (Phase 3, brief6.ts): an open case is briefed from its headline ("Standing water at ..."), not "There's ..."; it ends offering more
+    expect(say).not.toMatch(/^There was /);
+    expect(say).toMatch(/Want the details\?$/);
   });
 });
 

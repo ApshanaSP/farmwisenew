@@ -20,7 +20,9 @@ import { UNIT_TA, hoursBetween } from "./stagelocal";
 import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 import { conditionsTa, reasonTa } from "./reasons";
 import { stripFigures } from "./numbergate";
-import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
+import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
+import { briefIssue, roleWords, timeOf } from "./brief6";
+import { isNewsMedia } from "@/lib/collector/newsrel";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
 import { explainRecipe } from "./recipes/explain";
@@ -910,7 +912,12 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
   const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open,
     places: c.w.places });
-  const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
+  // v6 (Phase 3): briefed, not retold field by field: since when, why it matters, who has it and what is stuck, what to do (brief6.ts). The
+  // news outlet is the record's own report's publisher, only when it is a news medium; an official is said by role, never by name
+  const news = (d.reports ?? []).map((x) => ({ outlet: clip(x.publisher, 40), at: timeOf(x.t) })).find((x) => x.outlet && isNewsMedia(x.outlet)) ?? null;
+  const times = (d.reports ?? []).map((x) => timeOf(x.t)).filter((x): x is number => x != null);
+  const say = briefIssue({ ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(officials[0]?.role), officials: officials.length, news,
+    lastAt: times.length ? Math.max(...times) : null, now: Date.now() }, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   // the record's own title is English: a Tamil screen names the case by its kind in Tamil and its place
   const titleTa = [plainWhat(row.cat, row.title)?.ta ?? "சம்பவம்", placeTa ?? row.place].filter(Boolean).join(" · ");
   return { title: bi(row.title, clip(titleTa, 200)), takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
