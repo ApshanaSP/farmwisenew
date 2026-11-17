@@ -137,13 +137,18 @@ export const failLine = (why: string | undefined, lang: "en" | "ta"): string => 
 export interface NewsLink { outlet: string; title: string; url: string; publishedAt: string | null }
 
 /** The Stage document for a news answer: what was said (a Note) and every source as a link (a NewsReader list). Checked; null if it fails. */
-export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; title: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number }): StageDocT | null {
+export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outlet: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number }): StageDocT | null {
   const L = (en: string, ta: string) => (o.lang === "ta" ? ta : en);
   const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
   const said = (o.lang === "ta" ? o.ta : o.en).join(" ").trim();
   const seen = new Set<string>();
   const links = o.links.filter((x) => /^https?:\/\//.test(x.url) && x.url.length <= 2000 && !seen.has(x.url) && seen.add(x.url)).slice(0, 10);
-  const title = o.kind === "lookup" ? L("From the web", "இணையத்திலிருந்து") : clip(o.title || L("The news report", "செய்தி அறிக்கை"), 200);
+  // the title is the outlet's name, never the page's own headline: a Stage title goes back to the planner with the next sentence (the
+  // independent check, 17 Nov); the headlines stay in the sources list, as on the console's own news screens
+  const outlet = o.outlet ? clip(o.outlet, 60) : null;
+  const titles = o.kind === "lookup" ? { en: "From the web", ta: "இணையத்திலிருந்து" }
+    : { en: outlet ? `${outlet}'s report` : "The news report", ta: outlet ? `${outlet} செய்தி` : "செய்தி அறிக்கை" };
+  const title = L(titles.en, titles.ta);
   const blocks: StageDocT["blocks"] = [{ kind: "Note", id: "brief", text: clip(said || L("Nothing to read out.", "படிக்க எதுவும் இல்லை."), 400) }];
   if (links.length) blocks.push({ kind: "NewsReader", id: "sources", title: L("Sources", "ஆதாரங்கள்"), total: links.length,
     items: links.map((x, i) => ({ id: `web-${i + 1}`, title: clip(x.title || x.outlet, 300), source: clip(x.outlet, 80) || null, t: x.publishedAt ? x.publishedAt.slice(0, 30) : null, place: null, incidentId: null, url: x.url })) });
@@ -153,7 +158,7 @@ export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; titl
     scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { web: true },
     sources: [...new Set(links.map((x) => clip(x.outlet, 80)))].slice(0, 10), asOf: null,
     notes: [L("From the web: read just now, nothing kept. Quotes are the outlets' own.", "இணையத்திலிருந்து: இப்போது படித்தது, எதுவும் சேமிக்கப்படவில்லை. மேற்கோள்கள் அந்தந்த ஊடகங்களுடையவை.")],
-    lang: o.lang, titles: { en: o.kind === "lookup" ? "From the web" : clip(o.title || "The news report", 200), ta: o.kind === "lookup" ? "இணையத்திலிருந்து" : clip(o.title || "செய்தி அறிக்கை", 200) }
+    lang: o.lang, titles
   };
   const c = checkStage(doc);
   return c.ok ? c.doc : null;

@@ -1299,14 +1299,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
     const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
     const said = new Set<string>();
-    const st = { title: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false };
+    const st = { outlet: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false };
     const sayLines = (en: string[], ta: string[]) => {
       for (const t of lang === "ta" ? ta : en) { const k = t.trim(); if (!k || said.has(k)) continue; said.add(k); q?.push(k); }
       setReply([...said].join(" "));
     };
     // the screen: put up once without stopping the voice (putStage would cut the first line), then updated in place
     const draw = () => {
-      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", title: st.title, en: st.en, ta: st.ta, links: st.links });
+      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", outlet: st.outlet, en: st.en, ta: st.ta, links: st.links });
       if (!d || !alive()) return;
       if (!st.shown) {
         st.shown = true;
@@ -1336,7 +1336,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           if ((e as { stage?: string }).stage === "coverage") jvMark("newsCoverage");
           st.en = (b.en ?? []).map(String); st.ta = (b.ta ?? []).map(String);
           st.links = (b.links ?? []).filter((x) => x && typeof x.url === "string");
-          st.title = st.links[0]?.title ?? st.title;
+          st.outlet = st.links[0]?.outlet ?? st.outlet;
           draw(); sayLines(st.en, st.ta);
         } else if (e.type === "related") {
           const items = ((e as { items?: NewsLink[] }).items ?? []).filter((x) => x && typeof x.url === "string");
