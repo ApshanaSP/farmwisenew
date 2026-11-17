@@ -82,3 +82,19 @@ describe("v7 time atoms", () => {
     expect(timeAtoms("the last 7 days").has("this-week")).toBe(true);
   });
 });
+
+describe("v7: Tamil names by their inflected forms, never by a bare stem", () => {
+  it("a place with its case endings is found; an ordinary word that shares its start is not", () => {
+    const keys = (s: string) => namesIn(s, gaz).map((h) => h.key);
+    expect(keys("அடையாளம் தெரியவில்லை")).toEqual([]);
+    expect(keys("அடையாறில் வெள்ளம்")).toEqual(["zone:13"]);
+    expect(keys("அடையாற்றில் வெள்ளம்")).toEqual(["zone:13"]);
+    expect(keys("அடையாறுக்கு அமைச்சர்")).toEqual(["zone:13"]);
+    expect(keys("மாதவரத்தில் புகார்கள்")).toEqual(["zone:3"]);
+    expect(keys("ராயபுரத்துல கழிவுநீர்")).toEqual(["zone:5"]);
+    expect(keys("தேனாம்பேட்டையில்")).toEqual(["zone:9"]);
+    expect(keys("ஆலந்தூரில் சாலை")).toEqual(["zone:12"]);
+    expect(keys("அண்ணா நகரில் சாலை")).toEqual(["zone:8"]);
+    expect(keys("மணல் லாரிகள்")).toEqual([]);
+  });
+});

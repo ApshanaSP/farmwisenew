@@ -1,4 +1,20 @@
-# Jarvis: the three-minute reel (v6), then the real-room check (v5)
+# Jarvis: the v7 answers (first), the three-minute reel (v6), then the real-room check (v5)
+
+## v7: the answers, as a top aide would give them (do the v5 room check below first)
+
+Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J). The screens are v6's; what changes is what Jarvis **says**: two to four sentences a model wrote from the screen's facts, each sentence checked by code against those facts before it is spoken; nothing the screen already lists is read out ("read them" still reads the items). With a working Claude key and Claude on, Haiku 5.5 writes the answers; otherwise Groq does (the build was measured on Groq: see `chennai-grievance-portal-main/eval/RESULTS.md`, v7). `JARVIS_ANSWER=v6` in `chennai-grievance-portal-main/.env` brings v6's answers back.
+
+| # | Say | What the owner should see and hear |
+|---|---|---|
+| 1 | "Hey Jarvis, tell me about the Adyar issue." | The case that matters most in Adyar, explained on the screen; spoken: what it is and where, since when, how serious and why, who has it and what is stuck, and one suggestion. No field names, no lists. |
+| 2 | "Show me the latest news", then "Hey Jarvis, tell me about this news." | The news list, then "Reading The Hindu's report..." and two to four sentences from the article itself, attributed ("The Hindu reports that ..."); the other outlets that covered it named in one line, their links on the screen. Not a single headline read out. |
+| 3 | "Hey Jarvis, compare everything." | Every zone side by side (the zone table and map). Spoken: the zone that needs the most attention and by how much, one or two measures, not the table. |
+| 4 | "Hey Jarvis, why is Adyar worse than Anna Nagar?" | The two zones side by side. Spoken: where the gap is and what goes with it, and plainly that the record shows what moved, not why, when no fact gives a cause. |
+| 5 | "Hey Jarvis, CM Vijay is visiting Adyar, what should I know?" | Adyar's situation on the screen and in two or three sentences; for the visit itself, the dashboard's news and then the outlets' own feeds are searched: a report found is named with its outlet and time (its link added to the screen); nothing found is said plainly: "Nothing in the dashboard or today's news mentions CM Vijay visiting." Never a guess. |
+| 6 | "Hey Jarvis, அடையாறு பிரச்சினை என்ன?" | As step 1, in spoken Tamil (model-written; not checked by a Tamil speaker). |
+| 7 | "And in Royapuram?" (within 20 s) | The same question for Royapuram, answered the same way. |
+
+If a model is busy or slow, the answer is the screen's own line (v6's words, still grounded) with no item read out; the screen is never held back for the words.
 
 ## v6: the three-minute reel (do the v5 room check below first)
 

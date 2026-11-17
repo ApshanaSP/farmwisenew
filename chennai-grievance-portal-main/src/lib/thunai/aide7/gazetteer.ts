@@ -48,10 +48,39 @@ export function gazetteer(w: Pick<World, "zones" | "depts" | "taluks" | "places"
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** a Tamil name's stem: case endings attach to it (அடையாறு -> அடையாற்றில், அடையாறில்), so the last vowel sign or two may change */
-const taStem = (s: string) => (s.length >= 5 ? s.replace(/[ா-ௌ்]?[஀-௿]?[ா-ௌ்]$/u, "") : s);
+/**
+ * A Tamil name's spoken forms: the name with the case endings Tamil puts on a place (in, from, to, of, by; and the spoken -la, -ku), built from how
+ * the name ends (அடையாறு -> அடையாறில், அடையாற்றில், அடையாறுக்கு; மாதவரம் -> மாதவரத்தில்; தேனாம்பேட்டை -> தேனாம்பேட்டையில்; ஆலந்தூர் ->
+ * ஆலந்தூரில்). A word is a name only when it is one of these whole (an emphatic or "and" particle may follow): a bare stem would take ordinary
+ * words that start the same way (அடையாளம், "identity", is not Adyar: the dev check, 17 Nov).
+ */
+const ENDS = ["இல்", "இலிருந்து", "இலும்", "இல", "ஐ", "இன்", "ஆல்", "ஓடு", "உடன்", "இடம்", "உக்கு", "க்கு", "ல", "ல்", "லே", "உக்குள்", "உல", "உலே"];
+/** a vowel's sign after a consonant (இ -> ி) */
+const SIGN: Record<string, string> = { "இ": "ி", "ஈ": "ீ", "உ": "ு", "ஊ": "ூ", "எ": "ெ", "ஏ": "ே", "ஐ": "ை", "ஒ": "ொ", "ஓ": "ோ", "ஆ": "ா" };
+/** an ending joined to a stem that ends in a bare consonant (ர், ல், ண், ட், ன், ம் as த்த): its first vowel as a sign */
+const joinSign = (stem: string, end: string) => (/^[இஈஉஊஎஏஐஒஓஆ]/u.test(end) ? stem + SIGN[end[0]] + end.slice(1) : stem + end);
+function taForms(form: string): string[] {
+  const out = new Set<string>([form]);
+  const words = form.split(" ");
+  const last = words.pop() as string, head = words.length ? `${words.join(" ")} ` : "";
+  const add = (w: string) => out.add(head + w);
+  if (/்$/u.test(last)) {
+    // a consonant ending: ஆலந்தூர் -> ஆலந்தூரில்; ம் -> த்த (மாதவரம் -> மாதவரத்தில்)
+    const bare = last.slice(0, -1);
+    for (const e of ENDS) { add(joinSign(bare, e)); if (/ம்$/u.test(last)) add(joinSign(`${last.slice(0, -2)}த்த்`.slice(0, -1), e)); }
+  } else if (/ு$/u.test(last)) {
+    // -u: அடையாறு -> அடையாறில், and the doubled form அடையாற்றில்
+    const bare = last.slice(0, -1);
+    for (const e of ENDS) { add(joinSign(`${bare}்`.slice(0, -1), e)); add(joinSign(`${bare}்${bare.slice(-1)}`, e)); add(last + (/^[இஈஉஊஎஏஐஒஓஆ]/u.test(e) ? "" : e)); }
+    add(`${last}க்கு`);
+  } else {
+    // a vowel ending: தேனாம்பேட்டை -> தேனாம்பேட்டையில், பெருங்குடி -> பெருங்குடியில்
+    for (const e of ENDS) add(/^[இஈஉஊஎஏஐஒஓஆ]/u.test(e) ? `${last}ய${SIGN[e[0]] ?? ""}${e.slice(1)}` : last + e);
+  }
+  return [...out].filter((x) => x.length >= 3);
+}
 
-const cache = new WeakMap<Gazetteer, { re: RegExp; forms: Map<string, NameEntry>; ta: { stem: string; e: NameEntry; form: string }[] }>();
+const cache = new WeakMap<Gazetteer, { re: RegExp; forms: Map<string, NameEntry>; ta: { re: RegExp; e: NameEntry; form: string }[] }>();
 function index(g: Gazetteer) {
   let c = cache.get(g);
   if (c) return c;
@@ -59,14 +88,15 @@ function index(g: Gazetteer) {
   for (const e of g.entries) for (const f of e.en) { const k = f.toLowerCase(); const prev = forms.get(k); if (!prev || (prev.kind === "place" && e.kind !== "place")) forms.set(k, e); }
   // the longest forms first, so "Anna Nagar" is one hit, not "Anna"
   const all = [...forms.keys()].sort((a, b) => b.length - a.length).map(esc);
-  const re = new RegExp(`(?<![\\p{L}\\p{M}])(?:${all.join("|") || "(?!)"})(?![\\p{L}\\p{M}])`, "giu");
-  const ta = g.entries.flatMap((e) => e.ta.map((form) => ({ stem: taStem(form), e, form }))).filter((x) => x.stem.length >= 2).sort((a, b) => b.stem.length - a.stem.length);
+  const re = new RegExp(`(?<![\p{L}\p{M}])(?:${all.join("|") || "(?!)"})(?![\p{L}\p{M}])`, "giu");
+  const ta = g.entries.flatMap((e) => e.ta.map((form) => ({ form, e, re: new RegExp(`(?<![\p{L}\p{M}])(?:${taForms(form).sort((a, b) => b.length - a.length).map(esc).join("|")})(?:உம்|ும்|ே|ா|யும்|வும்)?(?![\p{L}\p{M}])`, "gu") })))
+    .sort((a, b) => b.form.length - a.form.length);
   c = { re, forms, ta };
   cache.set(g, c);
   return c;
 }
 
-/** Every district name in a text, in order, longest match first; English case-insensitive, Tamil by stem. */
+/** Every district name in a text, in order, longest match first; English case-insensitive, Tamil by its whole inflected forms. */
 export function namesIn(text: string, g: Gazetteer): NameHit[] {
   const { re, forms, ta } = index(g);
   const t = text.normalize("NFC");
@@ -79,16 +109,11 @@ export function namesIn(text: string, g: Gazetteer): NameHit[] {
     taken.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
   }
   for (const x of ta) {
-    let from = 0;
-    for (;;) {
-      const i = t.indexOf(x.stem, from);
-      if (i < 0) break;
-      from = i + x.stem.length;
-      // a Tamil stem starts a word
-      if (i > 0 && /[\p{L}\p{M}]/u.test(t[i - 1])) continue;
-      if (taken.some(([a, b]) => i < b && i + x.stem.length > a)) continue;
+    for (const m of t.matchAll(x.re)) {
+      const i = m.index ?? 0;
+      if (taken.some(([a, b]) => i < b && i + m[0].length > a)) continue;
       out.push({ key: x.e.key, kind: x.e.kind, at: i, form: x.form });
-      taken.push([i, i + x.stem.length]);
+      taken.push([i, i + m[0].length]);
     }
   }
   return out.sort((a, b) => a.at - b.at);
