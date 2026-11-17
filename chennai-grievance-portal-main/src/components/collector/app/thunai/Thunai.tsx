@@ -43,7 +43,9 @@ import type { Console } from "../CollectorApp";
 import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
-import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, nowSaying, pathFor, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, warmVoice, warmVoices } from "./mouth";
+import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
+import { WakeEars } from "./ears";
+import { flag } from "@/lib/thunai/flags";
 import { Conductor, type HeardLine } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
@@ -175,6 +177,8 @@ function heartbeat(): () => void {
 
 /** told when an earcon starts: it must not count as speech */
 let onEarcon: (() => void) | null = null;
+/** v6: NEXT_PUBLIC_JARVIS_GLIDE_FIRST=1: the pointer reaches a control before its step runs (v5); otherwise both at once */
+const glideFirst = () => flag("NEXT_PUBLIC_JARVIS_GLIDE_FIRST", process.env.NEXT_PUBLIC_JARVIS_GLIDE_FIRST) === "1";
 /** Earcons from the Web Audio API: no files. */
 function earcon(kind: "open" | "done" | "need" | "blocked") {
   onEarcon?.();
@@ -858,8 +862,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if ((abortMission.current || !alive()) && steps[i].a !== "stop") break;
       setChips((cs) => cs.map((c) => (c.id === ids[i] ? { ...c, state: "running" } : c)));
       try {
-        if (!quiet) await glide(steps[i]);
-        const s = await runStep(steps[i], lang, heardText);
+        // v6: the pointer glides to the control WHILE the step runs (its target is read as the glide starts), so the screen changes at
+        // once instead of 326 ms later; NEXT_PUBLIC_JARVIS_GLIDE_FIRST=1 keeps v5's order (glide, then act). The pointer looks the same
+        let s: string | null | undefined;
+        if (quiet) s = await runStep(steps[i], lang, heardText);
+        else if (glideFirst()) { await glide(steps[i]); s = await runStep(steps[i], lang, heardText); }
+        else { const g = glide(steps[i]); s = await runStep(steps[i], lang, heardText); await g; }
         if (s) said.push(s);
         setChips((cs) => cs.map((c) => (c.id === ids[i] ? { ...c, state: "done" } : c)));
       } catch (e) {
@@ -2203,6 +2211,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;
 
+  /**
+   * v6: the wake reply. "Hi Jarvis" / "Hey Jarvis" is answered with a short spoken line from memory (mouth.ts wakeReply); where none can
+   * play (not loaded yet, no audio, NEXT_PUBLIC_JARVIS_WAKE_REPLY=tone) the open tone sounds as before.
+   */
+  const sayWake = (lang: Lang) => {
+    const r = wakeReply(lang);
+    if (r) jvMark("wakeReply"); else earcon("open");
+    // the request comes next: its answer's voice is warmed now (mouth.ts prewarmVoice)
+    warmFor(lang);
+  };
+  /** v6: warm the natural voice an answer is about to use, the site's language first */
+  const warmFor = (lang: Lang) => { if (prewarmVoice([lang, lang === "ta" ? "en" : "ta"])) jvMark("prewarm"); };
   const conductorOf = () => {
     if (conductor.current) return conductor.current;
     // the trace (v5): no turn is being answered yet, so the power-on brief's voice stamps no trace the ears open
@@ -2239,7 +2259,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       },
       onEndSession: () => { setMode("off"); },
       onHold: () => { setNarrating(false); setReading(null); },
-      onNameOnly: () => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); earcon("open"); engagedNow(); },
+      onNameOnly: (o) => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); if (!o?.replied) sayWake(l); engagedNow(); },
+      // v6: "Hey Jarvis" on the device: the HUD answers in the next frame, the voice once the Collector pauses (conductor.ts wakeWord)
+      onWakeWord: () => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); jvMark("wakeWord"); engagedNow(); },
+      onWakeReply: () => sayWake(listenLangRef.current),
       rules: (t) => {
         const w = worldRef.current;
         const q = quickScreen(t, w);
@@ -2257,6 +2280,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // either way never outside the conductor's window (v5, C3: openMic's maker asks inWindow)
       onSpeechStart: (o: { engaged: boolean; fallback?: boolean }) => {
         speechEngaged.current = o.engaged;
+        // v6: a sentence to Jarvis has begun: its answer's voice is warmed while it is said
+        if (o.engaged) warmFor(listenLangRef.current);
         // Whisper is out and the conductor's own recogniser hears this speech: the live captions stand aside (one recogniser at a time)
         if (o.fallback) return;
         captions.current?.speechStart({ on: modeRef.current === "on", engaged: o.engaged, awaitingYes: !!pendingBRef.current });
@@ -2307,12 +2332,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (Date.now() - warmedAt.current < 60_000) return;
     warmedAt.current = Date.now();
     try { warmVoice(lang); } catch { /* no voice to warm */ }
+    // v6: the wake replies are the page's own files, fetched and decoded once (mouth.ts loadWakeReplies): never a speech request
+    void loadWakeReplies();
     const agent = hostRef.current.agentUrl;
     if (!agent || agent === "/api/collector/thunai/agent") fetch("/api/jarvis/warm", { method: "POST" }).catch(() => undefined);
   };
 
   /** Turn Jarvis mode on, off, or mute it. Off and muted stop the microphone's tracks: nothing listens. */
-  const setMode = useCallback((next: JarvisMode, why?: "hidden" | "boot") => {
+  const setMode = useCallback((next: JarvisMode, why?: "hidden" | "boot" | "wake") => {
     const prev = modeRef.current;
     if (prev === next) return;
     modeRef.current = next;
@@ -2327,7 +2354,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // the first time, the notice comes before the microphone: it opens when the Collector has read it
       if (!store.get("jarvis-mode-seen")) { hud.set({ firstUse: true }); return; }
       // the power-on's sound: one short synthesised tone, once a session, heard as an earcon so it cannot trigger a barge-in
-      try { if (why !== "hidden" && sessionStorage.getItem("jarvis-powered") !== "1") setTimeout(() => earcon("open"), 40); } catch { /* no storage: no tone */ }
+      // (v6: not when the name woke it: the wake reply is that sound)
+      try { if (why !== "hidden" && why !== "wake" && sessionStorage.getItem("jarvis-powered") !== "1") setTimeout(() => earcon("open"), 40); } catch { /* no storage: no tone */ }
       openMic();
     } else {
       conductor.current?.close();
@@ -2415,24 +2443,34 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   useEffect(() => {
     if (mode !== "off" || !canWake() || store.get("jarvis-mode-seen") !== "1") return;
     let stop: (() => void) | null = null, allowed = false, dead = false;
+    // v6: the on-device wake word listens beside the browser's recogniser ("Hey Jarvis"; NEXT_PUBLIC_JARVIS_KWS=all, the default)
+    let local: WakeEars | null = null;
+    const woke = (rest: string) => {
+      if (dead) return;
+      stop?.(); stop = null;
+      local?.stop(); local = null;
+      dead = true;
+      setModeRef.current("on", "wake");
+      engagedNow();
+      // the spoken reply only for the name alone; with a question in the same breath the answer is the reply
+      if (!rest) sayWake(listenLangRef.current); else earcon("open");
+      // the question said in the same breath ("Hi Jarvis, show the severe cases")
+      if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95), 60); }
+    };
     const begin = () => {
-      if (dead || !allowed || document.hidden || stop) return;
+      if (dead || !allowed || document.hidden) return;
+      void loadWakeReplies();
+      if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); woke(""); }); local = w; void w.start().then((ok) => { if (!ok && local === w) local = null; }); }
+      if (stop) return;
       stop = startWake({
-        onWake: (rest) => {
-          stop = null;
-          setModeRef.current("on");
-          engagedNow();
-          earcon("open");
-          // the question said in the same breath ("Hi Jarvis, show the severe cases")
-          if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95), 60); }
-        },
+        onWake: (rest) => { stop = null; woke(rest); },
         onFail: () => { stop = null; }
       });
     };
-    const vis = () => { if (document.hidden) { stop?.(); stop = null; } else begin(); };
+    const vis = () => { if (document.hidden) { stop?.(); stop = null; local?.stop(); local = null; } else begin(); };
     (navigator.permissions as Permissions | undefined)?.query({ name: "microphone" as PermissionName }).then((st) => { if (st.state === "granted") { allowed = true; begin(); } }).catch(() => undefined);
     document.addEventListener("visibilitychange", vis);
-    return () => { dead = true; stop?.(); document.removeEventListener("visibilitychange", vis); };
+    return () => { dead = true; stop?.(); local?.stop(); local = null; document.removeEventListener("visibilitychange", vis); };
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const click = (e: Event) => {

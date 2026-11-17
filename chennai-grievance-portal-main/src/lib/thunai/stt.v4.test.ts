@@ -133,13 +133,16 @@ describe("one prompt per language", () => {
 });
 
 describe("the forced English decode may not translate Tamil speech", () => {
+  // v6: the confidences here were hand-made with the English decode the MORE confident (-0.1 and -0.2 against -0.3), which on the Phase 0
+  // real run is the pattern of ENGLISH speech (its Tamil decode a translation); Tamil speech had the Tamil decode the more confident in every
+  // pair. The test keeps its point (Tamil speech: the English translation is refused) with the direction the real run measured (stt.v6.test.ts)
   it("a confident Tamil decode beats a fluent English one of another shape", () => {
-    const ta = scoreDecode(dec("ta", "அடையாறு புகார்களைக் காட்டுங்கள்", -0.3)), en = scoreDecode(dec("en", "Show the complaints in Adyar.", -0.1));
+    const ta = scoreDecode(dec("ta", "அடையாறு புகார்களைக் காட்டுங்கள்", -0.1)), en = scoreDecode(dec("en", "Show the complaints in Adyar.", -0.3));
     expect(translated(ta, en)).toBe(true);
-    expect(choose([dec("ta", "அடையாறு புகார்களைக் காட்டுங்கள்", -0.3), dec("en", "Show the complaints in Adyar.", -0.1)], "en")?.lang).toBe("ta");
+    expect(choose([dec("ta", "அடையாறு புகார்களைக் காட்டுங்கள்", -0.1), dec("en", "Show the complaints in Adyar.", -0.3)], "en")?.lang).toBe("ta");
     for (const [t, e] of [["அண்ணா நகர்ல தண்ணி பிரச்சனை என்ன", "What is the water problem in Anna Nagar"], ["வேளச்சேரி வெள்ளம் நிலவரம் சொல்லுங்க", "Tell me the Velachery flood situation"],
       ["பெருங்குடில எத்தனை புகார் இருக்கு", "How many complaints are there in Perungudi"], ["ஜார்விஸ் கடுமையான வழக்குகளைக் காட்டு", "Jarvis, show the severe cases"]]) {
-      expect(translated(scoreDecode(dec("ta", t, -0.3)), scoreDecode(dec("en", e, -0.2))), e).toBe(true);
+      expect(translated(scoreDecode(dec("ta", t, -0.2)), scoreDecode(dec("en", e, -0.3))), e).toBe(true);
     }
   });
   it("English letters that follow the same sounds (Tanglish) are not a translation", () => {

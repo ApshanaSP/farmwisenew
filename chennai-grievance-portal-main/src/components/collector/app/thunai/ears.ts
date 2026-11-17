@@ -18,6 +18,7 @@
  * capture. The conductor decides what to do with them; the end of utterance is decided here exactly as before.
  */
 import { EnergyVad, frameDb, ProbVad, TUNING, type VadEvent } from "@/lib/thunai/vad";
+import { Kws, kwsMode, To16k } from "./kws";
 
 export type EarsError = "blocked" | "nomic" | "unsupported" | "failed";
 
@@ -42,6 +43,11 @@ export interface EarsHooks {
   onFrame?: (level: number, heldMs: number) => void;
   /** the microphone went away (unplugged, permission taken back) */
   onDead?: () => void;
+  /**
+   * v6: the on-device wake word heard "Hey Jarvis" (kws.ts): `at` is the performance.now() of the end of the audio the model had heard
+   * when it fired (the audio clock on the page's clock), `score` its confidence
+   */
+  onWakeWord?: (at: number, score: number) => void;
 }
 
 declare global {
@@ -159,6 +165,9 @@ export class Ears {
   private vStart = 0;
   /** v5 (E2): onPause was given for the quiet run going on now (onResume or the end clears it) */
   private inPause = false;
+  /** v6: the on-device wake word (kws.ts), fed its own 16 kHz copy of the audio; null when NEXT_PUBLIC_JARVIS_KWS is off or it failed */
+  private kws: Kws | null = null;
+  private k16: To16k | null = null;
   /** which detector is deciding */
   kind: "silero" | "energy" = "energy";
   /** the model's last speech probability (dev metrics) */
@@ -230,7 +239,23 @@ export class Ears {
     this.node = node;
     src.connect(node);
     node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => this.frame(ev.data.frame, ev.data.total);
+    if (this.hooks.onWakeWord && kwsMode() !== "off") {
+      this.k16 = new To16k(this.rate);
+      const k = new Kws({
+        // the sample count the model heard up to, on the page's clock (16 samples a ms from the first frame)
+        onWake: (end, score) => { if (my === this.gen) this.hooks.onWakeWord?.(this.off == null ? performance.now() : end / 16 + this.off, score); },
+        onFail: () => { if (this.kws === k) { this.kws = null; this.k16 = null; } }
+      });
+      this.kws = k;
+      k.start();
+    }
   }
+  /** v6: the wake word is listening (its worker is up) */
+  get wakeWordLive(): boolean { return !!this.kws?.live; }
+  /** v6: ms of quiet the deciding detector has heard since the last voiced frame of the speech going on (0 while voiced or idle) */
+  get quietMs(): number { return (this.silero ? this.prob : this.vad).quiet; }
+  /** v6: the deciding detector is inside a sentence */
+  get inSpeech(): boolean { return (this.silero ? this.prob : this.vad).speaking; }
 
   private frame(x: Float32Array, total: number) {
     this.ring.push(x);
@@ -242,6 +267,7 @@ export class Ears {
     const off = performance.now() - at;
     this.off = this.off == null ? off : Math.min(off, this.off + 0.02);
     if (this.silero) { this.to16(x); this.pump(); }
+    if (this.kws && this.k16) this.kws.feed(this.k16.push(x));
     const db = frameDb(x);
     this.level = Math.max(0, Math.min(1, (db + 60) / 45));
     const e = this.vad.push(db, at, this.echo);
@@ -354,7 +380,66 @@ export class Ears {
     this.ctx = null; this.stream = null; this.node = null; this.src = null; this.ring = []; this.ringStart = 0; this.total = 0; this.capFrom = null;
     this.vad.reset(); this.prob.reset(); this.s16 = []; this.t16 = 0; this.acc = { sum: 0, n: 0, pos: 0 }; this.busy = false; this.level = 0; this.echo = false;
     this.off = null; this.vStart = 0; this.inPause = false;
+    this.kws?.stop(); this.kws = null; this.k16 = null;
   }
+}
+
+/**
+ * v6: the wake word while Jarvis is closed (NEXT_PUBLIC_JARVIS_KWS=all, the default). A microphone, the same worklet and the on-device
+ * wake word only: no detector, no ring, no recording, nothing uploaded; the audio goes nowhere but the wake word's worker on this
+ * page. The browser's own recogniser (wake.ts) still listens beside it for "Hi Jarvis", which this model does not catch.
+ */
+export class WakeEars {
+  private ctx: AudioContext | null = null;
+  private stream: MediaStream | null = null;
+  private node: AudioWorkletNode | null = null;
+  private kws: Kws | null = null;
+  private off: number | null = null;
+  private gen = 0;
+  constructor(private onWake: (at: number) => void) {}
+  get live(): boolean { return !!this.kws?.live; }
+  async start(): Promise<boolean> {
+    if (typeof window === "undefined" || kwsMode() !== "all") return false;
+    const W = window as unknown as { AudioContext?: typeof AudioContext };
+    if (!W.AudioContext) return false;
+    const my = ++this.gen;
+    try {
+      const test = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1" ? window.__jarvisTestStream : undefined;
+      this.stream = test ? await test() : await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      if (my !== this.gen) { this.release(); return false; }
+      const ctx = new W.AudioContext();
+      this.ctx = ctx;
+      if (ctx.state === "suspended") await ctx.resume().catch(() => undefined);
+      await ctx.audioWorklet.addModule("/thunai/ears.worklet.js");
+      if (my !== this.gen) { this.release(); return false; }
+      const k16 = new To16k(ctx.sampleRate), rate = ctx.sampleRate;
+      const k = new Kws({ onWake: (end) => { if (my === this.gen) this.onWake(this.off == null ? performance.now() : end / 16 + this.off); }, onFail: () => this.stop() });
+      this.kws = k;
+      k.start();
+      const node = new AudioWorkletNode(ctx, "jarvis-ears", { numberOfInputs: 1, numberOfOutputs: 0 });
+      this.node = node;
+      ctx.createMediaStreamSource(this.stream).connect(node);
+      node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => {
+        const off = performance.now() - (ev.data.total / rate) * 1000;
+        this.off = this.off == null ? off : Math.min(off, this.off + 0.02);
+        k.feed(k16.push(ev.data.frame));
+      };
+      return true;
+    } catch {
+      this.release();
+      return false;
+    }
+  }
+  private release() {
+    try { this.node?.disconnect(); } catch { /* gone */ }
+    if (this.node) this.node.port.onmessage = null;
+    this.kws?.stop();
+    // the page's test stream is shared with the ears: only a real microphone's tracks are stopped here
+    if (this.stream && !(typeof window !== "undefined" && window.__jarvisTestStream)) this.stream.getTracks().forEach((t) => t.stop());
+    void this.ctx?.close().catch(() => undefined);
+    this.ctx = null; this.stream = null; this.node = null; this.kws = null; this.off = null;
+  }
+  stop() { this.gen++; this.release(); }
 }
 
 /** Averaging decimation to 16 kHz (speech needs nothing above 8 kHz). */

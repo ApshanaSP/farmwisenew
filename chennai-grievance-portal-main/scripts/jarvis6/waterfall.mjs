@@ -46,7 +46,8 @@ for (const tag of tags) {
       "answer handed to the voice (console's finding mark)": stat(rows.map((r) => r.handed)),
       "first word of the answer (the voice's own start)": stat(rows.map((r) => r.finding)),
       "voice start delay (handed → first word)": stat(rows.map((r) => (r.finding != null && r.handed != null ? r.finding - r.handed : null))),
-      "end of the answer": stat(rows.map((r) => r.answerEnd)),
+      "answer in hand, on screen (the console's answer mark)": stat(rows.map((r) => r.answerReady)),
+      "end of the answer (its last word spoken)": stat(rows.map((r) => r.answerEnd)),
       "screen change": stat(rows.map((r) => r.screen)),
       "transcript at the page (transcribed mark)": stat(rows.map((r) => r.transcribed))
     };

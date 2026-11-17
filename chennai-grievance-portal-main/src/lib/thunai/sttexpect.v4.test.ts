@@ -30,8 +30,12 @@ function fake(plan: Partial<Record<"ta" | "en", Plan>>) {
   return { fetcher, aborted };
 }
 /** Whisper forced to English translating Tamil speech, and the Tamil decode of the same speech */
-const TRANSLATION = { en: { ms: 30, text: "Show the complaints in Adyar.", logprob: -0.1 } } as const;
-const TAMIL = (ms: number) => ({ ms, text: "அடையாறு புகார்களைக் காட்டுங்கள்", logprob: -0.3 });
+// v6: these confidences were hand-made with the English translation the MORE confident (-0.1 against -0.3); on the Phase 0 real run that is
+// the pattern of English speech, and Tamil speech had its Tamil decode the more confident in every pair (stt.ts translated, stt.v6.test.ts).
+// The tests keep their point (the race waits for the Tamil decode, which then wins) with the direction the real run measured; -0.3 is still
+// a "good" English decode (GOOD_LOGPROB -0.35), so the race's early-finish path is exercised as before
+const TRANSLATION = { en: { ms: 30, text: "Show the complaints in Adyar.", logprob: -0.3 } } as const;
+const TAMIL = (ms: number) => ({ ms, text: "அடையாறு புகார்களைக் காட்டுங்கள்", logprob: -0.1 });
 
 beforeEach(() => { vi.stubEnv("THUNAI_DIR", fs.mkdtempSync(path.join(os.tmpdir(), "jv-sttexp-"))); vi.stubEnv("GROQ_API_KEY", "x"); vi.stubEnv("GEMINI_API_KEY", ""); resetLedger(); });
 afterEach(() => { vi.unstubAllEnvs(); resetLedger(); });

@@ -9,6 +9,8 @@
  * drift with the device's sample rate.
  */
 
+import { flag } from "./flags";
+
 /** The constants to change after a real-room try (docs/thunai/HANDOVER.md has the five-minute checklist). */
 export const TUNING = {
   /** the gate's margin above the noise floor, dB */
@@ -17,6 +19,13 @@ export const TUNING = {
   echoMarginDb: 8,
   /** a sentence ends after this much quiet, ms (also the value whenever the browser's captions are not running) */
   endOfUtteranceMs: 300,
+  /**
+   * v6: a SHORT sentence (under shortUtteranceMs of speech so far: "Hi Jarvis", "Go to trends") ends after this much quiet instead, ms;
+   * NEXT_PUBLIC_JARVIS_SHORT_EOU_MS overrides it (0 turns it off). A longer sentence, or one whose live words set its own end, is as before.
+   * A short sentence cut at a pause is joined to its next part as before (conductor.ts carry), and a name said alone is a call either way
+   */
+  shortEouMs: 180,
+  shortUtteranceMs: 1200,
   /** the captions' words already read as a whole command (the rules are sure, or it ends on a place or a department): ends after this much quiet, ms */
   eouCompleteMs: 300,
   /** the words end on "and", "matrum", "apram", "um", a preposition or an article: the sentence is still going, ends after this much quiet, ms */
@@ -47,6 +56,13 @@ export const TUNING = {
   /** ...and a sentence makes at most this many /hear requests: the last one is kept for the whole sentence at its end */
   earlySttAttempts: 2
 } as const;
+
+/** v6: the short sentence's end-of-utterance quiet, ms (TUNING.shortEouMs, or NEXT_PUBLIC_JARVIS_SHORT_EOU_MS; 0 = off) */
+export function shortEouMs(v: string | undefined = flag("NEXT_PUBLIC_JARVIS_SHORT_EOU_MS", process.env.NEXT_PUBLIC_JARVIS_SHORT_EOU_MS)): number {
+  if (v == null || v.trim() === "") return TUNING.shortEouMs;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, TUNING.endOfUtteranceMs) : TUNING.shortEouMs;
+}
 
 export interface VadOpts {
   /** frame length, ms */
@@ -199,7 +215,9 @@ export class ProbVad {
     // bar is a voice over it; with no voice playing, any speech frame counts, as before
     if (p >= (echo ? o.echoPos : o.neg)) this.strong += o.frameMs;
     const len = at - this.startAt;
-    if (this.quietMs >= (this.eou ?? o.hangoverMs) + this.extraMs || len >= o.maxSpeechMs) {
+    // v6: a short sentence ends sooner (shortEou), unless its live words set its end or a hold made it longer
+    const shortEou = this.eou == null && !this.extraMs && len - this.quietMs < TUNING.shortUtteranceMs ? shortEouMs() : 0;
+    if (this.quietMs >= (this.eou ?? (shortEou || o.hangoverMs)) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
       this.extraMs = 0;
       this.eou = null;

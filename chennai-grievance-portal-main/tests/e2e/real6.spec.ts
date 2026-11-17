@@ -179,6 +179,8 @@ function measure(s: S, end: number) {
     // (not an acknowledgement) is HANDED to the voice; Edge's natural voice starts later (1.3 s on the 17 Nov smoke run)
     finding: rel(speech.find((a) => mark("finding") != null && (a.at as number) >= (mark("finding") as number) - 5)?.at as number | undefined, end),
     answerEnd: ends.length ? rel(Math.max(...ends), end) : null, screen: rel(screen, end),
+    // the console's "answer" mark: the answer exists, on the screen, whatever the voice is doing (Thunai.tsx markAnswer)
+    answerReady: rel(mark("answer"), end),
     vadEnd: rel(mark("vadEnd"), end), transcribed: rel(mark("transcribed"), end),
     trace: tr ? { lane: tr.lane, zeroVsTrue: Math.round(tr.zero - end), at: Object.fromEntries(Object.entries(tr.at).map(([k, v]) => [k, Math.round(v - end)])) } : null,
     voices: [...new Set(speech.map((a) => (a as { voice?: string }).voice ?? a.kind))],

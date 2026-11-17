@@ -22,6 +22,7 @@
  * (its start event where voice.ts passes one, else its first word) or the PCM path schedules its first sample. Not for an acknowledgement.
  */
 import { chunks } from "@/lib/thunai/chunker";
+import { flag } from "@/lib/thunai/flags";
 import { figuresIn, gateChunk } from "@/lib/thunai/numbergate";
 import { aloud, holdsDigit, sentenceLang, shownIndex, speakNumbers, spokenAllowed, type Aloud } from "@/lib/thunai/numberwords";
 import type { JarvisVoice } from "@/lib/jarvis/voices";
@@ -699,6 +700,77 @@ export function earconEnd(): boolean {
     o.stop(end + 0.005);
     return true;
   } catch { return false; }
+}
+
+/**
+ * v6, the instant wake reply. "Hi Jarvis" / "Hey Jarvis" is answered by a short spoken line ("Yes?", "சொல்லுங்க.") from audio already in
+ * memory: pre-rendered once in Jarvis's server voice (scripts/jarvis6/wake-replies.mjs -> public/thunai/wake/), fetched and decoded
+ * when Jarvis opens (Thunai's warm-up) or its closed wake listener starts, and played on the earcon's own context, so it needs no request, no synthesiser and no wait.
+ * Never the same variant twice in a row. The ears take it as Jarvis's own sound for its length (like an earcon: it can never start a
+ * barge-in, and the Collector's voice over it is still heard). NEXT_PUBLIC_JARVIS_WAKE_REPLY: "clip" (default) or "tone" (v5: the
+ * open tone only). Returns how long it plays (ms), or null when it could not play (no audio, not loaded): the caller then sounds
+ * the tone as before.
+ */
+export const wakeReplyMode = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_REPLY", process.env.NEXT_PUBLIC_JARVIS_WAKE_REPLY)): "clip" | "tone" => ((v ?? "").trim().toLowerCase() === "tone" ? "tone" : "clip");
+const wakeBufs: Record<"en" | "ta", AudioBuffer[]> = { en: [], ta: [] };
+let wakeLoad: Promise<void> | null = null;
+let wakeLast: Record<"en" | "ta", number> = { en: -1, ta: -1 };
+/** the next variant: any but the last one played (`r` fixed in tests) */
+export function nextVariant(n: number, last: number, r: number = Math.random()): number {
+  if (n <= 1) return 0;
+  const k = Math.floor(r * (n - 1));
+  return k >= last && last >= 0 ? k + 1 : k;
+}
+/** Fetch and decode the wake replies once (no request to any provider: they are the page's own files). */
+export function loadWakeReplies(): Promise<void> {
+  if (wakeLoad) return wakeLoad;
+  const c = fxOut();
+  if (!c || typeof fetch === "undefined") return Promise.resolve();
+  wakeLoad = (async () => {
+    try {
+      const m = (await (await fetch("/thunai/wake/manifest.json")).json()) as { files: Record<"en" | "ta", { file: string }[]> };
+      for (const lang of ["en", "ta"] as const) {
+        const bufs = await Promise.all((m.files?.[lang] ?? []).map(async (f) => c.decodeAudioData(await (await fetch(`/thunai/wake/${f.file}`)).arrayBuffer()).catch(() => null)));
+        wakeBufs[lang] = bufs.filter((b): b is AudioBuffer => !!b);
+      }
+    } catch { wakeLoad = null; }
+  })();
+  return wakeLoad;
+}
+export const wakeReady = (lang: string) => wakeBufs[short(lang)].length > 0;
+
+/**
+ * v6: warm the voice the next answer will use (voice.ts prewarm): only on the browser's natural voice (the server's PCM voice has
+ * nothing to warm), and never while Jarvis is speaking. Called when the Collector starts a sentence to Jarvis, and on a wake: the site's
+ * language first, then the other (the answer comes in the language the sentence is heard in).
+ */
+export function prewarmVoice(langs: string[]): boolean {
+  const ls = [...new Set(langs.map(short))].filter((l) => natural(l));
+  if (speakingNow || !ls.length) return false;
+  return browser.prewarm(ls.map((l) => (l === "ta" ? "ta-IN" : "en-IN")));
+}
+/** Play one wake reply now (see above). The `at` it returns is when its first sample is scheduled (performance.now()). */
+export function wakeReply(lang: string): { ms: number; at: number } | null {
+  if (wakeReplyMode() !== "clip") return null;
+  const l = short(lang);
+  const list = wakeBufs[l].length ? wakeBufs[l] : wakeBufs.en;
+  const c = fxOut();
+  if (!c || !list.length) { void loadWakeReplies(); return null; }
+  // over Jarvis's own voice it is not said (the turn machine stops that voice first when the name cuts in)
+  if (speakingNow && !paused) return null;
+  try {
+    if (c.state === "suspended") void c.resume().catch(() => undefined);
+    const i = nextVariant(list.length, wakeLast[l]);
+    wakeLast = { ...wakeLast, [l]: i };
+    const b = list[i], ms = Math.round(b.duration * 1000);
+    hooks.onEarcon?.(ms + 250, ms + 150);
+    const s = c.createBufferSource(), g = c.createGain();
+    g.gain.value = 0.9;
+    s.buffer = b; s.connect(g).connect(c.destination);
+    const t = c.currentTime + 0.005;
+    s.start(t);
+    return { ms, at: performance.now() + 5 };
+  } catch { return null; }
 }
 
 /**

@@ -1,0 +1,64 @@
+{
+ "voice": "Despina",
+ "made": "2026-11-17",
+ "files": {
+  "en": [
+   {
+    "file": "en-1.wav",
+    "text": "Yes?",
+    "ms": 570,
+    "model": "gemini-2.5-flash-preview-tts"
+   },
+   {
+    "file": "en-2.wav",
+    "text": "Go ahead.",
+    "ms": 570,
+    "model": "gemini-3.1-flash-tts-preview"
+   },
+   {
+    "file": "en-3.wav",
+    "text": "I'm listening.",
+    "ms": 740,
+    "model": "gemini-3.1-flash-tts-preview"
+   },
+   {
+    "file": "en-4.wav",
+    "text": "Yes, Collector?",
+    "ms": 1010,
+    "model": "gemini-2.5-flash-preview-tts"
+   },
+   {
+    "file": "en-5.wav",
+    "text": "Right here.",
+    "ms": 790,
+    "model": "gemini-3.1-flash-tts-preview"
+   }
+  ],
+  "ta": [
+   {
+    "file": "ta-1.wav",
+    "text": "சொல்லுங்க.",
+    "ms": 600,
+    "model": "gemini-3.1-flash-tts-preview"
+   },
+   {
+    "file": "ta-2.wav",
+    "text": "சொல்லுங்க, கேக்கறேன்.",
+    "ms": 1250,
+    "model": "gemini-2.5-flash-preview-tts"
+   },
+   {
+    "file": "ta-3.wav",
+    "text": "ம், சொல்லுங்க.",
+    "ms": 1230,
+    "model": "gemini-3.1-flash-tts-preview"
+   },
+   {
+    "file": "ta-4.wav",
+    "text": "கேக்கறேன், சொல்லுங்க.",
+    "ms": 1310,
+    "model": "gemini-3.1-flash-tts-preview"
+   }
+  ]
+ }
+}

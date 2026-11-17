@@ -20,6 +20,7 @@
  *
  * Whisper bills a 10 s minimum per request: the ledger is told, so the listening budget is what Groq will really count.
  */
+import { namedIn } from "./addressed";
 import { correctTranscript, gazetteerOn } from "./gazetteer";
 import { groqFetch } from "./keepalive";
 import { ledger, type Lane } from "./ledger";
@@ -222,6 +223,12 @@ const CONFIDENT_TA = -0.5;
 export function translated(ta: Scored, en: Scored): boolean {
   if (!ta.ok || !en.ok || ta.lang !== "ta" || en.lang !== "en") return false;
   if (ta.logprob < CONFIDENT_TA || tamilShare(ta.text) < 0.8 || latinShare(en.text) < 0.9) return false;
+  // v6 (defect, measured): which one is the translation? Two forced decodes of different shapes are a translation EITHER way: English
+  // speech comes back from the forced-Tamil decode as a Tamil translation just as Tamil speech comes back from the forced-English one.
+  // On the Phase 0 real run (17 Nov) 10 of 22 English sentences were heard as Tamil this way, the English decode the surer on all 10 (by
+  // 0.01-0.29); on Tamil speech the Tamil decode was always the surer (by 0.08-1.07), on Tanglish as sure or surer. So the English decode
+  // is refused only when the Tamil one is at least as sure (JARVIS_STT_DIRECTION=0: v5's rule, which refused it whatever the confidences)
+  if (env("JARVIS_STT_DIRECTION") !== "0" && ta.logprob < en.logprob) return false;
   const a = skeleton(ta.text), b = skeleton(en.text);
   // on hand-made pairs, translations scored 0.22-0.36 and the same sounds in the other script 0.80-1.00 (stt.v4.test.ts)
   const sim = dice(a, b), ratio = Math.min(a.length, b.length) / Math.max(1, a.length, b.length);
@@ -337,6 +344,10 @@ async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, gu
     let timer: ReturnType<typeof setTimeout> | null = null;
     const check = () => {
       if (rs.every((r) => r.done)) { if (timer) clearTimeout(timer); done(); return; }
+      // v6: a good decode in EITHER language that is the name alone ("Hi Jarvis", "ஹாய் ஜார்விஸ்") ends the race at once: a call is
+      // the same call in both, there is no request to mistranslate, and the Collector is waiting for the reply (nameFast)
+      const call = nameFast() ? rs.find((r) => r.done && r.d && good(scoreDecode(r.d, ctx)) && isCall(r.d.text)) : null;
+      if (call) { if (timer) clearTimeout(timer); done(); return; }
       const first = timer ? null : rs.find((r) => r.done && r.d && r.kind === want && good(scoreDecode(r.d, ctx)));
       if (first) timer = setTimeout(done, first.kind === "en" && rs.some((r) => r.kind === "ta" && !r.done) ? Math.max(grace, guard) : grace);
     };
@@ -346,6 +357,10 @@ async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, gu
 }
 
 const NAMED = /(?:^|[^a-z])(?:jarvis|jarviz|jarvish|jervis|javis|jaarvis)(?:[^a-z]|$)|ஜார்விஸ்|ஜார்வீஸ்|ஜாவிஸ்/i;
+/** v6: JARVIS_STT_NAME_FAST=0 turns the name-only early finish off (default on) */
+export const nameFast = () => env("JARVIS_STT_NAME_FAST") !== "0";
+/** the decode is the name alone, a call ("Hi Jarvis.", "Jarvis?", "ஹாய் ஜார்விஸ்"), as the address gate reads it */
+export const isCall = (text: string): boolean => namedIn(text.trim()) === "";
 const whyOf = (e: unknown) => e instanceof SttBusy ? "busy" : (e as Error)?.name === "TimeoutError" ? "timeout" : (e as Error)?.name === "AbortError" ? "aborted" : "error";
 
 export interface HearOpts {

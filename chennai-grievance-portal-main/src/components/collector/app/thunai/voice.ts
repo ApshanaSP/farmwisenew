@@ -7,6 +7,8 @@
  * which line and word is being spoken, so the Stage can highlight it.
  */
 
+import { flag } from "@/lib/thunai/flags";
+
 export const canSpeak = () => typeof window !== "undefined" && "speechSynthesis" in window;
 
 let cache: SpeechSynthesisVoice[] = [];
@@ -95,6 +97,44 @@ export interface SpeakOpts { rate?: number; voice?: string | null; onLine?: (i: 
   onStart?: () => void }
 
 let token = 0;
+
+/**
+ * v6, the voice kept warm. Edge's natural voices are online: measured 17 Nov in Playwright-launched Edge (scripts in BUILD_LOG), the
+ * first sentence after 20 s or more of quiet starts 543-1,560 ms after speak() (Neerja; Pallavi 585-1,451), but 145-215 ms when a
+ * silent utterance went out at least 300 ms before it (100 ms before: no help), and that warmth lasted up to 15 s. So when the
+ * Collector starts a sentence to Jarvis, a silent one-character utterance (volume 0) goes out in the voice the answer will use; by the
+ * time the answer is ready the connection is warm. It is never counted as speaking (speaking() ignores it), never heard, and any real
+ * speech cancels it. NEXT_PUBLIC_JARVIS_VOICE_PREWARM=0 turns it off.
+ */
+export const prewarmOn = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_VOICE_PREWARM", process.env.NEXT_PUBLIC_JARVIS_VOICE_PREWARM)) => (v ?? "").trim() !== "0";
+/** silent warm-ups still queued or sounding: while only they are, the synthesiser is not "speaking" */
+let warmN = 0;
+let warming = false;
+let warmedAt = 0;
+/** not more often than this (ms): a warm connection stays warm for seconds */
+export const PREWARM_EVERY_MS = 3000;
+/** Warm each language's best voice (the answer may come in either), in order; false when nothing was sent. */
+export function prewarm(langs: string | string[], now: number = Date.now()): boolean {
+  if (!prewarmOn() || !canSpeak()) return false;
+  const s = window.speechSynthesis;
+  if (s.speaking || s.pending || now - warmedAt < PREWARM_EVERY_MS) return false;
+  const voices = [...new Set((Array.isArray(langs) ? langs : [langs]).map((l) => bestVoice(l)).filter((v): v is SpeechSynthesisVoice => !!v))];
+  if (!voices.length) return false;
+  warmedAt = now;
+  for (const voice of voices) {
+    const u = new SpeechSynthesisUtterance(".");
+    u.voice = voice; u.lang = voice.lang; u.volume = 0; u.rate = 1;
+    const done = () => { warmN = Math.max(0, warmN - 1); warming = warmN > 0; };
+    u.onend = done; u.onerror = done;
+    warmN++;
+    warming = true;
+    s.speak(u);
+  }
+  return true;
+}
+/** test hook: forget the last warm-up time */
+export function resetPrewarm() { warmedAt = 0; warming = false; warmN = 0; }
+
 /**
  * Speak lines one after another, one utterance each: the caller (mouth.ts) has already cut the answer into chunks short
  * enough for Chrome (lib/thunai/chunker.ts), so they are not cut again here. Returns false where speech is unavailable; any
@@ -104,6 +144,7 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
   if (!canSpeak() || !lines.some((l) => l.trim())) { o.onEnd?.(); return false; }
   const s = window.speechSynthesis;
   s.cancel();
+  warming = false; warmN = 0;
   if (s.paused) s.resume();
   const my = ++token;
   const voice = bestVoice(lang, o.voice);
@@ -138,11 +179,13 @@ export function stopVoice() {
   token++;
   if (!canSpeak()) return;
   window.speechSynthesis.cancel();
+  warming = false; warmN = 0;
   // Chrome keeps a paused synthesiser paused after cancel(), and the next answer would then wait in silence
   if (window.speechSynthesis.paused) window.speechSynthesis.resume();
 }
 
-export const speaking = () => canSpeak() && window.speechSynthesis.speaking;
+/** v6: the silent warm-up (prewarm) is not speaking */
+export const speaking = () => canSpeak() && window.speechSynthesis.speaking && !warming;
 
 /**
  * Pause the utterance in progress (the barge-in's duck, behind its flag in mouth.ts). Whether Edge's natural voices honour

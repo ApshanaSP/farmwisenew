@@ -67,11 +67,21 @@ describe("captions only while hearing (defect 10)", () => {
     expect(src).toMatch(/onSpeechEnd:/);
     expect(src).toMatch(/\.partial\(/);
   });
-  it("the \"Hi Jarvis\" wake listener is exactly as the owner left it", () => {
+  // v6 (JARVIS_V6.md section 7, "Instant wake reply" and "On-device keyword spotting"): the closed listener keeps the browser's recogniser for
+  // "Hi Jarvis" exactly as before and adds the on-device wake word beside it and the spoken wake reply; the pin moves to the v6 block, and
+  // what the owner sees is pinned by behaviour below (docs/qa/pass7/V6_EXPECTED_CHANGES.md)
+  it("the \"Hi Jarvis\" wake listener is exactly as v6 left it", () => {
     const a = src.indexOf("  // \"Hi Jarvis\": closed, the browser");
     const b = src.indexOf("}, [mode]);", a) + "}, [mode]);".length;
     expect(a).toBeGreaterThan(-1);
-    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("bcc132e299addb98a2b2bd00c133f1e657c9717a59ce87cbacfa3f4f5631a33b");
+    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("02e5ac46d74408f6095c056c84503c22c3e16080d399249fc075582e4796c750");
+    const block = src.slice(a, b);
+    // still: only while closed, after the first-use notice, with the microphone already allowed, never while the tab is hidden; the browser's
+    // own recogniser still listens for the name
+    expect(block).toContain('if (mode !== "off" || !canWake() || store.get("jarvis-mode-seen") !== "1") return;');
+    expect(block).toContain("startWake({");
+    expect(block).toContain('st.state === "granted"');
+    expect(block).toContain("document.hidden");
   });
 });
 

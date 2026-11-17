@@ -48,6 +48,7 @@ import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from 
 import { TUNING } from "@/lib/thunai/vad";
 import { Ears, type EarsError, type EchoMode } from "./ears";
 import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, setMouthHooks, speaking, stopVoice, unduckVoice, type VoicePath } from "./mouth";
+import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
 
@@ -66,6 +67,15 @@ const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE =
 const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT === "1";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
+/**
+ * v6: after the on-device wake word fires, the spoken reply waits for this much quiet (ms), so "Hey Jarvis, show the severe cases" said
+ * in one breath is not talked over; NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600, default 150. Past WAKE_REPLY_GIVE_UP_MS of speech the
+ * request itself is the reply.
+ */
+export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS", process.env.NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS)): number => { const n = Number(v); return v != null && v.trim() !== "" && Number.isFinite(n) && n >= 60 ? Math.min(600, n) : 150; };
+export const WAKE_REPLY_GIVE_UP_MS = 1500;
+/** v6: a name-only sentence that arrives this soon after an on-device wake is the same call (it was answered already) */
+export const WAKE_SAME_CALL_MS = 5000;
 
 export interface HeardLine {
   text: string;
@@ -107,8 +117,18 @@ export interface ConductorHooks {
   onFail?: (why: EarsError | "gesture") => void;
   onEndSession?: () => void;
   onHold?: () => void;
-  /** the name alone ("Jarvis", and a pause): it listens on, engaged; the next sentence is the request */
-  onNameOnly?: () => void;
+  /**
+   * the name alone ("Jarvis", and a pause): it listens on, engaged; the next sentence is the request. `replied`: the on-device wake word
+   * already answered this call (v6), so nothing is to be said again
+   */
+  onNameOnly?: (o?: { replied: boolean }) => void;
+  /**
+   * v6: the on-device wake word heard "Hey Jarvis" (kws.ts): `at` the end of the audio it had heard (performance.now()); `overVoice`
+   * Jarvis was speaking. The HUD reacts now; the reply comes with onWakeReply
+   */
+  onWakeWord?: (o: { at: number; overVoice: boolean }) => void;
+  /** v6: the Collector paused after the wake word: say the wake reply now */
+  onWakeReply?: () => void;
   /** does the rules layer resolve this sentence with confidence and slots, and does it name something of the district? */
   rules: (text: string) => { sure: boolean; districtNoun: boolean };
   /** when Jarvis last finished a turn */
@@ -211,6 +231,10 @@ export class Conductor {
   /** every recogniser still alive (one that was stopped still sends its last words) */
   private fbAll = new Set<SR>();
   private earconUntil = 0;
+  /** v6: when the on-device wake word last fired (Date.now()); 0 before any */
+  private kwsAt = 0;
+  /** v6: the wake reply waits for the Collector to pause (performance.now() of the wake) */
+  private replyDue: number | null = null;
   /** the earcon's own tone (with the output's latency): the energy gate cannot tell it from a voice */
   private toneUntil = 0;
   /** when the Collector (or anyone in the room) last began or ended speaking: a VAD onset or end, whatever the gate said */
@@ -298,8 +322,10 @@ export class Conductor {
         if (was === "paused" && this.m.state !== "paused") this.speechEnded();
       },
       onDead: () => { if (this.ears === e) this.h.onFail?.("failed"); },
+      onWakeWord: (at) => this.wakeWord(at),
       onFrame: (level, held) => {
         this.h.onLevel?.(level);
+        if (this.replyDue != null) this.wakeReplyTick();
         if (this.ears) this.ears.echo = speaking() || this.earconOn();
         if (held > 0 && (this.m.state === "paused" || this.m.state === "hearing")) this.dispatch({ type: "tick", at: performance.now(), heldMs: held });
       }
@@ -542,6 +568,29 @@ export class Conductor {
       onFail: () => { this.wakeStop = null; }
     });
   }
+  /**
+   * v6: "Hey Jarvis" from the on-device wake word. Engaged at once (the next sentence, or the rest of this one, is the request); over
+   * Jarvis's own voice it is a bid for the turn (as two live words are); the reply waits for a pause (wakeReplyTick).
+   */
+  private wakeWord(at: number) {
+    this.h.mark?.("kws", at);
+    this.kwsAt = Date.now();
+    this.engage();
+    const over = speaking();
+    if (this.m.state === "paused") this.dispatch({ type: "words", text: "hey jarvis" });
+    this.h.onWakeWord?.({ at, overVoice: over });
+    this.replyDue = over ? null : performance.now();
+  }
+  /** v6: every frame while a wake reply is due: the Collector paused (or the sentence ended), or went on talking */
+  private wakeReplyTick() {
+    const e = this.ears, t0 = this.replyDue;
+    if (!e || t0 == null) { this.replyDue = null; return; }
+    if (!e.inSpeech || e.quietMs >= wakeQuietMs()) { this.replyDue = null; this.h.mark?.("wakeReply", performance.now()); this.h.onWakeReply?.(); return; }
+    if (performance.now() - t0 > WAKE_REPLY_GIVE_UP_MS) this.replyDue = null;
+  }
+  /** v6: the on-device wake word is listening */
+  get wakeWordLive(): boolean { return !!this.ears?.wakeWordLive; }
+
   /** The name was heard: the next sentences are engaged. */
   private engaged = 0;
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
@@ -754,7 +803,7 @@ export class Conductor {
     // voice, it stops the voice and listens: turn.ts)
     if (namedIn(t) === "") {
       this.engage();
-      this.h.onNameOnly?.();
+      this.h.onNameOnly?.({ replied: Date.now() - this.kwsAt < WAKE_SAME_CALL_MS });
       this.dispatch({ type: "nameOnly", gen });
       return;
     }
