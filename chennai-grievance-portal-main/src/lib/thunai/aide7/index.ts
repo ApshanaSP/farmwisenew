@@ -15,7 +15,7 @@ import type { Lang, World } from "../types";
 import { buildSheet, extrasOf } from "./facts";
 import { gazetteer, type Gazetteer } from "./gazetteer";
 import { causeGap, findGap, gapFacts, gapPhrase, gapWords, nothingLine, type GapDeps, type GapFound } from "./gap";
-import type { Sheet7 } from "./ground";
+import type { Fact7, Sheet7 } from "./ground";
 import { writeAnswer, type Written, type WriteOptions } from "./writer";
 
 export const answerStyle = (v: string | undefined = process.env.JARVIS_ANSWER): "v7" | "v6" => ((v ?? "").trim().toLowerCase() === "v6" ? "v6" : "v7");
@@ -69,7 +69,7 @@ export interface AideCtx {
   write?: Pick<WriteOptions, "open" | "rungs">;
   feeds?: GapDeps["feeds"];
 }
-export interface AideOut { result: AgentResult; written: Written; sheet: Sheet7; gap: (GapFound & { said: string[] }) | null }
+export interface AideOut { result: AgentResult; written: Written; sheet: Sheet7; gap: (GapFound & { said: string[]; /** the reports as the checker held the gap's sentences to them */ facts?: Fact7[] }) | null }
 
 /** The fallback said when the model gives nothing checked: the recipe's own line (v6's), without an announcement of a reading. */
 const fallbackOf = (doc: StageDocT, lang: Lang) => doc.say?.[lang] || doc.say?.en || "";
@@ -91,6 +91,7 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
     { user: ctx.user, until, firstBy: Math.min(until, t0 + firstMs()), signal: ctx.signal, onSentence: emit, noFallbackOnGap: true, ...(ctx.write ?? {}), now });
   const said = [...written.sentences];
   let gap: AideOut["gap"] = null;
+  let gapFacts7: Fact7[] = [];
   let links: BlockT | null = null;
   // a cause or a why is no gap: the record answers it (the writer says it shows what moved, not why); nothing is looked up for it
   if (written.gap && causeGap(written.gap)) written.gap = null;
@@ -107,6 +108,7 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
       // one more checked answer, about the gap only, from what the reports say
       const facts = gapFacts(found.hits, now());
       const gs: Sheet7 = { facts, lang, gaz, shown: [], question: ctx.question };
+      gapFacts7 = facts;
       const head = found.hits[0];
       const w2 = await writeAnswer({ question: `${ctx.question} (only this part: ${written.gap})`, lang, sheet: gs, note: "The screen will list these reports as links.", fallback: lang === "ta" ? `${head.outletTa ?? head.outlet} இதைப் பற்றி செய்தி வெளியிட்டிருக்கிறது; இணைப்பு திரையில் உள்ளது.` : `${head.outlet} has a report on that; the link is on the screen.` },
         { user: ctx.user, until, firstBy: Math.min(until, now() + 3500), signal: ctx.signal, onSentence: emit, ...(ctx.write ?? {}), now });
@@ -122,7 +124,7 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
       extra.push(line);
     }
     said.push(...extra);
-    gap = found ? { ...found, said: extra } : { status: "nothing", words: [], hits: [], ms: 0, phrase: gapPhrase(written.gap, ctx.question), said: extra };
+    gap = found ? { ...found, said: extra, facts: gapFacts7 } : { status: "nothing", words: [], hits: [], ms: 0, phrase: gapPhrase(written.gap, ctx.question), said: extra };
   }
   const say = said.join(" ").trim() || fallbackOf(doc, lang);
   const figures = [...new Set(figuresIn(say).map((f) => f.value).filter(Number.isFinite))].slice(0, 60);

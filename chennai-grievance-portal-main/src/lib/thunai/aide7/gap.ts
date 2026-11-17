@@ -14,7 +14,11 @@ import { injectionLike } from "../web/compare";
 import { listOf, type WebDeps } from "../web/fetch";
 import { readFeed } from "../web/related";
 import type { Lang, World } from "../types";
+import { gazetteer, namesIn, type Gazetteer } from "./gazetteer";
 import type { Fact7 } from "./ground";
+
+const gazCache = new WeakMap<World, Gazetteer>();
+const gazOfWorld = (w: World): Gazetteer => { let g = gazCache.get(w); if (!g) { g = gazetteer(w); gazCache.set(w, g); } return g; };
 
 export interface GapHit { outlet: string; outletTa: string | null; title: string; url: string | null; at: number | null; from: "dashboard" | "web" }
 export interface GapDeps {
@@ -40,7 +44,10 @@ export function gapWords(gap: string, question: string, world?: Pick<World, "zon
   const q = ` ${question.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")} `;
   const place = new Set((world ? [...world.zones.map((z) => z.name), ...world.places.flatMap((p) => [p.name, ...p.aliases])] : [])
     .flatMap((n) => n.toLowerCase().split(/[^\p{L}\p{N}]+/u)).filter((x) => x.length >= 3));
-  const words = [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && !place.has(w) && q.includes(` ${w}`)))].slice(0, 6);
+  // the district's places in Tamil too, with their case endings ("அடையாறு", "அடையாறுக்கு": the round-2 Haiku dev run, 17 Nov)
+  const g = world && "depts" in world ? gazOfWorld(world as World) : null;
+  const tamilPlace = (w: string) => !!g && /[஀-௿]/u.test(w) && namesIn(w, g).some((h) => (h.kind === "zone" || h.kind === "place" || h.kind === "taluk") && h.at === 0);
+  const words = [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && !place.has(w) && !tamilPlace(w) && q.includes(` ${w}`)))].slice(0, 6);
   // one short word alone ("cm") is no search: it would match any headline that holds it (the Haiku dev run, 17 Nov: "CM Royapuram ku eppo varaaru")
   return words.length === 1 && [...words[0]].length < 4 ? [] : words;
 }

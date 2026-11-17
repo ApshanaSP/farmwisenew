@@ -55,7 +55,7 @@ const OUT = path.join(DIR, "results", `${TAG}.json`);
 
 type Kind = "incident" | "news" | "compare" | "why" | "followup" | "outside";
 interface Item { id: string; kind: Kind; lang: "en" | "ta" | "tg"; text: string; before?: string; news?: number }
-interface Answer { said: string[]; lane: string | null; recipe: string | null; note: string | null; by: string | null; model: string | null; gap: string | null; gapStatus: string | null;
+interface Answer { said: string[]; lane: string | null; recipe: string | null; note: string | null; by: string | null; model: string | null; gap: string | null; gapStatus: string | null; gapSaid?: string[]; gapFacts?: Fact7[];
   rejected: { text: string; problems: string[] }[]; firstMs: number | null; ms: number; tokens: number; calls: number; hops: string[]; facts: Fact7[]; scope?: Sheet7["scope"]; error?: string }
 interface Row { id: string; kind: Kind; lang: string; text: string; before?: string; v7: Answer; v6: Answer; at: string }
 
@@ -110,7 +110,7 @@ async function turn(c: Ctx, text: string, lang: Lang, v: "v6" | "v7", prior: { s
     const a: Answer = { ...empty(), said: r?.say ? [r.say] : r?.reply ? [r.reply] : [], lane: o.lane, recipe: r?.stage?.recipe ?? r?.kind ?? null, note: r?.note ?? null, ms: Date.now() - t0,
       tokens: calls.reduce((n, x) => n + x.tokens, 0), calls: calls.length, hops: calls.map((x) => x.model ?? "none") };
     const got = aide as AideOut | null;
-    if (got) return { a: { ...fromWritten(a, got.written, got.sheet), said: [...got.written.sentences, ...(got.gap?.said ?? [])], gapStatus: got.gap?.status ?? null }, stage: r?.stage ?? null, say: r?.say ?? null, aide: got };
+    if (got) return { a: { ...fromWritten(a, got.written, got.sheet), said: [...got.written.sentences, ...(got.gap?.said ?? [])], gapStatus: got.gap?.status ?? null, gapSaid: got.gap?.said ?? [], gapFacts: got.gap?.facts ?? [] }, stage: r?.stage ?? null, say: r?.say ?? null, aide: got };
     // v6 (or a turn the aide did not answer): its line and the items v6 reads
     return { a: { ...a, said: v6Spoken(r?.say ?? r?.reply ?? null, r?.stage ?? null, (r?.lang ?? "en") as Lang) }, stage: r?.stage ?? null, say: r?.say ?? null, aide: null };
   } catch (e) {
@@ -235,8 +235,10 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
       if (/^Nothing in the dashboard|^The dashboard has nothing|டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும்|டாஷ்போர்டில் எதுவும் இல்லை/u.test(s)) continue;
       tally.sentences++;
       // the sentence was said without its fact marks: checked against every fact (a looser test than the live one, which binds to the cited facts)
-      const ids = sheet.facts.map((f) => f.id).join(",");
-      const k = checkSentence(`${s} [${ids}]`, sheet);
+      // a sentence about the gap's reports is checked against the reports, as it was live
+      const gs = r.v7.gapSaid?.includes(s) && r.v7.gapFacts?.length ? { ...sheet, facts: r.v7.gapFacts, scope: undefined } : sheet;
+      const ids = gs.facts.map((f) => f.id).join(",");
+      const k = checkSentence(`${s} [${ids}]`, gs);
       const real = k.problems.filter((p) => !["copy", "list", "length", "uncited"].includes(p.kind));
       if (real.length) { bad++; out.push({ id: r.id, sentence: s, problems: real.map((p) => `${p.kind}: ${p.detail}`) }); }
     }

@@ -138,3 +138,11 @@ describe("v7 (the tuned Haiku dev run, 17 Nov): the nothing line for a yes/no qu
     expect(nothingLine("CM ku eppo varaaru", "ta", "news")).toBe("அதைப் பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
   });
 });
+
+describe("v7 (the round-2 Haiku dev run, 17 Nov): a Tamil place name alone is no search either", () => {
+  it("'முதல்வரின் அடையாறு வருகை' searches no word of Adyar's (it matched an Adyar river report and Dinamalar's Adyar news)", () => {
+    const q = "முதல்வர் அடையாறுக்கு வருகிறாரா";
+    expect(gapWords("முதல்வரின் அடையாறு வருகை", q, WORLD)).toEqual([]);
+    expect(gapWords("முதல்வர் அடையாறுக்கு வருகிறாரா", q, WORLD)).toEqual(["முதல்வர்", "வருகிறாரா"]);
+  });
+});
