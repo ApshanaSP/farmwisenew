@@ -1,0 +1,6 @@
+{"wake":"wake_zira","woke":true,"firstSound":163,"sr":"169:speechend 182:error:aborted 182:end"}
+{"wake":"wake_mark","woke":true,"firstSound":4160,"sr":"1107:final: 3723:final: 4179:speechend 4185:error:aborted 4185:end"}
+{"wake":"wake_g_puck","woke":true,"firstSound":4104,"sr":"1612:final: 4125:speechend 4129:error:aborted 4129:end"}
+{"wake":"wake_zira","woke":true,"firstSound":4141,"sr":"455:final: 3393:final: 4160:speechend 4165:error:aborted 4165:end"}
+{"wake":"wake_mark","woke":true,"firstSound":4140,"sr":"874:final: 3909:final: 4161:speechend 4166:error:aborted 4166:end"}
+{"wake":"wake_g_puck","woke":true,"firstSound":4120,"sr":"1486:final: 4140:speechend 4145:error:aborted 4145:end"}

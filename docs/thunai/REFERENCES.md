@@ -1,5 +1,27 @@
 # Thunai and Jarvis: references checked
 
+## v6 Phases 2, 3 and 6, 17 Nov 2026: speed, briefings, the feel
+
+Nothing was installed from npm. The research notes are in `docs/jarvis/v6-research/` (10 turn-taking, 20 voice-agent speed, 30 local speech, 40 news and web) with their own sources; the lines below are what this build relies on.
+
+| Item | Exact value | Licence (file read) | Used for |
+|---|---|---|---|
+| LiveKit WakeWord, "hey jarvis" model | `hey_jarvis.onnx` from `@livekit/wakeword` 2.1.2 (the model file only, not installed as a dependency: v5 found that install moves onnxruntime-web) | Apache-2.0 for code and weights (its LICENSE and NOTICE read; copied to `public/thunai/LICENSE-livekit-wakeword.txt`) | the on-device "Hey Jarvis" (`public/thunai/kws.worker.js`, on the page's own onnxruntime-web); offline 3/3 "Hey Jarvis", 0/48 false fires, "Hi Jarvis" not caught (`eval/v6/kws/offline-hey_jarvis.json`) |
+| onnxruntime-web | as installed (through `@huggingface/transformers`) | MIT (v5's record) | the wake word's and Silero's runtime |
+| LiveKit's turn detectors | not used | the LiveKit Model License says they "can only" be used with LiveKit Agents (research 10 §1) | — |
+| Gemini TTS (free tier) | `gemini-2.5-flash-preview-tts`, `gemini-3.1-flash-tts-preview`, voice Despina | Google's terms: outputs usable; free-tier inputs used to improve Google's products (an owner decision, HANDOVER) | the nine wake replies (`public/thunai/wake/`), made once; the ten briefing samples (`docs/jarvis/samples/v6/`); test clips |
+| Edge's natural voices (Neerja, Pallavi) | the browser's own | Microsoft's: text and audio deleted after conversion (v5's record) | the answer's voice; the warm-up utterance and the Tamil first-chunk length were measured on them (`eval/v6/latency/voiceprobe.json`) |
+| Windows voices (David, Zira, Mark, Ravi, Heera) | SAPI and OneCore through WinRT | the operating system's | synthetic test clips only (`tests/e2e/fixtures/v6/winvoices.ps1`) |
+
+### Methods
+
+| Item | Source | Where |
+|---|---|---|
+| Nearest-rank percentiles, n with every figure | the brief (section 4) | `scripts/jarvis6/waterfall.mjs`, `compare.mjs`, `news-latency.mjs` |
+| Blind pairwise judging with a seeded A/B order | the brief (section 8) | `src/lib/thunai/brief6.live.ts` |
+| Exact McNemar on paired rows | v5's `evalstats.ts` (the brief's vectors) | the understanding finals |
+
+
 ## v6 Phase 4, 17 Nov 2026: Jarvis reads the news and the web (`src/lib/thunai/web/`)
 
 Nothing new was installed. Licences of the packages used were read from the licence file in the installed package on 17 Nov 2026. Sources and probes are in the research note `docs/jarvis/v6-research/40-news-web.md` (not committed here); the lines below say what this build relies on.
