@@ -31,17 +31,35 @@ describe("v6: a call ends the race at once", () => {
     for (const t of ["Hi Jarvis.", "Hey Jarvis", "Jarvis?", "Hello, Jarvis!", "ஹாய் ஜார்விஸ்.", "ok jarvis"]) expect(isCall(t)).toBe(true);
     for (const t of ["Hi Jarvis, show the severe cases", "Jarvis, go to trends", "I told Jarvis about it", "show the severe cases", ""]) expect(isCall(t)).toBe(false);
   });
+  // On the test clock (fake timers), so a loaded machine cannot fail them: the real-clock version (< 400 ms) failed twice in the QA
+  // gate's two-lane load (826 and 668 ms) and passed alone. Only the race's own timers move; at 100 ms the call is answered, a request
+  // (or JARVIS_STT_NAME_FAST=0) is not.
+  async function settledBy(ms: number, p: Promise<unknown>): Promise<boolean> {
+    let done = false;
+    void p.then(() => { done = true; }, () => { done = true; });
+    await vi.advanceTimersByTimeAsync(ms);
+    return done;
+  }
   it("English 'Hi Jarvis' back at 30 ms, Tamil still running: answered well before the 700 ms translation grace", async () => {
-    const t0 = Date.now();
-    const h = await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: fake({ en: { ms: 30, text: "Hi Jarvis." }, ta: { ms: 1500, text: "ஹாய் ஜார்விஸ்." } }) });
-    expect(h).toMatchObject({ text: "Hi Jarvis.", lang: "en" });
-    expect(Date.now() - t0).toBeLessThan(400);
+    vi.useFakeTimers();
+    try {
+      const p = hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: fake({ en: { ms: 30, text: "Hi Jarvis." }, ta: { ms: 1500, text: "ஹாய் ஜார்விஸ்." } }) });
+      expect(await settledBy(100, p)).toBe(true);
+      expect(await p).toMatchObject({ text: "Hi Jarvis.", lang: "en" });
+      vi.stubEnv("JARVIS_STT_NAME_FAST", "0");
+      const v5 = hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: fake({ en: { ms: 30, text: "Hi Jarvis." }, ta: { ms: 1500, text: "ஹாய் ஜார்விஸ்." } }) });
+      expect(await settledBy(100, v5)).toBe(false);
+      await vi.advanceTimersByTimeAsync(2000);
+      await v5;
+    } finally { vi.useRealTimers(); }
   });
   it("a Tamil call back first ends it too", async () => {
-    const t0 = Date.now();
-    const h = await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: fake({ en: { ms: 1500, text: "Hi Jarvis." }, ta: { ms: 30, text: "ஹாய் ஜார்விஸ்." } }) });
-    expect(h.lang).toBe("ta");
-    expect(Date.now() - t0).toBeLessThan(400);
+    vi.useFakeTimers();
+    try {
+      const p = hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: fake({ en: { ms: 1500, text: "Hi Jarvis." }, ta: { ms: 30, text: "ஹாய் ஜார்விஸ்." } }) });
+      expect(await settledBy(100, p)).toBe(true);
+      expect((await p).lang).toBe("ta");
+    } finally { vi.useRealTimers(); }
   });
   it("a request still waits for the Tamil decode (the translation check needs it)", async () => {
     const t0 = Date.now();
