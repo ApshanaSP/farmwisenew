@@ -79,6 +79,8 @@ No free model is both faster than Groq's and as right. Groq qwen3.8-27b and gpt-
 - **Diagnosis kept from v5:** the grid selected no planner change; Tamil goes to the wide bundle; strict-mode 400s and Gemini's schema refusals were fixed in v5. With the Claude key refused there was no stronger model to try, and the free Groq allowance was spent on the latency runs and the finals, so **no planner change was made or tuned** in v6.
 - **Code lanes, tuned on the dev set only** (`eval/dev200`, no model): the place lane (a place's state asked loosely goes to the situation screen by code): **68/200 → 70/200** right through the code lanes (114 left to the planner). Misses that remain there: a taluk or locality that is not a zone (Velachery, T Nagar), spans no console window holds ("last six months", "since August"), and browser-only controls the runner does not route (theme, language).
 
+- **Side talk, no model, on the final code** (`HOLDOUT=ambient` and `ambient-engaged`, `HOLDOUT_DIR=sidetalk200`, `eval/sidetalk200/results/v6final-*.json`): with Jarvis idle **0/200 acted** (0.0-1.9 %), 60/60 unnamed commands refused, no level B or C act; inside the engaged window (Jarvis's last turn 5 s ago) 58/200 acted (29.0 %, 23.2-35.6), 54/60 commands accepted: the same as v5 (the gate is unchanged in v6).
+
 FINALS-PENDING
 
 ### Phase 6: the feel
@@ -87,11 +89,35 @@ FINALS-PENDING
 
 ### Gates
 
-GATES-PENDING
+| Gate | Command | Result |
+|---|---|---|
+| Unit suite | `npx vitest run` (on `1cf3d052`) | 504 files, 6,103 passed, 13 skipped, 0 failed (68 s) |
+| Unit suite, shuffled, four seeds and two time zones (the QA gate's lane B, final code) | `node tests/qa/pass6/suite.mjs ...` | 6,119 passed in two runs; `firstsentence.v5` failed in the other two under the gate's two-lane load (the same seed alone: 6,119 passed, 0 failed) |
+| Type check | `npx tsc --noEmit` | clean (final code) |
+| Production build | `npx next build` (the QA gate's, and the measuring bundles v6a-v6e) | green; one break found and fixed on the way (a store module in the browser bundle, `e245a5d9`), now guarded by a test |
+| Jarvis browser specs | `npx playwright test tests/e2e/mode.spec.ts tests/e2e/bargein.spec.ts tests/e2e/hold.spec.ts tests/e2e/vad.spec.ts tests/e2e/vadfake.spec.ts tests/e2e/e2e-latency.spec.ts tests/e2e/hud.spec.ts` (dev server 3011, console AI off) | on `1cf3d052`: 39/39 (13.9 min); on the final code: 38/39, the barge-in duck p90 324 ms from one outlier of 8 (the first test after the dev server started; the other seven 66-85 ms); the barge-in spec again, twice: 5/5 each, p90 86 and 85 ms |
+| QA gate | `bash tests/qa/pass7/gate-fast.sh` (final code) | tsc, lint, build, pass 7 tests 24/24, guards 39/39, access matrix, browser drive, j1 journey: all EXIT 0; pass 4 suite 2,649 passed, 0 failed (EXIT 1: one vitest worker RPC timeout under load); golden master EXIT 2 against the old baselines, as in v5: v5's own recording to v6's differs in 6 of 3,298 bodies, all in routes v6 did not touch, no status change, no 5xx. Seven QA oracles that pinned v5's briefing wording or missed the news reader's cache moved, listed in `docs/qa/pass7/V6_EXPECTED_CHANGES.md`. Known items from v4 and v5: the seed script's `pii_enc` error, RC-35's load timeout |
+| Two independent checks (read-only agents) | — | the first on the code (all findings fixed test-first), the second on the write-ups against their sources and the code since (all findings corrected; the closed same-breath command left to the owner) |
 
 ### Acceptance (against `docs/jarvis/JARVIS_V6.md`)
 
-ACCEPTANCE-PENDING
+| Brief item | Target | Result | Met? |
+|---|---|---|---|
+| Phase 0: real baseline and waterfall | measured first | `eval/v6/latency/phase0-*` (48 wakes, 12 commands, 36 questions; 12 closed tries) | yes |
+| Phase 1: research and bake-off | bounded research, a ranked plan | four notes and `PLAN.md` (15 levers); the bake-off of every free model the keys list | yes |
+| "Hi Jarvis" -> first audible reply | p50 ≤ 250, p90 ≤ 400 | "Hey Jarvis" 193 / 210 open (n 24), 163 / 185 closed (n 12); "Hi/Hello Jarvis" 636 / 826 (n 24; v5 739 / 869 on the same clips) | **for "Hey Jarvis" only** |
+| End of question -> first sound | p90 ≤ 400 | 409 / 438 (n 36) | no |
+| End of question -> first word of the answer | p50 ≤ 900, p90 ≤ 1,500 | 2,864 / 6,343 (n 33); a news read's brief 4,669 / 5,129 (n 11), after its acknowledgement line at 1,066 / 1,463 | no |
+| Simple command -> screen change | p90 ≤ 700 | 1,030 / 1,737 (n 9); rules lane alone 759 / 1,045 (n 5) | no |
+| Data question -> full answer spoken | p90 ≤ 4 s | its last word 23,617 / 37,759 (n 33); in hand on screen 2,188 / 4,200 (n 34) | no |
+| Barge-in duck | p90 ≤ 150 | 83 / 92 (n 8) | yes |
+| Every figure with n, p50, p90; before and after on real providers | — | every latency cell above | yes |
+| Phase 3: briefing 2-4 sentences, offer, grounded | dev set ≥ 30, a checker, a rubric, a blind judge, ten samples | 34 incidents (8 news-sourced, English and Tamil); 34/34 grounded, 2-4 sentences and the offer; the blind judge v6 17-5 in English, 12-10 in Tamil (even); ten samples | yes (the process); the judge's preference holds in English only |
+| Phase 4: one article read and answered | p90 ≤ 4 s | 854 / 1,304 (n 11, in the browser; 9 from the stored article, the one cold fetch 1,868) | yes |
+| Phase 4: with related coverage | p90 ≤ 8 s | not reached in the browser (no other outlet had covered the timed articles, n 0); server side 680 ms (n 1) | not verified |
+| Phase 4: safety, a test for each item | mandatory | 101 web-reader tests, 6 for the routes and the turn's own; the independent check found the reader sound | yes |
+| Phase 6: the feel; before/after stills and a headless video | to the owner before any visible change ships | `docs/jarvis/screens/v6/` | yes (the owner's approval is owed) |
+| Phase 7: gates, documents, two independent checks, branch pushed | — | the gates above (green apart from load artifacts, each reproduced green alone); both checks done; the branch pushed | yes |
 
 ### Not verified
 
