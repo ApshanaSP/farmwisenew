@@ -45,3 +45,13 @@ describe("v7: a question about people or events outside the dashboard never reac
     for (const s of ["which officer has the Adyar case", "show the severe cases in Adyar", "who complained about the drain"]) expect(asks7(s, WORLD), s).toBeNull();
   });
 });
+
+describe("v7: current events with no district word go to the news, never to a model's memory", () => {
+  it("events, deaths, results and 'today's' happenings", () => {
+    for (const s of ["how many people died in the Kerala landslide", "who won the by-election yesterday", "what happened in Bengaluru today", "கேரளா நிலச்சரிவில் எத்தனை பேர் இறந்தார்கள்"])
+      expect(asks7(s, WORLD), s).toMatchObject({ recipe: "news", why: "outside" });
+  });
+  it("timeless general questions stay the general lane's", () => {
+    for (const s of ["what is a cyclone", "what is machine learning", "explain deep learning", "what is the capital of France"]) expect(asks7(s, WORLD), s).toBeNull();
+  });
+});

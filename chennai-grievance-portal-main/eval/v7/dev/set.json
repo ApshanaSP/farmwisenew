@@ -1,0 +1,58 @@
+{
+  "about": "v7 dev set (for tuning). 48 questions, 8 in each of incident, news, compare, why, follow-up and outside-dashboard; English, Tamil (ta) and Tanglish (tg). Model-drafted, not checked by a Tamil speaker. 'news' is the index of the item on screen in the store's latest news (a news list open); 'before' is the earlier turn of a follow-up. Gold facts are computed by code from the dry-run store at run time (the fact sheet); the gold rules per kind are in src/lib/thunai/aide7/eval7.live.ts.",
+  "items": [
+    { "id": "d-inc-1", "kind": "incident", "lang": "en", "text": "tell me about the Adyar issue" },
+    { "id": "d-inc-2", "kind": "incident", "lang": "en", "text": "what is the issue in Royapuram" },
+    { "id": "d-inc-3", "kind": "incident", "lang": "en", "text": "explain the main problem in Teynampet" },
+    { "id": "d-inc-4", "kind": "incident", "lang": "ta", "text": "அடையாறு பிரச்சினை என்ன" },
+    { "id": "d-inc-5", "kind": "incident", "lang": "ta", "text": "ராயபுரம் பிரச்சனை பற்றி சொல்லுங்க" },
+    { "id": "d-inc-6", "kind": "incident", "lang": "tg", "text": "Kodambakkam issue enna" },
+    { "id": "d-inc-7", "kind": "incident", "lang": "tg", "text": "Perungudi problem pathi sollu" },
+    { "id": "d-inc-8", "kind": "incident", "lang": "en", "text": "what's going on with the flooding in Perungudi" },
+
+    { "id": "d-news-1", "kind": "news", "lang": "en", "text": "tell me about this news", "news": 0 },
+    { "id": "d-news-2", "kind": "news", "lang": "en", "text": "what is this story about", "news": 1 },
+    { "id": "d-news-3", "kind": "news", "lang": "en", "text": "explain the second article", "news": 4 },
+    { "id": "d-news-4", "kind": "news", "lang": "ta", "text": "இந்த செய்தி பற்றி சொல்லு", "news": 2 },
+    { "id": "d-news-5", "kind": "news", "lang": "tg", "text": "indha news pathi sollu", "news": 3 },
+    { "id": "d-news-6", "kind": "news", "lang": "en", "text": "summarise the news" },
+    { "id": "d-news-7", "kind": "news", "lang": "ta", "text": "இன்றைய செய்திகளைச் சொல்லுங்க" },
+    { "id": "d-news-8", "kind": "news", "lang": "en", "text": "what's in the news about Adyar" },
+
+    { "id": "d-cmp-1", "kind": "compare", "lang": "en", "text": "compare Adyar and Anna Nagar" },
+    { "id": "d-cmp-2", "kind": "compare", "lang": "en", "text": "compare everything" },
+    { "id": "d-cmp-3", "kind": "compare", "lang": "en", "text": "compare all departments" },
+    { "id": "d-cmp-4", "kind": "compare", "lang": "en", "text": "compare this week with last week" },
+    { "id": "d-cmp-5", "kind": "compare", "lang": "ta", "text": "அடையாறு, அண்ணா நகர் ஒப்பிடு" },
+    { "id": "d-cmp-6", "kind": "compare", "lang": "ta", "text": "எல்லா மண்டலங்களையும் ஒப்பிடு" },
+    { "id": "d-cmp-7", "kind": "compare", "lang": "tg", "text": "Royapuram vs Tondiarpet compare pannu" },
+    { "id": "d-cmp-8", "kind": "compare", "lang": "en", "text": "how do the zones compare this month" },
+
+    { "id": "d-why-1", "kind": "why", "lang": "en", "text": "why are complaints rising in Adyar" },
+    { "id": "d-why-2", "kind": "why", "lang": "en", "text": "why is Adyar worse than Anna Nagar" },
+    { "id": "d-why-3", "kind": "why", "lang": "en", "text": "what changed since yesterday" },
+    { "id": "d-why-4", "kind": "why", "lang": "en", "text": "why did flooding reports drop this week" },
+    { "id": "d-why-5", "kind": "why", "lang": "ta", "text": "அடையாறில் புகார்கள் ஏன் அதிகரிக்கின்றன" },
+    { "id": "d-why-6", "kind": "why", "lang": "ta", "text": "நேற்றிலிருந்து என்ன மாறியது" },
+    { "id": "d-why-7", "kind": "why", "lang": "tg", "text": "Royapuram la yen complaints jaasthi" },
+    { "id": "d-why-8", "kind": "why", "lang": "en", "text": "which department is slowest and why" },
+
+    { "id": "d-fol-1", "kind": "followup", "lang": "en", "before": "what is happening in Adyar", "text": "and in Royapuram?" },
+    { "id": "d-fol-2", "kind": "followup", "lang": "en", "before": "compare Adyar and Anna Nagar", "text": "why?" },
+    { "id": "d-fol-3", "kind": "followup", "lang": "en", "before": "show the severe cases in Teynampet", "text": "tell me about the first one" },
+    { "id": "d-fol-4", "kind": "followup", "lang": "en", "before": "what changed since yesterday", "text": "what about last week?" },
+    { "id": "d-fol-5", "kind": "followup", "lang": "ta", "before": "அடையாறு நிலவரம் என்ன", "text": "ராயபுரம் எப்படி?" },
+    { "id": "d-fol-6", "kind": "followup", "lang": "tg", "before": "Adyar la enna nadakkudhu", "text": "Perungudi la?" },
+    { "id": "d-fol-7", "kind": "followup", "lang": "en", "before": "which zone needs the most attention", "text": "tell me more about it" },
+    { "id": "d-fol-8", "kind": "followup", "lang": "en", "before": "tell me about the Adyar issue", "text": "who has it?" },
+
+    { "id": "d-out-1", "kind": "outside", "lang": "en", "text": "CM Vijay is visiting Adyar, what should I know" },
+    { "id": "d-out-2", "kind": "outside", "lang": "en", "text": "what did the Governor say about the floods" },
+    { "id": "d-out-3", "kind": "outside", "lang": "en", "text": "is the minister inaugurating the Kathipara flyover today" },
+    { "id": "d-out-4", "kind": "outside", "lang": "en", "text": "how many people died in the Kerala landslide" },
+    { "id": "d-out-5", "kind": "outside", "lang": "ta", "text": "முதல்வர் அடையாறுக்கு வருகிறாரா" },
+    { "id": "d-out-6", "kind": "outside", "lang": "ta", "text": "ஆளுநர் வெள்ளம் பற்றி என்ன சொன்னார்" },
+    { "id": "d-out-7", "kind": "outside", "lang": "tg", "text": "CM Royapuram ku eppo varaaru" },
+    { "id": "d-out-8", "kind": "outside", "lang": "en", "text": "who won the by-election in Kolathur yesterday" }
+  ]
+}

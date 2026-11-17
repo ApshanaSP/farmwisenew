@@ -9,7 +9,7 @@
  * English, Tamil and Tanglish. Anything else is null: the lanes that read it already keep it. Pure and browser-safe.
  */
 import { asciiDigits } from "./digits";
-import { zonesIn } from "./quick";
+import { districtNounIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { World } from "./types";
 
@@ -53,6 +53,14 @@ const MANY = / (?:issues|problems|list|all|every|cases|complaints) /;
  */
 const OUTSIDE_EN = / (?:cm|chief minister|deputy cm|deputy chief minister|minister|ministers|governor|mla|mlas|mp|mps|mayor|deputy mayor|prime minister|pm|president|union minister|actor|film star|celebrity|inaugurat\w*|election|elections|bypoll|by election|bandh|hartal) /;
 const OUTSIDE_TA = /முதல்வர்|முதலமைச்சர்|அமைச்சர்|ஆளுநர்|மேயர்|எம்எல்ஏ|எம்\.எல்\.ஏ|பிரதமர்|ஜனாதிபதி|திறப்பு விழா|தேர்தல்|பந்த்/u;
+/**
+ * A current event with nothing of the district in it ("how many people died in the Kerala landslide", "what happened in Bengaluru today"): the
+ * general lane would answer it from a model's memory. A strong event word is enough; "happened" needs a time word with it.
+ */
+const EVENT_STRONG = / (?:died|dead|deaths|killed|injured|missing|won|wins|elected|resigned|arrested|landslide|landslides|earthquake|tsunami|explosion|blast|crash|crashed|derailed|derailment|stampede|riot|riots) /;
+const EVENT_WEAK = / (?:happened|happening|going on|news|update|updates|latest) /;
+const NOW_WORDS = / (?:today|yesterday|tonight|this week|this morning|last night|just now|right now|recently|latest) /;
+const EVENT_TA = /இறந்த|உயிரிழ|பலி|நிலச்சரிவு|நிலநடுக்க|வெடிவிபத்து|வெடிகுண்டு|ரயில் விபத்து|கலவர|வெற்றி பெற்ற|தேர்தல் முடிவு/u;
 const OUTSIDE_STOP = new Set(("the a an is are was were be to of in on at for and or about what who when where why how will would should could can do does did any there this that these those i me my we our you know tell " +
   "say said says today tomorrow yesterday now please jarvis ok okay hey hi going coming come anything something news report reports latest").split(" "));
 /** the outside part's words, as said: the question less its district names and its asking words (at most six) */
@@ -76,7 +84,8 @@ export function asks7(text: string, w: World): Ask7 | null {
     return { recipe: "changed", slots: { period: periodOf(t, "weekly"), zones: zones.slice(0, 1), fresh: true }, why: "compare-periods" };
   if (zones.length === 2 && (WORSE.test(t) || WORSE_TA.test(t) || WORSE_TG.test(t)))
     return { recipe: "compare", slots: { zones, cat: null, period: periodOf(t, "weekly") }, why: "why-worse" };
-  if (OUTSIDE_EN.test(t) || OUTSIDE_TA.test(t)) {
+  const current = !districtNounIn(text, w) && (EVENT_STRONG.test(t) || EVENT_TA.test(t) || (EVENT_WEAK.test(t) && NOW_WORDS.test(t)));
+  if (OUTSIDE_EN.test(t) || OUTSIDE_TA.test(t) || current) {
     const gap = outsideWords(t, w);
     return zones.length
       ? { recipe: "situation", slots: { zones: zones.slice(0, 1), period: "daily", fresh: true }, why: "outside", gap }
