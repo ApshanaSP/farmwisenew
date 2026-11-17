@@ -1,4 +1,20 @@
-# Jarvis: the five-minute real-room check (v5), then the demo
+# Jarvis: the three-minute reel (v6), then the real-room check (v5)
+
+## v6: the three-minute reel (do the v5 room check below first)
+
+Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J). The headless recording of the same steps, made on the v6 production bundle with synthetic voices and real providers, is `docs/jarvis/screens/v6/reel.webm`; its stills sit beside it (`after-<n>-<moment>.png`, and `before-*` from the v5 bundle for comparison). Nothing is recorded in the room.
+
+| # | Time | Say or do | What the owner should see and hear |
+|---|---|---|---|
+| 1 | 0:00 | "Hey Jarvis." | A short spoken reply ("Yes?", one of five; Tamil when the console listens in Tamil) about 0.2 s after you stop, from the on-device wake word; the HUD ribbon says "Yes?" in the same frame. "Hi Jarvis" and "Hello Jarvis" still wake through the speech service (about 1 s, the old tone): the on-device model knows "Hey Jarvis" only. |
+| 2 | 0:10 | "Show the severe cases." | The screen changes in about a second (no model: the rules lane; the speech-to-text round trip is most of it). |
+| 3 | 0:25 | "Hey Jarvis, what's happening in Royapuram?" | The situation screen at once (code, no planner), then the briefing as an aide says it: what and since when, why it is serious (complaints, the outlet that reported it, the deadline), who has it and what is stuck (a role, never a name), what to do, then "Want the details?". |
+| 4 | 1:00 | Open the news ("show me the latest news": the console's news panel), then "Hey Jarvis, read the first article." | At once: "Reading The Hindu's report..." (the outlet named). Then a two-to-four sentence brief with the outlet and the time for each fact; if another outlet covered it, what agrees and differs. The Stage shows what was said and every source as a link ("From the web" in its notes). Then "What did the Met department say about tonight's rain?": "Looking that up on the web..." and the Met department's latest alert from NDMA SACHET, or that there is none, with the link. |
+| 5 | 2:00 | "Hey Jarvis, தேனாம்பேட்டை எப்படி இருக்கு?" | The same situation screen and briefing in Tamil (the Tamil lines are model-drafted, not checked by a Tamil speaker). |
+| 6 | 2:30 | While Jarvis is speaking, say "Wait." | The voice ducks at once and stops; Jarvis listens. "mm" or "okay" over it does not stop it. |
+
+If the news step says it could not read the web: the outlets' feeds or the network are down, or the outlet is not on `chennai-grievance-portal-main/config/jarvis-web-domains.json` (the owner's allow/deny list).
+
 
 ## v5: the five-minute real-room check (do this first)
 
