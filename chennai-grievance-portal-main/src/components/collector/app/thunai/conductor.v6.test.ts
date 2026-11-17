@@ -123,6 +123,18 @@ describe("v6: the on-device wake word in the conductor", () => {
     expect(ev).toEqual(["wakeWord"]);
     c.close();
   });
+  it("over Jarvis's voice no reply is due, so the call's transcript is not marked answered and the name still gets its reply (the independent check, 17 Nov)", async () => {
+    const { c, e, named } = await boot();
+    mouth.speaking = true;
+    e.hooks.onVad({ type: "start", at: 1000 }, 0);
+    e.hooks.onVad({ type: "end", at: 2000, ms: 700, short: false }, 0);
+    e.hooks.onWakeWord?.(performance.now(), 0.9);
+    mouth.speaking = false;
+    posts[posts.length - 1].res(new Response(JSON.stringify({ text: "Hey Jarvis.", lang: "en", conf: { speech: 0.98, logprob: -0.1 } }), { status: 200 }));
+    await flush();
+    expect(named).toEqual([{ replied: false }]);
+    c.close();
+  });
   it("the call's own transcript (the name alone) comes back marked as answered; a name heard with no wake word is not", async () => {
     const { c, e, named } = await boot();
     e.hooks.onVad({ type: "start", at: 1000 }, 0);

@@ -101,3 +101,35 @@ export class Kws {
     this.w = null; this.ready = false; this.buf = [];
   }
 }
+
+/**
+ * v6 (the independent check, 17 Nov): closed, the on-device wake word fires at the name. If the Collector then pauses, Jarvis opens and
+ * replies at once; if they go straight on ("Hey Jarvis, show the severe cases"), the sentence is the browser recogniser's to bring whole
+ * (its `rest`, as v5 did), so Jarvis does not open over it and lose its words. QuietMeter tells the two apart on the wake listener's own
+ * audio: quiet since the last frame well above the room's floor.
+ */
+export class QuietMeter {
+  private floor = Infinity;
+  private lastVoiced: number | null = null;
+  /** one frame of audio at `now` (ms, the page clock) */
+  push(frame: Float32Array, now: number) {
+    let s = 0;
+    for (let i = 0; i < frame.length; i++) s += frame[i] * frame[i];
+    const db = 10 * Math.log10(s / Math.max(1, frame.length) + 1e-12);
+    // the floor follows the room down at once and up slowly (speech never lifts it far)
+    this.floor = db < this.floor ? db : this.floor + 0.02;
+    if (db > this.floor + 15) this.lastVoiced = now;
+  }
+  /** ms since the last voiced frame (Infinity: none yet) */
+  quietMs(now: number): number { return this.lastVoiced == null ? Infinity : Math.max(0, now - this.lastVoiced); }
+}
+/** how long after the name a pause still means "the name alone", ms; and how long the recogniser may take to bring a sentence */
+export const WAKE_NAME_ALONE_MS = 400;
+export const WAKE_SENTENCE_WAIT_MS = 4000;
+/** open now (and reply), or wait for the recogniser's sentence */
+export function wakeWait(o: { sinceKws: number; quietMs: number; recogniser: boolean; quietNeeded: number }): "open" | "wait" {
+  if (!o.recogniser) return "open";
+  if (o.sinceKws <= WAKE_NAME_ALONE_MS && o.quietMs >= o.quietNeeded) return "open";
+  if (o.sinceKws >= WAKE_SENTENCE_WAIT_MS) return "open";
+  return "wait";
+}

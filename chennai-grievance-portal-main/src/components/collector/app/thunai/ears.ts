@@ -18,7 +18,7 @@
  * capture. The conductor decides what to do with them; the end of utterance is decided here exactly as before.
  */
 import { EnergyVad, frameDb, ProbVad, TUNING, type VadEvent } from "@/lib/thunai/vad";
-import { Kws, kwsMode, To16k } from "./kws";
+import { Kws, kwsMode, QuietMeter, To16k } from "./kws";
 
 export type EarsError = "blocked" | "nomic" | "unsupported" | "failed";
 
@@ -396,8 +396,11 @@ export class WakeEars {
   private kws: Kws | null = null;
   private off: number | null = null;
   private gen = 0;
+  private meter = new QuietMeter();
   constructor(private onWake: (at: number) => void) {}
   get live(): boolean { return !!this.kws?.live; }
+  /** v6: ms since the last voiced frame on this listener's own audio (whether the Collector paused after the name) */
+  get quietMs(): number { return this.meter.quietMs(performance.now()); }
   async start(): Promise<boolean> {
     if (typeof window === "undefined" || kwsMode() !== "all") return false;
     const W = window as unknown as { AudioContext?: typeof AudioContext };
@@ -423,6 +426,7 @@ export class WakeEars {
         const off = performance.now() - (ev.data.total / rate) * 1000;
         this.off = this.off == null ? off : Math.min(off, this.off + 0.02);
         k.feed(k16.push(ev.data.frame));
+        this.meter.push(ev.data.frame, performance.now());
       };
       return true;
     } catch {

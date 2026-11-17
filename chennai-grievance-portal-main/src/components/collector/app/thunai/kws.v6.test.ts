@@ -4,7 +4,7 @@
  * stand-in here; the model is measured offline (scripts/jarvis6/kws-offline.mjs) and in the real-path spec.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Kws, kwsMode, kwsThreshold, To16k } from "./kws";
+import { Kws, kwsMode, kwsThreshold, QuietMeter, To16k, wakeWait } from "./kws";
 import { nextVariant, wakeReplyMode } from "./mouth";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
@@ -102,5 +102,29 @@ describe("the wake reply's variant: never the same twice in a row", () => {
     }
     expect(nextVariant(1, 0, 0.5)).toBe(0);
     expect(nextVariant(4, -1, 0.99)).toBeLessThan(4);
+  });
+});
+
+describe("closed, the name heard on the device: reply at once after a pause, or leave a sentence said in the same breath to the recogniser (the independent check, 17 Nov)", () => {
+  const tone = (amp: number, n = 480) => { const f = new Float32Array(n); for (let i = 0; i < n; i++) f[i] = amp * Math.sin(i / 3); return f; };
+  it("QuietMeter: quiet since the last frame well above the room's floor", () => {
+    const q = new QuietMeter();
+    for (let t = 0; t < 1000; t += 10) q.push(tone(0.0008), t);
+    expect(q.quietMs(1000)).toBe(Infinity);
+    q.push(tone(0.2), 1010);
+    q.push(tone(0.0008), 1020);
+    expect(q.quietMs(1100)).toBe(90);
+  });
+  it("wakeWait: a pause soon after the name opens with the reply; speech going on waits for the recogniser's sentence, up to its limit", () => {
+    // no recogniser running (it failed, or never started): open now, as before
+    expect(wakeWait({ sinceKws: 0, quietMs: 0, recogniser: false, quietNeeded: 90 })).toBe("open");
+    // the Collector stopped after the name
+    expect(wakeWait({ sinceKws: 120, quietMs: 95, recogniser: true, quietNeeded: 90 })).toBe("open");
+    // still talking 120 ms on: keep waiting
+    expect(wakeWait({ sinceKws: 120, quietMs: 10, recogniser: true, quietNeeded: 90 })).toBe("wait");
+    // talked on past the first moments: a sentence; its end is not the name's pause, the recogniser brings the words
+    expect(wakeWait({ sinceKws: 1500, quietMs: 300, recogniser: true, quietNeeded: 90 })).toBe("wait");
+    // the recogniser never answered: open, with the reply, at the limit
+    expect(wakeWait({ sinceKws: 4000, quietMs: 300, recogniser: true, quietNeeded: 90 })).toBe("open");
   });
 });

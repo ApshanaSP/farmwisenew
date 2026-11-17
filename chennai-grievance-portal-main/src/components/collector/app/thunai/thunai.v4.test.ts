@@ -74,7 +74,7 @@ describe("captions only while hearing (defect 10)", () => {
     const a = src.indexOf("  // \"Hi Jarvis\": closed, the browser");
     const b = src.indexOf("}, [mode]);", a) + "}, [mode]);".length;
     expect(a).toBeGreaterThan(-1);
-    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("02e5ac46d74408f6095c056c84503c22c3e16080d399249fc075582e4796c750");
+    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("027e9d2df1f28d8c118797ce35d8f6bc0c641c8b8ac8f4155f2a3cfc99ef034f");
     const block = src.slice(a, b);
     // still: only while closed, after the first-use notice, with the microphone already allowed, never while the tab is hidden; the browser's
     // own recogniser still listens for the name
@@ -82,6 +82,8 @@ describe("captions only while hearing (defect 10)", () => {
     expect(block).toContain("startWake({");
     expect(block).toContain('st.state === "granted"');
     expect(block).toContain("document.hidden");
+    // v6 (the independent check, 17 Nov): the device's wake word waits for a pause after the name, or leaves a sentence to the recogniser
+    expect(block).toContain("wakeWait({");
   });
 });
 

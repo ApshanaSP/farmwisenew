@@ -24,7 +24,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodSchema } from "ai";
 import type { z } from "zod";
-import { budgetLeft, recordClaude } from "@/lib/ai/claudebudget";
+import { beginClaude, budgetLeft, endClaude, recordClaude, recordEstimate } from "@/lib/ai/claudebudget";
 import { keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { compactPlan, type CompactPlan } from "@/lib/thunai/compact";
 import { ledger } from "@/lib/thunai/ledger";
@@ -470,6 +470,23 @@ export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonRes
   }
 }
 
+/**
+ * v6: one Claude request under the owner's spend ceiling: it holds one call's margin while it is out (claudebudget.ts beginClaude), and a
+ * request that was sent but never answered (aborted, timed out: it may still be billed) is counted at its worst case. The independent
+ * check, 17 Nov, found both uncounted.
+ */
+async function billed<R>(model: string, body: { max_tokens: number }, send: () => Promise<R>): Promise<R> {
+  beginClaude();
+  try {
+    return await send();
+  } catch (e) {
+    if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError") recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
+    throw e;
+  } finally {
+    endClaude();
+  }
+}
+
 async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input: number; output: number; cacheRead: number; cacheWrite: number }): Promise<ClaudeJsonResult<T>> {
   const t0 = Date.now();
   const timeout = a.timeoutMs ?? (a.role ? Number(env("AI_CLAUDE_TIMEOUT_MS")) || 25_000 : 6000);
@@ -486,7 +503,8 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
     const tA = Date.now();
     const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: a.name, model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: !!plan, warm: false }, r);
     try {
-      res = await client().beta.messages.create(requestBody(a, model, sch, useFormat ? "format" : "json", prompt), { timeout, signal: a.abortSignal });
+      const body = requestBody(a, model, sch, useFormat ? "format" : "json", prompt);
+      res = await billed(model, body, () => client().beta.messages.create(body, { timeout, signal: a.abortSignal }));
     } catch (e) {
       if (a.abortSignal?.aborted) { ev("aborted"); throw e; }
       const schemaRefused = useFormat && e instanceof Anthropic.BadRequestError && !/credit balance/i.test(e.message) && /schema|output_config|format|compil/i.test(e.message);
@@ -592,7 +610,7 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
     const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: "warm", model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: sent !== w.schema, warm: true }, r);
     try {
       const body = requestBody({ system: w.system }, model, sch, mode, "warm", maxTokens);
-      const res = await client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 }).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
+      const res = await billed(model, body, () => client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 })).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
       ev("ok", res);
       keyWorks("anthropic");
       recordClaude(res.model || model, res.usage);

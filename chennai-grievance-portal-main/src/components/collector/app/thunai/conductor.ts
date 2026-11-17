@@ -579,9 +579,11 @@ export class Conductor {
    */
   private wakeWord(at: number) {
     this.h.mark?.("kws", at);
-    this.kwsAt = Date.now();
     this.engage();
     const over = speaking();
+    // the call counts as answered only when a reply is due for it: over Jarvis's voice none is, so its transcript still gets one (the
+    // independent check, 17 Nov: it was marked answered and the Collector heard nothing)
+    this.kwsAt = over ? 0 : Date.now();
     if (this.m.state === "paused") this.dispatch({ type: "words", text: "hey jarvis" });
     this.h.onWakeWord?.({ at, overVoice: over });
     this.replyDue = over ? null : performance.now();
