@@ -449,7 +449,9 @@ export async function storyDept(cats: (string | null)[], titles: { title: string
 
 /** One news report's address and headline, for fetching its full text (fulltext.ts). */
 export async function newsDoc(id: string) {
-  const [r] = await q(`SELECT doc_id AS id, url, title, title_en, publisher, publisher_domain, publisher_tier, body FROM documents WHERE doc_id = ?`, [id]);
+  // t, place and cat for Jarvis's news reader (lib/thunai/web/serve.ts): when it was published (IST), the place and category the monitor read
+  const [r] = await q(`SELECT doc_id AS id, url, title, title_en, publisher, publisher_domain, publisher_tier, body,
+     DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t, place_text AS place, category_code AS cat FROM documents WHERE doc_id = ?`, [id]);
   return r ?? null;
 }
 

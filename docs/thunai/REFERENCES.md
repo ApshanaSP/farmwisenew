@@ -1,5 +1,36 @@
 # Thunai and Jarvis: references checked
 
+## v6 Phase 4, 17 Nov 2026: Jarvis reads the news and the web (`src/lib/thunai/web/`)
+
+Nothing new was installed. Licences of the packages used were read from the licence file in the installed package on 17 Nov 2026. Sources and probes are in the research note `docs/jarvis/v6-research/40-news-web.md` (not committed here); the lines below say what this build relies on.
+
+### Dependencies (already in `package.json`)
+
+| Item | Exact value | Licence (file read) | Used for |
+|---|---|---|---|
+| @mozilla/readability | 0.6.0 (installed) | Apache-2.0 (`node_modules/@mozilla/readability/LICENSE.md` read: "Copyright (c) 2010 Arc90 Inc", "Licensed under the Apache License, Version 2.0") | the article's main text (`src/lib/collector/pageread.ts`, shared with the console's article view) |
+| linkedom | 0.18.13 (installed) | ISC (`node_modules/linkedom/LICENSE` read: "ISC License, Copyright (c) 2021, Andrea Giammarchi, @WebReflection") | the DOM Readability runs on; block-aware text (`web/read.ts`) |
+| zod | as installed | (existing dependency, not re-read) | the domain list's and the model reply's schemas |
+
+### Sources read at run time (allow-list: `config/jarvis-web-domains.json`)
+
+| Source | Terms as relied on | Status |
+|---|---|---|
+| The outlets' own RSS feeds and news sitemaps (The Hindu, Times of India, DT Next, New Indian Express, Dinamani, Dinamalar, Daily Thanthi) | public feeds; robots.txt honoured for `ChennaiDistrictNewsDataset` on every request and redirect hop | all 7 feeds and their robots.txt answered 200 in this build's timing runs; each publisher's feed terms were **not read** (as the research note's "Not verified") |
+| NDMA SACHET CAP RSS `https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml` | the feed states "public domain" (research probe; not re-read in this build) | used only for the Met department's warnings; no query sent |
+| Wikipedia REST (`/w/rest.php/v1/search/page`, `/api/rest_v1/page/summary/`) | CC BY-SA 4.0 (attribution and licence on screen); Wikimedia User-Agent policy (bot UA, never a browser's); the owner's file exempts these two API paths from robots.txt's `/api/` and `/w/` disallow (the research's reading that the API policy sanctions them; **an owner decision**, `robotsExempt`) | not called live in this build (tests only) |
+| Google News RSS | refused (denied on the list): its robots.txt disallows `/rss` | never fetched |
+| GDELT DOC 2.0 | not used (11-16 s and 429s in the research probes) | denied on the list |
+
+### Methods
+
+| Item | Source | Where |
+|---|---|---|
+| robots.txt: 4xx allows all, 5xx or unreachable disallows all, follow at least 5 redirects | RFC 9309, https://www.rfc-editor.org/rfc/rfc9309.html | `web/fetch.ts` robotsOk |
+| SSRF: allow-list, every DNS answer checked, connection pinned to the checked address, each redirect re-checked | OWASP SSRF Prevention Cheat Sheet, https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html | `web/fetch.ts` (with `lib/netsafe.ts` and `lib/studio/fetchurl.ts` pinnedFetchWith) |
+| Datamarking (spotlighting) for page text given to a model | Hines et al., arXiv 2403.14720, https://arxiv.org/abs/2403.14720 | `web/compare.ts`, optional step (`JARVIS_WEB_MODEL=1`, default off) |
+| Untrusted input never triggers an action; quoted claims checked verbatim | Beurer-Kellner et al., arXiv 2506.08837, https://arxiv.org/abs/2506.08837 ; OWASP LLM01:2025, https://genai.owasp.org/llmrisk/llm01-prompt-injection/ | `web/compare.ts`, `web/serve.ts` (events carry no steps or tools) |
+
 ## v5, 15-16 Nov 2026 (brief: docs/jarvis/JARVIS_V5_BUILD_2.md, section 17)
 
 "Verified" and "unverified" are as the research graded them on 15 Nov 2026 unless this build checked a line itself (marked "checked in this build"). No grade was raised without opening the source. Licences of dependencies were read from the licence file in the installed package.

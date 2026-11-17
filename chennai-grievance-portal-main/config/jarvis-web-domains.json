@@ -1,0 +1,54 @@
+{
+  "_help": [
+    "Jarvis's web reader (src/lib/thunai/web) fetches ONLY hosts on this list. Edit it to add or remove a source; no restart is needed (re-read within a minute).",
+    "A host entry 'example.com' covers example.com and www.example.com; '*.example.com' covers example.com and every name under it.",
+    "deny wins over allow; a host on neither list is refused. If this file is missing or invalid, the same defaults in code are used.",
+    "outlets: the news outlets whose own feeds are matched for related coverage (no query ever leaves the server).",
+    "robotsExempt: documented public APIs (with published bot rate limits) read although robots.txt asks crawlers to keep out of /api/: an owner decision; empty it to obey robots.txt there too.",
+    "contact: a URL or email for the Wikipedia User-Agent (Wikimedia's policy asks for one); leave empty to send none."
+  ],
+  "version": 1,
+  "allow": [
+    "thehindu.com",
+    "timesofindia.indiatimes.com",
+    "dtnext.in",
+    "newindianexpress.com",
+    "dinamani.com",
+    "dinamalar.com",
+    "dailythanthi.com",
+    "sachet.ndma.gov.in",
+    "mausam.imd.gov.in",
+    "*.wikipedia.org"
+  ],
+  "deny": [
+    "news.google.com",
+    "api.gdeltproject.org",
+    "localhost",
+    "*.local",
+    "*.internal"
+  ],
+  "outlets": [
+    { "id": "thehindu", "name": "The Hindu", "nameTa": "தி இந்து", "lang": "en", "domains": ["thehindu.com"],
+      "feeds": ["https://www.thehindu.com/news/cities/chennai/feeder/default.rss"] },
+    { "id": "toi", "name": "The Times of India", "nameTa": "டைம்ஸ் ஆஃப் இந்தியா", "lang": "en", "domains": ["timesofindia.indiatimes.com"],
+      "feeds": ["https://timesofindia.indiatimes.com/rssfeeds/2950623.cms"] },
+    { "id": "dtnext", "name": "DT Next", "nameTa": "டிடி நெக்ஸ்ட்", "lang": "en", "domains": ["dtnext.in"],
+      "feeds": ["https://www.dtnext.in/api/v1/collections/newschennai-news.rss"] },
+    { "id": "nie", "name": "The New Indian Express", "nameTa": "நியூ இந்தியன் எக்ஸ்பிரஸ்", "lang": "en", "domains": ["newindianexpress.com"],
+      "feeds": ["https://www.newindianexpress.com/api/v1/collections/chennai-cities.rss"] },
+    { "id": "dinamani", "name": "Dinamani", "nameTa": "தினமணி", "lang": "ta", "domains": ["dinamani.com"],
+      "feeds": ["https://www.dinamani.com/stories.rss"] },
+    { "id": "dinamalar", "name": "Dinamalar", "nameTa": "தினமலர்", "lang": "ta", "domains": ["dinamalar.com"],
+      "feeds": ["https://www.dinamalar.com/sitemap_latest.xml"] },
+    { "id": "dailythanthi", "name": "Daily Thanthi", "nameTa": "தினத்தந்தி", "lang": "ta", "domains": ["dailythanthi.com"],
+      "feeds": ["https://www.dailythanthi.com/api/v1/collections/tamilnadu-news.rss"] }
+  ],
+  "sources": {
+    "sachet": { "name": "the NDMA alert feed", "nameTa": "தேசிய பேரிடர் மேலாண்மை ஆணையத்தின் எச்சரிக்கை தளம்", "url": "https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml" },
+    "wikipedia": { "name": "Wikipedia", "nameTa": "விக்கிப்பீடியா", "url": "https://en.wikipedia.org" }
+  },
+  "robotsExempt": {
+    "en.wikipedia.org": ["/api/rest_v1/page/summary/", "/w/rest.php/v1/search/page"]
+  },
+  "contact": ""
+}

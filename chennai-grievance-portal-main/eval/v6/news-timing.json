@@ -1,0 +1,239 @@
+{
+  "note": "Measured on this PC against the live outlets; ms from the start of the news turn (server side, no network to the browser).",
+  "at": "2026-11-17T07:37:37.520Z",
+  "articles": [
+    {
+      "outlet": "The Hindu",
+      "url": "https://www.thehindu.com/news/national/andhra-pradesh/cyclone-akvan-540-km-of-andhra-and-yanam-coast-braces-for-november-20-landfall/article71710410.ece"
+    },
+    {
+      "outlet": "DT Next",
+      "url": "https://www.dtnext.in/news/chennai/fake-books-scam-dvac-arrests-chennai-based-publisher"
+    },
+    {
+      "outlet": "The New Indian Express",
+      "url": "https://www.newindianexpress.com/cities/chennai/2026/Nov/17/man-steals-car-girl-wakes-up-to-abduction-nightmare-in-chennai"
+    }
+  ],
+  "turn": {
+    "cold": {
+      "first": {
+        "n": 3,
+        "p50": 0,
+        "p90": 1,
+        "min": 0,
+        "max": 1
+      },
+      "articleBrief": {
+        "n": 3,
+        "p50": 368,
+        "p90": 915,
+        "min": 295,
+        "max": 915
+      },
+      "coverageBrief": {
+        "n": 1,
+        "p50": 680,
+        "p90": 680,
+        "min": 680,
+        "max": 680
+      },
+      "done": {
+        "n": 3,
+        "p50": 680,
+        "p90": 916,
+        "min": 488,
+        "max": 916
+      }
+    },
+    "warmFeeds": {
+      "first": {
+        "n": 3,
+        "p50": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "articleBrief": {
+        "n": 3,
+        "p50": 191,
+        "p90": 204,
+        "min": 156,
+        "max": 204
+      },
+      "coverageBrief": {
+        "n": 1,
+        "p50": 229,
+        "p90": 229,
+        "min": 229,
+        "max": 229
+      },
+      "done": {
+        "n": 3,
+        "p50": 191,
+        "p90": 229,
+        "min": 156,
+        "max": 229
+      }
+    }
+  },
+  "stages": {
+    "pageFetch": {
+      "n": 6,
+      "p50": 183,
+      "p90": 495,
+      "min": 133,
+      "max": 495
+    },
+    "extract": {
+      "n": 6,
+      "p50": 21,
+      "p90": 375,
+      "min": 18,
+      "max": 375
+    },
+    "robotsFetch": {
+      "n": 21,
+      "p50": 126,
+      "p90": 211,
+      "min": 90,
+      "max": 311
+    },
+    "feedFetch": {
+      "n": 21,
+      "p50": 291,
+      "p90": 404,
+      "min": 198,
+      "max": 471
+    },
+    "relatedCoverageCold": {
+      "n": 3,
+      "p50": 492,
+      "p90": 674,
+      "min": 487,
+      "max": 674
+    },
+    "relatedCoverageWarmFeeds": {
+      "n": 3,
+      "p50": 14,
+      "p90": 224,
+      "min": 10,
+      "max": 224
+    }
+  },
+  "statuses": {
+    "robots:ok": 21,
+    "feed:ok": 21,
+    "page:ok": 8
+  },
+  "runs": [
+    {
+      "mode": "cold",
+      "outlet": "The Hindu",
+      "url": "https://www.thehindu.com/news/national/andhra-pradesh/cyclone-akvan-540-km-of-andhra-and-yanam-coast-braces-for-november-20-landfall/article71710410.ece",
+      "status": "ok",
+      "sentences": 2,
+      "related": 0,
+      "relatedOutlets": [],
+      "first": 1,
+      "article": 915,
+      "relatedAt": 916,
+      "done": 916,
+      "pageFetchMs": 495,
+      "extractMs": 375,
+      "relatedMs": 492,
+      "robotsFetched": 7
+    },
+    {
+      "mode": "cold",
+      "outlet": "DT Next",
+      "url": "https://www.dtnext.in/news/chennai/fake-books-scam-dvac-arrests-chennai-based-publisher",
+      "status": "ok",
+      "sentences": 2,
+      "related": 1,
+      "relatedOutlets": [
+        "The Hindu (article)"
+      ],
+      "first": 0,
+      "article": 295,
+      "relatedAt": 675,
+      "coverage": 680,
+      "done": 680,
+      "pageFetchMs": 264,
+      "extractMs": 26,
+      "relatedMs": 674,
+      "robotsFetched": 7
+    },
+    {
+      "mode": "cold",
+      "outlet": "The New Indian Express",
+      "url": "https://www.newindianexpress.com/cities/chennai/2026/Nov/17/man-steals-car-girl-wakes-up-to-abduction-nightmare-in-chennai",
+      "status": "ok",
+      "sentences": 2,
+      "related": 0,
+      "relatedOutlets": [],
+      "first": 0,
+      "article": 368,
+      "relatedAt": 488,
+      "done": 488,
+      "pageFetchMs": 322,
+      "extractMs": 43,
+      "relatedMs": 487,
+      "robotsFetched": 7
+    },
+    {
+      "mode": "warm-feeds",
+      "outlet": "The Hindu",
+      "url": "https://www.thehindu.com/news/national/andhra-pradesh/cyclone-akvan-540-km-of-andhra-and-yanam-coast-braces-for-november-20-landfall/article71710410.ece",
+      "status": "ok",
+      "sentences": 2,
+      "related": 0,
+      "relatedOutlets": [],
+      "first": 0,
+      "article": 156,
+      "relatedAt": 156,
+      "done": 156,
+      "pageFetchMs": 133,
+      "extractMs": 21,
+      "relatedMs": 10,
+      "robotsFetched": 0
+    },
+    {
+      "mode": "warm-feeds",
+      "outlet": "DT Next",
+      "url": "https://www.dtnext.in/news/chennai/fake-books-scam-dvac-arrests-chennai-based-publisher",
+      "status": "ok",
+      "sentences": 2,
+      "related": 1,
+      "relatedOutlets": [
+        "The Hindu (article)"
+      ],
+      "first": 0,
+      "article": 204,
+      "relatedAt": 225,
+      "coverage": 229,
+      "done": 229,
+      "pageFetchMs": 183,
+      "extractMs": 18,
+      "relatedMs": 224,
+      "robotsFetched": 0
+    },
+    {
+      "mode": "warm-feeds",
+      "outlet": "The New Indian Express",
+      "url": "https://www.newindianexpress.com/cities/chennai/2026/Nov/17/man-steals-car-girl-wakes-up-to-abduction-nightmare-in-chennai",
+      "status": "ok",
+      "sentences": 2,
+      "related": 0,
+      "relatedOutlets": [],
+      "first": 0,
+      "article": 191,
+      "relatedAt": 191,
+      "done": 191,
+      "pageFetchMs": 171,
+      "extractMs": 19,
+      "relatedMs": 14,
+      "robotsFetched": 0
+    }
+  ]
+}
