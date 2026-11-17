@@ -11,7 +11,7 @@
 import type { Lang } from "../types";
 import type { Fact7 } from "./ground";
 
-export const WRITER_SYSTEM = `You are Jarvis, the spoken aide to the District Collector of Chennai. The Collector is looking at a screen that already shows the details. Your job is to say the point, the way a trusted senior aide briefs a busy officer in person: short, calm, specific.
+export const WRITER_SYSTEM_EN = `You are Jarvis, the spoken aide to the District Collector of Chennai. The Collector is looking at a screen that already shows the details. Your job is to say the point, the way a trusted senior aide briefs a busy officer in person: short, calm, specific.
 
 Write the spoken answer from the FACTS only.
 
@@ -48,14 +48,22 @@ S: Sewage has been overflowing on Velachery Main Road since Monday, and it is pa
 S: 14 people have complained, yet Metro Water still has no officer on it. [F4,F5]
 S: A word with Metro Water to get an officer assigned would move it. [F4]
 A bad answer (it reads the screen): "Incident: drain overflow. Status: open. Severity: severe. Department: Metro Water. Complaints: 14."
+If the question were "Is the Minister visiting Velachery?" with only these facts:
+GAP: the Minister's visit
+S: I have nothing on a visit; what the console shows there is the sewage overflow on Velachery Main Road. [F1]`;
+
+/** The Tamil turn's instructions: the English ones and the example said in spoken Tamil (MODEL-DRAFTED, not checked by a Tamil speaker). */
+export const WRITER_SYSTEM_TA = `${WRITER_SYSTEM_EN}
 The same good answer in Tamil:
 GAP: none
 S: வேளச்சேரி மெயின் ரோட்டில் திங்கள்கிழமையிலிருந்து கழிவுநீர் வழிகிறது, காலக்கெடுவும் தாண்டிவிட்டது. [F1,F2,F3]
 S: 14 பேர் புகார் கொடுத்திருக்கிறார்கள், ஆனால் மெட்ரோ வாட்டரில் இன்னும் எந்த அதிகாரியும் இல்லை. [F4,F5]
 S: மெட்ரோ வாட்டரிடம் ஒரு அதிகாரியை நியமிக்கச் சொன்னால் வேலை நகரும். [F4]
-If the question were "Is the Minister visiting Velachery?" with only these facts:
-GAP: the Minister's visit
-S: I have nothing on a visit; what the console shows there is the sewage overflow on Velachery Main Road. [F1]`;
+`;
+/** The instructions for an answer in this language: fixed bytes per language (each its own cached prefix). */
+export const writerSystem = (lang: Lang): string => (lang === "ta" ? WRITER_SYSTEM_TA : WRITER_SYSTEM_EN);
+/** (v7 tests and older callers) the English instructions */
+export const WRITER_SYSTEM = WRITER_SYSTEM_EN;
 
 const LANG_NAME: Record<Lang, string> = { en: "English", ta: "Tamil (spoken Tamil, in Tamil script)" };
 
@@ -74,4 +82,4 @@ export function userMessage(a: { question: string; lang: Lang; note: string; fac
 }
 
 /** Rough tokens of a call, for the ladder's room check (the same rate llm.ts estimates at). */
-export const writerTokens = (prompt: string, maxOut: number) => Math.ceil((WRITER_SYSTEM.length + prompt.length) / 3.5) + Math.round(maxOut * 0.4);
+export const writerTokens = (prompt: string, maxOut: number, lang: Lang = "en") => Math.ceil((writerSystem(lang).length + prompt.length) / 3.5) + Math.round(maxOut * 0.4);

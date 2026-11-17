@@ -13,7 +13,7 @@
 import type { Lang } from "../types";
 import type { Rung } from "../llm";
 import { checkSentence, parseLine, placesOf, type Fact7, type Problem, type Sheet7 } from "./ground";
-import { userMessage, WRITER_SYSTEM, writerTokens } from "./prompt";
+import { userMessage, writerSystem, writerTokens } from "./prompt";
 import { firstTextMs, openRung, writerRungs, type OpenRung } from "./stream";
 
 export interface WriteInput {
@@ -77,7 +77,7 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
   const out: Written = { sentences: [], by: "model", model: null, gap: null, rejected: [], firstMs: null, ms: 0, tokens: 0, calls: 0, hops: [], facts: input.sheet.facts.length };
   let retry: string | null = null;
   const prompt0 = userMessage({ question: input.question, lang: input.lang, note: input.note, facts: input.sheet.facts, last: input.last });
-  const rungs = (o.rungs ?? writerRungs)(writerTokens(prompt0, MAX_OUT));
+  const rungs = (o.rungs ?? writerRungs)(writerTokens(prompt0, MAX_OUT, input.lang));
   let reasked = false;
   for (let i = 0; i < rungs.length && !out.sentences.length; ) {
     if (o.signal?.aborted) throw new DOMException("aborted", "AbortError");
@@ -124,7 +124,7 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
     const tUntil = setTimeout(() => stop.abort(), Math.max(0, o.until - now()));
     out.calls++;
     try {
-      const done = await open(rung, { name: "jarvis_aide", system: WRITER_SYSTEM, prompt, maxOutputTokens: MAX_OUT, user: o.user, signal, timeoutMs: Math.max(1000, o.until - now()) }, onText);
+      const done = await open(rung, { name: "jarvis_aide", system: writerSystem(input.lang), prompt, maxOutputTokens: MAX_OUT, user: o.user, signal, timeoutMs: Math.max(1000, o.until - now()) }, onText);
       out.tokens += done.tokens;
       // the last line has no newline after it; a reply cut off at its token limit leaves an unfinished line, which is not said
       if (done.stop !== "max_tokens" && done.stop !== "length") line(buf);
