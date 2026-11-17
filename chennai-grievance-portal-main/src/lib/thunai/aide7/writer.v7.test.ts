@@ -120,3 +120,12 @@ ${GOOD}` }] }), { onSentence: (s) => heard.push(s) }));
     expect(fallbackLines("12 headlines. Reading them now.")).toEqual(["12 headlines."]);
   });
 });
+
+describe("v7 (the tuned Haiku dev run, 17 Nov): the writer leaves the 'nothing on it' line to code, and says 'not why' only to a why", () => {
+  it("its instructions say so, and their example no longer shows the writer saying it has nothing", () => {
+    expect(WRITER_SYSTEM).toMatch(/do not say that you have nothing on it/);
+    expect(WRITER_SYSTEM).not.toMatch(/S: I have nothing on/);
+    expect(WRITER_SYSTEM).toMatch(/Never say that in an answer to any other question/);
+    expect(WRITER_SYSTEM).toMatch(/only if it bears on the question/);
+  });
+});

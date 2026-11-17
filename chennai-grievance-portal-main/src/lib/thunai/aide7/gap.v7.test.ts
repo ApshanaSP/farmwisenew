@@ -127,3 +127,14 @@ describe("v7 (the Haiku dev run, 17 Nov): the question reaches the checker", () 
     expect(a.written.sentences[0]).toBe("I have nothing on the Governor visiting Adyar.");
   });
 });
+
+describe("v7 (the tuned Haiku dev run, 17 Nov): the nothing line for a yes/no question, in Tamil, and from Tanglish", () => {
+  it("a yes/no question is said as 'whether ...'", () => {
+    expect(gapPhrase("the Minister's plans to inaugurate the Kathipara flyover today", "is the minister inaugurating the Kathipara flyover today")).toBe("whether the minister is inaugurating the Kathipara flyover today");
+    expect(gapPhrase("CM Vijay coming", "is CM Vijay coming to Adyar")).toBe("CM Vijay coming");
+  });
+  it("Tamil: a question-form phrase takes 'என்பது'; Tanglish words are not said inside a Tamil sentence", () => {
+    expect(nothingLine("முதல்வர் அடையாறுக்கு வருகிறாரா", "ta", "news")).toBe("முதல்வர் அடையாறுக்கு வருகிறாரா என்பது பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+    expect(nothingLine("CM ku eppo varaaru", "ta", "news")).toBe("அதைப் பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+  });
+});

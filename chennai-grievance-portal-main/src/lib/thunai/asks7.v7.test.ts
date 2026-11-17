@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asks7 } from "./asks7";
+import { asks7, whoHas } from "./asks7";
 import { WORLD } from "./fixture";
 
 const r = (s: string) => { const a = asks7(s, WORLD); return a ? { recipe: a.recipe, ...a.slots } : null; };
@@ -53,5 +53,18 @@ describe("v7: current events with no district word go to the news, never to a mo
   });
   it("timeless general questions stay the general lane's", () => {
     for (const s of ["what is a cyclone", "what is machine learning", "explain deep learning", "what is the capital of France"]) expect(asks7(s, WORLD), s).toBeNull();
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): 'who has it?' with a case on the screen", () => {
+  const caseStage = { recipe: "explain" as const, title: "Adyar", focus: null, slots: {}, blocks: [{ kind: "CaseDetail" as const, ids: ["INC-20261117-ABC123"] }, { kind: "Kpis" as const, ids: [] }] };
+  it("asks for the case's holder: the case's own screen, its facts say who holds it", () => {
+    for (const s of ["who has it?", "who is handling it", "which department has this", "who's on it", "யார் கையில் இருக்கு?", "இது எந்த துறையிடம் இருக்கு", "yaar kitta irukku"])
+      expect(whoHas(s, caseStage), s).toEqual({ recipe: "case", slots: { id: "INC-20261117-ABC123" }, why: "who-has" });
+  });
+  it("never without a case on the screen, and never for a different question", () => {
+    expect(whoHas("who has it?", { ...caseStage, blocks: [{ kind: "Kpis" as const, ids: [] }] })).toBeNull();
+    expect(whoHas("who has it?", null)).toBeNull();
+    expect(whoHas("who has the most open cases", caseStage)).toBeNull();
   });
 });

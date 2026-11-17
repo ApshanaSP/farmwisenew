@@ -171,7 +171,9 @@ function notACount(s: string, fig: Figure, at: number): boolean {
   return false;
 }
 /** two measures side by side: "59 against 44", "5க்கு எதிராக 3", "from 1419 to 1189" */
-const PAIR = /\d[\d,.]*%?\s+(?:against|versus|vs\.?|to)\s+(?:about |over )?\d|\d[\d,.]*(?:க்கு|உக்கு)?\s*எதிராக\s*\d/giu;
+const PAIR = /\d[\d,.]*%?(?:\s+[^\s\d]+){0,4}?\s+(?:against|versus|vs\.?|to|and)\s+(?:[^\s\d]+\s+){0,2}?(?:about |over )?\d|\d[\d,.]*\s*-?(?:இலிருந்து|லிருந்து)\s*\d|\d[\d,.]*(?:க்கு|உக்கு)?\s*(?:எதிராக|மற்றும்)\s*\d/giu;
+/** "the highest of the 10 zones compared": how many were compared, not a figure read off the screen */
+const groupSize = (text: string, at: number, raw: string) => /\bof (?:the |all (?:the )?)?$/i.test(text.slice(Math.max(0, at - 12), at)) && /^\s*(?:zones?|departments?|taluks?|wards?|compared)\b/i.test(text.slice(at + raw.length, at + raw.length + 16));
 /** the figures of a sentence, each with where it sits and its hedge */
 function placedFigures(s: string): Placed[] {
   const out: Placed[] = [];
@@ -413,7 +415,7 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   // a sentence of four figures or more reads the screen's numbers out (the tiles are on the screen)
   const figs = placedFigures(text);
   // a window's length ("the last 7 days", "24 மணி நேர") is how long, not a figure read off the screen
-  const dataFigs = figs.filter((x) => !WINDOW_UNIT.test(text.slice(x.at + x.fig.raw.length, x.at + x.fig.raw.length + 12)));
+  const dataFigs = figs.filter((x) => !WINDOW_UNIT.test(text.slice(x.at + x.fig.raw.length, x.at + x.fig.raw.length + 12)) && !groupSize(text, x.at, x.fig.raw));
   // (two measures side by side, two pairs, are a comparison's point: rule 14 of the writer's instructions)
   const pairs = [...text.matchAll(PAIR)].length;
   if (dataFigs.length >= 5 || (dataFigs.length === 4 && pairs < 2)) p("list", `${dataFigs.length} figures in one sentence`);

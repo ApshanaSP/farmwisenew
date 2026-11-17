@@ -94,3 +94,10 @@ describe("v7 (the Haiku dev run, 17 Nov): a level is no change, and a window's l
     expect(s.facts.filter((f) => /highest|lowest/.test(f.text)).map((f) => f.dir ?? null)).toEqual([null, null]);
   });
 });
+
+describe("v7 (the tuned Haiku dev run, 17 Nov): a period pair says its direction in words", () => {
+  it("'8 in the last 7 days, 21 the 7 days before' carries 'down 13' (Haiku read it as a rise twice)", () => {
+    const s = buildSheet(doc([{ kind: "Findings", id: "f", title: "What stands out", items: [{ title: "Flooding & waterlogging in Teynampet: 8 in the last 7 days, 21 the 7 days before", value: 8, unit: null, method: "m", n: 2, caveat: "A count of reports", tone: "warn" }] }], { recipe: "explain", title: "Teynampet" }), "en", gaz, NOW);
+    expect(s.facts.find((f) => /^Flooding/.test(f.text))?.text).toBe("Flooding & waterlogging in Teynampet: 8 in the last 7 days, 21 the 7 days before; down 13 (A count of reports)");
+  });
+});

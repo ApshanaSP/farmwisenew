@@ -95,3 +95,19 @@ export function asks7(text: string, w: World): Ask7 | null {
     return { recipe: "explain", slots: { zones, cat: null, sev: null, period: "monthly", fresh: true }, why: "the-issue" };
   return null;
 }
+
+/**
+ * "Who has it?" with a case on the screen (the Haiku dev run, 17 Nov: after "tell me about the Adyar issue" the planner's reply to "who has
+ * it?" failed the exit gate and the turn ended in "I can't do that"): the case's own screen, whose facts say who holds it and whether an
+ * officer is named. Only a question about "it", "this" or "that" (never "who has the most open cases").
+ */
+const WHO_HAS = / (?:who(?:s| s| is)? (?:has|holds|handling|handles|on|owns|in charge of|responsible for|dealing with|looking (?:at|into)) (?:it|this|that)(?: one| case)? $|which (?:department|dept|officer|team) (?:has|holds|is handling|handles|is on|owns) (?:it|this|that) |whose (?:case|job) is (?:it|this|that) )/;
+const WHO_HAS_TA = /யார்\s*(?:கையில்|கிட்ட|கிட்டே|பொறுப்பில்|பார்க்கிறார்|பார்க்கிறாங்க|கவனிக்கிறார்)|எந்த\s*துறை(?:யிடம்|கிட்ட|யின்\s*கையில்)|யாரிடம்\s*(?:இருக்கு|உள்ளது|இருக்கிறது)/u;
+const WHO_HAS_TG = / (?:yaar|yaaru|yar) (?:kitta|kaila|kayila|kaiyila|handle|paakuranga|pakuranga|paakraanga)| (?:entha|endha) (?:department|dept|thurai) (?:kitta|la) /;
+export function whoHas(text: string, stage: { blocks: { kind: string; ids: string[] }[] } | null | undefined): Ask7 | null {
+  const id = stage?.blocks.find((b) => b.kind === "CaseDetail")?.ids[0];
+  if (!id) return null;
+  const t = norm(text).replace(/\?/g, "");
+  if (t.trim().split(" ").length > 9) return null;
+  return WHO_HAS.test(t) || WHO_HAS_TA.test(text) || WHO_HAS_TG.test(t) ? { recipe: "case", slots: { id }, why: "who-has" } : null;
+}

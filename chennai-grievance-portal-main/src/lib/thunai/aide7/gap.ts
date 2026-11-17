@@ -93,13 +93,16 @@ export function gapPhrase(gap: string, question: string): string {
   if (content.length && content.every(said)) {
     // the Collector's casing for a word they said exactly ("cm vijay visiting" -> "CM Vijay visiting")
     const cased = g.split(" ").map((t) => { const i = qLow.indexOf(clean(t).toLowerCase()); return i >= 0 && clean(t).toLowerCase() === qWords[i].toLowerCase() ? t.replace(clean(t), qWords[i]) : t; }).join(" ");
-    return reported(cased);
+    return whether(reported(cased));
   }
   const clauses = question.split(/[,;?.!]+/).map((c) => c.trim()).filter(Boolean);
   const clause = clauses.find((c) => c.split(/\s+/).map(clean).map(base).some((w) => content.includes(w) || content.some((x) => w.startsWith(stem(x)))));
   if (!clause) return "";
-  return /^(?:what|who|whom|when|where|why|how|which|whether|is|are|was|were|will|did|does|do|has|have|can)\b/i.test(clause) || !/\b(?:is|are|was|were|will|has|have|had)\b/i.test(clause) ? reported(clause) : `that ${clause}`;
+  return /^(?:what|who|whom|when|where|why|how|which|whether|is|are|was|were|will|did|does|do|has|have|can)\b/i.test(clause) || !/\b(?:is|are|was|were|will|has|have|had)\b/i.test(clause) ? whether(reported(clause)) : `that ${clause}`;
 }
+/** a yes/no question said as "whether": "is the minister inaugurating X" -> "whether the minister is inaugurating X" (its subject: a determiner and a word, or a run of capitalised words) */
+const whether = (s: string) => s.replace(/^(is|are|was|were|will|can|has|have|does|do|did)\s+((?:the|a|an|this|that)\s+\S+|(?:[\p{Lu}][\p{L}'’.-]*\s*)+|\S+)\s+/u,
+  (_m, aux: string, subj: string) => `whether ${subj.trim()} ${aux.toLowerCase()} `);
 /** words that carry no meaning of their own in a gap (its words must be the Collector's: these may be the writer's) */
 const FUNC = new Set(["the", "a", "an", "is", "are", "was", "were", "be", "been", "of", "in", "on", "at", "to", "and", "or", "what", "who", "when", "where", "why", "how", "whether",
   "should", "know", "tell", "me", "about", "any", "there", "this", "that", "did", "does", "do", "has", "have", "had", "will", "would", "can", "his", "her", "its", "their", "itself",
@@ -140,9 +143,12 @@ export function gapFacts(hits: GapHit[], now: number, first = 1): Fact7[] {
  * the latest news ("news"), the dashboard alone (the look-up off or out of time, "dashboard"), or the dashboard with the feeds unreadable.
  */
 export function nothingLine(phrase: string, lang: Lang, searched: "news" | "dashboard" | "unavailable" = "news"): string {
-  const what = phrase.trim();
+  let what = phrase.trim();
   if (lang === "ta") {
-    const about = what ? `${what} பற்றி ` : "அதைப் பற்றி ";
+    // Tanglish words are not said inside a Tamil sentence (the answer before this line has named it); a question takes "என்பது"
+    if (/(?<![\p{L}])[a-z]{2,}/u.test(what)) what = "";
+    const asked = /(?:ரா|ளா|னா|தா|டா|வா)$/u.test(what) || /என்ன|எப்போது|எப்போ|யார்|ஏன்|எங்கே|எப்படி|எத்தனை/u.test(what);
+    const about = what ? `${what}${asked ? " என்பது" : ""} பற்றி ` : "அதைப் பற்றி ";
     return searched === "news" ? `${about}டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.`
       : searched === "unavailable" ? `${about}டாஷ்போர்டில் எதுவும் இல்லை; செய்தி ஊட்டங்களை இப்போது படிக்க முடியவில்லை.` : `${about}டாஷ்போர்டில் எதுவும் இல்லை.`;
   }

@@ -50,7 +50,7 @@ import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
 import { syncEpoch } from "@/lib/collector/epoch";
 import { aideAnswer, aideWanted, answerStyle, type AideCtx, type AideOut } from "./aide7";
-import { asks7 } from "./asks7";
+import { asks7, whoHas } from "./asks7";
 import { timeOf } from "./brief6";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
@@ -832,7 +832,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
 
     // 2e. v7 (asks7.ts): question shapes no lane read in code: compare everything, this period against the last, why one place is worse than
     // another, the X issue. Each goes to the screen whose facts answer it; the aide says the point
-    const ask7 = answerStyle() === "v7" ? asks7(b.text, world) : null;
+    // ("who has it?" with a case on the screen: the case's own facts)
+    const ask7 = answerStyle() === "v7" ? whoHas(b.text, stage) ?? asks7(b.text, world) : null;
     if (ask7) {
       const r = await screenFrom(ask7.recipe, ask7.slots, lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data");
       if (r.kind === "do" && r.stage) return out({ ...r, note: `asks7:${ask7.why}` }, "quick");

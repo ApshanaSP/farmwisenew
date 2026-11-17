@@ -194,3 +194,14 @@ describe("v7 (the Haiku dev run, 17 Nov): what a gap sentence, a fact sentence a
     expect(checkSentence("Street light complaints have risen to 12 from 9. [F2]", s).problems).toEqual([]);
   });
 });
+
+describe("v7 (the tuned Haiku dev run, 17 Nov): two measures side by side however they are said; a group's size is no figure read out", () => {
+  it("'59 open complaints to Anna Nagar's 44, and ... 8 against 26'; Tamil '26-லிருந்து 8', '59 மற்றும் 44'", () => {
+    ok("Adyar has 59 open complaints to Anna Nagar's 44, and fewer flooding reports, 8 against 26. [F5,F6]");
+    ok("வெள்ளப் புகார்கள் 26-லிருந்து 8 ஆகவும், திறந்த புகார்கள் 59 மற்றும் 44 ஆகவும் உள்ளன. [F5,F6]", "ta");
+  });
+  it("'the highest of the 10 zones compared': 10 is how many were compared", () => {
+    const s: Sheet7 = { ...sheet(), facts: [...sheet().facts, { id: "F9", src: "dashboard", text: "Reported: Teynampet 141, the highest of the 10 compared; severe 11; open 108", rank: true }] };
+    expect(checkSentence("Teynampet reported 141, the highest of the 10 zones compared, with 11 severe and 108 open. [F9]", s).problems).toEqual([]);
+  });
+});

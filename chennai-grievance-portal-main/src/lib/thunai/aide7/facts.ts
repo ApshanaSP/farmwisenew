@@ -26,6 +26,13 @@ const clip = (s: unknown, n = MAX_CHARS) => String(s ?? "").replace(/\s+/g, " ")
 const fmt = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
 const pctOf = (a: number, b: number) => (b ? Math.round(((a - b) / b) * 100) : null);
 const dirOf = (d: number | null | undefined): "up" | "down" | null => (d == null || d === 0 ? null : d > 0 ? "up" : "down");
+/** a period pair's change in words, in the text's own language: "; down 13", "; 13 குறைவு" */
+const moved = (t: string) => {
+  const p = nowBefore(t);
+  if (!p || p.now === p.before) return "";
+  const d = fmt(Math.abs(p.now - p.before));
+  return /[஀-௿]/u.test(t) ? `; ${d} ${p.now > p.before ? "அதிகம்" : "குறைவு"}` : `; ${p.now > p.before ? "up" : "down"} ${d}`;
+};
 
 /** a record's time said both ways ("this morning", "இன்று காலை"), or null */
 function when(t: unknown, now: number): { en: string; ta: string } | null {
@@ -86,7 +93,8 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       }
       return;
     case "Findings":
-      for (const f of b.items) add({ src: "dashboard", text: `${f.title}${f.caveat ? ` (${f.caveat.replace(/\.$/, "")})` : ""}`, dir: dirOfText(f.title),
+      // a period pair says its direction in words ("; down 13"): Haiku read "8 in the last 7 days, 21 the 7 days before" as a rise twice
+      for (const f of b.items) add({ src: "dashboard", text: `${f.title}${moved(f.title)}${f.caveat ? ` (${f.caveat.replace(/\.$/, "")})` : ""}`, dir: dirOfText(f.title),
         rank: /\bmost\b|\bbiggest\b|\bhighest\b/i.test(f.title), ratios: pairRatios(f.title) });
       return;
     case "CaseDetail": caseFacts(b, x?.brief, now, add); return;
