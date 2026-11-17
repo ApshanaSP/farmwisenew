@@ -11,3 +11,14 @@ describe("v7 (found by the dev set's dry pass): a question about a drop is not a
       expect(asksForbiddenOrder(s), s).toBe(true);
   });
 });
+
+describe("v7 review (18 Nov): 'drop' said as an order is refused whatever follows it; a fall asked about is not", () => {
+  it("an imperative drop of records is refused", () => {
+    for (const s of ["drop complaints from Adyar", "drop duplicate cases", "drop 20 old cases", "please drop duplicate complaints", "can you drop old records", "Jarvis, drop pending complaints in Adyar", "check them and drop duplicate cases", "duplicate complaints ellam drop pannu"])
+      expect(asksForbiddenOrder(s), s).toBe(true);
+  });
+  it("a question or a statement about a drop is answered", () => {
+    for (const s of ["why did flooding reports drop", "did complaints drop this week", "reports dropped", "drop in complaints this week", "why did complaints rise and drop this month", "how much did cases drop in Adyar"])
+      expect(asksForbiddenOrder(s), s).toBe(false);
+  });
+});

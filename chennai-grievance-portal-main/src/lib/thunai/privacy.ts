@@ -107,6 +107,17 @@ export function asksPrivate(text: string): boolean {
 // "drop" is a wipe only when it governs the records ("drop all the old complaints", "drop these cases"), never a fall said of them ("why did
 // flooding reports drop this week": v7, found by the dev set's dry pass)
 const WIPES = /\b(?:remove|close all|clear|discard|drop(?=\s+(?:all|every|the|this|that|these|those|old|them|it|any)\b)(?!\s+(?:this|that|the|last|next|past)\s+(?:week|month|year|day|morning|evening|night|time|quarter|period)\b)|trash|dismiss|get\s+rid\s+of)\b/i;
+/**
+ * "drop" said as an order, whatever follows it (v7 review: "drop complaints from Adyar", "drop duplicate cases", "drop 20 old cases" were let
+ * through by the narrowing above): at the head of the sentence or a clause, after a word that makes a request ("please", "can you", "want you
+ * to"), after "and"/"then" in a sentence that is not a question, or with a Tanglish helper ("drop pannu"). Never a fall asked about or told
+ * ("why did flooding reports drop", "did complaints drop this week", "reports dropped") or the noun ("drop in complaints").
+ */
+const DROP_NOUN_AFTER = String.raw`(?!\s+(?:in|of|by|from|to|off|out|on|over|after|since|between|during)\b)`;
+const DROP_HEAD = new RegExp(String.raw`(?:^|[.,;!?:]\s*|\b(?:please|pls|kindly|just|now|jarvis|ok|okay|(?:can|could|would|will)\s+you|(?:want|need|like)\s+(?:you\s+)?to|let'?s|let\s+us|go\s+ahead\s+and)\s+)drop\b${DROP_NOUN_AFTER}|\bdrop\s+(?:pannu|pannunga|pannungal|pannidu|panniru|seiyunga|seiyu|sei)\b`, "i");
+const DROP_AND = new RegExp(String.raw`\b(?:and|then)\s+drop\b${DROP_NOUN_AFTER}`, "i");
+const ASKED = /^\s*(?:why|how|did|does|do|has|have|had|is|are|was|were|will|would|when|what|which|where|who|whether|if)\b|\?\s*$/i;
+const dropOrder = (t: string): boolean => DROP_HEAD.test(t) || (DROP_AND.test(t) && !ASKED.test(t));
 const RECORDS = /\b(complaints?|cases?|incidents?|records?|data|reports?|drafts?|entries|entry|files?|tickets?|grievances?|everything|everyone)\b|all\s+of\s+them|\b(?:them|these|those)\s*$|புகார்|சம்பவ|அறிக்கை|வரைவ/i;
 const CONSOLE_THING = /\b(filters?|panels?|chips?|layers?|highlights?|pins?|windows?|views?|charts?|maps?|tabs?|screens?|lists?)\b|வடிகட்டி|பேனல்|வரைபடம்/i;
 /** a change to a record's state, a release of money, a close on records: Jarvis never writes, in any language ("maathidu", "மாத்திடு", "close pannu") */
@@ -133,7 +144,7 @@ export function asksForbidden(text: string): boolean {
   if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(whole)) return true;
   if (OBEY_RECORD.test(whole) || REVEAL_RULES.test(whole) || MONEY_VERB.test(whole)) return true;
   const t = whole.replace(DONE_PHRASE, " ");
-  if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
+  if ((WIPES.test(t) || dropOrder(t)) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
   if (!CONSOLE_THING.test(t) && (/\bresolved\b.{0,14}\bmark\b|\bmark\b.{0,20}\bresolved\b|resolved-?\s*nu\s+mark|resolved.{0,12}மார்க்|தீர்ந்த(?:தாக|து)?\s*(?:என)?\s*குறி/i.test(t))) return true;
   // the act said with a Tamil helper verb, with nothing else needed ("sanction pannunga", "send seiyunga", "அப்ரூவ் பண்ணுங்க")
   if (/\b(?:approve|delete|send|sanction|reject|authori[sz]e|forward|publish|erase|wipe)\s+(?:pann|seiy|sei\b|panni)\w*|(?:அப்ரூவ்|சாங்ஷன்|டெலிட்|சென்ட்|செண்ட்|ரிஜெக்ட்)\s*(?:பண்ண|செய்)/i.test(t)) return true;

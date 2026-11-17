@@ -68,3 +68,53 @@ describe("v7 (the Haiku dev run, 17 Nov): 'who has it?' with a case on the scree
     expect(whoHas("who has the most open cases", caseStage)).toBeNull();
   });
 });
+
+describe("v7 review (18 Nov): asks7 leaves ordinary commands and questions to their own lanes", () => {
+  it("A: 'cm' and 'pm' after a number or as a unit are no Chief Minister or Prime Minister; the offices still count", () => {
+    for (const s of ["Which zones got more than 10 cm of rain today?", "How many complaints came in after 6 pm today", "Adyar got 12 cm of rain, how many complaints", "how many cm of rain fell today", "how many cases between 2 pm and 4 pm today"])
+      expect(asks7(s, WORLD), s).toBeNull();
+    for (const s of ["CM Vijay is visiting Adyar", "is the CM coming to Royapuram", "CM Royapuram ku eppo varaaru"]) expect(asks7(s, WORLD), s).toMatchObject({ recipe: "situation", why: "outside" });
+    expect(asks7("PM visit", WORLD)).toMatchObject({ recipe: "news", why: "outside" });
+  });
+  it("B: a command that acts is never taken from the planner (draft, send, write, call, open, close, assign, escalate, mark, remind...)", () => {
+    for (const s of ["Draft a letter to the zonal officer about the issue in Adyar", "send the Adyar issue to the commissioner", "can you email the zonal officer about the problem in Adyar",
+      "write to the AE about the issue in Adyar", "escalate the Adyar issue", "remind me about the Adyar issue tomorrow", "call the zonal officer about the issue in Adyar",
+      "open the Adyar issue", "close the issue in Adyar", "mark the Adyar issue as resolved", "assign the Adyar issue to the AE", "schedule a meeting on the issue in Adyar",
+      "notify the commissioner about the Adyar issue", "forward the Adyar issue to the commissioner", "message the AE about the issue at Adyar", "delete the Adyar issue",
+      "please mail the officer about the issue in Adyar", "compare all zones and send it to the commissioner", "compare this week with last week and draft a note",
+      "Adyar issue pathi officer ku mail anuppu", "Adyar issue draft pannu", "அடையாறு பிரச்சினை பற்றி அதிகாரிக்கு கடிதம் எழுது", "அடையாறு பிரச்சினை என்ன, அதிகாரிக்கு அனுப்பு"])
+      expect(asks7(s, WORLD), s).toBeNull();
+    // the same words said of the past, or as a noun, are still questions
+    expect(r("tell me about the issue in Adyar the residents called about")).toMatchObject({ recipe: "explain", zones: [13] });
+  });
+  it("C: two windows joined by 'and' are a list; only a comparison is the what-changed screen", () => {
+    for (const s of ["show me complaints from today and yesterday", "list severe cases this week and last week"]) expect(r(s), s).toBeNull();
+    for (const s of ["compare this week with last week", "this week vs last week", "today versus yesterday", "how does this week compare with last week", "week on week", "compare today and yesterday", "this month compared with last month"])
+      expect(r(s), s).toMatchObject({ recipe: "changed" });
+  });
+  it("D: one department compared, or a department that compares worst, is not every department side by side", () => {
+    for (const s of ["how does the electricity department compare with last month", "which department compares worst"]) expect(r(s), s).toBeNull();
+    for (const s of ["compare all departments", "compare every department", "department wise comparison", "ella department um compare pannu", "ella departments um oppidu"])
+      expect(r(s), s).toMatchObject({ recipe: "performance", by: "dept" });
+  });
+  it("F: the place and the kind the sentence names are kept", () => {
+    expect(r("explain the drainage problem in Adyar")).toMatchObject({ recipe: "explain", zones: [13], cat: "DRAINAGE_SEWAGE" });
+    expect(r("what's the flooding issue in Adyar")).toMatchObject({ recipe: "explain", zones: [13], cat: "FLOOD_WATERLOGGING" });
+    expect(r("what's the Adyar issue")).toMatchObject({ recipe: "explain", zones: [13], cat: null });
+    expect(r("compare all departments in Adyar")).toMatchObject({ recipe: "performance", by: "dept", zones: [13] });
+    expect(r("compare this week with last week for garbage")).toMatchObject({ recipe: "changed", cat: "SOLID_WASTE" });
+    expect(r("compare this week with last week")).toMatchObject({ recipe: "changed", cat: null });
+  });
+});
+
+describe("v7 review (18 Nov): 'who has it?' in Tamil and Tanglish is about the case on screen, not a ranking", () => {
+  const caseStage = { recipe: "explain" as const, title: "Adyar", focus: null, slots: {}, blocks: [{ kind: "CaseDetail" as const, ids: ["INC-20261117-ABC123"] }] };
+  it("E: a ranking of holders is not the case on screen", () => {
+    for (const s of ["எந்த துறையிடம் அதிக புகார்கள் நிலுவையில் உள்ளன?", "entha department la adhigam complaints pending", "yaar kitta adhigam pending complaints irukku"])
+      expect(whoHas(s, caseStage), s).toBeNull();
+  });
+  it("E: asked about it, this or that, or bare, it is still the case's holder", () => {
+    for (const s of ["இந்த சம்பவம் யார் கையில் இருக்கு", "அது யார் கிட்ட இருக்கு", "எந்த துறையிடம் இருக்கு", "idhu entha department kitta irukku", "indha case yaar kitta irukku", "yaar kaila irukku"])
+      expect(whoHas(s, caseStage), s).toEqual({ recipe: "case", slots: { id: "INC-20261117-ABC123" }, why: "who-has" });
+  });
+});
