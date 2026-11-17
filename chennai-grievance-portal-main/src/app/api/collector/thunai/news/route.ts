@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collectorSession } from "@/lib/collector/guard";
 import { newsDoc } from "@/lib/collector/intel";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { incidentNewsDoc } from "@/lib/thunai/newsdoc";
 import { NewsBody, ndjson, newsEvents, type StoredDoc } from "@/lib/thunai/web/serve";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,6 @@ export async function POST(req: NextRequest) {
   const gate = checkRateLimit(`thunai-news:${s.userId}`, 20, 60);
   if (!gate.allowed) return NextResponse.json({ error: "busy" }, { status: 429 });
   const parsed = NewsBody.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Send { id } or { question }." }, { status: 400 });
-  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, signal: req.signal, user: `collector:${s.userId}` }));
+  if (!parsed.success) return NextResponse.json({ error: "Send { id }, { incident } or { question }." }, { status: 400 });
+  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}` }));
 }

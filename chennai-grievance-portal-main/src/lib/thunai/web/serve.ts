@@ -19,6 +19,8 @@ import { type NewsItemInput, relatedCoverage } from "./related";
 
 export const NewsBody = z.union([
   z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/) }).strict(),
+  // v6: an incident on Jarvis's screen: its own newest news report (from a news medium) is read; none, and the answer says so
+  z.object({ incident: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/) }).strict(),
   z.object({ question: z.string().trim().min(2).max(500) }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
@@ -32,12 +34,14 @@ export type NewsEvent =
   | { type: "brief"; stage: "article" | "coverage"; brief: SpokenBrief; status: string; ms: number }
   | { type: "related"; items: { outlet: string; title: string; url: string; publishedAt: string | null; source: "article" | "feed" }[]; feeds: { tried: number; ok: number; failed: number }; ms: number }
   | { type: "answer"; answer: LookupAnswer }
-  | { type: "error"; why: "not_found" | "failed" }
+  | { type: "error"; why: "not_found" | "failed" | "no_news" }
   | { type: "done"; ms: number };
 
 export interface ServeDeps extends WebDeps, CompareOptions {
   /** the stored item (newsDoc) */
   loadDoc: (id: string) => Promise<StoredDoc | null>;
+  /** an incident's newest news report's stored id (lib/thunai/newsdoc.ts incidentNewsDoc), null when it has none */
+  incidentDoc?: (incident: string) => Promise<string | null>;
   /** look for other outlets' coverage too (default true) */
   related?: boolean;
 }
@@ -47,9 +51,16 @@ const asSource = (a: { outlet: string | null; outletTa?: string | null; url: str
   ({ outlet: a.outlet, outletTa: a.outletTa ?? null, url: a.url, title: a.title, publishedAt: a.publishedAt, text: a.text });
 
 /** The events for one request, in order. Never throws (a failure is an "error" event). */
-export async function* newsEvents(body: NewsBodyT, d: ServeDeps): AsyncGenerator<NewsEvent> {
+export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerator<NewsEvent> {
   const t0 = performance.now();
   const ms = () => Math.round(performance.now() - t0);
+  let body: Exclude<NewsBodyT, { incident: string }>;
+  if ("incident" in asked) {
+    let id: string | null = null;
+    try { id = d.incidentDoc ? await d.incidentDoc(asked.incident) : null; } catch { yield { type: "error", why: "failed" }; return; }
+    if (!id) { yield { type: "error", why: "no_news" }; return; }
+    body = { id };
+  } else body = asked;
   if ("question" in body) {
     yield { type: "first", en: "Looking that up on the web...", ta: "இணையத்தில் தேடுகிறேன்..." };
     yield { type: "answer", answer: await webLookup(body.question, d) };

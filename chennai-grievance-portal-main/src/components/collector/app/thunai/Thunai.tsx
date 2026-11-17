@@ -25,6 +25,7 @@ import { band, canSpeak as watchMaySpeak, remember as watchRemember, type Signal
 import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
 import { idsOf, stageContext, type NextStepT, type StageDocT } from "@/lib/thunai/stage";
+import { failLine, newsAsk, newsScreen, readNdjson, whichLine, type NewsAskT, type NewsLink, type NewsOnScreen } from "@/lib/thunai/newsask";
 import { allowedSet, figuresIn } from "@/lib/thunai/numbergate";
 import { missionCommand, missionIntent } from "@/lib/thunai/missions.words";
 import { missionControl, runMission, type MissionCard, type MissionControl, type ScreenOutcome } from "@/lib/thunai/missions.run";
@@ -1265,6 +1266,109 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     showStage(r.stage, r.say, lang, { model: null, ms: Math.round(performance.now() - t0), rounds: 0, calls: r.calls.length }, opts);
   };
 
+  /** v6 (Phase 4): what on Jarvis's screen a "read the article" can mean (newsask.ts): its news list, or the incident it shows */
+  const newsOnScreen = (doc: StageDocT | null, cs: ScreenState): NewsOnScreen => {
+    const nr = doc?.blocks.find((b) => b.kind === "NewsReader");
+    const cd = doc?.blocks.find((b) => b.kind === "CaseDetail");
+    return {
+      items: nr?.kind === "NewsReader" && !doc?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [],
+      incident: cd?.kind === "CaseDetail" ? cd.incident.id : doc ? null : cs.incident,
+      reading: narration.current[narrIndex.current]?.key ?? null
+    };
+  };
+  /**
+   * v6 (Phase 4): a news report read, or a public question looked up on the web (/news, lib/thunai/web). The server's first line
+   * ("Reading The Hindu's report...") is said the moment it comes, then the brief's sentences as they come (one the coverage brief
+   * repeats is not said twice); the screen shows what was said and every source as a link (a Note and a NewsReader list, the panels
+   * the Stage already draws). Nothing a page said becomes a step: the events carry sentences and links only.
+   */
+  const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<void> => {
+    if (na.kind === "which") { earcon("need"); out(whichLine[lang], lang, "ready"); return; }
+    traceDecided("rules");
+    setBrainNow({ by: "instant", model: null, ms: 0 });
+    const t0 = performance.now();
+    const doing = na.kind === "lookup" ? (lang === "ta" ? "இணையத்தில் தேடுகிறேன்" : "Looking it up on the web") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
+    hud.set({ doing }); setReply(doing); setPhase("thinking");
+    const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
+    const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
+    const said = new Set<string>();
+    const st = { title: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false };
+    const sayLines = (en: string[], ta: string[]) => {
+      for (const t of lang === "ta" ? ta : en) { const k = t.trim(); if (!k || said.has(k)) continue; said.add(k); q?.push(k); }
+      setReply([...said].join(" "));
+    };
+    // the screen: put up once without stopping the voice (putStage would cut the first line), then updated in place
+    const draw = () => {
+      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", title: st.title, en: st.en, ta: st.ta, links: st.links });
+      if (!d || !alive()) return;
+      if (!st.shown) {
+        st.shown = true;
+        setStageBusy(null);
+        if (stageRef.current) { const cur = stageRef.current; setStageBack((b) => [...b, cur].slice(-8)); }
+        setStageViews({}); setStageFilter(null); setStageBrain({ model: null, ms: Math.round(performance.now() - t0), rounds: 0, calls: 0 }); stageFocus.current = null;
+        toHud(d, lang);
+      }
+      stageRef.current = d; setStage(d);
+    };
+    const url = `${(hostRef.current.agentUrl ?? "/api/collector/thunai/agent").replace(/\/agent$/, "")}/news`;
+    try {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(na.body), signal });
+      if (!alive()) return;
+      if (!res.ok || !res.body) st.fail = "failed";
+      else await readNdjson(res.body, (e) => {
+        if (!alive()) return;
+        if (e.type === "first") {
+          jvMark("newsFirst");
+          const f = e as { en?: string; ta?: string };
+          st.en = [String(f.en ?? "")]; st.ta = [String(f.ta ?? "")];
+          draw(); sayLines(st.en, st.ta);
+        } else if (e.type === "brief") {
+          const b = (e as { brief?: { en?: string[]; ta?: string[]; links?: NewsLink[] }; stage?: string }).brief;
+          if (!b) return;
+          if (!st.answered) { st.answered = true; jvMark("newsBrief"); markAnswer(); }
+          if ((e as { stage?: string }).stage === "coverage") jvMark("newsCoverage");
+          st.en = (b.en ?? []).map(String); st.ta = (b.ta ?? []).map(String);
+          st.links = (b.links ?? []).filter((x) => x && typeof x.url === "string");
+          st.title = st.links[0]?.title ?? st.title;
+          draw(); sayLines(st.en, st.ta);
+        } else if (e.type === "related") {
+          const items = ((e as { items?: NewsLink[] }).items ?? []).filter((x) => x && typeof x.url === "string");
+          jvMark("newsRelated");
+          const have = new Set(st.links.map((x) => x.url));
+          st.links = [...st.links, ...items.filter((x) => !have.has(x.url))];
+          draw();
+        } else if (e.type === "answer") {
+          const a = (e as { answer?: { en?: string[]; ta?: string[]; sources?: { name: string; title: string; url: string; publishedAt: string | null }[] } }).answer;
+          if (!a) return;
+          st.answered = true; jvMark("newsBrief"); markAnswer();
+          st.en = (a.en ?? []).map(String); st.ta = (a.ta ?? []).map(String);
+          st.links = (a.sources ?? []).map((x) => ({ outlet: x.name, title: x.title, url: x.url, publishedAt: x.publishedAt }));
+          draw(); sayLines(st.en, st.ta);
+        } else if (e.type === "done") jvMark("newsDone");
+        else if (e.type === "error") st.fail = String((e as { why?: string }).why ?? "failed");
+      }, alive);
+    } catch {
+      if (!alive() || signal.aborted) return;
+      st.fail = "failed";
+    }
+    if (!alive()) return;
+    setStageBusy(null);
+    hud.set({ doing: "" });
+    if (!st.answered) {
+      // nothing came back to tell: say why, on whatever screen is up
+      q?.drop();
+      earcon("blocked");
+      out(failLine(st.fail ?? "failed", lang), lang, "ready");
+      remember(heardText, na.kind === "lookup" ? "tried to look it up on the web: nothing came back" : "tried to read the news report: nothing came back");
+      return;
+    }
+    const all = (lang === "ta" ? st.ta : st.en).join(" ");
+    pushMsg({ who: "jarvis", text: all, lang });
+    remember(heardText, na.kind === "lookup" ? "looked it up on the web and said what it found, with sources" : "read the news report and other outlets' coverage aloud, with links", { doc: stageRef.current });
+    const done = () => setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
+    if (q?.speaking) { setPhase("speaking"); q.then(done); } else done();
+  };
+
   const draftMany = async (ids: string[], lang: Lang) => {
     const uniq = [...new Set(ids)].slice(0, 10);
     if (!uniq.length) { out(line("noIncident", lang), lang); return; }
@@ -1567,6 +1671,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       const doc = stageRef.current, cs = buildState();
       const onScreen = doc ? doc.blocks.find((b) => b.kind === "CaseDetail") : null;
+      // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts)
+      const na = newsAsk(said, newsOnScreen(doc, cs));
+      if (na) { instant(); await newsTurn(na, said, lg, alive, ctl.signal); decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 }); return; }
       const fa = followAsk(said, { incident: onScreen?.kind === "CaseDetail" ? onScreen.incident.id : doc ? null : cs.incident, zone: doc ? doc.scope.zone : cs.zone, world: worldRef.current });
       if (fa) { if (needsName("B", lg)) return; instant(); askFollow(fa, said, lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
       if (mi || im?.intent === "mission") { instant(); await startMission(said, lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -2517,7 +2624,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // dev only: what the end-to-end specs read
   useEffect(() => {
     if (!SPEC) return;
-    (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }), setHud: (p: never) => hud.set(p) };
+    (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }), setHud: (p: never) => hud.set(p),
+      // v6: a typed sentence, as the chat box sends it (the news spec puts a news list on screen before a spoken "read the first article")
+      ask: (t: string) => void handleRef.current(t, 0.95) };
   }, []);
 
   const switchOn = useCallback((quiet = false) => {

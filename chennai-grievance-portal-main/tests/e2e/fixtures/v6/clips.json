@@ -56,5 +56,22 @@
  "q_tg_attention": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Puck", "text": "Today நான் எந்த areas-ஐ focus பண்ணணும்?" },
  "q_tg_tondiarpet": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Leda", "text": "Tondiarpet-ல sewage complaints status என்ன?" },
  "wakecmd_zira": { "kind": "wakecmd", "lang": "en", "source": "win", "voice": "Zira", "text": "Hey Jarvis, show the severe cases." },
- "wakecmd_mark": { "kind": "wakecmd", "lang": "en", "source": "win", "voice": "Mark", "text": "Hey Jarvis, go to trends." }
+ "wakecmd_mark": { "kind": "wakecmd", "lang": "en", "source": "win", "voice": "Mark", "text": "Hey Jarvis, go to trends." },
+ "news_read1": { "kind": "news", "lang": "en", "source": "win", "voice": "Ravi", "text": "Read the first article." },
+ "news_read2": { "kind": "news", "lang": "en", "source": "win", "voice": "Heera", "text": "Read the second article." },
+ "news_read3": { "kind": "news", "lang": "en", "source": "win", "voice": "David", "text": "Read the third article." },
+ "news_read4": { "kind": "news", "lang": "en", "source": "win", "voice": "Zira", "text": "Read the fourth article." },
+ "news_read5": { "kind": "news", "lang": "en", "source": "win", "voice": "Mark", "text": "Read the fifth article." },
+ "news_read6": { "kind": "news", "lang": "en", "source": "win", "voice": "Ravi", "text": "Read the sixth article." },
+ "news_read7": { "kind": "news", "lang": "en", "source": "win", "voice": "Heera", "text": "Read the seventh article." },
+ "news_read8": { "kind": "news", "lang": "en", "source": "win", "voice": "David", "text": "Read the eighth article." },
+ "news_read9": { "kind": "news", "lang": "en", "source": "win", "voice": "Zira", "text": "Read the ninth article." },
+ "news_read10": { "kind": "news", "lang": "en", "source": "win", "voice": "Mark", "text": "Read the tenth article." },
+ "news_look_met": { "kind": "news", "lang": "en", "source": "win", "voice": "Ravi", "text": "What did the Met department say about tonight's rain?" },
+ "news_look_met2": { "kind": "news", "lang": "en", "source": "win", "voice": "Zira", "text": "What did the Met department say about tonight's rain?" },
+ "news_look_rain": { "kind": "news", "lang": "en", "source": "win", "voice": "Heera", "text": "Will it rain in Chennai tonight?" },
+ "news_look_rain2": { "kind": "news", "lang": "en", "source": "win", "voice": "Mark", "text": "Will it rain in Chennai tonight?" },
+ "news_look_alert": { "kind": "news", "lang": "en", "source": "win", "voice": "David", "text": "Is there a red alert for Chennai today?" },
+ "news_look_alert2": { "kind": "news", "lang": "en", "source": "win", "voice": "Ravi", "text": "Is there a red alert for Chennai today?" },
+ "news_ta_read1": { "kind": "news", "lang": "ta", "source": "gemini", "voice": "Kore", "text": "முதல் செய்தியைப் படியுங்கள்." }
 }
