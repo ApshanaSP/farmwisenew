@@ -150,7 +150,9 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
     const failed = firstFail as { text: string; problems: Problem[] } | null;
     if (failed && !reasked && o.firstBy - now() > REASK_MS) {
       reasked = true;
-      retry = `"${failed.text.slice(0, 160)}": ${failed.problems.map((p) => p.detail).join("; ")}`;
+      // what was wrong, and for reading the screen out what to do instead
+      const reads = failed.problems.some((p) => p.kind === "list" || p.kind === "copy");
+      retry = `"${failed.text.slice(0, 160)}": ${failed.problems.map((p) => p.detail).join("; ")}${reads ? ". That reads the screen out: say the point instead (what stands out, and why it matters), with at most two figures" : ""}`;
       continue;
     }
     retry = null;

@@ -43,7 +43,7 @@ describe("v7 fact sheet: the screen as numbered facts, every derived value code'
   });
   it("a heat table: each measure's highest and lowest row", () => {
     const s = buildSheet(doc([{ kind: "Heat", id: "h", title: "Zone × measure", rows: ["Adyar", "Royapuram", "Manali"], cols: ["Open", "Severe"], cells: [[86, 3], [109, 11], [12, 0]] }]), "en", gaz, NOW);
-    expect(s.facts.map((f) => f.text)).toEqual(expect.arrayContaining(["Open, across the 3 rows of the table: highest Royapuram 109, lowest Manali 12", "Severe, across the 3 rows of the table: highest Royapuram 11, lowest Manali 0"]));
+    expect(s.facts.map((f) => f.text)).toEqual(expect.arrayContaining(["Open: highest Royapuram 109, lowest Manali 12, of the 3 compared", "Severe: highest Royapuram 11, lowest Manali 0, of the 3 compared"]));
   });
   it("a case: when, said as a person says it, in English and Tamil; the record's own words kept for the copy check", () => {
     const s = buildSheet(doc([{ kind: "CaseDetail", id: "c", incident: { id: "INC-1", title: "Low lying area Pillaiyar Koil St, Guindy Industrial Estate inundated", sev: "Severe", status: "In progress", zone: 13, zoneName: "Adyar",

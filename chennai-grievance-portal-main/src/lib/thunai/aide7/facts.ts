@@ -91,7 +91,7 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       return;
     case "CaseDetail": caseFacts(b, x?.brief, now, add); return;
     case "CaseList": {
-      add({ src: "dashboard", text: `${b.title}: ${b.total} in all${b.rows.length < b.total ? `, ${b.rows.length} listed on screen` : ""}`, rank: /rank|highest|top|worst/i.test(b.title) });
+      add({ src: "dashboard", text: `${b.title}: ${b.total} in all`, rank: /rank|highest|top|worst/i.test(b.title) });
       for (const [i, r] of b.rows.slice(0, 3).entries()) {
         const w = r.t ? sinceWords(timeOf(r.t), now) : null;
         add({ src: "dashboard", text: `Listed ${i + 1}: ${r.title}${r.place ? `, at ${r.place}` : ""}${r.zoneName ? `, ${r.zoneName} zone` : ""}; ${String(r.sev ?? "unrated").toLowerCase()}${r.deptName ? `; held by ${r.deptName}` : ""}${r.complaints ? `; ${r.complaints} complaints` : ""}${r.overdue ? "; past its deadline" : ""}${w ? `; open ${w.en}` : ""}`,
@@ -100,7 +100,8 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       return;
     }
     case "NewsReader": {
-      add({ src: "dashboard", text: `${b.title}: ${b.total} news report${b.total === 1 ? "" : "s"}${b.items.length < b.total ? `, ${b.items.length} on screen` : ""}` });
+      // the stories only: a news list's count is no point to say (and its total is the district's even on a place's list: "95 reports from Adyar"
+      // was said in the dev run, 17 Nov)
       for (const it of b.items.slice(0, 5)) {
         const w = when(it.t, now);
         add({ src: it.source ?? "the news", text: `${it.source ?? "A report"}${w ? ` (${w.en})` : ""}: ${it.title}${it.place ? ` (place: ${it.place})` : ""}${it.incidentId ? "; linked to an incident on the console" : ""}`, times: w ? [w.en, w.ta] : [] });
@@ -162,7 +163,7 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
         if (vals.length < 2) continue;
         const hi = vals.reduce((a, x) => (x.v > a.v ? x : a)), lo = vals.reduce((a, x) => (x.v < a.v ? x : a));
         if (hi.v === lo.v) continue;
-        add({ src: "dashboard", text: `${col}, across the ${vals.length} rows of the table: highest ${hi.r} ${fmt(hi.v)}, lowest ${lo.r} ${fmt(lo.v)}`, rank: true, ratios: lo.v ? [hi.v / lo.v] : [] });
+        add({ src: "dashboard", text: `${col}: highest ${hi.r} ${fmt(hi.v)}, lowest ${lo.r} ${fmt(lo.v)}, of the ${vals.length} compared`, rank: true, ratios: lo.v ? [hi.v / lo.v] : [] });
       }
       return;
     }
@@ -207,7 +208,7 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
   // the screen's scope first: its place (its title's and its scope's names) and, on a screen that counts over a window, that window
   const scope = scopeOf(doc, gaz);
   if (scope.names.length || scope.times.length) b.add({ src: "dashboard", text: `This screen covers ${[...scope.names, ...scope.times.slice(0, 1)].join(", ")}`, times: scope.times });
-  if (doc.takeaway?.en) b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: /\b(?:down|fewer|fell)\b/i.test(doc.takeaway.en) ? "down" : /\b(?:up|more|rose)\b/i.test(doc.takeaway.en) ? "up" : null });
+  if (doc.takeaway?.en && doc.recipe !== "news") b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: /\b(?:down|fewer|fell)\b/i.test(doc.takeaway.en) ? "down" : /\b(?:up|more|rose)\b/i.test(doc.takeaway.en) ? "up" : null });
   if (x?.article) {
     const a = x.article, w = a.publishedAt ? when(a.publishedAt.replace("T", " ").slice(0, 19), now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
     const outlet = a.outlet ?? "The report";
@@ -217,7 +218,10 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
     if (a.incident) b.add({ src: "dashboard", text: "This report is linked to an incident on the console" });
     for (const r of x.related ?? []) { const rw = r.publishedAt ? when(r.publishedAt.replace("T", " ").slice(0, 19), now) : null; b.add({ src: r.outlet, text: `${r.outlet} also covered it${rw ? ` (${rw.en})` : ""}: ${r.title}`, times: rw ? [rw.en, rw.ta] : [] }); }
   }
-  for (const blk of doc.blocks) blockFacts(blk, doc, now, b.add, x);
+  // the facts that carry a point first (what stands out, the comparison, the ranking, the case), the tiles' totals after them: a model leads
+  // with the first facts it is given, and the totals made it read the screen's numbers out (the dev run, 17 Nov)
+  const ORDER: Record<string, number> = { Findings: 0, Compare: 1, Ranking: 2, Heat: 3, CaseDetail: 4, Brief: 5, Answer: 6, CaseList: 7, NewsReader: 8, Readings: 9, Chart: 10, Trend: 11, Kpis: 12, Filled: 13, Note: 14 };
+  for (const blk of [...doc.blocks].sort((p, q) => (ORDER[p.kind] ?? 20) - (ORDER[q.kind] ?? 20))) blockFacts(blk, doc, now, b.add, x);
   for (const l of x?.lines ?? []) b.add({ src: l.src ?? "dashboard", text: l.text, dir: l.dir ?? null, rank: l.rank, ratios: l.ratios, cause: l.cause });
   for (const n of doc.notes ?? []) b.add({ src: "dashboard", text: `Caution: ${n}` });
   const shown = [doc.title, ...doc.blocks.flatMap((blk) => blk.kind === "CaseList" ? blk.rows.map((r) => r.title) : blk.kind === "NewsReader" ? blk.items.map((i) => i.title) : blk.kind === "CaseDetail" ? [blk.incident.title, ...blk.timeline.map((t) => t.text)]
