@@ -121,6 +121,8 @@ The planner prompt is not changed: understanding on Groq must stay at least v6's
 - **Latency on Groq** with the real-path spec: first sound, first word of the answer, command → screen, wake; n, p50, p90; v6 and v7 bundles on the same clips (50 §rec 5).
 - **Understanding:** the live-60 holdout once at the end on Groq, paired by exact McNemar with v5's Groq final (v6 changed no planner and ran its finals with Claude, so v5's Groq run is the Groq baseline).
 
+**As built (17 Nov):** the dev set is 48 questions and the answer holdout 48 (8 a kind), not 72 and 60: at about 1,600 Groq tokens a writer call, plus v6's planner turns for the comparison, the larger sets would not fit the free tier's day beside the latency runs and live-60. The holdout was hashed at 21:04, before any live run.
+
 ### 5. Claude Haiku 5.5 at the owner's test
 
 The writer streams from Claude through the official SDK under the owner's spend ceiling (`claudebudget.ts`, `billed()`), thinking disabled, a cached system prompt, `max_tokens` about 300; a first-token watchdog hands a slow call to Groq. Tested with mocks only (request bytes of the cached prefix identical across turns, the budget path, the fallbacks). The owner's test plan goes in HANDOVER.
