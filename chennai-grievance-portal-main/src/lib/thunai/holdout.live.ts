@@ -15,7 +15,8 @@ import path from "path";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
-import { callLlm } from "./llm";
+import { callLlm, plannerLead } from "./llm";
+import { runRoom } from "./holdoutroom";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
@@ -89,6 +90,8 @@ function resultIntent(r: AgentResult): string {
 const SAME: Record<string, string[]> = { insight: ["insight", "answer", "why", "ranking", "trend"], complete: ["complete", "answer"], general: ["general", "chat", "refuse"], case: ["case", "stage_op"], stage_op: ["stage_op", "case"] };
 const matches = (gold: string, got: string) => got === gold || (SAME[gold] ?? []).includes(got);
 
+/** Haiku 5.5 leads the planner's ladder (llm.ts): a working key under the spend ceiling, no JARVIS_PLANNER_LEAD=groq, a Haiku model */
+const haikuLeads = () => claudeConfigured() && plannerLead() === "haiku" && /haiku/i.test(claudeModel());
 const mode = process.env.HOLDOUT ?? "rules";
 
 it.runIf(mode === "rules")("rules on all 150", () => {
@@ -298,9 +301,10 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
     : which === "rep20" ? seededIds(lists.live60, 20, Number(process.env.REP_SEED ?? 20261116)) : lists[which];
   const set = ids.map((id) => all.find((x) => x.id === id)!);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
-  const models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
-  const left = models.reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
-  if (left < set.length * 3000) { write(`planner-${which}`, { refused: true, left }); console.log(`not started: ${left} tokens left`); return; }
+  // v6: Claude's day when Haiku leads the planner (the owner's "do with claude", 17 Nov), else the Groq planners' (holdoutroom.ts)
+  const { who, left } = runRoom(ledger(), { leads: haikuLeads(), model: claudeModel() });
+  if (left < set.length * 3000) { write(`planner-${which}`, { refused: true, left, who }); console.log(`not started: ${left} tokens left (${who})`); return; }
+  console.log(`room: ${who}, ${left} tokens`);
   const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null; rec: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
@@ -355,9 +359,9 @@ it.runIf(mode === "planner3")("the v4 set through the browser's routing and the 
   const set = set3();
   // a run that cannot finish is not started: up to three planner turns an item (a script of two, then the sentence), about 3K tokens each
   const need = set.length * 3 * 3000;
-  const room = claudeConfigured() ? ledger().room("anthropic", claudeModel()) : null;
-  const left = room ? Math.min(room.left.tpd, room.left.rpd * 3000) : ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"].reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
-  if (left < need) { write3("planner3", [], { refused: true, left, need }); console.log(`not started: ${left} left, ${need} needed`); return; }
+  const { who, left } = runRoom(ledger(), { leads: haikuLeads(), model: claudeModel() });
+  if (left < need) { write3("planner3", [], { refused: true, left, need, who }); console.log(`not started: ${left} left, ${need} needed (${who})`); return; }
+  console.log(`room: ${who}, ${left} tokens`);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
   const rows: (Row3 & { rec?: TurnRecord })[] = [];
   clearCaches();
