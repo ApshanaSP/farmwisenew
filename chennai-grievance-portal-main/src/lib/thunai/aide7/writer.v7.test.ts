@@ -60,11 +60,11 @@ describe("v7 answer writer", () => {
     expect(calls[1].prompt).toMatch(/monday|morning/i);
     expect(w.rejected[0].problems.map((p) => p.kind)).toContain("time");
   });
-  it("drops a later sentence that fails, and says nothing after it", async () => {
-    const mixed = "GAP: none\nS: Standing water at Guindy Industrial Estate in Adyar since yesterday afternoon. [F1,F2]\nS: The Minister visited it this morning. [F1]\nS: PWD Water Resources has it. [F3]";
+  it("drops a later sentence that fails, skips what leans on it, keeps what stands alone, and ends at a second failure", async () => {
+    const mixed = "GAP: none\nS: Standing water at Guindy Industrial Estate in Adyar since yesterday afternoon. [F1,F2]\nS: The Minister visited it this morning. [F1]\nS: This shows the urgency. [F1]\nS: PWD Water Resources has it. [F3]\nS: The Governor called. [F1]\nS: Worth asking PWD Water Resources for an officer today. [F3]";
     const w = await writeAnswer(input, opts(fake({ "qwen/qwen3.8-27b": [{ text: mixed }] })));
-    expect(w.sentences).toEqual(["Standing water at Guindy Industrial Estate in Adyar since yesterday afternoon."]);
-    expect(w.rejected).toHaveLength(1);
+    expect(w.sentences).toEqual(["Standing water at Guindy Industrial Estate in Adyar since yesterday afternoon.", "PWD Water Resources has it."]);
+    expect(w.rejected).toHaveLength(2);
   });
   it("moves to the next rung when one sends nothing in its first-text time", async () => {
     const w = await writeAnswer(input, opts(fake({ "qwen/qwen3.8-27b": [{ text: GOOD, delay: 4000 }], "openai/gpt-oss-120b": [{ text: GOOD }] }), { firstBy: Date.now() + 6000, until: Date.now() + 8000 }));

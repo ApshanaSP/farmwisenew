@@ -63,6 +63,8 @@ const MAX_SENTENCES = 4;
 const MAX_OUT = 320;
 /** a model's preamble, a heading, or its echo of the prompt ("Here is the answer:", "FACTS:", "F1 [dashboard] ...", "QUESTION: ...") */
 const JUNK = /^(?:(?:here(?:'s| is)|sure|okay|ok|certainly|answer|output|spoken answer|response)\b[^.!?]*:?\s*$|[A-Z][A-Z ]{1,20}:\s*$|(?:QUESTION|ANSWER IN|SCREEN|FACTS|EARLIER IN THIS CONVERSATION)\s*:|F\d{1,3}\s+\[)/i;
+/** a sentence that leans on the one before it */
+const LEANS = /^(?:this|that|these|those|it|its|they|their|such|which|so|thus|hence|also|both)\b|^(?:இது|அது|இவை|அவை|இதனால்|அதனால்|இதன்|அதன்)/iu;
 /** a re-ask needs this much time before the first-sentence deadline to be worth making */
 const REASK_MS = 1200;
 
@@ -90,7 +92,7 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
     const stop = new AbortController();
     const signal = o.signal ? AbortSignal.any([o.signal, stop.signal]) : stop.signal;
     // what this try has said and seen
-    let buf = "", gotText = false, ended = false, firstFail: { text: string; problems: Problem[] } | null = null;
+    let buf = "", gotText = false, ended = false, dropped = false, firstFail: { text: string; problems: Problem[] } | null = null;
     const places = new Set<string>();
     const said: string[] = [];
     const line = (raw: string) => {
@@ -102,12 +104,16 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
       // a preamble, a heading or the facts echoed back is no sentence of the answer: never spoken, never a failure
       if (JUNK.test(l)) return;
       if (said.length >= MAX_SENTENCES) { ended = true; stop.abort(); return; }
+      // after a dropped sentence, one that leans on it ("This shows...", "It is...", "இது...") is skipped, not said
+      if (dropped && LEANS.test(parseLine(l).text)) return;
       const r = checkSentence(l, input.sheet, places);
       if (!r.ok) {
         out.rejected.push({ text: r.text || parseLine(l).text, problems: r.problems, model: label });
-        if (!said.length) firstFail = { text: r.text, problems: r.problems };
-        // nothing after a dropped sentence is said
-        ended = true; stop.abort();
+        if (!said.length) { firstFail = { text: r.text, problems: r.problems }; ended = true; stop.abort(); return; }
+        // a later sentence: dropped; the answer goes on with what stands alone, and ends at a second failure (the dev run, 17 Nov: ending at
+        // the first left one-sentence answers that lost their point)
+        if (dropped) { ended = true; stop.abort(); }
+        dropped = true;
         return;
       }
       said.push(r.text);
