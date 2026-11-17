@@ -54,5 +54,7 @@
  "q_tg_kodambakkam": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Charon", "text": "Kodambakkam-ல today ஏதாவது serious-ஆ இருக்கா?" },
  "q_tg_changed": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Kore", "text": "Yesterday-ல இருந்து என்ன change ஆகியிருக்கு?" },
  "q_tg_attention": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Puck", "text": "Today நான் எந்த areas-ஐ focus பண்ணணும்?" },
- "q_tg_tondiarpet": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Leda", "text": "Tondiarpet-ல sewage complaints status என்ன?" }
+ "q_tg_tondiarpet": { "kind": "q", "lang": "tanglish", "source": "gemini", "voice": "Leda", "text": "Tondiarpet-ல sewage complaints status என்ன?" },
+ "wakecmd_zira": { "kind": "wakecmd", "lang": "en", "source": "win", "voice": "Zira", "text": "Hey Jarvis, show the severe cases." },
+ "wakecmd_mark": { "kind": "wakecmd", "lang": "en", "source": "win", "voice": "Mark", "text": "Hey Jarvis, go to trends." }
 }

@@ -1,0 +1,623 @@
+{
+ "tag": "v6a-hey-q90",
+ "part": "wake",
+ "at": "2026-11-17T07:42:22.085Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "flags": {
+  "NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS": "90"
+ },
+ "rows": [
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 176,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 176,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1194,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 257,
+   "transcribed": 596,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 53,
+    "at": {
+     "voicedEnd": 53,
+     "eou": 257,
+     "uploadSent": 260,
+     "sttSent": 275,
+     "sttBack": 578,
+     "hearBack": 595
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@176",
+    "uttStart(silent)@890",
+    "uttEnd(silent)@890",
+    "uttStart(silent)@1062",
+    "uttEnd(silent)@1062",
+    "pcmEnd@1194",
+    "vadStart@-650",
+    "kws@69",
+    "wakeWord@78",
+    "wakeReply@171",
+    "wakeReply@171",
+    "prewarm@172",
+    "vadEnd@257",
+    "transcribed@596"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 202,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 202,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 772,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 252,
+   "transcribed": 612,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 58,
+    "at": {
+     "voicedEnd": 58,
+     "eou": 252,
+     "uploadSent": 254,
+     "sttSent": 277,
+     "sttBack": 596,
+     "hearBack": 612
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@202",
+    "pcmEnd@772",
+    "uttStart(silent)@1714",
+    "uttEnd(silent)@1716",
+    "uttStart(silent)@1864",
+    "uttEnd(silent)@1864",
+    "vadStart@-560",
+    "kws@90",
+    "wakeWord@94",
+    "wakeReply@197",
+    "wakeReply@197",
+    "prewarm@197",
+    "vadEnd@252",
+    "transcribed@612"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 210,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 210,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1004,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 259,
+   "transcribed": 919,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 66,
+    "at": {
+     "voicedEnd": 66,
+     "eou": 259,
+     "uploadSent": 267,
+     "sttSent": 285,
+     "sttBack": 884,
+     "hearBack": 919
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@210",
+    "pcmEnd@1004",
+    "uttStart(silent)@1200",
+    "uttEnd(silent)@1201",
+    "uttStart(silent)@1401",
+    "uttEnd(silent)@1401",
+    "vadStart@-434",
+    "kws@18",
+    "wakeWord@29",
+    "wakeReply@205",
+    "wakeReply@205",
+    "prewarm@205",
+    "vadEnd@259",
+    "transcribed@919"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 217,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 217,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 959,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 266,
+   "transcribed": 744,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 73,
+    "at": {
+     "voicedEnd": 73,
+     "eou": 266,
+     "uploadSent": 270,
+     "sttSent": 278,
+     "sttBack": 713,
+     "hearBack": 744
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@217",
+    "pcmEnd@959",
+    "uttStart(silent)@1581",
+    "uttEnd(silent)@1583",
+    "uttStart(silent)@1785",
+    "uttEnd(silent)@1785",
+    "vadStart@-608",
+    "kws@105",
+    "wakeWord@111",
+    "wakeReply@212",
+    "wakeReply@212",
+    "prewarm@213",
+    "vadEnd@266",
+    "transcribed@744"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 196,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 196,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 767,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 278,
+   "transcribed": 746,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 63,
+    "at": {
+     "voicedEnd": 63,
+     "eou": 278,
+     "uploadSent": 288,
+     "sttSent": 301,
+     "sttBack": 711,
+     "hearBack": 746
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@196",
+    "pcmEnd@767",
+    "uttStart(silent)@1062",
+    "uttEnd(silent)@1064",
+    "uttStart(silent)@1254",
+    "uttEnd(silent)@1256",
+    "vadStart@-565",
+    "kws@47",
+    "wakeWord@59",
+    "wakeReply@191",
+    "wakeReply@191",
+    "prewarm@192",
+    "vadEnd@278",
+    "transcribed@746"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 200,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 200,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 942,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 281,
+   "transcribed": 661,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 67,
+    "at": {
+     "voicedEnd": 67,
+     "eou": 281,
+     "uploadSent": 284,
+     "sttSent": 298,
+     "sttBack": 647,
+     "hearBack": 661
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@200",
+    "uttStart(silent)@941",
+    "uttEnd(silent)@941",
+    "pcmEnd@942",
+    "uttStart(silent)@1138",
+    "uttEnd(silent)@1138",
+    "vadStart@-423",
+    "kws@51",
+    "wakeWord@60",
+    "wakeReply@195",
+    "wakeReply@195",
+    "prewarm@195",
+    "vadEnd@281",
+    "transcribed@661"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 171,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 171,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 966,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 252,
+   "transcribed": 994,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 49,
+    "at": {
+     "voicedEnd": 49,
+     "eou": 252,
+     "uploadSent": 257,
+     "sttSent": 270,
+     "sttBack": 978,
+     "hearBack": 994
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@171",
+    "uttStart(silent)@769",
+    "uttEnd(silent)@769",
+    "uttStart(silent)@946",
+    "uttEnd(silent)@947",
+    "pcmEnd@966",
+    "vadStart@-654",
+    "kws@64",
+    "wakeWord@74",
+    "wakeReply@166",
+    "wakeReply@166",
+    "prewarm@166",
+    "vadEnd@252",
+    "transcribed@994"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 185,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 185,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1204,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 266,
+   "transcribed": 652,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 63,
+    "at": {
+     "voicedEnd": 63,
+     "eou": 266,
+     "uploadSent": 268,
+     "sttSent": 280,
+     "sttBack": 638,
+     "hearBack": 652
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@185",
+    "uttStart(silent)@970",
+    "uttEnd(silent)@971",
+    "pcmEnd@1204",
+    "uttStart(silent)@1206",
+    "uttEnd(silent)@1207",
+    "vadStart@-555",
+    "kws@79",
+    "wakeWord@87",
+    "wakeReply@180",
+    "wakeReply@180",
+    "prewarm@180",
+    "vadEnd@266",
+    "transcribed@652"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 181,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 181,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 751,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 261,
+   "transcribed": 589,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 47,
+    "at": {
+     "voicedEnd": 47,
+     "eou": 261,
+     "uploadSent": 267,
+     "sttSent": 279,
+     "sttBack": 575,
+     "hearBack": 588
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@181",
+    "pcmEnd@751",
+    "uttStart(silent)@1556",
+    "uttEnd(silent)@1556",
+    "uttStart(silent)@1750",
+    "uttEnd(silent)@1750",
+    "vadStart@-464",
+    "kws@15",
+    "wakeWord@18",
+    "wakeReply@176",
+    "wakeReply@176",
+    "prewarm@176",
+    "vadEnd@261",
+    "transcribed@589"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 194,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 194,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 988,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 275,
+   "transcribed": 673,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 61,
+    "at": {
+     "voicedEnd": 61,
+     "eou": 275,
+     "uploadSent": 277,
+     "sttSent": 291,
+     "sttBack": 656,
+     "hearBack": 673
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@194",
+    "pcmEnd@988",
+    "uttStart(silent)@1001",
+    "uttEnd(silent)@1002",
+    "uttStart(silent)@1183",
+    "uttEnd(silent)@1184",
+    "vadStart@-622",
+    "kws@108",
+    "wakeWord@117",
+    "wakeReply@189",
+    "wakeReply@189",
+    "prewarm@189",
+    "vadEnd@275",
+    "transcribed@673"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 216,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 216,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 957,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 264,
+   "transcribed": 643,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 72,
+    "at": {
+     "voicedEnd": 72,
+     "eou": 264,
+     "uploadSent": 271,
+     "sttSent": 284,
+     "sttBack": 628,
+     "hearBack": 643
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@216",
+    "uttStart(silent)@716",
+    "uttEnd(silent)@716",
+    "uttStart(silent)@891",
+    "uttEnd(silent)@891",
+    "pcmEnd@957",
+    "vadStart@-546",
+    "kws@24",
+    "wakeWord@33",
+    "wakeReply@210",
+    "wakeReply@211",
+    "prewarm@211",
+    "vadEnd@264",
+    "transcribed@643"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 200,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 200,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 770,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 280,
+   "transcribed": 587,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 66,
+    "at": {
+     "voicedEnd": 66,
+     "eou": 280,
+     "uploadSent": 282,
+     "sttSent": 296,
+     "sttBack": 573,
+     "hearBack": 587
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@200",
+    "pcmEnd@770",
+    "uttStart(silent)@850",
+    "uttEnd(silent)@851",
+    "uttStart(silent)@1018",
+    "uttEnd(silent)@1019",
+    "vadStart@-424",
+    "kws@50",
+    "wakeWord@59",
+    "wakeReply@194",
+    "wakeReply@195",
+    "prewarm@195",
+    "vadEnd@280",
+    "transcribed@587"
+   ]
+  }
+ ]
+}

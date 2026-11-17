@@ -68,11 +68,13 @@ const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT === "1";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 /**
- * v6: after the on-device wake word fires, the spoken reply waits for this much quiet (ms), so "Hey Jarvis, show the severe cases" said
- * in one breath is not talked over; NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600, default 150. Past WAKE_REPLY_GIVE_UP_MS of speech the
- * request itself is the reply.
+ * v6: after the on-device wake word fires, the spoken reply waits for this much quiet (ms); NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600,
+ * default 90. Measured 17 Nov (eval/v6/latency/v6a-hey*-wake.json, v6a-wakecmd-q*): "Hey Jarvis" -> the reply p50 200 / p90 216 ms at
+ * 90, p50 263 / p90 285 at 150 (n 12 each); but "Hey Jarvis, show the severe cases" said in one breath got the reply in its comma pause
+ * at BOTH settings (4/4 each; the command was still heard right and acted on, 8/8). Response time wins (the brief), so 90; a longer
+ * wait trades the wake's speed for fewer talk-overs. Past WAKE_REPLY_GIVE_UP_MS of speech the request itself is the reply.
  */
-export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS", process.env.NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS)): number => { const n = Number(v); return v != null && v.trim() !== "" && Number.isFinite(n) && n >= 60 ? Math.min(600, n) : 150; };
+export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS", process.env.NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS)): number => { const n = Number(v); return v != null && v.trim() !== "" && Number.isFinite(n) && n >= 60 ? Math.min(600, n) : 90; };
 export const WAKE_REPLY_GIVE_UP_MS = 1500;
 /** v6: a name-only sentence that arrives this soon after an on-device wake is the same call (it was answered already) */
 export const WAKE_SAME_CALL_MS = 5000;

@@ -614,5 +614,27 @@
   "speechMs": 620,
   "endMs": 3060,
   "durMs": 3590
+ },
+ "wakecmd_zira": {
+  "kind": "wakecmd",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "Hey Jarvis, show the severe cases.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2940,
+  "durMs": 3470
+ },
+ "wakecmd_mark": {
+  "kind": "wakecmd",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Hey Jarvis, go to trends.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2410,
+  "durMs": 2940
  }
 }
