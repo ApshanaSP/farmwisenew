@@ -14,7 +14,7 @@ import type { BlockT, StageDocT } from "../stage";
 import type { Lang, World } from "../types";
 import { buildSheet, extrasOf } from "./facts";
 import { gazetteer, type Gazetteer } from "./gazetteer";
-import { findGap, gapFacts, gapPhrase, nothingLine, type GapDeps, type GapFound } from "./gap";
+import { causeGap, findGap, gapFacts, gapPhrase, gapWords, nothingLine, type GapDeps, type GapFound } from "./gap";
 import type { Sheet7 } from "./ground";
 import { writeAnswer, type Written, type WriteOptions } from "./writer";
 
@@ -91,12 +91,16 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
   const said = [...written.sentences];
   let gap: AideOut["gap"] = null;
   let links: BlockT | null = null;
-  // the code's hint stands in for a gap the writer did not name, unless what was said already speaks of it
+  // a cause or a why is no gap: the record answers it (the writer says it shows what moved, not why); nothing is looked up for it
+  if (written.gap && causeGap(written.gap)) written.gap = null;
+  // the code's hint stands in for a gap the writer did not name, or named only in words of its own ("the Chief Minister's visit" for "CM":
+  // the Claude pilot), unless what was said already speaks of it
   const spoke = ` ${said.join(" ").toLowerCase()} `;
-  const hinted = !written.gap && ctx.gapHint?.length && !ctx.gapHint.some((w) => w.length >= 3 && spoke.includes(w)) ? ctx.gapHint.join(" ") : null;
+  const ownWords = written.gap ? gapWords(written.gap, ctx.question, ctx.world) : [];
+  const hinted = (!written.gap || !ownWords.length) && ctx.gapHint?.length && !ctx.gapHint.some((w) => w.length >= 3 && spoke.includes(w)) ? ctx.gapHint.join(" ") : null;
   if (hinted) written.gap = hinted;
   if (written.gap) {
-    const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now }).catch(() => null) : null;
+    const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now, world: ctx.world }).catch(() => null) : null;
     const extra: string[] = [];
     if (found?.status === "ok" && found.hits.length) {
       // one more checked answer, about the gap only, from what the reports say

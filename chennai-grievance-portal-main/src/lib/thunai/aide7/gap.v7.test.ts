@@ -26,7 +26,7 @@ const NOW = Date.parse("2026-11-17T10:00:00+05:30");
 
 describe("v7: the part the dashboard does not hold", () => {
   it("reads the gap's words from the question, and matches a report only on them and the event", () => {
-    expect(gapWords("CM Vijay's visit to Adyar", Q)).toEqual(["cm", "vijay", "adyar"]);
+    expect(gapWords("CM Vijay's visit to Adyar", Q, WORLD)).toEqual(["cm", "vijay"]);
     expect(gapPhrase("cm vijay visiting", Q)).toBe("CM Vijay visiting");
     expect(matches("CM Vijay to visit Adyar flood areas on Friday", ["cm", "vijay"], Q)).toBe(true);
     expect(matches("CM Vijay reviews the budget", ["cm", "vijay"], Q)).toBe(false);
@@ -55,6 +55,29 @@ describe("v7: the part the dashboard does not hold", () => {
       feeds: async () => { fed = true; return []; } });
     expect(a.gap?.hits[0].from).toBe("dashboard");
     expect(fed).toBe(false);
+  });
+  it("a cause or a why is no gap to look up (the record answers it: it shows what moved, not why)", async () => {
+    const calls: RungCall[] = [];
+    const why = (c: RungCall[]): OpenRung => async (rung, c2, onText) => { c.push(c2); onText("GAP: the cause of the rise; the facts only show what moved, not why\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [F2]\n"); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    let searched = false;
+    const a = await aideAnswer({ ...R, note: null }, { question: "why are complaints rising in Adyar", world: WORLD, user: "t", now: () => NOW, write: { open: why(calls), rungs: () => RUNGS },
+      dashboardNews: async () => { searched = true; return []; }, feeds: async () => { searched = true; return []; } });
+    expect(searched).toBe(false);
+    expect(a.gap).toBeNull();
+    expect(a.result.say).not.toMatch(/nothing on/i);
+  });
+  it("a place name alone is no search: the gap's words must name something besides the place", () => {
+    expect(gapWords("Adyar", "tell me about the Adyar issue", WORLD)).toEqual([]);
+    expect(gapWords("CM Vijay's visit to Adyar", Q, WORLD)).toEqual(["cm", "vijay"]);
+  });
+  it("the writer's gap in its own words ('the Chief Minister's visit'): the question's own words are looked for", async () => {
+    let seen: string[] = [];
+    const own: OpenRung = async (rung, c2, onText) => { onText(/only this part/.test(c2.prompt) ? "GAP: none\nS: The Hindu reports that CM Vijay is to visit the Adyar flood areas on Friday. [F1]\n" : "GAP: the Chief Minister's visit itself\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [F2]\n"); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: own, rungs: () => RUNGS },
+      dashboardNews: async (w) => { seen = w; return []; }, feeds: async () => [{ outlet: "The Hindu", outletTa: null, title: "CM Vijay to visit Adyar flood areas on Friday", url: "https://www.thehindu.com/x", at: NOW - 3600_000, from: "web" }] });
+    expect(seen).toEqual(["cm", "vijay"]);
+    expect(a.gap?.status).toBe("ok");
+    expect(a.result.say).toMatch(/CM Vijay is to visit/);
   });
   it("the nothing line says only what was searched", () => {
     expect(nothingLine("முதல்வர் வருகை", "ta", "news")).toBe("முதல்வர் வருகை பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");

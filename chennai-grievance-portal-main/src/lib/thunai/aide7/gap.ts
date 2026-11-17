@@ -13,11 +13,13 @@ import { relativeTime } from "../web/brief";
 import { injectionLike } from "../web/compare";
 import { listOf, type WebDeps } from "../web/fetch";
 import { readFeed } from "../web/related";
-import type { Lang } from "../types";
+import type { Lang, World } from "../types";
 import type { Fact7 } from "./ground";
 
 export interface GapHit { outlet: string; outletTa: string | null; title: string; url: string | null; at: number | null; from: "dashboard" | "web" }
 export interface GapDeps {
+  /** the district's own names, left out of a gap's search words */
+  world?: Pick<World, "zones" | "places"> | null;
   /** the dashboard's own stored news, searched by the gap's words (the console's search; server only) */
   dashboardNews?: (words: string[]) => Promise<GapHit[]>;
   /** the outlets' feed entries (the default reads every allowed feed through v6's reader) */
@@ -30,11 +32,18 @@ const STOP = new Set(["the", "a", "an", "is", "are", "was", "were", "be", "to", 
   "would", "should", "could", "can", "do", "does", "did", "any", "there", "this", "that", "these", "those", "today", "tomorrow", "yesterday", "visit", "visiting", "know", "tell", "me",
   "my", "our", "his", "her", "their", "its", "it", "has", "have", "had", "with", "from", "by", "up", "news", "report", "reports", "say", "says", "said", "i", "we", "you", "nothing", "anything",
   "something", "part", "dashboard", "console", "data", "the", "ah", "la", "pathi", "enna", "sollu", "irukka", "irukku"]);
-/** the gap's distinctive words that the Collector said (a word the model added is not looked for) */
-export function gapWords(gap: string, question: string): string[] {
+/**
+ * the gap's distinctive words that the Collector said (a word the model added is not looked for), less the district's own place names: a place
+ * alone matches every report about it ("Adyar" found a park and a restaurant sale for "the cause of the rise in Adyar": the Claude pilot, 17 Nov)
+ */
+export function gapWords(gap: string, question: string, world?: Pick<World, "zones" | "places"> | null): string[] {
   const q = ` ${question.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")} `;
-  return [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && q.includes(` ${w}`)))].slice(0, 6);
+  const place = new Set((world ? [...world.zones.map((z) => z.name), ...world.places.flatMap((p) => [p.name, ...p.aliases])] : [])
+    .flatMap((n) => n.toLowerCase().split(/[^\p{L}\p{N}]+/u)).filter((x) => x.length >= 3));
+  return [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && !place.has(w) && q.includes(` ${w}`)))].slice(0, 6);
 }
+/** a "gap" that is a cause or a why: the record answers it (it shows what moved, not why); nothing outside is looked for */
+export const causeGap = (gap: string): boolean => /\b(?:cause[sd]?|why|reasons?|drove|driv(?:e|es|ing|en)|behind (?:it|the)|explain(?:s|ed)?)\b/i.test(gap);
 
 /** "visit" said in the question is part of what is asked: a report must carry it too when the question names an event */
 const EVENT = /\b(visit\w*|inaugurat\w*|meet\w*|review\w*|protest\w*|strike\w*|rally|announce\w*|launch\w*|open\w*|tour\w*)\b/i;
@@ -68,7 +77,7 @@ const STOP_PHRASE = new Set(["the", "a", "an", "is", "are", "was", "of", "in", "
 /** Look for the gap: the dashboard's news first, the outlets' feeds only when it has nothing. At most three reports, newest first. */
 export async function findGap(gap: string, question: string, d: GapDeps = {}): Promise<GapFound> {
   const t0 = Date.now();
-  const words = gapWords(gap, question);
+  const words = gapWords(gap, question, d.world);
   const phrase = gapPhrase(gap, question);
   if (!words.length) return { status: "no-words", words, hits: [], ms: 0, phrase };
   const now = (d.now ?? Date.now)();
