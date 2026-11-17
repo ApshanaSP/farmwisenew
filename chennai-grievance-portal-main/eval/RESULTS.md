@@ -55,7 +55,7 @@ No free model is both faster than Groq's and as right. Groq qwen3.8-27b and gpt-
 
 ### Phase 3: incident briefings (`eval/v6/brief/set.json`, `src/lib/thunai/brief6.live.ts`)
 
-34 incidents from the cached store (9 with a news report), each briefed by v5 and by v6, in English and Tamil. A script checks every figure and name against the record; a rubric scores length, the next step and speech-likeness; a blind pairwise judge (Gemini 3.5 flash-lite, free tier, the A/B order seeded) compares them.
+34 incidents from the cached store (8 with a news report), each briefed by v5 and by v6, in English and Tamil, on the final code (after both independent checks; `eval/v6/brief/set.json`, 17 Nov 17:02 IST). A script checks every figure and name against the record; a rubric scores length, the next step and speech-likeness; a blind pairwise judge (Gemini 3.5 flash-lite, free tier, the A/B order seeded) compares them.
 
 | | v5 | v6 |
 |---|---|---|
@@ -64,12 +64,14 @@ No free model is both faster than Groq's and as right. Groq qwen3.8-27b and gpt-
 | Has a next step | 34/34 | 34/34 |
 | Two to four sentences | 34/34 | 34/34 |
 | Ends offering more ("Want the details?") | 0/34 | 34/34 |
-| Words, p50 / p90 | 31 / 36 | 40 / 43 |
-| Blind judge, English (n 28 judged) | 4 | **24** |
-| Blind judge, Tamil (n 28 judged) | 10 | **18** |
+| Words, p50 / p90 | 31 / 36 | 42 / 46 |
+| Blind judge, English, the judge's record holding the incident's own assignment (n 22 judged) | 5 | **17** |
+| Blind judge, Tamil, the same (n 22 judged) | 10 | 12 (about even) |
+| Blind judge, English, the record holding the department's directory count instead (n 18 judged) | 6 | 12 |
+| Blind judge, Tamil, the record holding the directory count (n 18 judged) | **12** | 6 |
 
-- 6 pairs in each language got no verdict (Gemini 503 "high demand"); the first full run (before the wording fixes) had 16 such in English and 17 in Tamil and judged v6 12-6 and 10-7 (its file was replaced by the later run).
-- The judge's reasons when it chose v5 (English): v5 is shorter and plainer; v6 names an outlet the judge did not see as tied to the severity; once it called a v6 detail not in the record (the script found every v6 figure and name in the record); once v5 named a locality v6 left out.
+- **Why two judge runs:** since the first independent check the briefing names an officer only from the incident's own assignment ("no officer is named" when there is none). The judge's record still held the department's directory count, so it read "no officer is named" as unsupported (its stated reason in most of the Tamil v5 wins); the record now holds the assignment the briefing reads, and both runs are shown. The briefings are the same in both. 12 (then 16) pairs in each language got no verdict (Gemini 503 "high demand"). Earlier runs, on code before the checks' fixes: English 24-4 and Tamil 18-10 (n 28), and 12-6 and 10-7 (n 18 and 17).
+- The judge's reasons when it chose v5: v5 is shorter and plainer (v6 says more: since when, the outlet and when, who has it); v6's mention of a missing officer read as unsupported when the judge could not see the assignment; once a locality v5 named that v6 left out. The script found every v6 figure and name in the record.
 - Ten audio samples for the owner: `docs/jarvis/samples/v6/` (README lists what each says).
 
 ### Understanding (Phase 5)

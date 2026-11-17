@@ -115,7 +115,10 @@ it("v6 briefing set", async () => {
     items.push({ id, sev: r.sev ?? null, zone: r.zone_name ?? null, news: reports.some((x) => !!x.publisher), facts: {
       what: (d.incident as Row | undefined)?.type ?? null, place: (d.incident as Row | undefined)?.place ?? null, zone: (d.incident as Row | undefined)?.zone_name ?? null, t: (d.incident as Row | undefined)?.t ?? null,
       sla_due: (d.incident as Row | undefined)?.sla_due ?? null, status: (d.incident as Row | undefined)?.status ?? null, sev: (d.incident as Row | undefined)?.sev ?? null, complaints: (d.incident as Row | undefined)?.complaints ?? null,
-      dept: (d.incident as Row | undefined)?.dept_name ?? null, officials: ((d.officials ?? []) as Row[]).length, reports: reports.map((x) => ({ t: x.t ?? null, publisher: x.publisher ?? null }))
+      // the incident's own assignment (the officer the briefing speaks of since the first independent check), not the department's directory
+      // of contacts: the judge was given the directory's count and read v6's "no officer is named" as unsupported (17 Nov)
+      dept: (d.incident as Row | undefined)?.dept_name ?? null, assigned_officer: ((d as Row).assigned as Row | null | undefined)?.designation ?? null,
+      reports: reports.map((x) => ({ t: x.t ?? null, publisher: x.publisher ?? null }))
     }, v5: out.v5, v6: out.v6, score: { v5: score(out.v5.en), v6: score(out.v6.en) } });
   }
   // the blind pairwise judge

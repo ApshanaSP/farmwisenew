@@ -8,7 +8,7 @@ Branch `claude/jarvis-v6-build-adbae2`, from the v5 build at `a7943b2f`. The bri
 - **"Hey Jarvis" is instant now**: the spoken "Yes?" comes p50 193 / p90 210 ms after the name with Jarvis open (n 24), 163 / 185 ms closed (n 12), against v5's tone at 703 / 743. **"Hi Jarvis" is not**: the on-device model knows only "Hey Jarvis", so "Hi/Hello Jarvis" still go through the speech service (636 / 826 ms).
 - **Answers start sooner but not within the brief's targets**: English question -> first word 2.9 / 3.7 s (v5 4.1 / 5.5 s); the voice itself starts 0.7 s after it is handed over (v5 1.3 s), Tamil 1.0 s with its short first chunk (was 2.6 s). The rest is the planner and the speech-to-text round trip; the first sound (the end-of-speech earcon) stays at about 0.41 / 0.44 s.
 - **Jarvis reads the news**: "read the first article" -> the brief in hand 0.85 / 1.3 s (n 11) with the outlet and the time, the sources as links.
-- **Briefings sound like an aide**: a blind judge preferred v6 to v5 in English 24-4 and in Tamil 18-10.
+- **Briefings sound like an aide in English; Tamil is even**: a blind judge preferred v6 to v5 17-5 in English and 12-10 in Tamil (n 22 each, the final code); every figure and name traces to the record (34/34).
 - **Understanding did not move**: FINALS-PENDING
 - **Claude was never called**: the key in `.env` was refused (401) when you allowed it; $0 spent.
 - **Nothing was tried with a real microphone in a real room**, again.
