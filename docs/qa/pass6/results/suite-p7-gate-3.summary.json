@@ -4,7 +4,7 @@
   "seed": "7203",
   "config": "vitest.config.ts",
   "exit": 0,
-  "secs": 148,
+  "secs": 79,
   "numTotalTests": 5914,
   "numPassedTests": 5901,
   "numFailedTests": 0,

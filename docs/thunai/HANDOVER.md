@@ -2,7 +2,7 @@
 
 ## v5 (15-17 Nov 2026)
 
-Branch `claude/jarvis-v5-build-dfece7`, cut from `origin/main` at START `f830efbd` (the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v5 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. Deploying Haiku: `docs/jarvis/DEPLOY_HAIKU.md`. The room check and demo: `docs/jarvis/DEMO.md`. Oracle changes: `docs/qa/pass7/V5_EXPECTED_CHANGES.md`. Review: `docs/jarvis/BUILD_REVIEW_FINDINGS.md`.
+Branch `claude/jarvis-v5-build-dfece7`, cut from `origin/main` at START `f830efbd` (the v4 code at `40ff9082` plus two non-Jarvis commits). On 17 Nov main's later `8b442b64` (Apshana's console fixes) was merged in as `a7943b2f`: no conflicts, and the unit suite, the Jarvis browser specs and the QA gate gave the same results as before the merge (`BUILD_LOG`). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v5 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. Deploying Haiku: `docs/jarvis/DEPLOY_HAIKU.md`. The room check and demo: `docs/jarvis/DEMO.md`. Oracle changes: `docs/qa/pass7/V5_EXPECTED_CHANGES.md`. Review: `docs/jarvis/BUILD_REVIEW_FINDINGS.md`.
 
 **Read this first.**
 - **Claude was not called at all, by design** (owner: build and test on Groq, add the Haiku key at deploy). The Haiku-first ladder is built and tested with mocks; the deploy check is built and never run.
