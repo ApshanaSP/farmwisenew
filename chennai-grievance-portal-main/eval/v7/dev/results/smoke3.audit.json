@@ -1,0 +1,66 @@
+{
+ "tally": {
+  "n": 3,
+  "model": 0,
+  "fallback": 3,
+  "grounded": 3,
+  "sentences": 0,
+  "failedAgain": 0,
+  "lists": 0,
+  "over4": 0,
+  "wordsP50": 37,
+  "outside": {
+   "n": 1,
+   "abstained": 1,
+   "found": 0,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 1
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 1,
+    "model": 0,
+    "fallback": 1,
+    "rejected": 0,
+    "firstMsP50": null
+   },
+   "compare": {
+    "n": 1,
+    "model": 0,
+    "fallback": 1,
+    "rejected": 0,
+    "firstMsP50": null
+   },
+   "outside": {
+    "n": 1,
+    "model": 0,
+    "fallback": 1,
+    "rejected": 0,
+    "firstMsP50": null
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 3,
+    "model": 0,
+    "fallback": 3,
+    "rejected": 0,
+    "firstMsP50": null
+   }
+  },
+  "byModel": {
+   "none": {
+    "n": 3,
+    "model": 0,
+    "fallback": 3,
+    "rejected": 0,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {}
+ },
+ "problems": []
+}

@@ -1,0 +1,144 @@
+{
+ "tally": {
+  "n": 48,
+  "model": 43,
+  "fallback": 3,
+  "capacity": 0,
+  "grounded": 46,
+  "sentences": 115,
+  "failedAgain": 2,
+  "lists": 0,
+  "over4": 1,
+  "wordsP50": 38,
+  "outside": {
+   "n": 8,
+   "abstained": 6,
+   "found": 1,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 90
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 4,
+    "firstMsP50": 1203
+   },
+   "news": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 1,
+    "firstMsP50": 1070
+   },
+   "compare": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 9,
+    "firstMsP50": 1064
+   },
+   "why": {
+    "n": 8,
+    "model": 7,
+    "fallback": 1,
+    "rejected": 8,
+    "firstMsP50": 960
+   },
+   "followup": {
+    "n": 8,
+    "model": 5,
+    "fallback": 2,
+    "rejected": 7,
+    "firstMsP50": 863
+   },
+   "outside": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 7,
+    "firstMsP50": 1290
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 30,
+    "model": 25,
+    "fallback": 3,
+    "rejected": 25,
+    "firstMsP50": 955
+   },
+   "ta": {
+    "n": 11,
+    "model": 11,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 1121
+   },
+   "tg": {
+    "n": 7,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 6,
+    "firstMsP50": 1278
+   }
+  },
+  "byModel": {
+   "claude-haiku-5-5": {
+    "n": 42,
+    "model": 42,
+    "fallback": 0,
+    "rejected": 26,
+    "firstMsP50": 1064
+   },
+   "none": {
+    "n": 5,
+    "model": 0,
+    "fallback": 3,
+    "rejected": 8,
+    "firstMsP50": null
+   },
+   "openai/gpt-oss-20b": {
+    "n": 1,
+    "model": 1,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {
+   "list": 13,
+   "multiplier": 1,
+   "number": 1,
+   "misbound": 5,
+   "absolute": 1,
+   "name": 9,
+   "uncited": 1,
+   "direction": 3,
+   "superlative": 1,
+   "cause": 1,
+   "copy": 4,
+   "time": 2
+  }
+ },
+ "problems": [
+  {
+   "id": "d-inc-3",
+   "sentence": "Only one citizen complaint is linked to it, while flooding reports in Teynampet rose from 21 to 8 in the last seven days.",
+   "problems": [
+    "direction: \"rose from 21 to 8\" goes the other way"
+   ]
+  },
+  {
+   "id": "d-out-7",
+   "sentence": "டைம்ஸ் ஆஃப் இந்தியா இதைப் பற்றி செய்தி வெளியிட்டிருக்கிறது; இணைப்பு திரையில் உள்ளது.",
+   "problems": [
+    "name: டைம்ஸ் ஆஃப் இந்தியா is in no cited fact"
+   ]
+  }
+ ]
+}

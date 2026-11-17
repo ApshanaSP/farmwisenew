@@ -1,5 +1,111 @@
 # Jarvis mode: results
 
+## v7 (17-18 Nov 2026)
+
+Branch `claude/jarvis-v7-upgrade-00072d` from v6's `736ce5f1`; the brief and the plan are `docs/jarvis/JARVIS_V7.md`, the research `docs/jarvis/v7-research/`. Until 22:45 on 17 Nov no live Claude call was made (the brief); **at 22:45 the owner wrote "use claude api limit 10 dollar"**, and from 22:48 the live runs used **Claude Haiku 5.5 leading** (the planner and the new answer writer) under `JARVIS_LIVE_CLAUDE=1 JARVIS_CLAUDE_BUDGET_USD=10`, with Groq behind it. Each figure below says which model led. The answers are scored by `src/lib/thunai/aide7/eval7.live.ts` on the console's dry-run store (real cached data, read only); every figure has its n.
+
+### Capacity, spend and blocks, before any number
+
+- **Claude spend:** the owner's record (`data/thunai/claude-budget.sqlite`) held 93 rows, US$0.024195 before the first v7 Claude call (22:48) and 539 rows, US$0.142792 after the last (02:08 on 18 Nov): v7's runs spent **US$0.119** (446 calls) of the US$10 ceiling. `claude.live.ts`, `claude.v4.live.ts` and `deploy.live.ts` were never run.
+- **Jarvis's own Claude day cap** (1.5M tokens, 500 requests, set against Opus's prices) would have stopped Claude at under US$0.10 of Haiku spend in the middle of the finals; the runs raised it by flag (`JARVIS_CLAUDE_DAY_TOKENS=6000000`, `JARVIS_CLAUDE_DAY_REQUESTS=2000`). The default is unchanged: an owner decision (HANDOVER).
+- **Groq's free tier** was spent for the day at the start (20:15) and came back on the rolling window through the night: the first half of the dev set ran on Groq (gpt-oss-20b mostly), the latency runs led by Groq ran at 23:40, everything else on Haiku.
+- **Gemini:** 3.5 flash-lite sent no text inside the 3.5 s first-sentence window on the smoke test (6.7-9.9 s to the first token that evening) and its day was near its limit; the judges ran on **Gemini 3.1 flash-lite** (a different family from the Haiku writer). Gemma 4 refused the gateway's thinking setting (400) and was not used.
+
+### How the answers were measured
+
+- **Sets:** `eval/v7/dev/set.json` (48 questions, for tuning) and `eval/v7/holdout/set.json` (48, hashed at 21:04 before any live run, run once at the end): 8 each of incident, news, compare, why, follow-up and outside-dashboard, in English, Tamil and Tanglish. Model-drafted; the Tamil not checked by a Tamil speaker.
+- **Gold facts** are the fact sheet code builds from the store for each answer (kept whole in each result row): every figure, name and time a sentence may say. The live checker binds each sentence to the facts it cites; the offline audit re-checks every spoken sentence the model wrote against every fact of its sheet (and a gap's report sentences against the reports).
+- **Outside the dashboard:** each answer is scored found (a report named with its outlet), abstained (said plainly as not found, claiming only what was searched) or hallucinated.
+- **The judge:** blind pairwise, v7's spoken answer against v6's (v6's line and every item v6 read aloud), Gemini 3.1 flash-lite, each pair asked in both orders; a win counts only when both orders agree; exact two-sided sign test on the wins.
+- **The grounding judge** (Gemini 3.1 flash-lite) lists claims its facts do not support; its flags were read by hand.
+- **Latency:** `tests/e2e/real6.spec.ts` on a production bundle served by `scripts/jarvis7/serve-real.sh`, headless Edge with its natural voices, the same synthetic clips as v6, real providers, times from the clip's true last voiced sample; n · p50 · p90 (nearest rank).
+
+### The answers: dev runs (tuning)
+
+| Run | Writer | n | Model's answer said | Fallback | First checked sentence after the screen, p50 / p90 (n) | Refused live | Audit: answers clean | Outside: abstained / found / invented |
+|---|---|---|---|---|---|---|---|---|
+| `dev1` (first half, 22:18-22:26) | Groq (gpt-oss-20b 15, qwen 3, flash-lite 1) | 24 | 19 | 5 (2 capacity) | 635 / 998 (19) | 17 | 21/24 | — |
+| `dev2` (Haiku, before tuning on it) | Haiku 5.5 (42), gpt-oss-20b (1) | 48 | 43 | 3 | 1,064 / 1,776 (42) | 36 | 46/48 (with the fixed checker: the two flags are the two spoken defects) | 6 / 1 (false: a two-letter match) / 0 |
+| `dev3` (round 1) | Haiku 5.5 | 48 | 45 | 0 | 1,167 / 1,528 (45) | 27 | **48/48** (111 sentences) | 7 / 0 / 0 |
+| `dev4` (round 2, the last) | Haiku 5.5 | 48 | 46 | 0 | **1,057 / 1,293** (46) | 20 | 47/48 (118 sentences; the flag: a false "found", fixed after) | 6 / 1 (false, fixed) / 0 |
+
+The other rows of each Haiku run were answered by other lanes: a clarifying question ("tell me more about it") and the refusal of a question about Kerala; in `dev3` also "who has it?", which got no answer (the planner's reply failed v6's exit gate: fixed after by a code lane). `dev1` has none. "Refused live" counts sentences (a sentence can carry several problems). Median answer length 32-38 words.
+
+**What the checker did not catch on dev4 (the grounding judge's flags read by hand):** the judge flagged 20 answers (28 claims). Read by hand: 3 spoken sentences of 118 carry a claim the facts do not support: "almost twice" for a ratio of 1.7 (the tolerance was loose: tightened after, test first), the Tamil "flooding is more in Adyar" (Adyar 7, Anna Nagar 10: a comparative claim; after a fact listed Anna Nagar's kinds out of order, fixed), and "three severe open incidents, including a road accident" (that accident is rated high). One more is the false "found" the audit flagged (d-out-5, fixed). The rest are not defects: two answers no model wrote (a clarifying question, the Kerala refusal), three restatements of their facts, and the judge's noise (suggestions, "nothing found" lines, "the record shows what moved, not why", which its instructions call supported).
+
+**The blind judge on the last dev run** (`dev4full`: v7's `dev4` answers against v6 answered live with its planner on Haiku, as v6's own finals ran; Gemini 3.1 flash-lite, both orders): **v7 preferred 36, v6 1**, tie 1, split 3, no verdict 7 (rate limits and timeouts in one order); exact sign test p = 5.5e-10. By kind v7's wins: incident 4/4 decided, news 8/8, compare 7/7, why 7/7, follow-up 6 of 7 (v6 1), outside 4 (split 3, tie 1). By language: English 21-1, Tamil 9-0, Tanglish 6-0. Mean length v7 41 words, v6 55 (v6's line and the items it read). The earlier judge on `dev4` alone judged 25 pairs (23 had no v6 answer: v6 had been reused from a Groq run limited to its code lanes) and decided 13: v7 10, v6 1, split 2.
+
+### The answers: the holdout (once, at the end, Haiku leading)
+
+`eval/v7/holdout/results/final.json` (hash checked; v7 and v6 both answered live, Haiku leading both).
+
+| | Holdout (48) |
+|---|---|
+| The model's answer said | 43 (all Haiku) |
+| The fallback (the recipe's own line) | 1 ("what's in today's news": "12 headlines.", the line without its "Reading them now") |
+| Other lanes | 4: two refusals of places outside the district (Mumbai, Bengaluru), and two follow-ups with no answer: "tell me more about that one" (the planner built no screen) and "since when?" (its reply failed v6's exit gate: in the app, "I can't do that"); v6 answered both with a screen (the slowest department again; the week's case list for "since when?") |
+| First checked sentence after the screen, p50 / p90 | **1,011 / 1,409 ms** (n 43; English 915, Tamil 1,239, Tanglish 1,100 at p50) |
+| Sentences refused live | 20 (carrying 26 problems: misbound 8, name 5, list 4, multiplier 3, copy 2, time, direction, cause, absolute 1 each) |
+| The audit: answers whose every spoken sentence passes again | 47/48 (it re-checks the 115 sentences the model wrote in 43 answers; the fallback and other lanes' lines are code's); the one flag read by hand is the audit's looser test ("the river's water has risen to the bank near the subway", from the record's "Water level in Adyar River at brim near subway", against a falling count elsewhere on the sheet), the claim supported |
+| Outside the dashboard (8) | 6 said plainly as not found (claiming the dashboard and the latest news), 2 refused as outside the district; **0 found, 0 invented** (zero, Wilson 95 % upper bound 32 % on 8) |
+| Median answer length | 37 words |
+
+**The blind judge on the holdout** (Gemini 3.1 flash-lite, both orders): **v7 preferred 35, v6 2**, tie 2, split 5, no verdict 4; exact sign test p = 1.0e-8. By kind: incident 8-0, news 5-1 (split 1), compare 6-0, why 7-0, follow-up 5-0, outside 4-1 (tie 2). By language: English 19-1, Tamil 9-1, Tanglish 7-0. v6's two wins: "what's in today's news" (v7's fallback, "12 headlines.", against v6 reading every headline) and the Tamil "is the minister coming to Royapuram". Mean length v7 41 words, v6 53.
+
+**The grounding judge on the holdout**, its 24 flagged answers read by hand: **3 spoken sentences of 115 are off**: a citizen's Tanglish complaint ("knee-deep water near the bus stop with every rain") said as water "about the size of a bus stop"; "metro transport" for a report on an Intelligent Transport System; the Tamil "much more" for 16 against 11. The rest are supported restatements, suggestions, "nothing found" lines, the two refusals and the fallback. So **100 % grounded is not met**: about 3 sentences in 115-118 carry an overstatement or a misrendering that code does not check (comparatives, a paraphrase of the record's words).
+
+### After the finals: the independent check, its fixes, and the dev set on the final code
+
+An independent read-only check (three reviewers: the aide's code; the wiring, privacy and spend; these numbers against the result files) found defects the finals did not show: ways a wrong sentence could pass the checker (a figure put on the wrong place across a comma or inside a two-place fact, "up 18" against "down 18", "this afternoon" against "yesterday afternoon", a window's length or a group's size taken for a count, an extreme licensed by another place's rank, one outlet's stories taken as one report, Tamil offices and causes, a cut-off line), routing that took ordinary commands away from their lanes, the browser's number gate silencing queued checked sentences and approving unchecked figures, an incomplete `JARVIS_ANSWER=v6` rollback, uncounted spend on a mid-stream Claude error, and any stored document readable by the news aide. All were fixed test-first (`3bd03b13`, `a3ff4df4`, `23cb02da`, `6b4510a5`). **The finals above ran before these fixes** (code at `3dfc93f1`); they were not run again (run once).
+
+The dev set on the code after the fixes (Haiku leading; v6's live answers reused from `dev4full`):
+
+| Run | Code | Model's answer said | Fallback | First checked sentence p50 / p90 (n) | Sentences refused live | Audit | Outside: abstained / found / invented |
+|---|---|---|---|---|---|---|---|
+| `dev5` | `23cb02da` (the review's binding before its last narrowing) | 45 (44 Haiku, 1 gpt-oss-20b) | 1 | 1,002 / 1,949 (45) | 40 (dev4: 20): most for binding, which the next commit narrowed | 48/48 (114 sentences) | 7 / 0 / 0 |
+| `dev6` | `6b4510a5` (the final code) | 46 (all Haiku) | 0 | 1,007 / 1,675 (46) | 29 | 48/48 (114 sentences) | 6 / 1 (a related report, honestly framed: no report names the CM and Adyar; the answer says so, then that three outlets reported the CM inspecting the 108 ambulance centre in Chennai) / 0 |
+
+The blind judge on `dev6` (the final code against v6's live answers, Gemini 3.1 flash-lite, both orders): **v7 preferred 38, v6 2**, tie 1, split 3, no verdict 4; exact sign test p = 1.5e-9. v7 led in every kind (incident 8-0, news 6-0, compare 8-0, why 6-0, follow-up 6-1, outside 4-1) and language (English 24-1, Tamil 8-0, Tanglish 6-1).
+
+The gates on the final code: type-check, production build, guards, pass 7's tests, the access matrix, the browser drive, the Collector journey j1: green. Lint: one error in a new test file (a helper named `useStream` read as a React hook), fixed after the gate. Four unit runs of 6,301 tests: 6,287 passed, 13 skipped, 1 failed each time: v6's `brief6.case.v6.test.ts` "a problem dated by the day alone", which fails at night (its report one hour before the clock is then "last night" or "early this morning"; unchanged since v6). Pass 4's real-path suite: 2,648 passed, 1 failed, the known RC-35 load timeout (as in v6). The golden master: EXIT 2 against the old baselines, as in v5 and v6. Jarvis browser specs: 41/41.
+
+Browser specs on the final code: 41/41 (barge-in duck p50 74 / p90 82 ms, n 8; v6 83 / 92). Latency was not measured again on the final code (`.next-v7d` = `ee74e8d8`): the later commits change the checker, the routing, the figures the browser's gate allows and the error paths, not the timing path.
+
+### Understanding: live-60 (once, at the end, Haiku leading the planner, `JARVIS_AIDE=0`)
+
+`HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v7final`, Haiku 5.5 leading, Groq behind; only the runner's printed summary was read.
+
+| | v6 final (Haiku leading) | **v7 final (Haiku leading)** |
+|---|---|---|
+| All | 45/60 | **46/60** (76.7 %, Wilson 64.6-85.6) |
+| English | — | 13/15 |
+| Tamil | 25/30 | 24/30 |
+| Tanglish | — | 9/15 |
+| Code lanes (no model) | 16/21 | 16/21 |
+| Capacity failures | 1 | 0 |
+
+Paired on the same 60 sentences (`HOLDOUT=pair`): 3 right only in v7, 2 right only in v6, exact McNemar p = 1.0. **Understanding is at least v6's** (the target); it did not rise. The new v7 lanes (compare, why-worse, the X issue, "who has it?", public events) are not in live-60's sentences.
+
+### Latency on real providers
+
+Bundle `.next-v7d` (= `ee74e8d8`; the later commits change the gap search's words, the checker's multiple tolerance, the kinds' order and the runner, nothing on the voice path). 4 questions a language, 4 commands.
+
+| Moment, from the true end of speech | v6a (Groq) | v6d (Groq) | **v7 Groq leading** (`v7g`) | v7 Haiku leading (`v7h`) | v6's answers, Haiku leading, same bundle (`v7h6`) | Haiku plans, Groq writes (`v7hg`, during the finals) | Target |
+|---|---|---|---|---|---|---|---|
+| "Hey Jarvis", open -> first audible reply | 24 · 193 · 210 | 7 · 189 · 227 | 6 · 201 · 229 | 6 · 184 · 206 | 4 · 207 · 218 | 4 · 203 · 217 | no slower than v6: **yes** |
+| "Hey Jarvis", closed -> first audible reply | 1 · 158 · 158 (1 of 12 fired) | 12 · 163 · 185 | 4 · 170 · 172 (4 of 4 "Hey Jarvis" clips fired) | — | — | — | yes |
+| Command -> the screen changes | 9 · 1,030 · 1,737 | — | 3 · 1,080 · 1,295 | 3 · 696 · 1,090 | — | — | no slower: **about even** (n 3) |
+| Question -> first sound (the earcon) | 36 · 409 · 438 | 7 · 409 · 428 | 12 · 408 · 426 | 12 · 396 · 410 | 12 · 409 · 421 | 12 · 404 · 419 | yes |
+| **Question -> first word of the answer** | 33 · 2,864 · 6,343 | 7 · 3,096 · 7,006 | **12 · 3,191 · 4,150** | 12 · 3,826 · 5,754 | 11 · 1,651 · 3,745 | 11 · 1,995 · 5,101 | **no** (see below) |
+|   English | 12 · 2,864 · 3,688 | 2 · 3,020 · 3,020 | 4 · 1,947 · 4,225 | 4 · 3,826 · 5,754 | 3 · 1,404 · 2,533 | 3 · 1,733 · 5,101 | |
+|   Tamil | 11 · 2,874 · 6,343 | 3 · 3,889 · 4,073 | 4 · 4,027 · 4,150 | 4 · 5,335 · 6,805 | 4 · 3,636 · 4,354 | 4 · 5,058 · 9,453 | |
+|   Tanglish | 10 · 3,197 · 8,226 | 2 · 7,006 · 7,006 | 4 · 1,898 · 3,191 | 4 · 3,004 · 4,422 | 4 · 1,382 · 3,745 | 4 · 1,995 · 2,302 | |
+| Question -> the screen's answer in hand | 34 · 2,188 · 4,200 | 7 · 2,379 · 5,847 | 12 · 1,788 · 2,937 | 12 · 1,466 · 3,039 | 11 · 1,241 · 3,114 | 11 · 1,154 · 3,220 | |
+| Question -> the answer's last word | 33 · 23,617 · 37,759 | 7 · 37,906 · 39,168 | 12 · 20,914 · 25,676 | 12 · 22,694 · 28,034 | 12 · 18,581 · 34,677 | 12 · 20,673 · 28,037 | |
+| The answer handed to the voice -> its first word | 37 · 675 · 1,251 | 7 · 742 · 1,282 | 13 · 387 · 809 | 13 · 359 · 799 | 11 · 379 · 846 | 11 · 316 · 1,456 | |
+
+**The first word:** v7 waits for its first checked sentence, where v6 spoke its line the moment the screen was ready. On the same Haiku-led bundle, on the 11 questions both runs timed, the first word came at p50 3,653 ms (v7) against 1,651 (v6's answers); the median per-question difference is 1.0 s. The aide's first sentence reached the browser 0.8-3.2 s after the screen (p50 1.0 s, p90 2.4 s, n 12). The v6-answers run went while the dev set's v6 answers were being run on Haiku in another process. With Groq writing: v7 Groq-led 3,191 / 4,150 against v6a's 2,864 / 6,343 (different days and bundles, n 12 against 33); on the same day, Haiku planning with Groq writing (`v7hg`, run while the finals ran) against v6's answers on the same planner, the median per-question difference is +0.33 s. The server log shows its 10 writer calls all on Groq's qwen (the latency rows do not record the writer). The target "no slower than v6" is **not met** with Haiku writing (about +1-2 s); with Groq writing the cost is about 0.3 s, on small n.
+
 ## v6 (17 Nov 2026)
 
 Branch `claude/jarvis-v6-build-adbae2` from the v5 build at `a7943b2f`; the brief is `docs/jarvis/JARVIS_V6.md`. Every latency in the tables below is from `tests/e2e/real6.spec.ts`: a production bundle built with `NEXT_PUBLIC_JARVIS_SPEC=1`, served by `scripts/jarvis6/serve-real.sh` (Claude off, Groq leading, the console's own AI off, the dry-run store with its real cached data), headless Edge with its natural voices, synthetic clips (Windows and Gemini voices, no person) played into the page's microphone, **real providers** (Groq Whisper, the Groq planner ladder, Edge's voices). Each time is from the clip's true last voiced sample. Cells are **n · p50 · p90** (nearest rank). The raw rows are in `eval/v6/latency/`; `node scripts/jarvis6/waterfall.mjs <tag>` and `node scripts/jarvis6/compare.mjs <a> <b>` rebuild the tables.

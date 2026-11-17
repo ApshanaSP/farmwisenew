@@ -1,0 +1,200 @@
+{
+ "model": "gemma-4-31b-it",
+ "clean": 0,
+ "flagged": 0,
+ "none": 48,
+ "rows": [
+  {
+   "id": "d-inc-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-inc-8",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-news-8",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-cmp-8",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-why-8",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-fol-8",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-1",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-2",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-3",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-4",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-5",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-6",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-7",
+   "error": "Thinking level is not supported for this model."
+  },
+  {
+   "id": "d-out-8",
+   "error": "Thinking level is not supported for this model."
+  }
+ ]
+}

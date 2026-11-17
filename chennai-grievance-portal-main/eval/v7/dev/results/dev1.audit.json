@@ -1,0 +1,129 @@
+{
+ "tally": {
+  "n": 24,
+  "model": 19,
+  "fallback": 5,
+  "capacity": 2,
+  "grounded": 21,
+  "sentences": 52,
+  "failedAgain": 3,
+  "lists": 0,
+  "over4": 0,
+  "wordsP50": 38,
+  "outside": {
+   "n": 0,
+   "abstained": 0,
+   "found": 0,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 68
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 854
+   },
+   "news": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 6,
+    "firstMsP50": 782
+   },
+   "compare": {
+    "n": 8,
+    "model": 3,
+    "fallback": 5,
+    "rejected": 8,
+    "firstMsP50": 605
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 14,
+    "model": 11,
+    "fallback": 3,
+    "rejected": 8,
+    "firstMsP50": 603
+   },
+   "ta": {
+    "n": 6,
+    "model": 4,
+    "fallback": 2,
+    "rejected": 7,
+    "firstMsP50": 910
+   },
+   "tg": {
+    "n": 4,
+    "model": 4,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": 904
+   }
+  },
+  "byModel": {
+   "qwen/qwen3.8-27b": {
+    "n": 3,
+    "model": 3,
+    "fallback": 0,
+    "rejected": 0,
+    "firstMsP50": 439
+   },
+   "openai/gpt-oss-20b": {
+    "n": 15,
+    "model": 15,
+    "fallback": 0,
+    "rejected": 8,
+    "firstMsP50": 743
+   },
+   "gemini-3.5-flash-lite": {
+    "n": 1,
+    "model": 1,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 3832
+   },
+   "none": {
+    "n": 5,
+    "model": 0,
+    "fallback": 5,
+    "rejected": 6,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {
+   "list": 8,
+   "name": 5,
+   "misbound": 6,
+   "length": 1
+  }
+ },
+ "problems": [
+  {
+   "id": "d-inc-4",
+   "sentence": "அடையாறு பகுதியில் லிட்டில் மவுண்டில் இன்று மாலையிலிருந்து வன்முறைக் குற்றம் நடந்துள்ளது, ஒரு மரணம் ஏற்பட்டுள்ளது.",
+   "problems": [
+    "time: \"today\" is in no cited fact"
+   ]
+  },
+  {
+   "id": "d-inc-5",
+   "sentence": "ராயபுரம் மருத்துவமனையில் குழந்தை சிகிச்சை நிலையத்தில் படுக்கை திறன் குறைவு, மருந்து பற்றாக்குறை, இன்று அதிகாலையிலிருந்து திறந்துள்ளது.",
+   "problems": [
+    "time: \"today\" is in no cited fact"
+   ]
+  },
+  {
+   "id": "d-inc-7",
+   "sentence": "பெருங்குடியில் காக்கான்ஜி கிராஸ் ஸ்ட்ரீட்டில் ஒரு பெரிய மரம் மழைக்குப் பிறகு சாலையை கடந்து விழுந்துள்ளது, இன்று மதியத்திலிருந்து திறந்துள்ளது.",
+   "problems": [
+    "time: \"today\" is in no cited fact"
+   ]
+  }
+ ]
+}

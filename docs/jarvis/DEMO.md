@@ -2,7 +2,7 @@
 
 ## v7: the answers, as a top aide would give them (do the v5 room check below first)
 
-Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J). The screens are v6's; what changes is what Jarvis **says**: two to four sentences a model wrote from the screen's facts, each sentence checked by code against those facts before it is spoken; nothing the screen already lists is read out ("read them" still reads the items). With a working Claude key and Claude on, Haiku 5.5 writes the answers; otherwise Groq does (the build was measured on Groq: see `chennai-grievance-portal-main/eval/RESULTS.md`, v7). `JARVIS_ANSWER=v6` in `chennai-grievance-portal-main/.env` brings v6's answers back.
+Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J). The screens are v6's; what changes is what Jarvis **says**: two to four sentences a model wrote from the screen's facts, each sentence checked by code against those facts before it is spoken; nothing the screen already lists is read out ("read them" still reads the items). With a working Claude key and Claude on, Haiku 5.5 writes the answers; otherwise Groq does (the answers, the finals and most timings were measured with Haiku writing, some timings with Groq: see `chennai-grievance-portal-main/eval/RESULTS.md`, v7). `JARVIS_ANSWER=v6` in `chennai-grievance-portal-main/.env` brings v6's answers back.
 
 | # | Say | What the owner should see and hear |
 |---|---|---|
@@ -13,8 +13,11 @@ Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J). The screens ar
 | 5 | "Hey Jarvis, CM Vijay is visiting Adyar, what should I know?" | Adyar's situation on the screen and in two or three sentences; for the visit itself, the dashboard's news and then the outlets' own feeds are searched: a report found is named with its outlet and time (its link added to the screen); nothing found is said plainly: "Nothing in the dashboard or today's news mentions CM Vijay visiting." Never a guess. |
 | 6 | "Hey Jarvis, அடையாறு பிரச்சினை என்ன?" | As step 1, in spoken Tamil (model-written; not checked by a Tamil speaker). |
 | 7 | "And in Royapuram?" (within 20 s) | The same question for Royapuram, answered the same way. |
+| 8 | After step 1, "Who has it?" | The case's own screen; spoken: who holds it and whether an officer is named, from the record (a role, never a person from the directory). |
 
 If a model is busy or slow, the answer is the screen's own line (v6's words, still grounded) with no item read out; the screen is never held back for the words.
+
+What to expect in time (measured, `eval/RESULTS.md` v7): the screen comes as fast as in v6, then the first spoken sentence. Against v6's answers on the same server, the first word comes about 1 s later per question with Claude Haiku writing (p50 3.7 s from the end of the question, against 1.7 s), and about 0.3 s later with Groq writing (`JARVIS_AIDE_LEAD=groq`). `JARVIS_ANSWER=v6` restores v6's answers.
 
 ## v6: the three-minute reel (do the v5 room check below first)
 

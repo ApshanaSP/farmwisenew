@@ -1,0 +1,128 @@
+{
+ "tally": {
+  "n": 48,
+  "model": 45,
+  "fallback": 1,
+  "capacity": 0,
+  "grounded": 48,
+  "sentences": 114,
+  "failedAgain": 0,
+  "lists": 0,
+  "over4": 0,
+  "wordsP50": 39,
+  "outside": {
+   "n": 8,
+   "abstained": 7,
+   "found": 0,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 124
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 7,
+    "firstMsP50": 1039
+   },
+   "news": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 4,
+    "firstMsP50": 1015
+   },
+   "compare": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 930
+   },
+   "why": {
+    "n": 8,
+    "model": 7,
+    "fallback": 1,
+    "rejected": 10,
+    "firstMsP50": 896
+   },
+   "followup": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 10,
+    "firstMsP50": 1049
+   },
+   "outside": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 4,
+    "firstMsP50": 1189
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 30,
+    "model": 28,
+    "fallback": 0,
+    "rejected": 24,
+    "firstMsP50": 898
+   },
+   "ta": {
+    "n": 11,
+    "model": 11,
+    "fallback": 0,
+    "rejected": 6,
+    "firstMsP50": 1073
+   },
+   "tg": {
+    "n": 7,
+    "model": 6,
+    "fallback": 1,
+    "rejected": 10,
+    "firstMsP50": 1212
+   }
+  },
+  "byModel": {
+   "claude-haiku-5-5": {
+    "n": 44,
+    "model": 44,
+    "fallback": 0,
+    "rejected": 33,
+    "firstMsP50": 1002
+   },
+   "none": {
+    "n": 3,
+    "model": 0,
+    "fallback": 1,
+    "rejected": 4,
+    "firstMsP50": null
+   },
+   "openai/gpt-oss-20b": {
+    "n": 1,
+    "model": 1,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 3341
+   }
+  },
+  "rejectedKinds": {
+   "direction": 3,
+   "absolute": 8,
+   "misbound": 26,
+   "name": 6,
+   "list": 5,
+   "number": 3,
+   "multiplier": 1,
+   "cause": 1,
+   "time": 2,
+   "superlative": 3,
+   "copy": 1
+  }
+ },
+ "problems": []
+}

@@ -143,3 +143,18 @@ The writer streams from Claude through the official SDK under the owner's spend 
 ### 8. Order of work
 
 1. This file and the research, committed. 2. The checker and the dev set, with planted-error tests. 3. Facts, prompt, writer, streaming, fallback (mocked tests). 4. Wired into the round and the browser. 5. The new code lanes. 6. Live dev runs on Groq and the judge; tuning on dev only. 7. Latency runs on Groq. 8. The gates. 9. The finals once: the v7 answer holdout and live-60. 10. The write-ups, an independent read-only check, the push.
+
+### 9. As built, and the results against the targets (18 Nov 2026, 01:00 IST)
+
+The numbers are in `chennai-grievance-portal-main/eval/RESULTS.md` (v7 section), the night's record in `docs/thunai/BUILD_LOG.md`, the owner's decisions in `docs/thunai/HANDOVER.md`. Against the targets of Part 1:
+
+| Target | Result | Met? |
+|---|---|---|
+| 100 % grounded, no unsupported figure, name or date spoken | Every spoken sentence passed code's check against its facts. Re-checked: the audit passed 47/48 answers on dev's last run and on the holdout (each flag read by hand: one false "found" on dev, fixed; one supported on the holdout). The grounding judge's flags read by hand: 3 of 118 sentences (dev) and 3 of 115 (holdout) overstate or misrender (a loose multiple, comparatives, a severity, a misrendered complaint, a loose paraphrase). An independent code review after the finals found more holes in the checker; all fixed test-first and the dev set re-run (RESULTS) | **no** (about 2.5 % of sentences) |
+| 0 hallucinations on outside-dashboard questions | 16 outside questions (dev's last run and the holdout): 0 invented; a false "found" on dev (a Tamil place name as the search) fixed before the holdout | **yes** on the holdout (0 of 8; Wilson upper bound 32 %) |
+| The judge prefers v7 | Dev: 36-1 (sign test p 5.5e-10); holdout: 35-2 (p 1.0e-8); dev on the final code: 38-2 (p 1.5e-9) | **yes** |
+| Understanding at least v6's | live-60 46/60 against v6's 45/60, both Haiku-led (paired p 1.0) | **yes** (not higher) |
+| Wake, command -> screen, question -> first word no slower than v6 | Wake and command unchanged (same code). The first word, against v6's answers on the same bundle: about +1.0 s per question (median; p50 3.7 s against 1.7 s) with Haiku writing, +0.3 s with Groq writing (same day); Groq-led v7 against v6's Groq figures from another day: p50 3.2 s against 2.9 s, p90 4.2 s against 6.3 s | **no** for the first word |
+| Measured with Claude Haiku 5.5 leading, under the owner's ceiling | US$0.119 spent of US$10 | yes |
+
+Changed from the plan: the plan said the finals and the latency would run on Groq; after the owner's update at 22:45 they ran with Haiku leading (the owner's deployment), with Groq-led latency kept for the comparison with v6's Groq figures. Live-60 was paired with v6's own Haiku-led final, not v5's Groq final. Jarvis's own Claude day cap (1.5M tokens) was raised by a new flag for the runs.

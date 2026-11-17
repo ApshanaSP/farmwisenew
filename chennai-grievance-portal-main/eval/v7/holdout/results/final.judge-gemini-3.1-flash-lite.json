@@ -1,0 +1,554 @@
+{
+ "model": "gemini-3.1-flash-lite",
+ "provider": "gemini",
+ "tally": {
+  "v7": 35,
+  "v6": 2,
+  "tie": 2,
+  "split": 5,
+  "none": 4
+ },
+ "signTestP": 1.0244548320770264e-8,
+ "verdicts": [
+  {
+   "id": "h-inc-1",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 84,
+    "v6": 39
+   }
+  },
+  {
+   "id": "h-inc-2",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 80,
+    "v6": 29
+   }
+  },
+  {
+   "id": "h-inc-3",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 60,
+    "v6": 36
+   }
+  },
+  {
+   "id": "h-inc-4",
+   "kind": "incident",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 29,
+    "v6": 127
+   }
+  },
+  {
+   "id": "h-inc-5",
+   "kind": "incident",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 26,
+    "v6": 25
+   }
+  },
+  {
+   "id": "h-inc-6",
+   "kind": "incident",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 34,
+    "v6": 22
+   }
+  },
+  {
+   "id": "h-inc-7",
+   "kind": "incident",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 30,
+    "v6": 23
+   }
+  },
+  {
+   "id": "h-inc-8",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 84,
+    "v6": 28
+   }
+  },
+  {
+   "id": "h-news-1",
+   "kind": "news",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 78,
+    "v6": 217
+   }
+  },
+  {
+   "id": "h-news-3",
+   "kind": "news",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 28,
+    "v6": 33
+   }
+  },
+  {
+   "id": "h-news-4",
+   "kind": "news",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 11,
+    "v6": 203
+   }
+  },
+  {
+   "id": "h-news-5",
+   "kind": "news",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 25,
+    "v6": 203
+   }
+  },
+  {
+   "id": "h-news-6",
+   "kind": "news",
+   "lang": "en",
+   "first": "v6",
+   "second": "v6",
+   "verdict": "v6",
+   "words": {
+    "v7": 2,
+    "v6": 217
+   }
+  },
+  {
+   "id": "h-news-7",
+   "kind": "news",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 37,
+    "v6": 203
+   }
+  },
+  {
+   "id": "h-news-8",
+   "kind": "news",
+   "lang": "en",
+   "first": "v6",
+   "second": "v7",
+   "verdict": "split",
+   "words": {
+    "v7": 23,
+    "v6": 7
+   }
+  },
+  {
+   "id": "h-cmp-1",
+   "kind": "compare",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 49,
+    "v6": 22
+   }
+  },
+  {
+   "id": "h-cmp-2",
+   "kind": "compare",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 52,
+    "v6": 10
+   }
+  },
+  {
+   "id": "h-cmp-3",
+   "kind": "compare",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 47,
+    "v6": 22
+   }
+  },
+  {
+   "id": "h-cmp-4",
+   "kind": "compare",
+   "lang": "en",
+   "first": "v7",
+   "second": "v6",
+   "verdict": "split",
+   "words": {
+    "v7": 49,
+    "v6": 53
+   }
+  },
+  {
+   "id": "h-cmp-5",
+   "kind": "compare",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 36,
+    "v6": 18
+   }
+  },
+  {
+   "id": "h-cmp-6",
+   "kind": "compare",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 39,
+    "v6": 17
+   }
+  },
+  {
+   "id": "h-cmp-7",
+   "kind": "compare",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 24,
+    "v6": 10
+   }
+  },
+  {
+   "id": "h-cmp-8",
+   "kind": "compare",
+   "lang": "en",
+   "first": null,
+   "second": "v7",
+   "verdict": "none",
+   "words": {
+    "v7": 43,
+    "v6": 22
+   }
+  },
+  {
+   "id": "h-why-1",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 40,
+    "v6": 33
+   }
+  },
+  {
+   "id": "h-why-2",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 30,
+    "v6": 38
+   }
+  },
+  {
+   "id": "h-why-3",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 63,
+    "v6": 56
+   }
+  },
+  {
+   "id": "h-why-4",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 37,
+    "v6": 39
+   }
+  },
+  {
+   "id": "h-why-5",
+   "kind": "why",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 37,
+    "v6": 27
+   }
+  },
+  {
+   "id": "h-why-6",
+   "kind": "why",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 33,
+    "v6": 44
+   }
+  },
+  {
+   "id": "h-why-7",
+   "kind": "why",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 36,
+    "v6": 30
+   }
+  },
+  {
+   "id": "h-why-8",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v6",
+   "verdict": "split",
+   "words": {
+    "v7": 80,
+    "v6": 57
+   }
+  },
+  {
+   "id": "h-fol-1",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 45,
+    "v6": 56
+   }
+  },
+  {
+   "id": "h-fol-2",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v6",
+   "verdict": "split",
+   "words": {
+    "v7": 28,
+    "v6": 33
+   }
+  },
+  {
+   "id": "h-fol-3",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 63,
+    "v6": 45
+   }
+  },
+  {
+   "id": "h-fol-4",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 41,
+    "v6": 53
+   }
+  },
+  {
+   "id": "h-fol-5",
+   "kind": "followup",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 24,
+    "v6": 79
+   }
+  },
+  {
+   "id": "h-fol-6",
+   "kind": "followup",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 40,
+    "v6": 30
+   }
+  },
+  {
+   "id": "h-out-1",
+   "kind": "outside",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 68,
+    "v6": 48
+   }
+  },
+  {
+   "id": "h-out-2",
+   "kind": "outside",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 48,
+    "v6": 4
+   }
+  },
+  {
+   "id": "h-out-3",
+   "kind": "outside",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 30,
+    "v6": 28
+   }
+  },
+  {
+   "id": "h-out-4",
+   "kind": "outside",
+   "lang": "en",
+   "first": "tie",
+   "second": "tie",
+   "verdict": "tie",
+   "words": {
+    "v7": 27,
+    "v6": 27
+   }
+  },
+  {
+   "id": "h-out-5",
+   "kind": "outside",
+   "lang": "ta",
+   "first": "v6",
+   "second": "v6",
+   "verdict": "v6",
+   "words": {
+    "v7": 21,
+    "v6": 10
+   }
+  },
+  {
+   "id": "h-out-6",
+   "kind": "outside",
+   "lang": "ta",
+   "first": "v6",
+   "second": "v7",
+   "verdict": "split",
+   "words": {
+    "v7": 33,
+    "v6": 6
+   }
+  },
+  {
+   "id": "h-out-7",
+   "kind": "outside",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 26,
+    "v6": 33
+   }
+  },
+  {
+   "id": "h-out-8",
+   "kind": "outside",
+   "lang": "en",
+   "first": "tie",
+   "second": "tie",
+   "verdict": "tie",
+   "words": {
+    "v7": 27,
+    "v6": 27
+   }
+  }
+ ]
+}

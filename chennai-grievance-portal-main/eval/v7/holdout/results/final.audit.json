@@ -1,0 +1,127 @@
+{
+ "tally": {
+  "n": 48,
+  "model": 43,
+  "fallback": 1,
+  "capacity": 0,
+  "grounded": 47,
+  "sentences": 115,
+  "failedAgain": 1,
+  "lists": 0,
+  "over4": 1,
+  "wordsP50": 37,
+  "outside": {
+   "n": 8,
+   "abstained": 6,
+   "found": 0,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 120
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 1,
+    "firstMsP50": 1083
+   },
+   "news": {
+    "n": 8,
+    "model": 7,
+    "fallback": 1,
+    "rejected": 5,
+    "firstMsP50": 1038
+   },
+   "compare": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 924
+   },
+   "why": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 989
+   },
+   "followup": {
+    "n": 8,
+    "model": 6,
+    "fallback": 0,
+    "rejected": 4,
+    "firstMsP50": 915
+   },
+   "outside": {
+    "n": 8,
+    "model": 6,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": 1100
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 30,
+    "model": 25,
+    "fallback": 1,
+    "rejected": 14,
+    "firstMsP50": 915
+   },
+   "ta": {
+    "n": 11,
+    "model": 11,
+    "fallback": 0,
+    "rejected": 4,
+    "firstMsP50": 1239
+   },
+   "tg": {
+    "n": 7,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": 1100
+   }
+  },
+  "byModel": {
+   "claude-haiku-5-5": {
+    "n": 43,
+    "model": 43,
+    "fallback": 0,
+    "rejected": 16,
+    "firstMsP50": 1011
+   },
+   "none": {
+    "n": 5,
+    "model": 0,
+    "fallback": 1,
+    "rejected": 4,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {
+   "multiplier": 3,
+   "time": 1,
+   "copy": 2,
+   "name": 5,
+   "misbound": 8,
+   "list": 4,
+   "direction": 1,
+   "cause": 1,
+   "absolute": 1
+  }
+ },
+ "problems": [
+  {
+   "id": "h-inc-4",
+   "sentence": "தேனாம்பேட்டையில் அடையாறு ஆற்றில் நீர்மட்டம் சப்வே அருகே கரைவரை உயர்ந்துள்ளது, காலக்கெடுவும் தாண்டிவிட்டது.",
+   "problems": [
+    "direction: says it rose; the cited facts fell"
+   ]
+  }
+ ]
+}

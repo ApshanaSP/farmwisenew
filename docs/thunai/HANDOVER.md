@@ -1,5 +1,75 @@
 # Jarvis mode: handover
 
+## v7 (17-18 Nov 2026)
+
+Branch `claude/jarvis-v7-upgrade-00072d`, from v6's `736ce5f1`. The brief and the plan: `docs/jarvis/JARVIS_V7.md`; the research: `docs/jarvis/v7-research/`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v7 section on top). The night's record: `docs/thunai/BUILD_LOG.md`. What to say in Edge: `docs/jarvis/DEMO.md` (v7 table on top).
+
+**Read this first.**
+- **Jarvis now answers like an aide instead of reading the screen.** For a question (an incident, "tell me about this news", "the Adyar issue", why, compare, a brief, a follow-up), the screen goes up as v6 built it and a model writes two to four sentences from the screen's facts: the point first, why it matters, what is done or stuck, what needs you. Code checks every sentence against the facts before it is spoken; a sentence that fails is never said. Nothing on the screen is read out item by item ("read them" still does).
+- **Grounding is high, not perfect.** Every sentence Jarvis says passed code's check against its facts. Re-checked afterwards: on the last dev run (Haiku writing, 48 questions) the audit passed 47 of 48 answers (the flag: a false "found" on a Tamil outside question, fixed); on the holdout (once, at the end) 47 of 48, the flag read by hand and supported. An independent grounding judge's flags, read by hand, found **3 sentences of 118 (dev) and 3 of 115 (holdout)** that overstate or misrender: "almost twice" for 1.7 (fixed), a wrong Tamil "more in Adyar", "severe" for an incident rated high, a citizen's Tanglish complaint misrendered, "metro transport" for an Intelligent Transport System, a Tamil "much more" for 16 against 11. So **100 % grounded is not met.** After the finals an independent code review found more ways a wrong sentence could pass the checker (a figure put on the wrong place across a comma, "up 18" against "down 18", "this afternoon" against "yesterday afternoon", a window's length taken for a count, and more); all were fixed test-first (`3bd03b13`), and the dev set was run again on that code (below). Comparatives ("more in X") and a paraphrase of the record's words are still not checked by code.
+- **Outside the dashboard:** 16 outside questions across dev and holdout: nothing invented; each said plainly that the dashboard and the latest news have nothing on it, in your own words, or refused a place outside the district. One false "found" on dev (a Tamil place name as the search) was fixed (dashboard first, then the outlets' own feeds; nothing is filled in by a model).
+- **The judge prefers v7:** a blind judge (Gemini 3.1 flash-lite, both orders) preferred v7 to v6 on the dev set 36-1 before the review's fixes and **38-2 on the final code** (tie 1, split 3, 7 undecided; sign test p 5.5e-10) and on the holdout **35-2** (tie 2, split 5, 4 undecided; p 1.0e-8), in every kind and language.
+- **The cost is time.** v7 waits for its first checked sentence, where v6 spoke its line at once. With Haiku writing, on the same bundle and the 11 questions both runs timed, the first word came at p50 3.7 s against 1.7 s for v6's answers (the median per-question difference 1.0 s); the first sentence reached the browser 0.8-3.2 s after the screen. With Haiku planning and Groq writing, the same day: +0.3 s per question at the median. Groq-led v7 against v6's Groq figures (another day): 3.2 s against 2.9 s at p50, 4.2 s against 6.3 s at p90. The target "no slower than v6" is **not met** with Haiku writing. `JARVIS_AIDE_LEAD=groq` makes Groq write first while Haiku plans; `JARVIS_ANSWER=v6` restores v6's answers.
+- **Understanding:** live-60 with Haiku leading : 46/60 against v6's 45/60 (Tamil 24/30 against 25/30; paired p 1.0): at least v6's, not higher. Two holdout follow-ups got no answer ("tell me more about that one", "since when?").
+- **Claude:** you allowed it at 22:45 ("use claude api limit 10 dollar"); v7 spent US$0.119 of the US$10 ceiling (446 calls; record before: 93 rows, US$0.024195; after: 539 rows, US$0.142792).
+- **Nothing was tried with a real microphone in a real room**, again; the Tamil wording is model-written and not checked by a Tamil speaker.
+
+### Owner actions and decisions (first)
+
+1. **Which model writes the answers.** Haiku's answers are the ones judged against v6 above (Groq's were not judged against Haiku's); Haiku is slower to its first sentence (about 1.1 s after the screen in the runner, 0.8-3.2 s on the real path) than Groq's qwen (0.4-0.6 s), and Groq's free day holds about 100 answers a model. Default: as the planner (Haiku first when the key works). `JARVIS_AIDE_LEAD=groq` puts Groq first for the writer only. Your call.
+2. **Jarvis's own Claude day cap.** It is 1.5M tokens and 500 requests a day, set in v4 against Opus's prices; on Haiku 5.5 that is under US$0.10 of spend, so a busy day would drop Claude to Groq long before your US$10 ceiling. The runs raised it by flag (`JARVIS_CLAUDE_DAY_TOKENS`, `JARVIS_CLAUDE_DAY_REQUESTS`); the default is unchanged. Say if it should be raised for Haiku.
+3. **The judge and the spoken style are model-made.** The dev and holdout questions, the Tamil example lines in the writer's instructions and the judges are all models; a Tamil speaker should listen to the Tamil answers (DEMO step 6).
+4. Still open from v6: "Hi Jarvis" on the device, the wake reply's voice, the talk-over trade-off, the news reader's lists, IndicConformer's licence, Groq Zero Data Retention (v6 section below).
+
+### What shipped
+
+- **The aide (`src/lib/thunai/aide7/`):** `facts.ts` (the screen as numbered facts by code: figures, Tamil names, times said as a person says them in IST, every ratio, rank and direction worked out in advance; a citizen's complaint never reaches a model, identifiers masked), `prompt.ts` (fixed-bytes instructions per language, cached by Haiku), `writer.ts` and `stream.ts` (one streamed plain-text call: `GAP:` then `S: sentence [F1,F3]` lines; Haiku 5.5, then Groq qwen3.8-27b, gpt-oss-120b, gpt-oss-20b, then Gemini flash-lite), `ground.ts` (the checker: figures exact or hedged, a figure bound to its place, names in English, Tamil and transliteration, times, causes, direction, superlatives, multiples, absolutes, guesses, ids, markup, copying the screen, lists, length, language), the repair ladder (the first sentence: one re-ask if there is time, else the next model, else the recipe's own line; a later failure ends the answer), `gap.ts` (the part the dashboard does not hold: the dashboard's news, then the outlets' feeds; a nothing line in your own words that claims only what was searched), `index.ts` (which turns get it, the round's wiring), `news.ts` (the /news route's brief written by the aide).
+- **New code lanes (`asks7.ts`):** compare everything / all zones / all departments; this period against the last; why A is worse than B; the X issue; "who has it?" with a case on the screen; a public office or event, and current events with no district word, to the place's situation or the news with the outside part searched, never the general lane's model memory.
+- **"Tell me about this news"** reads the report in focus (English, Tamil, Tanglish).
+- **Evaluation (`aide7/eval7.live.ts`):** dry routing, live runs of v7 and v6, the audit, the blind pairwise judge in both orders, the grounding judge; `V6_FROM` / `V7_FROM` reuse one side's answers; the dev (48) and holdout (48, hashed before tuning) sets in `eval/v7/`.
+- **An independent read-only check after the finals** (three reviewers: the aide's code, the wiring with privacy and spend, the numbers against the result files) found real defects: ways a wrong sentence could pass the checker, routing that took ordinary commands away from their lanes ("10 cm of rain" as the CM, "draft a letter about the issue in Adyar" never reaching the planner), the browser's number gate silencing queued checked sentences and approving unchecked figures, an incomplete v6 rollback, uncounted spend on a mid-stream Claude error, a document of any source readable by the news aide, and 15 inaccuracies in these write-ups. All fixed test-first (`3bd03b13`, `a3ff4df4`, `23cb02da`) or corrected here; the dev set was run again on the final code (RESULTS).
+- **Defects found by running it, each fixed test-first:** see BUILD_LOG (a level read as a rise; a two-letter gap match; a Tamil place name as the gap's search; v6's "why did flooding reports drop" refused as an order to drop records; and the false refusals).
+
+### Flags (new in v7, with their defaults)
+
+| Flag | Default | What it does |
+|---|---|---|
+| `JARVIS_ANSWER` | `v7` | `v6`: v6's answers (its lines, the items read out) and v6's routing (no `asks7`) |
+| `NEXT_PUBLIC_JARVIS_ANSWER` | `v7` | the browser's side of the same switch ("tell me about this news" lanes): set it to `v6` together with `JARVIS_ANSWER=v6` |
+| `JARVIS_AIDE` | on | `0`: v7's routing, the recipe's own line (no writer): the understanding runs use it |
+| `JARVIS_AIDE_WEB` | on | `0`: no look-up for a gap (the answer says the dashboard has nothing on it) |
+| `JARVIS_AIDE_FIRST_MS` | `3500` | the first checked sentence's deadline after the screen is ready, then the fallback (800-15,000) |
+| `JARVIS_AIDE_LEAD` | as `JARVIS_PLANNER_LEAD` | `groq` puts Claude after Groq for the writer; `haiku` Haiku first |
+| `JARVIS_CLAUDE_DAY_TOKENS`, `JARVIS_CLAUDE_DAY_REQUESTS` | unset (1.5M, 500) | raise Jarvis's own Claude day cap for a run; the spend ceiling holds every call whatever |
+
+### Runs owed (from `chennai-grievance-portal-main/`)
+
+1. **The real-room check** (DEMO, v5 section) and the v7 table at the top of DEMO, in Edge, with a person speaking; a Tamil speaker listening to the Tamil answers.
+2. **Latency with Groq writing on more clips** (4 a language here): `NEXT_DIST_DIR=.next-v7 NEXT_PUBLIC_JARVIS_SPEC=1 npx next build`, `CLAUDE=1 JARVIS_CLAUDE_BUDGET_USD=10 bash scripts/jarvis7/serve-real.sh .next-v7 3012 JARVIS_AIDE_LEAD=groq`, `REAL=1 SPEC_PROD=1 V6_TAG=<tag> V6_PARTS=en,ta,tg LIVE_GAP_MS=20000 npx playwright test tests/e2e/real6.spec.ts`, `node scripts/jarvis6/compare.mjs v7h6 <tag>`.
+3. **The news coverage brief in the browser** (owed from v6).
+
+### Gates on the final code
+
+Type-check, build, guards, pass 7's tests, the access matrix, the browser drive and j1 green; lint clean after one rename in a new test; Jarvis browser specs 41/41. Three reds, none from v7's code: v6's `brief6.case.v6.test.ts` "a problem dated by the day alone" fails at night (its report one hour before the clock reads as "last night" or "early this morning"; it passes in the day; pin its clock to fix it); pass 4's RC-35 load timeout (known, as in v6); the golden master against the old baselines (as in v5 and v6).
+
+### Known limits
+
+- **The checker does not check comparisons or severity words**: "more in Adyar" against the facts' two numbers, or "severe" said of an incident rated high, pass if their figures and names are right. The dev run's grounding judge found one of each in 118 sentences.
+- **The first word is later** (above). The screen is never held back for the words.
+- **A one-word gap search is loose**: "is the CM coming to Adyar?" in Tamil searched the one word for the CM the Collector said and matched three reports of the CM inspecting the 108 ambulance centre; the answer framed them honestly ("nothing on Adyar, but ..."), yet a looser match could bring an unrelated report. The writer also still says "the records here show no ..." before code's own nothing line now and then (its instructions say not to).
+- **The gap search reads headlines only** (the dashboard's stored news and the outlets' feeds, by the words you said); a report that names the event differently is missed and the answer says nothing was found.
+- **Tamil:** the writer's Tamil is model-written; the nothing line in Tamil is code's template.
+
+### The owner's Claude test plan (ready to run; US$10 ceiling)
+
+Done in this build already with your key (US$0.119 in all): the dev set five times, the holdout once, live-60 once, three latency runs with Haiku leading. To repeat or extend, from `chennai-grievance-portal-main/`, in Git Bash:
+
+1. **Before:** `node scripts/jarvis7/claude-spend.mjs` (rows and dollars).
+2. **The answers on the dev set** (48 questions, about US$0.013): `JARVIS_LIVE_CLAUDE=1 JARVIS_CLAUDE_BUDGET_USD=10 JARVIS_CLAUDE_DAY_TOKENS=6000000 AIDE7=run SET=dev TAG=<tag> V6=all LIVE_GAP_MS=20000 npx vitest run --config vitest.live.config.ts src/lib/thunai/aide7/eval7.live.ts`, then the same with `AIDE7=audit`, and `AI_GEMINI_MODEL_FAST=gemini-3.1-flash-lite JUDGE_MODEL=gemini-3.1-flash-lite AIDE7=judge` (free).
+3. **The voice path in the browser:** `npm run build` as usual, `start-fast.bat`, then the v7 table at the top of `docs/jarvis/DEMO.md`: "Hey Jarvis, tell me about the Adyar issue", "who has it?", "show me the latest news" then "tell me about this news", "compare everything", "why is Adyar worse than Anna Nagar", "CM Vijay is visiting Adyar, what should I know?", the Tamil and Tanglish lines.
+4. **Timed:** the latency commands in "Runs owed" 2, with `CLAUDE=1` (Haiku writes) or `JARVIS_AIDE_LEAD=groq` (Groq writes).
+5. **After:** `node scripts/jarvis7/claude-spend.mjs` again.
+
 ## v6 (17 Nov 2026)
 
 Branch `claude/jarvis-v6-build-adbae2`, from the v5 build at `a7943b2f`. The brief is `docs/jarvis/JARVIS_V6.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v6 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. The reel: `docs/jarvis/DEMO.md`.

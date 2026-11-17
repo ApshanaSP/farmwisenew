@@ -1,0 +1,289 @@
+{
+ "model": "gemini-3.1-flash-lite",
+ "clean": 21,
+ "flagged": 20,
+ "none": 7,
+ "rows": [
+  {
+   "id": "d-inc-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-3",
+   "by": "model",
+   "unsupported": [
+    "The main problem in Teynampet is an overflow from the Adyar River at Kotturpuram"
+   ]
+  },
+  {
+   "id": "d-inc-4",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-6",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-7",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-inc-8",
+   "by": "model",
+   "unsupported": [
+    "it has been open since Saturday"
+   ]
+  },
+  {
+   "id": "d-news-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-news-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-news-3",
+   "error": "The AI service is busy. Try again in 10 s."
+  },
+  {
+   "id": "d-news-4",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-news-5",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-news-6",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-news-7",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-news-8",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-cmp-1",
+   "error": "The AI call failed."
+  },
+  {
+   "id": "d-cmp-2",
+   "by": "model",
+   "unsupported": [
+    "A word with the Royapuram team on its open cases would be the next step."
+   ]
+  },
+  {
+   "id": "d-cmp-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-cmp-4",
+   "by": "model",
+   "unsupported": [
+    "so a check on them would be worth your time."
+   ]
+  },
+  {
+   "id": "d-cmp-5",
+   "by": "model",
+   "unsupported": [
+    "வெள்ளம் பிரச்சனைகள் அடையாறில் அதிகம்"
+   ]
+  },
+  {
+   "id": "d-cmp-6",
+   "by": "model",
+   "unsupported": [
+    "அடையாறைவிட கிட்டத்தட்ட இரு மடங்கு அதிகம்"
+   ]
+  },
+  {
+   "id": "d-cmp-7",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-cmp-8",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-why-1",
+   "by": "model",
+   "unsupported": [
+    "The record shows what moved, not why"
+   ]
+  },
+  {
+   "id": "d-why-2",
+   "by": "model",
+   "unsupported": [
+    "Flooding is the commonest kind in both areas"
+   ]
+  },
+  {
+   "id": "d-why-3",
+   "by": "model",
+   "unsupported": [
+    "Three severe open incidents, including a Thoraipakkam road accident and two hospital bed shortages, remain past their deadline."
+   ]
+  },
+  {
+   "id": "d-why-4",
+   "by": "model",
+   "unsupported": [
+    "a check with them on the overdue ones would help"
+   ]
+  },
+  {
+   "id": "d-why-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-why-6",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-why-7",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-why-8",
+   "by": "model",
+   "unsupported": [
+    "The record shows what moved, not why, so the cause still needs asking the department."
+   ]
+  },
+  {
+   "id": "d-fol-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-fol-2",
+   "by": "model",
+   "unsupported": [
+    "The record shows what moved, not why"
+   ]
+  },
+  {
+   "id": "d-fol-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-fol-4",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-fol-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-fol-6",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-fol-7",
+   "by": null,
+   "unsupported": [
+    "Which one do you mean?"
+   ]
+  },
+  {
+   "id": "d-fol-8",
+   "by": "model",
+   "unsupported": [
+    "A word with Greater Chennai Police to name an officer on it would move it along."
+   ]
+  },
+  {
+   "id": "d-out-1",
+   "by": "model",
+   "unsupported": [
+    "Nothing in the dashboard or the latest news mentions CM Vijay's visit to Adyar."
+   ]
+  },
+  {
+   "id": "d-out-2",
+   "by": "model",
+   "unsupported": [
+    "The console has no record of any statement by the Governor on the floods.",
+    "Nothing in the dashboard or the latest news mentions what the Governor said about the floods."
+   ]
+  },
+  {
+   "id": "d-out-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-out-4",
+   "by": null,
+   "unsupported": [
+    "I have no data on Kerala.",
+    "This console holds Chennai district's own records",
+    "I can brief you on the corporation, the police, Metrowater, PWD or any zone."
+   ]
+  },
+  {
+   "id": "d-out-5",
+   "by": "model",
+   "unsupported": [
+    "முதல்வர் பயணம் பற்றி எதுவும் இல்லை.",
+    "அடையாறு பற்றி இன்று மாலை தினமலர் வெளியிட்ட செய்திகளில் முதல்வர் வருகை குறித்து எதுவும் இல்லை.",
+    "அடையாறு ஆற்றில் ஒரு ஆண் சடலம் கிடைத்தது குறித்த செய்தியும் நேற்று இரவு தினத்தந்தியில் வந்துள்ளது."
+   ]
+  },
+  {
+   "id": "d-out-6",
+   "by": "model",
+   "unsupported": [
+    "ஆளுநர் வெள்ளம் பற்றி என்ன சொன்னார் என்பதை டாஷ்போர்டில் உள்ள பதிவுகளில் காண முடியவில்லை.",
+    "ஆளுநர் வெள்ளம் பற்றி சொன்னது பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை."
+   ]
+  },
+  {
+   "id": "d-out-7",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "d-out-8",
+   "by": "model",
+   "unsupported": [
+    "The dashboard has no report of who won the Kolathur by-election yesterday.",
+    "A check with the election office for the official result would settle it.",
+    "Nothing in the dashboard or the latest news mentions who won the by-election in Kolathur yesterday."
+   ]
+  }
+ ]
+}
