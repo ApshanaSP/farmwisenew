@@ -461,8 +461,10 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const boundName = (at: number, len: number): NameHit | null => {
     const start = clauseStart(text, at), end = clauseEnd(text, at + len);
     const before = placeHits.filter((h) => h.at < at);
-    // (across a comma only when one place came before: "Adyar has more than Anna Nagar, 59 against 44" binds nothing)
-    return before.filter((h) => h.at >= start).pop() ?? placeHits.find((h) => h.at > at && h.at < end) ?? (new Set(before.map((h) => h.key)).size === 1 ? before.pop() ?? null : null);
+    // (across a comma only from an opening "In Adyar, ..." / "At Guindy, ...": "Anna Nagar is down 21, and severe incidents fell to 7" and
+    // the second side of "107 against 101" bind nothing: the final dev run, 18 Nov)
+    const opener = before.find((h) => /^\s*(?:(?:in|at|for|across)\s+)?$/i.test(text.slice(0, h.at)) && /^\s*,/.test(text.slice(h.at + h.form.length)));
+    return before.filter((h) => h.at >= start).pop() ?? placeHits.find((h) => h.at > at && h.at < end) ?? opener ?? null;
   };
   /**
    * the figures a fact gives a place: all of them when it names one place; when it names two or more, those that follow that place up to the
@@ -517,7 +519,10 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
     // bound to the place said with it: before it in its clause, else after it in its clause, else the nearest before it in the sentence
     // ("In Adyar, 38 ...", "38 ... in Adyar": the review, 18 Nov); inside a fact of two places, the figure that follows that place
     const near = boundName(x.at, x.fig.raw.length);
-    if (near && !(scopeOne && scopeKeys.has(near.key)) && !cited.some((c) => has(c.keys, near.key) && allows(pool(c), v, x.hedge) && valuesFor(c, near.key, pool(c)).some((n) => allows([n], v, x.hedge))))
+    // (the screen's own place: a figure of a cited fact that names no place is the screen's; on a one-place screen any cited figure is)
+    const placeless = (c: Prepared) => !namesIn(c.f.text, sheet.gaz).some((h) => h.kind !== "outlet");
+    if (near && !(scopeKeys.has(near.key) && (scopeOne || cited.some((c) => placeless(c) && allows(pool(c), v, x.hedge))))
+      && !cited.some((c) => has(c.keys, near.key) && allows(pool(c), v, x.hedge) && valuesFor(c, near.key, pool(c)).some((n) => allows([n], v, x.hedge))))
       p("misbound", `${x.fig.raw} is not ${near.form}'s in the cited facts`);
   }
   // twice, half, three times: only against a ratio code computed

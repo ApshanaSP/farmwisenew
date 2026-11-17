@@ -277,3 +277,14 @@ describe("v7 (the independent review, 18 Nov): what the checker let through", ()
     expect(checkSentence("அடையாறில் புகார்கள் பாதியாகக் குறைந்தன. [F1]", s).problems.map((p) => p.kind)).toContain("multiplier");
   });
 });
+
+describe("v7 (the final dev run, 18 Nov): what the review's binding must not refuse", () => {
+  it("the second side of a pair, and a new clause about another thing, are not bound across the comma", () => {
+    ok("Anna Nagar has fewer open complaints, 44 against 59. [F6]");
+    ok("Open complaints in Anna Nagar are 44, and flooding reports fell to 8. [F5,F6]");
+  });
+  it("a figure of a fact that names no place holds for the screen's own place", () => {
+    const s: Sheet7 = { ...sheet(), scope: { names: ["Adyar", "Anna Nagar"], times: ["this week"] }, facts: [...sheet().facts, { id: "F9", src: "dashboard", text: "Key numbers: Reported, this week: 101, against 106 before (down 5%)", dir: "down" }] };
+    expect(checkSentence("Adyar had 101 incidents this week, against 106 before. [F9]", s).problems).toEqual([]);
+  });
+});
