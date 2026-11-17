@@ -25,6 +25,21 @@ describe("the per-turn record (6.2)", () => {
     expect(process.env.ANTHROPIC_API_KEY).toBeUndefined();
     expect(process.env.JARVIS_PLANNER_LEAD).toBe("groq");
   });
+
+  it("v6: only JARVIS_LIVE_CLAUDE=1 (the owner's allowance, 17 Nov: 'do with claude', US$5) keeps the key and the lead", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "sk-test-not-real");
+    vi.stubEnv("JARVIS_PLANNER_LEAD", "");
+    vi.stubEnv("JARVIS_LIVE_CLAUDE", "1");
+    groqOnly();
+    expect(process.env.ANTHROPIC_API_KEY).toBe("sk-test-not-real");
+    expect(process.env.JARVIS_PLANNER_LEAD).toBe("");
+    for (const v of ["", "0", "yes", "true"]) {
+      vi.stubEnv("ANTHROPIC_API_KEY", "sk-test-not-real");
+      vi.stubEnv("JARVIS_LIVE_CLAUDE", v);
+      groqOnly();
+      expect(process.env.ANTHROPIC_API_KEY).toBeUndefined();
+    }
+  });
 });
 
 describe("the live summary (6.2)", () => {

@@ -3,7 +3,7 @@
  * counts only: never a sentence, never a reply.
  *
  *   groqOnly()       the v5 build makes NO live Claude call (owner, 15 Nov 2026): a live run removes the Anthropic key from its
- *                    own process and pins the planner lead to Groq before any call
+ *                    own process and pins the planner lead to Groq before any call; v6: unless JARVIS_LIVE_CLAUDE=1 (owner, 17 Nov)
  *   recordTurn()     listens to the gateway's attempts and the ladder's walks for one scored turn
  *   liveSummary()    the score with its Wilson interval, per answering model, capacity failures as their own column, and the
  *                    clean-turn score beside the score with capacity failures counted as wrong. A run that met ANY 429 is
@@ -14,8 +14,13 @@ import { claudeConfigured } from "@/lib/ai/claude";
 import { wilson } from "./evalstats";
 import { onLlmCall, type LlmCallEvent } from "./llm";
 
-/** No live Claude call in this build: called at the top of every live runner, before any model is asked. */
+/**
+ * No live Claude call unless the owner allows it: called at the top of every live runner, before any model is asked. v6: the owner
+ * allowed Claude (17 Nov 2026: "do with claude, don't spend more than 5 dollars"); only JARVIS_LIVE_CLAUDE=1 keeps the key and the
+ * lead, and the spend ceiling (claudebudget.ts, US$5) still holds every call. Any other value, or none, is v5's Groq-only run.
+ */
 export function groqOnly(): void {
+  if (process.env.JARVIS_LIVE_CLAUDE === "1") { console.log("[live] JARVIS_LIVE_CLAUDE=1: Claude may answer, under the spend ceiling"); return; }
   delete process.env.ANTHROPIC_API_KEY;
   process.env.JARVIS_PLANNER_LEAD = "groq";
   if (claudeConfigured()) throw new Error("a live run must not be able to reach Claude");
