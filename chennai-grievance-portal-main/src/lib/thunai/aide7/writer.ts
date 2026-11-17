@@ -62,7 +62,7 @@ export interface Written {
 const MAX_SENTENCES = 4;
 const MAX_OUT = 320;
 /** a re-ask needs this much time before the first-sentence deadline to be worth making */
-const REASK_MS = 1500;
+const REASK_MS = 1200;
 
 /** The fallback line: the recipe's own words (grounded by construction), at most four sentences, never an announcement that items will be read. */
 export function fallbackLines(say: string): string[] {

@@ -43,6 +43,9 @@ describe("v7 grounding checker: what may be said", () => {
     ok("Adyar has over fifty open complaints. [F6]");
     ok("Teynampet has the most open incidents this week. [F7]");
     ok("Want the details?");
+    // a sentence may start with a short plain word (the live smoke test, 17 Nov: "A quarrel has ended ..." was rejected as a name)
+    ok("A low-lying street at Guindy Industrial Estate in Adyar is under water, rated severe. [F1]");
+    ok("It is past its deadline. [F4]");
     ok("அடையாறில் நேற்று மதியத்திலிருந்து தண்ணீர் தேங்கியிருக்கிறது. [F1,F2]", "ta");
   });
 });

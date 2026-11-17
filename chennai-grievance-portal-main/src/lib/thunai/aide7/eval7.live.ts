@@ -181,7 +181,10 @@ it.runIf(MODE === "run")("run: v7 and v6 answers, live on the free ladder", asyn
   const groqLeft = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"].reduce((n, m) => n + left(m), 0);
   const list = items();
   console.log(`[aide7] ${SET} ${list.length} questions; Groq left today about ${groqLeft} tokens`);
-  if (groqLeft < list.length * 2500) throw new Error(`not enough Groq allowance for ${list.length} questions (${groqLeft} left): never fill a run with an estimate`);
+  // a smoke test of at most three questions may run on Gemini flash-lite alone (the ladder's last rung) when Groq's day is spent
+  const lite = ledger().room("gemini", "gemini-3.5-flash-lite", { tokens: 2500 }).ok;
+  if (groqLeft < list.length * 2500 && !(list.length <= 3 && lite)) throw new Error(`not enough Groq allowance for ${list.length} questions (${groqLeft} left): never fill a run with an estimate`);
+  if (groqLeft < list.length * 2500) console.log("[aide7] a smoke test on Gemini flash-lite (Groq's day is spent): not a measurement");
   const c = await context();
   const rows: Row[] = fs.existsSync(OUT) ? (JSON.parse(fs.readFileSync(OUT, "utf8")) as { rows: Row[] }).rows.filter((r) => !list.some((x) => x.id === r.id)) : [];
   // V6=all: v6 answered live too (its planner turns cost Groq); V6=code: v6 only where its answer is code's (no model; its planner turns are left
@@ -197,7 +200,7 @@ it.runIf(MODE === "run")("run: v7 and v6 answers, live on the free ladder", asyn
     }
     rows.push({ id: it.id, kind: it.kind, lang: it.lang, text: it.text, before: it.before, v7, v6, at: new Date().toISOString() });
     save(rows);
-    console.log(`[aide7] ${it.id} v7 ${v7.by ?? "-"} ${v7.model ?? "-"} first ${v7.firstMs ?? "-"} ms, ${v7.said.length} sentences, ${v7.rejected.length} rejected${v7.gap ? `, gap "${v7.gap}" ${v7.gapStatus}` : ""}${v7.error ? ` ERROR ${v7.error}` : ""} | v6 ${v6.said.length} lines`);
+    console.log(`[aide7] ${it.id} v7 ${v7.by ?? "-"} ${v7.model ?? "-"} hops ${v7.hops.join(">") || "-"} first ${v7.firstMs ?? "-"} ms, ${v7.said.length} sentences, ${v7.rejected.length} rejected${v7.gap ? `, gap "${v7.gap}" ${v7.gapStatus}` : ""}${v7.error ? ` ERROR ${v7.error}` : ""} | v6 ${v6.said.length} lines`);
     if (v7.calls + v6.calls > 0) await sleep(GAP);
   }
   expect(rows.length).toBeGreaterThan(0);

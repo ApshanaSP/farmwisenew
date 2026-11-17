@@ -215,6 +215,8 @@ const MARKUP = /[*_#`|<>{}]|^\s*[-•]\s|\bhttps?:\/\/|\bwww\.|\.(?:com|in|org)\
 /** capitalised words that are no claim: the persona, the district, sentence furniture */
 const PLAIN_CAPS = new Set(["i", "i'd", "i'll", "i'm", "i've", "collector", "jarvis", "chennai", "tamil", "nadu", "district", "corporation", "ok", "okay", "ist", "want", "shall", "should", "nothing", "no"]);
 
+/** plain words of one or two letters a sentence may start with */
+const SHORT_PLAIN = new Set(["a", "an", "it", "is", "in", "on", "at", "as", "so", "no", "if", "or", "by", "to", "of", "up", "we", "he", "my", "do", "be", "go", "us", "ok"]);
 const tamilShare = (s: string) => {
   const letters = s.match(/\p{L}/gu)?.length ?? 0;
   const ta = s.match(/[஀-௿]/gu)?.length ?? 0;
@@ -270,7 +272,8 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
     const w = raw.toLowerCase();
     if (!w || PLAIN_CAPS.has(w) || WEEKDAYS.includes(w) || MONTHS.includes(w)) continue;
     const first = text.slice(0, at).trim() === "" || /[.!?:"“]\s*$/.test(text.slice(0, at));
-    if (first && lang === "en" && isEnglishWord(w)) continue;
+    // a sentence's first word is a name only if it is not plain English (the word list holds words of three letters or more; "A", "It", "So" are plain)
+    if (first && lang === "en" && (isEnglishWord(w) || SHORT_PLAIN.has(w))) continue;
     if (!lowCited.includes(` ${w} `) && !lowCited.includes(` ${w.replace(/s$/, "")} `)) p("name", `"${raw}" is in no cited fact`);
   }
   // an answer names at most three places, and a sentence never lists three
