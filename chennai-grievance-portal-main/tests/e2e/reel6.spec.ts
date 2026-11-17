@@ -110,8 +110,8 @@ test("v6 reel", async ({ page }, info) => {
   await page.waitForTimeout(800);
   // 7. a news deep read with sources (v6 Phase 4): the news list typed on screen, then "Read the first article." said
   const ask = (t: string) => page.evaluate((x) => (window as unknown as { __jv: { ask?(t: string): void } }).__jv.ask?.(x), t);
-  await ask("show me the latest news");
-  for (let t = 0; t < 40; t++) { await page.waitForTimeout(250); if (await page.locator(".st-news li").count()) break; }
+  await page.evaluate(() => (window as unknown as { __jv: { show?(r: string, s: Record<string, unknown>): void } }).__jv.show?.("news", { period: "weekly", fresh: true }));
+  for (let t = 0; t < 60; t++) { await page.waitForTimeout(250); if (await page.locator(".st-news li").count()) break; }
   await page.waitForTimeout(1500);
   await shot(page, 7, "news-list");
   await ask("stop");

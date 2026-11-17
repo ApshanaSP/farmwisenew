@@ -14,7 +14,8 @@
 import { type StageDocT, checkStage } from "./stage";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
-export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } } | { kind: "which" };
+export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } }
+  | { kind: "which"; why: "none" | "outlet" | "count"; outlet?: string; n?: number };
 
 /** What is on Jarvis's screen that a "read the article" can mean. */
 export interface NewsOnScreen {
@@ -30,15 +31,23 @@ const ID = /^[A-Za-z0-9_:.-]{1,80}$/;
 const norm = (t: string) => t.toLowerCase().replace(/[’']/g, "'").replace(/[.?!,;]+/g, " ").replace(/\s+/g, " ").trim();
 
 // ---- reading a report (a news item or an incident's own news report)
+// (the independent check, 17 Nov: unanchored, "I have read the report, now draft..." was a news read; "other reports from Adyar" too)
+const LEAD = "^(?:(?:hey |hi |ok |okay )?jarvis |please |ok |okay |now |and |so |can you |could you |would you |just )*";
 const READ_EN = [
-  /\b(?:read|go through)\b.{0,30}\b(?:article|report|story|news report|news item|coverage|piece|write-?up)\b/,
+  new RegExp(`${LEAD}(?:read|go through|read out|read me)\\b.{0,30}\\b(?:article|report|story|news report|news item|coverage|piece|write-?up)\\b`),
   /\bwhat (?:does|did|do) (?:the|this|that|their|its)?\s*(?:article|report|story|paper|papers|news|newspaper|press|media|outlet)\b.{0,20}\b(?:say|says|report|reported|write|wrote)\b/,
-  /\bwhat (?:are|do|did) (?:the )?other (?:papers|newspapers|outlets|channels|reports|media|sources)\b/,
-  /\b(?:other|more|related|wider) (?:coverage|reports|reporting)\b/,
-  /\bcompare (?:the )?(?:coverage|reports|reporting|papers)\b/,
+  /\bwhat (?:are|do|did) (?:the )?other (?:papers|newspapers|outlets|channels|media)\b/,
+  /\b(?:other|more|related|wider) (?:news )?coverage\b|\bother (?:news ?papers|papers|outlets|channels|media) (?:say|saying|report|reported|wrote|write)\b/,
+  /\bcompare (?:the )?(?:coverage|papers|outlets)\b/,
   /\bwhat (?:is|are) the (?:papers|media|news) saying\b/,
-  /\bread (?:the )?(?:hindu|times of india|toi|dt next|dtnext|new indian express|nie|dinamani|dinamalar|daily thanthi|thanthi)\b/
+  new RegExp(`${LEAD}read (?:the )?(?:hindu|times of india|toi|dt next|dtnext|new indian express|nie|dinamani|dinamalar|daily thanthi|thanthi)\\b`)
 ];
+/** a report of the console's own (an officer's, an action-taken, a weekly one): not the press */
+const OWN_REPORT = /\b(?:officer'?s?|action[- ]taken|atr|status|progress|weekly|monthly|daily|quarterly|annual|inspection|field|audit|my|our|department'?s?|dept|zone|ward|sla|incident|police|fir) reports?\b/;
+/** a negation: "don't read the article", "no need to read it" */
+const NEGATED = /\b(?:don'?t|dont|do not|never|no need to|stop)\b|வேண்டாம்|வேணாம்|\bvenaam\b|\bvendaam\b/u;
+/** a mission or a brief ("get everything ready", "prepare for heavy rain", "brief me on the cyclone"): theirs, never a look-up */
+const MISSION_LIKE = /\b(?:get (?:everything |things |it |them |all )?ready|be ready|prepare|preparation|brief me|briefing|war ?room|board|mission|plan for)\b|தயார்|தயாரா/u;
 const READ_TA = [
   // (சேதி: the spoken form of செய்தி, as Whisper writes "முதல் செய்தியைப் படியுங்கள்" said by a Tamil voice: the 17 Nov clip check)
   /(?:செய்தி|சேதி|கட்டுரை|அறிக்கை|ரிப்போர்ட்)(?:யை|யைப்|ஐ|யை\s)?\s*(?:படி|படிங்க|படியுங்கள்|படித்து|வாசி|வாசிங்க)/u,
@@ -65,17 +74,23 @@ const OUTLETS: [RegExp, RegExp][] = [
 const WEB_CUE = /\b(?:look (?:it|this|that) up|look up|search (?:the )?(?:web|internet|online)|(?:search|check|look) online|on the (?:web|internet|net)|google (?:it|that|this)|check (?:the )?(?:web|internet|news online))\b|இணையத்தில்|இணையதளத்தில்|ஆன்லைனில்|\bnet ?la\b|\bgoogle pannu\b/u;
 const FORECAST = /\b(?:met (?:department|dept|office|centre|center)|imd|india meteorological|regional meteorological|rmc|weather (?:department|office|forecast|warning|alert|report|update|bulletin)|forecast|nowcast|red alert|orange alert|yellow alert|will it rain|going to rain|rain (?:tonight|tomorrow)|(?:tonight|tomorrow)'?s? (?:rain|weather)|cyclone|depression|landfall)\b|வானிலை\s*(?:ஆய்வு|மைய|அறிக்கை|முன்னறிவிப்பு|எச்சரிக்கை)|மழை\s*(?:எச்சரிக்கை|முன்னறிவிப்பு)|புயல்|ரெட் அலர்ட்|ஆரஞ்சு அலர்ட்|நாளை மழை|இன்று இரவு மழை|\bmazhai (?:varuma|varumaa|warning|alert)\b|\bpuyal\b/u;
 /** the console's own nouns: a question about them is the console's to answer, unless it asks for the web in words */
-const CONSOLE = /\b(?:complaints?|grievances?|petitions?|cases|incidents?|tickets?|officers?|departments? (?:pending|backlog)|backlog|sla|overdue|readings?|rainfall (?:recorded|readings?))\b|புகார்|சம்பவ|மனு/u;
+// (the independent check: the console's IMD warning level is its own metric; zones on alert, a look-up of complaints or an incident, too)
+const CONSOLE = /\b(?:complaints?|grievances?|petitions?|cases|incidents?|tickets?|officers?|departments? (?:pending|backlog)|backlog|sla|overdue|readings?|rainfall (?:recorded|readings?)|zones?|wards?|taluks?|(?:warning|alert) level)\b|புகார்|சம்பவ|மனு|எச்சரிக்கை\s*நிலை|மண்டல/u;
 
-const pickItem = (t: string, on: NewsOnScreen): { id: string } | null => {
+type Pick = { id: string } | { why: "outlet"; outlet: string } | { why: "count"; n: number } | null;
+const pickItem = (t: string, on: NewsOnScreen): Pick => {
   // a sources list Jarvis drew itself (newsScreen: "web-1"...) holds links, not stored reports
   const items = (on.items ?? []).filter((x) => ID.test(x.id) && !/^web-\d/.test(x.id));
   if (!items.length) return null;
   const num = /\b(?:number|no|item|article|report|story|headline)\s*(\d{1,2})\b/.exec(t);
-  if (num) { const i = Number(num[1]) - 1; return items[i] ? { id: items[i].id } : null; }
-  for (const [re, n] of ORD) if (re.test(t)) return items[n - 1] ? { id: items[n - 1].id } : null;
+  if (num) { const i = Number(num[1]) - 1; return items[i] ? { id: items[i].id } : { why: "count", n: items.length }; }
+  for (const [re, n] of ORD) if (re.test(t)) return items[n - 1] ? { id: items[n - 1].id } : { why: "count", n: items.length };
   if (/\blast\b|கடைசி|kadaisi/u.test(t)) return { id: items[items.length - 1].id };
-  for (const [said, src] of OUTLETS) if (said.test(t)) { const x = items.find((y) => src.test(y.source ?? "")); if (x) return { id: x.id }; }
+  // an outlet named: its report, or that it is not on the screen (never another outlet's in its place)
+  for (const [said, src] of OUTLETS) {
+    const m = said.exec(t);
+    if (m) { const x = items.find((y) => src.test(y.source ?? "")); return x ? { id: x.id } : { why: "outlet", outlet: m[0] }; }
+  }
   const r = on.reading ? items.find((x) => x.id === on.reading) : null;
   return { id: (r ?? items[0]).id };
 };
@@ -84,23 +99,34 @@ const pickItem = (t: string, on: NewsOnScreen): { id: string } | null => {
 export function newsAsk(raw: string, on: NewsOnScreen = {}): NewsAskT | null {
   const t = norm(raw);
   if (!t || t.length > 300) return null;
-  const reads = READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t));
+  // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov)
+  if (NEGATED.test(t) || NEGATED.test(raw) || MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) return null;
+  const reads = !OWN_REPORT.test(t) && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
   if (reads) {
     const item = pickItem(t, on);
-    if (item) return { kind: "read", body: item };
+    if (item && "id" in item) return { kind: "read", body: item };
+    if (item) return { kind: "which", ...item };
     if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident } };
     // "what are other papers saying" about nothing on screen: the web, if a public subject is named; else ask which
-    if (WEB_CUE.test(t) || FORECAST.test(t)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
+    if ((WEB_CUE.test(t) || FORECAST.test(t)) && !CONSOLE.test(t)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
     // nothing on screen to read: "which report?" only when it plainly means the press ("the weekly report" is the planner's)
-    return NEWSY.test(t) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)) ? { kind: "which" } : null;
+    return NEWSY.test(t) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)) ? { kind: "which", why: "none" } : null;
   }
-  if (WEB_CUE.test(t) || WEB_CUE.test(raw)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
-  if ((FORECAST.test(t) || FORECAST.test(raw)) && !CONSOLE.test(t) && !CONSOLE.test(raw)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
+  // the console's own records ("look up the complaints in Adyar", "incident 1234", "zones on red alert") are the console's, web words or not
+  if (CONSOLE.test(t) || CONSOLE.test(raw)) return null;
+  if (WEB_CUE.test(t) || WEB_CUE.test(raw) || FORECAST.test(t) || FORECAST.test(raw)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
   return null;
 }
 
-/** "Which report?" when nothing on screen is a report */
-export const whichLine = { en: "Which report? Open an incident or the news first, then say \"read the article\".", ta: "எந்தச் செய்தி? முதலில் ஒரு சம்பவத்தையோ செய்திகளையோ திறந்து, \"செய்தியைப் படி\" என்று சொல்லுங்கள்." };
+/** what is said when nothing on screen is the report asked for: none open, that outlet's is not there, or fewer than asked */
+export function whichLine(w: Extract<NewsAskT, { kind: "which" }>, lang: "en" | "ta"): string {
+  if (w.why === "outlet") {
+    const name = (w.outlet ?? "").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bOf\b/g, "of");
+    return lang === "ta" ? `திரையில் ${name} செய்தி இல்லை.` : `I don't see a ${name} report on the screen.`;
+  }
+  if (w.why === "count") return lang === "ta" ? `இங்கே ${w.n ?? 0} செய்திகள் மட்டுமே உள்ளன.` : `There ${w.n === 1 ? "is only 1 report" : `are only ${w.n ?? 0} reports`} here.`;
+  return lang === "ta" ? "எந்தச் செய்தி? முதலில் ஒரு சம்பவத்தையோ செய்திகளையோ திறந்து, \"செய்தியைப் படி\" என்று சொல்லுங்கள்." : "Which report? Open an incident or the news first, then say \"read the article\".";
+}
 /** an answer that could not be had */
 export const failLine = (why: string | undefined, lang: "en" | "ta"): string => {
   if (why === "no_news") return lang === "ta" ? "இந்தச் சம்பவத்துக்கு செய்தி அறிக்கை இல்லை; இது புகார்கள் மூலம் வந்தது." : "This incident has no news report; it came from complaints, not the press.";

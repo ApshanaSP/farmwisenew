@@ -46,8 +46,9 @@ import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
 import { WakeEars } from "./ears";
+import { wakeWait } from "./kws";
 import { flag } from "@/lib/thunai/flags";
-import { Conductor, type HeardLine } from "./conductor";
+import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
@@ -1268,6 +1269,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   /** v6 (Phase 4): what on Jarvis's screen a "read the article" can mean (newsask.ts): its news list, or the incident it shows */
   const newsOnScreen = (doc: StageDocT | null, cs: ScreenState): NewsOnScreen => {
+    // no screen of Jarvis's, the console's own news panel open ("show me the latest news" opens it): its stories, in the order shown,
+    // each by one of its stored documents (the same event; the server reads it and the other outlets' coverage)
+    if (!doc && cs.panel === "news") {
+      const all = (hostRef.current.ov as { allNews?: { id: string; docIds?: string[]; outletNames?: string[]; title?: string }[] | null } | null)?.allNews ?? [];
+      return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.[0] ?? null, title: x.title })), incident: null, reading: null };
+    }
     const nr = doc?.blocks.find((b) => b.kind === "NewsReader");
     const cd = doc?.blocks.find((b) => b.kind === "CaseDetail");
     return {
@@ -1283,7 +1290,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * the Stage already draws). Nothing a page said becomes a step: the events carry sentences and links only.
    */
   const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<void> => {
-    if (na.kind === "which") { earcon("need"); out(whichLine[lang], lang, "ready"); return; }
+    if (na.kind === "which") { earcon("need"); out(whichLine(na, lang), lang, "ready"); return; }
     traceDecided("rules");
     setBrainNow({ by: "instant", model: null, ms: 0 });
     const t0 = performance.now();
@@ -1631,6 +1638,20 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
       return true;
     };
+    // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts). Before the
+    // Stage's own commands: over a news list "read the first one" stays the Stage's headline reading, but "read the first article" is the
+    // article itself (the 17 Nov news run: the Stage took it and read the headline)
+    if (!original) {
+      // a mission, a brief or a memory request is never the news lane's (the independent check, 17 Nov: "prepare for heavy rain tonight")
+      const na = intentMarker(said) || missionIntent(said, worldRef.current) ? null : newsAsk(said, newsOnScreen(stageRef.current, buildState()));
+      if (na) {
+        const lg: Lang = opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
+        const t0 = performance.now();
+        await newsTurn(na, said, lg, alive, ctl.signal);
+        decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
+        return;
+      }
+    }
     // the open Stage: its own commands ("next", "only the Adyar ones", "open 3", "pin this") need no model
     if (stageRef.current && !original) {
       const lc = localStageCommand(said);
@@ -1671,9 +1692,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       const doc = stageRef.current, cs = buildState();
       const onScreen = doc ? doc.blocks.find((b) => b.kind === "CaseDetail") : null;
-      // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts)
-      const na = newsAsk(said, newsOnScreen(doc, cs));
-      if (na) { instant(); await newsTurn(na, said, lg, alive, ctl.signal); decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 }); return; }
       const fa = followAsk(said, { incident: onScreen?.kind === "CaseDetail" ? onScreen.incident.id : doc ? null : cs.incident, zone: doc ? doc.scope.zone : cs.zone, world: worldRef.current });
       if (fa) { if (needsName("B", lg)) return; instant(); askFollow(fa, said, lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
       if (mi || im?.intent === "mission") { instant(); await startMission(said, lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -1812,6 +1830,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (rules.confidence < 0.85) { setWrong(rules.steps.map((x) => describeStep(x, worldRef.current, rules.lang)).join(", ")); setTimeout(() => setWrong(null), 4000); }
     await run(rules.steps, rules.lang, said, rules.by, rules.note?.[rules.lang]);
   };
+  /** v6: directStage for the measuring hook (__jv.show), always the latest render's */
+  const directRef = useRef(directStage);
+  directRef.current = directStage;
   const handleRef = useRef(handle);
   handleRef.current = handle;
 
@@ -2564,10 +2585,22 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // the question said in the same breath ("Hi Jarvis, show the severe cases")
       if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95), 60); }
     };
+    // v6 (the independent check, 17 Nov): the name heard on the device. A pause after it opens Jarvis with the reply at once; a sentence
+    // said straight on ("Hey Jarvis, show the severe cases") is left to the browser's recogniser, which brings its words whole (rest, as in
+    // v5), so Jarvis does not open over it and lose them; with no recogniser running, or none by the limit, it opens with the reply
+    const named = (w: WakeEars) => {
+      const t0 = performance.now();
+      const tick = () => {
+        if (dead) return;
+        if (wakeWait({ sinceKws: performance.now() - t0, quietMs: w.quietMs, recogniser: !!stop, quietNeeded: wakeQuietMs() }) === "open") { woke(""); return; }
+        setTimeout(tick, 30);
+      };
+      tick();
+    };
     const begin = () => {
       if (dead || !allowed || document.hidden) return;
       void loadWakeReplies();
-      if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); woke(""); }); local = w; void w.start().then((ok) => { if (!ok && local === w) local = null; }); }
+      if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); named(w); }); local = w; void w.start().then((ok) => { if (!ok && local === w) local = null; }); }
       if (stop) return;
       stop = startWake({
         onWake: (rest) => { stop = null; woke(rest); },
@@ -2625,8 +2658,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   useEffect(() => {
     if (!SPEC) return;
     (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }), setHud: (p: never) => hud.set(p),
-      // v6: a typed sentence, as the chat box sends it (the news spec puts a news list on screen before a spoken "read the first article")
-      ask: (t: string) => void handleRef.current(t, 0.95) };
+      // v6: a typed sentence, as the chat box sends it; a screen built directly, as a tap on an offered next step builds it (the news
+      // spec puts the news list on Jarvis's screen this way: the stand-in console has no news panel)
+      ask: (t: string) => void handleRef.current(t, 0.95),
+      show: (recipe: StageDocT["recipe"], slots: Record<string, unknown>) => void directRef.current(recipe, slots, "news", "en") };
   }, []);
 
   const switchOn = useCallback((quiet = false) => {

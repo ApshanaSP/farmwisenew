@@ -5,8 +5,9 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { failLine, newestNewsDoc, newsAsk, newsScreen, readNdjson } from "./newsask";
+import { failLine, newestNewsDoc, newsAsk, newsScreen, readNdjson, whichLine } from "./newsask";
 import { checkStage } from "./stage";
+import { localStageCommand } from "./stagelocal";
 
 const list = { items: [{ id: "doc-11", source: "The Hindu" }, { id: "doc-12", source: "DT Next" }, { id: "doc-13", source: "The New Indian Express" }] };
 
@@ -34,19 +35,49 @@ describe("a report on screen is read", () => {
     expect(newsAsk("what are other outlets saying about it", { incident: "INC-77" })).toEqual({ kind: "read", body: { incident: "INC-77" } });
   });
   it("Jarvis's own sources list is links, not reports: it is never sent as an id", () => {
-    expect(newsAsk("read the article", { items: [{ id: "web-1", source: "The Hindu" }] })).toEqual({ kind: "which" });
+    expect(newsAsk("read the article", { items: [{ id: "web-1", source: "The Hindu" }] })).toEqual({ kind: "which", why: "none" });
   });
   it("nothing on screen: 'which report?' only when the press is meant; 'the weekly report' stays the planner's", () => {
-    expect(newsAsk("read the article")).toEqual({ kind: "which" });
+    expect(newsAsk("read the article")).toEqual({ kind: "which", why: "none" });
     expect(newsAsk("read the weekly report")).toBeNull();
     expect(newsAsk("go through the monthly report")).toBeNull();
   });
-  it("the Stage's own reading commands are not taken ('read them', 'read it', 'next')", () => {
-    for (const t of ["read them", "read it", "read this", "next", "open 3", "read out"]) expect(newsAsk(t, list), t).toBeNull();
+  it("the Stage's own reading commands are not taken ('read them', 'read it', 'next', 'read the first one')", () => {
+    for (const t of ["read them", "read it", "read this", "next", "open 3", "read out", "read the first one", "read number 2", "read the second"]) expect(newsAsk(t, list), t).toBeNull();
+  });
+  it("'read the Nth article' is the article (the Stage keeps its own reading words; Thunai.tsx asks newsAsk first)", () => {
+    expect(localStageCommand("read them")).not.toBeNull();
+    expect(newsAsk("Read the first article.", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
   });
   it("an id that is not a stored id is never sent", () => {
-    expect(newsAsk("read the article", { items: [{ id: "../etc/passwd", source: null }] })).toEqual({ kind: "which" });
-    expect(newsAsk("read the article", { incident: "1; DROP TABLE x" })).toEqual({ kind: "which" });
+    expect(newsAsk("read the article", { items: [{ id: "../etc/passwd", source: null }] })).toEqual({ kind: "which", why: "none" });
+    expect(newsAsk("read the article", { incident: "1; DROP TABLE x" })).toEqual({ kind: "which", why: "none" });
+  });
+});
+
+describe("the independent check's cases (17 Nov): the news lane takes nothing that is not its own", () => {
+  it("a mission, a brief and the console's own weather-warning metric are never a web lookup", () => {
+    for (const t of ["We expect heavy rain tonight, get everything ready", "prepare for heavy rain tonight", "Cyclone is coming, get everything ready", "புயல் வருது, தயார் பண்ணுங்க",
+      "brief me on the cyclone", "What is the IMD warning level?", "what is the weather warning level now", "வானிலை எச்சரிக்கை நிலை என்ன", "which zones are on red alert"]) {
+      expect(newsAsk(t), t).toBeNull();
+    }
+  });
+  it("a sentence that only mentions reading, a negation, or a report of the console's own is not a news read", () => {
+    const caseOpen = { incident: "INC-77" };
+    for (const t of ["I have read the report, now draft a reply to the commissioner", "read the officer report", "read the action taken report", "any other reports from Adyar",
+      "show me related reports", "read the weekly report"]) expect(newsAsk(t, caseOpen), t).toBeNull();
+    for (const t of ["dont read the article", "don't read the article", "no need to read the report", "show more reports"]) expect(newsAsk(t, list), t).toBeNull();
+  });
+  it("a look-up of the console's own records is the console's", () => {
+    for (const t of ["look up the complaints in Adyar", "look up incident 1234", "search online for complaints in Adyar"]) expect(newsAsk(t), t).toBeNull();
+  });
+  it("an outlet or a position not on the screen is said as such, never another report read in its place", () => {
+    const hinduOnly = { items: [{ id: "doc-11", source: "The Hindu" }, { id: "doc-12", source: "The Hindu" }] };
+    expect(newsAsk("read the times of india report", hinduOnly)).toEqual({ kind: "which", why: "outlet", outlet: "times of india" });
+    expect(newsAsk("read the third article", hinduOnly)).toEqual({ kind: "which", why: "count", n: 2 });
+    expect(whichLine({ kind: "which", why: "count", n: 2 }, "en")).toMatch(/only 2/);
+    expect(whichLine({ kind: "which", why: "outlet", outlet: "times of india" }, "en")).toMatch(/Times of India/);
+    expect(whichLine({ kind: "which", why: "none" }, "en")).toMatch(/Open an incident or the news/);
   });
 });
 

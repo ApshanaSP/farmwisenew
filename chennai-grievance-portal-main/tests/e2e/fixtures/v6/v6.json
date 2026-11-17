@@ -636,5 +636,192 @@
   "speechMs": 620,
   "endMs": 2410,
   "durMs": 2940
+ },
+ "news_read1": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Read the first article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1910,
+  "durMs": 2440
+ },
+ "news_read2": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Read the second article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2220,
+  "durMs": 2750
+ },
+ "news_read3": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "David",
+  "text": "Read the third article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1590,
+  "durMs": 2120
+ },
+ "news_read4": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "Read the fourth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1790,
+  "durMs": 2320
+ },
+ "news_read5": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Read the fifth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1610,
+  "durMs": 2140
+ },
+ "news_read6": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Read the sixth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1810,
+  "durMs": 2340
+ },
+ "news_read7": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Read the seventh article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2260,
+  "durMs": 2790
+ },
+ "news_read8": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "David",
+  "text": "Read the eighth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1670,
+  "durMs": 2200
+ },
+ "news_read9": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "Read the ninth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1790,
+  "durMs": 2320
+ },
+ "news_read10": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Read the tenth article.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1620,
+  "durMs": 2150
+ },
+ "news_look_met": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "What did the Met department say about tonight's rain?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3410,
+  "durMs": 3940
+ },
+ "news_look_met2": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "What did the Met department say about tonight's rain?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3220,
+  "durMs": 3750
+ },
+ "news_look_rain": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Will it rain in Chennai tonight?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2710,
+  "durMs": 3240
+ },
+ "news_look_rain2": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Will it rain in Chennai tonight?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1970,
+  "durMs": 2500
+ },
+ "news_look_alert": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "David",
+  "text": "Is there a red alert for Chennai today?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2410,
+  "durMs": 2940
+ },
+ "news_look_alert2": {
+  "kind": "news",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Is there a red alert for Chennai today?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2570,
+  "durMs": 3100
+ },
+ "news_ta_read1": {
+  "kind": "news",
+  "lang": "ta",
+  "source": "gemini",
+  "voice": "Kore",
+  "text": "முதல் செய்தியைப் படியுங்கள்.",
+  "rate": 24000,
+  "speechMs": 620,
+  "endMs": 1910,
+  "durMs": 2440
  }
 }

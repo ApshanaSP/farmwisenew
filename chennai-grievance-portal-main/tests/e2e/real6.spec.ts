@@ -273,8 +273,9 @@ test("v6 real latency: news", async ({ page }) => {
   let k = 0;
   for (const clip of clips) {
     if (/^news_(read|ta_read)/.test(clip)) {
-      await ask("show me the latest news");
-      for (let t = 0; t < 40; t++) { await page.waitForTimeout(250); if (await page.locator(".st-news li").count()) break; }
+      // the news list on Jarvis's screen, as a tap on an offered step builds it (the stand-in console has no news panel)
+      await page.evaluate(() => (window as unknown as { __jv: { show(r: string, s: Record<string, unknown>): void } }).__jv.show("news", { period: "weekly", fresh: true }));
+      for (let t = 0; t < 60; t++) { await page.waitForTimeout(250); if (await page.locator(".st-news li").count()) break; }
       await page.waitForTimeout(600);
       await ask("stop");
       await page.waitForTimeout(1200);
