@@ -22,7 +22,7 @@ import { conditionsTa, reasonTa } from "./reasons";
 import { stripFigures } from "./numbergate";
 import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
 import { briefIssue, roleWords, timeOf } from "./brief6";
-import { isNewsMedia } from "@/lib/collector/newsrel";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
 import { explainRecipe } from "./recipes/explain";
