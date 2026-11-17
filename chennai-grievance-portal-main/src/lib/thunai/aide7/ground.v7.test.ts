@@ -98,3 +98,23 @@ describe("v7: Tamil names by their inflected forms, never by a bare stem", () =>
     expect(keys("மணல் லாரிகள்")).toEqual([]);
   });
 });
+
+describe("v7 (the live pilot, 17 Nov): what a correct sentence may rest on beyond its cited fact", () => {
+  const TA_HEADLINE = "Dinamalar reported this afternoon: மணலி காவல் நிலையத்தில் சட்ட விரோதமாக சிவராமன் என்பவரை அடைத்து வைத்திருப்பதாக திருவொற்றியூர் வழக்கறிஞர்கள் முற்றுகை போராட்டம்";
+  const news: Sheet7 = { lang: "en", gaz, shown: [], facts: [{ id: "F1", src: "Dinamalar", text: TA_HEADLINE }] };
+  it("a name said in English from a Tamil report: its transliteration (Manali, Sivaraman, Thiruvottiyur)", () => {
+    expect(checkSentence("Dinamalar reports that Thiruvottiyur lawyers protested at the Mannali police station over Sivaraman's detention. [F1]", news).problems).toEqual([]);
+    expect(checkSentence("Dinamalar reports that Kumaresan was detained at Manali. [F1]", news).problems.map((p) => p.kind)).toContain("name");
+  });
+  it("the screen's scope (its place and window) holds for every sentence", () => {
+    const why: Sheet7 = { lang: "en", gaz, shown: [], scope: { names: ["Adyar"], times: ["this week"] },
+      facts: [{ id: "F1", src: "dashboard", text: "Key numbers: Street lights & electrical hazards: 12, against 9 before (up 3)", dir: "up" }] };
+    expect(checkSentence("Street light complaints in Adyar went up to 12 this week, from 9. [F1]", why).problems).toEqual([]);
+    expect(checkSentence("Street light complaints in Royapuram went up to 12. [F1]", why).problems.map((p) => p.kind)).toContain("name");
+  });
+  it("a sentence of figures reads the screen out; a times sign is markup", () => {
+    const k: Sheet7 = { lang: "en", gaz, shown: [], facts: [{ id: "F1", src: "dashboard", text: "Reported 1196, severe 45, open 1024, open complaints 601; Royapuram 2.7 times the median" }] };
+    expect(checkSentence("This week 1196 incidents were reported, 45 severe, 1024 open and 601 open complaints. [F1]", k).problems.map((p) => p.kind)).toContain("list");
+    expect(checkSentence("Royapuram is at 2.7× the median. [F1]", k).problems.map((p) => p.kind)).toContain("markup");
+  });
+});

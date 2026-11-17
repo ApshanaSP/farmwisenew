@@ -12,7 +12,7 @@ import type { Lang } from "../types";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 import { redactText } from "../privacy";
 import { relativeTime } from "../web/brief";
-import { tamilFormsOf, type Gazetteer } from "./gazetteer";
+import { namesIn, tamilFormsOf, type Gazetteer } from "./gazetteer";
 import type { Fact7, Sheet7 } from "./ground";
 import { extrasOf, type AideExtras } from "./extras";
 
@@ -44,7 +44,8 @@ function builder(gaz: Gazetteer): Builder {
     facts,
     add: (f) => {
       // a phone number, an e-mail, an Aadhaar number in any record's words is masked before a model can read it (privacy.ts redactText)
-      const text = clip(redactText(f.text));
+      // "2.7×" is said "2.7 times" (a sign is not speech: the checker refuses it)
+      const text = clip(redactText(f.text).replace(/\s*×\s*/g, " times "));
       if (!text || seen.has(text) || facts.length >= MAX_FACTS) return;
       seen.add(text);
       facts.push({ ...f, text, id: `F${facts.length + 1}`, names: [...new Set([...(f.names ?? []), ...tamilFormsOf(text, gaz)])] });
@@ -178,6 +179,17 @@ function pairRatios(s: string): number[] {
   return b ? [a / b] : [];
 }
 
+/** the console's windows as said (screens.ts PERIOD_EN), and the screens that count over one */
+const WINDOW: Record<string, string[]> = { daily: ["the last 24 hours", "today"], weekly: ["this week", "the last 7 days"], monthly: ["this month", "the last 30 days"], quarterly: ["this quarter"] };
+const COUNTS = new Set(["situation", "why", "changed", "compare", "ranking", "performance", "cases", "news", "brief", "trend", "dashboard", "readings", "insight", "advise"]);
+/** The screen's scope: the district names in its title and its scope's zone, and the window it counts over (a case has none of its own) */
+export function scopeOf(doc: Pick<StageDocT, "title" | "recipe" | "scope">, gaz: Gazetteer): { names: string[]; times: string[] } {
+  const names = new Set<string>(namesIn(doc.title ?? "", gaz).filter((h) => h.kind !== "outlet").map((h) => h.form));
+  const z = doc.scope?.zone != null ? gaz.entries.find((e) => e.key === `zone:${doc.scope.zone}`) : null;
+  if (z?.en[0]) names.add(z.en[0]);
+  return { names: [...names].slice(0, 3), times: COUNTS.has(doc.recipe) ? WINDOW[doc.scope?.period ?? ""] ?? [] : [] };
+}
+
 /** A one-line note of what the screen shows, for the writer (it points at the screen, never reads it). */
 export function screenNote(doc: StageDocT): string {
   const kinds: Record<string, string> = { Kpis: "key-number tiles", CaseList: "a list of incidents", CaseDetail: "the incident's card and timeline", NewsReader: "a list of news reports with links",
@@ -192,6 +204,9 @@ export function screenNote(doc: StageDocT): string {
  */
 export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: number, x: AideExtras | null = extrasOf(doc)): Sheet7 & { note: string } {
   const b = builder(gaz);
+  // the screen's scope first: its place (its title's and its scope's names) and, on a screen that counts over a window, that window
+  const scope = scopeOf(doc, gaz);
+  if (scope.names.length || scope.times.length) b.add({ src: "dashboard", text: `This screen covers ${[...scope.names, ...scope.times.slice(0, 1)].join(", ")}`, times: scope.times });
   if (doc.takeaway?.en) b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: /\b(?:down|fewer|fell)\b/i.test(doc.takeaway.en) ? "down" : /\b(?:up|more|rose)\b/i.test(doc.takeaway.en) ? "up" : null });
   if (x?.article) {
     const a = x.article, w = a.publishedAt ? when(a.publishedAt.replace("T", " ").slice(0, 19), now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
@@ -207,7 +222,7 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
   for (const n of doc.notes ?? []) b.add({ src: "dashboard", text: `Caution: ${n}` });
   const shown = [doc.title, ...doc.blocks.flatMap((blk) => blk.kind === "CaseList" ? blk.rows.map((r) => r.title) : blk.kind === "NewsReader" ? blk.items.map((i) => i.title) : blk.kind === "CaseDetail" ? [blk.incident.title, ...blk.timeline.map((t) => t.text)]
     : blk.kind === "Brief" ? blk.points.map((p) => p.text) : blk.kind === "Answer" ? [blk.text] : blk.kind === "Findings" ? blk.items.map((f) => f.title) : [])];
-  return { facts: b.facts, lang, gaz, shown, note: screenNote(doc) };
+  return { facts: b.facts, lang, gaz, shown, note: screenNote(doc), scope };
 }
 
 /** An article's text as sentences worth a fact: not a byline, not a date line, 6 to 40 words. */

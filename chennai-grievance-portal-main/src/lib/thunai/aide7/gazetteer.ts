@@ -119,6 +119,27 @@ export function namesIn(text: string, g: Gazetteer): NameHit[] {
   return out.sort((a, b) => a.at - b.at);
 }
 
+const aliasCache = new WeakMap<Gazetteer, Map<string, string[]>>();
+/**
+ * The entries that share a form with this one, itself first: a name two reference lists hold is one name (Thiruvottiyur is a zone and a taluk,
+ * Alandur too), so a fact naming the taluk covers a sentence naming the zone (the live pilot, 17 Nov).
+ */
+export function aliasesOf(key: string, g: Gazetteer): string[] {
+  let m = aliasCache.get(g);
+  if (!m) {
+    const byForm = new Map<string, Set<string>>();
+    for (const e of g.entries) for (const f of [...e.en.map((x) => x.toLowerCase()), ...e.ta]) { const s = byForm.get(f) ?? new Set<string>(); s.add(e.key); byForm.set(f, s); }
+    m = new Map();
+    for (const e of g.entries) {
+      const keys = new Set<string>([e.key]);
+      for (const f of [...e.en.map((x) => x.toLowerCase()), ...e.ta]) for (const k of byForm.get(f) ?? []) keys.add(k);
+      m.set(e.key, [...keys]);
+    }
+    aliasCache.set(g, m);
+  }
+  return m.get(key) ?? [key];
+}
+
 /** The Tamil forms of the names in a text (for a fact's Tamil aliases). */
 export function tamilFormsOf(text: string, g: Gazetteer): string[] {
   const keys = new Set(namesIn(text, g).map((h) => h.key));

@@ -22,7 +22,8 @@ import { isEnglishWord } from "../english";
 import { figuresIn, type Figure } from "../numbergate";
 import { copiedRun, labelIn } from "../speechcheck";
 import type { Lang } from "../types";
-import { namesIn, type Gazetteer, type NameHit } from "./gazetteer";
+import { phonetic } from "../xlit";
+import { aliasesOf, namesIn, type Gazetteer, type NameHit } from "./gazetteer";
 
 export interface Fact7 {
   /** "F1", "F2", ... */
@@ -53,6 +54,11 @@ export interface Sheet7 {
   /** what the screen shows in words (titles, headlines): an answer must not read them out */
   shown: string[];
   gaz: Gazetteer;
+  /**
+   * the screen's scope (the place and window its title and scope name: "Why · Adyar · this week"): true of every fact on it, so any sentence may
+   * say it, and a figure said with the scope's place needs no fact that names the place again
+   */
+  scope?: { names: string[]; times: string[] };
 }
 
 export type ProblemKind = "number" | "misbound" | "multiplier" | "name" | "time" | "cause" | "direction" | "superlative" | "absolute" | "speculation"
@@ -211,7 +217,7 @@ const SPECULATION_TA = /இருக்கலாம்|போலிருக்�
 const ADVICE = /\b(?:i'd|i would|you (?:may|might|could) want|worth|suggest|consider|ask(?:ing)? (?:them|the|for|metro|pwd)|call|chase|push|a word with|would (?:move|help|get|speed)|it would help|follow(?:ing)? up)\b|கேட்கலாம்|சொல்லலாம்|பார்க்கலாம்|பேசலாம்|நல்லது|சொன்னால்|கேட்டால்/iu;
 /** time words a suggestion may use of its own: when to act, never when something happened */
 const FORWARD = new Set(["today", "tomorrow", "night", "evening", "this-week", "this-month", "next-week"]);
-const MARKUP = /[*_#`|<>{}]|^\s*[-•]\s|\bhttps?:\/\/|\bwww\.|\.(?:com|in|org)\b/i;
+const MARKUP = /[*_#`|<>{}×÷=]|^\s*[-•]\s|\bhttps?:\/\/|\bwww\.|\.(?:com|in|org)\b/i;
 /** capitalised words that are no claim: the persona, the district, sentence furniture */
 const PLAIN_CAPS = new Set(["i", "i'd", "i'll", "i'm", "i've", "collector", "jarvis", "chennai", "tamil", "nadu", "district", "corporation", "ok", "okay", "ist", "want", "shall", "should", "nothing", "no"]);
 
@@ -223,6 +229,23 @@ const tamilShare = (s: string) => {
   return letters ? ta / letters : 0;
 };
 const words = (s: string) => s.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
+/** edit distance at most one (a name's English spelling against a Tamil word's romanised key: Thiruvottiyur, திருவொற்றியூர்) */
+function oneEdit(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, d = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++d > 1) return false;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return d + (a.length - i) + (b.length - j) <= 1;
+}
+/** is this name (its phonetic key) the English spelling of one of these Tamil words (their keys), allowing a case ending on the Tamil word */
+function spelledFrom(key: string, taKeys: string[]): boolean {
+  if (key.length < 4) return false;
+  return taKeys.some((w) => oneEdit(key, w) || (w.startsWith(key) && w.length - key.length <= 4) || (key.length >= 6 && oneEdit(key, w.slice(0, key.length))));
+}
 /** the clause around a position: commas, semicolons, colons, dashes and "and/but/while/against" end it */
 function clauseStart(s: string, at: number): number {
   const before = s.slice(0, at);
@@ -258,12 +281,20 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   if (lang === "ta" && share < 0.45) p("language", "not in Tamil");
   if (lang === "en" && share > 0.05) p("language", "Tamil in an English answer");
 
-  // names: the district's (bound to the cited facts), then any other capitalised word
+  // the screen's scope: its place and its window, true of every fact on it
+  const scopeText = [...(sheet.scope?.names ?? []), ...(sheet.scope?.times ?? [])].join(" ; ");
+  const scopeKeys = new Set(scopeText ? namesIn(scopeText, sheet.gaz).flatMap((h) => aliasesOf(h.key, sheet.gaz)) : []);
+  const scopeAtoms = timeAtoms(scopeText);
+  // names: the district's (bound to the cited facts, or the scope's), then any other capitalised word. A name two reference lists hold
+  // (Thiruvottiyur is a zone and a taluk) is the same name in either
   const hits = namesIn(text, sheet.gaz);
-  const covered_ = (h: NameHit) => cited.some((c) => c.keys.has(h.key));
-  for (const h of hits) if (!covered_(h)) p("name", `${h.form} is in no cited fact${others.some((o) => o.keys.has(h.key)) ? " (another fact has it)" : ""}`);
+  const has = (keys: Set<string>, key: string) => aliasesOf(key, sheet.gaz).some((k) => keys.has(k));
+  const covered_ = (h: NameHit) => scopeKeys.has(h.key) || cited.some((c) => has(c.keys, h.key));
+  for (const h of hits) if (!covered_(h)) p("name", `${h.form} is in no cited fact${others.some((o) => has(o.keys, h.key)) ? " (another fact has it)" : ""}`);
   const spans = hits.map((h) => [h.at, h.at + h.form.length] as const);
-  const lowCited = cited.map((c) => c.low).join(" ");
+  const lowCited = `${cited.map((c) => c.low).join(" ")} ${lowWords(sheet.scope?.names.join(" ") ?? "")}`;
+  // a Tamil word of the cited facts, as a name said in English would spell it (a report in Tamil, the answer in English)
+  const taWords = cited.flatMap((c) => c.f.text.match(/[஀-௿]+/gu) ?? []).map((w) => phonetic(w)).filter((w) => w.length >= 3);
   const tokens = [...text.matchAll(/(?<![\p{L}\p{M}'’])[\p{Lu}][\p{L}\p{M}'’.-]*/gu)];
   for (const m of tokens) {
     const at = m.index ?? 0;
@@ -274,7 +305,9 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
     const first = text.slice(0, at).trim() === "" || /[.!?:"“]\s*$/.test(text.slice(0, at));
     // a sentence's first word is a name only if it is not plain English (the word list holds words of three letters or more; "A", "It", "So" are plain)
     if (first && lang === "en" && (isEnglishWord(w) || SHORT_PLAIN.has(w))) continue;
-    if (!lowCited.includes(` ${w} `) && !lowCited.includes(` ${w.replace(/s$/, "")} `)) p("name", `"${raw}" is in no cited fact`);
+    if (lowCited.includes(` ${w} `) || lowCited.includes(` ${w.replace(/s$/, "")} `)) continue;
+    if (spelledFrom(phonetic(raw), taWords)) continue;
+    p("name", `"${raw}" is in no cited fact`);
   }
   // an answer names at most three places, and a sentence never lists three
   const places = new Set(hits.filter((h) => h.kind === "zone" || h.kind === "place" || h.kind === "taluk").map((h) => h.key));
@@ -282,14 +315,17 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const answerPlaces = new Set([...soFar, ...places]);
   if (answerPlaces.size > 3 && places.size) p("list", `the answer would name ${answerPlaces.size} places`);
 
+  // a sentence of four figures or more reads the screen's numbers out (the tiles are on the screen)
+  const figs = placedFigures(text);
+  if (figs.length >= 4) p("list", `${figs.length} figures in one sentence`);
   // numbers: in a cited fact, hedged within tolerance, and bound to the name said with them
-  for (const x of placedFigures(text)) {
+  for (const x of figs) {
     const v = x.fig.value;
     const inCited = cited.some((c) => allows(c.nums, v, x.hedge));
     if (!inCited) { p(others.some((o) => allows(o.nums, v, x.hedge)) ? "misbound" : "number", `${x.fig.raw} (${v}) is in no cited fact`); continue; }
     const start = clauseStart(text, x.at);
     const near = hits.filter((h) => h.at >= start && h.at < x.at && h.kind !== "outlet").pop();
-    if (near && !cited.some((c) => c.keys.has(near.key) && allows(c.nums, v, x.hedge))) p("misbound", `${x.fig.raw} is not ${near.form}'s in the cited facts`);
+    if (near && !scopeKeys.has(near.key) && !cited.some((c) => has(c.keys, near.key) && allows(c.nums, v, x.hedge))) p("misbound", `${x.fig.raw} is not ${near.form}'s in the cited facts`);
   }
   // twice, half, three times: only against a ratio code computed
   const mults: number[] = [];
@@ -305,7 +341,7 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const have = new Set(cited.flatMap((c) => [...c.atoms]));
   // a suggestion's own time ("ask them for a status today", "இன்றே கேட்கலாம்") is advice about what to do, not a claim about the record
   const advice = ADVICE.test(text);
-  for (const a of atoms) if (!covered(a, have) && !(advice && FORWARD.has(a))) p("time", `"${a}" is in no cited fact`);
+  for (const a of atoms) if (!covered(a, have) && !covered(a, scopeAtoms) && !(advice && FORWARD.has(a))) p("time", `"${a}" is in no cited fact`);
 
   // claims
   const causal = lang === "ta" ? CAUSE_TA.test(text) || CAUSE_EN.test(text) : CAUSE_EN.test(text);
