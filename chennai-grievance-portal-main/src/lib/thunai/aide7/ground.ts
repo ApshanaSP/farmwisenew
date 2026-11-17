@@ -221,6 +221,8 @@ const MARKUP = /[*_#`|<>{}×÷=]|^\s*[-•]\s|\bhttps?:\/\/|\bwww\.|\.(?:com|in|
 /** capitalised words that are no claim: the persona, the district, sentence furniture */
 const PLAIN_CAPS = new Set(["i", "i'd", "i'll", "i'm", "i've", "collector", "jarvis", "chennai", "tamil", "nadu", "district", "corporation", "ok", "okay", "ist", "want", "shall", "should", "nothing", "no"]);
 
+/** a time unit right after a figure: the figure is a window's length */
+const WINDOW_UNIT = /^\s*-?\s*(?:hours?|days?|weeks?|months?|மணி|நாள்|நாட்|நாளி|வார|மாத)/iu;
 /** plain words of one or two letters a sentence may start with */
 const SHORT_PLAIN = new Set(["a", "an", "it", "is", "in", "on", "at", "as", "so", "no", "if", "or", "by", "to", "of", "up", "we", "he", "my", "do", "be", "go", "us", "ok"]);
 const tamilShare = (s: string) => {
@@ -295,7 +297,8 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const lowCited = `${cited.map((c) => c.low).join(" ")} ${lowWords(sheet.scope?.names.join(" ") ?? "")}`;
   // a Tamil word of the cited facts, as a name said in English would spell it (a report in Tamil, the answer in English)
   const taWords = cited.flatMap((c) => c.f.text.match(/[஀-௿]+/gu) ?? []).map((w) => phonetic(w)).filter((w) => w.length >= 3);
-  const tokens = [...text.matchAll(/(?<![\p{L}\p{M}'’])[\p{Lu}][\p{L}\p{M}'’.-]*/gu)];
+  // (letters right after a digit are an ordinal's or a unit's, "4Th Main Road", "10Km": no name)
+  const tokens = [...text.matchAll(/(?<![\p{L}\p{M}\p{N}'’])[\p{Lu}][\p{L}\p{M}'’.-]*/gu)];
   for (const m of tokens) {
     const at = m.index ?? 0;
     if (spans.some(([a, b]) => at >= a && at < b)) continue;
@@ -317,7 +320,9 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
 
   // a sentence of four figures or more reads the screen's numbers out (the tiles are on the screen)
   const figs = placedFigures(text);
-  if (figs.length >= 4) p("list", `${figs.length} figures in one sentence`);
+  // a window's length ("the last 7 days", "24 மணி நேர") is how long, not a figure read off the screen
+  const dataFigs = figs.filter((x) => !WINDOW_UNIT.test(text.slice(x.at + x.fig.raw.length, x.at + x.fig.raw.length + 12)));
+  if (dataFigs.length >= 4) p("list", `${dataFigs.length} figures in one sentence`);
   // numbers: in a cited fact, hedged within tolerance, and bound to the name said with them
   for (const x of figs) {
     const v = x.fig.value;

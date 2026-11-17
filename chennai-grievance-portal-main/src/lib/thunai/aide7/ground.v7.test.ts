@@ -118,3 +118,14 @@ describe("v7 (the live pilot, 17 Nov): what a correct sentence may rest on beyon
     expect(checkSentence("Royapuram is at 2.7× the median. [F1]", k).problems.map((p) => p.kind)).toContain("markup");
   });
 });
+
+describe("v7 (the dev run, 17 Nov): what a figure dump is not, and what a name is not", () => {
+  const s: Sheet7 = { lang: "ta", gaz, shown: [], facts: [{ id: "F1", src: "dashboard", text: "Violent crime in Adyar: 4 in the last 7 days, 1 the 7 days before", times: ["கடந்த 7 நாட்கள்"] }] };
+  it("a window's length (7 days, 24 hours) is no figure of the data in the dump count", () => {
+    expect(checkSentence("அடையாறில் கடந்த 7 நாளில் 4 வன்முறைக் குற்றங்கள், அதற்கு முன் 7 நாளில் 1. [F1]", s).problems.map((p) => p.kind)).not.toContain("list");
+  });
+  it("an ordinal's letters after a digit ('4Th Main Road') are no name", () => {
+    const e: Sheet7 = { lang: "en", gaz, shown: [], facts: [{ id: "F1", src: "dashboard", text: "Wall collapse on LIC Nagar 4th Main Road, Madipakkam; 2 citizen complaints" }] };
+    expect(checkSentence("A wall collapsed on 4Th Main Road in Madipakkam, and 2 citizens have complained. [F1]", e).problems).toEqual([]);
+  });
+});
