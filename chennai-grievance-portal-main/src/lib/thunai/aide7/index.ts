@@ -5,6 +5,7 @@
  *   JARVIS_ANSWER=v6   the aide is off: v6's lines, and the browser reads the items as before
  *   JARVIS_AIDE_WEB=0  no look-up for a gap (the gap is said as not known)
  *   JARVIS_AIDE_FIRST_MS  the first checked sentence's deadline (default 3500 ms after the screen is ready), then the fallback
+ *   JARVIS_AIDE=0      no writer (the recipe's own line), v7's routing kept: for the understanding runs, which score where a question goes
  */
 import { claudeConfigured } from "@/lib/ai/claude";
 import type { AgentResult } from "../agent";
@@ -36,6 +37,8 @@ export const aideReady = (): boolean => !!(process.env.GROQ_API_KEY ?? "").trim(
 /** Does this turn get the aide's answer? A screen built for a question, never a command, a control or a refusal. `forced`: a test's own writer. */
 export function aideWanted(r: AgentResult | null | undefined, question: string, lane: string, forced = false): boolean {
   if (answerStyle() === "v6" || !r || r.kind !== "do" || !r.stage) return false;
+  // JARVIS_AIDE=0: v7's routing with the recipe's own line (the understanding runs: they score where a question goes, not what is said)
+  if (!forced && (process.env.JARVIS_AIDE ?? "").trim() === "0") return false;
   if (!forced && !aideReady()) return false;
   if (lane === "direct" || lane === "refuse") return false;
   return ASKED.has(r.stage.recipe) || QUESTION.test(question);

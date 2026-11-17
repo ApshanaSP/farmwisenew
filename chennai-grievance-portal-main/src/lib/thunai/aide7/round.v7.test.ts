@@ -65,6 +65,13 @@ describe("v7: the aide answers a question in the round, a command keeps its line
     expect(calls).toHaveLength(0);
     expect(o.result?.stage?.voice).toBeUndefined();
   });
+  it("JARVIS_AIDE=0: no writer is asked, the recipe's line is said", async () => {
+    vi.stubEnv("JARVIS_AIDE", "0");
+    for (const k of ["GROQ_API_KEY"]) vi.stubEnv(k, "x");
+    const o = await planRound(body("what is happening in Adyar"), WORLD, fakeHands(), "u", undefined, undefined, { llm: { generate: (async () => { throw new Error("x"); }) as never, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false } });
+    expect(o.result?.stage).toBeTruthy();
+    expect(o.result?.stage?.voice).toBeUndefined();
+  });
   it("with no model configured at all the aide steps aside (the turn is v6's)", async () => {
     for (const k of ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"]) vi.stubEnv(k, "");
     const o = await planRound(body("what is happening in Adyar"), WORLD, fakeHands(), "u", undefined, undefined, { llm: { generate: (async () => { throw new Error("x"); }) as never, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false } });
