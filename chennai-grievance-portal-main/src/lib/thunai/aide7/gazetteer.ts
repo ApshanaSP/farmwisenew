@@ -88,8 +88,9 @@ function index(g: Gazetteer) {
   for (const e of g.entries) for (const f of e.en) { const k = f.toLowerCase(); const prev = forms.get(k); if (!prev || (prev.kind === "place" && e.kind !== "place")) forms.set(k, e); }
   // the longest forms first, so "Anna Nagar" is one hit, not "Anna"
   const all = [...forms.keys()].sort((a, b) => b.length - a.length).map(esc);
-  const re = new RegExp(`(?<![\p{L}\p{M}])(?:${all.join("|") || "(?!)"})(?![\p{L}\p{M}])`, "giu");
-  const ta = g.entries.flatMap((e) => e.ta.map((form) => ({ form, e, re: new RegExp(`(?<![\p{L}\p{M}])(?:${taForms(form).sort((a, b) => b.length - a.length).map(esc).join("|")})(?:உம்|ும்|ே|ா|யும்|வும்)?(?![\p{L}\p{M}])`, "gu") })))
+  // (String.raw: in a plain template "\p{L}" is the letters "p{L}", and a name was found inside other words, "Tadyar": the regex guard, 18 Nov)
+  const re = new RegExp(String.raw`(?<![\p{L}\p{M}\p{N}])(?:${all.join("|") || "(?!)"})(?![\p{L}\p{M}\p{N}])`, "giu");
+  const ta = g.entries.flatMap((e) => e.ta.map((form) => ({ form, e, re: new RegExp(String.raw`(?<![\p{L}\p{M}])(?:${taForms(form).sort((a, b) => b.length - a.length).map(esc).join("|")})(?:உம்|ும்|ே|ா|யும்|வும்)?(?![\p{L}\p{M}])`, "gu") })))
     .sort((a, b) => b.form.length - a.form.length);
   c = { re, forms, ta };
   cache.set(g, c);

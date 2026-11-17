@@ -215,3 +215,11 @@ describe("v7 (the round-2 Haiku dev run's grounding judge, 17 Nov): 'almost twic
   });
 });
 function fails2(sh: Sheet7, line: string, kind: string) { expect(checkSentence(line, sh).problems.map((p) => p.kind), line).toContain(kind); }
+
+describe("v7 (the unit suite's regex guard, 18 Nov): a district name is a whole word", () => {
+  it("'Adyar' inside another word is no name; with an ending in Tamil it is", () => {
+    expect(namesIn("The Tadyar road and Adyars are not Adyar.", gaz).map((h) => h.form)).toEqual(["Adyar"]);
+    expect(namesIn("xஅடையாறு", gaz).length + namesIn("அஅடையாறு", gaz).length).toBe(0);
+    expect(namesIn("அடையாறுக்கு", gaz).length).toBe(1);
+  });
+});
