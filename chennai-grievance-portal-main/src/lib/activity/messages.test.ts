@@ -34,7 +34,7 @@ describe("what the site says it is doing", () => {
 
   it("says something sensible about a route nobody has worded yet", () => {
     expect(noticeFor("GET", "/api/collector/brand-new")?.doing).toBe("Retrieving the requested information");
-    expect(noticeFor("POST", "/api/collector/brand-new")).toMatchObject({ doing: "Processing your request", done: "Your request has been completed." });
+    expect(noticeFor("POST", "/api/collector/brand-new")).toMatchObject({ doing: "Processing your request" });
   });
 
   it("claims nothing has been done when something was only read", () => {

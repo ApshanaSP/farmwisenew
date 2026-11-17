@@ -20,6 +20,12 @@ const GESTURE_MS = 1200;
 /** Choosing files is followed by shrinking the photos in the browser before anything is sent. */
 const FILE_GESTURE_MS = 8000;
 const MIN_SHOWN_MS = 450;
+/**
+ * Work that is over within this long shows nothing at all: a notice for every quick click was noise, and people read the site as
+ * forever "loading" (owner, 15 Nov 2026). Only what is still running after a second says so. Signing out (a covering notice) is
+ * shown at once, since it must stop other clicks.
+ */
+export const SHOW_AFTER_MS = 1000;
 const SLOW_MS = 7000;
 const DONE_MS = 2800;
 const FAILED_MS = 4500;
@@ -94,8 +100,9 @@ export function installActivity(): void {
   const show = (el: HTMLElement, on: boolean) => { if (el.hidden === on) el.hidden = !on; };
 
   function draw(): void {
-    const top = open[open.length - 1];
     const now = Date.now();
+    const shown = open.filter((i) => i.full || now - i.at >= SHOW_AFTER_MS);
+    const top = shown[shown.length - 1];
     if (top) {
       pill.dataset.state = "busy"; line.dataset.on = "1"; root.dataset.diqWorking = "1";
       put(main, top.text, !top.said);
@@ -131,6 +138,7 @@ export function installActivity(): void {
     mark(item.el, true);
     flash = null;
     draw();
+    if (!item.full) setTimeout(() => { if (open.includes(item)) draw(); }, SHOW_AFTER_MS + 10); // still running: now it is shown
     return item.id;
   }
 

@@ -1725,3 +1725,9 @@
   .dic .kpi{padding:8px 10px}
   .dic .kpi .kpi-l,.dic .kpi .kpi-sub,.dic .kpi small,.dic .kpi .kpi-d{white-space:normal;overflow:visible;text-overflow:clip}
 }
+
+/* "Back to previous view": shown on the map while an incident picked from a list (severe cases, the bell) holds the view */
+.dic .map-back{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:520;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px 0 10px;border-radius:999px;background:var(--accent);color:#fff;font:600 13px/1 var(--dic-sans),sans-serif;box-shadow:0 6px 18px -6px rgba(0,0,0,.45);white-space:nowrap;cursor:pointer}
+.dic .map-back:hover{filter:brightness(1.08)}
+.dic .map-back:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.dic .map-back svg{width:14px;height:14px}
