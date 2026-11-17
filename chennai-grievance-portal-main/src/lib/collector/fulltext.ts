@@ -13,9 +13,9 @@ import fs from "fs";
 import path from "path";
 import { isNewsMedia } from "@/lib/collector/newsrel";
 import { safeFetch } from "@/lib/netsafe";
+// robots.txt and Readability live in pageread.ts (no database import), shared with Jarvis's web reader (lib/thunai/web)
+import { UA, allowed, normTitle, readable, robotsRules, type Rule } from "@/lib/collector/pageread";
 
-const AGENT = "ChennaiDistrictNewsDataset"; // robots.txt token (chennai_news_pipeline/config.yaml)
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 (compatible; ChennaiDistrictNewsDataset/1.0)";
 const CACHE = path.join(process.cwd(), "data", "aws-cache", "news-fulltext.json");
 const HOUR = 3600_000;
 
@@ -51,52 +51,11 @@ async function get(url: string, ms = 12_000): Promise<string | null> {
   }
 }
 
-// ------------------------------------------------------------- robots.txt --
-
-interface Rule { allow: boolean; path: string }
-/** The rules for our crawler (its own group, else "*"), longest match wins, as Google and Python's parser read them. */
-function robotsRules(txt: string): { rules: Rule[]; sitemaps: string[] } {
-  const groups: { agents: string[]; rules: Rule[] }[] = [];
-  const sitemaps: string[] = [];
-  let cur: { agents: string[]; rules: Rule[] } | null = null;
-  let lastWasAgent = false;
-  for (const raw of txt.split(/\r?\n/)) {
-    const line = raw.replace(/#.*$/, "").trim();
-    const m = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
-    if (!m) continue;
-    const [k, v] = [m[1].toLowerCase(), m[2].trim()];
-    if (k === "sitemap") { sitemaps.push(v); continue; }
-    if (k === "user-agent") {
-      if (!cur || !lastWasAgent) groups.push((cur = { agents: [], rules: [] }));
-      cur.agents.push(v.toLowerCase());
-      lastWasAgent = true;
-      continue;
-    }
-    lastWasAgent = false;
-    if (cur && (k === "allow" || k === "disallow") && v) cur.rules.push({ allow: k === "allow", path: v });
-  }
-  const mine = groups.find((x) => x.agents.some((a) => AGENT.toLowerCase().includes(a) && a !== "*")) ?? groups.find((x) => x.agents.includes("*"));
-  return { rules: mine?.rules ?? [], sitemaps };
-}
-function allowed(rules: Rule[], url: string): boolean {
-  let p: string;
-  try { const u = new URL(url); p = u.pathname + u.search; } catch { return false; }
-  let best: Rule | null = null;
-  for (const r of rules) {
-    const re = new RegExp("^" + r.path.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\\\$$/, "$"));
-    if (re.test(p) && (!best || r.path.length > best.path.length || (r.path.length === best.path.length && r.allow))) best = r;
-  }
-  return !best || best.allow;
-}
-
 // ---------------------------------------------------------------- sitemaps --
 
 interface Site { at: number; rules: Rule[] | null; entries: Map<string, string>; slugs: [Set<string>, string][] }
 
-/** Headline key: lower case, letters and digits only (Tamil kept), publisher suffix removed (as the pipeline). */
-export function normTitle(t: string): string {
-  return String(t ?? "").normalize("NFC").toLowerCase().replace(/\s+[-|–]\s+[^-|–]{2,40}$/, "").replace(/[^\p{L}\p{N}\p{M}]+/gu, " ").trim();
-}
+export { normTitle };
 const words = (s: string) => new Set(s.split(" ").filter((w) => w.length > 2));
 /** Share of the shorter headline's words found in the other, with four shared words at least. */
 function similar(a: Set<string>, b: Set<string>): number {
@@ -164,16 +123,8 @@ function find(s: Site, title: string, english: string | null): string | null {
 // ----------------------------------------------------------------- extract --
 
 async function extract(html: string, url: string): Promise<string | null> {
-  const [{ parseHTML }, { Readability }] = await Promise.all([import("linkedom"), import("@mozilla/readability")]);
-  try {
-    const { document } = parseHTML(html);
-    try { Object.defineProperty(document, "baseURI", { value: url }); } catch { /* read-only on some builds */ }
-    const art = new Readability(document as unknown as Document, { charThreshold: 300 }).parse();
-    const text = String(art?.textContent ?? "").replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim();
-    return text.length >= 200 ? text.slice(0, 20_000) : null;
-  } catch {
-    return null;
-  }
+  const text = (await readable(html, url))?.text ?? "";
+  return text.length >= 200 ? text.slice(0, 20_000) : null;
 }
 
 /** The full text of one report: from the cache, or fetched now (several requests for one report share one fetch). */
