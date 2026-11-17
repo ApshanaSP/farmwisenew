@@ -198,7 +198,8 @@ describe("BUG-033 holds: every category keeps its own name, on real records", ()
       const l = await round("audit", { direct: { recipe: "cases", slots: { cat: c.code, zones: [], period: "quarterly", n: 30, fresh: true }, lang: "en" } });
       for (const row of listOf(l)!.rows.slice(0, 3)) {
         const d = stageOf(await round("audit", { direct: { recipe: "case", slots: { id: row.id }, lang: "en" } }))!;
-        expect(d.say.en, `${c.code} ${row.id}`).toMatch(NAME[c.code]);
+        // v6: the briefing starts with the name ("Standing water at ..."): case does not count
+        expect(d.say.en.toLowerCase(), `${c.code} ${row.id}`).toMatch(NAME[c.code]);
         expect(d.say.en, `${c.code} ${row.id}`).not.toMatch(/sewage overflow|structure that has given way|fallen tree/i);
         expect(d.say.ta, `${c.code} ${row.id}`).toMatch(/[஀-௿]/);
       }
@@ -342,7 +343,8 @@ describe("audit-understanding-19 P2: the next step is still read from loose word
   for (const [id, code] of [["INC-20261031-345A17", "a drinking-water problem"], ["INC-20261030-AE844C", "a lake or bund problem"]] as const)
     it(`audit-understanding-19 ${id}, ${code}: not "ask the conservancy team to clear it"`, async () => {
       const d = stageOf(await round("audit", { direct: { recipe: "case", slots: { id }, lang: "en" } }))!;
-      expect(d.say.en).toContain(code);
+      // v6: the briefing starts with the name ("A drinking-water problem since ..."): case does not count
+      expect(d.say.en.toLowerCase()).toContain(code);
       expect(d.say.en).not.toMatch(/conservancy team to clear it/);
     });
 });

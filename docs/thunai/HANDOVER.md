@@ -1,5 +1,92 @@
 # Jarvis mode: handover
 
+## v6 (17 Nov 2026)
+
+Branch `claude/jarvis-v6-build-adbae2`, from the v5 build at `a7943b2f`. The brief is `docs/jarvis/JARVIS_V6.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v6 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. The reel: `docs/jarvis/DEMO.md`.
+
+**Read this first.**
+- **"Hey Jarvis" is instant now**: the spoken "Yes?" comes p50 193 / p90 210 ms after the name with Jarvis open (n 24), 163 / 185 ms closed (n 12), against v5's tone at 703 / 743. **"Hi Jarvis" is not**: the on-device model knows only "Hey Jarvis", so "Hi/Hello Jarvis" still go through the speech service (636 / 826 ms).
+- **Answers start sooner but not within the brief's targets**: English question -> first word 2.9 / 3.7 s (v5 4.1 / 5.5 s); the voice itself starts 0.7 s after it is handed over (v5 1.3 s), Tamil 1.0 s with its short first chunk (was 2.6 s). The rest is the planner and the speech-to-text round trip; the first sound (the end-of-speech earcon) stays at about 0.41 / 0.44 s.
+- **Jarvis reads the news**: "read the first article" -> the brief in hand 0.85 / 1.3 s (n 11) with the outlet and the time, the sources as links.
+- **Briefings sound like an aide**: a blind judge preferred v6 to v5 in English 24-4 and in Tamil 18-10.
+- **Understanding did not move**: FINALS-PENDING
+- **Claude was never called**: the key in `.env` was refused (401) when you allowed it; $0 spent.
+- **Nothing was tried with a real microphone in a real room**, again.
+
+### Owner actions and decisions (first)
+
+1. **Fix the Anthropic key.** You allowed it on 17 Nov (US$5 at most, then Groq). One tiny Haiku 5.5 call returned 401 "invalid x-api-key"; every `.env` copy on this machine holds the same key and no other is set, so **nothing was spent ($0)** and every number here is Groq's. The ceiling is built (`src/lib/ai/claudebudget.ts`): each billed Claude response, from any caller, is counted in `data/thunai/claude-budget.sqlite`; from $4.75 (the $5 ceiling less one call's $0.25 margin) the key is treated as absent and the planner, the warm-up and the console's steps go to Groq; if that record cannot be kept (no `node:sqlite`, as on Node 22 before 22.13), no Claude call goes out at all. Put a working key in `chennai-grievance-portal-main/.env`, then run the deploy check (`docs/jarvis/DEPLOY_HAIKU.md`).
+2. **"Hi Jarvis" on the device.** The on-device wake word that shipped is LiveKit's pretrained "hey jarvis" model (Apache-2.0 code and weights). It answers "Hey Jarvis" in about 0.2 s; "Hi Jarvis" and "Hello Jarvis" still go through the speech service (p50 636 / p90 826 ms, the tone). A "Hi Jarvis" model means training one: LiveKit's own trainer needs a CUDA GPU (none here) or their paid cloud; a sherpa-onnx keyword spotter could be built as WebAssembly without training, unmeasured. Your call whether to train, to switch the spoken greeting to "Hey Jarvis", or to keep both.
+3. **The wake reply's voice.** The nine short replies (five English: "Yes?", "Go ahead.", "I'm listening."...; four Tamil) were made once with Gemini TTS (voice Despina, the 2.5 and 3.1 preview speech models) on the free tier and ship as files in `public/thunai/wake/`; Edge's Neerja (the answer's voice) cannot start fast enough cold (0.5-1.6 s measured). Your call whether a different voice for the first word is acceptable, and whether audio generated on Gemini's free tier may ship (its terms let the outputs be used; free-tier inputs are used to improve Google's products).
+4. **The talk-over trade-off.** The reply waits for 90 ms of quiet after "Hey Jarvis". When a command follows in one breath ("Hey Jarvis, show the severe cases"), the reply lands in its comma pause at 90 and at 150 ms alike (4/4 each), and with Jarvis open the command is still heard and acted on (8/8). **Closed, the same comma pause opens Jarvis with the reply and stops the browser's recogniser, so the command said in that breath is lost** (v5's recogniser kept it as the sentence's rest; a sentence said straight on, with no pause of 90 ms within 0.4 s of the name, is still left to the recogniser). This cannot be measured under automation (the recogniser gives nothing there). Your choice: keep the instant closed reply (`NEXT_PUBLIC_JARVIS_KWS=all`, the default: say "Hey Jarvis", wait for "Yes?", then the command), or `NEXT_PUBLIC_JARVIS_KWS=open` (the device's wake word only while Jarvis is open; closed it is v5's recogniser, about 1 s, with same-breath commands kept). `NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS` raises the pause.
+5. **The news reader's lists.** `chennai-grievance-portal-main/config/jarvis-web-domains.json` is your allow/deny list (seven Tamil Nadu outlets' own feeds, NDMA SACHET for weather warnings, Wikipedia's API; Google News and GDELT denied). Two decisions in it: Wikipedia's API paths are read although its robots.txt asks crawlers to keep out of `/api/` and `/w/` (`robotsExempt`; the Wikimedia API policy sanctions bots that identify themselves), and the `contact` field Wikimedia's User-Agent policy asks for is empty. The publishers' feed terms were not read.
+6. **Free local Tamil hearing (B5)**: still waits on your yes to IndicConformer's weights licence; not wired.
+7. **Groq Zero Data Retention** (console, Data Controls): still assumed off.
+
+### What shipped
+
+- **Instant wake (Phase 2):** LiveKit WakeWord's "hey jarvis" model (Apache-2.0, `public/thunai/hey_jarvis.onnx`, its own worker on the page's onnxruntime-web) listens while Jarvis is open and closed (`NEXT_PUBLIC_JARVIS_KWS=all`). The HUD answers in the next frame; a short spoken reply ("Yes?", `public/thunai/wake/`) plays once the Collector pauses (90 ms). Closed, a pause after the name opens Jarvis with the reply at once (a comma pause too: a command in the same breath is then lost, owner decision 4); a sentence said straight on with no pause is left to the browser's recogniser, which brings its words whole. "Hi Jarvis" and "Hello Jarvis" still wake through the speech service as before.
+- **The voice starts sooner:** a silent utterance warms Edge's natural voice while a sentence to Jarvis is said (`NEXT_PUBLIC_JARVIS_VOICE_PREWARM`), so the answer's first word starts in about 0.7 s after it is handed over, not 1.3 s.
+- **Speech to text:** a bare "Jarvis" ends the race at the first decode; English speech decoded by the forced-Tamil Whisper (a translation) no longer wins over the English decode when it is less sure: English clips heard as Tamil 7/12 → 1/12.
+- **End of turn:** a short command ends after 180 ms of quiet (was 300), with the live captions running too (they had overridden it); the console step runs while the pointer glides (was after it).
+- **Briefings (Phase 3, `brief6.ts`):** an incident is told as an aide would: what and since when (relative, IST), why it is serious (complaints, the outlet that reported it and when, the deadline), who has it and what is stuck (the record's own assignment, by role, never a name or the directory), what I would do, "Want the details?". Tamil the same. `JARVIS_BRIEF=v5` restores the old retelling.
+- **News and the web (Phase 4, `src/lib/thunai/web/`, `newsask.ts`):** "read the article", "the second article", "read DT Next's report", "what are other papers saying", over the news on screen (Jarvis's list or the console's panel) or a case (that incident's own news report); "look it up", a forecast, a warning or the Met department to the web (NDMA SACHET, Wikipedia, the outlets' feeds). The first line is said at once, the brief as it comes; the sources are links on the Stage. SSRF, robots.txt, caps, a 10-minute memory cache, the owner's allow/deny list, prompt-injection and privacy tests (103 + the turn's).
+- **Understanding (Phase 5):** the place lane: a place's state asked loosely ("what's happening in Royapuram", "Kodambakkam la enna nadakkudhu", "தேனாம்பேட்டை எப்படி இருக்கு") goes to the situation screen by code, no planner.
+- **The feel (Phase 6):** the HUD's core pulses on the voice's real word starts and on the wake reply's own audio. Look and layout unchanged.
+- **The owner's Claude ceiling:** US$5 (`JARVIS_CLAUDE_BUDGET_USD`), counted across processes; no shared record means no Claude call; aborted calls counted at their worst case; each call in flight holds a margin.
+- **A browser-bundle guard:** the build broke when the briefing imported a store module into the console's bundle; a test now walks the browser import graph from `Thunai.tsx`.
+
+### What was cut, and why
+
+| Item | What happened | Why |
+|---|---|---|
+| "Hi Jarvis" on the device | Not built | The pretrained model is "hey jarvis"; a "hi jarvis" model needs training (LiveKit Cloud and a CUDA GPU, or a sherpa-onnx WebAssembly build, unmeasured): the owner's call |
+| Planner or prompt changes for understanding | None | The Claude key was refused, the grid of v5 selected no change, and the free Groq allowance went to the measurements and the finals |
+| E2 early speech-to-text | Still off (v5's default) | Now switchable per measuring run (`NEXT_PUBLIC_JARVIS_EARLY_STT`), not measured on/off this build: with the short end of turn the upload already goes at about 190 ms of quiet on a short command |
+| A semantic end-of-turn model (Smart Turn) | Not built | BSD-2 and promising in the research (10 §1), but no Tamil and unmeasured here |
+| Faster situation screens | Not changed | Its server calls already run in parallel; the cached store's slowest call sets 1.2-2.6 s |
+| Local voices, Gemini Live | Not built | Edge's voices start in about 0.2 s warm (English); a voice change is the owner's |
+
+### Flags (new in v6, with their defaults)
+
+| Flag | Default | What it does |
+|---|---|---|
+| `NEXT_PUBLIC_JARVIS_KWS` | `all` | The on-device "Hey Jarvis" (LiveKit WakeWord `hey_jarvis.onnx`, Apache-2.0, in a worker): `all` while Jarvis is open and closed, `open` only while open, `off` none (v5: the browser recogniser only) |
+| `NEXT_PUBLIC_JARVIS_KWS_THRESHOLD` | `0.5` | The wake word's score to fire |
+| `NEXT_PUBLIC_JARVIS_WAKE_REPLY` | `clip` | `clip`: a short spoken reply ("Yes?", five English and four Tamil, `public/thunai/wake/`); `tone`: v5's tone |
+| `NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS` | `90` | How long the Collector must pause after "Hey Jarvis" before the reply plays (at 150 the reply still landed in a one-breath command's comma, 4/4 as at 90, and came 60 ms later) |
+| `NEXT_PUBLIC_JARVIS_VOICE_PREWARM` | on (`0` off) | A silent utterance keeps Edge's natural voice warm while a sentence to Jarvis is said, so a warm start is about 0.2 s (probes), not 0.5-1.6 s cold; on the real path the answer's first word now starts 0.7 s after it is handed over (was 1.3) |
+| `NEXT_PUBLIC_JARVIS_SHORT_EOU_MS` | `180` (`0` off) | The end of a short command (under 1.2 s of speech) after 180 ms of quiet, not the normal 300; with the live captions running too |
+| `NEXT_PUBLIC_JARVIS_GLIDE_FIRST` | off | v5's order (the screen glides, then the step runs); v6 runs the step during the glide |
+| `JARVIS_STT_NAME_FAST` | on (`0` off) | A bare "Jarvis"/"Hey Jarvis" ends the speech-to-text race at the first decode |
+| `JARVIS_STT_DIRECTION` | on (`0` off) | The forced-Tamil decode that translated English speech loses to the English one when it is less sure |
+| `JARVIS_BRIEF` | `v6` | `v5` restores the old incident retelling |
+| `JARVIS_CLAUDE_BUDGET_USD` | `5` | The owner's ceiling on Claude spend; past it (less one call's margin, $0.25) every caller goes to Groq |
+| `JARVIS_CLAUDE_BUDGET_FILE` | `data/thunai/claude-budget.sqlite` | Where the spend is counted (counts and dollars only) |
+| `JARVIS_WEB_DOMAINS` | `config/jarvis-web-domains.json` | The owner's allow/deny list for the news reader |
+| `JARVIS_WEB_MODEL` | off | An optional model step that compares the outlets' text (spotlighted, quotes checked verbatim); off: code compares |
+| `NEXT_PUBLIC_JARVIS_TA_FIRST_CHUNK` | `48` (`0` off) | A Tamil answer's first spoken chunk, at most this many characters (Edge's Tamil voice starts later the longer the utterance) |
+| `NEXT_PUBLIC_JARVIS_SHORT_UTT_MS` | `1200` | How much speech still counts as a short sentence (measuring knob) |
+| `NEXT_PUBLIC_JARVIS_EOU_MS` | `300` | Any other sentence's end-of-turn quiet (measuring knob, 150-1000) |
+| `NEXT_PUBLIC_JARVIS_EARLY_STT` | off (v5's E2) | Now also settable per run in a measuring build (`window.__jvFlags`) |
+
+Every `NEXT_PUBLIC_` flag above except `NEXT_PUBLIC_JARVIS_TA_FIRST_CHUNK` can also be set per run in a build made with `NEXT_PUBLIC_JARVIS_SPEC=1` through `window.__jvFlags` (the real-path spec's `V6_FLAGS`); a normal build reads its environment only.
+
+### Runs owed (each with its exact command, from `chennai-grievance-portal-main/`)
+
+1. **The real-room check** at the top of `docs/jarvis/DEMO.md`, then the v6 reel there.
+2. **With a working Claude key** (under the US$5 ceiling, which counts every call): the deploy check (`docs/jarvis/DEPLOY_HAIKU.md`), then the understanding finals again with Haiku leading: `HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v6haiku LIVE_GAP_MS=20000 npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts` and `HOLDOUT=planner3 HOLDOUT_DIR=holdout3 HOLDOUT_SET=live30 HOLDOUT_TAG=v6haiku LIVE_GAP_MS=20000 …`, paired by `HOLDOUT=pair`.
+3. **The news coverage brief in the browser**, on a day the outlets cover the same story: build `NEXT_DIST_DIR=.next-v6 NEXT_PUBLIC_JARVIS_SPEC=1 npx next build`, serve `bash scripts/jarvis6/serve-real.sh .next-v6 3012`, run `REAL=1 SPEC_PROD=1 V6_TAG=<tag> V6_PARTS=news V6_WAKES=wake_zira,wake_mark,wake_g_puck LIVE_GAP_MS=10000 npx playwright test tests/e2e/real6.spec.ts`, then `node scripts/jarvis6/news-latency.mjs <tag>`.
+4. **E2 on and off** on the same bundle: `V6_FLAGS='{"NEXT_PUBLIC_JARVIS_EARLY_STT":"1"}'` against none, `V6_PARTS=cmd,en` (about 12 planner turns each).
+5. **The questions again on the final bundle** (the place lane and Tamil's first chunk on all 36): `V6_TAG=<tag> V6_PARTS=en,ta,tg LIVE_GAP_MS=20000` (about 30 planner turns), then `node scripts/jarvis6/compare.mjs v6a <tag>`.
+
+### Known limits
+
+- **The free Groq tier** carries about 69 planner calls a model a day; this build spent it all on the measurements and the finals.
+- **Edge's Tamil voice** starts in 0.8-3 s depending on the sentence's length; English in about 0.2 s.
+- **The wake reply can sound in a comma pause**: "Hey Jarvis, show the severe cases" said in one breath got the reply in its comma (4/4 at 90 ms and at 150 ms of required quiet); the command was still heard and acted on (8/8).
+- **The situation screen's data takes 1.2-2.6 s** on the cached store.
+
 ## v5 (15-17 Nov 2026)
 
 Branch `claude/jarvis-v5-build-dfece7`, cut from `origin/main` at START `f830efbd` (the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. **Not merged, no PR: the owner decides.** Numbers: `chennai-grievance-portal-main/eval/RESULTS.md` (v5 section on top). The day's record: `docs/thunai/BUILD_LOG.md`. Deploying Haiku: `docs/jarvis/DEPLOY_HAIKU.md`. The room check and demo: `docs/jarvis/DEMO.md`. Oracle changes: `docs/qa/pass7/V5_EXPECTED_CHANGES.md`. Review: `docs/jarvis/BUILD_REVIEW_FINDINGS.md`.

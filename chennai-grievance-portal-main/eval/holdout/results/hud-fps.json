@@ -1,16 +1,16 @@
 {
  "listening": {
-  "pageFps": 60.1,
-  "worstGapMs": 17,
-  "coreFps": 12.1
+  "pageFps": 58.7,
+  "worstGapMs": 283,
+  "coreFps": 12.6
  },
  "speaking": {
-  "pageFps": 60.1,
-  "worstGapMs": 17,
-  "coreFps": 59.9
+  "pageFps": 58.5,
+  "worstGapMs": 50,
+  "coreFps": 58.3
  },
  "reducedMotion": {
-  "pageFps": 58.8,
+  "pageFps": 59.8,
   "worstGapMs": 33,
   "coreFps": 0
  },

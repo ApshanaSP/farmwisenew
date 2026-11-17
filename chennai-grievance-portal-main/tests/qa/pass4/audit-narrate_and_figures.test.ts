@@ -301,7 +301,9 @@ describe("after a decision (BUG-028, BUG-035)", () => {
   it("AUD-NF-10 BUG-035 Jarvis's case screen says closed at once", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.severity_level = 'High' ORDER BY i.first_reported_at DESC LIMIT 1 OFFSET 3`);
     const r0 = await direct("case", { id: t.id, fresh: true });
-    expect(r0.stage!.say.en).toMatch(/^There's /);
+    // v6 (Phase 3): an open case is briefed from its headline, not "There's ..."; it is told as open and ends offering more
+    expect(r0.stage!.say.en).not.toMatch(/^There was /);
+    expect(r0.stage!.say.en).toMatch(/Want the details\?$/);
     await decide(String(t.id), "resolve");
     const r1 = await direct("case", { id: t.id, fresh: true });
     expect(r1.stage!.say.en).toMatch(/^There was /);
@@ -360,7 +362,9 @@ describe("BUG-035: the other places a decision reaches (real store)", () => {
     await decide(String(t.id), "reopen");
     vi.setSystemTime(new Date(Date.parse(FROZEN) + 10 * 60_000));
     const r = await direct("case", { id: t.id, fresh: true });
-    expect(r.stage!.say.en).toMatch(/^There's /);
+    // v6 (Phase 3): told as open (not "There was"), as a briefing that ends offering more
+    expect(r.stage!.say.en).not.toMatch(/^There was /);
+    expect(r.stage!.say.en).toMatch(/Want the details\?$/);
     vi.setSystemTime(new Date(FROZEN));
   });
 });

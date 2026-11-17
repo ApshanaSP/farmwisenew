@@ -86,7 +86,9 @@ describe("RC-35 class guard: a timed cache over the store follows the epoch or s
     "lib/studio/link.ts": "Data Studio link fetching",
     "lib/studio/refs.ts": "reference lists for an upload",
     // QA pass 5: main's Manu Desk. Its timed cache is the list of GCC areas (reference data); the case writes it makes bump the epoch (cases.ts)
-    "lib/manu/petitions.ts": "caches the list of GCC areas for the check screen: reference data"
+    "lib/manu/petitions.ts": "caches the list of GCC areas for the check screen: reference data",
+    // Jarvis v6 Phase 4: the news reader keeps outside pages, feeds and robots.txt for 10 minutes, in memory: nothing of the store's
+    "lib/thunai/web/fetch.ts": "outside web pages, feeds and robots.txt (10 minutes, in memory): no store data"
   };
   const root = path.join(process.cwd(), "src");
   const files: string[] = [];

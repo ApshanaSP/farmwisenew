@@ -1,5 +1,108 @@
 # Jarvis mode: results
 
+## v6 (17 Nov 2026)
+
+Branch `claude/jarvis-v6-build-adbae2` from the v5 build at `a7943b2f`; the brief is `docs/jarvis/JARVIS_V6.md`. Every latency below is from `tests/e2e/real6.spec.ts`: a production bundle built with `NEXT_PUBLIC_JARVIS_SPEC=1`, served by `scripts/jarvis6/serve-real.sh` (Claude off, Groq leading, the console's own AI off, the dry-run store with its real cached data), headless Edge with its natural voices, synthetic clips (Windows and Gemini voices, no person) played into the page's microphone, **real providers** (Groq Whisper, the Groq planner ladder, Edge's voices). Each time is from the clip's true last voiced sample. Cells are **n · p50 · p90** (nearest rank). The raw rows are in `eval/v6/latency/`; `node scripts/jarvis6/waterfall.mjs <tag>` and `node scripts/jarvis6/compare.mjs <a> <b>` rebuild the tables.
+
+### Capacity and blocks, before any number
+
+- **Claude:** the owner allowed the key on 17 Nov (US$5 at most, then Groq). It was refused: one tiny Haiku 5.5 call returned 401 "invalid x-api-key"; $0 spent. Every number here is the Groq ladder's.
+- **Groq's free tier** (8K tokens a minute, 200K a day per model) set the pace: the planner turns are 20 s apart (`LIVE_GAP_MS=20000`) and the understanding finals waited for the day's allowance to come back (rolling 24 h).
+- **Gemini** answered 503 "high demand" on 16 of 34 briefing-judge pairs in the first full run, and its 3.8 speech models stopped after about 20 requests each on the day.
+- **Edge's cloud recogniser** (the closed "Hi Jarvis" path) gives empty results under automation: the closed wake can be measured only for the on-device "Hey Jarvis".
+
+### Latency: before and after, on real providers
+
+Bundles, in order (each a commit's code): **phase0** = v5 as handed over (`a7943b2f`); **v6a** = Phase 2 (wake word, wake reply, voice warm-up, STT fixes, short end of turn), quiet 90 ms; **v6b** = + briefing, place lane, news turn; **v6c** = + the first independent check's fixes; **v6d** = + the quiet-meter fix and Tamil's short first chunk; **v6e** = final code (the reel). Wake clips for the open turns: phase0 cycles eight (three "Hey Jarvis", three "Hi Jarvis" one of them a Gemini voice, one "Hello Jarvis", one Tamil "ஹாய் ஜார்விஸ்"), v6a six (the same without the Gemini "Hi" and the Tamil one), v6c and v6d the three "Hey Jarvis" ones; the rows below compare the same clips.
+
+| Moment, from the true end of speech | phase0 (v5) | v6 | Bundle | Target | Met? |
+|---|---|---|---|---|---|
+| "Hey Jarvis", Jarvis open -> first audible reply | 18 · 703 · 743 (the tone after Whisper) | **24 · 193 · 210** (the spoken "Yes?") | v6a | p50 ≤ 250, p90 ≤ 400 | **yes** |
+| "Hey Jarvis", Jarvis closed -> first audible reply | 0 of 12 fired, 4 of them "Hey Jarvis" (Edge's recogniser gives nothing under automation) | **12 · 163 · 185** (12/12 fired) | v6d | p50 ≤ 250, p90 ≤ 400 | **yes** |
+| "Hi Jarvis" / "Hello Jarvis", open -> first audible reply (the same three clips) | 18 · 739 · 869 | 24 · 636 · 826 | v6a | p50 ≤ 250, p90 ≤ 400 | **no** (the on-device model knows only "Hey Jarvis": an owner decision) |
+| End of question -> first sound (the end-of-speech earcon) | 36 · 405 · 427 | 36 · 409 · 438 | v6a | p90 ≤ 400 | **no** (detector lag about 75 ms + the 300 ms end-of-turn wait) |
+| End of question -> first word of the answer, all | 34 · 3,166 · 5,656 | 33 · 2,864 · 6,343 | v6a | p50 ≤ 900, p90 ≤ 1,500 | **no** |
+|   English | 12 · 4,109 · 5,471 | 12 · 2,864 · 3,688 | v6a | | no |
+|   Tamil | 11 · 3,428 · 4,318 | 11 · 2,874 · 6,343 | v6a | | no |
+|   Tanglish | 11 · 3,128 · 7,578 | 10 · 3,197 · 8,226 | v6a | | no |
+|   a place's state in Tamil (code lane) | — | 3 · 3,889 · 4,073 (v6c: 3 · 6,145 · 6,393) | v6d | | no |
+|   a news read: the first line's voice ("Reading ETV Bharat's report...", an acknowledgement); the brief's own first sentence | — | 11 · 1,066 · 1,463; the brief 11 · 4,669 · 5,129 | v6b | | no (the first line is not the answer) |
+| Simple command -> the screen changes | 3 · 1,192 · 1,194 | 9 · 1,030 · 1,737 (rules lane alone: 5 · 759 · 1,045) | v6a, v6c | p90 ≤ 700 | **no** (the end-of-turn wait and Whisper's round trip, about 330 + 400 ms) |
+| Data question -> full answer spoken (its last word) | 34 · 19,943 · 30,842 | 33 · 23,617 · 37,759 (the answer in hand on screen: 34 · 2,188 · 4,200) | v6a | p90 ≤ 4 s | **no** (answers are spoken in full: a briefing, then the screen's points) |
+| Barge-in: the voice ducks after the interruption's onset (PCM path, mocked hearing) | v5 START: pause p50 70 / p90 82 (n 8, the same spec; v5 RESULTS) | **8 · 83 · 92** | v6d | p90 ≤ 150 | **yes** |
+| The answer is handed to the voice -> its first word | 42 · 1,253 · 1,856 | 37 · 675 · 1,251 (Tamil v6d: 3 · 987 · 1,282) | v6a, v6d | — | — |
+| English speech heard as Tamil (Whisper's translation) | 7/12 | 1/12 | v6a | — | — |
+
+Where the remaining time goes (v6a English questions, `eval/v6/latency/v6a-waterfall.md`): detector lag 71 / 96, end-of-turn wait 332 / 366, speech to text 475 / 1,021, the planner 1,210 / 1,226 (n 3 traced), speak() -> voice start 697 / 814. On the code lane the planner is gone but the situation screen's server tools take 1.2-2.6 s on the cached store (all called in parallel already).
+
+**Edge's Tamil voice** started later the longer the utterance the first time each text was said (`eval/v6/latency/voiceprobe.json`, warm, n 1 a length): 33 characters 811 ms (the first utterance of the probe, which may add its own delay), 109 characters 2,159 ms, 236 characters 2,833 ms and on its first repeat 3,030; the later repeats started in 171-346 ms at every length (the service keeps what it has said); English 185-564 ms. In the v6c run the Tamil answers began 2.6-3.1 s after they were handed over; with a short first chunk (v6d) 1.0 / 1.3 s. A Tamil answer now starts with a chunk of at most 48 characters.
+
+### News and the web (Phase 4)
+
+| Moment, from the true end of speech (`eval/v6/latency/v6b-news-summary.md`, live outlets) | Reads ("Read the Nth article.") | Web look-ups (Met department, rain, red alert) | Target |
+|---|---|---|---|
+| Taken by the news lane | 11 / 11 (10 English, 1 Tamil) | 5 / 6 (one clip heard as Tamil went to the planner) | — |
+| The server's first line in hand | 11 · 826 · 967 | 5 · 865 · 1,460 | — |
+| Its voice starts | 11 · 1,066 · 1,463 | 6 · 1,484 · 1,838 | Phase 2's |
+| **The brief in hand (article read and answered)**: 9 of the 11 from the stored article (the brief came with the first line), 2 fetched from the outlet (1,868 the one cold read) | **11 · 854 · 1,304** | 5 · 1,442 · 1,858 | p90 ≤ 4 s: **yes** |
+| The coverage brief in hand | 0 (no other outlet had covered these 11 articles) | — | p90 ≤ 8 s: **not measured in the browser** |
+
+Server side, against the live outlets (`eval/v6/news-timing.json`, n 3 a mode): the article's brief p50 368 / p90 915 ms cold, 191 / 204 with the feeds cached; the coverage brief 680 ms (n 1). Safety: 101 tests in `src/lib/thunai/web/` (97 from the module, 4 for a case's report) and 6 for the routes (SSRF in its forms, redirects and DNS rebinding through the pinned connection, caps, robots.txt, the 10-minute memory cache with nothing on disk or in logs, the allow/deny list, hostile pages that tell Jarvis to act, privacy of every outgoing request) plus the turn's own (`newsask.v6.test.ts`).
+
+### Phase 1: the model bake-off (`eval/v6/bakeoff/TABLE.md`, `NOTES.md`)
+
+No free model is both faster than Groq's and as right. Groq qwen3.8-27b and gpt-oss-120b return a planner-sized JSON in p50 1,048 / p90 1,050 and 1,097 / 1,218 ms (n 4 successful calls each; two of six calls each met a 429 at 9 s spacing; `TABLE.md`'s total column counts those fast failures too); Gemini 3.5 flash-lite was right on 11/12 of the dev sentences but takes p50 1,960 / p90 3,062 ms (n 12); Gemini 3.1 flash-lite 11/11 scored, p50 2,088 / p90 3,814; allam-2-7b and gemma could not take the planner's structured output, 2.5 flash-lite is closed to new users. The ladder is unchanged (Groq first, Gemini 3.5 flash-lite last). The speed levers are therefore the code lanes, the wake and the voice, ranked in `docs/jarvis/v6-research/PLAN.md`.
+
+### Phase 3: incident briefings (`eval/v6/brief/set.json`, `src/lib/thunai/brief6.live.ts`)
+
+34 incidents from the cached store (9 with a news report), each briefed by v5 and by v6, in English and Tamil. A script checks every figure and name against the record; a rubric scores length, the next step and speech-likeness; a blind pairwise judge (Gemini 3.5 flash-lite, free tier, the A/B order seeded) compares them.
+
+| | v5 | v6 |
+|---|---|---|
+| Figures grounded in the record | 34/34 | 34/34 |
+| Names grounded | 34/34 | 34/34 |
+| Has a next step | 34/34 | 34/34 |
+| Two to four sentences | 34/34 | 34/34 |
+| Ends offering more ("Want the details?") | 0/34 | 34/34 |
+| Words, p50 / p90 | 31 / 36 | 40 / 43 |
+| Blind judge, English (n 28 judged) | 4 | **24** |
+| Blind judge, Tamil (n 28 judged) | 10 | **18** |
+
+- 6 pairs in each language got no verdict (Gemini 503 "high demand"); the first full run (before the wording fixes) had 16 such in English and 17 in Tamil and judged v6 12-6 and 10-7 (its file was replaced by the later run).
+- The judge's reasons when it chose v5 (English): v5 is shorter and plainer; v6 names an outlet the judge did not see as tied to the severity; once it called a v6 detail not in the record (the script found every v6 figure and name in the record); once v5 named a locality v6 left out.
+- Ten audio samples for the owner: `docs/jarvis/samples/v6/` (README lists what each says).
+
+### Understanding (Phase 5)
+
+- **Diagnosis kept from v5:** the grid selected no planner change; Tamil goes to the wide bundle; strict-mode 400s and Gemini's schema refusals were fixed in v5. With the Claude key refused there was no stronger model to try, and the free Groq allowance was spent on the latency runs and the finals, so **no planner change was made or tuned** in v6.
+- **Code lanes, tuned on the dev set only** (`eval/dev200`, no model): the place lane (a place's state asked loosely goes to the situation screen by code): **68/200 → 70/200** right through the code lanes (114 left to the planner). Misses that remain there: a taluk or locality that is not a zone (Velachery, T Nagar), spans no console window holds ("last six months", "since August"), and browser-only controls the runner does not route (theme, language).
+
+FINALS-PENDING
+
+### Phase 6: the feel
+
+- The HUD's core pulses on the voice's real word starts (the browser's word boundaries) and on the wake reply's own audio; the look, the layout and "Hi Jarvis" are as the owner sees them. Before/after stills and the headless recording: `docs/jarvis/screens/v6/` (`before-*` on the v5 bundle, `after-*` and `reel.webm` on the final one).
+
+### Gates
+
+GATES-PENDING
+
+### Acceptance (against `docs/jarvis/JARVIS_V6.md`)
+
+ACCEPTANCE-PENDING
+
+### Not verified
+
+- **Nothing was tried with a real microphone in a real room.** Every latency is a synthetic clip played into the page's microphone in headless Edge on this PC, with real providers. Room echo, distance and noise are not in them; nor is a person who pauses mid-sentence.
+- **The live captions under automation** give no words, so every measured turn ended on the detector's own values. v6 now lets the detector keep its own end when the captions read a line as complete or neutral: the room check should confirm commands still end where they should.
+- **"Hi Jarvis" closed** (the browser's cloud recogniser) cannot be run under automation; only the on-device "Hey Jarvis" was measured closed. A command said in the same breath as "Hey Jarvis" while Jarvis is closed is left to that recogniser: not measurable here.
+- **Claude**: no number (the key was refused). The spend ceiling is tested with stand-ins only.
+- **Tamil wording** (briefings, the news reader, the wake replies, number words) is model-drafted, not checked by a Tamil speaker.
+- **The news coverage brief in the browser** (n 0: no other outlet had covered the timed articles); the coverage matching's accuracy; the optional model step of the comparison (stand-in model only); the publishers' feed terms (not read).
+- **Over the console's own news panel** (no screen of Jarvis's), "read the first article" reads the panel's stories (`ov.allNews`): the list it builds is not tested on its own, in a unit test or a browser (the stand-in console has no news panel); `newsAsk` on such a list is.
+- **The situation screen's data time** (1.2-2.6 s) is the cached store's; the live store may differ.
+- **Small n** throughout: 2-12 per cell on the later bundles (v6c, v6d), because each run spends Whisper and planner allowance.
+
 ## v5 (15-17 Nov 2026)
 
 Measured on this Windows laptop, branch `claude/jarvis-v5-build-dfece7`, START `f830efbd` (`origin/main`: the v4 code at `40ff9082` plus two non-Jarvis commits). The brief is `docs/jarvis/JARVIS_V5_BUILD_2.md`. "Base" means START itself, run in a detached worktree with no v5 code. Raw files: `eval/holdout/results/grid-*.json`, `eval/holdout*/results/v5*`, `tests/e2e/results/`. Every interval is a 95 % Wilson interval. A grid or live run that met any 429 is a capacity failure: its clean-turn score (429 rows left out) is printed beside its all-turn score (429 rows counted wrong), and a strict-mode 400 with no usable draft, a 5xx or a timeout is its own outcome, not a wrong answer (grid files rescored so after review). Every paired comparison is an exact two-sided McNemar on the same sentences (b = right only in the first, c = right only in the second). The older sections below are unchanged.
