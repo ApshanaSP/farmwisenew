@@ -9,6 +9,8 @@
 import { deadlineWords, pointWords, sinceWords, timeOf, type BriefFacts } from "../brief6";
 import type { BlockT, StageDocT } from "../stage";
 import type { Lang } from "../types";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
+import { redactText } from "../privacy";
 import { relativeTime } from "../web/brief";
 import { tamilFormsOf, type Gazetteer } from "./gazetteer";
 import type { Fact7, Sheet7 } from "./ground";
@@ -41,7 +43,8 @@ function builder(gaz: Gazetteer): Builder {
   return {
     facts,
     add: (f) => {
-      const text = clip(f.text);
+      // a phone number, an e-mail, an Aadhaar number in any record's words is masked before a model can read it (privacy.ts redactText)
+      const text = clip(redactText(f.text));
       if (!text || seen.has(text) || facts.length >= MAX_FACTS) return;
       seen.add(text);
       facts.push({ ...f, text, id: `F${facts.length + 1}`, names: [...new Set([...(f.names ?? []), ...tamilFormsOf(text, gaz)])] });
@@ -67,7 +70,8 @@ function caseFacts(b: Extract<BlockT, { kind: "CaseDetail" }>, x: AideExtras["br
   if (i.why) add({ src: "dashboard", text: `Why it is rated so (the record's words): ${i.why}`, cause: true });
   const next = x?.next?.en ?? i.next;
   if (next) add({ src: "dashboard", text: `The suggested next step (code's): ${next}` });
-  for (const r of b.timeline.slice(0, 3)) { const w = when(r.t, now); add({ src: r.source || "dashboard", text: `${r.source || "A report"}${w ? ` (${w.en})` : ""}: ${r.text}`, times: w ? [w.en, w.ta] : [] }); }
+  // the timeline's news reports only: a citizen's complaint is never handed to a model (its words, a name, a house), whatever channel it came by
+  for (const r of b.timeline.filter((x) => isNewsMedia(x.source)).slice(0, 3)) { const w = when(r.t, now); add({ src: r.source, text: `${r.source}${w ? ` (${w.en})` : ""}: ${r.text}`, times: w ? [w.en, w.ta] : [] }); }
 }
 
 function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"], x: AideExtras | null) {

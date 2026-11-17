@@ -52,6 +52,16 @@ describe("v7 fact sheet: the screen as numbered facts, every derived value code'
     expect(s.shown).toContain("Low lying area Pillaiyar Koil St, Guindy Industrial Estate inundated");
     expect(s.note).toMatch(/^The screen shows "Low lying area/);
   });
+  it("privacy: a citizen's complaint in the case's timeline never becomes a fact (a model would read it); a news report does; identifiers are masked", () => {
+    const s = buildSheet(doc([{ kind: "CaseDetail", id: "c", incident: { id: "INC-1", title: "Water stagnation on 4th Street", sev: "High", status: "Open", zone: 13, zoneName: "Adyar",
+      place: "Kotturpuram", ward: 170, dept: "CMWSSB", deptName: "Metro Water", complaints: 2, t: "2026-11-16 15:15:25", overdue: false, lat: null, lon: null, why: null, cat: "Drainage & sewage",
+      what: ["Call 9876543210 for the site visit"], next: null, deadline: null, officials: [] },
+      timeline: [{ t: "2026-11-16 15:20:00", source: "complaint", text: "Ravi Kumar of 12 4th Street says water entered his house" }, { t: "2026-11-16 18:00:00", source: "The Hindu", text: "Kotturpuram streets waterlogged" }] }], { recipe: "case" }), "en", gaz, NOW);
+    const all = s.facts.map((f) => f.text).join(" | ");
+    expect(all).not.toMatch(/Ravi Kumar|entered his house/);
+    expect(all).toMatch(/The Hindu \(yesterday evening\): Kotturpuram streets waterlogged/);
+    expect(all).not.toMatch(/9876543210/);
+  });
   it("an article's own sentences, as the outlet's", () => {
     expect(sentencesOf("By Staff Reporter. Residents said water stood on three streets for two days after the canal overflowed. Read more at the site. Officials said desilting would begin this week."))
       .toEqual(["Residents said water stood on three streets for two days after the canal overflowed.", "Officials said desilting would begin this week."]);
