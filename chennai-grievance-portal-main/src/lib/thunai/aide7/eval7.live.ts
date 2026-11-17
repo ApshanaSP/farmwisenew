@@ -55,7 +55,7 @@ const OUT = path.join(DIR, "results", `${TAG}.json`);
 type Kind = "incident" | "news" | "compare" | "why" | "followup" | "outside";
 interface Item { id: string; kind: Kind; lang: "en" | "ta" | "tg"; text: string; before?: string; news?: number }
 interface Answer { said: string[]; lane: string | null; recipe: string | null; note: string | null; by: string | null; model: string | null; gap: string | null; gapStatus: string | null;
-  rejected: { text: string; problems: string[] }[]; firstMs: number | null; ms: number; tokens: number; calls: number; hops: string[]; facts: { id: string; src: string; text: string }[]; error?: string }
+  rejected: { text: string; problems: string[] }[]; firstMs: number | null; ms: number; tokens: number; calls: number; hops: string[]; facts: Fact7[]; scope?: Sheet7["scope"]; error?: string }
 interface Row { id: string; kind: Kind; lang: string; text: string; before?: string; v7: Answer; v6: Answer; at: string }
 
 const STATE = { page: "overview", period: "weekly", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false };
@@ -75,11 +75,12 @@ function items(): Item[] {
 }
 
 const empty = (): Answer => ({ said: [], lane: null, recipe: null, note: null, by: null, model: null, gap: null, gapStatus: null, rejected: [], firstMs: null, ms: 0, tokens: 0, calls: 0, hops: [], facts: [] });
-const factsOf = (s: Sheet7 | null) => (s?.facts ?? []).map((f: Fact7) => ({ id: f.id, src: f.src, text: f.text }));
+/** each fact whole (its Tamil times and names, ratios, direction, rank, cause): the audit checks against what the live check had */
+const factsOf = (s: Sheet7 | null) => (s?.facts ?? []).map((f: Fact7) => ({ ...f }));
 const fromWritten = (a: Answer, w: Written | null, sheet: Sheet7 | null) => {
   if (!w) return a;
   return { ...a, by: w.by, model: w.model, gap: w.gap, rejected: w.rejected.map((r) => ({ text: r.text, problems: r.problems.map((p) => `${p.kind}: ${p.detail}`) })), firstMs: w.firstMs,
-    tokens: a.tokens + w.tokens, calls: a.calls + w.calls, hops: [...a.hops, ...w.hops], facts: factsOf(sheet) };
+    tokens: a.tokens + w.tokens, calls: a.calls + w.calls, hops: [...a.hops, ...w.hops], facts: factsOf(sheet), scope: sheet?.scope };
 };
 
 /** what v6 said for a screen: its line, then (a news list or a brief) every item, as the browser read them */
@@ -219,7 +220,7 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
   const allWords: number[] = [];
   for (const r of rows) {
     const lang = langOf(r.lang as Item["lang"]);
-    const sheet: Sheet7 = { facts: r.v7.facts.map((f) => ({ id: f.id, src: f.src, text: f.text })), lang, gaz, shown: [] };
+    const sheet: Sheet7 = { facts: r.v7.facts.map((f) => ({ ...f })), lang, gaz, shown: [], scope: r.v7.scope };
     tally.n++;
     if (r.v7.by === "model") tally.model++; else if (r.v7.by === "fallback") tally.fallback++;
     // a capacity row: the fallback came because no Groq model had room (only the flash-lite rung, or none, was tried): not an answer's quality
