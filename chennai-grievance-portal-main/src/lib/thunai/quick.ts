@@ -50,6 +50,16 @@ const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} 
 
 const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|கம்பே|கம்பா)/.test(t);
 
+/**
+ * v6: a place's state asked loosely, in the normalised text (quick.ts norm: lower case, no apostrophes, one space): "what's happening",
+ * "what's going on", "how is X doing / looking", "how are things", "what's worst", "anything serious"; Tanglish "enna nadakkudhu",
+ * "eppadi irukku"; Tamil "என்ன நடக்குது", "எப்படி இருக்கு". Read only with one place named and no kind or severity (the situation rule).
+ */
+const PLACE_STATUS_EN = /\b(whats|what is) (happening|going on)\b|\bhow (is|s) [a-z]+( [a-z]+)? (doing|looking|faring)\b|\bhow are things\b|\b(whats|what is) (the )?worst\b|\banything serious\b|\bis (anything|something) serious\b/;
+const PLACE_STATUS_TG = /\b(enna|ena) (nadakkudhu|nadakuthu|nadakudhu|nadakkuthu|nadakkudu)\b|\b(epdi|eppadi|epadi|eppudi) (irukku|iruku|irukudhu|irukkudhu)\b/;
+const PLACE_STATUS_TA = /என்ன நடக்குது|என்ன நடக்கிறது|எப்படி இருக்கு|எப்படி இருக்கிறது|எப்படி உள்ளது|மோசமா இருக்கு|மோசமாக இருக்கிறது|மோசமானது என்ன/;
+export const placeStatus = (t: string): boolean => PLACE_STATUS_EN.test(t) || PLACE_STATUS_TG.test(t) || PLACE_STATUS_TA.test(t);
+
 /** the zones named in the sentence (by their names in either language, or a locality inside one), in the order said */
 export function zonesIn(t: string, w: World): number[] {
   const hits: { n: number; at: number }[] = [];
@@ -392,7 +402,8 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the last 24 hours
   // against the 24 before, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
   if (q.recipe === "changed" || q.recipe === "explain" || q.recipe === "situation") {
-    const key = spec.kind === "day" ? "daily" : spec.kind === "compare" || spec.kind === "last" || spec.kind === "lastWeekOf" ? keyOf(spec) : null;
+    // v6: a place's situation "right now" ("இப்போ", "ippo") is its state today, the last 24 hours its screen already reads (its own default)
+    const key = spec.kind === "day" || (spec.kind === "now" && q.recipe === "situation") ? "daily" : spec.kind === "compare" || spec.kind === "last" || spec.kind === "lastWeekOf" ? keyOf(spec) : null;
     return key ? { ...q, slots: { ...q.slots, period: key } } : null;
   }
   if (spec.kind === "compare") {
@@ -479,7 +490,9 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   if (reservoir) return { recipe: "readings", slots: { metric: "lakes", name: reservoir } };
   // "what's the situation in Adyar", "Perungudi la nilavaram enna", "அடையாறு நிலவரம் என்ன": everything about one place at once (recipes/situation.ts).
   // A kind named with it ("the flooding situation") stays with the screens that read that kind; the whole district's day is the brief
-  if (analysis && has(t, SITUATION) && zones.length === 1 && !cat && !sev && !has(t, RAIN)) return { recipe: "situation", slots: { zones, period: period ?? "daily", fresh: true } };
+  // v6 (Phase 2 fast path, Phase 5): the same for a place's state asked loosely ("what's happening in Royapuram", "how is Teynampet doing this
+  // week", "what's worst in Adyar today", "Kodambakkam la enna nadakkudhu", "தேனாம்பேட்டை எப்படி இருக்கு"): code answers it, no planner
+  if (analysis && (has(t, SITUATION) || placeStatus(t)) && zones.length === 1 && !cat && !sev && !has(t, RAIN)) return { recipe: "situation", slots: { zones, period: period ?? "daily", fresh: true } };
   if (has(t, LAKE) && !cat) return { recipe: "readings", slots: { metric: "lakes" } };
   if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   // a comparison the rules cannot fill (two departments, a period against another) is the planner's, never a plain list
