@@ -209,7 +209,7 @@ const WAKES = process.env.V6_WAKES ? process.env.V6_WAKES.split(",").filter((k) 
 /** V6_ONLY="q_en_royapuram,q_ta_teynampet": only these clips (a re-run of the place questions, which need no planner quota) */
 const ONLY = process.env.V6_ONLY ? new Set(process.env.V6_ONLY.split(",")) : null;
 const of = (pre: string) => Object.keys(META).filter((k) => k.startsWith(pre) && (!ONLY || ONLY.has(k)));
-const CMDS = ["cmd_trends", "cmd_severe", "cmd_briefing", "cmd_annanagar", "cmd_weekly", "cmd_high", "cmd_env", "cmd_monthly", "cmd_studio", "cmd_overview", "cmd_taluks", "cmd_medium"].filter((k) => META[k]);
+const CMDS = ["cmd_trends", "cmd_severe", "cmd_briefing", "cmd_annanagar", "cmd_weekly", "cmd_high", "cmd_env", "cmd_monthly", "cmd_studio", "cmd_overview", "cmd_taluks", "cmd_medium"].filter((k) => META[k] && (!ONLY || ONLY.has(k)));
 
 /** "Hi Jarvis" with Jarvis open and idle (b), then the clip inside the follow-up window */
 async function wakeThen(page: Page, wake: string, clip: string | null, gapMs: number, maxMs: number, planner: boolean) {
