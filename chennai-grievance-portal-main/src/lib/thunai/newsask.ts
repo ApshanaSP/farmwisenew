@@ -15,7 +15,7 @@ import { type StageDocT, checkStage } from "./stage";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
 export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } }
-  | { kind: "which"; why: "none" | "outlet" | "count"; outlet?: string; n?: number };
+  | { kind: "which"; why: "none" | "outlet" | "count"; /** the outlet's own name ("The Times of India") */ outlet?: string; n?: number };
 
 /** What is on Jarvis's screen that a "read the article" can mean. */
 export interface NewsOnScreen {
@@ -65,10 +65,16 @@ const ORD: [RegExp, number][] = [
   [/\b(?:fourth|4th)\b|நான்காவது/u, 4], [/\b(?:fifth|5th)\b|ஐந்தாவது/u, 5], [/\b(?:sixth|6th)\b|ஆறாவது/u, 6], [/\b(?:seventh|7th)\b|ஏழாவது/u, 7],
   [/\b(?:eighth|8th)\b|எட்டாவது/u, 8], [/\b(?:ninth|9th)\b|ஒன்பதாவது/u, 9], [/\b(?:tenth|10th)\b|பத்தாவது/u, 10]
 ];
-const OUTLETS: [RegExp, RegExp][] = [
-  [/\bhindu\b/, /hindu/i], [/\b(?:times of india|toi)\b/, /times of india/i], [/\bdt ?next\b/, /dt ?next/i], [/\b(?:new indian express|nie|express)\b/, /indian express/i],
-  [/\bdinamani\b|தினமணி/u, /dinamani|தினமணி/i], [/\bdinamalar\b|தினமலர்/u, /dinamalar|தினமலர்/i], [/\b(?:daily )?thanthi\b|தந்தி/u, /thanthi|தந்தி/i]
+/** an outlet: as said, as an item's source names it (a story's source may list several outlets), and its own name to say */
+const OUTLETS: [RegExp, RegExp, string][] = [
+  // the second pattern is an outlet's WHOLE name as a screen lists it (one of a story's " · "-joined outlets): Hindu Tamil Thisai is not
+  // The Hindu, Thanthi TV not Daily Thanthi, The Indian Express not The New Indian Express (the second check's skeptic, 17 Nov)
+  [/\bhindu\b/, /^(?:the )?hindu$/i, "The Hindu"], [/\b(?:times of india|toi)\b/, /^(?:the )?times of india$/i, "The Times of India"], [/\bdt ?next\b/, /^dt ?next$/i, "DT Next"],
+  [/\b(?:new indian express|nie|express)\b/, /^(?:the )?new indian express$/i, "The New Indian Express"], [/\bdinamani\b|தினமணி/u, /^dinamani$|^தினமணி$/iu, "Dinamani"],
+  [/\bdinamalar\b|தினமலர்/u, /^dinamalar$|^தினமலர்$/iu, "Dinamalar"], [/\b(?:daily )?thanthi\b|தந்தி/u, /^(?:daily )?thanthi$|^தினத்தந்தி$/iu, "Daily Thanthi"]
 ];
+/** the outlets one item lists (a story on the console's panel lists every outlet that ran it, joined by " · ") */
+const namesOf = (source: string | null | undefined): string[] => String(source ?? "").split(/\s+·\s+/).map((s) => s.trim()).filter(Boolean);
 
 // ---- a public question for the web
 const WEB_CUE = /\b(?:look (?:it|this|that) up|look up|search (?:the )?(?:web|internet|online)|(?:search|check|look) online|on the (?:web|internet|net)|google (?:it|that|this)|check (?:the )?(?:web|internet|news online))\b|இணையத்தில்|இணையதளத்தில்|ஆன்லைனில்|\bnet ?la\b|\bgoogle pannu\b/u;
@@ -87,9 +93,8 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
   for (const [re, n] of ORD) if (re.test(t)) return items[n - 1] ? { id: items[n - 1].id } : { why: "count", n: items.length };
   if (/\blast\b|கடைசி|kadaisi/u.test(t)) return { id: items[items.length - 1].id };
   // an outlet named: its report, or that it is not on the screen (never another outlet's in its place)
-  for (const [said, src] of OUTLETS) {
-    const m = said.exec(t);
-    if (m) { const x = items.find((y) => src.test(y.source ?? "")); return x ? { id: x.id } : { why: "outlet", outlet: m[0] }; }
+  for (const [said, src, name] of OUTLETS) {
+    if (said.test(t)) { const x = items.find((y) => namesOf(y.source).some((n) => src.test(n))); return x ? { id: x.id } : { why: "outlet", outlet: name }; }
   }
   const r = on.reading ? items.find((x) => x.id === on.reading) : null;
   return { id: (r ?? items[0]).id };
@@ -121,8 +126,11 @@ export function newsAsk(raw: string, on: NewsOnScreen = {}): NewsAskT | null {
 /** what is said when nothing on screen is the report asked for: none open, that outlet's is not there, or fewer than asked */
 export function whichLine(w: Extract<NewsAskT, { kind: "which" }>, lang: "en" | "ta"): string {
   if (w.why === "outlet") {
-    const name = (w.outlet ?? "").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bOf\b/g, "of");
-    return lang === "ta" ? `திரையில் ${name} செய்தி இல்லை.` : `I don't see a ${name} report on the screen.`;
+    // the outlet's own name, never the words heard title-cased ("a The Hindu", "a Toi" were said); a name takes no article
+    const said = (w.outlet ?? "").trim();
+    const name = OUTLETS.find(([re]) => re.test(norm(said)))?.[2] ?? said;
+    if (!name) return lang === "ta" ? "திரையில் அந்தச் செய்தி இல்லை." : "I don't see that report on the screen.";
+    return lang === "ta" ? `திரையில் ${name} செய்தி இல்லை.` : `I don't see ${name}'s report on the screen.`;
   }
   if (w.why === "count") return lang === "ta" ? `இங்கே ${w.n ?? 0} செய்திகள் மட்டுமே உள்ளன.` : `There ${w.n === 1 ? "is only 1 report" : `are only ${w.n ?? 0} reports`} here.`;
   return lang === "ta" ? "எந்தச் செய்தி? முதலில் ஒரு சம்பவத்தையோ செய்திகளையோ திறந்து, \"செய்தியைப் படி\" என்று சொல்லுங்கள்." : "Which report? Open an incident or the news first, then say \"read the article\".";

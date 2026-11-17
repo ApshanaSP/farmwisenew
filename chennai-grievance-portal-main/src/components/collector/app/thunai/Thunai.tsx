@@ -1270,10 +1270,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** v6 (Phase 4): what on Jarvis's screen a "read the article" can mean (newsask.ts): its news list, or the incident it shows */
   const newsOnScreen = (doc: StageDocT | null, cs: ScreenState): NewsOnScreen => {
     // no screen of Jarvis's, the console's own news panel open ("show me the latest news" opens it): its stories, in the order shown,
-    // each by one of its stored documents (the same event; the server reads it and the other outlets' coverage)
+    // each by one of its stored documents (the same event; the server reads it and the other outlets' coverage); its source is every
+    // outlet that ran it, as its card shows them, so "read The Hindu's report" finds a story where The Hindu is not the first
     if (!doc && cs.panel === "news") {
       const all = (hostRef.current.ov as { allNews?: { id: string; docIds?: string[]; outletNames?: string[]; title?: string }[] | null } | null)?.allNews ?? [];
-      return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.[0] ?? null, title: x.title })), incident: null, reading: null };
+      return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.length ? x.outletNames.join(" · ") : null, title: x.title })), incident: null, reading: null };
     }
     const nr = doc?.blocks.find((b) => b.kind === "NewsReader");
     const cd = doc?.blocks.find((b) => b.kind === "CaseDetail");

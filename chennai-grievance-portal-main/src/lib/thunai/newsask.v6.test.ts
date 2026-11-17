@@ -73,11 +73,42 @@ describe("the independent check's cases (17 Nov): the news lane takes nothing th
   });
   it("an outlet or a position not on the screen is said as such, never another report read in its place", () => {
     const hinduOnly = { items: [{ id: "doc-11", source: "The Hindu" }, { id: "doc-12", source: "The Hindu" }] };
-    expect(newsAsk("read the times of india report", hinduOnly)).toEqual({ kind: "which", why: "outlet", outlet: "times of india" });
+    expect(newsAsk("read the times of india report", hinduOnly)).toEqual({ kind: "which", why: "outlet", outlet: "The Times of India" });
     expect(newsAsk("read the third article", hinduOnly)).toEqual({ kind: "which", why: "count", n: 2 });
     expect(whichLine({ kind: "which", why: "count", n: 2 }, "en")).toMatch(/only 2/);
     expect(whichLine({ kind: "which", why: "outlet", outlet: "times of india" }, "en")).toMatch(/Times of India/);
     expect(whichLine({ kind: "which", why: "none" }, "en")).toMatch(/Open an incident or the news/);
+  });
+});
+
+describe("an outlet asked for by name", () => {
+  const line = (t: string, on: Parameters<typeof newsAsk>[1], lang: "en" | "ta") => {
+    const w = newsAsk(t, on);
+    if (w?.kind !== "which") throw new Error(`not a 'which': ${t}`);
+    return whichLine(w, lang);
+  };
+  it("a story on the console's news panel carries every outlet that ran it: any of them finds it, not only the first", () => {
+    const panel = { items: [{ id: "doc-21", source: "Dinamalar" }, { id: "doc-22", source: "Dinamani · The Hindu" }] };
+    expect(newsAsk("read the hindu's report", panel)).toEqual({ kind: "read", body: { id: "doc-22" } });
+    expect(newsAsk("Read Dinamani's report", panel)).toEqual({ kind: "read", body: { id: "doc-22" } });
+  });
+  it("an outlet is matched by its whole name: Hindu Tamil Thisai is not The Hindu, Thanthi TV not Daily Thanthi (the second check's skeptic, 17 Nov)", () => {
+    const panel = { items: [{ id: "d1", source: "Dinamani · Hindu Tamil Thisai" }, { id: "d2", source: "The Hindu" }, { id: "d3", source: "Thanthi TV" }, { id: "d4", source: "Daily Thanthi · Dinamalar" }] };
+    expect(newsAsk("Read The Hindu's report", panel)).toEqual({ kind: "read", body: { id: "d2" } });
+    expect(newsAsk("read the daily thanthi report", panel)).toEqual({ kind: "read", body: { id: "d4" } });
+    expect(newsAsk("Read The Hindu's report", { items: [{ id: "d1", source: "Hindu Tamil Thisai" }] })).toEqual({ kind: "which", why: "outlet", outlet: "The Hindu" });
+  });
+  it("one not on the screen is said by its own name, with no article before it (never 'a The Hindu', 'a Toi', 'a Express')", () => {
+    const hinduOnly = { items: [{ id: "doc-11", source: "The Hindu" }] };
+    expect(line("read the times of india report", list, "en")).toBe("I don't see The Times of India's report on the screen.");
+    expect(line("read the toi report", list, "en")).toBe("I don't see The Times of India's report on the screen.");
+    expect(line("read the express report", hinduOnly, "en")).toBe("I don't see The New Indian Express's report on the screen.");
+    expect(line("read the hindu's report", { items: [{ id: "doc-12", source: "DT Next" }] }, "en")).toBe("I don't see The Hindu's report on the screen.");
+    expect(newsAsk("read the thanthi report", list)).toEqual({ kind: "which", why: "outlet", outlet: "Daily Thanthi" });
+    expect(line("read the times of india report", list, "ta")).toBe("திரையில் The Times of India செய்தி இல்லை.");
+    for (const t of ["read the times of india report", "read the toi report", "read the express report", "read the dt next report"]) {
+      expect(line(t, { items: [{ id: "doc-11", source: "Dinamani" }] }, "en"), t).not.toMatch(/\ba (?:The|Toi|Express|Dt)\b/);
+    }
   });
 });
 
