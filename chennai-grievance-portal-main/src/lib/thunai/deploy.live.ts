@@ -26,6 +26,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
+import { budgetLeft, recordClaude } from "@/lib/ai/claudebudget";
 import { expect, it } from "vitest";
 import type { z } from "zod";
 import { claudeJson, claudeOff, claudeWarm, onClaudeCall, type ClaudeCallEvent } from "@/lib/ai/claude";
@@ -103,12 +104,15 @@ function live60(): HoldoutItem[] {
 async function keyStep(spend: Spend): Promise<{ go: boolean; line: string; headers: Record<string, string> }> {
   const key = (process.env.ANTHROPIC_API_KEY ?? "").trim();
   if (!key) return { go: false, line: "key refused (no ANTHROPIC_API_KEY in .env)", headers: {} };
+  // v6: the owner's spend ceiling covers this direct call too (claudebudget.ts)
+  if (!budgetLeft()) return { go: false, line: "stopped: the Claude spend ceiling is reached (JARVIS_CLAUDE_BUDGET_USD)", headers: {} };
   const client = new Anthropic({ apiKey: key, maxRetries: 0 });
   try {
     const body = { model: HAIKU, max_tokens: 1, messages: [{ role: "user", content: "Reply with OK." }], thinking: { type: "disabled" }, output_config: { effort: "low" } };
     const { data, response } = await client.beta.messages.create(body as unknown as Anthropic.Beta.MessageCreateParamsNonStreaming, { timeout: 20_000 }).withResponse();
     const u = data.usage;
     spend.add(u);
+    recordClaude(HAIKU, u);
     ledger().record("anthropic", HAIKU, { tokens: u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + u.output_tokens, lane: "eval" });
     return { ...keyVerdict({ stopReason: data.stop_reason }), headers: rateLimitHeaders(response.headers) };
   } catch (e) {

@@ -126,6 +126,10 @@ let lastDuckInfo: DuckInfo | null = null;
 /** the earcons' own context: a paused voice (its context suspended) never swallows one */
 let fx: AudioContext | null = null;
 const levelBuf = new Float32Array(512);
+/** v6 (Phase 6): when the browser's voice last started a word (its boundary event), and the wake reply's analyser and end */
+let lastWordAt = -Infinity;
+let wakeAnalyser: AnalyserNode | null = null;
+let wakeUntil = 0;
 
 const AC = () => {
   if (typeof window === "undefined") return undefined;
@@ -417,7 +421,7 @@ function byBrowser(p: Piece, lang: string, o: SpeakOpts, my: number, how: VoiceP
     const started = () => { if (!ack && my === token) stamp("voiceStart"); };
     const vo: browser.SpeakOpts & { onStart?: () => void } = {
       rate: o.rate, voice: o.voice, onStart: started,
-      onWord: (_, ch) => { if (my !== token) return; started(); o.onWord?.(p.line, shownIndex(p.voice, ch)); },
+      onWord: (_, ch) => { if (my !== token) return; started(); lastWordAt = performance.now(); o.onWord?.(p.line, shownIndex(p.voice, ch)); },
       onEnd: () => done()
     };
     const ok = browser.speakText(text, short(lang) === "ta" ? "ta-IN" : "en-IN", vo);
@@ -766,9 +770,14 @@ export function wakeReply(lang: string): { ms: number; at: number } | null {
     hooks.onEarcon?.(ms + 250, ms + 150);
     const s = c.createBufferSource(), g = c.createGain();
     g.gain.value = 0.9;
-    s.buffer = b; s.connect(g).connect(c.destination);
+    // v6 (Phase 6): the HUD's core moves with the reply's own audio (voiceLevel reads this analyser while it plays)
+    const an = c.createAnalyser();
+    an.fftSize = 512;
+    s.buffer = b; s.connect(g).connect(an).connect(c.destination);
     const t = c.currentTime + 0.005;
     s.start(t);
+    wakeAnalyser = an;
+    wakeUntil = performance.now() + 5 + ms;
     return { ms, at: performance.now() + 5 };
   } catch { return null; }
 }
@@ -795,13 +804,22 @@ export function warmVoice(lang: string): void {
  * envelope driven by the state (a syllable-rate pulse while speaking). The HUD shows which one it has (voicePath).
  */
 export function voiceLevel(now = performance.now()): number {
+  // v6: the wake reply's own audio, while it plays
+  if (wakeAnalyser && now < wakeUntil) return rms(wakeAnalyser);
   if (!speakingNow || paused || ducked === "cut") return 0;
-  if (path === "pcm" && analyser) {
-    analyser.getFloatTimeDomainData(levelBuf);
-    let s = 0;
-    for (let i = 0; i < levelBuf.length; i++) s += levelBuf[i] * levelBuf[i];
-    return Math.min(1, Math.sqrt(s / levelBuf.length) * 4);
-  }
+  if (path === "pcm" && analyser) return rms(analyser);
   if (path === "text") return 0.15;
+  // v6 (Phase 6): the browser's voice gives no audio to read, but it says when each word starts: the core pulses on the real words (a
+  // swell at each word's start, falling away over about 160 ms), and only where the voice sends no word events does it fall back on v5's
+  // steady syllable-rate pulse
+  if (now - lastWordAt < 1200) return wordPulse(now - lastWordAt);
   return 0.45 + 0.3 * Math.sin(now / 95) * Math.sin(now / 410);
+}
+/** v6: the level a word's start gives, `dt` ms after it: a quick swell and a fall over about 160 ms, never below the speaking floor */
+export const wordPulse = (dt: number): number => (dt < 0 ? 0.3 : 0.3 + 0.6 * Math.exp(-dt / 160));
+function rms(a: AnalyserNode): number {
+  a.getFloatTimeDomainData(levelBuf);
+  let s = 0;
+  for (let i = 0; i < levelBuf.length; i++) s += levelBuf[i] * levelBuf[i];
+  return Math.min(1, Math.sqrt(s / levelBuf.length) * 4);
 }

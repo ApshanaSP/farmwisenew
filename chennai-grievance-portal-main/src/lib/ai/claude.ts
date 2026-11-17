@@ -24,6 +24,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodSchema } from "ai";
 import type { z } from "zod";
+import { budgetLeft, recordClaude } from "@/lib/ai/claudebudget";
 import { keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { compactPlan, type CompactPlan } from "@/lib/thunai/compact";
 import { ledger } from "@/lib/thunai/ledger";
@@ -55,7 +56,8 @@ export function claudeProblem(): string | null {
  */
 export const claudeOff = (): boolean => env("JARVIS_CLAUDE_OFF") === "1";
 
-export const claudeConfigured = (): boolean => !claudeOff() && !!env("ANTHROPIC_API_KEY") && !claudeProblem();
+// v6: and while the owner's spend ceiling has room (claudebudget.ts, JARVIS_CLAUDE_BUDGET_USD, default $5); past it, every caller goes to Groq
+export const claudeConfigured = (): boolean => !claudeOff() && !!env("ANTHROPIC_API_KEY") && !claudeProblem() && budgetLeft();
 
 /** A console step's model by its role; with no role, Jarvis's. */
 export function claudeModel(role?: ClaudeRole): string {
@@ -69,6 +71,8 @@ export function claudeModel(role?: ClaudeRole): string {
 function client(): Anthropic {
   // every request is built through here: the switch holds even for a caller that did not ask claudeConfigured()
   if (claudeOff()) throw new Error("Claude is switched off (JARVIS_CLAUDE_OFF=1).");
+  // v6: the spend ceiling holds even for a caller that did not ask claudeConfigured()
+  if (!budgetLeft()) throw new Error("The Claude spend ceiling is reached (JARVIS_CLAUDE_BUDGET_USD).");
   const key = env("ANTHROPIC_API_KEY");
   if (global.__claude?.key !== key) global.__claude = { key, client: new Anthropic({ apiKey: key, maxRetries: 0 }) };
   return global.__claude.client;
@@ -520,6 +524,8 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
       throw e;
     }
     keyWorks("anthropic");
+    // v6: every billed response counts against the spend ceiling, whatever happens to its reply next
+    recordClaude(res.model || model, res.usage);
     usage.input += res.usage.input_tokens + (res.usage.cache_read_input_tokens ?? 0) + (res.usage.cache_creation_input_tokens ?? 0);
     usage.output += res.usage.output_tokens;
     usage.cacheRead += res.usage.cache_read_input_tokens ?? 0;
@@ -589,6 +595,7 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
       const res = await client().beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 }).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
       ev("ok", res);
       keyWorks("anthropic");
+      recordClaude(res.model || model, res.usage);
       const u = res.usage;
       const input = u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
       l.record("anthropic", model, { tokens: input + u.output_tokens, lane: "warm" });
