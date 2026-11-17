@@ -21,6 +21,13 @@ export const briefStyle = (v: string | undefined = process.env.JARVIS_BRIEF): "v
 /** a record's time ("2026-11-16 18:40", IST as the store writes it, or an ISO time) as epoch ms; null when it is not one */
 export function timeOf(t: unknown): number | null {
   const s = String(t ?? "").trim();
+  // as the store's tools hand report times (tools.ts readableTime, IST): "17 Nov 2026, 12:20 AM", or a day alone "17 Nov 2026"
+  const r = s.match(/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})(?:, (\d{1,2}):(\d{2}) (AM|PM))?$/);
+  if (r) {
+    const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(r[2]);
+    const h = r[4] == null ? 0 : (Number(r[4]) % 12) + (r[6] === "PM" ? 12 : 0);
+    return Date.UTC(Number(r[3]), mon, Number(r[1]), h - 5, Number(r[5] ?? 0) - 30);
+  }
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
   if (!m) return null;
   // an explicit zone (Z or +hh:mm) is the time's own; a bare one is IST, as the store writes it
@@ -48,7 +55,9 @@ export function sinceWords(t: number | null, now: number): Bilingual | null {
     if (now - t < 2 * 3_600_000) return { en: "for the last hour or two", ta: "கடந்த ஓரிரு மணி நேரமாக" };
     return { en: `since this ${part}`, ta: `இன்று ${FROM_TA[part]}` };
   }
-  if (days === 1) return { en: part === "night" && a.h >= 21 ? "since last night" : `since yesterday ${part}`, ta: `நேற்று ${FROM_TA[part]}` };
+  // (the small hours of yesterday are "early yesterday morning", not "yesterday night": the independent check, 17 Nov)
+  if (days === 1 && a.h < 5) return { en: "since early yesterday morning", ta: "நேற்று அதிகாலையிலிருந்து" };
+  if (days === 1) return { en: part === "night" ? "since last night" : `since yesterday ${part}`, ta: `நேற்று ${FROM_TA[part]}` };
   if (days < 7) return { en: `since ${WEEKDAY_EN[a.wd]}`, ta: `${WEEKDAY_TA[a.wd]}யிலிருந்து` };
   const age = ageWords((now - t) / 3_600_000);
   return age ? { en: `for ${age.en}`, ta: age.ta } : null;
@@ -75,7 +84,7 @@ export function deadlineWords(due: number | null, now: number): { passed: boolea
     if (days === 1) return { passed: true, en: "passed yesterday", ta: "நேற்றே முடிந்துவிட்டது" };
     if (days < 7) return { passed: true, en: `passed on ${WEEKDAY_EN[a.wd]}`, ta: `${WEEKDAY_TA[a.wd]} அன்றே முடிந்துவிட்டது` };
     const age = ageWords((now - due) / 3_600_000);
-    return { passed: true, en: age ? `passed ${age.en} ago` : "passed long ago", ta: age ? `${age.ta.replace(/ாக$/, "")} முன்பே முடிந்துவிட்டது` : "எப்போதோ முடிந்துவிட்டது" };
+    return { passed: true, en: age ? `passed ${age.en} ago` : "passed long ago", ta: age ? `${age.ta.replace(/ாக$/, "்")} முன்பே முடிந்துவிட்டது` : "எப்போதோ முடிந்துவிட்டது" };
   }
   if (days === 0) return { passed: false, en: part === "night" ? "is due tonight" : `is due this ${part}`, ta: `இன்று ${PART_TA[part]} வரை நேரம் இருக்கிறது` };
   if (days === -1) return { passed: false, en: "is due tomorrow", ta: "நாளை வரை நேரம் இருக்கிறது" };
@@ -101,12 +110,16 @@ export interface BriefFacts extends FactSheet {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** an event, told by when it was reported (narrate.ts plainWhat's names: "a road accident", "a fire", "a crime report", "a structure that has given way") */
 const EVENT = /(?:accident|fire|report|given way)$/;
+/** the words a post's designation is made of */
+const ROLE_WORD = /\b(?:engineer|officer|inspector|commissioner|superintendent|superintending|executive|assistant|deputy|joint|director|collector|tahsildar|magistrate|manager|chief|surveyor|constable|secretary|supervisor|overseer|clerk|head|in-charge|incharge|warden|controller|registrar|ae|aee|ee|je|si|ci|bdo|vao|ro|dro)\b/i;
 /** a holder said with a plural verb */
 const PLURAL_BODY = /\bpolice$/i;
 /** a role as said: "the assistant engineer", from the record's designation (short, letters only); null for anything else */
 export function roleWords(designation: unknown): string | null {
   const d = String(designation ?? "").replace(/\s+/g, " ").trim();
   if (!d || d.length > 40 || /[0-9@:/]/.test(d) || d.split(" ").length > 5) return null;
+  // a designation names a post ("Assistant Engineer", "Sub-Inspector of Police"); anything else may be a person's name ("Ravi Kumar")
+  if (!ROLE_WORD.test(d)) return null;
   return `the ${d.toLowerCase()}`;
 }
 

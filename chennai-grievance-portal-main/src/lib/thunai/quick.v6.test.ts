@@ -39,3 +39,17 @@ describe("v6: a place's state in Tamil and Tanglish", () => {
     expect(q("Royapuram-ல இப்போ என்ன situation?")).toMatchObject({ recipe: "situation", slots: { zones: [5], period: "daily" } });
   });
 });
+
+describe("v6: the place lane takes only a place's state (the independent check, 17 Nov)", () => {
+  it("a question about something else in a place is not the place's situation screen", () => {
+    for (const t of ["whats happening with incident 4521 in Adyar", "how is the Adyar river looking", "How is the weather looking in Adyar", "how is the AE doing in Royapuram",
+      "how is the commissioner doing in Royapuram"]) {
+      expect(quickScreen(t, w, { analysis: true })?.recipe, t).not.toBe("situation");
+    }
+  });
+  it("the place's own state still is", () => {
+    for (const t of ["What's happening in Royapuram right now?", "How is Teynampet doing this week?", "Kodambakkam la enna nadakkudhu"]) {
+      expect(quickScreen(t, w, { analysis: true })?.recipe, t).toBe("situation");
+    }
+  });
+});

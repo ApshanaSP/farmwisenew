@@ -58,7 +58,9 @@ const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|�
 const PLACE_STATUS_EN = /\b(whats|what is) (happening|going on)\b|\bhow (is|s) [a-z]+( [a-z]+)? (doing|looking|faring)\b|\bhow are things\b|\b(whats|what is) (the )?worst\b|\banything serious\b|\bis (anything|something) serious\b/;
 const PLACE_STATUS_TG = /\b(enna|ena) (nadakkudhu|nadakuthu|nadakudhu|nadakkuthu|nadakkudu)\b|\b(epdi|eppadi|epadi|eppudi) (irukku|iruku|irukudhu|irukkudhu)\b/;
 const PLACE_STATUS_TA = /என்ன நடக்குது|என்ன நடக்கிறது|எப்படி இருக்கு|எப்படி இருக்கிறது|எப்படி உள்ளது|மோசமா இருக்கு|மோசமாக இருக்கிறது|மோசமானது என்ன/;
-export const placeStatus = (t: string): boolean => PLACE_STATUS_EN.test(t) || PLACE_STATUS_TG.test(t) || PLACE_STATUS_TA.test(t);
+/** another subject in the place (an incident by number, the river, the weather, an officer): its own question, not the place's state (the independent check, 17 Nov) */
+const OTHER_SUBJECT = /\b(?:incident|case|complaint|ticket|petition)s? (?:no\.? ?|number |#)?\d+|\b(?:river|rivers|lake|lakes|reservoir|weather|rain|rainfall|air|aqi|traffic|officer|officers|ae|aee|ee|je|engineer|commissioner|inspector|collector|minister|mla|councillor|department|dept)\b/;
+export const placeStatus = (t: string): boolean => !OTHER_SUBJECT.test(t) && (PLACE_STATUS_EN.test(t) || PLACE_STATUS_TG.test(t) || PLACE_STATUS_TA.test(t));
 
 /** the zones named in the sentence (by their names in either language, or a locality inside one), in the order said */
 export function zonesIn(t: string, w: World): number[] {

@@ -891,7 +891,7 @@ async function caseDetail(c: Ctx): Promise<Part> {
   }
   if (!id) return { title: bi("Incident", "சம்பவம்"), takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
   const r = await call(c, "incident_detail", { id });
-  const d = r.data as { incident: Row; reports: Row[]; officials: Row[] } | null;
+  const d = r.data as { incident: Row; reports: Row[]; officials: Row[]; assigned?: Row | null } | null;
   // an id as asked is shown and said only as a code: never a figure of its own (Finding 51)
   const idShown = words(c, id, 80) || (c.ta ? "அந்த" : "that");
   if (!d?.incident) return { title: idShown, takeaway: null, say: bi(`I could not find incident ${idShown}.`, `${idShown} சம்பவம் கிடைக்கவில்லை.`),
@@ -913,10 +913,11 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open,
     places: c.w.places });
   // v6 (Phase 3): briefed, not retold field by field: since when, why it matters, who has it and what is stuck, what to do (brief6.ts). The
-  // news outlet is the record's own report's publisher, only when it is a news medium; an official is said by role, never by name
+  // news outlet is the record's own report's publisher, only when it is a news medium; an official is said by role, never by name, and only
+  // from the record's own assignment (`assigned`), never the department's directory of contacts (the independent check, 17 Nov)
   const news = (d.reports ?? []).map((x) => ({ outlet: clip(x.publisher, 40), at: timeOf(x.t) })).find((x) => x.outlet && isNewsMedia(x.outlet)) ?? null;
   const times = (d.reports ?? []).map((x) => timeOf(x.t)).filter((x): x is number => x != null);
-  const say = briefIssue({ ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(officials[0]?.role), officials: officials.length, news,
+  const say = briefIssue({ ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(d.assigned?.designation), officials: d.assigned ? 1 : 0, news,
     lastAt: times.length ? Math.max(...times) : null, now: Date.now() }, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   // the record's own title is English: a Tamil screen names the case by its kind in Tamil and its place
   const titleTa = [plainWhat(row.cat, row.title)?.ta ?? "சம்பவம்", placeTa ?? row.place].filter(Boolean).join(" · ");

@@ -44,6 +44,24 @@ describe("relative times", () => {
   });
 });
 
+describe("the independent check's small cases (17 Nov)", () => {
+  it("a start in the small hours of yesterday is early yesterday morning, not 'yesterday night'", () => {
+    expect(sinceWords(at("2026-11-16 02:00"), NOW)).toEqual({ en: "since early yesterday morning", ta: "நேற்று அதிகாலையிலிருந்து" });
+    expect(sinceWords(at("2026-11-16 22:30"), NOW)?.en).toBe("since last night");
+  });
+  it("a deadline passed weeks ago is well-formed Tamil (வாரம், not வாரம)", () => {
+    const d = deadlineWords(at("2026-11-09 09:00"), NOW)!;
+    expect(d.ta).toMatch(/வாரம் முன்பே|வாரங்கள் முன்பே/);
+    expect(d.ta).not.toMatch(/வாரம முன்|வாரங்கள முன்/);
+  });
+  it("a designation that is a person's name is not said", () => {
+    expect(roleWords("Ravi Kumar")).toBeNull();
+    expect(roleWords("Assistant Engineer")).toBe("the assistant engineer");
+    expect(roleWords("Executive Engineer (Electrical)")).toBe("the executive engineer (electrical)");
+    expect(roleWords("Sub-Inspector of Police")).toBe("the sub-inspector of police");
+  });
+});
+
 describe("a role, never a name", () => {
   it("a short designation is said as a role; anything with a figure, a long text or symbols is not said", () => {
     expect(roleWords("Assistant Engineer")).toBe("the assistant engineer");
