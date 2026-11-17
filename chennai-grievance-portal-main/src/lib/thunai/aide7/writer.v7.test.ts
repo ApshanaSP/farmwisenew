@@ -84,6 +84,23 @@ describe("v7 answer writer", () => {
     expect(w.gap).toBe("the CM's visit");
     expect(w.sentences).toHaveLength(1);
   });
+  it("a reply that names only a gap is the answer: no second model is asked (the gap search takes over)", async () => {
+    const calls: RungCall[] = [];
+    const w = await writeAnswer(input, { ...opts(fake({ "qwen/qwen3.8-27b": [{ text: "GAP: the CM's visit" }], "openai/gpt-oss-120b": [{ text: GOOD }] }, calls)), noFallbackOnGap: true });
+    expect(calls).toHaveLength(1);
+    expect(w.gap).toBe("the CM's visit");
+    expect(w.sentences).toEqual([]);
+  });
+  it("a preamble or an echo of the facts is never spoken", async () => {
+    const heard: string[] = [];
+    const w = await writeAnswer(input, opts(fake({ "qwen/qwen3.8-27b": [{ text: `Here is the spoken answer:
+FACTS:
+F1 [dashboard] x
+${GOOD}` }] }), { onSentence: (s) => heard.push(s) }));
+    expect(heard[0]).toMatch(/^Standing water at Guindy/);
+    expect(heard.join(" ")).not.toMatch(/Here is|FACTS|F1 \[/);
+    expect(w.sentences).toHaveLength(3);
+  });
   it("keeps the instructions byte-identical across turns (the cached prefix) and over 512 tokens", async () => {
     const calls: RungCall[] = [];
     await writeAnswer(input, opts(fake({ "qwen/qwen3.8-27b": [{ text: GOOD }] }, calls)));

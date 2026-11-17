@@ -61,6 +61,8 @@ export interface Written {
 
 const MAX_SENTENCES = 4;
 const MAX_OUT = 320;
+/** a model's preamble, a heading, or its echo of the prompt ("Here is the answer:", "FACTS:", "F1 [dashboard] ...", "QUESTION: ...") */
+const JUNK = /^(?:(?:here(?:'s| is)|sure|okay|ok|certainly|answer|output|spoken answer|response)\b[^.!?]*:?\s*$|[A-Z][A-Z ]{1,20}:\s*$|(?:QUESTION|ANSWER IN|SCREEN|FACTS|EARLIER IN THIS CONVERSATION)\s*:|F\d{1,3}\s+\[)/i;
 /** a re-ask needs this much time before the first-sentence deadline to be worth making */
 const REASK_MS = 1200;
 
@@ -97,6 +99,8 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
       if (!l) return;
       const gap = l.match(/^GAP\s*[:：]\s*(.*)$/i);
       if (gap) { const g = gap[1].trim().replace(/[.。]$/, ""); out.gap = /^(?:none|nil|no gap|n\/a|-)?$/i.test(g) ? null : g.slice(0, 160); return; }
+      // a preamble, a heading or the facts echoed back is no sentence of the answer: never spoken, never a failure
+      if (JUNK.test(l)) return;
       if (said.length >= MAX_SENTENCES) { ended = true; stop.abort(); return; }
       const r = checkSentence(l, input.sheet, places);
       if (!r.ok) {
@@ -123,8 +127,10 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
     const tFirstBy = setTimeout(() => { if (!said.length) stop.abort(); }, Math.max(0, o.firstBy - now()));
     const tUntil = setTimeout(() => stop.abort(), Math.max(0, o.until - now()));
     out.calls++;
+    let completed = false;
     try {
       const done = await open(rung, { name: "jarvis_aide", system: writerSystem(input.lang), prompt, maxOutputTokens: MAX_OUT, user: o.user, signal, timeoutMs: Math.max(1000, o.until - now()) }, onText);
+      completed = true;
       out.tokens += done.tokens;
       // the last line has no newline after it; a reply cut off at its token limit leaves an unfinished line, which is not said
       if (done.stop !== "max_tokens" && done.stop !== "length") line(buf);
@@ -138,6 +144,8 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
       clearTimeout(tFirst); clearTimeout(tFirstBy); clearTimeout(tUntil);
     }
     if (out.sentences.length) break;
+    // a whole reply that names only a gap is the answer (the facts cover nothing asked): the gap search takes over, no other model is asked
+    if (completed && out.gap && !firstFail) break;
     // the first sentence failed: once, the same rung is told what was wrong, if there is time; otherwise the next rung
     const failed = firstFail as { text: string; problems: Problem[] } | null;
     if (failed && !reasked && o.firstBy - now() > REASK_MS) {
