@@ -104,7 +104,9 @@ export function asksPrivate(text: string): boolean {
 }
 
 /** removing or closing everything: the forbidden act only when it names records; a filter or a panel is console work */
-const WIPES = /\b(?:remove|close all|clear|discard|drop|trash|dismiss|get\s+rid\s+of)\b/i;
+// "drop" is a wipe only when it governs the records ("drop all the old complaints", "drop these cases"), never a fall said of them ("why did
+// flooding reports drop this week": v7, found by the dev set's dry pass)
+const WIPES = /\b(?:remove|close all|clear|discard|drop(?=\s+(?:all|every|the|this|that|these|those|old|them|it|any)\b)(?!\s+(?:this|that|the|last|next|past)\s+(?:week|month|year|day|morning|evening|night|time|quarter|period)\b)|trash|dismiss|get\s+rid\s+of)\b/i;
 const RECORDS = /\b(complaints?|cases?|incidents?|records?|data|reports?|drafts?|entries|entry|files?|tickets?|grievances?|everything|everyone)\b|all\s+of\s+them|\b(?:them|these|those)\s*$|புகார்|சம்பவ|அறிக்கை|வரைவ/i;
 const CONSOLE_THING = /\b(filters?|panels?|chips?|layers?|highlights?|pins?|windows?|views?|charts?|maps?|tabs?|screens?|lists?)\b|வடிகட்டி|பேனல்|வரைபடம்/i;
 /** a change to a record's state, a release of money, a close on records: Jarvis never writes, in any language ("maathidu", "மாத்திடு", "close pannu") */

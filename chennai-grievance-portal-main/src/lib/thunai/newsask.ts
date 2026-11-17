@@ -114,15 +114,16 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
 };
 
 /** A sentence that asks for the news to be read or for the web: what the server is sent, or null (not this lane's). */
-export function newsAsk(raw: string, on: NewsOnScreen = {}): NewsAskT | null {
+/** `o.v7` false: v6's reading (the evaluation's v6 answers: "tell me about this news" was not a read then) */
+export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } = {}): NewsAskT | null {
   const t = norm(raw);
   if (!t || t.length > 300) return null;
   // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov); "brief me on this news" names one report (v7)
-  const thisReport = TELL_EN.some((re) => re.test(t)) && /\b(?:this|that)\b/.test(t);
+  const thisReport = o.v7 !== false && TELL_EN.some((re) => re.test(t)) && /\b(?:this|that)\b/.test(t);
   if (NEGATED.test(t) || NEGATED.test(raw) || ((MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) && !thisReport)) return null;
   const reads = !OWN_REPORT.test(t) && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
   // v7: "tell me about this news" is a read of the report on the screen, when there is one (else the news screen and its summary answer it)
-  const tells = !reads && !OWN_REPORT.test(t) && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
+  const tells = o.v7 !== false && !reads && !OWN_REPORT.test(t) && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
   if (tells) {
     const item = pickItem(t, on);
     if (item && "id" in item) return { kind: "read", body: item };

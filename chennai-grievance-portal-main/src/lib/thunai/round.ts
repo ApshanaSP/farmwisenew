@@ -49,7 +49,7 @@ import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
 import { syncEpoch } from "@/lib/collector/epoch";
-import { aideAnswer, aideWanted, answerStyle, type AideCtx } from "./aide7";
+import { aideAnswer, aideWanted, answerStyle, type AideCtx, type AideOut } from "./aide7";
 import { asks7 } from "./asks7";
 import { timeOf } from "./brief6";
 
@@ -594,6 +594,8 @@ export interface RoundDeps {
   speculate?: boolean;
   /** v7, tests and the evaluation: the aide writer's model and rungs (aide7/writer.ts) */
   aide?: AideCtx["write"];
+  /** v7, the evaluation: the aide's whole result (its facts, its rejected lines), and what v6 said for the same screen */
+  onAide?: (a: AideOut, v6: { say: string | null; stage: StageDocT }) => void;
 }
 type Emit = (e: TurnEvent) => void;
 
@@ -658,6 +660,7 @@ async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, 
           title: String(x.title ?? "").slice(0, 300), url: typeof x.url === "string" ? x.url : null, at: timeOf(x.t ?? x.published) ?? null, from: "dashboard" as const }));
       }
     });
+    deps.onAide?.(a, { say: r.say, stage: r.stage });
     telemetry("aide", { by: a.written.by, model: a.written.model, ms: Date.now() - t0, firstMs: a.written.firstMs, sentences: a.written.sentences.length, rejected: a.written.rejected.length,
       calls: a.written.calls, tokens: a.written.tokens, gap: a.gap ? a.gap.status : null, turn: b.turnId });
     return { ...o, result: a.result, tokens: o.tokens + a.written.tokens, calls: o.calls + a.written.calls, timing: { ...(o.timing ?? {}), ...(a.written.firstMs != null ? { aideFirst: t0 + a.written.firstMs } : {}) } };

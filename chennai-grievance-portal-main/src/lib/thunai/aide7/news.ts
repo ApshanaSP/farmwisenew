@@ -8,7 +8,8 @@ import type { Lang, World } from "../types";
 import { buildSheet } from "./facts";
 import type { AideExtras } from "./extras";
 import { gazOf } from "./index";
-import { writeAnswer, type WriteOptions } from "./writer";
+import type { Sheet7 } from "./ground";
+import { writeAnswer, type WriteOptions, type Written } from "./writer";
 
 export interface ArticleAsk {
   question: string;
@@ -34,7 +35,7 @@ const articleDoc = (a: ArticleAsk): StageDocT => ({
  * The aide for the news route: each yield is every sentence said so far (the route sends them as the article brief, and the browser speaks
  * only the new ones). The last yield is the whole answer; with nothing checked it is the code brief (v6's), as the fallback.
  */
-export function newsAide(world: World, o: { user: string; signal?: AbortSignal; write?: Pick<WriteOptions, "open" | "rungs">; now?: () => number }): NewsAide {
+export function newsAide(world: World, o: { user: string; signal?: AbortSignal; write?: Pick<WriteOptions, "open" | "rungs">; now?: () => number; onDone?: (w: Written, sheet: Sheet7) => void }): NewsAide {
   return async function* (a: ArticleAsk) {
     const now = o.now ?? Date.now;
     const t0 = now();
@@ -52,7 +53,8 @@ export function newsAide(world: World, o: { user: string; signal?: AbortSignal; 
       await new Promise<void>((r) => { wake = r; });
       wake = null;
     }
-    await p.catch(() => undefined);
+    const w = await p.catch(() => null);
+    if (w) o.onDone?.(w, sheet);
   };
 }
 
