@@ -1,0 +1,451 @@
+{
+ "tag": "v6a",
+ "part": "closed",
+ "at": "2026-11-17T08:35:40.779Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "flags": {
+  "NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS": "90"
+ },
+ "rows": [
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": true,
+   "firstSound": 158,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 158,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1276,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [
+    "pcm"
+   ],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@158",
+    "pcmEnd@1276",
+    "uttStart(silent)@1278",
+    "uttEnd(silent)@1288",
+    "uttStart(silent)@1528",
+    "uttEnd(silent)@1542",
+    "wakeWord@146",
+    "wakeReply@153",
+    "prewarm@156"
+   ],
+   "sr": [
+    {
+     "at": -462,
+     "ev": "final:"
+    },
+    {
+     "at": 176,
+     "ev": "speechend"
+    },
+    {
+     "at": 210,
+     "ev": "error:aborted"
+    },
+    {
+     "at": 210,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 3319,
+     "ev": "final:"
+    },
+    {
+     "at": 8514,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -545,
+     "ev": "final:"
+    },
+    {
+     "at": 4649,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 525,
+     "ev": "speechstart"
+    },
+    {
+     "at": 3283,
+     "ev": "final:"
+    },
+    {
+     "at": 8507,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 1786,
+     "ev": "final:"
+    },
+    {
+     "at": 7001,
+     "ev": "final:"
+    },
+    {
+     "at": 8523,
+     "ev": "speechend"
+    },
+    {
+     "at": 8760,
+     "ev": "final:"
+    },
+    {
+     "at": 8760,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 3291,
+     "ev": "final:"
+    },
+    {
+     "at": 8596,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 1955,
+     "ev": "final:"
+    },
+    {
+     "at": 7374,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 4122,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 1471,
+     "ev": "final:"
+    },
+    {
+     "at": 6666,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 789,
+     "ev": "final:"
+    },
+    {
+     "at": 5994,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 763,
+     "ev": "final:"
+    },
+    {
+     "at": 5974,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -599,
+     "ev": "final:"
+    },
+    {
+     "at": 4744,
+     "ev": "final:"
+    }
+   ]
+  }
+ ]
+}
