@@ -1,0 +1,263 @@
+import fs from "fs";
+import path from "path";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * v6, Phase 0 and every later before/after: the REAL path, timed from the true end of speech. A production bundle built with
+ * NEXT_PUBLIC_JARVIS_SPEC=1, real Groq Whisper, the real planner ladder (Claude off), the console's real local store, and Edge's own
+ * natural voices (Neerja for English, Pallavi for Tamil): the owner's voice path. Recorded synthetic clips (tests/e2e/fixtures/v6:
+ * Windows' voices and Gemini's, never a person) are played into the page's microphone stream at a known time, so the end of speech is
+ * the clip's own last voiced sample (v6.json endMs), not any detector's opinion.
+ *
+ * What is timed, from that end (performance.now(), one clock):
+ *  - the first sound the page makes (Jarvis's earcon, its PCM voice, or a browser voice's start event), by instrumenting the page's
+ *    AudioScheduledSourceNode.start and speechSynthesis.speak in an init script (the app's code is not touched; the output device's
+ *    reported latency is recorded beside each start);
+ *  - the first word of the answer: the first voice start event at or after the console's "finding" mark (stamped when the answer, not
+ *    an acknowledgement, is handed to the voice: Edge's natural voice starts later);
+ *  - the end of the answer (the last utterance or PCM buffer to end);
+ *  - the screen change (a mutation of the stand-in console's state panel);
+ *  - every stage of the v5 trace (zero there is the detector's last voiced sample; here it is re-based on the true end).
+ * The closed wake ("Hi Jarvis" with Jarvis off) runs through the browser's own recogniser (wake.ts); the init script hands it the
+ * same injected track (SpeechRecognition.start(track)), so the clip reaches it at a known time.
+ *
+ * Start the server first (scripts/jarvis6/serve-real.sh), then, from chennai-grievance-portal-main:
+ *   REAL=1 SPEC_PROD=1 V6_TAG=phase0 npx playwright test tests/e2e/real6.spec.ts
+ * V6_PARTS=wake,closed,cmd,en,ta,tg picks the parts; LIVE_GAP_MS (default 20000) spaces the planner turns. Results:
+ * eval/v6/latency/<tag>-<part>.json (timings, the clip's name, what Whisper returned for these synthetic clips, model names).
+ */
+test.skip(!process.env.REAL, "spends real quota: run with REAL=1");
+
+const FX = path.join(process.cwd(), "tests", "e2e", "fixtures", "v6");
+const META = JSON.parse(fs.readFileSync(path.join(FX, "v6.json"), "utf8")) as Record<string, { kind: string; lang: string; text: string; voice: string; source: string; speechMs: number; endMs: number; durMs: number }>;
+const b64 = (n: string) => fs.readFileSync(path.join(FX, `${n}.wav`)).toString("base64");
+const TAG = process.env.V6_TAG || "run";
+const PARTS = new Set((process.env.V6_PARTS || "wake,closed,cmd,en,ta,tg").split(","));
+const GAP = Number(process.env.LIVE_GAP_MS || 20_000);
+const LIMIT = Number(process.env.V6_LIMIT || 99);
+/** V6_FLAGS='{"NEXT_PUBLIC_JARVIS_KWS":"off"}': browser flags for this run (a measuring build reads window.__jvFlags: lib/thunai/flags.ts) */
+const FLAGS: Record<string, string> | null = process.env.V6_FLAGS ? JSON.parse(process.env.V6_FLAGS) : null;
+const OUT = path.join(process.cwd(), "eval", "v6", "latency");
+// Edge lists its online natural voices only when these Playwright defaults are left out (found 17 Nov: 326 voices instead of 5)
+const KEEP_VOICES = ["--disable-background-networking", "--disable-component-update", "--disable-component-extensions-with-background-pages", "--disable-default-apps", "--disable-extensions"];
+test.use({
+  channel: process.env.PW_CHANNEL || "msedge",
+  launchOptions: { ignoreDefaultArgs: KEEP_VOICES, args: ["--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] }
+});
+
+const init = (flags: Record<string, string> | null) => {
+  const W = window as unknown as Record<string, unknown> & { __v6: { audio: Record<string, unknown>[]; screen: { at: number; text: string }[]; sr: { at: number; ev: string }[] } };
+  if (flags) W.__jvFlags = flags;
+  try { localStorage.setItem("thunai-greeted", new Date().toDateString()); localStorage.setItem("jarvis-mode-seen", "1"); sessionStorage.setItem("jarvis-briefed", "1"); } catch { /* */ }
+  W.__v6 = { audio: [], screen: [], sr: [] };
+  const c = new AudioContext({ sampleRate: 48000 });
+  W.__v6own = c;
+  let dest: MediaStreamAudioDestinationNode | null = null;
+  const ensure = () => {
+    if (dest) return dest;
+    dest = c.createMediaStreamDestination();
+    const n = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+    const d = n.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.0008;
+    const s = c.createBufferSource();
+    s.buffer = n; s.loop = true; s.connect(dest); s.start();
+    return dest;
+  };
+  W.__jarvisTestStream = async () => { await c.resume(); return ensure().stream; };
+  W.__jvPlay = async (data: string, endMs: number) => {
+    await c.resume();
+    const dst = ensure();
+    const buf = await c.decodeAudioData(Uint8Array.from(atob(data), (x) => x.charCodeAt(0)).buffer);
+    const s = c.createBufferSource();
+    s.buffer = buf; s.connect(dst);
+    const when = c.currentTime + 0.05;
+    const startAt = performance.now() + (when - c.currentTime) * 1000;
+    s.start(when);
+    return { startAt, endAt: startAt + endMs };
+  };
+  // every sound the page itself starts (not this harness's own context)
+  const origStart = AudioScheduledSourceNode.prototype.start;
+  AudioScheduledSourceNode.prototype.start = function (this: AudioScheduledSourceNode, when?: number, ...rest: number[]) {
+    try {
+      const ctx = this.context as AudioContext;
+      if (ctx !== c) {
+        const now = performance.now(), ct = ctx.currentTime;
+        const at = now + Math.max(0, ((when ?? 0) || ct) - ct) * 1000;
+        const lat = ((ctx.outputLatency || 0) + (ctx.baseLatency || 0)) * 1000;
+        const kind = this instanceof OscillatorNode ? "tone" : "pcm";
+        const buf = (this as AudioBufferSourceNode).buffer;
+        W.__v6.audio.push({ kind, at, lat, dur: buf ? buf.duration * 1000 : null, ctx: ctx.state });
+        if (kind === "pcm") this.addEventListener("ended", () => W.__v6.audio.push({ kind: "pcmEnd", at: performance.now() }));
+      }
+    } catch { /* never break the page */ }
+    return (origStart as (w?: number, ...r: number[]) => void).call(this, when, ...rest);
+  } as typeof origStart;
+  const speak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
+    const rec = { queued: performance.now(), chars: (u.text || "").length, voice: u.voice?.name ?? null, lang: u.lang };
+    u.addEventListener("start", () => W.__v6.audio.push({ ...rec, kind: "uttStart", at: performance.now() }));
+    u.addEventListener("end", () => W.__v6.audio.push({ ...rec, kind: "uttEnd", at: performance.now() }));
+    u.addEventListener("error", (e) => W.__v6.audio.push({ ...rec, kind: "uttErr", at: performance.now(), err: (e as SpeechSynthesisErrorEvent).error }));
+    return speak(u);
+  };
+  // the browser's recogniser (the closed wake) hears the injected track, so the clip reaches it at a known time
+  const R = (window as unknown as { SpeechRecognition?: { prototype: { start: (t?: MediaStreamTrack) => void } }; webkitSpeechRecognition?: { prototype: { start: (t?: MediaStreamTrack) => void } } });
+  const Rc = R.SpeechRecognition ?? R.webkitSpeechRecognition;
+  if (Rc) {
+    const os = Rc.prototype.start;
+    Rc.prototype.start = function (this: EventTarget) {
+      const at = () => performance.now();
+      for (const ev of ["audiostart", "speechstart", "speechend", "end"]) this.addEventListener(ev, () => W.__v6.sr.push({ at: at(), ev }));
+      this.addEventListener("result", (e) => { const r = e as unknown as { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }; for (let i = r.resultIndex; i < r.results.length; i++) W.__v6.sr.push({ at: at(), ev: `${r.results[i].isFinal ? "final" : "interim"}:${r.results[i][0].transcript}` }); });
+      this.addEventListener("error", (e) => W.__v6.sr.push({ at: at(), ev: `error:${(e as unknown as { error: string }).error}` }));
+      W.__v6.sr.push({ at: at(), ev: "start" });
+      try { return os.call(this, ensure().stream.getAudioTracks()[0]); } catch { return os.call(this); }
+    };
+  }
+};
+
+async function open(page: Page) {
+  await page.addInitScript(init, FLAGS);
+  await page.route("**/api/collector/**", (r) => r.fulfill({ status: 401, json: {} }));
+  await page.goto("/dev/thunai");
+  await page.waitForFunction(() => !!(window as unknown as { __jv?: unknown }).__jv, null, { timeout: 180_000 });
+  await page.evaluate(() => {
+    const W = window as unknown as { __v6: { screen: { at: number; text: string }[] } };
+    const el = document.querySelector("[data-testid=harness-state]");
+    if (el) new MutationObserver(() => W.__v6.screen.push({ at: performance.now(), text: el.textContent ?? "" })).observe(el, { childList: true, subtree: true, characterData: true });
+    // a command can also answer with a screen of its own (the Stage, .st-root): its first appearance is a screen change too
+    let stage = !!document.querySelector(".st-root");
+    new MutationObserver(() => { const now = !!document.querySelector(".st-root"); if (now && !stage) W.__v6.screen.push({ at: performance.now(), text: "stage" }); stage = now; }).observe(document.body, { childList: true, subtree: true });
+  });
+  // a first call in a fresh server reads the store and builds its world: that is start-up, not a turn's latency
+  const warm = { turnId: "warm1", round: 0, text: "show the severe cases", turns: [], stage: null, direct: null, state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } };
+  await page.request.post("/api/dev/thunai/agent/round", { data: warm, timeout: 120_000 }).catch(() => undefined);
+}
+async function modeOn(page: Page) {
+  await page.keyboard.press("Control+Shift+J");
+  await page.waitForFunction(() => (window as unknown as { __jv: { state(): string } }).__jv.state() !== "off", null, { timeout: 60_000 });
+  await page.waitForTimeout(1600);
+}
+const play = (page: Page, name: string) => page.evaluate(([d, e]) => (window as unknown as { __jvPlay: (a: string, b: number) => Promise<{ startAt: number; endAt: number }> }).__jvPlay(d as string, e as number), [b64(name), META[name].endMs] as const);
+const reset = (page: Page) => page.evaluate(() => { const W = window as unknown as { __v6: { audio: unknown[]; screen: unknown[]; sr: unknown[] }; __jv: { marks: unknown[] } }; W.__v6.audio.length = 0; W.__v6.screen.length = 0; W.__v6.sr.length = 0; W.__jv.marks.length = 0; });
+const state = (page: Page) => page.evaluate(() => {
+  const W = window as unknown as { __v6: { audio: { kind: string; at: number }[]; screen: { at: number; text: string }[]; sr: { at: number; ev: string }[] }; __jv: { marks: { name: string; t: number }[]; state(): string; speaking(): boolean; trace?: { zero: number; at: Record<string, number>; lane: string | null }[]; hud(): { ribbon: string; answer: string; strip: { provider: string | null; tokens: number | null; path: string | null } } } };
+  const J = W.__jv;
+  return { audio: [...W.__v6.audio], screen: [...W.__v6.screen], sr: [...W.__v6.sr], marks: [...J.marks], st: J.state(), speaking: J.speaking(), trace: (J.trace ?? []).slice(-3), hud: J.hud() };
+});
+type S = Awaited<ReturnType<typeof state>>;
+
+/** wait until the turn after `end` has run its course: spoken and quiet, or nothing for `quietMs` */
+async function settle(page: Page, end: number, maxMs: number, wantAnswer: boolean) {
+  const t0 = Date.now();
+  let lastActive = Date.now();
+  for (;;) {
+    await page.waitForTimeout(250);
+    const s = await state(page);
+    const busy = s.speaking || s.st === "thinking" || s.st === "hearing";
+    if (busy) lastActive = Date.now();
+    const answered = s.marks.some((m) => m.name === "finding" && m.t > end);
+    if (!busy && Date.now() - lastActive > 1200 && (!wantAnswer || answered || Date.now() - t0 > 12_000)) return s;
+    if (Date.now() - t0 > maxMs) return s;
+  }
+}
+
+const rel = (x: number | undefined, end: number) => (x == null || !Number.isFinite(x) ? null : Math.round(x - end));
+function measure(s: S, end: number) {
+  const after = s.audio.filter((a) => (a.at as number) > end - 50);
+  const sound = after.filter((a) => a.kind === "tone" || a.kind === "pcm" || a.kind === "uttStart").sort((a, b) => (a.at as number) - (b.at as number));
+  const speech = after.filter((a) => a.kind === "pcm" || a.kind === "uttStart").sort((a, b) => (a.at as number) - (b.at as number));
+  const ends = after.filter((a) => a.kind === "uttEnd" || a.kind === "pcmEnd").map((a) => a.at as number);
+  const mark = (n: string) => s.marks.find((m) => m.name === n && m.t > end - 50)?.t;
+  const screen = s.screen.find((x) => x.at > end - 50)?.at;
+  // the trace of this turn: the latest one whose zero lies near this clip's end
+  const tr = [...s.trace].reverse().find((t) => Math.abs(t.zero - end) < 2500) ?? null;
+  return {
+    firstSound: rel(sound[0]?.at as number | undefined, end), firstSoundKind: (sound[0]?.kind as string | undefined) ?? null, firstSoundLat: sound[0] ? Math.round(Number((sound[0] as { lat?: number }).lat ?? 0)) : null,
+    firstSpeech: rel(speech[0]?.at as number | undefined, end), handed: rel(mark("finding"), end), ackMark: rel(mark("ack"), end),
+    // the first word of the answer: the first voice start at or after the console's "finding" mark, which is stamped when the answer
+    // (not an acknowledgement) is HANDED to the voice; Edge's natural voice starts later (1.3 s on the 17 Nov smoke run)
+    finding: rel(speech.find((a) => mark("finding") != null && (a.at as number) >= (mark("finding") as number) - 5)?.at as number | undefined, end),
+    answerEnd: ends.length ? rel(Math.max(...ends), end) : null, screen: rel(screen, end),
+    vadEnd: rel(mark("vadEnd"), end), transcribed: rel(mark("transcribed"), end),
+    trace: tr ? { lane: tr.lane, zeroVsTrue: Math.round(tr.zero - end), at: Object.fromEntries(Object.entries(tr.at).map(([k, v]) => [k, Math.round(v - end)])) } : null,
+    voices: [...new Set(speech.map((a) => (a as { voice?: string }).voice ?? a.kind))],
+    heard: s.hud.ribbon, provider: s.hud.strip.provider, tokens: s.hud.strip.tokens, path: s.hud.strip.path
+  };
+}
+function save(part: string, rows: unknown[], extra: Record<string, unknown> = {}) {
+  fs.mkdirSync(OUT, { recursive: true });
+  fs.writeFileSync(path.join(OUT, `${TAG}-${part}.json`), JSON.stringify({ tag: TAG, part, at: new Date().toISOString(), note: "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices", flags: FLAGS, ...extra, rows }, null, 1));
+}
+
+const WAKES = Object.keys(META).filter((k) => META[k].kind === "wake");
+const of = (pre: string) => Object.keys(META).filter((k) => k.startsWith(pre));
+const CMDS = ["cmd_trends", "cmd_severe", "cmd_briefing", "cmd_annanagar", "cmd_weekly", "cmd_high", "cmd_env", "cmd_monthly", "cmd_studio", "cmd_overview", "cmd_taluks", "cmd_medium"].filter((k) => META[k]);
+
+/** "Hi Jarvis" with Jarvis open and idle (b), then the clip inside the follow-up window */
+async function wakeThen(page: Page, wake: string, clip: string | null, gapMs: number, maxMs: number, planner: boolean) {
+  await reset(page);
+  const w = await play(page, wake);
+  await page.waitForTimeout(META[wake].durMs + 200);
+  const sw = await settle(page, w.endAt, 8000, false);
+  const wakeRow = { clip: wake, kind: "wake-open", ...measure(sw, w.endAt) };
+  if (!clip) return { wakeRow, row: null };
+  await page.waitForTimeout(600);
+  await reset(page);
+  const q = await play(page, clip);
+  await page.waitForTimeout(META[clip].durMs);
+  const s = await settle(page, q.endAt, maxMs, planner);
+  const row = { clip, kind: META[clip].kind, lang: META[clip].lang, ...measure(s, q.endAt) };
+  console.log(JSON.stringify({ wake: wakeRow.firstSound, clip, firstSound: row.firstSound, finding: row.finding, end: row.answerEnd, screen: row.screen, heard: row.heard, lane: row.trace?.lane }));
+  // the next item starts from the dashboard: a screen this one opened is closed (Esc), so the next screen change is its own
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(gapMs);
+  return { wakeRow, row };
+}
+
+test("v6 real latency: open turns", async ({ page }) => {
+  test.setTimeout(3_600_000);
+  await open(page);
+  await modeOn(page);
+  const wakeRows: unknown[] = [];
+  const parts: [string, string[], boolean][] = [["cmd", CMDS, false], ["en", of("q_en_"), true], ["ta", of("q_ta_"), true], ["tg", of("q_tg_"), true]];
+  if (PARTS.has("wake") && ![...PARTS].some((p) => p === "cmd" || p === "en" || p === "ta" || p === "tg")) {
+    for (let i = 0; i < 12; i++) { const r = await wakeThen(page, WAKES[i % WAKES.length], null, 0, 0, false); wakeRows.push(r.wakeRow); await page.waitForTimeout(21_000); }
+  }
+  let k = 0;
+  for (const [part, clips, planner] of parts) {
+    if (!PARTS.has(part)) continue;
+    const rows: unknown[] = [];
+    for (const clip of clips.slice(0, LIMIT)) {
+      const r = await wakeThen(page, WAKES[k++ % WAKES.length], clip, planner ? GAP : 21_000, 40_000, planner);
+      wakeRows.push(r.wakeRow); rows.push(r.row);
+      // the follow-up window (20 s) runs out before the next "Hi Jarvis", so every wake is from idle
+    }
+    save(part, rows);
+  }
+  if (wakeRows.length) save("wake", wakeRows);
+  expect(wakeRows.length).toBeGreaterThan(0);
+});
+
+test("v6 real latency: closed wake", async ({ page }) => {
+  test.skip(!PARTS.has("closed"), "part not asked for");
+  test.setTimeout(900_000);
+  await open(page);
+  const rows: unknown[] = [];
+  for (let i = 0; i < 12; i++) {
+    const wake = WAKES[i % WAKES.length];
+    // the wake recogniser runs only while Jarvis is off; give it time to start (or restart after the last try)
+    await page.waitForTimeout(2500);
+    await reset(page);
+    const w = await play(page, wake);
+    await page.waitForTimeout(META[wake].durMs);
+    let s = await state(page);
+    for (let t = 0; t < 32 && s.st === "off" && !s.audio.some((a) => a.kind === "tone"); t++) { await page.waitForTimeout(250); s = await state(page); }
+    const woke = s.st !== "off";
+    rows.push({ clip: wake, kind: "wake-closed", woke, ...measure(s, w.endAt), sr: s.sr.map((x) => ({ at: Math.round(x.at - w.endAt), ev: x.ev })) });
+    console.log(JSON.stringify({ wake, woke, firstSound: (rows.at(-1) as { firstSound: number | null }).firstSound, sr: s.sr.map((x) => `${Math.round(x.at - w.endAt)}:${x.ev}`).join(" ") }));
+    if (woke) { await page.keyboard.press("Control+Shift+J"); await page.waitForFunction(() => (window as unknown as { __jv: { state(): string } }).__jv.state() === "off", null, { timeout: 10_000 }).catch(() => undefined); }
+  }
+  save("closed", rows);
+  expect(rows.length).toBe(12);
+});

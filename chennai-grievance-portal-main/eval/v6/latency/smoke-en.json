@@ -1,0 +1,49 @@
+{
+ "tag": "smoke",
+ "part": "en",
+ "at": "2026-11-17T06:28:55.121Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "q_en_adyar",
+   "kind": "q",
+   "lang": "en",
+   "firstSound": 424,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3569,
+   "finding": 2259,
+   "ackMark": 1345,
+   "answerEnd": 17145,
+   "screen": null,
+   "vadEnd": 419,
+   "transcribed": 1322,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 98,
+    "at": {
+     "voicedEnd": 98,
+     "eou": 419,
+     "uploadSent": 423,
+     "sttSent": 436,
+     "sttBack": 1302,
+     "hearBack": 1322,
+     "gateDone": 1345,
+     "firstEvent": 1402,
+     "speakCalled": 2229,
+     "plannerSent": 1383,
+     "plannerBack": 2198,
+     "toolsDone": 2214,
+     "voiceStart": 3569
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "What's worst in AGR today?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 1590,
+   "path": "browser"
+  }
+ ]
+}

@@ -1,0 +1,493 @@
+{
+ "tag": "phase0",
+ "part": "ta",
+ "at": "2026-11-17T06:57:51.969Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "q_ta_adyar",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 418,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 1808,
+   "handed": 970,
+   "ackMark": 858,
+   "finding": 1808,
+   "answerEnd": 17256,
+   "screen": null,
+   "vadEnd": 413,
+   "transcribed": 833,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -386,
+    "at": {
+     "voicedEnd": -386,
+     "eou": 413,
+     "uploadSent": 415,
+     "sttSent": 428,
+     "sttBack": 814,
+     "hearBack": 833,
+     "gateDone": 858,
+     "firstEvent": 934,
+     "speakCalled": 962,
+     "toolsDone": 920,
+     "voiceStart": 1808
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "அடையார்ல, இன்று எது ரொம்ப மோசமா இருக்கு?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_velachery",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 414,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2697,
+   "handed": 1512,
+   "ackMark": 886,
+   "finding": 2697,
+   "answerEnd": 20326,
+   "screen": null,
+   "vadEnd": 409,
+   "transcribed": 863,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -345,
+    "at": {
+     "voicedEnd": -345,
+     "eou": 409,
+     "uploadSent": 411,
+     "sttSent": 424,
+     "sttBack": 841,
+     "hearBack": 863,
+     "gateDone": 886,
+     "firstEvent": 1476,
+     "speakCalled": 1502,
+     "toolsDone": 1472,
+     "voiceStart": 2697
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "வேலைச்சேரியில் எத்தனை தீவிரமான புகார்கள் திருந்திருக்கு?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_zoneweek",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 747,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 3900,
+   "handed": 2245,
+   "ackMark": 1166,
+   "finding": 3900,
+   "answerEnd": 15761,
+   "screen": null,
+   "vadEnd": 742,
+   "transcribed": 1148,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -305,
+    "at": {
+     "voicedEnd": -305,
+     "eou": 742,
+     "uploadSent": 744,
+     "sttSent": 757,
+     "sttBack": 1127,
+     "hearBack": 1148,
+     "gateDone": 1166,
+     "firstEvent": 1331,
+     "speakCalled": 2240,
+     "plannerSent": 1213,
+     "plannerBack": 2194,
+     "toolsDone": 2224,
+     "voiceStart": 3900
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "இந்த வாரம் எந்த மண்டலத்தில் அதிகமா புகார் வந்திருக்கு?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2740,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_royapuram",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 403,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 4251,
+   "handed": 2785,
+   "ackMark": 813,
+   "finding": 4251,
+   "answerEnd": 26468,
+   "screen": null,
+   "vadEnd": 398,
+   "transcribed": 794,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -266,
+    "at": {
+     "voicedEnd": -266,
+     "eou": 398,
+     "uploadSent": 399,
+     "sttSent": 415,
+     "sttBack": 771,
+     "hearBack": 794,
+     "gateDone": 813,
+     "firstEvent": 901,
+     "speakCalled": 2779,
+     "plannerSent": 863,
+     "plannerBack": 2728,
+     "toolsDone": 2754,
+     "voiceStart": 4251
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "ராயபுரத்தில் இப்போது என்ன நடக்குது?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4631,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_perungudi",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 407,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2443,
+   "handed": 1016,
+   "ackMark": 937,
+   "finding": 2443,
+   "answerEnd": 16210,
+   "screen": null,
+   "vadEnd": 402,
+   "transcribed": 913,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -196,
+    "at": {
+     "voicedEnd": -196,
+     "eou": 402,
+     "uploadSent": 405,
+     "sttSent": 418,
+     "sttBack": 889,
+     "hearBack": 913,
+     "gateDone": 937,
+     "firstEvent": 989,
+     "speakCalled": 1008,
+     "toolsDone": 984,
+     "voiceStart": 2443
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "பெருங்குடியில் இன்னைக்கு வெள்ளன் சம்பந்தமா ஏதாவது புகார் இருக்கா?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_overdue",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 412,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2632,
+   "handed": 915,
+   "ackMark": 825,
+   "finding": 2632,
+   "answerEnd": 19532,
+   "screen": null,
+   "vadEnd": 407,
+   "transcribed": 796,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -147,
+    "at": {
+     "voicedEnd": -147,
+     "eou": 407,
+     "uploadSent": 411,
+     "sttSent": 414,
+     "sttBack": 772,
+     "hearBack": 796,
+     "gateDone": 825,
+     "firstEvent": 876,
+     "toolsDone": 871,
+     "speakCalled": 910,
+     "voiceStart": 2632
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "எந்தத் துறைக்கு அதிகமா தாமதமான வழக்குகள் இருக்கு?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_teynampet",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 389,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2838,
+   "handed": 852,
+   "ackMark": 773,
+   "finding": 2838,
+   "answerEnd": 18166,
+   "screen": null,
+   "vadEnd": 384,
+   "transcribed": 759,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -124,
+    "at": {
+     "voicedEnd": -124,
+     "eou": 384,
+     "uploadSent": 387,
+     "sttSent": 400,
+     "sttBack": 739,
+     "hearBack": 759,
+     "gateDone": 773,
+     "firstEvent": 821,
+     "speakCalled": 845,
+     "toolsDone": 805,
+     "voiceStart": 2838
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "தேனாம்பேட்டை இந்த வாரம் எப்படி இருக்கு?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_annanagar",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 419,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 3521,
+   "handed": 1739,
+   "ackMark": 847,
+   "finding": 3521,
+   "answerEnd": 23241,
+   "screen": null,
+   "vadEnd": 413,
+   "transcribed": 825,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -39,
+    "at": {
+     "voicedEnd": -39,
+     "eou": 413,
+     "uploadSent": 416,
+     "sttSent": 429,
+     "sttBack": 804,
+     "hearBack": 825,
+     "gateDone": 847,
+     "firstEvent": 907,
+     "speakCalled": 1732,
+     "plannerSent": 892,
+     "plannerBack": 1676,
+     "toolsDone": 1703,
+     "voiceStart": 3521
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "அண்ணா நகரில முக்கியமான பிரச்சினைகள் என்ன?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2769,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_kodambakkam",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 407,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2395,
+   "handed": 2903,
+   "ackMark": 881,
+   "finding": 4318,
+   "answerEnd": 28093,
+   "screen": null,
+   "vadEnd": 402,
+   "transcribed": 857,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": -22,
+    "at": {
+     "voicedEnd": -22,
+     "eou": 402,
+     "uploadSent": 404,
+     "sttSent": 418,
+     "sttBack": 839,
+     "hearBack": 857,
+     "gateDone": 881,
+     "firstEvent": 959,
+     "speakCalled": 2895,
+     "plannerSent": 929,
+     "plannerBack": 2450,
+     "toolsDone": 2869,
+     "voiceStart": 4318
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "கோடம் பக்கத்தில் இன்று ஏதாவது சீரியஸா இருக்கா ?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4656,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_changed",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 390,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 6363,
+   "handed": 2539,
+   "ackMark": 788,
+   "finding": 6363,
+   "answerEnd": 32183,
+   "screen": null,
+   "vadEnd": 384,
+   "transcribed": 774,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 37,
+    "at": {
+     "voicedEnd": 37,
+     "eou": 384,
+     "uploadSent": 387,
+     "sttSent": 399,
+     "sttBack": 753,
+     "hearBack": 774,
+     "gateDone": 788,
+     "firstEvent": 1300,
+     "speakCalled": 2532,
+     "plannerSent": 837,
+     "plannerBack": 2074,
+     "toolsDone": 2506,
+     "voiceStart": 6363
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "நேத்திலிருந்து என்ன மாதிரி இருக்கு?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2774,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_attention",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 386,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": 381,
+   "transcribed": 783,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 50,
+    "at": {
+     "voicedEnd": 50,
+     "eou": 381,
+     "uploadSent": 383,
+     "sttSent": 396,
+     "sttBack": 763,
+     "hearBack": 783
+    }
+   },
+   "voices": [],
+   "heard": "",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2774,
+   "path": "browser"
+  },
+  {
+   "clip": "q_ta_tondiarpet",
+   "kind": "q",
+   "lang": "ta",
+   "firstSound": 392,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3428,
+   "handed": 1776,
+   "ackMark": 840,
+   "finding": 3428,
+   "answerEnd": 10990,
+   "screen": null,
+   "vadEnd": 387,
+   "transcribed": 807,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 55,
+    "at": {
+     "voicedEnd": 55,
+     "eou": 387,
+     "uploadSent": 390,
+     "sttSent": 404,
+     "sttBack": 787,
+     "hearBack": 807,
+     "gateDone": 840,
+     "firstEvent": 908,
+     "speakCalled": 1767,
+     "plannerSent": 902,
+     "plannerBack": 1715,
+     "toolsDone": 1747,
+     "voiceStart": 3428
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "Thanday-Yar-Petheil, Kđđivinir-Pukharikall, Eppiddi, Erukku?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2800,
+   "path": "browser"
+  }
+ ]
+}

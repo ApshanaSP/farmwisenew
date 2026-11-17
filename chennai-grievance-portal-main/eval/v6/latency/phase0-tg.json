@@ -1,0 +1,499 @@
+{
+ "tag": "phase0",
+ "part": "tg",
+ "at": "2026-11-17T07:07:19.718Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "q_tg_adyar",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 406,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2195,
+   "handed": 942,
+   "ackMark": 849,
+   "finding": 2195,
+   "answerEnd": 28136,
+   "screen": null,
+   "vadEnd": 400,
+   "transcribed": 830,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 69,
+    "at": {
+     "voicedEnd": 69,
+     "eou": 400,
+     "uploadSent": 403,
+     "sttSent": 495,
+     "sttBack": 805,
+     "hearBack": 830,
+     "gateDone": 849,
+     "firstEvent": 910,
+     "speakCalled": 937,
+     "toolsDone": 890,
+     "voiceStart": 2195
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "Ađயாரல, today worst case, яду?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_velachery",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 412,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2654,
+   "handed": 996,
+   "ackMark": 875,
+   "finding": 2654,
+   "answerEnd": 28143,
+   "screen": null,
+   "vadEnd": 407,
+   "transcribed": 854,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 65,
+    "at": {
+     "voicedEnd": 65,
+     "eou": 407,
+     "uploadSent": 410,
+     "sttSent": 414,
+     "sttBack": 831,
+     "hearBack": 854,
+     "gateDone": 875,
+     "firstEvent": 965,
+     "speakCalled": 986,
+     "toolsDone": 929,
+     "voiceStart": 2654
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "விலைச்சிரியில் severe cases எத்தனை open ஆருக்கு?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_zoneweek",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 388,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3499,
+   "handed": 1710,
+   "ackMark": 794,
+   "finding": 3499,
+   "answerEnd": 15328,
+   "screen": null,
+   "vadEnd": 383,
+   "transcribed": 768,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 41,
+    "at": {
+     "voicedEnd": 41,
+     "eou": 383,
+     "uploadSent": 385,
+     "sttSent": 394,
+     "sttBack": 747,
+     "hearBack": 768,
+     "gateDone": 794,
+     "firstEvent": 863,
+     "speakCalled": 1703,
+     "plannerSent": 846,
+     "plannerBack": 1647,
+     "toolsDone": 1684,
+     "voiceStart": 3499
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "இந்த வீக் எந்த ஜோன்ல கம்ப்பலைன்ஸ் அதிகம்?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2769,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_royapuram",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 403,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 7578,
+   "handed": 5272,
+   "ackMark": 831,
+   "finding": 7578,
+   "answerEnd": 30842,
+   "screen": null,
+   "vadEnd": 398,
+   "transcribed": 809,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 67,
+    "at": {
+     "voicedEnd": 67,
+     "eou": 398,
+     "uploadSent": 400,
+     "sttSent": 404,
+     "sttBack": 791,
+     "hearBack": 809,
+     "gateDone": 830,
+     "firstEvent": 914,
+     "speakCalled": 5265,
+     "plannerSent": 871,
+     "plannerBack": 2308,
+     "toolsDone": 5237,
+     "voiceStart": 7578
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "ராயபுரம்ல இப்போ என்ன சிட்டுவேஷன்?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4636,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_perungudi",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 405,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3128,
+   "handed": 1901,
+   "ackMark": 953,
+   "finding": 3128,
+   "answerEnd": 5745,
+   "screen": null,
+   "vadEnd": 400,
+   "transcribed": 926,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 58,
+    "at": {
+     "voicedEnd": 58,
+     "eou": 400,
+     "uploadSent": 402,
+     "sttSent": 416,
+     "sttBack": 901,
+     "hearBack": 926,
+     "gateDone": 953,
+     "firstEvent": 998,
+     "plannerSent": 991,
+     "plannerBack": 1827,
+     "toolsDone": 1836,
+     "speakCalled": 1890,
+     "voiceStart": 3128
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "பெருங்குடில் ஏதாவது தொடர்பு விரும்பு விரும்புகள் இருக்கின்றன?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2820,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_overdue",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 386,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2740,
+   "handed": 1667,
+   "ackMark": 753,
+   "finding": 2740,
+   "answerEnd": 9042,
+   "screen": null,
+   "vadEnd": 381,
+   "transcribed": 732,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 49,
+    "at": {
+     "voicedEnd": 49,
+     "eou": 381,
+     "uploadSent": 385,
+     "sttSent": 398,
+     "sttBack": 714,
+     "hearBack": 732,
+     "gateDone": 753,
+     "firstEvent": 821,
+     "plannerSent": 807,
+     "plannerBack": 1624,
+     "toolsDone": 1628,
+     "speakCalled": 1658,
+     "voiceStart": 2740
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "எந்த departmentல overdue cases அதிகும்?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4554,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_teynampet",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 373,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 7594,
+   "handed": 5115,
+   "ackMark": 774,
+   "finding": 7594,
+   "answerEnd": 38149,
+   "screen": null,
+   "vadEnd": 368,
+   "transcribed": 756,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 46,
+    "at": {
+     "voicedEnd": 46,
+     "eou": 368,
+     "uploadSent": 370,
+     "sttSent": 384,
+     "sttBack": 738,
+     "hearBack": 756,
+     "gateDone": 774,
+     "firstEvent": 818,
+     "speakCalled": 5104,
+     "plannerSent": 811,
+     "plannerBack": 2185,
+     "toolsDone": 5064,
+     "voiceStart": 7594
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "தைனேம்பேட்டை இந்த வீக் எப்படி இருக்க?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2765,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_annanagar",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 393,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2867,
+   "handed": 2507,
+   "ackMark": 823,
+   "finding": 2867,
+   "answerEnd": 13988,
+   "screen": null,
+   "vadEnd": 388,
+   "transcribed": 803,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 46,
+    "at": {
+     "voicedEnd": 46,
+     "eou": 388,
+     "uploadSent": 390,
+     "sttSent": 402,
+     "sttBack": 782,
+     "hearBack": 803,
+     "gateDone": 823,
+     "firstEvent": 866,
+     "speakCalled": 2502,
+     "plannerSent": 857,
+     "plannerBack": 2476,
+     "toolsDone": 2488,
+     "voiceStart": 2867
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "அண்ணா நகரில் டாப் பிராப்பில்லை என்ன?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4603,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_kodambakkam",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 407,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2825,
+   "handed": 2124,
+   "ackMark": 845,
+   "finding": 2825,
+   "answerEnd": 7868,
+   "screen": null,
+   "vadEnd": 401,
+   "transcribed": 833,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 69,
+    "at": {
+     "voicedEnd": 69,
+     "eou": 401,
+     "uploadSent": 405,
+     "sttSent": 417,
+     "sttBack": 810,
+     "hearBack": 833,
+     "gateDone": 845,
+     "firstEvent": 905,
+     "speakCalled": 2118,
+     "plannerSent": 889,
+     "plannerBack": 2008,
+     "toolsDone": 2114,
+     "voiceStart": 2825
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "Kodam-Bakketthil-Today-Yethaavudu serious-awai irikaa?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2274,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_changed",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 404,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 4103,
+   "handed": 2676,
+   "ackMark": 802,
+   "finding": 4103,
+   "answerEnd": 28348,
+   "screen": null,
+   "vadEnd": 399,
+   "transcribed": 787,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 57,
+    "at": {
+     "voicedEnd": 57,
+     "eou": 399,
+     "uploadSent": 401,
+     "sttSent": 414,
+     "sttBack": 766,
+     "hearBack": 787,
+     "gateDone": 802,
+     "firstEvent": 1051,
+     "speakCalled": 2670,
+     "plannerSent": 874,
+     "plannerBack": 2464,
+     "toolsDone": 2649,
+     "voiceStart": 4103
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "yesterdayலருந்து என்ன change ஆகிறுக்கு?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4578,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_attention",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 410,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": 405,
+   "transcribed": 1250,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 63,
+    "at": {
+     "voicedEnd": 63,
+     "eou": 405,
+     "uploadSent": 408,
+     "sttSent": 421,
+     "sttBack": 1230,
+     "hearBack": 1250
+    }
+   },
+   "voices": [],
+   "heard": "",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4578,
+   "path": "browser"
+  },
+  {
+   "clip": "q_tg_tondiarpet",
+   "kind": "q",
+   "lang": "tanglish",
+   "firstSound": 398,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3166,
+   "handed": 1776,
+   "ackMark": 921,
+   "finding": 3166,
+   "answerEnd": 6197,
+   "screen": null,
+   "vadEnd": 393,
+   "transcribed": 895,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 72,
+    "at": {
+     "voicedEnd": 72,
+     "eou": 393,
+     "uploadSent": 396,
+     "sttSent": 409,
+     "sttBack": 872,
+     "hearBack": 895,
+     "gateDone": 920,
+     "firstEvent": 982,
+     "speakCalled": 1770,
+     "plannerSent": 974,
+     "plannerBack": 1739,
+     "toolsDone": 1757,
+     "voiceStart": 3166
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "26 பேட்டில் சூவேஜ் கம்ப்பியன் ச்தேடுஸ் எந்த்?",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2788,
+   "path": "browser"
+  }
+ ]
+}

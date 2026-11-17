@@ -1,0 +1,41 @@
+{
+ "tag": "smoke",
+ "part": "cmd",
+ "at": "2026-11-17T06:28:27.483Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "cmd_trends",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 450,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": null,
+   "finding": null,
+   "ackMark": null,
+   "answerEnd": null,
+   "screen": 1190,
+   "vadEnd": 444,
+   "transcribed": 793,
+   "trace": {
+    "lane": "rules",
+    "zeroVsTrue": 102,
+    "at": {
+     "voicedEnd": 102,
+     "eou": 444,
+     "uploadSent": 448,
+     "sttSent": 461,
+     "sttBack": 774,
+     "hearBack": 793,
+     "gateDone": 831
+    }
+   },
+   "voices": [],
+   "heard": "Go to trends.",
+   "provider": null,
+   "tokens": null,
+   "path": null
+  }
+ ]
+}
