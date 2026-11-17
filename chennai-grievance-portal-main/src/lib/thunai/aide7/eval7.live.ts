@@ -25,6 +25,7 @@ import path from "path";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import { newsDoc } from "@/lib/collector/intel";
+import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { generateJson } from "@/lib/ai/gateway";
 import { serverHands } from "../data";
 import { ledger } from "../ledger";
@@ -185,8 +186,11 @@ it.runIf(MODE === "run")("run: v7 and v6 answers, live on the free ladder", asyn
   console.log(`[aide7] ${SET} ${list.length} questions; Groq left today about ${groqLeft} tokens`);
   // a smoke test of at most three questions may run on Gemini flash-lite alone (the ladder's last rung) when Groq's day is spent
   const lite = ledger().room("gemini", "gemini-3.5-flash-lite", { tokens: 2500 }).ok;
-  if (groqLeft < list.length * 2500 && !(list.length <= 3 && lite)) throw new Error(`not enough Groq allowance for ${list.length} questions (${groqLeft} left): never fill a run with an estimate`);
-  if (groqLeft < list.length * 2500) console.log("[aide7] a smoke test on Gemini flash-lite (Groq's day is spent): not a measurement");
+  // Claude leading (the owner's run, JARVIS_LIVE_CLAUDE=1): Claude carries the run under the spend ceiling, Groq behind it
+  const claude = process.env.JARVIS_LIVE_CLAUDE === "1" && claudeConfigured();
+  if (claude) console.log(`[aide7] Claude ${claudeModel()} leads (ceiling US$${process.env.JARVIS_CLAUDE_BUDGET_USD ?? 5}), Groq behind it`);
+  if (!claude && groqLeft < list.length * 2500 && !(list.length <= 3 && lite)) throw new Error(`not enough Groq allowance for ${list.length} questions (${groqLeft} left): never fill a run with an estimate`);
+  if (!claude && groqLeft < list.length * 2500) console.log("[aide7] a smoke test on Gemini flash-lite (Groq's day is spent): not a measurement");
   const c = await context();
   const rows: Row[] = fs.existsSync(OUT) ? (JSON.parse(fs.readFileSync(OUT, "utf8")) as { rows: Row[] }).rows.filter((r) => !list.some((x) => x.id === r.id)) : [];
   // V6=all: v6 answered live too (its planner turns cost Groq); V6=code: v6 only where its answer is code's (no model; its planner turns are left
