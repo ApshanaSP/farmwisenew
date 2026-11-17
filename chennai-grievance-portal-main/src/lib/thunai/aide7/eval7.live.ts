@@ -15,8 +15,9 @@
 process.env.AWS_STORE_DRY_RUN = "1";
 process.env.AWS_STORE_RELOAD_MINUTES = "100000";
 process.env.AWS_DURABLE_FILE ??= "data/aws-cache/dryrun-spec/durable.sqlite";
-// this build never calls Claude: the owner tests it later
-process.env.JARVIS_CLAUDE_OFF = "1";
+// this build never calls Claude (the owner tests it later): Claude is off unless the owner's run sets JARVIS_LIVE_CLAUDE=1 (then Haiku 5.5
+// leads the writer and the planner, under the US$5 ceiling)
+if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
 process.env.AI_PROVIDER = "none";
 import { createHash } from "crypto";
 import fs from "fs";
@@ -42,7 +43,7 @@ import { newsAide } from "./news";
 import type { Written } from "./writer";
 
 groqOnly();
-process.env.JARVIS_CLAUDE_OFF = "1";
+if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
 const MODE = process.env.AIDE7 ?? "";
 const SET = (process.env.SET ?? "dev") as "dev" | "holdout";
 const TAG = process.env.TAG ?? "v7";
