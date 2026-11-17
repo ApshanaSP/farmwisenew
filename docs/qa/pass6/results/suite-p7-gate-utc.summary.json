@@ -4,13 +4,13 @@
   "seed": "7204",
   "config": "vitest.config.ts",
   "exit": 1,
-  "secs": 138,
-  "numTotalTests": 5914,
-  "numPassedTests": 5900,
+  "secs": 90,
+  "numTotalTests": 6132,
+  "numPassedTests": 6118,
   "numFailedTests": 1,
   "numPendingTests": 13,
   "numFailedTestSuites": 2,
   "failed": [
-    "src\\lib\\thunai\\stt.v4.test.ts :: no third racer (v5 B1) Whisper unsure of an engaged turn: only the two forced decodes are asked, and the race ends when they are back"
+    "src\\lib\\thunai\\firstsentence.v5.test.ts :: E4: the planner turn's first spoken sentence is code's, from the built screen the model's reply (with a figure of its own) is not what is said: the screen's own say is, and it passes the number gate"
   ]
 }

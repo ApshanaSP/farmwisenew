@@ -1,17 +1,17 @@
 {
- "generated": "2026-11-16T18:11:28.562Z",
+ "generated": "2026-11-17T11:27:52.611Z",
  "port": 3106,
- "routes": 129,
- "methods": 157,
- "cells": 1257,
+ "routes": 131,
+ "methods": 159,
+ "cells": 1272,
  "summary": {
-  "pass": 1255,
+  "pass": 1270,
   "skip": 0,
   "fail": 2
  },
  "denyProof": {
-  "denyPassing": 909,
-  "guard": 886,
+  "denyPassing": 923,
+  "guard": 900,
   "unproven": 23,
   "unprovenMethods": [
    "GET /api/collector/assistant/tools",
@@ -7651,6 +7651,113 @@
    "body": "{}"
   },
   {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "anonymous",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "citizenA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "officerA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "officerB",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "collector",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "allow",
+   "status": 400,
+   "verdict": "pass",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "manu",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "citizenA@officer-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "citizenA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/collector/thunai/news",
+   "method": "POST",
+   "identity": "officerA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
    "route": "/api/collector/thunai/plan",
    "method": "POST",
    "identity": "anonymous",
@@ -9502,6 +9609,78 @@
   },
   {
    "route": "/api/dev/thunai/mission",
+   "method": "POST",
+   "identity": "manu",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
+   "method": "POST",
+   "identity": "anonymous",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
+   "method": "POST",
+   "identity": "citizenA",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
+   "method": "POST",
+   "identity": "officerA",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
+   "method": "POST",
+   "identity": "officerB",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
+   "method": "POST",
+   "identity": "collector",
+   "rule": "dev",
+   "guard": "NODE_ENV production returns 404",
+   "expected": "deny",
+   "status": 404,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/dev/thunai/news",
    "method": "POST",
    "identity": "manu",
    "rule": "dev",
@@ -14238,7 +14417,7 @@
    "expected": "deny",
    "status": 200,
    "verdict": "fail",
-   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-17T06:11:28.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-16 23:41:28\",\"action\":\""
+   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-17T23:27:52.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-17 16:57:52\",\"action\":\""
   },
   {
    "route": "/api/auth/security",

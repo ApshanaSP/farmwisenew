@@ -1,0 +1,14 @@
+{
+  "tag": "v6-repro-7201",
+  "tz": "Asia/Kolkata",
+  "seed": "7201",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 67,
+  "numTotalTests": 6132,
+  "numPassedTests": 6119,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}
