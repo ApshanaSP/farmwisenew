@@ -21,6 +21,15 @@ export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number
 
 /** Claude is paid by the token: this is Jarvis's own ceiling on a day, not Anthropic's limit. On Opus 5.5 it comes to about US$8 at the very most */
 const CLAUDE_DAY: Limits = { rpm: 50, rpd: 500, tpm: 50_000, tpd: 1_500_000 };
+/**
+ * v7: that day cap was set against Opus's prices; on Haiku 5.5 it stops Claude at under US$0.10 of spend. JARVIS_CLAUDE_DAY_TOKENS and
+ * JARVIS_CLAUDE_DAY_REQUESTS raise it for a run (unset: the cap above). The owner's spend ceiling (claudebudget.ts) holds every call whatever.
+ */
+const claudeDayFlags = (): Limits => {
+  const n = (k: string) => { const v = Number(process.env[k]); return Number.isFinite(v) && v > 0 ? Math.floor(v) : null; };
+  const tpd = n("JARVIS_CLAUDE_DAY_TOKENS"), rpd = n("JARVIS_CLAUDE_DAY_REQUESTS");
+  return { ...(tpd ? { tpd } : {}), ...(rpd ? { rpd } : {}) };
+};
 
 export const LIMITS: Record<string, Limits> = {
   "anthropic/claude-opus-5-5": CLAUDE_DAY,
@@ -133,7 +142,10 @@ export class Ledger {
     if (!this.store) this.store = openSqlite() ?? new MemoryStore();
     return this.store;
   }
-  limit(org: Org, model: string): Limits { return this.limits[`${org}/${bareModel(model)}`] ?? {}; }
+  limit(org: Org, model: string): Limits {
+    const l = this.limits[`${org}/${bareModel(model)}`] ?? {};
+    return org === "anthropic" ? { ...l, ...claudeDayFlags() } : l;
+  }
 
   /** One call's spend. A Whisper request is billed at least its minimum (10 s), whatever the clip's length. */
   record(org: Org, model: string, u: { tokens?: number; audioS?: number; lane?: Lane; requests?: number } = {}) {
