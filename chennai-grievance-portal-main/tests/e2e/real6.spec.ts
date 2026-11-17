@@ -75,9 +75,14 @@ const init = (flags: Record<string, string> | null) => {
     s.start(when);
     return { startAt, endAt: startAt + endMs };
   };
-  // every sound the page itself starts (not this harness's own context)
-  const origStart = AudioScheduledSourceNode.prototype.start;
-  AudioScheduledSourceNode.prototype.start = function (this: AudioScheduledSourceNode, when?: number, ...rest: number[]) {
+  // every sound the page itself starts (not this harness's own context). AudioBufferSourceNode has its OWN start() (when, offset,
+  // duration), so it is hooked too: hooking the base class alone missed every PCM sound (found 17 Nov; the Phase 0 run saw tones and
+  // the browser's voices only, which was all it played: its answers spoke on Edge's natural voices)
+  for (const proto of [AudioScheduledSourceNode.prototype, AudioBufferSourceNode.prototype]) hookStart(proto);
+  function hookStart(proto: { start: (...a: number[]) => void }) {
+  if (!Object.prototype.hasOwnProperty.call(proto, "start")) return;
+  const origStart = proto.start;
+  proto.start = function (this: AudioScheduledSourceNode, when?: number, ...rest: number[]) {
     try {
       const ctx = this.context as AudioContext;
       if (ctx !== c) {
@@ -92,9 +97,10 @@ const init = (flags: Record<string, string> | null) => {
     } catch { /* never break the page */ }
     return (origStart as (w?: number, ...r: number[]) => void).call(this, when, ...rest);
   } as typeof origStart;
+  }
   const speak = speechSynthesis.speak.bind(speechSynthesis);
   speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
-    const rec = { queued: performance.now(), chars: (u.text || "").length, voice: u.voice?.name ?? null, lang: u.lang };
+    const rec = { queued: performance.now(), chars: (u.text || "").length, voice: u.voice?.name ?? null, lang: u.lang, volume: u.volume };
     u.addEventListener("start", () => W.__v6.audio.push({ ...rec, kind: "uttStart", at: performance.now() }));
     u.addEventListener("end", () => W.__v6.audio.push({ ...rec, kind: "uttEnd", at: performance.now() }));
     u.addEventListener("error", (e) => W.__v6.audio.push({ ...rec, kind: "uttErr", at: performance.now(), err: (e as SpeechSynthesisErrorEvent).error }));
@@ -164,7 +170,8 @@ async function settle(page: Page, end: number, maxMs: number, wantAnswer: boolea
 
 const rel = (x: number | undefined, end: number) => (x == null || !Number.isFinite(x) ? null : Math.round(x - end));
 function measure(s: S, end: number) {
-  const after = s.audio.filter((a) => (a.at as number) > end - 50);
+  // a silent utterance (volume 0: the v6 voice warm-up) is no sound
+  const after = s.audio.filter((a) => (a.at as number) > end - 50 && (a as { volume?: number }).volume !== 0);
   const sound = after.filter((a) => a.kind === "tone" || a.kind === "pcm" || a.kind === "uttStart").sort((a, b) => (a.at as number) - (b.at as number));
   const speech = after.filter((a) => a.kind === "pcm" || a.kind === "uttStart").sort((a, b) => (a.at as number) - (b.at as number));
   const ends = after.filter((a) => a.kind === "uttEnd" || a.kind === "pcmEnd").map((a) => a.at as number);
@@ -184,7 +191,9 @@ function measure(s: S, end: number) {
     vadEnd: rel(mark("vadEnd"), end), transcribed: rel(mark("transcribed"), end),
     trace: tr ? { lane: tr.lane, zeroVsTrue: Math.round(tr.zero - end), at: Object.fromEntries(Object.entries(tr.at).map(([k, v]) => [k, Math.round(v - end)])) } : null,
     voices: [...new Set(speech.map((a) => (a as { voice?: string }).voice ?? a.kind))],
-    heard: s.hud.ribbon, provider: s.hud.strip.provider, tokens: s.hud.strip.tokens, path: s.hud.strip.path
+    heard: s.hud.ribbon, provider: s.hud.strip.provider, tokens: s.hud.strip.tokens, path: s.hud.strip.path,
+    // the raw events, timed from the true end (kinds and times only), for diagnosis
+    events: [...s.audio.map((a) => `${a.kind}${(a as { volume?: number }).volume === 0 ? "(silent)" : ""}@${Math.round((a.at as number) - end)}`), ...s.marks.map((m) => `${m.name}@${Math.round(m.t - end)}`)]
   };
 }
 function save(part: string, rows: unknown[], extra: Record<string, unknown> = {}) {
@@ -192,7 +201,8 @@ function save(part: string, rows: unknown[], extra: Record<string, unknown> = {}
   fs.writeFileSync(path.join(OUT, `${TAG}-${part}.json`), JSON.stringify({ tag: TAG, part, at: new Date().toISOString(), note: "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices", flags: FLAGS, ...extra, rows }, null, 1));
 }
 
-const WAKES = Object.keys(META).filter((k) => META[k].kind === "wake");
+/** V6_WAKES="wake_zira,wake_mark": the wake clips to cycle (default: all eight: "Hi", "Hey", "Hello" and the Tamil one) */
+const WAKES = process.env.V6_WAKES ? process.env.V6_WAKES.split(",").filter((k) => META[k]) : Object.keys(META).filter((k) => META[k].kind === "wake");
 const of = (pre: string) => Object.keys(META).filter((k) => k.startsWith(pre));
 const CMDS = ["cmd_trends", "cmd_severe", "cmd_briefing", "cmd_annanagar", "cmd_weekly", "cmd_high", "cmd_env", "cmd_monthly", "cmd_studio", "cmd_overview", "cmd_taluks", "cmd_medium"].filter((k) => META[k]);
 
@@ -224,7 +234,7 @@ test("v6 real latency: open turns", async ({ page }) => {
   const wakeRows: unknown[] = [];
   const parts: [string, string[], boolean][] = [["cmd", CMDS, false], ["en", of("q_en_"), true], ["ta", of("q_ta_"), true], ["tg", of("q_tg_"), true]];
   if (PARTS.has("wake") && ![...PARTS].some((p) => p === "cmd" || p === "en" || p === "ta" || p === "tg")) {
-    for (let i = 0; i < 12; i++) { const r = await wakeThen(page, WAKES[i % WAKES.length], null, 0, 0, false); wakeRows.push(r.wakeRow); await page.waitForTimeout(21_000); }
+    for (let i = 0; i < Number(process.env.V6_N || 12); i++) { const r = await wakeThen(page, WAKES[i % WAKES.length], null, 0, 0, false); wakeRows.push(r.wakeRow); await page.waitForTimeout(21_000); }
   }
   let k = 0;
   for (const [part, clips, planner] of parts) {
@@ -248,14 +258,17 @@ test("v6 real latency: closed wake", async ({ page }) => {
   const rows: unknown[] = [];
   for (let i = 0; i < 12; i++) {
     const wake = WAKES[i % WAKES.length];
-    // the wake recogniser runs only while Jarvis is off; give it time to start (or restart after the last try)
-    await page.waitForTimeout(2500);
+    // the wake listeners run only while Jarvis is off; give them time to start (or restart after the last try: v6's on-device one loads its
+    // model in a fresh worker each time Jarvis closes)
+    await page.waitForTimeout(Number(process.env.V6_CLOSED_WAIT_MS || 6000));
     await reset(page);
     const w = await play(page, wake);
     await page.waitForTimeout(META[wake].durMs);
     let s = await state(page);
     for (let t = 0; t < 32 && s.st === "off" && !s.audio.some((a) => a.kind === "tone"); t++) { await page.waitForTimeout(250); s = await state(page); }
     const woke = s.st !== "off";
+    // the reply sounds as Jarvis opens: read the page again once it has had time to
+    if (woke) { await page.waitForTimeout(1500); s = await state(page); }
     rows.push({ clip: wake, kind: "wake-closed", woke, ...measure(s, w.endAt), sr: s.sr.map((x) => ({ at: Math.round(x.at - w.endAt), ev: x.ev })) });
     console.log(JSON.stringify({ wake, woke, firstSound: (rows.at(-1) as { firstSound: number | null }).firstSound, sr: s.sr.map((x) => `${Math.round(x.at - w.endAt)}:${x.ev}`).join(" ") }));
     if (woke) { await page.keyboard.press("Control+Shift+J"); await page.waitForFunction(() => (window as unknown as { __jv: { state(): string } }).__jv.state() === "off", null, { timeout: 10_000 }).catch(() => undefined); }
