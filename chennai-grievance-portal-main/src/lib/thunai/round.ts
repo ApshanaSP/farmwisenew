@@ -621,7 +621,8 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   if (o0.done && o0.result?.stage && aideWanted(o0.result, b.text, o0.lane, !!deps.aide)) {
     const o = await withAide(o0, b, world, rawHands, user, signal, deps, start, {
       ready: (stage) => send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage } }),
-      sentence: (text, lang) => send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang })
+      // each sentence with its own figures, checked on the server against its facts (a web report's figure is not on the screen sent first)
+      sentence: (text, lang) => send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang, figures: figuresIn(text).map((f) => f.value).filter(Number.isFinite) })
     });
     send({ ...ids, type: "RUN_FINISHED", out: o });
     return o;

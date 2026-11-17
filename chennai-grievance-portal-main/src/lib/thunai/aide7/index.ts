@@ -110,7 +110,9 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
       links = { kind: "NewsReader", id: "aide-gap", title: lang === "ta" ? "செய்திகளிலிருந்து" : "From the news", total: found.hits.length,
         items: found.hits.map((h, i) => ({ id: `gap-${i}`, title: h.title.slice(0, 300), source: h.outlet, t: h.at != null ? new Date(h.at).toISOString() : null, place: null, incidentId: null, url: h.url && /^https?:\/\//.test(h.url) ? h.url.slice(0, 2000) : null })) };
     } else {
-      const line = nothingLine(found?.phrase ?? gapPhrase(written.gap, ctx.question), lang);
+      // what was searched decides what is claimed: the dashboard and the latest news, the dashboard alone (no look-up), or the feeds unreadable
+      const searched = found?.status === "nothing" ? "news" : found?.status === "unavailable" ? "unavailable" : "dashboard";
+      const line = nothingLine(found?.phrase ?? gapPhrase(written.gap, ctx.question), lang, searched);
       emit(line);
       extra.push(line);
     }

@@ -136,7 +136,7 @@ interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] 
  * the first sentence, whether they are said as they come (the browser's own voice only: turnstream.ts queuesSentences); when not,
  * none of them was said, and the whole answer is said once at RUN_FINISHED
  */
-interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null; speaks?: boolean }
+interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null; speaks?: boolean; /** v7: each aide sentence's server-checked figures */ figs?: Map<string, number[]> }
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
@@ -1016,10 +1016,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * server's voice the words only show: each queued run would be its own speech request and could come back in another voice, so the
    * whole answer is said once, at RUN_FINISHED (showStage).
    */
-  const streamSay = (gen: number, text: string, lang: Lang) => {
+  const streamSay = (gen: number, text: string, lang: Lang, figures?: number[]) => {
     const sx = streamOf(gen);
     if (!sx || gen !== turnGen.current || !sx.screen) return;
     sx.said.push(text);
+    // v7: an aide sentence brings its own figures, each checked on the server against its facts (a web report's are not on the screen)
+    if (figures?.length && sx.screen.voice) (sx.figs ??= new Map()).set(text, figures);
     // the words show as they come; the turn's card in the conversation is written once, when the whole answer is in
     setReply(sx.said.join(" "));
     setStreaming(true);
@@ -1028,9 +1030,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!sx.queue) {
       const allowed = speakableFigures(sx.screen, lang), voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
       sx.queue = new SayQueue((t, end) => {
+        const own = sx.figs?.get(t);
+        const allow = own?.length ? new Set([...allowed, ...allowedSet(own)]) : allowed;
         // a real zone's label is its name, not a figure (zoneSafe, before the voice's own gate)
-        const z = zoneSafe([spoken(t)], allowed, zoneNos());
-        return speak(z.lines[0] || spoken(t), voiceLang, end, rate, voiceName, z.lines[0] ? z.allowed : allowed);
+        const z = zoneSafe([spoken(t)], allow, zoneNos());
+        return speak(z.lines[0] || spoken(t), voiceLang, end, rate, voiceName, z.lines[0] ? z.allowed : allow);
       }, () => gen === turnGen.current);
     }
     sx.queue.push(text);
@@ -1095,7 +1099,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           steps: runSteps,
           heard: (h) => { budget = budgetOf(h.budgetMs); const sx = streamOf(gen); if (sx) sx.lang = h.lang; },
           screen: (d) => streamScreen(gen, d),
-          sentence: (t, l) => streamSay(gen, t, l)
+          sentence: (t, l, f) => streamSay(gen, t, l, f)
         } });
         const j = r.out;
         if (!direct && !r.timeline) for (const [i, x] of (j.trace ?? []).entries()) hud.step({ id: `${turnId}-${round}-${i}`, label: x.label, state: x.ok ? "done" : "failed", ms: x.ms });

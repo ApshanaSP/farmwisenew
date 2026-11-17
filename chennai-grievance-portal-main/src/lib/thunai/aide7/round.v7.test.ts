@@ -45,6 +45,10 @@ describe("v7: the aide answers a question in the round, a command keeps its line
     const said = events.filter((e): e is Extract<TurnEvent, { type: "TEXT_MESSAGE_CONTENT" }> => e.type === "TEXT_MESSAGE_CONTENT").map((e) => e.delta);
     expect(said.join(" ")).toBe(o.result?.say);
     expect(said.at(-1)).toBe("Want the details?");
+    // each aide sentence carries its own server-checked figures (the browser's gate allows them for that sentence)
+    const texts = events.filter((e): e is Extract<TurnEvent, { type: "TEXT_MESSAGE_CONTENT" }> => e.type === "TEXT_MESSAGE_CONTENT");
+    expect(texts.every((e) => Array.isArray(e.figures))).toBe(true);
+    expect(texts.find((e) => /\d/.test(e.delta))?.figures?.length ?? 1).toBeGreaterThan(0);
     expect(said.join(" ")).not.toMatch(/\[F\d/);
     expect(o.result?.stage?.voice?.by).toBe("aide7");
     expect(o.result?.stage?.say.en).toBe(o.result?.say);

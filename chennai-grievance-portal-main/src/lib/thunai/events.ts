@@ -31,8 +31,11 @@ export type TurnEvent =
   /** console steps the plan runs before it looks again; how they went comes back as observations in the next round */
   | (Base & { type: "CUSTOM"; name: "steps"; value: { steps: Step[] } })
   | (Base & { type: "STATE_SNAPSHOT"; snapshot: { stage: StageDocT } })
-  /** one spoken sentence, filled from code's values and passed by the number gate on the server */
-  | (Base & { type: "TEXT_MESSAGE_CONTENT"; messageId: string; delta: string; lang: Lang })
+  /**
+   * one spoken sentence, filled from code's values and passed by the number gate on the server. `figures` (v7): the figures of an aide sentence,
+   * each checked on the server against the facts it cites (aide7/ground.ts); the browser's gate allows them for this sentence
+   */
+  | (Base & { type: "TEXT_MESSAGE_CONTENT"; messageId: string; delta: string; lang: Lang; figures?: number[] })
   /** the round's whole answer: what the JSON reply was ({ done, result, steps, trace, tokens, calls, hops, lane, cached }) */
   | (Base & { type: "RUN_FINISHED"; out: RoundOutWire })
   | (Base & { type: "RUN_ERROR"; message: string });

@@ -27,8 +27,8 @@ export interface RoundHooks {
   steps?: (steps: Step[]) => void;
   /** the screen, built by code: it can be shown now */
   screen?: (doc: StageDocT) => void;
-  /** one spoken sentence, filled and gated by code on the server (the browser gates it again as it speaks) */
-  sentence?: (text: string, lang: Lang) => void;
+  /** one spoken sentence, filled and gated by code on the server (the browser gates it again as it speaks); `figures` (v7): the server-checked figures of an aide sentence */
+  sentence?: (text: string, lang: Lang, figures?: number[]) => void;
   /** how the server read the sentence (and, from a v4 server, how long the turn may take: `budgetMs`) */
   heard?: (v: Extract<TurnEvent, { type: "CUSTOM"; name: "heard" }>["value"]) => void;
 }
@@ -86,7 +86,7 @@ export async function readRound(res: Response, o: { turnId: string; live: () => 
       case "STEP_STARTED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: "running", ms: null })); return;
       case "STEP_FINISHED": r.timeline = true; safe(() => h.step?.({ id: `${e.round}-${e.id}`, label: e.stepName, state: e.ok ? "done" : "failed", ms: Number.isFinite(e.ms) ? Math.round(e.ms) : null })); return;
       case "STATE_SNAPSHOT": if (e.snapshot?.stage) { r.screen = e.snapshot.stage; safe(() => h.screen?.(e.snapshot.stage)); } return;
-      case "TEXT_MESSAGE_CONTENT": if (e.delta?.trim()) { r.sentences.push(e.delta); safe(() => h.sentence?.(e.delta, e.lang)); } return;
+      case "TEXT_MESSAGE_CONTENT": if (e.delta?.trim()) { r.sentences.push(e.delta); safe(() => h.sentence?.(e.delta, e.lang, Array.isArray(e.figures) ? e.figures.filter((x) => typeof x === "number" && Number.isFinite(x)).slice(0, 20) : undefined)); } return;
       case "RUN_FINISHED": r.out = e.out; finished = true; stampEpoch(e.out?.timing, undefined, o.trace); return;
       case "RUN_ERROR": error = e.message || "The round failed."; return;
       case "CUSTOM":

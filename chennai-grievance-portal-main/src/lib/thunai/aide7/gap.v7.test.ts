@@ -45,7 +45,7 @@ describe("v7: the part the dashboard does not hold", () => {
     const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS },
       dashboardNews: async () => [], feeds: async () => [{ outlet: "DT Next", outletTa: null, title: "Metro work on OMR delayed", url: "https://dtnext.in/y", at: NOW, from: "web" }] });
     expect(a.gap?.status).toBe("nothing");
-    expect(a.result.say).toContain("Nothing in the dashboard or today's news mentions CM Vijay visiting.");
+    expect(a.result.say).toContain("Nothing in the dashboard or the latest news mentions CM Vijay visiting.");
     expect(a.result.say).not.toMatch(/Friday|Metro/);
   });
   it("the dashboard's own news first: the web is not read when it has the report", async () => {
@@ -56,7 +56,24 @@ describe("v7: the part the dashboard does not hold", () => {
     expect(a.gap?.hits[0].from).toBe("dashboard");
     expect(fed).toBe(false);
   });
-  it("Tamil: the nothing line", () => {
-    expect(nothingLine("முதல்வர் வருகை", "ta")).toBe("முதல்வர் வருகை பற்றி டாஷ்போர்டிலும் இன்றைய செய்திகளிலும் எதுவும் இல்லை.");
+  it("the nothing line says only what was searched", () => {
+    expect(nothingLine("முதல்வர் வருகை", "ta", "news")).toBe("முதல்வர் வருகை பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+    expect(nothingLine("CM Vijay visiting", "en", "dashboard")).toBe("The dashboard has nothing on CM Vijay visiting.");
+    expect(nothingLine("CM Vijay visiting", "en", "unavailable")).toBe("The dashboard has nothing on CM Vijay visiting, and the news feeds could not be read just now.");
+  });
+  it("no web search (switched off): the line claims only the dashboard", async () => {
+    const prev = process.env.JARVIS_AIDE_WEB;
+    process.env.JARVIS_AIDE_WEB = "0";
+    try {
+      const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS } });
+      expect(a.result.say).toContain("The dashboard has nothing on CM Vijay visiting.");
+      expect(a.result.say).not.toMatch(/news mentions/);
+    } finally { if (prev == null) delete process.env.JARVIS_AIDE_WEB; else process.env.JARVIS_AIDE_WEB = prev; }
+  });
+  it("the feeds could not be read: said so, never 'nothing in the news'", async () => {
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS },
+      dashboardNews: async () => [], feeds: async () => { throw new Error("feeds unavailable"); } });
+    expect(a.gap?.status).toBe("unavailable");
+    expect(a.result.say).toContain("could not be read just now");
   });
 });

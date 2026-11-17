@@ -225,7 +225,7 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
     // the checker again, on every sentence the model wrote and was said (the fallback is the recipe's own line, code-written: not re-checked)
     let bad = 0;
     if (r.v7.by === "model") for (const s of r.v7.said) {
-      if (/^Nothing in the dashboard|டாஷ்போர்டிலும் இன்றைய செய்திகளிலும்/u.test(s)) continue;
+      if (/^Nothing in the dashboard|^The dashboard has nothing|டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும்|டாஷ்போர்டில் எதுவும் இல்லை/u.test(s)) continue;
       tally.sentences++;
       // the sentence was said without its fact marks: checked against every fact (a looser test than the live one, which binds to the cited facts)
       const ids = sheet.facts.map((f) => f.id).join(",");
@@ -240,7 +240,7 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
     if (r.kind === "outside") {
       tally.outside.n++;
       if (r.v7.gapStatus === "ok") tally.outside.found++;
-      else if (r.v7.gapStatus === "nothing" || /^Nothing in the dashboard|எதுவும் இல்லை/u.test(all)) tally.outside.abstained++;
+      else if (r.v7.gapStatus === "nothing" || r.v7.gapStatus === "unavailable" || /Nothing in the dashboard|The dashboard has nothing|எதுவும் இல்லை/u.test(all)) tally.outside.abstained++;
     }
     tally.v6Lines += r.v6.said.length;
   }

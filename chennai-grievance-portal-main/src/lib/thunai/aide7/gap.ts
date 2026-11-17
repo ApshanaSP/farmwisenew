@@ -51,10 +51,12 @@ export function matches(text: string, words: string[], question: string): boolea
 const defaultFeeds = (o: WebDeps = {}) => async (): Promise<GapHit[]> => {
   const list = listOf(o);
   const reads = await Promise.all(list.outlets.flatMap((out) => out.feeds.map((f) => readFeed(out, f, o).then((r) => ({ out, r })).catch(() => null))));
+  // not one feed read: the news could not be searched (never "nothing in the news")
+  if (!reads.some((x) => x?.r.status === "ok")) throw new Error("no news feed could be read");
   return reads.flatMap((x) => (x ? x.r.entries.map((e) => ({ outlet: x.out.name, outletTa: x.out.nameTa, title: `${e.title}${e.snippet ? ` . ${e.snippet}` : ""}`, url: e.url, at: e.publishedAt, from: "web" as const })) : []));
 };
 
-export interface GapFound { status: "ok" | "nothing" | "no-words"; words: string[]; hits: GapHit[]; ms: number; /** the gap in the question's own words and casing */ phrase: string }
+export interface GapFound { status: "ok" | "nothing" | "no-words" | "unavailable"; words: string[]; hits: GapHit[]; ms: number; /** the gap in the question's own words and casing */ phrase: string }
 
 /** The gap as the Collector said it: the question's own words (their casing kept) that the gap names, in the question's order */
 export function gapPhrase(gap: string, question: string): string {
@@ -74,8 +76,9 @@ export async function findGap(gap: string, question: string, d: GapDeps = {}): P
   const pick = (hs: GapHit[]) => hs.filter((h) => fresh(h) && !injectionLike(h.title) && matches(h.title, words, question)).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 3);
   const own = d.dashboardNews ? pick(await d.dashboardNews(words).catch(() => [])) : [];
   if (own.length) return { status: "ok", words, hits: own, ms: Date.now() - t0, phrase };
-  const web = pick(await (d.feeds ?? defaultFeeds(d.web))().catch(() => []));
-  return { status: web.length ? "ok" : "nothing", words, hits: web, ms: Date.now() - t0, phrase };
+  let read = true;
+  const web = pick(await (d.feeds ?? defaultFeeds(d.web))().catch(() => { read = false; return [] as GapHit[]; }));
+  return { status: web.length ? "ok" : read ? "nothing" : "unavailable", words, hits: web, ms: Date.now() - t0, phrase };
 }
 
 /** The reports found, as facts (their headline is what the outlet said, said as such) */
@@ -88,10 +91,18 @@ export function gapFacts(hits: GapHit[], now: number, first = 1): Fact7[] {
   });
 }
 
-/** Nothing found: said plainly, the gap in the Collector's own words (never the model's) */
-export function nothingLine(phrase: string, lang: Lang): string {
+/**
+ * Nothing found: said plainly, the gap in the Collector's own words (never the model's), and claiming only what was searched: the dashboard and
+ * the latest news ("news"), the dashboard alone (the look-up off or out of time, "dashboard"), or the dashboard with the feeds unreadable.
+ */
+export function nothingLine(phrase: string, lang: Lang, searched: "news" | "dashboard" | "unavailable" = "news"): string {
   const what = phrase.trim();
-  return lang === "ta"
-    ? `${what ? `${what} பற்றி ` : "அதைப் பற்றி "}டாஷ்போர்டிலும் இன்றைய செய்திகளிலும் எதுவும் இல்லை.`
-    : `Nothing in the dashboard or today's news mentions ${what || "that"}.`;
+  if (lang === "ta") {
+    const about = what ? `${what} பற்றி ` : "அதைப் பற்றி ";
+    return searched === "news" ? `${about}டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.`
+      : searched === "unavailable" ? `${about}டாஷ்போர்டில் எதுவும் இல்லை; செய்தி ஊட்டங்களை இப்போது படிக்க முடியவில்லை.` : `${about}டாஷ்போர்டில் எதுவும் இல்லை.`;
+  }
+  const it = what || "that";
+  return searched === "news" ? `Nothing in the dashboard or the latest news mentions ${it}.`
+    : searched === "unavailable" ? `The dashboard has nothing on ${it}, and the news feeds could not be read just now.` : `The dashboard has nothing on ${it}.`;
 }
