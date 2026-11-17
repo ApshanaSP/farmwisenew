@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { defineConfig } from "vitest/config";
 
@@ -14,6 +15,8 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "tests/qa/pass7/**/*.test.ts"],
     exclude: ["**/node_modules/**", "src/lib/studio/connectors.test.ts", "src/lib/studio/outcomes.test.ts"],
     environment: "node", testTimeout: 15_000,
-    env: { ...Object.fromEntries(blank.map((k) => [k, ""])), AWS_STORE_DRY_RUN: "1", SMS_MODE: "off", EMAIL_MODE: "sandbox" }
+    env: { ...Object.fromEntries(blank.map((k) => [k, ""])), AWS_STORE_DRY_RUN: "1", SMS_MODE: "off", EMAIL_MODE: "sandbox",
+      // v6: mocked Claude calls' pretend costs go to a temporary spend record, never the owner's real one
+      JARVIS_CLAUDE_BUDGET_FILE: path.join(os.tmpdir(), `jv-claude-budget-test-${process.pid}.sqlite`) }
   }
 });
