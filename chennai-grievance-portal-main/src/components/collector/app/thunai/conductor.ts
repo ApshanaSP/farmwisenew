@@ -64,7 +64,8 @@ const strictAudioGate = () => process.env.NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE =
 /** v5 (E2): NEXT_PUBLIC_JARVIS_EARLY_STT=1 sends a sentence at its pause; anything else (unset too) sends every sentence at its end, as before */
 // E2 ships OFF: in the second real run (16 Nov, Edge, synthetic English clips) two clips that Whisper's race reads right whole came
 // back as Tamil when their early upload was used, and right in the run before E2; until the real-room check clears it, "1" turns it on
-const earlyStt = () => process.env.NEXT_PUBLIC_JARVIS_EARLY_STT === "1";
+// (v6: read through flag(), so a measuring build can turn it on per run: window.__jvFlags; a normal build reads the env only)
+const earlyStt = () => flag("NEXT_PUBLIC_JARVIS_EARLY_STT", process.env.NEXT_PUBLIC_JARVIS_EARLY_STT) === "1";
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 /**
@@ -421,7 +422,9 @@ export class Conductor {
     const endsInNoun = !r.sure && r.districtNoun && tails(t).some((x) => this.h.rules(x).districtNoun);
     const end = eouFor(t, { sure: r.sure, endsInNoun });
     this.eou = end.why;
-    this.ears?.endAfter(end.ms);
+    // v6: only an open ending ("show Adyar and") lengthens the sentence; a complete or neutral one (300 ms, the detector's own value)
+    // leaves the detector its own choice, so a short command still ends at the short end (vad.ts shortEouMs) with the captions running
+    this.ears?.endAfter(end.why === "open" ? end.ms : null);
   }
 
   private noteOnset() {

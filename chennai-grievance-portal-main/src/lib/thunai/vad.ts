@@ -64,6 +64,17 @@ export function shortEouMs(v: string | undefined = flag("NEXT_PUBLIC_JARVIS_SHOR
   return Number.isFinite(n) && n >= 0 ? Math.min(n, TUNING.endOfUtteranceMs) : TUNING.shortEouMs;
 }
 
+/** v6: how much speech still counts as a short sentence, ms (TUNING.shortUtteranceMs, or NEXT_PUBLIC_JARVIS_SHORT_UTT_MS, 0-4000) */
+export function shortUtteranceMs(v: string | undefined = flag("NEXT_PUBLIC_JARVIS_SHORT_UTT_MS", process.env.NEXT_PUBLIC_JARVIS_SHORT_UTT_MS)): number {
+  const n = v == null || v.trim() === "" ? NaN : Number(v);
+  return Number.isFinite(n) && n >= 0 && n <= 4000 ? n : TUNING.shortUtteranceMs;
+}
+/** v6: any other sentence's end-of-utterance quiet, ms (TUNING.endOfUtteranceMs, or NEXT_PUBLIC_JARVIS_EOU_MS, 150-1000) */
+export function eouBaseMs(v: string | undefined = flag("NEXT_PUBLIC_JARVIS_EOU_MS", process.env.NEXT_PUBLIC_JARVIS_EOU_MS)): number {
+  const n = v == null || v.trim() === "" ? NaN : Number(v);
+  return Number.isFinite(n) && n >= 150 && n <= 1000 ? n : TUNING.endOfUtteranceMs;
+}
+
 export interface VadOpts {
   /** frame length, ms */
   frameMs: number;
@@ -216,8 +227,10 @@ export class ProbVad {
     if (p >= (echo ? o.echoPos : o.neg)) this.strong += o.frameMs;
     const len = at - this.startAt;
     // v6: a short sentence ends sooner (shortEou), unless its live words set its end or a hold made it longer
-    const shortEou = this.eou == null && !this.extraMs && len - this.quietMs < TUNING.shortUtteranceMs ? shortEouMs() : 0;
-    if (this.quietMs >= (this.eou ?? (shortEou || o.hangoverMs)) + this.extraMs || len >= o.maxSpeechMs) {
+    const shortEou = this.eou == null && !this.extraMs && len - this.quietMs < shortUtteranceMs() ? shortEouMs() : 0;
+    // the default hangover follows NEXT_PUBLIC_JARVIS_EOU_MS (a measuring build sets it per run); a VAD made with its own keeps that
+    const base = o.hangoverMs === TUNING.endOfUtteranceMs ? eouBaseMs() : o.hangoverMs;
+    if (this.quietMs >= (this.eou ?? (shortEou || base)) + this.extraMs || len >= o.maxSpeechMs) {
       this.speaking = false;
       this.extraMs = 0;
       this.eou = null;

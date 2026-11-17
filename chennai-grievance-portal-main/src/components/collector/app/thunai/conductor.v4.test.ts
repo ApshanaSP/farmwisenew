@@ -168,10 +168,11 @@ describe("captions only while hearing, and the end of the sentence they decide",
     e.hooks.onVad({ type: "start", at: 1000 }, 0);
     c.partial("show Adyar and");
     expect(e.ends.at(-1)).toBe(650);
+    // v6: a whole command (or a neutral line) leaves the detector its own end: 300 ms, or the short sentence's shorter one (vad.ts)
     c.partial("show the severe cases");
-    expect(e.ends.at(-1)).toBe(300);
+    expect(e.ends.at(-1)).toBeNull();
     c.partial("what about Adyar");
-    expect(e.ends.at(-1)).toBe(300);
+    expect(e.ends.at(-1)).toBeNull();
     e.hooks.onVad({ type: "end", at: 2500, ms: 1200, short: false }, 0);
     const n = e.ends.length;
     c.partial("and then");

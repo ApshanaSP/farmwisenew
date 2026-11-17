@@ -63,7 +63,9 @@ const init = (flags: Record<string, string> | null) => {
     s.buffer = n; s.loop = true; s.connect(dest); s.start();
     return dest;
   };
-  W.__jarvisTestStream = async () => { await c.resume(); return ensure().stream; };
+  // a fresh track each time, as getUserMedia gives: the open ears stop their tracks when Jarvis closes (ears.ts stop), and the shared
+  // track stopped then fed the closed wake listener nothing (17 Nov v6a closed run: 1 wake of 12, the first, before any close)
+  W.__jarvisTestStream = async () => { await c.resume(); return new MediaStream(ensure().stream.getAudioTracks().map((t) => t.clone())); };
   W.__jvPlay = async (data: string, endMs: number) => {
     await c.resume();
     const dst = ensure();
@@ -100,7 +102,8 @@ const init = (flags: Record<string, string> | null) => {
   }
   const speak = speechSynthesis.speak.bind(speechSynthesis);
   speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
-    const rec = { queued: performance.now(), chars: (u.text || "").length, voice: u.voice?.name ?? null, lang: u.lang, volume: u.volume };
+    // head: the first words of what is said (Jarvis's own words), to tell the news turn's first line from its brief
+    const rec = { queued: performance.now(), chars: (u.text || "").length, head: (u.text || "").slice(0, 40), voice: u.voice?.name ?? null, lang: u.lang, volume: u.volume };
     u.addEventListener("start", () => W.__v6.audio.push({ ...rec, kind: "uttStart", at: performance.now() }));
     u.addEventListener("end", () => W.__v6.audio.push({ ...rec, kind: "uttEnd", at: performance.now() }));
     u.addEventListener("error", (e) => W.__v6.audio.push({ ...rec, kind: "uttErr", at: performance.now(), err: (e as SpeechSynthesisErrorEvent).error }));
@@ -193,7 +196,7 @@ function measure(s: S, end: number) {
     voices: [...new Set(speech.map((a) => (a as { voice?: string }).voice ?? a.kind))],
     heard: s.hud.ribbon, provider: s.hud.strip.provider, tokens: s.hud.strip.tokens, path: s.hud.strip.path,
     // the raw events, timed from the true end (kinds and times only), for diagnosis
-    events: [...s.audio.map((a) => `${a.kind}${(a as { volume?: number }).volume === 0 ? "(silent)" : ""}@${Math.round((a.at as number) - end)}`), ...s.marks.map((m) => `${m.name}@${Math.round(m.t - end)}`)]
+    events: [...s.audio.map((a) => `${a.kind}${(a as { volume?: number }).volume === 0 ? "(silent)" : ""}${a.kind === "uttStart" && (a as { head?: string }).head ? `[${String((a as { head?: string }).head).slice(0, 24).replace(/[@\]]/g, " ")}]` : ""}@${Math.round((a.at as number) - end)}`), ...s.marks.map((m) => `${m.name}@${Math.round(m.t - end)}`)]
   };
 }
 function save(part: string, rows: unknown[], extra: Record<string, unknown> = {}) {
@@ -203,7 +206,9 @@ function save(part: string, rows: unknown[], extra: Record<string, unknown> = {}
 
 /** V6_WAKES="wake_zira,wake_mark": the wake clips to cycle (default: all eight: "Hi", "Hey", "Hello" and the Tamil one) */
 const WAKES = process.env.V6_WAKES ? process.env.V6_WAKES.split(",").filter((k) => META[k]) : Object.keys(META).filter((k) => META[k].kind === "wake");
-const of = (pre: string) => Object.keys(META).filter((k) => k.startsWith(pre));
+/** V6_ONLY="q_en_royapuram,q_ta_teynampet": only these clips (a re-run of the place questions, which need no planner quota) */
+const ONLY = process.env.V6_ONLY ? new Set(process.env.V6_ONLY.split(",")) : null;
+const of = (pre: string) => Object.keys(META).filter((k) => k.startsWith(pre) && (!ONLY || ONLY.has(k)));
 const CMDS = ["cmd_trends", "cmd_severe", "cmd_briefing", "cmd_annanagar", "cmd_weekly", "cmd_high", "cmd_env", "cmd_monthly", "cmd_studio", "cmd_overview", "cmd_taluks", "cmd_medium"].filter((k) => META[k]);
 
 /** "Hi Jarvis" with Jarvis open and idle (b), then the clip inside the follow-up window */
@@ -249,6 +254,44 @@ test("v6 real latency: open turns", async ({ page }) => {
   }
   if (wakeRows.length) save("wake", wakeRows);
   expect(wakeRows.length).toBeGreaterThan(0);
+});
+
+/**
+ * v6 Phase 4, the news turn spoken (V6_PARTS=news): a news list typed on screen ("show me the latest news", then "stop" so its headlines
+ * are not read), then "Hey Jarvis" and "Read the Nth article." (each a different live article), and three public questions twice. Per
+ * row, besides the open-turn fields: the server's first line, the article's brief, the related coverage and the coverage brief in
+ * hand (marks), and when the voice started the first line and the brief (from each utterance's first words).
+ */
+test("v6 real latency: news", async ({ page }) => {
+  test.skip(!PARTS.has("news"), "part not asked for");
+  test.setTimeout(3_600_000);
+  await open(page);
+  await modeOn(page);
+  const ask = (t: string) => page.evaluate((x) => (window as unknown as { __jv: { ask(t: string): void } }).__jv.ask(x), t);
+  const rows: unknown[] = [];
+  const clips = of("news_").slice(0, LIMIT);
+  let k = 0;
+  for (const clip of clips) {
+    if (/^news_(read|ta_read)/.test(clip)) {
+      await ask("show me the latest news");
+      for (let t = 0; t < 40; t++) { await page.waitForTimeout(250); if (await page.locator(".st-news li").count()) break; }
+      await page.waitForTimeout(600);
+      await ask("stop");
+      await page.waitForTimeout(1200);
+    }
+    const r = await wakeThen(page, WAKES[k++ % WAKES.length], clip, 4000, 40_000, true);
+    const row = r.row as Record<string, unknown> & { events: string[] };
+    // the marks and utterances again, from the row's own raw events (kind@ms from the clip's end)
+    const at = (name: string) => { const e = row.events.find((x) => x.startsWith(`${name}@`)); return e ? Number(e.split("@")[1]) : null; };
+    // the voice: the first line's start, then the first utterance that is not it (the brief's first sentence)
+    const utt = row.events.filter((x) => x.startsWith("uttStart[")).map((x) => ({ head: x.slice(9, x.indexOf("]")), ms: Number(x.split("@").pop()) })).filter((x) => x.ms >= 0);
+    const firstLine = utt[0] ?? null, briefVoice = utt.find((x) => firstLine && x.head !== firstLine.head && !/^(Reading|Looking that up)/.test(x.head)) ?? null;
+    rows.push({ ...row, wake: r.wakeRow.firstSound, firstLineVoice: firstLine?.ms ?? null, briefVoice: briefVoice?.ms ?? null, newsFirst: at("newsFirst"), newsBrief: at("newsBrief"), newsRelated: at("newsRelated"), newsCoverage: at("newsCoverage"), newsDone: at("newsDone") });
+    console.log(JSON.stringify({ clip, heard: row.heard, firstSound: row.firstSound, newsFirst: at("newsFirst"), newsBrief: at("newsBrief"), newsCoverage: at("newsCoverage"), newsDone: at("newsDone") }));
+    await page.waitForTimeout(GAP);
+  }
+  save("news", rows);
+  expect(rows.length).toBeGreaterThan(0);
 });
 
 test("v6 real latency: closed wake", async ({ page }) => {

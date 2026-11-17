@@ -4,7 +4,7 @@
  * NEXT_PUBLIC_JARVIS_SHORT_EOU_MS=0 turns it off.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ProbVad, shortEouMs, TUNING } from "./vad";
+import { eouBaseMs, ProbVad, shortEouMs, shortUtteranceMs, TUNING } from "./vad";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -41,5 +41,21 @@ describe("v6: the short sentence's end", () => {
     vi.stubEnv("NEXT_PUBLIC_JARVIS_SHORT_EOU_MS", "0");
     const off = endAfter(new ProbVad(), 700)!;
     expect(off).toBeGreaterThanOrEqual(TUNING.endOfUtteranceMs);
+  });
+  it("NEXT_PUBLIC_JARVIS_SHORT_UTT_MS and NEXT_PUBLIC_JARVIS_EOU_MS (measuring knobs): unset is as before; out of range is ignored", () => {
+    expect(shortUtteranceMs(undefined)).toBe(TUNING.shortUtteranceMs);
+    expect(shortUtteranceMs("1800")).toBe(1800);
+    expect(shortUtteranceMs("9000")).toBe(TUNING.shortUtteranceMs);
+    expect(eouBaseMs(undefined)).toBe(TUNING.endOfUtteranceMs);
+    expect(eouBaseMs("250")).toBe(250);
+    expect(eouBaseMs("50")).toBe(TUNING.endOfUtteranceMs);
+    // a 1.5 s sentence is short with 1800, long without
+    expect(endAfter(new ProbVad(), 1500)!).toBeGreaterThanOrEqual(TUNING.endOfUtteranceMs);
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_SHORT_UTT_MS", "1800");
+    expect(endAfter(new ProbVad(), 1500)!).toBeLessThan(TUNING.shortEouMs + 40);
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_EOU_MS", "250");
+    const long = endAfter(new ProbVad(), 2500)!;
+    expect(long).toBeGreaterThanOrEqual(250);
+    expect(long).toBeLessThan(250 + 40);
   });
 });
