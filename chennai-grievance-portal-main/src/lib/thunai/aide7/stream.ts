@@ -4,7 +4,7 @@
  * the owner's spend ceiling. JARVIS_AIDE_LEAD=groq (or the planner's JARVIS_PLANNER_LEAD=groq) puts Claude after Groq for the writer.
  * A rung that sends no text within its first-text time is stopped and the next one asked (writer.ts runs the walk; this file opens one).
  */
-import { claudeConfigured, claudeStreamText } from "@/lib/ai/claude";
+import { billedOf, claudeConfigured, claudeStreamText } from "@/lib/ai/claude";
 import { streamPlainText } from "@/lib/ai/gateway";
 import { ladder, plannerLead, type Rung } from "../llm";
 import { ledger, type Ledger } from "../ledger";
@@ -35,7 +35,16 @@ export const firstTextMs = (provider: string): number => (provider === "groq" ? 
 export const openRung: OpenRung = async (rung, c, onText) => {
   const t0 = Date.now();
   if (rung.provider === "anthropic") {
-    const r = await claudeStreamText({ name: c.name, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens, model: rung.model, timeoutMs: c.timeoutMs, abortSignal: c.signal }, onText);
+    let r: Awaited<ReturnType<typeof claudeStreamText>>;
+    try {
+      r = await claudeStreamText({ name: c.name, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens, model: rung.model, timeoutMs: c.timeoutMs, abortSignal: c.signal }, onText);
+    } catch (e) {
+      // v7 review (Spend 2): a stream that was billed and did not finish is in the day cap too: a refusal at what it was billed, one stopped
+      // or broken after it was sent at its worst case (claude.ts puts either on the error: billedOf). A refusal before any text bills nothing.
+      const b = billedOf(e);
+      if (b) ledger().record("anthropic", b.model, { tokens: b.inputTokens + b.outputTokens, lane: "aide" });
+      throw e;
+    }
     ledger().record("anthropic", r.model, { tokens: r.inputTokens + r.outputTokens, lane: "aide" });
     return { provider: "anthropic", model: r.model, tokens: r.inputTokens + r.outputTokens, firstMs: r.firstMs, ms: Date.now() - t0, stop: r.stopReason };
   }

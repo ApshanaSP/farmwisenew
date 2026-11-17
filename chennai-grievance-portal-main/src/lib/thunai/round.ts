@@ -28,7 +28,7 @@ import { explainSlots, explainTargetOfStage, type ExplainTarget } from "./recipe
 import { DecisionBody, type DecisionInput } from "./decisions";
 import { callLlm, type LlmDeps } from "./llm";
 import { detectLang } from "./normalise";
-import { fillTemplate, figuresIn } from "./numbergate";
+import { allowedSet, fillTemplate, figuresIn } from "./numbergate";
 import { AiStep, checkPlan, MEMORY_CHARS, memoryLines, requestOk, turnLine, type AiPlan } from "./plan";
 import { NEVER_REPLY, PRIVACY_REPLY, redact } from "./privacy";
 import { lineProblem, turnRecords } from "./exitgate";
@@ -50,6 +50,9 @@ import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
 import { syncEpoch } from "@/lib/collector/epoch";
 import { aideAnswer, aideWanted, answerStyle, type AideCtx, type AideOut } from "./aide7";
+import { parseLine } from "./aide7/ground";
+import { openRung, type OpenRung } from "./aide7/stream";
+import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
 import { timeOf } from "./brief6";
 
@@ -619,10 +622,19 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   if (!o0.done && o0.steps.length) send({ ...ids, type: "CUSTOM", name: "steps", value: { steps: o0.steps } });
   // v7: a screen built for a question goes up at once and its answer is written by the aide, each checked sentence streamed as it passes
   if (o0.done && o0.result?.stage && aideWanted(o0.result, b.text, o0.lane, !!deps.aide)) {
+    const tap = writerTap(deps.aide?.open ?? openRung);
+    // the ready screen's facts' figures (stage.ts voice): what the browser's gate already allows for every line of this answer
+    let facts: Set<string> | null = null;
     const o = await withAide(o0, b, world, rawHands, user, signal, deps, start, {
-      ready: (stage) => send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage } }),
-      // each sentence with its own figures, checked on the server against its facts (a web report's figure is not on the screen sent first)
-      sentence: (text, lang) => send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang, figures: figuresIn(text).map((f) => f.value).filter(Number.isFinite) })
+      ready: (stage) => { facts = allowedSet(stage.voice?.figures ?? []); send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage } }); },
+      // each sentence with the figures the server checked for it (review 3B): a model sentence the checker passed keeps its own (a web
+      // report's figure, a ratio code computed: not on the screen sent first); a line code wrote keeps only the facts' figures
+      sentence: (text, lang) => {
+        const own = [...new Set(figuresIn(text).map((f) => f.value).filter(Number.isFinite))];
+        const figures = tap.fromModel(text) ? own : own.filter((v) => facts?.has(String(v)));
+        send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang, figures });
+      },
+      open: tap.open
     });
     send({ ...ids, type: "RUN_FINISHED", out: o });
     return o;
@@ -635,12 +647,46 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
 }
 
 /**
+ * v7 review 3B: which streamed aide sentences the model wrote. The browser's gate lets a sentence's `figures` through for that sentence, so
+ * only figures the server checked may go with it. The rule, kept in this file (aide7/ is not asked for anything):
+ *   - a sentence the model wrote reached the round only after ground.ts checkSentence passed it (writer.ts hands a line on only then): its
+ *     figures are each a cited fact's value, a hedge within tolerance or a ratio code computed, so its own figures go with it;
+ *   - every other line is code's (the recipe's own line as the fallback, the gap's "nothing found" line in the Collector's words, the gap's
+ *     "<outlet> has a report" line, v6's line when the aide failed): no checker held its figures, so it keeps only those among the facts'
+ *     figures the aide put on the ready screen (`voice.figures`, which the browser allows for the whole answer anyway); the code's own
+ *     templates hold no figure.
+ * The writer hands a model line on while it reads the model's text (inside the text callback), or, for the last line (no newline after it),
+ * as soon as the model call returns, before anything else runs. So the round wraps the writer's model call (AideCtx.write.open) and marks a
+ * line as the model's only then. If the writer stops calling it, every line counts as code's: the gate errs to silence, never to a figure.
+ */
+function writerTap(base: OpenRung): { open: OpenRung; fromModel: (text: string) => boolean } {
+  let reading = false;
+  let tail: string | null = null;
+  const open: OpenRung = async (rung, c, onText) => {
+    let buf = "";
+    tail = null;
+    const done = await base(rung, c, (t) => {
+      const all = buf + t;
+      buf = all.slice(all.lastIndexOf("\n") + 1);
+      reading = true;
+      try { onText(t); } finally { reading = false; }
+    });
+    // the writer reads the last line in the continuation of this call (the same task); a later line with the same words is code's
+    tail = parseLine(buf.trim()).text || null;
+    setTimeout(() => { tail = null; }, 0);
+    return done;
+  };
+  return { open, fromModel: (text) => reading || (tail != null && text === tail) };
+}
+
+/**
  * v7 (aide7/): the answer to a question, written by a model from the screen's facts and checked by code, in place of the recipe's templated
- * line. `live`: the streamed round's hooks (the screen the moment the facts are ready, each checked sentence as it passes). A turn the aide
- * does not answer (a command, a control, a refusal, JARVIS_ANSWER=v6) comes back as it was. The answer ends inside the round's budget.
+ * line. `live`: the streamed round's hooks (the screen the moment the facts are ready, each checked sentence as it passes, and the writer's
+ * model call as writerTap wraps it). A turn the aide does not answer (a command, a control, a refusal, JARVIS_ANSWER=v6) comes back as it
+ * was. The answer ends inside the round's budget.
  */
 async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, user: string, signal: AbortSignal | undefined, deps: RoundDeps, start: number,
-  live: { ready: (stage: StageDocT) => void; sentence: (text: string, lang: Lang) => void } | null): Promise<RoundOut> {
+  live: { ready: (stage: StageDocT) => void; sentence: (text: string, lang: Lang) => void; open?: OpenRung } | null): Promise<RoundOut> {
   const r = o.result;
   if (!o.done || !r?.stage || !aideWanted(r, b.text, o.lane, !!deps.aide)) return o;
   const budget = budgetFor(turnSpeed(b.text, world));
@@ -650,7 +696,7 @@ async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, 
   let shown = false, spoke = false;
   try {
     const a = await aideAnswer(r as AgentResult & { stage: StageDocT }, {
-      question: b.text, world, user, signal, last, now: deps.now, write: deps.aide,
+      question: b.text, world, user, signal, last, now: deps.now, write: live?.open ? { ...(deps.aide ?? {}), open: live.open } : deps.aide,
       untilMs: Math.max(4000, start + budget - 600 - Date.now()),
       gapHint: o.result?.note === "asks7:outside" ? asks7(b.text, world)?.gap ?? null : null,
       ready: live ? (stage) => { shown = true; live.ready(stage); } : undefined,
@@ -666,14 +712,21 @@ async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, 
       calls: a.written.calls, tokens: a.written.tokens, gap: a.gap ? a.gap.status : null, turn: b.turnId });
     return { ...o, result: a.result, tokens: o.tokens + a.written.tokens, calls: o.calls + a.written.calls, timing: { ...(o.timing ?? {}), ...(a.written.firstMs != null ? { aideFirst: t0 + a.written.firstMs } : {}) } };
   } catch (e) {
-    if ((e as Error)?.name === "AbortError") throw e;
+    // a barge-in or Esc stopped the turn: an abort whatever the error is called (review 3D: the SDK's own abort, APIUserAbortError, is
+    // named "Error", and writer.ts rethrows it), so nothing is logged and nothing is sent into a stream nobody reads
+    if ((e as Error)?.name === "AbortError" || signal?.aborted) throw e;
     console.warn(`[jarvis aide] ${(e as Error)?.message?.slice(0, 160)}`);
-    // the aide failed: the turn is answered as v6 answered it (the screen and its own line)
+    // the aide failed: the turn is answered as v6 answered it (the screen and its own line). Once the aide's ready screen is up the browser
+    // reads no item from it (it carries the aide's voice), so v6's announcement of a reading ("Reading them now", "படிக்கிறேன்") is not said
+    // (review 3E; the aide's own fallback drops it the same way: writer.ts fallbackLines)
+    const lang: Lang = r.lang === "ta" ? "ta" : "en";
+    const v6 = shown && r.say ? fallbackLines(r.say).join(" ") : null;
+    const told: AgentResult = v6 != null && v6 !== r.say?.replace(/\s+/g, " ").trim() ? { ...r, say: v6, stage: { ...r.stage, say: { ...r.stage.say, [lang]: v6 } } } : r;
     if (live && r.stage) {
       if (!shown) live.ready(r.stage);
-      if (!spoke) for (const s of spokenSentences(r, world)) live.sentence(s.text, s.lang);
+      if (!spoke) for (const s of spokenSentences(told, world)) live.sentence(s.text, s.lang);
     }
-    return o;
+    return told === r ? o : { ...o, result: told };
   }
 }
 

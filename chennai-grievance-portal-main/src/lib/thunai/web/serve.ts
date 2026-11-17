@@ -9,6 +9,7 @@
  */
 import { performance } from "perf_hooks";
 import { z } from "zod";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
 import { type SpokenBrief, briefFromCoverage, firstLine } from "./brief";
 import { type CompareOptions, compareCoverage, type Source } from "./compare";
 import { outletByName, outletOfUrl } from "./domains";
@@ -30,6 +31,8 @@ export type NewsBodyT = z.infer<typeof NewsBody>;
 
 /** A stored news item as lib/collector/intel.ts newsDoc returns it. */
 export interface StoredDoc { id: string; url: string | null; title: string | null; title_en?: string | null; publisher?: string | null; publisher_domain?: string | null;
+  /** the monitor's tier ("social", "aggregator", "official", ...): a social or aggregator row is no outlet's report (newsmedia.ts) */
+  publisher_tier?: string | null;
   body?: string | null; t?: string | null; place?: string | null; cat?: string | null }
 
 export type NewsEvent =
@@ -75,7 +78,10 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   }
   let doc: StoredDoc | null = null;
   try { doc = await d.loadDoc(body.id); } catch { yield { type: "error", why: "failed" }; return; }
-  if (!doc) { yield { type: "error", why: "not_found" }; return; }
+  // v7 review (privacy): `documents` holds more than news (social posts, aggregators' copies), and v7 sends the stored body to the writer
+  // model (aide7/news.ts). Only a news outlet's report is read (newsmedia.ts, as the console's news lists keep it); any other row is
+  // answered as a missing document, so an id is no way to have another row read out or sent to a model
+  if (!doc || !isNewsMedia(doc.publisher, doc.publisher_domain, doc.publisher_tier)) { yield { type: "error", why: "not_found" }; return; }
   const list = listOf(d);
   const outlet = outletByName(doc.publisher, doc.publisher_domain, list) ?? (doc.url ? outletOfUrl(doc.url, list) : null);
   const outletName = outlet?.name ?? (doc.publisher ? String(doc.publisher) : null);

@@ -51,7 +51,7 @@ import { flag } from "@/lib/thunai/flags";
 import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
-import { budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
+import { answersV7, budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
 import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
@@ -136,7 +136,7 @@ interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] 
  * the first sentence, whether they are said as they come (the browser's own voice only: turnstream.ts queuesSentences); when not,
  * none of them was said, and the whole answer is said once at RUN_FINISHED
  */
-interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null; speaks?: boolean; /** v7: each aide sentence's server-checked figures */ figs?: Map<string, number[]> }
+interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: string[]; queue: SayQueue | null; speaks?: boolean }
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
@@ -1020,8 +1020,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const sx = streamOf(gen);
     if (!sx || gen !== turnGen.current || !sx.screen) return;
     sx.said.push(text);
-    // v7: an aide sentence brings its own figures, each checked on the server against its facts (a web report's are not on the screen)
-    if (figures?.length && sx.screen.voice) (sx.figs ??= new Map()).set(text, figures);
     // the words show as they come; the turn's card in the conversation is written once, when the whole answer is in
     setReply(sx.said.join(" "));
     setStreaming(true);
@@ -1029,15 +1027,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!sx.speaks) return;
     if (!sx.queue) {
       const allowed = speakableFigures(sx.screen, lang), voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
-      sx.queue = new SayQueue((t, end) => {
-        const own = sx.figs?.get(t);
+      // v7: an aide sentence brings its own figures, checked on the server (a web report's are not on the screen); the queue hands each run
+      // its sentences' own figures together (review 3A: a run said together is no one sentence's text)
+      sx.queue = new SayQueue((t, end, own) => {
         const allow = own?.length ? new Set([...allowed, ...allowedSet(own)]) : allowed;
         // a real zone's label is its name, not a figure (zoneSafe, before the voice's own gate)
         const z = zoneSafe([spoken(t)], allow, zoneNos());
         return speak(z.lines[0] || spoken(t), voiceLang, end, rate, voiceName, z.lines[0] ? z.allowed : allow);
       }, () => gen === turnGen.current);
     }
-    sx.queue.push(text);
+    sx.queue.push(text, figures?.length && sx.screen.voice ? figures : undefined);
   };
 
   /** Ask the agent: a sentence (with the screen, the turns and the open Stage), or a Stage control's direct screen. */
@@ -1653,7 +1652,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // article itself (the 17 Nov news run: the Stage took it and read the headline)
     if (!original) {
       // a mission, a brief or a memory request is never the news lane's (the independent check, 17 Nov: "prepare for heavy rain tonight")
-      const na = intentMarker(said) || missionIntent(said, worldRef.current) ? null : newsAsk(said, newsOnScreen(stageRef.current, buildState()));
+      const na = intentMarker(said) || missionIntent(said, worldRef.current) ? null : newsAsk(said, newsOnScreen(stageRef.current, buildState()), { v7: answersV7() });
       if (na) {
         const lg: Lang = opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
         const t0 = performance.now();

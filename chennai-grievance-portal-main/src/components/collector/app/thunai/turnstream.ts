@@ -10,6 +10,7 @@
 import { NDJSON, readEvents, type RoundOutWire, type TurnEvent } from "@/lib/thunai/events";
 import type { StageDocT } from "@/lib/thunai/stage";
 import type { Lang, Step } from "@/lib/thunai/types";
+import { flag } from "@/lib/thunai/flags";
 import type { VoicePath } from "./mouth";
 import { stamp, stampEpoch } from "./trace";
 
@@ -19,6 +20,15 @@ import { stamp, stampEpoch } from "./trace";
  * there the words show as they stream and the whole answer is said once, at RUN_FINISHED (Phase 7 review, Planner 3).
  */
 export const queuesSentences = (path: VoicePath | null): boolean => path === "browser";
+
+/**
+ * v7 review 3C: the browser's v7 lanes ("tell me about this news" read as the report on the screen: newsask.ts `v7`) follow the answer
+ * style. The server's JARVIS_ANSWER is not seen in the browser and no reply says it (a stage's `voice` shows only that an aide answered,
+ * never that v6 is on), so the build says it as the browser's other levers do (flags.ts): NEXT_PUBLIC_JARVIS_ANSWER=v6, set with
+ * JARVIS_ANSWER=v6, turns them off with the aide; anything else (unset too) keeps v7's.
+ */
+export const answersV7 = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_ANSWER", process.env.NEXT_PUBLIC_JARVIS_ANSWER)): boolean =>
+  (v ?? "").trim().toLowerCase() !== "v6";
 
 export interface RoundHooks {
   /** the work timeline: a step began, or ended with the time it really took (the server's ms) */
@@ -106,33 +116,38 @@ export async function readRound(res: Response, o: { turnId: string; live: () => 
  * The streamed sentences, spoken in order: the first at once, the rest queued while it plays and said together when it ends.
  * `speak` is the page's own speak (every chunk passes the number gate in the mouth); it returns false when nothing can be
  * said. A cancelled speech never calls its onEnd (mouth.ts), so a queue whose voice was cut by a newer answer just stops.
+ * v7 review 3A: a sentence may bring its own server-checked figures (an aide sentence's: a web report's figure is not on the screen);
+ * they go to `speak` with it, and a run said together carries the union of its sentences' own figures (the joined text is no single
+ * sentence's, so a lookup by text missed it and the gate silenced checked words).
  */
 export class SayQueue {
   readonly said: string[] = [];
-  private q: string[] = [];
+  private q: { text: string; figures?: number[] }[] = [];
   private busy = false;
   private waiters: (() => void)[] = [];
-  constructor(private speak: (text: string, onEnd: () => void) => boolean, private live: () => boolean) {}
+  constructor(private speak: (text: string, onEnd: () => void, figures?: number[]) => boolean, private live: () => boolean) {}
   get speaking() { return this.busy; }
-  push(text: string) {
+  push(text: string, figures?: number[]) {
     const t = text.trim();
     if (!t) return;
     this.said.push(t);
-    if (this.busy) { this.q.push(t); return; }
-    this.go(t);
+    const f = figures?.length ? figures : undefined;
+    if (this.busy) { this.q.push({ text: t, figures: f }); return; }
+    this.go(t, f);
   }
   /** run `f` when everything queued has been said (at once when nothing is) */
   then(f: () => void) { if (this.busy) this.waiters.push(f); else f(); }
   /** a newer answer took the voice: nothing more is said from here */
   drop() { this.q = []; this.waiters = []; this.busy = false; }
-  private go(text: string) {
+  private go(text: string, figures?: number[]) {
     this.busy = true;
     const ok = this.speak(text, () => {
       if (!this.live() || !this.busy) return;
       const next = this.q.splice(0);
-      if (next.length) this.go(next.join(" "));
-      else this.idle();
-    });
+      if (!next.length) { this.idle(); return; }
+      const own = [...new Set(next.flatMap((x) => x.figures ?? []))];
+      this.go(next.map((x) => x.text).join(" "), own.length ? own : undefined);
+    }, figures);
     if (!ok) { this.q = []; this.idle(); }
   }
   private idle() {

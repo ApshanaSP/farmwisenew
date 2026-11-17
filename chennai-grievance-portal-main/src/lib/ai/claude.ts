@@ -670,16 +670,25 @@ export async function claudeStreamText(a: ClaudeTextArgs, onText: (t: string) =>
     stream.on("text", (t: string) => { if (firstMs == null) firstMs = Date.now() - t0; onText(t); });
     res = (await stream.finalMessage()) as Anthropic.Beta.BetaMessage;
   } catch (e) {
-    if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError") recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
+    // v7 review (Spend 1): only an HTTP error the API answered with (a status) bills nothing. Anything else went out and may have been
+    // billed: an abort, a time-out, an error event mid-stream (overloaded_error after message_start comes as an APIError with no status),
+    // a dropped connection. It is counted at its worst case, and the error carries that estimate (billedOf) for Jarvis's own day cap.
+    const est: ClaudeBilled | null = e instanceof Anthropic.APIError && typeof e.status === "number" ? null
+      : { model, inputTokens: Math.ceil(JSON.stringify(body).length / 3), outputTokens: body.max_tokens, cacheReadTokens: 0, cacheWriteTokens: 0 };
+    if (est) recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
+    const fail = <E>(x: E): E => {
+      if (est && x && typeof x === "object" && !(BILLED in x)) try { Object.defineProperty(x, BILLED, { value: est }); } catch { /* a frozen error: the dollars are counted all the same */ }
+      return x;
+    };
     heard({ name: a.name, model, outcome: a.abortSignal?.aborted ? "aborted" : outcomeOf(e), ms: Date.now() - t0, path: "json", compact: false, warm: false });
-    if (a.abortSignal?.aborted) throw e;
+    if (a.abortSignal?.aborted) throw fail(e);
     if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) { refusedKey(e); throw new Error(`The Claude API refused the key (${e.status}).`); }
     if (e instanceof Anthropic.RateLimitError) { ledger().cool("anthropic", model, COOL_BUSY_MS); telemetry("fallback_429", { provider: "anthropic", model, status: 429, fallback: "next-rung" }); throw new ClaudeBusyError(retryAfter(e, 20), "rate limited"); }
     if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) { ledger().cool("anthropic", model, COOL_NO_CREDIT_MS); keyRefused("anthropic", 400, "no credit left"); throw new Error("The Claude API account has no credit left."); }
-    if (e instanceof Anthropic.APIConnectionTimeoutError) throw new ClaudeBusyError(10, `no answer in ${Math.round((a.timeoutMs ?? 8000) / 1000)} s`);
+    if (e instanceof Anthropic.APIConnectionTimeoutError) throw fail(new ClaudeBusyError(10, `no answer in ${Math.round((a.timeoutMs ?? 8000) / 1000)} s`));
     if (e instanceof Anthropic.APIError && typeof e.status === "number" && e.status >= 500) throw new ClaudeBusyError(retryAfter(e, 15), `HTTP ${e.status}`);
-    if (e instanceof Anthropic.APIConnectionError) throw new ClaudeBusyError(10, "connection failed");
-    throw e;
+    if (e instanceof Anthropic.APIConnectionError) throw fail(new ClaudeBusyError(10, "connection failed"));
+    throw fail(e);
   } finally {
     endClaude();
   }
