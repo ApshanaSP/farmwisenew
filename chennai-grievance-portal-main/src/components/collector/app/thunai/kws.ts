@@ -109,16 +109,22 @@ export class Kws {
  * audio: quiet since the last frame well above the room's floor.
  */
 export class QuietMeter {
-  private floor = Infinity;
   private lastVoiced: number | null = null;
+  /** the quietest frame of each 100 ms over the last 2 s: the room's floor is their minimum (a fresh track's digital silence is left out:
+   *  the v6c closed run's floor started 60 dB low on it and the room read as speech for seconds) */
+  private mins: { at: number; db: number }[] = [];
   /** one frame of audio at `now` (ms, the page clock) */
   push(frame: Float32Array, now: number) {
     let s = 0;
     for (let i = 0; i < frame.length; i++) s += frame[i] * frame[i];
     const db = 10 * Math.log10(s / Math.max(1, frame.length) + 1e-12);
-    // the floor follows the room down at once and up slowly (speech never lifts it far)
-    this.floor = db < this.floor ? db : this.floor + 0.02;
-    if (db > this.floor + 15) this.lastVoiced = now;
+    if (db < -100) return;
+    const slot = Math.floor(now / 100) * 100;
+    const last = this.mins[this.mins.length - 1];
+    if (last && last.at === slot) last.db = Math.min(last.db, db); else this.mins.push({ at: slot, db });
+    while (this.mins.length && this.mins[0].at < slot - 2000) this.mins.shift();
+    const floor = Math.min(...this.mins.map((m) => m.db));
+    if (db > floor + 15) this.lastVoiced = now;
   }
   /** ms since the last voiced frame (Infinity: none yet) */
   quietMs(now: number): number { return this.lastVoiced == null ? Infinity : Math.max(0, now - this.lastVoiced); }

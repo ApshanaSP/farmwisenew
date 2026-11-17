@@ -115,6 +115,19 @@ describe("closed, the name heard on the device: reply at once after a pause, or 
     q.push(tone(0.0008), 1020);
     expect(q.quietMs(1100)).toBe(90);
   });
+  it("QuietMeter: a listener that starts on digital silence still hears the room as quiet after its first seconds (the v6c closed run: 4.1 s waits)", () => {
+    const q = new QuietMeter();
+    // 0.5 s of zeros as a fresh microphone track starts, then 3 s of the room, 2.7 ms frames as the worklet sends them
+    let t = 0;
+    for (; t < 500; t += 2.7) q.push(new Float32Array(128), t);
+    for (; t < 3500; t += 2.7) q.push(tone(0.0008, 128), t);
+    // speech for 0.6 s, then the room again
+    for (; t < 4100; t += 2.7) q.push(tone(0.2, 128), t);
+    const end = t;
+    for (; t < end + 150; t += 2.7) q.push(tone(0.0008, 128), t);
+    expect(q.quietMs(t)).toBeGreaterThanOrEqual(140);
+    expect(q.quietMs(t)).toBeLessThan(160);
+  });
   it("wakeWait: a pause soon after the name opens with the reply; speech going on waits for the recogniser's sentence, up to its limit", () => {
     // no recogniser running (it failed, or never started): open now, as before
     expect(wakeWait({ sinceKws: 0, quietMs: 0, recogniser: false, quietNeeded: 90 })).toBe("open");
