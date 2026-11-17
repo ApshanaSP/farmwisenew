@@ -13,7 +13,7 @@ import type { BlockT, StageDocT } from "../stage";
 import type { Lang, World } from "../types";
 import { buildSheet, extrasOf } from "./facts";
 import { gazetteer, type Gazetteer } from "./gazetteer";
-import { findGap, gapFacts, nothingLine, type GapDeps, type GapFound } from "./gap";
+import { findGap, gapFacts, gapPhrase, nothingLine, type GapDeps, type GapFound } from "./gap";
 import type { Sheet7 } from "./ground";
 import { writeAnswer, type Written, type WriteOptions } from "./writer";
 
@@ -57,6 +57,8 @@ export interface AideCtx {
   ready?: (stage: StageDocT) => void;
   /** how long the whole answer may take (the round's budget left), ms */
   untilMs?: number;
+  /** the outside part code found in the question (asks7.ts: a public office or event), looked for when the writer names no gap itself */
+  gapHint?: string[] | null;
   now?: () => number;
   /** the dashboard's own news search, for a gap (round.ts gives the console's search_records) */
   dashboardNews?: GapDeps["dashboardNews"];
@@ -86,6 +88,10 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
   const said = [...written.sentences];
   let gap: AideOut["gap"] = null;
   let links: BlockT | null = null;
+  // the code's hint stands in for a gap the writer did not name, unless what was said already speaks of it
+  const spoke = ` ${said.join(" ").toLowerCase()} `;
+  const hinted = !written.gap && ctx.gapHint?.length && !ctx.gapHint.some((w) => w.length >= 3 && spoke.includes(w)) ? ctx.gapHint.join(" ") : null;
+  if (hinted) written.gap = hinted;
   if (written.gap) {
     const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now }).catch(() => null) : null;
     const extra: string[] = [];
@@ -101,12 +107,12 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
       links = { kind: "NewsReader", id: "aide-gap", title: lang === "ta" ? "செய்திகளிலிருந்து" : "From the news", total: found.hits.length,
         items: found.hits.map((h, i) => ({ id: `gap-${i}`, title: h.title.slice(0, 300), source: h.outlet, t: h.at != null ? new Date(h.at).toISOString() : null, place: null, incidentId: null, url: h.url && /^https?:\/\//.test(h.url) ? h.url.slice(0, 2000) : null })) };
     } else {
-      const line = nothingLine(found?.words ?? [], lang);
+      const line = nothingLine(found?.phrase ?? gapPhrase(written.gap, ctx.question), lang);
       emit(line);
       extra.push(line);
     }
     said.push(...extra);
-    gap = found ? { ...found, said: extra } : { status: "nothing", words: [], hits: [], ms: 0, said: extra };
+    gap = found ? { ...found, said: extra } : { status: "nothing", words: [], hits: [], ms: 0, phrase: gapPhrase(written.gap, ctx.question), said: extra };
   }
   const say = said.join(" ").trim() || fallbackOf(doc, lang);
   const figures = [...new Set(figuresIn(say).map((f) => f.value).filter(Number.isFinite))].slice(0, 60);

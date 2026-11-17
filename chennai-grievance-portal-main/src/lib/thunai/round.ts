@@ -49,7 +49,8 @@ import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
 import { syncEpoch } from "@/lib/collector/epoch";
-import { aideAnswer, aideWanted, type AideCtx } from "./aide7";
+import { aideAnswer, aideWanted, answerStyle, type AideCtx } from "./aide7";
+import { asks7 } from "./asks7";
 import { timeOf } from "./brief6";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
@@ -648,6 +649,7 @@ async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, 
     const a = await aideAnswer(r as AgentResult & { stage: StageDocT }, {
       question: b.text, world, user, signal, last, now: deps.now, write: deps.aide,
       untilMs: Math.max(4000, start + budget - 600 - Date.now()),
+      gapHint: o.result?.note === "asks7:outside" ? asks7(b.text, world)?.gap ?? null : null,
       ready: live ? (stage) => { shown = true; live.ready(stage); } : undefined,
       emit: live ? (text, lang) => { spoke = true; live.sentence(text, lang); } : undefined,
       dashboardNews: async (words) => {
@@ -823,6 +825,14 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     // A mission, stop, skip and instead are the browser's (missions.run.ts); a sentence that reaches here with one goes on to the planner
     const flow = marker ? await intentFlow(marker) : null;
     if (flow) return flow;
+
+    // 2e. v7 (asks7.ts): question shapes no lane read in code: compare everything, this period against the last, why one place is worse than
+    // another, the X issue. Each goes to the screen whose facts answer it; the aide says the point
+    const ask7 = answerStyle() === "v7" ? asks7(b.text, world) : null;
+    if (ask7) {
+      const r = await screenFrom(ask7.recipe, ask7.slots, lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data");
+      if (r.kind === "do" && r.stage) return out({ ...r, note: `asks7:${ask7.why}` }, "quick");
+    }
 
     // 3. general knowledge: labelled, no tools, no district numbers
     let lane: "district" | "general" | "refuse" | null = route.lane;

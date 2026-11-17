@@ -150,7 +150,17 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       for (const f of b.facts.slice(0, 6)) add({ src: "dashboard", text: `${f.label}: ${fmt(f.value)}${f.unit ? ` ${f.unit}` : ""}` });
       return;
     case "Filled": add({ src: "dashboard", text: `${b.title}: ${b.filled} cells filled, ${b.left} left` }); return;
-    case "Heat": return;
+    case "Heat": {
+      // each measure's highest and lowest row: the comparison across everything, worked out by code
+      for (const [j, col] of b.cols.slice(0, 6).entries()) {
+        const vals = b.rows.map((r, i) => ({ r, v: b.cells[i]?.[j] })).filter((x): x is { r: string; v: number } => typeof x.v === "number");
+        if (vals.length < 2) continue;
+        const hi = vals.reduce((a, x) => (x.v > a.v ? x : a)), lo = vals.reduce((a, x) => (x.v < a.v ? x : a));
+        if (hi.v === lo.v) continue;
+        add({ src: "dashboard", text: `${col}, across the ${vals.length} rows of the table: highest ${hi.r} ${fmt(hi.v)}, lowest ${lo.r} ${fmt(lo.v)}`, rank: true, ratios: lo.v ? [hi.v / lo.v] : [] });
+      }
+      return;
+    }
     case "Note": add({ src: "dashboard", text: `Note: ${b.text}` }); return;
     default: return;
   }

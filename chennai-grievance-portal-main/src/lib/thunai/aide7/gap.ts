@@ -54,20 +54,28 @@ const defaultFeeds = (o: WebDeps = {}) => async (): Promise<GapHit[]> => {
   return reads.flatMap((x) => (x ? x.r.entries.map((e) => ({ outlet: x.out.name, outletTa: x.out.nameTa, title: `${e.title}${e.snippet ? ` . ${e.snippet}` : ""}`, url: e.url, at: e.publishedAt, from: "web" as const })) : []));
 };
 
-export interface GapFound { status: "ok" | "nothing" | "no-words"; words: string[]; hits: GapHit[]; ms: number }
+export interface GapFound { status: "ok" | "nothing" | "no-words"; words: string[]; hits: GapHit[]; ms: number; /** the gap in the question's own words and casing */ phrase: string }
+
+/** The gap as the Collector said it: the question's own words (their casing kept) that the gap names, in the question's order */
+export function gapPhrase(gap: string, question: string): string {
+  const want = new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP_PHRASE.has(w)));
+  return question.split(/\s+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")).filter((w) => w && want.has(w.toLowerCase().replace(/['’]s$/, ""))).slice(0, 6).join(" ");
+}
+const STOP_PHRASE = new Set(["the", "a", "an", "is", "are", "was", "of", "in", "on", "at", "to", "and", "or", "what", "who", "should", "know", "tell", "me", "about", "any", "there", "this", "that"]);
 
 /** Look for the gap: the dashboard's news first, the outlets' feeds only when it has nothing. At most three reports, newest first. */
 export async function findGap(gap: string, question: string, d: GapDeps = {}): Promise<GapFound> {
   const t0 = Date.now();
   const words = gapWords(gap, question);
-  if (!words.length) return { status: "no-words", words, hits: [], ms: 0 };
+  const phrase = gapPhrase(gap, question);
+  if (!words.length) return { status: "no-words", words, hits: [], ms: 0, phrase };
   const now = (d.now ?? Date.now)();
   const fresh = (h: GapHit) => h.at == null || now - h.at < 4 * 86_400_000;
   const pick = (hs: GapHit[]) => hs.filter((h) => fresh(h) && !injectionLike(h.title) && matches(h.title, words, question)).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 3);
   const own = d.dashboardNews ? pick(await d.dashboardNews(words).catch(() => [])) : [];
-  if (own.length) return { status: "ok", words, hits: own, ms: Date.now() - t0 };
+  if (own.length) return { status: "ok", words, hits: own, ms: Date.now() - t0, phrase };
   const web = pick(await (d.feeds ?? defaultFeeds(d.web))().catch(() => []));
-  return { status: web.length ? "ok" : "nothing", words, hits: web, ms: Date.now() - t0 };
+  return { status: web.length ? "ok" : "nothing", words, hits: web, ms: Date.now() - t0, phrase };
 }
 
 /** The reports found, as facts (their headline is what the outlet said, said as such) */
@@ -81,9 +89,9 @@ export function gapFacts(hits: GapHit[], now: number, first = 1): Fact7[] {
 }
 
 /** Nothing found: said plainly, the gap in the Collector's own words (never the model's) */
-export function nothingLine(words: string[], lang: Lang): string {
-  const what = words.join(" ");
+export function nothingLine(phrase: string, lang: Lang): string {
+  const what = phrase.trim();
   return lang === "ta"
     ? `${what ? `${what} பற்றி ` : "அதைப் பற்றி "}டாஷ்போர்டிலும் இன்றைய செய்திகளிலும் எதுவும் இல்லை.`
-    : `I have nothing on ${what ? `the ${what} part` : "that"} in the dashboard or in today's news.`;
+    : `Nothing in the dashboard or today's news mentions ${what || "that"}.`;
 }
