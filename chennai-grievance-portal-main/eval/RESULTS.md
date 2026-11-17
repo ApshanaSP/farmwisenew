@@ -13,7 +13,7 @@ Branch `claude/jarvis-v6-build-adbae2` from the v5 build at `a7943b2f`; the brie
 
 ### Latency: before and after, on real providers
 
-Bundles, in order (each a commit's code): **phase0** = v5 as handed over (`a7943b2f`); **v6a** = Phase 2 (wake word, wake reply, voice warm-up, STT fixes, short end of turn), quiet 90 ms; **v6b** = + briefing, place lane, news turn; **v6c** = + the first independent check's fixes; **v6d** = + the quiet-meter fix and Tamil's short first chunk; **v6e** = final code (the reel). Wake clips for the open turns: phase0 cycles eight (three "Hey Jarvis", three "Hi Jarvis" one of them a Gemini voice, one "Hello Jarvis", one Tamil "ஹாய் ஜார்விஸ்"), v6a six (the same without the Gemini "Hi" and the Tamil one), v6c and v6d the three "Hey Jarvis" ones; the rows below compare the same clips.
+Bundles, in order (each a commit's code): **phase0** = v5 as handed over (`a7943b2f`); **v6a** = Phase 2 (wake word, wake reply, voice warm-up, STT fixes, short end of turn), quiet 90 ms; **v6b** = + briefing, place lane, news turn; **v6c** = + the first independent check's fixes; **v6d** = + the quiet-meter fix and Tamil's short first chunk; **v6e** = the code before the second check's fixes (the reel: those fixes change no screen); **v6f** = the code after them (the end-of-turn lever runs; then the short-sentence limit became 1.8 s, the setting its third arm measured). Wake clips for the open turns: phase0 cycles eight (three "Hey Jarvis", three "Hi Jarvis" one of them a Gemini voice, one "Hello Jarvis", one Tamil "ஹாய் ஜார்விஸ்"), v6a six (the same without the Gemini "Hi" and the Tamil one), v6c and v6d the three "Hey Jarvis" ones; the rows below compare the same clips.
 
 | Moment, from the true end of speech | phase0 (v5) | v6 | Bundle | Target | Met? |
 |---|---|---|---|---|---|
@@ -34,6 +34,16 @@ Bundles, in order (each a commit's code): **phase0** = v5 as handed over (`a7943
 | English speech heard as Tamil (Whisper's translation) | 7/12 | 1/12 | v6a | — | — |
 
 Where the remaining time goes (v6a English questions, `eval/v6/latency/v6a-waterfall.md`): detector lag 71 / 96, end-of-turn wait 332 / 366, speech to text 475 / 1,021, the planner 1,210 / 1,226 (n 3 traced), speak() -> voice start 697 / 814. On the code lane the planner is gone but the situation screen's server tools take 1.2-2.6 s on the cached store (all called in parallel already).
+
+**Two end-of-turn levers, on/off on the final bundle** (`.next-v6f`, `V6_PARTS=cmd`, 8 rules-lane commands an arm, the same bundle with a measuring flag per run; `eval/v6/latency/v6f-*-cmd.json`):
+
+| Setting | Screen change | End-of-turn wait (last voiced -> end decided) | First sound (the earcon) | Transcript at the page | Heard in the right language |
+|---|---|---|---|---|---|
+| short sentence ≤ 1.2 s (the setting until then) | 4 · 805 · 3,557 | 8 · 403 · 455 | 8 · 408 · 460 | 8 · 787 · 1,611 | 6/8 |
+| E2 on (early speech-to-text at 150 ms of quiet) | 6 · 763 · 1,811 | 8 · 401 · 425 | 8 · 406 · 430 | 8 · 639 · 1,795 | 8/8 |
+| **short sentence ≤ 1.8 s (now the default)** | 6 · 720 · 1,020 | 8 · 281 · 433 | 8 · 286 · 439 | 8 · 701 · 1,008 | 8/8 |
+
+The 1.8 s limit is now the default (`NEXT_PUBLIC_JARVIS_SHORT_UTT_MS=1200` restores the old one); E2 stays off for the room check (it helped the transcript here, 8 a side). The screen column's n is the commands whose screen change the spec could see (a map move is not one).
 
 **Edge's Tamil voice** started later the longer the utterance the first time each text was said (`eval/v6/latency/voiceprobe.json`, warm, n 1 a length): 33 characters 811 ms (the first utterance of the probe, which may add its own delay), 109 characters 2,159 ms, 236 characters 2,833 ms and on its first repeat 3,030; the later repeats started in 171-346 ms at every length (the service keeps what it has said); English 185-564 ms. In the v6c run the Tamil answers began 2.6-3.1 s after they were handed over; with a short first chunk (v6d) 1.0 / 1.3 s. A Tamil answer now starts with a chunk of at most 48 characters.
 

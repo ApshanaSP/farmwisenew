@@ -25,7 +25,9 @@ export const TUNING = {
    * A short sentence cut at a pause is joined to its next part as before (conductor.ts carry), and a name said alone is a call either way
    */
   shortEouMs: 180,
-  shortUtteranceMs: 1200,
+  // (1.8 s, not 1.2: measured 17 Nov on the final bundle, 8 rules-lane commands an arm: end of turn p50 403 -> 281 ms, screen p50 805 -> 720,
+  // first sound p50 408 -> 286; "Open the briefing page" and its like are 1.3-1.8 s of speech; NEXT_PUBLIC_JARVIS_SHORT_UTT_MS=1200 restores it)
+  shortUtteranceMs: 1800,
   /** the captions' words already read as a whole command (the rules are sure, or it ends on a place or a department): ends after this much quiet, ms */
   eouCompleteMs: 300,
   /** the words end on "and", "matrum", "apram", "um", a preposition or an article: the sentence is still going, ends after this much quiet, ms */

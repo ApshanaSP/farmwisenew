@@ -1,6 +1,6 @@
 /**
  * v6: a short sentence ("Hi Jarvis", "Go to trends": under TUNING.shortUtteranceMs of speech) ends after TUNING.shortEouMs of quiet
- * instead of endOfUtteranceMs; a longer one, one whose live words set its own end (eou.ts), or one held longer is as before.
+ * instead of endOfUtteranceMs (1.8 s since 17 Nov; 1.2 before); a longer one, one whose live words set its own end (eou.ts), or one held longer is as before.
  * NEXT_PUBLIC_JARVIS_SHORT_EOU_MS=0 turns it off.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -49,7 +49,9 @@ describe("v6: the short sentence's end", () => {
     expect(eouBaseMs(undefined)).toBe(TUNING.endOfUtteranceMs);
     expect(eouBaseMs("250")).toBe(250);
     expect(eouBaseMs("50")).toBe(TUNING.endOfUtteranceMs);
-    // a 1.5 s sentence is short with 1800, long without
+    // a 1.5 s sentence is short by default (1.8 s: "Open the briefing page", "Switch to the weekly view" are 1.3-1.8 s of speech), long at 1200
+    expect(endAfter(new ProbVad(), 1500)!).toBeLessThan(TUNING.shortEouMs + 40);
+    vi.stubEnv("NEXT_PUBLIC_JARVIS_SHORT_UTT_MS", "1200");
     expect(endAfter(new ProbVad(), 1500)!).toBeGreaterThanOrEqual(TUNING.endOfUtteranceMs);
     vi.stubEnv("NEXT_PUBLIC_JARVIS_SHORT_UTT_MS", "1800");
     expect(endAfter(new ProbVad(), 1500)!).toBeLessThan(TUNING.shortEouMs + 40);
