@@ -1,0 +1,1084 @@
+{
+ "at": "2026-11-17T14:03:38.728Z",
+ "v5": {
+  "label": "capacity failures present",
+  "allTurns": {
+   "k": 2,
+   "n": 30,
+   "p": 6.7,
+   "lo": 1.8,
+   "hi": 21.3
+  },
+  "cleanTurns": {
+   "k": 2,
+   "n": 9,
+   "p": 22.2,
+   "lo": 6.3,
+   "hi": 54.7
+  },
+  "capacityFailures": 21,
+  "rateLimited": 0,
+  "jsonValidateFailed": 0,
+  "fellBack": 0,
+  "byModel": {
+   "claude-haiku-5-5": {
+    "k": 0,
+    "n": 3,
+    "p": 0,
+    "lo": 0,
+    "hi": 56.2
+   },
+   "none": {
+    "k": 2,
+    "n": 27,
+    "p": 7.4,
+    "lo": 2.1,
+    "hi": 23.4
+   }
+  },
+  "tokens": {
+   "prompt": 0,
+   "completion": 0,
+   "cached": 0
+  },
+  "ladderOrders": [
+   "anthropic/claude-haiku-5-5 > gemini/gemini-3.5-flash-lite",
+   "gemini/gemini-3.5-flash-lite"
+  ]
+ },
+ "tokensAll": 16488,
+ "modelTurns": 2,
+ "byLang": {
+  "all": {
+   "n": 30,
+   "right": 2,
+   "deferred": 0,
+   "wrong": 7,
+   "capacity": 21,
+   "pct": {
+    "p": 22.2,
+    "lo": 6.3,
+    "hi": 54.7
+   }
+  },
+  "en": {
+   "n": 9,
+   "right": 2,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 5,
+   "pct": {
+    "p": 50,
+    "lo": 15,
+    "hi": 85
+   }
+  },
+  "ta": {
+   "n": 12,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 3,
+   "capacity": 9,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 56.2
+   }
+  },
+  "tanglish": {
+   "n": 9,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 7,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  }
+ },
+ "byIntent": {
+  "explain": {
+   "n": 5,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 4,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 79.3
+   }
+  },
+  "changed": {
+   "n": 3,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 0,
+   "capacity": 3,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 0
+   }
+  },
+  "howknow": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "mission": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 1,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 79.3
+   }
+  },
+  "brief": {
+   "n": 3,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 0,
+   "capacity": 2,
+   "pct": {
+    "p": 100,
+    "lo": 20.7,
+    "hi": 100
+   }
+  },
+  "remember": {
+   "n": 4,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 0,
+   "capacity": 4,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 0
+   }
+  },
+  "recall": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 1,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 79.3
+   }
+  },
+  "followup": {
+   "n": 9,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 6,
+   "pct": {
+    "p": 33.3,
+    "lo": 6.1,
+    "hi": 79.2
+   }
+  }
+ },
+ "byLane": {
+  "planner": {
+   "n": 2,
+   "right": 0
+  },
+  "no-model": {
+   "n": 21,
+   "right": 0
+  },
+  "resolve": {
+   "n": 3,
+   "right": 0
+  },
+  "quick": {
+   "n": 3,
+   "right": 1
+  },
+  "browser": {
+   "n": 1,
+   "right": 1
+  }
+ },
+ "rows": [
+  {
+   "id": "w065",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "drafts",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1510,
+   "tokens": 8452,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 5593,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w087",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 7198,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 11844,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w023",
+   "lang": "ta",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2006,
+   "tokens": 8036,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2006,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w038",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 34,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 34,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w097",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 34,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 34,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w115",
+   "lang": "ta",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 41,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 41,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w068",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 20,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w117",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 19,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w090",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 24,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 24,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w040",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "explain",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 55,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w110",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "why",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 21,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 44,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w089",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 18,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 18,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w072",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 20,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w018",
+   "lang": "en",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 16,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 16,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w051",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 20,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w035",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "howknow",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 8,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 22,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w001",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 10,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 27,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w046",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 18,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 21,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w113",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "browser",
+   "model": null,
+   "ms": 1,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w092",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 19,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w057",
+   "lang": "en",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 27,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 27,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w073",
+   "lang": "tanglish",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 30,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 30,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w020",
+   "lang": "tanglish",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 14,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w049",
+   "lang": "tanglish",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 20,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 20,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w026",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 17,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 33,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w005",
+   "lang": "tanglish",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 18,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 18,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w045",
+   "lang": "tanglish",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 10,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 10,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w118",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 13,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 30,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w085",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 33,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 33,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w060",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 31,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 31,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  }
+ ]
+}
