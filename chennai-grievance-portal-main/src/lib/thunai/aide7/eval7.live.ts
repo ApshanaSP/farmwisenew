@@ -215,13 +215,15 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
   const gaz = gazOf(c.world);
   const rows = (JSON.parse(fs.readFileSync(OUT, "utf8")) as { rows: Row[] }).rows;
   const out: Record<string, unknown>[] = [];
-  const tally = { n: 0, model: 0, fallback: 0, grounded: 0, sentences: 0, failedAgain: 0, lists: 0, over4: 0, wordsP50: 0, outside: { n: 0, abstained: 0, found: 0, hallucinated: 0 }, readsScreen: 0, v6Lines: 0 };
+  const tally = { n: 0, model: 0, fallback: 0, capacity: 0, grounded: 0, sentences: 0, failedAgain: 0, lists: 0, over4: 0, wordsP50: 0, outside: { n: 0, abstained: 0, found: 0, hallucinated: 0 }, readsScreen: 0, v6Lines: 0 };
   const allWords: number[] = [];
   for (const r of rows) {
     const lang = langOf(r.lang as Item["lang"]);
     const sheet: Sheet7 = { facts: r.v7.facts.map((f) => ({ id: f.id, src: f.src, text: f.text })), lang, gaz, shown: [] };
     tally.n++;
     if (r.v7.by === "model") tally.model++; else if (r.v7.by === "fallback") tally.fallback++;
+    // a capacity row: the fallback came because no Groq model had room (only the flash-lite rung, or none, was tried): not an answer's quality
+    if (r.v7.by === "fallback" && !r.v7.hops.some((h) => h.startsWith("groq/") || h.startsWith("anthropic/"))) tally.capacity++;
     // the checker again, on every sentence the model wrote and was said (the fallback is the recipe's own line, code-written: not re-checked)
     let bad = 0;
     if (r.v7.by === "model") for (const s of r.v7.said) {
