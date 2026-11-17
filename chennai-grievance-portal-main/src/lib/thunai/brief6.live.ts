@@ -60,13 +60,26 @@ it("v6 briefing set", async () => {
   const w = await serverWorld();
   const hands = serverHands({ email: "eval:brief", role: "collector", lockDept: null });
   // the set: open incidents, sorted by severity, the store's own order; spread over severities and zones, news-reported ones kept
-  const list = await hands.tool("incidents", { scope: {}, sev: null, status: "open", q: null, sort: "sev", dir: 1, page: 0, pageSize: 200 });
-  const rows = ((list.data as Row | undefined)?.rows ?? []) as Row[];
+  // the incident list comes 12 to a page: enough pages for the set; the news-reported ones (the console's "in the news, no department
+  // record" list) go in first, so the set holds news-sourced incidents
+  const rows: Row[] = [];
+  for (let page = 0; page < 10 && rows.length < N * 3; page++) {
+    const list = await hands.tool("incidents", { scope: {}, sev: null, status: "open", q: null, sort: "sev", dir: 1, page });
+    const got = ((list.data as Row | undefined)?.rows ?? []) as Row[];
+    if (!got.length) break;
+    rows.push(...got);
+  }
+  const gaps = await hands.tool("news_gaps", { scope: {} }).catch(() => null);
+  const newsRows = (((gaps?.data as Row | undefined)?.rows ?? []) as Row[]).slice(0, 8);
   const picked: Row[] = [];
+  const seen = new Set<string>();
   const seenZone = new Map<string, number>();
-  for (const r of rows) {
+  for (const r of [...newsRows, ...rows]) {
+    const id = String(r.id ?? "");
+    if (!id || seen.has(id)) continue;
     const z = String(r.zone ?? r.zone_name ?? "");
-    if ((seenZone.get(z) ?? 0) >= 3) continue;
+    if (!newsRows.includes(r) && (seenZone.get(z) ?? 0) >= 4) continue;
+    seen.add(id);
     seenZone.set(z, (seenZone.get(z) ?? 0) + 1);
     picked.push(r);
     if (picked.length >= N) break;

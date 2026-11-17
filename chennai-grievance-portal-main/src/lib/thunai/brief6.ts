@@ -69,13 +69,15 @@ export function deadlineWords(due: number | null, now: number): { passed: boolea
   if (due == null || !Number.isFinite(due)) return null;
   const a = ist(due), b = ist(now), days = b.day - a.day, part = PART_EN(a.h);
   if (due <= now) {
-    if (days === 0) return { passed: true, en: `passed this ${part}`, ta: `இன்று ${PART_TA[part]} முடிந்துவிட்டது` };
+    // the small hours are "early this morning", a late one "earlier tonight": never "this night" (the briefing set, 17 Nov)
+    if (days === 0) return { passed: true, en: part !== "night" ? `passed this ${part}` : a.h < 5 ? "passed early this morning" : "passed earlier tonight",
+      ta: `இன்று ${part === "night" && a.h < 5 ? "அதிகாலை" : PART_TA[part]} முடிந்துவிட்டது` };
     if (days === 1) return { passed: true, en: "passed yesterday", ta: "நேற்றே முடிந்துவிட்டது" };
     if (days < 7) return { passed: true, en: `passed on ${WEEKDAY_EN[a.wd]}`, ta: `${WEEKDAY_TA[a.wd]} அன்றே முடிந்துவிட்டது` };
     const age = ageWords((now - due) / 3_600_000);
     return { passed: true, en: age ? `passed ${age.en} ago` : "passed long ago", ta: age ? `${age.ta.replace(/ாக$/, "")} முன்பே முடிந்துவிட்டது` : "எப்போதோ முடிந்துவிட்டது" };
   }
-  if (days === 0) return { passed: false, en: `is due this ${part}`, ta: `இன்று ${PART_TA[part]} வரை நேரம் இருக்கிறது` };
+  if (days === 0) return { passed: false, en: part === "night" ? "is due tonight" : `is due this ${part}`, ta: `இன்று ${PART_TA[part]} வரை நேரம் இருக்கிறது` };
   if (days === -1) return { passed: false, en: "is due tomorrow", ta: "நாளை வரை நேரம் இருக்கிறது" };
   return null;
 }
@@ -97,6 +99,10 @@ export interface BriefFacts extends FactSheet {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** an event, told by when it was reported (narrate.ts plainWhat's names: "a road accident", "a fire", "a crime report", "a structure that has given way") */
+const EVENT = /(?:accident|fire|report|given way)$/;
+/** a holder said with a plural verb */
+const PLURAL_BODY = /\bpolice$/i;
 /** a role as said: "the assistant engineer", from the record's designation (short, letters only); null for anything else */
 export function roleWords(designation: unknown): string | null {
   const d = String(designation ?? "").replace(/\s+/g, " ").trim();
@@ -114,16 +120,19 @@ export function briefIssue(f: BriefFacts, label: string, sources: string[] = [])
   const since = sinceWords(f.since, f.now);
   const due = deadlineWords(f.due, f.now);
   const place = f.place ? ` at ${f.place}` : "";
-  // 1. the headline
-  const s1 = `${cap(what)}${place}${since ? ` ${since.en}` : ""}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
-  // 2. how serious, and why
+  // 1. the headline: a lasting problem "since" when it began; an event (an accident, a fire, a report) when it was reported, not "since"
+  const event = EVENT.test(what);
+  const point = event ? pointWords(f.since, f.now) : null;
+  const when = event ? (point ? ` ${/report$/.test(what) ? "came in" : "reported"} ${point}` : "") : since ? ` ${since.en}` : "";
+  const s1 = `${cap(what)}${place}${when}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
+  // 2. how serious, and why (a deadline that passed at a known time is said once, in 3, with when)
   const why: string[] = [];
   if (f.complaints >= 2) why.push(`${f.complaints} people have complained`);
   if (f.news) { const w = pointWords(f.news.at, f.now); why.push(w ? `${f.news.outlet} reported it ${w}` : `${f.news.outlet} has reported it`); }
-  if (f.overdue) why.push("it's past its deadline");
+  if (f.overdue && !due?.passed) why.push("it's past its deadline");
   const s2 = f.serious ? `It's one of the serious ones${why.length ? `: ${joinAnd(why)}` : ""}.` : why.length ? `${cap(joinAnd(why))}.` : "";
-  // 3. done and by whom, and what is stuck
-  const holder = f.who ? `${cap(f.who.en)} has it` : "No department has it yet";
+  // 3. done and by whom, and what is stuck ("the police have it": a plural body)
+  const holder = f.who ? `${cap(f.who.en)} ${PLURAL_BODY.test(f.who.en) ? "have" : "has"} it` : "No department has it yet";
   const officer = f.who ? (f.role ? `, with ${f.role} on it` : f.officials ? "" : ", but no officer is named") : "";
   const stuck = due?.passed ? `${officer.startsWith(", but") ? " and" : ", but"} the deadline ${due.en}` : due && !due.passed ? `; it ${due.en}` : "";
   const quiet = f.lastAt != null && f.now - f.lastAt > 2 * DAY ? ` Nothing new has come in ${(sinceWords(f.lastAt, f.now)?.en ?? "for a while")}.` : "";
@@ -137,7 +146,7 @@ export function briefIssue(f: BriefFacts, label: string, sources: string[] = [])
   const whyTa: string[] = [];
   if (f.complaints >= 2) whyTa.push(`${f.complaints} பேர் புகார் கொடுத்திருக்கிறார்கள்`);
   if (f.news) whyTa.push(`${f.news.outlet} செய்தியிலும் வந்திருக்கிறது`);
-  if (f.overdue) whyTa.push("கெடுவும் தாண்டிவிட்டது");
+  if (f.overdue && !(f.who && due?.passed)) whyTa.push("கெடுவும் தாண்டிவிட்டது");
   const t2 = f.serious ? `இது கடுமையானவற்றில் ஒன்று${whyTa.length ? `: ${whyTa.join(", ")}` : ""}.` : whyTa.length ? `${whyTa.join(", ")}.` : "";
   const t3 = f.who ? `${f.who.ta} பொறுப்பில் இருக்கிறது${!f.role && !f.officials ? ", ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை" : ""}${due?.passed ? `; கெடு ${due.ta}` : due ? `; ${due.ta}` : ""}.` : "எந்தத் துறையிடமும் இன்னும் ஒப்படைக்கப்படவில்லை.";
   const t4 = f.next ? `${f.next.ta}${f.overdue ? ", இன்றே" : ""}.` : f.who ? `${idam(f.who.ta)} ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "இன்றே ஒரு துறையிடம் ஒப்படைக்கலாம்.";

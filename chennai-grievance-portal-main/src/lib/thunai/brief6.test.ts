@@ -32,6 +32,11 @@ describe("relative times", () => {
     expect(deadlineWords(at("2026-11-17 18:00"), NOW)).toMatchObject({ passed: false, en: "is due this evening" });
     expect(deadlineWords(at("2026-11-18 18:00"), NOW)).toMatchObject({ passed: false, en: "is due tomorrow" });
   });
+  it("a deadline in the small hours is early this morning, a late one tonight: never 'this night' (the v6 briefing set, 17 Nov)", () => {
+    expect(deadlineWords(at("2026-11-17 03:00"), NOW)).toMatchObject({ passed: true, en: "passed early this morning" });
+    expect(deadlineWords(at("2026-11-17 22:30"), NOW)).toMatchObject({ passed: false, en: "is due tonight" });
+    for (const t of ["2026-11-17 00:30", "2026-11-17 04:59", "2026-11-17 21:30", "2026-11-17 23:59"]) expect(deadlineWords(at(t), NOW)?.en).not.toMatch(/this night/);
+  });
   it("a store time with no zone is IST; an ISO time keeps its own", () => {
     expect(timeOf("2026-11-17 11:00")).toBe(NOW);
     expect(timeOf("2026-11-17T05:30:00Z")).toBe(NOW);
@@ -57,7 +62,9 @@ const base: BriefFacts = {
 describe("the briefing", () => {
   it("headline, why serious, who has it and what is stuck, what to do, then an offer: two to four sentences and the question", () => {
     const b = briefIssue(base, "Waterlogging, Velachery Main Road", ["Waterlogging, Velachery Main Road"]);
-    expect(b.en).toBe("Standing water at Velachery since yesterday evening. It's one of the serious ones: 12 people have complained, The Hindu reported it this morning and it's past its deadline. The corporation's drains team has it, but no officer is named and the deadline passed this morning. I'd ask the corporation's drains team for an update today. Want the details?");
+    // the deadline is said once, with when it passed (the v6 briefing set, 17 Nov: "past its deadline" and "the deadline passed" both)
+    expect(b.en).toBe("Standing water at Velachery since yesterday evening. It's one of the serious ones: 12 people have complained and The Hindu reported it this morning. The corporation's drains team has it, but no officer is named and the deadline passed this morning. I'd ask the corporation's drains team for an update today. Want the details?");
+    expect(b.ta.match(/கெடு/g)?.length).toBe(1);
     expect(labelIn(b.en)).toBeNull();
     const sentences = b.en.replace(/ Want the details\?$/, "").split(/(?<=\.)\s/);
     expect(sentences.length).toBeGreaterThanOrEqual(2);
@@ -71,6 +78,19 @@ describe("the briefing", () => {
     const b = briefIssue({ ...base, role: "the assistant engineer", officials: 1, overdue: false, due: at("2026-11-17 18:00"), news: null, complaints: 1, serious: false }, "x", []);
     expect(b.en).toMatch(/has it, with the assistant engineer on it; it is due this evening\./);
     expect(b.en).not.toMatch(/past its deadline|no officer/);
+  });
+  it("the police have it (a plural body), and an event is 'reported', not 'since' (the v6 briefing set, 17 Nov)", () => {
+    const b = briefIssue({ ...base, what: { en: "a road accident", ta: "சாலை விபத்து" }, place: null, placeTa: null, since: at("2026-11-17 04:10"), complaints: 1,
+      who: { en: "the police", ta: "காவல்துறை" } }, "Road accident", []);
+    expect(b.en).toMatch(/^A road accident reported early this morning\. /);
+    expect(b.en).toMatch(/ The police have it, but no officer is named and the deadline passed this morning\. /);
+    expect(b.en).not.toMatch(/police has|since early/);
+    // a lasting problem keeps "since": the standing water above
+    expect(briefIssue(base, "x", []).en).toMatch(/^Standing water at Velachery since yesterday evening\./);
+  });
+  it("past its deadline with no deadline time known is still said as a reason", () => {
+    const b = briefIssue({ ...base, due: null }, "x", []);
+    expect(b.en).toMatch(/12 people have complained, The Hindu reported it this morning and it's past its deadline\./);
   });
   it("a closed case is told as closed (nothing to chase), as before", () => {
     const b = briefIssue({ ...base, closed: "resolved" }, "x", []);
