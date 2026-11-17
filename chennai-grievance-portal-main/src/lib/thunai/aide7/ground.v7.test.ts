@@ -142,3 +142,55 @@ describe("v7 (the dev run, 17 Nov): one report is one source", () => {
     expect(checkSentence("தி இந்து செய்தியின்படி அடையாறில் 31 கடுமையான வழக்குகள் உள்ளன. [F1]", art).problems.map((p) => p.kind)).toEqual(expect.arrayContaining(["misbound"]));
   });
 });
+
+describe("v7 (the Haiku dev run, 17 Nov): a rise said from a bigger figure to a smaller one", () => {
+  it("'rose from 21 to 8' contradicts itself, whatever the cited facts' directions", () => {
+    const s = { facts: [{ id: "F1", src: "dashboard", text: "Flooding in Adyar: 21 the week before, 8 this week", dir: "up" as const }, { id: "F2", src: "dashboard", text: "Open: 8", dir: "down" as const }], lang: "en" as const, gaz: gazetteer(WORLD), shown: [] };
+    expect(checkSentence("Flooding in Adyar rose from 21 to 8 this week. [F1,F2]", s).problems.map((p) => p.kind)).toContain("direction");
+    expect(checkSentence("Flooding in Adyar fell from 8 to 21 this week. [F1,F2]", s).problems.map((p) => p.kind)).toContain("direction");
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): an article, a pronoun and a comparison's two pairs are no figures read out", () => {
+  it("Tamil 'ஒரு' before a thing that is not counted ('ஒரு தாழ்வான தெரு', a low street) is 'a', not 1; before a complaint it is still a count", () => {
+    ok("அடையாறு மண்டலத்தில் ஒரு தாழ்வான சாலையில் தண்ணீர் தேங்கியுள்ளது. [F1]", "ta");
+    fails("அடையாறு மண்டலத்தில் ஒரு புகார் மட்டுமே வந்திருக்கிறது. [F1]", "number", "ta");
+  });
+  it("'ask them for one' and 'the two are close' count nothing", () => {
+    ok("PWD Water Resources has no officer named on it yet, so ask them for one. [F3]");
+    ok("The two are close on open complaints, 59 against 44. [F6]");
+  });
+  it("two measures side by side (two pairs) are a comparison, not the screen read out; five figures still are", () => {
+    ok("Adyar has more open complaints than Anna Nagar, 59 against 44, and fewer flooding reports, 8 against 26. [F5,F6]");
+    fails("Adyar has 59 and Anna Nagar 44 open complaints, with 8 and 26 flooding reports and 38 open. [F5,F6,F7]", "list");
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): what a gap sentence, a fact sentence and a street name may say", () => {
+  it("a sentence saying there is nothing on it may use the Collector's own words (a title, a place, a day)", () => {
+    const s = { ...sheet(), question: "did the Governor visit Guindy yesterday about the floods" };
+    expect(checkSentence("I have nothing on the Governor visiting Guindy yesterday. [F1]", s).problems).toEqual([]);
+    // never in a claim
+    expect(checkSentence("The Governor visited Guindy yesterday. [F1]", s).ok).toBe(false);
+  });
+  it("a fact's own short phrase that the screen also shows is no reading out; a headline's words still are", () => {
+    const s: Sheet7 = { ...sheet(), shown: ["97 incidents were rain-linked over 2 rain days", "Low lying area Pillaiyar Koil St, Guindy Industrial Estate inundated"],
+      facts: [...sheet().facts, { id: "F9", src: "dashboard", text: "Rain-linked: 97 incidents over 2 rain days" }] };
+    expect(checkSentence("So far, 97 incidents were rain-linked over 2 rain days. [F9]", s).problems).toEqual([]);
+    expect(checkSentence("Low lying area Pillaiyar Koil St Guindy Industrial Estate is inundated. [F1]", s).problems.map((p) => p.kind)).toContain("copy");
+  });
+  it("'South Street' for the record's 'South St', and 'R.A. Puram' as the record writes it, are the record's names", () => {
+    const s: Sheet7 = { ...sheet(), facts: [...sheet().facts, { id: "F9", src: "dashboard", text: "The incident: R.A. Puram: South St fully flooded near Amma Unavagam, knee-deep, Teynampet zone" }] };
+    expect(checkSentence("Water stands knee-deep on South Street at R.A. Puram, near Amma Unavagam. [F9]", s).problems).toEqual([]);
+  });
+  it("the Adyar River is a river, not a third place in the sentence", () => {
+    const s: Sheet7 = { ...sheet(), facts: [...sheet().facts, { id: "F9", src: "dashboard", text: "The incident: overflow from the Adyar River at Guindy, Teynampet zone" }] };
+    expect(checkSentence("In Teynampet, the Adyar River is overflowing at Guindy. [F9]", s).problems).toEqual([]);
+  });
+  it("a rise a cited fact states in its words ('rose by 3') may be said, though the total fell", () => {
+    const s: Sheet7 = { ...sheet(), facts: [{ id: "F1", src: "dashboard", text: "What drives it: 100 incidents this week against 105 before (down 5%). Main reasons: street lights rose by 3, protests rose by 3", dir: "down" },
+      { id: "F2", src: "dashboard", text: "Street lights & electrical hazards: now vs before: 12 (was 9)" }] };
+    expect(checkSentence("Reports are down overall, but a few kinds have risen. [F1]", s).problems).toEqual([]);
+    expect(checkSentence("Street light complaints have risen to 12 from 9. [F2]", s).problems).toEqual([]);
+  });
+});

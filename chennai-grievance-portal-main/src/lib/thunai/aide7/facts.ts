@@ -13,7 +13,7 @@ import { isNewsMedia } from "@/lib/collector/newsmedia";
 import { redactText } from "../privacy";
 import { relativeTime } from "../web/brief";
 import { namesIn, tamilFormsOf, type Gazetteer } from "./gazetteer";
-import type { Fact7, Sheet7 } from "./ground";
+import { dirOfText, nowBefore, type Fact7, type Sheet7 } from "./ground";
 import { extrasOf, type AideExtras } from "./extras";
 
 export { addExtras, extrasOf, keepExtras, type AideExtras } from "./extras";
@@ -86,7 +86,7 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       }
       return;
     case "Findings":
-      for (const f of b.items) add({ src: "dashboard", text: `${f.title}${f.caveat ? ` (${f.caveat.replace(/\.$/, "")})` : ""}`, dir: /\b(?:rose|more|rise|up)\b/i.test(f.title) ? "up" : /\b(?:fell|fewer|down|drop)\b/i.test(f.title) ? "down" : dirOf(f.value),
+      for (const f of b.items) add({ src: "dashboard", text: `${f.title}${f.caveat ? ` (${f.caveat.replace(/\.$/, "")})` : ""}`, dir: dirOfText(f.title),
         rank: /\bmost\b|\bbiggest\b|\bhighest\b/i.test(f.title), ratios: pairRatios(f.title) });
       return;
     case "CaseDetail": caseFacts(b, x?.brief, now, add); return;
@@ -139,8 +139,8 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
     case "Chart": {
       const pairs = b.labels.map((l, i) => ({ l, v: b.values[i] })).filter((p) => typeof p.v === "number");
       const sorted = [...pairs].sort((a, c) => c.v - a.v);
-      if (sorted.length) add({ src: "dashboard", text: `${b.title}: highest ${sorted.slice(0, 2).map((p) => `${p.l} ${fmt(p.v)}`).join(", ")}`, rank: true, dir: dirOf(sorted[0].v) });
-      if (sorted.length > 2) add({ src: "dashboard", text: `${b.title}: lowest ${sorted.slice(-2).reverse().map((p) => `${p.l} ${fmt(p.v)}`).join(", ")}`, rank: true, dir: dirOf(sorted[sorted.length - 1].v) });
+      if (sorted.length) add({ src: "dashboard", text: `${b.title}: highest ${sorted.slice(0, 2).map((p) => `${p.l} ${fmt(p.v)}`).join(", ")}`, rank: true });
+      if (sorted.length > 2) add({ src: "dashboard", text: `${b.title}: lowest ${sorted.slice(-2).reverse().map((p) => `${p.l} ${fmt(p.v)}`).join(", ")}`, rank: true });
       return;
     }
     case "Readings": {
@@ -149,10 +149,10 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       return;
     }
     case "Brief":
-      for (const p of b.points.slice(0, 8)) add({ src: "dashboard", text: `Brief point: ${p.text}`, names: p.ta ? [] : [], dir: /\bfewer|down|fell\b/i.test(p.text) ? "down" : /\bmore|up|rose\b/i.test(p.text) ? "up" : null, ratios: pairRatios(p.text) });
+      for (const p of b.points.slice(0, 8)) add({ src: "dashboard", text: `Brief point: ${p.text}`, names: p.ta ? [] : [], dir: dirOfText(p.text), ratios: pairRatios(p.text) });
       return;
     case "Answer":
-      add({ src: "dashboard", text: `${b.title}: ${b.text}`, cause: false, dir: /\bdown\b|fell|fewer/i.test(b.text) ? "down" : /\bup\b|rose|more/i.test(b.text) ? "up" : null });
+      add({ src: "dashboard", text: `${b.title}: ${b.text}`, cause: false, dir: dirOfText(b.text) });
       for (const f of b.facts.slice(0, 6)) add({ src: "dashboard", text: `${f.label}: ${fmt(f.value)}${f.unit ? ` ${f.unit}` : ""}` });
       return;
     case "Filled": add({ src: "dashboard", text: `${b.title}: ${b.filled} cells filled, ${b.left} left` }); return;
@@ -173,7 +173,11 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
 }
 
 /** "8 against 26", "2 now, 8 before": the ratio of the first to the second, for "a third", "twice" */
-function pairRatios(s: string): number[] {
+function pairRatios(text: string): number[] {
+  const pair = nowBefore(text);
+  if (pair) return pair.before ? [pair.now / pair.before] : [];
+  // a window's length ("in the last 7 days", "the 7 days before") is no side of a ratio
+  const s = text.replace(/\b(?:in )?(?:the )?(?:last|past) \d+ (?:days?|hours?|weeks?|months?)\b|\bthe \d+ (?:days?|hours?|weeks?|months?) before\b|\b\d+-day\b/gi, " ");
   const m = s.match(/(\d+(?:\.\d+)?)\D{1,20}?(?:against|vs|versus|before|,)\D{0,12}?(\d+(?:\.\d+)?)/i);
   if (!m) return [];
   const a = Number(m[1]), b = Number(m[2]);
@@ -208,7 +212,7 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
   // the screen's scope first: its place (its title's and its scope's names) and, on a screen that counts over a window, that window
   const scope = scopeOf(doc, gaz);
   if (scope.names.length || scope.times.length) b.add({ src: "dashboard", text: `This screen covers ${[...scope.names, ...scope.times.slice(0, 1)].join(", ")}`, times: scope.times });
-  if (doc.takeaway?.en && doc.recipe !== "news") b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: /\b(?:down|fewer|fell)\b/i.test(doc.takeaway.en) ? "down" : /\b(?:up|more|rose)\b/i.test(doc.takeaway.en) ? "up" : null });
+  if (doc.takeaway?.en && doc.recipe !== "news") b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: dirOfText(doc.takeaway.en) });
   if (x?.article) {
     const a = x.article, w = a.publishedAt ? when(a.publishedAt.replace("T", " ").slice(0, 19), now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
     const outlet = a.outlet ?? "The report";

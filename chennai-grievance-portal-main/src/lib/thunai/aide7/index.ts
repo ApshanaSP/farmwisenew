@@ -80,7 +80,8 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
   const lang: Lang = r.lang === "ta" ? "ta" : "en";
   const doc = r.stage;
   const gaz = gazOf(ctx.world);
-  const sheet = buildSheet(doc, lang, gaz, t0, extrasOf(doc));
+  // (the question goes with the facts: a sentence saying there is nothing on it may use the Collector's own words)
+  const sheet = { ...buildSheet(doc, lang, gaz, t0, extrasOf(doc)), question: ctx.question };
   // the screen goes up now; the browser's number gate may let through any figure of the facts (the server checks each sentence against them)
   const factFigures = [...new Set(sheet.facts.flatMap((f) => [...figuresIn([f.text, ...(f.times ?? [])].join(" ; ")).map((x) => x.value), ...(f.nums ?? [])]).filter(Number.isFinite))].slice(0, 200);
   ctx.ready?.({ ...doc, voice: { by: "aide7", model: null, figures: factFigures } });
@@ -105,7 +106,7 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
     if (found?.status === "ok" && found.hits.length) {
       // one more checked answer, about the gap only, from what the reports say
       const facts = gapFacts(found.hits, now());
-      const gs: Sheet7 = { facts, lang, gaz, shown: [] };
+      const gs: Sheet7 = { facts, lang, gaz, shown: [], question: ctx.question };
       const head = found.hits[0];
       const w2 = await writeAnswer({ question: `${ctx.question} (only this part: ${written.gap})`, lang, sheet: gs, note: "The screen will list these reports as links.", fallback: lang === "ta" ? `${head.outletTa ?? head.outlet} இதைப் பற்றி செய்தி வெளியிட்டிருக்கிறது; இணைப்பு திரையில் உள்ளது.` : `${head.outlet} has a report on that; the link is on the screen.` },
         { user: ctx.user, until, firstBy: Math.min(until, now() + 3500), signal: ctx.signal, onSentence: emit, ...(ctx.write ?? {}), now });

@@ -224,7 +224,7 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
   const allWords: number[] = [];
   for (const r of rows) {
     const lang = langOf(r.lang as Item["lang"]);
-    const sheet: Sheet7 = { facts: r.v7.facts.map((f) => ({ ...f })), lang, gaz, shown: [], scope: r.v7.scope };
+    const sheet: Sheet7 = { facts: r.v7.facts.map((f) => ({ ...f })), lang, gaz, shown: [], scope: r.v7.scope, question: r.text };
     tally.n++;
     if (r.v7.by === "model") tally.model++; else if (r.v7.by === "fallback") tally.fallback++;
     // a capacity row: the fallback came because no Groq model had room (only the flash-lite rung, or none, was tried): not an answer's quality

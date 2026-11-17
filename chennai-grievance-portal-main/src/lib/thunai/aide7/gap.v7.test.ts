@@ -100,3 +100,30 @@ describe("v7: the part the dashboard does not hold", () => {
     expect(a.result.say).toContain("could not be read just now");
   });
 });
+
+describe("v7 (the Haiku dev run, 17 Nov): the nothing line in good words, and no match on two letters", () => {
+  it("the writer's gap, when every word of it is the Collector's, is said as written; a 'what did X say' is said as 'what X said'", () => {
+    expect(gapPhrase("the CM Vijay's visit to Adyar", Q)).toBe("the CM Vijay's visit to Adyar");
+    expect(gapPhrase("what did the Governor say about the floods", "what did the Governor say about the floods")).toBe("what the Governor said about the floods");
+    expect(gapPhrase("who won the by-election in Kolathur yesterday", "who won the by-election in Kolathur yesterday")).toBe("who won the by-election in Kolathur yesterday");
+    expect(gapPhrase("முதல்வர் அடையாறுக்கு வருவது", "முதல்வர் அடையாறுக்கு வருகிறாரா")).toBe("முதல்வர் அடையாறுக்கு வருவது");
+  });
+  it("a gap in the writer's own words falls back to the Collector's own span, never a heap of words ('CM Vijay Adyar')", () => {
+    expect(gapPhrase("the Chief Minister's tour of Adyar", Q)).toBe("that CM Vijay is visiting Adyar");
+    expect(nothingLine(gapPhrase("the Chief Minister's tour of Adyar", Q), "en", "news")).toBe("Nothing in the dashboard or the latest news mentions that CM Vijay is visiting Adyar.");
+  });
+  it("a report matches on whole words, and two letters alone ('cm') search for nothing", () => {
+    const q = "CM Royapuram ku eppo varaaru";
+    expect(matches("CMWSSB to desilt drains in Royapuram", ["cm"], q)).toBe(false);
+    expect(matches("Acme fire at Ennore", ["cm", "vijay"], Q)).toBe(false);
+    expect(gapWords("CM-இன் வருகை எப்போது என்பது", q, WORLD)).toEqual([]);
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): the question reaches the checker", () => {
+  it("'I have nothing on the Governor visiting Adyar' is kept: the Collector named the Governor", async () => {
+    const say: OpenRung = async (rung, c2, onText) => { const id = c2.prompt.match(/^(F\d+) .*Reported in Adyar/m)?.[1]; onText(`GAP: none\nS: I have nothing on the Governor visiting Adyar. [${id}]\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [${id}]\n`); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    const a = await aideAnswer({ ...R, note: null }, { question: "Is the Governor visiting Adyar?", world: WORLD, user: "t", now: () => NOW, write: { open: say, rungs: () => RUNGS }, dashboardNews: async () => [], feeds: async () => [] });
+    expect(a.written.sentences[0]).toBe("I have nothing on the Governor visiting Adyar.");
+  });
+});

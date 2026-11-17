@@ -40,7 +40,9 @@ export function gapWords(gap: string, question: string, world?: Pick<World, "zon
   const q = ` ${question.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")} `;
   const place = new Set((world ? [...world.zones.map((z) => z.name), ...world.places.flatMap((p) => [p.name, ...p.aliases])] : [])
     .flatMap((n) => n.toLowerCase().split(/[^\p{L}\p{N}]+/u)).filter((x) => x.length >= 3));
-  return [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && !place.has(w) && q.includes(` ${w}`)))].slice(0, 6);
+  const words = [...new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP.has(w) && !place.has(w) && q.includes(` ${w}`)))].slice(0, 6);
+  // one short word alone ("cm") is no search: it would match any headline that holds it (the Haiku dev run, 17 Nov: "CM Royapuram ku eppo varaaru")
+  return words.length === 1 && [...words[0]].length < 4 ? [] : words;
 }
 /** a "gap" that is a cause or a why: the record answers it (it shows what moved, not why); nothing outside is looked for */
 export const causeGap = (gap: string): boolean => /\b(?:cause[sd]?|why|reasons?|drove|driv(?:e|es|ing|en)|behind (?:it|the)|explain(?:s|ed)?)\b/i.test(gap);
@@ -51,7 +53,9 @@ const EVENT = /\b(visit\w*|inaugurat\w*|meet\w*|review\w*|protest\w*|strike\w*|r
 /** Does a report's text hold the gap's words? Every name word, and the event word when the question names one. */
 export function matches(text: string, words: string[], question: string): boolean {
   const t = ` ${text.toLowerCase()} `;
-  const named = words.filter((w) => t.includes(w));
+  // whole words ("cm" is not in "CMWSSB" or "Acme"); a longer word may carry an ending ("visit" in "visits")
+  const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const named = words.filter((w) => new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${esc(w)}${[...w].length < 5 ? "(?![\\p{L}\\p{M}\\p{N}])" : ""}`, "u").test(t));
   if (named.length < Math.min(2, words.length) || !named.length) return false;
   const ev = question.match(EVENT)?.[1]?.toLowerCase().slice(0, 5);
   return !ev || t.includes(ev);
@@ -67,12 +71,43 @@ const defaultFeeds = (o: WebDeps = {}) => async (): Promise<GapHit[]> => {
 
 export interface GapFound { status: "ok" | "nothing" | "no-words" | "unavailable"; words: string[]; hits: GapHit[]; ms: number; /** the gap in the question's own words and casing */ phrase: string }
 
-/** The gap as the Collector said it: the question's own words (their casing kept) that the gap names, in the question's order */
+/**
+ * The gap as the Collector said it, for the nothing line (said by code, never by a model):
+ *  - the writer's gap as written when every word that carries meaning in it is one the Collector said ("the CM Vijay's visit to Adyar"), with
+ *    "what did X say" said as "what X said";
+ *  - else the clause of the question that holds the gap's words, as a clause ("that CM Vijay is visiting Adyar"), never a heap of its words
+ *    ("CM Vijay Adyar": the Haiku dev run, 17 Nov);
+ *  - else nothing (the line then says "that").
+ */
 export function gapPhrase(gap: string, question: string): string {
-  const want = new Set(gap.toLowerCase().replace(/['’]s\b/g, "").split(/[^\p{L}\p{M}\p{N}]+/u).filter((w) => w.length >= 2 && !STOP_PHRASE.has(w)));
-  return question.split(/\s+/).map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")).filter((w) => w && want.has(w.toLowerCase().replace(/['’]s$/, ""))).slice(0, 6).join(" ");
+  const clean = (w: string) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  const base = (w: string) => w.toLowerCase().replace(/['’]s$/, "");
+  const qWords = question.split(/\s+/).map(clean).filter(Boolean);
+  const qLow = qWords.map(base);
+  // the same word, or the same start (5 letters in English, 3 in Tamil: "visit" / "visiting", "வருவது" / "வருகிறாரா")
+  const stem = (w: string) => ([...w].some((c) => /[஀-௿]/u.test(c)) ? [...w].slice(0, 3).join("") : w.slice(0, 5));
+  const said = (w: string) => qLow.some((x) => x === w || x.startsWith(stem(w)));
+  const g = gap.replace(/\s+/g, " ").trim().replace(/[.?!,;:]+$/, "");
+  const gWords = g.split(" ").map(clean).filter(Boolean);
+  const content = gWords.map(base).filter((w) => [...w].length >= 2 && !FUNC.has(w));
+  if (content.length && content.every(said)) {
+    // the Collector's casing for a word they said exactly ("cm vijay visiting" -> "CM Vijay visiting")
+    const cased = g.split(" ").map((t) => { const i = qLow.indexOf(clean(t).toLowerCase()); return i >= 0 && clean(t).toLowerCase() === qWords[i].toLowerCase() ? t.replace(clean(t), qWords[i]) : t; }).join(" ");
+    return reported(cased);
+  }
+  const clauses = question.split(/[,;?.!]+/).map((c) => c.trim()).filter(Boolean);
+  const clause = clauses.find((c) => c.split(/\s+/).map(clean).map(base).some((w) => content.includes(w) || content.some((x) => w.startsWith(stem(x)))));
+  if (!clause) return "";
+  return /^(?:what|who|whom|when|where|why|how|which|whether|is|are|was|were|will|did|does|do|has|have|can)\b/i.test(clause) || !/\b(?:is|are|was|were|will|has|have|had)\b/i.test(clause) ? reported(clause) : `that ${clause}`;
 }
-const STOP_PHRASE = new Set(["the", "a", "an", "is", "are", "was", "of", "in", "on", "at", "to", "and", "or", "what", "who", "should", "know", "tell", "me", "about", "any", "there", "this", "that"]);
+/** words that carry no meaning of their own in a gap (its words must be the Collector's: these may be the writer's) */
+const FUNC = new Set(["the", "a", "an", "is", "are", "was", "were", "be", "been", "of", "in", "on", "at", "to", "and", "or", "what", "who", "when", "where", "why", "how", "whether",
+  "should", "know", "tell", "me", "about", "any", "there", "this", "that", "did", "does", "do", "has", "have", "had", "will", "would", "can", "his", "her", "its", "their", "itself",
+  "with", "from", "by", "for", "up", "s"]);
+const PAST: Record<string, string> = { say: "said", do: "did", announce: "announced", decide: "decided", order: "ordered", promise: "promised", plan: "planned", want: "wanted", tell: "told" };
+/** "what did the Governor say about the floods" said as "what the Governor said about the floods" */
+const reported = (s: string) => s.replace(/^(what|who|when|where|why|how)\s+(?:did|does|do)\s+(.+?)\s+(say|do|announce|decide|order|promise|plan|want|tell)\b/i,
+  (_m, wh: string, subj: string, verb: string) => `${wh} ${subj} ${PAST[verb.toLowerCase()] ?? verb}`);
 
 /** Look for the gap: the dashboard's news first, the outlets' feeds only when it has nothing. At most three reports, newest first. */
 export async function findGap(gap: string, question: string, d: GapDeps = {}): Promise<GapFound> {

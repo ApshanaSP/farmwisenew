@@ -71,3 +71,26 @@ describe("v7 fact sheet: the screen as numbered facts, every derived value code'
       .toEqual(["Residents said water stood on three streets for two days after the canal overflowed.", "Officials said desilting would begin this week."]);
   });
 });
+
+describe("v7 (the Haiku dev run, 17 Nov): a level is no change, and a window's length is no count", () => {
+  const find = (title: string, value: number) => ({ title, value, unit: null, method: "m", n: 2, caveat: "A count of reports, not of the problem on the ground", tone: "warn" as const });
+  const sheet = () => buildSheet(doc([{ kind: "Findings", id: "f", title: "What stands out", items: [find("Flooding & waterlogging in Teynampet: 8 in the last 7 days, 21 the 7 days before", 8), find("Puzhal (Red Hills): 71% full", 71)] }], { recipe: "explain", title: "Teynampet" }), "en", gaz, NOW);
+  it("'8 in the last 7 days, 21 the 7 days before' fell, by 8 against 21 (never 7 against 21); a reservoir's level neither rose nor fell", () => {
+    const s = sheet();
+    const flood = s.facts.find((f) => /^Flooding/.test(f.text));
+    expect(flood?.dir).toBe("down");
+    expect(flood?.ratios?.[0]).toBeCloseTo(8 / 21);
+    expect(s.facts.find((f) => /^Puzhal/.test(f.text))?.dir ?? null).toBeNull();
+  });
+  it("'rose from 21 to 8' is refused, and a rise the facts do not state is refused even where no cited fact has a direction", () => {
+    const s = sheet();
+    const flood = s.facts.find((f) => /^Flooding/.test(f.text))!.id, lake = s.facts.find((f) => /^Puzhal/.test(f.text))!.id;
+    expect(checkSentence(`Flooding reports in Teynampet rose from 21 to 8 in the last 7 days. [${flood}]`, s).problems.map((p) => p.kind)).toContain("direction");
+    expect(checkSentence(`Flooding reports in Teynampet fell to 8 in the last 7 days, from 21 the 7 days before. [${flood}]`, s).ok).toBe(true);
+    expect(checkSentence(`Puzhal has risen to 71% full. [${lake}]`, s).problems.map((p) => p.kind)).toContain("direction");
+  });
+  it("a heat table's highest row is a rank, not a rise", () => {
+    const s = buildSheet(doc([{ kind: "Heat", id: "h", title: "Zone × measure", rows: ["Adyar", "Royapuram", "Manali"], cols: ["Open", "Severe"], cells: [[86, 3], [109, 11], [12, 0]] }]), "en", gaz, NOW);
+    expect(s.facts.filter((f) => /highest|lowest/.test(f.text)).map((f) => f.dir ?? null)).toEqual([null, null]);
+  });
+});
