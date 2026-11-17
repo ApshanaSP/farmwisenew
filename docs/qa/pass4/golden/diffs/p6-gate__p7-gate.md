@@ -4,7 +4,7 @@ Compared 3277 requests with 3298. **375 changed, 42 added, 21 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to RGYCEBAqorAG-CzW31EUv
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to UewRA2fZuForJykOwO1Az
 
 ## By route
 
@@ -6174,8 +6174,8 @@ Session writes, id cd47878c4defdb30, 1202 bytes to 1251 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.01836568627451 |
-| $.incidents[0].lon | 80.21072974509804 | 80.21206307843137 |
+| $.incidents[0].lat | 13.016499019607844 | 13.01765980392157 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21104347058824 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |

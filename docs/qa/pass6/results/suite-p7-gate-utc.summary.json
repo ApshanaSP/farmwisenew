@@ -3,14 +3,12 @@
   "tz": "UTC",
   "seed": "7204",
   "config": "vitest.config.ts",
-  "exit": 1,
-  "secs": 90,
+  "exit": 0,
+  "secs": 89,
   "numTotalTests": 6132,
-  "numPassedTests": 6118,
-  "numFailedTests": 1,
+  "numPassedTests": 6119,
+  "numFailedTests": 0,
   "numPendingTests": 13,
-  "numFailedTestSuites": 2,
-  "failed": [
-    "src\\lib\\thunai\\firstsentence.v5.test.ts :: E4: the planner turn's first spoken sentence is code's, from the built screen the model's reply (with a figure of its own) is not what is said: the screen's own say is, and it passes the number gate"
-  ]
+  "numFailedTestSuites": 0,
+  "failed": []
 }
