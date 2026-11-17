@@ -16,7 +16,7 @@ import { expect, it } from "vitest";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
 import { callLlm, plannerLead } from "./llm";
-import { runRoom } from "./holdoutroom";
+import { runRoom, waitForRoom } from "./holdoutroom";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
@@ -308,6 +308,9 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null; rec: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
+    // v6: one model turn needs about 8-12K tokens of the lead's minute window; wait for it rather than score a turn the ledger stopped
+    const waited = await waitForRoom(ledger(), { who, model: claudeModel() }, 12_000);
+    if (waited) console.log(`waited ${waited} ms for the minute window`);
     const gold = goldIntent(x);
     const turnId = `h-${x.id}-${Date.now()}`;
     const t0 = Date.now();
@@ -366,6 +369,10 @@ it.runIf(mode === "planner3")("the v4 set through the browser's routing and the 
   const rows: (Row3 & { rec?: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
+    // v6: up to three wide planner turns an item, about 8-10K tokens each, back to back: wait until the lead's minute window has room
+    // for all three (the first Claude-led live30 lost 21 of 30 turns to a full window: holdoutroom.ts)
+    const waited = await waitForRoom(ledger(), { who, model: claudeModel() }, 30_000);
+    if (waited) console.log(`waited ${waited} ms for the minute window`);
     const recorder = recordTurn();
     const row0 = await runItem3(x, { world, hands: () => fakeHands(), user: "holdout" });
     const rec = recorder.stop();
