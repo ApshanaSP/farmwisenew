@@ -19,6 +19,9 @@ describe("a report on screen is read", () => {
     expect(newsAsk("Read DT Next's report", list)).toEqual({ kind: "read", body: { id: "doc-12" } });
     expect(newsAsk("What are other papers saying?", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
     expect(newsAsk("இந்த செய்தியைப் படி", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
+    // the spoken form, as Whisper wrote a Tamil voice's "முதல் செய்தியைப் படியுங்கள்"
+    expect(newsAsk("முதல் சேதியை படியிந்தை", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
+    expect(newsAsk("இரண்டாவது செய்தியைப் படியுங்கள்", list)).toEqual({ kind: "read", body: { id: "doc-12" } });
     expect(newsAsk("பத்திரிகையில் என்ன சொல்கிறார்கள்", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
     expect(newsAsk("article padichu sollu", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
     expect(newsAsk("news la enna solraanga", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
