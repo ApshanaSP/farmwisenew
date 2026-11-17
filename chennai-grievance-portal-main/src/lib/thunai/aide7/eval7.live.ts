@@ -246,9 +246,23 @@ it.runIf(MODE === "audit")("audit: every sentence again, the rubric and the gold
   }
   allWords.sort((a, b) => a - b);
   tally.wordsP50 = allWords[Math.floor(allWords.length / 2)] ?? 0;
+  // by kind, language and writer model: how often the model's answer was said, how often the fallback, how many lines were refused
+  const group = (key: (r: Row) => string) => {
+    const g: Record<string, { n: number; model: number; fallback: number; rejected: number; firstMs: number[] }> = {};
+    for (const r of rows) {
+      const k = key(r); g[k] ??= { n: 0, model: 0, fallback: 0, rejected: 0, firstMs: [] };
+      g[k].n++; if (r.v7.by === "model") g[k].model++; if (r.v7.by === "fallback") g[k].fallback++; g[k].rejected += r.v7.rejected.length;
+      if (r.v7.by === "model" && r.v7.firstMs != null) g[k].firstMs.push(r.v7.firstMs);
+    }
+    return Object.fromEntries(Object.entries(g).map(([k, v]) => { const f = [...v.firstMs].sort((a, b) => a - b); return [k, { n: v.n, model: v.model, fallback: v.fallback, rejected: v.rejected, firstMsP50: f[Math.floor(f.length / 2)] ?? null }]; }));
+  };
+  const rejectedKinds: Record<string, number> = {};
+  for (const r of rows) for (const x of r.v7.rejected) for (const p of x.problems) { const k = p.split(":")[0]; rejectedKinds[k] = (rejectedKinds[k] ?? 0) + 1; }
+  const breakdown = { byKind: group((r) => r.kind), byLang: group((r) => r.lang), byModel: group((r) => r.v7.model ?? "none"), rejectedKinds };
   const file = OUT.replace(/\.json$/, ".audit.json");
-  fs.writeFileSync(file, JSON.stringify({ tally, problems: out }, null, 1));
+  fs.writeFileSync(file, JSON.stringify({ tally, breakdown, problems: out }, null, 1));
   console.log(JSON.stringify(tally, null, 1));
+  console.log(JSON.stringify(breakdown, null, 1));
   for (const p of out.slice(0, 40)) console.log(JSON.stringify(p));
 });
 
