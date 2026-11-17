@@ -111,7 +111,13 @@ export const StageDoc = z.object({
   /** the title in both languages; `title` is the one in `lang` (older screens and pins carry `title` alone) */
   titles: Bi.optional(),
   /** the notes in both languages; `notes` are the ones in `lang` */
-  notesBi: z.array(Bi).max(4).optional()
+  notesBi: z.array(Bi).max(4).optional(),
+  /**
+   * v7: what was said for this screen was written by the aide (lib/thunai/aide7: a model's answer, every sentence checked against the
+   * screen's facts by code) or is its fallback (the recipe's own line). The browser then says it and reads no item aloud unless asked;
+   * `figures` are the figures the checked answer says (the browser's number gate allows them: the server checked each against its facts)
+   */
+  voice: z.object({ by: z.enum(["aide7", "fallback"]), model: str(80).nullable(), figures: z.array(num).max(200) }).optional()
 });
 export type StageDocT = z.infer<typeof StageDoc>;
 

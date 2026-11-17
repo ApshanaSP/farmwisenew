@@ -13,6 +13,7 @@ export const TRACE_STAGES = [
   "plannerSent", // server: the planner call sent
   "plannerBack", // server: the planner call back
   "toolsDone", // server: tools run, first sentence built
+  "aideFirst", // server, v7: the aide's first checked sentence ready (the model's answer, checked against the facts)
   "firstEvent", // the first streamed event received in the browser
   "speakCalled", // speak() called for the first sentence
   "voiceStart" // the voice's onstart (or the PCM path's first sample scheduled)

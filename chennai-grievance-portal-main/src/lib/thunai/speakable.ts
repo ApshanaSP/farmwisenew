@@ -72,6 +72,8 @@ export function speakableFigures(doc: StageDocT, lang: Lang): Set<string> {
   for (const x of narrationOf(doc, lang)) bag.text.push(x.text);
   const out = allowedSet(bag.nums);
   for (const s of bag.text) for (const v of allowedSet(figuresOfText(s))) out.add(v);
+  // v7: the aide's checked answer (its figures, each checked against the facts on the server: stage.ts voice)
+  for (const v of allowedSet(doc.voice?.figures ?? [])) out.add(v);
   if (answer) return out;
   // the title, takeaway and notes are code's templates, but a request's words can sit in them: a figure the model wrote never counts
   const shown = [...bag.shown, doc.title ?? "", doc.titles?.[lang] ?? "", doc.takeaway?.[lang] ?? "", ...(doc.notes ?? []), ...(doc.notesBi ?? []).map((n) => n[lang] ?? "")];

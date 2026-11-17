@@ -634,3 +634,61 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
   }
   return null;
 }
+
+// ------------------------------------------------------------ v7: plain text, streamed --
+
+export interface ClaudeTextArgs { name: string; system: string; prompt: string; maxOutputTokens: number; model?: string; timeoutMs?: number; abortSignal?: AbortSignal }
+export interface ClaudeTextResult { model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; ms: number; firstMs: number | null; stopReason: string | null }
+
+/**
+ * v7: Jarvis's answer writer on Claude (lib/thunai/aide7/stream.ts): one plain-text answer, streamed to `onText` as it comes. The same
+ * rules as a planner call: JARVIS_CLAUDE_OFF stops it; the owner's spend ceiling holds (client(): no call past it; this call's margin is
+ * held while it is out; a request sent and never answered is counted at its worst; every billed response is recorded); thinking disabled
+ * on Haiku 5.5 at JARVIS_HAIKU_EFFORT; the fixed instructions are the system block with the cache point (byte-stable: the writer's
+ * prompt has no per-turn text there), everything per turn in the user message. A refused key is remembered as for the planner; a 429
+ * cools Claude and throws ClaudeBusyError (the ladder's next rung answers). A "refusal" stop throws after the text (the writer checks
+ * every sentence anyway and speaks none it has not checked).
+ */
+export async function claudeStreamText(a: ClaudeTextArgs, onText: (t: string) => void): Promise<ClaudeTextResult> {
+  if (claudeOff()) throw new Error("Claude is switched off (JARVIS_CLAUDE_OFF=1).");
+  const model = a.model || claudeModel();
+  const c = client();
+  const effort: Effort = NO_THINK.test(model) ? haikuEffort() : "low";
+  const body = {
+    model, max_tokens: a.maxOutputTokens,
+    system: [{ type: "text" as const, text: a.system, cache_control: { type: "ephemeral" as const } }],
+    messages: [{ role: "user" as const, content: a.prompt }],
+    output_config: { effort },
+    ...thinkingFor(model, true, effort)
+  };
+  const t0 = Date.now();
+  let firstMs: number | null = null;
+  let res: Anthropic.Beta.BetaMessage;
+  beginClaude();
+  try {
+    const stream = c.beta.messages.stream(body as never, { timeout: a.timeoutMs ?? 8000, signal: a.abortSignal });
+    stream.on("text", (t: string) => { if (firstMs == null) firstMs = Date.now() - t0; onText(t); });
+    res = (await stream.finalMessage()) as Anthropic.Beta.BetaMessage;
+  } catch (e) {
+    if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError") recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
+    heard({ name: a.name, model, outcome: a.abortSignal?.aborted ? "aborted" : outcomeOf(e), ms: Date.now() - t0, path: "json", compact: false, warm: false });
+    if (a.abortSignal?.aborted) throw e;
+    if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) { refusedKey(e); throw new Error(`The Claude API refused the key (${e.status}).`); }
+    if (e instanceof Anthropic.RateLimitError) { ledger().cool("anthropic", model, COOL_BUSY_MS); telemetry("fallback_429", { provider: "anthropic", model, status: 429, fallback: "next-rung" }); throw new ClaudeBusyError(retryAfter(e, 20), "rate limited"); }
+    if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) { ledger().cool("anthropic", model, COOL_NO_CREDIT_MS); keyRefused("anthropic", 400, "no credit left"); throw new Error("The Claude API account has no credit left."); }
+    if (e instanceof Anthropic.APIConnectionTimeoutError) throw new ClaudeBusyError(10, `no answer in ${Math.round((a.timeoutMs ?? 8000) / 1000)} s`);
+    if (e instanceof Anthropic.APIError && typeof e.status === "number" && e.status >= 500) throw new ClaudeBusyError(retryAfter(e, 15), `HTTP ${e.status}`);
+    if (e instanceof Anthropic.APIConnectionError) throw new ClaudeBusyError(10, "connection failed");
+    throw e;
+  } finally {
+    endClaude();
+  }
+  keyWorks("anthropic");
+  recordClaude(res.model || model, res.usage);
+  heard({ name: a.name, model, outcome: res.stop_reason === "refusal" ? "refusal" : "ok", ms: Date.now() - t0, path: "json", compact: false, warm: false }, res);
+  const u = res.usage;
+  const out: ClaudeTextResult = { model: res.model || model, inputTokens: u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0), outputTokens: u.output_tokens,
+    cacheReadTokens: u.cache_read_input_tokens ?? 0, cacheWriteTokens: u.cache_creation_input_tokens ?? 0, ms: Date.now() - t0, firstMs, stopReason: res.stop_reason ?? null };
+  if (res.stop_reason === "refusal") { telemetry("claude_stop", { model, why: "refusal" }); throw Object.assign(new Error(`Claude declined ${a.name}`), { [BILLED]: { model, inputTokens: out.inputTokens, outputTokens: out.outputTokens, cacheReadTokens: out.cacheReadTokens, cacheWriteTokens: out.cacheWriteTokens } }); }
+  return out;
+}

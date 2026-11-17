@@ -37,7 +37,7 @@ import { asksCount, catIn, intentMarker, periodIn, placesIn, quickScreen, reserv
 import { riskOf } from "./risk";
 import { spanScreen } from "./spanned";
 import { GENERAL_FALLBACK, GENERAL_LABEL, GENERAL_SYSTEM, GeneralSchema, ROUTER_SYSTEM, RouterSchema, routeByRules, type Bundle } from "./router";
-import { checkStage, RECIPES, STAGE_DIGEST_MAX, type Recipe, type StageContext } from "./stage";
+import { checkStage, RECIPES, STAGE_DIGEST_MAX, type Recipe, type StageContext, type StageDocT } from "./stage";
 import { scrubDigest } from "./digestscrub";
 import type { Hands } from "./screens";
 import { ackFor, ackTemplated } from "./stagelocal";
@@ -49,6 +49,8 @@ import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn, clarifySlot } from "./entities";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { aideAnswer, aideWanted, type AideCtx } from "./aide7";
+import { timeOf } from "./brief6";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
 export const Heard = z.object({ lang: z.enum(["en", "ta"]), conf: z.number().min(0).max(1), source: z.enum(["whisper", "captions", "typed"]) });
@@ -589,6 +591,8 @@ export interface RoundDeps {
   progressEveryMs?: number;
   /** start the likely reads while the planner thinks (the round routes turn it on) */
   speculate?: boolean;
+  /** v7, tests and the evaluation: the aide writer's model and rungs (aide7/writer.ts) */
+  aide?: AideCtx["write"];
 }
 type Emit = (e: TurnEvent) => void;
 
@@ -598,18 +602,73 @@ type Emit = (e: TurnEvent) => void;
  * passed by the number gate against the screen's own figures), RUN_FINISHED with the same object this returns.
  */
 export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, user: string, mem: { notes: string[]; habits: Record<string, string> } = { notes: [], habits: {} }, signal?: AbortSignal, deps: RoundDeps = {}): Promise<RoundOut> {
-  if (!deps.emit) return roundOnce(b, world, rawHands, user, mem, signal, deps, null);
+  const start = Date.now();
+  if (!deps.emit) {
+    const o = await roundOnce(b, world, rawHands, user, mem, signal, deps, null);
+    return withAide(o, b, world, rawHands, user, signal, deps, start, null);
+  }
   const listener = deps.emit;
   // a listener that fails never breaks the turn
   const send: Emit = (e) => { try { listener(e); } catch { /* the stream is gone */ } };
   const ids = { turnId: b.turnId, round: b.round };
   send({ ...ids, type: "RUN_STARTED", at: Date.now() });
-  const o = await roundOnce(b, world, rawHands, user, mem, signal, deps, send);
-  if (!o.done && o.steps.length) send({ ...ids, type: "CUSTOM", name: "steps", value: { steps: o.steps } });
+  const o0 = await roundOnce(b, world, rawHands, user, mem, signal, deps, send);
+  if (!o0.done && o0.steps.length) send({ ...ids, type: "CUSTOM", name: "steps", value: { steps: o0.steps } });
+  // v7: a screen built for a question goes up at once and its answer is written by the aide, each checked sentence streamed as it passes
+  if (o0.done && o0.result?.stage && aideWanted(o0.result, b.text, o0.lane, !!deps.aide)) {
+    const o = await withAide(o0, b, world, rawHands, user, signal, deps, start, {
+      ready: (stage) => send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage } }),
+      sentence: (text, lang) => send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang })
+    });
+    send({ ...ids, type: "RUN_FINISHED", out: o });
+    return o;
+  }
+  const o = o0;
   if (o.result?.stage) send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage: o.result.stage } });
   for (const s of spokenSentences(o.result, world)) send({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: s.text, lang: s.lang });
   send({ ...ids, type: "RUN_FINISHED", out: o });
   return o;
+}
+
+/**
+ * v7 (aide7/): the answer to a question, written by a model from the screen's facts and checked by code, in place of the recipe's templated
+ * line. `live`: the streamed round's hooks (the screen the moment the facts are ready, each checked sentence as it passes). A turn the aide
+ * does not answer (a command, a control, a refusal, JARVIS_ANSWER=v6) comes back as it was. The answer ends inside the round's budget.
+ */
+async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, user: string, signal: AbortSignal | undefined, deps: RoundDeps, start: number,
+  live: { ready: (stage: StageDocT) => void; sentence: (text: string, lang: Lang) => void } | null): Promise<RoundOut> {
+  const r = o.result;
+  if (!o.done || !r?.stage || !aideWanted(r, b.text, o.lane, !!deps.aide)) return o;
+  const budget = budgetFor(turnSpeed(b.text, world));
+  const last = [...(b.turns ?? [])].reverse().find((t) => t.result)?.result ?? null;
+  const t0 = Date.now();
+  // what reached the browser, so a failure never sends the screen or a sentence twice
+  let shown = false, spoke = false;
+  try {
+    const a = await aideAnswer(r as AgentResult & { stage: StageDocT }, {
+      question: b.text, world, user, signal, last, now: deps.now, write: deps.aide,
+      untilMs: Math.max(4000, start + budget - 600 - Date.now()),
+      ready: live ? (stage) => { shown = true; live.ready(stage); } : undefined,
+      emit: live ? (text, lang) => { spoke = true; live.sentence(text, lang); } : undefined,
+      dashboardNews: async (words) => {
+        const sr = await hands.tool("search_records", { text: words.join(" "), scope: { period: "monthly", zone: null, dept: null, cat: null, taluk: null }, kinds: ["news"] });
+        return (((sr.data as { news?: Record<string, unknown>[] } | undefined)?.news) ?? []).map((x) => ({ outlet: String(x.publisher ?? x.source ?? "A report").slice(0, 80), outletTa: null,
+          title: String(x.title ?? "").slice(0, 300), url: typeof x.url === "string" ? x.url : null, at: timeOf(x.t ?? x.published) ?? null, from: "dashboard" as const }));
+      }
+    });
+    telemetry("aide", { by: a.written.by, model: a.written.model, ms: Date.now() - t0, firstMs: a.written.firstMs, sentences: a.written.sentences.length, rejected: a.written.rejected.length,
+      calls: a.written.calls, tokens: a.written.tokens, gap: a.gap ? a.gap.status : null, turn: b.turnId });
+    return { ...o, result: a.result, tokens: o.tokens + a.written.tokens, calls: o.calls + a.written.calls, timing: { ...(o.timing ?? {}), ...(a.written.firstMs != null ? { aideFirst: t0 + a.written.firstMs } : {}) } };
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") throw e;
+    console.warn(`[jarvis aide] ${(e as Error)?.message?.slice(0, 160)}`);
+    // the aide failed: the turn is answered as v6 answered it (the screen and its own line)
+    if (live && r.stage) {
+      if (!shown) live.ready(r.stage);
+      if (!spoke) for (const s of spokenSentences(r, world)) live.sentence(s.text, s.lang);
+    }
+    return o;
+  }
 }
 
 async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: string, mem: { notes: string[]; habits: Record<string, string> }, signal: AbortSignal | undefined, deps: RoundDeps, bus: Emit | null): Promise<RoundOut> {

@@ -1216,11 +1216,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setOffer(nq ? { say: nq.say, step: nq.step, lang } : null);
     const offerLine = (auto: boolean) => (nq && !auto && outMode === "voice" && (say ?? "").length <= 220 ? nq.say[lang] : null);
     if (sx && plan.show === "none") {
-      const shown = sx.screen as StageDocT;
+      // v7: the round's final screen is the streamed one plus what the aide said (stage.ts voice) and any reports it found: it takes its place
+      const shown = doc.voice ? doc : (sx.screen as StageDocT);
+      if (doc.voice) { setStage(doc); stageRef.current = doc; }
       setStageBrain(brainInfo);
       // the streamed words already show (its card is written now, once); with no words at all, the card is the screen's title
       if (say || sx.said.length) pendingScreen.current = scr; else { pendingScreen.current = null; pushMsg({ who: "jarvis", text: doc.title, lang, screen: scr }); }
-      const auto = shown.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
+      // a news list or a brief is read item by item only when no aide answered it (v7: the voice gives the point, the screen the items)
+      const auto = !shown.voice && shown.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
       if (plan.speak === "all") { narrate(shown, say, lang, auto, offerLine(auto)); return; }
       if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang, allowed: speakableFigures(shown, lang) }; }
       if (plan.speak === "rest" && outMode === "voice") sx.queue?.push(plan.rest);
@@ -1234,7 +1237,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // a different screen than the one that streamed takes its place (its words cut, it is not kept on the back stack)
     const shown = putStage(doc, lang, brainInfo, plan.show === "replace" ? { ...opts, push: false } : opts);
     if (say) pendingScreen.current = scr; else pushMsg({ who: "jarvis", text: doc.title, lang, screen: scr });
-    const auto = shown.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
+    const auto = !shown.voice && shown.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
     narrate(shown, say, lang, auto, offerLine(auto));
   };
   /** The offered next step, taken (a tap, or a plain yes): its screen built directly from the data. */

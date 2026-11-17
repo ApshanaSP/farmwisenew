@@ -22,6 +22,7 @@ import { conditionsTa, reasonTa } from "./reasons";
 import { stripFigures } from "./numbergate";
 import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
 import { briefIssue, latestOf, roleWords, timeOf } from "./brief6";
+import { keepExtras, type AideExtras } from "./aide7/extras";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
@@ -288,7 +289,7 @@ async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<num
 }
 
 /** a screen as a recipe builds it: its title in both languages (a plain string is the same in both: a name, the Collector's own words) */
-type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
+type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[]; /** v7: facts for the aide beyond the screen (aide7/extras.ts) */ aide?: AideExtras };
 
 /**
  * The analysis recipes (recipes/*.ts, lane A2) take the same context with their notes as plain lines in the screen's language and the
@@ -344,6 +345,7 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
     slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
     lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
+  if (part.aide) keepExtras(doc, part.aide);
   // the persona pushes back when the data is thin: a finding resting on a handful of cases says so, with code's own count (persona.ts)
   const thin = thinLine(doc);
   if (thin) doc.say = { en: fit(`${doc.say.en} ${thin.en}`.trim(), 600), ta: fit(`${doc.say.ta} ${thin.ta}`.trim(), 900) };
@@ -918,11 +920,12 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const news = (d.reports ?? []).map((x) => ({ outlet: clip(x.publisher, 40), at: timeOf(x.t) })).find((x) => x.outlet && isNewsMedia(x.outlet)) ?? null;
   // the last report's time for "nothing new since": a day-only report counts at that day's end (brief6.ts latestOf), never dropped
   const times = (d.reports ?? []).map((x) => latestOf(x.t)).filter((x): x is number => x != null);
-  const say = briefIssue({ ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(d.assigned?.designation), officials: d.assigned ? 1 : 0, news,
-    lastAt: times.length ? Math.max(...times) : null, now: Date.now() }, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
+  const bf = { ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(d.assigned?.designation), officials: d.assigned ? 1 : 0, news,
+    lastAt: times.length ? Math.max(...times) : null, now: Date.now() };
+  const say = briefIssue(bf, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   // the record's own title is English: a Tamil screen names the case by its kind in Tamil and its place
   const titleTa = [plainWhat(row.cat, row.title)?.ta ?? "சம்பவம்", placeTa ?? row.place].filter(Boolean).join(" · ");
-  return { title: bi(row.title, clip(titleTa, 200)), takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
+  return { title: bi(row.title, clip(titleTa, 200)), takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks, aide: { brief: { ...bf, label: spokenLabel(row) } } };
 }
 
 // ------------------------------------------------------------------ news --

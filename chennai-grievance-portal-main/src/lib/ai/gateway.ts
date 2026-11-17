@@ -12,7 +12,7 @@
  * model, tokens and latency, never with the prompt (it can carry untrusted text), and each
  * user has a daily token budget.
  */
-import { APICallError, Output, generateText, zodSchema, type LanguageModel } from "ai";
+import { APICallError, Output, generateText, streamText, zodSchema, type LanguageModel } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -651,4 +651,65 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     }
   }
   return { longBusy: false };
+}
+
+// ------------------------------------------------------------ v7: plain text, streamed --
+
+/** One streamed plain-text call to one free model (v7's answer writer, lib/thunai/aide7): Groq or Gemini, no schema. */
+export interface PlainCall {
+  provider: "groq" | "gemini"; model: string; name: string; system: string; prompt: string; maxOutputTokens: number; temperature?: number;
+  abortSignal?: AbortSignal; lane?: Lane; user: string;
+}
+export interface PlainUsage { provider: ProviderName; model: string; inputTokens: number; outputTokens: number; ms: number; firstMs: number | null }
+
+/**
+ * Stream one model's text to `onText` as it comes; resolves with the usage once the model is done, throws on a refusal, a rate limit (the
+ * model cools, as for the JSON calls), an error or the caller's abort. The tokens are recorded in the ledger as every call's are; a call
+ * stopped before it finished is recorded at its rough size (it was asked, and the free tier counts it). Thinking is kept off or low: a
+ * spoken answer cannot wait for it (Groq qwen: reasoning_effort none; gpt-oss: low, hidden; Gemini: low).
+ */
+export async function streamPlainText(c: PlainCall, onText: (t: string) => void): Promise<PlainUsage> {
+  const p = makers()[c.provider]?.();
+  const lm = p?.pool?.("fast").find((m) => m.id === c.model)?.lm ?? p?.pool?.("reasoning").find((m) => m.id === c.model)?.lm;
+  if (!p || !lm) throw new AiUnavailableError();
+  const key = `${p.name}/${c.model}`;
+  const rest = cooling.get(key) ?? 0;
+  if (rest > Date.now()) throw new AiBusyError(Math.ceil((rest - Date.now()) / 1000));
+  if (!budgetLeft(c.user)) throw new AiBudgetError();
+  const t0 = Date.now();
+  let firstMs: number | null = null, got = 0;
+  const providerOptions = c.provider === "groq"
+    ? { groq: c.model.startsWith("openai/") ? { reasoningEffort: "low", reasoningFormat: "hidden" } : { reasoningEffort: "none" } }
+    : { google: { thinkingConfig: { thinkingLevel: env("AI_REASONING_EFFORT") || "low" } } };
+  let failure: unknown = null;
+  const r = streamText({ model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature ?? 0, maxOutputTokens: Math.min(c.maxOutputTokens, p.maxOut?.(c.model) ?? Infinity),
+    maxRetries: 0, abortSignal: c.abortSignal, providerOptions: providerOptions as never, onError: ({ error }) => { failure = error; } });
+  let usage = { inputTokens: 0, outputTokens: 0 };
+  try {
+    for await (const part of r.fullStream) {
+      if (part.type === "text-delta" && part.text) { if (firstMs == null) firstMs = Date.now() - t0; got += part.text.length; onText(part.text); }
+      else if (part.type === "error") { failure = part.error; break; }
+      else if (part.type === "finish") usage = { inputTokens: part.totalUsage?.inputTokens ?? 0, outputTokens: part.totalUsage?.outputTokens ?? 0 };
+    }
+  } catch (e) { failure ??= e; }
+  if (failure || c.abortSignal?.aborted) {
+    // asked, so it counts: at its rough size when the provider never said
+    recordUse(key, usage.inputTokens + usage.outputTokens || roughTokens({ system: c.system, prompt: c.prompt, maxOutputTokens: Math.ceil(got / 3.5) || 1 }), c.lane);
+    const e = failure ?? new DOMException("aborted", "AbortError");
+    if (APICallError.isInstance(e) && (e.statusCode === 429 || (e.statusCode ?? 0) >= 500)) {
+      const secs = retryAfterSeconds(e) ?? 20;
+      cooling.set(key, Date.now() + Math.min(10 * 60_000, secs * 1000));
+      emitAttempt({ name: c.name, provider: p.name, model: c.model, outcome: e.statusCode === 429 ? "rate_limited" : "busy", status: e.statusCode, ms: Date.now() - t0, lane: c.lane });
+      throw new AiBusyError(secs);
+    }
+    if (APICallError.isInstance(e) && isKeyRefusal(e.statusCode, e.message)) keyRefused(p.name, e.statusCode ?? 401, e.message);
+    throw e;
+  }
+  const tokens = usage.inputTokens + usage.outputTokens;
+  charge(c.user, tokens);
+  recordUse(key, tokens, c.lane);
+  keyWorks(p.name);
+  emitAttempt({ name: c.name, provider: p.name, model: c.model, outcome: "ok", ms: Date.now() - t0, lane: c.lane, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
+  console.info(`[assistant] ${c.name} ${p.name}/${c.model} streamed ${Date.now() - t0} ms (first text ${firstMs ?? "-"} ms), ${usage.inputTokens}+${usage.outputTokens} tokens`);
+  return { provider: p.name, model: c.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, ms: Date.now() - t0, firstMs };
 }
