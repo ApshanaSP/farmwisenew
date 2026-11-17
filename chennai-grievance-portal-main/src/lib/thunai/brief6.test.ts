@@ -62,6 +62,17 @@ describe("the independent check's small cases (17 Nov)", () => {
   });
 });
 
+describe("the QA gate's case (17 Nov): 'today' is not added to a next step that already says when", () => {
+  it("'ask Metrowater for a status by this evening' stays as it is; a next step with no time gets 'today' when overdue", () => {
+    const withTime = briefIssue({ ...base, next: { en: "ask Metrowater for a status by this evening", ta: "இன்று மாலைக்குள் குடிநீர் வாரியத்திடம் நிலவரம் கேட்கலாம்" } }, "x", []);
+    expect(withTime.en).toMatch(/I'd ask Metrowater for a status by this evening\. /);
+    expect(withTime.en).not.toMatch(/this evening today/);
+    expect(withTime.ta).not.toMatch(/மாலைக்குள்[^.]*இன்றே/);
+    const noTime = briefIssue({ ...base, next: { en: "send the drains team to clear it", ta: "வடிகால் பிரிவை அனுப்பலாம்" } }, "x", []);
+    expect(noTime.en).toMatch(/I'd send the drains team to clear it today\./);
+  });
+});
+
 describe("a role, never a name", () => {
   it("a short designation is said as a role; anything with a figure, a long text or symbols is not said", () => {
     expect(roleWords("Assistant Engineer")).toBe("the assistant engineer");

@@ -7,6 +7,7 @@ import type { BlockT, CaseRowT, StageDocT } from "./stage";
 import type { Lang } from "./types";
 import { DEPT_TA, ZONES, ZONE_TA_NAME } from "./lexicon";
 import { asciiDigits } from "./digits";
+import { spokenPart } from "./chunker";
 import { catTaOfLabel } from "./narrate";
 import { OPEN_VERBS, SOFT_VERBS, readPicks, readPositions, tokensOf } from "./ordinal";
 
@@ -333,6 +334,9 @@ export function caseBrief(r: CaseRowT, i: number, asOf: string | null, lang: Lan
     r.deptName ? `${r.deptName} has it.` : ""].filter(Boolean).join(" ");
 }
 
+/** a line as compared for "already said": spacing and case do not count (a spoken line capitalises a lead the point keeps lower case) */
+const sameWords = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+
 /**
  * The items Thunai reads aloud one by one, with the key the Stage highlights and the lead-in said before the item's own
  * words (so the highlight follows the voice inside the headline).
@@ -344,7 +348,14 @@ export function narrationOf(d: StageDocT, lang: Lang): { key: string; text: stri
       return { key: x.id, lead, text: `${lead}${x.title}.` };
     });
     // a Tamil reading of a brief reads each point in Tamil where it has one (the sentences the code builds), the record's own title as it is (RC-15, PB-207)
-    if (b.kind === "Brief") return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: lang === "ta" ? p.ta ?? p.text : p.text })).filter((x, i) => !(lang === "ta" && b.points[i].ta === "")); // ta "": the pipeline AI wrote it in English only, so a Tamil reading leaves it out
+    if (b.kind === "Brief") {
+      // a point the spoken PART of the line already said whole is not read again: a brief's say ends with its lead, which is also its first
+      // point (v6 lead-twice). Only the part the voice says (chunker.ts spokenPart, as Thunai.tsx narrate speaks it): a point the line holds
+      // after that part is still read, or no one would hear it (the second check's skeptic, 17 Nov: the advise screen lost two points)
+      const said = ` ${sameWords(spokenPart(d.say?.[lang] ?? ""))} `;
+      return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: lang === "ta" ? p.ta ?? p.text : p.text }))
+        .filter((x, i) => !(lang === "ta" && b.points[i].ta === "") && !(sameWords(x.text) && said.includes(` ${sameWords(x.text)} `))); // ta "": the pipeline AI wrote it in English only, so a Tamil reading leaves it out
+    }
   }
   const list = d.blocks.find((b) => b.kind === "CaseList");
   if (list && list.kind === "CaseList") return list.rows.slice(0, 10).map((r, i) => ({ key: r.id, lead: "", text: caseBrief(r, i, d.asOf, lang) }));

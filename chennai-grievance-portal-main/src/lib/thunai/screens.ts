@@ -21,7 +21,7 @@ import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } fr
 import { conditionsTa, reasonTa } from "./reasons";
 import { stripFigures } from "./numbergate";
 import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
-import { briefIssue, roleWords, timeOf } from "./brief6";
+import { briefIssue, latestOf, roleWords, timeOf } from "./brief6";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
@@ -916,7 +916,8 @@ async function caseDetail(c: Ctx): Promise<Part> {
   // news outlet is the record's own report's publisher, only when it is a news medium; an official is said by role, never by name, and only
   // from the record's own assignment (`assigned`), never the department's directory of contacts (the independent check, 17 Nov)
   const news = (d.reports ?? []).map((x) => ({ outlet: clip(x.publisher, 40), at: timeOf(x.t) })).find((x) => x.outlet && isNewsMedia(x.outlet)) ?? null;
-  const times = (d.reports ?? []).map((x) => timeOf(x.t)).filter((x): x is number => x != null);
+  // the last report's time for "nothing new since": a day-only report counts at that day's end (brief6.ts latestOf), never dropped
+  const times = (d.reports ?? []).map((x) => latestOf(x.t)).filter((x): x is number => x != null);
   const say = briefIssue({ ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(d.assigned?.designation), officials: d.assigned ? 1 : 0, news,
     lastAt: times.length ? Math.max(...times) : null, now: Date.now() }, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   // the record's own title is English: a Tamil screen names the case by its kind in Tamil and its place

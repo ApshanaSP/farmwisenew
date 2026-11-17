@@ -18,21 +18,38 @@ import type { Bilingual } from "./stage";
 
 export const briefStyle = (v: string | undefined = process.env.JARVIS_BRIEF): "v6" | "v5" => ((v ?? "").trim().toLowerCase() === "v5" ? "v5" : "v6");
 
-/** a record's time ("2026-11-16 18:40", IST as the store writes it, or an ISO time) as epoch ms; null when it is not one */
+/**
+ * a record's time ("2026-11-16 18:40", IST as the store writes it, or an ISO time) as epoch ms; null when it is not one. A day alone
+ * ("16 Nov 2026", "2026-11-16") is null too: read as midnight it became "early yesterday morning", an hour the record never gave.
+ */
 export function timeOf(t: unknown): number | null {
   const s = String(t ?? "").trim();
-  // as the store's tools hand report times (tools.ts readableTime, IST): "17 Nov 2026, 12:20 AM", or a day alone "17 Nov 2026"
-  const r = s.match(/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})(?:, (\d{1,2}):(\d{2}) (AM|PM))?$/);
+  // as the store's tools hand report times (tools.ts readableTime, IST): "17 Nov 2026, 12:20 AM"
+  const r = s.match(/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4}), (\d{1,2}):(\d{2}) (AM|PM)$/);
   if (r) {
     const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(r[2]);
-    const h = r[4] == null ? 0 : (Number(r[4]) % 12) + (r[6] === "PM" ? 12 : 0);
-    return Date.UTC(Number(r[3]), mon, Number(r[1]), h - 5, Number(r[5] ?? 0) - 30);
+    const h = (Number(r[4]) % 12) + (r[6] === "PM" ? 12 : 0);
+    return Date.UTC(Number(r[3]), mon, Number(r[1]), h - 5, Number(r[5]) - 30);
   }
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
   if (!m) return null;
   // an explicit zone (Z or +hh:mm) is the time's own; a bare one is IST, as the store writes it
   if (/(Z|[+-]\d{2}:?\d{2})$/.test(s)) { const v = Date.parse(s); return Number.isFinite(v) ? v : null; }
   return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]) - 5, Number(m[5]) - 30);
+}
+
+/**
+ * The latest moment a time can mean: timeOf's, or for a day alone ("16 Nov 2026") the last minute of that day, IST. Only for "nothing new
+ * has come in since" (a day-only report is news on that day: dropping it, or reading it as midnight, would claim a quiet that was not
+ * there; the second check's skeptic, 17 Nov). Never for a time that is said: that is timeOf's, and a day alone has no time of day.
+ */
+export function latestOf(t: unknown): number | null {
+  const v = timeOf(t);
+  if (v != null) return v;
+  const d = String(t ?? "").trim().match(/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/);
+  if (!d) return null;
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(d[2]);
+  return Date.UTC(Number(d[3]), mon, Number(d[1]), 23 - 5, 59 - 30);
 }
 
 const IST = 5.5 * 3_600_000;
@@ -110,6 +127,9 @@ export interface BriefFacts extends FactSheet {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** an event, told by when it was reported (narrate.ts plainWhat's names: "a road accident", "a fire", "a crime report", "a structure that has given way") */
 const EVENT = /(?:accident|fire|report|given way)$/;
+/** a next step that already says when ("by this evening", "today", "within 24 hours"): no "today" is added to it */
+const WHEN_EN = /\b(?:today|tonight|tomorrow|this (?:morning|afternoon|evening|week)|by (?:noon|evening|the end of the day)|within \w+ (?:hours?|days?)|right away|now)\b/i;
+const WHEN_TA = /இன்று|இன்றே|இன்றைக்கு|நாளை|மாலைக்குள்|காலைக்குள்|உடனே|இப்போதே/u;
 /** the words a post's designation is made of */
 const ROLE_WORD = /\b(?:engineer|officer|inspector|commissioner|superintendent|superintending|executive|assistant|deputy|joint|director|collector|tahsildar|magistrate|manager|chief|surveyor|constable|secretary|supervisor|overseer|clerk|head|in-charge|incharge|warden|controller|registrar|ae|aee|ee|je|si|ci|bdo|vao|ro|dro)\b/i;
 /** a holder said with a plural verb */
@@ -151,7 +171,9 @@ export function briefIssue(f: BriefFacts, label: string, sources: string[] = [])
   const quiet = f.lastAt != null && f.now - f.lastAt > 2 * DAY ? ` Nothing new has come in ${(sinceWords(f.lastAt, f.now)?.en ?? "for a while")}.` : "";
   const s3 = `${holder}${officer}${stuck}.${quiet}`;
   // 4. what I would do
-  const s4 = f.next ? `I'd ${f.next.en}${f.overdue ? " today" : ""}.` : f.who ? `I'd ask ${f.who.en} for an update${f.overdue ? " today" : ""}.` : "I'd assign it to a department today.";
+  // "today" only on a next step that names no time of its own ("ask Metrowater for a status by this evening today": the QA gate, 17 Nov)
+  const timed = !!f.next && WHEN_EN.test(f.next.en), timedTa = !!f.next && WHEN_TA.test(f.next.ta);
+  const s4 = f.next ? `I'd ${f.next.en}${f.overdue && !timed ? " today" : ""}.` : f.who ? `I'd ask ${f.who.en} for an update${f.overdue ? " today" : ""}.` : "I'd assign it to a department today.";
   const en = [s1, s2, s3, s4, "Want the details?"].filter(Boolean).join(" ");
 
   const whatTa = f.what ? f.what.ta : "ஒரு பிரச்சினை";
@@ -162,7 +184,7 @@ export function briefIssue(f: BriefFacts, label: string, sources: string[] = [])
   if (f.overdue && !(f.who && due?.passed)) whyTa.push("கெடுவும் தாண்டிவிட்டது");
   const t2 = f.serious ? `இது கடுமையானவற்றில் ஒன்று${whyTa.length ? `: ${whyTa.join(", ")}` : ""}.` : whyTa.length ? `${whyTa.join(", ")}.` : "";
   const t3 = f.who ? `${f.who.ta} பொறுப்பில் இருக்கிறது${!f.role && !f.officials ? ", ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை" : ""}${due?.passed ? `; கெடு ${due.ta}` : due ? `; ${due.ta}` : ""}.` : "எந்தத் துறையிடமும் இன்னும் ஒப்படைக்கப்படவில்லை.";
-  const t4 = f.next ? `${f.next.ta}${f.overdue ? ", இன்றே" : ""}.` : f.who ? `${idam(f.who.ta)} ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "இன்றே ஒரு துறையிடம் ஒப்படைக்கலாம்.";
+  const t4 = f.next ? `${f.next.ta}${f.overdue && !timedTa ? ", இன்றே" : ""}.` : f.who ? `${idam(f.who.ta)} ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "இன்றே ஒரு துறையிடம் ஒப்படைக்கலாம்.";
   const ta = [t1, t2, t3, t4, "மேலும் விவரம் வேண்டுமா?"].filter(Boolean).join(" ");
   // the gates: a line that reads a record out, or carries a field, falls back to v5's retelling
   if (speechProblem(en, sources, [f.place ?? "", f.placeTa ?? "", f.news?.outlet ?? "", f.role ?? ""])) return explainIssue(f, label, sources);
