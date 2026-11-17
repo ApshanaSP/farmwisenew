@@ -1,0 +1,768 @@
+{
+ "summary": {
+  "model": "hey_jarvis.onnx",
+  "threads": 1,
+  "msPerChunk": {
+   "n": 2821,
+   "p50": 1.31,
+   "p90": 1.83
+  },
+  "t0.3": {
+   "wakeHits": "3/8",
+   "detectMs": {
+    "n": 3,
+    "p50": 30,
+    "p90": 40
+   },
+   "falseFires": "0/48"
+  },
+  "t0.5": {
+   "wakeHits": "3/8",
+   "detectMs": {
+    "n": 3,
+    "p50": 30,
+    "p90": 40
+   },
+   "falseFires": "0/48"
+  },
+  "t0.7": {
+   "wakeHits": "3/8",
+   "detectMs": {
+    "n": 3,
+    "p50": 30,
+    "p90": 120
+   },
+   "falseFires": "0/48"
+  }
+ },
+ "rows": [
+  {
+   "name": "wake_david",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hi Jarvis.",
+   "voice": "David",
+   "best": 0.003,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "wake_zira",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hey Jarvis.",
+   "voice": "Zira",
+   "best": 0.964,
+   "first": {
+    "0.3": 40,
+    "0.5": 40,
+    "0.7": 120
+   }
+  },
+  {
+   "name": "wake_ravi",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hi Jarvis.",
+   "voice": "Ravi",
+   "best": 0.004,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "wake_heera",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hello Jarvis.",
+   "voice": "Heera",
+   "best": 0.086,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "wake_mark",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hey Jarvis.",
+   "voice": "Mark",
+   "best": 0.964,
+   "first": {
+    "0.3": 30,
+    "0.5": 30,
+    "0.7": 30
+   }
+  },
+  {
+   "name": "wake_g_charon",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hi Jarvis.",
+   "voice": "Charon",
+   "best": 0.082,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "wake_g_kore_ta",
+   "kind": "wake",
+   "lang": "ta",
+   "text": "ஹாய் ஜார்விஸ்.",
+   "voice": "Kore",
+   "best": 0.144,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "wake_g_puck",
+   "kind": "wake",
+   "lang": "en",
+   "text": "Hey Jarvis.",
+   "voice": "Puck",
+   "best": 0.976,
+   "first": {
+    "0.3": 30,
+    "0.5": 30,
+    "0.7": 30
+   }
+  },
+  {
+   "name": "cmd_trends",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Go to trends.",
+   "voice": "Ravi",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_severe",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show the severe cases.",
+   "voice": "Heera",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_briefing",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Open the briefing page.",
+   "voice": "David",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_annanagar",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show Anna Nagar on the map.",
+   "voice": "Zira",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_weekly",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Switch to the weekly view.",
+   "voice": "Mark",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_high",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show the high severity cases.",
+   "voice": "Ravi",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_env",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Go to the environment page.",
+   "voice": "Heera",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_monthly",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show me the monthly view.",
+   "voice": "David",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_overview",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Go back to the overview.",
+   "voice": "Zira",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_taluks",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show the taluks on the map.",
+   "voice": "Mark",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_studio",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Open the studio page.",
+   "voice": "Ravi",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "cmd_medium",
+   "kind": "cmd",
+   "lang": "en",
+   "text": "Show the medium cases.",
+   "voice": "Heera",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_adyar",
+   "kind": "q",
+   "lang": "en",
+   "text": "What's worst in Adyar today?",
+   "voice": "Ravi",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_velachery",
+   "kind": "q",
+   "lang": "en",
+   "text": "How many severe cases are open in Velachery?",
+   "voice": "Heera",
+   "best": 0.004,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_zoneweek",
+   "kind": "q",
+   "lang": "en",
+   "text": "Which zone has the most complaints this week?",
+   "voice": "David",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_royapuram",
+   "kind": "q",
+   "lang": "en",
+   "text": "What's happening in Royapuram right now?",
+   "voice": "Zira",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_perungudi",
+   "kind": "q",
+   "lang": "en",
+   "text": "Any flooding complaints in Perungudi today?",
+   "voice": "Mark",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_overdue",
+   "kind": "q",
+   "lang": "en",
+   "text": "Which department has the most overdue cases?",
+   "voice": "Ravi",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_teynampet",
+   "kind": "q",
+   "lang": "en",
+   "text": "How is Teynampet doing this week?",
+   "voice": "Heera",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_annanagar",
+   "kind": "q",
+   "lang": "en",
+   "text": "What are the top problems in Anna Nagar?",
+   "voice": "David",
+   "best": 0.006,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_kodambakkam",
+   "kind": "q",
+   "lang": "en",
+   "text": "Is anything serious going on in Kodambakkam today?",
+   "voice": "Zira",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_changed",
+   "kind": "q",
+   "lang": "en",
+   "text": "What changed since yesterday?",
+   "voice": "Mark",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_attention",
+   "kind": "q",
+   "lang": "en",
+   "text": "Which areas need my attention today?",
+   "voice": "Ravi",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_en_tondiarpet",
+   "kind": "q",
+   "lang": "en",
+   "text": "How are the sewage complaints in Tondiarpet looking?",
+   "voice": "Heera",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_adyar",
+   "kind": "q",
+   "lang": "ta",
+   "text": "அடையாறுல இன்னைக்கு எது ரொம்ப மோசமா இருக்கு?",
+   "voice": "Kore",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_velachery",
+   "kind": "q",
+   "lang": "ta",
+   "text": "வேளச்சேரில எத்தனை தீவிரமான புகார்கள் திறந்திருக்கு?",
+   "voice": "Charon",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_zoneweek",
+   "kind": "q",
+   "lang": "ta",
+   "text": "இந்த வாரம் எந்த மண்டலத்துல அதிகமா புகார் வந்திருக்கு?",
+   "voice": "Leda",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_royapuram",
+   "kind": "q",
+   "lang": "ta",
+   "text": "ராயபுரத்துல இப்போ என்ன நடக்குது?",
+   "voice": "Puck",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_perungudi",
+   "kind": "q",
+   "lang": "ta",
+   "text": "பெருங்குடில இன்னைக்கு வெள்ளம் சம்பந்தமா ஏதாவது புகார் இருக்கா?",
+   "voice": "Kore",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_overdue",
+   "kind": "q",
+   "lang": "ta",
+   "text": "எந்த துறைக்கு அதிகமா தாமதமான வழக்குகள் இருக்கு?",
+   "voice": "Charon",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_teynampet",
+   "kind": "q",
+   "lang": "ta",
+   "text": "தேனாம்பேட்டை இந்த வாரம் எப்படி இருக்கு?",
+   "voice": "Leda",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_annanagar",
+   "kind": "q",
+   "lang": "ta",
+   "text": "அண்ணா நகர்ல முக்கியமான பிரச்சனைகள் என்ன?",
+   "voice": "Puck",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_kodambakkam",
+   "kind": "q",
+   "lang": "ta",
+   "text": "கோடம்பாக்கத்துல இன்னைக்கு ஏதாவது சீரியஸா இருக்கா?",
+   "voice": "Kore",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_changed",
+   "kind": "q",
+   "lang": "ta",
+   "text": "நேத்துல இருந்து என்ன மாறியிருக்கு?",
+   "voice": "Charon",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_attention",
+   "kind": "q",
+   "lang": "ta",
+   "text": "இன்னைக்கு நான் எந்த பகுதிகளை கவனிக்கணும்?",
+   "voice": "Leda",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_ta_tondiarpet",
+   "kind": "q",
+   "lang": "ta",
+   "text": "தண்டையார்பேட்டைல கழிவுநீர் புகார்கள் எப்படி இருக்கு?",
+   "voice": "Puck",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_adyar",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Adyar-ல today worst case எது?",
+   "voice": "Charon",
+   "best": 0.005,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_velachery",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Velachery-ல severe cases எத்தனை open-ஆ இருக்கு?",
+   "voice": "Kore",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_zoneweek",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "இந்த week எந்த zone-ல complaints அதிகம்?",
+   "voice": "Puck",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_royapuram",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Royapuram-ல இப்போ என்ன situation?",
+   "voice": "Leda",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_perungudi",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Perungudi-ல today flooding complaints ஏதாவது இருக்கா?",
+   "voice": "Charon",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_overdue",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "எந்த department-ல overdue cases அதிகம்?",
+   "voice": "Kore",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_teynampet",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Teynampet இந்த week எப்படி இருக்கு?",
+   "voice": "Puck",
+   "best": 0.002,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_annanagar",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Anna Nagar-ல top problems என்ன?",
+   "voice": "Leda",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_kodambakkam",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Kodambakkam-ல today ஏதாவது serious-ஆ இருக்கா?",
+   "voice": "Charon",
+   "best": 0.004,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_changed",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Yesterday-ல இருந்து என்ன change ஆகியிருக்கு?",
+   "voice": "Kore",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_attention",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Today நான் எந்த areas-ஐ focus பண்ணணும்?",
+   "voice": "Puck",
+   "best": 0.001,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  },
+  {
+   "name": "q_tg_tondiarpet",
+   "kind": "q",
+   "lang": "tanglish",
+   "text": "Tondiarpet-ல sewage complaints status என்ன?",
+   "voice": "Leda",
+   "best": 0.003,
+   "first": {
+    "0.3": null,
+    "0.5": null,
+    "0.7": null
+   }
+  }
+ ]
+}
