@@ -1,0 +1,196 @@
+{
+ "org": "gemini",
+ "model": "gemini-3.1-flash-lite",
+ "at": "2026-11-17T06:56:26.270Z",
+ "set": "eval/holdout/tuning24.jsonl, seed 20261117 balanced order",
+ "und": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "trend",
+   "outcome": "ok",
+   "ms": 3235,
+   "tokens": 1981
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "changed",
+   "outcome": "error",
+   "ms": 3814,
+   "tokens": 0
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "brief",
+   "outcome": "error",
+   "ms": 2727,
+   "tokens": 0
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "cases",
+   "outcome": "error",
+   "ms": 2088,
+   "tokens": 0
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "brief",
+   "outcome": "error",
+   "ms": 1844,
+   "tokens": 0
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": null,
+   "outcome": "error",
+   "ms": 1983,
+   "tokens": 0
+  },
+  {
+   "id": "t-u013",
+   "lang": "en",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "why",
+   "outcome": "error",
+   "ms": 3068,
+   "tokens": 0
+  },
+  {
+   "id": "t-n04",
+   "lang": "ta",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": null,
+   "outcome": "error",
+   "ms": 1905,
+   "tokens": 0
+  },
+  {
+   "id": "t-n05",
+   "lang": "tanglish",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "explain",
+   "outcome": "error",
+   "ms": 1693,
+   "tokens": 0
+  },
+  {
+   "id": "t-u023",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 4959,
+   "tokens": 0
+  },
+  {
+   "id": "t-u063",
+   "lang": "ta",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "readings",
+   "outcome": "error",
+   "ms": 1873,
+   "tokens": 0
+  },
+  {
+   "id": "t-u115",
+   "lang": "tanglish",
+   "ok": true,
+   "slotsOk": true,
+   "kind": "do",
+   "recipe": "readings",
+   "outcome": "error",
+   "ms": 2020,
+   "tokens": 0
+  }
+ ],
+ "speed": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ttftMs": 1188,
+   "totalMs": 1873,
+   "outTokens": 317,
+   "tps": 463,
+   "status": 200
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ttftMs": 1482,
+   "totalMs": 2505,
+   "outTokens": 458,
+   "tps": 447.7,
+   "status": 200
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ttftMs": 1343,
+   "totalMs": 2171,
+   "outTokens": 367,
+   "tps": 443.2,
+   "status": 200
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ttftMs": 1466,
+   "totalMs": 2151,
+   "outTokens": 304,
+   "tps": 443.8,
+   "status": 200
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ttftMs": 9731,
+   "totalMs": 10471,
+   "outTokens": 438,
+   "tps": 591.9,
+   "status": 200
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ttftMs": 2169,
+   "totalMs": 2669,
+   "outTokens": 215,
+   "tps": 429.9,
+   "status": 200
+  }
+ ]
+}

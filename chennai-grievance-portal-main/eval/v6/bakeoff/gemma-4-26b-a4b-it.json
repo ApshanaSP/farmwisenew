@@ -1,0 +1,199 @@
+{
+ "org": "gemini",
+ "model": "gemma-4-26b-a4b-it",
+ "at": "2026-11-17T07:18:32.514Z",
+ "set": "eval/holdout/tuning24.jsonl, seed 20261117 balanced order",
+ "und": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 636,
+   "tokens": 0
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 600,
+   "tokens": 0
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 651,
+   "tokens": 0
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 611,
+   "tokens": 0
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 758,
+   "tokens": 0
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 604,
+   "tokens": 0
+  },
+  {
+   "id": "t-u013",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 565,
+   "tokens": 0
+  },
+  {
+   "id": "t-n04",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 675,
+   "tokens": 0
+  },
+  {
+   "id": "t-n05",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 797,
+   "tokens": 0
+  },
+  {
+   "id": "t-u023",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 533,
+   "tokens": 0
+  },
+  {
+   "id": "t-u063",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 573,
+   "tokens": 0
+  },
+  {
+   "id": "t-u115",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 562,
+   "tokens": 0
+  }
+ ],
+ "speed": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ttftMs": null,
+   "totalMs": 11668,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 1097,
+   "outTokens": null,
+   "tps": null,
+   "status": 503,
+   "err": "{\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are u"
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 1124,
+   "outTokens": null,
+   "tps": null,
+   "status": 503,
+   "err": "{\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are u"
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ttftMs": null,
+   "totalMs": 768,
+   "outTokens": null,
+   "tps": null,
+   "status": 429,
+   "err": "{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing deta"
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 11743,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 11953,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  }
+ ]
+}

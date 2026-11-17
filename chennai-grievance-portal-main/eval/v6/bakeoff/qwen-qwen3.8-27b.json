@@ -1,0 +1,65 @@
+{
+ "org": "groq",
+ "model": "qwen/qwen3.8-27b",
+ "at": "2026-11-17T07:11:52.371Z",
+ "set": "eval/holdout/tuning24.jsonl, seed 20261117 balanced order",
+ "und": [],
+ "speed": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ttftMs": 1031,
+   "totalMs": 1048,
+   "outTokens": 317,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ttftMs": 1049,
+   "totalMs": 1050,
+   "outTokens": 248,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 146,
+   "outTokens": null,
+   "tps": null,
+   "status": 429,
+   "err": "{\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m3pwrjf6e4mr5p0rdf4q7wet` se"
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ttftMs": 1037,
+   "totalMs": 1037,
+   "outTokens": 216,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 158,
+   "outTokens": null,
+   "tps": null,
+   "status": 429,
+   "err": "{\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m3pwrjf6e4mr5p0rdf4q7wet` se"
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ttftMs": 818,
+   "totalMs": 819,
+   "outTokens": 215,
+   "tps": null,
+   "status": 200
+  }
+ ]
+}

@@ -1,0 +1,199 @@
+{
+ "org": "groq",
+ "model": "allam-2-7b",
+ "at": "2026-11-17T07:01:19.075Z",
+ "set": "eval/holdout/tuning24.jsonl, seed 20261117 balanced order",
+ "und": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 438,
+   "tokens": 0
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 410,
+   "tokens": 0
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 521,
+   "tokens": 0
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 295,
+   "tokens": 0
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 385,
+   "tokens": 0
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 274,
+   "tokens": 0
+  },
+  {
+   "id": "t-u013",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 379,
+   "tokens": 0
+  },
+  {
+   "id": "t-n04",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 357,
+   "tokens": 0
+  },
+  {
+   "id": "t-n05",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 362,
+   "tokens": 0
+  },
+  {
+   "id": "t-u023",
+   "lang": "en",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 272,
+   "tokens": 0
+  },
+  {
+   "id": "t-u063",
+   "lang": "ta",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 307,
+   "tokens": 0
+  },
+  {
+   "id": "t-u115",
+   "lang": "tanglish",
+   "ok": false,
+   "slotsOk": false,
+   "kind": null,
+   "recipe": null,
+   "outcome": "error",
+   "ms": 334,
+   "tokens": 0
+  }
+ ],
+ "speed": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ttftMs": null,
+   "totalMs": 256,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 162,
+   "outTokens": null,
+   "tps": null,
+   "status": 400,
+   "err": "{\"error\":{\"message\":\"Please reduce the length of the messages or completion.\",\"type\":\"invalid_request_error\",\"param\":\"me"
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 196,
+   "outTokens": null,
+   "tps": null,
+   "status": 400,
+   "err": "{\"error\":{\"message\":\"Please reduce the length of the messages or completion.\",\"type\":\"invalid_request_error\",\"param\":\"me"
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ttftMs": null,
+   "totalMs": 314,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 156,
+   "outTokens": null,
+   "tps": null,
+   "status": 400,
+   "err": "{\"error\":{\"message\":\"Please reduce the length of the messages or completion.\",\"type\":\"invalid_request_error\",\"param\":\"me"
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 650,
+   "outTokens": null,
+   "tps": null,
+   "status": 200
+  }
+ ]
+}
