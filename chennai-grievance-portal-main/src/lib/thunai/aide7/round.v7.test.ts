@@ -18,7 +18,8 @@ const RUNGS: Rung[] = [{ provider: "groq", model: "qwen/qwen3.8-27b" }];
 const writer = (calls: RungCall[] = []): OpenRung => async (rung, c, onText) => {
   calls.push(c);
   const facts = [...c.prompt.matchAll(/^(F\d+) \[[^\]]+\] (.*)$/gm)];
-  const hit = facts.map((m) => ({ id: m[1], zone: m[2].match(/\b(Adyar|Royapuram|Anna Nagar)\b/)?.[1], n: m[2].match(/\b(\d{1,4})\b/)?.[1] })).find((x) => x.zone && x.n);
+  const hit = facts.map((m) => ({ id: m[1], zone: m[2].match(/\b(Adyar|Royapuram|Anna Nagar)\b/)?.[1], n: m[2].match(/\b(\d{1,4})\b(?! (?:hours?|days?)\b)/)?.[1] })).find((x) => x.zone && x.n);
+  // (a window's length, "the last 24 hours", is no count: the checker refuses it since the review, 18 Nov)
   const lines = ["GAP: none", ...(hit ? [`S: ${hit.zone} shows ${hit.n} on this count. [${hit.id}]`] : []), "S: Want the details?"];
   for (const l of lines) onText(`${l}\n`);
   return { provider: rung.provider, model: rung.model, tokens: 50, firstMs: 1, ms: 2, stop: null };

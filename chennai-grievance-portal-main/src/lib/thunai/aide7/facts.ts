@@ -79,7 +79,7 @@ function caseFacts(b: Extract<BlockT, { kind: "CaseDetail" }>, x: AideExtras["br
   const next = x?.next?.en ?? i.next;
   if (next) add({ src: "dashboard", text: `The suggested next step (code's): ${next}` });
   // the timeline's news reports only: a citizen's complaint is never handed to a model (its words, a name, a house), whatever channel it came by
-  for (const r of b.timeline.filter((x) => isNewsMedia(x.source)).slice(0, 3)) { const w = when(r.t, now); add({ src: r.source, text: `${r.source}${w ? ` (${w.en})` : ""}: ${r.text}`, times: w ? [w.en, w.ta] : [] }); }
+  for (const [i, r] of b.timeline.filter((x) => isNewsMedia(x.source)).slice(0, 3).entries()) { const w = when(r.t, now); add({ src: r.source, doc: `timeline-${i}`, text: `${r.source}${w ? ` (${w.en})` : ""}: ${r.text}`, times: w ? [w.en, w.ta] : [] }); }
 }
 
 function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"], x: AideExtras | null) {
@@ -87,7 +87,9 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
     case "Kpis":
       for (const k of b.items) {
         const prev = k.prev != null ? `, against ${fmt(k.prev)} before` : "";
-        const ch = k.pct != null ? ` (${k.pct >= 0 ? "up" : "down"} ${Math.abs(k.pct)}%)` : k.delta != null && k.delta !== 0 ? ` (${k.delta > 0 ? "up" : "down"} ${fmt(Math.abs(k.delta))})` : "";
+        // (a change of 0 is no change: "up 0%" licensed "rose" and "none": the review, 18 Nov)
+        const ch = k.pct != null && k.pct !== 0 ? ` (${k.pct > 0 ? "up" : "down"} ${Math.abs(k.pct)}%)` : k.delta != null && k.delta !== 0 ? ` (${k.delta > 0 ? "up" : "down"} ${fmt(Math.abs(k.delta))})`
+          : k.prev != null && (k.pct === 0 || k.delta === 0) ? " (no change)" : "";
         add({ src: "dashboard", text: `${b.title}: ${k.label}: ${fmt(k.value)}${k.unit ? ` ${k.unit}` : ""}${prev}${ch}`, dir: dirOf(k.delta ?? (k.prev != null ? k.value - k.prev : null)),
           ratios: k.prev ? [k.value / k.prev] : [] });
       }
@@ -112,7 +114,7 @@ function blockFacts(b: BlockT, doc: StageDocT, now: number, add: Builder["add"],
       // was said in the dev run, 17 Nov)
       for (const it of b.items.slice(0, 5)) {
         const w = when(it.t, now);
-        add({ src: it.source ?? "the news", text: `${it.source ?? "A report"}${w ? ` (${w.en})` : ""}: ${it.title}${it.place ? ` (place: ${it.place})` : ""}${it.incidentId ? "; linked to an incident on the console" : ""}`, times: w ? [w.en, w.ta] : [] });
+        add({ src: it.source ?? "the news", doc: `news-${it.id}`, text: `${it.source ?? "A report"}${w ? ` (${w.en})` : ""}: ${it.title}${it.place ? ` (place: ${it.place})` : ""}${it.incidentId ? "; linked to an incident on the console" : ""}`, times: w ? [w.en, w.ta] : [] });
       }
       return;
     }
@@ -224,9 +226,9 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
   if (x?.article) {
     const a = x.article, w = a.publishedAt ? when(a.publishedAt.replace("T", " ").slice(0, 19), now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
     const outlet = a.outlet ?? "The report";
-    b.add({ src: a.outlet ?? "the news", text: `${outlet} reported${w?.en ? ` ${w.en}` : ""}: ${a.title}`, times: w ? [w.en, w.ta] : [], names: a.outletTa ? [a.outletTa] : [] });
+    b.add({ src: a.outlet ?? "the news", doc: "article", text: `${outlet} reported${w?.en ? ` ${w.en}` : ""}: ${a.title}`, times: w ? [w.en, w.ta] : [], names: a.outletTa ? [a.outletTa] : [] });
     // the article's own sentences, a few, each a fact of that outlet's (code reads none of them as true: they are what the outlet said)
-    for (const s of sentencesOf(a.text).slice(0, 6)) b.add({ src: a.outlet ?? "the news", text: `${outlet} wrote: ${s}`, cause: /\b(?:because|due to|caused|after)\b/i.test(s), names: a.outletTa ? [a.outletTa] : [] });
+    for (const s of sentencesOf(a.text).slice(0, 6)) b.add({ src: a.outlet ?? "the news", doc: "article", text: `${outlet} wrote: ${s}`, cause: /\b(?:because|due to|caused|after)\b/i.test(s), names: a.outletTa ? [a.outletTa] : [] });
     if (a.incident) b.add({ src: "dashboard", text: "This report is linked to an incident on the console" });
     for (const r of x.related ?? []) { const rw = r.publishedAt ? when(r.publishedAt.replace("T", " ").slice(0, 19), now) : null; b.add({ src: r.outlet, text: `${r.outlet} also covered it${rw ? ` (${rw.en})` : ""}: ${r.title}`, times: rw ? [rw.en, rw.ta] : [] }); }
   }

@@ -139,7 +139,9 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
       completed = true;
       out.tokens += done.tokens;
       // the last line has no newline after it; a reply cut off at its token limit leaves an unfinished line, which is not said
-      if (done.stop !== "max_tokens" && done.stop !== "length") line(buf);
+      // (Groq and Gemini give no stop reason: a last line that does not end as a line ends, with its fact marks or a full stop, was cut: the
+      // review, 18 Nov; a GAP line is read whole)
+      if (done.stop !== "max_tokens" && done.stop !== "length" && (/^\s*GAP\s*:/i.test(buf) || /(?:\]|[.!?।])\s*$/u.test(buf.trim()))) line(buf);
       out.hops.push(label);
       out.model = done.model;
     } catch (e) {

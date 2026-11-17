@@ -16,7 +16,7 @@ import { buildSheet, extrasOf } from "./facts";
 import { gazetteer, type Gazetteer } from "./gazetteer";
 import { causeGap, findGap, gapFacts, gapPhrase, gapWords, nothingLine, type GapDeps, type GapFound } from "./gap";
 import type { Fact7, Sheet7 } from "./ground";
-import { writeAnswer, type Written, type WriteOptions } from "./writer";
+import { fallbackLines, writeAnswer, type Written, type WriteOptions } from "./writer";
 
 export const answerStyle = (v: string | undefined = process.env.JARVIS_ANSWER): "v7" | "v6" => ((v ?? "").trim().toLowerCase() === "v6" ? "v6" : "v7");
 const webOn = () => (process.env.JARVIS_AIDE_WEB ?? "").trim() !== "0";
@@ -72,7 +72,7 @@ export interface AideCtx {
 export interface AideOut { result: AgentResult; written: Written; sheet: Sheet7; gap: (GapFound & { said: string[]; /** the reports as the checker held the gap's sentences to them */ facts?: Fact7[] }) | null }
 
 /** The fallback said when the model gives nothing checked: the recipe's own line (v6's), without an announcement of a reading. */
-const fallbackOf = (doc: StageDocT, lang: Lang) => doc.say?.[lang] || doc.say?.en || "";
+const fallbackOf = (doc: StageDocT, lang: Lang) => fallbackLines(doc.say?.[lang] || doc.say?.en || "").join(" ");
 
 export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: AideCtx): Promise<AideOut> {
   const now = ctx.now ?? Date.now;
@@ -101,6 +101,13 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
   const ownWords = written.gap ? gapWords(written.gap, ctx.question, ctx.world) : [];
   const hinted = (!written.gap || !ownWords.length) && ctx.gapHint?.length && !ctx.gapHint.some((w) => w.length >= 3 && spoke.includes(w)) ? ctx.gapHint.join(" ") : null;
   if (hinted) written.gap = hinted;
+  // a reply that was only a cause "gap" left nothing said (its fallback was held for the gap): the recipe's own line, said now (the review, 18 Nov)
+  if (!said.length && !written.gap) {
+    const fb = fallbackLines(doc.say?.[lang] || doc.say?.en || "");
+    for (const s of fb) emit(s);
+    said.push(...fb);
+    if (fb.length) written.by = "fallback";
+  }
   if (written.gap) {
     const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now, world: ctx.world }).catch(() => null) : null;
     const extra: string[] = [];

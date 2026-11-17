@@ -110,3 +110,17 @@ describe("v7 (the round-2 Haiku dev run, 17 Nov): a side's commonest kinds, most
     expect(s.facts.find((f) => /commonest/.test(f.text))?.text).toBe("Anna Nagar's commonest kinds: Flooding & waterlogging 10, Traffic obstruction & parking 3");
   });
 });
+
+describe("v7 (the independent review, 18 Nov): a flat tile, and each report its own source", () => {
+  it("a change of 0% is no change ('up 0%' licensed 'rose' and 'none')", () => {
+    const s = buildSheet(doc([{ kind: "Kpis", id: "k", title: "The situation", items: [{ key: "now", label: "Reported, the last 24 hours", value: 12, unit: null, prev: 12, delta: 0, pct: 0, tone: "good", spark: [] }] }]), "en", gaz, NOW);
+    const f = s.facts.find((x) => x.text.startsWith("The situation"));
+    expect(f?.text).not.toContain("up 0");
+    expect(f?.dir ?? null).toBeNull();
+  });
+  it("a news list's stories are each their own report", () => {
+    const s = buildSheet(doc([{ kind: "NewsReader", id: "n", title: "News", total: 2, items: [{ id: "a1", title: "Bund breached at Kotturpuram", source: "The Hindu", t: null, place: null, incidentId: null, url: null }, { id: "a2", title: "3 injured in a bus fire", source: "The Hindu", t: null, place: null, incidentId: null, url: null }] }], { recipe: "news" }), "en", gaz, NOW);
+    const docs = s.facts.filter((f) => f.src === "The Hindu").map((f) => f.doc);
+    expect(new Set(docs).size).toBe(2);
+  });
+});

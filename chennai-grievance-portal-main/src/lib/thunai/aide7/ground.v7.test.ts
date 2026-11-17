@@ -207,7 +207,7 @@ describe("v7 (the tuned Haiku dev run, 17 Nov): two measures side by side howeve
 });
 
 describe("v7 (the round-2 Haiku dev run's grounding judge, 17 Nov): 'almost twice' is no word for 1.7", () => {
-  const s = (r: number): Sheet7 => ({ ...sheet(), facts: [{ id: "F1", src: "dashboard", text: "Teynampet against Adyar: 53 against 31", ratios: [r] }] });
+  const s = (r: number): Sheet7 => ({ ...sheet(), facts: [{ id: "F1", src: "dashboard", text: r > 1.8 ? "Teynampet against Adyar: 57 against 30" : "Teynampet against Adyar: 53 against 31", ratios: [r] }] });
   it("a multiple within a tenth of the ratio code computed; 1.7 is not 'nearly twice', 1.9 is", () => {
     fails2(s(53 / 31), "Teynampet's score is almost twice Adyar's. [F1]", "multiplier");
     fails2(s(53 / 31), "தேனாம்பேட்டையின் மதிப்பெண் அடையாறைவிட கிட்டத்தட்ட இரு மடங்கு அதிகம். [F1]", "multiplier");
@@ -221,5 +221,59 @@ describe("v7 (the unit suite's regex guard, 18 Nov): a district name is a whole 
     expect(namesIn("The Tadyar road and Adyars are not Adyar.", gaz).map((h) => h.form)).toEqual(["Adyar"]);
     expect(namesIn("xஅடையாறு", gaz).length + namesIn("அஅடையாறு", gaz).length).toBe(0);
     expect(namesIn("அடையாறுக்கு", gaz).length).toBe(1);
+  });
+});
+
+describe("v7 (the independent review, 18 Nov): what the checker let through", () => {
+  const withQ = (q: string): Sheet7 => ({ ...sheet(), question: q });
+  const two = (r: number): Sheet7 => ({ ...sheet(), facts: [{ id: "F1", src: "dashboard", text: "Open: Adyar 38, Teynampet 19", ratios: [r] }] });
+  it("a figure is bound to its place across a comma, after it, and inside a two-place fact", () => {
+    fails("In Adyar, 38 incidents are open this week. [F5,F7]", "misbound");
+    fails("38 open incidents are in Adyar this week. [F5,F7]", "misbound");
+    fails("Anna Nagar has 59 open complaints, Adyar 44. [F6]", "misbound");
+    ok("Adyar has 59 open complaints, Anna Nagar 44. [F6]");
+  });
+  it("an extreme belongs to the place its rank names; a multiple goes the way the figures go", () => {
+    fails("Anna Nagar has the most open incidents this week. [F6,F7]", "superlative");
+    ok("Teynampet has the most open incidents this week, 38. [F7]");
+    expect(checkSentence("Teynampet has twice Adyar's open incidents. [F1]", two(2)).problems.map((p) => p.kind)).toContain("multiplier");
+    expect(checkSentence("Adyar has twice Teynampet's open incidents. [F1]", two(2)).problems).toEqual([]);
+  });
+  it("a 'no' needs a fact saying no of the same thing; a cause needs the cause the fact gives", () => {
+    fails("No one has complained about it yet. [F3]", "absolute");
+    ok("PWD Water Resources has no officer named on it yet. [F3]");
+    fails("The Hindu reports the bund breached due to encroachments. [F8]", "cause");
+  });
+  it("'up 18' against 'down 18', and a rise no fact states", () => {
+    fails("Flooding reports in Adyar are up 18 this week. [F5]", "direction");
+    fails("Open complaints in Adyar are rising. [F6]", "direction");
+  });
+  it("'this afternoon' is today; an advice clause excuses only its own time", () => {
+    fails("It has been under water since this afternoon. [F1,F2]", "time");
+    fails("PWD Water Resources cleared the street this evening; worth a call to confirm. [F3]", "time");
+    ok("Ask PWD Water Resources for an update this evening. [F3]");
+  });
+  it("a definite 'did not' about the Collector's words is a claim, not a 'nothing on it'", () => {
+    expect(checkSentence("The Governor did not visit Guindy yesterday. [F1]", withQ("Did the Governor visit Guindy yesterday?")).problems.map((p) => p.kind)).toContain("name");
+  });
+  it("Tamil: an office and its holder, and a cause said with -ஆல்", () => {
+    fails("அமைச்சர் சேகர்பாபு அடையாறில் ஆய்வு செய்தார். [F1]", "name", "ta");
+    fails("கனமழை பெய்ததால் அடையாறில் தண்ணீர் தேங்கியிருக்கிறது. [F1]", "cause", "ta");
+  });
+  it("a window's length, a group's size and a unit are no data figure", () => {
+    fails("Adyar had 7 flooding reports this week. [F5]", "number");
+    fails("Teynampet has 15 open incidents this week. [F7]", "number");
+    fails("Adyar got 59 mm of rain this week. [F6]", "number");
+    ok("Flooding reports in Adyar fell to 8 in the last 7 days, from 26 the 7 days before. [F5]");
+  });
+  it("one outlet's two stories are two reports", () => {
+    const s: Sheet7 = { ...sheet(), facts: [{ id: "F1", src: "The Hindu", doc: "a", text: "The Hindu (this morning): Bund breached at Kotturpuram" }, { id: "F2", src: "The Hindu", doc: "b", text: "The Hindu (yesterday): 3 injured in a bus fire" }] };
+    expect(checkSentence("The Hindu reports 3 injured at the bund breach this morning. [F1]", s).problems.map((p) => p.kind)).toContain("misbound");
+  });
+  it("a forecast, 'hardest-hit', and Tamil 'பாதியாக' are claims too", () => {
+    fails("The street will flood again if the rain continues. [F1]", "speculation");
+    fails("Adyar is the hardest-hit zone this week. [F5]", "superlative");
+    const s: Sheet7 = { ...sheet("ta"), facts: [{ id: "F1", src: "dashboard", text: "Adyar: 8 against 26", ratios: [8 / 26] }] };
+    expect(checkSentence("அடையாறில் புகார்கள் பாதியாகக் குறைந்தன. [F1]", s).problems.map((p) => p.kind)).toContain("multiplier");
   });
 });

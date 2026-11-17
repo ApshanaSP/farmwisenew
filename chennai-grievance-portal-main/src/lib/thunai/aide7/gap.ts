@@ -63,7 +63,8 @@ export function matches(text: string, words: string[], question: string): boolea
   // whole words ("cm" is not in "CMWSSB" or "Acme"); a longer word may carry an ending ("visit" in "visits")
   const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const named = words.filter((w) => new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${esc(w)}${[...w].length < 5 ? "(?![\\p{L}\\p{M}\\p{N}])" : ""}`, "u").test(t));
-  if (named.length < Math.min(2, words.length) || !named.length) return false;
+  // two words of two, three of four or five: a two-word name alone ("Metro Water") is no match for "the Metro Water pipeline burst" (the review, 18 Nov)
+  if (!named.length || named.length < (words.length <= 2 ? words.length : Math.ceil(words.length * 0.6))) return false;
   const ev = question.match(EVENT)?.[1]?.toLowerCase().slice(0, 5);
   return !ev || t.includes(ev);
 }
@@ -87,6 +88,11 @@ export interface GapFound { status: "ok" | "nothing" | "no-words" | "unavailable
  *  - else nothing (the line then says "that").
  */
 export function gapPhrase(gap: string, question: string): string {
+  // a figure is never repeated in the nothing line: it is the Collector's, and no checker holds it (the review, 18 Nov)
+  const p = phraseOf(gap, question);
+  return /\d/.test(p) ? "" : p;
+}
+function phraseOf(gap: string, question: string): string {
   const clean = (w: string) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
   const base = (w: string) => w.toLowerCase().replace(/['’]s$/, "");
   const qWords = question.split(/\s+/).map(clean).filter(Boolean);
@@ -126,7 +132,8 @@ export async function findGap(gap: string, question: string, d: GapDeps = {}): P
   const phrase = gapPhrase(gap, question);
   if (!words.length) return { status: "no-words", words, hits: [], ms: 0, phrase };
   const now = (d.now ?? Date.now)();
-  const fresh = (h: GapHit) => h.at == null || now - h.at < 4 * 86_400_000;
+  // (an undated feed item is not known to be recent: only the dashboard's own undated reports count)
+  const fresh = (h: GapHit) => (h.at == null ? h.from === "dashboard" : now - h.at < 4 * 86_400_000);
   const pick = (hs: GapHit[]) => hs.filter((h) => fresh(h) && !injectionLike(h.title) && matches(h.title, words, question)).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 3);
   const own = d.dashboardNews ? pick(await d.dashboardNews(words).catch(() => [])) : [];
   if (own.length) return { status: "ok", words, hits: own, ms: Date.now() - t0, phrase };
@@ -140,7 +147,7 @@ export function gapFacts(hits: GapHit[], now: number, first = 1): Fact7[] {
   return hits.map((h, i) => {
     const iso = h.at != null ? new Date(h.at).toISOString() : null;
     const en = relativeTime(iso, now, "en"), ta = relativeTime(iso, now, "ta");
-    return { id: `F${first + i}`, src: h.from === "web" ? `web:${h.outlet}` : h.outlet, text: `${h.outlet}${en ? ` (${en})` : ""}${h.from === "web" ? ", from its own news feed" : ", in the dashboard's news"}: ${h.title.slice(0, 200)}`,
+    return { id: `F${first + i}`, doc: `gap-${i}`, src: h.from === "web" ? `web:${h.outlet}` : h.outlet, text: `${h.outlet}${en ? ` (${en})` : ""}${h.from === "web" ? ", from its own news feed" : ", in the dashboard's news"}: ${h.title.slice(0, 200)}`,
       times: [en, ta].filter((x): x is string => !!x), names: h.outletTa ? [h.outletTa] : [] };
   });
 }

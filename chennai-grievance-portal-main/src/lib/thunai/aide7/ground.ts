@@ -42,6 +42,8 @@ export interface Fact7 {
   ratios?: number[];
   /** the direction of the change it states */
   dir?: "up" | "down" | null;
+  /** one report's id: its facts are one source (an outlet's two stories are two: the independent review, 18 Nov) */
+  doc?: string;
   /** it states a rank or an extreme (the highest, the most) */
   rank?: boolean;
   /** it states a cause in the record's or the outlet's own words */
@@ -97,7 +99,16 @@ export interface Checked { ok: boolean; problems: Problem[]; text: string }
 
 // ------------------------------------------------------------------ facts, prepared once a sheet --
 
-interface Prepared { f: Fact7; nums: number[]; keys: Set<string>; low: string; atoms: Set<string>; ratios: number[] }
+interface Prepared { f: Fact7; nums: number[]; sizes: number[]; units: { v: number; unit: string }[]; keys: Set<string>; low: string; atoms: Set<string>; ratios: number[] }
+/** a window's length ("the last 7 days", "a 6-hour deadline"; Tamil in TA_WINDOW): how long, never a figure of the data */
+const WINDOW_PHRASE = /\b(?:in |over |within )?(?:the )?(?:last|past|previous|next|first) (\d+) (?:days?|hours?|weeks?|months?)\b|\bthe (\d+) (?:days?|hours?|weeks?|months?) before\b|\b\d+[- ](?:day|hour|week|month)\b/gi;
+const TA_WINDOW = /கடந்த\s*\d+\s*(?:நாள்|நாட்|மணி)|\d+\s*மணி\s*நேர|அதற்கு\s*(?:முன்|முந்தைய)\s*\d+\s*நாள்/gu;
+/** a group's size or a rank's place ("of the 10 compared", "rank 1 of 15", "the last of 15") */
+const GROUP_PHRASE = /\bof (?:the |all (?:the )?)?(\d+)(?= (?:zones?|departments?|taluks?|wards?|compared)\b)|\brank (\d+) of (\d+)\b|\bthe last of (\d+)\b/gi;
+/** a figure with a unit that changes what it is: per cent, millimetres ("59 mm" is no count of 59) */
+const UNIT_PAIR = /(\d[\d,]*(?:\.\d+)?)\s*(%|per ?cent|mm\b|millimet\w*|மி\.?\s?மீ)/giu;
+const UNIT_AFTER = /^\s*(%|per ?cent|mm\b|millimet\w*|மி\.?\s?மீ)/iu;
+const unitKey = (u: string) => (/^(?:%|per)/i.test(u) ? "%" : "mm");
 const prepCache = new WeakMap<Sheet7, Map<string, Prepared>>();
 
 const lowWords = (s: string) => ` ${s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{M}\p{N}%]+/gu, " ").trim()} `;
@@ -108,10 +119,15 @@ function prepared(sheet: Sheet7): Map<string, Prepared> {
   m = new Map();
   for (const f of sheet.facts) {
     const all = [f.text, ...(f.names ?? []), ...(f.times ?? [])].join(" ; ");
-    const nums = [...figuresIn(all).map((x) => x.value).filter(Number.isFinite), ...(f.nums ?? [])];
+    // the data's figures: a window's length, a group's size and a rank's place are not among them (the independent review, 18 Nov:
+    // "Adyar had 7 flooding reports" passed on "the last 7 days", "15 open incidents" on "the highest of 15 zones")
+    const sizes: number[] = [];
+    const data = all.replace(WINDOW_PHRASE, " ").replace(TA_WINDOW, " ").replace(GROUP_PHRASE, (m) => { for (const d of m.match(/\d+/g) ?? []) sizes.push(Number(d)); return " "; });
+    const nums = [...figuresIn(data).map((x) => x.value).filter(Number.isFinite), ...(f.nums ?? [])];
+    const units = [...f.text.matchAll(UNIT_PAIR)].map((m) => ({ v: Number(m[1].replace(/,/g, "")), unit: unitKey(m[2]) }));
     // a ratio a fact's own pair of figures implies ("26 against 8"): code's arithmetic, not the model's
     const ratios = [...(f.ratios ?? [])];
-    m.set(f.id, { f, nums, keys: new Set(namesIn(all, sheet.gaz).map((h) => h.key)), low: lowWords(all), atoms: timeAtoms(all), ratios });
+    m.set(f.id, { f, nums, sizes, units, keys: new Set(namesIn(all, sheet.gaz).map((h) => h.key)), low: lowWords(all), atoms: timeAtoms(all), ratios });
   }
   prepCache.set(sheet, m);
   return m;
@@ -139,7 +155,7 @@ const MULT_WORDS: [RegExp, number][] = [
   [/^(?:twice|double[ds]?|two times|two-fold|twofold)$/i, 2], [/^(?:half|halved)$/i, 0.5], [/^(?:triple[ds]?|thrice|three times|three-fold|threefold)$/i, 3],
   [/^(?:four times|fourfold|quadruple[ds]?)$/i, 4]
 ];
-const MULT_TA: [RegExp, number][] = [[/இரண்டு\s*மடங்கு|ரெண்டு\s*மடங்கு|இரு\s*மடங்கு|இரட்டிப்பு|இரட்டிப்பா/u, 2], [/மூன்று\s*மடங்கு|மும்மடங்கு/u, 3], [/நான்கு\s*மடங்கு/u, 4], [/பாதி(?:யாக|யா)?\b/u, 0.5]];
+const MULT_TA: [RegExp, number][] = [[/இரண்டு\s*மடங்கு|ரெண்டு\s*மடங்கு|இரு\s*மடங்கு|இரட்டிப்பு|இரட்டிப்பா/u, 2], [/மூன்று\s*மடங்கு|மும்மடங்கு/u, 3], [/நான்கு\s*மடங்கு/u, 4], [/பாதி(?:யாக(?:க்)?|யா|யாய்)?(?![\p{L}\p{M}])/u, 0.5]];
 const MULT_EN = /\b(?:twice|double[ds]?|two times|twofold|half|halved|triple[ds]?|thrice|three times|threefold|four times|fourfold|quadruple[ds]?)\b/gi;
 
 /** a figure a fact allows: exact, or hedged within its tolerance */
@@ -220,6 +236,8 @@ export function timeAtoms(text: string): Set<string> {
   const out = new Set<string>();
   for (const w of ["today", "tonight", "yesterday", "tomorrow", "morning", "afternoon", "evening"]) if (new RegExp(`\\b${w}\\b`).test(low)) out.add(w === "tonight" ? "night" : w);
   if (/\b(?:night|overnight)\b/.test(low)) out.add("night");
+  // "this afternoon" is today's afternoon, never yesterday's (the review, 18 Nov)
+  if (/\b(?:this (?:morning|afternoon|evening)|tonight|earlier today)\b/.test(low)) out.add("today");
   if (/\b(?:early this|early yesterday|small hours)\b/.test(low)) out.add("early");
   for (const u of ["week", "month", "year", "quarter"]) {
     if (new RegExp(`\\bthis (?:past )?${u}\\b`).test(low)) out.add(`this-${u}`);
@@ -251,9 +269,31 @@ function covered(atom: string, have: Set<string>): boolean {
 // ------------------------------------------------------------------ word lists --
 
 const CAUSE_EN = /\b(?:because|due to|caused|causing|cause of|as a result|resulted in|results in|led to|leads to|leading to|owing to|thanks to|on account of|triggered|blamed?)\b/i;
-const CAUSE_TA = /காரணமாக|காரணம்|ஏனெனில்|ஏன்னா|என்பதால்|விளைவாக|ஆனதால்/u;
-const UP_EN = /\b(?:rose|risen|rising|rises|increased?|increases|increasing|grew|grown|growing|jump(?:ed|s)?|spiked?|spikes|surged?|surges|climb(?:ed|ing|s)?|doubled|tripled|went up|gone up|worsen(?:ed|ing)?|on the rise)\b/i;
-const DOWN_EN = /\b(?:fell|fallen|falling|falls|dropp(?:ed|ing)|drops|decreased?|decreases|decreasing|declin(?:e|ed|ing|es)|eased|easing|halved|went down|gone down|improv(?:ed|ing))\b/i;
+const CAUSE_TA = /காரணமாக|காரணம்|ஏனெனில்|ஏன்னா|என்பதால்|விளைவாக|ஆனதால்|ததால்|னதால்|மழையால்|வெள்ளத்தால்|காரணத்தால்/u;
+/** the cause a sentence gives: the words after its cause word */
+const CAUSE_WHAT = /\b(?:because(?: of)?|due to|caused by|owing to|as a result of|on account of|thanks to|triggered by|blamed on)\s+((?:\S+\s*){1,5})/i;
+const CAUSE_STOP = new Set(["that", "this", "these", "those", "with", "from", "their", "there", "which", "have", "been", "were", "more", "some", "said", "also", "what", "they"]);
+// (bare "up 18" / "down 18", "soared", "dipped", "higher than last week": the review, 18 Nov; "improved" and "worsened" say no direction of a count)
+const UP_EN = /\b(?:rose|risen|rising|rises|increased?|increases|increasing|grew|grown|growing|jump(?:ed|s)?|spiked?|spikes|surged?|surges|soar(?:ed|ing|s)?|climb(?:ed|ing|s)?|doubled|tripled|went up|gone up|on the rise)\b|\bup\s+(?:by\s+)?(?:about\s+|over\s+|nearly\s+)?\d|\b(?:higher|more) than (?:last|the previous|the week before|the day before|yesterday|before)\b/i;
+const DOWN_EN = /\b(?:fell|fallen|falling|falls|dropp(?:ed|ing)|drops|dipp?(?:ed|ing|s)?|decreased?|decreases|decreasing|declin(?:e|ed|ing|es)|eased|easing|halved|went down|gone down)\b|\bdown\s+(?:by\s+)?(?:about\s+|over\s+|nearly\s+)?\d|\b(?:lower|fewer|less) than (?:last|the previous|the week before|the day before|yesterday|before)\b/i;
+/** a rise or fall said of anything, with or without a figure ("fell" alone is left out: "a tree fell on the road") */
+const STRICT_UP = /\b(?:rose|risen|rising|rises|increas(?:e|ed|es|ing)|grew|grown|growing|climb(?:ed|ing|s)?|surg(?:e|ed|es|ing)|soar(?:ed|ing|s)?|jump(?:ed|s)?|spik(?:e|ed|es|ing)|went up|gone up|on the rise|doubled|tripled)\b|\bup\s+(?:by\s+)?\d/i;
+const STRICT_DOWN = /\b(?:decreas(?:e|ed|es|ing)|declin(?:e|ed|es|ing)|dropp(?:ed|ing)|drops|dipp?(?:ed|ing|s)?|went down|gone down|halved)\b|\bdown\s+(?:by\s+)?\d|\bfell (?:to|from|by)\b/i;
+/** the two ways of an extreme, in the sentence and in a fact */
+const HIGH_SUPER = /\b(?:most|highest|biggest|largest|worst|top|busiest|maximum|heaviest|slowest)\b|\b(?:hardest|worst)[- ]hit\b|மிக அதிக|அதிகபட்ச|முதலிட|மிக மோசம|மிகவும் மோசம|மிகப்பெரிய/iu;
+const LOW_SUPER = /\b(?:least|lowest|fewest|minimum|lightest|fastest|best)\b|மிகக் குறைந்த/iu;
+const FACT_HIGH = /\b(?:highest|rank 1 of|most|top|worst|biggest|largest)\b/i;
+const FACT_LOW = /\b(?:lowest|the last of|least|fewest|lightest)\b/i;
+/** what a "no" is about: a fact's "no" must be about the same */
+const ABS_STEMS = [/complain/, /officer|assign|named/, /death|died|dead|killed|fatal/, /injur/, /\bcases?\b/, /incident/, /report/, /update/, /action/, /progress/, /department/, /rain/];
+const ABSOLUTE_TA = /யாரும்|ஒருவரும்|எந்த\S*\s*[஀-௿]+(?:உம்|ும்)(?![஀-௿])/u;
+/** a sentence about what the console holds, not about the world: "I have nothing on ...", "the dashboard has no record of ..." */
+const KNOWS_NOTHING = /\b(?:nothing (?:on|about|in)|no (?:records?|reports?|information|data|mention|word|news|statements?|updates?) (?:of|on|about|from)|(?:do|does|did)(?: not|n['’]t) (?:have|hold|show|cover|mention|include)|(?:have|has) (?:no|nothing)\b|not (?:in|on) (?:the |this )?(?:dashboard|console|screen|record|records|news|facts)|cannot (?:say|tell|confirm)|can['’]t (?:say|tell|confirm))|(?:தகவல்|பதிவு|செய்தி|விவரம்)\S*\s*(?:எதுவும்|ஏதும்|எந்த)?\s*\S*\s*இல்லை|எதுவும் இல்லை|சொல்ல முடியாது|காண முடியவில்லை/iu;
+/** a public office said in Tamil, and in the facts' English */
+const TA_OFFICE = /அமைச்சர்|முதல்வர்|முதலமைச்சர்|ஆளுநர்|மேயர்|ஆணையர்|எம்எல்ஏ|எம்\.எல்\.ஏ|எம்பி|பிரதமர்/u;
+const OFFICE_EN = /\b(?:chief minister|minister|cm|governor|mayor|commissioner|mla|mp|prime minister)\b/i;
+/** a window said in Tamil around a figure ("கடந்த 7 நாளில்", "24 மணி நேர") */
+const TA_WINDOW_AT = /கடந்த\s*\d+\s*(?:நாள்|நாட்|மணி)|\d+\s*மணி\s*நேர/u;
 const UP_TA = /அதிகரித்|அதிகரிச்|உயர்ந்|கூடியிருக்|கூடி(?:ய|ருக்|ச்)|அதிகமாகியிருக்/u;
 const DOWN_TA = /குறைந்|குறைஞ்|சரிந்|இறங்கி|குறைவாகியிருக்/u;
 /** a change put on a figure: "risen to 71%", "fell by 12", "went up from 9" (never "a tree fell on the road") */
@@ -261,19 +301,18 @@ const CHANGE_ON = String.raw`\s+(?:to|from|by)\s+(?:about |over |nearly |almost 
 const UP_ON_FIGURE = new RegExp(String.raw`\b(?:rose|risen|rising|rises|increased?|increasing|grew|grown|jump(?:ed|s)?|surged?|climb(?:ed|ing|s)?|went up|gone up)${CHANGE_ON}`, "i");
 const DOWN_ON_FIGURE = new RegExp(String.raw`\b(?:fell|fallen|falling|dropp(?:ed|ing)|decreased?|decreasing|declin(?:ed|ing)|went down|gone down)${CHANGE_ON}`, "i");
 const FROM_TO = /\b(rose|risen|rising|increased|grew|grown|jumped|surged|climbed|went up|gone up|up|fell|fallen|falling|dropped|decreased|declined|went down|gone down|down)\s+from\s+(?:about |over |nearly )?(\d[\d,]*(?:\.\d+)?)\s+(?:\S+\s+){0,6}?to\s+(?:about |over |nearly )?(\d[\d,]*(?:\.\d+)?)/gi;
-const SUPER_EN = /\b(?:worst|highest|biggest|largest|top|least|lowest|fewest|best|slowest|fastest|busiest|maximum|minimum)\b|\bthe most\b|\bmost (?:complaints|incidents|cases|reports|open|severe|overdue)\b/i;
+const SUPER_EN = /\b(?:worst|highest|biggest|largest|top|least|lowest|fewest|best|slowest|fastest|busiest|maximum|minimum|heaviest|most affected)\b|\b(?:hardest|worst)[- ]hit\b|\bthe most\b|\bmost (?:complaints|incidents|cases|reports|open|severe|overdue)\b/i;
 const SUPER_TA = /மிக அதிக|அதிகபட்ச|முதலிட|மிகக் குறைந்த|மிகவும் மோசம|மிக மோசம|மிகப்பெரிய|மிக மெதுவா/u;
 const ABSOLUTE_EN = /\b(?:none|nobody|no one|zero|not a single|not one)\b|\bno (?:cases?|incidents?|complaints?|reports?|officers?|officials?|deaths?|injur\w*|casualt\w*|department|action|update|progress)\b/i;
 const NEGATION_IN_FACT = /\b(?:0|no|none|nothing|not|zero|never|without)\b|இல்லை|எதுவும்/u;
-const SPECULATION_EN = /\b(?:probably|likely|unlikely|presumably|apparently|perhaps|maybe|i think|i believe|i guess|i suspect|seems?|seemingly|must have|might have|may have|could have|bound to)\b/i;
+// (a forecast is a guess too: "will flood again", "is expected to": the review, 18 Nov)
+const SPECULATION_EN = /\b(?:probably|likely|unlikely|presumably|apparently|perhaps|maybe|i think|i believe|i guess|i suspect|seems?|seemingly|must have|might have|may have|could have|bound to|expected to)\b|\bwill (?:flood|rise|fall|worsen|increase|continue|recur|spread|get worse|clear|improve|drop|reach)\b|\bmay (?:rise|fall|flood|worsen|increase|continue|recur|spread)\b|\bcould (?:rise|flood|worsen|spread|recur)\b/i;
 const SPECULATION_TA = /இருக்கலாம்|போலிருக்கு|போலத் தெரிகிறது|என்று நினைக்கிறேன்|வாய்ப்பு அதிகம்/u;
 const ADVICE = /\b(?:i'd|i would|you (?:may|might|could) want|worth|suggest|consider|ask(?:ing)? (?:them|the|for|metro|pwd)|call|chase|push|a word with|would (?:move|help|get|speed)|it would help|follow(?:ing)? up)\b|கேட்கலாம்|சொல்லலாம்|பார்க்கலாம்|பேசலாம்|நல்லது|சொன்னால்|கேட்டால்/iu;
 /** time words a suggestion may use of its own: when to act, never when something happened */
 const FORWARD = new Set(["today", "tomorrow", "night", "evening", "this-week", "this-month", "next-week"]);
 const MARKUP = /[*_#`|<>{}×÷=]|^\s*[-•]\s|\bhttps?:\/\/|\bwww\.|\.(?:com|in|org)\b/i;
 /** capitalised words that are no claim: the persona, the district, sentence furniture */
-/** a sentence that says there is nothing, or nothing known (EN and Tamil) */
-const NEGATED = /\b(?:no|nothing|not|none|never|cannot)\b|n['’]t\b|இல்லை|எதுவும்|ஏதும்|தெரியவில்லை|கிடையாது/iu;
 /** a street's or a place's kind, said after its name ("South Street", "Ashok Nagar"): the name before it is what is checked */
 const STREET_KIND = new Set(["street", "st", "road", "rd", "main", "cross", "lane", "avenue", "salai", "nagar", "colony", "extension", "high"]);
 /**
@@ -332,9 +371,14 @@ function spelledFrom(key: string, taKeys: string[]): boolean {
 /** the clause around a position: commas, semicolons, colons, dashes and "and/but/while/against" end it */
 function clauseStart(s: string, at: number): number {
   const before = s.slice(0, at);
-  const m = [...before.matchAll(/[,;:–—]|\b(?:and|but|while|whereas|against|compared with|versus|vs)\b/gi)].pop();
+  const m = [...before.matchAll(CLAUSE_BREAK)].pop();
   return m ? (m.index ?? 0) + m[0].length : 0;
 }
+function clauseEnd(s: string, from: number): number {
+  const m = new RegExp(CLAUSE_BREAK.source, "i").exec(s.slice(from));
+  return m ? from + m.index : s.length;
+}
+const CLAUSE_BREAK = /[,;:–—]|\b(?:and|but|while|whereas|against|compared with|versus|vs)\b/gi;
 
 // ------------------------------------------------------------------ the check --
 
@@ -352,8 +396,10 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   if (bad.length) p("cite", `unknown fact ${bad.join(", ")}`);
   // one report is one source: citing one of an outlet's sentences cites that report's others (never the dashboard's facts: those stay bound)
   const direct = cites.map((c) => prep.get(c)).filter((x): x is Prepared => !!x);
-  const outlets = new Set(direct.map((c) => c.f.src).filter((s) => s !== "dashboard"));
-  const cited = [...direct, ...[...prep.values()].filter((x) => !direct.includes(x) && outlets.has(x.f.src))];
+  // (a report is its id, not its outlet: one outlet's two stories are two reports: the independent review, 18 Nov)
+  const group = (f: Fact7) => f.doc ?? f.src;
+  const outlets = new Set(direct.filter((c) => c.f.src !== "dashboard").map((c) => group(c.f)));
+  const cited = [...direct, ...[...prep.values()].filter((x) => !direct.includes(x) && x.f.src !== "dashboard" && outlets.has(group(x.f)))];
   const others = [...prep.values()].filter((x) => !cites.includes(x.f.id));
   const lang = sheet.lang;
 
@@ -377,7 +423,8 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const has = (keys: Set<string>, key: string) => aliasesOf(key, sheet.gaz).some((k) => keys.has(k));
   // a sentence that says there is nothing on it may name what the Collector asked about in their own words ("I have nothing on the Governor's
   // visit"): the question's names and times hold for it, never for a claim (the Haiku dev run, 17 Nov)
-  const q = sheet.question && NEGATED.test(text) ? sheet.question : "";
+  // (only a sentence about what the console holds: "the Governor did not visit Guindy" is a claim, not a "nothing on it": the review, 18 Nov)
+  const q = sheet.question && KNOWS_NOTHING.test(text) ? sheet.question : "";
   const qKeys = new Set(q ? namesIn(q, sheet.gaz).flatMap((h) => aliasesOf(h.key, sheet.gaz)) : []);
   const covered_ = (h: NameHit) => scopeKeys.has(h.key) || qKeys.has(h.key) || cited.some((c) => has(c.keys, h.key));
   for (const h of hits) if (!covered_(h)) p("name", `${h.form} is in no cited fact${others.some((o) => has(o.keys, h.key)) ? " (another fact has it)" : ""}`);
@@ -404,6 +451,38 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
     if (spelledFrom(phonetic(raw), taWords)) continue;
     p("name", `"${raw}" is in no cited fact`);
   }
+  // a Tamil office (a minister, the CM, the Governor, a mayor...): Tamil script has no capitals, so a person or office said in Tamil is held to
+  // the facts by its title (the independent review, 18 Nov: "அமைச்சர் சேகர்பாபு அடையாறில் ஆய்வு செய்தார்" passed)
+  const office = TA_OFFICE.exec(text);
+  if (office && !q && !KNOWS_NOTHING.test(text) && !cited.some((c) => TA_OFFICE.test([c.f.text, ...(c.f.names ?? [])].join(" ")) || OFFICE_EN.test(c.f.text)))
+    p("name", `${office[0]} is in no cited fact`);
+  // the place a figure is said with
+  const placeHits = hits.filter((h) => h.kind !== "outlet");
+  const boundName = (at: number, len: number): NameHit | null => {
+    const start = clauseStart(text, at), end = clauseEnd(text, at + len);
+    const before = placeHits.filter((h) => h.at < at);
+    // (across a comma only when one place came before: "Adyar has more than Anna Nagar, 59 against 44" binds nothing)
+    return before.filter((h) => h.at >= start).pop() ?? placeHits.find((h) => h.at > at && h.at < end) ?? (new Set(before.map((h) => h.key)).size === 1 ? before.pop() ?? null : null);
+  };
+  /**
+   * the figures a fact gives a place: all of them when it names one place; when it names two or more, those that follow that place up to the
+   * next one ("Open complaints: Adyar 59, Anna Nagar 44"), or, when the names come first and the figures after ("Royapuram against Adyar:
+   * 53 against 31"), the figure in the same position
+   */
+  const valuesFor = (c: Prepared, key: string, all: number[]): number[] => {
+    const ph = namesIn(c.f.text, sheet.gaz).filter((h) => h.kind !== "outlet");
+    if (new Set(ph.map((h) => h.key)).size < 2) return all;
+    const al = new Set(aliasesOf(key, sheet.gaz));
+    const segNums = (i: number) => { const h = ph[i], next = ph[i + 1]; return figuresIn(c.f.text.slice(h.at + h.form.length, next ? next.at : undefined).replace(WINDOW_PHRASE, " ").replace(GROUP_PHRASE, " ")).map((f) => f.value); };
+    const segs = ph.map((_, i) => segNums(i));
+    if (segs.slice(0, -1).every((s) => !s.length) && segs.length) {
+      const order = [...new Set(ph.map((h) => h.key))];
+      const i = order.findIndex((k) => al.has(k));
+      const tail = segs[segs.length - 1];
+      return i >= 0 && tail.length >= order.length ? [tail[i]] : [];
+    }
+    return ph.flatMap((h, i) => (al.has(h.key) ? segs[i] : []));
+  };
   // an answer names at most three places, and a sentence never lists three
   // (a name that is a river's, a lake's or a canal's here, "the Adyar River", is no place in the count)
   const water = (h: NameHit) => /^\s+(?:river|canal|creek|estuary|lake|tank|bridge)\b/i.test(text.slice(h.at + h.form.length, h.at + h.form.length + 10));
@@ -420,21 +499,43 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const pairs = [...text.matchAll(PAIR)].length;
   if (dataFigs.length >= 5 || (dataFigs.length === 4 && pairs < 2)) p("list", `${dataFigs.length} figures in one sentence`);
   // numbers: in a cited fact, hedged within tolerance, and bound to the name said with them
+  // the scope's place holds for a figure only when the screen is about one place (a comparison's title names two: the review, 18 Nov)
+  const scopePlaces = new Set(namesIn((sheet.scope?.names ?? []).join(" ; "), sheet.gaz).filter((h) => h.kind === "zone" || h.kind === "place" || h.kind === "taluk").map((h) => h.key));
+  const scopeOne = scopePlaces.size <= 1;
   for (const x of figs) {
     const v = x.fig.value;
-    const inCited = cited.some((c) => allows(c.nums, v, x.hedge));
-    if (!inCited) { p(others.some((o) => allows(o.nums, v, x.hedge)) ? "misbound" : "number", `${x.fig.raw} (${v}) is in no cited fact`); continue; }
-    const start = clauseStart(text, x.at);
-    const near = hits.filter((h) => h.at >= start && h.at < x.at && h.kind !== "outlet").pop();
-    if (near && !scopeKeys.has(near.key) && !cited.some((c) => has(c.keys, near.key) && allows(c.nums, v, x.hedge))) p("misbound", `${x.fig.raw} is not ${near.form}'s in the cited facts`);
+    const after = text.slice(x.at + x.fig.raw.length, x.at + x.fig.raw.length + 16);
+    // a window's length ("the last 7 days", "its 6-hour deadline") is how long: the time words hold it
+    if ((WINDOW_UNIT.test(after) && /(?:last|past|previous|first|the)\s*$/i.test(text.slice(Math.max(0, x.at - 12), x.at))) || /^-(?:hour|day|week|month)/i.test(after) || TA_WINDOW_AT.test(text.slice(Math.max(0, x.at - 8), x.at + x.fig.raw.length + 8))) continue;
+    // a group's size ("of the 10 zones compared"): against the sizes the facts give
+    if (groupSize(text, x.at, x.fig.raw)) { if (!cited.some((c) => c.sizes.includes(v))) p("number", `${x.fig.raw} compared is in no cited fact`); continue; }
+    // a figure with a unit (per cent, millimetres) only against the facts' figures with that unit
+    const unit = UNIT_AFTER.exec(after)?.[1];
+    const pool = (c: Prepared) => (unit ? c.units.filter((u) => u.unit === unitKey(unit)).map((u) => u.v) : c.nums);
+    const inCited = cited.some((c) => allows(pool(c), v, x.hedge));
+    if (!inCited) { p(others.some((o) => allows(pool(o), v, x.hedge)) ? "misbound" : "number", `${x.fig.raw}${unit ? ` ${unit}` : ""} (${v}) is in no cited fact`); continue; }
+    // bound to the place said with it: before it in its clause, else after it in its clause, else the nearest before it in the sentence
+    // ("In Adyar, 38 ...", "38 ... in Adyar": the review, 18 Nov); inside a fact of two places, the figure that follows that place
+    const near = boundName(x.at, x.fig.raw.length);
+    if (near && !(scopeOne && scopeKeys.has(near.key)) && !cited.some((c) => has(c.keys, near.key) && allows(pool(c), v, x.hedge) && valuesFor(c, near.key, pool(c)).some((n) => allows([n], v, x.hedge))))
+      p("misbound", `${x.fig.raw} is not ${near.form}'s in the cited facts`);
   }
   // twice, half, three times: only against a ratio code computed
   const mults: number[] = [];
   for (const m of text.matchAll(MULT_EN)) { const v = MULT_WORDS.find(([re]) => re.test(m[0]))?.[1]; if (v) mults.push(v); }
   for (const [re, v] of MULT_TA) if (re.test(text)) mults.push(v);
+  const near = (r: number, k: number) => r >= k * 0.9 && r <= k * 1.12;
+  // two places said, in order, with their figures in one cited fact: the multiple goes the way they go ("Teynampet has twice Adyar's" when
+  // Adyar has twice Teynampet's: the review, 18 Nov)
+  const two = [...new Map(placeHits.map((h) => [h.key, h])).values()];
   for (const k of mults) {
+    let sided: boolean | null = null;
+    if (two.length === 2) for (const c of cited) {
+      const a = valuesFor(c, two[0].key, c.nums), b = valuesFor(c, two[1].key, c.nums);
+      if (a.length === 1 && b.length === 1 && b[0]) { sided = near(a[0] / b[0], k); break; }
+    }
     // within a tenth of the multiple: 1.7 is not "nearly twice" (the round-2 Haiku dev run's grounding judge, 17 Nov; was 0.85-1.18)
-    const ok = cited.some((c) => c.ratios.some((r) => (r >= k * 0.9 && r <= k * 1.12) || (r > 0 && 1 / r >= k * 0.9 && 1 / r <= k * 1.12)));
+    const ok = sided ?? cited.some((c) => c.ratios.some((r) => near(r, k) || (r > 0 && near(1 / r, k))));
     if (!ok) p("multiplier", `"${k === 0.5 ? "half" : `${k} times`}" matches no ratio in the cited facts`);
   }
 
@@ -442,13 +543,20 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   const atoms = timeAtoms(text);
   const have = new Set(cited.flatMap((c) => [...c.atoms]));
   // a suggestion's own time ("ask them for a status today", "இன்றே கேட்கலாம்") is advice about what to do, not a claim about the record
-  const advice = ADVICE.test(text);
+  // (only the advice's own clause: "PWD cleared the street this evening; worth a call to confirm" claims the evening: the review, 18 Nov)
+  const adviceAtoms = new Set(text.split(/[;.!?]|,\s*(?=so\b|and\b|but\b)|\s[-–—]\s/).filter((cl) => ADVICE.test(cl)).flatMap((cl) => [...timeAtoms(cl)]));
   const qAtoms = q ? timeAtoms(q) : new Set<string>();
-  for (const a of atoms) if (!covered(a, have) && !covered(a, scopeAtoms) && !covered(a, qAtoms) && !(advice && FORWARD.has(a))) p("time", `"${a}" is in no cited fact`);
+  for (const a of atoms) if (!covered(a, have) && !covered(a, scopeAtoms) && !covered(a, qAtoms) && !(adviceAtoms.has(a) && FORWARD.has(a))) p("time", `"${a}" is in no cited fact`);
 
   // claims
   const causal = lang === "ta" ? CAUSE_TA.test(text) || CAUSE_EN.test(text) : CAUSE_EN.test(text);
-  if (causal && !cited.some((c) => c.f.cause || CAUSE_EN.test(c.f.text) || CAUSE_TA.test(c.f.text))) p("cause", "a cause no cited fact states");
+  const causeFacts = cited.filter((c) => c.f.cause || CAUSE_EN.test(c.f.text) || CAUSE_TA.test(c.f.text));
+  if (causal && !causeFacts.length) p("cause", "a cause no cited fact states");
+  else if (causal) {
+    // and the cause said is the one a fact gives ("due to encroachments" against "due to heavy rain": the review, 18 Nov)
+    const what = (CAUSE_WHAT.exec(text)?.[1] ?? "").toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4 && !CAUSE_STOP.has(w));
+    if (what.length && !causeFacts.some((c) => what.some((w) => c.low.includes(` ${w.slice(0, 5)}`)))) p("cause", "a cause the cited facts do not give");
+  }
   const up = UP_EN.test(text) || UP_TA.test(text), down = DOWN_EN.test(text) || DOWN_TA.test(text);
   // a fact's direction: code's, or what its own words state ("12 (was 9)", "rose by 3"): a rise a cited fact states may be said though the total fell
   const dirs = cited.map((c) => c.f.dir ?? dirOfText(c.f.text)).filter((d): d is "up" | "down" => d === "up" || d === "down");
@@ -459,15 +567,33 @@ export function checkSentence(line: string, sheet: Sheet7, soFar: Set<string> = 
   if (!dirs.length) {
     if (UP_ON_FIGURE.test(text) && !said(UP_EN) && !said(UP_TA)) p("direction", "says it rose; no cited fact states a change");
     else if (DOWN_ON_FIGURE.test(text) && !said(DOWN_EN) && !said(DOWN_TA)) p("direction", "says it fell; no cited fact states a change");
+    // and a rise or fall said without a figure ("open complaints are rising": the review, 18 Nov), outside a suggestion's own words
+    else if (!ADVICE.test(text) && STRICT_UP.test(text) && !said(UP_EN) && !said(UP_TA)) p("direction", "says it is rising; no cited fact states a change");
+    else if (!ADVICE.test(text) && STRICT_DOWN.test(text) && !said(DOWN_EN) && !said(DOWN_TA)) p("direction", "says it is falling; no cited fact states a change");
   }
   // "rose from 21 to 8" contradicts itself, whatever the facts
   for (const m of text.matchAll(FROM_TO)) {
     const a = Number(m[2].replace(/,/g, "")), b = Number(m[3].replace(/,/g, "")), rise = UP_EN.test(m[1]) || /^up$/i.test(m[1]);
     if (a !== b && rise === a > b) { p("direction", `"${m[0]}" goes the other way`); break; }
   }
-  if ((SUPER_EN.test(text) || SUPER_TA.test(text)) && !cited.some((c) => c.f.rank || SUPER_EN.test(c.f.text) || SUPER_TA.test(c.f.text) || /\brank\b/i.test(c.f.text)))
-    p("superlative", "an extreme no cited fact ranks");
-  if (ABSOLUTE_EN.test(text) && !cited.some((c) => NEGATION_IN_FACT.test(c.f.text))) p("absolute", "a none or no that no cited fact states");
+  if (SUPER_EN.test(text) || SUPER_TA.test(text)) {
+    const ranked = cited.filter((c) => c.f.rank || SUPER_EN.test(c.f.text) || SUPER_TA.test(c.f.text) || /\brank\b/i.test(c.f.text));
+    // the extreme belongs to the place said with it: a fact must rank that place, and the way it ranks it ("the last of 15" is no "most")
+    const named = placeHits.filter((h) => h.kind === "zone" || h.kind === "place" || h.kind === "taluk" || h.kind === "dept");
+    const forNamed = named.length ? ranked.filter((c) => named.some((h) => has(c.keys, h.key))) : ranked;
+    const high = HIGH_SUPER.test(text), low = LOW_SUPER.test(text);
+    if (!forNamed.length) p("superlative", "an extreme no cited fact ranks");
+    else if (high && !low && forNamed.every((c) => FACT_LOW.test(c.f.text) && !FACT_HIGH.test(c.f.text))) p("superlative", "says the most; the cited facts rank it lowest");
+    else if (low && !high && forNamed.every((c) => FACT_HIGH.test(c.f.text) && !FACT_LOW.test(c.f.text))) p("superlative", "says the least; the cited facts rank it highest");
+  }
+  // a "no" needs a fact saying no of the same thing ("no officer is named" is no "no one has complained": the review, 18 Nov); a sentence
+  // saying what the console does not hold is not one
+  if (!KNOWS_NOTHING.test(text) && (ABSOLUTE_EN.test(text) || (lang === "ta" && ABSOLUTE_TA.test(text)))) {
+    const low = text.toLowerCase();
+    const stems = ABS_STEMS.filter((re) => re.test(low));
+    if (!cited.some((c) => NEGATION_IN_FACT.test(c.f.text) && (!stems.length || stems.some((re) => re.test(c.f.text.toLowerCase())))))
+      p("absolute", "a none or no that no cited fact states");
+  }
   if ((SPECULATION_EN.test(text) || SPECULATION_TA.test(text)) && !cited.some((c) => SPECULATION_EN.test(c.f.text))) p("speculation", "a guess");
 
   // what the screen shows is not read out

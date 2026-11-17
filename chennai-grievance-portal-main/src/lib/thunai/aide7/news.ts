@@ -49,6 +49,8 @@ export function newsAide(world: World, o: { user: string; signal?: AbortSignal; 
     const p = writeAnswer({ question: a.question, lang: a.lang, sheet, note: "The screen shows the report's link and the other outlets' links.", fallback: a.fallback },
       { user: o.user, until: t0 + 9000, firstBy: t0 + 4000, signal: o.signal, onSentence: (s) => { q.push(s); wake?.(); }, ...(o.write ?? {}), now })
       .finally(() => { done = true; wake?.(); });
+    // (handled at once: a route that stops reading early never leaves it rejected unhandled: the review, 18 Nov)
+    p.catch(() => undefined);
     const said: string[] = [];
     for (;;) {
       while (q.length) { said.push(q.shift() as string); yield [...said]; }
