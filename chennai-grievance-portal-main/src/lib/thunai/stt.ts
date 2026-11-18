@@ -19,12 +19,19 @@
  * Stage that the browser sends (cleanVocab: at most 30 short names, no digits), inside Whisper's prompt limit.
  *
  * Whisper bills a 10 s minimum per request: the ledger is told, so the listening budget is what Groq will really count.
+ *
+ * v8: Sarvam AI (sarvam.ts) is one more way to hear, on engaged and named turns only, behind JARVIS_STT_SARVAM and OFF by default
+ * (unset, "0", anything else, or no SARVAM_API_KEY: the race above, unchanged). "tamil": Sarvam's decode takes the forced-Tamil Whisper
+ * decode's place in the race (same waits), and that Whisper decode runs only when Sarvam fails. "primary": Sarvam first, the whole
+ * Whisper race only when it fails. "shadow": Whisper decides; Sarvam hears alongside and only its timing and agreement are logged.
+ * Failing is an error, a timeout, a skip (sarvam.ts) or a reading with nothing usable in it.
  */
 import { namedIn } from "./addressed";
 import { correctTranscript, gazetteerOn } from "./gazetteer";
 import { groqFetch } from "./keepalive";
 import { ledger, type Lane } from "./ledger";
 import { STT_NAMES, sttTamilName } from "./lexicon";
+import { SARVAM_MODEL, sarvamKeyed, sarvamMode, sarvamTranscribe, shadowLog, type SarvamHeard } from "./sarvam";
 import { serverClock, type ServerTiming } from "./stagetime";
 import { telemetry } from "./telemetry";
 import { phonetic } from "./xlit";
@@ -119,7 +126,7 @@ export const INVENTED = /^(thank you\.?|thanks( for watching)?\.?|you\.?|bye\.?|
 
 export interface Seg { no_speech_prob?: number; avg_logprob?: number; compression_ratio?: number; text?: string }
 /** `prompt`: the prompt or vocabulary this decode was given (checked for an echo of it) */
-export interface Decode { lang: "en" | "ta"; model: string; text: string; segments: Seg[]; duration?: number; via?: "whisper"; prompt?: string }
+export interface Decode { lang: "en" | "ta"; model: string; text: string; segments: Seg[]; duration?: number; via?: "whisper" | "sarvam"; prompt?: string }
 export interface Scored extends Decode { logprob: number; noSpeech: number; compression: number; ok: boolean; why: string | null; score: number }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -191,9 +198,10 @@ export function scoreDecode(d: Decode, ctx: EchoCtx = {}): Scored {
   else if (compression >= 2.4) why = "compression";
   else if (repeats(text)) why = "repeats";
   else if (promptEcho(text, noSpeech >= 0.3 || logprob < -0.6, d.prompt ?? PROMPT, ctx)) why = "echo";
-  // a forced Tamil decode must come back mostly in Tamil letters, a forced English one mostly in Latin
-  else if (d.lang === "ta" && tamilShare(text) < 0.5) why = "script";
-  else if (d.lang === "en" && latinShare(text) < 0.6) why = "script";
+  // a forced Tamil decode must come back mostly in Tamil letters, a forced English one mostly in Latin (v8: not Sarvam's, which is not
+  // forced: its codemix writes Tanglish in both scripts, and its language is read from the script in the first place, sarvamLang)
+  else if (d.via !== "sarvam" && d.lang === "ta" && tamilShare(text) < 0.5) why = "script";
+  else if (d.via !== "sarvam" && d.lang === "en" && latinShare(text) < 0.6) why = "script";
   return { ...d, text, logprob, noSpeech, compression, ok: !why, why, score: logprob };
 }
 
@@ -245,8 +253,27 @@ export function choose(ds: Decode[], site: "en" | "ta", ctx: EchoCtx = {}): Scor
   const ta = all.find((x) => x.lang === "ta" && x.ok);
   const scored = all.map((x) => (ta && x.lang === "en" && translated(ta, x) ? { ...x, ok: false, why: "translated" } : x)).filter((x) => x.ok);
   if (!scored.length) return null;
+  // v8: Sarvam's decode has no log-probability to weigh against Whisper's, so its own language decides: Tamil or Tanglish is Sarvam's
+  // reading (a fluent English decode beside it may be Whisper translating); English is Whisper's English decode when that one is
+  // acceptable, else Sarvam's
+  const sv = scored.find((x) => x.via === "sarvam");
+  if (sv) return sv.lang === "ta" ? sv : scored.find((x) => x.via !== "sarvam" && x.lang === "en") ?? sv;
   return scored.sort((a, b) => (b.score + (b.lang === site ? 0.1 : 0)) - (a.score + (a.lang === site ? 0.1 : 0)))[0];
 }
+
+/**
+ * v8: Sarvam returns no confidence for its words (only how sure it is of the language), so its decode carries this stand-in, a clean
+ * Whisper decode's mean log-probability: it clears the bar (GOOD_LOGPROB), and the console reads it as about 0.82 sure (heard.ts confOf).
+ */
+export const SARVAM_LOGPROB = -0.2;
+/** Sarvam's reading as a decode in the race: its own language and words, no prompt, the clip's length. */
+export const sarvamDecode = (h: SarvamHeard, secs: number): Decode =>
+  ({ lang: h.lang, model: h.model, text: h.text, segments: [{ avg_logprob: SARVAM_LOGPROB, no_speech_prob: 0 }], duration: secs, via: "sarvam" });
+/** Sarvam's reading by scoreDecode's bars (nothing heard, a loop, an echo); null when there is none or it fails one. */
+const sarvamScored = (h: SarvamHeard | null, secs: number, ctx: EchoCtx): Scored | null => {
+  const s = h ? scoreDecode(sarvamDecode(h, secs), ctx) : null;
+  return s?.ok ? s : null;
+};
 
 function keys(): string[] {
   return [...new Set([env("GROQ_API_KEY"), ...[2, 3, 4, 5].map((k) => env(`GROQ_API_KEY_${k}`))].filter(Boolean))];
@@ -405,13 +432,32 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   const echo: EchoCtx = { clarify: o.clarify === true, spanS: typeof o.speechMs === "number" && Number.isFinite(o.speechMs) && o.speechMs >= 0 ? o.speechMs / 1000 : null };
 
   let lane = o.lane;
-  const whisper = wanted.filter((a) => b.models.includes(a.model)).map((a) => whisperOf(a, lane));
+  // v8 (sarvam.ts): JARVIS_STT_SARVAM, off by default and without SARVAM_API_KEY; never on the ambient lane (room talk would spend it)
+  const sv = lane === "ambient" || !sarvamKeyed() ? "off" : sarvamMode();
+  const sarvam = (signal?: AbortSignal) => sarvamTranscribe(audio, { secs, lane, signal, fetcher: o.fetcher });
+  // primary: Sarvam first; the Whisper race below runs only when it fails
+  let first: Scored | null = null;
+  if (sv === "primary") {
+    const p = sarvam(o.signal);
+    clock.mark("sttSent");
+    first = sarvamScored(await p.catch(() => null), secs, echo);
+  }
+  // tamil: Sarvam's decode takes the forced-Tamil Whisper decode's place (and its waits); that Whisper decode runs only when Sarvam fails
+  const tamilSlot = (a: { lang: "en" | "ta"; model: string }, lane: Lane) => racer(a.lang, SARVAM_MODEL, o.signal, async (s) => {
+    const d = sarvamScored(await sarvam(s).catch(() => null), secs, echo);
+    if (d || s.aborted) return d;
+    l.record("groq", a.model, { audioS: secs, lane });
+    return decode(audio, a.lang, a.model, s, o.fetcher, sttPrompt(a.lang, vocab), wMs);
+  });
+  const whisper = first ? [] : wanted.filter((a) => b.models.includes(a.model)).map((a) => (sv === "tamil" && a.lang === "ta" ? tamilSlot(a, lane) : whisperOf(a, lane)));
+  // shadow: Whisper decides; Sarvam hears the same clip alongside (shadowLog below)
+  const shadow = sv === "shadow" ? sarvam(o.signal).catch(() => null) : null;
   // each racer's request has gone out by now (decode() calls fetch before its first await)
   if (whisper.length) clock.mark("sttSent");
   // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
   const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
   await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0, echo);
-  let c = choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site, echo);
+  let c = first ?? choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site, echo);
 
   // an ambient sentence that names Jarvis, read unsure: once more, in the other language only
   if (lane === "ambient" && c && NAMED.test(c.text) && c.logprob < -0.7) {
@@ -428,13 +474,15 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   // the winning decode is in hand (after the ambient lane's second read, when there was one)
   if (c) clock.mark("sttBack");
   const timing = clock.timing();
+  if (shadow) shadowLog(shadow, c, lane);
 
   const got = whisper.filter((r) => r.d);
   const used: Kind | null = c ? c.lang : null;
   const ms = Date.now() - t0;
   for (const r of whisper) {
     const s = r.d ? scoreDecode(r.d, echo) : null;
-    telemetry("stt_decode", { lane, provider: "groq", model: r.model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
+    const model = r.d?.model ?? r.model;
+    telemetry("stt_decode", { lane, provider: model === SARVAM_MODEL ? "sarvam" : "groq", model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
   }
   telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
   if (!c) {

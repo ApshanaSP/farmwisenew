@@ -1,0 +1,7 @@
+{
+  "error": {
+    "request_id": "synthetic_err_key_1",
+    "message": "Invalid API subscription key",
+    "code": "invalid_api_key_error"
+  }
+}

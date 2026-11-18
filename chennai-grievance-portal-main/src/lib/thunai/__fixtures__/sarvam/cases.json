@@ -1,0 +1,20 @@
+{
+  "note": "SYNTHETIC: every body here was written by hand from Sarvam's documented response shapes (see README.md), not recorded from the live API. `tamil`: who answers a turn with JARVIS_STT_SARVAM=tamil when Groq's English decode is a confident 'Show the cases.' and Whisper's Tamil decode (asked only on fallback) a confident Tamil sentence: sarvam, whisper-en or whisper-ta.",
+  "cases": [
+    { "file": "en_command.json", "status": 200, "expect": { "text": "Open the Supreme Court news.", "lang": "en", "prob": 0.98 }, "tamil": "whisper-en" },
+    { "file": "ta_question.json", "status": 200, "expect": { "text": "அடையாறுல இன்னைக்கு எது ரொம்ப மோசமா இருக்கு?", "lang": "ta", "prob": 0.97 }, "tamil": "sarvam" },
+    { "file": "tanglish_codemix.json", "status": 200, "expect": { "text": "Adyar zone-ல pending cases எத்தனை?", "lang": "ta", "prob": 0.93 }, "tamil": "sarvam" },
+    { "file": "tanglish_codemix_en_code.json", "status": 200, "expect": { "text": "Teynampet water logging complaints show பண்ணு", "lang": "ta", "prob": 0.58 }, "tamil": "sarvam" },
+    { "file": "with_timestamps.json", "status": 200, "expect": { "text": "Show the severe cases in Perungudi.", "lang": "en", "prob": 0.96 }, "tamil": "whisper-en" },
+    { "file": "empty_silence.json", "status": 200, "expect": { "text": "", "lang": "en", "prob": null }, "tamil": "whisper-ta" },
+    { "file": "vendor_example_hi.json", "status": 200, "expect": { "fail": "other-script" }, "tamil": "whisper-ta" },
+    { "file": "error_invalid_key.json", "status": 403, "expect": { "fail": "refused" }, "tamil": "whisper-ta" },
+    { "file": "error_invalid_key.json", "status": 401, "expect": { "fail": "refused" }, "tamil": "whisper-ta" },
+    { "file": "error_rate_limit.json", "status": 429, "expect": { "fail": "busy" }, "tamil": "whisper-ta" },
+    { "file": "error_quota.json", "status": 429, "expect": { "fail": "quota" }, "tamil": "whisper-ta" },
+    { "file": "error_quota.json", "status": 402, "expect": { "fail": "quota" }, "tamil": "whisper-ta" },
+    { "file": "error_too_long.json", "status": 400, "expect": { "fail": "bad-request" }, "tamil": "whisper-ta" },
+    { "file": "error_internal.json", "status": 500, "expect": { "fail": "server" }, "tamil": "whisper-ta" },
+    { "file": "error_internal.json", "status": 503, "expect": { "fail": "server" }, "tamil": "whisper-ta" }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "request_id": "synthetic_err_long_1",
+    "message": "Audio duration exceeds the maximum limit of 30 seconds",
+    "code": "invalid_request_error"
+  }
+}
