@@ -349,6 +349,11 @@ const signP = (w: number, l: number) => { const n = w + l; if (!n) return 1; con
 it.runIf(MODE === "judge")("judge: blind pairwise, both orders, v8 against v7", async () => {
   const model = process.env.JUDGE_MODEL ?? "gemini-3.1-flash-lite";
   const provider = (process.env.JUDGE_PROVIDER ?? "gemini") as "gemini" | "groq";
+  // the gateway's Gemini pool holds only AI_GEMINI_MODEL_FAST's models: the judge's own must be among them, or every call fails (the first
+  // holdout judge, 19 Nov: 77 of 111 "none", the error swallowed)
+  if (provider === "gemini" && !(process.env.AI_GEMINI_MODEL_FAST ?? "").split(",").map((x) => x.trim()).includes(model))
+    process.env.AI_GEMINI_MODEL_FAST = [model, ...(process.env.AI_GEMINI_MODEL_FAST ?? "").split(",").map((x) => x.trim()).filter(Boolean)].join(",");
+  let failures = 0;
   const read = (t: string) => (JSON.parse(fs.readFileSync(path.join(DIR, "results", `${t}.json`), "utf8")) as { rows: Row8[] }).rows;
   const a8 = new Map(read(process.env.V8_FROM ?? `${TAG}-v8`).map((r) => [r.id, r])), a7 = new Map(read(process.env.V7_FROM ?? `${TAG}-v7`).map((r) => [r.id, r]));
   const set = new Map(items().map((x) => [x.id, x]));
@@ -372,7 +377,7 @@ it.runIf(MODE === "judge")("judge: blind pairwise, both orders, v8 against v7", 
         ledger().record(provider, model, { tokens: res.info.inputTokens + res.info.outputTokens, lane: "eval" });
         const w = res.object.winner;
         return w === "tie" ? "tie" : (w === "A") === (first === "v8") ? "v8" : "v7";
-      } catch { return null; } finally { await sleep(Number(process.env.JUDGE_GAP_MS ?? 7000)); }
+      } catch (e) { if (failures++ < 3) console.log(`[judge] call failed: ${String((e as Error).message).slice(0, 200)}`); return null; } finally { await sleep(Number(process.env.JUDGE_GAP_MS ?? 7000)); }
     };
     const a = await ask(order[0]), b = await ask(order[1]);
     const verdict = a == null || b == null ? "none" : a === b ? a : "split";
