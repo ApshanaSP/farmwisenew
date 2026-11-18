@@ -35,6 +35,7 @@ import { SARVAM_MODEL, sarvamKeyed, sarvamMode, sarvamTranscribe, shadowLog, typ
 import { serverClock, type ServerTiming } from "./stagetime";
 import { telemetry } from "./telemetry";
 import { phonetic } from "./xlit";
+import { understandV8 } from "./v8/flag8";
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 export const MODEL_TA = () => env("JARVIS_STT_MODEL_TA") || env("JARVIS_STT_MODEL") || "whisper-large-v3";
@@ -237,7 +238,12 @@ export function translated(ta: Scored, en: Scored): boolean {
   // 0.01-0.29); on Tamil speech the Tamil decode was always the surer (by 0.08-1.07), on Tanglish as sure or surer. So the English decode
   // is refused only when the Tamil one is at least as sure (JARVIS_STT_DIRECTION=0: v5's rule, which refused it whatever the confidences)
   if (env("JARVIS_STT_DIRECTION") !== "0" && ta.logprob < en.logprob) return false;
-  const a = skeleton(ta.text), b = skeleton(en.text);
+  return differentShapes(ta.text, en.text);
+}
+
+/** two decodes of one clip that are translations of each other, not the same sounds in two scripts */
+function differentShapes(taText: string, enText: string): boolean {
+  const a = skeleton(taText), b = skeleton(enText);
   // on hand-made pairs, translations scored 0.22-0.36 and the same sounds in the other script 0.80-1.00 (stt.v4.test.ts)
   const sim = dice(a, b), ratio = Math.min(a.length, b.length) / Math.max(1, a.length, b.length);
   return sim < 0.45 || (sim < 0.6 && ratio < 0.6);
@@ -258,7 +264,12 @@ export function choose(ds: Decode[], site: "en" | "ta", ctx: EchoCtx = {}): Scor
   // acceptable, else Sarvam's
   const sv = scored.find((x) => x.via === "sarvam");
   if (sv) return sv.lang === "ta" ? sv : scored.find((x) => x.via !== "sarvam" && x.lang === "en") ?? sv;
-  return scored.sort((a, b) => (b.score + (b.lang === site ? 0.1 : 0)) - (a.score + (a.lang === site ? 0.1 : 0)))[0];
+  // v8 (the owner's example 4): two decodes that are translations of each other (different shapes, not the same sounds in two scripts)
+  // are weighed by their own confidence alone; the console's language leans only between the same sounds (Tanglish) (stt.v8.test.ts)
+  const sTa = scored.find((x) => x.lang === "ta"), sEn = scored.find((x) => x.lang === "en");
+  // (an exact tie still goes to the console's language)
+  const lean = understandV8() && sTa && sEn && differentShapes(sTa.text, sEn.text) ? 0.001 : 0.1;
+  return scored.sort((a, b) => (b.score + (b.lang === site ? lean : 0)) - (a.score + (a.lang === site ? lean : 0)))[0];
 }
 
 /**

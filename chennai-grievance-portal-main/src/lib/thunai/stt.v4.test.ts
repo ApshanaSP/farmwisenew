@@ -54,7 +54,8 @@ describe("first good decode wins", () => {
     const t0 = Date.now();
     const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(Date.now() - t0).toBeGreaterThanOrEqual(380);
-    expect(h).toMatchObject({ text: "அடையாறு புகார்களைக் காட்டுங்கள்", lang: "ta" });
+    // v8 (the owner's example 4): the race still waits for the Tamil decode; the surer of two translations then wins with no lean
+    expect(h).toMatchObject({ text: "Show the complaints in Adyar.", lang: "en" });
   });
   it("a decode that never answers is given up at 5 s, not 12", async () => {
     expect(WHISPER_MS).toBeLessThanOrEqual(5000);

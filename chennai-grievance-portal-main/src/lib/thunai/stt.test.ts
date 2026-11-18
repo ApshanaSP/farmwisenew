@@ -11,7 +11,12 @@ describe("choosing between forced decodes", () => {
   it("takes the more confident decode, leaning a little to the site's language", () => {
     expect(choose([dec("ta", "அடையாறு புகார்கள் காட்டு", -0.25), dec("en", "a dire pugar kaattu", -0.9)], "en")?.lang).toBe("ta");
     expect(choose([dec("ta", "ஷோ மீ த கேசஸ்", -0.7), dec("en", "show me the cases", -0.2)], "ta")?.lang).toBe("en");
-    expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("ta");
+    // v8 (the owner's example 4): two decodes that are translations of each other are weighed by their confidence alone (stt.v8.test.ts);
+    // the lean to the site's language stays for the same sounds in two scripts, and v7's rule under JARVIS_UNDERSTAND=v7
+    expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("en");
+    expect(choose([dec("ta", "அடையாறு புகார்", -0.35), dec("en", "Adyar pugar", -0.3)], "ta")?.lang).toBe("ta");
+    process.env.JARVIS_UNDERSTAND = "v7";
+    try { expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("ta"); } finally { delete process.env.JARVIS_UNDERSTAND; }
   });
   it("refuses no-speech, a looping text, high compression, a prompt echo and the wrong script", () => {
     expect(scoreDecode(dec("en", "hello", -0.2, { no_speech_prob: 0.7 })).why).toBe("no-speech");
