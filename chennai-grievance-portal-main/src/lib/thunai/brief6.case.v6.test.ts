@@ -4,7 +4,7 @@
  *    or the outlet's "when" and "nothing new since" are never said (0 of 34 in the briefing set);
  *  - "who is on it" is the record's own assignment (`assigned.designation`), never the department's directory of contacts (`officials`).
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { timeOf } from "./brief6";
 import { WORLD } from "./fixture";
 import { ZONE_TA_NAME } from "./lexicon";
@@ -55,9 +55,17 @@ describe("the case screen's briefing reads the record as the store's tools hand 
     expect(about).not.toMatch(/early|morning|night|evening|afternoon/);
   });
   it("a problem dated by the day alone is not said to be 'since' a part of the day", async () => {
-    const now = Date.now();
-    const say = await briefed({ reportAt: now - 3_600_000, assigned: null, since: dayAlone(now - 86_400_000) });
-    expect(say).not.toMatch(/early|morning|night|evening|afternoon/);
+    // the clock pinned to a day's middle (v8, 19 Nov): a report "an hour ago" is rightly said as "last night" or "early this morning" after
+    // midnight, which this test's words would catch (it failed at night on v7's commit too); the "since" phrase is what it checks
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-18T07:30:00Z"));
+    try {
+      const now = Date.now();
+      const say = await briefed({ reportAt: now - 3_600_000, assigned: null, since: dayAlone(now - 86_400_000) });
+      expect(say).not.toMatch(/early|morning|night|evening|afternoon/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it("the outlet's report is said with when it came out; nothing new for days is said", async () => {
     const now = Date.now();
