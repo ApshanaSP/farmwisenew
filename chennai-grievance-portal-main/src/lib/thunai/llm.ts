@@ -257,6 +257,9 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       console.warn(`[jarvis llm] ${c.name}: ${label} failed: ${(e as Error).message?.slice(0, 120)}`);
       // stopped by the turn's deadline: a lower bound on its time, not a failure of the model
       if (cut) { stopped(rung, now() - tMain, "deadline"); if (hedged) stopped(next, now() - tHedge, "deadline"); }
+      // v8: a Claude call that failed with no billed usage (its own time limit, a dropped connection) still counts in Jarvis's day cap, at its
+      // estimate (the spend ceiling counts it already: claudebudget's estimate; the review, 19 Nov)
+      else if (rung.provider === "anthropic" && !billedOf(e)) stopped(rung, now() - tMain, "failed");
       else telemetry("llm", { model: rung.model, provider: rung.provider, ms: now() - t0, lane: c.lane, hop: hops.length, ok: false });
       if (hedged) telemetry("hedge", { provider: rung.provider, model: rung.model, into: `${next.provider}/${next.model}`, after: wait, why, winner: "none", lane: c.lane });
       // a hedge that already ran took the next rung with it

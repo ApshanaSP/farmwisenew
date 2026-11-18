@@ -16,6 +16,7 @@ import { talkedAbout, wakeIn } from "@/components/collector/app/thunai/wake";
 import { isEnglishWord } from "./english";
 import { understandV8 } from "./v8/flag8";
 import { areaWord } from "./v8/lang8";
+import { ordinalOf } from "./v8/refs8";
 
 export type Tier = 0 | 1 | 2 | 3;
 export interface Addressed { tier: Tier; act: boolean; text: string; maxLevel: "A" | "B" | "C" | null; why: string }
@@ -81,11 +82,16 @@ export function sideTalk8(text: string, o: { awaiting?: boolean; districtNoun?: 
   if (ASSISTANT8.test(text) || ASSISTANT8_TA.test(text)) return "another-assistant";
   if (HONORIFIC8.test(text) && !o.awaiting) return "title";
   if (vocative8(text, !!o.districtNoun)) return "person";
+  // Jarvis waits for an answer (a yes, a choice, a question back): whatever else is said is that answer ("rendavadhu", "Yes, tell them.": the
+  // review, 19 Nov); only another assistant or a person named above is someone else's
+  if (o.awaiting) return null;
   if (ERRAND8.test(t) || ERRAND8_TA.test(text) || ERRAND8_TG.test(t)) return "errand";
   if (YOU_PAST8.test(t)) return "asked-a-person";
   if (words.length && (words.every((w) => FILLER8.has(w)) || (words.length >= 2 && words.every((w) => ACK8.has(w) || FILLER8.has(w))))) return o.awaiting ? null : "filler";
   if (DANGLING8.test(t) && !o.awaiting) return "cut-off";
   if (words.length === 1 && ONE_WORD_TA8.test(words[0])) return null;
+  // an ordinal or "both" alone is a follow-up on the list ("rendavadhu", "இரண்டாவது", "rendum")
+  if (words.length <= 2 && (ordinalOf(text) != null || /^(?:rendum|irandum|ரெண்டும்|இரண்டும்|both)$/iu.test(words.join(" ")))) return null;
   // one word no lexicon knows (a noise Whisper wrote down): neither English, nor a district word, nor a Tamil question or command
   if (words.length === 1 && !o.districtNoun && !ACK8.has(words[0]) && !/^(?:no|nope|இல்லை|இல்ல|வேண்டாம்|வேணாம்|ஆம்|ஆமாம்|illa|venaam|vendaam|aama|aamam)$/u.test(words[0])) {
     const w = words[0];
@@ -209,6 +215,8 @@ export function addressed(i: GateInput): Addressed {
     // the request said right after "Hey Jarvis": the Collector called Jarvis, so it is answered however loosely it is said ("Supreme Court News
     // Open Panyunga.", the real run o8b, 18 Nov); only the hard silences above hold
     if (i.called) return { tier: 1, act: true, text, maxLevel: "C", why: "called" };
+    // Jarvis waits for an answer and has just spoken: this is the answer ("Yes, tell them.": the review, 19 Nov), not side talk
+    if (i.awaitingAnswer && i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS) return { tier: 2, act: true, text, maxLevel: "C", why: "answer" };
   }
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   // v8: a leading backchannel ("Haan, show me the severe cases", "Seri, open the news") does not hide the request's shape (the review, 18 Nov)

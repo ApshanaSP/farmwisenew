@@ -115,7 +115,8 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   // "the Nungambakkam subway one", "the one about ...", and "open that one, that's the Supreme Court order" (the owner's words, 18 Nov)
   const theOne = /\b(?:the|that|this|andha|antha)\s+[\p{L}\p{M}\s.'’-]{2,60}?\s+one\b|\bone about\b|\b(?:that|this) one\b/iu.test(text) && o.onScreen;
   if (!newsy && !theOne && !asks) return null;
-  const words = topicWords(text, outlet);
+  // at most 12 topic words (a request at the schema's 400 characters must not hold the server: the review, 19 Nov)
+  const words = topicWords(text, outlet).slice(0, 12);
   // "read the second story", "open the news": no topic of its own (ordinals and the panel are other lanes')
   if (!words.length && !outlet) return null;
   // "what's happening in Royapuram": a place's situation is the console's (its place lane), unless it names the news
@@ -136,7 +137,8 @@ const docOf = (x: StoryItem): Doc => {
   const memoKey = `${x.id}|${x.title}|${x.titleEn ?? ""}|${x.place ?? ""}`;
   const hit = docMemo.get(memoKey);
   if (hit) return { ...hit, item: x };
-  const toks = [...new Set(tokensOf(`${x.title} ${x.titleEn ?? ""} ${x.place ?? ""}`))].filter((w) => w.length >= 2);
+  // (at most 40 words a story: a headline is shorter; a 400-character title sent from a screen is cut)
+  const toks = [...new Set(tokensOf(`${x.title} ${x.titleEn ?? ""} ${x.place ?? ""}`))].filter((w) => w.length >= 2).slice(0, 40);
   const keys = new Set(toks.map(looseKey).filter(Boolean));
   const byFirst = new Map<string, { k: string; en: string | null }[]>();
   const seen = new Set<string>();

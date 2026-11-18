@@ -5,8 +5,9 @@
  */
 export const understandV8 = (): boolean => {
   try {
-    const v = (process.env.NEXT_PUBLIC_JARVIS_UNDERSTAND || process.env.JARVIS_UNDERSTAND || "").trim().toLowerCase();
-    return v !== "v7";
+    // either switch set to v7 is v7: the server's JARVIS_UNDERSTAND holds whatever the browser build's NEXT_PUBLIC_ value (the review, 19 Nov)
+    const v7 = (x: string | undefined) => (x ?? "").trim().toLowerCase() === "v7";
+    return !(v7(process.env.NEXT_PUBLIC_JARVIS_UNDERSTAND) || v7(process.env.JARVIS_UNDERSTAND));
   } catch {
     return true;
   }

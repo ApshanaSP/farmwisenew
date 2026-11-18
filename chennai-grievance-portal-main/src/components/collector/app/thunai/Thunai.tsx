@@ -1809,8 +1809,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // what it is doing shows in the bar at once; it is not said aloud (a spoken "one moment" was cut off mid-word whenever the
     // answer came quickly). With the mode on the core shows the work, with it off a soft heartbeat does
     const ack = ackTemplated(said, rules.lang, worldRef.current) || ackFor(said, rules.lang);
-    // v8: a sentence with no topic of its own gets no spoken filler; the bar still shows that it is working
-    const doingLine = ack || (rules.lang === "ta" ? "புரிந்துகொள்கிறேன்…" : "Working it out…");
+    // v8: a sentence with no topic of its own gets no spoken filler; the bar still shows v7's own words for it (nothing the owner sees changes)
+    const doingLine = ack || (rules.lang === "ta" ? "பார்க்கிறேன்." : "On it.");
     ackText.current = doingLine;
     setReply(doingLine);
     hud.set({ doing: doingLine });
@@ -2741,6 +2741,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     };
     window.addEventListener("jarvis:mode", f);
     return () => window.removeEventListener("jarvis:mode", f);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // v8: the word lists and the English word filter the v8 lanes read are built on their first use (about 170 ms): built here, when the page is
+  // idle, so the Collector's first sentence does not wait for them
+  useEffect(() => {
+    if (!understandV8()) return;
+    const t = setTimeout(() => { try { userLang8("show me the Adyar news story", null); newsLane8("open the Pallikaranai news", { news: { items: [] }, world: worldRef.current, lang: "en" }); } catch { /* a warm-up only */ } }, 2500);
+    return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // dev only: what the end-to-end specs read
   useEffect(() => {
