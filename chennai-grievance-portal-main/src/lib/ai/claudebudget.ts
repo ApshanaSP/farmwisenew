@@ -51,23 +51,39 @@ class SqliteStore implements Store {
 }
 declare global {
   // eslint-disable-next-line no-var
-  var __claudeBudget: { file: string; store: Store } | undefined;
+  var __claudeBudget: { file: string; store: Store; failedAt?: number } | undefined;
 }
 const fileOf = () => process.env.JARVIS_CLAUDE_BUDGET_FILE || path.join(process.cwd(), "data", "thunai", "claude-budget.sqlite");
+/** v8: a record that could not be opened is tried again after this long (one "database is locked" kept Claude off until a restart: the QA gate, 19 Nov) */
+export const REOPEN_MS = 2000;
 function store(): Store {
   const file = fileOf();
-  if (global.__claudeBudget?.file === file) return global.__claudeBudget.store;
+  const had = global.__claudeBudget?.file === file ? global.__claudeBudget : undefined;
+  if (had && (had.failedAt == null || Date.now() - had.failedAt < REOPEN_MS)) return had.store;
   let s: Store;
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const sqlite = (process as unknown as { getBuiltinModule(id: string): unknown }).getBuiltinModule("node:sqlite") as typeof import("node:sqlite") | undefined;
     if (!sqlite) throw new Error("no node:sqlite");
-    const db = new sqlite.DatabaseSync(file);
-    db.exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=2000;");
-    s = new SqliteStore(db);
+    // v8: a moment's lock (another writer) is waited out here, three tries 50 and 100 ms apart, before the record counts as unopened
+    for (let i = 0; ; i++) {
+      let db: DB | null = null;
+      try {
+        db = new sqlite.DatabaseSync(file);
+        db.exec("PRAGMA busy_timeout=2000; PRAGMA journal_mode=WAL;");
+        s = new SqliteStore(db);
+        break;
+      } catch (e) {
+        try { db?.close(); } catch { /* already closed */ }
+        if (i >= 2 || !/locked|busy/i.test((e as Error).message)) throw e;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (i + 1));
+      }
+    }
   } catch (e) {
     console.warn(`[claude budget] sqlite not available: no Claude call (the spend could not be kept): ${(e as Error).message.slice(0, 120)}`);
-    s = new MemoryStore();
+    // still closed (an unshared record never allows a call), and tried again in REOPEN_MS; what it counted meanwhile is kept
+    global.__claudeBudget = { file, store: had?.store ?? new MemoryStore(), failedAt: Date.now() };
+    return global.__claudeBudget.store;
   }
   global.__claudeBudget = { file, store: s };
   return s;
