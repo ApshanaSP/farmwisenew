@@ -118,3 +118,7 @@ describe("v8 news: a brief on a named story (the live dev run, 18 Nov)", () => {
     expect(na?.kind).toBe("find");
   });
 });
+
+describe("v8 news: Tanglish verbs as Whisper spells them (the real run o8b)", () => {
+  it("'Supreme Court News Open Panyunga.' has the topic Supreme Court", () => expect(topicWords("Supreme Court News Open Panyunga.", null)).toEqual(["supreme", "court"]));
+});

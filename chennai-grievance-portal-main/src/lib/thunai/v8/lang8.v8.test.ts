@@ -23,3 +23,12 @@ describe("v8 language: the Collector's own words decide", () => {
   });
   it("whatever the speech-to-text called it: the words are English", () => expect(lang("Show me the severe cases in Adyar.", "ta")).toBe("en"));
 });
+
+describe("v8 language: Tanglish verbs as Whisper spells them (the real run o8b)", () => {
+  it("'Supreme Court News Open Panyunga.' is Tamil (Tanglish)", () => expect(lang("Supreme Court News Open Panyunga.", "en")).toBe("ta"));
+  it("'-unga' and '-inga' endings are Tamil's polite verbs; English words keep English", () => {
+    expect(lang("Adyar cases kaatunga", "en")).toBe("ta");
+    expect(lang("news padinga", "en")).toBe("ta");
+    expect(lang("Show me the Kodungaiyur dumping news", "ta")).toBe("en");
+  });
+});

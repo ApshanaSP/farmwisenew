@@ -65,10 +65,12 @@ export function wordsLang(text: string, o: Lang8Opts = {}): L8 | null {
   }
   // a place said in Tamil letters alone ("அடையாறு?"): the letters are the evidence (the review, 18 Nov)
   if (!la.length) return ta.length || TAMIL.test(t) ? "ta" : null;
-  const tg = la.filter((w) => TG.has(w)).length, tc = la.filter((w) => TC.has(w)).length, eg = la.filter((w) => EG.has(w)).length;
+  // a Tamil polite verb however Whisper spells it ("panyunga", "kaatunga", "padinga": the real run o8b, 18 Nov)
+  const isTG = (w: string) => TG.has(w) || (w.length >= 5 && /(?:unga|inga|ungal|ungo)$/.test(w) && !isEnglishWord(w));
+  const tg = la.filter(isTG).length, tc = la.filter((w) => TC.has(w)).length, eg = la.filter((w) => EG.has(w)).length;
   const last = la[la.length - 1];
   // Tamil is verb-final: a Tamil word ending the clause makes it Tanglish ("severe cases kaattunga")
-  if (TG.has(last) && !EG.has(last)) return "ta";
+  if (isTG(last) && !EG.has(last)) return "ta";
   if (tg + tc > eg) return "ta";
   const ec = la.filter((w) => !TG.has(w) && !TC.has(w) && !EG.has(w) && isEnglishWord(w)).length;
   if (eg + ec >= 1) return "en";

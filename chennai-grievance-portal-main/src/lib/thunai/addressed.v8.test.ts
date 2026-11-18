@@ -32,3 +32,13 @@ describe("v8 addressee: the v7 gate stays with JARVIS_UNDERSTAND=v7 (the rollbac
     expect(at("Alexa, when was it open?").act).toBe(true);
   });
 });
+
+describe("v8 addressee: the request right after 'Hey Jarvis' (the real run o8b, 18 Nov)", () => {
+  const called = (text: string) => addressed({ text, lastTurnAt: null, now: 1_000_000, rulesSure: false, districtNoun: false, called: true });
+  it("Whisper's 'Supreme Court News Open Panyunga.' said right after the name is answered", () => expect(called("Supreme Court News Open Panyunga.").act).toBe(true));
+  it("so is a loose noun phrase", () => expect(called("the Pallikaranai marsh thing").act).toBe(true));
+  it("the hard silences still hold: another assistant, a person named, a cut-off line", () => {
+    for (const t of ["Alexa, when was it open?", "Ramesh, send the file to the Commissioner.", "What are the"]) expect(called(t).act, t).toBe(false);
+  });
+  it("in the window after an answer, a Tanglish verb as Whisper spells it is a request", () => expect(at("Supreme Court News Open Panyunga.").act).toBe(true));
+});

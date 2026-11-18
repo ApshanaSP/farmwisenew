@@ -32,6 +32,8 @@ export interface GateInput {
   commandTier?: boolean;
   /** v8: Jarvis waits for a yes or a choice (a card, a question back): a plain "okay" or "yes" is an answer, not a filler */
   awaitingAnswer?: boolean;
+  /** v8: said right after "Hey Jarvis" (the device's wake word), before Jarvis answered anything: the call's own request */
+  called?: boolean;
 }
 
 // ---- v8 (the owner's example 5; docs/jarvis/v8-research/20-addressee-language.md R1): hard silences, before the engaged window's rule.
@@ -58,7 +60,7 @@ const DANGLING8 = / (?:the|a|an|and|or|but|of|my|your|our|their|is|are|was|were|
 /** one Tamil word that is a whole command or answer ("அடுத்து": next) */
 const ONE_WORD_TA8 = /^(?:அடுத்து|அடுத்தது|முந்தையது|நிறுத்து|போதும்|மீண்டும்|மூடு|திற|படி|காட்டு|சரி|பின்னால்|வேண்டாம்|இல்லை|ஆமாம்|ஆம்)$/u;
 /** a request said with its verb at the end: "the Nungambakkam subway one, open it"; "Supreme Court news open pannunga" */
-const LATE_VERB8 = / (?:open|show|read|play|close|pull up|bring up|explain|summari[sz]e) (?:it|that|this|them|me|it up|that one|this one)? ?$|\b(?:open|show|read|compare|list|filter|map|sort|close|explain) (?:pannunga|pannungal|pannungo|pannu|panni kaattunga)\s*$/;
+const LATE_VERB8 = / (?:open|show|read|play|close|pull up|bring up|explain|summari[sz]e) (?:it|that|this|them|me|it up|that one|this one)? ?$|\b(?:open|show|read|compare|list|filter|map|sort|close|explain) (?:pa+n+[iy]?u+(?:nga|ngal|ngo)?|panni kaattunga)\s*$/;
 
 /** a capitalised word ending the clause or opening it with a comma, that is no English word, no place and not Jarvis: a person's name */
 function vocative8(raw: string, districtNoun: boolean): boolean {
@@ -204,6 +206,9 @@ export function addressed(i: GateInput): Addressed {
   if (understandV8()) {
     const why = sideTalk8(text, { awaiting: i.awaitingAnswer, districtNoun: i.districtNoun });
     if (why) return { tier: 0, act: false, text, maxLevel: null, why };
+    // the request said right after "Hey Jarvis": the Collector called Jarvis, so it is answered however loosely it is said ("Supreme Court News
+    // Open Panyunga.", the real run o8b, 18 Nov); only the hard silences above hold
+    if (i.called) return { tier: 1, act: true, text, maxLevel: "C", why: "called" };
   }
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   // v8: a leading backchannel ("Haan, show me the severe cases", "Seri, open the news") does not hide the request's shape (the review, 18 Nov)

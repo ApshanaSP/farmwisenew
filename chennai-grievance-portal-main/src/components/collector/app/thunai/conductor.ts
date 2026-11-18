@@ -79,6 +79,8 @@ export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAK
 export const WAKE_REPLY_GIVE_UP_MS = 1500;
 /** v6: a name-only sentence that arrives this soon after an on-device wake is the same call (it was answered already) */
 export const WAKE_SAME_CALL_MS = 5000;
+/** v8: how long after the name the first sentence still counts as the call's own request (the gate's `called`) */
+export const CALL_MS = 12_000;
 
 export interface HeardLine {
   text: string;
@@ -623,7 +625,9 @@ export class Conductor {
     const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler
     const awaitingAnswer = !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.());
-    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer });
+    // v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request
+    const called = this.engaged > 0 && this.engaged > (this.h.lastTurnAt() ?? 0) && Date.now() - this.engaged < CALL_MS;
+    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer, called });
   }
 
   private async transcribe(gen: number) {

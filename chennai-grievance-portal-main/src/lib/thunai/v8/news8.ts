@@ -87,8 +87,8 @@ export const outletIn = (text: string): string | null => OUTLET_NAMES.find(([re]
 /** Tamil-script words that are the request's own (news nouns, verbs, references, question words), as whole words with their endings: முதல்வர் (the
  * CM), இந்திய and காட்டுப்பள்ளி are topics, not "first", "this" and "show" (the review, 18 Nov) */
 const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்)?|திற(?:ங்க|ங்கள்|ந்து|க்கவும்|க்க)?|படி(?:ங்க|யுங்கள்|யுங்க|க்கவும்|த்து)?|சொல்(?:லு|லுங்க|லுங்கள்|லவும்)?|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பத்தி|குறித்து|என்ன|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|ஏதாவது|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
-/** Tanglish news words with their endings ("seithiya", "seidhila") */
-const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)/;
+/** Tanglish news words with their endings ("seithiya", "seidhila"); "pannunga" as Whisper spells it ("panyunga", "panunga": the real run o8b) */
+const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(?:nga|ngal|ngo)?$/;
 
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
