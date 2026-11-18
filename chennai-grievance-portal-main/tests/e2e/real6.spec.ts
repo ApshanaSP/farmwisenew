@@ -354,17 +354,21 @@ test("v8 real: the owner's examples", async ({ page }) => {
       await settle(page, w.endAt, 8000, false);
       await page.waitForTimeout(600);
     }
+    // the turn before is over (spoken and quiet) before a line is said to someone else, so its answer is not taken for this one's
+    await page.waitForFunction(() => { const J = (window as unknown as { __jv: { speaking(): boolean; state(): string } }).__jv; return !J.speaking() && J.state() !== "thinking"; }, null, { timeout: 60_000 }).catch(() => undefined);
     await reset(page);
+    await page.evaluate(() => { (window as unknown as { __jvIgnored?: string[] }).__jvIgnored = []; });
     const q = await play(page, clip);
     await page.waitForTimeout(META[clip].durMs);
-    const s = await settle(page, q.endAt, o.silent ? 9000 : 45_000, !o.silent);
+    const s = await settle(page, q.endAt, o.silent ? 20_000 : 45_000, !o.silent);
     const m = measure(s, q.endAt);
     const words = said(s, q.endAt);
     const acted = s.marks.some((x) => (x.name === "finding" || x.name === "answer" || x.name === "ack") && x.t > q.endAt - 50);
-    const row = { label, clip, text: META[clip].text, heard: s.hud.ribbon, said: words, stage: await stageText(), acted, silent: !words.length && !acted,
+    const ignored = await page.evaluate(() => (window as unknown as { __jvIgnored?: string[] }).__jvIgnored ?? []);
+    const row = { label, clip, text: META[clip].text, heard: s.hud.ribbon, ignored, said: words, stage: await stageText(), acted, silent: !words.length && !acted,
       firstSound: m.firstSound, finding: m.finding, answerReady: m.answerReady, screen: m.screen, lane: m.trace?.lane ?? null, events: m.events };
     rows.push(row);
-    console.log(JSON.stringify({ label, heard: row.heard, silent: row.silent, said: words.map((x) => `${x.lang}:${x.text.slice(0, 120)}`) }));
+    console.log(JSON.stringify({ label, heard: row.heard, ignored, silent: row.silent, said: words.map((x) => `${x.lang}:${x.text.slice(0, 120)}`) }));
     return row;
   };
   // 1 and 5: a story by its topic, then (Jarvis has just spoken) three lines said to others in the room

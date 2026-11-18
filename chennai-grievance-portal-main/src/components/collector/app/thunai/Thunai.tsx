@@ -2440,7 +2440,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onSentence: (h) => onSentenceRef.current(h),
       cancelTurn: () => cancelTurn(),
       onReach: (ok) => setOffline(!ok),
-      onIgnored: (t) => { hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000); },
+      onIgnored: (t) => {
+        hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000);
+        // a measuring build only: the line the gate left unanswered, for the real-path spec (the words stay in this page; nothing is logged)
+        if (SPEC) { jvMark("ignored"); (window as unknown as { __jvIgnored?: string[] }).__jvIgnored = [...((window as unknown as { __jvIgnored?: string[] }).__jvIgnored ?? []), t].slice(-10); }
+      },
       onState: (s) => {
         setTurnState(s); hud.set({ turn: s });
         // back to listening with no request taken: what the captions caught is not left on the screen
