@@ -16,7 +16,8 @@ import { expect, it } from "vitest";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
 import { callLlm, plannerLead } from "./llm";
-import { runRoom, waitForRoom } from "./holdoutroom";
+import { claudeLeadsPlanner, runRoom, waitForRoom } from "./holdoutroom";
+import { understandV8 } from "./v8/flag8";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
@@ -90,8 +91,8 @@ function resultIntent(r: AgentResult): string {
 const SAME: Record<string, string[]> = { insight: ["insight", "answer", "why", "ranking", "trend"], complete: ["complete", "answer"], general: ["general", "chat", "refuse"], case: ["case", "stage_op"], stage_op: ["stage_op", "case"] };
 const matches = (gold: string, got: string) => got === gold || (SAME[gold] ?? []).includes(got);
 
-/** Haiku 5.5 leads the planner's ladder (llm.ts): a working key under the spend ceiling, no JARVIS_PLANNER_LEAD=groq, a Haiku model */
-const haikuLeads = () => claudeConfigured() && plannerLead() === "haiku" && /haiku/i.test(claudeModel());
+/** Claude leads the planner's ladder (llm.ts): a working key under the spend ceiling, no JARVIS_PLANNER_LEAD=groq, Haiku (or Sonnet under v8) */
+const haikuLeads = () => claudeLeadsPlanner({ configured: claudeConfigured(), lead: plannerLead(), model: claudeModel(), v8: understandV8() });
 const mode = process.env.HOLDOUT ?? "rules";
 
 it.runIf(mode === "rules")("rules on all 150", () => {

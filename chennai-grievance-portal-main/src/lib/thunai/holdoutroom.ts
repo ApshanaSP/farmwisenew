@@ -7,6 +7,12 @@ import type { Ledger } from "./ledger";
 
 export const GROQ_PLANNERS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 
+/** Claude leads the planner's ladder as llm.ts ladder() decides it: a working key, no JARVIS_PLANNER_LEAD=groq, and Haiku 5.5, or under v8
+ * Sonnet 5.5 too (the finals); Opus never leads. The runner's room and its minute-window waits follow the model that really leads (v8, 19 Nov) */
+export function claudeLeadsPlanner(o: { configured: boolean; lead: "haiku" | "groq"; model: string; v8: boolean }): boolean {
+  return o.configured && o.lead === "haiku" && (o.v8 ? /haiku|sonnet/i : /haiku/i).test(o.model);
+}
+
 export function runRoom(l: Ledger, claude: { leads: boolean; model: string }, perRequest = 3000): { who: "anthropic" | "groq"; left: number } {
   if (claude.leads) {
     const r = l.room("anthropic", claude.model);

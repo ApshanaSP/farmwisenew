@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { Ledger, MemoryStore } from "./ledger";
-import { GROQ_PLANNERS, runRoom, waitForRoom } from "./holdoutroom";
+import { GROQ_PLANNERS, claudeLeadsPlanner, runRoom, waitForRoom } from "./holdoutroom";
 
 const groqSpent = () => {
   const l = new Ledger(new MemoryStore());
@@ -51,5 +51,16 @@ describe("v6: a live holdout run's room", () => {
     const l = new Ledger(new MemoryStore());
     l.record("anthropic", "claude-haiku-5-5", { tokens: 1000, requests: 490 });
     expect(runRoom(l, { leads: true, model: "claude-haiku-5-5" })).toEqual({ who: "anthropic", left: 10 * 3000 });
+  });
+});
+
+describe("v8 (19 Nov): the live-60 runner's room follows the ladder's own rule for who leads", () => {
+  it("Sonnet 5.5 leads under v8 (the finals), as llm.ts ladder() lets it", () => expect(claudeLeadsPlanner({ configured: true, lead: "haiku", model: "claude-sonnet-5-5", v8: true })).toBe(true));
+  it("Haiku leads as before", () => expect(claudeLeadsPlanner({ configured: true, lead: "haiku", model: "claude-haiku-5-5", v8: false })).toBe(true));
+  it("not Sonnet under v7's rule, never Opus, never with the lead set to Groq or no key", () => {
+    expect(claudeLeadsPlanner({ configured: true, lead: "haiku", model: "claude-sonnet-5-5", v8: false })).toBe(false);
+    expect(claudeLeadsPlanner({ configured: true, lead: "haiku", model: "claude-opus-5-5", v8: true })).toBe(false);
+    expect(claudeLeadsPlanner({ configured: true, lead: "groq", model: "claude-haiku-5-5", v8: true })).toBe(false);
+    expect(claudeLeadsPlanner({ configured: false, lead: "haiku", model: "claude-haiku-5-5", v8: true })).toBe(false);
   });
 });
