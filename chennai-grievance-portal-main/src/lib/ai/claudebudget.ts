@@ -65,12 +65,13 @@ function store(): Store {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const sqlite = (process as unknown as { getBuiltinModule(id: string): unknown }).getBuiltinModule("node:sqlite") as typeof import("node:sqlite") | undefined;
     if (!sqlite) throw new Error("no node:sqlite");
-    // v8: a moment's lock (another writer) is waited out here, three tries 50 and 100 ms apart, before the record counts as unopened
+    // v8: a moment's lock (another writer) is waited out here, three tries 50 and 100 ms apart, before the record counts as unopened. The WAL
+    // switch goes first so that a lock fails at once rather than holding a voice turn for busy_timeout's 2 s (the QA gate, 19 Nov)
     for (let i = 0; ; i++) {
       let db: DB | null = null;
       try {
         db = new sqlite.DatabaseSync(file);
-        db.exec("PRAGMA busy_timeout=2000; PRAGMA journal_mode=WAL;");
+        db.exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=2000;");
         s = new SqliteStore(db);
         break;
       } catch (e) {

@@ -88,7 +88,9 @@ describe("RC-35 class guard: a timed cache over the store follows the epoch or s
     // QA pass 5: main's Manu Desk. Its timed cache is the list of GCC areas (reference data); the case writes it makes bump the epoch (cases.ts)
     "lib/manu/petitions.ts": "caches the list of GCC areas for the check screen: reference data",
     // Jarvis v6 Phase 4: the news reader keeps outside pages, feeds and robots.txt for 10 minutes, in memory: nothing of the store's
-    "lib/thunai/web/fetch.ts": "outside web pages, feeds and robots.txt (10 minutes, in memory): no store data"
+    "lib/thunai/web/fetch.ts": "outside web pages, feeds and robots.txt (10 minutes, in memory): no store data",
+    // Jarvis v8: the Claude spend record's handle; an open that failed is tried again after 2 s. It holds the owner's spend, not the store's data
+    "lib/ai/claudebudget.ts": "the Claude spend record's handle (a failed open is retried after 2 s): no store data"
   };
   const root = path.join(process.cwd(), "src");
   const files: string[] = [];
