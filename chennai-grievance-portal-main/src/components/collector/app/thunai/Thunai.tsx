@@ -316,8 +316,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const ackText = useRef("");
   /** v8: the acknowledgement said last (never the same one twice running) */
   const lastAckSaid = useRef<string | null>(null);
-  /** v8: the language of the Collector's last words that had one (lang8.ts), for words with none */
-  const lastUserLang = useRef<Lang | null>(null);
   /** v8: the story found by its topic last, and the other one offered with it ("the other one") */
   const lastFound = useRef<LastFound | null>(null);
   const listenLangRef = useRef<Lang>("en");
@@ -1382,6 +1380,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             st.outlet = f.outlet ?? st.outlet;
           }
         } else if (e.type === "said") {
+          lastFound.current = null;
           // v8: nothing in the dashboard's news: what the outlets' feeds have, or that nothing was found, said as code wrote it
           const a = e as { en?: string[]; ta?: string[]; links?: NewsLink[] };
           st.answered = true; jvMark("newsBrief"); markAnswer();
@@ -1406,7 +1405,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setStageBusy(null);
     hud.set({ doing: "" });
     if (!st.answered) {
-      // nothing came back to tell: say why, on whatever screen is up
+      // nothing came back to tell: say why, on whatever screen is up (and no old story is left to offer)
+      if (na.kind === "find") lastFound.current = null;
       q?.drop();
       earcon("blocked");
       out(failLine(st.fail ?? "failed", lang), lang, "ready");
@@ -1635,8 +1635,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v8 (the owner's example 4): the answer's language is the language of these words, never the ears' label or the console's setting;
     // words with none ("Adyar?") take the Collector's last that had one
     const v8 = understandV8();
-    const ulang: Lang | null = v8 ? userLang8(said, lastUserLang.current) : null;
-    if (v8 && !original) { const wl = wordsLang(said, { isName: placeWord }); if (wl) lastUserLang.current = wl; }
+    // (the last language with any: from the same remembered turns the server reads, so the two never disagree: the review, 18 Nov)
+    const lastLang = v8 ? [...turns.current].reverse().map((x) => wordsLang(x.heard, { isName: placeWord })).find((x) => x) ?? null : null;
+    const ulang: Lang | null = v8 ? userLang8(said, lastLang) : null;
     forgetBookmark();
     if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
     // a new question replaces the last answer's card: earlier ones are in the chatbot's Jarvis tab; its progress line starts empty (an
@@ -1700,6 +1701,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         decide({ kind: "answer", query: said, lang: ulang ?? "en", lane: "instant", ms: performance.now() - t0 });
         return;
       }
+      // any other turn: the story found last is forgotten ("the other one" and "more on it" belong to the turn right after it: the review, 18 Nov)
+      lastFound.current = null;
       // a case on the list on screen by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க"): opened, or explained
       const r8 = stageRef.current ? refLane8(said, stageRef.current) : null;
       if (r8) {
@@ -1819,7 +1822,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const endAt = sourceRef.current !== "typed" ? utterEnd.current : null;
     const ackIn = outMode === "voice" ? ackDelay(endAt, performance.now()) : null;
     // v8 (the owner's example 3): said only when it has a topic and is not the line said last
-    const toSay = ackToSay(ack, lastAckSaid.current);
+    const toSay = understandV8() ? ackToSay(ack, lastAckSaid.current) : ack || null;
     if (ackIn != null && toSay) setTimeout(() => {
       if (alive() && ackDue({ endAt, now: performance.now(), answeredAt: answerAt.current, findingAt: findingAt.current, speaking: speaking(), waiting: conductor.current?.state === "thinking" }) && speakAck(toSay, rules.lang)) lastAckSaid.current = toSay;
     }, ackIn);
@@ -2624,7 +2627,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (modeRef.current === "on" && outMode === "voice" && conductor.current?.state === "thinking") {
         // v8: never the same line twice running (the owner's example 3)
         const l = listenLangRef.current === "ta" ? "ta" : "en";
-        const s = stillLine(l, lastAckSaid.current);
+        const s = understandV8() ? stillLine(l, lastAckSaid.current) : l === "ta" ? "இன்னும் பார்க்கிறேன்." : "Still working on it.";
         if (speakAck(s, listenLangRef.current)) lastAckSaid.current = s;
       }
     }, LONG_TURN_MS);

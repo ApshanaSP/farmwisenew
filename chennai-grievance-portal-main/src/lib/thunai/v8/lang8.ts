@@ -22,7 +22,7 @@ const TG = new Set(("enna ennachu enga engey epdi eppadi eppo eppodhu evlo evval
   "kaattu kaatu kattu kaattunga kaatunga kattunga katunga kaami kaaminga kaminga sollu sollunga sollungal sollungo paaru paru paarunga pannu pannunga pannungal panni " +
   "podu podunga kudu kudunga padi padinga padiunga padiyunga vaasi vasi thira thiranga thirandhu maathu mathu maathunga oppidu oppidunga theriyuma therinjukkanum " +
   "irukku irukka irukkaa iruka irundhu illa illai venum vendaam venaam aachu achu aagudhu nadakkudhu nadandhudhu nadanthathu varudhu poguthu pochu " +
-  "la le ku kku ukku oda ode kitta pathi patthi paththi ah aa dhaan than thaan um nu nga unga ga da di pa ma").split(/\s+/));
+  "la le ku kku ukku oda ode kitta pathi patthi paththi dhaan thaan nu nga unga ga da di pa ma").split(/\s+/));
 /** Tamil content words in Latin letters */
 const TC = new Set(("mazhai mazha kuppai thanni thaneer vellam saalai salai naalaikku naalai innaiku inniku indru romba konjam nilavaram nilamai pugar pugaar " +
   "seithi seidhi seythi sethi kadaisi mudhal rendavadhu moonavadhu adhu idhu andha indha antha intha avanga avaru ellam ellaam mattum innum vera").split(/\s+/));
@@ -32,7 +32,7 @@ const EG = new Set(("the a an of to in on at for from with about into over by an
   "show open give tell compare list read go take bring pull find check look let get please also only just more less any some all not no " +
   "there here than then now today tomorrow yesterday week month").split(/\s+/));
 /** words that carry no language: backchannels, the name, the console's own short codes */
-const NEUTRAL = new Set(("ok okay okk seri sari haan hmm mm jarvis hey hi hello yes yeah no aqi pwd gcc tvk cm mla mp dro rdo vao pa ae aee sla ward zone").split(/\s+/));
+const NEUTRAL = new Set(("ok okay okk seri sari haan hmm mm um uh ah aa er jarvis hey hi hello yes yeah no aqi pwd gcc tvk cm mla mp dro rdo vao pa ae aee sla ward zone").split(/\s+/));
 
 const TAMIL = /[஀-௿]/u;
 const tamilWords = (s: string) => s.split(/[^஀-௿]+/u).filter(Boolean);
@@ -63,7 +63,8 @@ export function wordsLang(text: string, o: Lang8Opts = {}): L8 | null {
     if (!grammar && asEnglish / ta.length >= 0.6 && ta.length >= 2) return "en";
     return "ta";
   }
-  if (!la.length) return ta.length ? "ta" : null;
+  // a place said in Tamil letters alone ("அடையாறு?"): the letters are the evidence (the review, 18 Nov)
+  if (!la.length) return ta.length || TAMIL.test(t) ? "ta" : null;
   const tg = la.filter((w) => TG.has(w)).length, tc = la.filter((w) => TC.has(w)).length, eg = la.filter((w) => EG.has(w)).length;
   const last = la[la.length - 1];
   // Tamil is verb-final: a Tamil word ending the clause makes it Tanglish ("severe cases kaattunga")
@@ -81,6 +82,11 @@ export function placeWord(word: string): boolean {
   if (ZONE_WORDS.has(word) || ZONE_WORDS.has(x)) return true;
   if (x.length < 4 || TG.has(x) || EG.has(x) || TC.has(x)) return false;
   return AREA_WORDS.has(x) || LOCALITY_WORDS.has(x);
+}
+/** a word of a zone's or one of the 250 areas' names (not the street list, which holds people's names: "Ramesh" is a person to the gate) */
+export function areaWord(word: string): boolean {
+  const x = word.toLowerCase();
+  return ZONE_WORDS.has(word) || ZONE_WORDS.has(x) || (x.length >= 4 && AREA_WORDS.has(x));
 }
 
 /** The reply's language for this turn: its own words, else the last language the Collector used, else English. */

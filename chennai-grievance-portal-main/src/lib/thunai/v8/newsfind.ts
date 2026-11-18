@@ -52,15 +52,23 @@ export async function feedLines(f: FindAsk, words: string[], d: { world: Pick<Wo
 }
 
 export interface ScreenStory { id: string; title?: string | null; source?: string | null }
-export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[] }
+export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[]; exclude?: string[] }
 export interface Found { req: NewsReq; picked: Picked }
 
 /** the district's own place names, for the place veto (a place named that a story does not mention is never that story) */
 export const placesOf = (w: Pick<World, "zones" | "places">): string[] => [...new Set([...w.zones.map((z) => z.name), ...w.places.flatMap((p) => [p.name, ...(p.aliases ?? [])])])].filter((n) => n && n.length >= 4);
 
 /** The dashboard's stored news of the last `days` days, newest first: news outlets' reports only (at most 3,000). */
+let storeCache: { at: number; asOf: string; days: number; rows: StoryItem[] } | null = null;
 export async function storeStories(days = 7): Promise<StoryItem[]> {
   const now = await asOf();
+  // the same week's stories for a minute (the store changes on its own schedule; a request a second must not re-read 3,000 rows: the review, 18 Nov)
+  if (storeCache && storeCache.asOf === now && storeCache.days === days && Date.now() - storeCache.at < 60_000) return storeCache.rows;
+  const rows = await readStore(now, days);
+  storeCache = { at: Date.now(), asOf: now, days, rows };
+  return rows;
+}
+async function readStore(now: string, days: number): Promise<StoryItem[]> {
   const until = now || new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   const since = new Date(Date.parse(`${until.replace(" ", "T")}+05:30`) - days * 86_400_000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   const [rows] = await intelPool.query<RowDataPacket[]>(
@@ -87,6 +95,9 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   const onScreen: StoryItem[] = screen.map((x, i) => ({ ...(byId.get(x.id) ?? { id: x.id, title: String(x.title ?? ""), outlets: x.source ? String(x.source).split(/\s+·\s+/) : [] }),
     ...(x.title ? { title: String(x.title) } : {}), onScreen: i + 1 }));
   const seen = new Set(onScreen.map((x) => x.id));
-  const items = [...onScreen, ...stored.filter((s) => !seen.has(s.id))];
-  return { req, picked: pickStory(rankStories(req, items, { places: placesOf(d.world) })) };
+  // a search for more on a story leaves out the report already read (its other outlets' reports are what is wanted)
+  const skip = new Set(f.exclude ?? []);
+  const items = [...onScreen, ...stored.filter((s) => !seen.has(s.id))].filter((x) => !skip.has(x.id));
+  // within one event, the report in the request's own language (the real run, 18 Nov: a Tamil headline was read in the English voice)
+  return { req, picked: pickStory(rankStories(req, items, { places: placesOf(d.world) }), f.lang) };
 }

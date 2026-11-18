@@ -14,8 +14,9 @@
  *
  * Pure: no network. The server (v8/newsfind.ts) supplies the store's stories; the browser sends the sentence and what is on screen.
  */
-import { fold, looseKey, tokenSim, tokensOf } from "./match";
+import { enStem, fold, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { placeWord } from "./lang8";
+import { isEnglishWord } from "../english";
 
 /** what the Collector says short for a name the headlines spell out: each must be in the headline, all its words */
 const SAYS_FOR: Record<string, string[]> = { cm: ["chief", "minister"], hc: ["high", "court"], sc: ["supreme", "court"], dmk: ["dmk"], gcc: ["corporation"],
@@ -42,6 +43,8 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
   "one ones thing things say says saying said write wrote written papers paper newspaper newspapers press media outlet outlets channel channels happening happened " +
   "jarvis hey hi ok okay yes yeah sir madam out more details detail full whole again thats its whats heres theres lets dont wanna want need " +
   "else anything something everything other others another same also too " +
+  // the console's own places for the news: "go to the news page", "open the news panel", "read the news in Tamil" are moves, not topics
+  "page pages panel panels tab tabs screen section window feed feeds widget list view mode tamil english language " +
   // ordinals: "the second story" is the list's, not a topic
   "first second third fourth fifth sixth seventh eighth ninth tenth last 1st 2nd 3rd 4th 5th mudhal mudhalavadhu mudhalaavadhu rendavadhu rendaavadhu randavadhu " +
   "moonavadhu moonaavadhu munavadhu naalavadhu anjavadhu kadaisi kadasi mutal irantavatu rentavatu munravatu kataici katasi " +
@@ -61,6 +64,8 @@ const ASK_TA = /(?:பற்றி|குறித்து)\s*(?:ஏதாவ�
 const ASK_TG = /\b(?:pathi|patthi|paththi)\s+(?:enna\s+)?(?:news|seithi|seidhi)\b|\b(?:news|seithi|seidhi)\s+(?:la|le|il)\s+(?:enna|edhavadhu)\b|\b(?:news|seithi)\s+(?:irukka|irukkaa|iruka|undaa|vandhirukka)\b/i;
 /** the console's own records: a case, a complaint, a reading is never a story */
 const CONSOLE = /\b(?:cases?|complaints?|grievances?|petitions?|incidents?|tickets?|readings?|rainfall|reservoirs?|lakes?|aqi|officers?|departments? (?:performance|backlog)|zones?|wards?|taluks?|drafts?|tray)\b|புகார்|சம்பவ|மனு|மண்டல/iu;
+/** a report of the console's own (an officer's, an action-taken, a weekly one, the rainfall or the zone's): not the press (v7's newsask OWN_REPORT, the review 18 Nov) */
+const OWN_REPORT = /\b(?:officer'?s?|action[- ]taken|atr|status|progress|weekly|monthly|daily|quarterly|annual|inspection|field|audit|my|our|department'?s?|dept|zone|ward|sla|incident|police|fir|rainfall|rain|situation|briefing|brief|summary|performance|collector'?s?) reports?\b/i;
 /** a forecast or a warning (v6's look-up lane answers those from the Met office and NDMA) */
 const FORECAST = /\b(?:will it rain|going to rain|forecast|nowcast|weather (?:warning|alert|forecast|report|update|bulletin)|red alert|orange alert|yellow alert)\b|வானிலை|முன்னறிவிப்பு/iu;
 /** a negation: "don't open the news" */
@@ -79,14 +84,15 @@ export const OUTLET_NAMES: [RegExp, string][] = [
 ];
 export const outletIn = (text: string): string | null => OUTLET_NAMES.find(([re]) => re.test(text))?.[1] ?? null;
 
-/** Tamil-script words that are the request's own (news nouns, verbs, references, question words), whatever their endings */
-const TA_OWN = /^(?:செய்தி|சேதி|கட்டுரை|அறிக்கை|திற|படி|படிங்க|சொல்|காட்டு|காமி|விளக்கு|பற்றி|பத்தி|குறித்து|என்ன|இருக்|வந்திருக்|அந்த|இந்த|ஏதாவது|போடு|தயவு|கொஞ்சம்|முதல்|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)/u;
+/** Tamil-script words that are the request's own (news nouns, verbs, references, question words), as whole words with their endings: முதல்வர் (the
+ * CM), இந்திய and காட்டுப்பள்ளி are topics, not "first", "this" and "show" (the review, 18 Nov) */
+const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்)?|திற(?:ங்க|ங்கள்|ந்து|க்கவும்|க்க)?|படி(?:ங்க|யுங்கள்|யுங்க|க்கவும்|த்து)?|சொல்(?:லு|லுங்க|லுங்கள்|லவும்)?|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பத்தி|குறித்து|என்ன|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|ஏதாவது|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
 /** Tanglish news words with their endings ("seithiya", "seidhila") */
 const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)/;
 
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  let t = text.split(/\s+/).filter((w) => !TA_OWN.test(w.replace(/^[^஀-௿]+/u, ""))).join(" ");
+  let t = text.split(/\s+/).filter((w) => !TA_OWN.test(w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""))).join(" ");
   if (outlet) for (const [re] of OUTLET_NAMES.filter(([, n]) => n === outlet)) t = t.replace(re, " ");
   return tokensOf(t).filter((w) => !STOP.has(w) && !TG_NEWS.test(w) && !/^\d+$/.test(w) && w.length >= 2 && !STOP.has(w.replace(/(?:a|ah|ai|ae|e|il|la|le)$/, "")));
 }
@@ -100,10 +106,12 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   if (!text || text.length > 400 || NEGATED.test(text)) return null;
   const outlet = outletIn(text);
   const consoleThing = CONSOLE.test(text) && !NEWS_NOUN.test(text);
-  if (consoleThing) return null;
+  if (consoleThing || OWN_REPORT.test(text)) return null;
   if (FORECAST.test(text) && !NEWS_NOUN.test(text)) return null;
   const newsy = NEWS_NOUN.test(text) || !!outlet;
-  const asks = ASK_EN.test(text) || ASK_TA.test(text) || ASK_TG.test(text) || /\bwhat(?:'s| is| are) the (?:papers|news) saying\b/i.test(text);
+  // a news question names the news ("any NEWS on the cyclone", "what are the PAPERS saying"): "anything urgent?", "latest numbers for Adyar?",
+  // "what happened to the drain work?" are the console's (the review, 18 Nov)
+  const asks = newsy && (ASK_EN.test(text) || ASK_TA.test(text) || ASK_TG.test(text) || /\bwhat(?:'s| is| are) the (?:papers|news) saying\b/i.test(text));
   // "the Nungambakkam subway one", "the one about ...", and "open that one, that's the Supreme Court order" (the owner's words, 18 Nov)
   const theOne = /\b(?:the|that|this|andha|antha)\s+[\p{L}\p{M}\s.'’-]{2,60}?\s+one\b|\bone about\b|\b(?:that|this) one\b/iu.test(text) && o.onScreen;
   if (!newsy && !theOne && !asks) return null;
@@ -121,21 +129,58 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
 
 // ---- ranking
 
-interface Doc { item: StoryItem; toks: string[]; keys: string[]; outlets: string[] }
+interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null }[]>; outlets: string[]; latin: boolean }
+/** a story's words, keyed once (and kept for the next request: the same stored stories come back) */
+const docMemo = new Map<string, Doc>();
 const docOf = (x: StoryItem): Doc => {
-  const toks = [...new Set([...tokensOf(`${x.title} ${x.titleEn ?? ""} ${x.place ?? ""}`)])].filter((w) => w.length >= 2);
-  return { item: x, toks, keys: toks.map(looseKey), outlets: (x.outlets ?? []).map((n) => n.toLowerCase()) };
+  const memoKey = `${x.id}|${x.title}|${x.titleEn ?? ""}|${x.place ?? ""}`;
+  const hit = docMemo.get(memoKey);
+  if (hit) return { ...hit, item: x };
+  const toks = [...new Set(tokensOf(`${x.title} ${x.titleEn ?? ""} ${x.place ?? ""}`))].filter((w) => w.length >= 2);
+  const keys = new Set(toks.map(looseKey).filter(Boolean));
+  const byFirst = new Map<string, { k: string; en: string | null }[]>();
+  const seen = new Set<string>();
+  for (const w of toks) {
+    const k = looseKey(w);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    const e = { k, en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null };
+    const l = byFirst.get(k[0]); if (l) l.push(e); else byFirst.set(k[0], [e]);
+  }
+  const d: Doc = { item: x, keys, byFirst, outlets: (x.outlets ?? []).map((n) => n.toLowerCase()), latin: !/[஀-௿]/u.test(x.title) };
+  if (docMemo.size > 20_000) docMemo.clear();
+  docMemo.set(memoKey, d);
+  return d;
 };
-/** how well one topic word is in one story: its best word, 0 below 0.8 */
-const simIn = (q: string, d: Doc): number => {
-  const qk = looseKey(q);
-  if (d.keys.includes(qk)) return 1;
-  const says = SAYS_FOR[q];
-  if (says && says.every((w) => d.keys.includes(looseKey(w)))) return 1;
+
+/** one topic word, worked out once: its key, its stems' keys, its English stem */
+interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null }
+const qOf = (w: string): QWord => ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null });
+
+/** a long name cut short by the ears ("Palikana" for Pallikaranai): the same first six letters or more, most of the shorter word */
+const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
+
+/** how well one topic word is in one story: its best word, 0 below 0.8 (the memo holds each word pair's score across the stories) */
+function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
+  if (d.keys.has(q.k)) return 1;
+  if (q.says && q.says.every((k) => d.keys.has(k))) return 1;
   let best = 0;
-  for (const t of d.toks) { const s = tokenSim(q, t); if (s > best) best = s; if (best >= 1) break; }
+  for (const { k: tk, en: ten } of d.byFirst.get(q.k[0]) ?? []) {
+    const mk = `${q.k}|${tk}`;
+    let s = memo.get(mk);
+    if (s === undefined) {
+      s = keySim(q.k, tk);
+      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk) * 0.98);
+      if (s < 0.8 && q.en && ten && q.en === ten) s = 0.92;
+      if (s < 0.8 && q.k.length >= 4 && tk.length >= 4 && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
+      if (s < 0.8) { const h = sharedHead(q.k, tk); if (h >= 6 && h >= 0.6 * Math.min(q.k.length, tk.length)) s = 0.85; }
+      memo.set(mk, s);
+    }
+    if (s > best) best = s;
+    if (best >= 1) break;
+  }
   return best >= 0.8 ? best : 0;
-};
+}
 
 /** the zones and places a request names (research 10, rec 4: a place the story does not mention vetoes it) */
 export interface Places { names: string[] }
@@ -145,14 +190,17 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
   if (!items.length || (!req.words.length && !req.outlet)) return [];
   const docs = items.map(docOf);
   const n = docs.length;
-  // the request's place words: a topic word that names a district place ("Palikan" -> Pallikaranai)
-  const placeKeys = new Set((o.places ?? []).map((p) => looseKey(fold(p).replace(/\s+/g, ""))));
-  const isPlace = (q: string) => [...placeKeys].some((pk) => pk.length >= 4 && (looseKey(q) === pk || tokenSim(q, pk) >= 0.88));
-  const sims = req.words.map((q) => docs.map((d) => simIn(q, d)));
+  const qs = req.words.map(qOf);
+  // the request's place words, decided once a word: a topic word that names a district place ("Palikan" -> Pallikaranai)
+  const placeKeys = [...new Set((o.places ?? []).map((p) => looseKey(fold(p).replace(/\s+/g, ""))).filter((k) => k.length >= 4))];
+  const placeOf = qs.map((q) => q.k.length >= 4 && placeKeys.some((pk) => pk[0] === q.k[0] && (pk === q.k || keySim(q.k, pk) >= 0.88 || q.stems.some((st) => st === pk))));
+  const memo = new Map<string, number>();
+  const sims = qs.map((q) => docs.map((d) => simIn(q, d, memo)));
   const idf = sims.map((row) => { const df = row.filter((s) => s > 0).length; return Math.log(1 + (n - df + 0.5) / (df + 0.5)); });
   const maxIdf = Math.max(...idf, 0.0001);
-  // a word no story holds (a slip of the ears, or something the news does not have) counts at half weight
-  const weight = idf.map((v, i) => (sims[i].some((s) => s > 0) ? v : 0.5 * maxIdf));
+  // a word no story holds counts at half weight (something the news does not have: "Kerala floods"); a short fragment that is no word at all
+  // ("Imash" in "Palikana Imash", the ears' "Pallikaranai marsh", the real run 18 Nov) at a fifth
+  const weight = idf.map((v, i) => (sims[i].some((s) => s > 0) ? v : (qs[i].w.length <= 5 && /^[a-z]+$/.test(qs[i].w) && !isEnglishWord(qs[i].w) ? 0.2 : 0.5) * maxIdf));
   const total = weight.reduce((a, b) => a + b, 0) || 1;
   const outletKey = req.outlet ? req.outlet.toLowerCase().replace(/^the /, "") : null;
   return docs.map((d, j) => {
@@ -166,7 +214,7 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
     }
     if (d.item.onScreen != null) score += 0.1;
     // a place the request names that the story does not mention: never this story
-    if (req.words.some((q, i) => isPlace(q) && sims[i][j] === 0)) score = Math.min(score, 0.3);
+    if (placeOf.some((p, i) => p && sims[i][j] === 0)) score = Math.min(score, 0.3);
     return { item: d.item, score, hits };
   }).sort((a, b) => b.score - a.score || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")));
 }
@@ -191,7 +239,7 @@ export interface Picked { pick: StoryItem | null; score: number; other: StoryIte
  * story within the margin is kept as `other` (said: "say 'the other one' for ..."), never a question back for a read: the Collector corrects a
  * named pick in two words (research 10, recs 5-7). `stories`: the distinct stories above the floor, best first (for a news question).
  */
-export function pickStory(ranked: Ranked[]): Picked {
+export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null): Picked {
   const good = ranked.filter((r) => r.score >= FLOOR && r.hits > 0);
   if (!good.length) return { pick: null, score: ranked[0]?.score ?? 0, other: null, close: false, stories: [] };
   const groups: Ranked[][] = [];
@@ -199,7 +247,10 @@ export function pickStory(ranked: Ranked[]): Picked {
     const g = groups.find((x) => sameStory(x[0].item, r.item));
     if (g) g.push(r); else groups.push([r]);
   }
-  const lead = (g: Ranked[]) => [...g].sort((a, b) => (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")))[0];
+  // within one event: the report in the request's own language (an English request is not read a Tamil headline: the real run, 18 Nov), then
+  // the one on screen, then the newest
+  const inLang = (x: StoryItem) => (lang == null ? 0 : (/[஀-௿]/u.test(x.title) ? "ta" : "en") === lang ? 0 : 1);
+  const lead = (g: Ranked[]) => [...g].sort((a, b) => inLang(a.item) - inLang(b.item) || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")))[0];
   const first = lead(groups[0]);
   const second = groups[1] ? lead(groups[1]) : null;
   const close = !!second && groups[0][0].score - groups[1][0].score < MARGIN;

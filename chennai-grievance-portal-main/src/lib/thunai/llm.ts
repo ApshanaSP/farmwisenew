@@ -16,6 +16,7 @@ import type { z } from "zod";
 import { ledger, type Lane, type Ledger, type Org } from "./ledger";
 import { telemetry } from "./telemetry";
 import { deepModel } from "./v8/deep8";
+import { understandV8 } from "./v8/flag8";
 
 export const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 export const LITE_MODEL = "gemini-3.5-flash-lite";
@@ -51,7 +52,7 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
   // may lead: any other Claude model JARVIS_CLAUDE_MODEL names (Opus: p50 3.9 s here, over the lane) is a rung after the Groq ladder,
   // whatever the lead says (review planner-quota-6, brief 3.1: Opus off the first rung in every case, selectable by env)
   // v8: Sonnet 5.5 may lead too, when the owner names it (the finals: JARVIS_CLAUDE_MODEL=claude-sonnet-5-5); Opus still never does
-  const haikuLeads = plannerLead() === "haiku" && /haiku|sonnet/i.test(claudeModel());
+  const haikuLeads = plannerLead() === "haiku" && (understandV8() ? /haiku|sonnet/i : /haiku/i).test(claudeModel());
   const base = haikuLeads ? [...first, ...groq, ...rest] : [...groq, ...first, ...rest];
   // v8 (deep8.ts): a hard or unclear turn asks the deep model first, then the usual ladder
   const dm = deep && claude ? deepModel() : null;

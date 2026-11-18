@@ -31,6 +31,10 @@ const EXPLAIN = /\b(?:tell me about|tell me more about|explain|what about|brief 
 const WHERE = /\bthe\s+([\p{L}\p{M}\s.'’-]{2,40}?)\s+one\b|\bthe one (?:in|at|from|about|near|on)\s+(?:the\s+)?([\p{L}\p{M}\s.'’-]{2,40}?)[.?!]*$|\b(?:andha|antha|that)\s+([\p{L}\p{M}\s.'’-]{2,30}?)\s+(?:case|one|complaint|incident)\b/iu;
 /** a new request's own words: a period, "cases in", a count: not a reference */
 const NEW_REQUEST = /\b(?:cases|complaints|incidents) (?:in|at|from|of)\b|\b(?:this|last|next) (?:week|month|year|quarter)\b|\btoday\b|\byesterday\b/i;
+/** a count, not a position: "the first two", "show the first five", "read the first three" (v7's list commands: the review, 18 Nov) */
+const COUNT = /\b(?:first|last|top)\s+(?:two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\b|\b(?:mudhal|kadaisi)\s+(?:rendu|moonu|naalu|anju)\b|(?:முதல்|கடைசி)\s*(?:இரண்டு|மூன்று|நான்கு|ஐந்து)/iu;
+/** the thing counted is not a case on the list ("the second chart", "the third column") */
+const NOT_A_CASE = /\b(?:chart|graph|column|page|row|table|map|tab|panel|story|news|article|headline|report|zone|ward|department)s?\b/i;
 
 export interface RowRef { id: string; title: string; place?: string | null; zoneName?: string | null; deptName?: string | null }
 
@@ -38,17 +42,19 @@ export interface RowRef { id: string; title: string; place?: string | null; zone
 export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain"; n: number } | null {
   if (!rows.length) return null;
   const t = text.trim();
-  if (NEW_REQUEST.test(t)) return null;
+  if (NEW_REQUEST.test(t) || COUNT.test(t) || NOT_A_CASE.test(t)) return null;
   const op: "open" | "explain" = EXPLAIN.test(t) && !/\bopen\b|திற|thira/iu.test(t) ? "explain" : "open";
   const verb = OPEN.test(t) || EXPLAIN.test(t);
+  // a reference needs a verb that opens or tells ("Is the Kasimedu one done?" asks about it: the planner's)
+  if (!verb) return null;
   const n = ordinalOf(t);
-  if (n != null && verb) {
+  if (n != null) {
     const k = n === -1 ? rows.length : n;
     return k >= 1 && k <= rows.length ? { op, n: k } : null;
   }
   const m = WHERE.exec(t);
   const what = (m?.[1] ?? m?.[2] ?? m?.[3] ?? "").trim();
-  if (!what || !verb && !m) return null;
+  if (!what) return null;
   const words = topicWords(what, null).filter((w) => !/^(?:case|cases|one|complaint|incident|issue|problem)$/.test(w));
   if (!words.length) return null;
   const items = rows.map((r, i) => ({ id: r.id, title: `${r.title} ${r.place ?? ""} ${r.zoneName ?? ""} ${r.deptName ?? ""}`, onScreen: i + 1 }));
@@ -58,14 +64,17 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
   return { op, n: rows.findIndex((r) => r.id === pick.pick!.id) + 1 };
 }
 
-const NEWS_NOUN = /\b(?:news|story|stories|article|report|headline|piece|one|seithi|seidhi)\b|செய்தி|சேதி/iu;
+/** an ordinal said of a story: the ordinal right before a news word ("the third news", "rendavadhu news", "இரண்டாவது செய்தி"). "The first one" over a
+ * news list stays the Stage's headline reading (the 17 Nov fix); "the news from last week" and "the story about the second bridge" name no position */
+const ORD_NEWS = /\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|1st|2nd|3rd|4th|5th|mudhal|mudhalavadhu|rendavadhu|rendaavadhu|randavadhu|moonavadhu|moonaavadhu|naalavadhu|anjavadhu|kadaisi)\s+(?:news|story|article|report|headline|piece|seithi|seidhi)\b|(?:முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|மூணாவது|நான்காவது|ஐந்தாவது|கடைசி)\s*(?:செய்தி|சேதி|கட்டுரை)/iu;
 
 /** The story on the screen a sentence names by its position, or null. */
 export function newsOrdinal8(text: string, items: { id: string }[]): string | null {
   if (!items.length) return null;
   const t = text.trim();
-  if (!NEWS_NOUN.test(t) || !(OPEN.test(t) || EXPLAIN.test(t))) return null;
-  const n = ordinalOf(t);
+  const at = ORD_NEWS.exec(t);
+  if (!at || !(OPEN.test(t) || EXPLAIN.test(t))) return null;
+  const n = ordinalOf(at[0]);
   if (n == null) return null;
   const k = n === -1 ? items.length : n;
   return items[k - 1]?.id ?? null;

@@ -244,8 +244,9 @@ export const SEV_NOUN = new Set(["priority", "severity", "risk", "level", "urgen
  * writes them.
  */
 export const STT_NAMES: { en: string[]; ta: string[] } = {
-  en: [...ZONE_NAMES, "Velachery", "Mylapore", "Chembarambakkam", "Puzhal", "Poondi", "GCC", "CMWSSB", "TNEB", "TANGEDCO", "IMD", "AQI", "storm water drain", "waterlogging", "dengue"],
-  ta: [...Object.keys(ZONES).map((n) => ZONE_TA_NAME[Number(n)]), "வேளச்சேரி", "மயிலாப்பூர்", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "மழைநீர் வடிகால்", "குடிநீர் வாரியம்", "வெள்ளம்", "மழை", "புகார்", "GCC", "TNEB"]
+  // v8: localities the news names most (the owner's "Palikan" was Pallikaranai; Whisper heard it as "Polygon" and "Palikana" on the real run, 18 Nov)
+  en: [...ZONE_NAMES, "Velachery", "Mylapore", "Pallikaranai", "Chembarambakkam", "Puzhal", "Poondi", "Kasimedu", "Guindy", "Tambaram", "GCC", "CMWSSB", "TNEB", "TANGEDCO", "IMD", "AQI", "storm water drain", "waterlogging", "dengue"],
+  ta: [...Object.keys(ZONES).map((n) => ZONE_TA_NAME[Number(n)]), "வேளச்சேரி", "மயிலாப்பூர்", "பள்ளிக்கரணை", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "காசிமேடு", "மழைநீர் வடிகால்", "குடிநீர் வாரியம்", "வெள்ளம்", "மழை", "புகார்", "GCC", "TNEB"]
 };
 
 /** A place or department name in English letters, in Tamil script when the lexicon knows it (zones, reservoirs, departments); else null. */

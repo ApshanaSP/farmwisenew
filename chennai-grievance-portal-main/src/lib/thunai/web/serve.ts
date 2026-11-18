@@ -29,7 +29,9 @@ export const NewsBody = z.union([
   // v8: a story asked for by its topic, or a news question (the owner's examples 1 and 2): the sentence, its language, and the stories on the
   // Collector's screen in order (their ids and titles as shown); the server finds it among them and the dashboard's stored news (v8/newsfind.ts)
   z.object({ find: z.object({ q: z.string().trim().min(2).max(400), lang: z.enum(["en", "ta"]),
-    screen: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), title: z.string().max(400).nullable().optional(), source: z.string().max(300).nullable().optional() })).max(250).optional() }).strict() }).strict()
+    screen: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), title: z.string().max(400).nullable().optional(), source: z.string().max(300).nullable().optional() })).max(250).optional(),
+    // the story already read, left out of a search for more on it
+    exclude: z.array(z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/)).max(5).optional() }).strict() }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
 

@@ -90,7 +90,10 @@ const planRiskA = (steps: Step[]) => planRisk(steps) === "A";
 export interface LastFound { id: string; title?: string | null; other: { id: string } | null }
 const STORY_NOUN = /\b(?:story|article|piece|news report|news item|headline)\b/i;
 /** "what else is in the news about it", "anything more on that", "what are the other papers saying": the story found last, searched again */
-const MORE_ON_IT = /\b(?:what else|anything else|anything more|more (?:on|about) (?:it|this|that)|other (?:papers|reports|outlets|stories|news)|what are (?:the )?other)\b|\b(?:vera enna|innum enna|vera ethavadhu)\b|வேற என்ன|இன்னும் என்ன|மற்ற (?:பத்திரிகை|செய்தி)/iu;
+// (it must point at the story: "anything else?" or "what else is pending in Teynampet?" is a new request: the review, 18 Nov)
+const MORE_ON_IT = /\bwhat else (?:is|are) (?:there )?(?:in the )?(?:news|papers)\b|\b(?:anything|something) (?:else|more) (?:in the news|in the papers|on (?:it|this|that))\b|\bmore (?:on|about) (?:it|this|that|this story|that story)\b|\bother (?:papers|reports|outlets)\b|\bwhat are (?:the )?other (?:papers|outlets|reports)\b|\b(?:idha|adha|indha news|andha news) pathi (?:vera|innum) enna\b|இதைப் பற்றி (?:வேற|இன்னும்) என்ன|மற்ற (?:பத்திரிகை|ஊடக)/iu;
+/** the found story's own words for a search again, its negations left out (a title with "never" or "stop" is no "don't") */
+const searchWords = (title: string) => title.replace(/\b(?:don'?t|dont|do not|never|no need|stop)\b/gi, " ").replace(/வேண்டாம்|வேணாம்/gu, " ").replace(/\s+/g, " ").trim();
 const OTHER_ONE = /^(?:no,? |nope,? )?(?:the )?other (?:one|story|news|report|article)\b|^(?:mattha|matha|matra|innoru) (?:news|onnu|seithi)\b|^மற்றொன்று|^மற்றச் செய்தி|^இன்னொன்று/iu;
 
 /** v8's news lane: a story by its topic, a news question, or "the other one" after a found story. Null: not this lane's. */
@@ -102,7 +105,8 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   const briefOnStory = /\bbrief\b/i.test(t) && STORY_NOUN.test(t);
   if ((im && !(im.intent === "brief" && briefOnStory)) || (missionIntent(said, c.world) && !briefOnStory)) return null;
   if (c.lastFound?.other && OTHER_ONE.test(t)) return { kind: "read", body: { id: c.lastFound.other.id } };
-  if (c.lastFound?.title && MORE_ON_IT.test(t)) return { kind: "find", body: { find: { q: `news on ${c.lastFound.title}`.slice(0, 400), lang: c.lang, screen: [] } } };
+  // more on the story found last: the other reports of it, the one already read left out
+  if (c.lastFound?.title && MORE_ON_IT.test(t)) return { kind: "find", body: { find: { q: `news on ${searchWords(c.lastFound.title)}`.slice(0, 400), lang: c.lang, screen: [], exclude: [c.lastFound.id] } } };
   const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));
   // a story on the screen by its position, in any of the three languages ("rendavadhu news ah padinga", "open the third news")
   const at = newsOrdinal8(t, items);
