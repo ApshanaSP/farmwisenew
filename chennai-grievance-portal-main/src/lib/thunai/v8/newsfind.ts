@@ -7,6 +7,7 @@
  * question the dashboard has nothing on) are read by v7's gap path, by their fixed addresses, with no query built from the Collector's words.
  */
 import intelPool from "@/lib/collector/db";
+import { syncEpoch } from "@/lib/collector/epoch";
 import { asOf } from "@/lib/collector/intel";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 import type { RowDataPacket } from "mysql2";
@@ -59,13 +60,16 @@ export interface Found { req: NewsReq; picked: Picked }
 export const placesOf = (w: Pick<World, "zones" | "places">): string[] => [...new Set([...w.zones.map((z) => z.name), ...w.places.flatMap((p) => [p.name, ...(p.aliases ?? [])])])].filter((n) => n && n.length >= 4);
 
 /** The dashboard's stored news of the last `days` days, newest first: news outlets' reports only (at most 3,000). */
-let storeCache: { at: number; asOf: string; days: number; rows: StoryItem[] } | null = null;
+// (a decision or a store write empties it, as every timed cache over the store: the data epoch, RC-35; the QA gate, 19 Nov)
+const storeCache = { v: null as { at: number; asOf: string; days: number; rows: StoryItem[] } | null, clear() { this.v = null; } };
 export async function storeStories(days = 7): Promise<StoryItem[]> {
   const now = await asOf();
+  syncEpoch(storeCache);
   // the same week's stories for a minute (the store changes on its own schedule; a request a second must not re-read 3,000 rows: the review, 18 Nov)
-  if (storeCache && storeCache.asOf === now && storeCache.days === days && Date.now() - storeCache.at < 60_000) return storeCache.rows;
+  const c = storeCache.v;
+  if (c && c.asOf === now && c.days === days && Date.now() - c.at < 60_000) return c.rows;
   const rows = await readStore(now, days);
-  storeCache = { at: Date.now(), asOf: now, days, rows };
+  storeCache.v = { at: Date.now(), asOf: now, days, rows };
   return rows;
 }
 async function readStore(now: string, days: number): Promise<StoryItem[]> {
