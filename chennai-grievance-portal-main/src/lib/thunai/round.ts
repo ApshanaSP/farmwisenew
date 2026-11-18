@@ -56,6 +56,8 @@ import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
 import { understandV8 } from "./v8/flag8";
 import { placeWord, replyLang8, wordsLang } from "./v8/lang8";
+import { deepModel, deepTurn, escalate } from "./v8/deep8";
+import { claudeConfigured } from "@/lib/ai/claude";
 import { timeOf } from "./brief6";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
@@ -984,13 +986,23 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   const prompt = b.round === 0 ? firstPrompt(b, world, lang, mem, system.length, { reg, bundle, marker }) : laterPrompt(b, t, b.round, lang);
   // the likely reads start now, while the planner thinks
   const spec = b.round === 0 && deps.speculate ? speculate(b, world, rawHands, state, lang, stage, signal) : null;
-  const ask = (s: string, sch: PlanSchema) => timed(lang === "ta" ? "யோசிக்கிறேன்" : "Thinking", () => callLlm({ name: `jarvis_${b.round === 0 ? bundle : "later"}${b.round}`, system: s, prompt, schema: sch, lenient: AgentPlanLenient as never, maxOutputTokens: 500, user, lane: "planner", until: t.until, signal }, deps.llm));
+  // v8 (deep8.ts): a hard or unclear turn asks the deep model (Sonnet 5.5) first; the rest the fast ladder
+  let deep = b.round === 0 && deepTurn(b.text, { analysis: speed === "analysis", context: !!stage || (b.turns?.length ?? 0) > 0 });
+  const ask = (s: string, sch: PlanSchema) => timed(lang === "ta" ? "யோசிக்கிறேன்" : "Thinking", () => callLlm({ name: `jarvis_${b.round === 0 ? bundle : "later"}${b.round}`, system: s, prompt, schema: sch, lenient: AgentPlanLenient as never, maxOutputTokens: 500, user, lane: "planner", until: t.until, signal, deep }, deps.llm));
   stagesAt.plannerSent ??= Date.now();
   let r = await ask(system, schema);
   stagesAt.plannerBack ??= Date.now();
   if (!r) return out(none(lang, t0, "no-model"), "no-model");
   t.tokens += r.tokens; t.calls++; t.model = r.model;
   let plan = toPlan(r.object);
+  // v8: the fast plan was no answer (a question back, "other", nothing usable): once more with the deep model, when there is time for it
+  // (only where the deep model can answer: the owner's key works, and no test's own model stands in for the ladder)
+  const deepOk = !!deepModel() && (deps.llm?.claudeOk ? deps.llm.claudeOk() : !deps.llm?.generate && claudeConfigured());
+  if (b.round === 0 && !deep && deepOk && escalate(plan.kind as string, b.text) && now() < t.until - 5000) {
+    deep = true;
+    const again = await ask(system, schema);
+    if (again) { r = again; t.tokens += again.tokens; t.calls++; t.model = again.model; plan = toPlan(again.object); }
+  }
   // the right tool was not in the bundle: one wider call, if there is time and budget
   if ((plan.kind as string) === "other" && b.round === 0 && now() < t.until - 1500) {
     telemetry("bundle_miss", { lane: bundle, turn: b.turnId });

@@ -15,6 +15,7 @@ import { generateJson, schemaText, type JsonCall, type JsonResult, type Provider
 import type { z } from "zod";
 import { ledger, type Lane, type Ledger, type Org } from "./ledger";
 import { telemetry } from "./telemetry";
+import { deepModel } from "./v8/deep8";
 
 export const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 export const LITE_MODEL = "gemini-3.5-flash-lite";
@@ -34,7 +35,7 @@ export const plannerLead = (): "haiku" | "groq" => ((process.env.JARVIS_PLANNER_
 export interface Rung { provider: ProviderName; model: string }
 
 /** The rungs in order: the Groq models with the most budget left first; those out of budget are not rungs at all. */
-export function ladder(need: number, l: Ledger = ledger(), bedrock = false, claude = false): Rung[] {
+export function ladder(need: number, l: Ledger = ledger(), bedrock = false, claude = false, deep = false): Rung[] {
   // qwen first while the minute has room for this call and a margin (fastest, and on the held-out rows the most often right), else by what is left of the minute
   const roomy = (x: { model: string; r: { left: { tpm: number } } }) => x.model === GROQ_MODELS[0] && x.r.left.tpm >= need * 1.5;
   const groq = GROQ_MODELS.map((model) => ({ model, r: l.room("groq", model, { tokens: need }) })).filter((x) => x.r.ok)
@@ -49,8 +50,13 @@ export function ladder(need: number, l: Ledger = ledger(), bedrock = false, clau
   // v5 A6: Haiku leads by default (the owner's plan at deploy); JARVIS_PLANNER_LEAD=groq puts it after the Groq ladder. Only a Haiku
   // may lead: any other Claude model JARVIS_CLAUDE_MODEL names (Opus: p50 3.9 s here, over the lane) is a rung after the Groq ladder,
   // whatever the lead says (review planner-quota-6, brief 3.1: Opus off the first rung in every case, selectable by env)
-  const haikuLeads = plannerLead() === "haiku" && /haiku/i.test(claudeModel());
-  return haikuLeads ? [...first, ...groq, ...rest] : [...groq, ...first, ...rest];
+  // v8: Sonnet 5.5 may lead too, when the owner names it (the finals: JARVIS_CLAUDE_MODEL=claude-sonnet-5-5); Opus still never does
+  const haikuLeads = plannerLead() === "haiku" && /haiku|sonnet/i.test(claudeModel());
+  const base = haikuLeads ? [...first, ...groq, ...rest] : [...groq, ...first, ...rest];
+  // v8 (deep8.ts): a hard or unclear turn asks the deep model first, then the usual ladder
+  const dm = deep && claude ? deepModel() : null;
+  if (!dm || !l.room("anthropic", dm, { tokens: need }).ok) return base;
+  return [{ provider: "anthropic", model: dm }, ...base.filter((r) => !(r.provider === "anthropic" && r.model === dm))];
 }
 
 // ---- each rung's own record of how long it takes
@@ -113,6 +119,8 @@ export interface LlmCall<T> {
   until: number;
   signal?: AbortSignal;
   hedge?: boolean;
+  /** v8 (deep8.ts): a hard or unclear turn: the deep model (Sonnet 5.5) first, when the owner's key works */
+  deep?: boolean;
 }
 export interface LlmResult<T> { object: T; model: string; tokens: number; ms: number; hops: string[]; hedged: boolean }
 
@@ -140,7 +148,9 @@ const bedrockReady = () => !!(process.env.AWS_BEARER_TOKEN_BEDROCK || process.en
  */
 function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop: AbortSignal, raceable: boolean): Promise<JsonResult<T>> {
   const left = c.until - now();
-  const cap = rung.provider === "anthropic" ? (raceable ? left : Math.max(6000, left - RESCUE_MS)) : 6000;
+  let cap = rung.provider === "anthropic" ? (raceable ? left : Math.max(6000, left - RESCUE_MS)) : 6000;
+  // v8: the deep model gets at most JARVIS_DEEP_MS (8 s) before the next rung answers instead
+  if (c.deep && rung.provider === "anthropic" && rung.model === deepModel()) cap = Math.min(cap, deepMs());
   return g<T>({
     role: "fast", name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, temperature: 0, maxOutputTokens: c.maxOutputTokens, user: c.user,
     lane: c.lane, timeoutMs: Math.max(800, Math.min(cap, left)), abortSignal: AbortSignal.any([stop, AbortSignal.timeout(Math.max(1, left))]),
@@ -149,6 +159,8 @@ function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop:
 }
 
 type Who = "main" | "hedge";
+/** v8: how long the deep model may take on a turn before the next rung is asked (JARVIS_DEEP_MS, 3-20 s, default 8 s) */
+const deepMs = () => { const v = Number(process.env.JARVIS_DEEP_MS); return Number.isFinite(v) && v >= 3000 && v <= 20_000 ? v : 8000; };
 
 /** Up the ladder until one answers. null: nothing could, inside the deadline: the caller answers from the rules. */
 export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmResult<T> | null> {
@@ -161,7 +173,7 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
   // (review planner-quota-8, A2: on Groq the schema is about 1,000-1,750 tokens of an 8,000-a-minute budget)
   const inputGuess = Math.ceil((c.system.length + c.prompt.length + schemaText(c.schema as z.ZodTypeAny).length) / 3.5);
   // a test's own model stands alone: a key in the developer's .env does not change what it asks
-  const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))());
+  const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))(), c.deep === true);
   const hops: string[] = [];
   /** a call Jarvis stopped: its time is a lower bound, and the request still counts against the model's allowance */
   const stopped = (rung: Rung, ms: number, why: string) => {

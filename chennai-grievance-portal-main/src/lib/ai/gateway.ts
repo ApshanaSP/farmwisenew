@@ -122,7 +122,8 @@ function anthropic(): Provider | null {
       if (until > Date.now()) throw new ClaudeBusyError(Math.ceil((until - Date.now()) / 1000), "resting");
       // Claude thinks before it answers: a console step's short deadline (5 s, set for the free models) gets at least 10 s here;
       // a Jarvis turn keeps its own, and its model and effort (no role)
-      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
+      // v8: a Jarvis rung names its Claude model (the deep model on a hard turn, deep8.ts); a console step keeps its role's
+      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
         timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
         // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
         const b = billedOf(e);
