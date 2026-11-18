@@ -85,19 +85,39 @@ async function readStore(now: string, days: number): Promise<StoryItem[]> {
  * Find what a request asks for. `screen`: the stories on the Collector's screen, in order (their titles as the browser shows them). Null: the
  * sentence is not a story by its topic nor a news question.
  */
+/** the floor for a search again on the story just found */
+export const MORE_FLOOR = 0.35;
+
 export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]> }): Promise<Found | null> {
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
   const req = newsRequest(f.q, { onScreen: screen.length > 0 });
   if (!req) return null;
   const stored = await (d.stories ?? storeStories)().catch(() => [] as StoryItem[]);
   const byId = new Map(stored.map((s) => [s.id, s]));
-  // the screen's stories first (their own titles, and the store's English title when it has one), then the rest of the store
-  const onScreen: StoryItem[] = screen.map((x, i) => ({ ...(byId.get(x.id) ?? { id: x.id, title: String(x.title ?? ""), outlets: x.source ? String(x.source).split(/\s+·\s+/) : [] }),
-    ...(x.title ? { title: String(x.title) } : {}), onScreen: i + 1 }));
+  // the screen's stories first (their own titles, and the store's English title when it has one), then the rest of the store. A panel row
+  // is read by its first stored report; when that report's headline is not the one the row shows (a merged cluster: the live dev re-check,
+  // 19 Nov), the stored report whose headline it is stands in, else the row's own title alone (never another story's words)
+  const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  let byTitle: Map<string, StoryItem> | null = null;
+  const titled = (t: string): StoryItem | null => {
+    if (!byTitle) { byTitle = new Map(); for (const s of stored) for (const k of [norm(s.title), norm(s.titleEn)]) if (k && !byTitle.has(k)) byTitle.set(k, s); }
+    return byTitle.get(norm(t)) ?? null;
+  };
+  const own = (x: (typeof screen)[number]): StoryItem => {
+    const bare = { id: x.id, title: String(x.title ?? ""), outlets: x.source ? String(x.source).split(/\s+·\s+/) : [] };
+    const s = byId.get(x.id);
+    if (!x.title) return s ?? bare;
+    if (s && (norm(s.title) === norm(x.title) || norm(s.titleEn) === norm(x.title))) return { ...s, title: String(x.title) };
+    return titled(String(x.title)) ?? bare;
+  };
+  const onScreen: StoryItem[] = screen.map((x, i) => ({ ...own(x), onScreen: i + 1 }));
   const seen = new Set(onScreen.map((x) => x.id));
   // a search for more on a story leaves out the report already read (its other outlets' reports are what is wanted)
   const skip = new Set(f.exclude ?? []);
   const items = [...onScreen, ...stored.filter((s) => !seen.has(s.id))].filter((x) => !skip.has(x.id));
   // within one event, the report in the request's own language (the real run, 18 Nov: a Tamil headline was read in the English voice)
-  return { req, picked: pickStory(rankStories(req, items, { places: placesOf(d.world) }), f.lang) };
+  // "what else is in the news about it": the topic is the one just found, so another outlet's report of it that words it differently is enough (a
+  // lower floor; the place veto still holds: the live dev re-check, 19 Nov)
+  const floor = f.exclude?.length ? MORE_FLOOR : undefined;
+  return { req, picked: pickStory(rankStories(req, items, { places: placesOf(d.world) }), f.lang, floor) };
 }

@@ -20,7 +20,7 @@ import type { Lang, ScreenState, Step, World } from "../types";
 import { asksWhatToday, followAsk } from "@/components/collector/app/thunai/aide";
 import { understandV8 } from "./flag8";
 import { placeWord, replyLang8 } from "./lang8";
-import { newsRequest } from "./news8";
+import { newsRequest, outletIn, topicWords } from "./news8";
 import { newsOrdinal8, stageRef8, type RowRef } from "./refs8";
 
 export type BrowserLane =
@@ -87,7 +87,7 @@ const planRiskA = (steps: Step[]) => planRisk(steps) === "A";
 // ---- v8: the lanes in front of v7's (docs/jarvis/JARVIS_V8.md: the owner's examples 1, 2 and 4)
 
 /** the story found last and the other one offered with it ("say 'the other one'") */
-export interface LastFound { id: string; title?: string | null; other: { id: string } | null }
+export interface LastFound { id: string; title?: string | null; /** the request that found it (its topic words are searched again for "what else") */ q?: string | null; other: { id: string } | null }
 const STORY_NOUN = /\b(?:story|article|piece|news report|news item|headline)\b/i;
 /** "what else is in the news about it", "anything more on that", "what are the other papers saying": the story found last, searched again */
 // (it must point at the story: "anything else?" or "what else is pending in Teynampet?" is a new request: the review, 18 Nov)
@@ -106,7 +106,13 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   if ((im && !(im.intent === "brief" && briefOnStory)) || (missionIntent(said, c.world) && !briefOnStory)) return null;
   if (c.lastFound?.other && OTHER_ONE.test(t)) return { kind: "read", body: { id: c.lastFound.other.id } };
   // more on the story found last: the other reports of it, the one already read left out
-  if (c.lastFound?.title && MORE_ON_IT.test(t)) return { kind: "find", body: { find: { q: `news on ${searchWords(c.lastFound.title)}`.slice(0, 400), lang: c.lang, screen: [], exclude: [c.lastFound.id] } } };
+  // the Collector's own topic words from the turn that found it ("the Pallikaranai marsh"), else the found headline's: other outlets word the same
+  // event differently, and a whole headline's words score them under the floor (the live dev re-check, 19 Nov)
+  if ((c.lastFound?.title || c.lastFound?.q) && MORE_ON_IT.test(t)) {
+    const own = c.lastFound.q ? topicWords(c.lastFound.q, outletIn(c.lastFound.q)).join(" ") : "";
+    const about = own || searchWords(c.lastFound.title ?? "");
+    if (about) return { kind: "find", body: { find: { q: `news on ${about}`.slice(0, 400), lang: c.lang, screen: [], exclude: [c.lastFound.id] } } };
+  }
   const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));
   // a story on the screen by its position, in any of the three languages ("rendavadhu news ah padinga", "open the third news")
   const at = newsOrdinal8(t, items);

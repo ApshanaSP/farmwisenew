@@ -1376,7 +1376,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           const f = e as { id?: string; title?: string; outlet?: string | null; other?: { id?: string; outlet?: string | null } | null };
           if (typeof f.id === "string") {
             found = { id: f.id, other: f.other && typeof f.other.id === "string" ? { id: f.other.id, outlet: f.other.outlet ?? null } : null };
-            lastFound.current = { id: found.id, title: typeof f.title === "string" ? f.title.slice(0, 300) : null, other: found.other ? { id: found.other.id } : null };
+            lastFound.current = { id: found.id, title: typeof f.title === "string" ? f.title.slice(0, 300) : null, q: "find" in na.body ? na.body.find.q.slice(0, 400) : null, other: found.other ? { id: found.other.id } : null };
             st.outlet = f.outlet ?? st.outlet;
           }
         } else if (e.type === "said") {

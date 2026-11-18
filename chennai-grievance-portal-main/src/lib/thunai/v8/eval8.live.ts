@@ -193,7 +193,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         o.lane = "news8";
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);
-          scene.lastFound = { id: f.pick.id, title: f.pick.title, other: f.other ? { id: f.other.id } : null };
+          scene.lastFound = { id: f.pick.id, title: f.pick.title, q: bl.na.body.find.q, other: f.other ? { id: f.other.id } : null };
           if (ANSWER) { const r = await readAloud(c, { id: f.pick.id }, said, bl.lang); o.spoken = r.lines; o.facts = r.facts; }
           const doc = newsScreen({ lang: bl.lang, kind: "read", outlet: f.pick.outlet, en: ["(read)"], ta: ["(read)"], links: [{ outlet: f.pick.outlet ?? "", title: f.pick.title, url: "https://example.invalid/x", publishedAt: null }] });
           scene = { ...scene, stage: doc };

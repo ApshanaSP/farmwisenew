@@ -66,6 +66,16 @@ const ASK_TG = /\b(?:pathi|patthi|paththi)\s+(?:enna\s+)?(?:news|seithi|seidhi)\
 const CONSOLE = /\b(?:cases?|complaints?|grievances?|petitions?|incidents?|tickets?|readings?|rainfall|reservoirs?|lakes?|aqi|officers?|departments? (?:performance|backlog)|zones?|wards?|taluks?|drafts?|tray)\b|புகார்|சம்பவ|மனு|மண்டல/iu;
 /** a report of the console's own (an officer's, an action-taken, a weekly one, the rainfall or the zone's): not the press (v7's newsask OWN_REPORT, the review 18 Nov) */
 const OWN_REPORT = /\b(?:officer'?s?|action[- ]taken|atr|status|progress|weekly|monthly|daily|quarterly|annual|inspection|field|audit|my|our|department'?s?|dept|zone|ward|sla|incident|police|fir|rainfall|rain|situation|briefing|brief|summary|performance|collector'?s?) reports?\b/i;
+/** the press, in a news question's frame ("what are the papers saying", "what is the media saying") */
+const PRESS = /\b(?:papers|newspapers?|media|press)\b/i;
+const PRESS_SAYS = /\bwhat(?:'s| is| are| do| does)? (?:the )?(?:papers|newspapers?|media|press|news) (?:saying|say|reporting|report)\b/i;
+/** a news question about a topic named after it: "any update on X", "what happened at X", "anything about X" */
+const NAMED_ASK = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:any (?:update|updates|word|news)|anything(?: new)?|is there (?:any|anything)(?: new)?|what happened|what'?s (?:new|happening|the latest))\s+(?:on|about|at|to|with|in|regarding)\b/i;
+/** names that are the console's own (its officers, offices, the assistant): not a news topic */
+const NOT_A_NAME = /^(?:jarvis|collector|collectorate|dro|rdo|ae|aee|je|bdo|vao|pwd|gcc|tneb|cmwssb|corporation|commissioner|tahsildar|tamil|english|i|ok|okay|hey|hi|sir|madam)$/i;
+/** a capitalised name or an acronym after the first word that is no place and none of the console's own */
+const namedTopic = (text: string): boolean =>
+  text.replace(/['’]s\b/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean).slice(1).some((w) => /^\p{Lu}/u.test(w) && !NOT_A_NAME.test(w) && !placeWord(w));
 /** a forecast or a warning (v6's look-up lane answers those from the Met office and NDMA) */
 const FORECAST = /\b(?:will it rain|going to rain|forecast|nowcast|weather (?:warning|alert|forecast|report|update|bulletin)|red alert|orange alert|yellow alert)\b|வானிலை|முன்னறிவிப்பு/iu;
 /** a negation: "don't open the news" */
@@ -111,7 +121,10 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   const newsy = NEWS_NOUN.test(text) || !!outlet;
   // a news question names the news ("any NEWS on the cyclone", "what are the PAPERS saying"): "anything urgent?", "latest numbers for Adyar?",
   // "what happened to the drain work?" are the console's (the review, 18 Nov)
-  const asks = newsy && (ASK_EN.test(text) || ASK_TA.test(text) || ASK_TG.test(text) || /\bwhat(?:'s| is| are) the (?:papers|news) saying\b/i.test(text));
+  // ... or the press ("what are the papers saying about ..."), or a topic by its own name ("any update on the Supreme Court bench?", "what happened at
+  // the IOCL plant?": a capitalised name or an acronym that is no place, officer or office of the console's; the live dev re-check, 19 Nov)
+  const asks = (newsy || PRESS.test(text) || (NAMED_ASK.test(text) && namedTopic(text))) &&
+    (ASK_EN.test(text) || ASK_TA.test(text) || ASK_TG.test(text) || PRESS_SAYS.test(text));
   // "the Nungambakkam subway one", "the one about ...", and "open that one, that's the Supreme Court order" (the owner's words, 18 Nov)
   const theOne = /\b(?:the|that|this|andha|antha)\s+[\p{L}\p{M}\s.'’-]{2,60}?\s+one\b|\bone about\b|\b(?:that|this) one\b/iu.test(text) && o.onScreen;
   if (!newsy && !theOne && !asks) return null;
@@ -137,8 +150,10 @@ const docOf = (x: StoryItem): Doc => {
   const memoKey = `${x.id}|${x.title}|${x.titleEn ?? ""}|${x.place ?? ""}`;
   const hit = docMemo.get(memoKey);
   if (hit) return { ...hit, item: x };
-  // (at most 40 words a story: a headline is shorter; a 400-character title sent from a screen is cut)
-  const toks = [...new Set(tokensOf(`${x.title} ${x.titleEn ?? ""} ${x.place ?? ""}`))].filter((w) => w.length >= 2).slice(0, 40);
+  // (at most 40 words a headline, each headline on its own: a 400-character title sent from a screen is cut, and a long Tamil headline
+  // never pushes the English one out; the live dev re-check, 19 Nov)
+  const part = (s: string | null | undefined) => tokensOf(s ?? "").filter((w) => w.length >= 2).slice(0, 40);
+  const toks = [...new Set([...part(x.title), ...part(x.titleEn), ...part(x.place).slice(0, 8)])];
   const keys = new Set(toks.map(looseKey).filter(Boolean));
   const byFirst = new Map<string, { k: string; en: string | null }[]>();
   const seen = new Set<string>();
@@ -241,8 +256,8 @@ export interface Picked { pick: StoryItem | null; score: number; other: StoryIte
  * story within the margin is kept as `other` (said: "say 'the other one' for ..."), never a question back for a read: the Collector corrects a
  * named pick in two words (research 10, recs 5-7). `stories`: the distinct stories above the floor, best first (for a news question).
  */
-export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null): Picked {
-  const good = ranked.filter((r) => r.score >= FLOOR && r.hits > 0);
+export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null, floor = FLOOR): Picked {
+  const good = ranked.filter((r) => r.score >= floor && r.hits > 0);
   if (!good.length) return { pick: null, score: ranked[0]?.score ?? 0, other: null, close: false, stories: [] };
   const groups: Ranked[][] = [];
   for (const r of good) {
