@@ -242,11 +242,13 @@ describe("shadow: Whisper decides; Sarvam's timing and agreement only", () => {
   beforeEach(() => { vi.stubEnv("JARVIS_STT_SARVAM", "shadow"); });
   it("the answer is today's, whatever Sarvam says; Sarvam is asked once; stt_shadow has its time, language and agreement, no words", async () => {
     const base = await today(TAMIL_SPEECH);
-    const f = fake({ ...TAMIL_SPEECH, sarvam: sarvamSays(TANGLISH, "ta-IN", 120) });
+    // Sarvam answers in 2 s; Whisper's answer must come well before it. (It was 120 ms against a 110 ms bound: under the QA gate's parallel
+    // load the fake Whisper path alone took 186 ms, 19 Nov. The margin is now a second, the claim the same: Whisper does not wait for Sarvam.)
+    const f = fake({ ...TAMIL_SPEECH, sarvam: sarvamSays(TANGLISH, "ta-IN", 2000) });
     const t0 = Date.now();
     const h = await hearUtterance(wav(), { lane: "engaged", site: "en", fetcher: f.fetcher });
     // Whisper's answer does not wait for Sarvam's
-    expect(Date.now() - t0).toBeLessThan(110);
+    expect(Date.now() - t0).toBeLessThan(1000);
     expect(f.kinds()).toEqual(["en", "sarvam", "ta"]);
     expect(strip(h)).toEqual(strip(base.h));
     await shadowSettled();
