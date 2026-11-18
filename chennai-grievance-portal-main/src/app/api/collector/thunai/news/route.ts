@@ -7,6 +7,8 @@ import { NewsBody, ndjson, newsEvents, type StoredDoc } from "@/lib/thunai/web/s
 import { aideReady, answerStyle } from "@/lib/thunai/aide7";
 import { newsAide } from "@/lib/thunai/aide7/news";
 import { serverWorld } from "@/lib/thunai/world";
+import { understandV8 } from "@/lib/thunai/v8/flag8";
+import { feedLines, foundStory, type FindAsk } from "@/lib/thunai/v8/newsfind";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,6 +26,9 @@ export async function POST(req: NextRequest) {
   const parsed = NewsBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Send { id }, { incident } or { question }." }, { status: 400 });
   // v7: the aide writes the spoken brief from the article (JARVIS_ANSWER=v6, or no model configured: the code brief, as v6)
-  const aide = answerStyle() === "v7" && aideReady() ? newsAide(await serverWorld(), { user: `collector:${s.userId}`, signal: req.signal }) : undefined;
-  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}`, aide }));
+  const world = await serverWorld();
+  const aide = answerStyle() === "v7" && aideReady() ? newsAide(world, { user: `collector:${s.userId}`, signal: req.signal }) : undefined;
+  // v8: a story by its topic and a news question (the owner's examples 1 and 2); JARVIS_UNDERSTAND=v7 turns them off
+  const v8 = understandV8() ? { find: (f: FindAsk) => foundStory(f, { world }), feedLines: (f: FindAsk, words: string[]) => feedLines(f, words, { world }) } : {};
+  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}`, aide, ...v8 }));
 }

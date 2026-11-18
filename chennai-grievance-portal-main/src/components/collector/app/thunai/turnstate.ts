@@ -192,6 +192,18 @@ export function ackDue(o: { endAt: number | null; now: number; answeredAt: numbe
   if (o.now - o.endAt < ACK_AFTER_MS) return false;
   return o.answeredAt < o.endAt && o.findingAt < o.endAt;
 }
+/** v8 (the owner's example 3): the acknowledgement to say, or null: none for a sentence with no topic, never the one said last */
+export const ackToSay = (ack: string, lastSaid: string | null): string | null => (!ack.trim() || ack === lastSaid ? null : ack);
+/** v8: the long wait's line (10 s), never the same twice running and never a promise it cannot keep */
+const STILL: Record<"en" | "ta", string[]> = {
+  en: ["Still putting it together.", "This one is taking a little longer.", "Still reading the data."],
+  ta: ["இன்னும் தயார் செய்கிறேன்.", "இதற்குக் கொஞ்சம் கூடுதல் நேரம் ஆகிறது.", "இன்னும் தரவைப் படிக்கிறேன்."]
+};
+export function stillLine(lang: "en" | "ta", last: string | null): string {
+  const list = STILL[lang];
+  const at = last ? list.indexOf(last) : -1;
+  return list[(at + 1) % list.length];
+}
 
 // ---------------------------------------------------------------- captions while hearing --
 export interface Recogniser { start(): unknown; stop(): void; setLang?(lang: string): void }

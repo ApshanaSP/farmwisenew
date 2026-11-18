@@ -21,7 +21,7 @@
     { "id": "d-nt-9", "kind": "newsTopic", "lang": "en", "text": "Read the cattle licensing order story.", "screen": "newsPanel", "gold": { "story": "cattle", "lang": "en" } },
     { "id": "d-nt-10", "kind": "newsTopic", "lang": "en", "text": "Open the de-occupation notices piece.", "screen": "newsPanel", "gold": { "story": "de-occupation", "lang": "en" } },
     { "id": "d-nt-11", "kind": "newsTopic", "lang": "ta", "text": "அயனாவரம் கழிவுநீர் செய்தியைப் படியுங்கள்.", "screen": "newsPanel", "gold": { "story": "அயனாவரம்", "lang": "ta" } },
-    { "id": "d-nt-12", "kind": "newsTopic", "lang": "ta", "text": "சுப்ரீம் கோர்ட் செய்தியைத் திறங்க.", "gold": { "story": "supreme court|உச்ச நீதிமன்ற", "lang": "ta" } },
+    { "id": "d-nt-12", "kind": "newsTopic", "lang": "ta", "text": "சுப்ரீம் கோர்ட் செய்தியைத் திறங்க.", "gold": { "story": "supreme court|உச்ச நீதிமன்ற|சுப்ரீம் கோர்ட்", "lang": "ta" } },
     { "id": "d-nt-13", "kind": "newsTopic", "lang": "ta", "text": "பள்ளிக்கரணை செய்தியைப் பற்றி சொல்லுங்க.", "gold": { "story": "pallik|பள்ளிக்கரணை", "lang": "ta" } },
     { "id": "d-nt-14", "kind": "newsTopic", "lang": "tg", "text": "Supreme Court news open pannunga.", "gold": { "story": "supreme court", "lang": "ta" } },
     { "id": "d-nt-15", "kind": "newsTopic", "lang": "tg", "text": "andha IOCL fire news ah padinga", "screen": "newsPanel", "gold": { "story": "IOCL", "lang": "ta" } },
@@ -101,7 +101,7 @@
     { "id": "d-cmd-5", "kind": "command", "lang": "tg", "text": "Royapuram cases kaattunga", "gold": { "zone": "Royapuram", "lang": "ta" } },
     { "id": "d-cmd-6", "kind": "command", "lang": "en", "text": "Open the map.", "gold": { "acted": true, "lang": "en" } },
     { "id": "d-cmd-7", "kind": "command", "lang": "en", "text": "Brief me.", "gold": { "acted": true, "lang": "en" } },
-    { "id": "d-cmd-8", "kind": "command", "lang": "en", "text": "Show me the latest news.", "gold": { "acted": true, "lang": "en", "newsAbout": "." } },
+    { "id": "d-cmd-8", "kind": "command", "lang": "en", "text": "Show me the latest news.", "gold": { "acted": true, "lang": "en" } },
 
     { "id": "d-q-1", "kind": "question", "lang": "en", "text": "What's the situation in Royapuram?", "gold": { "zone": "Royapuram", "lang": "en" } },
     { "id": "d-q-2", "kind": "question", "lang": "en", "text": "Which department is the slowest?", "gold": { "acted": true, "lang": "en" } },

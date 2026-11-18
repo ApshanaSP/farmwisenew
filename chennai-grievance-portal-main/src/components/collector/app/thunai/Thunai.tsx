@@ -52,10 +52,13 @@ import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { answersV7, budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
-import { ackDelay, ackDue, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
+import { ackDelay, ackDue, ackToSay, stillLine, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
+import { understandV8 } from "@/lib/thunai/v8/flag8";
+import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
+import { newsLane8, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -311,6 +314,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     return () => window.removeEventListener("diq:studio", f);
   }, []);
   const ackText = useRef("");
+  /** v8: the acknowledgement said last (never the same one twice running) */
+  const lastAckSaid = useRef<string | null>(null);
+  /** v8: the language of the Collector's last words that had one (lang8.ts), for words with none */
+  const lastUserLang = useRef<Lang | null>(null);
+  /** v8: the story found by its topic last, and the other one offered with it ("the other one") */
+  const lastFound = useRef<LastFound | null>(null);
   const listenLangRef = useRef<Lang>("en");
   /** what was asked and answered goes to the chatbot's Jarvis tab: nothing stacks over the dashboard */
   const pushMsg = (m: Omit<JLog, "id" | "at">) => jarvisLog.add(m);
@@ -1301,7 +1310,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     traceDecided("rules");
     setBrainNow({ by: "instant", model: null, ms: 0 });
     const t0 = performance.now();
-    const doing = na.kind === "lookup" ? (lang === "ta" ? "இணையத்தில் தேடுகிறேன்" : "Looking it up on the web") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
+    const doing = na.kind === "lookup" ? (lang === "ta" ? "இணையத்தில் தேடுகிறேன்" : "Looking it up on the web")
+      : na.kind === "find" ? (lang === "ta" ? "செய்தியைத் தேடுகிறேன்" : "Finding that story") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
+    // v8: the story a find picks, and another close one to offer at the end ("say 'the other one'")
+    let found: { id: string; other: { id: string; outlet: string | null } | null } | null = null;
     hud.set({ doing }); setReply(doing); setPhase("thinking");
     const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
     const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
@@ -1328,6 +1340,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     try {
       // v7: a read carries the sentence said and its language, so the server's aide answers what was asked (a web question is its own sentence)
       const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang } } : na.body;
+      if (na.kind !== "find") lastFound.current = na.kind === "read" && "id" in na.body && lastFound.current?.other?.id === na.body.id ? { id: na.body.id, other: null } : null;
       const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sent), signal });
       if (!alive()) return;
       if (!res.ok || !res.body) st.fail = "failed";
@@ -1360,7 +1373,29 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           st.en = (a.en ?? []).map(String); st.ta = (a.ta ?? []).map(String);
           st.links = (a.sources ?? []).map((x) => ({ outlet: x.name, title: x.title, url: x.url, publishedAt: x.publishedAt }));
           draw(); sayLines(st.en, st.ta);
-        } else if (e.type === "done") jvMark("newsDone");
+        } else if (e.type === "found") {
+          // v8: the story found by its topic (read next); the other close one is remembered for "the other one"
+          const f = e as { id?: string; title?: string; outlet?: string | null; other?: { id?: string; outlet?: string | null } | null };
+          if (typeof f.id === "string") {
+            found = { id: f.id, other: f.other && typeof f.other.id === "string" ? { id: f.other.id, outlet: f.other.outlet ?? null } : null };
+            lastFound.current = { id: found.id, title: typeof f.title === "string" ? f.title.slice(0, 300) : null, other: found.other ? { id: found.other.id } : null };
+            st.outlet = f.outlet ?? st.outlet;
+          }
+        } else if (e.type === "said") {
+          // v8: nothing in the dashboard's news: what the outlets' feeds have, or that nothing was found, said as code wrote it
+          const a = e as { en?: string[]; ta?: string[]; links?: NewsLink[] };
+          st.answered = true; jvMark("newsBrief"); markAnswer();
+          st.en = (a.en ?? []).map(String); st.ta = (a.ta ?? []).map(String);
+          st.links = (a.links ?? []).filter((x) => x && typeof x.url === "string" && /^https?:\/\//.test(x.url));
+          draw(); sayLines(st.en, st.ta);
+        } else if (e.type === "done") {
+          jvMark("newsDone");
+          // v8: another story matched almost as well: offered in one line, never read uninvited
+          if (found?.other && st.answered) {
+            const o = found.other.outlet;
+            sayLines([`Another story matched too${o ? `, ${o}'s` : ""}: say "the other one" for it.`], [`இன்னொரு செய்தியும் பொருந்துகிறது${o ? ` (${o})` : ""}: அதற்கு "மற்றொன்று" என்று சொல்லுங்கள்.`]);
+          }
+        }
         else if (e.type === "error") st.fail = String((e as { why?: string }).why ?? "failed");
       }, alive);
     } catch {
@@ -1597,6 +1632,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     sourceRef.current = opts.source ?? "typed";
     // how the sentence came, for the planner (v4, defect 6): the ears' language and confidence, or typed (sure)
     const heardInfo = heardOf(sourceRef.current, opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLangRef.current), conf);
+    // v8 (the owner's example 4): the answer's language is the language of these words, never the ears' label or the console's setting;
+    // words with none ("Adyar?") take the Collector's last that had one
+    const v8 = understandV8();
+    const ulang: Lang | null = v8 ? userLang8(said, lastUserLang.current) : null;
+    if (v8 && !original) { const wl = wordsLang(said, { isName: placeWord }); if (wl) lastUserLang.current = wl; }
     forgetBookmark();
     if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
     // a new question replaces the last answer's card: earlier ones are in the chatbot's Jarvis tab; its progress line starts empty (an
@@ -1650,11 +1690,31 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts). Before the
     // Stage's own commands: over a news list "read the first one" stays the Stage's headline reading, but "read the first article" is the
     // article itself (the 17 Nov news run: the Stage took it and read the headline)
+    // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
+    // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
+    if (!original && v8) {
+      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current });
+      if (n8) {
+        const t0 = performance.now();
+        await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal);
+        decide({ kind: "answer", query: said, lang: ulang ?? "en", lane: "instant", ms: performance.now() - t0 });
+        return;
+      }
+      // a case on the list on screen by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க"): opened, or explained
+      const r8 = stageRef.current ? refLane8(said, stageRef.current) : null;
+      if (r8) {
+        const lg: Lang = ulang ?? "en";
+        setBrainNow({ by: "instant", model: null, ms: 0 }); remember(said, `on the Stage: ${r8.op} ${r8.n}`, { doc: stageRef.current });
+        if (r8.op === "explain" && await explainOnStage(r8.n, lg)) return;
+        await applyLocal({ op: "open", n: r8.n }, lg);
+        return;
+      }
+    }
     if (!original) {
       // a mission, a brief or a memory request is never the news lane's (the independent check, 17 Nov: "prepare for heavy rain tonight")
       const na = intentMarker(said) || missionIntent(said, worldRef.current) ? null : newsAsk(said, newsOnScreen(stageRef.current, buildState()), { v7: answersV7() });
       if (na) {
-        const lg: Lang = opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
+        const lg: Lang = ulang ?? opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
         const t0 = performance.now();
         await newsTurn(na, said, lg, alive, ctl.signal);
         decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
@@ -1665,7 +1725,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (stageRef.current && !original) {
       const lc = localStageCommand(said);
       if (lc) {
-        const lg: Lang = /[஀-௿]/.test(said) ? "ta" : listenLang;
+        const lg: Lang = ulang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
         if (needsName(lc.op === "pin" ? "B" : lc.op === "draft" ? "C" : "A", lg)) return;
         setBrainNow({ by: "instant", model: null, ms: 0 }); remember(said, `on the Stage: ${lc.op}`, { doc: stageRef.current });
         // pinning keeps something: one spoken yes or a tap first (level B)
@@ -1677,7 +1737,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the v4 flows, before the planner (D2 intentMarker): what Jarvis remembers (remember and forget are Level B: the name or the
     // engagement, then a yes), the brief, "what did you do today?", follow and unfollow (Level B), and a mission's plan card
     if (!original) {
-      const lg: Lang = opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
+      const lg: Lang = ulang ?? opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
       const instant = () => setBrainNow({ by: "instant", model: null, ms: 0 });
       const t0 = performance.now();
       const im = intentMarker(said);
@@ -1707,7 +1767,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     const st = buildState();
     // the ears' confidence on the scale understand() was tuned on: a clean decode reads as before, an unsure one asks first (turnstate.ts)
-    const rules = understand(said, st, worldRef.current, { speechConf: rulesConf(conf) });
+    const rules0 = understand(said, st, worldRef.current, { speechConf: rulesConf(conf) });
+    // v8: every lane answers in the language of the Collector's own words
+    const rules: Understood = ulang ? { ...rules0, lang: ulang } : rules0;
     // a question while a dataset is open in the Data Studio: the dataset answers (its engine counts the rows), as the
     // Studio's own analyst did. Going to another page ("go to trends") and the instant controls (stop, quieter) still work
     const sd = studioRef.current;
@@ -1738,24 +1800,28 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const heardAs = original ?? said;
     // "complete this data" with a list on the screen means those rows, not whatever the console's filters hold
     const openRows = (stageRef.current?.blocks ?? []).flatMap((b) => (b.kind === "CaseList" ? b.rows.map((r) => r.id) : []));
-    if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+    if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang) || (rules.lang === "ta" ? "தரவை முழுமையாக்குகிறேன்" : "Completing the data"), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
     // the rules could not settle it: the planner's turn (the trace's lane, before its call is made)
     traceDecided("planner");
     // what it is doing shows in the bar at once; it is not said aloud (a spoken "one moment" was cut off mid-word whenever the
     // answer came quickly). With the mode on the core shows the work, with it off a soft heartbeat does
     const ack = ackTemplated(said, rules.lang, worldRef.current) || ackFor(said, rules.lang);
-    ackText.current = ack;
-    setReply(ack);
-    hud.set({ doing: ack });
-    if (stageRef.current) setStageBusy(ack);
+    // v8: a sentence with no topic of its own gets no spoken filler; the bar still shows that it is working
+    const doingLine = ack || (rules.lang === "ta" ? "புரிந்துகொள்கிறேன்…" : "Working it out…");
+    ackText.current = doingLine;
+    setReply(doingLine);
+    hud.set({ doing: doingLine });
+    if (stageRef.current) setStageBusy(doingLine);
     jvMark("ack");
     if (utterEnd.current) hud.strip({ ackMs: Math.round(performance.now() - utterEnd.current) });
     // said aloud only when it is honest (turnstate.ts ackDue): a spoken sentence whose answer has not started, on screen or in the
     // voice, 1.2 s after the end of speech, and never over a voice; the earcon at the end of speech already said "heard you"
     const endAt = sourceRef.current !== "typed" ? utterEnd.current : null;
     const ackIn = outMode === "voice" ? ackDelay(endAt, performance.now()) : null;
-    if (ackIn != null) setTimeout(() => {
-      if (alive() && ackDue({ endAt, now: performance.now(), answeredAt: answerAt.current, findingAt: findingAt.current, speaking: speaking(), waiting: conductor.current?.state === "thinking" })) speakAck(ack, rules.lang);
+    // v8 (the owner's example 3): said only when it has a topic and is not the line said last
+    const toSay = ackToSay(ack, lastAckSaid.current);
+    if (ackIn != null && toSay) setTimeout(() => {
+      if (alive() && ackDue({ endAt, now: performance.now(), answeredAt: answerAt.current, findingAt: findingAt.current, speaking: speaking(), waiting: conductor.current?.state === "thinking" }) && speakAck(toSay, rules.lang)) lastAckSaid.current = toSay;
     }, ackIn);
     const stopBeat = outMode !== "quiet" && modeRef.current !== "on" ? heartbeat() : () => undefined;
     const ag = await callAgent(said, st, undefined, ctl.signal, heardInfo).finally(() => { stopBeat(); });
@@ -2411,6 +2477,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // transcribed in time is said calmly to be missed
       vocab: () => vocabOf(stageRef.current),
       wantsYes: () => !!pendingBRef.current,
+      offerPending: () => !!offerRef.current,
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
       // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service);
@@ -2554,7 +2621,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       setLongMs(performance.now() - t0);
       tick = setInterval(() => setLongMs(performance.now() - t0), 1000);
       // said once, numberless, only while the ears wait for this answer and nothing else is being said (mouth.ts speakAck refuses otherwise)
-      if (modeRef.current === "on" && outMode === "voice" && conductor.current?.state === "thinking") speakAck(listenLangRef.current === "ta" ? "இன்னும் பார்க்கிறேன்." : "Still working on it.", listenLangRef.current);
+      if (modeRef.current === "on" && outMode === "voice" && conductor.current?.state === "thinking") {
+        // v8: never the same line twice running (the owner's example 3)
+        const l = listenLangRef.current === "ta" ? "ta" : "en";
+        const s = stillLine(l, lastAckSaid.current);
+        if (speakAck(s, listenLangRef.current)) lastAckSaid.current = s;
+      }
     }, LONG_TURN_MS);
     return () => { clearTimeout(first); if (tick) clearInterval(tick); };
   }, [longBusy]); // eslint-disable-line react-hooks/exhaustive-deps

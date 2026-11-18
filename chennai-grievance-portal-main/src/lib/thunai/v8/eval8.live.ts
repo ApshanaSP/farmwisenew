@@ -28,13 +28,14 @@ import { quickScreen, districtNounIn } from "../quick";
 import { understand } from "../understand";
 import { clearCaches, planRound, RoundBody, type RoundBodyT, type RoundDeps } from "../round";
 import { stageContext, type StageDocT } from "../stage";
-import { stageDigest, stageEmpty } from "../stagelocal";
+import { stageDigest, stageEmpty, stageReducer } from "../stagelocal";
 import type { Lang, ScreenState, World } from "../types";
 import { serverWorld } from "../world";
 import { addressed } from "../addressed";
 import { labelsOf } from "../register";
-import { browserLaneV7, type BrowserCtx, type BrowserLane } from "./browser";
-import * as v8mod from "./browser";
+import { browserLaneV7, browserLaneV8, type BrowserCtx, type LastFound } from "./browser";
+import { wordsLang, placeWord } from "./lang8";
+import { feedLines, foundStory } from "./newsfind";
 import { checkSet, emptyOutcome, score8, tally8, type Item8, type Outcome8 } from "./eval8";
 
 groqOnly();
@@ -42,6 +43,8 @@ if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
 const MODE = process.env.EVAL8 ?? "";
 const SET = (process.env.SET ?? "dev") as "dev" | "holdout";
 const V = (process.env.V ?? "v8") as "v7" | "v8";
+// V=v7 in this tree: every v8 layer off by its rollback switch (the v7 commit itself is run from its own checkout for the finals)
+if (V === "v7") process.env.JARVIS_UNDERSTAND = "v7";
 const TAG = process.env.TAG ?? "dry";
 const GAP = Number(process.env.LIVE_GAP_MS ?? 20000);
 const ONLY = (process.env.ONLY ?? "").split(",").filter(Boolean);
@@ -62,7 +65,7 @@ function items(): Item8[] {
   return ONLY.length ? all.filter((x) => ONLY.includes(x.id)) : all;
 }
 
-const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as ScreenState;
+const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as unknown as ScreenState;
 type NewsRow = { id: string; source: string | null; title: string };
 interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[] }
 
@@ -76,7 +79,7 @@ async function context(): Promise<Ctx> {
 }
 
 /** where one turn leaves the browser: the screen it shows, the console's state and the turns remembered */
-interface Scene { stage: StageDocT | null; state: ScreenState; turns: NonNullable<RoundBodyT["turns"]>; lastTurnAt: number | null }
+interface Scene { stage: StageDocT | null; state: ScreenState; turns: NonNullable<RoundBodyT["turns"]>; lastTurnAt: number | null; lastLang?: Lang | null; lastFound?: LastFound | null }
 
 const titleOf = async (id: string): Promise<string | null> => {
   const d = (await newsDoc(id).catch(() => null)) as { title?: string | null; title_en?: string | null } | null;
@@ -136,7 +139,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
     const q = quickScreen(text, c.world);
     const u = q ? null : understand(text, s.state, c.world, { speechConf: 0.95 });
     const input = { text, lastTurnAt, now, rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(text, c.world) };
-    const g = v === "v8" && "addressed8" in v8mod ? (v8mod as unknown as { addressed8: typeof addressed }).addressed8(input) : addressed(input);
+    const g = addressed(input);
     if (!g.act) { o.silent = true; o.why = g.why; o.lane = "gate"; o.ms = Date.now() - t0; return { o, scene: s }; }
     said = g.text;
   }
@@ -144,9 +147,8 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   const listen: Lang = it.ui ?? "en";
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   const ctx: BrowserCtx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone } } : null, news: newsOn(c, s), state: s.state, world: c.world, listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true };
-  const pick = v === "v8" && "browserLaneV8" in v8mod ? (v8mod as unknown as { browserLaneV8: (t: string, x: BrowserCtx) => BrowserLane }).browserLaneV8 : browserLaneV7;
-  const bl = pick(said, ctx);
-  let scene: Scene = { ...s, lastTurnAt: now };
+  const bl = v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
+  let scene: Scene = { ...s, lastTurnAt: now, lastLang: wordsLang(said, { isName: placeWord }) ?? s.lastLang ?? null };
   const remember = (did: string, doc: StageDocT | null, result: string | null) => {
     scene.turns = [...s.turns, { heard: said.slice(0, 300), did: did.slice(0, 300), ...(doc ? { recipe: doc.recipe } : {}), ...(result ? { result: result.slice(0, 200) } : {}) }].slice(-4) as Scene["turns"];
   };
@@ -167,24 +169,43 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         const doc = newsScreen({ lang: bl.lang, kind: "read", outlet: null, en: ["(read)"], ta: ["(read)"], links: o.story ? [{ outlet: "", title: o.story, url: "https://example.invalid/x", publishedAt: null }] : [] });
         scene = { ...scene, stage: doc };
         remember("read the news report aloud", doc, null);
+      } else if (bl.na.kind === "find") {
+        // v8: the server's finder, on the same store; nothing found: the outlets' feeds (none in a dry run: no network)
+        const f = await foundStory(bl.na.body.find, { world: c.world });
+        o.lane = "news8";
+        if (f?.pick) {
+          o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);
+          scene.lastFound = { id: f.pick.id, title: f.pick.title, other: f.other ? { id: f.other.id } : null };
+          const doc = newsScreen({ lang: bl.lang, kind: "read", outlet: f.pick.outlet, en: ["(read)"], ta: ["(read)"], links: [{ outlet: f.pick.outlet ?? "", title: f.pick.title, url: "https://example.invalid/x", publishedAt: null }] });
+          scene = { ...scene, stage: doc };
+          remember("read the news report aloud", doc, null);
+        } else if (f) {
+          const said8 = await feedLines(bl.na.body.find, f.words, { world: c.world, ...(noModel ? { gap: { feeds: async () => [] } } : {}) });
+          o.nothing = !said8.links.length; o.stories = said8.links.map((x) => x.title); o.reply = said8[bl.lang].join(" "); o.kind = "chat";
+          remember("searched the news", null, o.reply);
+        } else { o.kind = "none"; o.reply = "not found"; }
       } else if (bl.na.kind === "which") { o.kind = "chat"; o.reply = whichLine(bl.na, bl.lang); remember("asked which report", null, o.reply); }
       else { o.kind = "lookup"; o.lane = "lookup"; remember("looked it up on the web", null, null); }
-      // v8's news lanes (a story by its topic, a news question) report what they picked
-      const x = bl as unknown as { story?: { id: string; title: string } | null; stories?: string[]; nothing?: boolean; ask?: boolean };
-      if (x.story) { o.story = (await titleOf(x.story.id)) ?? x.story.title; o.storyId = x.story.id; }
-      if (x.stories) o.stories = x.stories;
-      if (x.nothing) o.nothing = true;
-      if (x.ask) o.kind = "clarify";
     } else if (bl.lane === "stage") {
       o.kind = "stageOp";
-      if (bl.cmd.op === "open" && s.stage) { const ids = caseIdsOf(s.stage); o.caseId = bl.cmd.n ? ids[bl.cmd.n - 1] ?? null : null; }
-      remember(`on the Stage: ${bl.cmd.op}`, s.stage, null);
+      // the Stage's own reducer, as the console runs it: an open rebuilds the case screen
+      const r = s.stage ? stageReducer({ ...stageEmpty, doc: s.stage }, bl.cmd) : null;
+      const rebuild = r?.fx.find((x): x is Extract<typeof x, { fx: "rebuild" }> => x.fx === "rebuild");
+      if (rebuild) {
+        o.caseId = typeof rebuild.slots.id === "string" ? rebuild.slots.id : null;
+        o.recipe = rebuild.recipe;
+        const body = RoundBody.parse({ turnId: `o${Date.now().toString(36)}`, round: 0, text: said, state: s.state, turns: [], stage: null, stageDigest: null, direct: { recipe: rebuild.recipe, slots: rebuild.slots, lang: bl.lang }, heard: null });
+        const out = await planRound(body, c.world, c.hands, "eval:v8", { notes: [], habits: {} }).catch(() => null);
+        if (out?.result?.stage) scene = { ...scene, stage: out.result.stage };
+      } else if (r) { const sayFx = r.fx.find((x) => x.fx === "say") as { en?: string; ta?: string } | undefined; o.reply = sayFx ? (bl.lang === "ta" ? sayFx.ta : sayFx.en) ?? null : null; }
+      remember(`on the Stage: ${bl.cmd.op}`, scene.stage, null);
     } else if (bl.lane === "rules") {
       o.pages = bl.steps.flatMap((st) => (st.a === "page" ? [st.page] : []));
       for (const st of bl.steps) {
         if (st.a === "page") scene.state = { ...scene.state, page: st.page };
         if (st.a === "panel") scene.state = { ...scene.state, panel: st.panel as ScreenState["panel"] };
-        if (st.a === "zone") { scene.state = { ...scene.state, zone: st.zone }; const z = zoneName(c.world, st.zone); if (z) o.zones.push(z); }
+        const zn = (st as { zone?: unknown }).zone;
+        if (typeof zn === "number") { scene.state = { ...scene.state, zone: zn }; const z = zoneName(c.world, zn); if (z) o.zones.push(z); }
       }
       remember("did it", null, null);
     } else remember(bl.lane, null, null);

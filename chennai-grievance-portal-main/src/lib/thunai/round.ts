@@ -54,6 +54,8 @@ import { parseLine } from "./aide7/ground";
 import { openRung, type OpenRung } from "./aide7/stream";
 import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
+import { understandV8 } from "./v8/flag8";
+import { placeWord, replyLang8, wordsLang } from "./v8/lang8";
 import { timeOf } from "./brief6";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
@@ -139,7 +141,13 @@ const EN_WORDS = new Set(["the", "a", "an", "is", "are", "was", "were", "what", 
  * The reply's language. Tamil letters, or Tanglish the words show, are Tamil. Latin letters with hardly an English function word ("Ambattur
  * kuppai") read either way: the language the speech was heard in decides. A plain English sentence stays English whatever the decoder guessed.
  */
-export function replyLang(text: string, heard: HeardT | null | undefined): Lang {
+export function replyLang(text: string, heard: HeardT | null | undefined, earlier: string[] = []): Lang {
+  // v8 (the owner's example 4): the words decide, never the ears' label; words with no language take the Collector's last that had one
+  if (understandV8()) {
+    let last: Lang | null = null;
+    for (const e of [...earlier].reverse()) { last = wordsLang(e, { isName: placeWord }); if (last) break; }
+    return replyLang8(text, { isName: placeWord, last });
+  }
   if (detectLang(text) === "ta") return "ta";
   if (heard?.lang !== "ta") return "en";
   const words = text.toLowerCase().split(/[^a-z]+/).filter(Boolean);
@@ -734,7 +742,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   const t0 = Date.now();
   const hands = safeHands(rawHands, signal);
   const state = screenOf(b.state);
-  const lang: Lang = replyLang(b.text, b.heard);
+  const lang: Lang = replyLang(b.text, b.heard, (b.turns ?? []).map((x) => x.heard));
   const stage = (b.stage ?? null) as StageContext | null;
   const trace: TraceItem[] = [];
   // the v5 trace's server stages (6.4), epoch ms: the planner call sent and back, the answer built (timings only, no words)

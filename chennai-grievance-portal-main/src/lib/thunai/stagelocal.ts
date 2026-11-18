@@ -10,6 +10,7 @@ import { asciiDigits } from "./digits";
 import { spokenPart } from "./chunker";
 import { catTaOfLabel } from "./narrate";
 import { OPEN_VERBS, SOFT_VERBS, readPicks, readPositions, tokensOf } from "./ordinal";
+import { understandV8 } from "./v8/flag8";
 
 /** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
 const zoneNamed = (x: string): number | null => {
@@ -231,7 +232,8 @@ export function ackFor(text: string, lang: Lang): string {
   if (/why|reason|ஏன்/.test(t)) return pick("Looking at what changed.", "என்ன மாறியது என்று பார்க்கிறேன்.");
   if (/brief|சுருக்கம்/.test(t)) return pick("Preparing your brief.", "சுருக்கத்தைத் தயார் செய்கிறேன்.");
   if (/dashboard|trend|moved|map|hotspot|top|worst|most/.test(t)) return pick("Building that screen.", "திரையை உருவாக்குகிறேன்.");
-  return pick("On it.", "பார்க்கிறேன்.");
+  // v8 (the owner's example 3): no filler for a sentence with no topic of its own; the screen shows the work, the answer speaks
+  return understandV8() ? "" : pick("On it.", "பார்க்கிறேன்.");
 }
 
 /**

@@ -13,6 +13,8 @@
  * someone's side conversation is not.
  */
 import { talkedAbout, wakeIn } from "@/components/collector/app/thunai/wake";
+import { isEnglishWord } from "./english";
+import { understandV8 } from "./v8/flag8";
 
 export type Tier = 0 | 1 | 2 | 3;
 export interface Addressed { tier: Tier; act: boolean; text: string; maxLevel: "A" | "B" | "C" | null; why: string }
@@ -27,6 +29,60 @@ export interface GateInput {
   districtNoun: boolean;
   /** v4's command tier (both returns, in the engaged window and out of it): true brings it back, false keeps it cut; unset, the env decides (commandTierOn) */
   commandTier?: boolean;
+  /** v8: Jarvis waits for a yes or a choice (a card, a question back): a plain "okay" or "yes" is an answer, not a filler */
+  awaitingAnswer?: boolean;
+}
+
+// ---- v8 (the owner's example 5; docs/jarvis/v8-research/20-addressee-language.md R1): hard silences, before the engaged window's rule.
+// The owner's own session (18 Nov) answered "Alexa, when was it open?", "What are the", "தயவுசெய்து," and an unclear Tamil word.
+
+/** another assistant's name: said to that one */
+const ASSISTANT8 = /^ (?:hey |ok |okay )?(?:alexa|siri|google|cortana|bixby|gemini|chatgpt) /;
+/** a person addressed by a title: "sir, the car is ready", "madam, ...", Tamil and Tanglish terms of address (Anna as a place is no title) */
+const HONORIFIC8 = /^ (?:sir|madam|maam|mam|saar|ayya|amma|akka|thambi|boss|anna(?! (?:nagar|salai|university|flyover|arch|square|library)))(?: |$)|(?:^| )(?:sir|madam|saar|boss)[ .!?]*$/;
+/** an errand for a person in the room: call, tell, ask, send, bring ... aimed at someone (a pronoun, an office, or "it to ...") */
+const ERRAND8 = /^ (?:(?:yes|yeah|ok|okay|and|so|then|please|also) )*(?:call|phone|ring|inform|ask|tell|send|forward|bring|fetch|hand|remind|message|text) (?:him|her|them|it to|this to|that to|the file|the letter|the papers|(?:the |our )?(?:pa|ae|aee|ee|dro|rdo|vao|tahsildar|driver|commissioner|secretary|engineer|officer|inspector|mla|mp|minister|staff|peon|clerk|team|deputy))\b/;
+const ERRAND8_TA = /(?:அவரை|அவனை|அவளை|அவங்களை|அவர்களை|அவருக்கு|அவங்களுக்கு|அவர்களுக்கு|அவர்கிட்ட|அவங்ககிட்ட)|(?:^|\s)\S+\s*கிட்ட\s+(?:சொல்|கொடு|குடு|அனுப்பு)|கொண்டு\s*வா/u;
+const ERRAND8_TG = /\b(?:avarai|avanai|avanga(?:lai|ukku)?|avarukku)\b|\bkitta\s+(?:sollu|sollunga|kudu|kudunga|anuppu|anuppunga)\b|\bkondu\s+(?:vaa|va|vaanga|varunga)\b/;
+/** asking a person in the room about themselves or what they did ("did you speak to the engineer", "have you eaten") */
+const YOU_PAST8 = /^ (?:did|have|had|were|was|will|are) you (?!(?:show|open|find|get|have the|check|see the (?:report|cases|list|news))\b)/;
+/** words that carry nothing alone: backchannels, thanks, "please" (a yes or a no is an answer to Jarvis's offer, and stays one) */
+const FILLER8 = new Set(["hmm", "hm", "mm", "mmm", "uh", "um", "ah", "oh", "aha", "please", "thanks", "thank", "you", "ம்ம்", "ம்", "நன்றி", "தயவுசெய்து"]);
+/** an acknowledgement said twice over ("okay okay", "seri seri"): talk, not an answer */
+const ACK8 = new Set(["ok", "okay", "okk", "yes", "yeah", "sari", "seri", "haan", "achha", "acha", "fine", "right", "சரி", "ஓகே", "ஆமா"]);
+/** a sentence cut off before its point: it ends on a word that cannot end one */
+const DANGLING8 = / (?:the|a|an|of|to|and|or|but|about|for|with|in|on|at|is|are|was|were|what|which|whats|my|your|our|this|that|from|by|into|than|if|because) $/;
+/** a request said with its verb at the end: "the Nungambakkam subway one, open it"; "Supreme Court news open pannunga" */
+const LATE_VERB8 = / (?:open|show|read|play|close|pull up|bring up|explain|summari[sz]e) (?:it|that|this|them|me|it up|that one|this one)? ?$|\b(?:open|show|read|compare|list|filter|map|sort|close|explain) (?:pannunga|pannungal|pannungo|pannu|panni kaattunga)\s*$/;
+
+/** a capitalised word ending the clause or opening it with a comma, that is no English word, no place and not Jarvis: a person's name */
+function vocative8(raw: string, districtNoun: boolean): boolean {
+  const t = raw.trim();
+  const lead = /^([A-Z][a-z]{2,15})\s*,/.exec(t)?.[1];
+  const tail = /,\s*([A-Z][a-z]{2,15})[.!?]*$/.exec(t)?.[1];
+  const named = (w: string | undefined) => !!w && !/^(?:jarvis|okay|yes|yeah|now|so|well|then|also|please|sorry|first|next|and|but|tell|show|open|read)$/i.test(w) && !isEnglishWord(w.toLowerCase());
+  // a name that is a district place ("Adyar, the severe ones") is the topic, not a person
+  return (named(lead) && !(districtNoun && t.toLowerCase().startsWith(String(lead).toLowerCase()) && !/\b(?:send|tell|call|ask|bring|give)\b/i.test(t))) || named(tail);
+}
+
+/** Why a line the open mic heard is not for Jarvis (v8's hard silences), or null. Named lines never reach this. */
+export function sideTalk8(text: string, o: { awaiting?: boolean; districtNoun?: boolean } = {}): string | null {
+  const t = norm(text);
+  const words = t.trim().split(" ").filter(Boolean);
+  if (ASSISTANT8.test(t)) return "another-assistant";
+  if (HONORIFIC8.test(t) && !o.awaiting) return "title";
+  if (vocative8(text, !!o.districtNoun)) return "person";
+  if (ERRAND8.test(t) || ERRAND8_TA.test(text) || ERRAND8_TG.test(t)) return "errand";
+  if (YOU_PAST8.test(t)) return "asked-a-person";
+  if (words.length && (words.every((w) => FILLER8.has(w)) || (words.length >= 2 && words.every((w) => ACK8.has(w) || FILLER8.has(w))))) return o.awaiting ? null : "filler";
+  if (DANGLING8.test(t)) return "cut-off";
+  // one word no lexicon knows (a noise Whisper wrote down): neither English, nor a district word, nor a Tamil question or command
+  if (words.length === 1 && !o.districtNoun && !ACK8.has(words[0]) && !/^(?:no|nope|இல்லை|இல்ல|வேண்டாம்|வேணாம்|ஆம்|ஆமாம்|illa|venaam|vendaam|aama|aamam)$/u.test(words[0])) {
+    const w = words[0];
+    const tamil = /[஀-௿]/u.test(w);
+    if (tamil ? !QUESTION_TA.test(text) && !IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) : !isEnglishWord(w) && !QUESTION_TG.test(t) && !IMPERATIVE_TG.test(t.trim())) return "unclear";
+  }
+  return null;
 }
 
 export const ENGAGED_MS = 20_000;
@@ -104,8 +160,8 @@ export const isImperative = (text: string): boolean => {
   const t = norm(text);
   return IMPERATIVE_EN.test(t) || IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) || IMPERATIVE_TG.test(t.trim());
 };
-/** asked as a request or a question, whatever its length */
-const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text);
+/** asked as a request or a question, whatever its length (v8: a verb at the end too, "the X one, open it", "news open pannunga") */
+const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text) || (understandV8() && LATE_VERB8.test(t));
 const statement = (text: string, t: string) => STATEMENT_EN.test(t) || ASIDE_TA.test(text) || (FINITE_TA.test(text) && !QUESTION_TA.test(text));
 /** a chore for someone in the room, not work for the console */
 const chore = (text: string, engaged = false): boolean => {
@@ -136,6 +192,11 @@ export function addressed(i: GateInput): Addressed {
   // the name talked about: someone else is being spoken to, engaged or not
   if (talkedAbout(text)) return { tier: 0, act: false, text, maxLevel: null, why: "about" };
   if (isStopWord(text)) return { tier: 3, act: true, text, maxLevel: "A", why: "stop" };
+  // v8: said to someone else (another assistant, a person by name or title, an errand for a person), a filler or a cut-off line: silent
+  if (understandV8()) {
+    const why = sideTalk8(text, { awaiting: i.awaitingAnswer, districtNoun: i.districtNoun });
+    if (why) return { tier: 0, act: false, text, maxLevel: null, why };
+  }
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   if (engaged && looksRequest(text) && !looksSide(text, true, i.districtNoun) && !chore(text, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text, false, i.districtNoun)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };

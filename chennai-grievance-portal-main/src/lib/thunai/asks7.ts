@@ -12,6 +12,7 @@ import { asciiDigits } from "./digits";
 import { catIn, districtNounIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { World } from "./types";
+import { understandV8 } from "./v8/flag8";
 
 export interface Ask7 {
   recipe: Recipe; slots: Record<string, unknown>; why: string;
@@ -145,6 +146,10 @@ export function asks7(text: string, w: World): Ask7 | null {
 const WHO_HAS = / (?:who(?:s| s| is)? (?:has|holds|handling|handles|on|owns|in charge of|responsible for|dealing with|looking (?:at|into)) (?:it|this|that)(?: one| case)? $|which (?:department|dept|officer|team) (?:has|holds|is handling|handles|is on|owns) (?:it|this|that) |whose (?:case|job) is (?:it|this|that) )/;
 const WHO_HAS_TA = /யார்\s*(?:கையில்|கிட்ட|கிட்டே|பொறுப்பில்|பார்க்கிறார்|பார்க்கிறாங்க|கவனிக்கிறார்)|எந்த\s*துறை(?:யிடம்|கிட்ட|யின்\s*கையில்)|யாரிடம்\s*(?:இருக்கு|உள்ளது|இருக்கிறது)/u;
 const WHO_HAS_TG = / (?:yaar|yaaru|yar) (?:kitta|kaila|kayila|kaiyila|handle|paakuranga|pakuranga|paakraanga)| (?:entha|endha) (?:department|dept|thurai) (?:kitta|la) /;
+/** v8: since when the case on screen has been open */
+const SINCE_WHEN = /^ (?:and )?(?:since when|from when|how long(?: has (?:it|this|that) been(?: open| going on| pending)?| is it| now)?|when did (?:it|this|that) (?:start|begin|happen|come in)|how old is (?:it|this|that)) $/;
+const SINCE_WHEN_TA = /^\s*(?:எப்போதிலிருந்து|எப்போலிருந்து|எப்ப\s*இருந்து|எப்போ\s*இருந்து|எவ்வளவு\s*நாளா|எத்தனை\s*நாளா|எப்போ\s*ஆரம்பி)/u;
+const SINCE_WHEN_TG = /^ (?:eppo|eppa|eppodhu) (?:irundhu|irunthu|lerndhu|lerundhu)|^ (?:evlo|evvalavu|ethana) naal(?:a|aa)?\b/;
 /**
  * The Tamil and Tanglish readings ask about the case, as the English one does (v7 review: "எந்த துறையிடம் அதிக புகார்கள் நிலுவையில் உள்ளன?",
  * "which department has the most complaints pending", re-showed the one case): about it, this or that ("இது", "இந்த சம்பவம்", "அது", "idhu",
@@ -159,5 +164,8 @@ export function whoHas(text: string, stage: { blocks: { kind: string; ids: strin
   if (!id) return null;
   const t = norm(text).replace(/\?/g, "");
   if (t.trim().split(" ").length > 9) return null;
-  return WHO_HAS.test(t) || ((WHO_HAS_TA.test(text) || WHO_HAS_TG.test(t)) && aboutIt(t)) ?{ recipe: "case", slots: { id }, why: "who-has" } : null;
+  if (WHO_HAS.test(t) || ((WHO_HAS_TA.test(text) || WHO_HAS_TG.test(t)) && aboutIt(t))) return { recipe: "case", slots: { id }, why: "who-has" };
+  // v8: "since when?", "how long has it been open?", "eppo irundhu?", "எப்போதிலிருந்து?" with a case open: its own facts (when it began)
+  if (understandV8() && (SINCE_WHEN.test(t) || SINCE_WHEN_TA.test(text) || SINCE_WHEN_TG.test(t))) return { recipe: "case", slots: { id }, why: "since-when" };
+  return null;
 }

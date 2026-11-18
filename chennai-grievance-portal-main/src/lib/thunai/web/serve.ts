@@ -25,7 +25,11 @@ export const NewsBody = z.union([
   z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
   // v6: an incident on Jarvis's screen: its own newest news report (from a news medium) is read; none, and the answer says so
   z.object({ incident: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
-  z.object({ question: z.string().trim().min(2).max(500) }).strict()
+  z.object({ question: z.string().trim().min(2).max(500) }).strict(),
+  // v8: a story asked for by its topic, or a news question (the owner's examples 1 and 2): the sentence, its language, and the stories on the
+  // Collector's screen in order (their ids and titles as shown); the server finds it among them and the dashboard's stored news (v8/newsfind.ts)
+  z.object({ find: z.object({ q: z.string().trim().min(2).max(400), lang: z.enum(["en", "ta"]),
+    screen: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), title: z.string().max(400).nullable().optional(), source: z.string().max(300).nullable().optional() })).max(250).optional() }).strict() }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
 
@@ -40,6 +44,10 @@ export type NewsEvent =
   | { type: "brief"; stage: "article" | "coverage"; brief: SpokenBrief; status: string; ms: number }
   | { type: "related"; items: { outlet: string; title: string; url: string; publishedAt: string | null; source: "article" | "feed" }[]; feeds: { tried: number; ok: number; failed: number }; ms: number }
   | { type: "answer"; answer: LookupAnswer }
+  /** v8: the story found for a request by its topic (read next), another close story to offer, the other matching stories */
+  | { type: "found"; id: string; title: string; outlet: string | null; other: { id: string; title: string; outlet: string | null } | null; stories: { id: string; title: string; outlet: string | null }[] }
+  /** v8: lines said as they are (nothing in the dashboard's news: what the outlets' feeds have, or that nothing was found), with links */
+  | { type: "said"; en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }
   | { type: "error"; why: "not_found" | "failed" | "no_news" }
   | { type: "done"; ms: number };
 
@@ -52,6 +60,18 @@ export interface ServeDeps extends WebDeps, CompareOptions {
   related?: boolean;
   /** v7: the aide writes the spoken brief from the article (aide7/news.ts); absent, the code brief (v6) is said */
   aide?: NewsAide;
+  /** v8: find a story by its topic among the screen's and the store's (v8/newsfind.ts findNews); absent, a { find } is not found */
+  find?: (f: Extract<NewsBodyT, { find: unknown }>["find"]) => Promise<FoundStory | null>;
+  /** v8: nothing in the dashboard: the outlets' feeds, said by code (v8/newsfind.ts feedLines) */
+  feedLines?: (f: Extract<NewsBodyT, { find: unknown }>["find"], words: string[]) => Promise<{ en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }>;
+}
+
+/** v8: what a { find } found (v8/newsfind.ts): the request's kind and topic words, the story picked (or none), another close one, the matches */
+export interface FoundStory {
+  kind: "story" | "ask"; words: string[];
+  pick: { id: string; title: string; outlet: string | null } | null;
+  other: { id: string; title: string; outlet: string | null } | null;
+  stories: { id: string; title: string; outlet: string | null }[];
 }
 
 const STORED_MIN = 200;
@@ -62,9 +82,24 @@ const asSource = (a: { outlet: string | null; outletTa?: string | null; url: str
 export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerator<NewsEvent> {
   const t0 = performance.now();
   const ms = () => Math.round(performance.now() - t0);
-  let body: Exclude<NewsBodyT, { incident: string }>;
-  const ask = "ask" in asked ? asked.ask ?? null : null;
-  if ("incident" in asked) {
+  let body: Exclude<NewsBodyT, { incident: string } | { find: unknown }>;
+  let ask = "ask" in asked ? asked.ask ?? null : null;
+  if ("find" in asked) {
+    // v8: the story the Collector named by its topic, else (a news question with nothing in the dashboard) what the outlets' feeds have
+    let f: FoundStory | null = null;
+    try { f = d.find ? await d.find(asked.find) : null; } catch { yield { type: "error", why: "failed" }; return; }
+    if (!f) { yield { type: "error", why: "not_found" }; return; }
+    if (!f.pick) {
+      const said = d.feedLines ? await d.feedLines(asked.find, f.words).catch(() => null) : null;
+      if (!said) { yield { type: "error", why: "not_found" }; return; }
+      yield { type: "said", ...said };
+      yield { type: "done", ms: ms() };
+      return;
+    }
+    yield { type: "found", id: f.pick.id, title: f.pick.title, outlet: f.pick.outlet, other: f.other, stories: f.stories };
+    ask = { q: asked.find.q, lang: asked.find.lang };
+    body = { id: f.pick.id, ask };
+  } else if ("incident" in asked) {
     let id: string | null = null;
     try { id = d.incidentDoc ? await d.incidentDoc(asked.incident) : null; } catch { yield { type: "error", why: "failed" }; return; }
     if (!id) { yield { type: "error", why: "no_news" }; return; }

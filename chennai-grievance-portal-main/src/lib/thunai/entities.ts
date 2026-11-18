@@ -23,6 +23,7 @@ import { isEnglishWord } from "./english";
 import { calendarWindowIn, isListedExact, listedWord, periodIn, quickScreen } from "./quick";
 import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
+import { understandV8 } from "./v8/flag8";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -475,7 +476,11 @@ export function noData(heard: string, near: Entity | null = null): { en: string;
     ta: `${heard} பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன${near ? `; அருகில் உள்ளது ${near.ta ?? near.name}, அதைப் பற்றிச் சொல்லலாம்` : `; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்`}.` };
 }
 
+/** v8: "which department / zone / officer ...", in any of the three languages: a question over all of them, never a body called "which department" */
+const WHICH_BODY = /\bwhich (?:department|dept|zone|officer|division|body)s?\b|\b(?:endha|entha|edhu|ethu) (?:department|dept|thurai|zone|mandalam|officer)\b|எந்த(?:த்)?\s*(?:துறை|மண்டல|அதிகாரி|பிரிவு)/iu;
+
 export function briefTurn(text: string, w: World): BriefTurn | null {
+  if (understandV8() && WHICH_BODY.test(text)) return null;
   // another place's body, or a place the console does not cover, named anywhere (even with no word for a brief): said, never answered with ours (RC-01)
   if (!KEEPING.test(` ${text.toLowerCase()} `)) {
     const far = foreignIn(text, w);

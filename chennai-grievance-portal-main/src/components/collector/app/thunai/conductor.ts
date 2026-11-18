@@ -145,6 +145,8 @@ export interface ConductorHooks {
   vocab?: () => string[];
   /** an ask card is waiting for a yes: a "yes" said over Jarvis's voice is then an answer, not a backchannel */
   wantsYes?: () => boolean;
+  /** v8: a next step is on offer ("Want the details?"): a yes or a no is its answer */
+  offerPending?: () => boolean;
   /**
    * speech began (VAD onset): the browser's captions may start now. `engaged`: the turn is engaged by the lane's reckoning;
    * `fallback`: Whisper is out and the conductor's own recogniser hears this speech (the console's live captions stand aside)
@@ -619,7 +621,9 @@ export class Conductor {
     const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || null;
     // talking over Jarvis counts as engaged: it was speaking a moment ago
     const over = this.sayingAtOnset ? Date.now() : last;
-    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun });
+    // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler
+    const awaitingAnswer = !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.());
+    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer });
   }
 
   private async transcribe(gen: number) {
