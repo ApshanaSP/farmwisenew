@@ -194,6 +194,12 @@ export function ackDue(o: { endAt: number | null; now: number; answeredAt: numbe
 }
 /** v8 (the owner's example 3): the acknowledgement to say, or null: none for a sentence with no topic, never the one said last */
 export const ackToSay = (ack: string, lastSaid: string | null): string | null => (!ack.trim() || ack === lastSaid ? null : ack);
+/**
+ * v8: a news turn's first line ("Reading The Hindu's report..."), said only when it is not the line said last; shown on the screen either way.
+ * The brief's own first sentence names the outlet ("The Hindu reports that ..."), so nothing is lost (the owner's example 3; the final real run, 19 Nov).
+ */
+export const newsOpener = (first: { en?: string; ta?: string }, lang: "en" | "ta", lastSaid: string | null): string | null =>
+  ackToSay(String((lang === "ta" ? first.ta : first.en) ?? "").trim(), lastSaid);
 /** v8: the long wait's line (10 s), never the same twice running and never a promise it cannot keep */
 const STILL: Record<"en" | "ta", string[]> = {
   en: ["Still putting it together.", "This one is taking a little longer.", "Still reading the data."],

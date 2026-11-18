@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { ackFor } from "../stagelocal";
-import { ackToSay, stillLine } from "@/components/collector/app/thunai/turnstate";
+import { ackToSay, newsOpener, stillLine } from "@/components/collector/app/thunai/turnstate";
 
 // the owner's example 3: "On it" on every turn. A sentence with no topic of its own gets no spoken filler; a topic line is said only when it is
 // not the one said last; the long wait's line changes each time.
@@ -31,4 +31,16 @@ describe("v8 acknowledgements: never the same filler on every turn", () => {
     process.env.JARVIS_UNDERSTAND = "v7";
     expect(ackFor("tell me more", "en")).toBe("On it.");
   });
+});
+
+describe("the final real run (o8final, 19 Nov): a news turn's opener is not said on every news turn", () => {
+  const hindu = { en: "Reading The Hindu's report...", ta: "தி இந்து செய்தியைப் படிக்கிறேன்..." };
+  it("said on the first news turn", () => expect(newsOpener(hindu, "en", null)).toBe(hindu.en));
+  it("not said again when it was the line said last (shown on screen only)", () => expect(newsOpener(hindu, "en", hindu.en)).toBeNull());
+  it("Tamil the same", () => { expect(newsOpener(hindu, "ta", null)).toBe(hindu.ta); expect(newsOpener(hindu, "ta", hindu.ta)).toBeNull(); });
+  it("another outlet's opener, or the same after another line, is said", () => {
+    expect(newsOpener({ en: "Reading The Times of India's report...", ta: "" }, "en", hindu.en)).toBe("Reading The Times of India's report...");
+    expect(newsOpener(hindu, "en", "Looking at Royapuram.")).toBe(hindu.en);
+  });
+  it("an empty opener is never said", () => expect(newsOpener({ en: " ", ta: "" }, "en", null)).toBeNull());
 });

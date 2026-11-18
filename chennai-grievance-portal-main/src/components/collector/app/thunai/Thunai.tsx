@@ -52,7 +52,7 @@ import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { answersV7, budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
-import { ackDelay, ackDue, ackToSay, stillLine, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
+import { ackDelay, ackDue, ackToSay, newsOpener, stillLine, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
@@ -1348,7 +1348,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           jvMark("newsFirst");
           const f = e as { en?: string; ta?: string };
           st.en = [String(f.en ?? "")]; st.ta = [String(f.ta ?? "")];
-          draw(); sayLines(st.en, st.ta);
+          draw();
+          if (!understandV8()) sayLines(st.en, st.ta);
+          else {
+            // v8: the opener is said only when it is not the line said last (shown either way): no filler on every news turn
+            const s = newsOpener(f, lang === "ta" ? "ta" : "en", lastAckSaid.current);
+            if (s) { sayLines(st.en, st.ta); lastAckSaid.current = s; }
+          }
         } else if (e.type === "brief") {
           const b = (e as { brief?: { en?: string[]; ta?: string[]; links?: NewsLink[] }; stage?: string }).brief;
           if (!b) return;
