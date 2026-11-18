@@ -1,4 +1,22 @@
-# Jarvis: the v7 answers (first), the three-minute reel (v6), then the real-room check (v5)
+# Jarvis: the v8 examples (first), the v7 answers, the three-minute reel (v6), then the real-room check (v5)
+
+## v8: your five examples, as you said them (do the v5 room check below first)
+
+Edge on the demo laptop, speakers on, Jarvis open (Ctrl+Shift+J), the console's language set to **Tamil** for step 6. Start steps 1-6 with "Hey Jarvis" and wait for its reply (the run played the wake, then the request); step 7 is said on the open mic, right after Jarvis speaks. The screens and the HUD look as in v7; what changes is what Jarvis understands and what it says. Each step below was played on the real path with synthetic voices on 19 Nov (`eval/v8/real/o8final-owner8.json`, `o8ship-owner8.json`, local).
+
+| # | Say | What the owner should see and hear |
+|---|---|---|
+| 1 | "Hey Jarvis, open the Supreme Court news on Palikan." | The story found by its topic and place (Whisper may write "Palikkan"): "Reading The Hindu's report..." and The Hindu's English report on the Pallikaranai marsh case (the Madras High Court sending the litigants to the Supreme Court), its link on the screen. |
+| 2 | "What's the news on the Supreme Court?" | The same story from the dashboard's news; on the final code without the opener said again ("The Hindu reports that ..."). A topic in neither the dashboard's news nor the outlets' feeds is said plainly as not found, in your words. |
+| 3 | "Read the Pallikaranai marsh story." | Another outlet's report on the marsh (The Times of India's report of 18 Nov), even when Whisper writes "Palikana Imash". ("What else is in the news about it?" then finds the other outlets' reports: checked on the dev set, not on the real path.) |
+| 4 | "Supreme Court news open pannunga." | The same story, answered in Tamil. |
+| 5 | "And what about the other thing?" | No "On it" and no filler: "Which other thing do you mean?" with the closest guesses. No filler line is said on every turn (the same report asked for twice is read twice); the bar still shows "On it." while Jarvis works, and nothing is spoken until the answer, so the first words come about 2 s later than v7's "On it". |
+| 6 | On the Tamil console: "Show me the severe cases in Adyar.", then "What's happening in Royapuram?", then "ராயபுரத்துல இப்போ என்ன நடக்குது?" | English answers to the two English questions, a Tamil answer to the Tamil one, whatever the console's setting. |
+| 7 | Right after Jarvis speaks, to someone in the room: "Ramesh, send the file to the Commissioner.", "Alexa, when was it open?", "Call him back after lunch." | Nothing said, nothing done. Saying "Jarvis" first is always heard. |
+
+What to expect in time (measured, `eval/RESULTS.md` v8): as v7. The wake reply and the screen after a command come at v7's times (the differences paired by clip are Whisper's own); a question's first sound (the tone) at about 0.4 s and the answer's first word a few seconds later, as in v7; but v7 spoke a filler first and v8 does not, so there is about 2.4 s more silence before the first words at the median.
+
+What is not yet right (the holdout, `eval/RESULTS.md` v8): a story named by an acronym said letter by letter ("I O C L"), a place split or spelt by ear ("Kasi medu"), a misheard outlet ("Deccan Chronical"), or "open the X protest" with no word "news" and nothing on the screen may not be found; Tamil ordinals past the fifth are not yet read.
 
 ## v7: the answers, as a top aide would give them (do the v5 room check below first)
 

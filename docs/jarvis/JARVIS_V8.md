@@ -85,3 +85,20 @@ The dev set (`eval/v8/dev`, 105 requests, for tuning) and the holdout (`eval/v8/
 ### 6. Flags
 
 `JARVIS_UNDERSTAND=v7` (and `NEXT_PUBLIC_JARVIS_UNDERSTAND=v7` in the browser build) turns every v8 understanding change off. `JARVIS_DEEP_MODEL` (default `claude-sonnet-5-5`; `off`), `JARVIS_DEEP_MS` (8,000), `JARVIS_STT_SARVAM` (off), `JARVIS_SARVAM_TIMEOUT_MS`, `JARVIS_SARVAM_DAY_S`, `JARVIS_SARVAM_KEYTERMS`.
+
+## Part 3: what the finals showed (19 Nov 2026)
+
+The numbers and their files are in `eval/RESULTS.md` (v8); the owner's summary and decisions in `docs/thunai/HANDOVER.md` (v8); the steps in `docs/thunai/BUILD_LOG.md` (v8).
+
+| Target (part 1) | Result |
+|---|---|
+| Each owner example fixed, test first, and shown live on the real path | **Met.** All five on the real path with Sonnet leading (`o8final`) and as shipped on the final code (`o8ship`). |
+| Understanding "very high": before and after on the dev set and the new hashed holdout | Dev: v7's code 46/105 → v8 102/105 (no model). **Holdout, once: v7 44/111 → v8 75/111 as shipped, 76/111 with Sonnet leading** (p < 1e-8). Not "very high" on news by topic (9/22) and news questions (6/14); the miss classes are listed for the next round. |
+| live-60 (v7's regression set) once at the end | **46/60, v7's own score** (Sonnet leading), the same per language; not paired item by item (the result file was overwritten by a stray process of a stopped attempt). |
+| The reply in the Collector's language | Holdout 86/98 → 95/98; real path: English on a Tamil console in English, Tamil in Tamil. |
+| The addressee: false wakes and missed requests | Holdout: lines said to someone else answered 5/13 → 2/13; requests silenced 5/98 → 1/98. Real path: the three side lines silent. |
+| A blind judge against v7 | Sonnet-led v8 preferred to v7 39-20 (p = 0.018); as shipped 31-21 (p = 0.21, not significant); the owner's examples 5-0 and news by topic 13-4 (Sonnet-led). |
+| Latency no worse than v7 (wake, command to screen, question to first word) | **Met for the moments named, within Whisper's own variation:** paired by clip, the page's own part is the same (wake 5 ms, commands 30 against 30.5 ms); the answer's first word +31.5 ms at the paired median (measured on the bundle before the last fixes). **The first spoken words come about 2.4 s later at the median**, because v8 says no filler before the answer (example 3). |
+| Claude within US$10, Sonnet leading the finals | US$0.771 spent by v8 (Sonnet US$0.697); the finals ran with Sonnet leading and, as a second column, as shipped. |
+| Sarvam ready to run, no account, no call | Built behind `JARVIS_STT_SARVAM` (off), mocked and fixture tests; the plan and the Rs 500 budget in `docs/jarvis/SARVAM.md`. |
+| Independent checks; gates | Code review and wiring/privacy/spend review before the finals, their findings fixed test-first; a third check of the write-ups' numbers against the result files (14 corrections to the drafts, none in the code); the gates: QA gate on `21ff151d`: type check, lint, build, guards, pass 7's tests, the access matrix (its two known cells), the browser drive and j1 green; three reds none from v8's code (a v4 timing bound under the gate's load, RC-35's known timeout, an environmental model-file check); Jarvis browser specs 41/41. |

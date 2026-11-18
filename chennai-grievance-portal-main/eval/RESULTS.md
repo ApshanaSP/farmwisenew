@@ -1,5 +1,116 @@
 # Jarvis mode: results
 
+## v8 (18-19 Nov 2026)
+
+Branch `claude/jarvis-v8-700c5f` from v7's `22304da4`; the brief and the plan are `docs/jarvis/JARVIS_V8.md`, the research `docs/jarvis/v8-research/`. The goal, in the owner's words: "think like the world's best AI assistant", understanding "very high", "more powerful", "don't make me run again". The owner's five examples are the spine; every number below is from a result file named beside it (local where the rows hold a citizen's words).
+
+### Capacity, spend and blocks, before any number
+
+- **Claude spend:** the owner's record (`data/thunai/claude-budget.sqlite`) held **550 rows, US$0.147505** when first read (21:30, 18 Nov; v8's first call was at 22:36) and **992 rows, US$0.918660** after the last call (01:21, 19 Nov): v8's runs spent **US$0.771** (442 calls) of the US$10 ceiling (`JARVIS_CLAUDE_BUDGET_USD=10`), of which Sonnet 5.5 US$0.697 (156 calls; Haiku 286 calls, US$0.074). The estimate before the finals was about US$4.5, at most about US$6.
+- **Jarvis's own Claude day cap** (1.5M tokens and 500 requests a model, set in v4 against Opus's prices) was raised for the runs by flag (`JARVIS_CLAUDE_DAY_TOKENS=8000000`, `JARVIS_CLAUDE_DAY_REQUESTS=3000`); its per-minute window (50,000 tokens a model, shared by every process on the laptop through the ledger) is why the Claude-heavy runs ran one model at a time.
+- **Groq** carried Whisper for every real-path run (well inside its day: about 1,700 audio-seconds of 28,800 at the check); its planners were only a rung behind Claude. **Gemini 3.1 flash-lite** judged (a different family from the models judged).
+- **Not called at all:** Sarvam (no account, no key: mocked and synthetic-fixture tests only), `claude.live.ts`, `claude.v4.live.ts`, `deploy.live.ts`.
+
+### How understanding was measured
+
+- **The dev set** (`eval/v8/dev/set.json`, 105 requests, for tuning) and **the holdout** (`eval/v8/holdout/set.json`, 111 requests: English 61, Tamil 21, Tanglish 29; about 17 with speech-to-text slips, by the set's own description; written by a helper that saw neither the code nor the dev set, hashed in `eval/v8/HASHES.txt` before any fix, run **once**, at the end). Each request carries its screen, earlier turns, the open mic's timing and the ears' label; the gold is what a right answer does (the story, the language, silence for side talk, a screen).
+- **The runner** (`src/lib/thunai/v8/eval8.live.ts`) sends each through the addressee gate, the browser's lanes (`v8/browser.ts`, the function the console runs) and the server's round on the dry-run copy of the console's store. **v7's side is v7's own commit** (`22304da4`, a separate checkout) with the same runner, not v8's rollback switch.
+- **The real path** (`tests/e2e/real6.spec.ts` part `owner8`): the production bundle, synthetic clips from Windows' voices, real Whisper, real models, Edge's voices; every word Jarvis says recorded with its voice and language.
+
+### Understanding: the dev set (tuning)
+
+| Run (`eval/v8/dev/results/`) | All | Owner's examples | News by topic | News questions | References | Follow-ups | Side talk | Language |
+|---|---|---|---|---|---|---|---|---|
+| v7's code, no model (`dry0-v7`) | 46/105 | 1/8 | 1/20 | 3/12 | 4/12 | 6/10 | 9/14 | 81/92 |
+| v8 final code, no model (`dry-v8`, `c9e32c1a`; 3 left to the planner count as misses) | **102/105** | 8/8 | 20/20 | 12/12 | 12/12 | 9/10 | 14/14 | 92/92 |
+| v8 live, Haiku leading, deep model off (`live1-v8`, before the reviews) | 104/105 | 8/8 | 19/20 | 12/12 | 12/12 | 10/10 | 14/14 | 92/92 |
+| v8's lanes switched to v7 (`live1-v7`, `JARVIS_UNDERSTAND=v7`) | 54/105 | 1/8 | 1/20 | 4/12 | 5/12 | 10/10 | 9/14 | 80/92 |
+| v8 live after the review fixes (`live2-v8`) | 100/105 | 8/8 | 19/20 | 9/12 | 12/12 | 10/10 | 14/14 | 91/92 |
+
+`live2`'s four news slips came from the review fixes and were fixed test-first (`c9e32c1a`); the fifth miss was Haiku's empty plan on a Tamil "which department is slow?" (the deep model, off in that run, takes those).
+
+### Understanding: the holdout (once, at the end)
+
+`eval/v8/holdout/results/` (hash checked; v7 from its own commit). The rows hold the requests and answers: local.
+
+| | v7, Haiku leading (`final-haiku-v7`) | **v8, Sonnet 5.5 leading** (`final-sonnet-v8`) | v8 as shipped: Haiku leading, Sonnet deep (`final-haiku-v8`) |
+|---|---|---|---|
+| All (111) | 44 (39.6 %, Wilson 31.0-48.9) | **76 (68.5 %, 59.3-76.4)** | 75 (67.6 %, 58.4-75.6) |
+| The owner's examples (6) | 1 | 5 | 5 |
+| News by topic (22) | 0 | 9 | 9 |
+| News questions (14) | 2 | 6 | 6 |
+| References (14) | 3 | 8 | 7 |
+| Follow-ups (12) | 9 | 11 | 11 |
+| Side talk (16: 11 said to someone else, 5 to Jarvis) | 11 | 14 | 14 |
+| Language items (10) | 6 | 9 | 9 |
+| Commands (6), questions (6), outside (5) | 4, 3, 5 | 5, 4, 5 | 5, 4, 5 |
+| English (61), Tamil (21), Tanglish (29) | 22, 10, 12 | 40, 16, 20 | 38, 16, 21 |
+| Reply in the Collector's language | 86/98 | 95/98 | 95/98 |
+| Turns a model answered | Haiku 38, Groq 1 | Sonnet 22 | Haiku 16, Sonnet (deep) 6 |
+
+**Paired** (the same 111): right only in v8 33, only in v7 1, exact McNemar p = 4.1e-9. The as-shipped run (00:57-01:08) shared Claude's minute windows with the live-60 run, a stray process (below) and the latency run; it had no capacity failure, but the deep model may have been skipped on a turn or two. As shipped against v7: 32 and 1, p = 7.9e-9. **Sonnet leading against as shipped: 76 and 75** (right only in one 2 and 1, p = 1.0): on understanding, Sonnet leading buys nothing measurable here. As shipped, the deep model was asked on 6 turns and 3 were right, the same 3 as v7 and as Sonnet leading; two of the six were the two lines said to someone else that the gate let through (h-owner-6, h-side-6), which it then answered.
+
+**The addressee** (the 13 lines said to someone else, the 98 said to Jarvis): v7 answered 5 of the 13 (false wakes) and silenced 5 of the 98 (missed requests); v8 (Sonnet-led) answered 2 and silenced 1. As shipped: 2 and 1, the same.
+
+**Where v8 still misses** (read after the one run; nothing was tuned on it): news by topic 13 of 22 and news questions 8 of 14. The stories are in the store; the misses are the matcher's and the lane's: an acronym spoken letter by letter ("I O C L"), a place split or spelt by ear ("Kasi medu", "Pattinapakam", "Kodungayur", "Vandaloor"), an outlet misheard ("Deccan Chronical", "ETV Bharath"), colloquial Tamil postpositions and verbs left in the topic ("பத்தின", "-வுல", "மிரண்டு ஓடின"), "open the X protest" or "the IOCL fire, open that" with no news word and nothing on the screen (v8 sends those to the planner by design), Tamil ordinals past the fifth ("ஏழாவது"), "the last one". Each class needs a fix and a fresh blind set to measure it (the follow-up).
+
+**The blind judge** (Gemini 3.1 flash-lite, both orders, the holdout's answers): **v8 with Sonnet leading preferred 39, v7 20** (identical answers 34, split 14, no verdict 4; exact sign test p = 0.018); **v8 as shipped preferred 31, v7 21** (identical answers 37, a tie in both orders 1, split 8, no verdict 13: Gemini busy or failing; p = 0.21, not significant). By kind (Sonnet-led): the owner's examples 5-0, news by topic 13-4, news questions 7-3, references 3-2, follow-ups 4-1, side talk 2-3, language 3-4, commands 1-1, questions 1-2; by language English 23-9, Tanglish 7-6, Tamil 9-5. Of v7's 20 wins, 11 are requests both runs got wrong and 5 both got right (the same answer writer, worded differently); as shipped, 7 and 10 of 21. The judge files: `final-sonnet.judge-gemini-3.1-flash-lite.json`, `final-haiku.judge-gemini-3.1-flash-lite.json`. A first judge run was void (77 of 111 without a verdict: the judge's model was not in the gateway's Gemini pool); it is set aside.
+
+### Understanding: live-60 (once, at the end, Sonnet 5.5 leading, `JARVIS_AIDE=0`)
+
+`HOLDOUT=planner2 HOLDOUT_DIR=holdout2 HOLDOUT_SET=live60 HOLDOUT_TAG=v8final`; only the runner's printed summary was read.
+
+| | v7 final (Haiku leading) | **v8 final (Sonnet 5.5 leading)** |
+|---|---|---|
+| All | 46/60 | **46/60** (76.7 %, Wilson 64.6-85.6) |
+| English | 13/15 | 13/15 |
+| Tamil | 24/30 | 24/30 |
+| Tanglish | 9/15 | 9/15 |
+| Code lanes (no model) | 16/21 | 16/21 |
+| The model's turns | Haiku | Sonnet 30/39 |
+| Capacity failures, fallbacks | 0 | 0, 0 (Sonnet first on every ladder) |
+
+**The regression check holds: understanding on v7's sentences is v7's** (the target: no worse); it did not rise, as it did not from v6 to v7. live-60's sentences are planner turns about the console; v8's new lanes (news by topic, news questions, references, side talk, the reply's language) are what the holdout above measures. **Not paired item by item:** the first attempt (19 Nov, 00:59) printed "room: groq" (the runner's own room check knew only Haiku as a Claude leader; fixed test-first, `b576c1ff`) and was stopped at once; stopping its shell did not end its test process, which ran on and wrote over the finished run's result file after the run had printed its summary. The summary above is the finished run's (01:02-01:17); rerunning would break "once", so the pairing with v7's rows is not reported. The stray process's Sonnet calls are in the spend above; it shared Sonnet's minute window with the as-shipped holdout run, so it may have kept the deep model out of a few of that run's turns.
+
+### The owner's examples on the real path
+
+`eval/v8/real/<tag>-owner8.json` (local). Four runs: `o8a` and `o8b` while building (Haiku leading, the deep model off), **`o8final` (Sonnet 5.5 leading, `.next-v8d`)** and `o8ship` (as shipped: Haiku leading, Sonnet as the deep model, `.next-v8e`). (`.next-v8e` is the final code but for three later fixes the gates found: `7da4e5b7` (the week of stored stories follows the data epoch) and `5b6b8763`, `21ff151d` (the Claude spend record's open); no single request's answer changes).
+
+| Example | o8a (first) | o8b | **o8final (Sonnet)** | o8ship (as shipped) |
+|---|---|---|---|---|
+| 1 "Open the Supreme Court news on Palikan" (heard "Polygon", then "Palikkan") | found after "Still putting it together"; Dinamalar's Tamil headline in the English voice | The Hindu's English report | **The Hindu's English report on the Pallikaranai marsh case** | the same |
+| 1 the HPV headline read out | the opener began after 44 s; the report did not come within the turn's 45 s | read | **read (The Hindu)** | read |
+| 1 "Read the Pallikaranai marsh story" (heard "Palikana Imash") | not found ("Nothing in the dashboard or the latest news mentions Palikana Imash") | found (ETV Bharat); the brief stalled once | **found (The Times of India), briefed** | the same |
+| 1 Tanglish "Supreme Court news open pannunga" (heard "Panyunga") | Whisper returned nothing | dropped by the gate | **answered in Tamil (The Hindu)** | the same |
+| 2 "What's the news on the Supreme Court?" | Dinamalar's Tamil headline in the English voice | answered (The Hindu) | **answered from the dashboard's news** | the same |
+| 3 "And what about the other thing?" (no topic) | no filler | no filler | **no filler; "Which other thing do you mean?" with the closest guesses** | the same |
+| 3 the news opener ("Reading The Hindu's report...") | | | said on every news turn (5 of 5) | **said on 3 of 5: the Hindu opener once, then the next two Hindu turns went straight to the report; the Times of India's and the Tamil Hindu opener (other lines) were said** |
+| 4 English on a Tamil console | English | English | **English (2/2)**; Tamil in Tamil | the same |
+| 5 "Ramesh, send the file...", "Alexa, when was it open?", "Call him back after lunch." | Ramesh silent; Alexa (heard in Tamil letters) answered, and that answer said again on the next line | all silent | **all silent** (the gate's record: heard "ரோமெஷ்", "அலேக்சா") | all silent |
+
+### Latency on real providers
+
+`eval/v6/latency/v8fin-v7-*.json` and `v8fin-v8-*.json`, compared in `compare-v8fin-v7-v8fin-v8.md` (`tests/e2e/real6.spec.ts`: real Whisper, Edge's voices, synthetic clips; ms from each clip's true end of speech; n · p50 · p90). Run back to back on 19 Nov: v7's own bundle (`.next-v7f`, v7's commit) and **v8's final bundle** (`.next-v8e`), both with Claude on as shipped (Haiku leading; v8 with Sonnet as the deep model).
+
+| Moment | v7 | v8 |
+|---|---|---|
+| Wake, open, "Hey Jarvis" -> first audible reply | 4 · 209 · 215 | 4 · 208 · 257 |
+| Wake, open, "Hi/Hello Jarvis" and Tamil (Whisper hears them) | 8 · 581 · 782 | 8 · 649 · 671 |
+| Wake, open, all | 12 · 572 · 606 | 12 · 583 · 658 |
+| Wake, closed -> first audible reply (fired 4/12 on both) | 4 · 149 · 191 | 4 · 190 · 197 |
+| Command -> the screen changes | 10 · 1130 · 7525 | 10 · 1123 · 8332 |
+| Command -> first sound | 12 · 304 · 345 | 12 · 318 · 365 |
+
+**Paired by clip** (medians, the midpoint for an even n): wake +4 ms (n 12; Whisper's transcript -6 ms; the page's own part after the transcript 5 ms on both); command to screen +52.5 ms (n 10), Whisper's transcript +38.5 ms (n 12); the page's own part 30 against 30.5 ms. Closed wake +30 ms on 4 pairs (too few to read). **Load:** v8's runs had more company than v7's: the as-shipped holdout run, the live-60 run and the stray process ran during v8's latency run (00:57-01:07); v7's (01:07-01:18) ran with less. The bias is against v8. The p90 of command to screen is the planner's command ("show the severe cases"), the model's time.
+
+**Questions** were measured the evening before on `.next-v8c` against `.next-v7f` (`compare-v8lat-v7-v8lat-v8.md`, the same configuration): question to first sound 12 · 407 · 415 against 12 · 412 · 421; to the answer's first word 12 · 5327 · 9796 against 12 · 5944 · 8701 (paired median +31.5 ms, n 12); the whole answer in hand 12 · 3525 · 8128 against 12 · 4360 · 5325 (paired median +1.5 ms). **The first spoken words come later, by design:** v7 said a filler or topic line first (the first words at p50 1,842 / p90 2,472 ms; the answer itself first in 4 of 12), v8 says nothing until the answer (p50 4,292 / p90 7,249 ms; the answer first in 9 of 12); the tone at about 0.4 s and the bar's "On it." are the same in both. That is the owner's example 3 (no "On it"), at the price of about 2.4 s more silence at the median. v8's lanes cost 1-4 ms a turn warm; their first call (170 ms) is now made while the page is idle. Questions were not re-measured on the final bundle: it differs from `.next-v8c` by the wiring review's fixes (`b76fa7bf`: the gate's answer rule, the word caps, the warm-up while idle), the news matching (`c9e32c1a`) and the news opener (`3a4cacf5`), none of which adds a call on a question's path.
+
+### After the finals
+
+**The third independent check** (read only; the write-ups' numbers against the result files and the code) found 14 mismatches in these drafts, none in the code, all corrected before they were committed: the side-talk split (11 said to someone else and 5 to Jarvis, not 13 and 3); a claim that the deep model's turns "carry the hard ones" (they scored 3 of 6, as v7 did, and two were side lines the gate let through); the news opener in `o8ship` (said on 3 of 5 news turns, the Hindu one once, not "once"); "no spoken line repeats" in the demo (the same report asked twice is read twice); the questions' paired n (12, not 13) and medians taken as the upper middle for an even n (now the midpoint); the as-shipped judge's ties (37 identical answers and 1 tie in both orders); two cells of the first real run (`o8a`); a cache-write price; the order of the deep model's rungs; the runs' shared load; and wording. It also confirmed every holdout count, interval, pairing and p value, the judge's tallies, the spend figures and the code's defaults.
+
+**The gates on the final code** (`21ff151d`; the QA gate `bash tests/qa/pass7/gate-fast.sh` on a clean tree, 03:48-04:15, its fifth run this night): type check, lint and the production build EXIT 0; the four shuffled unit runs (two time zones) **6,694 passed in three, 6,693 and 1 failed in one**; pass 7's tests 769 passed (7 skipped); the collector-ops real path 24/24; the src guards 39/39; the browser drive (28 pages, 0 problems) and the Collector journey j1 EXIT 0; the access matrix 1,270 of 1,272 cells (the same two cells as the record before v8: the QA seed's `pii_enc` problem, since v5); the golden master EXIT 2 against the old baselines (as in v5, v6 and v7: the build id, jittered map points, and the same Jarvis lines as v7's own gate record); pass 4's whole real-path suite 2,647 passed, 2 failed. **The three reds, none from v8's code:** (1) the unit run's failure is v4's `llm.v4.test.ts` real-clock bound (1,500 ms) met at 1,627 ms under the gate's two lanes (the same seed, 7202, at 1,929 ms in the run before); the same seed alone passed 8 of 9 runs (the one other failure's file was not kept); (2) pass 4's RC-35 write test, the known 180 s load timeout (alone 3.9 s); (3) `audit-ui_honesty-11`, an expected-to-fail check that this checkout's search model is a git-lfs pointer, which here is the real 278 MB file (environmental). **Jarvis browser specs 41/41** (15.1 min, before the gates' fixes, which touch no browser code). **Three defects the gates found were fixed test-first:** v8's stories cache and the data epoch (`7da4e5b7`); the Claude spend record that, after one locked open, refused Claude until a restart (older than v8; `5b6b8763`, `21ff151d`); and v8's own Sarvam test's thin timing margin (`19230a27`), with v6's night-time clock test pinned (`713a50f0`). The ready-to-run production bundle (`.next-prod`, as `start-fast.bat` builds it) was rebuilt on `21ff151d`.
+
 ## v7 (17-18 Nov 2026)
 
 Branch `claude/jarvis-v7-upgrade-00072d` from v6's `736ce5f1`; the brief and the plan are `docs/jarvis/JARVIS_V7.md`, the research `docs/jarvis/v7-research/`. Until 22:45 on 17 Nov no live Claude call was made (the brief); **at 22:45 the owner wrote "use claude api limit 10 dollar"**, and from 22:48 the live runs used **Claude Haiku 5.5 leading** (the planner and the new answer writer) under `JARVIS_LIVE_CLAUDE=1 JARVIS_CLAUDE_BUDGET_USD=10`, with Groq behind it. Each figure below says which model led. The answers are scored by `src/lib/thunai/aide7/eval7.live.ts` on the console's dry-run store (real cached data, read only); every figure has its n.
