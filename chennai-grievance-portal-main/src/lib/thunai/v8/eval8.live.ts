@@ -19,6 +19,7 @@ import fs from "fs";
 import path from "path";
 import { expect, it } from "vitest";
 import { newsDoc } from "@/lib/collector/intel";
+import { incidentNewsDoc } from "../newsdoc";
 import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { serverHands } from "../data";
 import { groqOnly } from "../liverecord";
@@ -37,6 +38,13 @@ import { browserLaneV7, browserLaneV8, type BrowserCtx, type LastFound } from ".
 import { wordsLang, placeWord } from "./lang8";
 import { feedLines, foundStory } from "./newsfind";
 import { checkSet, emptyOutcome, score8, tally8, type Item8, type Outcome8 } from "./eval8";
+import { newsEvents, type NewsEvent, type StoredDoc } from "../web/serve";
+import { newsAide } from "../aide7/news";
+import type { AideOut } from "../aide7";
+import type { Sheet7 } from "../aide7/ground";
+import { generateJson } from "@/lib/ai/gateway";
+import { ledger } from "../ledger";
+import { z } from "zod";
 
 groqOnly();
 if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
@@ -48,6 +56,8 @@ if (V === "v7") process.env.JARVIS_UNDERSTAND = "v7";
 const TAG = process.env.TAG ?? "dry";
 const GAP = Number(process.env.LIVE_GAP_MS ?? 20000);
 const ONLY = (process.env.ONLY ?? "").split(",").filter(Boolean);
+/** ANSWER=1: the aide answers (live), and what Jarvis would say is recorded for the blind judge */
+const ANSWER = process.env.ANSWER === "1";
 const DIR = path.resolve(process.cwd(), "eval", "v8", SET);
 const norm = (s: string) => s.replace(/\r\n/g, "\n");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -102,7 +112,9 @@ async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; s
   const stageCtx = s.stage ? { ...stageContext(s.stage, null), blocks: s.stage.blocks.map((b) => ({ kind: b.kind, ids: (stageContext(s.stage!, null).blocks.find((x) => x.kind === b.kind)?.ids ?? []), labels: labelsOf(b).slice(0, 30) })) } : null;
   const digest = s.stage ? stageDigest({ ...stageEmpty, doc: s.stage }) : null;
   const body = RoundBody.parse({ turnId: `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, round: 0, text, state: s.state, turns: s.turns, stage: stageCtx, stageDigest: digest, direct: null, heard: { lang: heard.lang, conf: 0.95, source: heard.source } });
-  const deps: RoundDeps = noModel ? { aide: { open: async () => { throw new Error("dry: no model"); }, rungs: () => [] }, llm: { generate: (async () => { throw new Error("dry: no model"); }) as never } } as RoundDeps : {};
+  let aideOut: AideOut | null = null;
+  const deps: RoundDeps = noModel ? { aide: { open: async () => { throw new Error("dry: no model"); }, rungs: () => [] }, llm: { generate: (async () => { throw new Error("dry: no model"); }) as never } } as RoundDeps
+    : ANSWER ? { onAide: (x) => { aideOut = x; } } : {};
   try {
     const out = await planRound(body, c.world, c.hands, "eval:v8", { notes: [], habits: {} }, undefined, deps);
     const r = out.result;
@@ -121,6 +133,11 @@ async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; s
     o.reply = r?.reply ?? r?.say ?? null;
     o.model = calls.filter(Boolean).at(-1) ?? null;
     if (out.lane === "no-model" || (noModel && o.kind === "none")) o.lane = "deferred";
+    if (ANSWER) {
+      const a = aideOut as AideOut | null;
+      o.spoken = a ? [...a.written.sentences, ...(a.gap?.said ?? [])] : [r?.say ?? r?.reply ?? ""].filter(Boolean);
+      o.facts = a ? a.sheet.facts.slice(0, 24).map((f) => `${f.id} [${f.src}] ${f.text}`) : [];
+    }
     return { stage: r?.stage ?? null, say: r?.say ?? r?.reply ?? null };
   } catch (e) {
     o.error = (e as Error).message.slice(0, 200);
@@ -164,6 +181,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
     if (bl.lane === "news") {
       if (bl.na.kind === "read") {
         const id = "id" in bl.na.body ? bl.na.body.id : null;
+        if (ANSWER) { const r = await readAloud(c, bl.na.body, said, bl.lang); o.spoken = r.lines; o.facts = r.facts; }
         o.story = id ? await titleOf(id) : `incident ${(bl.na.body as { incident: string }).incident}`;
         o.storyId = id;
         const doc = newsScreen({ lang: bl.lang, kind: "read", outlet: null, en: ["(read)"], ta: ["(read)"], links: o.story ? [{ outlet: "", title: o.story, url: "https://example.invalid/x", publishedAt: null }] : [] });
@@ -176,15 +194,17 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);
           scene.lastFound = { id: f.pick.id, title: f.pick.title, other: f.other ? { id: f.other.id } : null };
+          if (ANSWER) { const r = await readAloud(c, { id: f.pick.id }, said, bl.lang); o.spoken = r.lines; o.facts = r.facts; }
           const doc = newsScreen({ lang: bl.lang, kind: "read", outlet: f.pick.outlet, en: ["(read)"], ta: ["(read)"], links: [{ outlet: f.pick.outlet ?? "", title: f.pick.title, url: "https://example.invalid/x", publishedAt: null }] });
           scene = { ...scene, stage: doc };
           remember("read the news report aloud", doc, null);
         } else if (f) {
           const said8 = await feedLines(bl.na.body.find, f.words, { world: c.world, ...(noModel ? { gap: { feeds: async () => [] } } : {}) });
           o.nothing = !said8.links.length; o.stories = said8.links.map((x) => x.title); o.reply = said8[bl.lang].join(" "); o.kind = "chat";
+          if (ANSWER) o.spoken = said8[bl.lang];
           remember("searched the news", null, o.reply);
         } else { o.kind = "none"; o.reply = "not found"; }
-      } else if (bl.na.kind === "which") { o.kind = "chat"; o.reply = whichLine(bl.na, bl.lang); remember("asked which report", null, o.reply); }
+      } else if (bl.na.kind === "which") { o.kind = "chat"; o.reply = whichLine(bl.na, bl.lang); if (ANSWER) o.spoken = [o.reply]; remember("asked which report", null, o.reply); }
       else { o.kind = "lookup"; o.lane = "lookup"; remember("looked it up on the web", null, null); }
     } else if (bl.lane === "stage") {
       o.kind = "stageOp";
@@ -197,6 +217,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         const body = RoundBody.parse({ turnId: `o${Date.now().toString(36)}`, round: 0, text: said, state: s.state, turns: [], stage: null, stageDigest: null, direct: { recipe: rebuild.recipe, slots: rebuild.slots, lang: bl.lang }, heard: null });
         const out = await planRound(body, c.world, c.hands, "eval:v8", { notes: [], habits: {} }).catch(() => null);
         if (out?.result?.stage) scene = { ...scene, stage: out.result.stage };
+        if (ANSWER) o.spoken = [out?.result?.say ?? ""].filter(Boolean);
       } else if (r) { const sayFx = r.fx.find((x) => x.fx === "say") as { en?: string; ta?: string } | undefined; o.reply = sayFx ? (bl.lang === "ta" ? sayFx.ta : sayFx.en) ?? null : null; }
       remember(`on the Stage: ${bl.cmd.op}`, scene.stage, null);
     } else if (bl.lane === "rules") {
@@ -212,6 +233,21 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   }
   o.ms = Date.now() - t0;
   return { o, scene };
+}
+
+/** ANSWER=1: a news report read as the console reads it (the news route with the aide): the lines said, the facts they came from */
+async function readAloud(c: Ctx, body: { id: string } | { incident: string }, q: string, lang: Lang): Promise<{ lines: string[]; facts: string[] }> {
+  let sheet: Sheet7 | null = null;
+  const aide = newsAide(c.world, { user: "eval:v8", onDone: (_w, s) => { sheet = s; } });
+  const ev: NewsEvent[] = [];
+  try {
+    for await (const e of newsEvents({ ...body, ask: { q: q.slice(0, 400), lang } } as never, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, related: false, user: "eval:v8", aide })) ev.push(e);
+  } catch { /* nothing read */ }
+  const last = ev.filter((e): e is Extract<NewsEvent, { type: "brief" }> => e.type === "brief").at(-1)?.brief;
+  const first = ev.find((e): e is Extract<NewsEvent, { type: "first" }> => e.type === "first");
+  const lines = [...(first ? [first[lang]] : []), ...(last ? last[lang] : [])].filter(Boolean);
+  const sh = sheet as Sheet7 | null;
+  return { lines, facts: sh ? sh.facts.slice(0, 24).map((f) => `${f.id} [${f.src}] ${f.text}`) : [] };
 }
 
 async function sceneFor(c: Ctx, it: Item8, v: "v7" | "v8"): Promise<Scene> {
@@ -301,4 +337,51 @@ it.runIf(MODE === "run")("run: live, the planner ladder", async () => {
   }
   report(rows, `${SET} ${V} live (${TAG})`);
   expect(rows.length).toBeGreaterThan(0);
+}, 6 * 3_600_000);
+
+// ---- the blind judge: v8's spoken answers against v7's, on the same requests (both answered live, ANSWER=1)
+const Verdict = z.object({ reason: z.string(), winner: z.enum(["A", "B", "tie"]) });
+const JUDGE_SYSTEM = `You compare two spoken replies a voice assistant gave the District Collector of Chennai, who speaks English, Tamil or Tanglish and is looking at a console screen. You see what the Collector said, what was on the screen or said before, the facts the replies could use, and two replies, A and B (an empty reply means the assistant stayed silent). Decide which the Collector would rather have had. Judge in this order: (1) it understood the request: it did what was asked, about the right story, case, place or thing, in the language the Collector spoke (a reply in the wrong language is a failure), and stayed silent only when the words were said to someone else in the room; (2) accuracy: anything the facts do not support counts against it; (3) it gives the point first rather than reading out a list; (4) it is short and natural to listen to. Length alone is not a reason. Reply as JSON: {"reason": "<one sentence>", "winner": "A" | "B" | "tie"}.`;
+const rng = (seed: number) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+/** exact two-sided sign test on the decided pairs */
+const signP = (w: number, l: number) => { const n = w + l; if (!n) return 1; const k = Math.min(w, l); let p = 0, c = 1; for (let i = 0; i <= n; i++) { if (i > 0) c = (c * (n - i + 1)) / i; if (i <= k) p += c; } return Math.min(1, (2 * p) / 2 ** n); };
+
+it.runIf(MODE === "judge")("judge: blind pairwise, both orders, v8 against v7", async () => {
+  const model = process.env.JUDGE_MODEL ?? "gemini-3.1-flash-lite";
+  const provider = (process.env.JUDGE_PROVIDER ?? "gemini") as "gemini" | "groq";
+  const read = (t: string) => (JSON.parse(fs.readFileSync(path.join(DIR, "results", `${t}.json`), "utf8")) as { rows: Row8[] }).rows;
+  const a8 = new Map(read(process.env.V8_FROM ?? `${TAG}-v8`).map((r) => [r.id, r])), a7 = new Map(read(process.env.V7_FROM ?? `${TAG}-v7`).map((r) => [r.id, r]));
+  const set = new Map(items().map((x) => [x.id, x]));
+  const r = rng(20261118);
+  const tally = { v8: 0, v7: 0, tie: 0, split: 0, none: 0 };
+  const verdicts: Record<string, unknown>[] = [];
+  for (const [id, x8] of a8) {
+    const x7 = a7.get(id), it0 = set.get(id);
+    if (!x7 || !it0) { tally.none++; continue; }
+    const s8 = (x8.o.silent ? "" : (x8.o.spoken ?? []).join(" ")).trim(), s7 = (x7.o.silent ? "" : (x7.o.spoken ?? []).join(" ")).trim();
+    if (s8 === s7) { tally.tie++; verdicts.push({ id, kind: it0.kind, lang: it0.lang, verdict: "same" }); continue; }
+    const facts = [...new Set([...(x8.o.facts ?? []), ...(x7.o.facts ?? [])])].slice(0, 30).join("\n").slice(0, 5000);
+    const ctx = [it0.screen ? `SCREEN: ${it0.screen === "newsPanel" ? "the console's news panel (today's stories)" : it0.screen}` : "", it0.before?.length ? `SAID BEFORE: ${it0.before.join(" / ")}` : "",
+      it0.mic !== false ? `(heard by the open microphone ${it0.engagedSec ?? 5} s after the assistant last spoke)` : ""].filter(Boolean).join("\n");
+    const order: ("v8" | "v7")[] = r() < 0.5 ? ["v8", "v7"] : ["v7", "v8"];
+    const ask = async (first: "v8" | "v7"): Promise<"v8" | "v7" | "tie" | null> => {
+      const A = first === "v8" ? s8 : s7, B = first === "v8" ? s7 : s8;
+      const prompt = `THE COLLECTOR SAID: ${it0.text}\n${ctx}\nFACTS:\n${facts || "(none)"}\n\nREPLY A:\n${A.slice(0, 2500) || "(silent)"}\n\nREPLY B:\n${B.slice(0, 2500) || "(silent)"}`;
+      try {
+        const res = await generateJson({ role: "fast", name: "v8_judge", schema: Verdict, system: JUDGE_SYSTEM, prompt, temperature: 0, maxOutputTokens: 200, user: "eval", lane: "eval", timeoutMs: 25_000, only: { provider, models: [model] } });
+        ledger().record(provider, model, { tokens: res.info.inputTokens + res.info.outputTokens, lane: "eval" });
+        const w = res.object.winner;
+        return w === "tie" ? "tie" : (w === "A") === (first === "v8") ? "v8" : "v7";
+      } catch { return null; } finally { await sleep(Number(process.env.JUDGE_GAP_MS ?? 7000)); }
+    };
+    const a = await ask(order[0]), b = await ask(order[1]);
+    const verdict = a == null || b == null ? "none" : a === b ? a : "split";
+    tally[verdict as keyof typeof tally]++;
+    verdicts.push({ id, kind: it0.kind, lang: it0.lang, first: a, second: b, verdict });
+    console.log(`[judge] ${id} ${a}/${b} -> ${verdict}`);
+  }
+  const p = signP(tally.v8, tally.v7);
+  fs.writeFileSync(path.join(DIR, "results", `${TAG}.judge-${model}.json`), JSON.stringify({ model, provider, tally, signTestP: p, verdicts }, null, 1));
+  console.log(JSON.stringify({ model, tally, signTestP: p }));
+  expect(verdicts.length).toBeGreaterThan(0);
 }, 6 * 3_600_000);

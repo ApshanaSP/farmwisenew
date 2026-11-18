@@ -29,8 +29,12 @@ import { expect, test, type Page } from "@playwright/test";
 test.skip(!process.env.REAL, "spends real quota: run with REAL=1");
 
 const FX = path.join(process.cwd(), "tests", "e2e", "fixtures", "v6");
-const META = JSON.parse(fs.readFileSync(path.join(FX, "v6.json"), "utf8")) as Record<string, { kind: string; lang: string; text: string; voice: string; source: string; speechMs: number; endMs: number; durMs: number }>;
-const b64 = (n: string) => fs.readFileSync(path.join(FX, `${n}.wav`)).toString("base64");
+// v8: the owner's examples, spoken by Windows' own voices (tests/e2e/fixtures/v8, synthetic, no person)
+const FX8 = path.join(process.cwd(), "tests", "e2e", "fixtures", "v8");
+type Meta = Record<string, { kind: string; lang: string; text: string; voice: string; source: string; speechMs: number; endMs: number; durMs: number }>;
+const META8 = (fs.existsSync(path.join(FX8, "v8.json")) ? JSON.parse(fs.readFileSync(path.join(FX8, "v8.json"), "utf8")) : {}) as Meta;
+const META = { ...(JSON.parse(fs.readFileSync(path.join(FX, "v6.json"), "utf8")) as Meta), ...META8 };
+const b64 = (n: string) => fs.readFileSync(path.join(META8[n] ? FX8 : FX, `${n}.wav`)).toString("base64");
 const TAG = process.env.V6_TAG || "run";
 const PARTS = new Set((process.env.V6_PARTS || "wake,closed,cmd,en,ta,tg").split(","));
 const GAP = Number(process.env.LIVE_GAP_MS || 20_000);
@@ -103,7 +107,7 @@ const init = (flags: Record<string, string> | null) => {
   const speak = speechSynthesis.speak.bind(speechSynthesis);
   speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
     // head: the first words of what is said (Jarvis's own words), to tell the news turn's first line from its brief
-    const rec = { queued: performance.now(), chars: (u.text || "").length, head: (u.text || "").slice(0, 40), voice: u.voice?.name ?? null, lang: u.lang, volume: u.volume };
+    const rec = { queued: performance.now(), chars: (u.text || "").length, head: (u.text || "").slice(0, 40), text: (u.text || "").slice(0, 400), voice: u.voice?.name ?? null, lang: u.lang, volume: u.volume };
     u.addEventListener("start", () => W.__v6.audio.push({ ...rec, kind: "uttStart", at: performance.now() }));
     u.addEventListener("end", () => W.__v6.audio.push({ ...rec, kind: "uttEnd", at: performance.now() }));
     u.addEventListener("error", (e) => W.__v6.audio.push({ ...rec, kind: "uttErr", at: performance.now(), err: (e as SpeechSynthesisErrorEvent).error }));
@@ -318,5 +322,74 @@ test("v6 real latency: closed wake", async ({ page }) => {
     if (woke) { await page.keyboard.press("Control+Shift+J"); await page.waitForFunction(() => (window as unknown as { __jv: { state(): string } }).__jv.state() === "off", null, { timeout: 10_000 }).catch(() => undefined); }
   }
   save("closed", rows);
+  expect(rows.length).toBe(12);
+});
+
+/**
+ * v8 (V6_PARTS=owner8): the owner's five examples on the real path (docs/jarvis/JARVIS_V8.md), each as the owner would say it, with what Jarvis
+ * said (every utterance's words, voice and language), what it showed and what it heard, in one conversation:
+ *   1 a story by its topic ("Open the Supreme Court news on Palikan", a headline read out, "the Pallikaranai marsh story", Tanglish)
+ *   2 a short news question ("What's the news on the Supreme Court?")
+ *   3 a sentence with no topic of its own: no "On it" (nor any filler said twice)
+ *   4 English said with the console set to Tamil: answered in English; Tamil: in Tamil
+ *   5 said to someone else a moment after Jarvis spoke ("Ramesh, ...", "Alexa, ...", "Call him back..."): nothing said, nothing done
+ * Results: eval/v8/real/<tag>-owner8.json (local: the answers may hold a case's title).
+ */
+test("v8 real: the owner's examples", async ({ page }) => {
+  test.skip(!PARTS.has("owner8"), "part not asked for");
+  test.setTimeout(3_600_000);
+  await open(page);
+  await modeOn(page);
+  const rows: Record<string, unknown>[] = [];
+  const wakes = ["wake_zira", "wake_mark"];
+  let k = 0;
+  const said = (s: S, end: number) => s.audio.filter((a) => a.kind === "uttStart" && (a.at as number) > end - 50 && (a as { volume?: number }).volume !== 0)
+    .map((a) => ({ at: Math.round((a.at as number) - end), text: String((a as { text?: string }).text ?? (a as { head?: string }).head ?? ""), voice: (a as { voice?: string }).voice ?? null, lang: (a as { lang?: string }).lang ?? null }));
+  const stageText = () => page.evaluate(() => (document.querySelector(".st-root")?.textContent ?? "").replace(/\s+/g, " ").slice(0, 800));
+  const turn = async (label: string, clip: string, o: { wake: boolean; silent?: boolean }) => {
+    if (o.wake) {
+      await reset(page);
+      const w = await play(page, wakes[k++ % wakes.length]);
+      await page.waitForTimeout(META[wakes[0]].durMs + 200);
+      await settle(page, w.endAt, 8000, false);
+      await page.waitForTimeout(600);
+    }
+    await reset(page);
+    const q = await play(page, clip);
+    await page.waitForTimeout(META[clip].durMs);
+    const s = await settle(page, q.endAt, o.silent ? 9000 : 45_000, !o.silent);
+    const m = measure(s, q.endAt);
+    const words = said(s, q.endAt);
+    const acted = s.marks.some((x) => (x.name === "finding" || x.name === "answer" || x.name === "ack") && x.t > q.endAt - 50);
+    const row = { label, clip, text: META[clip].text, heard: s.hud.ribbon, said: words, stage: await stageText(), acted, silent: !words.length && !acted,
+      firstSound: m.firstSound, finding: m.finding, answerReady: m.answerReady, screen: m.screen, lane: m.trace?.lane ?? null, events: m.events };
+    rows.push(row);
+    console.log(JSON.stringify({ label, heard: row.heard, silent: row.silent, said: words.map((x) => `${x.lang}:${x.text.slice(0, 120)}`) }));
+    return row;
+  };
+  // 1 and 5: a story by its topic, then (Jarvis has just spoken) three lines said to others in the room
+  await turn("ex1-palikan", "o8_palikan", { wake: true });
+  await turn("ex5-ramesh", "o8_ramesh", { wake: false, silent: true });
+  await turn("ex5-alexa", "o8_alexa", { wake: false, silent: true });
+  await turn("ex5-call", "o8_call", { wake: false, silent: true });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(GAP);
+  // 2: a short news question; 1 again: a headline read out, a topic and place, Tanglish
+  for (const [label, clip] of [["ex2-sc-ask", "o8_sc_ask"], ["ex1-hpv", "o8_hpv"], ["ex1-marsh", "o8_marsh"], ["ex1-tanglish", "o8_tg_sc"], ["ex3-no-topic", "o8_other"]] as const) {
+    await turn(label, clip, { wake: true });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(GAP);
+  }
+  // 4: the console set to Tamil; English said, then Tamil
+  await page.evaluate(() => { localStorage.setItem("diq-lang", "ta"); window.dispatchEvent(new CustomEvent("diq:lang", { detail: "ta" })); });
+  await page.waitForTimeout(800);
+  for (const [label, clip] of [["ex4-en-severe", "o8_severe"], ["ex4-en-royapuram", "o8_royapuram"], ["ex4-ta-royapuram", "q_ta_royapuram"]] as const) {
+    await turn(label, clip, { wake: true });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(GAP);
+  }
+  const out = path.join(process.cwd(), "eval", "v8", "real");
+  fs.mkdirSync(out, { recursive: true });
+  fs.writeFileSync(path.join(out, `${TAG}-owner8.json`), JSON.stringify({ tag: TAG, at: new Date().toISOString(), note: "the owner's examples on the real path: synthetic clips (Windows voices), real Whisper, real models, Edge's voices", rows }, null, 1));
   expect(rows.length).toBe(12);
 });

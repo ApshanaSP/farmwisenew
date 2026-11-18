@@ -1,0 +1,123 @@
+{
+ "o8_palikan": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Open the Supreme Court news on Palikan.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3400,
+  "durMs": 3930
+ },
+ "o8_sc_ask": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "What's the news on the Supreme Court?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2590,
+  "durMs": 3120
+ },
+ "o8_hpv": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Open the Health Department and Rotary Club of Madras partner to take forward HPV vaccination story.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 7890,
+  "durMs": 8420
+ },
+ "o8_marsh": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Read the Pallikaranai marsh story.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2400,
+  "durMs": 2930
+ },
+ "o8_tg_sc": {
+  "kind": "owner",
+  "lang": "tg",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Supreme Court news open pannunga.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3100,
+  "durMs": 3630
+ },
+ "o8_ramesh": {
+  "kind": "side",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Ramesh, send the file to the Commissioner.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2730,
+  "durMs": 3260
+ },
+ "o8_alexa": {
+  "kind": "side",
+  "lang": "en",
+  "source": "win",
+  "voice": "David",
+  "text": "Alexa, when was it open?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2430,
+  "durMs": 2960
+ },
+ "o8_call": {
+  "kind": "side",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "Call him back after lunch.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2150,
+  "durMs": 2680
+ },
+ "o8_severe": {
+  "kind": "lang",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Show me the severe cases in Adyar.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2410,
+  "durMs": 2940
+ },
+ "o8_royapuram": {
+  "kind": "lang",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "What's happening in Royapuram?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2130,
+  "durMs": 2660
+ },
+ "o8_other": {
+  "kind": "ack",
+  "lang": "en",
+  "source": "win",
+  "voice": "Zira",
+  "text": "And what about the other thing?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1970,
+  "durMs": 2500
+ }
+}

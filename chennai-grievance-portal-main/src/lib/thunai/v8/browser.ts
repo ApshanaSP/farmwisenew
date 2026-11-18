@@ -99,7 +99,8 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   const t = said.trim();
   // a mission or a memory request is never the news lane's; "brief me on the Minjur desal plant story" names a story, so it is
   const im = intentMarker(said);
-  if ((im && !(im.intent === "brief" && STORY_NOUN.test(t))) || missionIntent(said, c.world)) return null;
+  const briefOnStory = /\bbrief\b/i.test(t) && STORY_NOUN.test(t);
+  if ((im && !(im.intent === "brief" && briefOnStory)) || (missionIntent(said, c.world) && !briefOnStory)) return null;
   if (c.lastFound?.other && OTHER_ONE.test(t)) return { kind: "read", body: { id: c.lastFound.other.id } };
   if (c.lastFound?.title && MORE_ON_IT.test(t)) return { kind: "find", body: { find: { q: `news on ${c.lastFound.title}`.slice(0, 400), lang: c.lang, screen: [] } } };
   const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));

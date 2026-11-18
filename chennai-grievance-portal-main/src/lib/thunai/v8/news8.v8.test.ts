@@ -109,3 +109,12 @@ describe("v8 news: not this lane's", () => {
     expect(topicWords("Supreme Court news open pannunga.", null)).toEqual(["supreme", "court"]);
   });
 });
+
+describe("v8 news: a brief on a named story (the live dev run, 18 Nov)", () => {
+  it("'Brief me on the Minjur desal plant story' is the story's lane, not the mission's brief", async () => {
+    const { newsLane8 } = await import("./browser");
+    const { WORLD } = await import("../fixture");
+    const na = newsLane8("Brief me on the Minjur desal plant story.", { news: { items: [] }, world: WORLD, lang: "en" });
+    expect(na?.kind).toBe("find");
+  });
+});

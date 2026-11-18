@@ -91,6 +91,9 @@ export interface Outcome8 {
   ms: number;
   model: string | null;
   error?: string;
+  /** ANSWER=1: what Jarvis would say (the aide's checked sentences, a news brief, a code line), and the facts they were written from */
+  spoken?: string[];
+  facts?: string[];
 }
 
 export const emptyOutcome = (): Outcome8 => ({ silent: false, why: null, lane: "none", lang: null, kind: null, recipe: null, zones: [], pages: [], story: null, storyId: null, stories: [], caseId: null, reply: null, nothing: false, ms: 0, model: null });
