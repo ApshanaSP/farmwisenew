@@ -131,7 +131,8 @@ export function OutcomeView({ outcome, onAction, onBack }: { outcome: Outcome; o
         <h3 lang={lang}>{t.next}</h3>
         <div className="ds-out-acts">
           {outcome.next.map((a, i) => (
-            <button key={i} ref={i === 0 ? first : undefined} className={i === 0 ? "ds-btn" : "ds-ghost"} onClick={() => onAction(a, outcome)}>
+            <button key={i} ref={i === 0 ? first : undefined} className={i === 0 ? "ds-btn" : "ds-ghost"} onClick={() => onAction(a, outcome)}
+                  data-jarvis-never={["retry", "news", "useAnyway", "refresh"].includes(a.act) || undefined}>
               <I n={ACT_IC[a.act]} /><span lang={lang}>{lang === "ta" ? TA_ACT[a.act] : a.label}</span>
             </button>
           ))}
@@ -236,7 +237,7 @@ export function Picker({ pick, onAdd, onCancel }: { pick: PickSet; onAdd: (ids: 
                         </div>
                         <div className="ds-pcard-cols">{c.headers.slice(0, 6).map((h, i) => <span key={i} className="ds-tag">{h}</span>)}{c.headers.length > 6 && <span className="ds-tag more">+{c.headers.length - 6}</span>}</div>
                         {c.series && sel.has(c.id) && (
-                          <div className="ds-pcard-series" role="group" aria-label="Series">
+                          <div className="ds-pcard-series" role="group" aria-label="Series" data-jarvis-never>
                             <button className="ds-btn sm" onClick={() => onAdd([c.id], "latest")}>{t.latest}</button>
                             <button className="ds-ghost" onClick={() => onAdd([c.id], "all")}>{t.all}</button>
                             <button className="ds-ghost" onClick={() => onAdd([c.id], "connector")}><I n="refresh" />{t.keep}</button>
@@ -264,8 +265,8 @@ export function Picker({ pick, onAdd, onCancel }: { pick: PickSet; onAdd: (ids: 
       <footer className="ds-pick-f">
         {chosen.length >= 2 && !sameCols && <small className="ds-muted" lang={lang}>{t.combineNo}</small>}
         <button className="ds-ghost" onClick={onCancel}>{t.cancel}</button>
-        {sameCols && <button className="ds-ghost" onClick={() => onAdd(chosen.map((c) => c.id), "combine")}><I n="layers" />{t.combine}</button>}
-        <button className="ds-btn" disabled={!chosen.length || (chosen.length === 1 && !!series)} onClick={() => onAdd(chosen.map((c) => c.id), "each")}>
+        {sameCols && <button className="ds-ghost" data-jarvis-never onClick={() => onAdd(chosen.map((c) => c.id), "combine")}><I n="layers" />{t.combine}</button>}
+        <button className="ds-btn" data-jarvis-never disabled={!chosen.length || (chosen.length === 1 && !!series)} onClick={() => onAdd(chosen.map((c) => c.id), "each")}>
           <I n="plus" />{t.add(chosen.length)}
         </button>
       </footer>

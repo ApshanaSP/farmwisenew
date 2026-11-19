@@ -21,7 +21,10 @@ const guarded = (label: string) => `${label} ${label}`.trim();
 
 describe("the click guard, on the string it really sees", () => {
   it("the guard builds its test from the name and the text, each alone and together (keepsSomething)", () => {
-    expect(THUNAI).toContain("keepsSomething(t.name, t.el.textContent)");
+    // v10: through one verdict for a spoken click and a registry press (dom.ts verdictFor -> press10.ts pressVerdict), name and text apart
+    expect(THUNAI).toContain("verdictFor(t.el, t.name ?? \"\")");
+    expect(read("src/components/collector/app/thunai/dom.ts")).toContain("pressVerdict({ name, text: el.textContent,");
+    expect(read("src/components/collector/app/thunai/press10.ts")).toContain("keepsSomething(o.name, o.text)");
     expect(read("src/components/collector/app/thunai/guards.ts")).toContain("[n, t, `${n} ${t}`.trim()].some(");
   });
   it.each(["Save new version", "Pin"])("holds: %s", (b) => expect(KEEP_BUTTON.test(guarded(b))).toBe(true));

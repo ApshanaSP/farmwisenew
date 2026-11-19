@@ -76,7 +76,7 @@ export default function Connect({ initialUrl, onClose, onConnect }: { initialUrl
             <span>How does the site sign in?</span>
             <div className="ds-modes" role="radiogroup">
               {MODES.map((m) => (
-                <button type="button" key={m.mode} role="radio" aria-checked={mode === m.mode} className={mode === m.mode ? "on" : ""} onClick={() => setMode(m.mode)}>
+                <button type="button" key={m.mode} role="radio" aria-checked={mode === m.mode} className={mode === m.mode ? "on" : ""} onClick={() => setMode(m.mode)} data-jarvis-never>
                   {mode === m.mode && <motion.span layoutId="ds-mode-hl" className="ds-mode-hl" transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
                   <I n={m.ic} /><b>{m.title}</b><small>{m.sub}</small>
                 </button>
@@ -118,12 +118,12 @@ export default function Connect({ initialUrl, onClose, onConnect }: { initialUrl
 
           <div className="ds-field">
             <span>Keep it up to date</span>
-            <div className="ds-seg wide">{EVERY.map((e) => <button type="button" key={String(e.v)} className={every === e.v ? "on" : ""} onClick={() => setEvery(e.v)}>{e.t}</button>)}</div>
+            <div className="ds-seg wide">{EVERY.map((e) => <button type="button" key={String(e.v)} className={every === e.v ? "on" : ""} onClick={() => setEvery(e.v)} data-jarvis-never>{e.t}</button>)}</div>
           </div>
 
           {needsOk && (
             <label className="ds-consent">
-              <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />
+              <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} data-jarvis-never />
               <span>I am authorised to use this account to read this data for the Collectorate. <small>Encrypted on this server, never shown again and never sent to an AI model.</small></span>
             </label>
           )}
@@ -132,7 +132,7 @@ export default function Connect({ initialUrl, onClose, onConnect }: { initialUrl
         <footer>
           <span className="ds-connect-note"><I n="shield" />Every read is logged in the audit trail.</span>
           <button type="button" className="ds-ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="ds-btn" disabled={!ready}><I n="bolt" />Connect</button>
+          <button type="submit" className="ds-btn" disabled={!ready} data-jarvis-never><I n="bolt" />Connect</button>
         </footer>
       </motion.form>
     </motion.div>

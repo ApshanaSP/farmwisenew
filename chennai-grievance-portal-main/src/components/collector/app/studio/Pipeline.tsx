@@ -153,7 +153,7 @@ export default function Pipeline({ run, onBack, onRetry, onForce, onDiscard }: {
                   <p>{run.blocked.why}</p>
                   <ul>{run.blocked.signals.map((s, i) => <motion.li key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.07 }}>{s}</motion.li>)}</ul>
                   <div>
-                    {onForce && <button className="ds-btn" onClick={() => onForce(run.blocked!.id)}><I n="right" />Use anyway</button>}
+                    {onForce && <button className="ds-btn" onClick={() => onForce(run.blocked!.id)} data-jarvis-never><I n="right" />Use anyway</button>}
                     {onDiscard && <button className="ds-ghost" onClick={() => onDiscard(run.blocked!.id)}><I n="trash" />Discard</button>}
                   </div>
                 </motion.div>
@@ -162,7 +162,7 @@ export default function Pipeline({ run, onBack, onRetry, onForce, onDiscard }: {
                   <I n="alert" />
                   <b>That did not work</b>
                   <p>{run.error}</p>
-                  <div>{onRetry && <button className="ds-btn" onClick={onRetry}><I n="refresh" />Try again</button>}<button className="ds-ghost" onClick={onBack}>Back</button></div>
+                  <div>{onRetry && <button className="ds-btn" onClick={onRetry} data-jarvis-never><I n="refresh" />Try again</button>}<button className="ds-ghost" onClick={onBack}>Back</button></div>
                 </motion.div>
               ) : run.doneAt ? (
                 <motion.div key="ok" className="ds-run-ok" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>

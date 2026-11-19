@@ -35,7 +35,7 @@ export default function Hero({ samples, onSample, busy }: { samples: SampleInfo[
           <div className="ds-try-g">
             {samples == null && [0, 1, 2].map((k) => <Skeleton key={k} w="100%" h={34} r={9} />)}
             {(samples ?? []).map((s, i) => (
-              <button key={s.key} className="ds-sample" disabled={busy} onClick={() => onSample(s.key)} style={{ ["--i" as string]: i }}>
+              <button key={s.key} className="ds-sample" disabled={busy} onClick={() => onSample(s.key)} data-jarvis-never style={{ ["--i" as string]: i }}>
                 <span className={`ds-sample-ic ${s.icon}`}><I n={s.icon} /></span>
                 <span className="ds-sample-b"><b>{s.title}</b><small>{s.dept}</small><em>{s.blurb}</em></span>
                 <span className="ds-fmt">{s.format}</span>

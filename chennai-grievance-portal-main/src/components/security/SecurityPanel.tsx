@@ -120,7 +120,7 @@ export default function SecurityPanel({ onClose }: { onClose: () => void }) {
             <article className="sec-card">
               <h4><I n="clock" />This session</h4>
               <p>{d?.sessionEnds ? `Ends ${fmt(d.sessionEnds)}; then sign in again.` : "…"}</p>
-              <button className="sec-btn" onClick={others} disabled={busy === "others"}><I n="x" />Sign out every other device</button>
+              <button className="sec-btn" onClick={others} disabled={busy === "others"} data-jarvis-never><I n="x" />Sign out every other device</button>
             </article>
             <article className="sec-card grow">
               <h4><I n="doc" />Recent activity</h4>

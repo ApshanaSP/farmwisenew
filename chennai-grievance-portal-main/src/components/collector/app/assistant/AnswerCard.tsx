@@ -136,8 +136,8 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
           <button className={copied ? "on" : ""} onClick={copy} title={copied ? t.copied : t.copy} aria-label={copied ? t.copied : t.copy}><I n={copied ? "check" : "copy"} /></button>
           <span className="sp" />
           <span>{t.helpful}</span>
-          <button className={vote === 1 ? "on" : ""} onClick={() => feedback(1)} aria-pressed={vote === 1} aria-label={t.yes}><I n="thumbUp" /></button>
-          <button className={vote === -1 ? "on" : ""} onClick={() => feedback(-1)} aria-pressed={vote === -1} aria-label={t.no}><I n="thumbDown" /></button>
+          <button className={vote === 1 ? "on" : ""} onClick={() => feedback(1)} aria-pressed={vote === 1} aria-label={t.yes} data-jarvis-never><I n="thumbUp" /></button>
+          <button className={vote === -1 ? "on" : ""} onClick={() => feedback(-1)} aria-pressed={vote === -1} aria-label={t.no} data-jarvis-never><I n="thumbDown" /></button>
           {onPin && kind === "answer" && card.datasets.length > 0 && (
             <button className={`aq-pin${pinned ? " on" : ""}`} disabled={pinned} title={pinned ? x.pinnedOk : x.pin} aria-label={pinned ? x.pinnedOk : x.pin}
               onClick={async () => setPinned(await onPin(card.id))}><I n="bookmark" />{pinned ? x.pinnedOk : ""}</button>

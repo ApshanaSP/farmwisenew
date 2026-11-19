@@ -69,7 +69,7 @@ export default function JarvisLogView({ geo, onClose }: { geo: MapGeo | null; on
           {measured.map((l) => <p key={l} style={{ margin: "4px 0", fontVariantNumeric: "tabular-nums" }}>{l}</p>)}
         </details>
       )}
-      {list.length > 0 && <div className="jl-foot"><button onClick={() => jarvisLog.clear()}><I n="trash" />{ta ? "பதிவை அழி" : "Clear this list"}</button></div>}
+      {list.length > 0 && <div className="jl-foot"><button onClick={() => jarvisLog.clear()} data-jarvis-never><I n="trash" />{ta ? "பதிவை அழி" : "Clear this list"}</button></div>}
     </>
   );
 }
