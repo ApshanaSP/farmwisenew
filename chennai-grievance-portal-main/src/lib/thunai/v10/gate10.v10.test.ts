@@ -67,4 +67,32 @@ describe("v10: a lone unclear word or a cut-off line that reached the lanes wait
   it.each(["அடுத்து", "Adyar", "stop", "yes", "next", "நன்றி"])("'%s' does not", (said) => {
     expect(lane(said).lane).not.toBe("wait");
   });
+  // v10 review 2, finding 27: the brief's own one-word example and "Please." reached the lanes (unclearWord exempts a filler) and were answered
+  it.each(["தயவுசெய்து,", "Please.", "Please, please."])("a filler alone ('%s') waits", (said) => {
+    expect(lane(said).lane).toBe("wait");
+  });
+  it.each(["yes", "சரி", "no", "இல்லை", "okay"])("a yes, a no or an ack ('%s') is still an answer", (said) => {
+    expect(lane(said).lane).not.toBe("wait");
+  });
+});
+
+describe("v10 review 2: a whole question that ends on 'is' or 'are' is no cut-off line on the open mic either (finding 19)", () => {
+  // v10 review 2, finding 19: the gate's cut-off rule held "Tell me where the relief centres are" in the engaged window, and it was never answered
+  it.each(["Tell me where the relief centres are", "Tell me what the IMD warning is"])("'%s' (5 s after Jarvis spoke) is acted on", (said) => {
+    expect(gate(said, { engagedSec: 5 }).act).toBe(true);
+  });
+  it.each(["And the real problem is the", "What are the", "Tell me if the drain is"])("'%s' is still cut off", (said) => {
+    expect(gate(said, { engagedSec: 5 }).why).toBe("cut-off");
+  });
+});
+
+describe("v10 review 2: a yes or a no in Tamil and Tanglish is no hearsay (finding 21)", () => {
+  // v10 review 2, finding 21: HEARSAY_TA matched ஆமாம் (ஆ + மாம்) and HEARSAY_TG matched "vendaam" (ven + daam): these were silenced
+  it.each(["ஆமாம்", "சரி, ஆமாம்", "Map vendaam", "Adyar report vendaam"])("'%s' 3 s after Jarvis spoke is acted on", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act} ${g.why}`).toBe("true engaged");
+  });
+  it.each(["நாளைக்கு மழை வருமாம்", "Kodungaiyur la thanni illaiyaam"])("'%s' is still hearsay", (said) => {
+    expect(gate(said, { engagedSec: 3 }).why).toBe("hearsay");
+  });
 });

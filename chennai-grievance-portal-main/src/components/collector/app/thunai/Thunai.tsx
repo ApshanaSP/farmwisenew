@@ -1766,7 +1766,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       confirmRef.current = null;
       if (Date.now() - cf.at < 30_000) {
         if (plainYes(said)) { await handle(cf.then, conf, undefined, { ...opts, lang: cf.lang }); return; }
-        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)\b/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
+        // (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil "no": v10 review 2, finding 24)
+        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)(?=[\s,.!?]|$)/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
       }
     }
     // the next step offered after a screen (Level A): a plain yes, or "show me", builds it; anything else puts the offer away
@@ -1813,6 +1814,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const st10 = buildState();
       const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
         lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
+        // typed or spoken: a typed line is finished when Enter is pressed, so it never waits for its rest (v10 review 2, finding 19)
+        source: sourceRef.current,
         // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
         askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
       if (f10.lane?.lane === "wait") {

@@ -537,7 +537,7 @@ export class Conductor {
 
   /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
   get engagedAt(): number | null {
-    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged);
+    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt);
     return t > 0 ? t : null;
   }
   /**
@@ -607,6 +607,9 @@ export class Conductor {
   /** The name was heard: the next sentences are engaged. */
   private engaged = 0;
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
+  /** v10: when a cut-off line was last held for its rest (ignored()): it keeps the window open, but it is no call (the gate's `called` is the name's
+   * alone; a hold that engaged took the next side talk at tier 1: v10 review 2, finding 20) */
+  private heldAt = 0;
   private fromCaptions(text: string) {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
     // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())
@@ -627,15 +630,15 @@ export class Conductor {
    */
   private ignored(text: string, gate: Addressed) {
     if (gate.why === "cut-off" && understandV10()) {
-      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || 0;
-      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.engage(); this.h.onIgnored(text, "cut-off-held"); return; }
+      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.h.onIgnored(text, "cut-off-held"); return; }
     }
     this.h.onIgnored(text, gate.why);
   }
 
   private gateFor(text: string): Addressed {
     const r = this.h.rules(text);
-    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || null;
+    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
     // talking over Jarvis counts as engaged: it was speaking a moment ago
     const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler

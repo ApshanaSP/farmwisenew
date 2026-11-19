@@ -42,8 +42,13 @@ interface W { raw: string; f: string; cls: EntityClass | null; stop: boolean }
 const STOPWORDS = new Set(("a an the this that these those it its is are was were be do does did please can could would will you me my our i we to of in on at for from by with about " +
   "and or but so then now just any some what whats which who how when where why tell show open read give get news story article report latest today update updates " +
   "jarvis hey hi ok okay yes no sir madam la le ku pathi patthi paththi enna sollu sollunga padinga padi kaattu kaattunga thiranga thira pannunga pannu adha idha andha indha " +
-  "seithi seidhi").split(/\s+/));
+  "seithi seidhi " +
+  // (the Tanglish he, she, they and this one, never a name: "avan" sounded as Akvan, v10 review 2, finding 22)
+  "avan aval avar avaru avanga avangal ivan ival ivar ivaru ivanga").split(/\s+/));
 const TA_STOP = /^(?:பற்றி|பத்தி|என்ன|சொல்லுங்க|சொல்லு|படிங்க|படி|காட்டு|காட்டுங்க|திறங்க|திற|செய்தி|நியூஸ்|அந்த|இந்த|அது|இது)/u;
+/** the Tamil he, she, they and this one, with their case endings (அவன், அவனை, அவருக்கு, அவங்க): never a name (அவன் sounded as அக்வான், v10 review 2,
+ * finding 22); whole words only, so a place that begins so (அவனியாபுரம்) still is one */
+const TA_PRON = /^(?:அவ|இவ)(?:ன்|ள்|ர்|ரு|ங்க|ர்கள்|ங்கள்|னை|ளை|ரை|ங்களை|னுக்கு|ளுக்கு|ருக்கு|ங்களுக்கு|னோட|ளோட|ரோட|ன்கிட்ட|ள்கிட்ட|ர்கிட்ட|ங்ககிட்ட)$/u;
 /** a Tamil verb's spoken and written endings (has come, is there, they said, it happened ...): never a name */
 const TA_VERB = new RegExp(`(?:ருக்கு|ருக்கா|ருக்கும்|ருக்கிறது|ருக்கின்றன|ச்சு|ச்சா|ந்தது|ந்துச்சு|றாங்க|ராங்க|ிங்க|ுங்க|ீங்க|ாங்க|ுது|ுதா|ிறது|ின்றன|ின்றது|கிறார்|கிறார்கள்|ட்டாங்க|ட்டார்|னார்|னாங்க|லாம்|ணும்|ணுமா|வேண்டும்|` +
   // (and what went or happened, "திருட்டு போனது" as Pondy: news9, the dry run of 19 Nov)
@@ -52,7 +57,7 @@ const TA_VERB = new RegExp(`(?:ருக்கு|ருக்கா|ருக�
 const wordsOf = (text: string): W[] => text.normalize("NFC").split(/[^\p{L}\p{M}\p{N}'’]+/u).filter(Boolean).map((raw) => {
   const f = fold(raw);
   const ta = /[஀-௿]/u.test(raw);
-  return { raw, f, cls: classOf(raw), stop: ta ? TA_STOP.test(raw) : STOPWORDS.has(f) };
+  return { raw, f, cls: classOf(raw), stop: ta ? TA_STOP.test(raw) || TA_PRON.test(raw) : STOPWORDS.has(f) };
 });
 
 /** The names the request says, best first; spans never overlap (the better mention keeps its words). */

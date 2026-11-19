@@ -10,8 +10,8 @@
 import { describe, expect, it } from "vitest";
 import { WORLD } from "../fixture";
 import { referenceWorld } from "../world";
-import { browserLaneV8 } from "../v8/browser";
-import { browserLaneV10, cutOff, type BrowserCtx10, type BrowserLane10 } from "./browser10";
+import { browserLaneV8, userLang8 } from "../v8/browser";
+import { browserLaneV10, cutOff, joinCut, v10Front, type BrowserCtx10, type BrowserLane10 } from "./browser10";
 import { buildLexicon } from "./lexicon10";
 
 const world = { ...WORLD, ...referenceWorld() };
@@ -187,5 +187,83 @@ describe("v10: what stays as it was", () => {
   });
   it.each(["what's going on", "carry on", "zoom in", "Open that.", "Read it.", "Who is this case assigned to?", "Will you read the second story?"])("'%s' is whole, not cut off", (said) => {
     expect(cutOff(said)).toBe(false);
+  });
+});
+
+describe("v10 review 2: a whole question that ends on 'is' or 'are' is answered, never waited on (finding 19)", () => {
+  // v10 review 2, finding 19: cutOff took every line ending in is/are for a cut-off one, so these were held and never answered (v9 answered them)
+  it.each(["Tell me where the Adyar zonal office is", "Tell me what the IMD warning is", "Find out who the AE for Velachery is", "Tell me where the relief centres are"])("'%s'", (said) => {
+    expect(cutOff(said)).toBe(false);
+    expect(lane(said).lane).not.toBe("wait");
+  });
+  it.each(["And the real problem is the", "What is", "Tell me what is", "Tell me if the drain is", "Check whether the AE is"])("'%s' is still cut off", (said) => {
+    expect(cutOff(said)).toBe(true);
+  });
+  it("a typed line is finished when Enter is pressed: 'Tell me about the' typed is not waited on", () => {
+    const c: BrowserCtx10 = { stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: "en", v7: true, lex, source: "typed" };
+    expect(browserLaneV10("Tell me about the", c).lane).not.toBe("wait");
+    expect(browserLaneV10("Tell me about the", { ...c, source: "whisper" }).lane).toBe("wait");
+  });
+});
+
+describe("v10 review 2: the Tamil and Tanglish 'he' is not Cyclone Akvan (finding 22)", () => {
+  // v10 review 2, finding 22: அவன் / avan sounded within the ask band of Akvan (0.89), so these were asked back "Cyclone Akvan?"
+  const lexA = buildLexicon([...STORIES, { id: "ta1", title: "அக்வான் புயல் நாளை கரையைக் கடக்கும்", titleEn: "Cyclone Akvan to cross the coast tomorrow", t: "2026-11-19 09:00" }], world);
+  const c = (said: string): BrowserCtx10 => ({ stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: /[஀-௿]/u.test(said) ? "ta" : "en", v7: true, lex: lexA });
+  it.each(["அவன் என்ன சொன்னான்?", "அவன் மேல என்ன வழக்கு?", "Adyar AE avan phone edukkala"])("'%s' is not asked back", (said) => {
+    const b = browserLaneV10(said, c(said));
+    expect(b.lane === "confirm" ? b.ask.en : null).toBeNull();
+  });
+  it("the storm said in Tamil letters still is ('அக்வான் புயல் பற்றி சொல்லுங்க')", () => {
+    const said = "அக்வான் புயல் பற்றி சொல்லுங்க";
+    expect(findOf(browserLaneV10(said, c(said)))?.entity?.name).toBe("Cyclone Akvan");
+  });
+});
+
+describe("v10 review 2: a name of the day said alone is answered, never waited on as a noise word (finding 23)", () => {
+  // v10 review 2, finding 23: the one-word wait ran before the lexicon, so a name said or typed alone was taken for a noise
+  const lexA = buildLexicon([...STORIES, { id: "ta1", title: "அக்வான் புயல் நாளை கரையைக் கடக்கும்", titleEn: "Cyclone Akvan to cross the coast tomorrow", t: "2026-11-19 09:00" }], world);
+  const c = (said: string): BrowserCtx10 => ({ stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: /[஀-௿]/u.test(said) ? "ta" : "en", v7: true, lex: lexA });
+  it.each(["Akvan", "Akvan?", "Arlekar", "அக்வான்"])("'%s' does not wait", (said) => {
+    expect(browserLaneV10(said, c(said)).lane).not.toBe("wait");
+  });
+  it.each(["Seithi", "செய்தி"])("the news word alone ('%s') does not wait", (said) => {
+    expect(browserLaneV10(said, c(said)).lane).not.toBe("wait");
+  });
+  it("a noise no lexicon knows still waits ('வாயமுர்ரா.')", () => {
+    expect(browserLaneV10("வாயமுர்ரா.", c("வாயமுர்ரா.")).lane).toBe("wait");
+  });
+});
+
+describe("v10 review 2: 'the Fort' and 'the fast' at a sentence's end are no positions (finding 25)", () => {
+  // v10 review 2, finding 25: with a list on screen, earOrdinals read "the Fort" as "the Fourth" and "the fast" as "the first"
+  const S2 = [...STORIES, { id: "s4", title: "Secretariat staff protest at Fort St George over pay", t: "2026-11-19 10:00" },
+    { id: "s5", title: "Hunger fast by fishermen enters third day at Kasimedu", t: "2026-11-19 09:30" }];
+  const lex2 = buildLexicon(S2, world);
+  const items = S2.map((s) => ({ id: s.id, title: s.title, source: "DT Next" }));
+  const c = (): BrowserCtx10 => ({ stage: { recipe: "news", blocks: [{ kind: "NewsReader", items }], scope: { zone: null }, slots: {} } as never, news: { items }, state: state(), world, listenLang: "en", heardLang: "en", v7: true, lex: lex2 });
+  it("'Any news from the Fort?' searches the news for the Fort", () => {
+    const s = "Any news from the Fort?";
+    expect(v10Front(s, c()).said).toBe(s);
+    expect(browserLaneV10(s, c()).lane).toBe("news");
+  });
+  it("'Any update on the fast?' stays the fast", () => {
+    expect(v10Front("Any update on the fast?", c()).said).toBe("Any update on the fast?");
+  });
+  it.each([["Tell me about the fast news.", "Tell me about the first news."], ["open the fort one", "open the fourth one"], ["open the secand", "open the second"]])("'%s' is still the position", (said, read) => {
+    expect(v10Front(said, c()).said).toBe(read);
+  });
+});
+
+describe("v10 review 2: a noise word that waited is never glued to the next request (finding 26)", () => {
+  // v10 review 2, finding 26: "வாயமுர்ரா." waited (one-word) and joinCut put it in front of the next request, which then came back in Tamil
+  it("'வாயமுர்ரா.' then 'Adyar complaints evvalavu?'", () => {
+    const joined = joinCut({ text: "வாயமுர்ரா.", at: 0 }, "Adyar complaints evvalavu?", 1000);
+    expect(userLang8(joined, null)).toBe(userLang8("Adyar complaints evvalavu?", null));
+    expect(joined).toBe("Adyar complaints evvalavu?");
+  });
+  it("a line cut off before its point still takes its rest ('Tell me about the' ... 'fast news'; 'அந்த' ... 'Adyar report')", () => {
+    expect(joinCut({ text: "Tell me about the", at: 0 }, "fast news", 1000)).toBe("Tell me about the fast news");
+    expect(joinCut({ text: "அந்த", at: 0 }, "Adyar report", 1000)).toBe("அந்த Adyar report");
   });
 });

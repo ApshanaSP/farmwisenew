@@ -81,7 +81,10 @@ export function earOrdinals(text: string, o: { list: boolean }): string {
     const next = words.slice(i + 1).filter(Boolean)[0] ?? "";
     // "fifty" is a number unless said as a position ("the fifty news" is the fifth only with a list's noun after it)
     if (w === "fifty" && !AFTER.test(next)) continue;
-    if (!(BEFORE.test(prev) && (AFTER.test(next) || next === "")) && !(prev === "the" && AFTER.test(next))) continue;
+    // a by-ear form that is itself an English word ("fort", "fast", "fist") is a position only with a list's word after it: at a sentence's end it
+    // is what was said ("Any news from the Fort?", "Any update on the fast?": v10 review 2, finding 25); "secand", "thurd" may end one
+    const end = next === "" && !isEnglishWord(w);
+    if (!(BEFORE.test(prev) && (AFTER.test(next) || end)) && !(prev === "the" && AFTER.test(next))) continue;
     parts[i] = parts[i].replace(/[A-Za-z]+/, (m) => (m[0] === m[0].toUpperCase() ? ord![0].toUpperCase() + ord!.slice(1) : ord!));
   }
   return parts.join("");
