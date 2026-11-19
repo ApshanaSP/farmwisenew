@@ -1,5 +1,127 @@
 # Jarvis mode: results
 
+## v9: v8's news-matching misses (19 Nov 2026)
+
+Branch `claude/dazzling-torvalds-52b811`, built on v8's tip `7fa525fb`. On the owner's yes (19 Nov), `main` was fast-forwarded to it, which brings v5 to v9 into `main` together. The task: fix the miss classes v8's section lists under "Where v8 still misses", each with a failing test first, and measure the fixes on a fresh blind set run once against v8's own commit.
+
+### The blind set, before any fix
+
+`eval/v8/news9/set.json`: 60 requests (news by topic 22, news questions 16, ordinals and outlets on the console's news panel 14, console controls 8; English 24, Tamil 18, Tanglish 18; 20 with speech-to-text slips). Written by a helper that saw neither the code nor `eval/v8/`, only the store's stories (`EVAL8=ref`, 19 Nov 09:43: today's panel of 27 and this week's 120); hashed (`eval/v8/HASHES.txt`, sha256 `f5494087…`) and committed (`d47973e3`) before any fix. **One leak to state:** the helper's report back named its slipped and colloquial words (among them "Kathi para", "N D T V", "Malai Malar", "current thiruttu", "kosu", "current cut"); I saw those words, not the items. The fixes follow v8's miss classes and were written as tests before the report arrived (`news9.v8.test.ts`); the three colloquial words it named ("current", "thiruttu", "kosu") are left out of every new word list on purpose, so those items measure nothing they were tuned on.
+
+### What changed (each with its failing test first; `news9.v8.test.ts`, then `news9r.v8.test.ts` for the review's findings)
+
+| Class (v8's list) | v9 |
+|---|---|
+| Acronym said letter by letter ("I O C L") | joined in the tokenizer, request and headline alike (`b07c1530`) |
+| Place split or spelt by ear ("Kasi medu", "Pattinapakam", "Kodungayur", "Vandaloor") | a split name matched joined, story by story, only on a headline word its parts are not, by spelling; spellings by ear already folded to one key in v8 (their misses were the lane) (`a37876d3`, `f98d938f`) |
+| Outlet misheard ("Deccan Chronical", "ETV Bharath") | outlets read word by word, exact then by ear (a long name's word, no English word); The Indian Express is no longer The New Indian Express (`4464efac`, `6c92d7f0`) |
+| Colloquial Tamil left in the topic ("பத்தின", "-வுல", "மிரண்டு ஓடின") | the spoken forms around a topic are the request's own; -வுல and the accusative's sandhi are case endings; a spoken verb costs a story that lacks it a fifth of a word; a gloss of event and civic nouns lets a Tamil request find an English headline (`405fce85`, `67f592ec`, `e790e466`) |
+| Tamil ordinals past the fifth ("ஏழாவது"), "the last one" | ord8.ts reads positions to the twelfth in three languages; on the console's news panel "the seventh one", "the last one" are its stories (`6b44279e`, `31efc7fd`) |
+| "open the X protest" with no news word | a soft search: a named event (not a place alone, not plural, no console word, no case in focus), taken only above 0.7 and only a story with the event and its naming word; nothing that close, the console's lanes as in v8 (`e7a0cc3b`, `79db9ef1`, `d1ec89b0`) |
+
+### The independent reviews
+
+**First review**, after the six classes were built and before the blind run. Finders by area (matcher, routing, Tamil, wiring, speed) worked over the v8-to-v9 diff, and a verifier reproduced each finding against the code before it counted. 33 were confirmed: 10 high, 13 medium, 10 low. 29 of them were regressions against v8. Two examples:
+- "Marina beach" said in full vetoed every story that writes "Marina" alone.
+- The gloss for தீ (fire) caught the தி in தி.மு.க. and தி.நகர்.
+
+All 33 were fixed, each with its failing test first (`news9r.v8.test.ts`, commits `f98d938f` to `e790e466`).
+
+**Second review**, of those fixes. It started, then stalled on the Claude plan's five-hour usage limit, and was stopped. It is carried to v10 as that build's first step (`docs/jarvis/JARVIS_V10.md`, Part 8). So the fixes after the first review have had no independent review yet.
+
+### The blind set, once (v8's own commit against v9)
+
+Run once, after every fix and the first review, on 19 Nov from 14:15 to 14:26 IST. v8's commit `7fa525fb` ran in a separate checkout and v9 at `e790e466`, side by side, on the same store build (`2026-11-19 10:23:57`):
+
+| | v8's commit | v9 |
+|---|---|---|
+| No model (`final9dry`) | 14/60 | 23/60 |
+| Live, Haiku leading as shipped (`final9live`) | 15/60 | 24/60 |
+
+By kind and language, live:
+
+| | n | v8's commit | v9 |
+|---|---|---|---|
+| News by topic | 22 | 2 | 3 |
+| News questions | 16 | 7 | 10 |
+| Ordinals and outlets on the news panel | 14 | 0 | 5 |
+| Console controls, and one question | 8 | 6 | 6 |
+| English | 24 | 8 | 15 |
+| Tamil | 18 | 3 | 5 |
+| Tanglish | 18 | 4 | 4 |
+
+Live, v9 gained 10 requests and lost 1.
+- **Gained:**
+  - the acronyms said letter by letter (D R I, I O C L);
+  - "Veera Mani";
+  - the Tamil "சைபர் மோசடி பத்தின செய்தி";
+  - "Tiruvotriyur la enna nadandhuchu";
+  - the panel's 7th, 11th and 12th, and the Tamil 8th;
+  - "Malai Malar".
+- **Lost:** "Palli karanai construction ban news padinga". v9 opened the Tamil headline of the same Supreme Court ban; v8 opened an English one. The set's answer names only English words, so it counts as a miss.
+
+**The panel moved between the set's writing and the run.** The writer saw today's panel at 09:43, with 27 stories. The runs' store build had 25, and only one story kept its place.
+- Positions ("the seventh one", "number 11") are scored against the panel at run time, so they are unaffected.
+- The five requests whose answers name a headline from the 09:43 panel are affected. Against the run-time panel:
+  - v9's answer to "the last one on the list, open it" was right: it opened the run-time last story, in its Tamil headline;
+  - NDTV and Makkal Kural had no story on the panel;
+  - DT Next had four.
+
+The scores above stand as measured.
+
+**Where v9 still misses** (the live rows, read after the run; for v10, `docs/jarvis/JARVIS_V10.md`):
+1. **"நியூஸ்" is not a news word.** The Tamil-script spelling of "news", which Whisper writes, is not on v9's list, so "புழல் ஜெயில் நியூஸ் படிங்க" makes no news request at all. v8 had the same gap. Six of the set's Tamil requests made no news request at all for this reason.
+2. **A story described with no news word gets no news request.** That is 13 of the 22 topic requests: "adha padinga", "அத காட்டு", "pull up the ... thing", "show me the ... one". The console's rules or the planner take them, and the planner searched the news for none of them. v9's soft search needs an "open"-type verb and an event word from a fixed list. It fired on two (the D R I seizure, the I O C L fire).
+3. **Weather words take news questions.** Two examples: "மழை பத்தி என்ன நியூஸ் இருக்கு?" and "what's the latest on the cyclone". This is the same fault as the owner's own "Tell me about Cyclone Aquan" (19 Nov, in the local audit log). The instant lane answered it and the news was never searched.
+4. **Ordinals past the twelfth.**
+   - "இருபதாவது" (20th) and "pathinettavadhu" (18th) go to the planner, which does not read them.
+   - "irubathi naalavadhu" (24th) and "irubathi rendavadhu" (22nd) are read as the 4th and the 2nd. That is a wrong story read, the worst kind of miss.
+5. **Tamil describing an English headline** in words no gloss covers. For example, the Collector flagging off vehicles for persons with disabilities.
+6. **Outlets.**
+   - An outlet said in Tamil with a case ending ("மக்கள் குரல்ல") is not read as one.
+   - When an outlet has several stories on the panel, v9 opens one instead of asking which.
+7. **Two console commands that v8 and v9 both miss:** "open the drainage complaints for Ambattur" and "map la Manali zone kaattu".
+
+The probes behind items 1 and 2 are local (`probe9e`, `probe9f`, not committed).
+
+### Regression checks
+
+v8's dev set (`eval/v8/dev`, 105 requests), v8's own commit (`7fa525fb`, a separate checkout) against v9, started together on the same store build (`2026-11-19 10:23:57`):
+
+| | v8's commit | v9 |
+|---|---|---|
+| No model (`devdry1`) | 100/105 | 100/105, every row the same |
+| Live, Haiku leading as shipped (`devlive1`) | 103/105 | 102/105 |
+
+The one live difference is the Tamil "எந்தத் துறை மெதுவாக இருக்கு?" (which department is slow?), a planner turn neither version's lanes touch (the server's round imports nothing v9 changed): in the paired run v9's call found no model (both runs shared Haiku's minute window), and alone it came back an empty plan once and right once; v8's commit was right in all three tries. v8's own notes record the same sentence as "Haiku's empty plan" (RESULTS v8, `live2`). (The two dev reference misses in both are the panel's positions: the store's panel has moved since the set was written on 18 Nov.)
+
+### Sarvam, measured for the first time
+
+The owner made a Sarvam account on 19 Nov and put the key in `.env`. v8's bench (`src/lib/thunai/sarvam.live.ts`, `SARVAM_BENCH=1`) then ran 40 synthetic clips through Whisper and Sarvam `saaras:v4` (codemix, with v8's fixed keyterms). These are synthetic voices, not the Collector's. The result is local, in `data/thunai/sarvam-bench.json`.
+
+| Word error rate | n | Whisper (the race) | Sarvam |
+|---|---|---|---|
+| All | 40 | 0.369 | 0.146 |
+| English | 14 | 0.077 | 0.042 |
+| Tamil | 14 | 0.452 | 0.258 |
+| Tanglish | 12 | 0.612 | 0.138 |
+
+- **Language right:** Whisper 0.90, Sarvam 0.975.
+- **Time:** the Sarvam call took 281 ms at p50 and 403 ms at p90; the Whisper race took 439 ms and 683 ms.
+- **Cost:** 80 calls, 316 billed seconds, Rs 2.58 before GST, from the free signup credit.
+
+`JARVIS_STT_SARVAM` stays off until the owner sets it (`docs/jarvis/SARVAM.md`). The next step is `shadow` on the owner's own voice, then `tamil`; that is the owner's decision, in `docs/jarvis/JARVIS_V10.md`.
+
+### Spend
+
+- **Claude:** the ledger moved from US$1.050 to US$1.136 across the two live blind runs (US$0.086). That includes two of the owner's own console turns made at the same time.
+- **v9's build as a whole:** from US$0.919 at v8's end to US$1.136, so US$0.217. That includes the owner's own console sessions on 19 Nov.
+
+### Gates
+
+- **Jarvis unit suites** on `e790e466`: 218 files and 3,389 tests, all passed. Lint is clean.
+- **The QA gate** (`bash tests/qa/pass7/gate-fast.sh`) runs on a clean tree, on the commit that adds this section. Its result is recorded in the commit after.
+
 ## v8 (18-19 Nov 2026)
 
 Branch `claude/jarvis-v8-700c5f` from v7's `22304da4`; the brief and the plan are `docs/jarvis/JARVIS_V8.md`, the research `docs/jarvis/v8-research/`. The goal, in the owner's words: "think like the world's best AI assistant", understanding "very high", "more powerful", "don't make me run again". The owner's five examples are the spine; every number below is from a result file named beside it (local where the rows hold a citizen's words).
