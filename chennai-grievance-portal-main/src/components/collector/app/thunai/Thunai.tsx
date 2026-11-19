@@ -58,7 +58,7 @@ import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
-import { casesOnStage, newsLane8, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
+import { casesOnStage, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -1285,7 +1285,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // no screen of Jarvis's, the console's own news panel open ("show me the latest news" opens it): its stories, in the order shown,
     // each by one of its stored documents (the same event; the server reads it and the other outlets' coverage); its source is every
     // outlet that ran it, as its card shows them, so "read The Hindu's report" finds a story where The Hindu is not the first
-    if (!doc && cs.panel === "news") {
+    // (v9: Jarvis's read of one story over the open panel, `slots.web`, leaves the panel's stories the news on screen: the review, 19 Nov)
+    if ((!doc || doc.slots?.web) && cs.panel === "news") {
       const all = (hostRef.current.ov as { allNews?: { id: string; docIds?: string[]; outletNames?: string[]; title?: string }[] | null } | null)?.allNews ?? [];
       return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.length ? x.outletNames.join(" · ") : null, title: x.title })), incident: null, reading: null };
     }
@@ -1708,7 +1709,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
     if (!original && v8) {
       const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current,
-        panel: !stageRef.current, cases: casesOnStage(stageRef.current) });
+        panel: onNewsPanel(stageRef.current, buildState()), cases: casesOnStage(stageRef.current) });
       if (n8) {
         const t0 = performance.now();
         // (v9: a soft find, a story-like topic with no news word, that found nothing close goes on to the lanes below, as v8 sent it)

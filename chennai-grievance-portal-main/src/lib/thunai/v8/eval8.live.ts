@@ -102,7 +102,8 @@ const caseIdsOf = (d: StageDocT | null): string[] => (d ? d.blocks.flatMap((b) =
 
 /** the browser's news-on-screen (Thunai.tsx newsOnScreen) */
 const newsOn = (c: Ctx, s: Scene) => {
-  if (!s.stage && s.state.panel === "news") return { items: c.panel.map((x) => ({ id: x.id, source: x.source, title: x.title })), incident: null, reading: null };
+  // (v9: Jarvis's read of one story over the open panel leaves the panel's stories on screen, as Thunai.tsx newsOnScreen does)
+  if ((!s.stage || s.stage.slots?.web) && s.state.panel === "news") return { items: c.panel.map((x) => ({ id: x.id, source: x.source, title: x.title })), incident: null, reading: null };
   const nr = s.stage?.blocks.find((b) => b.kind === "NewsReader");
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   return { items: nr?.kind === "NewsReader" && !s.stage?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [], incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, reading: null };
@@ -165,7 +166,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   const heardLang: Lang = it.heard ?? (/[஀-௿]/.test(said) ? "ta" : "en");
   const listen: Lang = it.ui ?? "en";
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
-  const ctx: BrowserCtx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone } } : null, news: newsOn(c, s), state: s.state, world: c.world, listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true };
+  const ctx: BrowserCtx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone }, slots: (s.stage.slots ?? null) as Record<string, unknown> | null } : null, news: newsOn(c, s), state: s.state, world: c.world, listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true };
   let bl = v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
   // v9: a soft find (a story-like topic with no news word) that finds nothing close goes on to the lane behind it, as Thunai.tsx does
   if (bl.lane === "news" && bl.soft && bl.na.kind === "find") {

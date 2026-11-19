@@ -214,3 +214,61 @@ describe("v9 review, group 3: an outlet heard by ear is a long name's word, neve
     expect(per).toBeLessThan(15);
   });
 });
+
+describe("v9 review, group 4: a position is a position only where it is said as one", () => {
+  const items = Array.from({ length: 12 }, (_, i) => ({ id: `n${i + 1}`, title: `Story ${i + 1}`, source: "The Hindu" }));
+  const lane = async (t: string, o: { panel?: boolean } = {}) => {
+    const { newsLane8 } = await import("./browser");
+    return newsLane8(t, { news: { items }, world, lang: /[஀-௿]/u.test(t) ? "ta" : "en", panel: o.panel ?? true });
+  };
+  it("#8: on the news panel, 'a second', 'First, ...', 'zone number 3' are not stories", async () => {
+    for (const t of ["Wait a second, open the Adyar complaints", "One second, open the Teynampet cases", "First open the Adyar complaints, then the map",
+      "Just a second, please open the map", "Show me zone number 3", "Open ward number 5", "Show me complaint number 7", "Show me zone no. 4"]) {
+      const r = await lane(t);
+      expect(r?.kind === "read" ? r.body : null, t).toBeNull();
+    }
+    // still positions: "the seventh one", "number 7", "open number 12", Tamil and Tanglish ordinals
+    const read = async (t: string) => { const r = await lane(t); return r?.kind === "read" && "id" in r.body ? r.body.id : null; };
+    expect(await read("Jarvis, read me the seventh one")).toBe("n7");
+    expect(await read("open number 12")).toBe("n12");
+    expect(await read("read news number 3")).toBe("n3");
+    expect(await read("ஏழாவது செய்தியைத் திறங்க")).toBe("n7");
+    expect(await read("ezhavadhu onna open pannunga")).toBe("n7");
+  });
+  it("#9: over a case list, 'no one' and a date are not positions", async () => {
+    const { stageRef8 } = await import("./refs8");
+    const rows = Array.from({ length: 20 }, (_, i) => ({ id: `c${i + 1}`, title: "Garbage", place: "Adyar", zoneName: "Adyar" }));
+    for (const t of ["Show me the cases no one has acted on", "Open the complaints no one has picked up", "Show me the ones no one is handling", "Read out the ones that came in on the 15th"])
+      expect(stageRef8(t, rows), t).toBeNull();
+    expect(stageRef8("Open the third one", rows)).toEqual({ op: "open", n: 3 });
+    expect(stageRef8("open number 12", rows)).toEqual({ op: "open", n: 12 });
+    expect(stageRef8("ஏழாவது சம்பவத்தைத் திறங்க", rows)).toEqual({ op: "open", n: 7 });
+  });
+  it("#13: 'the second item' on a Stage with news and cases is the case list's, not a story", async () => {
+    const { newsOrdinal8 } = await import("./refs8");
+    expect(newsOrdinal8("Open the second item", items)).toBeNull();
+    expect(newsOrdinal8("Read the first item", items)).toBeNull();
+    expect(newsOrdinal8("read the seventh news item", items)).toBe("n7");
+  });
+  it("#32: spoken forms past the fifth: ஒம்பதாவது, பன்னிரெண்டாவது, பதினோராவது, ஏழாம், ombadhavadhu, padhinonnavadhu, pannendavadhu; ஒன்னு and நியூஸ்", async () => {
+    const { newsOrdinal8 } = await import("./refs8");
+    const at = (t: string) => newsOrdinal8(t, items, { panel: true });
+    expect(at("ஒம்பதாவது செய்தியைத் திறங்க")).toBe("n9");
+    expect(at("பன்னிரெண்டாவது செய்தியைப் படிங்க")).toBe("n12");
+    expect(at("பதினோராவது செய்தியைப் படிங்க")).toBe("n11");
+    expect(at("ஏழாம் செய்தியைப் படிங்க")).toBe("n7");
+    expect(at("ombadhavadhu news padinga")).toBe("n9");
+    expect(at("padhinonnavadhu news padinga")).toBe("n11");
+    expect(at("pannendavadhu news padinga")).toBe("n12");
+    expect(at("கடைசி ஒன்னைப் படிங்க")).toBe("n12");
+    expect(at("எட்டாவது நியூஸ் படிங்க")).toBe("n8");
+    expect(at("கடைசி நியூஸ் படிங்க")).toBe("n12");
+  });
+  it("#20: after reading one story, the panel's positions still mean the panel (Jarvis's read screen over the open panel)", async () => {
+    const { browserLaneV8 } = await import("./browser");
+    const state = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: "news", incident: null, listLength: 0, lastPlace: null, numbers: false } as never;
+    const readScreen = { recipe: "news", blocks: [{ kind: "NewsReader", rows: [] }], scope: { zone: null }, slots: { web: true } };
+    const bl = browserLaneV8("read the seventh one", { stage: readScreen, news: { items }, state, world, listenLang: "en", heardLang: "en", v7: true });
+    expect(bl.lane === "news" && bl.na.kind === "read" && "id" in bl.na.body && bl.na.body.id).toBe("n7");
+  });
+});

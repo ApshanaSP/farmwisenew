@@ -11,12 +11,15 @@ const EN_CARD = ["one", "two", "three", "four", "five", "six", "seven", "eight",
   "nineteen", "twenty"];
 /** Tanglish: a number's stem and an ordinal ending ("ezhavadhu", "ettaavathu", "pathavadhu") */
 const TG_STEM: [string[], number][] = [[["rend", "irand", "rand"], 2], [["moon", "mun", "moond", "moonr"], 3], [["naal", "naang", "nang"], 4], [["anj", "ainth", "aind"], 5], [["aar", "ar"], 6],
-  [["ezh", "yezh", "eezh", "el", "ezhu"], 7], [["ett", "et"], 8], [["onbad", "onbadh", "onbath", "ombad", "ombath", "onpath"], 9], [["path", "padh", "patth", "paath"], 10]];
+  [["ezh", "yezh", "eezh", "el", "ezhu"], 7], [["ett", "et"], 8], [["onbad", "onbadh", "onbath", "ombad", "ombadh", "ombath", "onpath"], 9], [["path", "padh", "patth", "paath"], 10],
+  // (v9, the review: 11 and 12 as said, "padhinonnavadhu", "pannendavadhu")
+  [["padhinon", "pathinon", "padhinonn", "pathinonn", "padhinor", "pathinor"], 11], [["pannend", "pannirend", "pannirand", "pannendu"], 12]];
 const TG_END = ["avadhu", "aavadhu", "avathu", "aavathu", "vadhu", "vathu", "avadha", "aavadha", "avatha", "aavatha", "avadhai", "aavadhai", "avathai", "aavathai"];
 /** Tamil: a number's stem (without its closing vowel sign) and an ordinal ending (ஏழாவது, ஏழாவதை, ஏழாவதைத்) */
 const TA_STEM: [string[], number][] = [[["இரண்ட", "ரெண்ட"], 2], [["மூன்ற", "மூண"], 3], [["நான்க", "நால"], 4], [["ஐந்த", "அஞ்ச"], 5], [["ஆற"], 6], [["ஏழ"], 7], [["எட்ட"], 8],
-  [["ஒன்பத"], 9], [["பத்த"], 10], [["பதினொன்ற"], 11], [["பன்னிரண்ட"], 12]];
-const TA_END = ["ாவது", "ாவதை", "ாவதைத்", "ாவதைப்", "ாவதைச்", "ாவதில்", "ாவதும்"];
+  // (v9, the review: the spoken ஒம்பது, the spellings பன்னிரெண்டு and பதினோர், and the -ஆம் ordinal, ஏழாம்)
+  [["ஒன்பத", "ஒம்பத"], 9], [["பத்த"], 10], [["பதினொன்ற", "பதினோர"], 11], [["பன்னிரண்ட", "பன்னிரெண்ட"], 12]];
+const TA_END = ["ாவது", "ாவதை", "ாவதைத்", "ாவதைப்", "ாவதைச்", "ாவதில்", "ாவதும்", "ாம்"];
 const ORD_WORD = new Map<string, number>();
 EN_ORDS.forEach((w, i) => ORD_WORD.set(w, i + 1));
 for (const [stems, n] of TG_STEM) for (const s of stems) for (const e of TG_END) ORD_WORD.set(s + e, n);
@@ -39,21 +42,26 @@ export const ordWord = (w: string): number | null => {
 /** the word after a position that makes it a street or a floor, not a place on a list */
 const STREET = /^(?:line|street|st|main|avenue|cross|road|lane|floor|block|stage|phase|sector)$/;
 
-/** Where a sentence names a position: its value (-1: the last), its word's index, the word after it (or null), and whether it is said in the
- * accusative ("ஏழாவதை", "ezhavadhai": the thing itself, no noun needed). "number 7", "no. 9", "நம்பர் 7" count too. */
-export function ordinalAt(text: string): { n: number; i: number; next: string | null; acc: boolean } | null {
+/** Where a sentence names a position: its value (-1: the last), its word's index, the words around it (or null), whether it is said in the
+ * accusative ("ஏழாவதை", "ezhavadhai": the thing itself, no noun needed), and what kind of word it is: an English one ("seventh", "7th",
+ * "last", which needs "the" before it to be a position: "wait a second" is none), a Tamil or Tanglish ordinal ("ஏழாவது", "ezhavadhu"), or
+ * "number 7" ("no. 9", "நம்பர் 7"; "no one" is no position: the review, 19 Nov). */
+export interface OrdinalAt { n: number; i: number; prev: string | null; prev2: string | null; next: string | null; acc: boolean; kind: "en" | "ta" | "number"; words: string[] }
+export function ordinalAt(text: string): OrdinalAt | null {
   const w = ordWordsOf(text);
   for (let i = 0; i < w.length; i++) {
     let n = ordWord(w[i]);
     let at = i;
+    let kind: OrdinalAt["kind"] = /^(?:[a-z]+|\d{1,2}(?:st|nd|rd|th))$/.test(w[i]) && !/(?:vadhu|vathu|adhai|athai|adha|atha)$|^(?:mudhal|modhal|kadaisi|kadasi)/.test(w[i]) ? "en" : "ta";
     if (n == null && /^(?:number|no|item|nambar|நம்பர்|எண்)$/u.test(w[i]) && w[i + 1]) {
-      const c = /^\d{1,2}$/.test(w[i + 1]) ? Number(w[i + 1]) : EN_CARD.indexOf(w[i + 1]) + 1;
-      if (c >= 1) { n = c; at = i + 1; }
+      // a number after "no" only as digits ("no. 9"): "no one" is nobody
+      const c = /^\d{1,2}$/.test(w[i + 1]) ? Number(w[i + 1]) : w[i] === "no" ? 0 : EN_CARD.indexOf(w[i + 1]) + 1;
+      if (c >= 1) { n = c; at = i + 1; kind = "number"; }
     }
     if (n == null) continue;
     const next = w[at + 1] ?? null;
     if (next && STREET.test(next)) continue;
-    return { n, i: at, next, acc: /(?:ை|ைத்|ைப்|ைச்|adhai|athai|aavadhai|aavathai)$/u.test(w[at]) };
+    return { n, i: at, prev: w[i - 1] ?? null, prev2: w[i - 2] ?? null, next, acc: /(?:ை|ைத்|ைப்|ைச்|adhai|athai|aavadhai|aavathai)$/u.test(w[at]), kind, words: w };
   }
   return null;
 }

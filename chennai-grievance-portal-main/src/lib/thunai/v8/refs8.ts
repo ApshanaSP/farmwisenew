@@ -10,7 +10,7 @@
  * Pure.
  */
 import { rankStories, pickStory, topicWords } from "./news8";
-import { ordinalAt, ordinalOf } from "./ord8";
+import { ordinalAt, ordinalOf, type OrdinalAt } from "./ord8";
 
 // (v9: the ordinal reader is ord8.ts, past the fifth and in all three languages; kept exported here for the callers that had it)
 export { ordinalOf };
@@ -37,9 +37,13 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
   const verb = OPEN.test(t) || EXPLAIN.test(t);
   // a reference needs a verb that opens or tells ("Is the Kasimedu one done?" asks about it: the planner's)
   if (!verb) return null;
-  const n = ordinalOf(t);
-  if (n != null) {
-    const k = n === -1 ? rows.length : n;
+  const at = ordinalAt(t);
+  if (at) {
+    // v9 (the review, 19 Nov): a position said as one: "the third", "the 3rd one", "number 3", "ஏழாவது சம்பவத்தை"; never a date ("on the 15th")
+    // and never a position of something else ("the second chart" is NOT_A_CASE's)
+    if (!positionSaid(at) || DATE_BEFORE.test(at.prev2 ?? "")) return null;
+    if (!(at.next == null || at.acc || ONE_AFTER.test(at.next) || VERB_AFTER.test(at.next) || CASE_AFTER.test(at.next) || CASE_WORD.test(t))) return null;
+    const k = at.n === -1 ? rows.length : at.n;
     return k >= 1 && k <= rows.length ? { op, n: k } : null;
   }
   const m = WHERE.exec(t);
@@ -54,11 +58,25 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
   return { op, n: rows.findIndex((r) => r.id === pick.pick!.id) + 1 };
 }
 
-/** a news word right after the position ("the third news", "rendavadhu news", "இரண்டாவது செய்தி", "ஏழாவது செய்தியைத்") */
-const NEWS_AFTER = /^(?:news|story|stories|article|report|headline|piece|item|seithi|seidhi|seythi|sethi|seithiya|seidhiya)$|^(?:செய்தி|சேதி|கட்டுரை)/u;
-/** "one" right after it ("the seventh one", "kadaisi onnu", "ஏழாவது ஒண்ணைப்"), or a verb ("the seventh, open it", "seventh padinga") */
-const ONE_AFTER = /^(?:one|onnu|onna|onnai|onnaiya|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒண்ணைத்|ஒன்று|ஒன்றை|ஒன்றைப்|ஒன்றைத்)$/u;
+/** a news word right after the position ("the third news", "rendavadhu news", "இரண்டாவது செய்தி", "ஏழாவது செய்தியைத்", "எட்டாவது நியூஸ்");
+ * (v9, the review: not "item", the console's word for a Stage's rows: "open the second item" is a case) */
+const NEWS_AFTER = /^(?:news|story|article|report|headline|piece|seithi|seidhi|seythi|sethi|seithiya|seidhiya)$|^(?:செய்தி|சேதி|கட்டுரை|நியூஸ்)/u;
+/** "one" right after it ("the seventh one", "kadaisi onnu", "ஏழாவது ஒண்ணைப்", "கடைசி ஒன்னைப்"), or a verb ("the seventh, open it", "seventh padinga") */
+const ONE_AFTER = /^(?:one|onnu|onna|onnai|onnaiya|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒண்ணைத்|ஒன்னு|ஒன்னை|ஒன்னைப்|ஒன்னைத்|ஒன்று|ஒன்றை|ஒன்றைப்|ஒன்றைத்)$/u;
 const VERB_AFTER = /^(?:open|read|play|please|padi\w*|thira\w*|sollu\w*|kaattu\w*)$|^(?:திற|படி|சொல்|காட்டு)/u;
+/** a case word after the position, or anywhere ("the second case", "ரெண்டாவது சம்பவத்தை", "the second Adyar case") */
+const CASE_AFTER = /^(?:case|cases|complaint|complaints|incident|incidents|petition|grievance)$|^(?:சம்பவ|புகார்|கேஸ்|மனு)/u;
+const CASE_WORD = /\b(?:case|complaint|incident|petition|grievance)s?\b|சம்பவ|புகார்|கேஸ்|மனு/iu;
+/** the console's own things: a position near one of them is its, never a story on the news panel ("zone number 3", "open the Adyar complaints") */
+const CONSOLE_WORD = /\b(?:zones?|wards?|complaints?|cases?|incidents?|petitions?|map|maps|pages?|charts?|graphs?|departments?|taluks?|districts?|rows?|columns?|tabs?)\b|புகார்|சம்பவ|மண்டல|வார்டு/iu;
+/** the words before a date ("on the 15th", "by the 3rd"): no position */
+const DATE_BEFORE = /^(?:on|by|from|since|till|until|before|after|of|dated)$/;
+/** a position said as one (the review, 19 Nov: "wait a second", "First, open ...", "zone number 3" were stories): an English ordinal after
+ * "the"/"that"/"this"; "number 7" at the start, after a verb or after a news word; a Tamil or Tanglish ordinal as it is */
+const positionSaid = (at: OrdinalAt): boolean =>
+  at.kind === "ta" ? true
+    : at.kind === "en" ? /^(?:the|that|this)$/.test(at.prev ?? "")
+      : at.prev == null || /^(?:open|read|play|show|explain|news|story|article|report|headline|item|seithi|padi\w*|thira\w*)$|^(?:செய்தி|திற|படி)/u.test(at.prev);
 
 /**
  * The story on the screen a sentence names by its position, or null. A position with a news word after it, on any news on screen. v9, on the
@@ -74,7 +92,8 @@ export function newsOrdinal8(text: string, items: { id: string }[], o: { panel?:
   const at = ordinalAt(t);
   if (!at) return null;
   const noun = at.next != null && NEWS_AFTER.test(at.next);
-  const bare = o.panel === true && (at.next == null || at.acc || ONE_AFTER.test(at.next) || VERB_AFTER.test(at.next));
+  // (v9, the review: on the panel, the position alone only when said as one, and never near the console's own things)
+  const bare = o.panel === true && positionSaid(at) && !CONSOLE_WORD.test(t) && (at.next == null || at.acc || ONE_AFTER.test(at.next) || VERB_AFTER.test(at.next));
   if (!noun && !bare) return null;
   const k = at.n === -1 ? items.length : at.n;
   return items[k - 1]?.id ?? null;

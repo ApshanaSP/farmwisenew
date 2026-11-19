@@ -37,7 +37,7 @@ export type BrowserLane =
 
 export interface BrowserCtx {
   /** the open Stage's document, if any */
-  stage: { recipe: string; blocks: { kind: string; rows?: unknown }[]; scope?: { zone: number | null } } | null;
+  stage: { recipe: string; blocks: { kind: string; rows?: unknown }[]; scope?: { zone: number | null }; slots?: Record<string, unknown> | null } | null;
   /** what news the screen shows (Thunai.tsx newsOnScreen: Jarvis's news list, else the console's news panel) */
   news: NewsOnScreen;
   /** the console's state (Thunai.tsx buildState) */
@@ -128,6 +128,10 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   return { kind: "find", body: { find: { q: t.slice(0, 400), lang: c.lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })) } }, ...(req.soft ? { soft: true } : {}) };
 }
 
+/** v9: the news on screen is the console's own news panel: no Stage open, or Jarvis's read of one story (`slots.web`) over the open panel
+ * ("read the seventh one" after a first read still means the panel: the review, 19 Nov) */
+export const onNewsPanel = (stage: BrowserCtx["stage"], state: Pick<ScreenState, "panel">): boolean => !stage || (!!stage.slots?.web && state.panel === "news");
+
 /** v9: the open Stage shows a list of cases (a soft find never runs over one) */
 export const casesOnStage = (stage: BrowserCtx["stage"]): boolean => !!stage && stage.blocks.some((b) => b.kind === "CaseList" && Array.isArray(b.rows) && b.rows.length > 0);
 
@@ -145,7 +149,7 @@ export const userLang8 = (said: string, last: Lang | null): Lang => replyLang8(s
 export function browserLaneV8(said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null }): BrowserLane {
   if (!understandV8()) return browserLaneV7(said, c);
   const lang = userLang8(said, c.lastLang ?? null);
-  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: !c.stage, cases: casesOnStage(c.stage) });
+  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: onNewsPanel(c.stage, c.state), cases: casesOnStage(c.stage) });
   if (n8 && !(n8.kind === "find" && n8.soft)) return { lane: "news", na: n8, lang };
   const behind = ((): BrowserLane => {
     // a case on the list on screen, by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க")
