@@ -107,7 +107,8 @@ const LOAN_DIRECT = /^(?:ல|லே|ல்ல|க்கு(?:ப்|க்|த�
 /** a case ending, alone or with its clitic (ும், ஆ, ஏ), on the vowel after the stem's doubled consonant, its glide or a plural */
 const LOAN_CASE = /^(?:ை(?:க்|த்|ப்|ச்|யும்|யா|யே)?|ில்|ிலே|ில|ிலும்|ிலா|ிலேயே|ிலிருந்து|ுக்கு(?:ப்|க்|த்|ம்)?|ுல|ுலே|ோட|ோடு|ோடே|ின்|ுடைய|ால்|ும்|ா|ே|ு)$/u;
 /** Tamil words spelled as a loanword's case form: சர்ச்சை (a controversy) is சர்ச் + ஐ, சாட்டை (a whip) சாட் + ஐ. They, with their own endings,
- * stay themselves (v10 review 2, round 2: "இந்த சர்ச்சை", this controversy, opened Search) */
+ * stay themselves (v10 review 2, round 2: "இந்த சர்ச்சை", this controversy, opened Search), but for the loan's own case form with the doubled
+ * consonant before a verb (round 3: "சர்ச்சைத் திற" is "open the search") */
 const LOAN_NOT = ["சர்ச்சை", "சாட்டை"];
 function loanEnds(stem: string, rest: string): boolean {
   if (!rest || LOAN_DIRECT.test(rest)) return true;
@@ -132,7 +133,7 @@ export function words10(text: string): string[] {
   for (const w of t.split(" ")) {
     if (TAMIL.test(w)) {
       if (LOAN_EXACT[w]) { out.push(LOAN_EXACT[w]); continue; }
-      if (LOAN_NOT.some((n) => w.startsWith(n))) { out.push(w); continue; }
+      if (LOAN_NOT.some((n) => w.startsWith(n) && !/^[கசதப]்$/u.test(w.slice(n.length)))) { out.push(w); continue; }
       const l = LOAN.find(([stem]) => w.startsWith(stem) && loanEnds(stem, w.slice(stem.length)));
       out.push(l ? l[1] : w);
     } else out.push(w);
@@ -211,10 +212,18 @@ const QUOTE_BEFORE = new Set(["called", "named", "saying", "says", "say", "title
 /** "type it": words said to be typed as they are, an article or an object's case among them ("type the drain is blocked in the subject") */
 const DICTATE = /^(?:type|typing|enter|dictate)$/u;
 /** a thing to write about, not the words: an article before it ("add a line to the message"), an object's case after it in Tanglish
- * ("address-a message la podu") or on it in Tamil ("முகவரியைச் செய்தியில் சேர்") */
-const DESCRIBE_BEFORE = new Set(["a", "an", "the", "some", "this", "that", "my"]);
+ * ("address-a message la podu") or on it in Tamil ("முகவரியைச் செய்தியில் சேர்"), or as the first of the words: someone's, something ("add his
+ * phone number to the message", "அவருடைய எண்ணைச் சேர்": v10 review 2, round 3) */
+const DESCRIBE_BEFORE = new Set(["a", "an", "the", "some", "this", "that", "my", "his", "her", "their", "your", "our", "its", "something", "anything",
+  "அவருடைய", "அவரது", "அவனுடைய", "அவனது", "அவளுடைய", "அவளது", "அவர்களுடைய", "அவர்களது", "ஏதாவது", "ஏதோ",
+  "avaroda", "avanoda", "avaloda", "avangaloda", "avangaludaya", "edhavadhu", "ethavathu", "edho"]);
 const ACC_AFTER = new Set(["a", "ai", "ah", "aa"]);
-const TA_ACC = /(?:ை|ைக்|ைச்|ைத்|ைப்)$/u;
+/** the object's case: ை with the doubled consonant after it (முகவரியைச்), the glide before it (முகவரியை) or -த்தை (விவரத்தை); a bare ை ends a noun
+ * of its own (மழை, குப்பை, சாலை, பிரச்சினை: round 3, they were dropped) */
+const TA_ACC = /(?:யை|த்தை|ை[கசதப]்)$/u;
+/** a question's own word in the words (NOT_CONTROL's why, what, which, enna, என்ன): a thing to write about or a question, never words to type; a
+ * title's "how to …" is words ("search the list for how to apply") (v10 review 2, round 3) */
+const ASKS = /\b(?:why|how|what|whats|which|who|whom|whose|when|where|enna|evlo|eppadi|yen|endha|yaaru)\b(?!\s+to\b)|(?:^|\s)(?:ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|யார்|எப்போ)(?:[கசதப]்|து)?(?=\s|$)/iu;
 /** the little words between a preposition and the box ("in the subject", "to my message") */
 const ARTICLE = new Set(["the", "a", "an", "my", "this", "that", "its", "your", "our", "அந்த", "இந்த"]);
 /** a box's own nouns said after its name ("the subject box la") */
@@ -340,25 +349,30 @@ function typedFrame(spoken: string[], at: (string | null)[], restAt: number[], n
   // the words typed: from the first left-over word to the last, the little words between them kept ("how to apply")
   const lo = restAt[0], hi = restAt[restAt.length - 1];
   const value = () => spoken.slice(lo, hi + 1).filter((_, k) => at[lo + k] === null).join(" ").replace(/^(?:by|as|with|into|at|from|called|named)\s+/u, "").trim() || null;
+  // a thing to write about is not the words ("add a line to the message", "write the address in the subject"), unless told to type it
+  const describes = () => !spoken.some((w) => DICTATE.test(w)) && ((lo > 0 && at[lo - 1] === null && DESCRIBE_BEFORE.has(spoken[lo - 1]))
+    || DESCRIBE_BEFORE.has(spoken[lo]) || ACC_AFTER.has(spoken[hi + 1] ?? "") || (TAMIL.test(spoken[hi]) && TA_ACC.test(spoken[hi])));
   const typed = (replace: boolean) => {
     // a manner, not words: "change the message to a formal tone", "set the subject to Tamil" (a redraft, the planner's)
     if (!search && restAt.every((i) => MANNER.test(spoken[i]))) return null;
-    return { value: value(), typed: true, replace };
+    // a question's words: "write what happened at Adyar in the message", "search the list for which ones are overdue" (round 3)
+    const v = value();
+    if (v && ASKS.test(v)) return null;
+    // they replace what the box holds only when they are plainly words: a manner word among them or an article before them is a redraft asked for
+    // ("change the message to be more polite", "replace the message with a new draft"), added to the draft as in round 1, never wiping it (round 3)
+    return { value: v, typed: true, replace: replace && !describes() && !restAt.some((i) => MANNER.test(spoken[i])) };
   };
   const after = (k: number) => lo > k, before = (k: number) => hi < k;
   // the verbs that put or look for words, where they stand
   const verbs = spoken.flatMap((w, i) => (PUT_V.test(w) || (search && SEARCH_V.test(w)) ? [i] : []));
-  // put somewhere: a thing to write about is not the words ("add a line to the message", "write the address in the subject"), unless told to type it
-  const placed = () => {
-    const describes = !spoken.some((w) => DICTATE.test(w)) && ((lo > 0 && at[lo - 1] === null && DESCRIBE_BEFORE.has(spoken[lo - 1]))
-      || ACC_AFTER.has(spoken[hi + 1] ?? "") || (TAMIL.test(spoken[hi]) && TA_ACC.test(spoken[hi])));
-    return describes && !search ? null : typed(false);
-  };
-  // the box as the place the words go, the verb before them: "type drain overflow in the subject", "type in the subject drain overflow", "search
-  // for Adyar in the list" (never "what should I write in the message": the words before the verb are not what it writes)
+  // put somewhere
+  const placed = () => (describes() && !search ? null : typed(false));
+  // the box as the place the words go, the verb before them: "type drain overflow in the subject", "type in the subject drain overflow", "in the
+  // subject type drain overflow" (round 3), "search for Adyar in the list" (never "what should I write in the message": the words before the verb
+  // are not what it writes)
   let jb = first - 1;
   while (jb >= 0 && at[jb] === null && (ARTICLE.has(spoken[jb]) || BOX_W.has(spoken[jb]) || qual(spoken[jb]))) jb--;
-  if (jb >= 0 && at[jb] === null && INTO_W.has(spoken[jb]) && ((before(jb) && verbs.some((v) => v < lo)) || (after(last) && verbs.some((v) => v < jb)))) return placed();
+  if (jb >= 0 && at[jb] === null && INTO_W.has(spoken[jb]) && (before(jb) || after(last)) && verbs.some((v) => v < lo)) return placed();
   // the box said with a locative: "subject la drain overflow podu", "தலைப்பில் வடிகால் அடைப்பு போடு", "drain overflow subject la podu"
   let ka = last + 1;
   while (ka < n && at[ka] === null && BOX_W.has(spoken[ka])) ka++;
@@ -370,6 +384,8 @@ function typedFrame(spoken: string[], at: (string | null)[], restAt: number[], n
   // is replaced); a put "to" is someone the draft is for ("write a message to the zonal officer"), never words
   const to = ka < n ? spoken[ka] : "";
   if (((set && TO_W.has(to)) || (put && (to === "with" || to === "as"))) && after(ka)) return typed(true);
+  // "set the subject: drain overflow", "set subject drain overflow": set, the box, its words straight after it (typed in round 1; round 3)
+  if (spoken.slice(0, first).includes("set") && lo === ka) return typed(false);
   // a search box searched for them: "search the list for …"
   if (search && ka < n && spoken[ka] === "for" && after(ka)) return typed(false);
   // the words quoted: "subject-a drain overflow nu maathu", "தலைப்பை … என்று மாற்று", "… called Daily Briefing"

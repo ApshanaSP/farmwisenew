@@ -360,3 +360,58 @@ describe("v10 review 2, round 2: the verifier's problems with the round-1 fixes"
     expect(controlCommand10("add inspect by Friday to the message", ctx({ panel: "incident" }, { visible: TA }))?.replace).toBeFalsy();
   });
 });
+
+describe("v10 review 2, round 3: the verifier's problems with the round-2 controls fixes", () => {
+  const lane = (said: string, o: Partial<ScreenState>, visible: string[] | null, x: Partial<BrowserCtx10> = {}) =>
+    v10Front(said, { stage: null, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible, ...x }).lane;
+  const TA = ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"];
+  const LIST = ["list.filter", "list.department", "list.severity", "list.status", "list.timeRange", "list.page.next", "list.page.prev"];
+  const INC: Partial<ScreenState> = { panel: "incident", incident: "INC-1" };
+  const typed = (said: string, o: Partial<ScreenState>, visible: string[], listenLang: "en" | "ta" = "en") => {
+    const l = lane(said, o, visible, { listenLang });
+    return l && l.lane === "control" && l.press && l.value ? `${l.id} <- "${l.value}"` : null;
+  };
+
+  // v10 review 2, round 3: the set frame's replace wiped the draft for a redraft request one word away from the manner guard (the console's side,
+  // the draft itself, is in controls.v10.test.ts)
+  it.each(["change the message to be more polite", "replace the message with a new draft", "change the message to a more polite one"])(
+    "'%s' never asks for the draft to be replaced", (said) => {
+      const l = lane(said, INC, TA);
+      expect(l?.lane === "control" ? !!l.replace : false).toBe(false);
+    });
+  it("'set the message to …' still replaces the draft, and the subject is still set to words with a manner word among them", () => {
+    expect(controlCommand10("set the message to inspect tomorrow", ctx(INC, { visible: TA }))).toMatchObject({ id: "ta.message", value: "inspect tomorrow", replace: true });
+    expect(controlCommand10("set the subject to water shortage in Adyar", ctx(INC, { visible: TA }))).toMatchObject({ id: "ta.subject", value: "water shortage in adyar" });
+  });
+
+  // v10 review 2, round 3: a question, or a thing to write about, was typed into the draft word for word (round 2 excused a typed box's question words)
+  it.each(["write what happened at Adyar in the message", "add what happened at Adyar to the message", "write why the drain is blocked in the message",
+    "add his phone number to the message", "add something about the inspection to the message"])("'%s' does not type into the Take action draft", (said) => {
+    expect(typed(said, INC, TA)).toBeNull();
+  });
+  it("a question about the list is not typed into its search; a title's 'how to' still is", () => {
+    expect(typed("search the list for which ones are overdue", { panel: "list" }, LIST)).toBeNull();
+    expect(controlCommand10("search the list for how to apply", ctx({ panel: "list" }, { visible: LIST }))).toMatchObject({ id: "list.filter", value: "how to apply" });
+  });
+
+  // v10 review 2, round 3: Tamil dictation whose last word ends in ஐ (மழை, குப்பை, சாலை, பிரச்சினை) was read as an object's case and dropped
+  it.each([["தலைப்பில் வடிகால் பிரச்சினை எழுது", "வடிகால் பிரச்சினை"], ["தலைப்பில் மழை பிரச்சினை என்று எழுது", "மழை பிரச்சினை"],
+    ["தலைப்பில் அண்ணா சாலை போடு", "அண்ணா சாலை"], ["தலைப்பில் மழை போடு", "மழை"], ["தலைப்பில் குப்பை போடு", "குப்பை"]])("'%s' types into the subject", (said, want) => {
+    expect(typed(said, INC, TA, "ta")).toBe(`ta.subject <- "${want}"`);
+  });
+
+  // v10 review 2, round 3: the verb said after the locative, and "set" with no "to", typed in round 1 and were dropped in round 2
+  it.each([["in the subject type drain overflow", "ta.subject", "drain overflow"], ["in the subject put drain overflow", "ta.subject", "drain overflow"],
+    ["set the subject: drain overflow", "ta.subject", "drain overflow"], ["set subject drain overflow", "ta.subject", "drain overflow"],
+    ["in the message write please inspect by Friday", "ta.message", "inspect by friday"]])("'%s' types into the box", (said, id, want) => {
+    expect(typed(said, INC, TA)).toBe(`${id} <- "${want}"`);
+  });
+
+  // v10 review 2, round 3: சர்ச்சை (controversy) kept as itself also kept the loanword's own accusative: "சர்ச்சைத் திற" (open the search)
+  it("'சர்ச்சைத் திற' opens the search; the controversy stays itself", () => {
+    const l = lane("சர்ச்சைத் திற", {}, [], { listenLang: "ta" });
+    expect(l?.lane === "control" ? l.id : null).toBe("topbar.search.open");
+    expect(words10("சர்ச்சைத்")).toEqual(["search"]);
+    expect(words10("இந்த சர்ச்சை")).toEqual(["இந்த", "சர்ச்சை"]);
+  });
+});

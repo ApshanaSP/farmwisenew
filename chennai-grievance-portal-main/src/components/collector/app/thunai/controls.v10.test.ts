@@ -19,6 +19,8 @@ import { isDangerButton } from "@/lib/thunai/skeleton";
 import type { ScreenState } from "@/lib/thunai/types";
 import { CONTROLS10 } from "@/lib/thunai/v10/controls10.data";
 import { controlCommand10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
+import { v10Front } from "@/lib/thunai/v10/browser10";
+import { WORLD } from "@/lib/thunai/fixture";
 import { ITEM_ROWS, PRESS_ALLOW, TARGETS, bestOption, parseSpec, pressKind, pressVerdict } from "./press10";
 
 const APP = path.join(__dirname, "..");
@@ -291,6 +293,20 @@ describe("v10 review 2: a registry press on a page (linkedom)", () => {
     expect(i).toBeGreaterThan(0);
     expect(thunai.slice(i, thunai.indexOf(");", i))).toMatch(/replace: !!cl\.replace/);
   });
+  // v10 review 2, round 3: a redraft request one word away from the manner guard ("change the message to be more polite") carried the set frame's
+  // replace: the console cleared Take action's whole draft and typed the words, with no yes and no undo
+  it.each(["change the message to be more polite", "replace the message with a new draft", "change the message to a more polite one"])(
+    "'%s' never wipes the draft (v10 review 2, round 3)", async (said) => {
+      const DRAFT = "Dear Zonal Officer, please inspect the blocked drain at Adyar and report by Friday.";
+      const ta = document.querySelector("textarea")!;
+      ta.value = DRAFT;
+      const state: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: "incident",
+        incident: "INC-1", list: [], lastFilter: null, lastPlace: null, numbers: false, now: 0 };
+      const cl = v10Front(said, { stage: null, news: {}, state, world: WORLD, listenLang: "en", visible: ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"] }).lane;
+      // as Thunai.tsx runs a control lane's press
+      if (cl?.lane === "control" && cl.press) await dom.pressControl(cl.press, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes: false, replace: !!cl.replace });
+      expect(ta.value).toContain("Dear Zonal Officer");
+    });
 });
 
 describe("the registry's press selectors name elements the console has", () => {
