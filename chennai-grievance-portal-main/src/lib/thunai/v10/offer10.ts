@@ -74,7 +74,8 @@ export type OfferAct =
 const flat = (s: string) => s.normalize("NFC").toLowerCase().replace(/[’']/g, "'").replace(/[.?!,;:]+/g, " ").replace(/\s+/g, " ").trim();
 // ("okay thanks", "thanks": that's all, as v9's plainYes reads it, never a yes: v10 review 2, finding 8)
 const NO = /^(?:no|nope|not now|no thanks|no thank you|leave it|that's all|that's it|nothing|later|(?:ok |okay )?(?:thanks|thank you)|வேண்டாம்|இல்லை|இல்ல|இப்போ வேண்டாம்|இப்போது வேண்டாம்|vendaam|venaam|vendam|venam|illa|illai|parava illa|paravaillai)(?: (?:thanks|thank you|jarvis|now))*$/u;
-const NEGATED = /\b(?:don't|dont|do not|no need|never)\b|வேண்டாம்|வேணாம்|\bvendaam\b|\bvenaam\b|\bvendam\b/u;
+// (round 3: and a "don't" said as the verb's own ending: "இதை கவனிக்காதீங்க", "ஃபாலோ பண்ணாதீங்க", "கவனிக்காதே", "map-la kaattadheenga")
+const NEGATED = /\b(?:don't|dont|do not|no need|never)\b|வேண்டாம்|வேணாம்|\bvendaam\b|\bvenaam\b|\bvendam\b|ாதீங்க|ாதீர்|ாதே(?=\s|$)|\b[a-z]{3,}(?:aa?dh|aa?th)(?:ee|i)nga\b/u;
 /** the offer's own question ("Shall I show them on the map, ...", "வரைபடத்தில் காட்டட்டுமா"): Jarvis's words, not the Collector's */
 const OWN = /\bshall i\b|காட்டட்டுமா|செய்யட்டுமா|படிக்கட்டுமா|சொல்லட்டுமா/u;
 const YES = /^(?:(?:jarvis|ok|okay)\s+)?(?:yes|yeah|yep|yup|sure|ok|okay|go ahead|do it|please do|please|yes please|ஆமா|ஆமாம்|ஆம்|சரி|சரிங்க|பண்ணுங்க|aama|aamam|aamaa|sari|seri|seringa|pannunga)(?:\s+(?:please|jarvis|sir|do it|go ahead|பண்ணுங்க|பண்ணு|pannu|pannunga))*$/u;
@@ -86,6 +87,17 @@ const MAP = /\bmaps?\b|\bmap-?(?:la|le|il|ula|ah|a)\b|வரைபட|மேப�
  * cases close to the bus stop", "show them on the map and zoom in" are the story's (v10 review 2, finding 2; round 2)
  */
 const MAP_CONTROL = /^(?:(?:ok|okay|jarvis|please|now|hey|can you|could you|would you|will you)\s+)*(?:close|hide|clear|reset|zoom|switch|turn|toggle|remove|export|save|download|print|share|exit|minimi[sz]e|maximi[sz]e|pan|centre|center)\b|\b(?:legend|layers?|satellite|base ?map|heat ?map|street view|terrain)\b|\b(?:close|hide|clear|reset|zoom|switch off|off|remove|save|download)\s*(?:pannu\w*|panni\w*|pannidu\w*)|மூடு|மறைத்|மறைச்|மறையுங்க|ஜூம்|பெரிதாக்கு|சிறிதாக்கு/u;
+/**
+ * A control word anywhere is the map's own, as it was before round 2, unless the Collector asked to show first ("show them on the map and zoom
+ * in", "show the cases close to the bus stop"): "just close the map", "no, close the map", "you can hide the map now" (v10 review 2, round 3)
+ */
+const CONTROL_ANY = /\b(?:close|hide|clear|reset|zoom|switch|turn off|export|save|download)\b/;
+const SHOW_VERB = /\b(?:show|plot|pull up|put|mark|display)\b/;
+function mapControl(t: string): boolean {
+  if (MAP_CONTROL.test(t)) return true;
+  const c = t.search(CONTROL_ANY), v = t.search(SHOW_VERB);
+  return c >= 0 && (v < 0 || v > c);
+}
 const SHOW = /^(?:(?:yes|ok|okay|sure|please|jarvis)\s+)*(?:show|plot|pull up)(?: (?:it|them|those|that|these|me|me them|the area|the cases|the complaints|the place))?(?: (?:please|jarvis))*$|^(?:சரி |ஆமா )?(?:காட்டு|காட்டுங்க|காட்டுங்கள்)$|^(?:sari |aama )?(?:kaattu|kaatu|kaattunga|kaatunga)$/u;
 const DRAFT = /\bdraft\b|\b(?:write|send|prepare)(?: (?:a|an|the))? (?:note|letter|mail|e-?mail|message|memo)\b|\b(?:note|letter|mail|message|memo) to (?:the )?(?:officer|ae|ee|aee|engineer|department|dept|official)\b|\b(?:officer|ae|department|dept)-?(?:ku|kku|ukku|kitta)\b.*\b(?:note|letter|mail|ezhudhu\w*|ezhuthu\w*|eluthu\w*)\b|டிராஃப்ட்|டிராப்ட்|வரைவு|குறிப்பு\s*எழுது|கடிதம்\s*எழுது|மெயில்\s*எழுது|அதிகாரிக்கு.*(?:எழுது|குறிப்பு|அனுப்பு)/u;
 // (Tanglish and Tamil anchored as the English is, the story or nothing followed: "Teynampet zone follow pannunga" and "officer-a follow pannunga"
@@ -98,7 +110,9 @@ const FOLLOW = /^(?:(?:yes|ok|okay|sure|please|jarvis|hey)\s+)*(?:follow|track|k
  * whole (v10 review 2, finding 2); "the full report in Tamil" or "of The Hindu" is still the story's (round 2: any word after "report on/of/in" was
  * taken for the console's). A place, a kind, a time or a status named is aboutElse's.
  */
-const FULL_OF = /\b(?:report|list|details?|data|summary|breakdown|status|numbers|figures|stats|statistics) (?:on|of|about|for|in|from) (?:\S+ ){0,4}?(?:cases?|complaints?|incidents?|grievances?|petitions?|tickets?|records?|zones?|wards?|departments?|depts?|the console|the dashboard)\b|புகார்|சம்பவ|வழக்கு/u;
+// (round 3: in Tamil the console's records, many of them: "புகார்கள் பற்றி முழுசா சொல்லுங்க"; one incident or case is the story's: "அந்த சம்பவத்தைப்
+// பற்றி முழுசா படிங்க")
+const FULL_OF = /\b(?:report|list|details?|data|summary|breakdown|status|numbers|figures|stats|statistics) (?:on|of|about|for|in|from) (?:\S+ ){0,4}?(?:cases?|complaints?|incidents?|grievances?|petitions?|tickets?|records?|zones?|wards?|departments?|depts?|the console|the dashboard)\b|புகார்கள்|வழக்குகள்|சம்பவங்கள்/u;
 
 /** "what do we have on this?": the console's records on the story just read (it must point at the story, or be short enough to) */
 const GROUND_EN = /\bwhat (?:do|have|did) we (?:got|have|know|hold)\b|\bwhat have we got\b|\bdo we have (?:any(?:thing)?|complaints?|cases?|records?|incidents?|grievances?)\b|\b(?:any|are there(?: any)?) (?:open )?(?:complaints?|cases?|incidents?|grievances?)\b|\bwhat (?:does|do|did) (?:the console|our (?:data|records?|console)|the records?|the data|the dashboard) (?:say|show|have|hold)\b|\b(?:anything|what'?s|what is) (?:on|in) (?:the console|our (?:records?|data|console|side)|the dashboard)\b|\bground truth\b|\bcheck (?:it |this |that )?(?:against|with) (?:the console|our (?:records?|data))\b|\bhave (?:people|citizens|residents) complained\b/;
@@ -161,28 +175,39 @@ const TA_NOT_PLACE = /^(?:இத|அத|இங்க|அங்க|எங்க|�
 const TA_POINT = /^(?:இந்த|இந்தப்|இந்தச்|இந்தத்|அந்த|அந்தப்|அந்தச்|அந்தத்|இதே|அதே|கடந்த|போன|அடுத்த)$/u;
 
 /**
- * The places a sentence names by the words around them, whatever the world holds: a name after "in", "at", "near" or "around" (in any case, as typed
+ * The places a sentence names by the words around them, held by the world or not: a name after "in", "at", "near" or "around" (in any case, as typed
  * or captioned), one with a Tanglish "-la", a Tamil word with a place's case ending. Each is given as the ways it may be read (an English name as
  * its first one, two and three words; a Tamil one alone and with the word before it). The words that name no place, a department or public body,
  * a time are left out (v10 review 2, round 2: only a capitalised English name was found without the world, so "வேளச்சேரியில் புகார் ஏதாவது
  * இருக்கா?" and "show the drainage complaints in velachery on the map" were taken for the story's).
  */
-function placeWords(raw: string, t: string, w: World): string[][] {
+function placeWords(raw: string, t: string, w: World, from = false): string[][] {
   const nfc = raw.normalize("NFC"), orgs = orgsOf(w), out: string[][] = [];
-  // an acronym alone after the word ("at GCC", "at CMWSSB"): a body, never a locality ("in KK Nagar" is one)
-  const acr = new Set([...nfc.matchAll(/\b(?:[Ii]n|[Aa]t|[Nn]ear|[Aa]round) (?:the )?([A-Z]{2,8})\b(?! \p{Lu})/gu)].map((m) => m[1].toLowerCase()));
+  // With the console's names (the district's localities and taluks), a lower-case or Tamil word they do not hold is far likelier an ordinary
+  // word ("in terms of", "in bullet points", "email-la", "விஷயத்துல", "வாட்ஸ்அப்பில்") than a place: only a name written as one (capitalised, as
+  // round 1 read it) is read by the words around it, the rest by the world's names (v10 review 2, round 3). Without them, every script, as round 2.
+  const world = w.places.length > 0 || w.taluks.length > 0;
+  const cased = nfc.replace(/[’']/g, "'").replace(/[.?!,;:]+/g, " ").replace(/\s+/g, " ").trim();
+  const named = (i: number) => !world || (cased.length === t.length && /\p{Lu}/u.test(cased[i] ?? ""));
+  // an acronym alone after "at" ("at GCC", "at CMWSSB"): a body; after "near" or "in" it is a road or a place ("near OMR", "in ECR": round 3)
+  const acr = new Set([...nfc.matchAll(/\b[Aa]t (?:the )?([A-Z]{2,8})\b(?! \p{Lu})/gu)].map((m) => m[1].toLowerCase()));
   // (each "in", "at", "near" read, none swallowed by the one before: "in velachery near adyar"; a name ends at a word that names no place)
-  for (const m of t.matchAll(/\b(?:in|at|near|around) (?=([a-z][\w.]*(?:-[a-z]+)*(?: [a-z][\w.]*){0,2}))/g)) {
-    const all = m[1].replace(/-(?:la|le|ula|a|ah|aa)$/, "").split(" ");
-    if (NOT_PLACE_EN.has(all[0]) || acr.has(all[0])) continue;
+  // ("from" too, for an ask of the cases or a note, not the story read whole, whose "from" is its outlet: "any complaints from Medavakkam?": round 3)
+  for (const m of t.matchAll(/\b(in|at|near|around|from) (?=([a-z][\w.]*(?:-[a-z]+)*(?: [a-z][\w.]*){0,2}))/g)) {
+    if (m[1] === "from" && !from) continue;
+    const all = m[2].replace(/-(?:la|le|ula|a|ah|aa)$/, "").split(" ");
+    if (NOT_PLACE_EN.has(all[0]) || (m[1] === "at" && acr.has(all[0])) || !named(m.index + m[0].length)) continue;
     const cut = all.findIndex((x) => NOT_PLACE_EN.has(x));
     const ws = cut > 0 ? all.slice(0, cut) : all;
-    if (ws.some((x, i) => orgs.has(ws.slice(0, i + 1).join(" ")) || ORG_HEAD.has(x))) continue;
+    // a department or body after "in", "at" or "from" ("the officer at Metro Water"); after "near" or "around", a name is a place ("near Central
+    // Station", "near Chetpet station": round 3)
+    if (m[1] !== "near" && m[1] !== "around" && ws.some((x, i) => orgs.has(ws.slice(0, i + 1).join(" ")) || ORG_HEAD.has(x))) continue;
     if (readPeriod(ws.join(" ")).kind !== "none") continue;
     out.push(ws.map((_, i) => ws.slice(0, i + 1).join(" ")));
   }
-  for (const m of t.matchAll(/\b([a-z][a-z.]{2,})(?:-| )(?:la|le|ula|lae)\b/g)) if (!NOT_PLACE_TG.has(m[1]) && !orgs.has(m[1])) out.push([m[1]]);
+  for (const m of t.matchAll(/\b([a-z][a-z.]{2,})(?:-| )(?:la|le|ula|lae)\b/g)) if (named(m.index) && !NOT_PLACE_TG.has(m[1]) && !orgs.has(m[1])) out.push([m[1]]);
   for (const m of nfc.matchAll(/\b(\p{Lu}\p{L}{3,})(?:la|ula)\b/gu)) { const x = m[1].toLowerCase(); if (!NOT_PLACE_TG.has(x) && !orgs.has(x)) out.push([x]); }
+  if (world) return out;
   const toks = t.split(" ");
   toks.forEach((x, i) => {
     const before = toks[i - 1] ?? "";
@@ -197,6 +222,16 @@ const saysName = (s: string, en: string, ta: string | null | undefined) => {
   const e = spaced(en).trim(), a = ta ? spaced(ta).trim().replace(/[்ுூ]$/, "") : "";
   return (e.length >= 4 && s.includes(` ${e} `)) || (a.length >= 3 && s.includes(` ${a}`));
 };
+/** the localities a sentence names, a Tamil name that ends in ம் in its case form too (கோட்டூர்புரம்: கோட்டூர்புரத்தில், கோட்டூர்புரத்துல), as zonesIn
+ * reads a zone's (v10 review 2, round 3: placesIn looks for "கோட்டூர்புரம", so the story's own place in Tamil went to the lanes) */
+function placesAt(s: string, w: World): string[] {
+  const out = new Set(placesIn(s, w));
+  for (const p of w.places) for (const a of p.aliases) {
+    const x = a.normalize("NFC").trim();
+    if (/ம்$/u.test(x) && x.length >= 5 && s.includes(` ${x.slice(0, -2)}த்`)) { out.add(p.name); break; }
+  }
+  return [...out];
+}
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** the offer's own zone's names: English (the offer's and the lexicon's), and Tamil stems that its case forms start with (அடையாறு: அடையாற) */
 const ownEnglish = (o: Offer10) => (o.follow ? [...new Set([o.follow.en.toLowerCase(), ...(ZONES[o.follow.zone]?.en ?? [])])].filter((x) => x.length >= 3) : []);
@@ -221,20 +256,20 @@ function ownAsThis(t: string, o: Offer10): string {
  * names no locality, a locality inside the story's zone is taken for the story's). A place the world does not hold is told by the words around
  * it (placeWords), in the three scripts (round 2).
  */
-function aboutElse(raw: string, t: string, o: Offer10, w: World, scoped: boolean): boolean {
+function aboutElse(raw: string, t: string, o: Offer10, w: World, scoped: boolean, from: boolean): boolean {
   if ([...t.matchAll(CASE_ID)].some((m) => !o.draft.some((id) => id.toLowerCase() === m[0])) || WARD.test(t)) return true;
   const s = spaced(t), own = spaced(o.map ?? "");
   const ownWords = spaced(`${o.map ?? ""} ${ownEnglish(o).join(" ")}`), ownTa = ownTamil(o);
-  for (const ways of placeWords(raw, t, w)) {
+  for (const ways of placeWords(raw, t, w, from)) {
     const mine = ways.some((p) => ownWords.includes(` ${p} `) || ownTa.some((x) => p.includes(x)));
     // a name the world or the lexicon holds (a zone, a locality, a taluk) is told below, the story's own from another's
-    const known = ways.some((p) => { const q = spaced(p); return zonesIn(q, w).length > 0 || placesIn(q, w).length > 0 || w.taluks.some((k) => saysName(q, k.name, k.ta)); });
+    const known = ways.some((p) => { const q = spaced(p); return zonesIn(q, w).length > 0 || placesAt(q, w).length > 0 || w.taluks.some((k) => saysName(q, k.name, k.ta)); });
     if (!mine && !known) return true;
   }
   const zones = new Set([...(o.follow ? [o.follow.zone] : []), ...zonesIn(own, w)]);
   if (zonesIn(s, w).some((z) => !zones.has(z))) return true;
-  const places = new Set(placesIn(own, w));
-  if (placesIn(s, w).some((p) => !places.has(p) && (places.size > 0 || !zones.has(w.places.find((x) => x.name === p)?.zone ?? 0)))) return true;
+  const places = new Set(placesAt(own, w));
+  if (placesAt(s, w).some((p) => !places.has(p) && (places.size > 0 || !zones.has(w.places.find((x) => x.name === p)?.zone ?? 0)))) return true;
   if (w.taluks.some((k) => !w.zones.some((z) => z.name.toLowerCase() === k.name.toLowerCase()) && saysName(s, k.name, k.ta) && !saysName(own, k.name, k.ta))) return true;
   const kind = catIn(withoutDepts(s, w));
   if (kind && kind !== catIn(own)) return true;
@@ -255,13 +290,13 @@ export function offerAct(raw: string, o: Offer10 | null, now: number, world: Wor
   if (NO.test(t)) return { act: "no" };
   // (an offer never said aloud, after the whole story, takes no bare yes or "okay": v10 review 2, finding 8)
   // (round 2: a ground ask's place is aboutElse's, which knows the story's own; the offer's own zone named is "this" to follow)
-  const wants = fullRead(raw) && !FULL_OF.test(t) ? "full" : groundWords(t, nfc) ? "ground" : DRAFT.test(t) || DRAFT.test(nfc) ? "draft" : (MAP.test(t) && !MAP_CONTROL.test(t)) || SHOW.test(t) ? "map"
+  const wants = fullRead(raw) && !FULL_OF.test(t) ? "full" : groundWords(t, nfc) ? "ground" : DRAFT.test(t) || DRAFT.test(nfc) ? "draft" : (MAP.test(t) && !mapControl(t)) || SHOW.test(t) ? "map"
     : FOLLOW.test(ownAsThis(t, o)) || FOLLOW.test(nfc) ? "follow" : YES.test(t) && !o.unsaid ? o.offers[0] ?? null : null;
   if (!wants) return null;
   // "don't draft anything", "map vendaam": put away
   if (NEGATED.test(t) || NEGATED.test(nfc)) return { act: "no" };
   // about another case, place, zone or kind (or for the map, the cases or the story, another time or status): the lanes' (review 2, finding 2)
-  if (aboutElse(raw, t, o, world, wants === "map" || wants === "ground" || wants === "full")) return null;
+  if (aboutElse(raw, t, o, world, wants === "map" || wants === "ground" || wants === "full", wants !== "full")) return null;
   if (wants === "full") return { act: "full", id: o.story };
   if (wants === "ground") return { act: "ground", id: o.story };
   if (wants === "map") return o.map ? { act: "map", q: o.map } : { act: "none", what: "map" };

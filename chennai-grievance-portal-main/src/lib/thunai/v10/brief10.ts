@@ -129,15 +129,28 @@ const COMPLAINTS_N = /(\d+)\s+(?:[^\s\d,;:.]+\s+){0,5}?(?:complaints?|grievances
 /** a none in the story itself ("no complaints had been received", "புகார் எதுவும் வரவில்லை"): its own claim, someone's word in it */
 const TA_NONE_TOLD = /(?:புகார்|சம்பவ)\S*\s+(?:\S+\s+){0,2}?\S*(?:இல்லை|வில்லை)/u;
 const noneTold = (x: string) => NONE_SAID.test(x) || TA_NONE_TOLD.test(x);
-/** a sentence that says whose word it is ("an official says", "The Hindu reports:", "என்று அதிகாரி கூறினார்") */
-const ATTRIBUTED = /\b(?:says?|said|saying|tells?|told|claim(?:s|ed|ing)?|stat(?:es|ed)|according to|reports?|insist(?:s|ed)?|maintain(?:s|ed)?|den(?:y|ies|ied)|alleg(?:es|ed)|add(?:s|ed)|admit(?:s|ted)?|assert(?:s|ed)?|contend(?:s|ed)?)\b|என்று|எனத்|எனக்|கூறி|கூறுகி|தெரிவித்|தெரிவிக்கி|சொன்ன|சொல்கி|அறிவித்|மறுத்|வெளியிட்ட\s*செய்தி|செய்தி\s*வெளியிட்/iu;
+/** a word of saying ("an official says", "The Hindu reports:", "அதிகாரி கூறினார்"); "என்று" alone is none ("என்று தெரிகிறது": it seems: round 3) */
+const ATTRIBUTED = /\b(?:says?|said|saying|tells?|told|claim(?:s|ed|ing)?|stat(?:es|ed)|according to|reports?|insist(?:s|ed)?|maintain(?:s|ed)?|den(?:y|ies|ied)|alleg(?:es|ed)|add(?:s|ed)|admit(?:s|ted)?|assert(?:s|ed)?|contend(?:s|ed)?)\b|கூறி|கூறுகி|தெரிவித்|தெரிவிக்கி|சொன்ன|சொல்கி|அறிவித்|மறுத்|வெளியிட்ட\s*செய்தி|செய்தி\s*வெளியிட்/iu;
+/** the brief's own side as the one who says it ("our records say", "we are told", "நம் பதிவுகள் கூறுகின்றன"): the console's word, not the story's */
+const OURS = /\b(?:we|i|i'm|us|our|ours|my)\b|\bconsole\b|\bdashboard\b|(?:^|\s)(?:நாம்|நாங்கள்|நம்|நம்ம|நமது|எங்கள்|நமக்கு|எங்களுக்கு)(?=\s|$)|கன்சோல்/iu;
+/**
+ * Who says the none: a speaker named before it ("An official says no ...", "According to the board, no ..."), in a clause after it ("No ..., an
+ * official said."), or, in Tamil, after it ("... இல்லை என்று அதிகாரி கூறினார்"); never the brief's own side (v10 review 2, round 3: "No complaints or
+ * reports have come in" and "Our records say no ..." were taken for a speaker's, and said over the console's 4).
+ */
+function spokenBy(s: string): boolean {
+  const i = s.search(NONE_SAID);
+  if (i < 0) return false;
+  const by = (x: string) => ATTRIBUTED.test(x) && !OURS.test(x), rest = s.slice(i);
+  return by(s.slice(0, i)) || rest.split(",").slice(1).some(by) || (TAMIL.test(rest) && by(rest));
+}
 /**
  * Is a none the story's own claim, said as its speaker's ("A water board official says no complaints have come in")? Then it is the article's
  * word, not the console's count, and is said as the story is (v10 review 2, round 2: the gate for the console's count dropped the headline and the
  * official's claim of a story about that very claim). A none the story never says, or one said in the brief's own voice, is still the console's.
  */
 export function theirNone(s: string, story: Pick<Story10, "title" | "titleEn" | "text">): boolean {
-  return NONE_SAID.test(s) && ATTRIBUTED.test(s) && noneTold([story.title, story.titleEn ?? "", story.text ?? ""].join(" \n "));
+  return spokenBy(s) && noneTold([story.title, story.titleEn ?? "", story.text ?? ""].join(" \n "));
 }
 
 /**

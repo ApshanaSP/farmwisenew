@@ -489,3 +489,36 @@ describe("v10 review 2, round 2 (reading): a storm told by its effects or its na
     expect(stormy("Residents Storm Corporation Office Over Water Shortage", "Residents of Kodungaiyur gathered at the zonal office.")).toBe(false);
   });
 });
+
+describe("v10 review 2, round 3 (reading): a none is the story's speaker's only when the sentence names a speaker other than the brief", () => {
+  // as round 2: the water board's word against the residents'; the console has 4 open cases
+  const D9: StoredDoc = { id: "d9", url: "https://www.thehindu.com/news/cities/chennai/y.ece", title: "Water board says no complaints received on sewage overflow at Kotturpuram", publisher: "The Hindu",
+    publisher_domain: "thehindu.com", body: "Residents of Kotturpuram said sewage had been overflowing from a manhole near the bus stop for a week. A water board official said no complaints had been received from the area. Residents disputed this.",
+    t: "2026-11-19 08:10:00", place: "Kotturpuram", cat: "DRAINAGE_SEWAGE" };
+  const d9 = { title: D9.title ?? "", titleEn: null, text: D9.body ?? "" };
+  it("v10 review 2, round 3: 'reports' as a noun, 'our records say', 'we are told', 'என்று தெரிகிறது' name no speaker: the console's word", () => {
+    expect(theirNone("No complaints or reports have come in from the area.", d9)).toBe(false);
+    expect(theirNone("Our records say no complaints have come in from the area.", d9)).toBe(false);
+    expect(theirNone("No complaints have come in from the area, we are told.", d9)).toBe(false);
+    expect(theirNone("கோட்டூர்புரத்தில் புகார் எதுவும் இல்லை என்று தெரிகிறது.", d9)).toBe(false);
+    // one word away: the noun with more after it, the first person in the other place, our records in Tamil
+    expect(theirNone("No complaints or reports of overflow have come in from the area.", d9)).toBe(false);
+    expect(theirNone("I am told no complaints have come in from the area.", d9)).toBe(false);
+    expect(theirNone("No complaints have come in from the area, according to our records.", d9)).toBe(false);
+    expect(theirNone("கோட்டூர்புரத்தில் புகார் எதுவும் இல்லை என்று நம் பதிவுகள் கூறுகின்றன.", d9)).toBe(false);
+  });
+  it("v10 review 2, round 3: a speaker named before the none or after it is still the speaker's", () => {
+    expect(theirNone("No complaints have come in from the area, a water board official said.", d9)).toBe(true);
+    expect(theirNone("According to the water board, no complaints have come in from the area.", d9)).toBe(true);
+    expect(theirNone("Reports say no complaints have come in from the area.", d9)).toBe(true);
+  });
+  it("v10 review 2, round 3: such a none in the brief's own voice is not said over the console's 4", async () => {
+    const SAID_4 = "The console has 4 open drainage and sewage cases at Kotturpuram, the oldest open 12 days, all with Metro Water.";
+    for (const line of ["No complaints or reports have come in from the area.", "Our records say no complaints have come in from the area."]) {
+      const lines = (f: (re: RegExp) => string) => [GOOD_EN(f)[0], `S: ${line} [${f(/no complaints had been received/)}]`, GOOD_EN(f)[2]];
+      const said = lastBrief(await collect(newsEvents({ id: "d9", ask: { q: "read it", lang: "en" } }, deps({ open: model([], lines), docs: [D9] }))));
+      expect(said.some((x) => /no complaints/i.test(x) && !/water board says/i.test(x))).toBe(false);
+      expect(said).toContain(SAID_4);
+    }
+  });
+});
