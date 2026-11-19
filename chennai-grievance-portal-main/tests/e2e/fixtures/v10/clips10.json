@@ -1,0 +1,22 @@
+{
+ "o10_aquan": { "kind": "owner", "lang": "en", "source": "win", "voice": "Heera", "text": "Tell me about Cyclone Aquan." },
+ "o10_goto": { "kind": "owner", "lang": "en", "source": "win", "voice": "Ravi", "text": "Javes, go to news." },
+ "o10_fast": { "kind": "owner", "lang": "en", "source": "win", "voice": "Heera", "text": "Tell me about the fast news." },
+ "o10_cut1": { "kind": "owner", "lang": "en", "source": "win", "voice": "Ravi", "text": "Tell me about the" },
+ "o10_cut2": { "kind": "owner", "lang": "en", "source": "win", "voice": "Ravi", "text": "Puzhal jail drugs story." },
+ "o10_full": { "kind": "read", "lang": "en", "source": "win", "voice": "Heera", "text": "Read it fully." },
+ "o10_ground": { "kind": "read", "lang": "en", "source": "win", "voice": "Ravi", "text": "What do we have on this?" },
+ "o10_screen": { "kind": "side", "lang": "en", "source": "win", "voice": "Mark", "text": "See, this one has gone up." },
+ "o10_phone": { "kind": "side", "lang": "tg", "source": "win", "voice": "Heera", "text": "Hello? Haan, sollunga." },
+ "o10_map_ask": { "kind": "map", "lang": "en", "source": "win", "voice": "Ravi", "text": "Ask the map where garbage complaints are clustering." },
+ "o10_map_circle": { "kind": "map", "lang": "en", "source": "win", "voice": "Heera", "text": "Within two kilometres of Kasimedu." },
+ "o10_map_tg": { "kind": "map", "lang": "tg", "source": "win", "voice": "Heera", "text": "Adyar flooding map-la kaattu." },
+ "o10_tour": { "kind": "map", "lang": "en", "source": "win", "voice": "Ravi", "text": "Jarvis, take me round the district." },
+ "o10_next": { "kind": "map", "lang": "en", "source": "win", "voice": "Ravi", "text": "Next." },
+ "o10_tour_stop": { "kind": "map", "lang": "en", "source": "win", "voice": "Ravi", "text": "Stop the tour." },
+ "o10_alerts": { "kind": "control", "lang": "en", "source": "win", "voice": "Heera", "text": "Click the alerts bell." },
+ "o10_pins": { "kind": "control", "lang": "en", "source": "win", "voice": "Ravi", "text": "Hide the severe pins." },
+ "o10_signout": { "kind": "control", "lang": "en", "source": "win", "voice": "Mark", "text": "Sign out." },
+ "o10_ta_akvan": { "kind": "owner", "lang": "ta", "source": "gemini", "voice": "Kore", "text": "அக்வான் புயல் பத்தி சொல்லுங்க." },
+ "o10_ta_sir": { "kind": "side", "lang": "ta", "source": "gemini", "voice": "Puck", "text": "சார், ஒரு நிமிஷம் இங்க வாங்க." }
+}

@@ -33,8 +33,11 @@ const FX = path.join(process.cwd(), "tests", "e2e", "fixtures", "v6");
 const FX8 = path.join(process.cwd(), "tests", "e2e", "fixtures", "v8");
 type Meta = Record<string, { kind: string; lang: string; text: string; voice: string; source: string; speechMs: number; endMs: number; durMs: number }>;
 const META8 = (fs.existsSync(path.join(FX8, "v8.json")) ? JSON.parse(fs.readFileSync(path.join(FX8, "v8.json"), "utf8")) : {}) as Meta;
-const META = { ...(JSON.parse(fs.readFileSync(path.join(FX, "v6.json"), "utf8")) as Meta), ...META8 };
-const b64 = (n: string) => fs.readFileSync(path.join(META8[n] ? FX8 : FX, `${n}.wav`)).toString("base64");
+// v10: the owner's asks of 19 Nov, spoken by Windows' voices and Gemini's (tests/e2e/fixtures/v10, synthetic, no person)
+const FX10 = path.join(process.cwd(), "tests", "e2e", "fixtures", "v10");
+const META10 = (fs.existsSync(path.join(FX10, "v10.json")) ? JSON.parse(fs.readFileSync(path.join(FX10, "v10.json"), "utf8")) : {}) as Meta;
+const META = { ...(JSON.parse(fs.readFileSync(path.join(FX, "v6.json"), "utf8")) as Meta), ...META8, ...META10 };
+const b64 = (n: string) => fs.readFileSync(path.join(META10[n] ? FX10 : META8[n] ? FX8 : FX, `${n}.wav`)).toString("base64");
 const TAG = process.env.V6_TAG || "run";
 const PARTS = new Set((process.env.V6_PARTS || "wake,closed,cmd,en,ta,tg").split(","));
 const GAP = Number(process.env.LIVE_GAP_MS || 20_000);
@@ -396,4 +399,94 @@ test("v8 real: the owner's examples", async ({ page }) => {
   fs.mkdirSync(out, { recursive: true });
   fs.writeFileSync(path.join(out, `${TAG}-owner8.json`), JSON.stringify({ tag: TAG, at: new Date().toISOString(), note: "the owner's examples on the real path: synthetic clips (Windows voices), real Whisper, real models, Edge's voices", rows }, null, 1));
   expect(rows.length).toBe(12);
+});
+
+/**
+ * v10 (V6_PARTS=owner10): the owner's asks of 19 Nov on the real path (docs/jarvis/JARVIS_V10.md Parts 2-3), in one conversation, each as
+ * the owner would say it, with what Jarvis heard, said (words, voice, language), showed (the Stage) and did on the console (the stand-in's
+ * state panel: a view, a page, "ask the map: ..."):
+ *   names by ear ("Tell me about Cyclone Aquan.", Tamil "அக்வான் புயல்"), its own name by ear ("Javes, go to news."), a position by ear over
+ *   the news panel ("the fast news"), a line cut off and its rest ("Tell me about the" ... "Puzhal jail drugs story."), the brief, "read it
+ *   fully", news to ground truth, side talk kept silent (talk about the screen, a phone call's opener, a Tamil vocative), Ask the Map by voice
+ *   (a question, a circle, Tanglish, the tour and its steering) and the dashboard by voice (two harmless controls, Sign out refused).
+ * Results: eval/v10/real/<tag>-owner10.json (local: the answers may hold a case's title).
+ */
+test("v10 real: the owner's asks", async ({ page }) => {
+  test.skip(!PARTS.has("owner10"), "part not asked for");
+  test.setTimeout(3_600_000);
+  await open(page);
+  await modeOn(page);
+  const rows: Record<string, unknown>[] = [];
+  const wakes = ["wake_zira", "wake_mark"];
+  let k = 0;
+  const said = (s: S, end: number) => s.audio.filter((a) => a.kind === "uttStart" && (a.at as number) > end - 50 && (a as { volume?: number }).volume !== 0)
+    .map((a) => ({ at: Math.round((a.at as number) - end), text: String((a as { text?: string }).text ?? (a as { head?: string }).head ?? ""), voice: (a as { voice?: string }).voice ?? null, lang: (a as { lang?: string }).lang ?? null }));
+  const stageText = () => page.evaluate(() => (document.querySelector(".st-root")?.textContent ?? "").replace(/\s+/g, " ").slice(0, 800));
+  const consoleText = () => page.evaluate(() => (document.querySelector("[data-testid=harness-state]")?.textContent ?? "").replace(/\s+/g, " ").slice(-600));
+  const quiet = () => page.waitForFunction(() => { const J = (window as unknown as { __jv: { speaking(): boolean; state(): string } }).__jv; return !J.speaking() && J.state() !== "thinking"; }, null, { timeout: 90_000 }).catch(() => undefined);
+  const turn = async (label: string, clip: string, o: { wake: boolean; silent?: boolean; wait?: number }) => {
+    if (o.wake) {
+      await reset(page);
+      const w = await play(page, wakes[k++ % wakes.length]);
+      await page.waitForTimeout(META[wakes[0]].durMs + 200);
+      await settle(page, w.endAt, 8000, false);
+      await page.waitForTimeout(600);
+    }
+    await quiet();
+    await reset(page);
+    await page.evaluate(() => { (window as unknown as { __jvIgnored?: string[] }).__jvIgnored = []; });
+    const before = await consoleText();
+    const q = await play(page, clip);
+    await page.waitForTimeout(META[clip].durMs);
+    const s = await settle(page, q.endAt, o.wait ?? (o.silent ? 20_000 : 45_000), !o.silent);
+    const m = measure(s, q.endAt);
+    const words = said(s, q.endAt);
+    const acted = s.marks.some((x) => (x.name === "finding" || x.name === "answer" || x.name === "ack") && x.t > q.endAt - 50);
+    const ignored = await page.evaluate(() => (window as unknown as { __jvIgnored?: string[] }).__jvIgnored ?? []);
+    const after = await consoleText();
+    const row = { label, clip, text: META[clip].text, heard: s.hud.ribbon, ignored, said: words, stage: await stageText(), console: after === before ? "" : after, acted,
+      silent: !words.length && !acted, firstSound: m.firstSound, finding: m.finding, answerReady: m.answerReady, screen: m.screen, lane: m.trace?.lane ?? null, events: m.events };
+    rows.push(row);
+    console.log(JSON.stringify({ label, heard: row.heard, ignored, silent: row.silent, said: words.map((x) => `${x.lang}:${x.text.slice(0, 140)}`), console: row.console.slice(-160) }));
+    return row;
+  };
+  const pause = async () => { await page.keyboard.press("Escape"); await page.waitForTimeout(GAP); };
+  // names by ear, with the weather for a storm; then its own name by ear, a position by ear over the panel it opened, and the brief's follow-ups
+  await turn("aquan", "o10_aquan", { wake: true, wait: 60_000 });
+  await pause();
+  await turn("javes-goto", "o10_goto", { wake: true });
+  await turn("fast-news", "o10_fast", { wake: false, wait: 60_000 });
+  await turn("ground-truth", "o10_ground", { wake: false });
+  // side talk while Jarvis listens on: about the screen, a phone call, a Tamil vocative
+  await turn("side-screen", "o10_screen", { wake: false, silent: true });
+  await turn("side-phone", "o10_phone", { wake: false, silent: true });
+  await turn("side-ta-sir", "o10_ta_sir", { wake: false, silent: true });
+  await pause();
+  // a line cut off, then its rest a few seconds later (as the owner's "Tell me about the" on 19 Nov)
+  await turn("cut-1", "o10_cut1", { wake: true, silent: true });
+  await page.waitForTimeout(2500);
+  await turn("cut-2", "o10_cut2", { wake: false, wait: 60_000 });
+  await turn("read-fully", "o10_full", { wake: false, wait: 30_000 });
+  await pause();
+  // Tamil: a storm's name in Tamil letters
+  await turn("ta-akvan", "o10_ta_akvan", { wake: true, wait: 60_000 });
+  await pause();
+  // Ask the Map by voice, then the tour and its steering
+  for (const [label, clip] of [["map-ask", "o10_map_ask"], ["map-circle", "o10_map_circle"], ["map-tanglish", "o10_map_tg"]] as const) {
+    await turn(label, clip, { wake: true });
+    await pause();
+  }
+  await turn("tour", "o10_tour", { wake: true });
+  await turn("tour-next", "o10_next", { wake: false });
+  await turn("tour-stop", "o10_tour_stop", { wake: false });
+  await pause();
+  // the dashboard by voice: two harmless controls, and Sign out, which Jarvis never presses
+  for (const [label, clip] of [["ctl-alerts", "o10_alerts"], ["ctl-pins", "o10_pins"], ["ctl-signout", "o10_signout"]] as const) {
+    await turn(label, clip, { wake: true });
+    await pause();
+  }
+  const out = path.join(process.cwd(), "eval", "v10", "real");
+  fs.mkdirSync(out, { recursive: true });
+  fs.writeFileSync(path.join(out, `${TAG}-owner10.json`), JSON.stringify({ tag: TAG, at: new Date().toISOString(), note: "the owner's asks on the real path: synthetic clips (Windows and Gemini voices), real speech to text, real models, Edge's voices, the dev console", rows }, null, 1));
+  expect(rows.length).toBe(20);
 });

@@ -32,6 +32,7 @@ eval/store/
 # headlines, case titles and what Jarvis said)
 eval/v10/replay/
 eval/v10/*/results/
+eval/v10/real/
 
 # Thunai: per-Collector memory and the audit trail (never committed)
 data/thunai/
