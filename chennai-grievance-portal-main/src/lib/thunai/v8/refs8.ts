@@ -10,20 +10,10 @@
  * Pure.
  */
 import { rankStories, pickStory, topicWords } from "./news8";
+import { ordinalAt, ordinalOf } from "./ord8";
 
-const EN_ORD: [RegExp, number][] = [[/\b(?:first|1st)\b/i, 1], [/\b(?:second|2nd)\b(?! (?:line|street|main|avenue|cross))/i, 2], [/\b(?:third|3rd)\b/i, 3], [/\b(?:fourth|4th)\b/i, 4],
-  [/\b(?:fifth|5th)\b/i, 5], [/\b(?:sixth|6th)\b/i, 6], [/\b(?:seventh|7th)\b/i, 7], [/\b(?:eighth|8th)\b/i, 8], [/\b(?:ninth|9th)\b/i, 9], [/\b(?:tenth|10th)\b/i, 10], [/\b(?:last|final)\b/i, -1]];
-/** Tanglish: a number's stem with an ordinal ending ("rendavadhu", "moonaavathu"), mudhal, kadaisi */
-const TG_ORD: [RegExp, number][] = [[/\b(?:mudhal|mudhalavadhu|mudhalaavadhu|mudhalavathu|modhal)\b/i, 1], [/\b(?:rend|irand|rand)(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)\b/i, 2],
-  [/\b(?:moon|mun|moond)(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)\b/i, 3], [/\b(?:naal|naang)(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)\b/i, 4],
-  [/\b(?:anj|ainth)(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)\b/i, 5], [/\b(?:kadaisi|kadasi|kadaisiya)\b/i, -1]];
-const TA_ORD: [RegExp, number][] = [[/முதல்|முதலாவது/u, 1], [/(?:இரண்ட|ரெண்ட)ாவது|(?:இரண்ட|ரெண்ட)ாவதை/u, 2], [/(?:மூன்ற|மூண)ாவது|மூன்றாவதை|மூணாவதை/u, 3], [/(?:நான்க|நால)ாவது/u, 4], [/(?:ஐந்த|அஞ்ச)ாவது/u, 5], [/கடைசி/u, -1]];
-
-export function ordinalOf(text: string): number | null {
-  const t = text.normalize("NFC");
-  for (const [re, n] of [...EN_ORD, ...TG_ORD, ...TA_ORD]) if (re.test(t)) return n;
-  return null;
-}
+// (v9: the ordinal reader is ord8.ts, past the fifth and in all three languages; kept exported here for the callers that had it)
+export { ordinalOf };
 
 const OPEN = /\b(?:open|show(?: me)?|pull up|bring up|go to|read|play)\b|\b(?:thira|thiranga|open pannu|open pannunga|kaattu|kaattunga|padi|padinga)\b|திற|காட்டு|படி/iu;
 const EXPLAIN = /\b(?:tell me about|tell me more about|explain|what about|brief me on|what is|what's)\b|\b(?:pathi sollu|pathi sollunga|sollunga|sollu|vilakku)\b|சொல்|விளக்கு/iu;
@@ -64,18 +54,28 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
   return { op, n: rows.findIndex((r) => r.id === pick.pick!.id) + 1 };
 }
 
-/** an ordinal said of a story: the ordinal right before a news word ("the third news", "rendavadhu news", "இரண்டாவது செய்தி"). "The first one" over a
- * news list stays the Stage's headline reading (the 17 Nov fix); "the news from last week" and "the story about the second bridge" name no position */
-const ORD_NEWS = /\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|last|1st|2nd|3rd|4th|5th|mudhal|mudhalavadhu|rendavadhu|rendaavadhu|randavadhu|moonavadhu|moonaavadhu|naalavadhu|anjavadhu|kadaisi)\s+(?:news|story|article|report|headline|piece|seithi|seidhi)\b|(?:முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|மூணாவது|நான்காவது|ஐந்தாவது|கடைசி)\s*(?:செய்தி|சேதி|கட்டுரை)/iu;
+/** a news word right after the position ("the third news", "rendavadhu news", "இரண்டாவது செய்தி", "ஏழாவது செய்தியைத்") */
+const NEWS_AFTER = /^(?:news|story|stories|article|report|headline|piece|item|seithi|seidhi|seythi|sethi|seithiya|seidhiya)$|^(?:செய்தி|சேதி|கட்டுரை)/u;
+/** "one" right after it ("the seventh one", "kadaisi onnu", "ஏழாவது ஒண்ணைப்"), or a verb ("the seventh, open it", "seventh padinga") */
+const ONE_AFTER = /^(?:one|onnu|onna|onnai|onnaiya|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒண்ணைத்|ஒன்று|ஒன்றை|ஒன்றைப்|ஒன்றைத்)$/u;
+const VERB_AFTER = /^(?:open|read|play|please|padi\w*|thira\w*|sollu\w*|kaattu\w*)$|^(?:திற|படி|சொல்|காட்டு)/u;
 
-/** The story on the screen a sentence names by its position, or null. */
-export function newsOrdinal8(text: string, items: { id: string }[]): string | null {
+/**
+ * The story on the screen a sentence names by its position, or null. A position with a news word after it, on any news on screen. v9, on the
+ * console's own news panel (`panel`: no Stage open): "the seventh one", "the last one", "read me the last one", "ஏழாவதைத் திறங்க" (the
+ * position alone, or with "one" or a verb after it: v8's holdout h-reference-1, -2). Over Jarvis's own news list "read the first one" stays the
+ * Stage's headline reading (the 17 Nov fix). Never a count ("the first two"), a period ("the news from last week"), a street or a floor ("the
+ * fire on the ninth floor"), or another noun ("the story about the second bridge").
+ */
+export function newsOrdinal8(text: string, items: { id: string }[], o: { panel?: boolean } = {}): string | null {
   if (!items.length) return null;
   const t = text.trim();
-  const at = ORD_NEWS.exec(t);
-  if (!at || !(OPEN.test(t) || EXPLAIN.test(t))) return null;
-  const n = ordinalOf(at[0]);
-  if (n == null) return null;
-  const k = n === -1 ? items.length : n;
+  if (!(OPEN.test(t) || EXPLAIN.test(t)) || COUNT.test(t)) return null;
+  const at = ordinalAt(t);
+  if (!at) return null;
+  const noun = at.next != null && NEWS_AFTER.test(at.next);
+  const bare = o.panel === true && (at.next == null || at.acc || ONE_AFTER.test(at.next) || VERB_AFTER.test(at.next));
+  if (!noun && !bare) return null;
+  const k = at.n === -1 ? items.length : at.n;
   return items[k - 1]?.id ?? null;
 }

@@ -1700,7 +1700,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
     if (!original && v8) {
-      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current });
+      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current, panel: !stageRef.current });
       if (n8) {
         const t0 = performance.now();
         await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal);

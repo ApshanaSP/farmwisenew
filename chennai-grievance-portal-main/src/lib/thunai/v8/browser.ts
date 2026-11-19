@@ -96,8 +96,11 @@ const MORE_ON_IT = /\bwhat else (?:is|are) (?:there )?(?:in the )?(?:news|papers
 const searchWords = (title: string) => title.replace(/\b(?:don'?t|dont|do not|never|no need|stop)\b/gi, " ").replace(/வேண்டாம்|வேணாம்/gu, " ").replace(/\s+/g, " ").trim();
 const OTHER_ONE = /^(?:no,? |nope,? )?(?:the )?other (?:one|story|news|report|article)\b|^(?:mattha|matha|matra|innoru) (?:news|onnu|seithi)\b|^மற்றொன்று|^மற்றச் செய்தி|^இன்னொன்று/iu;
 
-/** v8's news lane: a story by its topic, a news question, or "the other one" after a found story. Null: not this lane's. */
-export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null }): NewsAskT | null {
+/**
+ * v8's news lane: a story by its topic, a news question, or "the other one" after a found story. Null: not this lane's. v9: `panel`, the news on
+ * screen is the console's own news panel (no Stage open): "the seventh one", "the last one" there are its stories (refs8.ts newsOrdinal8).
+ */
+export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null; panel?: boolean }): NewsAskT | null {
   if (!understandV8()) return null;
   const t = said.trim();
   // a mission or a memory request is never the news lane's; "brief me on the Minjur desal plant story" names a story, so it is
@@ -115,7 +118,7 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   }
   const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));
   // a story on the screen by its position, in any of the three languages ("rendavadhu news ah padinga", "open the third news")
-  const at = newsOrdinal8(t, items);
+  const at = newsOrdinal8(t, items, { panel: c.panel === true });
   if (at) return { kind: "read", body: { id: at } };
   const req = newsRequest(t, { onScreen: items.length > 0 });
   if (!req) return null;
@@ -136,7 +139,7 @@ export const userLang8 = (said: string, last: Lang | null): Lang => replyLang8(s
 export function browserLaneV8(said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null }): BrowserLane {
   if (!understandV8()) return browserLaneV7(said, c);
   const lang = userLang8(said, c.lastLang ?? null);
-  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound });
+  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: !c.stage });
   if (n8) return { lane: "news", na: n8, lang };
   // a case on the list on screen, by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க")
   const r8 = refLane8(said, c.stage);

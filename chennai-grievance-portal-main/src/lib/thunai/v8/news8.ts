@@ -16,6 +16,7 @@
  */
 import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { placeWord } from "./lang8";
+import { ordWord, ordWordsOf } from "./ord8";
 import { isEnglishWord } from "../english";
 
 /** what the Collector says short for a name the headlines spell out: each must be in the headline, all its words */
@@ -47,6 +48,8 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
   "else anything something everything other others another same also too " +
   // the console's own places for the news: "go to the news page", "open the news panel", "read the news in Tamil" are moves, not topics
   "page pages panel panels tab tabs screen section window feed feeds widget list view mode tamil english language " +
+  // v9: a period is the news panel's, not a topic ("read the news from last week": v8 searched for "week")
+  "week weeks weekly month months monthly year years yesterday yesterdays tonight morning mornings evening evenings night " +
   // ordinals: "the second story" is the list's, not a topic
   "first second third fourth fifth sixth seventh eighth ninth tenth last 1st 2nd 3rd 4th 5th mudhal mudhalavadhu mudhalaavadhu rendavadhu rendaavadhu randavadhu " +
   "moonavadhu moonaavadhu munavadhu naalavadhu anjavadhu kadaisi kadasi mutal irantavatu rentavatu munravatu kataici katasi " +
@@ -118,7 +121,7 @@ const OUTLETS: OutletDef[] = [
   { name: "BusinessLine", words: ["businessline"] }, { name: "Mathrubhumi English", words: ["mathrubhumi"] },
   // (not "Times Now", "India Today" or "News7": ordinary words in a sentence, "three times now", "open news 7")
   // "தி இந்து" (the paper's name said in Tamil); "இந்து" alone is the religion ("இந்து அறநிலையத் துறை")
-  { name: "The Hindu", words: ["thi", "indhu"] },
+  { name: "The Hindu", words: ["ti", "indhu"] },
   { name: "The Hindu", words: ["hindu"], notBefore: ["tamil", "munnani", "makkal", "temple", "temples", "religious", "religion", "endowments", "outfit", "outfits", "organisation", "organisations", "organization", "organizations", "festival", "festivals", "devotees", "mahasabha", "front"] }
 ];
 /**
@@ -127,7 +130,8 @@ const OUTLETS: OutletDef[] = [
  * match, which made "malar" Malaimurasu and the four Dina- papers one another)
  */
 const outletWord = (tok: string, w: string, byEar: boolean): number => {
-  if (/\d/.test(w)) return tok === w ? 1 : 0;
+  // a short word ("dd", "tv", "of", "etv") or one with a digit is the word itself: "9th" keys like "dd" ("open the 9th news" was DD News)
+  if (/\d/.test(w) || /\d/.test(tok) || w.length <= 3) return tok === w ? 1 : 0;
   const a = looseKey(tok), b = looseKey(w);
   if (a && a === b) return 1;
   if (!byEar || w.length < 6 || a.length < 5) return 0;
@@ -235,11 +239,12 @@ const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(
 
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  const t = text.split(/\s+/).filter((w) => !TA_OWN.test(w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""))).join(" ");
+  const t = text.split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
   let toks = outletToks(t);
   // the outlet's own words are not the topic (found again on these words: the same reader as outletIn's)
   if (outlet) { const r = outletRun(toks); if (r && r.name === outlet) toks = [...toks.slice(0, r.i), ...toks.slice(r.i + r.n)]; }
-  return toks.filter((w) => !STOP.has(w) && !TG_NEWS.test(w) && !/^\d+$/.test(w) && w.length >= 2 && !STOP.has(w.replace(/(?:a|ah|ai|ae|e|il|la|le)$/, "")));
+  // (v9: a position, "seventh", "7th", "ezhavadhu", ஏழாவது, is the list's, never a topic: ord8.ts)
+  return toks.filter((w) => !STOP.has(w) && !TG_NEWS.test(w) && !/^\d+$/.test(w) && w.length >= 2 && !STOP.has(w.replace(/(?:a|ah|ai|ae|e|il|la|le)$/, "")) && ordWord(w) == null);
 }
 
 /**
@@ -261,7 +266,9 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   const asks = (newsy || PRESS.test(text) || (NAMED_ASK.test(text) && namedTopic(text))) &&
     (ASK_EN.test(text) || ASK_TA.test(text) || ASK_TG.test(text) || PRESS_SAYS.test(text));
   // "the Nungambakkam subway one", "the one about ...", and "open that one, that's the Supreme Court order" (the owner's words, 18 Nov)
-  const theOne = /\b(?:the|that|this|andha|antha)\s+[\p{L}\p{M}\s.'’-]{2,60}?\s+one\b|\bone about\b|\b(?:that|this) one\b/iu.test(text) && o.onScreen;
+  // (v9: "the last one", "the seventh one" are positions, refs8.ts's, never "the X one" with X a topic)
+  const xOne = /\b(?:the|that|this|andha|antha)\s+([\p{L}\p{M}\s.'’-]{2,60}?)\s+one\b/iu.exec(text);
+  const theOne = ((!!xOne && !ordWordsOf(xOne[1]).some((w) => ordWord(w) != null)) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
   if (!newsy && !theOne && !asks) return null;
   // at most 12 topic words (a request at the schema's 400 characters must not hold the server: the review, 19 Nov)
   const words = topicWords(text, outlet).slice(0, 12);

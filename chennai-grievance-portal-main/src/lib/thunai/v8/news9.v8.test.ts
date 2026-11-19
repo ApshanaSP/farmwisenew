@@ -110,6 +110,10 @@ describe("v9: an outlet misheard", () => {
     expect(outletIn("News 18 report")).toBe("News18");
     expect(outletIn("show me the news")).toBeNull();
     expect(outletIn("தினமணி செய்தியைப் படிங்க")).toBe("Dinamani");
+    expect(outletIn("தி இந்து செய்தியைப் படிங்க")).toBe("The Hindu");
+    // a number with an ordinal ending is no outlet ("9th" keyed like "DD")
+    expect(outletIn("open the 9th news")).toBeNull();
+    expect(outletIn("read the DD News report")).toBe("DD News");
     expect(outletIn("மாலைமலர் செய்தி")).toBe("Maalaimalar");
   });
 });
