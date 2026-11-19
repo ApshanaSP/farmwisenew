@@ -28,6 +28,11 @@ data/lancedb/
 # frozen district data for the chatbot golden questions (scripts/freeze-eval-store.cjs)
 eval/store/
 
+# Jarvis v10: the owner's own turns replayed (read from the local audit log; never committed), and every set's result rows (they hold
+# headlines, case titles and what Jarvis said)
+eval/v10/replay/
+eval/v10/*/results/
+
 # Thunai: per-Collector memory and the audit trail (never committed)
 data/thunai/
 
