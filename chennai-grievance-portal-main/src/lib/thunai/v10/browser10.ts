@@ -34,7 +34,7 @@ export type BrowserLane10 = BrowserLane
   /** Ask the Map by voice (map10.ts): one map operation; the console runs it (mapops.ts) */
   | { lane: "map"; cmd: MapCmd; lang: Lang }
   /** a dashboard control by voice (controls10.ts): its id, and its steps or the control pressed, or a question back */
-  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; which?: ControlHit["which"]; level: ControlHit["level"]; lang: Lang };
+  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; value?: string | null; tick?: boolean | null; own?: boolean; which?: ControlHit["which"]; level: ControlHit["level"]; label?: ControlHit["label"]; lang: Lang };
 
 export interface BrowserCtx10 extends BrowserCtx {
   lastLang?: Lang | null;
@@ -139,8 +139,8 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // 2b. Ask the Map by voice, then a dashboard control by voice (each module answers only for what is plainly its own)
   const mc = mapCommand10(said, { ...(c.askMap ?? { open: false, hasAnswer: false }), lang });
   if (mc) return { lane: "map", cmd: mc, lang };
-  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null });
-  if (cc) return { lane: "control", id: cc.id, ...(cc.steps ? { steps: cc.steps } : {}), ...(cc.press ? { press: cc.press } : {}), ...(cc.which ? { which: cc.which } : {}), level: cc.level, lang };
+  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null, stage: !!c.stage });
+  if (cc) return { ...cc, lane: "control", lang };
   // 3. a named thing: the day's lexicon, by ear
   const consoleThing = CONSOLE.test(said) && !/\b(?:news|story|article|seithi|seidhi)\b|செய்தி|நியூஸ்/iu.test(said);
   if (!consoleThing && c.lex?.length) {
