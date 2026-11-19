@@ -18,13 +18,20 @@ import { type LookupAnswer, webLookup } from "./lookup";
 import { type ArticleRead, readArticle } from "./read";
 import { type NewsItemInput, relatedCoverage } from "./related";
 import { coverageLine, type NewsAide } from "../aide7/news";
+import type { CaseRowT } from "../stage";
+import type { NewsBrief10 } from "../v10/brief10";
+import type { OfferPayload, Story10 } from "../v10/ground10";
 
 /** v7: the sentence the Collector said and its language, so the aide answers the question asked (aide7/news.ts); never sent anywhere */
 const Ask = z.object({ q: z.string().trim().min(1).max(400), lang: z.enum(["en", "ta"]) }).strict();
+const DocId = z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/);
 export const NewsBody = z.union([
-  z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
+  // v10: `full`, "read it fully": the whole story, not the brief (v10/brief10.ts)
+  z.object({ id: DocId, ask: Ask.optional(), full: z.boolean().optional() }).strict(),
   // v6: an incident on Jarvis's screen: its own newest news report (from a news medium) is read; none, and the answer says so
-  z.object({ incident: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), ask: Ask.optional() }).strict(),
+  z.object({ incident: DocId, ask: Ask.optional(), full: z.boolean().optional() }).strict(),
+  // v10, news to ground truth ("what do we have on this?"): what the console holds on the story read last (v10/ground10.ts)
+  z.object({ ground: z.object({ id: DocId, lang: z.enum(["en", "ta"]), q: z.string().trim().min(1).max(400).optional() }).strict() }).strict(),
   z.object({ question: z.string().trim().min(2).max(500) }).strict(),
   // v8: a story asked for by its topic, or a news question (the owner's examples 1 and 2): the sentence, its language, and the stories on the
   // Collector's screen in order (their ids and titles as shown); the server finds it among them and the dashboard's stored news (v8/newsfind.ts)
@@ -48,7 +55,12 @@ export interface StoredDoc { id: string; url: string | null; title: string | nul
 
 export type NewsEvent =
   | { type: "first"; en: string; ta: string }
-  | { type: "brief"; stage: "article" | "coverage"; brief: SpokenBrief; status: string; ms: number }
+  /** v10: `full`, the whole story read ("read it fully"), not its brief */
+  | { type: "brief"; stage: "article" | "coverage"; brief: SpokenBrief; status: string; ms: number; full?: true }
+  /** v10: the next steps the brief offered and what each does (the browser keeps them for the next turn: offer10.ts) */
+  | ({ type: "offer" } & OfferPayload)
+  /** v10, news to ground truth: what the console holds on the story, said by code, and its cases for the screen */
+  | { type: "ground"; en: string[]; ta: string[]; rows: CaseRowT[]; title: { en: string; ta: string } }
   | { type: "related"; items: { outlet: string; title: string; url: string; publishedAt: string | null; source: "article" | "feed" }[]; feeds: { tried: number; ok: number; failed: number }; ms: number }
   | { type: "answer"; answer: LookupAnswer }
   /** v8: the story found for a request by its topic (read next), another close story to offer, the other matching stories */
@@ -77,6 +89,8 @@ export interface ServeDeps extends WebDeps, CompareOptions {
   feedLines?: (f: Extract<NewsBodyT, { find: unknown }>["find"], words: string[]) => Promise<{ en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }>;
   /** v10: a storm's weather readings (v10/weather10.ts weatherLines), when a find asks for them */
   weather?: () => Promise<{ en: string[]; ta: string[] } | null>;
+  /** v10: the brief (what, why, the console's records, an offer), "read it fully", and news to ground truth (v10/brief10.ts); absent, v7's aide */
+  brief10?: NewsBrief10;
 }
 
 /** v8: what a { find } found (v8/newsfind.ts): the request's kind and topic words, the story picked (or none), another close one, the matches */
@@ -97,8 +111,11 @@ const asSource = (a: { outlet: string | null; outletTa?: string | null; url: str
 export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerator<NewsEvent> {
   const t0 = performance.now();
   const ms = () => Math.round(performance.now() - t0);
-  let body: Exclude<NewsBodyT, { incident: string } | { find: unknown }>;
+  let body: Exclude<NewsBodyT, { incident: string } | { find: unknown } | { ground: unknown }>;
   let ask = "ask" in asked ? asked.ask ?? null : null;
+  // v10: "read it fully" (the whole story), and news to ground truth (what the console holds on the story read last)
+  const full = "full" in asked && asked.full === true;
+  if ("ground" in asked) { yield* groundEvents(asked.ground, d, ms); return; }
   // v10: a storm's weather readings, read while the story is found and read, said after it
   const weatherP = "find" in asked && asked.find.weather && d.weather ? d.weather().catch(() => null) : null;
   const weatherEvent = async (): Promise<NewsEvent | null> => { const w = weatherP ? await weatherP : null; return w && (w.en.length || w.ta.length) ? { type: "weather", en: w.en, ta: w.ta } : null; };
@@ -125,7 +142,7 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
     let id: string | null = null;
     try { id = d.incidentDoc ? await d.incidentDoc(asked.incident) : null; } catch { yield { type: "error", why: "failed" }; return; }
     if (!id) { yield { type: "error", why: "no_news" }; return; }
-    body = { id, ...(ask ? { ask } : {}) };
+    body = { id, ...(ask ? { ask } : {}), ...(full ? { full: true } : {}) };
   } else body = asked;
   if ("question" in body) {
     yield { type: "first", en: "Looking that up on the web...", ta: "இணையத்தில் தேடுகிறேன்..." };
@@ -147,8 +164,13 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   const publishedAt = (() => { const s = doc.t ? String(doc.t) : ""; const v = Date.parse(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s) ? `${s.replace(" ", "T")}+05:30` : s); return Number.isFinite(v) ? new Date(v).toISOString() : null; })();
   const item: NewsItemInput = { id: doc.id, title: doc.title, titleEn: doc.title_en ?? null, url: doc.url, outlet: outletName, publisherDomain: doc.publisher_domain ?? null,
     publishedAt, place: doc.place ?? null, category: doc.cat ?? null };
-  // the other outlets' feeds are read while the article is (both within the 8 s target)
-  const relP = d.related === false ? null : relatedCoverage(item, d);
+  // v10: the brief's console facts (the story's place and kind, the open cases there), read while the article is
+  const b10 = d.brief10 && ask ? d.brief10 : null;
+  const story10 = (text: string): Story10 => ({ id: doc.id, outlet: outletName, outletTa: outlet?.nameTa ?? null, title: doc.title ?? "", titleEn: doc.title_en ?? null, publishedAt, text,
+    place: doc.place ?? null, cat: doc.cat ?? null });
+  const consoleP = b10 ? b10.console(story10(String(doc.body ?? ""))) : null;
+  // the other outlets' feeds are read while the article is (both within the 8 s target); a whole story read needs none
+  const relP = d.related === false || (b10 && full) ? null : relatedCoverage(item, d);
 
   let primary: ArticleRead | { status: "stored" | "no_link"; outlet: string | null; outletTa: string | null; url: string; title: string; publishedAt: string | null; text: string };
   const stored = String(doc.body ?? "").trim();
@@ -170,15 +192,26 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   // v7: the aide writes the brief in the asked language from the article's own sentences, each sentence sent as it passes its check; the other
   // language keeps the code brief (shown, not said)
   let aideLines: string[] | null = null;
-  if (d.aide && ask) {
+  // v10: the brief (what, why, the console's records, an offer), or the whole story, in the asked language; then the offer kept for the next turn
+  let gauged = false;
+  if (b10 && ask) {
+    const story: Story10 = { ...story10(pText), outlet: pOutlet, outletTa: pOutletTa, title: pTitle, publishedAt: pWhen };
+    const c = await (consoleP ?? b10.console(story));
+    gauged = !full && !!c.gauges;
+    for await (const lines of full ? b10.full({ question: ask.q, lang: ask.lang, story }) : b10.brief({ question: ask.q, lang: ask.lang, story, console: c })) {
+      aideLines = lines;
+      yield { type: "brief", stage: "article", status: primary.status, brief: { ...codeBrief, [ask.lang]: lines }, ms: ms(), ...(full ? { full: true as const } : {}) };
+    }
+    yield { type: "offer", ...b10.offer(story, c) };
+  } else if (d.aide && ask) {
     for await (const lines of d.aide({ question: ask.q, lang: ask.lang, outlet: pOutlet, outletTa: pOutletTa, title: pTitle, publishedAt: pWhen, text: pText, fallback: codeBrief[ask.lang].join(" ") })) {
       aideLines = lines;
       yield { type: "brief", stage: "article", status: primary.status, brief: { ...codeBrief, [ask.lang]: lines }, ms: ms() };
     }
   }
   if (!aideLines) yield { type: "brief", stage: "article", status: primary.status, brief: codeBrief, ms: ms() };
-  // v10: a storm's readings after its story
-  { const w = await weatherEvent(); if (w) yield w; }
+  // v10: a storm's readings after its story (the brief said the gauges already: not twice)
+  if (!gauged) { const w = await weatherEvent(); if (w) yield w; }
 
   if (relP) {
     const rel = await relP;
@@ -190,11 +223,35 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
       const cmp = await compareCoverage(sources, d);
       const cov = briefFromCoverage({ primary: pBrief, related: rel.items, comparison: cmp }, d);
       // v7: after the aide's answer, one line names the other outlets (their links are on the screen); nothing said twice
-      const line = aideLines && ask ? coverageLine(rel.items.map((x) => ({ outlet: x.outlet, outletTa: x.outletTa ?? null })), ask.lang) : null;
+      // (v10: the brief ends on its offer: the other outlets' links are shown, not said)
+      const line = aideLines && ask && !b10 ? coverageLine(rel.items.map((x) => ({ outlet: x.outlet, outletTa: x.outletTa ?? null })), ask.lang) : null;
       yield { type: "brief", stage: "coverage", status: primary.status, brief: aideLines && ask ? { ...cov, [ask.lang]: [...aideLines, ...(line ? [line] : [])] } : cov, ms: ms() };
     }
   }
   tele(d, "web_news", { ms: ms(), why: primary.status, count: 0 });
+  yield { type: "done", ms: ms() };
+}
+
+/**
+ * v10, news to ground truth ("what do we have on this?", JARVIS_V10.md 4.9 feature 1): the story read last, matched by code with the console's
+ * own records (v10/ground10.ts): the open cases of its kind at its place, how old, who holds them, said by code in both languages; the cases for
+ * the screen; the offer (the map, a note to the officer into the tray). No model. Only a news outlet's stored report, as for a read.
+ */
+async function* groundEvents(g: { id: string; lang: "en" | "ta"; q?: string }, d: ServeDeps, ms: () => number): AsyncGenerator<NewsEvent> {
+  if (!d.brief10) { yield { type: "error", why: "not_found" }; return; }
+  let doc: StoredDoc | null = null;
+  try { doc = await d.loadDoc(g.id); } catch { yield { type: "error", why: "failed" }; return; }
+  if (!doc || !isNewsMedia(doc.publisher, doc.publisher_domain, doc.publisher_tier)) { yield { type: "error", why: "not_found" }; return; }
+  const list = listOf(d);
+  const outlet = outletByName(doc.publisher, doc.publisher_domain, list) ?? (doc.url ? outletOfUrl(doc.url, list) : null);
+  const story: Story10 = { id: doc.id, outlet: outlet?.name ?? (doc.publisher ? String(doc.publisher) : null), outletTa: outlet?.nameTa ?? null, title: doc.title ?? "", titleEn: doc.title_en ?? null,
+    publishedAt: null, text: String(doc.body ?? "").slice(0, 2000), place: doc.place ?? null, cat: doc.cat ?? null };
+  let c: Awaited<ReturnType<NewsBrief10["console"]>>;
+  try { c = await d.brief10.console(story); } catch { yield { type: "error", why: "failed" }; return; }
+  const o = d.brief10.offer(story, c);
+  const where = c.place ? { en: c.place.name, ta: c.place.nameTa ?? c.place.name } : { en: "this story", ta: "இந்தச் செய்தி" };
+  yield { type: "ground", en: d.brief10.ground(c, o, "en"), ta: d.brief10.ground(c, o, "ta"), rows: c.rows, title: { en: `On the console: ${where.en}`, ta: `கன்சோலில்: ${where.ta}` } };
+  yield { type: "offer", ...o };
   yield { type: "done", ms: ms() };
 }
 

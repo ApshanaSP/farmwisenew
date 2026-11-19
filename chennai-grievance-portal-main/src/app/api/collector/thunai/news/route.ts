@@ -11,6 +11,17 @@ import { feedLines, foundStory, type FindAsk } from "@/lib/thunai/v8/newsfind";
 import { serverHands } from "@/lib/thunai/data";
 import { weatherLines } from "@/lib/thunai/v10/weather10";
 import { semScores } from "@/lib/thunai/v10/sem10";
+import { newsBrief10 } from "@/lib/thunai/v10/brief10";
+import { understandV10 } from "@/lib/thunai/v10/flag10";
+import { tamilNames } from "@/lib/collector/nlp";
+
+/** v10: a locality's Tamil name from the console's gazetteer (the brief's Tamil lines say it), when it has one */
+function placeTa(): ((name: string) => string | null) | undefined {
+  try {
+    const names = tamilNames();
+    return (n) => names.find((x) => x.en.some((e) => e.toLowerCase() === n.toLowerCase()))?.ta[0] ?? null;
+  } catch { return undefined; }
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +46,13 @@ export async function POST(req: NextRequest) {
   const v8 = { find: async (f: FindAsk) => foundStory(f, { world: await serverWorld(), sem: semScores }), feedLines: async (f: FindAsk, words: string[]) => feedLines(f, words, { world: await serverWorld() }) };
   // v10: a storm's weather readings (the rain gauges, IMD's warning), read from the console's own records when a find asks for them
   const hands = serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal);
-  const v10 = { weather: () => weatherLines((n, a) => hands.tool(n, a)) };
+  const tool = (n: string, a: Record<string, unknown>) => hands.tool(n, a);
+  // v10 (JARVIS_V10.md 4.5, 4.9 feature 1): "read" is a brief (what, why, the console's own records, an offer), "read it fully" the whole story,
+  // and "what do we have on this?" the console's cases on the story; with no model configured, code says the brief (JARVIS_ANSWER=v6 or
+  // JARVIS_UNDERSTAND=v9: as before)
+  const brief10 = understandV10() && answerStyle() === "v7"
+    ? newsBrief10({ world: await serverWorld(), user: `collector:${s.userId}`, signal: req.signal, tool, weather: () => weatherLines(tool), placeTa: placeTa(), ...(aideReady() ? {} : { write: { rungs: () => [] } }) })
+    : undefined;
+  const v10 = { weather: () => weatherLines(tool), brief10 };
   return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}`, aide, ...v8, ...v10 }));
 }

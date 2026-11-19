@@ -25,7 +25,7 @@ import { band, canSpeak as watchMaySpeak, remember as watchRemember, type Signal
 import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
 import { idsOf, stageContext, type NextStepT, type StageDocT } from "@/lib/thunai/stage";
-import { failLine, newsAsk, newsScreen, readNdjson, whichLine, type NewsAskT, type NewsLink, type NewsOnScreen } from "@/lib/thunai/newsask";
+import { failLine, fullRead, newsAsk, newsScreen, readNdjson, whichLine, type NewsAskT, type NewsLink, type NewsOnScreen } from "@/lib/thunai/newsask";
 import { allowedSet, figuresIn } from "@/lib/thunai/numbergate";
 import { missionCommand, missionIntent } from "@/lib/thunai/missions.words";
 import { missionControl, runMission, type MissionCard, type MissionControl, type ScreenOutcome } from "@/lib/thunai/missions.run";
@@ -62,6 +62,7 @@ import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFoun
 import { joinCut, v10Front } from "@/lib/thunai/v10/browser10";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
 import type { Entity10 } from "@/lib/thunai/v10/lexicon10";
+import { groundScreen, offerAct, offerOf as newsOfferOf, offerSaid, type Offer10 } from "@/lib/thunai/v10/offer10";
 import { runMapCmd } from "./mapops";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
@@ -327,6 +328,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const lexRef = useRef<Entity10[] | null>(null);
   const cutRef = useRef<{ text: string; at: number } | null>(null);
   const confirmRef = useRef<{ then: string; lang: Lang; at: number } | null>(null);
+  /** v10 (reading): the news brief's offered next steps and the story it was about (offer10.ts), kept for the next turn only */
+  const newsOffer = useRef<Offer10 | null>(null);
   const listenLangRef = useRef<Lang>("en");
   /** what was asked and answered goes to the chatbot's Jarvis tab: nothing stacks over the dashboard */
   const pushMsg = (m: Omit<JLog, "id" | "at">) => jarvisLog.add(m);
@@ -1323,7 +1326,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const soft = na.kind === "find" && na.soft === true;
     const t0 = performance.now();
     const doing = na.kind === "lookup" ? (lang === "ta" ? "இணையத்தில் தேடுகிறேன்" : "Looking it up on the web")
-      : na.kind === "find" ? (lang === "ta" ? "செய்தியைத் தேடுகிறேன்" : "Finding that story") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
+      : na.kind === "find" ? (lang === "ta" ? "செய்தியைத் தேடுகிறேன்" : "Finding that story")
+      : na.kind === "ground" ? (lang === "ta" ? "கன்சோல் பதிவுகளைப் பார்க்கிறேன்" : "Checking the console's records") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
     let begun = false;
     const begin = () => {
       if (begun) return;
@@ -1338,7 +1342,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
     const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
     const said = new Set<string>();
-    const st = { outlet: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false, none: false };
+    const st = { outlet: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false, none: false,
+      // v10 (reading): the console's cases on the story (news to ground truth), and the next steps the brief offered
+      ground: null as { rows: unknown; title: { en: string; ta: string } } | null, offer: null as Offer10 | null };
     const sayLines = (en: string[], ta: string[]) => {
       for (const t of lang === "ta" ? ta : en) { const k = t.trim(); if (!k || said.has(k)) continue; said.add(k); q?.push(k); }
       setReply([...said].join(" "));
@@ -1347,7 +1353,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const draw = () => {
       // (v10: the story read is kept on its screen, so "this story" next means it: the second review of v9)
       const readId = (found as { id: string } | null)?.id ?? (na.kind === "read" && "id" in na.body ? na.body.id : null);
-      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", outlet: st.outlet, en: st.en, ta: st.ta, links: st.links, readId });
+      const d = st.ground ? groundScreen({ lang, en: st.en, ta: st.ta, rows: st.ground.rows, title: st.ground.title })
+        : newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", outlet: st.outlet, en: st.en, ta: st.ta, links: st.links, readId });
       if (!d || !alive()) return;
       if (!st.shown) {
         st.shown = true;
@@ -1361,7 +1368,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const url = `${(hostRef.current.agentUrl ?? "/api/collector/thunai/agent").replace(/\/agent$/, "")}/news`;
     try {
       // v7: a read carries the sentence said and its language, so the server's aide answers what was asked (a web question is its own sentence)
-      const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang } } : na.body;
+      // (v10: "read it fully" carries `full`: the whole story, not its brief)
+      const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang }, ...(na.full || fullRead(heardText) ? { full: true } : {}) } : na.body;
       if (na.kind !== "find") lastFound.current = na.kind === "read" && "id" in na.body && lastFound.current?.other?.id === na.body.id ? { id: na.body.id, other: null } : null;
       const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sent), signal });
       if (!alive()) return "aborted";
@@ -1427,6 +1435,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           const w = e as { en?: string[]; ta?: string[] };
           const wen = (w.en ?? []).map(String), wta = (w.ta ?? []).map(String);
           if (wen.length || wta.length) { st.answered = true; markAnswer(); st.en = [...st.en, ...wen]; st.ta = [...st.ta, ...wta]; draw(); sayLines(wen, wta); }
+        } else if (e.type === "offer") {
+          // v10 (reading): the next steps the brief offered, kept for the next turn (offer10.ts)
+          st.offer = newsOfferOf(e, lang, Date.now());
+        } else if (e.type === "ground") {
+          // v10, news to ground truth: what the console holds on the story (said by code), its cases on the screen
+          const g = e as { en?: string[]; ta?: string[]; rows?: unknown; title?: { en?: string; ta?: string } };
+          st.answered = true; jvMark("newsBrief"); markAnswer();
+          st.en = (g.en ?? []).map(String); st.ta = (g.ta ?? []).map(String); st.links = [];
+          st.ground = { rows: g.rows, title: { en: String(g.title?.en ?? "On the console"), ta: String(g.title?.ta ?? "கன்சோலில்") } };
+          draw(); sayLines(st.en, st.ta);
         } else if (e.type === "done") {
           jvMark("newsDone");
           // v8: another story matched almost as well: offered in one line, never read uninvited
@@ -1459,7 +1477,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     const all = (lang === "ta" ? st.ta : st.en).join(" ");
     pushMsg({ who: "jarvis", text: all, lang });
-    remember(heardText, na.kind === "lookup" ? "looked it up on the web and said what it found, with sources" : "read the news report and other outlets' coverage aloud, with links", { doc: stageRef.current });
+    remember(heardText, na.kind === "lookup" ? "looked it up on the web and said what it found, with sources" : na.kind === "ground" ? "said what the console holds on the story, its open cases on the screen"
+      : "read the news report and other outlets' coverage aloud, with links", { doc: stageRef.current });
+    // v10 (reading): the brief's offer waits for the next turn only (an older next-step card is put away: one offer at a time)
+    newsOffer.current = st.offer;
+    if (st.offer) setOffer(null);
     const done = () => setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
     if (q?.speaking) { setPhase("speaking"); q.then(done); } else done();
     return "done";
@@ -1746,6 +1768,27 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
       return true;
     };
+    // v10 (reading, JARVIS_V10.md 4.5 and 4.9 feature 1): a reply to the news brief's offer (offer10.ts): "show them on the map" (Ask the Map),
+    // "draft a note to the officer" (the tray: level C, never sent), "follow it" (the follow flow and its yes), "read it fully", "what do we have
+    // on this?" (news to ground truth); one pending offer, forgotten on any other turn
+    const nOffer = newsOffer.current;
+    newsOffer.current = null;
+    const oa = nOffer && !original ? offerAct(said, nOffer, Date.now()) : null;
+    if (oa && nOffer) {
+      const lg: Lang = ulang ?? (/[஀-௿]/.test(said) ? "ta" : nOffer.lang);
+      const t0 = performance.now();
+      setBrainNow({ by: "instant", model: null, ms: 0 });
+      if (oa.act === "full" || oa.act === "ground") {
+        const na: NewsAskT = oa.act === "full" ? { kind: "read", body: { id: oa.id }, full: true } : { kind: "ground", body: { ground: { id: oa.id, lang: lg, q: said.slice(0, 400) } } };
+        if (await newsTurn(na, said, lg, alive, ctl.signal) === "aborted") return;
+      } else if (oa.act === "map") await run([{ a: "map", q: oa.q }], lg, said, "rules");
+      else if (oa.act === "draft") { if (needsName("C", lg)) return; await draftMany(oa.ids, lg); }
+      else if (oa.act === "follow") { if (needsName("B", lg)) return; askFollow({ op: "follow", kind: "zone", ref: oa.zone, name: oa.name }, said, lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+      else { earcon(oa.act === "no" ? "done" : "need"); out(offerSaid(oa, lg) ?? "", lg, "ready"); }
+      if (!alive()) return;
+      decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
+      return;
+    }
     // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts). Before the
     // Stage's own commands: over a news list "read the first one" stays the Stage's headline reading, but "read the first article" is the
     // article itself (the 17 Nov news run: the Stage took it and read the headline)

@@ -28,7 +28,9 @@ describe("a report on screen is read", () => {
     expect(newsAsk("news la enna solraanga", list)).toEqual({ kind: "read", body: { id: "doc-11" } });
   });
   it("the item being read aloud is the one meant when no other is named", () => {
-    expect(newsAsk("read the full article", { ...list, reading: "doc-13" })).toEqual({ kind: "read", body: { id: "doc-13" } });
+    // (v10: "the full article" is the whole story, not its brief: `full`, JARVIS_V10.md 4.5)
+    expect(newsAsk("read the full article", { ...list, reading: "doc-13" })).toEqual({ kind: "read", body: { id: "doc-13" }, full: true });
+    expect(newsAsk("read the article", { ...list, reading: "doc-13" })).toEqual({ kind: "read", body: { id: "doc-13" } });
   });
   it("over a case, the incident's own news report", () => {
     expect(newsAsk("Read the news report", { incident: "INC-77" })).toEqual({ kind: "read", body: { incident: "INC-77" } });
