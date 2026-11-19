@@ -55,7 +55,9 @@ export interface Console10 {
   n: number | null;
   complaints: number;
   oldestDays: number | null;
-  dept: { code: string | null; en: string; ta: string; all: boolean; k: number } | null;
+  /** the department holding most of the cases read: `all` of them (every case counted was read), `k` of those read; `whole`: every case
+   * counted was read (12 or fewer); `of`: the departments holding the cases read */
+  dept: { code: string | null; en: string; ta: string; all: boolean; k: number; whole: boolean; of: number } | null;
   /** cases past their deadline, when every case counted was read (12 or fewer) */
   overdue: number | null;
   /** the cases, oldest first (ids, for the map and a draft), and their rows for the screen (no row reaches a model) */
@@ -84,7 +86,12 @@ const TOPICS: (Topic10 & { re: RegExp })[] = [
   { cat: "TRAFFIC_OBSTRUCTION", en: "traffic obstruction", ta: "போக்குவரத்து நெரிசல்", map: "traffic", re: /traffic (?:jam|congestion|snarl)|congestion|போக்குவரத்து நெரிசல்/iu },
   { cat: "PUBLIC_ORDER", en: "protest", ta: "போராட்டம்", map: "protest", re: /protest|agitation|road roko|dharna|demonstration|போராட்ட|மறியல்|ஆர்ப்பாட்ட/iu }
 ];
-const STORM = /cyclone|\bstorm\b|deep depression|heavy rain|very heavy rain|rain alert|red alert|orange alert|landfall|புயல்|கனமழை|காற்றழுத்த|சைக்ளோன்/iu;
+const STORM = /cyclone|deep depression|heavy rain|very heavy rain|rain alert|red alert|orange alert|landfall|புயல்|கனமழை|காற்றழுத்த|சைக்ளோன்/iu;
+/** a bare "storm" is the weather's only with a weather word in the story: "storm water drain" is a drain (the GCC's department), and "a political
+ * storm erupts over" a row (v10 review 2, finding 3: both were briefed with the rain gauges and a flooding offer) */
+const BARE_STORM = /\bstorms?\b(?![- ]?water)/iu;
+const STORM_FIGURE = /\b(?:political|social media|online|media|legal|verbal|diplomatic) storms?\b|\bstorms? (?:of|over) (?:protests?|criticism|outrage|controvers\w*|questions|anger|allegations?)\b|\bstorms? erupt(?:s|ed)?\b|\b(?:kick(?:s|ed)? up|creat(?:es?|ed)|trigger(?:s|ed)?|spark(?:s|ed)?|rais(?:es?|ed)) (?:a )?storms?\b/iu;
+const WEATHER = /\b(?:rain\w*|winds?|gales?|cyclon\w*|imd|meteorolog\w*|landfall|depressions?|monsoon|thunder\w*|lightning|squalls?|weather|surge)\b|மழை|புயல்|காற்று/iu;
 const label = (s: string) => s.replace(/\s*&\s*/g, " and ").toLowerCase();
 
 /** The story's civic kind: the table's, else the monitor's own category when the console has it; null when it names none. */
@@ -96,7 +103,8 @@ export function storyTopic(text: string, cat: string | null | undefined, world: 
   if (!c || c.code === "OTHER" || c.code === "FLOOD_RISK_SIGNAL") return null;
   return { cat: c.code, en: label(c.label), ta: CAT_LABEL_TA[c.code] ?? label(c.label), map: label(c.label) };
 }
-export const stormy = (text: string): boolean => STORM.test(text);
+/** Is the story a storm's? `text` is its headline; `context` its opening, where a bare "storm" finds its weather word. */
+export const stormy = (text: string, context = ""): boolean => STORM.test(text) || (BARE_STORM.test(text) && !STORM_FIGURE.test(text) && WEATHER.test(`${text} ${context}`));
 
 // ------------------------------------------------------------------ the story's place --
 
@@ -160,7 +168,7 @@ export interface ConsoleDeps {
 /** What the console holds on the story: never throws (a tool that fails counts nothing). */
 export async function consoleOn(s: Story10, d: ConsoleDeps): Promise<Console10> {
   const text = [s.title, s.titleEn ?? "", s.text.slice(0, 600)].join(" ");
-  const storm = stormy([s.title, s.titleEn ?? ""].join(" "));
+  const storm = stormy([s.title, s.titleEn ?? ""].join(" "), s.text.slice(0, 600));
   // a storm's cases are its flooding
   const flood = TOPICS.find((x) => x.cat === "FLOOD_WATERLOGGING")!;
   const topic = storyTopic([s.title, s.titleEn ?? ""].join(" "), s.cat, d.world) ?? storyTopic(text, null, d.world) ?? (storm ? { cat: flood.cat, en: flood.en, ta: flood.ta, map: flood.map } : null);
@@ -169,9 +177,11 @@ export async function consoleOn(s: Story10, d: ConsoleDeps): Promise<Console10> 
     storm && d.weather ? d.weather().catch(() => null) : Promise.resolve(null)
   ]);
   const out: Console10 = { place, topic, storm, area: null, n: null, complaints: 0, oldestDays: null, dept: null, overdue: null, ids: [], rows: [], gauges };
-  if (!d.tool || (!place && !storm)) return out;
+  // a story of no civic kind (a library opened) is not counted: every open case of every kind at the place is no record of it, and the oldest
+  // of them no case to draft a note on (v10 review 2, finding 5); a storm always has its kind (its flooding)
+  if (!d.tool || (!place && !storm) || !topic) return out;
   // a storm with no place: the district's open flooding cases
-  const cat = topic?.cat ?? null;
+  const cat = topic.cat;
   const ask = async (zone: number | null, q: string | null) => {
     const r = await d.tool!("incidents", { scope: { period: "monthly", zone, cat, dept: null, taluk: null }, status: "open", q, sort: "t", dir: 1, page: 0, allTime: true }).catch(() => null);
     const data = r?.data as { rows?: Row[]; incidents?: unknown; complaints?: unknown } | undefined;
@@ -204,8 +214,10 @@ export async function consoleOn(s: Story10, d: ConsoleDeps): Promise<Console10> 
     by.set(name, e);
   }
   const top = [...by.values()].sort((a, b) => b.k - a.k)[0];
-  if (top && got.rows.length) out.dept = { code: top.code, en: top.name, ta: (top.code && DEPT_TA[top.code]) || plainDept(top.name), all: top.k === got.rows.length, k: top.k };
-  if (got.n <= got.rows.length) out.overdue = got.rows.filter((r) => r.overdue === true).length;
+  // "all" only over every case counted: one page (12) of 30 read all with one department says nothing of the other 18 (v10 review 2, finding 6)
+  const whole = got.n <= got.rows.length;
+  if (top && got.rows.length) out.dept = { code: top.code, en: top.name, ta: (top.code && DEPT_TA[top.code]) || plainDept(top.name), all: whole && top.k === got.rows.length, k: top.k, whole, of: by.size };
+  if (whole) out.overdue = got.rows.filter((r) => r.overdue === true).length;
   // oldest first, as listed
   const order = got.rows.map((r, i) => ({ r, i, t: timeOf(r.t) ?? Infinity })).sort((a, b) => a.t - b.t || a.i - b.i).map((x) => x.r);
   out.ids = order.map((r) => String(r.id ?? "")).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x));
@@ -219,6 +231,15 @@ const s = (n: number, one: string, many: string) => (n === 1 ? one : many);
 const kindEn = (c: Console10) => (c.topic ? `${c.topic.en} ` : "");
 const kindTa = (c: Console10) => (c.topic ? `${c.topic.ta} தொடர்பான ` : "");
 const daysEn = (d: number) => `${d} ${s(d, "day", "days")}`;
+/**
+ * How the department holds the cases counted, said only as far as the cases read show it: all (every case read), most (more than half of all
+ * counted), spread (every case read, no majority), else some (how many of them) (v10 review 2, finding 6: "most with" was said for 1 of 4).
+ */
+export function deptHold(c: Pick<Console10, "dept" | "n">): "all" | "most" | "spread" | "some" | null {
+  const d = c.dept;
+  if (!d || !c.n) return null;
+  return d.all ? "all" : d.k * 2 > c.n ? "most" : d.whole && d.of > 1 ? "spread" : "some";
+}
 
 /** The console's facts for the brief's fact sheet: plain English, one line a fact, figures in digits (the checker holds each sentence to them). */
 export function consoleFacts(c: Console10): { text: string; rank?: boolean }[] {
@@ -233,7 +254,7 @@ export function consoleFacts(c: Console10): { text: string; rank?: boolean }[] {
       if (c.complaints > 0) out.push({ text: `Citizen complaints linked to these open cases: ${c.complaints}` });
       if (c.oldestDays != null) out.push({ text: c.oldestDays === 0 ? (c.n === 1 ? "This open case was opened today" : "These open cases were all opened today")
         : c.n === 1 ? `This open case has been open ${daysEn(c.oldestDays)}` : `The oldest of these open cases has been open ${daysEn(c.oldestDays)}`, rank: true });
-      if (c.dept) out.push({ text: c.dept.all ? `${c.n === 1 ? "It is" : "All of these open cases are"} held by ${c.dept.en}` : `${c.dept.k} of these open cases are held by ${c.dept.en}`, rank: !c.dept.all });
+      if (c.dept) out.push({ text: c.dept.all ? `${c.n === 1 ? "It is" : "All of these open cases are"} held by ${c.dept.en}` : `${c.dept.k} of these open cases ${s(c.dept.k, "is", "are")} held by ${c.dept.en}`, rank: !c.dept.all });
       else out.push({ text: "No department holds these open cases yet" });
       if (c.overdue) out.push({ text: `${c.overdue} of these open cases ${s(c.overdue, "is", "are")} past ${s(c.overdue, "its", "their")} deadline` });
     } else {
@@ -259,14 +280,16 @@ export function countLine(c: Console10, lang: Lang): string {
   if (c.n == null || !c.area) return "";
   if (c.n === 0) return ta ? `கன்சோலில் ${c.area.ta} ${kindTa(c)}திறந்த புகார் எதுவும் இல்லை; புகார் குறைவு என்றால் பிரச்சினை இல்லை என்று அர்த்தமில்லை.`
     : `The console has no open ${kindEn(c)}case ${c.area.en}; few reports may only mean few were filed, not that all is well.`;
-  const d = c.dept, n = c.n;
+  const d = c.dept, n = c.n, h = deptHold(c);
   if (ta) {
     const old = c.oldestDays == null ? "" : c.oldestDays === 0 ? (n === 1 ? ", இன்றுதான் பதிவானது" : ", எல்லாம் இன்று பதிவானவை") : n === 1 ? `, ${c.oldestDays} நாட்களாகத் திறந்திருக்கிறது` : `, பழையது ${c.oldestDays} நாட்களாகத் திறந்திருக்கிறது`;
-    const who = d ? `; ${n === 1 ? "அது" : d.all ? "எல்லாமே" : "பெரும்பாலானவை"} ${d.ta} வசம் உள்ளன` : "; எந்தத் துறையிடமும் இன்னும் ஒப்படைக்கப்படவில்லை";
+    const who = !d ? "; எந்தத் துறையிடமும் இன்னும் ஒப்படைக்கப்படவில்லை" : n === 1 || h === "all" || h === "most" ? `; ${n === 1 ? "அது" : h === "all" ? "எல்லாமே" : "பெரும்பாலானவை"} ${d.ta} வசம் உள்ளன`
+      : h === "spread" ? `; ${d.of} துறைகளிடம் பிரிந்துள்ளன` : `; அவற்றில் ${d.k} ${d.ta} வசம் உள்ளன`;
     return `கன்சோலில் ${c.area.ta} ${kindTa(c)}${n} புகார்கள் திறந்த நிலையில் உள்ளன${old}${who}.`;
   }
   const old = c.oldestDays == null ? "" : c.oldestDays === 0 ? (n === 1 ? ", opened today" : ", all opened today") : n === 1 ? `, open ${daysEn(c.oldestDays)}` : `, the oldest open ${daysEn(c.oldestDays)}`;
-  const who = d ? `, ${n === 1 ? "held by" : d.all ? "all with" : "most with"} ${plainDept(d.en)}` : ", with no department on them yet";
+  const who = !d ? ", with no department on them yet" : n === 1 ? `, held by ${plainDept(d.en)}` : h === "all" ? `, all with ${plainDept(d.en)}` : h === "most" ? `, most with ${plainDept(d.en)}`
+    : h === "spread" ? `, spread across ${d.of} departments` : `, ${d.k} of them with ${plainDept(d.en)}`;
   return `The console has ${n} open ${kindEn(c)}${s(n, "case", "cases")} ${c.area.en}${old}${who}.`;
 }
 
@@ -319,7 +342,9 @@ export function offerLine(o: OfferPayload, lang: Lang): string {
 export function groundLines(c: Console10, o: OfferPayload, lang: Lang): string[] {
   const ta = lang === "ta";
   const out: string[] = [];
-  const first = countLine(c, lang);
+  // a story of no civic kind was not counted: said so, not left unsaid (v10 review 2, finding 5)
+  const first = countLine(c, lang) || (c.place && !c.topic ? (ta ? "இந்தச் செய்தி கன்சோல் கண்காணிக்கும் எந்தக் குடிமைப் பிரச்சினையையும் குறிப்பிடவில்லை; அதனால் ஒப்பிட புகார்கள் இல்லை."
+    : "This story names no civic problem the console tracks, so I have no cases to match it with.") : "");
   if (first) out.push(first);
   if (c.n && c.n > 0) {
     const late = c.overdue ?? 0, linked = c.complaints;
