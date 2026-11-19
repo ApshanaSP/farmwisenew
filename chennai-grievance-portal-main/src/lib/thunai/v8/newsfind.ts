@@ -15,7 +15,8 @@ import type { World } from "../types";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { eventForms, newsRequest, pickStory, rankStories, SOFT_FLOOR, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { eventForms, newsRequest, pickStory, rankStories, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { tokensOf } from "./match";
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
@@ -54,8 +55,32 @@ export async function feedLines(f: FindAsk, words: string[], d: { world: Pick<Wo
 }
 
 export interface ScreenStory { id: string; title?: string | null; source?: string | null }
-export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[]; exclude?: string[] }
+export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[]; exclude?: string[];
+  /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have */
+  entity?: { name: string; kind: string; spellings: string[] } | null;
+  /** v10: a storm: the weather readings come with the news */
+  weather?: boolean }
 export interface Found { req: NewsReq; picked: Picked }
+
+/**
+ * v10: a request that names a thing by ear ("Tell me about Cyclone Aquan"), as the store spells it: its topic words (the request's own, which
+ * v10's browser already wrote with the store's spelling), each word of the name glossed with every spelling the store has for it (a headline
+ * that says "Akwan" matches "Akvan" at 0.9, as a Tamil word's English does). Never soft: the Collector named it. With no request of v8's shape
+ * ("tell me about X" has no news word), it is a story when said with a verb that reads or tells, else a news question.
+ */
+export function entityRequest(req: NewsReq | null, f: Pick<FindAsk, "q" | "entity">): NewsReq | null {
+  const e = f.entity;
+  if (!e || !e.spellings.length) return req;
+  const coreToks = [...new Set(e.spellings.flatMap((s) => tokensOf(s)).filter((w) => w.length >= 3))];
+  const own = tokensOf(e.spellings[0]).filter((w) => w.length >= 3);
+  const base = topicWords(f.q, null).slice(0, 12);
+  const words = [...new Set([...(req?.words ?? base), ...own])].slice(0, 12);
+  if (!words.length) return req;
+  const gloss: Record<string, string[]> = { ...(req?.gloss ?? {}) };
+  for (const w of own) gloss[w] = [...new Set([...(gloss[w] ?? []), ...coreToks])];
+  const kind: NewsReq["kind"] = req?.kind ?? (/\b(?:tell|read|open|explain|brief|about|show|play)\b|\b(?:sollu|padi|kaattu|thira)\w*|சொல்|படி|காட்டு|திற|விளக்கு/iu.test(f.q) ? "story" : "ask");
+  return { kind, words, outlet: req?.outlet ?? null, ref: false, gloss, ...(req?.weak ? { weak: req.weak } : {}) };
+}
 
 /** the district's own place names, for the place veto (a place named that a story does not mention is never that story) */
 export const placesOf = (w: Pick<World, "zones" | "places">): string[] => [...new Set([...w.zones.map((z) => z.name), ...w.places.flatMap((p) => [p.name, ...(p.aliases ?? [])])])].filter((n) => n && n.length >= 4);
@@ -95,7 +120,8 @@ export const MORE_FLOOR = 0.35;
 
 export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]> }): Promise<Found | null> {
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
-  const req = newsRequest(f.q, { onScreen: screen.length > 0 });
+  // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
+  const req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
   if (!req) return null;
   const stored = await (d.stories ?? storeStories)().catch(() => [] as StoryItem[]);
   const byId = new Map(stored.map((s) => [s.id, s]));
