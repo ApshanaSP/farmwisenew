@@ -1893,7 +1893,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           setBrainNow({ by: "instant", model: null, ms: 0 });
           const t0 = performance.now();
           const go = async (yes: boolean) => {
-            const r = await pressControl(cl.press!, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes });
+            const r = await pressControl(cl.press!, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes, replace: !!cl.replace });
             remember(said, `pressed ${cl.id}`, { doc: null });
             audit(said, [], `control ${cl.id}: ${r.ok ? "pressed" : r.why}`);
             decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });

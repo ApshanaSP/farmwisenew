@@ -15,6 +15,8 @@
  */
 import type { Lang, PageKey, ScreenState, Step } from "../types";
 import { planRisk } from "../risk";
+import { isReflex } from "../plan";
+import { readPositions } from "../ordinal";
 import { localStageCommand } from "../stagelocal";
 import { CONTROLS10, REGIONS10, SKIP10 } from "./controls10.data";
 
@@ -29,6 +31,8 @@ export interface ControlHit {
   value?: string | null;
   /** a checkbox: tick (true), untick (false), flip (null) */
   tick?: boolean | null;
+  /** a text box: the words said replace what it holds ("set the message to …"); else a box holding a draft is added to (dom.ts pressControl) */
+  replace?: boolean;
   /** the control is Jarvis's own (its cards, its tray): found inside Jarvis's UI, which a generic click never touches */
   own?: boolean;
   /** two or more controls match: the question back and its choices (by region) */
@@ -95,18 +99,26 @@ const LOAN: [string, string][] = [
 ];
 /** loanwords short enough to be part of other words: matched whole only */
 const LOAN_EXACT: Record<string, string> = { "டேப்": "tab", "ஆன்": "on", "ஆஃப்": "off", "டிக்": "tick", "மைக்": "mic", "பேக்": "back", "டைப்": "type" };
-/** the case endings and clitics a loanword takes after its stem (மேப்பில், லேயர்களை, மெனுவைத், டேட்டாவுல, பிரீஃபிங்குக்கு): the rest of the word must
- * be one of these, never any few letters (v10 review 2, finding 34: சர்ச்சையைக் காட்டு, "show the controversy", opened Search; சாட்சி, a witness,
- * was "chat"; மோட்டார் "mode"; சாட்டிலைட் "chat") */
-const LOAN_FREE = new Set(["கள்", "களை", "களைக்", "களைத்", "களைப்", "களில்", "களுக்கு", "ல", "லே", "ல்ல", "க்கு", "க்குப்", "க்குக்", "க்குத்"]);
-/** after the stem's last consonant said again (மேப் + பில்; ங் takes க: பிரீஃபிங் + குக்கு), or after a வ when the stem ends in a vowel (மெனு + வை) */
-const LOAN_JOIN = new Set(["ு", "ை", "ைக்", "ைத்", "ைப்", "ைச்", "ையும்", "ில்", "ிலே", "ில", "ிலும்", "ிலிருந்து", "ுக்கு", "ுக்குப்", "ுக்குக்", "ுக்குத்",
-  "ுக்கும்", "ுல", "ுலே", "ோட", "ோடு", "ின்", "ும்", "ா"]);
+/** the endings a loanword takes after its stem (மேப்பில், லேயர்களையும், மெனுவைத், டேட்டாவுல, பிரீஃபிங்குக்கு, ஃபில்டர்ஸ், சிஎஸ்வியா): the rest of the word
+ * must be a case ending (with its clitic), the plural, or both, never any few letters (v10 review 2, finding 34: சர்ச்சையைக் காட்டு, "show the
+ * controversy", opened Search; சாட்சி, a witness, was "chat"; மோட்டார் "mode"; சாட்டிலைட் "chat") */
+/** said straight after the stem (மேப்ல, மேப்க்கு, டேட்டால) */
+const LOAN_DIRECT = /^(?:ல|லே|ல்ல|க்கு(?:ப்|க்|த்|ம்)?)$/u;
+/** a case ending, alone or with its clitic (ும், ஆ, ஏ), on the vowel after the stem's doubled consonant, its glide or a plural */
+const LOAN_CASE = /^(?:ை(?:க்|த்|ப்|ச்|யும்|யா|யே)?|ில்|ிலே|ில|ிலும்|ிலா|ிலேயே|ிலிருந்து|ுக்கு(?:ப்|க்|த்|ம்)?|ுல|ுலே|ோட|ோடு|ோடே|ின்|ுடைய|ால்|ும்|ா|ே|ு)$/u;
+/** Tamil words spelled as a loanword's case form: சர்ச்சை (a controversy) is சர்ச் + ஐ, சாட்டை (a whip) சாட் + ஐ. They, with their own endings,
+ * stay themselves (v10 review 2, round 2: "இந்த சர்ச்சை", this controversy, opened Search) */
+const LOAN_NOT = ["சர்ச்சை", "சாட்டை"];
 function loanEnds(stem: string, rest: string): boolean {
-  if (!rest || LOAN_FREE.has(rest)) return true;
-  const last = stem.endsWith("்") ? stem[stem.length - 2] : "வ";
-  const x = last === "ங" ? "க" : last;
-  return rest.startsWith(x) && LOAN_JOIN.has(rest.slice(x.length));
+  if (!rest || LOAN_DIRECT.test(rest)) return true;
+  // the plural: Tamil's கள் (லேயர்கள், லேயர்களையும்), or the English s in Tamil letters (ஃபில்டர்ஸ், ஃபில்டர்ஸை)
+  if (rest === "கள்" || (rest.startsWith("கள") && LOAN_CASE.test(rest.slice(2)))) return true;
+  if (!stem.endsWith("ஸ்") && (rest === "ஸ்" || (rest.startsWith("ஸ") && LOAN_CASE.test(rest.slice(1))))) return true;
+  // the stem's last consonant said again (மேப் + பில்; ங் takes க: பிரீஃபிங் + குக்கு), or after a vowel its glide: ய after i, e and ai
+  // (சிஎஸ்வி + யா), வ after the others (மெனு + வை, டேட்டா + வுல)
+  const v = stem.endsWith("்") ? "" : stem.slice(-1);
+  const x = v ? (/[ிீெேை]/u.test(v) ? "ய" : "வ") : stem[stem.length - 2] === "ங" ? "க" : stem[stem.length - 2];
+  return rest.startsWith(x) && LOAN_CASE.test(rest.slice(x.length));
 }
 
 /** The words of a sentence or a name, normalised alike. */
@@ -120,6 +132,7 @@ export function words10(text: string): string[] {
   for (const w of t.split(" ")) {
     if (TAMIL.test(w)) {
       if (LOAN_EXACT[w]) { out.push(LOAN_EXACT[w]); continue; }
+      if (LOAN_NOT.some((n) => w.startsWith(n))) { out.push(w); continue; }
       const l = LOAN.find(([stem]) => w.startsWith(stem) && loanEnds(stem, w.slice(stem.length)));
       out.push(l ? l[1] : w);
     } else out.push(w);
@@ -165,10 +178,53 @@ const CUE = new Set(`click press tap hit tab button toggle checkbox tick untick 
 const ON_W = new Set(`on tick check enable enabled show tik ஆன் டிக் போடு போடுங்க காட்டு காட்டுங்க`.split(/\s+/));
 const OFF_W = new Set(`off untick uncheck disable disabled hide remove clear எடு எடுங்க நீக்கு நீக்குங்க அணை அணைங்க மறை மறைங்க வேண்டாம் vendaam venaam edu edunga
  maraicchu maraiyunga`.split(/\s+/).filter(Boolean));
-/** a word that says "type it": a text box takes the words around its name only with one ("type drain overflow in the subject", "search the list for
- * Adyar", "set the subject to …"), and the word is the frame, never typed (v10 review 2, finding 28: "read the message" cleared Take action's
- * draft and typed "read") */
-const TYPE_W = /^(?:type|typing|write|enter|fill|search|find|filter|set|put|change|replace|called|named|ezhudh\w*|ezhuth\w*|thed\w*)$|^(?:எழுது|தேடு|தேட)/u;
+/**
+ * A text box takes the words said around its name only in a frame that types them, and the frame's words are never typed (v10 review 2, finding 28:
+ * "read the message" cleared Take action's draft and typed "read"; round 2: "write the message in Tamil" typed "tamil", and podu / போடு typed
+ * nothing). The frame is where the words stand against the box's name, not a word anywhere in the sentence:
+ *   the box as the place the words go: "type drain overflow in the subject", "add … to the message", "subject la … podu", "தலைப்பில் … போடு";
+ *   the box set to them: "set the subject to …", "replace the message with …" (they replace what it holds);
+ *   a search box searched for them: "search the list for …";
+ *   the words quoted: "subject-a … nu maathu", "தலைப்பை … என்று மாற்று", "… called Daily Briefing";
+ *   the box's own name says to type ("search the list adyar").
+ * The box as the thing written ("write the message in Tamil", "செய்தியைத் தமிழில் எழுது", "find the message from the zonal officer") is a
+ * request about the draft, not words to type; nor is a box set to a manner ("change the message to a formal tone").
+ */
+/** put words in: type, write, put, enter, fill, add, paste (டைப் is "type"); podu, ezhudhu; போடு, எழுது, சேர், ஒட்டு */
+const PUT_V = /^(?:type|typing|write|enter|fill|put|add|append|insert|paste|dictate|ezhudh\w*|ezhuth\w*|podu|podunga|podungo|poodu|pottu|pottudu|serthu|ottu)$|^(?:எழுது|எழுதுங்க|எழுதுங்கள்|எழுதவும்|எழுதி|போடு|போடுங்க|போடுங்கள்|போடவும்|போட்டு|போட்டுடு|சேர்|சேர்க்கவும்|சேர்த்து|சேருங்க|ஒட்டு|ஒட்டுங்க|ஒட்டவும்)$/u;
+/** make it hold them: set, change, replace, rename; maathu; மாற்று, மாத்து */
+const SET_V = /^(?:set|change|make|replace|rename|update|edit|correct|maathu|maathunga|mathu|mathunga|maathi|maatru\w*)$|^(?:மாற்று|மாற்றுங்க|மாற்றுங்கள்|மாற்றவும்|மாற்றி|மாத்து|மாத்துங்க|மாத்தி|ஆக்கு)$/u;
+/** look for them (a search box's own frame): search, find, filter, look; thedu; தேடு, வடிகட்டு */
+const SEARCH_V = /^(?:search|searching|find|filter|look|lookup|seek|thed\w*|thaed\w*)$|^(?:தேடு|தேடுங்க|தேடுங்கள்|தேடவும்|தேடி|வடிகட்டு|வடிகட்டுங்க|வடிகட்டவும்)$/u;
+const TYPE_VERB = (w: string) => PUT_V.test(w) || SET_V.test(w) || SEARCH_V.test(w);
+/** before the box: where the words go ("in the subject", "to the message") */
+const INTO_W = new Set(["in", "into", "inside", "on", "onto", "to"]);
+/** after the box (Tanglish): "subject la", "box kulla" */
+const LA_W = new Set(["la", "le", "lla", "ile", "ula", "ulla", "kulla", "ulle", "kulle"]);
+/** a Tamil locative on the box's own word (தலைப்பில், பெட்டியில், தலைப்புல, பெட்டிக்குள்) */
+const TA_LOC = /(?:ல்|ல|லே|க்குள்|குள்|குள்ளே)$/u;
+/** after the box: what it becomes ("set the subject to …", "replace it with …") */
+const TO_W = new Set(["to", "as", "with"]);
+/** the words quoted: after them (nu, என்று) or before them (called, named) */
+const QUOTE_AFTER = new Set(["nu", "nnu", "apdinu", "appadinu", "endru", "enru", "என்று", "என", "னு", "ன்னு", "அப்படின்னு", "எனும்"]);
+const QUOTE_BEFORE = new Set(["called", "named", "saying", "says", "say", "titled", "as"]);
+/** "type it": words said to be typed as they are, an article or an object's case among them ("type the drain is blocked in the subject") */
+const DICTATE = /^(?:type|typing|enter|dictate)$/u;
+/** a thing to write about, not the words: an article before it ("add a line to the message"), an object's case after it in Tanglish
+ * ("address-a message la podu") or on it in Tamil ("முகவரியைச் செய்தியில் சேர்") */
+const DESCRIBE_BEFORE = new Set(["a", "an", "the", "some", "this", "that", "my"]);
+const ACC_AFTER = new Set(["a", "ai", "ah", "aa"]);
+const TA_ACC = /(?:ை|ைக்|ைச்|ைத்|ைப்)$/u;
+/** the little words between a preposition and the box ("in the subject", "to my message") */
+const ARTICLE = new Set(["the", "a", "an", "my", "this", "that", "its", "your", "our", "அந்த", "இந்த"]);
+/** a box's own nouns said after its name ("the subject box la") */
+const BOX_W = new Set(["box", "field", "bar", "area", "space", "column", "பெட்டி", "புலம்"]);
+/** how a draft is written, not what it says: a language, a tone, a length ("in Tamil", "to a formal tone", "shorter", "சுருக்கமாக") */
+const MANNER = /^(?:tone|formal\w*|informal\w*|polite\w*|friendl\w*|firm\w*|strict\w*|short\w*|brief\w*|long|longer|detail\w*|simple|simpler|simply|clear|clearer|concise\w*|crisp\w*|professional\w*|casual\w*|tamil\w*|english\w*|language|version|way|manner|style|more|less|bit|little|mariyadh\w*|mariyaadh\w*|churukk\w*|surukk\w*|viriv\w*|elimai\w*)$|^(?:தமிழ்|தமிழி|ஆங்கில|இங்கிலீஷ்|முறையா|மரியாதை|சுருக்க|விரிவா|விரிவான|எளிமை|தொனி|நடை|மொழி|நீளமா|நீளமான)/u;
+/** a select's name said as something's own: "the status of the second one", "second one oda status", "இரண்டாவதின் நிலை" (its status, a question
+ * about that thing), never the option it is set to (v10 review 2, round 2) */
+const GEN_W = new Set(["oda", "ode", "odaya", "odaiya", "udaya", "udeya", "yoda", "voda"]);
+const TA_GEN = /(?:இன்|ின்|உடைய|ுடைய|ோட|ோடைய)$/u;
 /** words that make a sentence a question about the data, a news request, or talk: not a control's, unless it says a control's whole name */
 const NOT_CONTROL = /\b(?:why|how|what|whats|which|who|whom|whose|when|where|tell|explain|compare|versus|vs|is there|are there|should|many|much|latest|update|updates|about|pathi|patthi|paththi|enna|evlo|eppadi|yen|endha|yaaru)\b|\?|ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|யார்|எப்போ|பற்றி|பத்தி|சொல்லு/iu;
 
@@ -201,12 +257,21 @@ function prepared(): Prepared[] {
   return PREPARED;
 }
 
-export interface Match10 { id: string; score: number; e: Control10; value: string | null; tick: boolean | null; whole: boolean }
+export interface Match10 {
+  id: string; score: number; e: Control10; value: string | null; tick: boolean | null; whole: boolean;
+  /** a text box's value given by a typing frame (its words may be a question's: "search the list for how to apply") */
+  typed?: boolean;
+  /** the frame sets the box to the words ("set the message to …") */
+  replace?: boolean;
+}
+type Scored = { s: number; value: string | null; tick: boolean | null; whole: boolean; typed?: boolean; replace?: boolean };
 
 /** How well one name says the sentence: every word of the name heard, and nothing else said but frame words, the region's own words, a select's
  * option, or on / off. */
-function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; value: string | null; tick: boolean | null; whole: boolean } | null {
+function scoreName(spoken: string[], name: string[], p: Prepared): Scored | null {
   const used = new Array<boolean>(spoken.length).fill(false);
+  /** the name's word heard at each place of the sentence */
+  const at: (string | null)[] = new Array<string | null>(spoken.length).fill(null);
   let q = 1, matched = 0;
   for (const nw of name) {
     let best = -1, bq = 0;
@@ -215,7 +280,7 @@ function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; 
       const v = wordEq(spoken[i], nw);
       if (v > bq) { bq = v; best = i; if (v === 1) break; }
     }
-    if (best >= 0) { used[best] = true; q = Math.min(q, bq); matched++; }
+    if (best >= 0) { used[best] = true; at[best] = nw; q = Math.min(q, bq); matched++; }
   }
   const a = p.e.act;
   const takesValue = "press" in a && (a.input === "select" || a.input === "text");
@@ -223,25 +288,95 @@ function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; 
   const check = ("press" in a && a.input === "check") || ("steps" in a && a.steps.some((s) => s.a === "layer"));
   // tick or untick, said anywhere in the sentence ("untick My tasks", "hide the severe pins"); neither: flip it
   const tick: boolean | null = !check ? null : spoken.some((w) => OFF_W.has(w)) ? false : spoken.some((w) => ON_W.has(w)) ? true : null;
-  const rest: string[] = [];
+  const qual = (w: string) => p.qual.some((r) => wordEq(w, r) > 0);
+  const restAt: number[] = [];
   for (let i = 0; i < spoken.length; i++) {
     if (used[i]) continue;
     const w = spoken[i];
     if (check && (ON_W.has(w) || OFF_W.has(w))) continue;
-    if (text && TYPE_W.test(w)) continue;
+    if (text && (TYPE_VERB(w) || QUOTE_AFTER.has(w) || QUOTE_BEFORE.has(w))) continue;
     if (isFiller(w)) continue;
-    if (p.qual.some((r) => wordEq(w, r) > 0)) continue;
-    rest.push(w);
+    if (qual(w)) continue;
+    restAt.push(i);
   }
+  const rest = restAt.map((i) => spoken[i]);
   // every word of the name heard; part of a name never acts on its own (5.1's 0.8 for "most of a long name" took data requests: "show open
   // complaints" pressed the Open complaints tile), so a control's shorter forms are written as its synonyms instead
   if (matched !== name.length) return null;
   if (rest.length && !takesValue) return null;
-  // a text box's words only when told to type them (TYPE_W, in its name or around it)
-  if (rest.length && text && !spoken.some((w) => TYPE_W.test(w))) return null;
+  // a text box: the words a typing frame gives it, or none (typedFrame)
+  if (text) {
+    if (!rest.length) return { s: q, value: null, tick, whole: true };
+    const f = typedFrame(spoken, at, restAt, name, p, qual);
+    if (!f) return null;
+    return { s: f.value ? 0.9 * q : q, value: f.value, tick, whole: true, typed: f.typed, ...(f.replace ? { replace: true } : {}) };
+  }
+  // a select: its name said as something's own ("the status of the second one", "second one oda status", "இரண்டாவதின் நிலை") or a row's place
+  // said as its option ("status second one") is a question about that row, not an option (v10 review 2, round 2)
+  if (rest.length) {
+    const named = at.flatMap((x, i) => (x === null ? [] : [i]));
+    const first = Math.min(...named), last = Math.max(...named);
+    if (spoken[last + 1] === "of" && restAt.some((i) => i > last + 1)) return null;
+    const before = spoken[first - 1];
+    if (first > 0 && at[first - 1] === null && (GEN_W.has(before) || (TAMIL.test(before) && TA_GEN.test(before)))) return null;
+    if (readPositions(rest)) return null;
+  }
   const value = takesValue && rest.length ? rest.join(" ").replace(/^(?:by|as|with|into|at|from|called|named)\s+/u, "").trim() || null : null;
   // a name with an option after it explains fewer of the words than a name said alone ("sort by severity" is the column, not Severity "sort by")
   return { s: value ? 0.9 * q : q, value, tick, whole: true };
+}
+
+/** A text box's words, by the frame they are said in (PUT_V .. MANNER above), or null: words left over that no frame types. */
+function typedFrame(spoken: string[], at: (string | null)[], restAt: number[], name: string[], p: Prepared, qual: (w: string) => boolean):
+  { value: string | null; typed: boolean; replace: boolean } | null {
+  const n = spoken.length;
+  const put = spoken.some((w) => PUT_V.test(w)), set = spoken.some((w) => SET_V.test(w));
+  // a search box's own frame: its names say search, find or filter ("Filter the list", "Search chats")
+  const search = p.names.some((nm) => nm.w.some((w) => SEARCH_V.test(w))) && spoken.some((w) => SEARCH_V.test(w));
+  // where the box's name stands: its nouns, not a verb inside the name ("search the list" stands at "list")
+  const named = at.flatMap((x, i) => (x === null ? [] : [i]));
+  const nouns = named.filter((i) => !TYPE_VERB(spoken[i]));
+  const first = Math.min(...(nouns.length ? nouns : named)), last = Math.max(...(nouns.length ? nouns : named));
+  // the words typed: from the first left-over word to the last, the little words between them kept ("how to apply")
+  const lo = restAt[0], hi = restAt[restAt.length - 1];
+  const value = () => spoken.slice(lo, hi + 1).filter((_, k) => at[lo + k] === null).join(" ").replace(/^(?:by|as|with|into|at|from|called|named)\s+/u, "").trim() || null;
+  const typed = (replace: boolean) => {
+    // a manner, not words: "change the message to a formal tone", "set the subject to Tamil" (a redraft, the planner's)
+    if (!search && restAt.every((i) => MANNER.test(spoken[i]))) return null;
+    return { value: value(), typed: true, replace };
+  };
+  const after = (k: number) => lo > k, before = (k: number) => hi < k;
+  // the verbs that put or look for words, where they stand
+  const verbs = spoken.flatMap((w, i) => (PUT_V.test(w) || (search && SEARCH_V.test(w)) ? [i] : []));
+  // put somewhere: a thing to write about is not the words ("add a line to the message", "write the address in the subject"), unless told to type it
+  const placed = () => {
+    const describes = !spoken.some((w) => DICTATE.test(w)) && ((lo > 0 && at[lo - 1] === null && DESCRIBE_BEFORE.has(spoken[lo - 1]))
+      || ACC_AFTER.has(spoken[hi + 1] ?? "") || (TAMIL.test(spoken[hi]) && TA_ACC.test(spoken[hi])));
+    return describes && !search ? null : typed(false);
+  };
+  // the box as the place the words go, the verb before them: "type drain overflow in the subject", "type in the subject drain overflow", "search
+  // for Adyar in the list" (never "what should I write in the message": the words before the verb are not what it writes)
+  let jb = first - 1;
+  while (jb >= 0 && at[jb] === null && (ARTICLE.has(spoken[jb]) || BOX_W.has(spoken[jb]) || qual(spoken[jb]))) jb--;
+  if (jb >= 0 && at[jb] === null && INTO_W.has(spoken[jb]) && ((before(jb) && verbs.some((v) => v < lo)) || (after(last) && verbs.some((v) => v < jb)))) return placed();
+  // the box said with a locative: "subject la drain overflow podu", "தலைப்பில் வடிகால் அடைப்பு போடு", "drain overflow subject la podu"
+  let ka = last + 1;
+  while (ka < n && at[ka] === null && BOX_W.has(spoken[ka])) ka++;
+  const sw = spoken[last], nw = at[last] ?? sw;
+  const la = ka < n && LA_W.has(spoken[ka]);
+  const loc = la || (sw !== nw && (TAMIL.test(sw) ? TA_LOC.test(sw) && !TA_LOC.test(nw) : sw.startsWith(nw) && LA_W.has(sw.slice(nw.length))));
+  if (verbs.length && loc && (after(la ? ka : last) || before(first))) return placed();
+  // the box set to them: "set the subject to …", "replace the message with …", "fill the subject with …", "write the subject as …" (what it held
+  // is replaced); a put "to" is someone the draft is for ("write a message to the zonal officer"), never words
+  const to = ka < n ? spoken[ka] : "";
+  if (((set && TO_W.has(to)) || (put && (to === "with" || to === "as"))) && after(ka)) return typed(true);
+  // a search box searched for them: "search the list for …"
+  if (search && ka < n && spoken[ka] === "for" && after(ka)) return typed(false);
+  // the words quoted: "subject-a drain overflow nu maathu", "தலைப்பை … என்று மாற்று", "… called Daily Briefing"
+  if ((set || put) && ((hi + 1 < n && QUOTE_AFTER.has(spoken[hi + 1])) || (lo > 0 && QUOTE_BEFORE.has(spoken[lo - 1])))) return typed(set);
+  // the box's own name says to type into it ("search the list adyar"): its words, as a question's are not (decide10)
+  if (name.some(TYPE_VERB)) return { value: value(), typed: false, replace: false };
+  return null;
 }
 
 const inList = <T,>(v: T, l: T | T[] | undefined) => l === undefined || (Array.isArray(l) ? l.includes(v) : l === v);
@@ -280,7 +415,7 @@ export function matchControls10(text: string, c: ControlCtx10, withMap = false):
       // a page, a period, a panel or the theme is a move by its name alone, as the rules have it
       if (n.w.length === 1 && !cue && !focused(p.e, c) && !navOne) continue;
       const s = Math.min(1.1, (n.first ? 1 : 0.95) * r.s + (focused(p.e, c) ? 0.1 : 0));
-      if (!best || s > best.score) best = { id: p.e.id, score: s, e: p.e, value: r.value, tick: r.tick, whole: r.whole };
+      if (!best || s > best.score) best = { id: p.e.id, score: s, e: p.e, value: r.value, tick: r.tick, whole: r.whole, ...(r.typed ? { typed: true } : {}), ...(r.replace ? { replace: true } : {}) };
     }
     if (best) out.push(best);
   }
@@ -303,9 +438,10 @@ function whichOf(ms: Match10[]): NonNullable<ControlHit["which"]> {
   };
 }
 
-/** a move said ("go to", "navigate", "open", po, போங்க) */
-const MOVE = /\b(?:go|goto|navigate|jump|take me|open|po|ponga|poonga|poi|poyi)\b|(?:^|\s)(?:போ|போங்க|போங்கள்|போய்|போகவும்|செல்|செல்லவும்|திற|திறங்க|திறங்கள்)(?=\s|$)/iu;
+/** a move said ("go to", "navigate", "open", "switch to", po, maathu, போங்க, மாத்து) */
+const MOVE = /\b(?:go|goto|navigate|jump|take me|open|po|ponga|poonga|poi|poyi|maathu|maathunga|mathu|mathunga|maathi)\b|\b(?:switch|change|move|head|skip)\s+(?:over\s+)?to\b|(?:^|\s)(?:போ|போங்க|போங்கள்|போய்|போகவும்|செல்|செல்லவும்|திற|திறங்க|திறங்கள்|மாத்து|மாத்துங்க|மாற்று|மாற்றுங்க|மாற்றுங்கள்|மாற்றவும்)(?=\s|$)/iu;
 const isPageMove = (m: Match10) => "steps" in m.e.act && m.e.act.steps.every((s) => s.a === "page");
+const isNavMove = (m: Match10) => "steps" in m.e.act && m.e.act.steps.every((s) => NAV_ONE.has(s.a));
 const isTick = (m: Match10) => "press" in m.e.act && m.e.act.input === "check";
 
 /** What the sentence names: one control (`top`), or two or more that tie (`which`, at most three, by distinct action), or null. */
@@ -313,6 +449,10 @@ export function decide10(text: string, c: ControlCtx10, withMap = false): { top:
   const t = String(text ?? "").trim();
   if (!t) return null;
   let ms = matchControls10(t, c, withMap);
+  // a page's (a period's, a panel's) name with no tick or press word said is the move, not the open window's tick of that name: the tick is
+  // ticked by a word that says so ("tick trends", "hide the briefing", "click Trends") (v10 review 2, round 2: "switch to trends", "trends ku
+  // maathu", "போக்குகளுக்கு மாத்து" with Customize open flipped its Trends tick, the window's +0.1 put it first)
+  if (ms.some(isNavMove) && !words10(t).some((w) => ON_W.has(w) || OFF_W.has(w) || CUE.has(w))) ms = ms.filter((m) => !isTick(m));
   // a move said with a page's name is the page, not the open window's tick of that name (v10 review 2, finding 32: "go to trends" with Customize
   // open flipped its Trends tick, the window's +0.1 put it first)
   if (MOVE.test(t) && ms.some(isPageMove)) ms = [...ms.filter(isPageMove), ...ms.filter((m) => !isPageMove(m) && !isTick(m))];
@@ -322,7 +462,11 @@ export function decide10(text: string, c: ControlCtx10, withMap = false): { top:
   // a question about the data or a news request is not a control's, unless it says a control's whole name ("What else is near here?"); never when
   // the question's words are what is left over as a select's or a box's value (v10 review 2, finding 29: "what is the status of the second one"
   // set the list's Status to "what is second one")
-  if (NOT_CONTROL.test(t) && (!(top.whole && top.score >= 0.95) || (top.value && NOT_CONTROL.test(top.value)))) return null;
+  // A box's words given by a typing frame are what to type, a question's words included ("search the list for how to apply"): only the rest of the
+  // sentence is asked about (v10 review 2, round 2: "search the list for complaints about garbage" was dropped), and a question there is never
+  // excused by the box's whole name ("why did you type drain overflow in the subject")
+  if (top.typed && top.value) { if (NOT_CONTROL.test(words10(t).join(" ").replace(top.value, " "))) return null; }
+  else if (NOT_CONTROL.test(t) && (!(top.whole && top.score >= 0.95) || (top.value && NOT_CONTROL.test(top.value)))) return null;
   // the next best that does something else; the same action under two names is one control
   const rival = ms.find((m) => m !== top && actKey(m.e) !== actKey(top.e));
   if (rival && rival.score >= 0.8 && top.score - rival.score < 0.1) {
@@ -350,9 +494,18 @@ export function controlCommand10(text: string, c: ControlCtx10): ControlHit | nu
   if (d.which) return { id: d.top.id, which: whichOf(d.which), level: d.top.e.level };
   const hit = hitOf(d.top);
   // with a dataset open, a console step the Studio's intercept keeps ("clear the filters", "this month": the dataset's own focus and period) is
-  // left to it (v10 review 2, finding 30: the control lane ran them first, on the console's hidden filter band)
-  if (c.studio && hit?.steps?.length && !studioLetsThrough(t, hit.steps, 1)) return null;
+  // left to it (v10 review 2, finding 30: the control lane ran them first, on the console's hidden filter band); what the intercept passes on
+  // stays here (round 2: "stop speaking", "close Jarvis", "forget all my notes" went to the dataset)
+  if (c.studio && hit?.steps?.length && !studioPasses(t, hit.steps, c.state)) return null;
   return hit;
+}
+
+/** With a dataset open in the Data Studio, what still reaches the console, as its intercept (Thunai.tsx) has it: a page move, an instant control
+ * (plan.ts isReflex: stop, off, undo, …), Jarvis's own notes (remember, forget: the intent markers run before the intercept), or a plain console
+ * command (studioLetsThrough). Everything else is the dataset's. */
+export function studioPasses(said: string, steps: Step[], state: ScreenState): boolean {
+  if (!steps.length) return false;
+  return steps.every((s) => s.a === "page") || isReflex(steps, state) || steps.every((s) => s.a === "forget" || s.a === "remember") || studioLetsThrough(said, steps, 1);
 }
 
 function hitOf(m: Match10): ControlHit | null {
@@ -371,8 +524,8 @@ function hitOf(m: Match10): ControlHit | null {
     return { id: m.id, press: a.press, value: a.value ?? (m.value ? valueWords(m.value) : null), level: m.e.level, label, ...own };
   }
   if (a.input === "check") return { id: m.id, press: a.press, tick: m.tick, level: m.e.level, label, ...own };
-  // a text box: focused, and the words said after its name typed into it ("search the list for Adyar")
-  if (a.input === "text") return { id: m.id, press: a.press, value: m.value, level: m.e.level, label, ...own };
+  // a text box: focused, and the words a typing frame gives typed into it ("search the list for Adyar"); "set … to" replaces what it holds
+  if (a.input === "text") return { id: m.id, press: a.press, value: m.value, level: m.e.level, label, ...own, ...(m.replace && m.value ? { replace: true } : {}) };
   return { id: m.id, press: a.press, level: m.e.level, label, ...own };
 }
 

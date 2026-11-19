@@ -35,7 +35,7 @@ export type BrowserLane10 = BrowserLane
   /** Ask the Map by voice (map10.ts): one map operation; the console runs it (mapops.ts) */
   | { lane: "map"; cmd: MapCmd; lang: Lang }
   /** a dashboard control by voice (controls10.ts): its id, and its steps or the control pressed, or a question back */
-  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; value?: string | null; tick?: boolean | null; own?: boolean; which?: ControlHit["which"]; level: ControlHit["level"]; label?: ControlHit["label"]; lang: Lang };
+  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; value?: string | null; tick?: boolean | null; replace?: boolean; own?: boolean; which?: ControlHit["which"]; level: ControlHit["level"]; label?: ControlHit["label"]; lang: Lang };
 
 export interface BrowserCtx10 extends BrowserCtx {
   lastLang?: Lang | null;

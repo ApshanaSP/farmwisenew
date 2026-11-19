@@ -16,8 +16,9 @@ import path from "path";
 import { parseHTML } from "linkedom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { isDangerButton } from "@/lib/thunai/skeleton";
+import type { ScreenState } from "@/lib/thunai/types";
 import { CONTROLS10 } from "@/lib/thunai/v10/controls10.data";
-import { itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
+import { controlCommand10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
 import { ITEM_ROWS, PRESS_ALLOW, TARGETS, bestOption, parseSpec, pressKind, pressVerdict } from "./press10";
 
 const APP = path.join(__dirname, "..");
@@ -271,6 +272,24 @@ describe("v10 review 2: a registry press on a page (linkedom)", () => {
     expect(document.querySelector("textarea")?.value).toBe("Inspect the drain. by Friday");
     await dom.pressControl(spec("list.filter"), { value: "velachery" });
     expect((document.querySelector("input[type=search]") as HTMLInputElement | null)?.value).toBe("velachery");
+  });
+  // v10 review 2, round 2: finding 28's add-to rule also added when the sentence said to replace: "set the message to inspect tomorrow" put the
+  // words after the draft, where before the fix they replaced it
+  it("'set the message to …' replaces the draft; a plain value is still added to it", async () => {
+    const state: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: "incident",
+      incident: "INC-1", list: [], lastFilter: null, lastPlace: null, numbers: false, now: 0 };
+    const hit = controlCommand10("set the message to inspect tomorrow", { state, lang: "en", visible: ["ta.message"] });
+    expect(hit).toMatchObject({ id: "ta.message", value: "inspect tomorrow", replace: true });
+    const r = await dom.pressControl(spec("ta.message"), { value: hit?.value ?? null, replace: !!hit?.replace });
+    expect(r.ok).toBe(true);
+    expect(document.querySelector("textarea")?.value).toBe("inspect tomorrow");
+    await dom.pressControl(spec("ta.message"), { value: "by Friday" });
+    expect(document.querySelector("textarea")?.value).toBe("inspect tomorrow by Friday");
+  });
+  it("the console passes the lane's replace to the press (v10 review 2, round 2)", () => {
+    const i = thunai.indexOf("const r = await pressControl(cl.press!");
+    expect(i).toBeGreaterThan(0);
+    expect(thunai.slice(i, thunai.indexOf(");", i))).toMatch(/replace: !!cl\.replace/);
   });
 });
 
