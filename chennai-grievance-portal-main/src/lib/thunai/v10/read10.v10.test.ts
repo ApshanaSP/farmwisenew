@@ -14,7 +14,7 @@ import { WORLD } from "../fixture";
 import type { Rung } from "../llm";
 import type { OpenRung, RungCall } from "../aide7/stream";
 import { NewsBody, newsEvents, type NewsEvent, type StoredDoc } from "../web/serve";
-import { briefSheet, newsBrief10 } from "./brief10";
+import { briefSheet, newsBrief10, theirNone } from "./brief10";
 import { consoleFacts, consoleOn, countLine, groundLines, offerOf, stormy, storyTopic } from "./ground10";
 import { offerAct, offerOf as keptOffer } from "./offer10";
 
@@ -425,5 +425,67 @@ describe("v10 reading: the request shapes and the story's kind", () => {
     ["Traders protest against eviction in T. Nagar", "PUBLIC_ORDER"]
   ])("%s -> %s", (title, cat) => {
     expect(storyTopic(title, null, WORLD)?.cat).toBe(cat);
+  });
+});
+
+describe("v10 review 2, round 2 (reading): the article's own 'no complaints' is the article's, and still said", () => {
+  // the water board's word against the residents': the headline and the official's claim are the story; the console has 4 open cases
+  const D9: StoredDoc = { id: "d9", url: "https://www.thehindu.com/news/cities/chennai/y.ece", title: "Water board says no complaints received on sewage overflow at Kotturpuram", publisher: "The Hindu",
+    publisher_domain: "thehindu.com", body: "Residents of Kotturpuram said sewage had been overflowing from a manhole near the bus stop for a week. A water board official said no complaints had been received from the area. Residents disputed this.",
+    t: "2026-11-19 08:10:00", place: "Kotturpuram", cat: "DRAINAGE_SEWAGE" };
+  const SAID_4 = "The console has 4 open drainage and sewage cases at Kotturpuram, the oldest open 12 days, all with Metro Water.";
+  it("v10 review 2, round 2: no model, the code's brief still says the headline", async () => {
+    const said = lastBrief(await collect(newsEvents({ id: "d9", ask: { q: "read it", lang: "en" } }, deps({ rungs: [], docs: [D9] }))));
+    expect(said.join(" ")).toMatch(/no complaints received on sewage overflow/);
+    expect(said.join(" ")).toContain(SAID_4);
+  });
+  it("v10 review 2, round 2: a model, the official's claim said as his is said; a none said as the console's, over 4, never is", async () => {
+    const lines = (f: (re: RegExp) => string) => [GOOD_EN(f)[0], `S: A water board official says no complaints have come in from the area. [${f(/no complaints had been received/)}]`, GOOD_EN(f)[2]];
+    const said = lastBrief(await collect(newsEvents({ id: "d9", ask: { q: "read it", lang: "en" } }, deps({ open: model([], lines), docs: [D9] }))));
+    expect(said.join(" ")).toMatch(/no complaints have come in/);
+    expect(said[2]).toBe(SAID_4);
+    // the same none in the brief's own voice, unattributed, is the console's word, and is not said over 4
+    const bare = (f: (re: RegExp) => string) => [GOOD_EN(f)[0], `S: No complaints have come in from the area. [${f(/no complaints had been received/)}]`, GOOD_EN(f)[2]];
+    const said2 = lastBrief(await collect(newsEvents({ id: "d9", ask: { q: "read it", lang: "en" } }, deps({ open: model([], bare), docs: [D9] }))));
+    expect(said2.some((x) => /no complaints have come in/i.test(x))).toBe(false);
+    expect(said2).toContain(SAID_4);
+  });
+  it("v10 review 2, round 2: whose none it is, in English and Tamil: the story's speaker's, only when the story says it", () => {
+    const d9 = { title: D9.title ?? "", titleEn: null, text: D9.body ?? "" };
+    expect(theirNone("A water board official says no complaints have come in from the area.", d9)).toBe(true);
+    expect(theirNone("The Hindu reports this morning: Water board says no complaints received on sewage overflow at Kotturpuram.", d9)).toBe(true);
+    expect(theirNone("புகார் எதுவும் இல்லை என்று குடிநீர் வாரிய அதிகாரி கூறினார்.", d9)).toBe(true);
+    // a Tamil story's own none ("புகார் எதுவும் வரவில்லை"), said as the official's
+    const ta = { title: "கோட்டூர்புரத்தில் கழிவுநீர் வழிந்தோடுகிறது", titleEn: null, text: "அந்தப் பகுதியிலிருந்து புகார் எதுவும் வரவில்லை என்று குடிநீர் வாரிய அதிகாரி தெரிவித்தார்." };
+    expect(theirNone("புகார் எதுவும் இல்லை என்று குடிநீர் வாரிய அதிகாரி தெரிவித்தார்.", ta)).toBe(true);
+    expect(theirNone("An official said no complaints had come in from the area.", ta)).toBe(true);
+    // the brief's own voice, or a story that says no none: the console's word, held to its count
+    expect(theirNone("No complaints have come in from the area.", d9)).toBe(false);
+    expect(theirNone("கோட்டூர்புரத்தில் புகார் எதுவும் இல்லை.", d9)).toBe(false);
+    expect(theirNone("An official says there are no open drainage cases at Kotturpuram.", { title: DOC.title ?? "", titleEn: null, text: BODY })).toBe(false);
+  });
+});
+
+describe("v10 review 2, round 2 (reading): a storm told by its effects or its name is still a storm", () => {
+  const story = (title: string, text: string, cat: string | null = null) => ({ id: "s", outlet: "The Hindu", outletTa: null, title, titleEn: null, publishedAt: null, text, place: "Chennai", cat });
+  it.each([
+    ["Storm Fengal: holiday for schools and colleges in Chennai on Saturday", "In view of Storm Fengal, the Chennai district administration has declared a holiday for schools and colleges on Saturday. Residents have been advised to stay indoors and keep emergency supplies ready."],
+    // one word away: the name alone in the body, the effects alone, the monitor's own kind
+    ["Storm to cross the coast near Chennai tonight", "Fishermen have been told not to venture out, and relief camps are ready in low-lying areas."],
+    ["Chennai braces for the storm", "The city is preparing for Storm Michaung, officials said."],
+    ["Schools shut as storm nears Chennai", "Schools and colleges will remain closed on Monday."]
+  ])("v10 review 2, round 2: %s", async (title, text) => {
+    const c = await consoleOn(story(title, text), { world: WORLD, tool: tools(), weather: async () => null });
+    expect(c.storm).toBe(true);
+    expect(c.topic?.cat).toBe("FLOOD_WATERLOGGING");
+  });
+  it("v10 review 2, round 2: the monitor's own weather kind makes a bare storm the weather's", () => {
+    expect(stormy("Storm nears Chennai", "", "FLOOD_RISK_SIGNAL")).toBe(true);
+  });
+  it("v10 review 2, round 2: still never a drain, a row or a crowd", () => {
+    expect(stormy("Storm water drain works across Chennai to be completed before monsoon", "Schools in the area will remain open.")).toBe(false);
+    expect(stormy("Political storm erupts over Chennai Corporation's property tax hike", "A holiday was declared for the protest.")).toBe(false);
+    expect(stormy("Residents storm Corporation office over water shortage", "Residents of Kodungaiyur gathered at the zonal office demanding water.")).toBe(false);
+    expect(stormy("Residents Storm Corporation Office Over Water Shortage", "Residents of Kodungaiyur gathered at the zonal office.")).toBe(false);
   });
 });

@@ -103,8 +103,25 @@ export function storyTopic(text: string, cat: string | null | undefined, world: 
   if (!c || c.code === "OTHER" || c.code === "FLOOD_RISK_SIGNAL") return null;
   return { cat: c.code, en: label(c.label), ta: CAT_LABEL_TA[c.code] ?? label(c.label), map: label(c.label) };
 }
-/** Is the story a storm's? `text` is its headline; `context` its opening, where a bare "storm" finds its weather word. */
-export const stormy = (text: string, context = ""): boolean => STORM.test(text) || (BARE_STORM.test(text) && !STORM_FIGURE.test(text) && WEATHER.test(`${text} ${context}`));
+/** "storm" as a verb ("residents storm the office", "stormed into"): a crowd's, not the weather's */
+const STORM_VERB = /\bstorm(?:ed|ing)\b|\bstorms? (?:into|out of|the|a|an|their|its)\b/iu;
+/** a storm told by its name in the story's running text ("in view of Storm Fengal", "preparing for Storm Michaung"): a capital "Storm" and a name
+ * after a lower-case word, as no verb is written (a headline in title case capitalises a crowd's "Storm" too, so the name is looked for in the text) */
+const NAMED_STORM = /[\p{Ll},]\s+(?:(?:Cyclonic|Tropical|Severe)\s+)?Storm\s+(?!Water\b)\p{Lu}\p{Ll}{2,}/u;
+/** a storm told by what it does to the city: a holiday, schools or flights shut, people kept indoors, the coast, the sea and its fishermen, relief camps */
+const STORM_EFFECTS = /\bholidays?\b|\b(?:schools?|colleges?|offices?|airport|beach(?:es)?|flights?|trains?|subways?)\b[^.]{0,40}?\b(?:closed|shut|cancell?ed|suspended|diverted)\b|\b(?:stay(?:ing)? indoors|evacuat\w*|relief camps?|uprooted|power (?:cuts?|outages?)|fishermen|ndrf|sdrf|emergency supplies|high tides?|rough seas?|lash(?:es|ed|ing)|batter(?:s|ed|ing)|cross(?:es|ed|ing)? the coast|coastal|low-lying)\b|விடுமுறை|மீனவர்|கரையைக் கடக்|நிவாரண முகாம்/iu;
+/**
+ * Is the story a storm's? `text` is its headline; `context` its opening; `cat` the monitor's own kind for it. A bare "storm" is the weather's with a
+ * weather word, its effects (a holiday declared, schools shut, people told to stay indoors), its name, or the monitor's weather kind; never a
+ * "storm water drain", "a political storm" or a crowd that "storms" an office (v10 review 2, finding 3; round 2: "Storm Fengal: holiday for schools"
+ * had none of the weather's words and lost its gauges).
+ */
+export const stormy = (text: string, context = "", cat: string | null = null): boolean => {
+  if (STORM.test(text)) return true;
+  if (!BARE_STORM.test(text) || STORM_FIGURE.test(text) || STORM_VERB.test(text)) return false;
+  const all = `${text} ${context}`;
+  return WEATHER.test(all) || STORM_EFFECTS.test(all) || NAMED_STORM.test(context) || cat === "FLOOD_RISK_SIGNAL";
+};
 
 // ------------------------------------------------------------------ the story's place --
 
@@ -168,7 +185,7 @@ export interface ConsoleDeps {
 /** What the console holds on the story: never throws (a tool that fails counts nothing). */
 export async function consoleOn(s: Story10, d: ConsoleDeps): Promise<Console10> {
   const text = [s.title, s.titleEn ?? "", s.text.slice(0, 600)].join(" ");
-  const storm = stormy([s.title, s.titleEn ?? ""].join(" "), s.text.slice(0, 600));
+  const storm = stormy([s.title, s.titleEn ?? ""].join(" "), s.text.slice(0, 600), s.cat);
   // a storm's cases are its flooding
   const flood = TOPICS.find((x) => x.cat === "FLOOD_WATERLOGGING")!;
   const topic = storyTopic([s.title, s.titleEn ?? ""].join(" "), s.cat, d.world) ?? storyTopic(text, null, d.world) ?? (storm ? { cat: flood.cat, en: flood.en, ta: flood.ta, map: flood.map } : null);

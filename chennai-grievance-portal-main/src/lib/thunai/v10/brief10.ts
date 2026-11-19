@@ -126,6 +126,19 @@ const NONE_SAID = /\b(?:no|zero|not any|not a single)\s+(?:open\s+)?(?:[\p{L}-]+
 /** a figure said as the count of cases ("4 open drainage and sewage cases"), or of complaints (a case is a complaint too: "4 கழிவுநீர் புகார்கள்") */
 const CASES_N = /(\d+)\s+(?:[^\s\d,;:.]+\s+){0,5}?(?:cases?|incidents?)\b/giu;
 const COMPLAINTS_N = /(\d+)\s+(?:[^\s\d,;:.]+\s+){0,5}?(?:complaints?|grievances?|புகார்)/giu;
+/** a none in the story itself ("no complaints had been received", "புகார் எதுவும் வரவில்லை"): its own claim, someone's word in it */
+const TA_NONE_TOLD = /(?:புகார்|சம்பவ)\S*\s+(?:\S+\s+){0,2}?\S*(?:இல்லை|வில்லை)/u;
+const noneTold = (x: string) => NONE_SAID.test(x) || TA_NONE_TOLD.test(x);
+/** a sentence that says whose word it is ("an official says", "The Hindu reports:", "என்று அதிகாரி கூறினார்") */
+const ATTRIBUTED = /\b(?:says?|said|saying|tells?|told|claim(?:s|ed|ing)?|stat(?:es|ed)|according to|reports?|insist(?:s|ed)?|maintain(?:s|ed)?|den(?:y|ies|ied)|alleg(?:es|ed)|add(?:s|ed)|admit(?:s|ted)?|assert(?:s|ed)?|contend(?:s|ed)?)\b|என்று|எனத்|எனக்|கூறி|கூறுகி|தெரிவித்|தெரிவிக்கி|சொன்ன|சொல்கி|அறிவித்|மறுத்|வெளியிட்ட\s*செய்தி|செய்தி\s*வெளியிட்/iu;
+/**
+ * Is a none the story's own claim, said as its speaker's ("A water board official says no complaints have come in")? Then it is the article's
+ * word, not the console's count, and is said as the story is (v10 review 2, round 2: the gate for the console's count dropped the headline and the
+ * official's claim of a story about that very claim). A none the story never says, or one said in the brief's own voice, is still the console's.
+ */
+export function theirNone(s: string, story: Pick<Story10, "title" | "titleEn" | "text">): boolean {
+  return NONE_SAID.test(s) && ATTRIBUTED.test(s) && noneTold([story.title, story.titleEn ?? "", story.text ?? ""].join(" \n "));
+}
 
 /**
  * Does a sentence of the console's cases say the console's own count? The checker holds a figure to the facts it cites, but not to the noun it
@@ -270,7 +283,8 @@ export function newsBrief10(d: Brief10Deps): NewsBrief10 {
         if (said.length >= 3) return false;
         const ic = consoleish(s, c);
         // a sentence of the console's cases that does not say its count is never said: the code's console sentence is (review 2, findings 1, 4)
-        if (((ic && CONSOLE_WORDS.test(s)) || NONE_SAID.test(s)) && !agrees(s, c)) return false;
+        // (the story's own none, said as its speaker's, is the article's word and is said: v10 review 2, round 2)
+        if (((ic && CONSOLE_WORDS.test(s)) || (NONE_SAID.test(s) && !(!ic && theirNone(s, story)))) && !agrees(s, c)) return false;
         if (said.length >= 2 && !hasConsole && !ic && cLine) return false;
         if (ic) hasConsole = true;
         said.push(s);
