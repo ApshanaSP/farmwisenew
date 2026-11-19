@@ -30,7 +30,7 @@ import { understand } from "../understand";
 import { clearCaches, planRound, RoundBody, type RoundBodyT, type RoundDeps } from "../round";
 import { stageContext, type StageDocT } from "../stage";
 import { stageDigest, stageEmpty, stageReducer } from "../stagelocal";
-import type { Lang, ScreenState, World } from "../types";
+import type { Lang, ScreenState, Step, World } from "../types";
 import { serverWorld } from "../world";
 import { addressed } from "../addressed";
 import { labelsOf } from "../register";
@@ -182,6 +182,10 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   const own = bl as unknown as { lane: string; ask?: { en: string; ta: string }; lang?: Lang };
   if (own.lane === "wait") { o.silent = true; o.why = "wait"; o.lane = "wait"; o.ms = Date.now() - t0; return { o, scene: s }; }
   if (own.lane === "confirm") { o.kind = "clarify"; o.lane = "confirm"; o.lang = own.lang ?? null; o.reply = own.lang === "ta" ? own.ask?.ta ?? null : own.ask?.en ?? null; o.ms = Date.now() - t0; return { o, scene: s }; }
+  // v10: a dashboard control said by voice with the console's own steps (a page, a period, a panel) is those steps, as Thunai.tsx runs them
+  // (the merged dry run of 19 Nov: "Go to trends." through the control lane recorded no page)
+  const ctl = own.lane === "control" ? (bl as unknown as { steps?: Step[]; lang: Lang }) : null;
+  if (ctl?.steps?.length) bl = { lane: "rules", steps: ctl.steps, lang: ctl.lang, reflex: false } as BrowserLane;
   // v9: a soft find (a story-like topic with no news word) that finds nothing close goes on to the lane behind it, as Thunai.tsx does
   if (bl.lane === "news" && bl.soft && bl.na.kind === "find") {
     const f = await foundStory(bl.na.body.find, { world: c.world, sem: c.sem }).catch(() => null);

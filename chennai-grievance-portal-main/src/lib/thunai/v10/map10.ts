@@ -20,6 +20,7 @@ import { COUNT_BY, EDIT_ADD, EDIT_ALL_SEV, EDIT_CLEAR, EDIT_COMPARE, EDIT_DEPTS,
 import { dayIn, rehearsalIntent } from "@/lib/rehearsal/intent";
 import { taNumber } from "../normalise";
 import { asciiDigits } from "../digits";
+import { placeWord } from "../v8/lang8";
 
 export type MapOp = "ask" | "followup" | "chip" | "circle" | "layer" | "shot" | "export" | "save" | "visit" | "insight" | "send" | "suggest" | "rain" | "tour";
 export interface MapCmd {
@@ -649,6 +650,12 @@ const ASK_MAP = /^(?:ask (?:the )?map(?: to| about| for| whether| if)?|on the ma
 const OPEN_ASK = /^(?:open |show )?(?:the )?ask the map$|^ask the map$|^வரைபடத்திடம் கேள்$/u;
 const PLACE_Q = /\b(?:within|near|nearest|nearby|closest|farthest|around|along|hotspots?|clusters?|clustering|where (?:is|are)|which wards?|which zones?|what(?:s| is) happening in|how far)\b|\bpakkathula\b|\benga (?:adhigam|athigam)\b|அருகில்|அருகே|அருகிலுள்ள|எங்கே அதிகம்|என்ன நடக்கிறது/u;
 
+/** a question that is only a zone's or a place's name (with "zone", "area", a zone number): no topic for the map to answer */
+const placeOnly = (q: string): boolean => {
+  const ws = q.split(/\s+/).filter((w) => w && !/^(?:the|zone|zones|mandalam|மண்டலம்|area|areas|ward|taluk|\d+)$/iu.test(w));
+  return ws.length > 0 && ws.length <= 3 && ws.every((w) => placeWord(w) || placeWord(w.charAt(0).toUpperCase() + w.slice(1)));
+};
+
 function askCmd(t: string, c: MapCtx10): MapCmd | null {
   if (OPEN_ASK.test(t)) return { op: "ask", question: null };
   const m = ASK_MAP.exec(t);
@@ -656,6 +663,9 @@ function askCmd(t: string, c: MapCtx10): MapCmd | null {
     const q = (m[1] ?? m[2] ?? "").replace(/^(?:show|kaattu|kattu|about|for)\s+/, "").replace(/\s+(?:kaattu|kattu|show)$/, "").trim();
     if (!q) return { op: "ask", question: null };
     if (NOT_MINE.test(q)) return null;
+    // (a zone or a place alone, "map la Manali zone kaattu", is the console's own map view, the rules' zone on the map page: news9's
+    // n9-command-7, the merged dry run of 19 Nov)
+    if (placeOnly(q)) return null;
     return { op: "ask", question: withDigits(q) };
   }
   // the map open: a place question is the map's ("where are garbage complaints clustering", "what is happening in Teynampet")

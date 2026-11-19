@@ -306,6 +306,8 @@ describe("not the map's", () => {
     "read the second story", "what's the latest on the cyclone",
     // console filters and page moves
     "show zone 7", "make it weekly", "clear the filters", "go to the trends page", "open the briefing", "switch to taluks", "dark mode", "zone 13 kaattu",
+    // a zone or a place alone on the map is the console's own map view, not a question (news9's n9-command-7, the merged dry run of 19 Nov)
+    "Jarvis, map la Manali zone kaattu.", "show Adyar zone on the map", "Royapuram on the map",
     // cases and drafts
     "open case INC-2026-004", "draft action for the second one", "send the drafts", "open the first one",
     // exports that are not the map's

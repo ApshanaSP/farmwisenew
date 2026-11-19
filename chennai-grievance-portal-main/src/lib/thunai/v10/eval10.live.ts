@@ -211,7 +211,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
   const listen: Lang = it.ui ?? "en";
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   const ctx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone }, slots: (s.stage.slots ?? null) as Record<string, unknown> | null } : null, news: newsOn(c, s), state: s.state, world: c.world,
-    listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null, lex: c.lanes.lex, askMap: s.askMap ?? null } as Parameters<Lanes["lane"]>[1];
+    listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null, lex: c.lanes.lex, askMap: s.askMap ? { open: true, hasAnswer: true, kind: "answer", question: s.askMap } : null } as Parameters<Lanes["lane"]>[1];
   let bl = c.lanes.lane(said, ctx);
   // a soft find that finds nothing close goes on to the lane behind it, as the console does (v9)
   if (bl.lane === "news" && (bl as unknown as { soft?: AnyLane }).soft && (bl as unknown as { na: { kind: string } }).na.kind === "find") {
