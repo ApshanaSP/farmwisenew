@@ -21,7 +21,8 @@ const Ctor = (): (new () => Rec) | null => {
 export const canWake = () => !!Ctor();
 
 /** the name as speech services write it down (Jarvis is often heard as "jarvis", "jervis", "javis", "service" never counts) */
-const NAME = "(?:jarvis|jarviz|jarvish|jarwis|jervis|jarves|javis|jaarvis|ஜார்விஸ்|ஜார்விஸ|ஜார்வீஸ்|ஜாவிஸ்)";
+// (v10: and by ear, the owner's own turns: "Javes, Goto News.", "எப்படி இருக்காதே ஜர்விஸ்?"; "jarvees", "jaarves", ஜார்வெஸ், ஜாவேஸ்)
+const NAME = "(?:jarvis|jarviz|jarvish|jarwis|jervis|jarves|javis|jaarvis|javes|jarvees|jaarves|jervees|ஜார்விஸ்|ஜார்விஸ|ஜார்வீஸ்|ஜாவிஸ்|ஜர்விஸ்|ஜர்விஸ|ஜார்வெஸ்|ஜாவேஸ்|ஜர்வீஸ்)";
 const GREET = "(?:hi|hey|hello|hai|ok|okay|yo|ஹாய்|ஹலோ|ஹே)";
 const WAKE = new RegExp(`(?:^|\\s)(${GREET}[\\s,.!]*)?${NAME}(?=$|[\\s,.!?])[\\s,.!?]*(.*)$`, "i");
 /** said before the name and meaning nothing: still the name alone */

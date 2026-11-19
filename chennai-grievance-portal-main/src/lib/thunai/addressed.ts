@@ -17,6 +17,7 @@ import { isEnglishWord } from "./english";
 import { understandV8 } from "./v8/flag8";
 import { areaWord } from "./v8/lang8";
 import { ordinalOf } from "./v8/refs8";
+import { understandV10 } from "./v10/flag10";
 
 export type Tier = 0 | 1 | 2 | 3;
 export interface Addressed { tier: Tier; act: boolean; text: string; maxLevel: "A" | "B" | "C" | null; why: string }
@@ -44,8 +45,23 @@ export interface GateInput {
 const ASSISTANT8 = /^\s*(?:hey |ok |okay )?(?:alexa|siri|cortana|bixby)\b|^\s*(?:hey |ok |okay )?(?:google|gemini|chatgpt)\s*[,.!?]|^\s*(?:hey|ok|okay) google\b/i;
 /** the same names as Whisper writes them in Tamil letters ("அலேக்சா When was it open?": the real run, 18 Nov) */
 const ASSISTANT8_TA = /^\s*(?:அலெக்சா|அலேக்சா|அலெக்ஸா|அலேக்ஸா|அலெக்ஸ்ஸா)|^\s*(?:சிரி|கூகுள்|கூகிள்)\s*,/u;
+/**
+ * v10 (v10-research/30-side-talk.md 3.3-3.4, 5.4): talk about the screen to someone beside it ("See, this one has gone up", "Look at this, Adyar is
+ * the worst again", "Idhu romba jaasthi aagiduchu, paarunga", "இதோ பாருங்க ..."): a perception verb with a demonstrative, never "look up", "look
+ * for" or "show"; a phone call's opener ("Hello? Haan, sollunga"); hearsay ("... illaiyaam", "... வருமாம்": they say ...).
+ */
+const SCREEN_TALK_EN = /^\s*(?:see|look)\s*[,.!]\s|^\s*look\s+(?:at\s+(?:this|that|it|these|those|here)|here)\b/i;
+const SCREEN_TALK_TG = /\b(?:idhu|idho|ithu|itho|inga|ingey|adho|atho)\b.*\b(?:paarunga|paaru|parunga|paru|paarungo|paarungal)\b|\b(?:paarunga|parunga|paarungo)\b[\s,.!]+(?:idhu|idho|ithu|itho|inga)\b/i;
+const SCREEN_TALK_TA = /(?:^|\s)(?:இதோ|இதைப்|இதை|இங்க|இங்கே|அதோ)\s*(?:பாருங்க|பாரு|பாருங்கள்|பாருங்கோ)/u;
+// (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil word)
+const PHONE_OPEN = /^\s*(?:hello|hallo|halo|ஹலோ)\s*[?!.,]+\s*(?:(?:haan|han|ha|aan|yes|yeah|ok|okay|sollunga|sollungo|sollu|speaking|tell me|sir|madam|ஆ|ஆமா|சொல்லுங்க|சொல்லு|சொல்லுங்கோ)(?=[\s,.!?]|$)[\s,.!?]*)+/iu;
+const HEARSAY_TG = /\b(?!aama?am\b)[a-z]{3,}(?:iyaam|yaam|maam|chaam|daam|taam)\s*[.!?]*\s*$/i;
+const HEARSAY_TA = /\S(?:மாம்|களாம்|ச்சாம்|தாம்)\s*[.!?]*\s*$/u;
 /** a person addressed by a title, set off by a comma: "Sir, the car is ready", "Madam, ...", "..., sir" ("Amma Unavagam complaints" is no title) */
 const HONORIFIC8 = /^\s*(?:sir|madam|ma'?am|mam|saar|ayya|amma|akka|thambi|boss|anna)\s*[,.!]|,\s*(?:sir|madam|saar|boss)\s*[.!?]*\s*$/i;
+/** v10: the same in Tamil script ("சார், ...", "தம்பி, ...", "..., சார்"); "ஏங்க", "ஏய்", "டேய்" call a person with or without the comma. A title with
+ * no comma is a name or a place ("அண்ணா நகர்", "அம்மா உணவகம்") */
+const HONORIFIC_TA = /^\s*(?:சார்|சாரு|மேடம்|ஐயா|அய்யா|அம்மா|அக்கா|தம்பி|அண்ணா|அண்ணே|மச்சான்|மச்சி|தங்கச்சி|பாப்பா)\s*[,.!]|^\s*(?:ஏங்க|ஏய்|டேய்|ஏம்பா|ஏம்மா)(?:\s|[,.!]|$)|,\s*(?:சார்|மேடம்|ஐயா)\s*[.!?]*\s*$/u;
 /** an errand for a person in the room: call, tell, ask, inform ... someone; bring or send them a thing ("send it to the AE" may be the console's: kept) */
 const ERRAND8 = /^ (?:(?:yes|yeah|ok|okay|and|so|then|please|also) )*(?:(?:call|phone|ring|inform|ask|tell|remind|message|text) (?:him|her|them|(?:the |our )?(?:pa|ae|aee|ee|dro|rdo|vao|tahsildar|driver|commissioner|secretary|engineer|officer|inspector|mla|mp|minister|staff|peon|clerk|team|deputy))|(?:bring|fetch|hand|send|forward) (?:him|her|them|the file|the letter|the papers|the car|tea|coffee))\b/;
 const ERRAND8_TA = /(?:அவரை|அவனை|அவளை|அவங்களை|அவர்களை|அவருக்கு|அவங்களுக்கு|அவர்களுக்கு|அவர்கிட்ட|அவங்ககிட்ட)|(?:^|\s)\S+\s*கிட்ட\s+(?:சொல்|கொடு|குடு|அனுப்பு)|கொண்டு\s*வா/u;
@@ -80,8 +96,14 @@ export function sideTalk8(text: string, o: { awaiting?: boolean; districtNoun?: 
   const t = norm(text);
   const words = t.trim().split(" ").filter(Boolean);
   if (ASSISTANT8.test(text) || ASSISTANT8_TA.test(text)) return "another-assistant";
-  if (HONORIFIC8.test(text) && !o.awaiting) return "title";
+  if ((HONORIFIC8.test(text) || (understandV10() && HONORIFIC_TA.test(text.normalize("NFC")))) && !o.awaiting) return "title";
   if (vocative8(text, !!o.districtNoun)) return "person";
+  if (understandV10()) {
+    const nfc = text.normalize("NFC");
+    if (PHONE_OPEN.test(nfc)) return "phone";
+    if (SCREEN_TALK_EN.test(text) || SCREEN_TALK_TG.test(t) || SCREEN_TALK_TA.test(nfc)) return "screen-talk";
+    if (!o.awaiting && (HEARSAY_TG.test(t.trim()) || HEARSAY_TA.test(nfc))) return "hearsay";
+  }
   // Jarvis waits for an answer (a yes, a choice, a question back): whatever else is said is that answer ("rendavadhu", "Yes, tell them.": the
   // review, 19 Nov); only another assistant or a person named above is someone else's
   if (o.awaiting) return null;
@@ -92,13 +114,20 @@ export function sideTalk8(text: string, o: { awaiting?: boolean; districtNoun?: 
   if (words.length === 1 && ONE_WORD_TA8.test(words[0])) return null;
   // an ordinal or "both" alone is a follow-up on the list ("rendavadhu", "இரண்டாவது", "rendum")
   if (words.length <= 2 && (ordinalOf(text) != null || /^(?:rendum|irandum|ரெண்டும்|இரண்டும்|both)$/iu.test(words.join(" ")))) return null;
-  // one word no lexicon knows (a noise Whisper wrote down): neither English, nor a district word, nor a Tamil question or command
-  if (words.length === 1 && !o.districtNoun && !ACK8.has(words[0]) && !/^(?:no|nope|இல்லை|இல்ல|வேண்டாம்|வேணாம்|ஆம்|ஆமாம்|illa|venaam|vendaam|aama|aamam)$/u.test(words[0])) {
-    const w = words[0];
-    const tamil = /[஀-௿]/u.test(w);
-    if (tamil ? !QUESTION_TA.test(text) && !IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) : !isEnglishWord(w) && !QUESTION_TG.test(t) && !IMPERATIVE_TG.test(t.trim())) return "unclear";
-  }
+  if (unclearWord(text, !!o.districtNoun)) return "unclear";
   return null;
+}
+
+/** one word no lexicon knows (a noise Whisper wrote down): neither English, nor a district word, nor a Tamil question or command, nor a yes or a
+ * no. v10: also asked by the browser's lanes (browser10.ts), for a line that reached them named, called or engaged ("வாயமுர்ரா.") */
+export function unclearWord(text: string, districtNoun: boolean): boolean {
+  const t = norm(text);
+  const words = t.trim().split(" ").filter(Boolean);
+  if (words.length !== 1 || districtNoun || ACK8.has(words[0]) || FILLER8.has(words[0]) || /^(?:no|nope|இல்லை|இல்ல|வேண்டாம்|வேணாம்|ஆம்|ஆமாம்|illa|venaam|vendaam|aama|aamam)$/u.test(words[0])) return false;
+  if (ONE_WORD_TA8.test(words[0]) || ordinalOf(text) != null) return false;
+  const w = words[0];
+  const tamil = /[஀-௿]/u.test(w);
+  return tamil ? !QUESTION_TA.test(text) && !IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) : !isEnglishWord(w) && !QUESTION_TG.test(t) && !IMPERATIVE_TG.test(t.trim());
 }
 
 export const ENGAGED_MS = 20_000;
@@ -169,7 +198,7 @@ export function namedIn(text: string): string | null {
   if (talkedAbout(text)) return null;
   const w = wakeIn(text);
   if (w != null) return w;
-  return /(jarvis|ஜார்விஸ்)/i.test(text) ? text.replace(/,?\s*(jarvis|ஜார்விஸ்)\s*,?/gi, " ").replace(/\s+/g, " ").trim() : null;
+  return /(jarvis|ஜார்விஸ்|ஜர்விஸ்)/i.test(text) ? text.replace(/,?\s*(jarvis|ஜார்விஸ்|ஜர்விஸ்)\s*,?/gi, " ").replace(/\s+/g, " ").trim() : null;
 }
 
 export const isImperative = (text: string): boolean => {
