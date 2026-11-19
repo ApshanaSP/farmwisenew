@@ -5,13 +5,13 @@
   "a": 3277,
   "b": 3298
  },
- "changed": 375,
- "added": 42,
- "removed": 21,
+ "changed": 373,
+ "added": 44,
+ "removed": 23,
  "context": {
   "next_build_id": {
    "a": "7W1366w-32VU0Pwhed8Oy",
-   "b": "UewRA2fZuForJykOwO1Az"
+   "b": "AsDHaFEqgR-8G-NbTpFL0"
   }
  },
  "routes": [
@@ -78,7 +78,7 @@
   },
   {
    "route": "/api/collector/thunai/agent/round",
-   "requests": 52,
+   "requests": 50,
    "roles": [
     "collector"
    ],
@@ -86,50 +86,50 @@
    "top_paths": [
     {
      "path": "$.timing",
-     "count": 52
+     "count": 50
     },
     {
      "path": "$.result.stage.lang",
-     "count": 33
+     "count": 31
     },
     {
      "path": "$.result.stage.titles",
-     "count": 33
+     "count": 31
     },
     {
      "path": "$.result.stage.notesBi",
-     "count": 33
+     "count": 31
     },
     {
      "path": "$.result.stage.say.ta",
-     "count": 28
-    },
-    {
-     "path": "$.result.stage.blocks[*].title",
-     "count": 27
+     "count": 26
     },
     {
      "path": "$.result.say",
-     "count": 23
+     "count": 24
+    },
+    {
+     "path": "$.result.stage.blocks[*].title",
+     "count": 24
     },
     {
      "path": "$.result.stage.blocks[*].points[*]",
      "count": 17
     },
     {
-     "path": "$.result.stage.say.en",
-     "count": 16
-    },
-    {
      "path": "$.result.stage.blocks[*].items[*].label",
      "count": 16
     },
     {
-     "path": "$.result.stage.title",
-     "count": 12
+     "path": "$.result.stage.say.en",
+     "count": 15
     },
     {
      "path": "$.result.stage.blocks[*].rows[*].id",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].title",
      "count": 12
     }
    ]
@@ -1283,6 +1283,20 @@
    "status": 200
   },
   {
+   "id": "3a9d6c35d6b35234",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "1c094674763a3e36",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
    "id": "a1cc51848f7bb9a1",
    "role": "collector",
    "method": "POST",
@@ -1412,6 +1426,20 @@
   },
   {
    "id": "e2bf5af9ffe285e3",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "f0ed9bee243901b3",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "75892bd131e3b8c5",
    "role": "collector",
    "method": "POST",
    "url": "/api/collector/thunai/agent/round",
@@ -57264,14 +57292,64 @@
    "fields": {},
    "bytes": {
     "a": 309,
-    "b": 402
+    "b": 5111
    },
-   "path_count": 1,
+   "path_count": 11,
    "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "none",
+     "b": "do"
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 16 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "7 headlines about deaths reported last hours. Reading them now."
+    },
+    {
+     "path": "$.result.note",
+     "a": "no-model",
+     "b": "asks7:outside"
+    },
+    {
+     "path": "$.trace.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "Thinking",
+     "b": "Reading the data"
+    },
+    {
+     "path": "$.trace[1]",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    },
+    {
+     "path": "$.lane",
+     "a": "no-model",
+     "b": "quick"
+    },
     {
      "path": "$.timing",
      "a": "(absent)",
-     "b": "{object with 3 keys}"
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -57623,10 +57701,65 @@
    "fields": {},
    "bytes": {
     "a": 449,
-    "b": 486
+    "b": 2528
    },
-   "path_count": 1,
+   "path_count": 12,
    "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "chat",
+     "b": "do"
+    },
+    {
+     "path": "$.result.reply",
+     "a": "I can't reason about that right now. Ask me about the district: incidents, news, rain, air, reservoirs, prices or departments.",
+     "b": null
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 16 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "1 headline about won last cricket world cup. Reading them now."
+    },
+    {
+     "path": "$.result.note",
+     "a": "general-fallback",
+     "b": "asks7:outside"
+    },
+    {
+     "path": "$.trace.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "General knowledge",
+     "b": "Reading the data"
+    },
+    {
+     "path": "$.trace[1]",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    },
+    {
+     "path": "$.lane",
+     "a": "general",
+     "b": "quick"
+    },
     {
      "path": "$.timing",
      "a": "(absent)",
@@ -59516,14 +59649,64 @@
    "fields": {},
    "bytes": {
     "a": 337,
-    "b": 430
+    "b": 5479
    },
-   "path_count": 1,
+   "path_count": 11,
    "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "none",
+     "b": "do"
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 16 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "5 தலைப்புச் செய்திகள். படிக்கிறேன்."
+    },
+    {
+     "path": "$.result.note",
+     "a": "no-model",
+     "b": "asks7:outside"
+    },
+    {
+     "path": "$.trace.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "யோசிக்கிறேன்",
+     "b": "தரவைப் படிக்கிறேன்"
+    },
+    {
+     "path": "$.trace[1]",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    },
+    {
+     "path": "$.lane",
+     "a": "no-model",
+     "b": "quick"
+    },
     {
      "path": "$.timing",
      "a": "(absent)",
-     "b": "{object with 3 keys}"
+     "b": "{object with 1 keys}"
     }
    ]
   },
@@ -60083,10 +60266,20 @@
    "fields": {},
    "bytes": {
     "a": 309,
-    "b": 402
+    "b": 430
    },
-   "path_count": 1,
+   "path_count": 3,
    "paths": [
+    {
+     "path": "$.result.lang",
+     "a": "en",
+     "b": "ta"
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "Thinking",
+     "b": "யோசிக்கிறேன்"
+    },
     {
      "path": "$.timing",
      "a": "(absent)",
@@ -60754,125 +60947,6 @@
      "path": "$.result.say",
      "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)",
      "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars)"
-    },
-    {
-     "path": "$.timing",
-     "a": "(absent)",
-     "b": "{object with 1 keys}"
-    }
-   ]
-  },
-  {
-   "id": "f0ed9bee243901b3",
-   "session": "ask",
-   "role": "collector",
-   "method": "POST",
-   "url": "/api/collector/thunai/agent/round",
-   "route": "/api/collector/thunai/agent/round",
-   "note": "direct, sentence 20",
-   "fields": {},
-   "bytes": {
-    "a": 6113,
-    "b": 6347
-   },
-   "path_count": 8,
-   "paths": [
-    {
-     "path": "$.result.stage.say.en",
-     "a": "2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Srinivasa Nagar V Cross Road, Srini... (216 chars)",
-     "b": "2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Kolathur in Madhavaram. Say \"read t... (169 chars)"
-    },
-    {
-     "path": "$.result.stage.say.ta",
-     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)",
-     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். \"படி\" அல்லத... (175 chars)"
-    },
-    {
-     "path": "$.result.stage.blocks[0].title",
-     "a": "Key numbers",
-     "b": "முக்கிய எண்கள்"
-    },
-    {
-     "path": "$.result.stage.lang",
-     "a": "(absent)",
-     "b": "ta"
-    },
-    {
-     "path": "$.result.stage.titles",
-     "a": "(absent)",
-     "b": "{object with 2 keys}"
-    },
-    {
-     "path": "$.result.stage.notesBi",
-     "a": "(absent)",
-     "b": "[array of 0]"
-    },
-    {
-     "path": "$.result.say",
-     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)",
-     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். \"படி\" அல்லத... (175 chars)"
-    },
-    {
-     "path": "$.timing",
-     "a": "(absent)",
-     "b": "{object with 1 keys}"
-    }
-   ]
-  },
-  {
-   "id": "75892bd131e3b8c5",
-   "session": "ask",
-   "role": "collector",
-   "method": "POST",
-   "url": "/api/collector/thunai/agent/round",
-   "route": "/api/collector/thunai/agent/round",
-   "note": "direct, sentence 22",
-   "fields": {},
-   "bytes": {
-    "a": 3570,
-    "b": 3881
-   },
-   "path_count": 9,
-   "paths": [
-    {
-     "path": "$.result.stage.title",
-     "a": "Reservoir storage",
-     "b": "நீர்த்தேக்க இருப்பு"
-    },
-    {
-     "path": "$.result.stage.say.ta",
-     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
-     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
-    },
-    {
-     "path": "$.result.stage.blocks[0].title",
-     "a": "Reservoir storage",
-     "b": "நீர்த்தேக்க இருப்பு"
-    },
-    {
-     "path": "$.result.stage.blocks[1].title",
-     "a": "Stations",
-     "b": "நிலையங்கள்"
-    },
-    {
-     "path": "$.result.stage.lang",
-     "a": "(absent)",
-     "b": "ta"
-    },
-    {
-     "path": "$.result.stage.titles",
-     "a": "(absent)",
-     "b": "{object with 2 keys}"
-    },
-    {
-     "path": "$.result.stage.notesBi",
-     "a": "(absent)",
-     "b": "[array of 0]"
-    },
-    {
-     "path": "$.result.say",
-     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
-     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
     },
     {
      "path": "$.timing",
@@ -63551,19 +63625,19 @@
    "fields": {},
    "bytes": {
     "a": 1202,
-    "b": 1251
+    "b": 1252
    },
    "path_count": 5,
    "paths": [
     {
      "path": "$.incidents[0].lat",
      "a": 13.016499019607844,
-     "b": 13.01765980392157
+     "b": 13.017220588235295
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21072974509804,
-     "b": 80.21104347058824
+     "b": 80.21127876470588
     },
     {
      "path": "$.incidents[0].sev",
@@ -63859,7 +63933,7 @@
    "fields": {},
    "bytes": {
     "a": 232509,
-    "b": 235191
+    "b": 235192
    },
    "path_count": 837,
    "paths": [
@@ -66086,12 +66160,12 @@
     {
      "path": "$.severity.rows[32].lat",
      "a": 12.99715,
-     "b": 13.01765980392157
+     "b": 13.017220588235295
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.197346,
-     "b": 80.21104347058824
+     "b": 80.21127876470588
     },
     {
      "path": "$.severity.rows[32].status",
@@ -66375,7 +66449,7 @@
    "fields": {},
    "bytes": {
     "a": 140493,
-    "b": 139122
+    "b": 139124
    },
    "path_count": 765,
    "paths": [
@@ -67542,12 +67616,12 @@
     {
      "path": "$.map.pins[64].lat",
      "a": 13.0002073,
-     "b": 13.01765980392157
+     "b": 13.017220588235295
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.2172367,
-     "b": 80.21104347058824
+     "b": 80.21127876470588
     },
     {
      "path": "$.map.pins[64].title",
@@ -67632,12 +67706,12 @@
     {
      "path": "$.severity.rows[27].lat",
      "a": 12.9795268,
-     "b": 13.01765980392157
+     "b": 13.017220588235295
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.2184424,
-     "b": 80.21104347058824
+     "b": 80.21127876470588
     },
     {
      "path": "$.severity.rows[27].status",

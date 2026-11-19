@@ -3,15 +3,12 @@
   "tz": "Asia/Kolkata",
   "seed": "7202",
   "config": "vitest.config.ts",
-  "exit": 1,
-  "secs": 91,
-  "numTotalTests": 6132,
-  "numPassedTests": 6117,
-  "numFailedTests": 2,
+  "exit": 0,
+  "secs": 103,
+  "numTotalTests": 6775,
+  "numPassedTests": 6762,
+  "numFailedTests": 0,
   "numPendingTests": 13,
-  "numFailedTestSuites": 2,
-  "failed": [
-    "src\\lib\\thunai\\stt.v6.test.ts :: v6: a call ends the race at once English 'Hi Jarvis' back at 30 ms, Tamil still running: answered well before the 700 ms translation grace",
-    "src\\lib\\thunai\\stt.v6.test.ts :: v6: a call ends the race at once a Tamil call back first ends it too"
-  ]
+  "numFailedTestSuites": 0,
+  "failed": []
 }

@@ -4,17 +4,17 @@
   {
    "name": "load",
    "status": 200,
-   "firstPaint": 798,
+   "firstPaint": 794,
    "url": "http://127.0.0.1:3106/collector",
    "shot": "01-j1en-console-first.png",
-   "band": "Tuesday 17 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood evening, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nChennai Metrowater (1 open)\nSolid Waste Management (1 open)\nBridges\nBuildings (GCC)\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nStorm Water Drain\nStreet Lighting & Electrical\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n2\n2 more\nthan yesterday\nOngoing incidents\n2\n2 more\nthan yesterday\nResolved, last 24 hours\n0\nNo change\nfrom yesterday\nMost serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20",
+   "band": "Thursday 19 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood afternoon, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nChennai Metrowater (1 open)\nSolid Waste Management (1 open)\nBridges\nBuildings (GCC)\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nStorm Water Drain\nStreet Lighting & Electrical\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n2\n2 more\nthan yesterday\nOngoing incidents\n2\n2 more\nthan yesterday\nResolved, last 24 hours\n0\nNo change\nfrom yesterday\nMost serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20",
    "layout": {
     "hScroll": false,
     "scrollWidth": 1280,
     "W": 1280,
     "wide": []
    },
-   "ms": 3779
+   "ms": 3819
   },
   {
    "name": "jarvis-open",
@@ -22,55 +22,55 @@
    "firstText": "While Jarvis is open, speech in this room goes to transcription services and is not stored. While it is closed, this browser's speech service listens only for \"Hi Jarvis\". It obeys anyone in the room: it cannot tell voices apart.\n\nUnderstood, open it",
    "hud": "Muted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\nMuted",
    "shot": "02-j1en-jarvis-open.png",
-   "ms": 4719
+   "ms": 4707
   },
   {
    "name": "jarvis-q1",
    "q": "How many cases are overdue?",
-   "firstChangeMs": 6798,
-   "totalMs": 13529,
-   "answer": "You asked\n\nHow many cases are overdue?\n\n2,225 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
+   "firstChangeMs": 6793,
+   "totalMs": 13513,
+   "answer": "You asked\n\nHow many cases are overdue?\n\n2,243 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
    "stage": "",
-   "live": "2,225 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
+   "live": "2,243 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
    "card": "",
-   "hud": "You asked\n\nHow many cases are overdue?\n\n2,225 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.\n\nMuted\nI can't hear you. Press Unmute to talk.\nRules\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n1\nClose Jarvis\n2,225 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
+   "hud": "You asked\n\nHow many cases are overdue?\n\n2,243 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.\n\nMuted\nI can't hear you. Press Unmute to talk.\nRules\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n1\nClose Jarvis\n2,243 incidents reported in the last 90 days are past their deadline, 128 of them severe; 65 deaths recorded in them.",
    "core": "idle",
    "shot": "03-j1en-jarvis-q1.png",
-   "ms": 28719
+   "ms": 28689
   },
   {
    "name": "jarvis-q2",
    "q": "How many new complaints came in today?",
-   "firstChangeMs": 3777,
-   "totalMs": 7494,
+   "firstChangeMs": 3776,
+   "totalMs": 7497,
    "answer": "",
-   "stage": "Back to dashboard\nJarvis\nCases · today (17 Nov, since midnight)\nNext\nShow them on a map\nWhich department is slowest?\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nAll cases, today (17 Nov, since midnight)\n2\nPast their deadline\n0\nStill open\n2\nCases · today (17 Nov, since midnight)\nDraft for the top 3\n1\nSewage overflowing on the street for a week\nMedium\nJawahar Street, Perambur, Thiru-Vi-Ka-Nagar\nunder 1 h\n1 complaint\nChennai Metrowater\nOpen\n2\nQA6 matrix\nLow\n1 Test Street, Thiruvottiyur\nunder 1 h\n1 complaint\nSolid Waste Management\nOpen\nWhere they are\n\nNumbered as in the list; cases without an exact place are not drawn.\n\nEnlarge map\n1\n2\nImagery © Esri\n+\n−\n\n2 cases today (17 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.\n\nData as of 17 Nov, 6:33 PM",
-   "live": "2 cases today (17 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.",
+   "stage": "Back to dashboard\nJarvis\nCases · today (19 Nov, since midnight)\nNext\nShow them on a map\nWhich department is slowest?\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nAll cases, today (19 Nov, since midnight)\n2\nPast their deadline\n0\nStill open\n2\nCases · today (19 Nov, since midnight)\nDraft for the top 3\n1\nSewage overflowing on the street for a week\nMedium\nJawahar Street, Perambur, Thiru-Vi-Ka-Nagar\nunder 1 h\n1 complaint\nChennai Metrowater\nOpen\n2\nQA6 matrix\nLow\n1 Test Street, Thiruvottiyur\nunder 1 h\n1 complaint\nSolid Waste Management\nOpen\nWhere they are\n\nNumbered as in the list; cases without an exact place are not drawn.\n\nEnlarge map\n1\n2\nImagery © Esri\n+\n−\n\n2 cases today (19 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.\n\nData as of 19 Nov, 2:51 PM",
+   "live": "2 cases today (19 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.",
    "card": "Shall I put these on the map?\n\nYes\nNo thanks",
-   "hud": "Shall I put these on the map?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n25 ms\nNumbered as in the list; cases without an exact…\nn = 2\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n2\nClose Jarvis\n2 cases today (17 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.",
+   "hud": "Shall I put these on the map?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n22 ms\nNumbered as in the list; cases without an exact…\nn = 2\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n2\nClose Jarvis\n2 cases today (19 Nov, since midnight). The most urgent: an issue at Perambur in Thiru-Vi-Ka-Nagar. Say \"read them\", or \"open\" and a number.",
    "core": "idle",
    "shot": "04-j1en-jarvis-q2.png",
-   "ms": 17258
+   "ms": 17135
   },
   {
    "name": "jarvis-q3",
    "q": "How is Adyar zone doing?",
-   "firstChangeMs": 4100,
-   "totalMs": 7812,
+   "firstChangeMs": 4090,
+   "totalMs": 7821,
    "answer": "",
-   "stage": "Back to dashboard\nJarvis\nBriefing · the last 24 hours\n\n0 incidents were reported in Adyar (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n0\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n0 incidents were reported in Adyar (last 24 hours).\n\n2\n\n0 incidents are still open; 0 severe events.\n\n2 points in the brief for the last 24 hours. 0 incidents were reported in Adyar (last 24 hours).\n\nData as of 17 Nov, 6:33 PM",
+   "stage": "Back to dashboard\nJarvis\nBriefing · the last 24 hours\n\n0 incidents were reported in Adyar (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n0\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n0 incidents were reported in Adyar (last 24 hours).\n\n2\n\n0 incidents are still open; 0 severe events.\n\n2 points in the brief for the last 24 hours. 0 incidents were reported in Adyar (last 24 hours).\n\nData as of 19 Nov, 2:51 PM",
    "live": "2 points in the brief for the last 24 hours. 0 incidents were reported in Adyar (last 24 hours).",
    "card": "Shall I show the severe cases?\n\nYes\nNo thanks",
-   "hud": "Shall I show the severe cases?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n1.7 s\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n3\nClose Jarvis\n2 points in the brief for the last 24 hours. 0 incidents were reported in Adyar (last 24 hours).",
+   "hud": "Shall I show the severe cases?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n1.6 s\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n3\nClose Jarvis\n2 points in the brief for the last 24 hours. 0 incidents were reported in Adyar (last 24 hours).",
    "core": "idle",
    "shot": "05-j1en-jarvis-q3.png",
-   "ms": 17439
+   "ms": 17476
   },
   {
    "name": "jarvis-q4",
    "q": "How many open complaints does Solid Waste Management have?",
-   "firstChangeMs": 7021,
-   "totalMs": 13770,
+   "firstChangeMs": 7069,
+   "totalMs": 13800,
    "answer": "You asked\n\nHow many open complaints does Solid Waste Management have?\n\n101 open citizen complaints about garbage in the last 90 days for Solid Waste Management.",
    "stage": "",
    "live": "101 open citizen complaints about garbage in the last 90 days for Solid Waste Management.",
@@ -78,21 +78,21 @@
    "hud": "You asked\n\nHow many open complaints does Solid Waste Management have?\n\n101 open citizen complaints about garbage in the last 90 days for Solid Waste Management.\n\nMuted\nI can't hear you. Press Unmute to talk.\nRules\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n4\nClose Jarvis\n101 open citizen complaints about garbage in the last 90 days for Solid Waste Management.",
    "core": "idle",
    "shot": "06-j1en-jarvis-q4.png",
-   "ms": 26377
+   "ms": 26415
   },
   {
    "name": "jarvis-q5",
    "q": "What needs my attention first this morning?",
-   "firstChangeMs": 4083,
-   "totalMs": 7813,
+   "firstChangeMs": 4117,
+   "totalMs": 7838,
    "answer": "",
-   "stage": "Back to dashboard\nJarvis\nBriefing · the last 24 hours\n\n2 incidents were reported in Chennai district (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n2\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n2 incidents were reported in Chennai district (last 24 hours).\n\n2\n\n2 incidents are still open; 0 severe events.\n\n3\n\nFlooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.\n\n4\n\nAir pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.\n\n5\n\nConditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 41.6% full\n\n5 points in the brief for the last 24 hours. 2 incidents were reported in Chennai district (last 24 hours).\n\nData as of 17 Nov, 6:34 PM",
+   "stage": "Back to dashboard\nJarvis\nBriefing · the last 24 hours\n\n2 incidents were reported in Chennai district (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n2\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n2 incidents were reported in Chennai district (last 24 hours).\n\n2\n\n2 incidents are still open; 0 severe events.\n\n3\n\nFlooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.\n\n4\n\nAir pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.\n\n5\n\nConditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 40.8% full\n\n5 points in the brief for the last 24 hours. 2 incidents were reported in Chennai district (last 24 hours).\n\nData as of 19 Nov, 2:51 PM",
    "live": "5 points in the brief for the last 24 hours. 2 incidents were reported in Chennai district (last 24 hours).",
    "card": "Shall I show the severe cases?\n\nYes\nNo thanks",
-   "hud": "Shall I show the severe cases?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n1.8 s\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n5\nClose Jarvis\n5 points in the brief for the last 24 hours. 2 incidents were reported in Chennai district (last 24 hours).",
+   "hud": "Shall I show the severe cases?\n\nYes\nNo thanks\nMuted\nI can't hear you. Press Unmute to talk.\nAI\n2.1 s\nToday\nsources 1\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\n5\nClose Jarvis\n5 points in the brief for the last 24 hours. 2 incidents were reported in Chennai district (last 24 hours).",
    "core": "idle",
    "shot": "07-j1en-jarvis-q5.png",
-   "ms": 17449
+   "ms": 17426
   },
   {
    "name": "jarvis-close",
@@ -104,7 +104,7 @@
  "problems": [],
  "step": "jarvis-close",
  "log": {
-  "all": 27,
+  "all": 23,
   "errors": [
    "[jarvis llm] jarvis_data0: groq/qwen/qwen3.8-27b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
    "[jarvis llm] jarvis_data0: groq/openai/gpt-oss-20b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",

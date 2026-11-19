@@ -1,17 +1,17 @@
 # Golden-master diff: p6-gate to p7-gate
 
-Compared 3277 requests with 3298. **375 changed, 42 added, 21 removed.**
+Compared 3277 requests with 3298. **373 changed, 44 added, 23 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to UewRA2fZuForJykOwO1Az
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to AsDHaFEqgR-8G-NbTpFL0
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
 | /api/officer/grievances | 75 | officerA, officerB | 200 -> 400 | $.rows[*].breached (404), $.rows[*] (24), $.rows[*].id (14), $.rows[*].title (14), $.rows[*].zone (14) |
-| /api/collector/thunai/agent/round | 52 | collector | none | $.timing (52), $.result.stage.lang (33), $.result.stage.titles (33), $.result.stage.notesBi (33), $.result.stage.say.ta (28) |
+| /api/collector/thunai/agent/round | 50 | collector | none | $.timing (50), $.result.stage.lang (31), $.result.stage.titles (31), $.result.stage.notesBi (31), $.result.stage.say.ta (26) |
 | /api/map/ask | 47 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
 | /api/collector/overview | 31 | collector | none | $.stories.threads[*].records (261), $.stories.threads[*].placed (261), $.map.pins[*].id (120), $.map.pins[*].lat (120), $.map.pins[*].lon (120) |
 | /api/officer/overview | 29 | officerA, officerB | none | $.map.pins[*].stage (152), $.queue.new[*].breached (150), $.queue.action[*].breached (140), $.board.bell[*] (64), $.queue.action[*].id (59) |
@@ -81,6 +81,8 @@ Compared 3277 requests with 3298. **375 changed, 42 added, 21 removed.**
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 
 ## Removed requests
 
@@ -94,6 +96,8 @@ Compared 3277 requests with 3298. **375 changed, 42 added, 21 removed.**
 - officerA POST /api/map/export: 428
 - officerA POST /api/map/export: 200
 - collector POST /api/map/send: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
@@ -5468,11 +5472,21 @@ Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4576 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 63dfe3dee1ac56e0, 309 bytes to 402 bytes.
+Session ask, id 63dfe3dee1ac56e0, 309 bytes to 5111 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.timing | (absent) | {object with 3 keys} |
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 7 headlines about deaths reported last hours. Reading them now. |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | Thinking | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
@@ -5574,10 +5588,21 @@ Session ask, id 7255cb0e3505beda, 351 bytes to 388 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a453571182cf725c, 449 bytes to 486 bytes.
+Session ask, id a453571182cf725c, 449 bytes to 2528 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.kind | chat | do |
+| $.result.reply | I can't reason about that right now. Ask me about the district: incidents, news, rain, air, reservoirs, prices or departments. | null |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 1 headline about won last cricket world cup. Reading them now. |
+| $.result.note | general-fallback | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | General knowledge | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | general | quick |
 | $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
@@ -5713,11 +5738,21 @@ Session ask, id 28f22571a1767a13, 337 bytes to 430 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 14927ecce74c7a51, 337 bytes to 430 bytes.
+Session ask, id 14927ecce74c7a51, 337 bytes to 5479 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.timing | (absent) | {object with 3 keys} |
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 5 தலைப்புச் செய்திகள். படிக்கிறேன். |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | யோசிக்கிறேன் | தரவைப் படிக்கிறேன் |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
@@ -5872,10 +5907,12 @@ Session ask, id 21e564f32b745b4f, 337 bytes to 430 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 0f560ec72f462bb0, 309 bytes to 402 bytes.
+Session ask, id 0f560ec72f462bb0, 309 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.lang | en | ta |
+| $.trace[0].label | Thinking | யோசிக்கிறேன் |
 | $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
@@ -6059,37 +6096,6 @@ Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11641 bytes.
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
 | $.timing | (absent) | {object with 1 keys} |
 
-### collector POST /api/collector/thunai/agent/round (direct, sentence 20)
-
-Session ask, id f0ed9bee243901b3, 6113 bytes to 6347 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.say.en | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Srinivasa Nagar V Cross Road, Srini... (216 chars) | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Kolathur in Madhavaram. Say "read t... (169 chars) |
-| $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
-| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
-| $.result.stage.lang | (absent) | ta |
-| $.result.stage.titles | (absent) | {object with 2 keys} |
-| $.result.stage.notesBi | (absent) | [array of 0] |
-| $.result.say | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
-| $.timing | (absent) | {object with 1 keys} |
-
-### collector POST /api/collector/thunai/agent/round (direct, sentence 22)
-
-Session ask, id 75892bd131e3b8c5, 3570 bytes to 3881 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.title | Reservoir storage | நீர்த்தேக்க இருப்பு |
-| $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
-| $.result.stage.blocks[0].title | Reservoir storage | நீர்த்தேக்க இருப்பு |
-| $.result.stage.blocks[1].title | Stations | நிலையங்கள் |
-| $.result.stage.lang | (absent) | ta |
-| $.result.stage.titles | (absent) | {object with 2 keys} |
-| $.result.stage.notesBi | (absent) | [array of 0] |
-| $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
-| $.timing | (absent) | {object with 1 keys} |
-
 ### officerA POST /api/collector/assistant/chat
 
 Session ask, id b5c6b01cbcec6214, 2021 bytes to 2122 bytes.
@@ -6170,12 +6176,12 @@ Session writes, id 1a74f77c3d8d08f6, 1435 bytes to 1458 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1202 bytes to 1251 bytes.
+Session writes, id cd47878c4defdb30, 1202 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.01765980392157 |
-| $.incidents[0].lon | 80.21072974509804 | 80.21104347058824 |
+| $.incidents[0].lat | 13.016499019607844 | 13.017220588235295 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21127876470588 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |
@@ -6262,7 +6268,7 @@ Session writes, id 312d7e3e75cbc3a0, 3536 bytes to 3257 bytes.
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
+Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -6296,7 +6302,7 @@ Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 140493 bytes to 139122 bytes.
+Session writes, id 3f54c3ecc14de285, 140493 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|

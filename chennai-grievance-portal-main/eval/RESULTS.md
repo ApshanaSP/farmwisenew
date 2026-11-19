@@ -120,7 +120,15 @@ The owner made a Sarvam account on 19 Nov and put the key in `.env`. v8's bench 
 ### Gates
 
 - **Jarvis unit suites** on `e790e466`: 218 files and 3,389 tests, all passed. Lint is clean.
-- **The QA gate** (`bash tests/qa/pass7/gate-fast.sh`) runs on a clean tree, on the commit that adds this section. Its result is recorded in the commit after.
+- **The QA gate** (`bash tests/qa/pass7/gate-fast.sh`) ran on a clean tree at `43fbbed8`, 14:31 to 15:01 IST. It came out the same as v8's gate on every check:
+  - Type check, lint and the production build pass.
+  - The unit suite under four seeds and time zones: 6,762 passed and 0 failed each time (13 pending).
+  - Pass 7's lane tests: 769 passed. Collector-ops real-path: 24 passed. The src guards: 39 passed.
+  - Pass 4's real-path suite: 2,648 passed and 1 failed, `audit-ui_honesty-11`. That test fails in any checkout holding the real search model rather than its git-lfs pointer; it failed in v8's gate too.
+  - The golden master against the previous gate's recording: 89 changed, 37 added, 12 removed. v8's was 91, 35 and 10, on the same routes. The noise floor is the same 3.
+  - The access matrix shows the same two cells as v7's and v8's gates.
+  - The browser drive: 28 pages, none with problems. The Collector's Jarvis journey: every step clean.
+  - **One tooling fault:** `tests/qa/seed-local-users.mjs` stops at "no such function: pii_enc". The cause is main's encrypted personal details, `f830efbd`. The matrix and drive came out the same as v8's anyway. Left for v10.
 
 ## v8 (18-19 Nov 2026)
 

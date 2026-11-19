@@ -1,16 +1,16 @@
 # Golden-master diff: p7-gate-r3 to p7-gate
 
-Compared 3273 requests with 3298. **91 changed, 35 added, 10 removed.**
+Compared 3273 requests with 3298. **89 changed, 37 added, 12 removed.**
 
 ## What differs around the requests
 
-- next_build_id: CBdQM0A0VtrCiiuGe8KNC to UewRA2fZuForJykOwO1Az
+- next_build_id: CBdQM0A0VtrCiiuGe8KNC to AsDHaFEqgR-8G-NbTpFL0
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
-| /api/collector/thunai/agent/round | 59 | collector | none | $.timing (59), $.result.stage.lang (41), $.result.stage.titles (41), $.result.stage.notesBi (41), $.result.stage.blocks[*].title (34) |
+| /api/collector/thunai/agent/round | 57 | collector | none | $.timing (57), $.result.stage.lang (39), $.result.stage.titles (39), $.result.stage.notesBi (39), $.result.stage.blocks[*].title (31) |
 | /api/map/ask | 12 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
 | /api/collector/thunai/agent | 7 | collector | none | $.result.stage.lang (7), $.result.stage.titles (7), $.result.stage.notesBi (7), $.result.stage.blocks[*].items[*].sub (5), $.result.stage.say.ta (3) |
 | /api/map/export | 4 | collector | none | $.line[*] (67), $.lines (2), $.properties.window (2) |
@@ -57,6 +57,8 @@ Compared 3273 requests with 3298. **91 changed, 35 added, 10 removed.**
 - officerA POST /api/map/export: 428
 - officerA POST /api/map/export: 200
 - collector POST /api/map/send: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 
 ## Removed requests
 
@@ -70,6 +72,8 @@ Compared 3273 requests with 3298. **91 changed, 35 added, 10 removed.**
 - officerA POST /api/map/export: 428
 - officerA POST /api/map/export: 200
 - collector POST /api/map/send: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 
 ## Each changed request
 
@@ -568,11 +572,21 @@ Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4576 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 63dfe3dee1ac56e0, 309 bytes to 402 bytes.
+Session ask, id 63dfe3dee1ac56e0, 309 bytes to 5111 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.timing | (absent) | {object with 3 keys} |
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 7 headlines about deaths reported last hours. Reading them now. |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | Thinking | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
@@ -654,10 +668,21 @@ Session ask, id 7255cb0e3505beda, 351 bytes to 388 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a453571182cf725c, 449 bytes to 486 bytes.
+Session ask, id a453571182cf725c, 449 bytes to 2528 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.kind | chat | do |
+| $.result.reply | I can't reason about that right now. Ask me about the district: incidents, news, rain, air, reservoirs, prices or departments. | null |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 1 headline about won last cricket world cup. Reading them now. |
+| $.result.note | general-fallback | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | General knowledge | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | general | quick |
 | $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
@@ -753,11 +778,21 @@ Session ask, id 28f22571a1767a13, 337 bytes to 430 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 14927ecce74c7a51, 337 bytes to 430 bytes.
+Session ask, id 14927ecce74c7a51, 337 bytes to 5479 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.timing | (absent) | {object with 3 keys} |
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 5 தலைப்புச் செய்திகள். படிக்கிறேன். |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | யோசிக்கிறேன் | தரவைப் படிக்கிறேன் |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
@@ -908,10 +943,12 @@ Session ask, id 21e564f32b745b4f, 337 bytes to 430 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 0f560ec72f462bb0, 309 bytes to 402 bytes.
+Session ask, id 0f560ec72f462bb0, 309 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.lang | en | ta |
+| $.trace[0].label | Thinking | யோசிக்கிறேன் |
 | $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
@@ -1123,32 +1160,6 @@ Session ask, id 61ed15dc04e17ba5, 11290 bytes to 11641 bytes.
 | $.result.stage.notesBi | (absent) | [array of 0] |
 | $.timing | (absent) | {object with 1 keys} |
 
-### collector POST /api/collector/thunai/agent/round (direct, sentence 20)
-
-Session ask, id f0ed9bee243901b3, 5972 bytes to 6347 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
-| $.result.stage.lang | (absent) | ta |
-| $.result.stage.titles | (absent) | {object with 2 keys} |
-| $.result.stage.notesBi | (absent) | [array of 0] |
-| $.timing | (absent) | {object with 1 keys} |
-
-### collector POST /api/collector/thunai/agent/round (direct, sentence 22)
-
-Session ask, id 75892bd131e3b8c5, 3622 bytes to 3881 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.title | Reservoir storage | நீர்த்தேக்க இருப்பு |
-| $.result.stage.blocks[0].title | Reservoir storage | நீர்த்தேக்க இருப்பு |
-| $.result.stage.blocks[1].title | Stations | நிலையங்கள் |
-| $.result.stage.lang | (absent) | ta |
-| $.result.stage.titles | (absent) | {object with 2 keys} |
-| $.result.stage.notesBi | (absent) | [array of 0] |
-| $.timing | (absent) | {object with 1 keys} |
-
 ### collector POST /api/collector/thunai/agent/round (follow-on)
 
 Session ask, id f8461f953dc4cad9, 15083 bytes to 15361 bytes.
@@ -1205,32 +1216,32 @@ Session ask, id a39eb5710e1b812a, 70972 bytes to 70921 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1251 bytes to 1251 bytes.
+Session writes, id cd47878c4defdb30, 1251 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.01767549019608 | 13.01765980392157 |
-| $.incidents[0].lon | 80.21344347058823 | 80.21104347058824 |
+| $.incidents[0].lat | 13.01767549019608 | 13.017220588235295 |
+| $.incidents[0].lon | 80.21344347058823 | 80.21127876470588 |
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235191 bytes.
+Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.severity.rows[32].lat | 13.01767549019608 | 13.01765980392157 |
-| $.severity.rows[32].lon | 80.21344347058823 | 80.21104347058824 |
+| $.severity.rows[32].lat | 13.01767549019608 | 13.017220588235295 |
+| $.severity.rows[32].lon | 80.21344347058823 | 80.21127876470588 |
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 139122 bytes to 139122 bytes.
+Session writes, id 3f54c3ecc14de285, 139122 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.map.pins[64].lat | 13.01767549019608 | 13.01765980392157 |
-| $.map.pins[64].lon | 80.21344347058823 | 80.21104347058824 |
-| $.severity.rows[27].lat | 13.01767549019608 | 13.01765980392157 |
-| $.severity.rows[27].lon | 80.21344347058823 | 80.21104347058824 |
+| $.map.pins[64].lat | 13.01767549019608 | 13.017220588235295 |
+| $.map.pins[64].lon | 80.21344347058823 | 80.21127876470588 |
+| $.severity.rows[27].lat | 13.01767549019608 | 13.017220588235295 |
+| $.severity.rows[27].lon | 80.21344347058823 | 80.21127876470588 |
 
 ### collector POST /api/collector/thunai/memory
 
@@ -1265,7 +1276,7 @@ Session writes, id d7a191781f17de43, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | omr7-CE_RjBTgcyh9j4b9cKjvibjtgXV |
+| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | TIcXV_poFnvlwUjQpxHTukfHbHBFMSJS |
 
 ### collector GET /api/collector/studio/<dataset-1>?export=xlsx
 
@@ -1273,7 +1284,7 @@ Session writes, id be094a0c735be649, 188 bytes to 188 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | DGlHVvk_vpSOkMp1W3_HrMNSEjz8pYQz |
+| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | cBMKyqe_ndFvi73AfRQeev4FttE1OOW7 |
 
 ### collector GET /api/collector/studio/<dataset-1>?f=[{"col"%3A"c0"%2C"op"%3A"neq"%2C"values"%3A["no such value"]}]&export=csv
 
@@ -1281,5 +1292,5 @@ Session writes, id a91af3219ee7b0a3, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | agc9X1TALXVc6Y-KzXTgtXQW28K3kY18 |
+| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | wufqmqAjhgjJRPX8nuggeZ0FJCoio3nq |
 
