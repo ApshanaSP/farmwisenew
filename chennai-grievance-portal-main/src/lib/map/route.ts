@@ -14,6 +14,11 @@ import { isCalendar, LIMITS, OPEN_FILTER, type AreaRef, type Filter, type Period
 import { areaFor, isLine, type Found, type Verb } from "./resolve";
 import type { LayerId } from "./types";
 import type { Lang } from "./words";
+import { COUNT_BY, distanceOf, EDIT_ADD, EDIT_ALL_SEV, EDIT_CLEAR, EDIT_COMPARE, EDIT_DEPTS, EDIT_EXPORT, EDIT_NEWS, EDIT_NOT_NEWS, EDIT_OPEN, EDIT_OVERDUE, EDIT_RADIUS, EDIT_REMOVE, EDIT_SEND, EDIT_SEVERE,
+  EDIT_TRACE, EDIT_WHICH_AREA, FOLLOW, THERE, VISITS } from "./edits";
+
+// the follow-up words and distanceOf live in edits.ts (pure), so Jarvis's browser lanes read them too; distanceOf stays exported from here
+export { distanceOf };
 
 // --------------------------------------------------------------- words --
 
@@ -68,11 +73,6 @@ const SEVERE_HIGH = ["severe or high", "high or severe", "severe and high", "hig
 const OPEN = ["open", "pending", "unresolved", "not resolved", "active", "ongoing", "திறந்த", "நிலுவை", "நிலுவையில்", "தீர்க்கப்படாத", "pending-a"];
 const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்கப்பட்ட", "முடிந்த", "முடிக்கப்பட்ட"];
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
-const COUNT_BY: [RegExp, "ward" | "zone" | "taluk"][] = [
-  [/\b(by|per|each|every|across)\s+wards?\b|\bward[- ]?wise\b|வார்டு\s*வாரி|வார்டுவாரி|ward\s*wise/i, "ward"],
-  [/\b(by|per|each|every|across)\s+zones?\b|\bzone[- ]?wise\b|மண்டல\s*வாரி|zone\s*wise/i, "zone"],
-  [/\b(by|per|each|every|across)\s+taluks?\b|\btaluk[- ]?wise\b|வட்ட\s*வாரி/i, "taluk"]
-];
 const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b/i;
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
 const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத/i;
@@ -92,19 +92,6 @@ const any = (toks: string[], phrases: string[]) => phrases.some((p) => hasPhrase
 const firstHit = (toks: string[], phrases: string[]) => phrases.find((p) => hasPhrase(toks, p)) ?? null;
 
 // ------------------------------------------------------------- numbers --
-
-/** A distance in metres said in the question: "300 m", "300 meters", "1.5 km", "half a km", "300 மீட்டர்", "அரை கிலோமீட்டர்". */
-export function distanceOf(text: string): number | null {
-  const t = text.toLowerCase();
-  if (/\bhalf\s+(a\s+)?(km|kilomet(er|re))\b|அரை\s*(கி\.?\s*மீ|கிலோ)/.test(t)) return 500;
-  if (/\bquarter\s+(of\s+)?(a\s+)?(km|kilomet(er|re))\b/.test(t)) return 250;
-  if (/\b(a|one)\s+(km|kilomet(er|re))\b|ஒரு\s*(கி\.?\s*மீ|கிலோமீட்டர்)/.test(t)) return 1000;
-  const km = t.match(/(\d+(?:\.\d+)?)\s*(km|kms|kilomet(?:er|re)s?|கி\.?\s*மீ|கிலோமீட்டர்)/);
-  if (km) return Math.round(Number(km[1]) * 1000);
-  const m = t.match(/(\d+(?:\.\d+)?)\s*(m|mtr|mtrs|meters?|metres?|மீட்டர்|மீ)(?![a-z஀-௿])/);
-  if (m) return Math.round(Number(m[1]));
-  return null;
-}
 
 /** "5 nearest", "top 3 nearest", "3 closest" -> 5; else null. */
 function kOf(text: string): number | null {
@@ -625,25 +612,6 @@ function hasIncidentNoun(toks: string[]) {
 
 // ------------------------------------------------------------- follow-ups --
 
-const EDIT_SEVERE = /^\s*(only|just)\s+(severe|serious|critical)(\s+ones?)?\s*$|^\s*(severe|serious)\s+only\s*$|கடுமையான(வை|வற்றை)?\s*மட்டும்|severe mattum|severe-a mattum/i;
-const EDIT_ALL_SEV = /^\s*(all|any)\s+severit(y|ies)\s*$|^\s*(include|with)\s+(all|every)\s+severit/i;
-const EDIT_RADIUS = /^\s*(make it|change (it )?to|increase (it )?to|reduce (it )?to|within|expand to|widen to|narrow to|use|try|set)?\s*(\d+(\.\d+)?\s*(m|km|meters?|metres?|kms?|மீட்டர்|கி\.?\s*மீ)|half a km|a km|one km)\s*(instead|radius|please|only)?\s*$|(\d+)\s*(மீட்டர்|கி\.?மீ)\s*(ஆக|க்குள்)?\s*(மாற்று|வை)?\s*$/i;
-const EDIT_ADD = /^\s*(add|also|plus|and|include|with)\s+(.+)$|(.+?)(களையும்|யும்)\s*சேர்/i;
-const EDIT_REMOVE = /^\s*(remove|drop|without|exclude|not)\s+(.+)$|(.+?)\s*நீக்கு/i;
-const EDIT_COMPARE = /^\s*(compare|vs\.?|versus)\s+(it\s+)?(with|to|against)?\s*(.+)$|(.+?)\s*(உடன்|ஓடு)\s*ஒப்பிடு/i;
-const EDIT_TRACE = /^\s*(why( these| this| those)?|how (did you|was this) (get|work|worked) (this|that|it)( out)?|show (the )?(method|working|steps)|explain( this)?)\s*\??\s*$|ஏன் இவை|எப்படி கணக்கிட/i;
-const EDIT_SEND = /\b(send|forward|assign|escalate)\b.*\b(to|these|them|this)\b|அனுப்பு/i;
-const EDIT_CLEAR = /^\s*(start over|clear( it| all| the map)?|reset|new question|forget (it|that)|clear map)\s*$|மீண்டும் தொடங்கு|அழி/i;
-/** "plan my visits today", "visit order", "route my visits": the officer's visit order for the current answer */
-const VISITS = /\b(plan|order|route|sequence)\s+(my|the|today'?s)?\s*(site\s+)?visits?\b|\bvisit\s+(order|plan|route)\b|என் வருகை|visit plan pannu/i;
-const EDIT_EXPORT =/^\s*(export|download)(\s+(these|them|this|it|csv|geojson|the list))*\s*$|பதிவிறக்கு/i;
-const EDIT_NEWS = /^\s*(only|just)?\s*(the\s+)?(ones\s+)?(that\s+were\s+)?((in|from)\s+(the\s+)?)?(news|newspapers?|papers?|press|media)(\s+(ones|only|reports?))?\s*$|^\s*(only|just)?\s*(news|media)[- ]reported(\s+ones)?\s*$|செய்தி(களில்|யில்)?\s*(வந்த(வை)?)?\s*மட்டும்|^\s*news\s*(la)?\s*(vandhadhu|vandhathu)?\s*mattum\s*$/i;
-const EDIT_NOT_NEWS = /^\s*(all|any)\s+sources?\s*$|^\s*(not only|not just)\s+(the\s+)?news\s*$|^\s*include\s+(all|everything|non-news)\s*$/i;
-const EDIT_OPEN =/^\s*(only )?open( ones| only)?\s*$|^\s*include closed\s*$|^\s*(all|any) status(es)?\s*$|^\s*closed( ones| only)?\s*$/i;
-const EDIT_OVERDUE = /^\s*(show\s+)?(me\s+)?(only\s+|just\s+)?(the\s+)?(overdue|past[- ]deadline|delayed|late|breached)(\s+(ones|cases|only|complaints|incidents))?\s*\??\s*$|^\s*how many (are|of them are|of these are)\s+(overdue|past[- ]deadline|late|delayed)\s*\??\s*$|காலக்கெடு\s*(தாண்டிய|கடந்த)(வை)?\s*(மட்டும்)?\s*$|overdue\s*(mattum)?\s*$/i;
-const EDIT_DEPTS = /^\s*(which|what)\s+(department|dept|departments|office)s?\b|\b(by|per)\s+department\b|\bdepartment[- ]?wise\b|^\s*(who|which team)\s+(has|holds|handles|owns)\b|எந்த\s*துறை|துறை\s*வாரி|endha department/i;
-const EDIT_WHICH_AREA = /^\s*(which|what)\s+(zone|ward|taluk)s?\b|எந்த\s*(மண்டல|வார்டு|வட்ட)/i;
-
 /** "ward 999", "zone 22", "வார்டு 250": an area number the district does not have. */
 export function noSuchArea(t: string): { en: string; ta: string } | null {
   const w = t.match(/\bward\s*(?:no\.?\s*|number\s*)?(\d{1,5})\b|வார்டு\s*(\d{1,5})/i);
@@ -798,9 +766,6 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
   }
   return null;
 }
-/** Words that make a short question lean on the last answer ("and thefts?", "what about Velachery", "same for flooding"). */
-const FOLLOW = /^\s*(and|also|plus|now|then|so|what about|how about|same|for|in|at|on|near|around|only|just|but|make it|change (it )?to|instead|அப்போ|அதே)\b|\b(there|same|instead|too|as well|those|them|these)\b|அங்கே|அங்கு|அதே|அவற்றில்/i;
-const THERE = /\b(there|same area|same place|that area|in it|nearby there)\b|அங்கே|அங்கு|அதே இடத்தில்|anga\b/i;
 
 /**
  * A short follow-up merged with the last answer: whatever the new words do not say is kept. "in Adyar" keeps the topic

@@ -17,6 +17,7 @@ import ImpactView, { LENS_WORD } from "./ImpactView";
 import type { ImpactData, Lens } from "@/lib/rehearsal/impacts";
 import { days, fmtD, fmtT, n0, plural, RainDots, range } from "./rainKit";
 import { Grip, useDragPanel } from "../askmap/dragPanel";
+import { onMapCmd } from "../askmap/bridge";
 import "./rehearsal.css";
 import "./rainview.css";
 
@@ -123,6 +124,23 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
 
   const rain = view.kind === "rain" ? rains.find((r) => r.id === view.id) ?? null : null;
   const openRain = (id: string) => { setPick(null); setAllReports(false); setView({ kind: "rain", id, zone: null }); };
+  // v10: Jarvis's voice moves between the tabs and to a past rain while the view is open (askmap/bridge.ts "diq:map-cmd"); its sends stay the
+  // Collector's own (PlanSheet)
+  const live = useRef({ rains, lens });
+  live.current = { rains, lens };
+  useEffect(() => onMapCmd(["rain"], (_op, a) => {
+    const s = live.current;
+    const tab = a.tab === "flooding" ? "flood" : a.tab === "traffic" || a.tab === "power" || a.tab === "metro" ? a.tab : null;
+    if (tab) setLens(tab);
+    if (typeof a.rain === "string") {
+      const id = a.rain === "latest" ? s.rains.find((r) => r.reports.length > 0)?.id : a.rain;
+      if (!id || !s.rains.some((r) => r.id === id)) return { ok: false, why: "no-such-rain", state: { rains: s.rains.slice(0, 6).map((r) => r.start.slice(0, 10)) } };
+      setPick(null); setAllReports(false); setView({ kind: "rain", id, zone: null });
+      const r = s.rains.find((x) => x.id === id)!;
+      return { ok: true, state: { lens: tab ?? s.lens, rain: id, start: r.start, reports: r.reports.length } };
+    }
+    return { ok: true, state: { lens: tab ?? s.lens, rains: s.rains.length } };
+  }), []);
   const pickStreet = (key: string) => setPick({ kind: "street", id: key });
   const pickReport = (id: string) => setPick({ kind: "report", id });
 

@@ -19,6 +19,11 @@ import { canListen, listen } from "../assistant/speech";
 import { answerGist, splitHead, type MapAsk, type Turn } from "./useMapAsk";
 import { Grip, useDragPanel } from "./dragPanel";
 import { istDate } from "@/lib/ist-dates";
+import { cueAct } from "./actions";
+import { onMapCmd } from "./bridge";
+
+/** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
+let cueSeen = 0;
 
 const T = {
   en: {
@@ -82,14 +87,17 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => { if (autoFocus) input.current?.focus(); }, [autoFocus]);
   useEffect(() => { setTour(-1); setTraceOn(null); setMenu(null); }, [r]);
-  // "send these to SWD", "export": follow-ups that are actions
+  // "send these to SWD", "export", "plan my visits": follow-ups that are actions, each acted on once (not again when the panel mounts again)
   useEffect(() => {
-    const u = ask.uiCue;
-    if (!u || !ask.resp) return;
-    if (u.ui === "send" && actions.onSend) actions.onSend(ask.resp, u.dept);
-    if (u.ui === "export" && actions.onExport) actions.onExport(ask.resp);
-    if (u.ui === "visits" && actions.onVisits) actions.onVisits(ask.resp);
+    const a = ask.resp ? cueAct(ask.uiCue, actions.role, cueSeen) : null;
+    if (!a || !ask.resp) return;
+    cueSeen = ask.uiCue?.seq ?? cueSeen;
+    if (a.act === "send" && actions.onSend) actions.onSend(ask.resp, a.dept);
+    if (a.act === "export" && actions.onExport) actions.onExport(ask.resp);
+    if (a.act === "visits" && actions.onVisits) actions.onVisits(ask.resp);
   }, [ask.uiCue?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+  // v10: Jarvis's voice opens and closes the suggestions tray (bridge.ts "diq:map-cmd")
+  useEffect(() => onMapCmd(["tray"], (_op, a) => { setTray(a.open !== false); return { ok: true }; }), []);
 
   const submit = async (q?: string) => {
     const t = (q ?? text).trim();

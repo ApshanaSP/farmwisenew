@@ -64,7 +64,7 @@ import { joinCut, v10Front } from "@/lib/thunai/v10/browser10";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
 import type { Entity10 } from "@/lib/thunai/v10/lexicon10";
 import { groundScreen, offerAct, offerOf as newsOfferOf, offerSaid, type Offer10 } from "@/lib/thunai/v10/offer10";
-import { runMapCmd } from "./mapops";
+import { consoleMapDeps, mapRisk, mapSnap10, runMapCmd } from "./mapops";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -1812,7 +1812,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!original && understandV10()) {
       const st10 = buildState();
       const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
-        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)) });
+        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
+        // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
+        askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
       if (f10.lane?.lane === "wait") {
         // nothing said: the rest of the sentence is joined to it when it comes (joinCut), and Jarvis keeps listening
         cutRef.current = { text: said, at: Date.now() };
@@ -1845,10 +1847,23 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         // v10: Ask the Map by voice (map10.ts, mapops.ts): one operation on the map, its own words said by code
         const lg = f10.lane.lang;
         const t0 = performance.now();
+        // saving and exporting keep something (B), the drafts are C: from a sentence with no name, only level A runs
+        if (needsName(mapRisk(f10.lane.cmd), lg)) return;
         setBrainNow({ by: "instant", model: null, ms: 0 }); remember(said, `Ask the Map: ${f10.lane.cmd.op}`, { doc: null });
-        const line = await runMapCmd(f10.lane.cmd, { askOnMap: hostRef.current.c.askOnMap, lang: lg });
+        let askedYes = false;
+        const line = await runMapCmd(f10.lane.cmd, consoleMapDeps(() => hostRef.current, {
+          lang: lg, clearStage: () => { if (stageRef.current) closeStage(); },
+          show: (p) => hud.panel({ ...p, recipe: "askmap", at: Date.now() }),
+          point: (p) => hud.set({ focus: p ? { label: p.label, lat: p.lat, lon: p.lon, zone: null } : null }),
+          // a save keeps something: the Collector's spoken yes or tap first (level B), what it did said after
+          askYes: (q, act) => {
+            askedYes = true;
+            setPendingB({ text: lg === "ta" ? q.ta : q.en, steps: [], heard: said, lang: lg, act: () => void act().then((l) => { if (l) { earcon("done"); out(lg === "ta" ? l.ta : l.en, lg, "ready", l.allowed); } }) });
+            earcon("need"); out(lg === "ta" ? q.ta : q.en, lg, "asking");
+          }
+        }));
         if (!alive()) return;
-        if (line) { earcon("done"); out(lg === "ta" ? line.ta : line.en, lg, "ready"); } else setPhase("ready");
+        if (line) { earcon("done"); out(lg === "ta" ? line.ta : line.en, lg, "ready", line.allowed); } else if (!askedYes) setPhase("ready");
         decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
         return;
       }
