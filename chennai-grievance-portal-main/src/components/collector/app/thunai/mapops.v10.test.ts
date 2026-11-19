@@ -380,6 +380,44 @@ describe("the narrated district tour", () => {
     expect(tourNow()).toBe(null);
     expect((await run({ op: "tour", tour: "stop" }, d))?.en).toBe("No tour is running.");
   });
+  it("v10 review 2, round 2: a tour ended by the shrunk map leaves no reticle and no spotted cases: 'stop the tour' clears them", async () => {
+    const m = fakeMap(null, () => hotspotAnswer(5));
+    const { d, calls } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    expect(calls.points.at(-1)).not.toBe(null);
+    m.grown = false;
+    const cmd = mapCommand10("stop the tour", { ...mapSnap10(m as unknown as MapAsk), lang: "en" });
+    const line = cmd ? await run(cmd, d) : null;
+    expect({ said: line?.en, reticle: calls.points.at(-1), spot: m.setSpot.mock.calls.at(-1)?.[0] }).toEqual({ said: "Tour ended. The map stays where it is.", reticle: null, spot: null });
+    expect(m.setGrown).toHaveBeenCalledTimes(1);
+    // and any other map operation first clears what the left tour showed
+    resetMapOps();
+    const m2 = fakeMap(null, () => hotspotAnswer(5));
+    const x = deps(m2);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, x.d);
+    m2.grown = false;
+    mapSnap10(m2 as unknown as MapAsk);
+    await run({ op: "layer", layer: "schools", on: true }, x.d);
+    expect({ reticle: x.calls.points.at(-1), spot: m2.setSpot.mock.calls.at(-1)?.[0] }).toEqual({ reticle: null, spot: null });
+    expect((await run({ op: "tour", tour: "stop" }, x.d))?.en).toBe("No tour is running.");
+  });
+});
+
+describe("v10 review 2, round 2: a send to any of the console's departments opens the map's drafts", () => {
+  it("Parks, Buildings, Bridges, Electrical, Education, by name and by short name", () => {
+    const DEPTS = [{ code: "GCC-PRK", name: "Parks & Play Fields Department" }, { code: "GCC-BLD", name: "Buildings Department" }, { code: "GCC-BRG", name: "Bridges Department" },
+      { code: "GCC-ELE", name: "Electrical Department" }, { code: "GCC-EDU", name: "Education Department" }, { code: "GCC-HLT", name: "Health Department" },
+      { code: "GCC-ENG", name: "Engineering Department (Town Planning & Building Permissions)" }, { code: "GCC-FWD", name: "Family Welfare Department" }];
+    const ANS = { ...mapSnap10(fakeMap(withinAnswer()) as unknown as MapAsk), open: true, lang: "en" as const };
+    for (const [s, code] of [["send this to the Parks department", "GCC-PRK"], ["forward this to the Buildings department", "GCC-BLD"], ["send it to Bridges", "GCC-BRG"],
+      ["send this to Electrical", "GCC-ELE"], ["send it to Education", "GCC-EDU"], ["send these to the bridge department", "GCC-BRG"], ["send it to town planning", "GCC-ENG"],
+      ["send this to Family Welfare", "GCC-FWD"]]) {
+      const cmd = mapCommand10(s, ANS);
+      expect({ op: cmd?.op ?? null, dept: cmd?.dept ? deptCode(cmd.dept, DEPTS)?.code ?? null : null }, s).toEqual({ op: "send", dept: code });
+    }
+    // a person or a case is still the planner's (finding 17)
+    for (const s of ["send this to the zonal officer", "assign this case to the AE", "send this to Ramesh", "send it to my PA"]) expect(mapCommand10(s, ANS), s).toBe(null);
+  });
 });
 
 describe("never on its own", () => {

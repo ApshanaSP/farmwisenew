@@ -3,6 +3,14 @@
  * sentences that are not the map's: news, console filters, cases, page moves, "next" with no tour, an export with no answer on the map.
  */
 import { describe, expect, it } from "vitest";
+import { deptFromWords } from "@/lib/assistant/deptwords";
+import type { RefNames } from "@/lib/assistant/scope";
+import { fixtureResolver } from "@/lib/map/fixture";
+import { makeResolver } from "@/lib/map/resolve";
+import { rulesRoute, type RouteEnv } from "@/lib/map/route";
+import { WORLD } from "../fixture";
+import { referenceWorld } from "../world";
+import { browserLaneV10, type BrowserCtx10 } from "./browser10";
 import { anchorKind, anchorOf, distance10, mapCommand10, nearKm, prep10, taBase, withDigits, type ChipCtx, type MapCtx10 } from "./map10";
 
 const CLOSED: MapCtx10 = { open: false, hasAnswer: false, lang: "en" };
@@ -415,5 +423,92 @@ describe("not the map's", () => {
     expect(mapCommand10("export this as CSV", CLOSED)).toBe(null);
     expect(mapCommand10("export this as CSV", OPEN)).toBe(null);
     expect(mapCommand10("export the report", ANSWER)).toBe(null);
+  });
+});
+
+describe("v10 review 2, round 2: the map lane's round-1 fixes held one word away", () => {
+  const names = { zones: new Map(), cats: new Map(), taluks: new Map(), depts: new Map([["GCC-SWD", { name: "GCC-SWD", head: null, actionOwner: true }]]) } as unknown as RefNames;
+  const env: RouteEnv = { resolve: makeResolver(fixtureResolver()), dept: (t) => deptFromWords(t, names)?.code ?? null };
+  const state = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as never;
+  const ANS = { open: true, hasAnswer: true, kind: "answer" as const, total: 12, shots: 4, shot: 0, chips: ["Flooding", "Open"], chipOpts: [], suggest: ["severe cases this week", "garbage near schools"] };
+  const TOURING = { ...ANS, tour: true };
+  /** the map's command, or the lane the sentence went to (the browser's own lanes, as Thunai.tsx runs them) */
+  const seen = (s: string, askMap: unknown = null) => {
+    const b = browserLaneV10(s, { stage: null, news: { items: [] }, state, world: { ...WORLD, ...referenceWorld() }, listenLang: "en", heardLang: /[஀-௿]/u.test(s) ? "ta" : "en", v7: true, lex: [], askMap } as BrowserCtx10);
+    return b.lane === "map" ? b.cmd : b.lane;
+  };
+  const STOP = { op: "tour", tour: "stop" };
+
+  it("v10 review 2, round 2: a circle's subject is never read from the place's own name ('near Stanley Hospital' is the area brief, not hospitals)", () => {
+    for (const [s, c, q] of [
+      ["what's happening near Stanley Hospital", OPEN, "what is happening within 500 m of Stanley Hospital"],
+      ["Stanley hospital pakkathula enna nadakkudhu", OPEN, "what is happening within 500 m of Stanley Hospital"],
+      ["Stanley hospital la 1 km kulla enna nadakkudhu", CLOSED, "what is happening within 1 km of Stanley Hospital"]] as [string, MapCtx10, string][]) {
+      const cmd = mapCommand10(s, c);
+      expect({ q: cmd?.question, route: rulesRoute(cmd?.question ?? "", null, env)?.kind }, s).toEqual({ q, route: "brief" });
+    }
+    // any place named for what it is: a school, a railway station, a fire station, a lake
+    expect(mapCommand10("near the Adyar school", OPEN)?.question).toBe("what is happening within 500 m of Adyar School");
+    expect(mapCommand10("within 2 km of Egmore railway station", CLOSED)?.question).toBe("what is happening within 2 km of Egmore Railway Station");
+    expect(mapCommand10("Kasimedu fire station pakkathula", OPEN)?.question).toBe("what is happening within 500 m of Kasimedu Fire Station");
+    expect(mapCommand10("what's near the fire station", OPEN)?.question).toBe("what is happening within 500 m of Fire Station");
+    expect(mapCommand10("Velachery lake la rendu km kulla", CLOSED)?.question).toBe("what is happening within 2 km of Velachery Lake");
+    // Tamil: the place's own word holds the subject word, and the circle still asks what is happening there
+    expect(mapCommand10("ஸ்டான்லி மருத்துவமனையிலிருந்து 1 கிலோமீட்டருக்குள்", CLOSED)?.question).toMatch(/என்ன நடக்கிறது$/);
+    // a subject said beside such a place is kept
+    expect(mapCommand10("schools within 1 km of Stanley Hospital", CLOSED)?.question).toBe("schools within 1 km of Stanley Hospital");
+    expect(mapCommand10("hospitals near the Adyar school", OPEN)?.question).toBe("hospitals within 500 m of Adyar School");
+    expect(mapCommand10("Stanley hospital la 1 km kulla schools", CLOSED)?.question).toBe("schools within 1 km of Stanley Hospital");
+  });
+
+  it("v10 review 2, round 2: 'stop' said as a noun, a stop said not to, or the Collector's own tour cancelled, is not the map tour's stop", () => {
+    for (const s of ["next stop on the tour", "go to the next stop of the tour", "don't stop the tour", "do not end the tour yet", "what's at the end of this round", "tour-a niruthadheenga"]) {
+      expect(seen(s, TOURING), s).not.toEqual(STOP);
+    }
+    // the next stop asked for is the tour's next
+    expect(seen("next stop on the tour", TOURING)).toEqual({ op: "tour", tour: "next" });
+    expect(seen("go to the next stop of the tour", TOURING)).toEqual({ op: "tour", tour: "next" });
+    // no tour running: a tour of the Collector's own (a day, a person's) is the planner's
+    for (const s of ["cancel my tour tomorrow", "cancel tomorrow's tour", "cancel the CM's tour", "end our tour on Monday"]) expect(seen(s), s).toBe("server");
+    // the map's own tour stopped with none running is still the map's ("No tour is running.")
+    for (const s of ["stop the tour", "end the news tour", "stop tour", "tour-a niruthu"]) expect(mapCommand10(s, CLOSED), s).toEqual(STOP);
+  });
+
+  it("v10 review 2, round 2: the news tour asked for in plain words starts it", () => {
+    for (const s of ["give me the news tour", "give me a news tour", "take me on a news tour", "tour of the places in the news", "start a quick news tour", "give me a tour of today's news"]) {
+      expect(seen(s), s).toEqual({ op: "tour", tour: "start", source: "news" });
+    }
+    // still the news's: the round-up, the CM's tour, a tour in the news (finding 12)
+    for (const s of ["give me the news round-up", "news about the CM's district tour", "news about the tour being cancelled"]) expect(seen(s), s).toBe("news");
+  });
+
+  it("v10 review 2, round 2: a named news tour is stopped whatever is said around the stop, in three languages", () => {
+    for (const s of ["ok stop the news tour", "now stop the news tour", "alright, end the news tour", "news tour-a niruthu", "செய்திச் சுற்றுலாவை நிறுத்து", "please stop the news tour now",
+      "சுற்றுலா போதும்"]) {
+      expect(seen(s, TOURING), s).toEqual(STOP);
+    }
+    // the news about a tour is still the news, tour or none
+    expect(seen("news about the tour being cancelled", TOURING)).toBe("news");
+  });
+
+  it("v10 review 2, round 2: a tour asked for in Tamil with any verb or a place, and a tour with a stop at each place, starts", () => {
+    for (const s of ["மாவட்டச் சுற்றுலா", "சுற்றுலா செல்வோம்", "மாவட்டத்தைச் சுற்றுலா அழைத்துச் செல்லுங்கள்", "take me round the district and stop at each hotspot", "சுற்றுலா போகலாம்",
+      "மாவட்டச் சுற்றுலா தொடங்குங்கள்", "என்னை மாவட்டச் சுற்றுலா கூட்டிட்டுப் போ"]) {
+      expect(seen(s), s).toMatchObject({ op: "tour", tour: "start" });
+    }
+    // tourism, its department and the CM's tours stay off the map (finding 12); "enough of the tour" is a stop
+    for (const s of ["சுற்றுலாத் துறை புகார்கள்", "மாமல்லபுரம் சுற்றுலா செய்திகள் காட்டு"]) expect(mapCommand10(s, CLOSED), s).toBe(null);
+    expect(mapCommand10("சுற்றுலா போதும்", CLOSED)?.tour ?? null).not.toBe("start");
+  });
+
+  it("v10 review 2, round 2: the suggested questions asked for in everyday words", () => {
+    for (const s of ["suggest a question", "what do you suggest I ask", "read out the suggestions", "tell me the suggestions", "suggestions sollu", "list the suggestions",
+      "enna suggestions irukku", "suggest something to ask", "what are the map's suggestions", "suggest another question", "பரிந்துரைகளைக் காட்டு"]) {
+      expect(seen(s, ANS), s).toMatchObject({ op: "suggest" });
+    }
+    // still not the suggestions (finding 18): an action, a reply, the next step, suggestions for a case, asking a person
+    for (const s of ["suggest an action for this", "suggest a reply", "can you suggest the next step", "any suggestions for this case", "suggest I ask the AE to visit the site"]) {
+      expect(mapCommand10(s, ANSWER)?.op ?? null, s).not.toBe("suggest");
+    }
   });
 });
