@@ -418,6 +418,8 @@ export interface HearOpts {
   clock?: ReturnType<typeof serverClock>;
   /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace */
   ms?: { whisper?: number; grace?: number; translate?: number };
+  /** v10: the day's keyterms for Sarvam (v10/lexserver.ts dayKeytermsNow); absent, sarvam.ts's fixed list */
+  keyterms?: readonly string[] | null;
 }
 
 /** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes. */
@@ -445,7 +447,7 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   let lane = o.lane;
   // v8 (sarvam.ts): JARVIS_STT_SARVAM, off by default and without SARVAM_API_KEY; never on the ambient lane (room talk would spend it)
   const sv = lane === "ambient" || !sarvamKeyed() ? "off" : sarvamMode();
-  const sarvam = (signal?: AbortSignal) => sarvamTranscribe(audio, { secs, lane, signal, fetcher: o.fetcher });
+  const sarvam = (signal?: AbortSignal) => sarvamTranscribe(audio, { secs, lane, signal, fetcher: o.fetcher, keyterms: o.keyterms ?? null });
   // primary: Sarvam first; the Whisper race below runs only when it fails
   let first: Scored | null = null;
   if (sv === "primary") {

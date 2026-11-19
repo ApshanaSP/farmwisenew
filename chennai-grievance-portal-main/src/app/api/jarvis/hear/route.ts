@@ -15,6 +15,9 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import type { Lane } from "@/lib/thunai/ledger";
 import { hearUtterance, MAX_AUDIO_BYTES, readHear, sttAvailable } from "@/lib/thunai/stt";
 import { serverClock } from "@/lib/thunai/stagetime";
+import { sarvamKeyed, sarvamMode } from "@/lib/thunai/sarvam";
+import { serverWorld } from "@/lib/thunai/world";
+import { dayKeytermsNow } from "@/lib/thunai/v10/lexserver";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +37,9 @@ export async function POST(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("lane") as Lane | null;
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
   try {
-    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang, clarify: body.clarify, speechMs: body.speechMs, clock }));
+    // v10: Sarvam hears with the day's names (the storms and names in the news, then the Stage's names and the zones), never waiting on the store
+    const keyterms = lane !== "ambient" && sarvamKeyed() && sarvamMode() !== "off" ? dayKeytermsNow(await serverWorld(), { extra: body.vocab ?? [] }) : null;
+    return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang, clarify: body.clarify, speechMs: body.speechMs, clock, keyterms }));
   } catch (e) {
     if (req.signal.aborted) return NextResponse.json({ error: "aborted" }, { status: 499 });
     console.warn("[jarvis] hear failed:", (e as Error).message);
