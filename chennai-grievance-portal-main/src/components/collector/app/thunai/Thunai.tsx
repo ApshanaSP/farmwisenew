@@ -1789,7 +1789,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // on this?" (news to ground truth); one pending offer, forgotten on any other turn
     const nOffer = newsOffer.current;
     newsOffer.current = null;
-    const oa = nOffer && !original ? offerAct(said, nOffer, Date.now()) : null;
+    // (with the console's world: a locality named elsewhere, in any script, is the lanes', never the story's: v10 review 2, round 2)
+    const oa = nOffer && !original ? offerAct(said, nOffer, Date.now(), worldRef.current) : null;
     if (oa && nOffer) {
       const lg: Lang = ulang ?? (/[஀-௿]/.test(said) ? "ta" : nOffer.lang);
       const t0 = performance.now();

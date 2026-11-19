@@ -9,7 +9,8 @@
  *           model call writes (1)-(3) citing them, and ground.ts checks every sentence before it is spoken; a sentence that fails is never said.
  *           A missing console sentence is said by code; with no model, or nothing checked, a code template says the same parts.
  *   full    "read it fully": the whole story. In its own language, its paragraphs as written (no model). In the other language, the model says
- *           it a few sentences at a time, each sentence checked against the one it renders, spoken as each part passes.
+ *           it a few sentences at a time, each sentence checked against the one it renders, spoken as each part passes; a part that fails
+ *           is said so and ends the read, and the whole read has one deadline.
  *
  * The answer is in the asked language whatever the story's own (a Tamil story asked in English is briefed in English, and the other way round).
  * Privacy: the article is the outlet's; the console's facts are counts, places, kinds, departments and ages; no citizen's words reach a model.
@@ -26,7 +27,7 @@ import type { AideExtras } from "../aide7/extras";
 import { tamilFormsOf } from "../aide7/gazetteer";
 import type { Fact7, Sheet7 } from "../aide7/ground";
 import { writeAnswer, type WriteOptions } from "../aide7/writer";
-import { consoleFacts, consoleLine, consoleOn, groundLines, offerLine, offerOf, plainDept, type Console10, type ConsoleDeps, type OfferPayload, type Story10 } from "./ground10";
+import { consoleFacts, consoleLine, consoleOn, deptHold, groundLines, offerLine, offerOf, plainDept, type Console10, type ConsoleDeps, type OfferPayload, type Story10 } from "./ground10";
 
 // ------------------------------------------------------------------ the instructions (fixed bytes: cached) --
 
@@ -120,6 +121,52 @@ export function consoleish(s: string, c: Pick<Console10, "n" | "gauges">): boole
   return CONSOLE_WORDS.test(s) && figuresIn(s).some((f) => f.value === c.n);
 }
 
+/** "no open drainage cases", "none": the console's count said as none (a kind at most between: "no reply to complaints" is the article's) */
+const NONE_SAID = /\b(?:no|zero|not any|not a single)\s+(?:open\s+)?(?:[\p{L}-]+\s+(?:and\s+[\p{L}-]+\s+)?)?(?:cases?|complaints?|incidents?)\b|(?:புகார்|சம்பவ)\S*\s+(?:(?:எதுவும்|ஏதும்)\s+)?இல்லை/iu;
+/** a figure said as the count of cases ("4 open drainage and sewage cases"), or of complaints (a case is a complaint too: "4 கழிவுநீர் புகார்கள்") */
+const CASES_N = /(\d+)\s+(?:[^\s\d,;:.]+\s+){0,5}?(?:cases?|incidents?)\b/giu;
+const COMPLAINTS_N = /(\d+)\s+(?:[^\s\d,;:.]+\s+){0,5}?(?:complaints?|grievances?|புகார்)/giu;
+/** a none in the story itself ("no complaints had been received", "புகார் எதுவும் வரவில்லை"): its own claim, someone's word in it */
+const TA_NONE_TOLD = /(?:புகார்|சம்பவ)\S*\s+(?:\S+\s+){0,2}?\S*(?:இல்லை|வில்லை)/u;
+const noneTold = (x: string) => NONE_SAID.test(x) || TA_NONE_TOLD.test(x);
+/** a word of saying ("an official says", "The Hindu reports:", "அதிகாரி கூறினார்"); "என்று" alone is none ("என்று தெரிகிறது": it seems: round 3) */
+const ATTRIBUTED = /\b(?:says?|said|saying|tells?|told|claim(?:s|ed|ing)?|stat(?:es|ed)|according to|reports?|insist(?:s|ed)?|maintain(?:s|ed)?|den(?:y|ies|ied)|alleg(?:es|ed)|add(?:s|ed)|admit(?:s|ted)?|assert(?:s|ed)?|contend(?:s|ed)?)\b|கூறி|கூறுகி|தெரிவித்|தெரிவிக்கி|சொன்ன|சொல்கி|அறிவித்|மறுத்|வெளியிட்ட\s*செய்தி|செய்தி\s*வெளியிட்/iu;
+/** the brief's own side as the one who says it ("our records say", "we are told", "நம் பதிவுகள் கூறுகின்றன"): the console's word, not the story's */
+const OURS = /\b(?:we|i|i'm|us|our|ours|my)\b|\bconsole\b|\bdashboard\b|(?:^|\s)(?:நாம்|நாங்கள்|நம்|நம்ம|நமது|எங்கள்|நமக்கு|எங்களுக்கு)(?=\s|$)|கன்சோல்/iu;
+/**
+ * Who says the none: a speaker named before it ("An official says no ...", "According to the board, no ..."), in a clause after it ("No ..., an
+ * official said."), or, in Tamil, after it ("... இல்லை என்று அதிகாரி கூறினார்"); never the brief's own side (v10 review 2, round 3: "No complaints or
+ * reports have come in" and "Our records say no ..." were taken for a speaker's, and said over the console's 4).
+ */
+function spokenBy(s: string): boolean {
+  const i = s.search(NONE_SAID);
+  if (i < 0) return false;
+  const by = (x: string) => ATTRIBUTED.test(x) && !OURS.test(x), rest = s.slice(i);
+  return by(s.slice(0, i)) || rest.split(",").slice(1).some(by) || (TAMIL.test(rest) && by(rest));
+}
+/**
+ * Is a none the story's own claim, said as its speaker's ("A water board official says no complaints have come in")? Then it is the article's
+ * word, not the console's count, and is said as the story is (v10 review 2, round 2: the gate for the console's count dropped the headline and the
+ * official's claim of a story about that very claim). A none the story never says, or one said in the brief's own voice, is still the console's.
+ */
+export function theirNone(s: string, story: Pick<Story10, "title" | "titleEn" | "text">): boolean {
+  return spokenBy(s) && noneTold([story.title, story.titleEn ?? "", story.text ?? ""].join(" \n "));
+}
+
+/**
+ * Does a sentence of the console's cases say the console's own count? The checker holds a figure to the facts it cites, but not to the noun it
+ * counts, and lets "The console has no ..." through as a sentence that knows nothing (v10 review 2: "no open cases" said over 4, finding 1;
+ * the 9 linked complaints said as 9 open cases, finding 4). Counted: the count, and never none; none counted: none; not counted: no claim.
+ */
+export function agrees(s: string, c: Pick<Console10, "n" | "complaints">): boolean {
+  const none = NONE_SAID.test(s) || (/\bnone\b|எதுவும்\s+இல்லை/iu.test(s) && CONSOLE_WORDS.test(s));
+  const cases = [...s.matchAll(CASES_N)].map((m) => Number(m[1]));
+  const told = [...s.matchAll(COMPLAINTS_N)].map((m) => Number(m[1]));
+  if (c.n == null) return !none && !cases.length && !told.length;
+  if (c.n === 0) return none && [...cases, ...told].every((v) => v === 0);
+  return !none && figuresIn(s).some((f) => f.value === c.n) && cases.every((v) => v === c.n) && told.every((v) => v === c.n || v === c.complaints);
+}
+
 /** A minimal screen for the story: the facts come from the extras alone (as aide7/news.ts). */
 const storyDoc = (s: Story10, lang: Lang): StageDocT => ({
   v: 1, id: `brief10-${Date.now().toString(36)}`, recipe: "answer", title: s.outlet ? `${s.outlet}'s report` : "The news report", takeaway: null, say: { en: "", ta: "" },
@@ -154,7 +201,9 @@ export function briefTemplate(s: Story10, c: Console10, lang: Lang, now: number)
   }
   let why = "";
   if (p) {
-    const dept = c.topic && c.dept && c.n ? c.dept : null;
+    // (the kind "falls to" a department only when it holds all or most of the cases: v10 review 2, finding 6)
+    const h = deptHold(c);
+    const dept = c.topic && (h === "all" || h === "most") ? c.dept : null;
     why = ta ? `இது ${p.level === "place" && p.zoneTa ? `${p.zoneTa} மண்டலத்தின் ${p.nameTa ?? p.name} பகுதியைப்` : p.level === "zone" ? `${p.zoneTa ?? p.name} மண்டலத்தைப்` : `${p.nameTa ?? p.name} பகுதியைப்`} பற்றியது${dept ? `; அங்கே ${c.topic!.ta} பணி ${dept.ta} பொறுப்பு` : ""}.`
       : `It touches ${p.name}${p.level === "place" && p.zoneName ? ` in ${p.zoneName} zone` : p.level === "zone" ? " zone" : ""}${dept ? `, where ${c.topic!.en} falls to ${plainDept(dept.en)}` : ""}.`;
   } else if (c.storm) why = ta ? "இது மாவட்டம் முழுவதற்கும் மழை, வெள்ளக் கண்காணிப்புக்கு முக்கியம்." : "It matters for the whole district's rain and flood watch.";
@@ -202,6 +251,9 @@ const fullHeader = (s: Story10, lang: Lang, m: number, cross: boolean) => (lang 
 const REST = { en: "That is the first part; the full report is linked on the screen.", ta: "இது முதல் பகுதி மட்டும்; முழுச் செய்தியின் இணைப்பு திரையில் உள்ளது." };
 const NO_TEXT = { en: "I couldn't get the report's full text; its link is on the screen.", ta: "இந்தச் செய்தியின் முழு உரை கிடைக்கவில்லை; அதன் இணைப்பு திரையில் உள்ளது." };
 const NO_TRANSLATE = { en: "I can't put the whole report into English just now; its link is on the screen.", ta: "முழுச் செய்தியையும் இப்போது தமிழில் சொல்ல முடியவில்லை; அதன் இணைப்பு திரையில் உள்ளது." };
+const NO_MORE = { en: "I couldn't put the next part into English; the full report is linked on the screen.", ta: "அடுத்த பகுதியைத் தமிழில் சொல்ல முடியவில்லை; முழுச் செய்தியின் இணைப்பு திரையில் உள்ளது." };
+/** the whole read in the other language has one deadline for its model calls: past it, the rest is linked on the screen */
+const CROSS_MS = 30_000;
 
 // ------------------------------------------------------------------ the aide --
 
@@ -243,6 +295,9 @@ export function newsBrief10(d: Brief10Deps): NewsBrief10 {
       const take = (s: string) => {
         if (said.length >= 3) return false;
         const ic = consoleish(s, c);
+        // a sentence of the console's cases that does not say its count is never said: the code's console sentence is (review 2, findings 1, 4)
+        // (the story's own none, said as its speaker's, is the article's word and is said: v10 review 2, round 2)
+        if (((ic && CONSOLE_WORDS.test(s)) || (NONE_SAID.test(s) && !(!ic && theirNone(s, story)))) && !agrees(s, c)) return false;
         if (said.length >= 2 && !hasConsole && !ic && cLine) return false;
         if (ic) hasConsole = true;
         said.push(s);
@@ -276,20 +331,25 @@ export function newsBrief10(d: Brief10Deps): NewsBrief10 {
       const said = [fullHeader(story, lang, minutes(lines, own), true), ...(lang === "en" && story.titleEn && TAMIL.test(story.title) ? [end(story.titleEn)] : [])];
       yield [...said];
       const gaz = gazOf(d.world);
-      let any = false;
+      const tEnd = now() + CROSS_MS;
       for (let i = 0; i < lines.length; i += 3) {
         if (d.signal?.aborted) return;
+        // past the whole read's deadline: the rest is linked, no more model calls (v10 review 2, finding 7)
+        if (i > 0 && now() >= tEnd) { said.push(REST[lang]); yield [...said]; return; }
         const part = lines.slice(i, i + 3);
         const facts: Fact7[] = part.map((text, k) => ({ id: `F${k + 1}`, src: story.outlet ?? "the news", doc: "article", text, names: [...new Set([...(story.outletTa ? [story.outletTa] : []), ...tamilFormsOf(text, gaz)])], cause: true, rank: true }));
         const sheet: Sheet7 = { facts, lang, gaz, shown: [] };
         const t = now();
+        let got = false;
         for await (const s of streamed((push) => writeAnswer({ question: `Say these sentences of ${story.outlet ?? "the"} report in ${lang === "ta" ? "Tamil" : "English"}, in order.`, lang, sheet, note: "The screen shows the report's link.", fallback: "", system: fullSystem(lang), maxOut: 700 },
-          { user: d.user, until: t + 12_000, firstBy: t + 6000, signal: d.signal, onSentence: push, ...(d.write ?? {}), now }))) {
-          any = true;
+          { user: d.user, until: Math.min(t + 12_000, tEnd), firstBy: Math.min(t + 6000, tEnd), signal: d.signal, onSentence: push, ...(d.write ?? {}), now }))) {
+          got = true;
           said.push(s);
           yield [...said];
         }
-        if (!any) { said.push(NO_TRANSLATE[lang]); yield [...said]; return; }
+        // a part with nothing checked is said so at once, and the parts after it are not asked for: never a silent gap in "the whole story"
+        // (v10 review 2, finding 7: parts 2 and 3 failed, and 6 of 9 sentences went unsaid while every part still cost its model calls)
+        if (!got) { said.push(i ? NO_MORE[lang] : NO_TRANSLATE[lang]); yield [...said]; return; }
       }
       if (cut) { said.push(REST[lang]); yield [...said]; }
     }

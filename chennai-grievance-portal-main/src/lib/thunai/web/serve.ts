@@ -57,8 +57,9 @@ export type NewsEvent =
   | { type: "first"; en: string; ta: string }
   /** v10: `full`, the whole story read ("read it fully"), not its brief */
   | { type: "brief"; stage: "article" | "coverage"; brief: SpokenBrief; status: string; ms: number; full?: true }
-  /** v10: the next steps the brief offered and what each does (the browser keeps them for the next turn: offer10.ts) */
-  | ({ type: "offer" } & OfferPayload)
+  /** v10: the next steps the brief offered and what each does (the browser keeps them for the next turn: offer10.ts); `unsaid`: the whole story
+   * was read, so no offer was said aloud and a bare "okay" takes none of them */
+  | ({ type: "offer"; unsaid?: true } & OfferPayload)
   /** v10, news to ground truth: what the console holds on the story, said by code, and its cases for the screen */
   | { type: "ground"; en: string[]; ta: string[]; rows: CaseRowT[]; title: { en: string; ta: string } }
   | { type: "related"; items: { outlet: string; title: string; url: string; publishedAt: string | null; source: "article" | "feed" }[]; feeds: { tried: number; ok: number; failed: number }; ms: number }
@@ -202,7 +203,8 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
       aideLines = lines;
       yield { type: "brief", stage: "article", status: primary.status, brief: { ...codeBrief, [ask.lang]: lines }, ms: ms(), ...(full ? { full: true as const } : {}) };
     }
-    yield { type: "offer", ...b10.offer(story, c) };
+    // (the whole story ends on its last sentence, not on an offer: v10 review 2, finding 8)
+    yield { type: "offer", ...b10.offer(story, c), ...(full ? { unsaid: true as const } : {}) };
   } else if (d.aide && ask) {
     for await (const lines of d.aide({ question: ask.q, lang: ask.lang, outlet: pOutlet, outletTa: pOutletTa, title: pTitle, publishedAt: pWhen, text: pText, fallback: codeBrief[ask.lang].join(" ") })) {
       aideLines = lines;

@@ -16,7 +16,8 @@ describe("v10 reading: Thunai.tsx", () => {
   it("one pending offer, taken from the ref as each sentence comes (forgotten on any other turn), before v10's and v8's lanes", () => {
     expect(hook).toMatch(/const nOffer = newsOffer\.current;\s*newsOffer\.current = null;/);
     expect(handle.indexOf("const nOffer = newsOffer.current;")).toBeLessThan(handle.indexOf("v10Front(said"));
-    expect(hook).toMatch(/offerAct\(said, nOffer, Date\.now\(\)\)/);
+    // (v10 review 2, round 2: with the console's world, so a locality named elsewhere, in any script, is told from the story's own)
+    expect(hook).toMatch(/offerAct\(said, nOffer, Date\.now\(\), worldRef\.current\)/);
   });
   it("each reply goes the console's own way: the map step, the tray (level C), the follow flow (level B, its yes), the news route", () => {
     expect(hook).toMatch(/await run\(\[\{ a: "map", q: oa\.q \}\], lg, said, "rules"\)/);
