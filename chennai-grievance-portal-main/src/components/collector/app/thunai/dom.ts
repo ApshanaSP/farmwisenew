@@ -155,7 +155,12 @@ export async function pressControl(spec: string, o: { own?: boolean; value?: str
     if (o.value) { if (!chooseOption(el as HTMLSelectElement, o.value)) return { ok: false, why: "noOption" }; }
     else el.focus();
   } else if (k === "check") setTick(el as HTMLInputElement, o.tick ?? null);
-  else if (k === "focus") { el.focus(); if (o.value) { typeInto("", true); typeInto(o.value); } }
+  else if (k === "focus") {
+    el.focus();
+    // a box holding a draft (Take action's message) is added to, never cleared: the model's draft and the Collector's edits have no undo; a search
+    // or a name box is replaced (v10 review 2, finding 28)
+    if (o.value) { if (!(el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value.trim())) typeInto("", true); typeInto(o.value); }
+  }
   else el.click();
   return { ok: true, el };
 }

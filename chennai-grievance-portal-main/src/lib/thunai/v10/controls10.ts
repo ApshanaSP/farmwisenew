@@ -44,6 +44,8 @@ export interface ControlCtx10 {
   visible?: string[] | null;
   /** Jarvis's Stage is open: its own commands ("next", "close", "pin this") stay the Stage's */
   stage?: boolean;
+  /** a dataset is open in the Data Studio: the console's steps its intercept keeps are the dataset's (studioLetsThrough) */
+  studio?: boolean;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------- the registry --
@@ -93,6 +95,19 @@ const LOAN: [string, string][] = [
 ];
 /** loanwords short enough to be part of other words: matched whole only */
 const LOAN_EXACT: Record<string, string> = { "டேப்": "tab", "ஆன்": "on", "ஆஃப்": "off", "டிக்": "tick", "மைக்": "mic", "பேக்": "back", "டைப்": "type" };
+/** the case endings and clitics a loanword takes after its stem (மேப்பில், லேயர்களை, மெனுவைத், டேட்டாவுல, பிரீஃபிங்குக்கு): the rest of the word must
+ * be one of these, never any few letters (v10 review 2, finding 34: சர்ச்சையைக் காட்டு, "show the controversy", opened Search; சாட்சி, a witness,
+ * was "chat"; மோட்டார் "mode"; சாட்டிலைட் "chat") */
+const LOAN_FREE = new Set(["கள்", "களை", "களைக்", "களைத்", "களைப்", "களில்", "களுக்கு", "ல", "லே", "ல்ல", "க்கு", "க்குப்", "க்குக்", "க்குத்"]);
+/** after the stem's last consonant said again (மேப் + பில்; ங் takes க: பிரீஃபிங் + குக்கு), or after a வ when the stem ends in a vowel (மெனு + வை) */
+const LOAN_JOIN = new Set(["ு", "ை", "ைக்", "ைத்", "ைப்", "ைச்", "ையும்", "ில்", "ிலே", "ில", "ிலும்", "ிலிருந்து", "ுக்கு", "ுக்குப்", "ுக்குக்", "ுக்குத்",
+  "ுக்கும்", "ுல", "ுலே", "ோட", "ோடு", "ின்", "ும்", "ா"]);
+function loanEnds(stem: string, rest: string): boolean {
+  if (!rest || LOAN_FREE.has(rest)) return true;
+  const last = stem.endsWith("்") ? stem[stem.length - 2] : "வ";
+  const x = last === "ங" ? "க" : last;
+  return rest.startsWith(x) && LOAN_JOIN.has(rest.slice(x.length));
+}
 
 /** The words of a sentence or a name, normalised alike. */
 export function words10(text: string): string[] {
@@ -105,7 +120,7 @@ export function words10(text: string): string[] {
   for (const w of t.split(" ")) {
     if (TAMIL.test(w)) {
       if (LOAN_EXACT[w]) { out.push(LOAN_EXACT[w]); continue; }
-      const l = LOAN.find(([stem]) => w.startsWith(stem) && w.length - stem.length <= 7);
+      const l = LOAN.find(([stem]) => w.startsWith(stem) && loanEnds(stem, w.slice(stem.length)));
       out.push(l ? l[1] : w);
     } else out.push(w);
   }
@@ -150,6 +165,10 @@ const CUE = new Set(`click press tap hit tab button toggle checkbox tick untick 
 const ON_W = new Set(`on tick check enable enabled show tik ஆன் டிக் போடு போடுங்க காட்டு காட்டுங்க`.split(/\s+/));
 const OFF_W = new Set(`off untick uncheck disable disabled hide remove clear எடு எடுங்க நீக்கு நீக்குங்க அணை அணைங்க மறை மறைங்க வேண்டாம் vendaam venaam edu edunga
  maraicchu maraiyunga`.split(/\s+/).filter(Boolean));
+/** a word that says "type it": a text box takes the words around its name only with one ("type drain overflow in the subject", "search the list for
+ * Adyar", "set the subject to …"), and the word is the frame, never typed (v10 review 2, finding 28: "read the message" cleared Take action's
+ * draft and typed "read") */
+const TYPE_W = /^(?:type|typing|write|enter|fill|search|find|filter|set|put|change|replace|called|named|ezhudh\w*|ezhuth\w*|thed\w*)$|^(?:எழுது|தேடு|தேட)/u;
 /** words that make a sentence a question about the data, a news request, or talk: not a control's, unless it says a control's whole name */
 const NOT_CONTROL = /\b(?:why|how|what|whats|which|who|whom|whose|when|where|tell|explain|compare|versus|vs|is there|are there|should|many|much|latest|update|updates|about|pathi|patthi|paththi|enna|evlo|eppadi|yen|endha|yaaru)\b|\?|ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|யார்|எப்போ|பற்றி|பத்தி|சொல்லு/iu;
 
@@ -200,6 +219,7 @@ function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; 
   }
   const a = p.e.act;
   const takesValue = "press" in a && (a.input === "select" || a.input === "text");
+  const text = "press" in a && a.input === "text";
   const check = ("press" in a && a.input === "check") || ("steps" in a && a.steps.some((s) => s.a === "layer"));
   // tick or untick, said anywhere in the sentence ("untick My tasks", "hide the severe pins"); neither: flip it
   const tick: boolean | null = !check ? null : spoken.some((w) => OFF_W.has(w)) ? false : spoken.some((w) => ON_W.has(w)) ? true : null;
@@ -208,6 +228,7 @@ function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; 
     if (used[i]) continue;
     const w = spoken[i];
     if (check && (ON_W.has(w) || OFF_W.has(w))) continue;
+    if (text && TYPE_W.test(w)) continue;
     if (isFiller(w)) continue;
     if (p.qual.some((r) => wordEq(w, r) > 0)) continue;
     rest.push(w);
@@ -216,6 +237,8 @@ function scoreName(spoken: string[], name: string[], p: Prepared): { s: number; 
   // complaints" pressed the Open complaints tile), so a control's shorter forms are written as its synonyms instead
   if (matched !== name.length) return null;
   if (rest.length && !takesValue) return null;
+  // a text box's words only when told to type them (TYPE_W, in its name or around it)
+  if (rest.length && text && !spoken.some((w) => TYPE_W.test(w))) return null;
   const value = takesValue && rest.length ? rest.join(" ").replace(/^(?:by|as|with|into|at|from|called|named)\s+/u, "").trim() || null : null;
   // a name with an option after it explains fewer of the words than a name said alone ("sort by severity" is the column, not Severity "sort by")
   return { s: value ? 0.9 * q : q, value, tick, whole: true };
@@ -280,16 +303,26 @@ function whichOf(ms: Match10[]): NonNullable<ControlHit["which"]> {
   };
 }
 
+/** a move said ("go to", "navigate", "open", po, போங்க) */
+const MOVE = /\b(?:go|goto|navigate|jump|take me|open|po|ponga|poonga|poi|poyi)\b|(?:^|\s)(?:போ|போங்க|போங்கள்|போய்|போகவும்|செல்|செல்லவும்|திற|திறங்க|திறங்கள்)(?=\s|$)/iu;
+const isPageMove = (m: Match10) => "steps" in m.e.act && m.e.act.steps.every((s) => s.a === "page");
+const isTick = (m: Match10) => "press" in m.e.act && m.e.act.input === "check";
+
 /** What the sentence names: one control (`top`), or two or more that tie (`which`, at most three, by distinct action), or null. */
 export function decide10(text: string, c: ControlCtx10, withMap = false): { top: Match10; which: Match10[] | null } | null {
   const t = String(text ?? "").trim();
   if (!t) return null;
-  const ms = matchControls10(t, c, withMap);
+  let ms = matchControls10(t, c, withMap);
+  // a move said with a page's name is the page, not the open window's tick of that name (v10 review 2, finding 32: "go to trends" with Customize
+  // open flipped its Trends tick, the window's +0.1 put it first)
+  if (MOVE.test(t) && ms.some(isPageMove)) ms = [...ms.filter(isPageMove), ...ms.filter((m) => !isPageMove(m) && !isTick(m))];
   if (!ms.length) return null;
   const top = ms[0];
   if (top.score < 0.8) return null;
-  // a question about the data or a news request is not a control's, unless it says a control's whole name ("What else is near here?")
-  if (NOT_CONTROL.test(t) && !(top.whole && top.score >= 0.95)) return null;
+  // a question about the data or a news request is not a control's, unless it says a control's whole name ("What else is near here?"); never when
+  // the question's words are what is left over as a select's or a box's value (v10 review 2, finding 29: "what is the status of the second one"
+  // set the list's Status to "what is second one")
+  if (NOT_CONTROL.test(t) && (!(top.whole && top.score >= 0.95) || (top.value && NOT_CONTROL.test(top.value)))) return null;
   // the next best that does something else; the same action under two names is one control
   const rival = ms.find((m) => m !== top && actKey(m.e) !== actKey(top.e));
   if (rival && rival.score >= 0.8 && top.score - rival.score < 0.1) {
@@ -315,7 +348,11 @@ export function controlCommand10(text: string, c: ControlCtx10): ControlHit | nu
   const d = decide10(t, c);
   if (!d) return null;
   if (d.which) return { id: d.top.id, which: whichOf(d.which), level: d.top.e.level };
-  return hitOf(d.top);
+  const hit = hitOf(d.top);
+  // with a dataset open, a console step the Studio's intercept keeps ("clear the filters", "this month": the dataset's own focus and period) is
+  // left to it (v10 review 2, finding 30: the control lane ran them first, on the console's hidden filter band)
+  if (c.studio && hit?.steps?.length && !studioLetsThrough(t, hit.steps, 1)) return null;
+  return hit;
 }
 
 function hitOf(m: Match10): ControlHit | null {

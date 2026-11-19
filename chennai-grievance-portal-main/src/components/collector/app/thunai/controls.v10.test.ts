@@ -13,7 +13,8 @@
  */
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
-import { describe, expect, it } from "vitest";
+import { parseHTML } from "linkedom";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { isDangerButton } from "@/lib/thunai/skeleton";
 import { CONTROLS10 } from "@/lib/thunai/v10/controls10.data";
 import { itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
@@ -210,6 +211,66 @@ describe("finding 7: the pointer's targets are elements that exist", () => {
       for (const key of sel.match(/data-key="([\w-]+)"/g) ?? []) expect(ALL, `${k}: ${key}`).toMatch(/data-key=\{/);
     }
     expect(TARGETS.theme[0]).toMatch(/data-key="theme"/);
+  });
+});
+
+describe("v10 review 2: the console's side of the controls' findings", () => {
+  it("the console tells the control lane a dataset is open, so the dataset's own sentences reach its intercept (v10 review 2, finding 30)", () => {
+    const i = thunai.indexOf("const f10 = v10Front(said, {");
+    expect(i).toBeGreaterThan(0);
+    expect(thunai.slice(i, thunai.indexOf("});", i))).toMatch(/studio: !!studioRef\.current && hostRef\.current\.c\.page === "studio"/);
+  });
+});
+
+describe("v10 review 2: a registry press on a page (linkedom)", () => {
+  const HTML = `<html><body>
+    <div class="ds-spot" role="dialog"><header><button class="ds-ghost" aria-label="Close">x</button></header>
+      <footer><button class="ds-ghost">On the dashboard</button><button class="ds-btn">Add to this dashboard</button></footer></div>
+    <div class="ta"><div class="ta-f grow"><textarea>Inspect the drain.</textarea></div></div>
+    <div class="modal"><div class="filters"><input type="search" value="adyar"></div></div>
+  </body></html>`;
+  const clicked: string[] = [];
+  const keep = new Map<string, unknown>();
+  const GLOBALS = ["window", "document", "getComputedStyle", "HTMLInputElement", "HTMLTextAreaElement", "Event"] as const;
+  let dom: typeof import("./dom");
+  beforeAll(async () => {
+    const { window, document } = parseHTML(HTML);
+    Object.assign(window, { innerWidth: 1200, innerHeight: 900 });
+    for (const k of GLOBALS) keep.set(k, (globalThis as Record<string, unknown>)[k]);
+    Object.assign(globalThis, { window, document, getComputedStyle: () => ({ visibility: "visible", display: "block", opacity: "1" }),
+      HTMLInputElement: window.HTMLInputElement, HTMLTextAreaElement: window.HTMLTextAreaElement, Event: window.Event });
+    // what linkedom lacks: layout, and the focused element
+    (window.Element.prototype as unknown as { getBoundingClientRect: () => object }).getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 40, width: 100, height: 30 });
+    (document as unknown as { elementFromPoint: () => unknown }).elementFromPoint = () => document.body;
+    let active: unknown = null;
+    (window.HTMLElement.prototype as unknown as { focus: () => void }).focus = function (this: unknown) { active = this; };
+    Object.defineProperty(document, "activeElement", { get: () => active, configurable: true });
+    for (const b of document.querySelectorAll("button")) b.addEventListener("click", () => clicked.push(b.textContent ?? ""));
+    dom = await import("./dom");
+  });
+  afterAll(() => { for (const [k, v] of keep) (globalThis as Record<string, unknown>)[k] = v; });
+  const spec = (id: string) => { const e = CONTROLS10.find((x) => x.id === id)!; return "press" in e.act ? e.act.press : ""; };
+
+  // v10 review 2, finding 31: the large chart's pin toggle was pressed in either state (a yes unpinned a chart on the dashboard); its "Add to this
+  // dashboard" was looked for as a .ds-ghost, but it is a .ds-btn
+  it("'Add the large chart to the dashboard' (yes said) never unpins a chart already on it", async () => {
+    clicked.length = 0;
+    await dom.pressControl(spec("ds.spot.toDashboard"), { yes: true });
+    expect(clicked).not.toContain("On the dashboard");
+  });
+  it("the large chart's 'Add to this dashboard' is found and pressed", async () => {
+    clicked.length = 0;
+    const r = await dom.pressControl(spec("ds.spot.addHere"), { yes: true });
+    expect(r.ok ? clicked : r.why).toEqual(["Add to this dashboard"]);
+  });
+
+  // v10 review 2, finding 28: a value typed into Take action's message cleared the draft first (the model's draft and the Collector's edits lost)
+  it("a value typed into a box that holds a draft is added to it, never wiping it; a search box is replaced", async () => {
+    const r = await dom.pressControl(spec("ta.message"), { value: "by Friday" });
+    expect(r.ok).toBe(true);
+    expect(document.querySelector("textarea")?.value).toBe("Inspect the drain. by Friday");
+    await dom.pressControl(spec("list.filter"), { value: "velachery" });
+    expect((document.querySelector("input[type=search]") as HTMLInputElement | null)?.value).toBe("velachery");
   });
 });
 

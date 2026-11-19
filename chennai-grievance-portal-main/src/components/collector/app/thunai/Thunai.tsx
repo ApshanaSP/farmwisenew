@@ -1813,6 +1813,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const st10 = buildState();
       const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
         lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
+        // v10 review 2, finding 30: with a dataset open, the control lane leaves the dataset's own sentences to the intercept below
+        studio: !!studioRef.current && hostRef.current.c.page === "studio",
         // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
         askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
       if (f10.lane?.lane === "wait") {

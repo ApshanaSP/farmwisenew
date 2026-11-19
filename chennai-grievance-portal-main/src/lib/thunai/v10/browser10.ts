@@ -48,6 +48,8 @@ export interface BrowserCtx10 extends BrowserCtx {
   askMap?: Omit<MapCtx10, "lang"> | null;
   /** the controls visible now, by registry id, when the console knows them */
   visible?: string[] | null;
+  /** a dataset is open in the Data Studio (the console's studioRef on the Studio page): its own sentences are its intercept's */
+  studio?: boolean;
 }
 
 /** words a sentence cannot end on: a line cut off before its point (v8's addressed.ts DANGLING8) */
@@ -147,7 +149,7 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // 2b. Ask the Map by voice, then a dashboard control by voice (each module answers only for what is plainly its own)
   const mc = mapCommand10(said, { ...(c.askMap ?? { open: false, hasAnswer: false }), lang });
   if (mc) return { lane: "map", cmd: mc, lang };
-  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null, stage: !!c.stage });
+  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null, stage: !!c.stage, studio: !!c.studio });
   if (cc) return { ...cc, lane: "control", lang };
   // 3. a named thing: the day's lexicon, by ear
   const consoleThing = CONSOLE.test(said) && !/\b(?:news|story|article|seithi|seidhi)\b|செய்தி|நியூஸ்/iu.test(said);
