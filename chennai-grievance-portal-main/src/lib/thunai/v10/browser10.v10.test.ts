@@ -79,6 +79,60 @@ describe("v10: the owner's own turns (Part 3)", () => {
   });
 });
 
+describe("v10: the owner's replayed turns, dry (19 Nov): three misses", () => {
+  it.each(["அண்ணா நகர் பிரைஸ் என்ன?", "Akvan puyal pathi?", "அக்வான் புயல் பற்றி?", "Adyar la?"])("'%s' is a whole question, not a cut-off line", (said) => {
+    expect(cutOff(said)).toBe(false);
+  });
+  it.each(["அந்த", "Show me the", "இந்த ஒரு"])("'%s' is cut off", (said) => {
+    expect(cutOff(said) || said.split(/\s+/).length === 1).toBe(true);
+  });
+  it("'Goto News.' (Whisper's 'go to') is the news panel's move, never a search for 'goto'", () => {
+    const b = lane("Goto News.");
+    expect(findOf(b)).toBeNull();
+  });
+  it("a Tamil headline's ordinary words are no names: a Tamil complaint question makes no news search", () => {
+    const lex2 = buildLexicon([...STORIES, { id: "t1", title: "சென்னையில் இன்று புகார்கள் வந்திருக்கின்றன என்னனால் கம்ப்பியன்ஸ் அதிகம்", t: "2026-11-19 10:00" },
+      { id: "t2", title: "அர்லேகர் மருத்துவமனையில் அனுமதி", titleEn: "Governor Arlekar admitted to hospital", t: "2026-11-19 11:00" },
+      // the real store's (19 Nov): words before புயல் that are no storm, and Tamil words that sound like names in other stories
+      { id: "t3", title: "இன்று புயல் கரையைக் கடக்கும்; தீவிர புயல் எச்சரிக்கை", titleEn: "Cyclone to cross coast today; severe cyclone warning", t: "2026-11-19 09:00" },
+      { id: "t4", title: "பெண்கள் பாதுகாப்பு; கனமழை எச்சரிக்கை", titleEn: "Women's safety; heavy rain warning", t: "2026-11-19 08:00" },
+      { id: "t5", title: "Bengal bay depression; Kanimozhi visits Chennai", t: "2026-11-19 07:00" }], world);
+    expect(lex2.some((e) => e.spellings.includes("கம்ப்பியன்ஸ்") || e.spellings.includes("வந்திருக்கின்றன"))).toBe(false);
+    expect(lex2.find((e) => e.core === "Arlekar")?.spellings).toContain("அர்லேகர்");
+    expect(lex2.some((e) => e.kind === "storm" && e.spellings.some((s) => ["இன்று", "தீவிர"].includes(s)))).toBe(false);
+    expect(lex2.some((e) => e.spellings.includes("பெண்கள்") || e.spellings.includes("கனமழை"))).toBe(false);
+    expect(lex2.find((e) => e.core === "Vandalur") ?? null).toBeNull();
+    const c: BrowserCtx10 = { stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: "ta", v7: true, lex: lex2 };
+    const b = browserLaneV10("எனக்கு வந்து இன்று என்ன என்னனால் கம்ப்பியன்ஸ் வந்திருக்கு.", c);
+    expect(findOf(b)?.entity ?? null).toBeNull();
+    // a Tamil verb that sounds as a Latin name in the news is no mention ("வந்திருக்கு" as Vandalur)
+    const lex3 = buildLexicon([{ id: "v1", title: "Vandalur Zoo closed due to bird flu to reopen tomorrow!", t: "2026-11-17 20:20" }], world);
+    const c3: BrowserCtx10 = { ...c, lex: lex3 };
+    expect(b.lane === "confirm").toBe(false);
+    expect(browserLaneV10("இன்று எத்தனை புகார்கள் வந்திருக்கு?", c3).lane).not.toBe("confirm");
+  });
+});
+
+describe("v10: a story on the screen named by its topic, with no news word (the owner's \"Open the GCC issue.\", 18 Nov)", () => {
+  const panelStories = [{ id: "p1", title: "DRI Officials Seize 70 Kg Heroin Worth Rs 140 Crore In Chennai; Two Arrested", source: "DT Next" },
+    { id: "p25", title: "GCC issues 124 de-occupation notices for coastal buildings", source: "The Hindu" }];
+  const onPanel = (said: string) => browserLaneV10(said, { stage: null, news: { items: panelStories }, state: state({ panel: "news" }), world, listenLang: "en", heardLang: "en", v7: true, lex });
+  it("'Open the GCC issue.' over the news panel is a find among the screen's stories, soft (nothing close: the lanes behind)", () => {
+    const b = onPanel("Open the GCC issue.");
+    const f = findOf(b);
+    expect(f?.onlyScreen).toBe(true);
+    expect(b.lane === "news" && b.na.kind === "find" && b.na.soft).toBe(true);
+  });
+  it.each(["Open the trends page.", "Open the Adyar complaints.", "Close the panel.", "Open the news panel."])("'%s' over the panel is not", (said) => {
+    expect(findOf(onPanel(said))?.onlyScreen ?? false).toBe(false);
+  });
+  it("the server finds it among the screen's stories only", async () => {
+    const { findNews } = await import("../v8/newsfind");
+    const r = await findNews({ q: "Open the GCC issue.", lang: "en", screen: panelStories, onlyScreen: true }, { world, stories: async () => [{ id: "s9", title: "GCC issue tracker launched for roads", t: "2026-11-19 10:00" }] });
+    expect(r?.picked.pick?.id).toBe("p25");
+  });
+});
+
 describe("v10: what stays as it was", () => {
   it.each(["show the severe cases in Adyar", "go to the trends page", "open the news panel", "how fast is the drain work in Adyar", "fast track the Adyar case"])("'%s' is not a named-event news search", (said) => {
     const b = lane(said);

@@ -18,6 +18,7 @@ import type { Lang, Step } from "../types";
 import { mapCommand10, type MapCmd, type MapCtx10 } from "./map10";
 import { controlCommand10, type ControlHit } from "./controls10";
 import { browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "../v8/browser";
+import { topicWords } from "../v8/news8";
 import { userLang8 } from "../v8/browser";
 import { classMention, findMentions, type Mention } from "./entity10";
 import type { Entity10 } from "./lexicon10";
@@ -56,9 +57,11 @@ const DANGLING = /(?:^|\s)(?:the|a|an|and|or|but|of|my|your|our|their|is|are|was
 const DANGLING_FRAME = /\b(?:tell (?:me|us)|talk|read|news|update|updates|anything|something|what|how|more)\s+(?:about|on|for|regarding|from)\s*$/i;
 /** a whole short request that ends on such a word all the same ("what's going on", "carry on", "log in", "zoom in", "which one is it about") */
 const WHOLE = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:what'?s going on|what is going on|go on|carry on|move on|log in|sign in|zoom in|come in|hold on|turn (?:it )?on|switch (?:it )?on|what are you up to|what is it about|what'?s it about|what is this about|what'?s this about|which one is it about)\s*$/i;
-/** Tamil and Tanglish lines cut off before the verb: an object, a postposition, "about", with no verb after it */
-const DANGLING_TA = /(?:பற்றி|பத்தி|குறித்து|என்ன|அந்த|இந்த|எந்த|ஒரு)\s*$/u;
-const DANGLING_TG = /\b(?:pathi|patthi|paththi|andha|indha|endha|oru|la|le)\s*$/i;
+/** Tamil and Tanglish lines cut off before their noun: a determiner at the end ("அந்த", "oru"). Not "என்ன" ("அண்ணா நகர் பிரைஸ் என்ன?" is a whole
+ * question: Tamil asks with "what" at the end), nor "பற்றி"/"pathi" or "la" ("Akvan puyal pathi?", "Adyar la?" are whole follow-ups): the dry
+ * replay of the owner's turns, 19 Nov */
+const DANGLING_TA = /(?:அந்த|இந்த|எந்த|ஒரு)\s*$/u;
+const DANGLING_TG = /\b(?:andha|indha|endha|oru)\s*$/i;
 
 /** Is this line cut off before its point? Its words, the punctuation the speech-to-text put at the end aside. */
 export function cutOff(text: string): boolean {
@@ -71,6 +74,9 @@ export function cutOff(text: string): boolean {
   if (words.length >= 2 && (DANGLING_TA.test(t) || DANGLING_TG.test(t))) return true;
   return false;
 }
+
+/** the speech-to-text's joined words, split as said ("Goto" is "go to") */
+export const heardFix = (s: string): string => s.replace(/\bgoto\b/gi, (m) => (m[0] === "G" ? "Go to" : "go to"));
 
 /** a fresh request of its own: a verb or a question word first (not the rest of a cut-off line) */
 const FRESH = /^(?:(?:hey |hi |ok |okay )?jarvis,? )?(?:show|open|read|tell|go|what|which|who|where|when|how|why|close|stop|compare|any|is|are|can|could|please|pull|bring|give|take|list|filter|draft|send|play|explain)\b|^(?:காட்டு|திற|படி|சொல்|என்ன|எந்த|யார்|எங்கே)/iu;
@@ -120,8 +126,10 @@ export function browserLaneV10(said0: string, c: BrowserCtx10): BrowserLane10 {
  * v10's own lanes, in front of v8's: the lane they take (null: none of v10's), and the sentence as v8's lanes are to read it (a position by ear
  * read as the position). Thunai.tsx runs this, then its own inline v8 lanes on `said`, as browserLaneV10 runs browserLaneV8.
  */
-export function v10Front(said0: string, c: BrowserCtx10): { said: string; lane: BrowserLane10 | null } {
-  if (!understandV10()) return { said: said0, lane: null };
+export function v10Front(said1: string, c: BrowserCtx10): { said: string; lane: BrowserLane10 | null } {
+  if (!understandV10()) return { said: said1, lane: null };
+  // the speech-to-text's own joins: "Goto News." is "go to news" (the owner's turn, 19 Nov: v9 searched the news for "goto")
+  const said0 = heardFix(said1);
   const lane = v10Lane(said0, c);
   const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
   return { said: earOrdinals(said0, { list: sm.lists.length > 0 }), lane: lane && lane.lane !== "server" ? lane : null };
@@ -171,6 +179,18 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
       return { lane: "news", na: { kind: "find", body: { find: { q: `news on the cyclone ${said}`.slice(0, 400), lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })), weather: true } } } as NewsAskT, lang };
     }
   }
+  // 4. a story on the screen named by its topic with no news word ("Open the GCC issue." over the news panel: the owner, 18 Nov): a find among the
+  // screen's stories only, soft (nothing that close: the lanes behind take the sentence, as v8 sent it)
+  const main = sm.lists[0];
+  if (main?.kind === "news" && !consoleThing && SCREEN_VERB.test(said) && !NEWS_WORD.test(said) && !PANEL_WORD.test(said) && topicWords(said, null).length) {
+    const items = main.items.filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
+    return { lane: "news", na: { kind: "find", body: { find: { q: said.slice(0, 400), lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? String(x.source).slice(0, 300) : null })), onlyScreen: true } }, soft: true } as NewsAskT, lang, soft: browserLaneV8(said, c) };
+  }
   // 5. none of v10's: v8's lanes take it (with the by-ear positions read)
   return null;
 }
+/** a verb that opens, reads or tells about one thing on a list (not "show": the console's views) */
+const SCREEN_VERB = /\b(?:open|read|play|pull up|bring up|tell me about|tell me more about|explain)\b|\b(?:open pannu\w*|padi\w*|thira\w*|sollu\w*)\b|(?:^|\s)(?:திற|படி|சொல்)\S*/iu;
+const NEWS_WORD = /\b(?:news|story|stories|article|report|headline|piece|seithi|seidhi)\b|செய்தி|சேதி|நியூஸ்/iu;
+/** the console's own panels and pages, closing and switching: moves, never a story */
+const PANEL_WORD = /\b(?:panel|page|tab|window|screen|section|close|switch|filter|sort)\b|பேனல்|பக்கம்/iu;

@@ -48,3 +48,16 @@ describe("v10: the Tamil-script loanwords for the news are news words", () => {
     expect(newsRequest(said)).toBeNull();
   });
 });
+
+describe("v10: two stories as close, the one in the request's language", () => {
+  it("an English request about Cyclone Akvan reads an English report when a Tamil one scores as close (the dry replay, 19 Nov)", () => {
+    const items = [
+      { id: "ta1", title: "அக்வான் புயல் எதிரொலி திருவொற்றியூர், எண்ணூரில் கடல் சீற்றம்", titleEn: "Akvan cyclone effect: rough sea at Thiruvottiyur, Ennore", t: "2026-11-19 12:00" },
+      { id: "en1", title: "Cyclone Akvan to cross Odisha coast tomorrow; rain likely in Chennai on November 23, 24", t: "2026-11-19 11:36" }
+    ];
+    const r = newsRequest("tell me the news about cyclone akvan");
+    expect(r).not.toBeNull();
+    expect(pickStory(rankStories(r!, items), "en").pick?.id).toBe("en1");
+    expect(pickStory(rankStories(newsRequest("அக்வான் புயல் செய்தி படிங்க")!, items), "ta").pick?.id).toBe("ta1");
+  });
+});

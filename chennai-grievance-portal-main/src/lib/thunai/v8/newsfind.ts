@@ -59,7 +59,9 @@ export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[];
   /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have */
   entity?: { name: string; kind: string; spellings: string[] } | null;
   /** v10: a storm: the weather readings come with the news */
-  weather?: boolean }
+  weather?: boolean;
+  /** v10: only the stories on the screen are candidates, found softly (a story named on screen with no news word) */
+  onlyScreen?: boolean }
 export interface Found { req: NewsReq; picked: Picked }
 
 /**
@@ -121,7 +123,12 @@ export const MORE_FLOOR = 0.35;
 export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]> }): Promise<Found | null> {
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
   // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
-  const req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
+  let req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
+  // v10: a story named on screen with no news word: the request's own topic words, found softly among the screen's stories only
+  if (!req && f.onlyScreen && screen.length) {
+    const words = topicWords(f.q, null).slice(0, 12);
+    if (words.length) req = { kind: "story", words, outlet: null, ref: false, soft: true };
+  }
   if (!req) return null;
   const stored = await (d.stories ?? storeStories)().catch(() => [] as StoryItem[]);
   const byId = new Map(stored.map((s) => [s.id, s]));
@@ -145,7 +152,8 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   const seen = new Set(onScreen.map((x) => x.id));
   // a search for more on a story leaves out the report already read (its other outlets' reports are what is wanted)
   const skip = new Set(f.exclude ?? []);
-  const items = [...onScreen, ...stored.filter((s) => !seen.has(s.id))].filter((x) => !skip.has(x.id));
+  // (v10: a story named on screen with no news word is looked for on the screen alone)
+  const items = (f.onlyScreen ? onScreen : [...onScreen, ...stored.filter((s) => !seen.has(s.id))]).filter((x) => !skip.has(x.id));
   // within one event, the report in the request's own language (the real run, 18 Nov: a Tamil headline was read in the English voice)
   // "what else is in the news about it": the topic is the one just found, so another outlet's report of it that words it differently is enough (a
   // lower floor; the place veto still holds: the live dev re-check, 19 Nov)

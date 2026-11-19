@@ -636,8 +636,13 @@ export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null, flo
   // the one on screen, then the newest
   const inLang = (x: StoryItem) => (lang == null ? 0 : (/[஀-௿]/u.test(x.title) ? "ta" : "en") === lang ? 0 : 1);
   const lead = (g: Ranked[]) => [...g].sort((a, b) => inLang(a.item) - inLang(b.item) || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")))[0];
+  // v10: two stories as close (within the margin), the one whose report is in the request's language leads (an English request about Cyclone
+  // Akvan read a Tamil headline's story: the dry replay of the owner's turn, 19 Nov)
+  if (lang != null && groups[1] && groups[0][0].score - groups[1][0].score < MARGIN && inLang(lead(groups[0]).item) === 1 && inLang(lead(groups[1]).item) === 0) {
+    const g0 = groups[0]; groups[0] = groups[1]; groups[1] = g0;
+  }
   const first = lead(groups[0]);
   const second = groups[1] ? lead(groups[1]) : null;
-  const close = !!second && groups[0][0].score - groups[1][0].score < MARGIN;
+  const close = !!second && Math.abs(groups[0][0].score - groups[1][0].score) < MARGIN;
   return { pick: first.item, score: groups[0][0].score, other: close && second ? second.item : null, close, stories: groups.slice(0, 5).map(lead).map((r) => r.item) };
 }

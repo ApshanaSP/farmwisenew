@@ -1772,8 +1772,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const t0 = performance.now();
         const r10 = await newsTurn(f10.lane.na, said, f10.lane.lang, alive, ctl.signal);
         if (r10 === "aborted") return;
-        decide({ kind: "answer", query: said, lang: f10.lane.lang, lane: "instant", ms: performance.now() - t0 });
-        return;
+        // (a soft find among the screen's stories that found nothing close goes on to the lanes below, as v9's soft find does)
+        const softMiss = r10 === "none" && f10.lane.na.kind === "find" && f10.lane.na.soft === true;
+        if (!softMiss) {
+          decide({ kind: "answer", query: said, lang: f10.lane.lang, lane: "instant", ms: performance.now() - t0 });
+          return;
+        }
+        if (!alive()) return;
       }
       if (f10.lane?.lane === "map") {
         // v10: Ask the Map by voice (map10.ts, mapops.ts): one operation on the map, its own words said by code

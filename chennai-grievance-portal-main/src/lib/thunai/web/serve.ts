@@ -34,7 +34,9 @@ export const NewsBody = z.union([
     exclude: z.array(z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/)).max(5).optional(),
     // v10: a named thing heard by ear (its name and the store's spellings of it), and a storm's weather readings wanted with the news
     entity: z.object({ name: z.string().trim().min(1).max(80), kind: z.string().max(20), spellings: z.array(z.string().trim().min(1).max(80)).max(12) }).strict().optional(),
-    weather: z.boolean().optional() }).strict() }).strict()
+    weather: z.boolean().optional(),
+    // v10: only the stories on the screen are candidates (a story named on screen with no news word), found softly
+    onlyScreen: z.boolean().optional() }).strict() }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
 

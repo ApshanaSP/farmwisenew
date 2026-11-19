@@ -20,7 +20,9 @@ export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string
     /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have ("Akvan", "Akwan") */
     entity?: { name: string; kind: string; spellings: string[] };
     /** v10: a storm: the weather readings come with the news */
-    weather?: boolean } };
+    weather?: boolean;
+    /** v10: only the stories on the screen are candidates (a story named on screen with no news word: "Open the GCC issue.") */
+    onlyScreen?: boolean } };
     /** v9: a story-like topic with no news word (not sent: the server reads the sentence itself): nothing close found, the lanes behind take it */
     soft?: boolean }
   | { kind: "which"; why: "none" | "outlet" | "count"; /** the outlet's own name ("The Times of India") */ outlet?: string; n?: number };

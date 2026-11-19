@@ -77,8 +77,12 @@ export function findMentions(text: string, lex: Entity10[], o: { kinds?: Entity1
         // the sound keys first (cheap): the same first consonant, or the entry's key within reach
         if (!e.keys.some((k) => k[0] === hk[0] || k.replace(/^a/, "")[0] === hk.replace(/^a/, "")[0])) continue;
         let s = 0;
+        // (Tamil letters heard match a name's Tamil spellings; across scripts only beside a class word ("அக்வான் புயல்"): Tamil verbs sound like
+        // Latin names, "வந்திருக்கு" like Vandalur, on the real store, 19 Nov)
+        const taHeard = /[஀-௿]/u.test(heard);
         for (const sp of e.spellings) {
           if (english && fold(sp) !== hf) continue;
+          if (taHeard && !cls && !/[஀-௿]/u.test(sp)) continue;
           s = Math.max(s, phraseSim(heard, sp));
           if (s >= 1) break;
         }

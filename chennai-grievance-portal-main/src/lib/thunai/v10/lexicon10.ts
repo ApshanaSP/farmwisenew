@@ -77,23 +77,40 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
     if (cls && !a.cls) a.cls = cls;
     if (!hit) acc.set(sid(kind, key), a);
   };
-  // 1. storms and names in the news
+  // 1. storms and names in the news. A name comes from Latin letters (an English headline or a story's English title); a Tamil-script word
+  // only adds a spelling to a name already found that sounds the same ("அர்லேகர்" to "Arlekar"), else it is let go: a Tamil headline's
+  // ordinary words are no names (the owner's "... கம்ப்பியன்ஸ் வந்திருக்கு" matched one in the dry replay, 19 Nov). A storm named before
+  // புயல் is a storm whatever its letters (the class word is the evidence).
+  const tamilRuns: { run: string; s: LexStory }[] = [];
   for (const s of stories) {
     for (const title of [s.title, s.titleEn].filter((x): x is string => !!x)) {
       for (const m of title.matchAll(STORM_EN)) {
         const w = (m[1] ?? m[2] ?? "").trim();
         if (w && !NOT_STORM_NAME.has(w.toLowerCase()) && !placeWord(w)) add("storm", w, s, "storm");
       }
-      for (const m of title.matchAll(STORM_TA)) { const w = m[1]; if (w && !placeWord(w)) add("storm", w, s, "storm"); }
-      for (const run of nameRuns(title)) add("name", run, s, headlineClass(title));
+      // (a Tamil word before புயல் is a storm's spelling only when it sounds as a storm found in Latin letters in the same story: "இன்று புயல்",
+      // "தீவிர புயல்", "நாளை புயல்" are today, severe and tomorrow; the real store, 19 Nov)
+      for (const m of title.matchAll(STORM_TA)) { const w = m[1]; if (w && !placeWord(w)) tamilRuns.push({ run: w, s }); }
+      for (const run of nameRuns(title)) {
+        if (/[஀-௿]/u.test(run)) tamilRuns.push({ run, s });
+        else add("name", run, s, headlineClass(title));
+      }
     }
   }
-  // a storm's Tamil spelling found as a name in a Tamil headline joins the storm ("அக்வான்" sounds as "Akvan")
+  // a name in the news found in Latin letters that sounds as a storm joins it ("Aquan" in a Dinamalar headline is Cyclone Akvan)
   const storms = [...acc.values()].filter((a) => a.kind === "storm");
   for (const a of [...acc.values()]) {
     if (a.kind !== "name") continue;
-    const st = storms.find((x) => earSim(x.key, a.key) >= 0.9);
+    const st = storms.find((x) => [...x.spell.keys()].some((sp) => [...a.spell.keys()].some((sa) => earSim(sp, sa) >= 0.9)));
     if (st) { for (const [sp, k] of a.spell) st.spell.set(sp, (st.spell.get(sp) ?? 0) + k); for (const [d, t] of a.docs) st.docs.set(d, t); acc.delete(sid("name", a.key)); }
+  }
+  // the Tamil-script spellings of the storms and names found: a Tamil word of the same story's Tamil headline that sounds as the name its English
+  // title carries (a Tamil outlet's story has both); a sound alone across stories made "பெண்கள்" (women) Bengal and "கனமழை" (heavy rain)
+  // Kanimozhi on the real store (19 Nov). The rest are let go.
+  const known = [...acc.values()].filter((a) => a.kind === "storm" || a.kind === "name");
+  for (const { run, s } of tamilRuns) {
+    const hit = known.find((a) => a.docs.has(s.id) && a.key.replace(/^a/, "").length >= 3 && [...a.spell.keys()].some((sp) => !/[஀-௿]/u.test(sp) && earSim(sp, run) >= 0.9));
+    if (hit) hit.spell.set(run, (hit.spell.get(run) ?? 0) + 1);
   }
   // 2. the district's places, zones and taluks (English and Tamil), the departments and bodies, the outlets
   for (const z of world.zones) { add("place", z.name, null); if (z.ta) add("place", z.ta, null); }
@@ -141,8 +158,10 @@ export function nameRuns(title: string): string[] {
     if (/[஀-௿]/u.test(w)) {
       // a Tamil word: a name when it is not grammar (a case ending glued on is fine: "அக்வான்" and "அக்வானால்") and not a place
       const bare = w.replace(/(?:ால்|ில்|க்கு|ுக்கு|ின்|ை|ும்)$/u, "");
-      if (bare.length >= 3 && !TA_COMMON.test(bare) && !placeWord(w) && !placeWord(bare)) { run.push(bare); continue; }
-      flush(); continue;
+      // (each Tamil word a run of its own: Tamil headlines run common words together, and a Tamil word only ever adds a spelling by sound)
+      flush();
+      if (bare.length >= 3 && !TA_COMMON.test(bare) && !placeWord(w) && !placeWord(bare)) out.push(bare);
+      continue;
     }
     if (!shouting && /^[A-Z]{3,6}$/.test(w) && !NOT_A_NAME.has(w.toLowerCase())) { flush(); out.push(w); continue; }
     const lw = w.toLowerCase();
