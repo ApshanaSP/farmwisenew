@@ -36,7 +36,9 @@ export const REGIONS10: Record<string, { en: string; ta: string; words?: string[
   briefing: { en: "the Briefing page", ta: "சுருக்கப் பக்கம்", words: ["briefing"] },
   trends: { en: "the Trends page", ta: "போக்குகள் பக்கம்", words: ["trends"] },
   env: { en: "the Environment page", ta: "சுற்றுச்சூழல் பக்கம்", words: ["environment"] },
-  markets: { en: "the prices card", ta: "விலை அட்டை", words: ["prices", "price", "market", "markets", "விலை"] },
+  // (the card named by what it prices: "vegetable prices-la rising first": v10 dev2, dB-control-11)
+  markets: { en: "the prices card", ta: "விலை அட்டை", words: ["prices", "price", "market", "markets", "விலை", "vegetable", "vegetables", "veggies", "fruit", "fruits", "kaikari",
+    "kaaikari", "kaikaari", "kaai", "vilai", "காய்கறி", "பழம்", "பழங்கள்"] },
   yourdata: { en: "Your data", ta: "உங்கள் தரவு", words: ["charts"] },
   window: { en: "the window", ta: "சாளரம்" },
   list: { en: "the incident list", ta: "சம்பவப் பட்டியல்", words: ["list", "column", "பட்டியல்"] },
@@ -68,7 +70,8 @@ export const REGIONS10: Record<string, { en: string; ta: string; words?: string[
   tray: { en: "the approval tray", ta: "ஒப்புதல் தட்டு", words: ["tray"] },
   jpanel: { en: "Jarvis's side panel", ta: "ஜார்விஸ் பக்கப் பலகை", words: ["side"] },
   jq: { en: "Earlier questions", ta: "முந்தைய கேள்விகள்" },
-  stage: { en: "Jarvis's screen", ta: "ஜார்விஸ் திரை" }
+  // (done with the screen: "podhum indha screen, dashboard-ku thirumbi polaam", "enough of this screen, back to the dashboard": v10 dev2, dB-control-8)
+  stage: { en: "Jarvis's screen", ta: "ஜார்விஸ் திரை", words: ["enough", "done", "podhum", "pothum", "போதும்"] }
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------ helpers --
@@ -345,8 +348,9 @@ c("markets.scope.tamilNadu", "markets", "A", P("[data-voice=\"markets.scope\"] b
 c("markets.fullScreen", "markets", "A", S(panel("markets")), "Full screen prices|mandi prices|market prices window", "முழுத் திரை விலைகள்|சந்தை விலைகள்", "full screen prices|mandi prices");
 c("markets.find", "markets", "A", P(".mk-bar .mk-find input", { input: "text" }), "Find a vegetable or fruit|find a vegetable|find in the prices", "காய்கறி அல்லது பழத்தைத் தேடு|காய்கறியைத் தேடு", "kaai kari thedu|vegetable find pannu");
 c("markets.sort.az", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(1)"), "A to Z|alphabetical|sort by name", "அகர வரிசை|பெயர் வரிசை", "a to z|name order");
-c("markets.sort.rising", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(2)"), "Rising first|prices rising first", "விலை ஏறுபவை முதலில்", "rising first|vilai yerum first");
-c("markets.sort.falling", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(3)"), "Falling first|prices falling first", "விலை இறங்குபவை முதலில்", "falling first|vilai irangum first");
+// (said loosely, "rising first mela varattum", "ஏறுபவை முதல்ல": the order words are controls10.ts FIRST_W; v10 dev2, dB-control-11)
+c("markets.sort.rising", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(2)"), "Rising first|prices rising first", "விலை ஏறுபவை முதலில்|ஏறும் விலைகள் முதலில்|விலை ஏறுவது முதலில்", "rising first|vilai yerum first|yerum vilai first");
+c("markets.sort.falling", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(3)"), "Falling first|prices falling first", "விலை இறங்குபவை முதலில்|இறங்கும் விலைகள் முதலில்|விலை இறங்குவது முதலில்", "falling first|vilai irangum first|irangum vilai first");
 c("markets.allMarkets", "markets", "A", P(".mk-back .btn"), "All markets|back to all markets", "எல்லா சந்தைகளும்|எல்லா சந்தைகளுக்கும் திரும்பு", "ella markets|all markets");
 c("yourdata.showAll", "yourdata", "A", P("button.yd-more::show all"), "Show all charts|show all your data", "எல்லா வரைபடங்களையும் காட்டு", "ella charts kaattu", ENV);
 c("yourdata.showFewer", "yourdata", "A", P("button.yd-more::show fewer|குறைவாக"), "Show fewer|fewer charts", "குறைவாகக் காட்டு|குறைந்த வரைபடங்கள்", "konjam kaattu|fewer charts", ENV);
@@ -587,6 +591,11 @@ c("tray.discard", "tray", NEVER, N("discards the drafts: the Collector's own tap
 c("panel.close", "jpanel", "A", P(".th-panel button[aria-label=\"Close\"]", { own: true }), "Close the side panel|close Jarvis's panel", "பக்கப் பலகையை மூடு", "side panel close pannu");
 c("memory.forgetAll", "jpanel", "B", S({ a: "forget", all: true }), "Forget everything|forget all my notes", "எல்லாம் மற|எல்லா குறிப்புகளையும் மற", "ellaam marandhudu|ella notes-um marandhudu");
 c("jq.seeAll", "jq", "A", P(".jq-all", { own: true }), "See all earlier questions|all my questions", "எல்லா முந்தைய கேள்விகளும்|அனைத்தும்", "ella questions-um|all questions");
+// Jarvis's screen left for the dashboard by its own button (Stage.tsx .st-home: the Stage closed), said loosely with the screen open ("podhum indha
+// screen, dashboard-ku thirumbi polaam", "back to the dashboard"); "close", "back" and "go back" stay the Stage's own commands (stagelocal.ts) (v10
+// dev2, dB-control-8: the rules moved the page under the open screen)
+c("stage.backToDashboard", "stage", "A", P(".st-root .st-home", { own: true }), "Back to dashboard|back to the dashboard|return to the dashboard",
+  "டாஷ்போர்டுக்குத் திரும்பு|முகப்புக்குத் திரும்பு", "dashboard thirumbu|dashboard thirumbi|dashboard thirumba|back to dashboard", { stage: true });
 
 export const CONTROLS10: Control10[] = list;
 
@@ -623,7 +632,7 @@ export const SKIP10: Record<string, string> = {
   "answer.download": LINK, "answer.tools": ROW, "answer.sources": ROW, "figure.controls": ROW, "response.controls": ROW, "jlog.openScreen": ROW, "jlog.cardAction": ROW,
   "jlog.studio": ROW, "hud.typeInput": "the typing box: typed in, not said", "card.nextStep": SAID, "card.askOnce.choice": SAID, "card.levelB": SAID, "card.mission": SAID,
   "memory.forgetItem": "a note's own: 'forget that'", "memory.unfollow": "a followed item's own: 'stop following …'", "memory.undoAlertChoice": ROW, "help.example": ROW,
-  "jq.question": ROW, "stage.backToDashboard": STAGE, "stage.previous": STAGE, "stage.suggestion": STAGE, "stage.showAll": STAGE, "stage.readAloud": STAGE, "stage.pin": STAGE,
+  "jq.question": ROW, "stage.previous": STAGE, "stage.suggestion": STAGE, "stage.showAll": STAGE, "stage.readAloud": STAGE, "stage.pin": STAGE,
   "stage.export": STAGE, "stage.save": STAGE, "stage.filters": STAGE, "stage.block.view": STAGE, "stage.case.open": STAGE, "stage.case.takeAction": STAGE,
   "stage.case.draft": STAGE, "stage.case.showOnMap": STAGE, "stage.case.openInConsole": STAGE, "stage.other": STAGE
 };

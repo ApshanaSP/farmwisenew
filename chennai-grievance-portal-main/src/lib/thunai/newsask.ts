@@ -17,7 +17,10 @@ import { ownReport } from "./v8/ownreport8";
 import { ordinalsAt, ordWordsOf } from "./v8/ord8";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
-export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string }; /** v10: "read it fully": the whole story, not its brief */ full?: boolean }
+export type NewsAskT = { kind: "read";
+  /** v10 dev2: `full` in the body too, as it is sent to the news route (Thunai.tsx sends the body) and as the runners read it (eval10.live.ts reads
+   * `na.body.full`: "read the whole thing" was a read, never a full one, there) */
+  body: ({ id: string } | { incident: string }) & { full?: boolean }; /** v10: "read it fully": the whole story, not its brief */ full?: boolean }
   | { kind: "lookup"; body: { question: string } }
   /** v10, news to ground truth: what the console holds on the story read last (v10/offer10.ts asks it) */
   | { kind: "ground"; body: { ground: { id: string; lang: "en" | "ta"; q?: string } } }
@@ -133,7 +136,7 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
   // twelfth, the last), never a date, a street or a period ("a second time"); v7's own list knew ten and two Tanglish spellings, and read the
   // first story for any other. A word in an ordinal's form that no position reads names no story here (never the first in its place)
   const at = ordinalsAt(t).find((a) => !(a.kind === "en" && a.prev === "a"));
-  if (at) { const k = at.n === -1 ? items.length : at.n; return items[k - 1] ? { id: items[k - 1].id } : { why: "count", n: items.length }; }
+  if (at) { const k = at.n < 0 ? items.length + 1 + at.n : at.n; return items[k - 1] ? { id: items[k - 1].id } : { why: "count", n: items.length }; }
   if (ordWordsOf(t).some((w) => ORDISH.test(w))) return null;
   // an outlet named: its report, or that it is not on the screen (never another outlet's in its place)
   for (const [said, src, name] of OUTLETS) {
@@ -162,6 +165,9 @@ export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } 
   const own = OWN_REPORT.test(t) || ownReport(raw);
   const reads = !own && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
   // v7: "tell me about this news" is a read of the report on the screen, when there is one (else the news screen and its summary answer it)
+  // v10 dev2 (dA-reading-2): "read the whole thing", "read it fully", "முழுசா படிங்க" with no report named: the story read last on screen, in full;
+  // with none read, no story is in focus (never the panel's first read in full for it)
+  if (!reads && !own && fullRead(raw) && on.reading && ID.test(on.reading)) return { kind: "read", body: { id: on.reading, full: true }, full: true };
   const tells = o.v7 !== false && !reads && !own && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
   if (tells) {
     const item = pickItem(t, on);

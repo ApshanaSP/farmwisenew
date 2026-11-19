@@ -14,6 +14,7 @@
 import { isEnglishWord } from "../english";
 import { editDistance, fold } from "../v8/match";
 import { placeWord } from "../v8/lang8";
+import { topicGlossed } from "../v8/news8";
 import type { Entity10 } from "./lexicon10";
 import { classOf, earKeyJoined, phraseSim, type EntityClass } from "./phon10";
 
@@ -81,10 +82,16 @@ export function findMentions(text: string, lex: Entity10[], o: { kinds?: Entity1
       // an English word is no name by ear ("fast", "sea", "bird" is not Bharati: v8's dev set): a span with one counts only by an exact spelling
       const english = span.some((w) => /^[a-z]+$/.test(w.f) && isEnglishWord(w.f));
       // (a name the ears split into words, one of them English, "Vela cherry", "Deccan Chronical": by ear when sure, never asked; the names
-      // research's must-match list, 20-names-by-ear.md 7.4)
-      const mixed = english && n >= 2 && span.some((w) => /^[a-z]{3,}$/.test(w.f) && !isEnglishWord(w.f) && !/['’]/.test(w.raw));
+      // research's must-match list, 20-names-by-ear.md 7.4). v10 dev2: or split into a two-letter piece that is no word at all and an English
+      // word, beside its class word ("cyclone ak van", "ak wan puyal": Akvan; "cyclone van" alone is no name)
+      const clsBy = ws[i - 1]?.cls ?? ws[i + n]?.cls ?? null;
+      const mixed = english && n >= 2 && (span.some((w) => /^[a-z]{3,}$/.test(w.f) && !isEnglishWord(w.f) && !/['’]/.test(w.raw))
+        || (!!clsBy && span.some((w) => /^[a-z]{2}$/.test(w.f) && !isEnglishWord(w.f))));
       // nor a Tamil verb or a word with a verb's ending ("வந்திருக்கு" is not Vandalur's வண்டலூர்)
       if (span.some((w) => /[஀-௿]/u.test(w.raw) && TA_VERB.test(w.raw.normalize("NFC")))) break;
+      // nor a word the news reads as a topic (கோயில், திருட்டு, தீ, "kovil": the gloss table's): "கோயில்ல திருட்டு" was asked back as Coilathur
+      // (கொளத்தூர்) on the store of 20 Nov
+      if (span.some((w) => topicGlossed(w.raw))) break;
       if (hf.replace(/\s+/g, "").length < 3) continue;
       // the class word right before or after the run ("Cyclone Aquan", "Murasar Saikilon", "அக்வான் புயல்")
       const cls = ws[i - 1]?.cls ?? ws[i + n]?.cls ?? null;

@@ -189,3 +189,56 @@ describe("v10 review 2, round 4: a relative clause cut off is held, with no arti
     expect(`${gate(said, { engagedSec: 3 }).act}`).toBe("true");
   });
 });
+
+// ---- v10 dev2 (the development set written blind to the code, 20 Nov): the engaged window's own lines, each a failing test first
+
+describe("v10 dev2: dA-reading-9, dB-feature-4, dC-control-4: a request in a later clause is still a request in the engaged window", () => {
+  // dev2: the request's shape was looked for only at the line's start (a verb, a question word) or its end (a Tamil verb), so a request after a
+  // lead-in ("hold on.") or a topic said first ("rain gauges, ...") was unaddressed, and an imperative ending its clause ("full-aa padinga,") too
+  it.each([["full-aa padinga, endha endha area-nu ellam", 4], ["hold on. go deeper here", 1], ["detail-aa kaattunga, endha zone-la adhigam", 5],
+    ["முழுசா படிங்க, எந்த எந்த ஏரியான்னு எல்லாம்", 4], ["wait, show me more here", 2], ["one sec. tell me more about this one", 3],
+    ["Adyar subway, what's the water level now", 6]] as const)("'%s' (%i s after Jarvis spoke) is acted on", (said, sec) => {
+    const g = gate(said, { engagedSec: sec });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+  it.each(["hold on, I'm on a call", "wait, he is coming", "one sec, the driver is here", "saapadu ready, vaanga", "the rain is heavy, close the windows",
+    "the car is ready, go down and wait", "Ramesh, show the Adyar cases."])("'%s' in the window is still not for Jarvis", (said) => {
+    expect(gate(said, { engagedSec: 3 }).act).toBe(false);
+  });
+  it("outside the window it is still unaddressed ('hold on. go deeper here')", () => {
+    expect(gate("hold on. go deeper here").act).toBe(false);
+  });
+});
+
+describe("v10 dev2: dC-control-4, dA-reading-4: the office's own 'we' and 'our' asking about the console's records is no side talk", () => {
+  // dev2: "we", "our", "us" made any line side talk, even in the engaged window, so "rain gauges, last 24 hours, what have we got" and "and on our
+  // side? any complaints there" were silenced: the Collector's office asking what it holds
+  it.each([["rain gauges, last 24 hours, what have we got", 10], ["right, and on our side? any complaints there, how old?", 5], ["how many complaints do we have in Adyar", 4],
+    ["and on our end, any petitions about it?", 6], ["what do our records say about Velachery flooding?", 3], ["severe cases, what have we got in Teynampet", 8]] as const)("'%s' (%i s after Jarvis spoke) is acted on", (said, sec) => {
+    const g = gate(said, { engagedSec: sec });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+  it.each(["what have we got for lunch", "shall we go now", "we should leave by five", "our car is ready downstairs", "did we tell him about the meeting"])("'%s' in the window is still side talk", (said) => {
+    expect(gate(said, { engagedSec: 4 }).act).toBe(false);
+  });
+});
+
+describe("v10 dev2: dC-control-2: a list of the console's own named with no verb, in the engaged window", () => {
+  // dev2: "severe ones in adair zone, quick" 7 s after Jarvis spoke: six words with no verb and no question word, so it was unaddressed; a
+  // follow-up said as the list it wants ("overdue ones in Teynampet") is a request in the conversation
+  it.each([["severe ones in adair zone, quick", 7], ["overdue ones in Teynampet zone, fast", 5], ["pending petitions for Kodambakkam zone, quickly", 9], ["the oldest open complaints in Royapuram please", 4]] as const)("'%s' (%i s after Jarvis spoke) is acted on", (said, sec) => {
+    const g = gate(said, { engagedSec: sec });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+  it("in Tamil script too ('அடையாறு மண்டலத்துல சீரியஸ் புகார்கள், சீக்கிரம்')", () => {
+    const now = 1_000_000;
+    const g = addressed({ text: "அடையாறு மண்டலத்துல சீரியஸ் புகார்கள், சீக்கிரம்", lastTurnAt: now - 5000, now, rulesSure: false, districtNoun: true });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+  it.each(["status meeting at five", "the zone officer called about the meeting", "severe pain in the back since morning", "new zone officer joined today"])("'%s' in the window is still not for Jarvis", (said) => {
+    expect(gate(said, { engagedSec: 4 }).act).toBe(false);
+  });
+  it("outside the window it is still unaddressed", () => {
+    expect(gate("severe ones in adair zone, quick").act).toBe(false);
+  });
+});

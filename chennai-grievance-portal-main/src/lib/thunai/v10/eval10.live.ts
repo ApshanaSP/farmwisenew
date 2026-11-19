@@ -294,8 +294,8 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
         const body = na.body as { id: string } | { incident: string };
         const id = "id" in body ? body.id : null;
         o.story = id ? await titleOf(id) : `incident ${(body as { incident: string }).incident}`; o.storyId = id;
-        if (ANSWER) { const r = await readAloud(c, body, said, lang, { ...(na.body.full ? { full: true } : {}) }); scene.offer = r.offer ? { ...r.offer, lang } : null; o.spoken = r.lines; o.full = r.full; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
-        else if (na.body.full) o.full = true;
+        if (ANSWER) { const r = await readAloud(c, body, said, lang, { ...((na as { full?: boolean }).full || na.body.full ? { full: true } : {}) }); scene.offer = r.offer ? { ...r.offer, lang } : null; o.spoken = r.lines; o.full = r.full; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
+        else if ((na as { full?: boolean }).full || na.body.full) o.full = true;
         remember("read the news report aloud", null, null);
       } else if (na.kind === "find") {
         const find = (na.body as { find: Parameters<typeof foundStory>[0] & { weather?: boolean } }).find;

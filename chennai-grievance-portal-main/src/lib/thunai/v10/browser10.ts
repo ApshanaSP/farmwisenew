@@ -86,8 +86,16 @@ export function cutOff(text: string): boolean {
   // one word that is a whole request (a verb, a yes, a place) is not cut off: only the dangling words count
   if (DANGLING.test(` ${t}`) || DANGLING_FRAME.test(t)) return true;
   if (words.length >= 2 && (DANGLING_TA.test(t) || DANGLING_TG.test(t))) return true;
+  // (v10 dev2: and on a relative participle, its noun still to come, unless it was asked as a question)
+  if (words.length >= 2 && !/\?\s*$/.test(text) && (PARTICIPLE_TA.test(t) || PARTICIPLE_TG.test(t))) return true;
   return false;
 }
+/** v10 dev2: a Tamil or Tanglish line that ends on a relative participle ("Adyar la open aana", "pending-la irukkura", "நிலுவையில் உள்ள", "நேத்து
+ * கொடுங்கையூர்ல வந்த") is cut off before its noun ("the open [complaints] in Adyar"), as an English line that ends on "the" is; dev2's "Adyar la
+ * open aana" was answered as a zone filter. A participle cannot end a Tamil sentence (its finite forms are "aanadhu", "aachu", "இருக்கு"); asked
+ * ("open aana?"), the line is a question and whole */
+const PARTICIPLE_TA = /(?:^|\s)(?:ஆன|ஆனா|ஆகுற|ஆகிற|உள்ள|இருக்கிற|இருக்குற|இருக்கற|வந்த)\s*$/u;
+const PARTICIPLE_TG = /\b(?:aana|aanaa|aagura|aagara|aagira|ulla|irukkura|irukura|irukkira|irukkara|irukra|vandha|vantha)\s*$/i;
 
 /** the speech-to-text's joined words, split as said ("Goto" is "go to") */
 export const heardFix = (s: string): string => s.replace(/\bgoto\b/gi, (m) => (m[0] === "G" ? "Go to" : "go to"));
@@ -132,7 +140,8 @@ const FORECAST_ONLY = /\b(?:will it rain|going to rain|forecast|nowcast|red aler
  * "open", and the Tamil and Tanglish "pathi", பற்றி, பத்தி */
 const ABOUT = /\b(?:tell (?:me|us) (?:more )?about|what about|how about|anything (?:on|about)|news (?:on|about)|latest (?:on|about)|updates? (?:on|about)|explain|what happened (?:to|with|at)|what'?s happening (?:to|with)|who is|who'?s|read|open|pull up|brief me on|health|status of)\b|\b(?:pathi|patthi|paththi|enna aachu|enna achu)\b|பற்றி|பத்தி|என்ன ஆச்சு|என்னாச்சு/iu;
 /** a news-like ask about a storm with no name ("what's the latest on the cyclone", "puyal pathi enna news"): the news, with the weather */
-const STORM_ASK = /\b(?:latest|update|updates|news|happening|happened|status|where is|tell me about|what about|explain)\b|\b(?:enna aachu|enna nilamai|pathi enna|pathi sollu\w*)\b|என்ன ஆச்சு|பற்றி|நிலவரம்|செய்தி|நியூஸ்/iu;
+// (v10 dev2: and where it is headed, "where's the cyclone headed now", "where is the storm heading")
+const STORM_ASK = /\b(?:latest|update|updates|news|happening|happened|status|where is|where'?s|headed|heading|tell me about|what about|explain)\b|\b(?:enna aachu|enna nilamai|pathi enna|pathi sollu\w*)\b|என்ன ஆச்சு|பற்றி|நிலவரம்|செய்தி|நியூஸ்/iu;
 
 /** v10's order: the cut-off wait, the by-ear positions, the named thing, then v8's lanes. */
 export function browserLaneV10(said0: string, c: BrowserCtx10): BrowserLane10 {

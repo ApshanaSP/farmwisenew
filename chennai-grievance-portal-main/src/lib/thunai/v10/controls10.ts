@@ -168,10 +168,17 @@ const FILLER = new Set(`the a an please pls plz kindly jarvis hey hi hello ok ok
  pannu pannunga pannungo panni pannuga pannidu kaattu kaattunga kattu kattunga kaatu kaatunga kaami kaaminga kaamiunga kamiunga kami po ponga poi poyi
  poonga maathu maathunga mathu mathunga maattu maathi thora thorandhu thoranga thorangal thira thiranga thirandhu thirangal podu podunga podungo vai
  vainga vaiyunga amukku amukkunga amukkungo thattu thattunga konjam enakku andha indha adha idha da ma la le ku kku ukku ah aa ai um sollunga
+ polaam polam pogalaam pogalam povom varattum varatum varanum
  திற திறங்க திறங்கள் திறக்க திறக்கவும் திறந்து திறந்துடு தொற தொறங்க காட்டு காட்டுங்க காட்டுங்கள் காட்டவும் காட்டி காமி காமிங்க காண்பி காண்பிங்க
  காண்பிக்கவும் போ போங்க போங்கள் போய் போகவும் செல் செல்லவும் மாத்து மாத்துங்க மாற்று மாற்றுங்கள் மாற்றவும் அழுத்து அழுத்துங்க அழுத்துங்கள்
  அழுத்தவும் தட்டு தட்டுங்க தட்டுங்கள் தட்டவும் பண்ணு பண்ணுங்க பண்ணுங்கள் பண்ணவும் பண்ணி செய் செய்யுங்க செய்யுங்கள் செய்யவும் வை வைங்க
- வையுங்கள் போடு போடுங்க போடுங்கள் போட்டு கொஞ்சம் தயவுசெய்து அந்த இந்த அதை இதை எனக்கு ப்ளீஸ் பக்கம் சாளரம் அட்டை பொத்தான் ஒரு`.split(/\s+/).filter(Boolean));
+ வையுங்கள் போடு போடுங்க போடுங்கள் போட்டு கொஞ்சம் தயவுசெய்து அந்த இந்த அதை இதை எனக்கு ப்ளீஸ் பக்கம் சாளரம் அட்டை பொத்தான் ஒரு
+ இந்தத் அந்தத் இந்தச் அந்தச் இந்தப் அந்தப் போகலாம் போலாம் போவோம் வரட்டும் வரணும்`.split(/\s+/).filter(Boolean));
+// (v10 dev2, dB-control-8, dB-control-11: the frame's verbs "let's go" (polaam, போகலாம்) and "let it come" (varattum, வரட்டும்) are a move or a
+// placing said, as po and podu are; இந்த and அந்த with the doubled consonant before a word, இந்தத் திரை, are themselves)
+/** words that put a thing first in an order: "first", "on top", "at the top", mela, முதல்ல, மேலே. Said in place of a name's "first" they are that
+ * word, and said beside it ("rising first mela varattum") they add nothing (v10 dev2, dB-control-11: the prices card's "Rising first") */
+const FIRST_W = new Set(["first", "top", "mela", "mele", "melae", "mudhalla", "mudhala", "mudhal", "munnadi", "முதலில்", "முதல்ல", "முதலாவதாக", "மேலே", "மேல", "முன்னாடி"]);
 /** a word that says "press it": a one-word name that is also everyday talk ("News", "Rows", "Later") is taken with one of these, or in the
  * window it belongs to */
 const CUE = new Set(`click press tap hit tab button toggle checkbox tick untick link amukku amukkunga thattu thattunga அழுத்து அழுத்துங்க அழுத்துங்கள்
@@ -289,11 +296,12 @@ function scoreName(spoken: string[], name: string[], p: Prepared): Scored | null
   /** the name's word heard at each place of the sentence */
   const at: (string | null)[] = new Array<string | null>(spoken.length).fill(null);
   let q = 1, matched = 0;
+  const firstName = name.some((w) => FIRST_W.has(w));
   for (const nw of name) {
     let best = -1, bq = 0;
     for (let i = 0; i < spoken.length; i++) {
       if (used[i]) continue;
-      const v = wordEq(spoken[i], nw);
+      const v = Math.max(wordEq(spoken[i], nw), FIRST_W.has(nw) && FIRST_W.has(spoken[i]) ? 0.97 : 0);
       if (v > bq) { bq = v; best = i; if (v === 1) break; }
     }
     if (best >= 0) { used[best] = true; at[best] = nw; q = Math.min(q, bq); matched++; }
@@ -313,6 +321,7 @@ function scoreName(spoken: string[], name: string[], p: Prepared): Scored | null
     if (text && (TYPE_VERB(w) || QUOTE_AFTER.has(w) || QUOTE_BEFORE.has(w))) continue;
     // a box's own noun straight after its name ("the subject line to …"): the name's, never words to type (round 4)
     if (text && i > 0 && at[i - 1] !== null && BOX_W.has(w)) continue;
+    if (firstName && FIRST_W.has(w)) continue;
     if (isFiller(w)) continue;
     if (qual(w)) continue;
     restAt.push(i);

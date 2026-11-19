@@ -600,3 +600,61 @@ describe("v10 review 2, round 4: the round-3 guards narrowed back to the Collect
     expect(each(not, ANS)).toEqual(all(not, null));
   });
 });
+
+describe("v10 dev2: the map lane's misses on the second development set, each a failing test first", () => {
+  const state = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as never;
+  /** the map's command, or the lane the sentence went to (the browser's own lanes, as Thunai.tsx runs them) */
+  const seen = (s: string, askMap: unknown = null) => {
+    const b = browserLaneV10(s, { stage: null, news: { items: [] }, state, world: { ...WORLD, ...referenceWorld() }, listenLang: "en", heardLang: /[஀-௿]/u.test(s) ? "ta" : "en", v7: true, lex: [], askMap } as BrowserCtx10);
+    return b.lane === "map" ? b.cmd : b.lane;
+  };
+
+  it("v10 dev2: dB-map-1: an ask names the district place it is about, a zone heard by ear in the console's spelling (the question too)", () => {
+    expect(mapCommand10("ask the map where the open drainage complaints are in Tandiyarpet", CLOSED))
+      .toEqual({ op: "ask", place: "Tondiarpet", question: "where the open drainage complaints are in Tondiarpet" });
+    expect(seen("ask the map where the open drainage complaints are in Tandiyarpet")).toMatchObject({ op: "ask", place: "Tondiarpet" });
+    // one word away: another zone by ear, a Tanglish clitic, the map open with no "ask the map", a known spelling of the zone
+    expect(mapCommand10("ask the map how many garbage complaints are pending in Valasaravakam", CLOSED))
+      .toEqual({ op: "ask", place: "Valasaravakkam", question: "how many garbage complaints are pending in valasaravakam" });
+    expect(mapCommand10("ask the map about the sewage complaints in Kodambakam this week", CLOSED)).toMatchObject({ op: "ask", place: "Kodambakkam" });
+    expect(mapCommand10("ask the map about the potholes in Sholinganalur", CLOSED)).toMatchObject({ op: "ask", place: "Sholinganallur" });
+    expect(mapCommand10("ask the map about the potholes in Sholinganalloor", CLOSED)).toMatchObject({ op: "ask", place: "Sholinganallur", question: "the potholes in Sholinganallur" });
+    expect(mapCommand10("Tandiyarpet-la sewage complaints map-la kaattu", CLOSED)).toEqual({ op: "ask", place: "Tondiarpet", question: "Tondiarpet la sewage complaints" });
+    expect(mapCommand10("where are the drainage complaints clustering in Tandiyarpet", OPEN)).toMatchObject({ op: "ask", place: "Tondiarpet", question: "where are the drainage complaints clustering in Tondiarpet" });
+    expect(mapCommand10("ask the map what is happening at Egmore", CLOSED)).toMatchObject({ op: "ask", place: "Egmore" });
+    // no place named: none given, the question as said
+    for (const s of ["ask the map where garbage complaints are clustering", "ask the map about complaints in detail", "ask the map what changed in the last week", "ask the map about flooding in this zone"]) {
+      const r = mapCommand10(s, CLOSED);
+      expect(r?.op, s).toBe("ask");
+      expect(r?.place ?? null, s).toBe(null);
+    }
+  });
+
+  it("v10 dev2: dB-map-6: a distance said 'a kilometre and a half' is 1.5 km, the half after the unit read too", () => {
+    expect(mapCommand10("anything going on in a kilometre and a half around Egmore station?", CLOSED))
+      .toEqual({ op: "circle", place: "Egmore Station", km: 1.5, question: "what is happening within 1.5 km of Egmore Station" });
+    const km = (t: string) => distance10(prep10(t))?.km ?? null;
+    expect(km("show garbage complaints within a km and a half of Kasimedu")).toBe(1.5);
+    expect(km("flooding within two kilometres and a half of Adyar")).toBe(2.5);
+    expect(km("what's happening within one km and half of Velachery")).toBe(1.5);
+    expect(km("within a kilometre and a quarter of Adyar")).toBe(1.25);
+    expect(withDigits(prep10("within a kilometre and a half of Adyar"))).toBe("within 1.5 km of adyar");
+    expect(mapCommand10("show garbage complaints within a km and a half of Kasimedu", CLOSED)).toMatchObject({ op: "circle", place: "Kasimedu", km: 1.5 });
+    expect(seen("anything going on in a kilometre and a half around Egmore station?")).toMatchObject({ op: "circle", km: 1.5 });
+    // a half not after the unit is no distance's ("a km from Adyar and a half day"): the km said stands
+    expect(km("within a km of Adyar and a half hour away")).toBe(1);
+  });
+
+  it("v10 dev2: dB-feature-3: a tour asked with the Tamil-letter loanword (டூர்) and a Tamil verb, or Tanglish kootittu po, starts the map tour", () => {
+    const NEWS = { op: "tour", tour: "start", source: "news" };
+    expect(mapCommand10("ஜார்விஸ், இன்னைக்கு நியூஸ்ல வந்த இடங்களுக்கு ஒரு டூர் கூட்டிட்டு போ", CLOSED)).toEqual(NEWS);
+    expect(seen("ஜார்விஸ், இன்னைக்கு நியூஸ்ல வந்த இடங்களுக்கு ஒரு டூர் கூட்டிட்டு போ")).toEqual(NEWS);
+    expect(mapCommand10("செய்தியில் வந்த இடங்களுக்கு ஒரு டூர் அழைத்துச் செல்லுங்கள்", CLOSED)).toEqual(NEWS);
+    expect(mapCommand10("நியூஸ்ல வந்த இடங்களுக்கு டூர் போலாம்", CLOSED)).toEqual(NEWS);
+    expect(mapCommand10("inniki news-la vandha edangalukku oru tour kootittu po", CLOSED)).toEqual(NEWS);
+    expect(mapCommand10("மாவட்டத்துக்கு ஒரு டூர் கூட்டிட்டு போங்க", CLOSED)).toEqual({ op: "tour", tour: "start", source: "hotspots" });
+    expect(mapCommand10("district-ku oru tour kootikittu po", CLOSED)).toEqual({ op: "tour", tour: "start", source: "hotspots" });
+    // the CM's tour in the news, and a tour gone on or planned, are not the map's tour
+    for (const s of ["முதல்வர் டூர் போனார் நியூஸ் படி", "முதல்வர் டூர் பற்றிய செய்தி", "CM tour pathi news sollu", "நாளைக்கு டூர் போறேன்", "டூர் போனது எப்படி இருந்தது"]) expect(mapCommand10(s, CLOSED), s).toBe(null);
+  });
+});

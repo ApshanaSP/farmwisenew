@@ -16,12 +16,12 @@
  */
 import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { areaWord, placeWord } from "./lang8";
-import { ordWord, ordWordsOf, ordinalsAt } from "./ord8";
+import { cardinalWord, ordWord, ordWordsOf, ordinalsAt } from "./ord8";
 import { ownReport } from "./ownreport8";
 import { isEnglishWord } from "../english";
 import { outsideIn } from "../outside";
 import { AREA_WORDS } from "../areas";
-import { CAT_ALIASES, ZONES } from "../lexicon";
+import { CAT_ALIASES, ZONE_NAMES, ZONES } from "../lexicon";
 
 /** what the Collector says short for a name the headlines spell out: each must be in the headline, all its words */
 const SAYS_FOR: Record<string, string[]> = { cm: ["chief", "minister"], hc: ["high", "court"], sc: ["supreme", "court"], dmk: ["dmk"], gcc: ["corporation"],
@@ -81,14 +81,23 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
   "aachu achu aacha aachaa ennaachu ennachu nadandha nadantha nadandhadhu nadanthathu nadandhathu nadandhuchu nadanthuchu nadandhurukku nadanthirukku " +
   "sambavam sambhavam sambavathai sambavatha edhavadhu ethavathu edhachum ethachum edhaavadhu vandhucha vandhuchu vanthucha vanthuchu vandhurukka vandhurukku " +
   "konjam pathina patthina paththina pathiya pathuna pathunna sambandhamana sammandhamana thodarbana kuritha kurithu onnu onna onnai ondru adha idha adhai idhai " +
-  "aana oru solreengala sollreengala sollungalen padingalen kaattungalen he she hes shes they theyre im").split(/\s+/));
+  "aana oru solreengala sollreengala sollungalen padingalen kaattungalen he she hes shes they theyre im " +
+  // v10 dev2: a matter recalled ("that X thing", "andha X vishayam"), someone or no one, a hearsay's own words, and a saying verb's question forms
+  // ("condolence sonnaangala", did they say): the request's words, never its topic
+  "vishayam visayam vishayatha vishayathai matter stuff someone somebody nobody anyone anybody everyone yaaro yaarum yaarumae yaarume edho etho " +
+  "heard apparently seems sonnaangala sonnangala sonnaangalaa sonnaanga sonnanga sonnaaru sonnaru sonnaara sonnaaraa sonnar solliyirukkaanga solliyirukaanga " +
+  "sollirukaanga solliyirukkaaru solliyirukaaru sollirukaaru arivichaangala arivichaanga arivichaaru therivichaangala therivichaanga therivichaaru " +
+  // (dA-news-6: whether something is coming, "another", "new", "how much", and the verb "converting" ("kadal thanniya ... maathura innoru project
+  // varudhaa? thanni evlo kammi?"): the question's own words; "maathura" read as a place, Mathur, vetoed the very story asked about)
+  "coming innoru inoru innonnu pudhu pudhusa pudhusaa puthu puthusa evlo evvalavu evalavu evalo yevlo evvalo varudhaa varudha varuthaa varutha varuma " +
+  "varumaa varudhu varuthu varapogudhaa varapoguthaa varapogudhu varapoguthu maathura maathuradhu maathurathu maaththura maathuraanga maathuvaanga").split(/\s+/));
 
 // (v10: and the press's English said in Tamil letters, as Whisper writes it: நியூஸ், ஆர்டிகிள், ஹெட்லைன், ஸ்டோரி, ரிப்போர்ட், பேப்பர்: v9's blind set,
 // "புழல் ஜெயில் நியூஸ் படிங்க" made no news request at all)
 // (v10 review 2, round 2, news-4b: each without its closing virama, so any ending glued on is still the word: ஹெட்லைனை, ஆர்டிகிளை, not "hetlainai")
 const TA_LOAN_NEWS = "நியூஸ|ஆர்டிகிள|ஆர்ட்டிக்கிள|ஹெட்லைன|ஸ்டோரி|ரிப்போர்ட|பேப்பர";
 const NEWS_NOUN = new RegExp(String.raw`\b(?:news|story|stories|article|piece|report|headline|coverage|seithi|seidhi|seythi|sethi)\b|செய்தி|சேதி|கட்டுரை|${TA_LOAN_NEWS}`, "iu");
-const STORY_VERB = /\b(?:open|read|play|brief me|tell me|tell us|explain|summari[sz]e|sum up|go through|pull up|show me)\b|\b(?:padi|padinga|padiunga|sollu|sollunga|open pannu|open pannunga|kaattu|kaattunga|thira|thiranga)\b|திற|படி|சொல்|காட்டு|விளக்கு/iu;
+const STORY_VERB = /\b(?:open|read|play|brief me|tell me|tell us|explain|summari[sz]e|sum up|go through|pull up|show me)\b|\b(?:padi|padinga|padiunga|sollu|sollunga|open pannu|open pannunga|kaattu|kaattunga|thira|thiranga)\b|திற|படி|சொல்|காட்டு|விளக்கு|ஓபன்|ஓப்பன்|ரீட்/iu;
 const ASK_EN = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:any|is there (?:any|anything)|anything|what(?:'s| is| are)? the (?:latest|news|update|story)|what(?:'s| is) (?:new|happening|the latest)|what (?:are|do|did|does) (?:the )?(?:papers|newspapers|media|press|news|reports?|outlets?)|latest|what happened (?:at|to|with|in)|any (?:update|word))\b/i;
 // (v10: நியூஸ் beside செய்தி, the spoken பத்தி beside பற்றி, and "என்ன நியூஸ் இருக்கு")
 const ASK_TA = /(?:பற்றி|குறித்து|பத்தி)\s*(?:ஏதாவது|என்ன)?\s*(?:செய்தி|சேதி|நியூஸ்)|(?:செய்தி|சேதி|நியூஸ்)(?:யில்|ல|களில்|ஸ்ல|்ல)?\s*(?:என்ன|ஏதாவது)|(?:செய்தி|சேதி|நியூஸ்)\s*(?:இருக்கா|இருக்கிறதா|உண்டா|வந்திருக்கா)|என்ன\s*(?:செய்தி|சேதி|நியூஸ்)\s*(?:இருக்கு|வந்திருக்கு|வந்துச்சு)/u;
@@ -329,7 +338,13 @@ const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அ
  * tree is not three, plane is not plan). Left out: a Tanglish spelling that is another Tamil word ("palli" is a school and half of Pallikaranai),
  * and theft, mosquitoes and power cuts' "current" (the blind set's helper named "thiruttu", "kosu" and "current" in its report).
  */
-interface Gloss { ta?: string[]; taExact?: string[]; tg?: string[]; en: string[] }
+interface Gloss { ta?: string[]; taExact?: string[]; tg?: string[]; en: string[];
+  /** v10 dev2: more Tamil words a Tamil headline uses for it (a prefix of the headline's word, or its compound's second part) */
+  taHead?: string[];
+  /** v10 dev2: English words a headline may use for it, for a request in any language ("weekend": Saturday, Sunday) */
+  enAlso?: string[];
+  /** v10 dev2: never given to an English request word (its English is another everyday sense: "plant" is no planting) */
+  noRev?: boolean }
 const GLOSS8: Gloss[] = [
   { ta: ["வெட்டிக்", "வெட்டிப்", "வெட்டப்"], taExact: ["வெட்டு", "வெட்டி"], tg: ["vettu"], en: ["hack", "slash", "sickle"] },
   { ta: ["குத்திக்", "குத்தப்"], taExact: ["குத்து", "குத்தி"], tg: ["kuthu", "kutthu"], en: ["stab"] },
@@ -342,11 +357,13 @@ const GLOSS8: Gloss[] = [
   { ta: ["காலிக்குட", "காலிக்கும"], tg: ["kaalikudam", "kalikudam"], en: ["empty", "pot"] },
   { ta: ["வெடிவிபத்", "வெடிப்பு", "வெடித்து", "வெடித்த", "வெடிகுண்டு"], tg: ["vedi", "vedippu"], en: ["blast", "explosion", "explode", "bomb"] },
   { ta: ["தற்கொலை"], tg: ["tharkolai", "tarkolai"], en: ["suicide"] },
-  { ta: ["மரண", "உயிரிழ", "சாவு", "பலியா"], taExact: ["பலி"], tg: ["maranam"], en: ["death", "dead", "die", "kill"] },
+  // (v10 dev2: and a public figure's death as Tamil headlines say it, மறைவு, காலமானார்: "the Kolathur MLA's death")
+  { ta: ["மரண", "உயிரிழ", "சாவு", "பலியா", "மறைவ", "காலமான"], taExact: ["பலி"], tg: ["maranam", "maraivu", "kaalamaanaar", "kalamanar"], en: ["death", "dead", "die", "kill"] },
   { ta: ["மோசடி"], tg: ["mosadi"], en: ["fraud", "scam", "cheat", "dupe"] }, { ta: ["கஞ்சா"], tg: ["ganja", "kanja"], en: ["ganja", "cannabis"] },
   { ta: ["போதை"], tg: ["bodhai", "bothai"], en: ["drug", "narcotic"] }, { ta: ["மழை"], tg: ["mazhai", "mazha"], en: ["rain", "rainfall", "downpour", "shower"] },
   { ta: ["வெள்ளம்", "வெள்ளத்", "வெள்ளப்", "வெள்ளநீர்"], tg: ["vellam"], en: ["flood", "inundate", "waterlog", "waterlogging"] },
-  { ta: ["புயல்"], tg: ["puyal"], en: ["cyclone"] }, { ta: ["குடிநீர்"], tg: ["kudineer", "kudinir"], en: ["drinking", "water"] },
+  // (v10 dev2, dA-news-6: and drinking water said in two words, குடிதண்ணி, "kudi thanni": PAIR8)
+  { ta: ["புயல்"], tg: ["puyal"], en: ["cyclone"] }, { ta: ["குடிநீர்", "குடிதண்ணி", "குடித்தண்ணி", "குடிதண்ணீர", "குடித்தண்ணீர"], tg: ["kudineer", "kudinir", "kudithanni", "kudithanniya", "kudithanneer"], en: ["drinking", "water"] },
   { ta: ["தட்டுப்பாடு"], tg: ["thattuppadu", "thattupaadu", "thattupadu"], en: ["shortage", "scarcity"] },
   { ta: ["கழிவுநீர்", "சாக்கடை"], tg: ["kazhivuneer", "saakkadai", "sakkadai"], en: ["sewage", "sewer", "sewerage"] },
   { ta: ["குப்பை"], tg: ["kuppai"], en: ["garbage", "waste", "trash", "dump"] }, { ta: ["மின்தடை", "மின்வெட்டு"], tg: ["mintadai", "minthadai", "minvettu"], en: ["shutdown", "outage"] },
@@ -360,7 +377,7 @@ const GLOSS8: Gloss[] = [
   // a form, both in the headline, or its short name)
   { ta: ["உயர்நீதிமன்ற", "உயர்நீதிமன்றம"], en: ["high court", "hc"] }, { ta: ["உச்சநீதிமன்ற", "உச்சநீதிமன்றம"], en: ["supreme court", "sc", "apex court"] },
   { ta: ["நீதிமன்ற"], en: ["court"] }, { ta: ["கோயில", "கோவில"], tg: ["kovil", "koil"], en: ["temple"] },
-  { ta: ["தேர்தல"], tg: ["therthal"], en: ["election", "poll"] }, { ta: ["விமான"], tg: ["vimanam"], en: ["flight", "plane", "aircraft"] },
+  { ta: ["தேர்தல", "இடைத்தேர்தல"], tg: ["therthal", "idaitherthal", "idaitherdhal"], en: ["election", "poll", "bypoll", "byelection"] }, { ta: ["விமான"], tg: ["vimanam"], en: ["flight", "plane", "aircraft"] },
   { taExact: ["பள்ளி", "பள்ளியில்", "பள்ளிகள்", "பள்ளிக்கு", "பள்ளியின்", "பள்ளிகளில்"], en: ["school"] },
   { ta: ["அமைச்ச"], en: ["minister"] }, { ta: ["ஆட்சியர"], en: ["collector"] },
   // v10: words a Tamil request about an English headline says in Tamil or Tamil letters (a vaccine, a jail, the police, a bus stop, a hospital)
@@ -370,13 +387,25 @@ const GLOSS8: Gloss[] = [
   { ta: ["மருந்"], tg: ["marundhu", "marunthu"], en: ["drug", "medicine"] },
   { ta: ["கடத்த", "கடத்தல்"], tg: ["kadathal", "kadathu", "kadatha"], en: ["smuggle", "smuggling", "kidnap", "abduct"] },
   { ta: ["மரக்கன்", "மரக்கண்"], tg: ["marakkannu", "marakandru", "marakkandru"], en: ["sapling"] },
-  { ta: ["நடுற", "நடும்", "நட்ட", "நடவு", "நடப்பட்ட"], tg: ["naduradhu", "nadurathu"], en: ["plant", "planting"] },
+  { ta: ["நடுற", "நடும்", "நட்ட", "நடவு", "நடப்பட்ட"], tg: ["naduradhu", "nadurathu"], en: ["plant", "planting"], noRev: true },
   { ta: ["போலீஸ்", "போலீசார்", "காவல்துறை"], tg: ["police", "polees", "poleesu"], en: ["police", "cop", "cops"] },
   { ta: ["ஆஸ்பத்திரி", "மருத்துவமனை", "ஹாஸ்பிடல்"], tg: ["aaspathiri", "aspathiri", "hospital"], en: ["hospital"] },
   { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] },
   // (v10 review 2, round 2, news-10: a legal case, "பள்ளிக்கரணை வழக்கு", "Senthil Balaji valakku"; not வழக்கறிஞர், a lawyer; as headlines say
   // one: a court, the HC or SC, a petition, a plea, a hearing, a verdict)
-  { ta: ["வழக்கு"], taExact: ["வழக்கை", "வழக்கைப்", "வழக்கைத்", "வழக்கில்", "வழக்கின்", "வழக்கிலும்"], tg: ["valakku", "vazhakku", "valakkil", "vazhakkil", "valakka", "vazhakka"], en: ["case", "lawsuit", "court", "hc", "sc", "petition", "petitioner", "plea", "hearing", "verdict"] }
+  { ta: ["வழக்கு"], taExact: ["வழக்கை", "வழக்கைப்", "வழக்கைத்", "வழக்கில்", "வழக்கின்", "வழக்கிலும்"], tg: ["valakku", "vazhakku", "valakkil", "vazhakkil", "valakka", "vazhakka"], en: ["case", "lawsuit", "court", "hc", "sc", "petition", "petitioner", "plea", "hearing", "verdict"] },
+  // v10 dev2 (dA-news-1, dA-names-12): a weekend as a Tamil headline names its days; a condolence (இரங்கல்)
+  { ta: ["வீக்கெண்ட", "வாரஇறுதி"], tg: ["weekend", "weekendu", "vikkend", "weekendla"], en: ["weekend"], taHead: ["சனிக்கிழமை", "ஞாயிற்றுக்கிழமை", "ஞாயிறு", "வார இறுதி"], enAlso: ["saturday", "sunday"] },
+  { ta: ["இரங்கல"], tg: ["irangal"], en: ["condolence", "condole", "condoles", "condoled", "mourn"] },
+  // (dA-news-10: கார்ப்பரேஷன், the corporation in Tamil letters, is the மாநகராட்சி a Tamil headline names)
+  { ta: ["கார்ப்பரேஷன", "மாநகராட்சி"], tg: ["karporation", "korporation", "corporashan", "maanagaraatchi", "managaratchi", "maanagaratchi"], en: ["corporation", "gcc"] },
+  // (dA-news-6: water, as said, தண்ணி / "thanni", never நீர் inside another word (மழைநீர், கழிவுநீர் are their own); a shortfall, கம்மி / "kammi",
+  // பற்றாக்குறை, and its English words for one another ("water shortfall" is the "water deficit" headline); a plan or a project, திட்டம் / "thittam"
+  // (not திட்டு, a scolding))
+  { ta: ["தண்ணீர", "தண்ணி"], taExact: ["நீர்", "நீரை", "நீரில்", "நீரின்"], tg: ["thanni", "thanniya", "thannikku", "thannila", "thanneer", "thannir", "thannee", "tanni", "tanniya"], en: ["water"] },
+  { ta: ["பற்றாக்குறை", "கம்மி"], tg: ["kammi", "pattrakkurai", "patrakurai", "patrakkurai", "pathaakurai", "pathakurai", "paththaakurai"], en: ["deficit", "shortfall", "shortage", "scarcity"],
+    enAlso: ["deficit", "shortfall", "shortage", "scarcity"] },
+  { ta: ["திட்டம", "திட்டத்", "திட்டங்க", "திட்டமி"], tg: ["thittam", "thittamum", "thittatha", "thittathai", "thitam", "thittangal"], en: ["project", "scheme", "plan", "proposal"] }
 ];
 /**
  * v9: an event a soft request names, in the words headlines use for it ("the Pattinapakkam honking attack" is "Man hacked after dispute over
@@ -411,7 +440,19 @@ const englishForms = (w: string): string[] => {
   if (w.endsWith("y")) out.push(w.slice(0, -1) + "ies");
   return out;
 };
-const GLOSS_FORMS = new Map<Gloss, Set<string>>(GLOSS8.map((g) => [g, new Set(g.en.flatMap(englishForms))]));
+const GLOSS_FORMS = new Map<Gloss, Set<string>>(GLOSS8.map((g) => [g, new Set([...g.en, ...(g.enAlso ?? [])].flatMap(englishForms))]));
+/**
+ * v10 dev2: the Tamil words a Tamil headline uses for an entry, as headline forms: each listed stem a prefix of the headline's word (or the second
+ * part of its compound, இடைத்தேர்தல் for தேர்தல்), each exact form marked "=" (matched whole). A Tamil headline was reached only by a word's sound:
+ * "election" never found இடைத்தேர்தல், nor "கரண்ட் கட்" (current cut) மின்தடை (dA-names-4, dA-news-1).
+ */
+const TA_FORMS = new Map<Gloss, string[]>(GLOSS8.map((g) => [g, [...new Set([...(g.ta ?? []), ...(g.taExact ?? []).map((w) => `=${w}`), ...(g.taHead ?? [])])]]));
+/** the English forms an English request word has in the glosses (every entry that lists it: "drug" is போதை and மருந்து) */
+const BY_ENGLISH = (() => {
+  const m = new Map<string, Gloss[]>();
+  for (const g of GLOSS8) if (!g.noRev) for (const f of new Set(g.en.flatMap(englishForms))) if (/^[a-z]+$/.test(f)) m.set(f, [...(m.get(f) ?? []), g]);
+  return m;
+})();
 /** the gloss of one word as said: a Tamil word by its own letters (an exact form, else a listed stem it begins with), a Latin word by its spelling */
 const glossOfWord = (raw: string): Gloss | null => {
   const ta = raw.replace(/[^஀-௿]/gu, "");
@@ -419,17 +460,71 @@ const glossOfWord = (raw: string): Gloss | null => {
   const lw = raw.toLowerCase().replace(/[^a-z]/g, "");
   return lw ? GLOSS8.find((g) => g.tg?.includes(lw)) ?? null : null;
 };
-/** each topic word with a gloss, by the word as said: its English forms */
+/** v10: a word the news reads as a topic (a gloss of its own: கோயில், திருட்டு, தீ, "kovil"): an everyday word, never part of a name (entity10.ts) */
+export const topicGlossed = (raw: string): boolean => !!glossOfWord(raw);
+/**
+ * v10 dev2 (dA-news-1): two words that name one thing together, each glossed for its part: a power cut as said in English, Tanglish and Tamil
+ * letters ("power cut", "current cut", "கரண்ட் கட்", "பவர் கட்", "மின் தடை"): the power word is the power's (மின்சாரம், மின் alone), the cut word
+ * the cut's (மின்தடை, மின்வெட்டு, outage, shutdown). Never one word alone: "கட்" is any cut, "current" any current, மின் திருட்டு (power theft) no cut.
+ */
+const PAIR8: { a: RegExp; b: RegExp; aForms: string[]; bForms: string[]; /** words apart at most, either order (default: a right before b) */ win?: number }[] = [
+  { a: /^(?:power|current|karant|karent|electricity|eb|கரண்ட்|கரன்ட்|பவர்|மின்|மின்சார|மின்சாரம்)$/u, b: /^(?:cut|cuts|kat|katt|cutt|outage|outages|shutdown|shutdowns|கட்|கட்டு|வெட்டு|தடை|நிறுத்தம்)$/u,
+    aForms: ["power", "electricity", "மின்தடை", "மின்வெட்டு", "மின்சார", "மின்வாரிய", "மின்நிறுத்த", "மின்விநியோக", "=மின்"],
+    bForms: [...["cut", "outage", "shutdown", "disruption"].flatMap(englishForms), "மின்தடை", "மின்வெட்டு", "மின்நிறுத்த", "மின் தடை", "மின் வெட்டு", "மின் நிறுத்தம்"] },
+  // (dA-news-10: land grabbed, "இடத்தை யாரோ வளைச்சுப் போட்டுட்டாங்க", "idatha valachu", "grabbed corporation land": an encroachment, ஆக்கிரமிப்பு; the
+  // place word alone is any place, the verb alone any bend)
+  { a: /^(?:land|lands|plot|plots|site|idam|idatha|idathai|idaththa|idaththai|nilam|nilatha|nilathai|இடம்|இடத்தை|இடத்த|இடத்தைப்|நிலம்|நிலத்தை|நிலத்த)$/u,
+    b: /^(?:grab|grabbed|grabbing|encroach|encroached|encroaching|occupied|occupy|valachu|valaichu|valachitaanga|valaichitaanga|aakiramippu|aakramippu|வளைச்சு|வளைச்சுப்|வளைத்து|வளைத்துப்|ஆக்கிரமிப்பு|ஆக்கிரமித்து|ஆக்கிரமிச்சு)$/u,
+    aForms: [...["land", "plot", "site"].flatMap(englishForms), "நிலம", "நிலத்", "இடம்", "இடத்"],
+    bForms: [...["encroach", "grab", "occupy"].flatMap(englishForms), "encroachment", "encroachments", "occupied", "ஆக்கிரமி", "ஆக்கிரமிப்ப"], win: 3 },
+  // (dA-news-6: drinking water said in two words, "kudi thanni", "குடி தண்ணீர்": குடிநீர்; "kudi" alone is any drink)
+  { a: /^(?:kudi|kudikkira|kudikkura|kudikka|குடி|குடிக்கிற|குடிக்கும்|குடிக்கற)$/u, b: /^(?:thanni\w*|thanneer\w*|tanni\w*|neer|neeru|தண்ணி\S*|தண்ணீர\S*|தண்ணீர்|நீர்|நீரு|நீரா|நீராக)$/u,
+    aForms: ["drinking", "குடிநீர"], bForms: ["water", "waters", "குடிநீர"] }
+];
+/**
+ * v10 dev2 (dA-news-6): a thing said by what it does, in a phrase, as people describe a project they do not know the name of: sea water made
+ * drinking water is desalination ("kadal thanniya kudi thanniya maathura", "கடல் தண்ணியை குடிதண்ணியா மாத்துற", "turns sea water into drinking
+ * water", "desalination"). Each request word in the phrase takes the forms a headline uses ("desal plant", "கடல்நீரை குடிநீராக்கும்"). Never sea water
+ * alone (the surge's "கடல்நீர் புகுந்தது", "kadal thanni road-la"), never drinking water alone.
+ */
+const PHRASE8: { re: RegExp; forms: string[] }[] = [
+  { re: new RegExp([
+    String.raw`\b(?:turn|turns|turning|turned|convert|converts|converting|converted|treat|treats|treating|purify|purifies|purifying)\s+(?:the\s+)?(?:sea|salt|saline)\s*-?\s*water(?:\s+(?:in)?to\s+(?:drinking|potable|fresh|usable)\s+water)?`,
+    String.raw`\b(?:sea|salt|saline)\s*-?\s*water\s+(?:in)?to\s+(?:drinking|potable|fresh)\s+water`, String.raw`\bdesal\w*`,
+    String.raw`\bkadal\s*(?:thanni\w*|thanneer\w*|tanni\w*|neer\w*)\s+(?:\S+\s+)?(?:kudi\s*(?:thanni\w*|thanneer\w*|tanni\w*|neer\w*)|kudineer\w*|kudinir\w*)`,
+    String.raw`கடல்\s*(?:தண்ணி|தண்ணீர|நீர)\S*\s+(?:\S+\s+)?(?:குடி\s*(?:தண்ணி|தண்ணீர|நீர)|குடித்தண்ணி|குடிநீர)\S*`, String.raw`கடல்நீரை\s+குடிநீராக்க\S*`].join("|"), "giu"),
+    forms: [...["desal", "desalinate", "desalination", "desalinisation", "desalinization"].flatMap(englishForms), "=கடல்நீரை", "குடிநீராக்க", "உப்புநீக்க"] }
+];
+const pairWord = (raw: string) => raw.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{M}]/gu, "");
+/** each topic word with a gloss, by the word as said: its English forms (v10 dev2: and the Tamil words a Tamil headline uses for it; an English
+ * word, the Tamil words of every entry that lists it) */
 const glossesOf = (text: string, words: string[]): Record<string, string[]> | null => {
   const out: Record<string, string[]> = {};
+  const add = (raw: string, forms: string[]) => { for (const t of tokensOf(raw)) if (words.includes(t) && forms.length) out[t] = [...new Set([...(out[t] ?? []), ...forms])]; };
   for (const raw of text.split(/\s+/)) {
     const g = glossOfWord(raw);
-    if (!g) continue;
+    if (!g) {
+      // (v10 dev2: an English word: the Tamil a Tamil headline has for it, and the English it may use besides)
+      const lw = /[஀-௿]/u.test(raw) ? "" : raw.toLowerCase().replace(/[^a-z]/g, "");
+      for (const e of (lw && BY_ENGLISH.get(lw)) || []) add(raw, [...TA_FORMS.get(e)!, ...(e.enAlso ?? []).flatMap(englishForms)]);
+      continue;
+    }
     // v10 (the second review of v9): a word with another sense beside its context words: வெட்டு / "vettu" with a road or the power is a cut, not
     // a hacking; வெடி / "vedi" with Deepavali or a shop is crackers, not a bomb
     const alt = SENSES.find((x) => x.of(g) && x.near.test(text));
-    for (const t of tokensOf(raw)) if (words.includes(t)) out[t] = alt ? alt.en.flatMap(englishForms) : [...GLOSS_FORMS.get(g)!];
+    add(raw, alt ? alt.en.flatMap(englishForms) : [...GLOSS_FORMS.get(g)!, ...TA_FORMS.get(g)!]);
   }
+  const raws = text.split(/[\s-]+/);
+  const pw = raws.map(pairWord);
+  for (const p of PAIR8) {
+    for (let i = 0; i < raws.length; i++) for (let j = i + 1; j < raws.length && j <= i + (p.win ?? 1); j++) {
+      if (p.a.test(pw[i]) && p.b.test(pw[j])) { add(raws[i], p.aForms); add(raws[j], p.bForms); }
+      else if (p.win && p.b.test(pw[i]) && p.a.test(pw[j])) { add(raws[i], p.bForms); add(raws[j], p.aForms); }
+    }
+  }
+  // (v10 dev2: a thing said by what it does: every request word in the phrase)
+  const nfc = text.normalize("NFC");
+  for (const p of PHRASE8) for (const m of nfc.matchAll(p.re)) for (const raw of m[0].split(/[\s-]+/)) add(raw, p.forms);
   return Object.keys(out).length ? out : null;
 };
 const SENSES: { of: (g: Gloss) => boolean; near: RegExp; en: string[] }[] = [
@@ -446,9 +541,11 @@ const SENSES: { of: (g: Gloss) => boolean; near: RegExp; en: string[] }[] = [
  * (மிரண்டு); not -ந்து, -ட்டு, -த்து or -ச்சு, which end as many nouns (பேருந்து, மின்வெட்டு, விபத்து, பேச்சு: the review, 19 Nov). Tanglish in small
  * letters: -ndu, -chu ("mirandu"), no English word and no place. Never a word with a gloss or an event's own word.
  */
-const TA_VERBISH = /(?:ின|ிய|ந்த|ட்ட|த்த|ன்ன|ச்ச|ண்டு|ாங்க|ாங்களாம்|ாராம்|ானாம்|ிட்டாங்க|ிருக்காங்க|ாங்களே|ாங்களா|ாங்களாமே)$/u;
+// (v10 dev2: and a hearsay's negative and perfect forms, கண்டுக்கலையாமே, போட்டிருக்காமே: "no one cared, it seems")
+const TA_VERBISH = /(?:ின|ிய|ந்த|ட்ட|த்த|ன்ன|ச்ச|ண்டு|ாங்க|ாங்களாம்|ாராம்|ானாம்|ிட்டாங்க|ிருக்காங்க|ாங்களே|ாங்களா|ாங்களாமே|லையாமே|லையாம்|லியாமே|லியாம்|க்காமே|க்காம்)$/u;
 const TA_NOT_VERB = /^(?:வெடி)?குண்டு$|^(?:துண்டு|வண்டு|ரவுண்டு)$/u;
-const TG_VERBISH = /^[a-z]{3,}(?:ndu|chu|cchu)$/;
+// (v10 dev2: and a Tanglish hearsay, "pottutaangalaam", "kandukkalaiyaame")
+const TG_VERBISH = /^[a-z]{3,}(?:ndu|chu|cchu|aangalaam|aangalaame|alaiyaam|alaiyaame|aaraam|aaraame)$/;
 const TG_NOT_VERB = new Set(["gundu", "kundu", "thundu", "vandu", "pechu", "moochu", "pochu"]);
 const weakWords = (text: string): string[] => [
   ...(text.match(/[஀-௿]+/gu) ?? []).filter((w) => TA_VERBISH.test(w) && !TA_NOT_VERB.test(w) && !glossOfWord(w) && !EVENT.test(w)).flatMap((w) => tokensOf(w)),
@@ -459,9 +556,20 @@ const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(
 
 /** v10: the press's English in Tamil letters, with any ending glued on (நியூஸை, நியூஸ்ல, நியூஸ்ஸ, ஹெட்லைன்ஸ், ரிப்போர்ட்டை): the request's own word */
 const TA_LOAN_OWN = new RegExp(String.raw`^(?:${TA_LOAN_NEWS}|பேனல்|பேஜ்|டேப்)`, "u");
+/** v10 dev2 (dA-screenRef-5): the English verbs said in Tamil letters, and the spoken "do" after them (ஓபன் பண்ணு, ரீட் பண்ணுங்க, ப்ளே பண்ணு):
+ * the request's own words; "opan" was a topic word no story has, and capped the Kasimedu story as a place alone. (பண்ணு, பண்ணி with any ending;
+ * never பண்ணை, a farm) */
+export const TA_LOAN_VERB = /^(?:ஓபன்|ஓப்பன்|ஓபென்|ரீட்|ரீடு|ரீடிங்|ப்ளே|பிளே|ஷோ|க்ளோஸ்|பண்ணு\S*|பண்ணி\S*)$/u;
+/** v10 dev2: a matter recalled (விஷயம்), someone or no one (யாரோ, யாரும்), the zone said in Tamil letters (ஜோன்), and a saying verb (சொன்னாங்களா, did they
+ * say; அறிவிச்சாங்க, announced): the request's own words */
+// (dA-news-6: and whether something is coming, another, new, how much, converting: வருதா, வருமா, இன்னொரு, புது, எவ்வளவு, மாத்துற)
+const TA_ASK_OWN = /^(?:விஷயம்|விஷயத்த\S*|விசயம்|விசயத்த\S*|யாரோ|யாரும்|யாருமே|யாராவது|ஏதோ|ஜோன்\S*|சொன்ன\S*|சொல்லியிருக்க\S*|சொல்லிருக்க\S*|அறிவிச்ச\S*|தெரிவிச்ச\S*|வருதா|வருமா|வருகிறதா|வரப்போகுதா|வரப்போகிறதா|வருது|வரப்போகுது|இன்னொரு|இன்னொன்று|புது|புதுசா|புதிதாக|எவ்வளவு|எவ்ளோ|எவ்வளோ|மாத்துற|மாத்தும்|மாத்துறது|மாற்றும்|மாற்றுகிற|மாற்றக்கூடிய)$/u;
+/** v10 dev2 (dA-news-6): a question's frame for an amount or a degree ("how big is the water shortfall", "how bad", "how much"), or for a plan ("are
+ * they building a new ..."): not the topic */
+const HOW_FRAME = /\bhow\s+(?:big|bad|serious|severe|large|huge|much|many|long|far|short|deep|high|low)\b|\b(?:is|are|will)\s+(?:there|they|the government|the state)\s+(?:be\s+)?(?:planning|building|setting up|bringing|getting|adding)\b/giu;
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  const t = text.normalize("NFC").split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !TA_LOAN_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
+  const t = text.normalize("NFC").replace(HOW_FRAME, " ").split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !TA_LOAN_OWN.test(ta) && !TA_LOAN_VERB.test(ta) && !TA_ASK_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
   let toks = outletToks(t);
   // the outlet's own words are not the topic (found again on these words: the same reader as outletIn's)
   if (outlet) { const r = outletRun(toks); if (r && r.name === outlet) toks = [...toks.slice(0, r.i), ...toks.slice(r.i + r.n)]; }
@@ -480,13 +588,44 @@ export function namingWords(text: string, words: string[]): { event: string[]; w
   return { event: words.filter((w) => eventToks.has(w)), which: words.filter((w) => !eventToks.has(w) && !placeByEar(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w)) };
 }
 
+/** v10 dev2 (dA-names-3): a thing recalled, "that X thing, what was it", "what was that X business", "andha X vishayam enna", "அந்த X விஷயம் என்ன" */
+const RECALL = new RegExp(String.raw`\b(?:that|the)\s+[\p{L}\p{M}\s.'’-]{3,60}?\s+(?:thing|business|matter|affair|stuff|episode)\b[\s\S]{0,30}\bwhat\s+(?:was|is|'s)\s+(?:it|that|this)\b|`
+  + String.raw`\bwhat\s+(?:was|is|'s)\s+(?:that|the)\s+[\p{L}\p{M}\s.'’-]{3,60}?\s+(?:thing|business|matter|affair|stuff|episode)\b|`
+  + String.raw`\b(?:andha|antha)\s+[\p{L}\p{M}\s.'’-]{3,60}?\s+(?:vishayam|visayam|matter|thing)\s*(?:enna|ennachu|enna\s+aachu|ennadhu)\b|`
+  + String.raw`(?:அந்த|அந்தச்)\s+[\p{L}\p{M}\s.'’-]{3,60}?\s+(?:விஷயம்|விசயம்|மேட்டர்)\S*\s*(?:என்ன|என்னாச்சு)`, "iu");
+/** v10 dev2 (dA-names-12): whether a public figure said or did something, asked as Tamil, Tanglish and English ask it ("... condolence sonnaangala", "... இரங்கல்
+ * சொன்னாங்களா?", "did the Muslim League condole ...") */
+const SAY_Q = /\b(?:sonn?aa?ng?(?:k)?a?l?aa?|sonnaa?raa?|sonnaa?ru|solli(?:yi)?ru(?:k)?kaa?(?:nga|ru)|arivichaa?(?:ngala|nga|ru)|therivichaa?(?:ngala|nga|ru))\b|சொன்னாங்களா|சொன்னாரா|சொல்லியிருக்கா|சொல்லிருக்கா|அறிவிச்சாங்க|தெரிவிச்சாங்க|\bdid\s+(?!i\b|you\b|we\b)[\p{L}\s.'’-]{2,60}?\b(?:condole|announce|express|issue|react|respond|comment|mourn|pay tribute)\b/iu;
+/** v10 dev2 (dA-news-10): a hearsay, as Tamil marks it on a verb (-ஆம், -ஆமே: போட்டுட்டாங்களாம், பாத்தாங்களாமே, போட்டிருக்காமே), Tanglish (pottaangalaam,
+ * pudichaangalaame) and English ("I heard", "apparently", "they say"); never the permissive -லாம் (போகலாம், we may go), a position (ஏழாம்), நாம் (we) */
+/** v10 dev2 (dA-news-6): whether a public project or plan is coming, asked as Tanglish, Tamil and English ask it ("innoru project varudhaa?", "இன்னொரு
+ * திட்டம் வருதா?", "is another plant coming", "are they planning a new desal plant"): a news question about it; the project is said in other words
+ * (found only when close). Never the weather's ("mazhai varuma": no project word), never the console's (SOFT_NOT) */
+const PLAN_Q = new RegExp([
+  String.raw`\b(?:projects?|plants?|schemes?|thittam\w*|thitam\w*|plan|plans)\s+(?:ethavathu\s+|edhavadhu\s+|ethachum\s+)?(?:varudhaa?|varuthaa?|varumaa?|varapogudhaa?|varapoguthaa?|varapogudhu|varapoguthu|varudhaam|varuthaam|podraangalaa?|poduraangalaa?|kondu\s*varaangalaa?|kondu\s*varraangalaa?)\b`,
+  String.raw`(?:திட்ட|ப்ராஜெக்ட்|பிராஜெக்ட்|ஆலை|பிளான்ட்)\S*\s+(?:ஏதாவது\s+)?(?:வருதா|வருமா|வருகிறதா|வரப்போகுதா|வரப்போகிறதா|வருதாம்|வரப்போகுது|கொண்டு\s*வராங்களா|கொண்டுவராங்களா)`,
+  String.raw`\b(?:another|a new|one more|a second|any new)\s+(?:[\p{L}-]+\s+){0,3}?(?:projects?|plants?|schemes?|facilit(?:y|ies))\s+(?:coming|planned|proposed|being planned|being built|being set up|in the pipeline|in the works|on the way|on the cards)\b`,
+  String.raw`\b(?:is|are|will)\s+(?:there|they|the government|the state|gcc|metrowater|metro water|cmwssb)\s+(?:be\s+)?(?:planning|building|setting up|bringing|getting|adding)\s+(?:another|a new|one more|a second)\b`].join("|"), "iu");
+const HEARSAY_EN = /\b(?:i heard|i've heard|i have heard|heard that|apparently|they say|people say|is it true)\b/i;
+const hearsay = (text: string): boolean => HEARSAY_EN.test(text)
+  || (text.match(/[஀-௿]+/gu) ?? []).some((w) => w.length >= 5 && /(?:ாம்|ாமே|ாமா)$/u.test(w) && !/(?:லாம்|லாமே|லாமா|கிராம்)$/u.test(w) && !/^(?:ஆமா|ஆமாம்|நாம்|நாமே|தாம்)$/u.test(w) && ordWord(w) == null)
+  || (text.toLowerCase().match(/[a-z]+/g) ?? []).some((w) => /^[a-z]{3,}(?:aam|aame|aamae|aamey|aamaa)$/.test(w) && !/(?:laam|laame|laamaa)$/.test(w));
+/** v10 dev2: a zone said by its number, "எட்டாவது ஜோன்", "8th zone", "zone 8", "zone number eight", "மண்டலம் 8": its name instead ("Anna Nagar"), for the news */
+const zoneNamed = (text: string): string => {
+  const name = (n: number | null) => (n != null && n >= 1 && n <= ZONE_NAMES.length ? ` ${ZONE_NAMES[n - 1]} ` : null);
+  return text
+    .replace(/(\S+)\s+(?:zone|ஜோன்|மண்டல)[\p{L}\p{M}-]*/giu, (m, w: string) => name(ordWord(w.toLowerCase().replace(/[^\p{L}\p{M}\p{N}]/gu, ""))) ?? m)
+    .replace(/(?:zone|ஜோன்|மண்டலம்)[\p{L}\p{M}-]*\s+(?:number\s+|no\.?\s*|நம்பர்\s+|எண்\s*)?([\p{L}\p{M}\p{N}]+)/giu, (m, w: string) => name(/^\d{1,2}$/.test(w) ? Number(w) : cardinalWord(w.toLowerCase())) ?? m);
+};
+
 /**
  * Is this a story asked for by its topic, or a news question? `o.onScreen`: news is on the screen (Jarvis's list or the console's panel), so
  * "the X one" means a story there. Null: not this lane's.
  */
 export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsReq | null {
   // (v9, the review: decomposed Tamil letters read as composed: the word lists below are written composed)
-  const text = raw.normalize("NFC").trim();
+  // (v10 dev2: a zone said by its number is its name, "எட்டாவது ஜோன்", "zone 8": Anna Nagar, as headlines name it)
+  const text = zoneNamed(raw.normalize("NFC").trim());
   if (!text || text.length > 400 || NEGATED.test(text)) return null;
   const outlet = outletIn(text);
   const consoleThing = CONSOLE.test(text) && !NEWS_NOUN.test(text);
@@ -508,17 +647,30 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   const theOne = ((!!xOne && !ordinalsAt(xOne[1]).length) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
   // v9: "open the Kodungaiyur empty pot protest", "the IOCL fire, open that": a story-like topic with no news word (soft: found only above
   // SOFT_FLOOR, else the console's own lanes take the sentence, as they did in v8)
-  const soft = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text) && !SOFT_MANY.test(text);
+  const softStory = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text) && !SOFT_MANY.test(text);
+  // v10 dev2: and a story asked about with no news word as people do (each found only when close, as a soft find is; the lanes behind take the rest):
+  // recalled ("that Sydapet court toilet thing, what was it", dA-names-3), a public figure's word or deed asked ("... condolence sonnaangala",
+  // dA-names-12), or a hearsay ("... வளைச்சுப் போட்டுட்டாங்களாம்", they grabbed it, it seems: dA-news-10). Not the console's own (SOFT_NOT), not many
+  const recall = RECALL.test(text);
+  // (and whether a public project is coming, "innoru project varudhaa?": dA-news-6)
+  const softAsk = !newsy && !theOne && !asks && !softStory && (recall || SAY_Q.test(text) || hearsay(text) || PLAN_Q.test(text)) && !SOFT_NOT.test(text) && !SOFT_MANY.test(text);
+  const soft = softStory || softAsk;
   if (!newsy && !theOne && !asks && !soft) return null;
   // at most 12 topic words (a request at the schema's 400 characters must not hold the server: the review, 19 Nov)
   const words = topicWords(text, outlet).slice(0, 12);
   // a soft request names which one: a word besides the event ("the protest" alone is the console's PUBLIC_ORDER view)
   if (soft) {
-    const { event, which } = namingWords(text, words);
-    if (!which.length || !event.length) return null;
+    const named = namingWords(text, words);
+    const { event } = named;
+    // (a soft ask needs no event word: a word that names the thing is enough; or two words or more, one of them no place, which name one thing
+    // together though each is a kind of thing or a place alone: "the Saidapet court toilet thing" (the High Court is a place of the district);
+    // "what was that drain thing" names nothing)
+    const plain = softAsk && !named.which.length && words.length >= 2 ? words.filter((w) => !placeByEar(w) && !/^\d+$/.test(w)) : [];
+    const which = named.which.length ? named.which : plain;
+    if (!which.length || (!event.length && !softAsk)) return null;
     const weak = weakWords(text).filter((w) => words.includes(w));
     const gloss = glossesOf(text, words);
-    return { kind: "story", words, outlet: null, ref: false, soft: true, event, which, ...(weak.length ? { weak } : {}), ...(gloss ? { gloss } : {}) };
+    return { kind: softAsk && !recall ? "ask" : "story", words, outlet: null, ref: false, soft: true, ...(event.length || !softAsk ? { event } : {}), which, ...(weak.length ? { weak } : {}), ...(gloss ? { gloss } : {}) };
   }
   // "read the second story", "open the news": no topic of its own (ordinals and the panel are other lanes')
   if (!words.length && !outlet) return null;
@@ -538,7 +690,9 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
 
 interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null; eng: boolean }[]>; latin: boolean;
   /** v9: its words as written (romanised, lower case): a gloss's English forms are looked up here */
-  raw: Set<string> }
+  raw: Set<string>;
+  /** v10 dev2: its Tamil words as written: a gloss's Tamil forms are looked up here */
+  ta: Set<string> }
 /** a story's words, keyed once (and kept for the next request: the same stored stories come back) */
 const docMemo = new Map<string, Doc>();
 /** a headline word's key, English stem and whether it is an English word, worked out once a word (v10: a week of new headlines is mostly the
@@ -572,7 +726,7 @@ const docOf = (x: StoryItem): Doc => {
     seen.add(e.k);
     const l = byFirst.get(e.k[0]); if (l) l.push(e); else byFirst.set(e.k[0], [e]);
   }
-  const d: Doc = { item: x, keys, byFirst, latin: !/[஀-௿]/u.test(x.title), raw: new Set(toks) };
+  const d: Doc = { item: x, keys, byFirst, latin: !/[஀-௿]/u.test(x.title), raw: new Set(toks), ta: new Set(`${x.title} ${x.titleEn ?? ""}`.normalize("NFC").match(/[஀-௿]+/gu) ?? []) };
   if (docMemo.size > 20_000) docMemo.clear();
   docMemo.set(memoKey, d);
   return d;
@@ -580,11 +734,15 @@ const docOf = (x: StoryItem): Doc => {
 
 /** one topic word, worked out once: its key, its stems' keys, its English stem, and (v9) its gloss's English forms (GLOSS8) */
 interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null; gloss: string[] | null;
+  /** v10 dev2 (dA-names-3): a "y" between consonants said "ai", as Indian spellings write it ("Sydapet" is Saidapet, "Mylapore" மயிலாப்பூர்): the key
+   * so said, else null */
+  ky: string | null;
   /** v10: a long English word (six letters or more): matched by its spelling, never by its consonants alone ("volcano" is not வழக்கின், both
    * v-l-k-n: the real store, 19 Nov); the consonants-only match is for a name heard by ear ("suprim") and a short word across scripts ("court") */
   engLong: boolean }
 const qOf = (w: string, gloss: string[] | null = null): QWord =>
   ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null, gloss,
+    ky: /^[a-z]{5,}$/.test(w) && /[^aeiouy]y[^aeiouy]/.test(w) && !isEnglishWord(w) ? looseKey(w.replace(/([^aeiouy])y(?=[^aeiouy])/g, "$1ai")) : null,
     engLong: w.length >= 6 && /^[a-z]+$/.test(w) && isEnglishWord(w) });
 
 /** a key's consonants and vowel runs, in order ("meyar" and "mayor" are both CVCVC; "pokso" is CVCCV, "puks", books, CVCC) */
@@ -593,6 +751,20 @@ const cvShape = (k: string): string => k.replace(/[aeiou]+/g, "V").replace(/[^V]
 /** a long name cut short by the ears ("Palikana" for Pallikaranai): the same first six letters or more, most of the shorter word */
 const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
 
+/** v10 dev2: a Tamil form in a Tamil headline: "=" a whole word; else a word it begins, or the second part of a compound, its first hard consonant
+ * doubled at the join (இடை-த்-தேர்தல்: தேர்தல் in இடைத்தேர்தலில்) */
+const TA_HARD = new Set(["க", "ச", "த", "ப"]);
+const TAMIL_FORM = /[஀-௿]/u;
+const taHas = (d: Doc, f: string): boolean => {
+  if (f.startsWith("=")) return d.ta.has(f.slice(1));
+  for (const w of d.ta) if (w.startsWith(f) || (TA_HARD.has(f[0]) && w.indexOf(`${f[0]}்${f}`, 1) > 0)) return true;
+  return false;
+};
+/** a gloss's form in a story: an English word (or two, both there) among its words; a Tamil one among its Tamil words (two: both whole) */
+const glossHit = (gloss: string[] | null, d: Doc): boolean => !!gloss && gloss.some((f) => (f.includes(" ")
+  ? f.split(" ").every((t) => (TAMIL_FORM.test(t) ? d.ta.has(t.replace(/^=/, "")) : d.raw.has(t)))
+  : TAMIL_FORM.test(f) ? d.ta.size > 0 && taHas(d, f) : d.raw.has(f)));
+
 /** how well one topic word is in one story: its best word, 0 below 0.8 (the memo holds each word pair's score across the stories) */
 function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
   // v10 (the second review of v9): a word of three letters or fewer (an acronym, said letter by letter or not: "gcc", "rss", "iit", "cm", "dri")
@@ -600,10 +772,11 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
   // "they"); its gloss still counts (தீ: fire)
   if (q.w.length <= 3) {
     if (d.raw.has(q.w) || (q.says && q.says.every((k) => d.keys.has(k)))) return 1;
-    return q.gloss && q.gloss.some((f) => (f.includes(" ") ? f.split(" ").every((t) => d.raw.has(t)) : d.raw.has(f))) ? 0.9 : 0;
+    return glossHit(q.gloss, d) ? 0.9 : 0;
   }
   if (d.keys.has(q.k)) return 1;
   if (q.says && q.says.every((k) => d.keys.has(k))) return 1;
+  if (q.ky && d.keys.has(q.ky)) return 0.95;
   let best = 0;
   for (const { k: tk, en: ten, eng } of d.byFirst.get(q.k[0]) ?? []) {
     const mk = `${q.k}|${tk}|${eng ? 1 : 0}|${q.engLong ? 1 : 0}`;
@@ -627,7 +800,8 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
   }
   // v9: the word's English in the headline, word for word ("vettu" in "Man hacked ...")
   // (v10: a form of two words counts when the headline has both: "high court", "supreme court")
-  if (best < 0.9 && q.gloss && q.gloss.some((f) => (f.includes(" ") ? f.split(" ").every((t) => d.raw.has(t)) : d.raw.has(f)))) best = 0.9;
+  // (v10 dev2: a Tamil form among a Tamil headline's words: glossHit)
+  if (best < 0.9 && glossHit(q.gloss, d)) best = 0.9;
   return best >= 0.8 ? best : 0;
 }
 
@@ -768,7 +942,8 @@ export interface Picked { pick: StoryItem | null; score: number; other: StoryIte
  * story within the margin is kept as `other` (said: "say 'the other one' for ..."), never a question back for a read: the Collector corrects a
  * named pick in two words (research 10, recs 5-7). `stories`: the distinct stories above the floor, best first (for a news question).
  */
-export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null, floor = FLOOR): Picked {
+export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null, floor = FLOOR,
+  /** v10 dev2 (dA-names-4): the outlet asked for ("what Daily Thanthi wrote"): within one event its own report leads */ outlet: string | null = null): Picked {
   const good = ranked.filter((r) => r.score >= floor && r.hits > 0);
   if (!good.length) return { pick: null, score: ranked[0]?.score ?? 0, other: null, close: false, stories: [] };
   const groups: Ranked[][] = [];
@@ -780,10 +955,15 @@ export function pickStory(ranked: Ranked[], lang: "en" | "ta" | null = null, flo
   // within one event: the report in the request's own language (an English request is not read a Tamil headline: the real run, 18 Nov), then
   // the one on screen, then the newest
   const inLang = (x: StoryItem) => (lang == null ? 0 : (/[஀-௿]/u.test(x.title) ? "ta" : "en") === lang ? 0 : 1);
-  const lead = (g: Ranked[]) => [...g].sort((a, b) => inLang(a.item) - inLang(b.item) || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")))[0];
+  const byOutlet = (x: StoryItem) => (outlet && !(x.outlets ?? []).some((o) => sameOutlet(o, outlet)) ? 1 : 0);
+  const lead = (g: Ranked[]) => [...g].sort((a, b) => byOutlet(a.item) - byOutlet(b.item) || inLang(a.item) - inLang(b.item) || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")))[0];
   // v10: two stories as close (within the margin), the one whose report is in the request's language leads (an English request about Cyclone
   // Akvan read a Tamil headline's story: the dry replay of the owner's turn, 19 Nov)
-  if (lang != null && groups[1] && groups[0][0].score - groups[1][0].score < MARGIN && inLang(lead(groups[0]).item) === 1 && inLang(lead(groups[1]).item) === 0) {
+  // (v10 dev2, dA-screenRef-5: never a story on the screen swapped for one off it: "அந்த காசிமேடு நியூஸ" over the panel is the panel's story, its
+  // headline shown in English or not)
+  const onScr = (g: Ranked[]) => lead(g).item.onScreen != null;
+  if (lang != null && groups[1] && groups[0][0].score - groups[1][0].score < MARGIN && inLang(lead(groups[0]).item) === 1 && inLang(lead(groups[1]).item) === 0
+    && !(onScr(groups[0]) && !onScr(groups[1]))) {
     const g0 = groups[0]; groups[0] = groups[1]; groups[1] = g0;
   }
   const first = lead(groups[0]);

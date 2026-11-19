@@ -49,3 +49,33 @@ describe("v10: compound ordinals are read whole, never by their last part", () =
     expect(ordinalOf("twenty two complaints in Adyar")).toBeNull();
   });
 });
+
+describe("v10 dev2: dA-screenRef-6, a position counted from the end ('கடைசிக்கு முந்தின', 'the second last', 'last but one')", () => {
+  const thirteen = panel.slice(0, 13);
+  it.each([
+    ["கடைசிக்கு முந்தின ஸ்டோரி என்ன?", 12],
+    ["கடைசிக்கு முந்தைய செய்தியைப் படிங்க", 12],
+    ["kadaisikku munnaadi news-a padinga", 12],
+    ["read the second last story", 12],
+    ["open the last but one", 12],
+    ["what's the second to last news about", 12],
+    ["கடைசியிலிருந்து மூன்றாவது செய்தியைத் திறங்க", 11],
+    ["open the third from last story", 11]
+  ])("%s -> the story %i of 13", (said, n) => {
+    expect(newsOrdinal8(said, thirteen, { panel: true })).toBe(`s${n}`);
+  });
+  it("the last stays the last, and 'last but not least' is no position of its own", () => {
+    expect(newsOrdinal8("what's the last one about", thirteen, { panel: true })).toBe("s13");
+    expect(newsOrdinal8("last but not least, read the first news", thirteen, { panel: true })).toBe("s1");
+    expect(ordinalOf("the last week's news")).toBeNull();
+  });
+  it("a position from the end past the list's start opens nothing", () => {
+    expect(newsOrdinal8("open the fifth from last story", thirteen.slice(0, 3), { panel: true })).toBeNull();
+  });
+});
+
+describe("v10 dev2: dA-screenRef-5, the English verb in Tamil letters opens a story by its position too", () => {
+  it.each([["மூணாவது நியூஸ ஓபன் பண்ணு", 3], ["எட்டாவது ஸ்டோரிய ரீட் பண்ணுங்க", 8], ["கடைசி நியூஸ ஓப்பன் பண்ணுங்க", 13]])("%s -> %i", (said, n) => {
+    expect(newsOrdinal8(said, panel.slice(0, 13), { panel: true })).toBe(`s${n}`);
+  });
+});

@@ -194,7 +194,8 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
     const named = { words: req.which ?? [], outlet: null, gloss: req.gloss };
     ranked = ranked.filter((r) => r.score < SOFT_FLOOR || ((rankStories(ev, [r.item])[0]?.hits ?? 0) > 0 && (!named.words.length || (rankStories(named, [r.item])[0]?.hits ?? 0) > 0)));
   }
-  const picked = pickStory(ranked, f.lang, floor);
+  // (v10 dev2: the outlet asked for leads its event: "what Daily Thanthi wrote on ..." is Daily Thanthi's report of it)
+  const picked = pickStory(ranked, f.lang, floor, req.outlet);
   // v10: nothing found by the words: the request's meaning (a Tamil request about an English headline), under the lexical guards; never for a thing
   // named by ear (its spellings are the evidence), a soft find, a search for more on a story, or the screen alone
   // (asked only when the caller passes it: the news route and the runners; a unit test or another caller never starts the model)

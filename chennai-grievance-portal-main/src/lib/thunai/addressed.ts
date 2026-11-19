@@ -197,7 +197,7 @@ const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத
 // (epdi: the clipped "how" of spoken Tanglish, "idhu epdi theriyum": lane D2's how-do-you-know forms)
 const QUESTION_TG = /\b(enna|enga|yen|ethana|evvalavu|edhu|yaaru|eppadi|epdi|eppo)\b/;
 /** what the console talks about: with one of these, a sentence with a chore's shape is still work */
-const WORK_EN = /\b(complaints?|grievances?|cases?|incidents?|accidents?|reports?|status|situation|news|levels?|counts?|numbers?|figures?|totals?|data|trends?|charts?|graphs?|maps?|lists?|pages?|panels?|screens?|dashboard|overview|briefing|brief|summary|update|forecast|readings?|rainfall|alerts?|zones?|wards?|taluks?|departments?|dept|officers?|severe|overdue|backlog|prices?|markets?|environment|aqi|lakes?|reservoirs?|pugar|nilavaram|alavu|evvalavu|ethana|seidhi)\b/;
+const WORK_EN = /\b(complaints?|grievances?|cases?|incidents?|accidents?|reports?|status|situation|news|levels?|counts?|numbers?|figures?|totals?|data|trends?|charts?|graphs?|maps?|lists?|pages?|panels?|screens?|dashboard|overview|briefing|brief|summary|update|forecast|readings?|rainfall|gauges?|records|petitions?|alerts?|zones?|wards?|taluks?|departments?|dept|officers?|severe|overdue|backlog|prices?|markets?|environment|aqi|lakes?|reservoirs?|pugar|nilavaram|alavu|evvalavu|ethana|seidhi)\b/;
 const WORK_TA = /(புகார்|சம்பவ|நிலவரம்|அளவு|எத்தனை|எவ்வளவு|செய்தி|பக்கம்|வரைபடம்|பட்டியல்|மண்டல|துறை|சுருக்கம்|விலை|அறிக்கை|அதிகாரி)/;
 /** asking someone in the room for something, or about one's own things: "give me some water", "where is my phone", "can you pass the salt" */
 const ERRAND_EN = /^ (?:please )?(?:give|get|bring|pass|fetch|hand) (?:me|us) (?:some|a|an) /;
@@ -227,7 +227,27 @@ export const isImperative = (text: string): boolean => {
   return IMPERATIVE_EN.test(t) || IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) || IMPERATIVE_TG.test(t.trim());
 };
 /** asked as a request or a question, whatever its length (v8: a verb at the end too, "the X one, open it", "news open pannunga") */
-const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text) || (understandV8() && LATE_VERB8.test(t));
+const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text) || (understandV8() && LATE_VERB8.test(t))
+  || (understandV10() && clauseShaped(text));
+/** v10 dev2: the clauses the speech-to-text set off with its punctuation. A request in a later clause, after a lead-in or a topic said first ("hold
+ * on. go deeper here", "rain gauges, last 24 hours, what have we got"), or a Tamil verb ending its own clause ("full-aa padinga, endha endha
+ * area-nu ellam"), is a request's shape as much as one at the line's start or end. Not after a remark of its own ("rain is heavy, close the
+ * windows": an errand after a statement), nor after a person's name ("Ramesh, show the Adyar cases.") */
+const clausesOf = (text: string): string[] => text.split(/[,.;:!?…]+/u).map((x) => x.trim()).filter(Boolean);
+const clauseShaped = (text: string): boolean => {
+  const cs = clausesOf(text);
+  if (cs.length < 2 || vocativeLead(text)) return false;
+  for (const c of cs) {
+    if (REQUEST_EN.test(norm(c)) || isImperative(c)) return true;
+    if (statement(c, norm(c))) return false;
+  }
+  return false;
+};
+/** a first clause that is a person's name alone ("Ramesh, show the Adyar cases."): the request after it is said to that person */
+const vocativeLead = (text: string): boolean => {
+  const w = /^\s*([A-Z][a-z]{2,15})\s*,/.exec(text)?.[1];
+  return !!w && !isEnglishWord(w.toLowerCase()) && !areaWord(w) && !/^(?:jarvis|okay|ok|yes|yeah|seri|sari|haan|han|achha|acha|aama|hmm)$/i.test(w);
+};
 const statement = (text: string, t: string) => STATEMENT_EN.test(t) || ASIDE_TA.test(text) || (FINITE_TA.test(text) && !QUESTION_TA.test(text));
 /** v10 review 2, round 3: a statement of its own ("the driver is waiting downstairs", "my phone is not working", "மழை வருது"): never the rest of a
  * line held as cut off (conductor.ts gateFor) */
@@ -241,8 +261,16 @@ const chore = (text: string, engaged = false): boolean => {
 };
 
 const sideEn = (t: string, weak: boolean) => SIDE_STRONG.test(t) || (weak && SIDE_WEAK.test(t));
+/**
+ * v10 dev2: the office's own "we" and "our" asking what it holds ("rain gauges, last 24 hours, what have we got", "and on our side? any complaints
+ * there", "how many complaints do we have in Adyar", "what do our records say"): the Collector asking the console's records, not talk about other
+ * people. Taken out before the side-talk words are looked for, only in the conversation and only beside the console's own things; "shall we",
+ * "should we", "let us", "our car", "what have we got for lunch" stay side talk
+ */
+const OUR_OWN = /\b(?:what (?:have|do|did) we (?:got|get|have)|whatve we got|(?:do|did|have) we (?:have|got)|how (?:are|is) we (?:doing|placed|looking)|where are we (?:on|with)|what are we (?:looking at|seeing|dealing with)|(?:on|from|at) our (?:side|end)|(?:in |from )?our (?:own )?(?:side|end|records?|data|system|console|numbers|figures|gauges|readings|complaints|grievances|petitions|cases))\b/g;
 export const looksSide = (text: string, engaged = false, districtNoun = false): boolean => {
-  const t = norm(text);
+  const t0 = norm(text);
+  const t = engaged && understandV10() && (WORK_EN.test(t0) || WORK_TA.test(text)) ? t0.replace(OUR_OWN, " ") : t0;
   if (SIDE_TA.test(text) || SIDE_TG.test(t)) return true;
   if (!districtNoun && (SIDE_TOPIC.test(t) || SIDE_TOPIC_TA.test(text))) return true;
   if ((SIDE_TENSE.test(t) || SIDE_TENSE_TA.test(text)) && !(engaged && shaped(text, t))) return true;
@@ -252,6 +280,28 @@ export const looksSide = (text: string, engaged = false, districtNoun = false): 
 export const looksRequest = (text: string): boolean => {
   const t = norm(text);
   return shaped(text, t) || (t.trim().split(" ").length <= 4 && !FIRST_PERSON.test(t) && !statement(text, t));
+};
+
+/**
+ * v10 dev2: in the conversation, the list wanted said with no verb and asked for ("severe ones in adair zone, quick", "overdue ones in Teynampet zone,
+ * fast", "the oldest open complaints in Royapuram please", "அடையாறு மண்டலத்துல சீரியஸ் புகார்கள், சீக்கிரம்"): a follow-up. Only the console's own
+ * things with a word that picks from them (severe, overdue, pending, oldest ...), and asked: "ones" pointing back at what was on screen, or a word
+ * said to the hearer (quick, please). Eight words at most, no verb, no person and no statement ("the zone officer called about the meeting",
+ * "status meeting at five" stay someone else's). A list named and not asked ("severe cases in Perungudi this week") stays unaddressed: v5's C1
+ */
+const LIST_PICK = /\b(?:severe|serious|critical|urgent|overdue|pending|open|unresolved|unassigned|escalated|closed|resolved|new|latest|recent|oldest|top|worst|biggest|highest)\b/;
+const LIST_PICK_TA = /சீரியஸ்|தீவிர|அவசர|நிலுவை|பெண்டிங்|புதிய|மோசமான|அதிக/u;
+const VERB_EN = /\b(?:is|are|was|were|be|been|has|have|had|will|would|can|could|should|must|do|does|did|come|comes|came|go|goes|went|gone|say|says|said|tell|tells|told|ask|asks|asked|want|wants|need|needs|left|leaving|arrived|waiting|coming|going|sent|gave|took|got|brought|spoke|met|ate|eaten|happened|happens|call|calls|called|joined|ready)\b/;
+/** a word in -ed that is a verb's past, not a list's state ("closed", "flooded", "escalated" are the console's) */
+/** asked of the hearer: "ones" pointing back, or a word said to the one who does it */
+const LIST_ASKED = /\b(?:ones|quick|quickly|fast|asap|please|pls|plz|seekiram|seekram|sikiram|sikkiram)\b/;
+const LIST_ASKED_TA = /சீக்கிரம்|உடனே|தயவுசெய்து/u;
+const PAST_ED = /\b(?!(?:closed|resolved|unresolved|escalated|assigned|unassigned|flooded|waterlogged|blocked|delayed|registered|reported|affected|damaged|logged|filed|need)\b)[a-z]{2,}ed\b/;
+const consoleList = (text: string): boolean => {
+  const t = norm(text);
+  if (t.trim().split(" ").length > 8 || !(WORK_EN.test(t) || WORK_TA.test(text)) || !(LIST_PICK.test(t) || LIST_PICK_TA.test(text))
+    || !(LIST_ASKED.test(t) || LIST_ASKED_TA.test(text))) return false;
+  return !VERB_EN.test(t) && !PAST_ED.test(t) && !FIRST_PERSON.test(t) && !/\b(?:you|your|i|me|my)\b/.test(t) && !statement(text, t);
 };
 
 export function addressed(i: GateInput): Addressed {
@@ -274,7 +324,7 @@ export function addressed(i: GateInput): Addressed {
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   // v8: a leading backchannel ("Haan, show me the severe cases", "Seri, open the news") does not hide the request's shape (the review, 18 Nov)
   const core = understandV8() ? text.replace(/^\s*(?:haan|han|seri|sari|ok|okay|so|achha|acha|aama|yes|yeah|right)\s*[,.]\s*/i, "") || text : text;
-  if (engaged && looksRequest(core) && !looksSide(core, true, i.districtNoun) && !chore(core, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
+  if (engaged && (looksRequest(core) || (understandV10() && consoleList(core))) && !looksSide(core, true, i.districtNoun) && !chore(core, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text, false, i.districtNoun)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };
   if (chore(text) || statement(text, norm(text))) return { tier: 0, act: false, text, maxLevel: null, why: "aside" };
   // the command tier, cut in v5 (C1), inside the 20 s window and outside it: only the switch brings both returns back. Unnamed, a

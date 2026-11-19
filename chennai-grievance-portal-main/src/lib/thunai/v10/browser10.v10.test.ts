@@ -132,6 +132,15 @@ describe("v10: no \"did you mean\" for an English word or a Tamil verb (v8's dev
     const said = "Open that one, that's Supreme Court order.";
     expect(browserLaneV10(said, { ...c(said), lex: lexU }).lane).not.toBe("confirm");
   });
+  it("a word the news reads as a topic (கோயில், திருட்டு, தீ, kovil) is never part of a name ('கோயில்ல திருட்டு' was asked back as Coilathur: news9, the store of 20 Nov)", () => {
+    const lexC = buildLexicon([{ id: "c1", title: "கொளத்தூர் எம்.எல்.ஏ. மறைவு: தலைவர்கள் இரங்கல்", titleEn: "Coilathur MLA passes away; leaders condole", t: "2026-11-19 10:00" },
+      { id: "c2", title: "Coilathur by-election likely in February", t: "2026-11-19 11:00" }], world);
+    for (const said of ["கோயில்ல திருட்டு போனது பத்தி ஏதாவது நியூஸ்?", "kovil-la thiruttu pathi news irukka?"]) {
+      expect(browserLaneV10(said, { ...c(said), lex: lexC }).lane, said).not.toBe("confirm");
+    }
+    // (the name itself, said as such, still is)
+    expect(findOf(browserLaneV10("tell me about Coilathur", { ...c("x"), lex: lexC }))?.entity ?? browserLaneV10("tell me about Coilathur", { ...c("x"), lex: lexC }).lane).toBeTruthy();
+  });
   it("a name heard by ear still is ('Bharathi statue' is Bharati)", () => {
     const b = browserLaneV10("tell me about the Bharathi statue", c("x"));
     expect(findOf(b)?.entity?.name ?? (b.lane === "confirm" ? "asked" : null)).toBeTruthy();
@@ -369,5 +378,51 @@ describe("v10 review 2, round 3: 'the Fort' after a view verb is the Fort; a pos
   });
   it("'Open fast.' opens the first item", () => {
     expect(JSON.stringify(browserLaneV10("Open fast.", c()))).toContain(`"n":1`);
+  });
+});
+
+// ---- v10 dev2 (the development set written blind to the code, 20 Nov): each a failing test first
+
+describe("v10 dev2: dA-names-1: a storm's name the ears split into a fragment and an English word ('cyclone ak van')", () => {
+  // dev2: "jarvis where's cyclone ak van headed now" went to the instant look-up: "van" is an English word, so the run "ak van" was a name only by
+  // its exact spelling, and "ak" (two letters, no word at all) was too short for the split-name rule; "where's" was no storm question either
+  it.each(["where's cyclone ak van headed now", "where is cyclone ak van now", "cyclone ak wan latest", "ak van puyal enga pogudhu", "any update on cyclone ack van"])("'%s' is the news about Cyclone Akvan, with the weather", (said) => {
+    const f = findOf(lane(said));
+    expect(`${f?.entity?.name ?? null} ${!!f?.weather}`).toBe("Cyclone Akvan true");
+  });
+  it.each(["where's the cyclone headed now", "where is the storm heading"])("'%s' (no name) is the storm's news, with the weather", (said) => {
+    const f = findOf(lane(said));
+    expect(`${!!f} ${!!f?.weather}`).toBe("true true");
+  });
+  it.each(["the van near the cyclone shelter is ready", "cyclone van"])("'%s' is no Akvan", (said) => {
+    expect(findOf(lane(said))?.entity?.name ?? null).not.toBe("Cyclone Akvan");
+  });
+});
+
+describe("v10 dev2: dA-names-11: Tanglish with English nouns and Tamil endings is answered in Tamil", () => {
+  // dev2: "yaangan flight cancel aanadhu cyclone naala thaana": its Tamil is in endings and particles ("aanadhu", "naala", "thaana") no word list
+  // knew, and its nouns are English, so the answer was in English
+  it.each(["yaangan flight cancel aanadhu cyclone naala thaana", "school leave vittadhu rain naala thaane", "Akvan cyclone Andhra pakkam poyiduchu",
+    "metro service stop aanadhu power cut naala", "flight ellam cancel pannittaanga"])("'%s' is Tamil", (said) => {
+    expect(userLang8(said, null)).toBe("ta");
+  });
+  it.each(["the Yangon flight was cancelled due to the cyclone", "is the metro service stopped because of the power cut", "show the Adyar complaints",
+    "what happened in Thane", "Sindhu complaint status"])("'%s' stays English", (said) => {
+    expect(userLang8(said, null)).toBe("en");
+  });
+});
+
+describe("v10 dev2: dC-cutoff-5: a Tamil or Tanglish line cut off on its relative participle waits for its noun", () => {
+  // dev2: "Adyar la open aana" (the open ... in Adyar) was answered as a zone filter: a line that ends on a participle ("aana", "irukkura", "உள்ள",
+  // "வந்த") has its noun still to come, as an English line ending on "the" has
+  it.each(["Adyar la open aana", "Teynampet la pending-la irukkura", "Royapuram zone la puthusa vandha", "அடையாறுல ஓபன் ஆன", "வேளச்சேரில நிலுவையில் உள்ள", "நேத்து கொடுங்கையூர்ல வந்த"])("'%s' is cut off and waits", (said) => {
+    expect(cutOff(said)).toBe(true);
+    expect(lane(said).lane).toBe("wait");
+  });
+  it.each(["Adyar la open aana complaints kaattunga", "Adyar la open aacha?", "Adyar la open aana?", "அடையாறுல ஓபன் ஆன புகார்கள் காட்டுங்க", "complaints close aanadhu"])("'%s' is whole", (said) => {
+    expect(cutOff(said)).toBe(false);
+  });
+  it("its rest is joined to it ('Adyar la open aana' ... 'complaints ellam kaattunga')", () => {
+    expect(joinCut({ text: "Adyar la open aana", at: 1000 }, "complaints ellam kaattunga", 3000)).toBe("Adyar la open aana complaints ellam kaattunga");
   });
 });

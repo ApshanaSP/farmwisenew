@@ -91,6 +91,8 @@ const CARD = new Map<string, number>([
     .flatMap((ws, i) => ws.map((w) => [w, i + 1] as [string, number]))
 ]);
 const cardinal = (w: string | null | undefined): number | null => (w ? CARD.get(w) ?? tensWord(w) : null);
+/** v10 dev2: a number said as a word ("eight", "ettu", "எட்டு"), for the zone said by its number (news8.ts) */
+export const cardinalWord = (w: string | null | undefined): number | null => cardinal(w);
 
 /** the word after a position that makes it a street or a floor, not a place on a list. v10 (the second review of v9): and in Tamil (ஏழாவது
  * தெரு, இரண்டாம் கட்ட), a date (ஏழாம் தேதி, "21st November"), a period ("the last one hour", "the last week") */
@@ -100,6 +102,28 @@ const PERIOD = /^(?:hour|hours|day|days|week|weeks|month|months|year|years|minut
 const ONE_WORD = /^(?:one|onnu|onna|ஒரு|ஒண்ணு)$/u;
 /** the month said before a number ("November 21st", "நவம்பர் பத்தாம்"): a date */
 const MONTH_BEFORE = /^(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)$|^(?:ஜனவரி|பிப்ரவரி|மார்ச்|ஏப்ரல்|ஜூன்|ஜூலை|ஆகஸ்ட்|செப்டம்பர்|அக்டோபர்|நவம்பர்|டிசம்பர்)$/u;
+
+/**
+ * v10 dev2 (dA-screenRef-6): a position counted from the end, its value negative (-1 the last, -2 the one before it): "the second last", "the
+ * second to last", "the third from the end", "last but one"; Tamil "கடைசிக்கு முந்தின" (the one before the last), "கடைசியிலிருந்து மூன்றாவது" (the
+ * third from the end); Tanglish "kadaisikku munnaadi", "kadaisila irundhu rendavadhu". v10 read "the second last story" as the second.
+ */
+const BEFORE_LAST = /^(?:கடைசிக்கு|கடைசிக்கும்|kadaisikku|kadasikku|kadaisiku|kataisikku)$/u;
+const BEFORE_IT = /^(?:முந்தின|முந்தைய|முந்திய|முந்துன|முன்னாடி|முன்னால்|முன்னாலுள்ள|முன்னாடியுள்ள|முன்பு|mundhina|mundhaiya|mundhiya|mundhuna|munthina|munthaiya|munnadi|munnaadi|munnala|munnaala)$/u;
+const FROM_LAST_TA = /^(?:கடைசியிலிருந்து|கடைசியில்இருந்து|கடைசிலிருந்து|kadaisilirundhu|kadaisilerundhu|kadaisilendhu|kadaisilirunthu)$/u;
+const FROM_LAST_TA2 = /^(?:கடைசியில|கடைசியில்|கடைசில|kadaisila|kadaisile|kadasila)$/u;
+const IRUNDHU = /^(?:இருந்து|irundhu|irunthu|erundhu|lerundhu)$/u;
+const END_WORD = /^(?:last|end|bottom)$/;
+/** the words after an English or Tamil ordinal that count it from the end: how many words they take (0: none) */
+const fromEndAfter = (w: string[], at: number): number => {
+  const a = w[at + 1], b = w[at + 2], c = w[at + 3];
+  if (a === "last" && !(b && (PERIOD.test(b) || DATE_AFTER.test(b)))) return 1;
+  if ((a === "from" || a === "to") && b && END_WORD.test(b)) return 2;
+  if ((a === "from" || a === "to") && b === "the" && c && END_WORD.test(c)) return 3;
+  return 0;
+};
+/** the words before a Tamil or Tanglish ordinal that count it from the end ("கடைசியிலிருந்து", "kadaisila irundhu") */
+const fromEndBefore = (w: string[], i: number): boolean => (!!w[i - 1] && FROM_LAST_TA.test(w[i - 1])) || (!!w[i - 2] && FROM_LAST_TA2.test(w[i - 2]) && IRUNDHU.test(w[i - 1] ?? ""));
 
 /** Where a sentence names a position: its value (-1: the last), its word's index, the words around it (or null), whether it is said in the
  * accusative ("ஏழாவதை", "ezhavadhai": the thing itself, no noun needed), and what kind of word it is: an English one ("seventh", "7th",
@@ -128,7 +152,17 @@ export function ordinalsAt(text: string): OrdinalAt[] {
       const unit = tens != null ? cardinal(w[i + 2]) : null;
       if (tens != null && unit != null && unit >= 1 && unit <= 9) { n = tens + unit; at = i + 2; }
     }
+    // v10 dev2: the one before the last, said in Tamil or Tanglish ("கடைசிக்கு முந்தின", "kadaisikku munnaadi")
+    if (n == null && BEFORE_LAST.test(w[i]) && w[i + 1] && BEFORE_IT.test(w[i + 1])) { n = -2; at = i + 1; kind = "ta"; }
     if (n == null) continue;
+    // v10 dev2: counted from the end ("the second last", "the third from the end", "last but one", "கடைசியிலிருந்து மூன்றாவது")
+    if (n >= 1 && kind !== "number" && at === i) {
+      const k = fromEndAfter(w, at);
+      if (k) { n = -n; at += k; } else if (kind === "ta" && fromEndBefore(w, i)) n = -n;
+    } else if (n === -1 && w[i + 1] === "but") {
+      const c = cardinal(w[i + 2]);
+      if (c != null && c >= 1 && c <= 9) { n = -(c + 1); at = i + 2; }
+    }
     const next = w[at + 1] ?? null;
     if (next && STREET.test(next)) continue;
     // v10 (the review): a date ("ஏழாம் தேதி", "21st November", "November 21st") or a period ("the last one hour", "the last week") is no position

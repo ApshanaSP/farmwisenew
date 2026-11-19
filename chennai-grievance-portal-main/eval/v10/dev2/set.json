@@ -1,0 +1,2153 @@
+{
+  "about": "122 items (dA 42, dB 40, dC 40). By kind: names 12 (en 5, ta 3, tg 4); news 12 (en 2, ta 5, tg 5); reading 10 (en 4, ta 3, tg 3); screenRef 16 (en 5, ta 6, tg 5); map 18 (en 6, ta 6, tg 6); control 28 (en 11, ta 8, tg 9); feature 8 (en 3, ta 3, tg 2); side 12 (en 4, ta 4, tg 4); cutoff 6 (en 2, ta 2, tg 2). By language: en 42, ta 40, tg 40.",
+  "items": [
+    {
+      "id": "dA-names-1",
+      "kind": "names",
+      "lang": "en",
+      "text": "jarvis where's cyclone ak van headed now",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "Akvan|Akwan|அக்வான்",
+        "entity": "Akvan|Akwan|அக்வான்",
+        "weather": true,
+        "confirmOk": true,
+        "lang": "en"
+      },
+      "note": "Akvan split by ear into 'ak van'"
+    },
+    {
+      "id": "dA-names-2",
+      "kind": "names",
+      "lang": "en",
+      "text": "is the vandaloor zoo opening again or not",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "Vandalur Zoo",
+        "entity": "Vandalur",
+        "confirmOk": true,
+        "lang": "en"
+      },
+      "note": "Vandalur is outside the district but is in the week's news, so it must not be refused"
+    },
+    {
+      "id": "dA-names-3",
+      "kind": "names",
+      "lang": "en",
+      "text": "that sydapet court toilet thing, what was it",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Saidapet",
+        "entity": "Saidapet",
+        "confirmOk": true,
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-names-4",
+      "kind": "names",
+      "lang": "en",
+      "text": "read me what daily tanty wrote on the kolathur by election",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "கொளத்தூர் தொகுதி இடைத்தேர்தல்",
+        "entity": "Daily Thanthi",
+        "confirmOk": true,
+        "readLang": "en",
+        "lang": "en"
+      },
+      "note": "outlet by ear; the only Daily Thanthi by-election story is in Tamil, so it is read in English"
+    },
+    {
+      "id": "dA-names-5",
+      "kind": "names",
+      "lang": "en",
+      "text": "perumal muruga said something about libraries, pull that up",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Perumal Murugan",
+        "entity": "Perumal Murugan",
+        "confirmOk": true,
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-names-6",
+      "kind": "names",
+      "lang": "ta",
+      "text": "தினமலர்ல மொரசு புயல் பத்தி என்ன போட்டிருக்காங்க",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "story": "Murasu",
+        "entity": "Murasu|முரசு",
+        "weather": true,
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-7",
+      "kind": "names",
+      "lang": "ta",
+      "text": "மகேஸ் குமார் அகர்வள் என்ன சொல்லியிருக்காரு",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "story": "அகர்வால்",
+        "entity": "Agrawal|Agarwal|அகர்வால்",
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-8",
+      "kind": "names",
+      "lang": "ta",
+      "text": "புழுல் ஜெயிலுக்குள்ள போதை கடத்தப் பாத்தாங்களாமே, அது என்ன",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "story": "Puzhal jail",
+        "entity": "Puzhal|புழல்",
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-9",
+      "kind": "names",
+      "lang": "tg",
+      "text": "thanthi tv-la pradeep jaan asuran pathi enna sonnaaru",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Pradeep John",
+        "entity": "Pradeep John",
+        "weather": true,
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-10",
+      "kind": "names",
+      "lang": "tg",
+      "text": "palli karanai construction ban case enna aachu, SC-ku poraangala",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Pallikaranai",
+        "entity": "Pallikaranai",
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-11",
+      "kind": "names",
+      "lang": "tg",
+      "text": "yaangan flight cancel aanadhu cyclone naala thaana",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Yangon",
+        "entity": "Yangon",
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-names-12",
+      "kind": "names",
+      "lang": "tg",
+      "text": "kolathoor MLA vee yes baabu-ku muslim league condolence sonnaangala",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "story": "பாபு மறைவு",
+        "entity": "Babu|பாபு",
+        "confirmOk": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-1",
+      "kind": "news",
+      "lang": "ta",
+      "text": "இந்த வீக்கெண்ட் கரண்ட் கட் பத்தி ஏதாவது நியூஸ் இருக்கா?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "மின்தடை அறிவிப்பு",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-2",
+      "kind": "news",
+      "lang": "tg",
+      "text": "indha dhadava nijamaave nalla pozhiyumaa, illa vazhakkam pola emaathidumaa?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "மழை நிச்சயம்|heavy rain",
+        "weather": true,
+        "lang": "ta"
+      },
+      "note": "will it really pour this time; no news word"
+    },
+    {
+      "id": "dA-news-3",
+      "kind": "news",
+      "lang": "tg",
+      "text": "inniki periya alavula pothai porul pudichaangalaame, adhoda vilai evlo?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "heroin|ஹெராயின்",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-4",
+      "kind": "news",
+      "lang": "en",
+      "text": "any news on that printing press passing off AI-written stuff under made-up writers?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "ChatGPT|Fake books",
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-news-5",
+      "kind": "news",
+      "lang": "ta",
+      "text": "கொசுக்கடி தாங்க முடியல, எங்கயாவது மருந்து அடிக்கிறாங்களா?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "newsAbout": "Mosquito menace|drone spraying",
+        "lang": "ta"
+      },
+      "note": "no news word"
+    },
+    {
+      "id": "dA-news-6",
+      "kind": "news",
+      "lang": "tg",
+      "text": "kadal thanniya kudi thanniya maathura innoru project varudhaa? thanni evlo kammi?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "Minjur",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-7",
+      "kind": "news",
+      "lang": "tg",
+      "text": "corporation office munnaadi sivappu kodi party kaaranga edhuku kosham podraanga?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "Ripon Building",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-8",
+      "kind": "news",
+      "lang": "ta",
+      "text": "ரோட்டுல மாடு அலையறதுக்கு கோர்ட்டு ஏதோ உத்தரவு போட்டிருக்காமே",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "tagging of cattle",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-9",
+      "kind": "news",
+      "lang": "tg",
+      "text": "bathroom-ku ippo kaasu kudukka venaamaa? evlo idathula appdi?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "free (public )?toilets",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-news-10",
+      "kind": "news",
+      "lang": "ta",
+      "text": "எட்டாவது ஜோன்ல கார்ப்பரேஷன் இடத்தை யாரோ வளைச்சுப் போட்டுட்டாங்களாம், யாரும் கண்டுக்கலையாமே?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "newsAbout": "நகரில் ஆக்கிரமிப்பு",
+        "lang": "ta"
+      },
+      "note": "zone 8 is Anna Nagar; no headline word"
+    },
+    {
+      "id": "dA-news-11",
+      "kind": "news",
+      "lang": "ta",
+      "text": "எண்ணூர்ல மறுபடியும் எண்ணெய் கசிவாமே, ஏதாவது செய்தி வந்துச்சா?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "newsAbout": "எண்ணூரில்|IOCL",
+        "orNothing": true,
+        "lang": "ta"
+      },
+      "note": "no oil-spill story in the news; Ennore is only in the Akvan sea-surge story, and the IOCL fire is the nearest oil story"
+    },
+    {
+      "id": "dA-news-12",
+      "kind": "news",
+      "lang": "en",
+      "text": "anything in the papers on the Bengaluru tanker strike?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "outside": true,
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-reading-1",
+      "kind": "reading",
+      "lang": "en",
+      "text": "brief me on that Ambattur footpath story, where exactly and what's pending with us",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Ambattur pedestrians",
+        "brief": [
+          "place",
+          "console",
+          "next"
+        ],
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-reading-2",
+      "kind": "reading",
+      "lang": "en",
+      "text": "read the whole thing, not the summary",
+      "screen": null,
+      "before": [
+        "open the Gateway of Chennai one"
+      ],
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Gateway of Chennai",
+        "full": true,
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-reading-3",
+      "kind": "reading",
+      "lang": "en",
+      "text": "what's Dinakaran saying about the sea coming onto the roads at Ennore? read it to me",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "எண்ணூரில் கடல் சீற்றம்",
+        "readLang": "en",
+        "weather": true,
+        "lang": "en"
+      },
+      "note": "a Tamil story asked about in English"
+    },
+    {
+      "id": "dA-reading-4",
+      "kind": "reading",
+      "lang": "en",
+      "text": "right, and on our side? any complaints there, how old?",
+      "screen": null,
+      "before": [
+        "pull up the Ayanavaram sewage story"
+      ],
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "brief": [
+          "console"
+        ],
+        "entity": "Ayanavaram",
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-reading-5",
+      "kind": "reading",
+      "lang": "ta",
+      "text": "பழைய வண்ணாரப்பேட்டை நேரு நகர் பார்க் பக்கத்துல சேறும் சகதியுமா இருக்குன்னு வந்த நியூஸ சுருக்கமா சொல்லு",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "story": "Old Washermenpet",
+        "brief": [
+          "place",
+          "console",
+          "next"
+        ],
+        "readLang": "ta",
+        "lang": "ta"
+      },
+      "note": "an English story asked about in Tamil"
+    },
+    {
+      "id": "dA-reading-6",
+      "kind": "reading",
+      "lang": "ta",
+      "text": "முழுசா படிங்க",
+      "screen": null,
+      "before": [
+        "காசிமேடு மீனவர் வேலைநிறுத்தம் செய்திய திற"
+      ],
+      "mic": true,
+      "engagedSec": 3,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "story": "காசிமேடு மீனவர்கள்",
+        "full": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-reading-7",
+      "kind": "reading",
+      "lang": "ta",
+      "text": "இதுக்கு நம்ம கிட்ட என்ன கம்ப்ளைண்ட் இருக்கு? மெட்ரோ வாட்டர் ஆபீசருக்கு ஒரு நோட் ரெடி பண்ணு",
+      "screen": null,
+      "before": [
+        "கொடுங்கையூர் காலிக்குடம் போராட்டம் நியூஸ ஓபன் பண்ணு"
+      ],
+      "mic": false,
+      "engagedSec": 6,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "brief": [
+          "console"
+        ],
+        "draft": true,
+        "never": true,
+        "entity": "Kodungaiyur|கொடுங்கையூர்",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-reading-8",
+      "kind": "reading",
+      "lang": "tg",
+      "text": "Mylapa street kuzhi road news-a Tamil-la short-a sollunga",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Mylappa Street",
+        "brief": [
+          "place",
+          "console"
+        ],
+        "readLang": "ta",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-reading-9",
+      "kind": "reading",
+      "lang": "tg",
+      "text": "full-aa padinga, endha endha area-nu ellam",
+      "screen": null,
+      "before": [
+        "sanikkizhamai current cut news open pannu"
+      ],
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "மின்தடை அறிவிப்பு",
+        "full": true,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-reading-10",
+      "kind": "reading",
+      "lang": "tg",
+      "text": "namma data-la idhu pathi enna irukku? endha department-oda velai idhu?",
+      "screen": null,
+      "before": [
+        "Nungambakkam subway vela story-a kaattunga"
+      ],
+      "mic": false,
+      "engagedSec": 7,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "brief": [
+          "console"
+        ],
+        "entity": "Nungambakkam",
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-screenRef-1",
+      "kind": "screenRef",
+      "lang": "en",
+      "text": "read out the forth one",
+      "screen": "newsPanel",
+      "mic": true,
+      "engagedSec": 6,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "storyN": 4,
+        "lang": "en"
+      },
+      "note": "'forth' for fourth"
+    },
+    {
+      "id": "dA-screenRef-2",
+      "kind": "screenRef",
+      "lang": "en",
+      "text": "what's the last one about",
+      "screen": "newsPanel",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "storyFromEnd": 1,
+        "lang": "en"
+      }
+    },
+    {
+      "id": "dA-screenRef-3",
+      "kind": "screenRef",
+      "lang": "en",
+      "text": "Jarvis open that Adyar one",
+      "screen": "newsPanel",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "clarify": true,
+        "lang": "en"
+      },
+      "note": "no story on today's 13-story panel names Adyar: say so and ask which one; opening any story is wrong"
+    },
+    {
+      "id": "dA-screenRef-4",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "எட்டாவது செய்திய படிங்க",
+      "screen": "newsPanel",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "storyN": 8,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-screenRef-5",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "அந்த காசிமேடு நியூஸ ஓபன் பண்ணு",
+      "screen": "newsPanel",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "storyN": 3,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-screenRef-6",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "கடைசிக்கு முந்தின ஸ்டோரி என்ன?",
+      "screen": "newsPanel",
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "storyFromEnd": 2,
+        "lang": "ta"
+      }
+    },
+    {
+      "id": "dA-screenRef-7",
+      "kind": "screenRef",
+      "lang": "tg",
+      "text": "pathinonnaavadhu-va open pannunga",
+      "screen": "newsPanel",
+      "mic": true,
+      "engagedSec": 8,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "storyN": 11,
+        "weather": true,
+        "lang": "ta"
+      },
+      "note": "the 11th is the Akvan sea-surge story"
+    },
+    {
+      "id": "dA-screenRef-8",
+      "kind": "screenRef",
+      "lang": "tg",
+      "text": "aaraavadhu Kolathur thaana? adha sollunga",
+      "screen": "newsPanel",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "storyN": 6,
+        "lang": "ta"
+      },
+      "note": "three Kolathur stories (2, 6, 7): the ordinal decides"
+    },
+    {
+      "id": "dB-map-1",
+      "kind": "map",
+      "lang": "en",
+      "text": "ask the map where the open drainage complaints are in Tandiyarpet",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "ask",
+          "place": "Tondiarpet|Tandiyarpet|Thandaiyarpet|தண்டையார்பேட்டை",
+          "question": "drain|sewage|sewer|சாக்கடை|கழிவுநீர்"
+        },
+        "lang": "en"
+      },
+      "note": "ask; Tondiarpet spelt by ear"
+    },
+    {
+      "id": "dB-map-2",
+      "kind": "map",
+      "lang": "ta",
+      "text": "வேளச்சேரில எங்கெல்லாம் தண்ணி தேங்கி நிக்குதுனு மேப்ல போட்டு காட்டு",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "ask",
+          "place": "Velachery|வேளச்சேரி",
+          "question": "water|flood|logg|stagna|தண்ணி|தண்ணீர்|தேங்"
+        },
+        "lang": "ta"
+      },
+      "note": "ask in Tamil script"
+    },
+    {
+      "id": "dB-map-3",
+      "kind": "map",
+      "lang": "tg",
+      "text": "Teynampet zone mattum kaattunga",
+      "screen": "askMap:where are the stray dog complaints this week",
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "followup",
+          "place": "Teynampet|தேனாம்பேட்டை"
+        },
+        "lang": "ta"
+      },
+      "note": "follow-up narrowing to one zone"
+    },
+    {
+      "id": "dB-map-4",
+      "kind": "map",
+      "lang": "en",
+      "text": "same thing, but for the last three months",
+      "screen": "askMap:show the open sewage cases in Royapuram",
+      "mic": true,
+      "engagedSec": 7,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "followup"
+        },
+        "lang": "en"
+      },
+      "note": "follow-up changing the period"
+    },
+    {
+      "id": "dB-map-5",
+      "kind": "map",
+      "lang": "ta",
+      "text": "கீழ இருக்கிற மந்த்லி சிப்பை அமுக்கு",
+      "screen": "askMap:show the open flooding complaints in Perungudi this week",
+      "mic": false,
+      "engagedSec": 6,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "chip"
+        },
+        "lang": "ta"
+      },
+      "note": "chip; English loanwords in Tamil letters"
+    },
+    {
+      "id": "dB-map-6",
+      "kind": "map",
+      "lang": "en",
+      "text": "anything going on in a kilometre and a half around Egmore station?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "circle",
+          "place": "Egmore|எழும்பூர்",
+          "km": 1.5
+        },
+        "lang": "en"
+      },
+      "note": "circle, distance in words"
+    },
+    {
+      "id": "dB-map-7",
+      "kind": "map",
+      "lang": "tg",
+      "text": "Ennur-ah suthi moonu kilometre radius podu, ulla enna problem irukku",
+      "screen": "page:overview",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "circle",
+          "place": "Ennore|Ennur|எண்ணூர்",
+          "km": 3
+        },
+        "lang": "ta"
+      },
+      "note": "circle, distance in Tamil words; Ennore spelt by ear"
+    },
+    {
+      "id": "dB-map-8",
+      "kind": "map",
+      "lang": "en",
+      "text": "throw the flood-prone areas on top of this",
+      "screen": "askMap:show the open waterlogging complaints in Adyar zone",
+      "mic": false,
+      "engagedSec": 9,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "layer",
+          "layer": "flood"
+        },
+        "lang": "en"
+      },
+      "note": "layer"
+    },
+    {
+      "id": "dB-map-9",
+      "kind": "map",
+      "lang": "ta",
+      "text": "சாட்டிலைட் மேப்புக்கு மாத்து",
+      "screen": "askMap:which roads in Anna Nagar have the most pothole complaints",
+      "mic": false,
+      "engagedSec": 12,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "map": {
+          "op": "layer",
+          "layer": "satellite"
+        },
+        "lang": "ta"
+      },
+      "note": "base map layer"
+    },
+    {
+      "id": "dB-map-10",
+      "kind": "map",
+      "lang": "tg",
+      "text": "camera fast shot-la irundhu innoru dhadava replay pannu",
+      "screen": "askMap:show the three worst garbage spots along the canals in Kodungaiyur",
+      "mic": false,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "shot",
+          "shot": "replay"
+        },
+        "lang": "ta"
+      },
+      "note": "camera shot; 'first' heard as 'fast'"
+    },
+    {
+      "id": "dB-map-11",
+      "kind": "map",
+      "lang": "ta",
+      "text": "இதுக்கு ஜியோ ஜேசன் டவுன்லோட் வேணும்",
+      "screen": "askMap:where are the open street light complaints in Ambattur",
+      "mic": false,
+      "engagedSec": 8,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "export",
+          "format": "geojson"
+        },
+        "lang": "ta"
+      },
+      "note": "export; GeoJSON split into two words"
+    },
+    {
+      "id": "dB-map-12",
+      "kind": "map",
+      "lang": "en",
+      "text": "save this view, I want it again for Monday's review",
+      "screen": "askMap:which wards in Sholinganallur have the most open water supply complaints",
+      "mic": false,
+      "engagedSec": 10,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "save"
+        },
+        "lang": "en"
+      },
+      "note": "save the view"
+    },
+    {
+      "id": "dB-map-13",
+      "kind": "map",
+      "lang": "tg",
+      "text": "indha cases-ku oru driving order podunga, Google Maps link-oda",
+      "screen": "askMap:show the open severe cases in Madhavaram zone",
+      "mic": false,
+      "engagedSec": 6,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "visit"
+        },
+        "lang": "ta"
+      },
+      "note": "visit order"
+    },
+    {
+      "id": "dB-map-14",
+      "kind": "map",
+      "lang": "en",
+      "text": "give me the in sight on this, what's odd here",
+      "screen": "askMap:show the garbage complaints in Manali this month",
+      "mic": false,
+      "engagedSec": 5,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "insight"
+        },
+        "lang": "en"
+      },
+      "note": "analyst's insight; 'insight' split"
+    },
+    {
+      "id": "dB-map-15",
+      "kind": "map",
+      "lang": "ta",
+      "text": "இதெல்லாம் ஸ்டார்ம் வாட்டர் டிரெயின் டிபார்ட்மெண்டுக்கு அனுப்பிடு",
+      "screen": "askMap:show the open storm water drain complaints in Valasaravakkam",
+      "mic": false,
+      "engagedSec": 7,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "send"
+        },
+        "draft": true,
+        "never": true,
+        "lang": "ta"
+      },
+      "note": "send to department: drafts only, the Collector sends"
+    },
+    {
+      "id": "dB-map-16",
+      "kind": "map",
+      "lang": "tg",
+      "text": "next enna kekkalaam? konjam suggest pannunga",
+      "screen": "askMap:where are the mosquito complaints in Kodambakkam this week",
+      "mic": false,
+      "engagedSec": 9,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "suggest"
+        },
+        "lang": "ta"
+      },
+      "note": "suggested questions"
+    },
+    {
+      "id": "dB-map-17",
+      "kind": "map",
+      "lang": "tg",
+      "text": "Rain and flooding open aagattum, adikkadi moozhgura streets edhu?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "rain"
+        },
+        "lang": "ta"
+      },
+      "note": "rain & flooding: streets that flood most"
+    },
+    {
+      "id": "dB-map-18",
+      "kind": "map",
+      "lang": "ta",
+      "text": "போன பெரிய மழையில மெட்ரோ எவ்வளவு லேட்டா ஓடுச்சு, எந்த ஸ்டேஷன் மூடுனாங்க",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "map": {
+          "op": "rain"
+        },
+        "lang": "ta"
+      },
+      "note": "rain & flooding: Metro in the last heavy rain"
+    },
+    {
+      "id": "dB-control-1",
+      "kind": "control",
+      "lang": "en",
+      "text": "flip the map over to taluks",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "map.mode.taluks",
+        "lang": "en"
+      },
+      "note": "harmless, by loose name"
+    },
+    {
+      "id": "dB-control-2",
+      "kind": "control",
+      "lang": "tg",
+      "text": "period weakly-ku maathunga",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "filter.period.weekly",
+        "lang": "ta"
+      },
+      "note": "harmless; 'weekly' heard as 'weakly'"
+    },
+    {
+      "id": "dB-control-3",
+      "kind": "control",
+      "lang": "ta",
+      "text": "மேல பெல் ஐகானை திற",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "control": "topbar.bell.toggle",
+        "lang": "ta"
+      },
+      "note": "harmless; loanwords in Tamil letters"
+    },
+    {
+      "id": "dB-control-4",
+      "kind": "control",
+      "lang": "en",
+      "text": "fit the whole district back in, I've lost where I am",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "map.fit",
+        "lang": "en"
+      },
+      "note": "harmless, by visible name"
+    },
+    {
+      "id": "dB-control-5",
+      "kind": "control",
+      "lang": "tg",
+      "text": "news card-la Differ tab kaattu",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "news.tab.differ",
+        "lang": "ta"
+      },
+      "note": "harmless, by visible name"
+    },
+    {
+      "id": "dB-control-6",
+      "kind": "control",
+      "lang": "ta",
+      "text": "சிவியாரிட்டி கார்டுல மை டாஸ்க்ஸ் பக்கம் போ",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "control": "att.switch.tasks",
+        "lang": "ta"
+      },
+      "note": "harmless; English names in Tamil letters"
+    },
+    {
+      "id": "dB-control-7",
+      "kind": "control",
+      "lang": "en",
+      "text": "get those station markers off the map",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "map.layer.stations",
+        "lang": "en"
+      },
+      "note": "harmless, by loose name"
+    },
+    {
+      "id": "dB-control-8",
+      "kind": "control",
+      "lang": "tg",
+      "text": "podhum indha screen, dashboard-ku thirumbi polaam",
+      "screen": "stage:show the severe cases in Royapuram",
+      "mic": false,
+      "engagedSec": 11,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "stage.backToDashboard",
+        "lang": "ta"
+      },
+      "note": "harmless, loose name for Back to dashboard"
+    },
+    {
+      "id": "dB-control-9",
+      "kind": "control",
+      "lang": "ta",
+      "text": "மைக்க மியூட்ல வை, ஒரு போன் வருது",
+      "screen": null,
+      "mic": false,
+      "engagedSec": 14,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "control": "hud.mute",
+        "lang": "ta"
+      },
+      "note": "harmless, mute the microphone"
+    },
+    {
+      "id": "dB-control-10",
+      "kind": "control",
+      "lang": "en",
+      "text": "click the open complaints number up top",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "kpi.openComplaints",
+        "lang": "en"
+      },
+      "note": "harmless, headline tile by loose name"
+    },
+    {
+      "id": "dB-control-11",
+      "kind": "control",
+      "lang": "tg",
+      "text": "vegetable prices-la rising first mela varattum",
+      "screen": "page:environment",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "markets.sort.rising",
+        "lang": "ta"
+      },
+      "note": "harmless, by visible name"
+    },
+    {
+      "id": "dB-control-12",
+      "kind": "control",
+      "lang": "en",
+      "text": "fine, approve and send everything in the tray, I don't need to see it",
+      "screen": null,
+      "before": [
+        "draft a note to the Royapuram zonal officer on the sewage overflow cases"
+      ],
+      "mic": false,
+      "engagedSec": 6,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "never": true,
+        "lang": "en"
+      },
+      "note": "must never be pressed: tray.approve"
+    },
+    {
+      "id": "dB-control-13",
+      "kind": "control",
+      "lang": "ta",
+      "text": "மண்டே ரிவ்யூ வொர்க்ஸ்பேஸ் இனி தேவையில்ல, எல்லா வெர்ஷனையும் அழிச்சிடு",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "never": true,
+        "lang": "ta"
+      },
+      "note": "must never be pressed: workspace.delete.confirm"
+    },
+    {
+      "id": "dB-control-14",
+      "kind": "control",
+      "lang": "tg",
+      "text": "my tasks-la irukkura ellathayum verify panni close pannidunga, time illa",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "never": true,
+        "lang": "ta"
+      },
+      "note": "must never be pressed: task.verify"
+    },
+    {
+      "id": "dB-feature-1",
+      "kind": "feature",
+      "lang": "en",
+      "text": "Jarvis, give me a quick spin round the district, whatever's hot today",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "acted": true,
+        "lang": "en"
+      },
+      "note": "narrated tour of today's hotspots"
+    },
+    {
+      "id": "dB-feature-2",
+      "kind": "feature",
+      "lang": "tg",
+      "text": "seri, adutha spot-ku po",
+      "screen": null,
+      "before": [
+        "Jarvis, inniki hotspots ellam oru round kaattu"
+      ],
+      "mic": true,
+      "engagedSec": 2,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "shot",
+          "shot": "next"
+        },
+        "acted": true,
+        "lang": "ta"
+      },
+      "note": "tour steering: next stop"
+    },
+    {
+      "id": "dB-feature-3",
+      "kind": "feature",
+      "lang": "ta",
+      "text": "ஜார்விஸ், இன்னைக்கு நியூஸ்ல வந்த இடங்களுக்கு ஒரு டூர் கூட்டிட்டு போ",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "acted": true,
+        "lang": "ta"
+      },
+      "note": "tour of the places in the news; loanwords in Tamil letters"
+    },
+    {
+      "id": "dB-feature-4",
+      "kind": "feature",
+      "lang": "en",
+      "text": "hold on. go deeper here",
+      "screen": null,
+      "before": [
+        "Jarvis, walk me through the areas Cyclone Akvan could hit"
+      ],
+      "mic": true,
+      "engagedSec": 1,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "acted": true,
+        "lang": "en"
+      },
+      "note": "tour steering: go deeper at a storm stop"
+    },
+    {
+      "id": "dB-feature-5",
+      "kind": "feature",
+      "lang": "en",
+      "text": "Jarvis, I'm heading out first thing tomorrow. line up the worst water logged spots in a sensible order, with the route",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "visit"
+        },
+        "lang": "en"
+      },
+      "note": "field visit plan for tomorrow"
+    },
+    {
+      "id": "dB-feature-6",
+      "kind": "feature",
+      "lang": "ta",
+      "text": "நாளைக்கு காலைல சாக்கடை பிரச்சனை மோசமா இருக்கிற இடங்களுக்கு போகணும், எந்த வரிசையில போகலாம்னு ரூட் போட்டு டிரைவருக்கு அனுப்பிடு",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "map": {
+          "op": "visit"
+        },
+        "never": true,
+        "lang": "ta"
+      },
+      "note": "field visit plan; sending it needs the Collector's own yes"
+    },
+    {
+      "id": "dB-feature-7",
+      "kind": "feature",
+      "lang": "tg",
+      "text": "idhu pathi namma kitta enna complaints irukku?",
+      "screen": null,
+      "before": [
+        "Ainavaram bus stand sewage news open pannunga"
+      ],
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "brief": [
+          "console"
+        ],
+        "entity": "Ayanavaram|அயனாவரம்",
+        "lang": "ta"
+      },
+      "note": "news to ground truth after the Ayanavaram sewage story (Ayanavaram spelt by ear in the earlier request)"
+    },
+    {
+      "id": "dB-feature-8",
+      "kind": "feature",
+      "lang": "ta",
+      "text": "இதைப் பத்தி நம்மகிட்ட கம்ப்ளைண்ட் ஏதாவது இருக்கா? இருந்தா மெட்ரோ வாட்டர் ஆபீசருக்கு ஒரு நோட் எழுதி வை",
+      "screen": null,
+      "before": [
+        "கொடுங்கையூர்ல காலி குடம் போராட்டம் நியூஸ் ஓபன் பண்ணு"
+      ],
+      "mic": false,
+      "engagedSec": 5,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "brief": [
+          "console"
+        ],
+        "entity": "Kodungaiyur|கொடுங்கையூர்",
+        "draft": true,
+        "never": true,
+        "lang": "ta"
+      },
+      "note": "news to ground truth after the Kodungaiyur empty-pot protest story, with a draft note"
+    },
+    {
+      "id": "dC-side-1",
+      "kind": "side",
+      "lang": "en",
+      "text": "Hello? Yes, speaking. Tell me.",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 6,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "phone call opener"
+    },
+    {
+      "id": "dC-side-2",
+      "kind": "side",
+      "lang": "en",
+      "text": "See, I told you, Perungudi's gone completely red again on the map",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 11,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "talk about the screen to a colleague"
+    },
+    {
+      "id": "dC-side-3",
+      "kind": "side",
+      "lang": "en",
+      "text": "Alexa, set a timer for ten minutes",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "another assistant's name"
+    },
+    {
+      "id": "dC-side-4",
+      "kind": "side",
+      "lang": "en",
+      "text": "can somebody get me a coffee? and shut that door",
+      "screen": "page:briefing",
+      "mic": true,
+      "engagedSec": 15,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "English aside to staff"
+    },
+    {
+      "id": "dC-side-5",
+      "kind": "side",
+      "lang": "ta",
+      "text": "தம்பி, அந்த ஃபைலை கொஞ்சம் எடுத்துட்டு வா",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 3,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "vocative thambi with comma"
+    },
+    {
+      "id": "dC-side-6",
+      "kind": "side",
+      "lang": "ta",
+      "text": "ஏங்க, இந்த மேப்பை பாருங்க, மணலி முழுக்க செவப்பா இருக்கு",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 8,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "vocative yenga, talk about the screen; loanword map in Tamil letters"
+    },
+    {
+      "id": "dC-side-7",
+      "kind": "side",
+      "lang": "ta",
+      "text": "அக்வான் புயல் இன்னும் ரெண்டு நாள்ல கரையைக் கடக்குமாம், டிவில சொன்னாங்க",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 12,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "silent": true
+      },
+      "note": "hearsay -maam about a storm in the news"
+    },
+    {
+      "id": "dC-side-8",
+      "kind": "side",
+      "lang": "ta",
+      "text": "ஹலோ, வணக்கம் சார், சொல்லுங்க சார்",
+      "screen": "page:environment",
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "silent": true
+      },
+      "note": "phone call opener with saar"
+    },
+    {
+      "id": "dC-side-9",
+      "kind": "side",
+      "lang": "tg",
+      "text": "Madam, CM cell la irundhu call, line la wait pannraanga",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 9,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "vocative madam; staff speaking to the Collector"
+    },
+    {
+      "id": "dC-side-10",
+      "kind": "side",
+      "lang": "tg",
+      "text": "Anna, rendu tea sollunga, sugar kammiya",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 17,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "vocative anna, order to staff"
+    },
+    {
+      "id": "dC-side-11",
+      "kind": "side",
+      "lang": "tg",
+      "text": "Kodungaiyur la thanni illama kodam vechu protest pannraangalaam",
+      "screen": "newsPanel",
+      "mic": true,
+      "engagedSec": 7,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "hearsay -aam about a news topic, not a request"
+    },
+    {
+      "id": "dC-side-12",
+      "kind": "side",
+      "lang": "tg",
+      "text": "Okay Google, naalaikku Madurai la mazhai varuma",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 10,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "silent": true
+      },
+      "note": "another assistant's name"
+    },
+    {
+      "id": "dC-cutoff-1",
+      "kind": "cutoff",
+      "lang": "en",
+      "text": "show me the over due ones in",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "waitOrAsk": true
+      },
+      "note": "cut before the zone; overdue split by the speech-to-text"
+    },
+    {
+      "id": "dC-cutoff-2",
+      "kind": "cutoff",
+      "lang": "en",
+      "text": "how many complaints from the",
+      "screen": "page:trends",
+      "mic": true,
+      "engagedSec": 9,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "waitOrAsk": true
+      }
+    },
+    {
+      "id": "dC-cutoff-3",
+      "kind": "cutoff",
+      "lang": "ta",
+      "text": "அந்த நியூஸ்ல வந்த அந்த",
+      "screen": "newsPanel",
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "waitOrAsk": true
+      },
+      "note": "loanword news in Tamil letters; cut before the thing"
+    },
+    {
+      "id": "dC-cutoff-4",
+      "kind": "cutoff",
+      "lang": "ta",
+      "text": "மழை அளவு எந்த",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 7,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "waitOrAsk": true
+      }
+    },
+    {
+      "id": "dC-cutoff-5",
+      "kind": "cutoff",
+      "lang": "tg",
+      "text": "Adyar la open aana",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 3,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "waitOrAsk": true
+      }
+    },
+    {
+      "id": "dC-cutoff-6",
+      "kind": "cutoff",
+      "lang": "tg",
+      "text": "Sholinganallur la evlo",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 11,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "waitOrAsk": true
+      }
+    },
+    {
+      "id": "dC-control-1",
+      "kind": "control",
+      "lang": "en",
+      "text": "jarvis how many cases are overdue in tenam pet",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "zone": "Teynampet",
+        "recipe": [
+          "cases",
+          "dashboard"
+        ],
+        "lang": "en",
+        "acted": true,
+        "confirmOk": true
+      },
+      "note": "overdue count; Teynampet split and misspelt by ear"
+    },
+    {
+      "id": "dC-control-2",
+      "kind": "control",
+      "lang": "en",
+      "text": "severe ones in adair zone, quick",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 7,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "zone": "Adyar",
+        "recipe": [
+          "cases"
+        ],
+        "lang": "en",
+        "acted": true,
+        "confirmOk": true
+      },
+      "note": "Adyar heard as adair; in conversation, no wake word"
+    },
+    {
+      "id": "dC-control-3",
+      "kind": "control",
+      "lang": "en",
+      "text": "Jarvis, which zone is sitting on the most pending complaints",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "ranking"
+        ],
+        "lang": "en",
+        "acted": true
+      },
+      "note": "rank the zones"
+    },
+    {
+      "id": "dC-control-4",
+      "kind": "control",
+      "lang": "en",
+      "text": "rain gauges, last 24 hours, what have we got",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 10,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "readings"
+        ],
+        "lang": "en",
+        "acted": true
+      },
+      "note": "rainfall readings"
+    },
+    {
+      "id": "dC-control-5",
+      "kind": "control",
+      "lang": "en",
+      "text": "jarvis pull up trends, I want the category chart",
+      "screen": "page:briefing",
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "page": "trends",
+        "lang": "en",
+        "acted": true
+      },
+      "note": "trends page"
+    },
+    {
+      "id": "dC-control-6",
+      "kind": "control",
+      "lang": "en",
+      "text": "put everything on monthly",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "filter.period.monthly",
+        "lang": "en",
+        "acted": true
+      },
+      "note": "period filter, typed"
+    },
+    {
+      "id": "dC-control-7",
+      "kind": "control",
+      "lang": "ta",
+      "text": "ஜார்விஸ், ராயபுரத்துல எத்தனை புகார் இன்னும் முடியாம இருக்கு?",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "zone": "Royapuram",
+        "recipe": [
+          "cases",
+          "dashboard"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "count of open cases in a zone"
+    },
+    {
+      "id": "dC-control-8",
+      "kind": "control",
+      "lang": "ta",
+      "text": "இன்னைக்கு மழை எவ்வளவு பெஞ்சிருக்கு, ரெயின் கேஜ் ரீடிங்ஸ் போடுங்க",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 6,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "readings"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "rainfall readings; English loanwords in Tamil letters"
+    },
+    {
+      "id": "dC-control-9",
+      "kind": "control",
+      "lang": "ta",
+      "text": "எந்த மண்டலத்துல புகார் அதிகமா தேங்கி கிடக்கு, வரிசைப்படுத்தி சொல்லுங்க ஜார்விஸ்",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "recipe": [
+          "ranking"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "rank the zones, wake word at the end"
+    },
+    {
+      "id": "dC-control-10",
+      "kind": "control",
+      "lang": "ta",
+      "text": "டிரெண்ட்ஸ் பேஜ் திறங்க",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 12,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "page": "trends",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "trends page; loanwords in Tamil letters"
+    },
+    {
+      "id": "dC-control-11",
+      "kind": "control",
+      "lang": "tg",
+      "text": "Jarvis Ambathoor la severe cases evlo irukku",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "zone": "Ambattur",
+        "recipe": [
+          "cases"
+        ],
+        "lang": "ta",
+        "acted": true,
+        "confirmOk": true
+      },
+      "note": "severe in a zone; Ambattur spelt by ear"
+    },
+    {
+      "id": "dC-control-12",
+      "kind": "control",
+      "lang": "tg",
+      "text": "this week oda numbers mattum podunga",
+      "screen": null,
+      "mic": true,
+      "engagedSec": 8,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "control": "filter.period.weekly",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "a period: this week"
+    },
+    {
+      "id": "dC-control-13",
+      "kind": "control",
+      "lang": "tg",
+      "text": "Jarvis Kodam bakkam um Valasara vakkam um compare pannunga, edhu mosam",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "compare"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "two zones compared; zone names split by the speech-to-text"
+    },
+    {
+      "id": "dC-control-14",
+      "kind": "control",
+      "lang": "tg",
+      "text": "Environment page open pannunga, AQI paakanum",
+      "screen": null,
+      "mic": false,
+      "engagedSec": null,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "page": "environment",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "typed; environment page"
+    },
+    {
+      "id": "dC-screenRef-1",
+      "kind": "screenRef",
+      "lang": "en",
+      "text": "and adyar?",
+      "screen": "stage:show the severe cases in Anna Nagar",
+      "before": [
+        "show the severe cases in Anna Nagar"
+      ],
+      "mic": true,
+      "engagedSec": 3,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "zone": "Adyar",
+        "recipe": [
+          "cases"
+        ],
+        "lang": "en",
+        "acted": true
+      },
+      "note": "same list for another zone"
+    },
+    {
+      "id": "dC-screenRef-2",
+      "kind": "screenRef",
+      "lang": "en",
+      "text": "second one. open it",
+      "screen": "stage:show me the latest news",
+      "before": [
+        "show me the latest news"
+      ],
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "storyN": 2,
+        "lang": "en",
+        "acted": true
+      },
+      "note": "the second one on Jarvis's news list"
+    },
+    {
+      "id": "dC-screenRef-3",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "இன்னும் சொல்லுங்க",
+      "screen": null,
+      "before": [
+        "காசிமேடு மீனவர் ஸ்ட்ரைக் பத்தி என்ன நியூஸ் வந்திருக்கு"
+      ],
+      "mic": true,
+      "engagedSec": 2,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "story": "காசிமேடு மீனவர்கள் போராட்டம்",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "tell me more about the story just briefed"
+    },
+    {
+      "id": "dC-screenRef-4",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "மூணாவது கேஸை திறங்க",
+      "screen": "stage:show the severe cases in Royapuram",
+      "before": [
+        "ராயபுரத்துல சீரியஸ் கேஸ் எல்லாம் காட்டுங்க"
+      ],
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "ta",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "case"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "the third case on the list"
+    },
+    {
+      "id": "dC-screenRef-5",
+      "kind": "screenRef",
+      "lang": "ta",
+      "text": "காத்து மாசு எப்படி இருக்கு, அதையும் சொல்லுங்க",
+      "screen": "stage:show the rainfall readings",
+      "before": [
+        "மழை அளவு காட்டுங்க"
+      ],
+      "mic": true,
+      "engagedSec": 6,
+      "heard": "ta",
+      "ui": "ta",
+      "gold": {
+        "recipe": [
+          "readings"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "same readings screen for air quality"
+    },
+    {
+      "id": "dC-screenRef-6",
+      "kind": "screenRef",
+      "lang": "tg",
+      "text": "last weekku adhe maadhiri sollunga",
+      "screen": null,
+      "before": [
+        "Perungudi la indha week evlo complaints vandhuchu"
+      ],
+      "mic": true,
+      "engagedSec": 4,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "zone": "Perungudi",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "same for last week; week and -ku joined"
+    },
+    {
+      "id": "dC-screenRef-7",
+      "kind": "screenRef",
+      "lang": "tg",
+      "text": "adha konjam read pannunga",
+      "screen": "newsPanel",
+      "before": [
+        "Puzhal jail news open pannunga"
+      ],
+      "mic": true,
+      "engagedSec": 3,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "story": "Puzhal jail",
+        "readLang": "ta",
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "read that; an English story asked in Tanglish is read in Tamil"
+    },
+    {
+      "id": "dC-screenRef-8",
+      "kind": "screenRef",
+      "lang": "tg",
+      "text": "top la irukra zone oda cases ellam kaattunga",
+      "screen": "stage:rank the zones by open complaints",
+      "before": [
+        "zones ah open complaints vechu rank pannunga"
+      ],
+      "mic": true,
+      "engagedSec": 5,
+      "heard": "en",
+      "ui": "en",
+      "gold": {
+        "recipe": [
+          "cases"
+        ],
+        "lang": "ta",
+        "acted": true
+      },
+      "note": "the first zone of the ranking"
+    }
+  ]
+}

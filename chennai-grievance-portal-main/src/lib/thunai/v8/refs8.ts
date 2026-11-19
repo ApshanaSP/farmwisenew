@@ -15,7 +15,8 @@ import { ordinalAt, ordinalOf, ordinalsAt, type OrdinalAt } from "./ord8";
 // (v9: the ordinal reader is ord8.ts, past the fifth and in all three languages; kept exported here for the callers that had it)
 export { ordinalOf };
 
-const OPEN = /\b(?:open|show(?: me)?|pull up|bring up|go to|read|play)\b|\b(?:thira|thiranga|open pannu|open pannunga|kaattu|kaattunga|padi|padinga)\b|திற|காட்டு|படி/iu;
+// (v10 dev2: and the English verb in Tamil letters, "ஓபன் பண்ணு", "ரீட் பண்ணுங்க")
+const OPEN = /\b(?:open|show(?: me)?|pull up|bring up|go to|read|play)\b|\b(?:thira|thiranga|open pannu|open pannunga|kaattu|kaattunga|padi|padinga)\b|திற|காட்டு|படி|ஓபன்|ஓப்பன்|ரீட்/iu;
 const EXPLAIN = /\b(?:tell me about|tell me more about|explain|what about|brief me on|what is|what's)\b|\b(?:pathi sollu|pathi sollunga|sollunga|sollu|vilakku)\b|சொல்|விளக்கு/iu;
 /** "the X one", "the one in/at/from/about X", "andha X case" */
 const WHERE = /\bthe\s+([\p{L}\p{M}\s.'’-]{2,40}?)\s+one\b|\bthe one (?:in|at|from|about|near|on)\s+(?:the\s+)?([\p{L}\p{M}\s.'’-]{2,40}?)[.?!]*$|\b(?:andha|antha|that)\s+([\p{L}\p{M}\s.'’-]{2,30}?)\s+(?:case|one|complaint|incident)\b/iu;
@@ -46,7 +47,8 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
     const at = ats.find((a) => positionSaid(a) && !dated(a)
       && (a.next == null || a.acc || ONE_AFTER.test(a.next) || VERB_AFTER.test(a.next) || CASE_AFTER.test(a.next) || caseNear(a)));
     if (!at) return null;
-    const k = at.n === -1 ? rows.length : at.n;
+    // (v10 dev2: a position from the end, -1 the last, -2 the one before it)
+    const k = at.n < 0 ? rows.length + 1 + at.n : at.n;
     return k >= 1 && k <= rows.length ? { op, n: k } : null;
   }
   const m = WHERE.exec(t);
@@ -68,7 +70,7 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
 const NEWS_AFTER = /^(?:news|story|stori|article|report|headline|piece|seithi|seidhi|seythi|sethi)(?:a|ah|aa|ai|ae|ya|yah|yai|ye|u|la|le|il)?$|^(?:செய்தி|சேதி|கட்டுரை|நியூஸ|ஹெட்லைன|ஸ்டோரி|ஆர்டிகிள|ஆர்ட்டிக்கிள|ரிப்போர்ட)/u;
 /** "one" right after it ("the seventh one", "kadaisi onnu", "ஏழாவது ஒண்ணைப்", "கடைசி ஒன்னைப்"), or a verb ("the seventh, open it", "seventh padinga") */
 const ONE_AFTER = /^(?:one|onnu|onna|onnai|onnaiya|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒண்ணைத்|ஒன்னு|ஒன்னை|ஒன்னைப்|ஒன்னைத்|ஒன்று|ஒன்றை|ஒன்றைப்|ஒன்றைத்)$/u;
-const VERB_AFTER = /^(?:open|read|play|please|padi\w*|thira\w*|sollu\w*|kaattu\w*)$|^(?:திற|படி|சொல்|காட்டு)/u;
+const VERB_AFTER = /^(?:open|read|play|please|padi\w*|thira\w*|sollu\w*|kaattu\w*)$|^(?:திற|படி|சொல்|காட்டு|ஓபன்|ஓப்பன்|ரீட்)/u;
 /** a case word after the position, or anywhere ("the second case", "ரெண்டாவது சம்பவத்தை", "the second Adyar case") */
 const CASE_AFTER = /^(?:case|cases|complaint|complaints|incident|incidents|petition|grievance)$|^(?:சம்பவ|புகார்|கேஸ்|மனு)/u;
 const CASE_WORD = /\b(?:case|complaint|incident|petition|grievance)s?\b|சம்பவ|புகார்|கேஸ்|மனு/iu;
@@ -102,7 +104,7 @@ const consoleNumber = (at: OrdinalAt): boolean => at.kind === "number" && !!at.p
 export function newsOrdinal8(text: string, items: { id: string }[], o: { panel?: boolean } = {}): string | null {
   if (!items.length) return null;
   const t = text.trim();
-  if (!(OPEN.test(t) || EXPLAIN.test(t)) || COUNT.test(t)) return null;
+  if (!(OPEN.test(t) || EXPLAIN.test(t) || NEWS_WHAT.test(t)) || COUNT.test(t)) return null;
   // v10 (the second review of v9): the first position said as one among all the sentence names ("Wait a second, read the third news"), never a
   // date ("on the 3rd", "for the 21st"), never the console's own numbering ("ward number 5 news")
   for (const at of ordinalsAt(t)) {
@@ -111,10 +113,13 @@ export function newsOrdinal8(text: string, items: { id: string }[], o: { panel?:
     // (v9, the review: on the panel, the position alone only when said as one, and never near the console's own things)
     const bare = o.panel === true && positionSaid(at) && !CONSOLE_WORD.test(t) && (at.next == null || at.acc || ONE_AFTER.test(at.next) || VERB_AFTER.test(at.next));
     if (!noun && !bare) continue;
-    const k = at.n === -1 ? items.length : at.n;
+    const k = at.n < 0 ? items.length + 1 + at.n : at.n;
     return items[k - 1]?.id ?? null;
   }
   return null;
 }
+/** v10 dev2 (dA-screenRef-6): "what is" said after the news word, as Tamil and Tanglish ask it ("கடைசிக்கு முந்தின ஸ்டோரி என்ன?", "moonavadhu news
+ * enna?"): a question about that story, as "what's the third story" is */
+const NEWS_WHAT = /(?:செய்தி|சேதி|நியூஸ|ஸ்டோரி|ஹெட்லைன|ஆர்டிகிள|ஆர்ட்டிக்கிள)\S*\s+(?:என்ன|என்னது|என்னன்னு)|\b(?:news|story|stori|seithi|seidhi|headline|article)\w*\s+(?:enna|ennadhu|ennathu|ennanu)\b/iu;
 /** v10: a verb right before an English position with a news word after it ("read fifth news") */
 const VERB_BEFORE = /^(?:open|read|play|show|explain|padi\w*|thira\w*)$/;

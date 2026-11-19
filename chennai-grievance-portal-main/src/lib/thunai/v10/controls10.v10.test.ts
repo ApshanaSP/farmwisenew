@@ -448,3 +448,42 @@ describe("v10 review 2, round 4: the verifier's regressions after the round-3 co
     expect(typed("set the subject line to drain overflow")).toBe(`ta.subject <- "drain overflow" (replace)`);
   });
 });
+
+describe("v10 dev2: the controls' misses on the second development set, each a failing test first", () => {
+  const STAGE = ctx({}, { stage: true });
+  /** the lane v10Front gives a sentence, as the console runs it (a Stage of cases open, or none) */
+  const stageDoc = { recipe: "cases", blocks: [{ kind: "CaseList", rows: [] }], scope: { zone: 5 }, slots: null };
+  const lane = (said: string, o: Partial<ScreenState> = {}, stage: unknown = null) =>
+    v10Front(said, { stage: stage as never, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible: null } as BrowserCtx10).lane;
+
+  it("v10 dev2: dB-control-8: with Jarvis's screen open, going back to the dashboard in loose words presses its Back to dashboard", () => {
+    const back = { id: "stage.backToDashboard", own: true, level: "A" };
+    for (const s of ["podhum indha screen, dashboard-ku thirumbi polaam", "dashboard-ku thirumbi po", "dashboardku thirumba polaam", "back to the dashboard",
+      "take me back to the dashboard", "enough of this screen, back to the dashboard", "ok done, return to the dashboard", "டாஷ்போர்டுக்குத் திரும்பு",
+      "இந்த ஸ்கிரீன் போதும், டாஷ்போர்டுக்கு திரும்பிப் போகலாம்", "இந்தத் திரை போதும், டாஷ்போர்டுக்குத் திரும்புங்க"]) expect(controlCommand10(s, STAGE), s).toMatchObject(back);
+    expect(lane("podhum indha screen, dashboard-ku thirumbi polaam", {}, stageDoc)).toMatchObject({ lane: "control", id: "stage.backToDashboard" });
+    // with no screen of Jarvis's open, the dashboard is the Overview page, as the rules have it
+    expect(controlCommand10("back to the dashboard", ctx())?.id ?? null).not.toBe("stage.backToDashboard");
+    expect(controlCommand10("dashboard-ku thirumbi polaam", ctx())?.id ?? null).not.toBe("stage.backToDashboard");
+    // the Stage's own words stay the Stage's; "enough" alone is the Stage's stop
+    for (const s of ["close", "go back", "back", "podhum", "போதும்"]) expect(controlCommand10(s, STAGE), s).toBeNull();
+    // a question about the dashboard is not the button
+    expect(controlCommand10("why did the dashboard go back to daily", STAGE)).toBeNull();
+  });
+
+  it("v10 dev2: dB-control-11: the prices card's order said as 'on top' or 'first', the card named by its vegetables, in three languages", () => {
+    const env = ctx({ page: "environment" });
+    for (const [s, id] of [["vegetable prices-la rising first mela varattum", "markets.sort.rising"], ["vegetable prices la rising mela varattum", "markets.sort.rising"],
+      ["show the vegetable prices with rising first", "markets.sort.rising"], ["put the rising prices on top", "markets.sort.rising"],
+      ["காய்கறி விலையில் ஏறுபவை முதல்ல வரட்டும்", "markets.sort.rising"], ["காய்கறி விலை ஏறுபவை மேலே வரட்டும்", "markets.sort.rising"],
+      ["falling prices on top", "markets.sort.falling"], ["vilai irangum first mela podunga", "markets.sort.falling"], ["vegetable prices falling first", "markets.sort.falling"]] as const) {
+      expect(controlCommand10(s, env), s).toMatchObject({ id });
+    }
+    expect(lane("vegetable prices-la rising first mela varattum", { page: "environment" })).toMatchObject({ lane: "control", id: "markets.sort.rising" });
+    // a question about the prices, or prices rising said with no order, is not the button
+    for (const s of ["which vegetable prices are rising", "are tomato prices rising", "vegetable prices rising-a", "mela varattum", "show the vegetable prices"]) {
+      const r = controlCommand10(s, env);
+      expect(r?.id ?? "none", s).not.toMatch(/^markets\.sort\./);
+    }
+  });
+});

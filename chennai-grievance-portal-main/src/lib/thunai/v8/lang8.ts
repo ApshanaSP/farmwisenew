@@ -22,7 +22,13 @@ const TG = new Set(("enna ennachu enga engey epdi eppadi eppo eppodhu evlo evval
   "kaattu kaatu kattu kaattunga kaatunga kattunga katunga kaami kaaminga kaminga sollu sollunga sollungal sollungo paaru paru paarunga pannu pannunga pannungal panni " +
   "podu podunga kudu kudunga padi padinga padiunga padiyunga vaasi vasi thira thiranga thirandhu maathu mathu maathunga oppidu oppidunga theriyuma therinjukkanum " +
   "irukku irukka irukkaa iruka irundhu illa illai venum vendaam venaam aachu achu aagudhu nadakkudhu nadandhudhu nadanthathu varudhu poguthu pochu " +
-  "la le ku kku ukku oda ode kitta pathi patthi paththi dhaan thaan nu nga unga ga da di pa ma").split(/\s+/));
+  "la le ku kku ukku oda ode kitta pathi patthi paththi dhaan thaan nu nga unga ga da di pa ma " +
+  // (v10 dev2: the particles a Tanglish line hangs on English nouns: because of, isn't it, isn't there; "yaangan flight cancel aanadhu cyclone naala
+  // thaana" was answered in English). Not "thane", "nala": a city's and a person's names in English news
+  "naala aala thaana dhaana thaane dhaane thaney dhaney illaya illaiya illaiyaa").split(/\s+/));
+/** v10 dev2: a Tamil verb's spoken endings in Latin letters, whatever the verb ("aanadhu", "vittadhu", "poyiduchu", "sonnaanga", "vandhaaru",
+ * "paakalaam", "pannanum"): Tamil grammar however Whisper spells the stem. Not an English word, nor a name written with a capital ("Sindhu") */
+const TG_END = /(?:dhu|thu|chu|aanga|aaru|laam|anum)$/;
 /** Tamil content words in Latin letters */
 const TC = new Set(("mazhai mazha kuppai thanni thaneer vellam saalai salai naalaikku naalai innaiku inniku indru romba konjam nilavaram nilamai pugar pugaar " +
   "seithi seidhi seythi sethi kadaisi mudhal rendavadhu moonavadhu adhu idhu andha indha antha intha avanga avaru ellam ellaam mattum innum vera").split(/\s+/));
@@ -66,7 +72,10 @@ export function wordsLang(text: string, o: Lang8Opts = {}): L8 | null {
   // a place said in Tamil letters alone ("அடையாறு?"): the letters are the evidence (the review, 18 Nov)
   if (!la.length) return ta.length || TAMIL.test(t) ? "ta" : null;
   // a Tamil polite verb however Whisper spells it ("panyunga", "kaatunga", "padinga": the real run o8b, 18 Nov)
-  const isTG = (w: string) => TG.has(w) || (w.length >= 5 && /(?:unga|inga|ungal|ungo)$/.test(w) && !isEnglishWord(w));
+  // (v10 dev2: and a verb's spoken ending, on a word not written as a name)
+  const caps = new Set((t.match(/\b[A-Z][a-z]+\b/g) ?? []).map((w) => w.toLowerCase()));
+  const isTG = (w: string) => TG.has(w) || (w.length >= 5 && /(?:unga|inga|ungal|ungo)$/.test(w) && !isEnglishWord(w))
+    || (w.length >= 5 && TG_END.test(w) && !caps.has(w) && !isEnglishWord(w));
   const tg = la.filter(isTG).length, tc = la.filter((w) => TC.has(w)).length, eg = la.filter((w) => EG.has(w)).length;
   const last = la[la.length - 1];
   // Tamil is verb-final: a Tamil word ending the clause makes it Tanglish ("severe cases kaattunga")

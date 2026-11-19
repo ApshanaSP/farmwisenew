@@ -21,6 +21,10 @@ import { dayIn, rehearsalIntent } from "@/lib/rehearsal/intent";
 import { taNumber } from "../normalise";
 import { asciiDigits } from "../digits";
 import { placeWord } from "../v8/lang8";
+import { ZONES, ZONE_NAMES } from "../lexicon";
+import { AREA_WORDS } from "../areas";
+import { isEnglishWord } from "../english";
+import { earSim } from "./phon10";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 
 export type MapOp = "ask" | "followup" | "chip" | "circle" | "layer" | "shot" | "export" | "save" | "visit" | "insight" | "send" | "suggest" | "rain" | "tour";
@@ -219,8 +223,17 @@ function numBefore(ws: string[]): { n: number; len: number } | null {
 const KM_UNIT = /^(?:km|kms|kilomet(?:er|re)s?|kilo|கிமீ\S*|கிலோமீட்ட\S*|கிலோ)$/u;
 const M_UNIT = /^(?:m|mtrs?|met(?:er|re)s?|மீட்ட\S*|மீ)$/u;
 
-/** A distance said in the sentence, as km, and where its words are (to put digits in their place). */
-export function distance10(t: string): { km: number; from: number; to: number } | null {
+/** a fraction said after the unit, as English says it ("a kilometre and a half", "two km and half", "a km and a quarter"): its value and words */
+function fractionAfter(ws: string[], i: number): { n: number; len: number } | null {
+  if (ws[i + 1] !== "and") return null;
+  const art = ws[i + 2] === "a" || ws[i + 2] === "an" ? 1 : 0;
+  const w = ws[i + 2 + art];
+  return w === "half" ? { n: 0.5, len: 2 + art } : w === "quarter" ? { n: 0.25, len: 2 + art } : null;
+}
+
+/** A distance said in the sentence, as km, and where its words are (to put digits in their place): `to` is the unit, `end` the last word of
+ * the distance (a fraction said after the unit: "a kilometre and a half") */
+export function distance10(t: string): { km: number; from: number; to: number; end: number } | null {
   const ws = words(t);
   for (let i = 0; i < ws.length; i++) {
     const km = KM_UNIT.test(ws[i]), m = !km && M_UNIT.test(ws[i]);
@@ -229,7 +242,10 @@ export function distance10(t: string): { km: number; from: number; to: number } 
     if (!nb) continue;
     // "a km" alone is one; "m" needs a real number ("I'm", "m" said alone)
     if (m && ws[i] === "m" && !/^\d/.test(ws[i - 1] ?? "")) continue;
-    return { km: km ? nb.n : nb.n / 1000, from: i - nb.len, to: i };
+    // "a kilometre and a half" is 1.5 km: the half said after the unit counts, after a whole number only (v10 dev2, dB-map-6: it was 1 km)
+    const fr = Number.isInteger(nb.n) ? fractionAfter(ws, i) : null;
+    const n = nb.n + (fr?.n ?? 0);
+    return { km: km ? n : n / 1000, from: i - nb.len, to: i, end: i + (fr?.len ?? 0) };
   }
   return null;
 }
@@ -243,7 +259,7 @@ export function withDigits(t: string): string {
   // words read only those)
   const unit = /[஀-௿]/u.test(ws[d.to]) ? ws[d.to] : km ? "km" : "m";
   const n = km ? Math.round(d.km * 1000) / 1000 : Math.round(d.km * 1000);
-  return [...ws.slice(0, d.from), String(n), unit, ...ws.slice(d.to + 1)].join(" ");
+  return [...ws.slice(0, d.from), String(n), unit, ...ws.slice(d.end + 1)].join(" ");
 }
 
 // ------------------------------------------------------------------ places --
@@ -376,9 +392,12 @@ const TOUR_FRAME = [
   // the Tamil nouns for a tour only with a verb that starts one, or goes, or takes the Collector on it: alone they are tourism and the CM's tours
   // in the news (v10 review 2, finding 12; round 2: "சுற்றுலா செல்வோம்", "சுற்றுலா அழைத்துச் செல்லுங்கள்" were not heard; never போதும், enough;
   // round 3: நடத்து only as asked, never the CM's "சுற்றுப்பயணம் நடத்துகிறார்" or "நடத்தும்")
-  "(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:தொடங்கு|ஆரம்பி|காட்டு|காண்பி|நடத்து(?:ங்கள்|ங்க|வோம்)?(?=\\s|$)|போகலாம்|போவோம்|போங்க|போ(?=\\s|$)|செல்வோம்|செல்லலாம்|செல்லுங்க|செல்லவும்|செல்(?=\\s|$)|(?:அழைத்து|கூட்டி)\\S*\\s*(?:செல்|போ(?!தும்))\\S*)",
+  // (v10 dev2, dB-feature-3: and the loanword டூர், "tour" after prep10, with the same verbs: "ஒரு டூர் கூட்டிட்டு போ", "டூர் போலாம்"; never "டூர் போனார்",
+  // the CM went on tour, nor "டூர் போறேன்", "கூட்டிட்டு போனாங்க": a tense said is a tour told of, not asked for)
+  "(?:(?:சுற்றுலா|சுற்றுப்பயண)\\S*|\\btour)\\s+(?:தொடங்கு|ஆரம்பி|காட்டு|காண்பி|நடத்து(?:ங்கள்|ங்க|வோம்)?(?=\\s|$)|போகலாம்|போலாம்|போவோம்|போங்க|போ(?=\\s|$)|செல்வோம்|செல்லலாம்|செல்லுங்க|செல்லவும்|செல்(?=\\s|$)|(?:அழைத்து|கூட்டி)\\S*\\s*(?:செல்|போ(?!தும்|ன|ற))\\S*)",
   "\\b(?:suthi|suththi|sutthi|chuthi|suthi) ?(?:kaattu|kattu|kaatu|kaami|kaaminga|kaatunga|kaattunga|paakalam|paaru)\\b", "\\bround (?:kootitu po|kootittu po|pogalam|kaattu|adikkalam)\\b",
-  "\\btour (?:kaattu|pannu|pannalam|kootitu po|start pannu|pogalam)\\b"
+  // ("kootitu", "kootittu", "kootikittu", "kootti" po: v10 dev2)
+  "\\btour (?:kaattu|kaattunga|pannu|pannalam|pannunga|start pannu|pogalam|polaam|polam|koo?tt?i(?:tt?u|kk?itt?u)? ?(?:po|ponga|pongo|poonga|polaam|pogalam))\\b"
 ];
 const TOUR_ASKED = new RegExp(TOUR_FRAME.join("|"), "u");
 /** the tour named with no frame ("today's hotspots tour", "the full round of the district tour", "மாவட்டச் சுற்றுலா"): a start when no news is
@@ -778,7 +797,7 @@ function circleCmd(t: string, c: MapCtx10): MapCmd | null {
   // review 2, round 2)
   const ws = words(t), placeWs = new Set(words(place.toLowerCase())), at = placeAt(ws, place);
   const subject = subjectOf(ws.filter((_, i) => !at.has(i)).join(" "));
-  const said = ws.filter((w, i) => !(d && i >= d.from && i <= d.to) && !placeWs.has(w) && !CIRCLE_FILL.has(w));
+  const said = ws.filter((w, i) => !(d && i >= d.from && i <= d.end) && !placeWs.has(w) && !CIRCLE_FILL.has(w));
   if (d) {
     const unit = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${Math.round(km * 1000) / 1000} km`);
     // the question the map's rules read: the sentence with digits (English, Tamil), or the same in English words (Tanglish, a drawn circle)
@@ -854,8 +873,100 @@ const placeOnly = (q: string): boolean => {
   return ws.length > 0 && ws.length <= 3 && ws.every((w) => placeWord(w) || placeWord(w.charAt(0).toUpperCase() + w.slice(1)));
 };
 
+// ------------------------------------------------------------------ an ask's place --
+
+/** the zones, as the console writes their names, with every spelling the lexicon has for each (one word, or more joined by spaces) */
+const ZONE_SPELL: { name: string; spell: string[] }[] = Object.entries(ZONES).map(([n, z]) => ({ name: ZONE_NAMES[Number(n) - 1], spell: z.en }));
+/** a zone's name by a spelling the lexicon has ("thandaiyarpet", "kodambakam", "anna nagar") */
+const zoneSpelled = (said: string): string | null => ZONE_SPELL.find((z) => z.spell.includes(said))?.name ?? null;
+/** the district's area words heard by ear: the 250 areas' own words long enough to tell apart, never an English word */
+let AREA_EAR: string[] | null = null;
+const areaEar = (): string[] => (AREA_EAR ??= [...AREA_WORDS].filter((w) => /^[a-z]{5,}$/.test(w) && !isEnglishWord(w)));
+/** a Tanglish clitic joined on a place ("tandiyarpetla", "adyarkku") */
+const CLITIC_END = /^([a-z]{4,}?)(ukku|kku|ile|ila|il|la|le|lu|ku)$/;
+/** words that end a place's run of words ("in Adyar zone", "in Teynampet this week"): a zone's or ward's own word is said after its name */
+const RUN_STOP = /^(?:zone|zones|ward|wards|taluk|taluks|area|areas|division|side|region|mandalam|limits?)$/;
+
+/**
+ * One word of a question as a district place: a zone by any of its spellings (the console's name for it), a word of the district's places as
+ * said, or heard by ear ("Tandiyarpet" is Tondiarpet, "Sholinganalloor" Sholinganallur: the same consonants by ear, earSim at least 0.9; one of
+ * the 250 areas only where a place is said to be); with a Tanglish clitic joined on ("tandiyarpetla"); null: no place.
+ */
+function placeOfWord(w: string, areas: boolean): { name: string; ear: boolean; clitic: string | null } | null {
+  if (!/^[a-z]{3,}$/.test(w)) return null;
+  const zone = zoneSpelled(w);
+  if (zone) return { name: zone, ear: false, clitic: null };
+  if (placeWord(w)) return { name: titleCase(w), ear: false, clitic: null };
+  // by ear: a word no list knows; a short one never an English word (a long one sounding like a zone's long name is the zone)
+  if (w.length >= 5 && !(w.length < 8 && isEnglishWord(w))) {
+    let best: { name: string; s: number } | null = null;
+    for (const z of ZONE_SPELL) for (const sp of z.spell) { const s = earSim(w, sp.replace(/\s+/g, "")); if (s >= 0.9 && (!best || s > best.s)) best = { name: z.name, s }; }
+    if (!best && areas) for (const a of areaEar()) { const s = earSim(w, a); if (s >= 0.9 && (!best || s > best.s)) best = { name: titleCase(a), s }; }
+    if (best) return { name: best.name, ear: true, clitic: null };
+  }
+  const m = CLITIC_END.exec(w);
+  if (m) { const p = placeOfWord(m[1], areas); if (p && !p.clitic) return { ...p, clitic: m[2] }; }
+  return null;
+}
+
+/**
+ * The district place an ask names, and its question with a place heard by ear in the console's spelling (v10 dev2, dB-map-1: "ask the map
+ * where the open drainage complaints are in Tandiyarpet" asked for "tandiyarpet" and named no place). The place is the words after one that
+ * says where ("in", "at", "near", "around", "along", "from", "of") or before a Tanglish clitic ("Tandiyarpet-la"), each a place of the district;
+ * a zone's own spelling or a name heard by ear is put as the console writes it. A zone heard by ear anywhere in the question is put right in the
+ * question too ("Tandiyarpet flooding map-la kaattu"). A place said with no such word ("Adyar flooding") and Tamil script are left as said: the
+ * map reads them (its resolver has the Tamil names).
+ */
+function askPlace(q: string): { place: string | null; question: string } {
+  const ws = words(q);
+  if (!ws.length) return { place: null, question: q };
+  const fix = new Map<number, string>();
+  /** a run of place words from i on (forward) or back from i (backward), at most four words */
+  const run = (i: number, dir: 1 | -1): { at: number[]; name: string } | null => {
+    const at: number[] = [], names: string[] = [], ears = new Map<number, string>();
+    let own = false;
+    for (let k = i; k >= 0 && k < ws.length && at.length < 4; k += dir) {
+      const w = ws[k];
+      if (PLACE_STOP.has(w) || SUBJECT_WORDS.has(w) || RUN_STOP.test(w) || NOT_PLACE.has(w)) break;
+      const p = placeOfWord(w, true);
+      if (!p) break;
+      at.push(k); names.push(p.name);
+      // (a word of the place's own, not an English word that names many places: "bus stand la" is no place, "Kannadasan Nagar" is)
+      own ||= p.ear || !!zoneSpelled(p.clitic ? w.slice(0, -p.clitic.length) : w) || !isEnglishWord(p.clitic ? w.slice(0, -p.clitic.length) : w);
+      if (p.ear) ears.set(k, p.clitic ? `${p.name} ${p.clitic}` : p.name);
+      if (p.clitic) break;
+    }
+    if (!at.length || !own) return null;
+    for (const [k, v] of ears) fix.set(k, v);
+    if (dir === -1) { at.reverse(); names.reverse(); }
+    // the words a zone's spelling of two or more words ("anna nagar", "thiru vi ka nagar"): the zone's name
+    const zone = zoneSpelled(at.map((k) => ws[k]).join(" "));
+    return { at, name: zone ?? names.join(" ") };
+  };
+  let place: string | null = null;
+  for (let i = 0; i < ws.length && !place; i++) {
+    if (/^(?:in|at|near|nearby|around|along|from|of|inside|beside|across)$/.test(ws[i])) {
+      const j = ws[i + 1] === "the" ? i + 2 : i + 1;
+      place = run(j, 1)?.name ?? null;
+    } else if (i > 0 && /^(?:la|le|lerundhu|lerunthu|kitta|kitte|pakkathula|pakkathil|pakkam|suthi|suththi|ulla|kulla)$/.test(ws[i])) {
+      place = run(i - 1, -1)?.name ?? null;
+    } else if (CLITIC_END.test(ws[i]) && !placeWord(ws[i])) {
+      const p = placeOfWord(ws[i], true);
+      if (p?.clitic) { place = p.name; if (p.ear) fix.set(i, `${p.name} ${p.clitic}`); }
+    }
+  }
+  // a zone heard by ear anywhere in the question, put right ("Tandiyarpet flooding"): the map's resolver then reads it surely
+  ws.forEach((w, i) => { if (!fix.has(i)) { const p = placeOfWord(w, false); if (p?.ear) fix.set(i, p.clitic ? `${p.name} ${p.clitic}` : p.name); } });
+  return { place, question: fix.size ? ws.map((w, i) => fix.get(i) ?? w).join(" ") : q };
+}
+/** an ask of the map with its question, and the place it names when it names one */
+const asked = (q: string): MapCmd => {
+  const p = askPlace(q);
+  return { op: "ask", question: p.question, ...(p.place ? { place: p.place } : {}) };
+};
+
 /** "this case", "that incident", "it", "these", "this one": a thing on the screen, not a question */
-const REF_ONLY = /^(?:this|that|these|those|it|them)(?: (?:case|cases|incident|incidents|complaint|complaints|ticket|tickets|one|ones|issue|issues))?$|^(?:idhu|idha|adhu|adha|இதை|அதை|இது|அது)$/u;
+const REF_ONLY =/^(?:this|that|these|those|it|them)(?: (?:case|cases|incident|incidents|complaint|complaints|ticket|tickets|one|ones|issue|issues))?$|^(?:idhu|idha|adhu|adha|இதை|அதை|இது|அது)$/u;
 
 function askCmd(t: string, c: MapCtx10): MapCmd | null {
   if (OPEN_ASK.test(t)) return { op: "ask", question: null };
@@ -870,11 +981,11 @@ function askCmd(t: string, c: MapCtx10): MapCmd | null {
     // (a reference alone, "show this case on the map", "show it on the map", is not a question the map can read: the planner has the case in
     // focus, as in v9: v10 review 2, finding 15)
     if (REF_ONLY.test(q)) return null;
-    return { op: "ask", question: withDigits(q) };
+    return asked(withDigits(q));
   }
   // the map open: a place question is the map's ("where are garbage complaints clustering", "what is happening in Teynampet")
   // ("where is ..." only about cases: "where is the commissioner" is not the map's)
-  if (c.open && PLACE_Q.test(t) && words(t).length >= 3 && !/^(?:open|read|draft|send|go to)\b/.test(t) && (!/\bwhere (?:is|are)\b/.test(t) || catOf(t))) return { op: "ask", question: withDigits(t) };
+  if (c.open && PLACE_Q.test(t) && words(t).length >= 3 && !/^(?:open|read|draft|send|go to)\b/.test(t) && (!/\bwhere (?:is|are)\b/.test(t) || catOf(t))) return asked(withDigits(t));
   return null;
 }
 
