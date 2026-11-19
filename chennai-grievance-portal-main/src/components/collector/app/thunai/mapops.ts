@@ -73,6 +73,9 @@ export function resetMapOps() { tour = null; readOut = null; }
 /** Ask the Map's state for Jarvis's lanes (map10.ts MapCtx10 without the language), from the console's useMapAsk instance. */
 export function mapSnap10(m: Partial<MapAsk> | null | undefined, o: { rainOpen?: boolean } = {}): Omit<MapCtx10, "lang"> {
   const r = m?.resp ?? null;
+  // the tour lives on the grown map: the map found shrunk (the Collector moved on without saying stop) ends it, so its "go back", "again" and
+  // "show me more" are the console's again, and it does not come back when the map is grown for another question (v10 review 2, finding 14)
+  if (tour && !m?.grown) tour = null;
   const t = tourNow();
   const cur = r ? (m?.turns ?? []).find((x) => x.resp === r) ?? null : null;
   return {
@@ -513,7 +516,16 @@ async function tourOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
       takeaway: s.stops.map((x, i) => `${i + 1}. ${cap(x.place.en)}: ${x.n}`).join("\n"), figures: [{ label: "Stops", value: s.stops.length, unit: null }], source: "Ask the Map" });
     return L(mv.say.en, mv.say.ta);
   }
-  if (!tour || tour.s.phase !== "running") return L("No tour is running. Say: take me round the district.", "சுற்றுலா எதுவும் நடக்கவில்லை. மாவட்டத்தைச் சுற்றிக் காட்டு என்று சொல்லுங்கள்.");
+  if (!tour || tour.s.phase !== "running") {
+    return ev === "stop" ? L("No tour is running.", "சுற்றுலா எதுவும் நடக்கவில்லை.")
+      : L("No tour is running. Say: take me round the district.", "சுற்றுலா எதுவும் நடக்கவில்லை. மாவட்டத்தைச் சுற்றிக் காட்டு என்று சொல்லுங்கள்.");
+  }
+  // stop ends the tour wherever the console is, without growing the map again (v10 review 2, finding 14)
+  if (ev === "stop") {
+    const mv = tourStep(tour.s, "stop");
+    endTour(d);
+    return L(mv.say.en, mv.say.ta);
+  }
   if (ev === "deeper") {
     const mv = tourStep(tour.s, "deeper");
     tour = { ...tour, s: mv.s };

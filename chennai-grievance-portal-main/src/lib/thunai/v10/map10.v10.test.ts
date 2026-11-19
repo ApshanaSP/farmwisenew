@@ -47,6 +47,18 @@ describe("the words: prep, numbers, places", () => {
     expect(km("ஒன்றரை கி.மீ")).toBe(1.5);
     expect(km("I'm near the station")).toBe(null);
   });
+  it("number words as they are said: 'and half', 'point', a count before 'thousand' or 'nooru' (v10 review 2, finding 16)", () => {
+    const km = (t: string) => distance10(prep10(t))?.km ?? null;
+    expect(km("within one and half km of Adyar")).toBe(1.5);
+    expect(km("within two point five kilometres of Adyar")).toBe(2.5);
+    expect(km("within two thousand metres of Adyar")).toBe(2);
+    expect(km("Adyar la anju nooru meter kulla")).toBe(0.5);
+    expect(km("twenty five hundred metres around the bus stand")).toBe(2.5);
+    expect(km("two hundred and fifty metres from the school")).toBe(0.25);
+    expect(withDigits(prep10("within two point five kilometres of Adyar"))).toBe("within 2.5 km of adyar");
+    // the radius the circle asks with is the one said
+    expect(mapCommand10("within one and half km of Adyar", CLOSED)).toEqual({ op: "circle", place: "Adyar", km: 1.5, question: "what is happening within 1.5 km of Adyar" });
+  });
   it("number words become digits in the question the map reads", () => {
     expect(withDigits(prep10("complaints within two kilometres of Kasimedu"))).toBe("complaints within 2 km of kasimedu");
     expect(withDigits(prep10("make it five hundred metres"))).toBe("make it 500 m");
@@ -98,6 +110,12 @@ describe("1. a question on the map", () => {
     expect(mapCommand10("where are garbage complaints clustering", OPEN)).toEqual({ op: "ask", question: "where are garbage complaints clustering" });
     expect(op("what is happening in Teynampet", OPEN)).toBe("ask");
     expect(op("where are garbage complaints clustering", CLOSED)).toBe(null);
+  });
+  it("a reference on the map ('this case', 'it') is not a question the map can read: the planner has the case in focus (v10 review 2, finding 15)", () => {
+    for (const t of ["show this case on the map", "show this incident on the map", "show it on the map", "show that complaint on the map", "show this one on the map"]) {
+      for (const c of [CLOSED, OPEN, ANSWER]) expect(mapCommand10(t, c), t).toBe(null);
+    }
+    expect(mapCommand10("show garbage complaints on the map", CLOSED)).toEqual({ op: "ask", question: "garbage complaints" });
   });
 });
 
@@ -151,6 +169,17 @@ describe("3. a circle by voice", () => {
     expect(mapCommand10("near ward 5", OPEN)).toEqual({ op: "ask", question: "what is happening in Ward 5" });
     expect(mapCommand10("flooding near the harbour", CLOSED)).toBe(null);
   });
+  it("a circle keeps what was asked about: schools, hospitals, rain, not only the case categories (v10 review 2, finding 11)", () => {
+    expect(mapCommand10("show schools within two kilometres of Adyar", CLOSED)).toEqual({ op: "circle", place: "Adyar", km: 2, question: "show schools within 2 km of Adyar" });
+    expect(mapCommand10("how many hospitals within 1 km of Kasimedu", CLOSED)?.question).toBe("how many hospitals within 1 km of Kasimedu");
+    expect(mapCommand10("how much rain fell within 2 km of Adyar", CLOSED)?.question).toBe("how much rain fell within 2 km of Adyar");
+    expect(mapCommand10("show hospitals near Adyar", OPEN)).toEqual({ op: "circle", place: "Adyar", km: 1, near: true, question: "hospitals within 1 km of Adyar" });
+    expect(mapCommand10("how many toilets near Adyar", OPEN)?.question).toBe("how many toilets within 1 km of Adyar");
+    expect(mapCommand10("Adyar la rendu km kulla schools", CLOSED)?.question).toBe("schools within 2 km of Adyar");
+    expect(mapCommand10("காசிமேட்டிலிருந்து இரண்டு கிலோமீட்டருக்குள் பள்ளிகள்", CLOSED)?.question).toBe("காசிமேட்டிலிருந்து 2 கிலோமீட்டருக்குள் பள்ளிகள்");
+    // a place and a distance and nothing else: what is happening there
+    expect(mapCommand10("what's happening within two kilometres of Kasimedu", CLOSED)?.question).toBe("what is happening within 2 km of Kasimedu");
+  });
 });
 
 describe("4. layers and the camera's shots", () => {
@@ -197,6 +226,13 @@ describe("5-9. the answer's actions", () => {
     expect(mapCommand10("இந்தப் பார்வையைச் சேமி", ANSWER)).toEqual({ op: "save" });
     expect(mapCommand10("indha view-a save pannu", ANSWER)).toEqual({ op: "save" });
   });
+  it("6. 'keep the map open' is not a save, nor 'suggest an action' the suggested questions (v10 review 2, finding 18)", () => {
+    for (const t of ["keep the map open", "keep this view on screen", "suggest an action for this", "suggest a reply", "can you suggest the next step"]) expect(mapCommand10(t, ANSWER), t).toBe(null);
+    expect(mapCommand10("bookmark this view", ANSWER)).toEqual({ op: "save" });
+    expect(mapCommand10("suggest some questions", ANSWER)).toEqual({ op: "suggest" });
+    expect(mapCommand10("show the suggested questions", ANSWER)).toEqual({ op: "suggest" });
+    expect(mapCommand10("suggestions kaattunga", ANSWER)).toEqual({ op: "suggest" });
+  });
   it("7. the visit order, and the field visit by voice", () => {
     expect(mapCommand10("plan my visits", ANSWER)).toEqual({ op: "visit", question: null });
     expect(mapCommand10("Plan my visit to the worst flooded spots tomorrow morning", CLOSED)).toEqual({ op: "visit", question: "open flooding", when: { en: "tomorrow morning", ta: "நாளை காலை" } });
@@ -204,6 +240,15 @@ describe("5-9. the answer's actions", () => {
     expect(mapCommand10("நாளை காலை வெள்ளம் பாதித்த இடங்களுக்குச் செல்ல திட்டமிடு", CLOSED)).toMatchObject({ op: "visit", question: "open flooding", when: { en: "tomorrow morning" } });
     expect(mapCommand10("naalaiku kaalaila vellam irukura edathukku visit plan pannu", CLOSED)).toMatchObject({ op: "visit", question: "open flooding", when: { en: "tomorrow morning" } });
     expect(mapCommand10("visit order", CLOSED)).toBe(null);
+  });
+  it("7. a visit mentioned, or a brief asked for it, is not a route (v10 review 2, finding 13)", () => {
+    for (const t of ["I have a site visit in Velachery tomorrow, what should I know?", "I have a field visit in Adyar tomorrow morning, brief me", "I'll come with you on the field visit"]) {
+      for (const c of [CLOSED, ANSWER]) expect(mapCommand10(t, c), t).toBe(null);
+    }
+    expect(op("how many field visits did the AE make in Adyar this week", ANSWER)).not.toBe("visit");
+    expect(op("plan my visit to the flooded spots, what should I know first", CLOSED)).toBe(null);
+    // still a visit's plan
+    expect(mapCommand10("schedule a site visit to the garbage complaints in Adyar", CLOSED)).toMatchObject({ op: "visit", question: "open garbage in Adyar" });
   });
   it("8. the AI analyst's insight", () => {
     expect(mapCommand10("what stands out here?", ANSWER)).toEqual({ op: "insight" });
@@ -222,6 +267,14 @@ describe("5-9. the answer's actions", () => {
     expect(mapCommand10("approve and send", ANSWER)).toBe(null);
     expect(mapCommand10("send it to me", ANSWER)).toBe(null);
     expect(mapCommand10("send these to Storm Water Drains", CLOSED)).toBe(null);
+  });
+  it("9. a case assigned, or sent to a person, is the console's, never the map's drafts (v10 review 2, finding 17)", () => {
+    for (const t of ["assign this case to the AE", "send this to the zonal officer", "send this case to Storm Water Drains", "forward this incident to Metro Water", "assign these to Metro Water", "send this to the executive engineer"]) {
+      expect(mapCommand10(t, ANSWER), t).toBe(null);
+    }
+    // the map's answer plainly sent: still the drafts
+    expect(mapCommand10("send these over to storm water drains", ANSWER)).toEqual({ op: "send", dept: "storm water drains" });
+    expect(mapCommand10("send this to SWD", ANSWER)).toEqual({ op: "send", dept: "swd" });
   });
 });
 
@@ -263,6 +316,16 @@ describe("11. Rain & flooding", () => {
     expect(mapCommand10("back", CLOSED)).toBe(null);
     expect(mapCommand10("power", CLOSED)).toBe(null);
   });
+  it("a news request about the rain is the news's, not Rain & flooding (v10 review 2, finding 9)", () => {
+    for (const t of ["show the latest rain news", "what's the news on rain and flooding", "news about flood prone areas", "கடந்த மழை செய்திகளைக் காட்டு", "mazhai vellam news kaattu"]) {
+      for (const c of [CLOSED, OPEN, RAIN]) expect(mapCommand10(t, c), t).toBe(null);
+    }
+    expect(mapCommand10("news on power cuts when it rains", OPEN)).toBe(null);
+    // the view and a past rain asked for with no news word stay the map's; close and back still close it while it is open
+    expect(op("open rain and flooding", CLOSED)).toBe("rain");
+    expect(op("replay the last rain", CLOSED)).toBe("rain");
+    expect(mapCommand10("close rain and flooding", RAIN)).toEqual({ op: "rain", act: "close" });
+  });
 });
 
 describe("the narrated district tour", () => {
@@ -295,6 +358,28 @@ describe("the narrated district tour", () => {
   });
   it("'next' with no tour running is not the map's", () => {
     for (const t of ["next", "go back", "stop", "go deeper here", "yes", "aduthu"]) expect(mapCommand10(t, HOT), t).toBe(null);
+  });
+  it("a running tour is stopped when the Collector names it, and a stop never starts one (v10 review 2, finding 10)", () => {
+    for (const t of ["stop the district tour", "end the news tour", "cancel the hotspots tour", "சுற்றுலாவை நிறுத்துங்கள்", "சுற்றுலா நிறுத்து", "stop tour", "tour-a niruthu"]) {
+      expect(mapCommand10(t, TOUR), t).toEqual({ op: "tour", tour: "stop" });
+      expect(mapCommand10(t, CLOSED)?.tour ?? null, t).not.toBe("start");
+    }
+  });
+  it("a news request that names a tour or a round-up, or a tourism word, starts no tour (v10 review 2, finding 12)", () => {
+    for (const t of ["give me the news round-up", "news about the CM's district tour", "முதல்வர் சுற்றுப்பயணம் பற்றிய செய்தி", "மாமல்லபுரம் சுற்றுலா செய்திகள்", "சுற்றுலாத் துறை புகார்கள்"]) {
+      expect(mapCommand10(t, CLOSED), t).toBe(null);
+    }
+    // a tour asked for, of the places in the news or in Tamil with its verb, still starts
+    expect(mapCommand10("take me round the places in today's news", CLOSED)).toEqual({ op: "tour", tour: "start", source: "news" });
+    expect(mapCommand10("start the news tour", CLOSED)).toEqual({ op: "tour", tour: "start", source: "news" });
+    expect(mapCommand10("சுற்றுலா தொடங்கு", CLOSED)).toEqual({ op: "tour", tour: "start", source: "hotspots" });
+  });
+  it("the tour's back, repeat and deeper only with the map on screen, and never on a news word (v10 review 2, finding 14)", () => {
+    const LEFT: MapCtx10 = { ...TOUR, open: false };
+    for (const t of ["go back", "previous", "again", "repeat", "show me more"]) expect(mapCommand10(t, LEFT), t).toBe(null);
+    expect(mapCommand10("show me more news", TOUR)).toBe(null);
+    // stop still ends it
+    expect(mapCommand10("stop the tour", LEFT)).toEqual({ op: "tour", tour: "stop" });
   });
 });
 

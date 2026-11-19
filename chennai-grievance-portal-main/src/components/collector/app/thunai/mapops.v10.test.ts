@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
-import type { MapCmd } from "@/lib/thunai/v10/map10";
+import { mapCommand10, type MapCmd } from "@/lib/thunai/v10/map10";
 import { briefAnswer, hotspotAnswer, withinAnswer } from "@/lib/thunai/v10/mapfix.testkit";
 import type { BridgeOp, BridgeReply } from "../askmap/bridge";
 import type { MapAsk } from "../askmap/useMapAsk";
@@ -351,6 +351,34 @@ describe("the narrated district tour", () => {
     const empty = fakeMap(null, () => hotspotAnswer(0));
     expect((await run({ op: "tour", tour: "start", source: "flood" }, deps(empty).d))?.en).toBe("Nothing clusters enough for a tour today or this week.");
     expect(empty.ask.mock.calls.map((c) => c[0])).toEqual(["hotspots of open flooding this week", "hotspots of flooding in the last 30 days"]);
+  });
+  it("a tour left when the map is shrunk ends there: 'go back' is the console's undo again, and the console is not pulled back to the map (v10 review 2, finding 14)", async () => {
+    const r = hotspotAnswer(5);
+    const m = fakeMap(null, () => r);
+    const { d } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    // the Collector shrinks the map and moves on, without saying stop
+    m.grown = false;
+    m.setGrown.mockClear();
+    const snap = mapSnap10(m as unknown as MapAsk);
+    expect(snap).toMatchObject({ open: false, tour: false, tourCheck: false });
+    expect(mapCommand10("go back", { ...snap, lang: "en" })).toBe(null);
+    expect(tourNow()).toBe(null);
+    // the map grown again for another question: the old tour does not come back
+    m.grown = true;
+    expect(mapSnap10(m as unknown as MapAsk).tour).toBe(false);
+    expect(m.setGrown).not.toHaveBeenCalled();
+  });
+  it("stop ends a tour wherever the console is, without growing the map again (v10 review 2, finding 14)", async () => {
+    const m = fakeMap(null, () => hotspotAnswer(5));
+    const { d } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    m.grown = false;
+    m.setGrown.mockClear();
+    expect((await run({ op: "tour", tour: "stop" }, d))?.en).toBe("Tour ended. The map stays where it is.");
+    expect(m.setGrown).not.toHaveBeenCalled();
+    expect(tourNow()).toBe(null);
+    expect((await run({ op: "tour", tour: "stop" }, d))?.en).toBe("No tour is running.");
   });
 });
 
