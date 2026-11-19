@@ -305,3 +305,44 @@ describe("v10 review 2, round 3 (reading): the offer's guards let the Collector'
     expect(actW("read me the whole report from The Hindu")).toEqual({ act: "full", id: "d1" });
   });
 });
+
+describe("v10 review 2, round 4 (reading): a \"don't\" on another verb is no refusal, and a place the console lacks is never the story's", () => {
+  const RW = { ...WORLD, ...referenceWorld() };
+  const actW = (said: string, o: Offer10 = OFFER) => offerAct(said, o, AT + 5000, RW);
+  const MAPPED = { act: "map", q: OFFER.map }, DRAFTED = { act: "draft", ids: ["INC-OLD"] };
+
+  it.each([
+    ["அதிகாரிக்கு குறிப்பு எழுத மறக்காதீங்க", DRAFTED], ["அதிகாரிக்கு ஒரு குறிப்பு எழுத மறக்காதீர்கள்", DRAFTED], ["வரைபடத்தில் காட்ட மறக்காதீங்க", MAPPED],
+    ["officer-ku note anuppa marakkadheenga", DRAFTED], ["map-la kaatta marakkaadheenga", MAPPED], ["கவலைப்படாதீங்க, வரைபடத்தில் காட்டுங்க", MAPPED],
+    ["இதை முழுசா படிங்க, எதையும் விடாதீங்க", { act: "full", id: "d1" }], ["அதிகாரிக்கு குறிப்பு எழுதுங்க, தாமதிக்காதீங்க", DRAFTED],
+    // one word away: another reassurance, a colloquial "don't forget", Tanglish "don't worry", "don't hesitate"
+    ["தயங்காதீங்க, அதிகாரிக்கு குறிப்பு அனுப்புங்க", DRAFTED], ["வரைபடத்தில் காட்ட மறந்துடாதீங்க", MAPPED], ["kavalaippadaadheenga, map-la kaattunga", MAPPED]
+  ])("v10 review 2, round 4: '%s' asks for the step (a \"don't\" on forget, worry, delay or skip)", (said, want) => {
+    expect(actW(said)).toEqual(want);
+    expect(act(said)).toEqual(want);
+    expect(act(said, { ...OFFER, lang: "ta" })).toEqual(want);
+  });
+  it("v10 review 2, round 4: a \"don't\" on the offer's own verb is still a refusal", () => {
+    for (const s of ["அதிகாரிக்கு குறிப்பு அனுப்பாதீங்க", "officer-ku note anuppaadheenga", "இதை முழுசா படிக்காதீங்க", "follow pannaadheenga", "எதுவும் பண்ணாதீங்க, வரைபடம் வேண்டாம்",
+      // and its "go ahead and" form: "don't go and send it"
+      "அதிகாரிக்கு குறிப்பு அனுப்பிடாதீங்க", "வரைபடத்தில் காட்டிடாதீங்க", "officer-ku note anuppidaadheenga"]) {
+      expect(["map", "draft", "follow", "full"]).not.toContain(actW(s)?.act);
+    }
+  });
+
+  it.each([
+    ["சேத்துப்பட்டில் புகார் ஏதாவது இருக்கா?"], ["மேடவாக்கத்தில் புகார் ஏதாவது இருக்கா?"], ["தாம்பரத்தில் உள்ள புகார்களை வரைபடத்தில் காட்டுங்க"], ["any complaints in chetpet?"],
+    ["show the drainage complaints in chetpet on the map"], ["chetpet-la complaints irukka?"], ["chromepet-la complaints map-la kaattunga"],
+    // one word away: colloquial Tamil, another suburb, "near", a note
+    ["பல்லாவரத்துல புகார் ஏதாவது இருக்கா?"], ["குரோம்பேட்டையில் புகார் ஏதாவது இருக்கா?"], ["any complaints near medavakkam?"], ["selaiyur-la complaints irukka?"],
+    ["draft a note to the officer in tambaram"],
+    // the district itself, whose name has no locality's ending
+    ["சென்னையில் புகார் ஏதாவது இருக்கா?"], ["any complaints in chennai?"]
+  ])("v10 review 2, round 4: '%s' names a place the console's names lack (said in Tamil or lower case): the lanes take it", (said) => {
+    expect(actW(said)).toBeNull();
+  });
+  it("v10 review 2, round 4: the story's own place in lower case is still the story's", () => {
+    expect(actW("show the drainage complaints in kotturpuram on the map")).toEqual(MAPPED);
+    expect(actW("any complaints in kotturpuram?")).toEqual({ act: "ground", id: "d1" });
+  });
+});

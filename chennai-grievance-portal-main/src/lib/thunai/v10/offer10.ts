@@ -75,7 +75,10 @@ const flat = (s: string) => s.normalize("NFC").toLowerCase().replace(/[’']/g, 
 // ("okay thanks", "thanks": that's all, as v9's plainYes reads it, never a yes: v10 review 2, finding 8)
 const NO = /^(?:no|nope|not now|no thanks|no thank you|leave it|that's all|that's it|nothing|later|(?:ok |okay )?(?:thanks|thank you)|வேண்டாம்|இல்லை|இல்ல|இப்போ வேண்டாம்|இப்போது வேண்டாம்|vendaam|venaam|vendam|venam|illa|illai|parava illa|paravaillai)(?: (?:thanks|thank you|jarvis|now))*$/u;
 // (round 3: and a "don't" said as the verb's own ending: "இதை கவனிக்காதீங்க", "ஃபாலோ பண்ணாதீங்க", "கவனிக்காதே", "map-la kaattadheenga")
-const NEGATED = /\b(?:don't|dont|do not|no need|never)\b|வேண்டாம்|வேணாம்|\bvendaam\b|\bvenaam\b|\bvendam\b|ாதீங்க|ாதீர்|ாதே(?=\s|$)|\b[a-z]{3,}(?:aa?dh|aa?th)(?:ee|i)nga\b/u;
+// (round 4: on the offer's own verbs only, show, write, send, follow, read, tell, put, or "do nothing": a "don't" on another verb asks for the step,
+// "எழுத மறக்காதீங்க" (don't forget to write), "கவலைப்படாதீங்க" (don't worry), "தாமதிக்காதீங்க", "எதையும் விடாதீங்க", "anuppa marakkadheenga"; and the
+// verb's "go ahead and" form, "அனுப்பிடாதீங்க", "anuppidaadheenga")
+const NEGATED = /\b(?:don't|dont|do not|no need|never)\b|வேண்டாம்|வேணாம்|\bvendaam\b|\bvenaam\b|\bvendam\b|(?:காட்ட|எழுத|அனுப்ப|கவனிக்க|படிக்க|சொல்ல|போட|(?:ஃபாலோ|பாலோ|டிராக்|டிராஃப்ட்|டிராப்ட்|வரைவு|இதை|அதை|இதைக்|அதைக்|எதுவும்|எதையும்|ஒன்றும்|ஒண்ணும்)\s*(?:பண்ண|செய்ய))(?:ி[டற])?(?:ாதீங்க|ாதீர்|ாதே(?=\s|$))|\b(?:kaa?tt?|ezhudh|ezhuth|eludh|eluth|anupp?|kavanikk?|padikk?|soll|pod|(?:follow|track|draft|map|adha|idha|adhai|idhai|edhuvum|ethuvum|edhayum|onnum)\s+pann)(?:i[dr])?aa?(?:dh|th)(?:ee|i)nga\b/u;
 /** the offer's own question ("Shall I show them on the map, ...", "வரைபடத்தில் காட்டட்டுமா"): Jarvis's words, not the Collector's */
 const OWN = /\bshall i\b|காட்டட்டுமா|செய்யட்டுமா|படிக்கட்டுமா|சொல்லட்டுமா/u;
 const YES = /^(?:(?:jarvis|ok|okay)\s+)?(?:yes|yeah|yep|yup|sure|ok|okay|go ahead|do it|please do|please|yes please|ஆமா|ஆமாம்|ஆம்|சரி|சரிங்க|பண்ணுங்க|aama|aamam|aamaa|sari|seri|seringa|pannunga)(?:\s+(?:please|jarvis|sir|do it|go ahead|பண்ணுங்க|பண்ணு|pannu|pannunga))*$/u;
@@ -173,6 +176,11 @@ const taLocative = (x: string) => /^[஀-௿]{2,}(?:ில்|ிலே|ில|�
 const TA_NOT_PLACE = /^(?:இத|அத|இங்க|அங்க|எங்க|இந்த|அந்த|கன்சோல|வரைபட|மேப|டேட்டா|தரவ|பதிவ|செய்த|பகுத|இடத|இடம|மண்டல|தமிழ|ஆங்கில|இங்கிலீஷ|சிஸ்ட|மொத்த|லிஸ்ட|பட்டியல|திரை|ஸ்க்ரீன|நம்ம|வார|மாத|நாள|வருட|காலை|மாலை|இரவ|இப்போ|தற்போ|கணக்க|ரிப்போர்ட|ஸ்டோர|நியூஸ|கணின|டேஷ்போர்ட|புகார|அலுவல|ஆபீஸ|துறை|உண்மை|நிஜ)/u;
 /** "this", "that", "last", "next" before it: the area pointed at, or a time ("இந்தப் பகுதியில்", "கடந்த வாரத்தில்") */
 const TA_POINT = /^(?:இந்த|இந்தப்|இந்தச்|இந்தத்|அந்த|அந்தப்|அந்தச்|அந்தத்|இதே|அதே|கடந்த|போன|அடுத்த)$/u;
+/** a word ending as the district's and its suburbs' localities do (Chetpet, Medavakkam, Gopalapuram, Tambaram, Shenoy Nagar, Selaiyur; in Tamil, in its
+ * case forms: சேத்துப்பட்டில், மேடவாக்கத்துல, தாம்பரத்தில், குரோம்பேட்டையில், சேலையூர்ல), or the district's own (Chennai, சென்னையில்): a place, in lower
+ * case or Tamil, though the console's names lack it */
+const PLACE_EN = /^(?:[a-z.]{2,}(?:pet|pett(?:ai|ah)|[bpv]akkam|puram|[bv]aram|nagar|chavadi|thangal|[mb]edu|kuppam|palayam|pore|[^aeiou](?:ur|oor))|chennai|madras)$/;
+const PLACE_TA = /(?:ப்பட்டு?|பேட்டை?|பாக்கத்து?|வாக்கத்து?|புரத்து?|வரத்து?|பரத்து?|ூர்?|நகர்?|சாவடி|தாங்கல்?|மேட்டு?|^சென்னை)(?:ில்|ிலே|ுல|ுலே|யில்|யிலே|்ல|ல)$/u;
 
 /**
  * The places a sentence names by the words around them, held by the world or not: a name after "in", "at", "near" or "around" (in any case, as typed
@@ -186,6 +194,7 @@ function placeWords(raw: string, t: string, w: World, from = false): string[][] 
   // With the console's names (the district's localities and taluks), a lower-case or Tamil word they do not hold is far likelier an ordinary
   // word ("in terms of", "in bullet points", "email-la", "விஷயத்துல", "வாட்ஸ்அப்பில்") than a place: only a name written as one (capitalised, as
   // round 1 read it) is read by the words around it, the rest by the world's names (v10 review 2, round 3). Without them, every script, as round 2.
+  // (round 4: and, with them, a word shaped as a locality's name is one, in lower case or Tamil: "any complaints in chetpet?", "தாம்பரத்தில்")
   const world = w.places.length > 0 || w.taluks.length > 0;
   const cased = nfc.replace(/[’']/g, "'").replace(/[.?!,;:]+/g, " ").replace(/\s+/g, " ").trim();
   const named = (i: number) => !world || (cased.length === t.length && /\p{Lu}/u.test(cased[i] ?? ""));
@@ -196,22 +205,22 @@ function placeWords(raw: string, t: string, w: World, from = false): string[][] 
   for (const m of t.matchAll(/\b(in|at|near|around|from) (?=([a-z][\w.]*(?:-[a-z]+)*(?: [a-z][\w.]*){0,2}))/g)) {
     if (m[1] === "from" && !from) continue;
     const all = m[2].replace(/-(?:la|le|ula|a|ah|aa)$/, "").split(" ");
-    if (NOT_PLACE_EN.has(all[0]) || (m[1] === "at" && acr.has(all[0])) || !named(m.index + m[0].length)) continue;
+    if (NOT_PLACE_EN.has(all[0]) || (m[1] === "at" && acr.has(all[0]))) continue;
     const cut = all.findIndex((x) => NOT_PLACE_EN.has(x));
     const ws = cut > 0 ? all.slice(0, cut) : all;
+    if (!named(m.index + m[0].length) && !ws.some((x) => PLACE_EN.test(x))) continue;
     // a department or body after "in", "at" or "from" ("the officer at Metro Water"); after "near" or "around", a name is a place ("near Central
     // Station", "near Chetpet station": round 3)
     if (m[1] !== "near" && m[1] !== "around" && ws.some((x, i) => orgs.has(ws.slice(0, i + 1).join(" ")) || ORG_HEAD.has(x))) continue;
     if (readPeriod(ws.join(" ")).kind !== "none") continue;
     out.push(ws.map((_, i) => ws.slice(0, i + 1).join(" ")));
   }
-  for (const m of t.matchAll(/\b([a-z][a-z.]{2,})(?:-| )(?:la|le|ula|lae)\b/g)) if (named(m.index) && !NOT_PLACE_TG.has(m[1]) && !orgs.has(m[1])) out.push([m[1]]);
+  for (const m of t.matchAll(/\b([a-z][a-z.]{2,})(?:-| )(?:la|le|ula|lae)\b/g)) if ((named(m.index) || PLACE_EN.test(m[1])) && !NOT_PLACE_TG.has(m[1]) && !orgs.has(m[1])) out.push([m[1]]);
   for (const m of nfc.matchAll(/\b(\p{Lu}\p{L}{3,})(?:la|ula)\b/gu)) { const x = m[1].toLowerCase(); if (!NOT_PLACE_TG.has(x) && !orgs.has(x)) out.push([x]); }
-  if (world) return out;
   const toks = t.split(" ");
   toks.forEach((x, i) => {
     const before = toks[i - 1] ?? "";
-    if (!taLocative(x) || TA_NOT_PLACE.test(x) || TA_POINT.test(before)) return;
+    if (!taLocative(x) || TA_NOT_PLACE.test(x) || TA_POINT.test(before) || (world && !PLACE_TA.test(x))) return;
     out.push(/[஀-௿]/u.test(before) ? [x, `${before} ${x}`] : [x]);
   });
   return out;

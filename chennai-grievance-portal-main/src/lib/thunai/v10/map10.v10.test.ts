@@ -552,3 +552,51 @@ describe("v10 review 2, round 3: the round-2 guards that blocked what the Collec
     expect(mapCommand10("suggest a follow up question", S)).toEqual({ op: "suggest" });
   });
 });
+
+describe("v10 review 2, round 4: the round-3 guards narrowed back to the Collector's everyday words", () => {
+  const ANS: MapCtx10 = { open: true, hasAnswer: true, kind: "answer", total: 12, shots: 4, shot: 0, chips: [], chipOpts: [], suggest: ["severe cases this week", "garbage near schools"], lang: "en" };
+  const each = (ss: string[], c: MapCtx10) => Object.fromEntries(ss.map((s) => [s, mapCommand10(s, c)]));
+  const all = (ss: string[], v: unknown) => Object.fromEntries(ss.map((s) => [s, v]));
+  const state = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as never;
+  /** the map's command, or the lane the sentence went to (the browser's own lanes, as Thunai.tsx runs them) */
+  const seen = (s: string, askMap: unknown = null) => {
+    const b = browserLaneV10(s, { stage: null, news: { items: [] }, state, world: { ...WORLD, ...referenceWorld() }, listenLang: "en", heardLang: "en", v7: true, lex: [], askMap } as BrowserCtx10);
+    return b.lane === "map" ? b.cmd : b.lane;
+  };
+  const START = { op: "tour", tour: "start", source: "hotspots" };
+
+  it("v10 review 2, round 4: a quick, short, full or whole tour given starts the map tour; the Collector's tour programme or plan still does not", () => {
+    const ss = ["give me a quick tour", "give me a short tour", "jarvis give me a quick tour", "can you give me a quick tour", "give me the quick tour please"];
+    expect(each(ss, CLOSED)).toEqual(all(ss, START));
+    expect(each(ss, ANS)).toEqual(all(ss, START));
+    expect(seen("give me a quick tour")).toEqual(START);
+    expect(seen("give me a short tour", ANS)).toEqual(START);
+    for (const s of ["give me a full tour", "give me the whole tour"]) expect(mapCommand10(s, CLOSED), s).toEqual({ ...START, full: true });
+    // still the Collector's own (round 3), whatever size is said
+    const own = ["give me today's tour programme", "give me the full tour plan for tomorrow", "give me the quick tour schedule"];
+    expect(each(own, CLOSED)).toEqual(all(own, null));
+  });
+
+  it("v10 review 2, round 4: the map's answer sent to a department by its own full name, a 'unit', or with a purpose, is the map's draft", () => {
+    const ss: [string, string][] = [["send this to disaster management", "disaster management"], ["send this to the disaster management department", "disaster management"],
+      ["forward this to disaster management", "disaster management"], ["send it to general administration", "general administration"],
+      ["send this to the parks and play fields department", "parks and play fields"], ["send this to the financial management unit", "financial management unit"],
+      ["send this to town planning for action", "town planning for action"], ["send it to education for follow up", "education for follow up"], ["send this to the bridges unit", "bridges unit"]];
+    for (const [s, dept] of ss) expect(mapCommand10(s, ANS), s).toEqual({ op: "send", dept });
+    expect(seen("send this to disaster management", ANS)).toEqual({ op: "send", dept: "disaster management" });
+    // still the planner's (round 3): a person, with a department word, a generic word or a purpose
+    const people = ["send this to the road contractor", "send this to the road contractor for action", "send this to the general manager", "send this to the unit head", "send this to management"];
+    expect(each(people, ANS)).toEqual(all(people, null));
+  });
+
+  it("v10 review 2, round 4: 'suggest what to ask' and its everyday kin read the map's suggested questions; a person to ask is still the planner's", () => {
+    const ss = ["suggest what to ask", "suggest what i should ask", "suggest some things to ask", "suggest a few things to ask", "suggest me what to ask", "can you suggest what to ask",
+      "suggest what else to ask", "suggest what i can ask the map", "suggest some follow ups for this"];
+    expect(each(ss, ANS)).toEqual(all(ss, { op: "suggest" }));
+    expect(seen("suggest what to ask", ANS)).toEqual({ op: "suggest" });
+    // still not the suggestions (round 3): a person to ask, an officer to ask, a case's follow-up
+    const not = ["suggest who to ask", "suggest whom I should ask", "suggest someone to ask", "suggest which officer to ask", "suggest a follow up action for this case",
+      "suggest some follow ups for this case"];
+    expect(each(not, ANS)).toEqual(all(not, null));
+  });
+});

@@ -359,12 +359,14 @@ const SEVERE_WORD = /\bsevere\b|\bserious\b|\bcritical\b|\bkadumaiyana\w*|கட
 
 /** the words that name which tour, between "a" or "the" and "tour" ("give me the news tour", "start a quick district tour": v10 review 2, round 2) */
 const TOUR_KIND = "(?:(?:district|city|hotspots?|news|flood|morning|full|whole|quick|short|guided|narrated|today'?s|todays|map) )*";
-/** the same words where a tour is given: a day or a size only before the map tour's name ("give me today's news tour"; "give me today's tour
- * programme" and "the full tour plan for tomorrow" are the Collector's own: v10 review 2, round 3) */
-const TOUR_NAMED = "(?:(?:(?:morning|full|whole|quick|short|today'?s|todays) )*(?:district|city|hotspots?|news|flood|guided|narrated|map) )*";
+/** the same words where a tour is given: a day only before the map tour's name ("give me today's news tour"; "give me today's tour
+ * programme" and "the full tour plan for tomorrow" are the Collector's own: v10 review 2, round 3); a size also right before "tour", never a
+ * tour programme or plan ("give me a quick tour", "give me the whole tour": round 4) */
+const TOUR_NAMED = "(?:(?:(?:morning|full|whole|quick|short|today'?s|todays) )*(?:district|city|hotspots?|news|flood|guided|narrated|map) )*(?:(?:full|whole|quick|short) )?";
+const TOUR_OWN = "(?! (?:programme|program|plans?|schedule|itinerary|diary)\\b)";
 /** a tour asked for in so many words: "take me round", "give me a tour", "start the news tour", "suthi kaattu", "சுற்றிக் காட்டு", "சுற்றுலா தொடங்கு" */
 const TOUR_FRAME = [
-  "\\btake me (?:a)?round\\b", `\\btake me on (?:a |the )?${TOUR_KIND}(?:tour|round)\\b`, "\\bshow me (?:a)?round\\b", `\\bgive me (?:a |the )?${TOUR_NAMED}tour\\b`,
+  "\\btake me (?:a)?round\\b", `\\btake me on (?:a |the )?${TOUR_KIND}(?:tour|round)\\b`, "\\bshow me (?:a)?round\\b", `\\bgive me (?:a |the )?${TOUR_NAMED}tour\\b${TOUR_OWN}`,
   "\\bgo (?:a)?round the (?:district|city)\\b",
   `\\b(?:start|begin|do|run|play) (?:a |the )?${TOUR_KIND}tour\\b`, "\\b(?:start|begin|do|run|play) (?:a |the )?(?:district|city|hotspots?|morning) round\\b",
   "\\bwalk me through (?:the |today'?s |todays )?(?:district|hotspots|city)\\b", "\\bfly me (?:a)?round\\b", "^(?:(?:the|a|today'?s|todays) )*news tour$",
@@ -571,9 +573,11 @@ const DEPT_WORDS: Set<string> = (() => {
   return s;
 })();
 /** every word said a department's ("Family Welfare", "town planning"): one of them beside a person ("the road contractor", "the hospital dean",
- * "the victim's family") is the planner's (v10 review 2, round 3) */
+ * "the victim's family") is the planner's (v10 review 2, round 3); the words DEPT_WORDS leaves out as too common are a department's own beside
+ * one of its words ("Disaster Management", "General Administration", "Parks and Play Fields", "the bridges unit"), and a purpose after "for"
+ * is not the department's name ("town planning for action") (round 4) */
 const deptWord = (said: string): boolean => {
-  const ws = words(said).filter((w) => !/^(?:and|of|department|dept)$/.test(w));
+  const ws = words(said.replace(/ for .*$/, "")).filter((w) => !/^(?:and|of|the|department|dept|unit|general|management|mgmt|play|fields?)$/.test(w));
   return ws.length > 0 && ws.every((w) => DEPT_WORDS.has(w.replace(/s$/, "")));
 };
 /** the map's answer plainly the thing sent ("send these", "send the results", "idha ... anuppu") */
@@ -632,7 +636,9 @@ function insightCmd(t: string, c: MapCtx10): MapCmd | null {
 // "tell me the suggestions", "suggestions sollu", "enna suggestions irukku", "பரிந்துரைகளைக் காட்டு")
 // (round 3: "ask" at the end only after "I" or "something", never a person, "suggest who to ask", "suggest someone to ask"; a follow-up only as
 // the whole thing suggested, never "suggest a follow up action for this case")
-const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\bsuggest(?:ed)? (?:me |us )?(?:(?:a|an|some|few|more|other|any|another|one|two|three|good|useful|next|new|follow up|followup) )*(?:(?:questions?|queries|query)\b|(?:follow ups?|followups?)$)|\bsuggest\w* (?:(?:i|we) (?:should |could |can )?|(?:something|anything) (?:(?:i|we) (?:can|could|should) |to )?)ask(?: (?:the map|here|it|next|now))?$|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
+// (round 4: "ask" at the end after any three words but a person's, "suggest what to ask", "suggest some things to ask", "suggest what i should
+// ask"; "suggest which officer to ask" is the planner's; follow-ups "for this", never "for this case")
+const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\bsuggest(?:ed)? (?:me |us )?(?:(?:a|an|some|few|more|other|any|another|one|two|three|good|useful|next|new|follow up|followup) )*(?:(?:questions?|queries|query)\b|(?:follow ups?|followups?)(?: (?:for|on|about) (?:this|it|that|these|here|the map|this map|the answer|this answer))?$)|\bsuggest\w*(?: (?!(?:who|whom|whose|whoever|someone|somebody|anyone|anybody|person|people|officers?|officials?|engineers?|staff|ae)\b)\w+){0,3} (?:to )?ask(?: (?:the map|here|it|next|now))?$|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
 const SUGGEST_NOUN = /^(?:suggestions?|பரிந்துரைகள்\S*|பரிந்துரைகளை\S*)$/u;
 const SUGGEST_FILL = new Set(("show read out tell list give open what whats are is the your some any map maps me us all again please now say those these tray its " +
   "sollu sollunga solunga kaattu kaattunga kaatu kaatunga kattu kattunga padi padinga irukku iruku irukka enna ena ennenna காட்டு காட்டுங்கள் சொல் சொல்லு சொல்லுங்கள் படி " +

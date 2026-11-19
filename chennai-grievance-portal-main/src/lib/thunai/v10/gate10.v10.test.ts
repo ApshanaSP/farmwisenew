@@ -5,11 +5,20 @@
  *   - A lone unclear word ("வாயமுர்ரா.") or a cut-off line that reached the lanes (named, called or engaged) waits; it is never answered.
  * Failing first on v9's gate and lanes.
  */
-import { describe, expect, it } from "vitest";
-import { addressed, namedIn, sideTalk8 } from "../addressed";
+import { describe, expect, it, vi } from "vitest";
+
+// (round 4's conductor tests: the microphone and the voice are stand-ins, as in conductor.v10.test.ts; the gate is real)
+vi.mock("@/components/collector/app/thunai/ears", () => ({ Ears: class { live = true; } }));
+vi.mock("@/components/collector/app/thunai/mouth", () => ({
+  EARCON_GUARD_MS: 400, setMouthHooks: () => undefined, speaking: () => false, nowSaying: () => null, canContinue: () => false,
+  continueAnswer: () => false, stopVoice: () => undefined, duckVoice: () => undefined, unduckVoice: () => undefined
+}));
+
+import { Conductor, type ConductorHooks } from "@/components/collector/app/thunai/conductor";
+import { addressed, embeddedAsk, namedIn, sideTalk8, type Addressed } from "../addressed";
 import { WORLD } from "../fixture";
 import { referenceWorld } from "../world";
-import { browserLaneV10 } from "./browser10";
+import { browserLaneV10, cutOff } from "./browser10";
 
 const world = { ...WORLD, ...referenceWorld() };
 const gate = (text: string, o: { engagedSec?: number | null } = {}) => {
@@ -128,5 +137,55 @@ describe("v10 review 2, round 3: a question asked inside a request is acted on i
     "Can you look up who the AE for Adyar is?"])("'%s' (3 s after Jarvis spoke) is acted on", (said) => {
     const g = gate(said, { engagedSec: 3 });
     expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+});
+
+type Inner = { gateFor(t: string): Addressed; ignored(t: string, g: Addressed): void };
+const conductor = (lastTurn: number) => new Conductor({
+  hearUrl: () => "/x", siteLang: () => "en", onSentence: () => undefined, cancelTurn: () => undefined, onIgnored: () => undefined,
+  onState: () => undefined, rules: () => ({ sure: false, districtNoun: false }), lastTurnAt: () => lastTurn
+} as unknown as ConductorHooks) as unknown as Inner;
+/** the held line gated and held as the open mic holds it, then its rest gated */
+const heldThen = (held: string, rest: string) => {
+  const c = conductor(Date.now() - 3000);
+  const g = c.gateFor(held);
+  c.ignored(held, g);
+  const r = c.gateFor(rest);
+  return `held:${g.why} rest:${r.act}/${r.why} text:${r.text}`;
+};
+
+describe("v10 review 2, round 4: the rest of a held line is its clause, is or are in it or not (finding 20)", () => {
+  // v10 review 2, round 4: round 3 let go any rest with an is/are in it as a remark of its own, so the clause a held "Tell me what the" or "Check
+  // whether the" waits for, and a noun with its relative clause after "Show me the", were gated as asides and never answered
+  it.each([["Tell me what the", "situation is in Velachery"], ["Tell me why the", "power is out in Adyar"], ["Check whether the", "pumps in Velachery are working"],
+    ["Tell me if the", "Adyar subway is flooded"], ["Show me the", "wards where water is stagnant"], ["Tell me what the", "problem is in Adyar"],
+    ["Show me the", "roads that are flooded in Velachery"]])("'%s' ... '%s' is acted on, joined", (held, rest) => {
+    expect(heldThen(held, rest)).toBe(`held:cut-off rest:true/engaged text:${held} ${rest}`);
+  });
+  // (round 3's remarks stay remarks: one with its own subject, a person or a thing of the speaker's, is no clause of the held line)
+  it.each([["Tell me what the", "my phone is not working"], ["Tell me if the", "I will be back in ten minutes"], ["Tell me why the", "your car is ready downstairs"],
+    ["Show me the", "the driver is waiting downstairs"]])("'%s' ... '%s' stays a remark", (held, rest) => {
+    expect(heldThen(held, rest)).toMatch(/^held:cut-off rest:false\//);
+  });
+});
+
+describe("v10 review 2, round 4: a relative clause cut off is held, with no article or a phrase before it (finding 19)", () => {
+  // v10 review 2, round 4: round 3's embedded question took any words before where/when/who, so a relative clause cut off on its "is" after a bare
+  // noun or a place ("Show me complaints where the status is") was acted on as whole and its qualifier lost; the rest then went unaddressed
+  it.each(["Show me complaints where the status is", "List complaints in Adyar where the road is", "Show me the complaints in Velachery where the water is",
+    "Give me the list of wards where the water is", "Show me only complaints where the status is", "Show me all the complaints from last week in Adyar where the status is"])("'%s' (3 s after Jarvis spoke) is cut off", (said) => {
+    expect(`${embeddedAsk(said)} ${cutOff(said)}`).toBe("false true");
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act} ${g.why}`).toBe("false cut-off");
+    expect(lane(said).lane).toBe("wait");
+  });
+  it("its rest is joined to it and acted on ('Show me complaints where the status is' ... 'still open after a week')", () => {
+    expect(heldThen("Show me complaints where the status is", "still open after a week"))
+      .toBe("held:cut-off rest:true/engaged text:Show me complaints where the status is still open after a week");
+  });
+  it.each(["Show me where the relief centres are", "Find out who the AE for Velachery is", "Show me again where the Adyar zonal office is",
+    "Find me who the AE for Adyar is", "Show me the map and tell me where the relief centres are", "Can you find where the relief centres are?",
+    "Give me an update on where the relief work is", "Show me exactly where the flooding is"])("'%s' (an embedded question) is still acted on", (said) => {
+    expect(`${gate(said, { engagedSec: 3 }).act}`).toBe("true");
   });
 });

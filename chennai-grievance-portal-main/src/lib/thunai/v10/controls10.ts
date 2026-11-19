@@ -219,15 +219,22 @@ const DESCRIBE_BEFORE = new Set(["a", "an", "the", "some", "this", "that", "my",
   "avaroda", "avanoda", "avaloda", "avangaloda", "avangaludaya", "edhavadhu", "ethavathu", "edho"]);
 const ACC_AFTER = new Set(["a", "ai", "ah", "aa"]);
 /** the object's case: ை with the doubled consonant after it (முகவரியைச்), the glide before it (முகவரியை) or -த்தை (விவரத்தை); a bare ை ends a noun
- * of its own (மழை, குப்பை, சாலை, பிரச்சினை: round 3, they were dropped) */
-const TA_ACC = /(?:யை|த்தை|ை[கசதப]்)$/u;
+ * of its own (மழை, குப்பை, சாலை, பிரச்சினை: round 3, they were dropped), but for a plural's (விவரங்களை) and the things a draft is filled with,
+ * a name, a number, a complaint, the information, a reply, him or her (round 4: "அவர் பெயரை தலைப்பில் போடு" typed "அவர் பெயரை" over the subject) */
+const TA_ACC = /(?:யை|த்தை|ை[கசதப]்|.களை|பெயரை|பேரை|எண்ணை|புகாரை|தகவலை|பதிலை|அவரை|அவனை|அவளை)$/u;
 /** a question's own word in the words (NOT_CONTROL's why, what, which, enna, என்ன): a thing to write about or a question, never words to type; a
  * title's "how to …" is words ("search the list for how to apply") (v10 review 2, round 3) */
 const ASKS = /\b(?:why|how|what|whats|which|who|whom|whose|when|where|enna|evlo|eppadi|yen|endha|yaaru)\b(?!\s+to\b)|(?:^|\s)(?:ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|யார்|எப்போ)(?:[கசதப]்|து)?(?=\s|$)/iu;
 /** the little words between a preposition and the box ("in the subject", "to my message") */
 const ARTICLE = new Set(["the", "a", "an", "my", "this", "that", "its", "your", "our", "அந்த", "இந்த"]);
-/** a box's own nouns said after its name ("the subject box la") */
-const BOX_W = new Set(["box", "field", "bar", "area", "space", "column", "பெட்டி", "புலம்"]);
+/** a box's own nouns said after its name ("the subject box la", "the subject line to …": round 4, "line" was typed) */
+const BOX_W = new Set(["box", "field", "bar", "area", "space", "column", "line", "பெட்டி", "புலம்"]);
+/** a redraft's words before how it should read ("to be more polite", "to a lot more formal", "to sound friendlier") */
+const LEAD_GLUE = /^(?:be|sound|sounds|sounding|so|much|lot|very|too|slightly|somewhat|rather|more|less|bit|little|a|an|the)$/u;
+/** a sentence's own verb after its subject ("the drain was cleared today", "the zonal officer will inspect tomorrow"): words said, not a thing
+ * after an article; a relative "that"/"which" before it is still a thing ("a new draft that is polite") */
+const CLAUSE_W = /^(?:is|are|was|were|will|would|shall|should|has|have|had|can|could|may|might|must|does|did)$/u;
+const REL_W = new Set(["that", "which", "who"]);
 /** how a draft is written, not what it says: a language, a tone, a length ("in Tamil", "to a formal tone", "shorter", "சுருக்கமாக") */
 const MANNER = /^(?:tone|formal\w*|informal\w*|polite\w*|friendl\w*|firm\w*|strict\w*|short\w*|brief\w*|long|longer|detail\w*|simple|simpler|simply|clear|clearer|concise\w*|crisp\w*|professional\w*|casual\w*|tamil\w*|english\w*|language|version|way|manner|style|more|less|bit|little|mariyadh\w*|mariyaadh\w*|churukk\w*|surukk\w*|viriv\w*|elimai\w*)$|^(?:தமிழ்|தமிழி|ஆங்கில|இங்கிலீஷ்|முறையா|மரியாதை|சுருக்க|விரிவா|விரிவான|எளிமை|தொனி|நடை|மொழி|நீளமா|நீளமான)/u;
 /** a select's name said as something's own: "the status of the second one", "second one oda status", "இரண்டாவதின் நிலை" (its status, a question
@@ -304,6 +311,8 @@ function scoreName(spoken: string[], name: string[], p: Prepared): Scored | null
     const w = spoken[i];
     if (check && (ON_W.has(w) || OFF_W.has(w))) continue;
     if (text && (TYPE_VERB(w) || QUOTE_AFTER.has(w) || QUOTE_BEFORE.has(w))) continue;
+    // a box's own noun straight after its name ("the subject line to …"): the name's, never words to type (round 4)
+    if (text && i > 0 && at[i - 1] !== null && BOX_W.has(w)) continue;
     if (isFiller(w)) continue;
     if (qual(w)) continue;
     restAt.push(i);
@@ -358,9 +367,20 @@ function typedFrame(spoken: string[], at: (string | null)[], restAt: number[], n
     // a question's words: "write what happened at Adyar in the message", "search the list for which ones are overdue" (round 3)
     const v = value();
     if (v && ASKS.test(v)) return null;
-    // they replace what the box holds only when they are plainly words: a manner word among them or an article before them is a redraft asked for
-    // ("change the message to be more polite", "replace the message with a new draft"), added to the draft as in round 1, never wiping it (round 3)
-    return { value: v, typed: true, replace: replace && !describes() && !restAt.some((i) => MANNER.test(spoken[i])) };
+    // they replace what the box holds only when they are plainly words: a redraft asked for is added to the draft as in round 1, never wiping it
+    // (round 3)
+    return { value: v, typed: true, replace: replace && !redraft() };
+  };
+  // a redraft asked for: the words begin with how the draft should read ("change the message to be more polite", "to a more polite one"), or are
+  // a thing after an article ("replace the message with a new draft") (round 3); never a manner word inside words said ("set the message to
+  // please send more workers to Adyar"), nor a sentence that begins with "the" ("replace the message with the drain was cleared today": its own
+  // verb says it is words) (round 4)
+  const redraft = () => {
+    let j = lo;
+    while (j < hi && LEAD_GLUE.test(spoken[j])) j++;
+    if (MANNER.test(spoken[j])) return true;
+    const ws = spoken.slice(lo, hi + 1), k = ws.findIndex((w) => CLAUSE_W.test(w));
+    return !(k > 0 && !ws.slice(0, k).some((w) => REL_W.has(w))) && describes();
   };
   const after = (k: number) => lo > k, before = (k: number) => hi < k;
   // the verbs that put or look for words, where they stand

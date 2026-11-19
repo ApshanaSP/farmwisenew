@@ -415,3 +415,36 @@ describe("v10 review 2, round 3: the verifier's problems with the round-2 contro
     expect(words10("இந்த சர்ச்சை")).toEqual(["இந்த", "சர்ச்சை"]);
   });
 });
+
+describe("v10 review 2, round 4: the verifier's regressions after the round-3 controls fixes", () => {
+  const lane = (said: string, o: Partial<ScreenState>, visible: string[] | null, x: Partial<BrowserCtx10> = {}) =>
+    v10Front(said, { stage: null, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible, ...x }).lane;
+  const TA = ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"];
+  const INC: Partial<ScreenState> = { panel: "incident", incident: "INC-1" };
+  const typed = (said: string, listenLang: "en" | "ta" = "en") => {
+    const l = lane(said, INC, TA, { listenLang });
+    return l && l.lane === "control" && l.press && l.value ? `${l.id} <- "${l.value}"${l.replace ? " (replace)" : ""}` : null;
+  };
+
+  // v10 review 2, round 4: round 3's narrower Tamil object case (a bare ை is a noun's own: மழை, சாலை) let the plain accusative of a thing to write
+  // about through: "put his name in the subject" wiped the subject and typed "அவர் பெயரை"
+  it.each(["அவர் பெயரை தலைப்பில் போடு", "புகார் எண்ணை செய்தியில் சேர்", "விவரங்களை செய்தியில் சேர்", "தொலைபேசி எண்ணை செய்தியில் சேர்",
+    "இடத்தின் பெயரை தலைப்பில் போடு", "புகாரை செய்தியில் சேர்", "தலைப்பில் அவர் பெயரை போடு", "செய்தியில் புகார் எண்ணை சேர்"])(
+    "'%s' does not type its words into the Take action draft", (said) => {
+      expect(typed(said, "ta")).toBeNull();
+    });
+
+  // v10 review 2, round 4: round 3's replace guard (an article before the words, a manner word among them) kept an ordinary "set the message to …"
+  // from replacing the draft: the words were added to it
+  it.each([["replace the message with the drain was cleared today", "drain was cleared today"],
+    ["set the message to the zonal officer will inspect tomorrow", "zonal officer will inspect tomorrow"],
+    ["set the message to please send more workers to Adyar", "send more workers to adyar"],
+    ["set the message to the drain is clear now", "drain is clear"]])("'%s' replaces the draft", (said, want) => {
+    expect(typed(said)).toBe(`ta.message <- "${want}" (replace)`);
+  });
+
+  // v10 review 2, round 4: round 3's "set, the box, its words" typed "line to drain overflow" into the subject
+  it("'set the subject line to drain overflow' sets the subject to the words", () => {
+    expect(typed("set the subject line to drain overflow")).toBe(`ta.subject <- "drain overflow" (replace)`);
+  });
+});

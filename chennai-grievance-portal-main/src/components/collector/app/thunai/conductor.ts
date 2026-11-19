@@ -84,6 +84,16 @@ export const WAKE_SAME_CALL_MS = 5000;
 /** v8: how long after the name the first sentence still counts as the call's own request (the gate's `called`) */
 export const CALL_MS = 12_000;
 
+// v10 review 2, round 4: the rest of a held line that is shaped as a statement and is still the line's own (gateFor)
+/** the words alone, lower case (a dash or an ellipsis the speech-to-text wrote for the pause is no word) */
+const plain = (s: string): string => s.toLowerCase().replace(/[’']/g, "").replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim();
+/** the held line opens a clause and stops before its subject: "Tell me what the", "Check whether the", "Tell me if the", "Tell me why" */
+const OPENS_CLAUSE = /(?:^| )(?:what|whats|why|where|when|how|who|which|whether|if)(?: (?:the|a|an|this|these|those))?$/;
+/** a rest whose subject is a person or the speaker's own thing is a remark of its own ("my phone is not working", "I will be back") */
+const OWN_SUBJECT = /^(?:i|im|ive|ill|id|my|you|your|youre|he|she|his|her|him|we|our|they|their|them)(?: |$)/;
+/** a noun with its relative clause, the verb inside it: "wards where water is stagnant", "complaints that are still open" */
+const NOUN_RELATIVE = /^(?:(?:the|all|any|some|these|those) )?(?:(?!(?:is|are|was|were|will|has|have|had|it|its|this|i|im|my|you|your|he|she|we|our|they|their|there)(?: |$))\S+ ){1,3}(?:where|that|which|who|whose|when) /;
+
 export interface HeardLine {
   text: string;
   /** the language the server heard it in (Whisper's forced decode that won, or the captions' script) */
@@ -660,8 +670,11 @@ export class Conductor {
     if (!h) return g;
     if (!/^(?:side|aside|unaddressed|unclear)$/.test(g.why)) return g;
     // round 3: a statement of its own is no rest ("Tell me about the" ... "the driver is waiting downstairs" was acted on: the held request lent it
-    // its shape)
-    if (isStatement(text)) return g;
+    // its shape). Round 4: but a held line that opens a clause ("Tell me what the", "Check whether the", "Tell me if the") waits for a subject and
+    // its verb, so a rest shaped as a statement is that clause ("situation is in Velachery"), unless a person or the speaker's own thing is its
+    // subject ("my phone is not working"); and a noun whose verb is in its relative clause ("Show me the" ... "wards where water is stagnant") is
+    // no statement. Both were gated as asides and never answered
+    if (isStatement(text) && !(OPENS_CLAUSE.test(plain(h.text)) && !OWN_SUBJECT.test(plain(text))) && !NOUN_RELATIVE.test(plain(text))) return g;
     const joined = joinCut(h, text, Date.now());
     if (joined === text.trim()) return g;
     const j = this.gateOne(joined);

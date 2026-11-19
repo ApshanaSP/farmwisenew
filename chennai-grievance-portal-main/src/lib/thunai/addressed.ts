@@ -86,9 +86,14 @@ const EMBEDDED_ASK = /^(?:\S+ )+(?:where|what|who|when|how) \S+(?: \S+)* (?:is|a
 const CLEFT = /^(?:(?:and|so|ok|okay|but|now|well|then|also|yes|yeah|right|haan|seri|sari|hey|hi|jarvis|ஜார்விஸ்) )+(?:where|what|who|when|how) /;
 /** the relative clause: the question word right after a noun the sentence names ("the complaints where", "those wards where") */
 const RELATIVE = /(?:^| )(?:the|these|those) \S+ (?:where|when|who) /;
+/** v10 review 2, round 4: the same on a request's object with no article, or with a phrase between ("Show me complaints where the status is", "List
+ * complaints in Adyar where the road is"): a show or list verb, its object, then where/when/who. A question is no object: "Show me where", "Show me
+ * again where", "Find out who" (a pronoun, particle, adverb or preposition first), "Show me the map and tell me where" ("and", "tell" in it), "Give me
+ * an update on where" (a preposition right before it) */
+const RELATIVE_OBJ = /(?:^| )(?:show|list|give|get|display|filter|find|count|map|mark|highlight|sort|rank|pull up|bring up|open) (?:(?:me|us) )?(?:(?:only|just|\S+ly) )?(?:(?:all|the|these|those|any|some) ){0,2}(?!(?:me|us|out|up|again|now|just|also|then|here|there|please|on|in|at|for|from|to|with|by|about|where|when|who|what|how|which|\S+ly)\b)(?:(?!(?:and|or|tell|me|us|you|where|when|who|what|how|which)\b)\S+ ){0,6}(?!(?:and|or|tell|me|us|you|where|when|who|what|how|which|on|about|of|in|at|for|from|to|with|by|as|regarding|over|into|is|are|was|were)\b)\S+ (?:where|when|who) /;
 export const embeddedAsk = (text: string): boolean => {
   const t = norm(text).trim();
-  return EMBEDDED_ASK.test(t) && !CLEFT.test(t) && !RELATIVE.test(t);
+  return EMBEDDED_ASK.test(t) && !CLEFT.test(t) && !RELATIVE.test(t) && !RELATIVE_OBJ.test(t);
 };
 /** one Tamil word that is a whole command or answer ("அடுத்து": next) */
 const ONE_WORD_TA8 = /^(?:அடுத்து|அடுத்தது|முந்தையது|நிறுத்து|போதும்|மீண்டும்|மூடு|திற|படி|காட்டு|சரி|பின்னால்|வேண்டாம்|இல்லை|ஆமாம்|ஆம்)$/u;

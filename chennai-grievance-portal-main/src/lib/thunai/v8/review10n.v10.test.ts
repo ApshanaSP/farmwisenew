@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { WORLD } from "../fixture";
 import { referenceWorld } from "../world";
 import { asksPrivate } from "../privacy";
+import { routeByRules } from "../router";
 import { newsAsk } from "../newsask";
 import { NewsBody, newsEvents, type StoredDoc } from "../web/serve";
 import { newsAide } from "../aide7/news";
@@ -308,4 +309,46 @@ describe("v10 review 2, round 3: news-12, 'report aana' (was reported) is the pr
     "mazhai report panna sollunga", "மழை ரிப்போர்ட் பண்ண சொல்லுங்க", "weekly report aachaa sollunga", "வார ரிப்போர்ட் ஆச்சா சொல்லுங்க"])("%s is still the console's own report", (t) => {
     expect(newsRequest(t)).toBeNull();
   });
+});
+
+describe("v10 review 2, round 4: news-3, a news request about people who died is no privacy ask unless it asks who they were or for their details (high)", () => {
+  const ctx = (lang: "en" | "ta") => ({ stage: null, news: { items: [], incident: null, reading: null }, state: state(), world, listenLang: lang, heardLang: lang, incident: null, v7: true, lastLang: null, lastFound: null }) as never;
+  it.each([
+    // a "who" that opens a relative clause after the dead ("the dead man who was found"), not one that asks who he was
+    "read the news about the dead man who was found near the Adyar bridge", "any news on the drowned boys who went missing at Marina beach?",
+    // வீடுகள் (houses) is no வீடு (a home address)
+    "வெள்ளத்தில் உயிரிழந்தவர்கள் மற்றும் இடிந்த வீடுகள் பற்றிய செய்தி படிங்க",
+    // a "who" right after a "to them" (dative) is who gave the relief, not who died
+    "மழையில் உயிரிழந்தவர்களுக்கு யார் நிவாரணம் அறிவித்தார்கள்? செய்தி படிங்க", "Ennore la irandhavanga family ku yaaru nivaranam kuduthaanga news padinga",
+    // "news number 2" is a position, not someone's number
+    "read news number 2 about the drowned students in Ennore",
+    // (one word away: இறந்தவர்கள் with houses, a girl who drowned, a Tamil news number, the victims in news number 3)
+    "வெள்ளத்தில் இறந்தவர்கள் மற்றும் இடிந்த வீடுகள் பற்றிய செய்தி படிங்க", "any news on the dead girl who was found in the Cooum?",
+    "உயிரிழந்தவர்கள் பற்றிய செய்தி நம்பர் 2 படிங்க", "read news number 3 about the victims of the Ennore fire"])("%s is a news find, not a privacy refusal", (q) => {
+    const lang = /[஀-௿]/u.test(q) ? "ta" : "en";
+    expect(asksPrivate(q)).toBe(false);
+    expect(routeByRules(q, world, false).why).not.toBe("privacy");
+    expect(what(browserLaneV10(q, ctx(lang)))).toBe("find:q");
+  });
+  it.each(["the dead man who is he?", "tell me who the dead man was", "who were the drowned boys in Ennore?", "Ennore la irandhavar yaaru", "உயிரிழந்தவர்கள் யார்",
+    "யார் அந்த கொல்லப்பட்டவர்", "the dead man found near the Adyar bridge, what is his name?", "இறந்தவரின் வீடு எங்கே"])("%s is still a private ask", (q) => {
+    expect(asksPrivate(q)).toBe(true);
+  });
+});
+
+describe("v10 review 2, round 4: news-12, 'aana' as 'but' and ஆனா, ஆனதா, ஆனதும் after the console's report leave it the console's (high)", () => {
+  const ctx = (lang: "en" | "ta", panel: boolean) => ({ stage: null, news: { items: panel ? PANEL23 : [], incident: null, reading: null }, state: state(panel ? { panel: "news" } : {}), world, listenLang: lang,
+    heardLang: lang, incident: null, v7: true, lastLang: null, lastFound: null }) as never;
+  it.each(["mazhai report aana Adyar mattum kaattunga", "weekly report aana zone wise kaattunga", "மழை ரிப்போர்ட் ஆனா அடையாறு மட்டும் காட்டுங்க", "வார ரிப்போர்ட் ஆனதா சொல்லுங்க",
+    "மழை ரிப்போர்ட் ஆனதும் படிங்க",
+    // (one word away: Tanglish "if done", ரிப்போர்ட்டானா, ஆனால் in full)
+    "vaara report aana Velachery mattum sollunga", "மழை ரிப்போர்ட்டானா படிங்க", "வார ரிப்போர்ட் ஆனால் அடையாறு மட்டும் காட்டுங்க"])("%s is the console's own report, no news find", (t) => {
+    const lang = /[஀-௿]/u.test(t) ? "ta" : "en";
+    expect(newsRequest(t)).toBeNull();
+    for (const panel of [false, true]) expect(what(browserLaneV10(t, ctx(lang, panel)))).not.toMatch(/^(?:read|find)/);
+  });
+  it.each(["nethu report aana Pallikaranai news padinga", "innaiku report aana Ennore murder seithi sollunga", "இன்னைக்கு ரிப்போர்ட் ஆன அடையாறு செய்தி படிங்க"])(
+    "%s, the press's 'that was reported' with its news word, is still a news find", (t) => {
+      expect(what(browserLaneV10(t, ctx(/[஀-௿]/u.test(t) ? "ta" : "en", false)))).toBe("find:q");
+    });
 });
