@@ -48,7 +48,9 @@ describe("explaining one issue", () => {
     const say = b.doc.say.en;
     expect(labelIn(say)).toBeNull();
     expect(say).not.toMatch(/status |handles it/);
-    expect(say).toMatch(/^There's /);
+    // v6 (Phase 3, brief6.ts): an open case is briefed from its headline ("Standing water at ..."), not "There's ..."; it ends offering more
+    expect(say).not.toMatch(/^There was /);
+    expect(say).toMatch(/Want the details\?$/);
   });
 });
 
@@ -59,7 +61,8 @@ describe("asking for one issue to be explained, with no number", () => {
     const body = RoundBody.parse({ turnId: `e-${text.length}-${Math.random().toString(36).slice(2, 8)}`, round: 0, text, turns: [], lastText: null, stage: null, direct: null,
       state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } });
     const r = (await planRound(body, world, fakeHands(), "t", { notes: [], habits: {} }, undefined, { llm: noModel })).result!;
-    expect(r.stage?.recipe).toBe("case");
+    // v4: the explain recipe (recipes/explain.ts) retells the scope's most urgent case
+    expect(r.stage?.recipe).toBe("explain");
     expect(labelIn(r.stage!.say.en)).toBeNull();
   });
 });
@@ -86,6 +89,6 @@ describe("a new request with an open screen is not taken as a follow-up (BUG-020
     const body = RoundBody.parse({ turnId: "frame-explain-1", round: 0, text: "explain the flooding complaint in Adyar", turns: [{ heard: "chennai city police report", did: "showed a screen" }], lastText: "chennai city police report", stage, direct: null,
       state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } });
     const r = (await planRound(body, world, fakeHands(), "t", { notes: [], habits: {} }, undefined, { llm: noModel })).result!;
-    expect(r.stage?.recipe).toBe("case");
+    expect(r.stage?.recipe).toBe("explain");
   });
 });

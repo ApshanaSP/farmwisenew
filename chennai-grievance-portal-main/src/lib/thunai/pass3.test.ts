@@ -85,23 +85,25 @@ describe("a closed case is told as closed (BUG-031)", () => {
   });
   it("a reopened case is told as open", async () => {
     const b = await buildScreen("case", { ...emptySlots(), id: "INC-7" }, scope, world, detail("Open", 1), "explain INC-7");
-    expect(b.doc.say.en).toMatch(/^There's /);
+    // v6 (Phase 3, brief6.ts): an open case is briefed (headline first, an offer of more), never told as closed
+    expect(b.doc.say.en).not.toMatch(/^There was |marked resolved/);
+    expect(b.doc.say.en).toMatch(/Want the details\?$/);
   });
 });
 
 describe("the explain rule asks for one issue only (BUG-032)", () => {
   it.each(["திருவொற்றியூர்ல தெருவிளக்கு புகார்கள் காட்டுங்க", "அடையார் தெரு விளக்கு புகார்கள் காட்டு", "அடையாறு தெருவிளக்கு புகார்கள்", "tell me about the severe cases in Adyar",
     "tell me about the garbage complaints in Anna Nagar", "tell me about the flooding in Adyar this week", "explain the rise in dengue cases in Adyar", "explain why flooding complaints are high in Adyar",
-    "explain the flooding trend in Adyar this month"])("%s is not one case", (s) => expect(quickScreen(s, world)?.recipe).not.toBe("case"));
+    "explain the flooding trend in Adyar this month"])("%s is not one case", (s) => { const r = quickScreen(s, world)?.recipe; expect(r).not.toBe("case"); expect(r).not.toBe("explain"); });
   it("a street-light list stays a list", () => expect(quickScreen("அடையாறு தெருவிளக்கு புகார்கள் காட்டு", world)).toMatchObject({ recipe: "cases", slots: { zones: [13], cat: "STREETLIGHT_ELECTRICAL" } }));
   it("the severe list keeps its filter", () => expect(quickScreen("tell me about the severe cases in Adyar", world)).toMatchObject({ recipe: "cases", slots: { sev: "Severe", zones: [13] } }));
   it.each(["explain the flooding complaint in Adyar", "what's going on with the garbage in Anna Nagar", "Adyar flooding enna aachu", "அடையாறு வெள்ளம் விளக்கு", "அடையாறு வெள்ளம் பற்றி விளக்குங்க",
-    "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", "அடையாறு வெள்ள புகார் என்னன்னு சொல்லுங்க", "tell me about the flooding complaint in Adyar", "Adyar la garbage complaint, adhu enna problem", "Adyar garbage complaint ah simple ah sollu"])("%s is one case", (s) => expect(quickScreen(s, world)?.recipe).toBe("case"));
-  it("the Tamil joined form names the topic", () => expect(quickScreen("அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", world)).toMatchObject({ recipe: "case", slots: { cat: "FLOOD_WATERLOGGING", zones: [13] } }));
+    "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", "அடையாறு வெள்ள புகார் என்னன்னு சொல்லுங்க", "tell me about the flooding complaint in Adyar", "Adyar la garbage complaint, adhu enna problem", "Adyar garbage complaint ah simple ah sollu"])("%s is one case (v4: the explain recipe)", (s) => expect(quickScreen(s, world)?.recipe).toBe("explain"));
+  it("the Tamil joined form names the topic", () => expect(quickScreen("அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க", world)).toMatchObject({ recipe: "explain", slots: { cat: "FLOOD_WATERLOGGING", zones: [13] } }));
   it.each(["அடையாறு வெள்ளை புகார்", "அடையாறு வெள்ளி புகார்"])("%s is not about a flood", (s) => expect(catIn(` ${s} `)).not.toBe("FLOOD_WATERLOGGING"));
-  it.each(["explain the power cut complaint in Ambattur", "அம்பத்தூர் மின்வெட்டு புகார் விளக்கமா சொல்லுங்க", "explain the tanker complaint in Adyar"])("%s names a topic the rules cannot read: not the zone's top case", (s) => expect(quickScreen(s, world)?.recipe).not.toBe("case"));
-  it.each(["explain the complaint in Adyar", "அடையாறு புகார் விளக்குங்க", "அடையாறில் உள்ள புகார் பற்றி விளக்கமா சொல்லுங்க"])("%s names only a place: its top case", (s) => expect(quickScreen(s, world)).toMatchObject({ recipe: "case", slots: { zones: [13], cat: null } }));
-  it("one severe case keeps the severity", () => expect(quickScreen("explain the severe flooding complaint in Adyar", world)).toMatchObject({ recipe: "case", slots: { sev: "Severe" } }));
+  it.each(["explain the power cut complaint in Ambattur", "அம்பத்தூர் மின்வெட்டு புகார் விளக்கமா சொல்லுங்க", "explain the tanker complaint in Adyar"])("%s names a topic the rules cannot read: not the zone's top case", (s) => { const r = quickScreen(s, world)?.recipe; expect(r).not.toBe("case"); expect(r).not.toBe("explain"); });
+  it.each(["explain the complaint in Adyar", "அடையாறு புகார் விளக்குங்க", "அடையாறில் உள்ள புகார் பற்றி விளக்கமா சொல்லுங்க"])("%s names only a place: its top case", (s) => expect(quickScreen(s, world)).toMatchObject({ recipe: "explain", slots: { zones: [13], cat: null } }));
+  it("one severe case keeps the severity", () => expect(quickScreen("explain the severe flooding complaint in Adyar", world)).toMatchObject({ recipe: "explain", slots: { sev: "Severe" } }));
   it("a street light is a follow-up word, not a request to explain", () => expect(isElliptical("தெருவிளக்கு")).toBe(true));
   it("the verb is still a new request", () => expect(isElliptical("விளக்குங்க")).toBe(false));
 });

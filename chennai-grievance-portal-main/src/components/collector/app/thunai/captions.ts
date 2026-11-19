@@ -2,6 +2,10 @@
  * The ribbon's live words while someone is speaking: the browser's own recognition (continuous, interim results), restarted
  * as the browser ends it. Display only, never an action: Whisper's text decides, and a "yes" from captions never counts (they
  * can catch Jarvis's own voice). Where the browser has no service the ribbon just shows that speech is being heard.
+ *
+ * v5 (C3): the recogniser sends room audio to the browser's speech service, so it runs only while Jarvis is woken or engaged:
+ * `may` (the console passes the conductor's inWindow: within ENGAGED_MS of the wake or of Jarvis's last turn, or while it speaks)
+ * is asked before every start, the browser's own restarts and a language change included. Outside the window nothing starts.
  */
 type Rec = {
   lang: string; interimResults: boolean; continuous: boolean; maxAlternatives: number;
@@ -21,10 +25,12 @@ export class Captions {
   private base = 0;
   private seen = 0;
   private fails = 0;
-  constructor(private lang: string, private onText: (t: string) => void) {}
+  constructor(private lang: string, private onText: (t: string) => void, private may: () => boolean = () => true) {}
   start() {
     const R = Recognizer();
     if (!R) return false;
+    // outside the engaged window (C3): no recogniser, and the browser's restart loop ends here
+    if (!this.may()) { this.alive = false; return false; }
     this.alive = true;
     const r = new R();
     this.r = r;

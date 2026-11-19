@@ -10,15 +10,26 @@ import { aggregate, change, largestGaps, median, peak, rank, round, share, spoke
  * whatever the count (pass4-open-13, the PB-224 class). */
 const nTa = (n: number, one: string, many: string) => `${spoken(n)} ${n === 1 ? one : many}`;
 import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
-import type { PeriodKey, Sev, World } from "./types";
+import type { Lang, PeriodKey, Sev, World } from "./types";
+import { detectLang } from "./normalise";
 import { needsDates, type PeriodSpec, type Span, type Comparison, type Words } from "@/lib/period/read";
 import { nextSteps } from "./next";
 import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { UNIT_TA, hoursBetween } from "./stagelocal";
-import { DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
+import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 import { conditionsTa, reasonTa } from "./reasons";
-import { CAT_LABEL_TA, closedAs, explainIssue, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
+import { stripFigures } from "./numbergate";
+import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPlace, type Gazetteer } from "./narrate";
+import { briefIssue, latestOf, roleWords, timeOf } from "./brief6";
+import { keepExtras, type AideExtras } from "./aide7/extras";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
+// the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
+import { changedRecipe } from "./recipes/changed";
+import { explainRecipe } from "./recipes/explain";
+import { situationRecipe } from "./recipes/situation";
+import type { RecipeCtx, RecipePart } from "./recipes/common";
+import { thinLine } from "./persona";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -48,8 +59,13 @@ export interface Slots {
   id: string | null;
   /** a station or reservoir name (readings) */
   name: string | null;
-  what: "severe" | "hotspots" | "cases" | null;
+  /** map: what to put on it; explain: "change" explains one part of a change (the one zone, department or kind named) */
+  what: "severe" | "hotspots" | "cases" | "change" | null;
   sort: "priority" | "complaints" | "time" | null;
+  /** changed: a metric registry id (metrics.ts); absent, incidents reported */
+  metricId?: string | null;
+  /** explain: one part of a change, by its dimension and key (recipes/explain.ts explainSlots) */
+  change?: { dim: "zone" | "dept" | "cat"; key: string } | null;
   /** start clean: the console's own filters are not inherited (a Stage control's "All of Chennai") */
   fresh?: boolean;
   /** complete: the open Stage's incident ids; those rows are completed, not the console's list */
@@ -105,7 +121,8 @@ export function when(t: unknown): string | null {
 }
 const bi = (en: string, ta: string): Bilingual => ({ en, ta });
 const zoneName = (w: World, n: number | null | undefined) => (n ? w.zones.find((z) => z.n === n)?.name ?? `Zone ${n}` : null);
-const zoneTa = (w: World, n: number | null | undefined) => (n ? w.zones.find((z) => z.n === n)?.ta ?? zoneName(w, n) : null);
+// a world without the zones' Tamil names (a test's) still names them in Tamil, from the lexicon, by number
+const zoneTa = (w: World, n: number | null | undefined) => (n ? w.zones.find((z) => z.n === n)?.ta ?? ZONE_TA[n] ?? zoneName(w, n) : null);
 const catLabel = (w: World, c: string | null) => (c ? w.cats.find((x) => x.code === c)?.label ?? c : null);
 const deptName = (w: World, d: string | null) => (d ? w.depts.find((x) => x.code === d)?.name ?? d : null);
 // the Tamil line says the department and the category in Tamil: DEPT_TA and CAT_LABEL_TA are complete tables (a test checks every code)
@@ -135,6 +152,11 @@ const labelTa = (l: string) => String(l).replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul
 const reportsOf = (subject: string, generic: boolean, n = 2): string => (generic ? (n === 1 ? "incident" : "incidents") : `${subject.toLowerCase()} ${n === 1 ? "report" : "reports"}`);
 const plural = (n: number, one: string, many: string) => `${spoken(n)} ${n === 1 ? one : many}`;
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+/**
+ * A request's own words (a slot the model or the rules filled: q, name, id) as a screen shows or says them: without a figure of their own
+ * (Finding 51). "flood deaths 300" is shown as "flood deaths"; a real zone's label stays. The lookups keep the words as they came.
+ */
+const shown = (w: World, s: unknown, n: number): string => clip(stripFigures(clip(s, n), w.zones.map((z) => z.n)) ?? "", n);
 /** Text fit to show and say: no phone numbers or e-mail addresses, no letter openings ("Respected sir, ..."). */
 export function safeText(t: unknown, n: number): string {
   return clip(String(t ?? "").replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "").replace(/(?:\+?91[\s-]?)?\b\d[\d\s-]{8,}\d\b/g, "")
@@ -190,7 +212,43 @@ function sortRows(rows: CaseRowT[], sort: Slots["sort"]): CaseRowT[] {
 
 // ------------------------------------------------------------------ the builder --
 
-interface Ctx { w: World; h: Hands; s: ScopeT; slots: Slots; heard: string; runs: string[]; sources: Set<string>; notes: string[]; asOf: string | null }
+/**
+ * What a screen builder works with. `ta`: the turn is in Tamil (or Tanglish), so the screen's own words, its title, its blocks' titles and its notes,
+ * are in Tamil script; English stays only in names (places, bodies, stations) and codes (v4 brief, defect 9). Notes are kept in both languages.
+ */
+interface Ctx { w: World; h: Hands; s: ScopeT; slots: Slots; heard: string; runs: string[]; sources: Set<string>; notes: Bilingual[]; asOf: string | null; ta: boolean }
+/** the screen's own words in its language */
+const L = (c: Pick<Ctx, "ta">, en: string, ta: string): string => (c.ta ? ta : en);
+const KEY_NUMBERS = (c: Pick<Ctx, "ta">) => L(c, "Key numbers", "முக்கிய எண்கள்");
+/** a kind of incident as a tool row names it ({code, label}), in the screen's language */
+const kindLabel = (c: Pick<Ctx, "ta">, x: Row): string => clip(c.ta ? CAT_LABEL_TA[String(x.code ?? "")] ?? x.label : x.label, 80);
+/** the same kind in Tamil, for a Tamil line whatever the screen's language */
+const kindTa = (x: Row): string => clip(CAT_LABEL_TA[String(x.code ?? "")] ?? x.label, 80);
+/** the period's words, in the screen's language */
+const periodWords = (c: Pick<Ctx, "ta">, p: PeriodKey) => (c.ta ? PERIOD_TA[p] : PERIOD_EN[p]);
+/** a request's own words (Finding 51) for this screen */
+const words = (c: Pick<Ctx, "w">, s: unknown, n: number) => shown(c.w, s, n);
+/**
+ * A request's search words (q, often English even for a Tamil turn) as a Tamil screen shows them: a kind of incident by its Tamil name, a zone by
+ * its Tamil name, a place as it is named, Tamil words as they are; any other English word is left out, so no English sentence sits on a Tamil screen.
+ */
+function topicTa(c: Pick<Ctx, "w">, q: string): string {
+  if (!q) return "";
+  const low = ` ${q.toLowerCase().replace(/[^a-z஀-௿]+/g, " ")} `;
+  const out: string[] = [];
+  for (const [code, al] of Object.entries(CAT_ALIASES)) {
+    if (CAT_LABEL_TA[code] && al.some((a) => { const t = a.trim().toLowerCase(); return t.length >= 4 && /^[a-z ]+$/.test(t) && low.includes(` ${t} `); })) out.push(CAT_LABEL_TA[code]);
+  }
+  for (const z of c.w.zones) if (z.name.length >= 4 && low.includes(` ${z.name.toLowerCase()} `)) out.push(zoneTa(c.w, z.n) ?? z.name);
+  for (const p of c.w.places) if (p.name.length >= 4 && low.includes(` ${p.name.toLowerCase()} `)) out.push(p.name);
+  for (const m of q.match(/[஀-௿]+/g) ?? []) out.push(m);
+  return clip([...new Set(out)].join(", "), 120);
+}
+/** the Collector's own words as a title (a request no recipe could count); on a Tamil screen only when they are in Tamil script */
+const heardTitle = (c: Pick<Ctx, "heard">, fallback: Bilingual): Bilingual => {
+  const h = clip(c.heard, 120);
+  return bi(h || fallback.en, /[஀-௿]/.test(h) ? h : fallback.ta);
+};
 
 async function call(c: Ctx, name: string, args: Record<string, unknown>): Promise<ToolResult> {
   c.runs.push(name);
@@ -230,16 +288,36 @@ async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<num
   return (await incidentList(c, { sev, status: "overdue", q, sort: "sev" })).incidents;
 }
 
-type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
+/** a screen as a recipe builds it: its title in both languages (a plain string is the same in both: a name, the Collector's own words) */
+type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[]; /** v7: facts for the aide beyond the screen (aide7/extras.ts) */ aide?: AideExtras };
+
+/**
+ * The analysis recipes (recipes/*.ts, lane A2) take the same context with their notes as plain lines in the screen's language and the
+ * language as `ta`: the runs and sources are shared, the notes and the data's time are handed back. Called lazily (the recipes import
+ * this file's helpers, so the import is a cycle that only works at call time).
+ */
+const analysis = (run: (c: RecipeCtx) => Promise<RecipePart>) => async (c: Ctx): Promise<Part> => {
+  const rc: RecipeCtx = { w: c.w, h: c.h, s: c.s, slots: c.slots, heard: c.heard, runs: c.runs, sources: c.sources, notes: [], asOf: c.asOf, ta: c.ta };
+  try {
+    return await run(rc);
+  } finally {
+    c.asOf ??= rc.asOf;
+    for (const n of rc.notes) c.notes.push(bi(n, n));
+  }
+};
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, city, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
-  }
+  },
+  changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c))
 };
 
-/** Build a screen. Throws only on a programming error; a tool failure becomes a Note block that says so. */
-export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w: World, h: Hands, heard: string, id = `st-${Date.now().toString(36)}`): Promise<Built> {
+/**
+ * Build a screen. Throws only on a programming error; a tool failure becomes a Note block that says so. `lang` is the turn's language
+ * (agent.ts finish); without it, the language of the words heard (normalise.ts detectLang: Tamil script or Tanglish is Tamil).
+ */
+export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w: World, h: Hands, heard: string, id = `st-${Date.now().toString(36)}`, lang?: Lang): Promise<Built> {
   const s: ScopeT = {
     period: slots.period ?? base.period, zone: slots.zones.length === 1 ? slots.zones[0] : slots.zones.length ? null : base.zone,
     dept: slots.dept ?? (slots.depts.length ? null : base.dept), cat: slots.cat ?? base.cat, taluk: slots.taluk ?? base.taluk, sev: slots.sev ?? null
@@ -250,18 +328,27 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   // console's filters, so "the severe cases" are the ones the console shows
   const named = slots.zones.length > 0 || !!slots.dept || !!slots.cat || !!slots.taluk || slots.depts.length > 0;
   if (recipe === "news" || recipe === "brief" || slots.fresh || named) { s.zone = slots.zones[0] ?? null; s.dept = slots.dept; s.cat = slots.cat; s.taluk = slots.taluk; }
-  const c: Ctx = { w, h, s, slots, heard, runs: [], sources: new Set(), notes: [], asOf: null };
+  const lng: Lang = (lang ?? detectLang(heard)) === "ta" ? "ta" : "en";
+  const c: Ctx = { w, h, s, slots, heard, runs: [], sources: new Set(), notes: [], asOf: null, ta: lng === "ta" };
   let part: Part;
   try {
     part = await RECIPE[recipe](c);
   } catch (e) {
-    part = { title: heard, takeaway: null, say: bi("I could not get that data just now.", "அந்தத் தரவை இப்போது பெற முடியவில்லை."),
-      blocks: [{ kind: "Note", id: "err", text: `The data could not be read: ${clip((e as Error).message, 200)}` }] };
+    part = { title: heardTitle(c, bi("Data", "தரவு")), takeaway: null, say: bi("I could not get that data just now.", "அந்தத் தரவை இப்போது பெற முடியவில்லை."),
+      blocks: [{ kind: "Note", id: "err", text: L(c, `The data could not be read: ${clip((e as Error).message, 200)}`, "தரவைப் படிக்க முடியவில்லை.") }] };
   }
-  if (!part.blocks.length) part.blocks.push({ kind: "Note", id: "empty", text: "Nothing in the data matches this, for this scope." });
-  const doc: StageDocT = { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, 6), scope: s,
-    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: c.notes.slice(0, 4) };
+  if (!part.blocks.length) part.blocks.push({ kind: "Note", id: "empty", text: L(c, "Nothing in the data matches this, for this scope.", "இந்தப் பார்வைக்குத் தரவில் எதுவும் பொருந்தவில்லை.") });
+  const titles = typeof part.title === "string" ? bi(part.title, part.title) : part.title;
+  // a note with nothing in it is not shown as a blank line
+  const notes = c.notes.map((n) => bi(clip(n.en, 300), clip(n.ta, 300))).filter((n) => n[lng]).slice(0, 4);
+  const doc: StageDocT = { v: 1, id, recipe, title: clip(titles[lng], 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, 6), scope: s,
+    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
+    lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
+  if (part.aide) keepExtras(doc, part.aide);
+  // the persona pushes back when the data is thin: a finding resting on a handful of cases says so, with code's own count (persona.ts)
+  const thin = thinLine(doc);
+  if (thin) doc.say = { en: fit(`${doc.say.en} ${thin.en}`.trim(), 600), ta: fit(`${doc.say.ta} ${thin.ta}`.trim(), 900) };
   return { runs: c.runs, doc };
 }
 
@@ -304,7 +391,7 @@ function actionFor(label: string): { en: string; ta: string } {
  */
 async function advise(c: Ctx): Promise<Part> {
   const { w, s } = c;
-  const ta = /[஀-௿]/.test(c.heard);
+  const ta = c.ta;
   const where = s.zone ? bi(` in ${zoneName(w, s.zone)}`, ` ${zoneTa(w, s.zone) ?? zoneName(w, s.zone)} பகுதியில்`) : bi("", "");
   const [inc, late, drv] = await Promise.all([
     incidentList(c, { status: "open", sort: "sev" }).catch(() => null),
@@ -348,22 +435,23 @@ async function advise(c: Ctx): Promise<Part> {
   if (rise) {
     const act = actionFor(String(rise.label ?? rise.code ?? ""));
     points.push({ en: `${clip(rise.label, 60)} rose by ${spoken(Number(rise.delta))} ${inPeriod(s.period)} (${spoken(Number(rise.n))} against ${spoken(Number(rise.prev))}). Suggested: ${act.en}.`,
-      ta: `${clip(rise.label, 60)} ${PERIOD_TA[s.period]} ${spoken(Number(rise.delta))} கூடியது (${spoken(Number(rise.n))}, முன்பு ${spoken(Number(rise.prev))}). பரிந்துரை: ${act.ta}.`, id: null });
+      ta: `${clip(kindTa(rise), 60)} ${PERIOD_TA[s.period]} ${spoken(Number(rise.delta))} கூடியது (${spoken(Number(rise.n))}, முன்பு ${spoken(Number(rise.prev))}). பரிந்துரை: ${act.ta}.`, id: null });
   }
   // 4. the busiest spot
   const place = d.places?.[0];
   if (place && points.length < 4) points.push({ en: `The busiest spot is ${clip(place.place, 60)}: ${spoken(Number(place.n))} ${clip(place.category, 50).toLowerCase()}.`,
     ta: `அதிக சம்பவங்கள்: ${clip(place.place, 60)} (${spoken(Number(place.n))}).`, id: null });
-  const title = ta ? `இப்போது என்ன செய்ய வேண்டும்${where.ta}` : `What needs you first${where.en}`;
-  if (!points.length) return { title, takeaway: null, say: bi(`Nothing open needs you${where.en} right now.`, `இப்போது${where.ta} உங்கள் கவனம் தேவைப்படும் திறந்த சம்பவம் இல்லை.`), blocks: [] };
+  const titles = bi(`What needs you first${where.en}`, `இப்போது என்ன செய்ய வேண்டும்${where.ta}`);
+  const title = titles[ta ? "ta" : "en"];
+  if (!points.length) return { title: titles, takeaway: null, say: bi(`Nothing open needs you${where.en} right now.`, `இப்போது${where.ta} உங்கள் கவனம் தேவைப்படும் திறந்த சம்பவம் இல்லை.`), blocks: [] };
   const blocks: BlockT[] = [{ kind: "Brief", id: "advise", title, points: points.map((p) => ({ text: clip(ta ? p.ta : p.en, 400), incidentId: p.id })) }];
   if (rows.length) blocks.push({ kind: "CaseList", id: "open", title: ta ? "அவசரமான திறந்த சம்பவங்கள்" : "The most urgent open cases", source: "list", sev: null, total: rows.length, rows });
   const cats = [...(d.categories ?? [])].sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 8);
-  if (cats.length) blocks.push({ kind: "Chart", id: "chart", title: ta ? "முந்தைய காலத்தை விட மாற்றம்" : "Change against the period before", chart: "hbar", unit: "incidents", labels: cats.map((x) => clip(x.label, 80)), values: cats.map((x) => Number(x.delta)) });
+  if (cats.length) blocks.push({ kind: "Chart", id: "chart", title: ta ? "முந்தைய காலத்தை விட மாற்றம்" : "Change against the period before", chart: "hbar", unit: "incidents", labels: cats.map((x) => kindLabel(c, x)), values: cats.map((x) => Number(x.delta)) });
   const n = points.length;
   const say = bi(`${n === 1 ? "One thing needs" : `${spoken(n)} things need`} you${where.en}. ${points.slice(0, 3).map((p) => p.en).join(" ")}`,
     `${where.ta ? `${where.ta.trim()} ` : ""}${spoken(n)} விஷயங்கள் உங்கள் கவனத்துக்கு. ${points.slice(0, 3).map((p) => p.ta).join(" ")}`);
-  return { title, takeaway: null, say, blocks };
+  return { title: titles, takeaway: null, say, blocks };
 }
 
 // ------------------------------------------------------------------ insight --
@@ -375,7 +463,7 @@ async function advise(c: Ctx): Promise<Part> {
  */
 async function insight(c: Ctx): Promise<Part> {
   const { w, s } = c;
-  const ta = /[஀-௿]/.test(c.heard);
+  const ta = c.ta;
   const [zr, ser, drv] = await Promise.all([
     call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
     call(c, "incident_series", { scope: scopeArg(s) }),
@@ -387,7 +475,7 @@ async function insight(c: Ctx): Promise<Part> {
   // 2-hour buckets swing with the time of day: no limits or trend are read from them (queries.ts refuses a normal band on them too)
   const hourly = /hour|2h/.test(String((ser.data as { unit?: unknown }).unit ?? ""));
   const labels = buckets.map((b) => (hourly ? when(b.from)?.split(", ")[1] ?? "" : when(b.from)?.split(",")[0] ?? ""));
-  if (hourly) c.notes.push(ta ? "2 மணி நேரக் கணக்குகள் நாளின் நேரத்தோடு மாறும்: அவற்றிலிருந்து வரம்போ போக்கோ கணிக்கவில்லை." : "Counts per 2 hours swing with the time of day, so no limits or trend are read from them.");
+  if (hourly) c.notes.push(bi("Counts per 2 hours swing with the time of day, so no limits or trend are read from them.", "2 மணி நேரக் கணக்குகள் நாளின் நேரத்தோடு மாறும்: அவற்றிலிருந்து வரம்போ போக்கோ கணிக்கவில்லை."));
   const items: Extract<BlockT, { kind: "Findings" }>["items"] = [];
   const zoneLabel = (z: number) => (ta ? zoneTa(w, z) : zoneName(w, z)) ?? `Zone ${z}`;
   const open = modifiedZ(zrows.map((z) => ({ key: String(z.zone), value: Number(z.open ?? z.n ?? 0) })));
@@ -401,17 +489,18 @@ async function insight(c: Ctx): Promise<Part> {
   if (!hourly && counts.length >= 4) items.push({ title: trendS.value.direction === "rising" ? (ta ? "போக்கு உயர்கிறது" : "The series is rising") : trendS.value.direction === "falling" ? (ta ? "போக்கு குறைகிறது" : "The series is falling") : (ta ? "தெளிவான போக்கு இல்லை" : "No clear trend"), value: trendS.value.slope, unit: ta ? "ஒரு காலத்துக்கு" : "per period", method: trendS.method, n: trendS.n, caveat: ta ? trendS.caveat.ta : trendS.caveat.en, tone: trendS.value.direction === "rising" ? "warn" : "ok" });
   const d = (drv?.data ?? {}) as { categories?: Row[] };
   const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
-  if (rise) items.push({ title: ta ? `வேகமாக உயர்வது: ${clip(rise.label, 60)}` : `Rising fastest: ${clip(rise.label, 60)}`, value: Number(rise.delta), unit: ta ? "கூடுதல்" : "more", method: `Against the period before (${Number(rise.prev)} to ${Number(rise.n)})`, n: 2, caveat: ta ? "இரண்டு காலங்களின் ஒப்பீடு மட்டுமே." : "A comparison of two periods only.", tone: "warn" });
-  const title = ta ? "தனித்து நிற்பவை" : "What stands out";
-  if (!items.length) return { title, takeaway: null, say: bi("Nothing stands out in this data.", "இந்தத் தரவில் தனித்து நிற்பது எதுவும் இல்லை."), blocks: [] };
+  if (rise) items.push({ title: ta ? `வேகமாக உயர்வது: ${clip(kindLabel(c, rise), 60)}` : `Rising fastest: ${clip(rise.label, 60)}`, value: Number(rise.delta), unit: ta ? "கூடுதல்" : "more", method: `Against the period before (${Number(rise.prev)} to ${Number(rise.n)})`, n: 2, caveat: ta ? "இரண்டு காலங்களின் ஒப்பீடு மட்டுமே." : "A comparison of two periods only.", tone: "warn" });
+  const titles = bi("What stands out", "தனித்து நிற்பவை");
+  const title = titles[ta ? "ta" : "en"];
+  if (!items.length) return { title: titles, takeaway: null, say: bi("Nothing stands out in this data.", "இந்தத் தரவில் தனித்து நிற்பது எதுவும் இல்லை."), blocks: [] };
   const lead = open.value[0];
   const en = lead ? `${zoneName(w, Number(lead.key)) ?? ""} stands out: ${spoken(lead.value)} open cases against a typical ${spoken(lead.median)}.` : `No zone stands out from the rest${latestOut ? ", but the latest count is outside its usual limits" : ""}.`;
   const tam = lead ? `${zoneTa(w, Number(lead.key)) ?? ""} தனித்து நிற்கிறது: ${spoken(lead.value)} திறந்த சம்பவங்கள், வழக்கமாக ${spoken(lead.median)}.` : `எந்த மண்டலமும் தனித்து நிற்கவில்லை${latestOut ? ", ஆனால் கடைசி எண்ணிக்கை வரம்புக்கு வெளியே" : ""}.`;
   const marks = hourly ? [] : chart.value.signals.slice(0, 8).map((i) => ({ i, why: ta ? "வரம்புக்கு வெளியே" : "Outside the limits" }));
   const blocks: BlockT[] = [{ kind: "Findings", id: "find", title, items: items.slice(0, 6) }];
   if (counts.length) blocks.push({ kind: "Trend", id: "trend", title: ta ? "காலவாரி எண்ணிக்கை" : "Incidents over time", unit: "incidents", labels, values: counts, marks, normal: hourly ? null : { lo: chart.value.lcl, hi: chart.value.ucl } });
-  blocks.push({ kind: "MapView", id: "map", title: ta ? "மண்டலங்கள்" : "The zones", rule: open.method, shade: { geo: "zone", label: "Open incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.open ?? x.n ?? 0) })) }, points: [], outline: open.value.map((o) => Number(o.key)).slice(0, 15) });
-  return { title, takeaway: bi(en, tam), say: bi(en, tam), blocks };
+  blocks.push({ kind: "MapView", id: "map", title: ta ? "மண்டலங்கள்" : "The zones", rule: open.method, shade: { geo: "zone", label: L(c, "Open incidents", "திறந்த சம்பவங்கள்"), values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.open ?? x.n ?? 0) })) }, points: [], outline: open.value.map((o) => Number(o.key)).slice(0, 15) });
+  return { title: titles, takeaway: bi(en, tam), say: bi(en, tam), blocks };
 }
 
 // ------------------------------------------------------------------ complete --
@@ -423,21 +512,21 @@ async function insight(c: Ctx): Promise<Part> {
  */
 async function complete(c: Ctx): Promise<Part> {
   const { w, s, slots } = c;
-  const ta = /[஀-௿]/.test(c.heard);
+  const ta = c.ta;
   let input: InRow[] = [];
-  let what = ta ? "தீர்க்கப்படாத சம்பவங்கள்" : "Unresolved incidents";
+  let whatEn = "Unresolved incidents", whatTa = "தீர்க்கப்படாத சம்பவங்கள்";
   let read = 0, total = 0;
   const toIn = (x: CaseRowT, asOf: string | null | undefined): InRow => ({ id: x.id, title: x.title, zone: x.zone, zoneName: x.zoneName, ward: x.ward, place: x.place, dept: x.dept, deptName: x.deptName, cat: x.cat, lat: x.lat, lon: x.lon, t: x.t, hours: hoursBetween(x.t, asOf ?? c.asOf) });
   const ds = slots.name && c.h.dataset ? await c.h.dataset(slots.name) : null;
   if (ds) {
     c.runs.push("studio_dataset");
     c.sources.add(`Data Studio: ${ds.name}`);
-    what = clip(ds.name, 100);
+    whatEn = whatTa = clip(ds.name, 100);
     input = ds.rows.slice(0, 30).map((x) => ({ ...x, id: clip(x.id, 80) }));
     read = input.length; total = ds.total ?? read;
   } else if (slots.ids?.length) {
     // the rows on the open Stage, one incident at a time, a few at once: an id the store no longer holds is said, not hidden
-    what = ta ? "இந்தப் பட்டியல்" : "This list";
+    whatEn = "This list"; whatTa = "இந்தப் பட்டியல்";
     c.runs.push("incident_detail");
     c.sources.add("incident_detail");
     const got: (ToolResult | null)[] = [];
@@ -449,7 +538,7 @@ async function complete(c: Ctx): Promise<Part> {
       input.push(toIn(caseRow(inc, w), r?.asOf));
     }
     read = total = input.length;
-    if (input.length < got.length) c.notes.push(ta ? `${got.length - input.length} வரிசைகளைப் படிக்க முடியவில்லை.` : `${got.length - input.length} of the ${got.length} rows could not be read.`);
+    if (input.length < got.length) c.notes.push(bi(`${got.length - input.length} of the ${got.length} rows could not be read.`, `${got.length}-இல் ${got.length - input.length} வரிசைகளைப் படிக்க முடியவில்லை.`));
   } else {
     const data = await incidentList(c, { status: "open", sort: "sev" });
     input = data.rows.map((x) => toIn(caseRow(x, w), c.asOf));
@@ -460,8 +549,9 @@ async function complete(c: Ctx): Promise<Part> {
   const res = completeRows(input, k);
   // the screen covers part of a longer list: said in its title (so the figures are on the Stage), its takeaway and its first words
   const part = total > read;
-  const title = clip(ta ? `${what}: நிரப்பியவை${part ? ` (முதல் ${read}, மொத்தம் ${total})` : ""}` : `${what}: completed${part ? ` (first ${read} of ${total})` : ""}`, 160);
-  if (!res.rows.length) return { title, takeaway: null, say: bi("Nothing here to complete.", "நிரப்ப வேண்டியது எதுவும் இல்லை."), blocks: [] };
+  const titles = bi(clip(`${whatEn}: completed${part ? ` (first ${read} of ${total})` : ""}`, 160), clip(`${whatTa}: நிரப்பியவை${part ? ` (முதல் ${read}, மொத்தம் ${total})` : ""}`, 160));
+  const title = titles[ta ? "ta" : "en"];
+  if (!res.rows.length) return { title: titles, takeaway: null, say: bi("Nothing here to complete.", "நிரப்ப வேண்டியது எதுவும் இல்லை."), blocks: [] };
   const COLS = [{ key: "ward", en: "Ward", ta: "வார்டு" }, { key: "zone", en: "Zone", ta: "மண்டலம்" }, { key: "place", en: "Place", ta: "இடம்" }, { key: "dept", en: "Department", ta: "துறை" }, { key: "age", en: "Open, hours", ta: "திறந்த மணி" }] as const;
   const shown = res.rows.slice(0, 30);
   const blocks: BlockT[] = [{ kind: "Filled", id: "filled", title, cols: COLS.map((x) => ({ key: x.key, label: ta ? x.ta : x.en })),
@@ -474,9 +564,9 @@ async function complete(c: Ctx): Promise<Part> {
     `${lead.ta}${res.filled ? `${spoken(res.filled)} இடங்களை நிரப்பினேன், ஒவ்வொன்றுக்கும் ஆதாரத்துடன். ` : res.left ? "" : "இந்த வரிசைகளில் எதுவும் விடுபடவில்லை."}${res.left ? `${spoken(res.left)} நிரப்ப முடியவில்லை. எதையும் ஊகிக்கவில்லை.` : res.filled ? "எதுவும் காலியாக இல்லை." : ""}`);
   const ids = res.unresolved.slice(0, 10);
   const next: NextStepT[] = ids.length ? [{ label: bi(`Draft follow-ups for ${spoken(ids.length)} unresolved`, `தீர்க்கப்படாத ${spoken(ids.length)}-க்கு வரைவு`), kind: "draft", recipe: null, slots: null, ids, text: null }] : [];
-  c.notes.push("A filled cell shows where the value came from. Blank cells are left blank on purpose.");
-  if (res.derived) c.notes.push(ta ? "திறந்த மணி நேரம் பதிவின் நேரத்திலிருந்து கணக்கிடப்பட்டது; நிரப்பியதாக எண்ணப்படவில்லை." : "Open, hours is worked out from the report time and is not counted as filled.");
-  return { title, takeaway: bi(`${lead.en}${spoken(res.filled)} filled, ${spoken(res.left)} left.`, `${lead.ta}${spoken(res.filled)} நிரப்பியது, ${spoken(res.left)} மீதம்.`), say, blocks, next };
+  c.notes.push(bi("A filled cell shows where the value came from. Blank cells are left blank on purpose.", "நிரப்பிய ஒவ்வொரு இடமும் அதன் ஆதாரத்தைக் காட்டும். காலி இடங்கள் வேண்டுமென்றே காலியாக விடப்பட்டன."));
+  if (res.derived) c.notes.push(bi("Open, hours is worked out from the report time and is not counted as filled.", "திறந்த மணி நேரம் பதிவின் நேரத்திலிருந்து கணக்கிடப்பட்டது; நிரப்பியதாக எண்ணப்படவில்லை."));
+  return { title: titles, takeaway: bi(`${lead.en}${spoken(res.filled)} filled, ${spoken(res.left)} left.`, `${lead.ta}${spoken(res.filled)} நிரப்பியது, ${spoken(res.left)} மீதம்.`), say, blocks, next };
 }
 
 // ------------------------------------------------------------------ cases --
@@ -550,18 +640,19 @@ async function cases(c: Ctx): Promise<Part> {
   const complete = rows.length >= (groupsTotal ?? total);
   const sevWord = sev ? sev.toLowerCase() : "";
   const scope = scopeWords(w, { ...s, sev: null });
-  const asTa = /[஀-௿]/.test(c.heard);
-  const L = (en: string, ta: string) => (asTa ? ta : en);
-  const title = asTa ? `${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : slots.q ? `சம்பவங்கள்: ${slots.q}` : "சம்பவங்கள்"} · ${scope.ta}` : `${sev ? `${sev} cases` : slots.q ? `Cases: ${slots.q}` : "Cases"} · ${scope.en}`;
+  // the words searched for are shown without a figure of their own (Finding 51: a model's "flood deaths 300" became the title)
+  const topic = words(c, slots.q, 80);
+  const titles = bi(`${sev ? `${sev} cases` : topic ? `Cases: ${topic}` : "Cases"} · ${scope.en}`, `${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : topicTa(c, topic) ? `சம்பவங்கள்: ${topicTa(c, topic)}` : "சம்பவங்கள்"} · ${scope.ta}`);
+  const title = L(c, titles.en, titles.ta);
   if (!rows.length) {
     // filters left on the console (not named in this request) can empty the list: say so and offer the whole district
     const inherited = (s.zone && !slots.zones.length) || (s.cat && !slots.cat) || (s.dept && !slots.dept) || (s.taluk && !slots.taluk);
     const filters = scopeWords(w, { ...s, sev: null, period: s.period });
-    return { title, takeaway: null,
+    return { title: titles, takeaway: null,
       say: inherited
         ? bi(`No ${sevWord} cases ${inPeriod(s.period)} with the console's filters (${filters.en}). Say "all of Chennai" to look across the district.`, `கன்சோல் வடிகட்டிகளுடன் (${filters.ta}) ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை. முழு மாவட்டத்தையும் பார்க்க "முழு சென்னை" என்று சொல்லுங்கள்.`)
         : bi(`There are no ${sevWord ? `${sevWord} ` : ""}cases ${inPeriod(s.period)} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
-      blocks: [{ kind: "Note", id: "none", text: inherited ? `No incidents match this view. The console still has these filters on: ${filters.en}.` : "No incidents match this view." }],
+      blocks: [{ kind: "Note", id: "none", text: inherited ? L(c, `No incidents match this view. The console still has these filters on: ${filters.en}.`, `இந்தப் பார்வைக்கு எந்தச் சம்பவமும் பொருந்தவில்லை. கன்சோலில் இந்த வடிகட்டிகள் இன்னும் உள்ளன: ${filters.ta}.`) : L(c, "No incidents match this view.", "இந்தப் பார்வைக்கு எந்தச் சம்பவமும் பொருந்தவில்லை.") }],
       next: inherited ? [{ label: { en: "All of Chennai", ta: "முழு சென்னை" }, kind: "direct", recipe: "cases", slots: { ...slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, ids: [], text: null }] : [] };
   }
   const lateShown = rows.filter((r) => r.overdue).length;
@@ -582,14 +673,14 @@ async function cases(c: Ctx): Promise<Part> {
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
   // "held by" counts the rows it is given, so it is shown only for a list shown whole
   const lead = complete ? [...byDept.entries()].sort((a, b) => b[1] - a[1])[0] : undefined;
-  blocks.push({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-    { key: "total", label: L(`${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள், ${PERIOD_TA[s.period]}`), value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
-    { key: "late", label: L("Past their deadline", "காலக்கெடு தாண்டியவை"), value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
-    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: L(`Held by ${lead[0]}`, `${deptTaByName(rows).get(lead[0]) ?? lead[0]} வசம்`), value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
+  blocks.push({ kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+    { key: "total", label: L(c, `${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள், ${PERIOD_TA[s.period]}`), value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
+    { key: "late", label: L(c, "Past their deadline", "காலக்கெடு தாண்டியவை"), value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
+    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: L(c, `Held by ${lead[0]}`, `${deptTaByName(rows).get(lead[0]) ?? lead[0]} வசம்`), value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
   ] });
   blocks.push({ kind: "CaseList", id: "cases", title, source, sev, total, rows });
-  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L("Where they are", "எங்கே உள்ளன"), rule: L("Numbered as in the list; cases without an exact place are not drawn.", "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."), shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
-  return { title, takeaway, say, blocks };
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L(c, "Where they are", "எங்கே உள்ளன"), rule: L(c, "Numbered as in the list; cases without an exact place are not drawn.", "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."), shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
+  return { title: titles, takeaway, say, blocks };
 }
 
 /**
@@ -642,13 +733,20 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
 /** The span a request names with its own dates, when this screen must count it itself (not a comparison: that is periodCompare). */
 const spanned = (slots: Slots): PeriodSpec | null => (slots.span && needsDates(slots.span) && slots.span.kind !== "compare" ? slots.span : null);
 const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** the period reader's notes (lib/period/read.ts writes them in English) in both languages; one it does not know is left out of a Tamil screen */
+const spanNote = (n: string): Bilingual => bi(n, !/180 days/.test(n) ? ""
+  : /start of this month/.test(n) ? "பதிவுகள் ஏறக்குறைய 180 நாட்கள் வரை மட்டுமே உள்ளன; இந்த மாதத்தின் தொடக்கம் அவற்றில் இல்லை."
+  : /start of this period/.test(n) ? "பதிவுகள் ஏறக்குறைய 180 நாட்கள் வரை மட்டுமே உள்ளன; இந்தக் காலத்தின் தொடக்கம் அவற்றில் இல்லை."
+  : "பதிவுகள் ஏறக்குறைய 180 நாட்கள் வரை மட்டுமே உள்ளன; அதிலிருந்து எண்ணப்பட்டது.");
 
 /** Hands that cannot count a span (a test's fakes): said plainly, never answered with another window. */
 function cannotSpan(c: Ctx, spec: PeriodSpec): Part {
   void spec;
-  return { title: c.heard.slice(0, 120) || "Cases", takeaway: null,
+  // every figure said is on the screen: the windows it can show are named in the note too
+  return { title: heardTitle(c, bi("Cases", "சம்பவங்கள்")), takeaway: null,
     say: bi("I can't count that stretch of time here. Ask District IQ can, or I can show the last 24 hours, 7, 30 or 90 days.", "அந்தக் காலத்தை இங்கே எண்ண முடியாது. District IQ-இடம் கேளுங்கள், அல்லது கடந்த 24 மணி நேரம், 7, 30, 90 நாட்களைக் காட்டலாம்."),
-    blocks: [{ kind: "Note", id: "span", text: "This stretch of time is not one of the console's windows, and these figures could not be counted for it." }] };
+    blocks: [{ kind: "Note", id: "span", text: L(c, "This stretch of time is not one of the console's windows (the last 24 hours, 7, 30 or 90 days), and these figures could not be counted for it.",
+      "இந்தக் காலம் கன்சோலின் சாளரங்களில் (கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள்) ஒன்றல்ல; இதற்கு இந்த எண்ணிக்கைகளை எண்ண முடியவில்லை.") }] };
 }
 
 async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
@@ -664,7 +762,7 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
   c.asOf ??= r.asOf;
   const when = r.span.label;
   const rows = sortRows(r.rows.map((x) => caseRow(x, w)), slots.sort).slice(0, n);
-  const asTa = /[஀-௿]/.test(c.heard);
+  const asTa = c.ta;
   const scope = scopeWords(w, { ...s, sev: null }, false);
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
   // what was counted, said with the count: "open now" for the current state, "still open" or "past their deadline" when that was asked
@@ -672,18 +770,20 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
     : status === "overdue" ? bi(" past their deadline", " காலக்கெடு தாண்டியவை") : status === "open" ? bi(" still open", " இன்னும் நிலுவையில்") : bi("", "");
   const whenEn = r.span.now ? "" : ` ${when.en}`, whenTa = r.span.now ? "" : `${when.ta} `;
   // (the list's title has 160 characters on the catalog: a Tamil zone, department, kind and span ran past it and the screen was refused, review break C27)
-  const title = clip(asTa ? [`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · ")
-    : [`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160);
-  const kpis: BlockT = { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+  const titles = bi(clip([`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160),
+    clip([`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · "), 160));
+  const title = L(c, titles.en, titles.ta);
+  const kpis: BlockT = { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
     { key: "total", label: clip(asTa ? `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள்${state.ta}, ${r.span.now ? "எந்த நாள் பதிவானாலும்" : when.ta.replace(/\s*\(.*\)$/, "")}` : `${sev ?? "All"} cases${state.en}, ${r.span.now ? "whatever the day reported" : when.en}`, 80),
       value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
     ...(status === "overdue" ? [] : [{ key: "late", label: asTa ? "காலக்கெடு தாண்டியவை" : "Past their deadline", value: r.late, unit: null, prev: null, delta: null, tone: r.late ? "bad" as const : "good" as const, spark: [] }]),
     ...(status || r.span.now ? [] : [{ key: "open", label: asTa ? "இன்னும் நிலுவையில்" : "Still open", value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }])
   ] };
-  if (r.prev && kpis.kind === "Kpis") c.notes.push(`Beside the count: ${r.prev.label.en}, ${r.prev.n}.`);
+  if (r.prev && kpis.kind === "Kpis") c.notes.push(bi(`Beside the count: ${r.prev.label.en}, ${r.prev.n}.`, `ஒப்பீட்டுக்கு: ${r.prev.label.ta}, ${r.prev.n}.`));
   if (!r.total) {
     // none in the span asked: said for that span, never widened to another (P6-022)
-    return { title, takeaway: null, blocks: [kpis, { kind: "Note", id: "none", text: `No ${sevWord}incidents${state.en}${whenEn}${scope.en ? `, ${scope.en}` : ""}.` }],
+    return { title: titles, takeaway: null, blocks: [kpis, { kind: "Note", id: "none", text: L(c, `No ${sevWord}incidents${state.en}${whenEn}${scope.en ? `, ${scope.en}` : ""}.`,
+      `${whenTa}${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${state.ta} எதுவும் இல்லை${scope.ta ? `, ${scope.ta}` : ""}.`) }],
       say: bi(`No ${sevWord}cases${state.en}${whenEn}${r.span.now ? "" : "."}${r.span.now ? ", whatever the day reported." : ""}`, `${whenTa}${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்${state.ta} எதுவும் இல்லை.`) };
   }
   const complete = rows.length >= r.total;
@@ -693,7 +793,7 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
   const blocks: BlockT[] = [kpis, { kind: "CaseList", id: "cases", title, source: "list", sev, total: r.total, rows }];
   const pts = points(rows);
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: asTa ? "எங்கே உள்ளன" : "Where they are", rule: asTa ? "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை." : "Numbered as in the list; cases without an exact place are not drawn.", shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
-  return { title, takeaway, say, blocks };
+  return { title: titles, takeaway, say, blocks };
 }
 
 /** A brief on a place or a department over a span (a zone's report for last month): its figures over the span's own dates, and the cases that matter most. */
@@ -719,20 +819,20 @@ async function spanBrief(c: Ctx, spec: PeriodSpec): Promise<Part> {
   const pointsTa = [{ text: lead.en, ta: lead.ta, incidentId: null as string | null },
     ...top.map((x) => ({ text: safeText(`${spokenLabel(x)}${x.zoneName && !spokenLabel(x).includes(x.zoneName) ? `, ${x.zoneName}` : ""}${x.overdue ? ": past its deadline" : ""}`, 400),
       ta: safeText(`${plainWhat(x.cat, x.title)?.ta ?? "ஒரு பிரச்சினை"}${x.zone ? `, ${ZONE_TA[x.zone] ?? x.zoneName ?? ""}` : ""}${x.overdue ? ": காலக்கெடு தாண்டியது" : ""}`, 400), incidentId: x.id }))];
-  if (r.prev) c.notes.push(`Reported ${r.prev.label.en}: ${r.prev.n}, for comparison.`);
-  if (r.span.note) c.notes.push(r.span.note);
+  if (r.prev) c.notes.push(bi(`Reported ${r.prev.label.en}: ${r.prev.n}, for comparison.`, `ஒப்பீட்டுக்கு: ${r.prev.label.ta}, ${r.prev.n} பதிவானவை.`));
+  if (r.span.note) c.notes.push(spanNote(r.span.note));
   return {
-    title: `${where} · brief, ${r.span.now ? "open now" : when.en}`,
+    title: bi(`${where} · brief, ${r.span.now ? "open now" : when.en}`, `${whereTa} · சுருக்கம், ${r.span.now ? "இப்போது நிலுவையில்" : when.ta}`),
     takeaway: lead,
     say: bi(`${pointsTa.length} ${pointsTa.length === 1 ? "point" : "points"} in the brief. ${lead.en}`, `சுருக்கத்தில் ${pointsTa.length} குறிப்புகள். ${lead.ta}`),
     blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "reported", label: clip(r.span.now ? "Open now" : `Reported, ${when.en}`, 80), value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: "neutral", spark: [] },
-        { key: "severe", label: "Severe", value: r.severe, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        ...(r.span.now ? [] : [{ key: "open", label: "Still open", value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }]),
-        { key: "overdue", label: "Past deadline", value: r.late, unit: null, prev: null, delta: null, tone: "bad", spark: [] }
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+        { key: "reported", label: clip(r.span.now ? L(c, "Open now", "இப்போது நிலுவையில்") : L(c, `Reported, ${when.en}`, `பதிவானவை, ${when.ta}`), 80), value: r.total, unit: null, prev: r.prev?.n ?? null, delta: r.prev ? r.total - r.prev.n : null, tone: "neutral", spark: [] },
+        { key: "severe", label: L(c, "Severe", "கடுமையானவை"), value: r.severe, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        ...(r.span.now ? [] : [{ key: "open", label: L(c, "Still open", "இன்னும் நிலுவையில்"), value: r.open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }]),
+        { key: "overdue", label: L(c, "Past deadline", "காலக்கெடு தாண்டியவை"), value: r.late, unit: null, prev: null, delta: null, tone: "bad", spark: [] }
       ] },
-      { kind: "Brief", id: "brief", title: "The brief", points: pointsTa }
+      { kind: "Brief", id: "brief", title: L(c, "The brief", "சுருக்கம்"), points: pointsTa }
     ]
   };
 }
@@ -766,14 +866,17 @@ async function periodCompare(c: Ctx, key: PeriodKey): Promise<Part> {
   const ta = dir === "level"
     ? `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} அதே அளவு.`
     : `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} ${spoken(r.prev)}; ${pct != null ? `${pct}% ` : ""}${dir === "up" ? "அதிகம்" : "குறைவு"}.`;
-  c.notes.push(`Two windows of equal length: ${r.cmp.label.en}. Incidents first reported in each, with the console's filters for ${where.en || "the district"}.`);
+  c.notes.push(bi(`Two windows of equal length: ${r.cmp.label.en}. Incidents first reported in each, with the console's filters for ${where.en || "the district"}.`,
+    `சம நீளமுள்ள இரண்டு காலங்கள்: ${r.cmp.label.ta}. ஒவ்வொன்றிலும் முதலில் பதிவான சம்பவங்கள், ${where.ta || "மாவட்டம்"} கன்சோல் வடிகட்டிகளுடன்.`));
+  const beforeTa = key === "daily" ? "முந்தைய நாள்" : key === "weekly" ? "முந்தைய வாரம்" : key === "monthly" ? "முந்தைய மாதம்" : "முந்தைய காலாண்டு";
   return {
-    title: `${subject}${where.en ? ` · ${where.en}` : ""} · ${r.cmp.cur.label.en} against the ${key === "daily" ? "day" : key === "weekly" ? "week" : key === "monthly" ? "month" : "quarter"} before`,
+    title: bi(`${subject}${where.en ? ` · ${where.en}` : ""} · ${r.cmp.cur.label.en} against the ${key === "daily" ? "day" : key === "weekly" ? "week" : key === "monthly" ? "month" : "quarter"} before`,
+      `${subjectTa}${where.ta ? ` · ${where.ta}` : ""} · ${r.cmp.cur.label.ta}, ${beforeTa}டன் ஒப்பீடு`),
     takeaway: bi(en, ta),
     say: bi(en, ta),
-    blocks: [{ kind: "Kpis", id: "kpis", title: "Against the period before", items: [
-      { key: "cur", label: clip(capFirst(cur.en), 80), value: r.n, unit: null, prev: r.prev, delta: diff, pct: pct == null ? null : diff < 0 ? -pct : pct, tone: diff > 0 ? "bad" : "good", spark: [] },
-      { key: "prev", label: clip(capFirst(before.en), 80), value: r.prev, unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+    blocks: [{ kind: "Kpis", id: "kpis", title: L(c, "Against the period before", "முந்தைய காலத்துடன் ஒப்பீடு"), items: [
+      { key: "cur", label: clip(L(c, capFirst(cur.en), cur.ta), 80), value: r.n, unit: null, prev: r.prev, delta: diff, pct: pct == null ? null : diff < 0 ? -pct : pct, tone: diff > 0 ? "bad" : "good", spark: [] },
+      { key: "prev", label: clip(L(c, capFirst(before.en), before.ta), 80), value: r.prev, unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
     ] }]
   };
 }
@@ -785,12 +888,16 @@ async function caseDetail(c: Ctx): Promise<Part> {
   if (!id && (c.s.zone || c.s.cat || c.slots.q)) {
     const top = await incidentList(c, { sev: c.s.sev ?? null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
     id = String(top?.rows[0]?.id ?? "") || null;
-    if (!id) return { title: "Nothing open", takeaway: null, say: bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."), blocks: [{ kind: "Note", id: "none", text: "No open incident matches this." }] };
+    if (!id) return { title: bi("Nothing open", "திறந்த சம்பவம் இல்லை"), takeaway: null, say: bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."),
+      blocks: [{ kind: "Note", id: "none", text: L(c, "No open incident matches this.", "இதற்குப் பொருந்தும் திறந்த சம்பவம் இல்லை.") }] };
   }
-  if (!id) return { title: "Incident", takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
+  if (!id) return { title: bi("Incident", "சம்பவம்"), takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
   const r = await call(c, "incident_detail", { id });
-  const d = r.data as { incident: Row; reports: Row[]; officials: Row[] } | null;
-  if (!d?.incident) return { title: id, takeaway: null, say: bi(`I could not find incident ${id}.`, `${id} சம்பவம் கிடைக்கவில்லை.`), blocks: [{ kind: "Note", id: "none", text: `No incident ${id} in the data.` }] };
+  const d = r.data as { incident: Row; reports: Row[]; officials: Row[]; assigned?: Row | null } | null;
+  // an id as asked is shown and said only as a code: never a figure of its own (Finding 51)
+  const idShown = words(c, id, 80) || (c.ta ? "அந்த" : "that");
+  if (!d?.incident) return { title: idShown, takeaway: null, say: bi(`I could not find incident ${idShown}.`, `${idShown} சம்பவம் கிடைக்கவில்லை.`),
+    blocks: [{ kind: "Note", id: "none", text: L(c, `No incident ${idShown} in the data.`, `தரவில் ${idShown} சம்பவம் இல்லை.`) }] };
   const i = d.incident;
   const row = caseRow({ ...i, loc: i.place }, c.w);
   const what = (i.why?.what ?? []).map((x: unknown) => clip(x, 300)).slice(0, 6);
@@ -801,14 +908,24 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const block: BlockT = { kind: "CaseDetail", id: "case", incident: { ...row, what: what.slice(0, 6), why: clip(i.why?.why?.[0], 300) || null, next: clip(i.why?.next, 300) || null,
     deadline: when(i.sla_due), officials }, timeline };
   const blocks: BlockT[] = [block];
-  if (row.lat != null && row.lon != null) blocks.push({ kind: "MapView", id: "map", title: "Where", rule: null, shade: null, outline: [],
+  if (row.lat != null && row.lon != null) blocks.push({ kind: "MapView", id: "map", title: L(c, "Where", "இடம்"), rule: null, shade: null, outline: [],
     points: [{ n: 1, id: row.id, lat: row.lat, lon: row.lon as number, label: row.title, sev: row.sev, value: null, hot: true }] });
   // retold, not read out: a fact sheet from the record, then what is wrong, how long, why it matters and what I would do
   const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
   const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open,
     places: c.w.places });
-  const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
-  return { title: row.title, takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
+  // v6 (Phase 3): briefed, not retold field by field: since when, why it matters, who has it and what is stuck, what to do (brief6.ts). The
+  // news outlet is the record's own report's publisher, only when it is a news medium; an official is said by role, never by name, and only
+  // from the record's own assignment (`assigned`), never the department's directory of contacts (the independent check, 17 Nov)
+  const news = (d.reports ?? []).map((x) => ({ outlet: clip(x.publisher, 40), at: timeOf(x.t) })).find((x) => x.outlet && isNewsMedia(x.outlet)) ?? null;
+  // the last report's time for "nothing new since": a day-only report counts at that day's end (brief6.ts latestOf), never dropped
+  const times = (d.reports ?? []).map((x) => latestOf(x.t)).filter((x): x is number => x != null);
+  const bf = { ...facts, since: timeOf(i.t ?? i.first), due: timeOf(i.sla_due), role: roleWords(d.assigned?.designation), officials: d.assigned ? 1 : 0, news,
+    lastAt: times.length ? Math.max(...times) : null, now: Date.now() };
+  const say = briefIssue(bf, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
+  // the record's own title is English: a Tamil screen names the case by its kind in Tamil and its place
+  const titleTa = [plainWhat(row.cat, row.title)?.ta ?? "சம்பவம்", placeTa ?? row.place].filter(Boolean).join(" · ");
+  return { title: bi(row.title, clip(titleTa, 200)), takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks, aide: { brief: { ...bf, label: spokenLabel(row) } } };
 }
 
 // ------------------------------------------------------------------ news --
@@ -836,21 +953,21 @@ async function news(c: Ctx): Promise<Part> {
   c.asOf ??= r.asOf;
   // words that ask for news are not its topic ("today's news", "read the headlines", "இன்றைய செய்திகள்")
   const GENERIC = /^(news|today|todays|latest|headline|headlines|read|tell|show|about|this|week|month|please|செய்தி.*|இன்றைய|இன்று|படி.*|சொல்லு.*|காட்டு.*|seithi.*|padi|sollu)$/;
-  const words = (slots.q ?? "").toLowerCase().split(/[^a-z\u0B80-\u0BFF]+/).filter((x) => x.length >= 4 && !GENERIC.test(x))
+  const terms = (slots.q ?? "").toLowerCase().split(/[^a-z\u0B80-\u0BFF]+/).filter((x) => x.length >= 4 && !GENERIC.test(x))
     .map((x) => x.replace(/(ing|ed|s)$/, ""));
-  const match = (x: Row) => !words.length || words.some((wd) => `${x.title ?? ""} ${x.original ?? ""} ${x.loc ?? ""}`.toLowerCase().includes(wd));
+  const match = (x: Row) => !terms.length || terms.some((wd) => `${x.title ?? ""} ${x.original ?? ""} ${x.loc ?? ""}`.toLowerCase().includes(wd));
   let items = r.rows.filter(match).map((x) => ({
     id: String(x.id), title: clip(x.title, 300), source: clip((x.outletNames ?? [])[0] ?? x.publisher, 80) || null, t: x.t ?? null,
     place: clip(x.loc, 120) || null, incidentId: x.incident ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
   }));
   // a topic the latest news does not carry: the console's search over every report
-  if (words.length && items.length < 2) {
+  if (terms.length && items.length < 2) {
     const sr = await call(c, "search_records", { text: slots.q, scope: scopeArg(s), kinds: ["news"] }).catch(() => null);
     const found = ((sr?.data as { news?: Row[] } | undefined)?.news ?? []).map((x) => ({
       id: String(x.id ?? x.doc_id ?? x.title), title: clip(x.title, 300), source: clip(x.publisher ?? x.source, 80) || null, t: x.t ?? x.published ?? null,
       place: clip(x.place ?? x.loc, 120) || null, incidentId: x.incident ?? x.incident_id ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
     }));
-    if (found.length) { items = found; c.notes.push("Found by searching every news report (the latest news had none on this)."); }
+    if (found.length) { items = found; c.notes.push(bi("Found by searching every news report (the latest news had none on this).", "எல்லாச் செய்தி அறிக்கைகளிலும் தேடிக் கண்டது (சமீபத்திய செய்திகளில் இது இல்லை).")); }
   }
   // a zone with no report of its own in the latest news: every report is searched for it
   if (zone && !items.length) {
@@ -860,31 +977,37 @@ async function news(c: Ctx): Promise<Part> {
       place: clip(x.place ?? x.loc, 120) || null, incidentId: x.incident ?? x.incident_id ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
     }));
   }
+  const zoneNameTa = zone ? ZONE_TA[zone] ?? zoneName : null;
   if (zone && !items.length) {
-    return { title: `News · ${zoneName} · ${PERIOD_EN[s.period]}`, takeaway: null,
-      say: bi(`No news report named ${zoneName} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} ${ZONE_TA[zone] ?? zoneName} பற்றி செய்தி இல்லை.`),
-      blocks: [{ kind: "Note", id: "none", text: `No news report ${inPeriod(s.period)} names ${zoneName} or a place in it.` }],
+    return { title: bi(`News · ${zoneName} · ${PERIOD_EN[s.period]}`, `செய்திகள் · ${zoneNameTa} · ${PERIOD_TA[s.period]}`), takeaway: null,
+      say: bi(`No news report named ${zoneName} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} ${zoneNameTa} பற்றி செய்தி இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: L(c, `No news report ${inPeriod(s.period)} names ${zoneName} or a place in it.`, `${PERIOD_TA[s.period]} ${zoneNameTa} அல்லது அதிலுள்ள இடத்தைக் குறிப்பிடும் செய்தி இல்லை.`) }],
       next: [{ label: { en: "All of Chennai's news", ta: "சென்னை முழுவதும்" }, kind: "direct", recipe: "news", slots: { ...slots, zones: [], fresh: true }, ids: [], text: null }] };
   }
-  let topic = words.length && slots.q ? ` about ${slots.q}` : zoneName ? ` from ${zoneName}` : "";
+  // the topic as asked, shown and said without a figure of its own (Finding 51: "about flood deaths 300" was said)
+  const asked = words(c, slots.q, 240);
+  let topic = terms.length && asked ? ` about ${asked}` : zoneName ? ` from ${zoneName}` : "";
+  let topicWordsTa = terms.length && topicTa(c, asked) ? `${topicTa(c, asked)} பற்றிய ` : zoneNameTa ? `${zoneNameTa} ` : "";
   // a topic nothing matched: say so, and still show the latest news
-  if (words.length && !items.length) {
-    c.notes.push(`No news matched "${clip(slots.q, 80)}"; showing the latest news instead.`);
+  if (terms.length && !items.length) {
+    c.notes.push(bi(`No news matched "${clip(asked, 80)}"; showing the latest news instead.`, `"${clip(asked, 80)}" பற்றிய செய்தி இல்லை; சமீபத்திய செய்திகளைக் காட்டுகிறேன்.`));
     topic = "";
+    topicWordsTa = "";
     items = r.rows.map((x) => ({
       id: String(x.id), title: clip(x.title, 300), source: clip((x.outletNames ?? [])[0] ?? x.publisher, 80) || null, t: x.t ?? null,
       place: clip(x.loc, 120) || null, incidentId: x.incident ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
     }));
   }
   items = items.slice(0, Math.min(slots.n ?? 12, 20));
-  const title = `News${topic} · ${PERIOD_EN[s.period]}`;
-  const taTopic = zone ? `${ZONE_TA[zone] ?? zoneName} ` : "";
-  if (!items.length) return { title, takeaway: null, say: bi(`No news${topic} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
+  const titles = bi(`News${topic} · ${PERIOD_EN[s.period]}`, `${topicWordsTa}செய்திகள் · ${PERIOD_TA[s.period]}`);
+  const title = L(c, titles.en, titles.ta);
+  const taTopic = zone ? `${zoneNameTa} ` : "";
+  if (!items.length) return { title: titles, takeaway: null, say: bi(`No news${topic} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
   const linked = items.filter((x) => x.incidentId).length;
   return {
-    title, takeaway: linked ? bi(`${linked} of these ${items.length} headlines are linked to an incident.`, `இந்த ${items.length} தலைப்புகளில் ${linked} ஒரு சம்பவத்துடன் இணைந்தவை.`) : null,
+    title: titles, takeaway: linked ? bi(`${linked} of these ${items.length} headlines are linked to an incident.`, `இந்த ${items.length} தலைப்புகளில் ${linked} ஒரு சம்பவத்துடன் இணைந்தவை.`) : null,
     say: bi(`${plural(items.length, "headline", "headlines")}${topic}. Reading them now.`, `${taTopic}${spoken(items.length)} தலைப்புச் செய்திகள். படிக்கிறேன்.`),
-    blocks: [{ kind: "NewsReader", id: "news", title, total: words.length ? items.length : r.total, items }]
+    blocks: [{ kind: "NewsReader", id: "news", title, total: terms.length ? items.length : r.total, items }]
   };
 }
 
@@ -899,9 +1022,11 @@ async function prices(c: Ctx): Promise<Part> {
   const d = r.data as { rows: MandiRow[]; latest: string | null; unknown: string[] };
   const latest = d.latest ? when(d.latest) ?? d.latest : null;
   if (!d.rows?.length) {
-    const what = c.slots.q ?? "vegetables";
-    return { title: `Prices · ${what}`, takeaway: null, say: bi(`There is no recent market price for ${what}.`, `${what} விலை சமீபத்திய சந்தை அறிக்கைகளில் இல்லை.`),
-      blocks: [{ kind: "Note", id: "none", text: `No Chennai market reported a price for ${what} in the last 14 days.` }] };
+    // the item as asked, said and shown without a figure of its own (Finding 51)
+    const asked = words(c, c.slots.q, 80);
+    const what = asked || "vegetables", whatTa = asked || "காய்கறி";
+    return { title: bi(`Prices · ${what}`, `விலைகள் · ${whatTa}`), takeaway: null, say: bi(`There is no recent market price for ${what}.`, `${whatTa} விலை சமீபத்திய சந்தை அறிக்கைகளில் இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: L(c, `No Chennai market reported a price for ${what} in the last 14 days.`, `கடந்த 14 நாட்களில் எந்தச் சென்னைச் சந்தையும் ${whatTa} விலையை அறிவிக்கவில்லை.`) }] };
   }
   const rs = (x: number | null) => (x == null ? "—" : `₹${Math.round(x)}`);
   if (c.slots.q) {
@@ -914,26 +1039,29 @@ async function prices(c: Ctx): Promise<Part> {
     const say = bi(`${it.commodity} costs ${rs(it.avg_per_kg)} a kilo on average across ${it.markets} Chennai markets, ${trendEn}. Cheapest at ${lo.market}, ${rs(lo.per_kg)}; dearest at ${hi.market}, ${rs(hi.per_kg)}.`,
       `${it.commodity} சராசரியாக கிலோ ${rs(it.avg_per_kg)}, ${it.markets} சென்னை சந்தைகளில்; ${trendTa}. மலிவு: ${lo.market}, ${rs(lo.per_kg)}; அதிகம்: ${hi.market}, ${rs(hi.per_kg)}.`);
     return {
-      title: `${it.commodity} prices · Chennai markets`, takeaway: ch.pct != null && Math.abs(ch.pct) >= 10 ? bi(`${it.commodity} is ${trendEn}.`, `${it.commodity} ${trendTa}.`) : null, say,
+      title: bi(`${it.commodity} prices · Chennai markets`, `${it.commodity} விலை · சென்னைச் சந்தைகள்`), takeaway: ch.pct != null && Math.abs(ch.pct) >= 10 ? bi(`${it.commodity} is ${trendEn}.`, `${it.commodity} ${trendTa}.`) : null, say,
       blocks: [
-        { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-          { key: "avg", label: `Average, ${it.markets} markets`, value: Math.round(it.avg_per_kg ?? 0), unit: "₹/kg", prev: it.avg_prev_per_kg == null ? null : Math.round(it.avg_prev_per_kg), delta: ch.delta, tone: ch.pct != null && ch.pct >= 10 ? "bad" : "neutral", spark: [] },
-          { key: "lo", label: `Cheapest: ${lo.market}`, value: Math.round(lo.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "good", spark: [] },
-          { key: "hi", label: `Dearest: ${hi.market}`, value: Math.round(hi.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "neutral", spark: [] }
+        { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+          { key: "avg", label: L(c, `Average, ${it.markets} markets`, `சராசரி, ${it.markets} சந்தைகள்`), value: Math.round(it.avg_per_kg ?? 0), unit: "₹/kg", prev: it.avg_prev_per_kg == null ? null : Math.round(it.avg_prev_per_kg), delta: ch.delta, tone: ch.pct != null && ch.pct >= 10 ? "bad" : "neutral", spark: [] },
+          { key: "lo", label: L(c, `Cheapest: ${lo.market}`, `மலிவு: ${lo.market}`), value: Math.round(lo.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "good", spark: [] },
+          { key: "hi", label: L(c, `Dearest: ${hi.market}`, `அதிக விலை: ${hi.market}`), value: Math.round(hi.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "neutral", spark: [] }
         ] },
-        { kind: "Ranking", id: "markets", title: `${it.commodity} at each market${latest ? ` · reports to ${latest}` : ""}`, unit: "₹/kg", method: "AGMARKNET modal price, rupees per kilo (the latest report of each market)", order: "bottom",
-          items: ps.map((p, i) => ({ key: p.market, label: p.market, value: Math.round(p.per_kg), rank: i + 1, sub: `${p.date}${p.prev_per_kg != null ? ` · was ₹${Math.round(p.prev_per_kg)}` : ""}`, zone: null, lat: null, lon: null, action: "none" as const })) }
+        { kind: "Ranking", id: "markets", title: L(c, `${it.commodity} at each market${latest ? ` · reports to ${latest}` : ""}`, `ஒவ்வொரு சந்தையிலும் ${it.commodity}${latest ? ` · ${labelTa(latest)} வரையிலான அறிக்கைகள்` : ""}`), unit: "₹/kg",
+          method: L(c, "AGMARKNET modal price, rupees per kilo (the latest report of each market)", "AGMARKNET மைய விலை, கிலோவுக்கு ரூபாய் (ஒவ்வொரு சந்தையின் கடைசி அறிக்கை)"), order: "bottom",
+          items: ps.map((p, i) => ({ key: p.market, label: p.market, value: Math.round(p.per_kg), rank: i + 1, sub: `${p.date}${p.prev_per_kg != null ? L(c, ` · was ₹${Math.round(p.prev_per_kg)}`, ` · முன்பு ₹${Math.round(p.prev_per_kg)}`) : ""}`, zone: null, lat: null, lon: null, action: "none" as const })) }
       ]
     };
   }
   const list = d.rows.filter((x) => x.avg_per_kg != null);
   const ups = list.map((x) => ({ x, ch: x.avg_prev_per_kg ? change(x.avg_per_kg!, x.avg_prev_per_kg) : { delta: null, pct: null } })).filter((y) => (y.ch.pct ?? 0) >= 10);
   return {
-    title: "Vegetable prices · Chennai markets", takeaway: ups.length ? bi(`Up 10% or more: ${ups.map((y) => y.x.commodity).join(", ")}.`, `10% அல்லது அதிகம் உயர்ந்தவை: ${ups.map((y) => y.x.commodity).join(", ")}.`) : null,
+    title: bi("Vegetable prices · Chennai markets", "காய்கறி விலைகள் · சென்னைச் சந்தைகள்"), takeaway: ups.length ? bi(`Up 10% or more: ${ups.map((y) => y.x.commodity).join(", ")}.`, `10% அல்லது அதிகம் உயர்ந்தவை: ${ups.map((y) => y.x.commodity).join(", ")}.`) : null,
     say: bi(`Prices of ${list.length} items at Chennai markets${latest ? `, reports to ${latest}` : ""}. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} went up.` : "No big rises."}`,
       `சென்னை சந்தைகளில் ${list.length} பொருட்களின் விலை. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} விலை உயர்ந்துள்ளது.` : "பெரிய உயர்வு இல்லை."}`),
-    blocks: [{ kind: "Ranking", id: "prices", title: "Average price per kilo", unit: "₹/kg", method: "AGMARKNET modal prices averaged across the Chennai markets that reported", order: "top",
-      items: list.map((x, i) => ({ key: x.commodity, label: x.commodity, value: Math.round(x.avg_per_kg!), rank: i + 1, sub: x.avg_prev_per_kg != null ? `was ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} markets` : `${x.markets} markets`, zone: null, lat: null, lon: null, action: "none" as const })) }]
+    blocks: [{ kind: "Ranking", id: "prices", title: L(c, "Average price per kilo", "கிலோவுக்குச் சராசரி விலை"), unit: "₹/kg",
+      method: L(c, "AGMARKNET modal prices averaged across the Chennai markets that reported", "அறிக்கை தந்த சென்னைச் சந்தைகளின் AGMARKNET மைய விலைகளின் சராசரி"), order: "top",
+      items: list.map((x, i) => ({ key: x.commodity, label: x.commodity, value: Math.round(x.avg_per_kg!), rank: i + 1,
+        sub: x.avg_prev_per_kg != null ? L(c, `was ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} markets`, `முன்பு ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} சந்தைகள்`) : L(c, `${x.markets} markets`, `${x.markets} சந்தைகள்`), zone: null, lat: null, lon: null, action: "none" as const })) }]
   };
 }
 
@@ -959,8 +1087,10 @@ async function readings(c: Ctx): Promise<Part> {
   const items = rows.map((x) => ({ id: String(x.place_id ?? x.place), name: clip(x.place, 120), value: round(Number(x.value), 1), t: x.t ?? null,
     mean28: num(x.mean28) == null ? null : round(Number(x.mean28), 1), z: num(x.zscore), anomaly: !!x.anomaly, detail: clip(x.detail, 200) || null }))
     .sort((a, b) => b.value - a.value);
-  const title = `${e.en}${c.slots.name ? ` · ${c.slots.name}` : ""}`;
-  if (!items.length) return { title, takeaway: null, say: bi(`There is no ${e.en.toLowerCase()} reading in the data.`, `${e.ta} அளவீடு தரவில் இல்லை.`), blocks: [] };
+  const station = words(c, c.slots.name, 80);
+  const titles = bi(`${e.en}${station ? ` · ${station}` : ""}`, `${e.ta}${station ? ` · ${station}` : ""}`);
+  const title = L(c, titles.en, titles.ta);
+  if (!items.length) return { title: titles, takeaway: null, say: bi(`There is no ${e.en.toLowerCase()} reading in the data.`, `${e.ta} அளவீடு தரவில் இல்லை.`), blocks: [] };
   // a station named in the question; else a zone named in it, read through a station whose name holds the zone's name (QA4 gate, FB-2: "the rainfall in
   // Adyar" was answered with the city's highest reading). The data has stations, not zones, so a zone with no station of that name gets an honest line.
   const asked = c.slots.name ? [] : [...new Set(c.slots.zones)].filter((z) => zoneName(c.w, z));
@@ -988,8 +1118,8 @@ async function readings(c: Ctx): Promise<Part> {
   const blocks: BlockT[] = [{ kind: "Readings", id: "readings", title, metric: m, unit: e.unit, items: named ? [named, ...items.filter((x) => x !== named)] : items }];
   const pts = rows.filter((x) => num(x.lat) != null && num(x.lon) != null && Math.abs(Number(x.lat) - 13.05) < 0.6)
     .map((x, i) => ({ n: i + 1, id: String(x.place_id ?? x.place), lat: Number(x.lat), lon: Number(x.lon), label: clip(x.place, 120), sev: null, value: round(Number(x.value), 1), hot: String(x.place) === top.name }));
-  if (pts.length >= 2) blocks.push({ kind: "MapView", id: "map", title: "Stations", rule: null, shade: null, points: pts, outline: [] });
-  return { title, takeaway, say, blocks };
+  if (pts.length >= 2) blocks.push({ kind: "MapView", id: "map", title: L(c, "Stations", "நிலையங்கள்"), rule: null, shade: null, points: pts, outline: [] });
+  return { title: titles, takeaway, say, blocks };
 }
 
 // ------------------------------------------------------------------ the city now --
@@ -1051,15 +1181,16 @@ async function ranking(c: Ctx): Promise<Part> {
   const n = Math.min(Math.max(slots.n ?? 5, 1), 15);
   const order = slots.order;
   let items: Extract<BlockT, { kind: "Ranking" }>["items"] = [];
-  let unit: string | null = null; let method = ""; let label = ""; let shade: Extract<BlockT, { kind: "MapView" }>["shade"] = null; let pts: PointT[] = [];
+  let unit: string | null = null; let methodBi = bi("", ""); let labelBi = bi("", ""); let shade: Extract<BlockT, { kind: "MapView" }>["shade"] = null; let pts: PointT[] = [];
   let asWhen: string | null = null; let all: number[] = [];
   if (measure === "rain" || measure === "aqi" || measure === "lakes" || measure === "temp") {
     const m = measure as Metric;
     const rows = await envRows(c, m);
     const ranked = rank(rows, (x) => Number(x.value), n, order);
     all = rows.map((x) => Number(x.value));
-    unit = ENV[m].unit; label = ENV[m].en;
-    method = `Latest reading at each ${m === "lakes" ? "reservoir" : "station"} (${rows.length} reporting), ranked; the data has no zone-level gauge, so places are the stations themselves.`;
+    unit = ENV[m].unit; labelBi = bi(ENV[m].en, ENV[m].ta);
+    methodBi = bi(`Latest reading at each ${m === "lakes" ? "reservoir" : "station"} (${rows.length} reporting), ranked; the data has no zone-level gauge, so places are the stations themselves.`,
+      `ஒவ்வொரு ${m === "lakes" ? "நீர்த்தேக்கத்தின்" : "நிலையத்தின்"} கடைசி அளவீடு (${rows.length} அளவீடுகள்), வரிசைப்படி; தரவில் மண்டல அளவிலான மானி இல்லை, எனவே இடங்கள் நிலையங்களே.`);
     items = ranked.map((r) => ({ key: String(r.item.place_id ?? r.item.place), label: clip(r.item.place, 120), value: round(r.value, 1), rank: r.rank, sub: when(r.item.t), zone: null,
       lat: num(r.item.lat), lon: num(r.item.lon), action: "station" as const }));
     asWhen = when(ranked[0]?.item.t);
@@ -1069,50 +1200,58 @@ async function ranking(c: Ctx): Promise<Part> {
     const r = await call(c, "zones", { scope: scopeArg(s) });
     const rows = (r.data as { rows: Row[] }).rows;
     const key = { zone_severe: "severe", zone_open: "open", zone_incidents: "n", zone_complaints: "complaints", zone_attention: "score" }[measure as "zone_severe"] ?? "score";
-    label = { severe: "Severe incidents", open: "Open incidents", n: "Incidents reported", complaints: "Open citizen complaints", score: "Attention score (3 × severe + high)" }[key] ?? key;
+    labelBi = ({ severe: bi("Severe incidents", "கடுமையான சம்பவங்கள்"), open: bi("Open incidents", "திறந்த சம்பவங்கள்"), n: bi("Incidents reported", "பதிவான சம்பவங்கள்"),
+      complaints: bi("Open citizen complaints", "திறந்த குடிமக்கள் புகார்கள்"), score: bi("Attention score (3 × severe + high)", "கவனப் புள்ளி (3 × கடுமையானவை + அதிக முக்கியத்துவம்)") } as Record<string, Bilingual>)[key] ?? bi(key, key);
     unit = key === "score" ? "points" : "incidents";
-    method = `${label} by zone, ${PERIOD_EN[s.period]}, as the console's zone table counts them.`;
+    methodBi = bi(`${labelBi.en} by zone, ${PERIOD_EN[s.period]}, as the console's zone table counts them.`, `${labelBi.ta}, மண்டல வாரியாக, ${PERIOD_TA[s.period]}, கன்சோலின் மண்டல அட்டவணைப்படி.`);
     all = rows.map((x) => Number(x[key]));
     items = rank(rows, (x) => Number(x[key]), n, order).map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 120), value: x.value, rank: x.rank,
-      sub: `${spoken(Number(x.item.severe))} severe · ${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const }));
-    shade = { geo: "zone", label, values: rows.map((x) => ({ key: Number(x.zone), value: Number(x[key]) })) };
+      sub: L(c, `${spoken(Number(x.item.severe))} severe · ${spoken(Number(x.item.open))} open`, `${spoken(Number(x.item.severe))} கடுமையானவை · ${spoken(Number(x.item.open))} திறந்தவை`), zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const }));
+    shade = { geo: "zone", label: L(c, labelBi.en, labelBi.ta), values: rows.map((x) => ({ key: Number(x.zone), value: Number(x[key]) })) };
   } else if (measure === "taluk_open") {
     const r = await call(c, "taluks", { scope: scopeArg(s) });
     const rows = (r.data as { rows: Row[] }).rows ?? [];
-    label = "Unresolved incidents, last 30 days"; unit = "incidents"; method = "Open incidents by revenue taluk over the last 30 days (the Trends page's taluk ranking).";
+    labelBi = bi("Unresolved incidents, last 30 days", "தீர்க்கப்படாத சம்பவங்கள், கடந்த 30 நாட்கள்"); unit = "incidents";
+    methodBi = bi("Open incidents by revenue taluk over the last 30 days (the Trends page's taluk ranking).", "வருவாய் வட்ட வாரியாகக் கடந்த 30 நாட்களின் திறந்த சம்பவங்கள் (போக்குகள் பக்கத்தின் வட்டத் தரவரிசை).");
     all = rows.map((x) => Number(x.open));
     items = rank(rows, (x) => Number(x.open), n, order).map((x) => ({ key: String(x.item.code), label: clip(x.item.name, 120), value: x.value, rank: x.rank,
-      sub: `${spoken(Number(x.item.severe ?? 0))} severe`, zone: null, lat: num(x.item.lat), lon: num(x.item.lon), action: "none" as const }));
+      sub: L(c, `${spoken(Number(x.item.severe ?? 0))} severe`, `${spoken(Number(x.item.severe ?? 0))} கடுமையானவை`), zone: null, lat: num(x.item.lat), lon: num(x.item.lon), action: "none" as const }));
   } else if (measure === "hotspots") {
     const r = await call(c, "hotspots", { scope: scopeArg(s) });
     const rows = (r.data as { rows: Row[] }).rows ?? [];
-    label = "Incidents in 30 days, per hotspot"; unit = "incidents"; method = "Clusters of incidents within 250 m of each other (DBSCAN), 3 or more in the last 30 days.";
+    labelBi = bi("Incidents in 30 days, per hotspot", "ஒவ்வொரு மையப் பகுதியிலும் 30 நாட்களில் சம்பவங்கள்"); unit = "incidents";
+    methodBi = bi("Clusters of incidents within 250 m of each other (DBSCAN), 3 or more in the last 30 days.", "ஒன்றுக்கொன்று 250 மீ-க்குள் உள்ள சம்பவக் கொத்துகள் (DBSCAN), கடந்த 30 நாட்களில் 3 அல்லது அதிகம்.");
     all = rows.map((x) => Number(x.incidents_30d));
-    items = rank(rows, (x) => Number(x.incidents_30d), n, order).map((x) => ({ key: String(x.item.id), label: `${clip(x.item.label, 60)} · ${clip(x.item.top_place, 50)}`, value: x.value, rank: x.rank,
-      sub: `${spoken(Number(x.item.open))} open · ${clip(x.item.zone_name, 40)}`, zone: num(x.item.zone), lat: num(x.item.lat), lon: num(x.item.lon), action: "zone" as const }));
+    items = rank(rows, (x) => Number(x.incidents_30d), n, order).map((x) => ({ key: String(x.item.id), label: `${clip(c.ta ? CAT_LABEL_TA[String(x.item.cat ?? "")] ?? x.item.label : x.item.label, 60)} · ${clip(x.item.top_place, 50)}`, value: x.value, rank: x.rank,
+      sub: L(c, `${spoken(Number(x.item.open))} open · ${clip(x.item.zone_name, 40)}`, `${spoken(Number(x.item.open))} திறந்தவை · ${clip(zoneTa(w, num(x.item.zone)) ?? x.item.zone_name, 40)}`), zone: num(x.item.zone), lat: num(x.item.lat), lon: num(x.item.lon), action: "zone" as const }));
     pts = items.filter((x) => x.lat != null).map((x) => ({ n: x.rank, id: x.key, lat: x.lat as number, lon: x.lon as number, label: x.label, sev: null, value: x.value, hot: x.rank <= 3 }));
   } else {
     const d = await deptMeasures(c);
     const key = measure === "dept_backlog" ? "days" : measure === "dept_resolution" ? "closeDays" : measure === "dept_overdue" ? "overdue" : "open";
-    label = { days: "Average age of open incidents", closeDays: "Average days to close", overdue: "Open past the deadline", open: "Open incidents" }[key] ?? key;
+    labelBi = ({ days: bi("Average age of open incidents", "திறந்த சம்பவங்களின் சராசரி வயது"), closeDays: bi("Average days to close", "மூட ஆன சராசரி நாட்கள்"),
+      overdue: bi("Open past the deadline", "காலக்கெடு தாண்டி திறந்தவை"), open: bi("Open incidents", "திறந்த சம்பவங்கள்") } as Record<string, Bilingual>)[key] ?? bi(key, key);
     unit = key === "days" || key === "closeDays" ? "days" : "incidents";
-    method = { days: "Departments with 5 or more open incidents, by the average age of their open incidents (the console's backlog card).",
-      closeDays: `Average days from first report to closing, incidents closed ${inPeriod(s.period)}.`, overdue: `Open incidents past their deadline, ${PERIOD_EN[s.period]}.`,
-      open: `Open incidents, ${PERIOD_EN[s.period]}.` }[key] ?? "";
+    methodBi = ({ days: bi("Departments with 5 or more open incidents, by the average age of their open incidents (the console's backlog card).", "5 அல்லது அதிகம் திறந்த சம்பவங்கள் உள்ள துறைகள், அவற்றின் சராசரி வயதுப்படி (கன்சோலின் நிலுவை அட்டை)."),
+      closeDays: bi(`Average days from first report to closing, incidents closed ${inPeriod(s.period)}.`, `முதல் பதிவிலிருந்து மூடும் வரை சராசரி நாட்கள், ${PERIOD_TA[s.period]} மூடிய சம்பவங்கள்.`),
+      overdue: bi(`Open incidents past their deadline, ${PERIOD_EN[s.period]}.`, `காலக்கெடு தாண்டிய திறந்த சம்பவங்கள், ${PERIOD_TA[s.period]}.`),
+      open: bi(`Open incidents, ${PERIOD_EN[s.period]}.`, `திறந்த சம்பவங்கள், ${PERIOD_TA[s.period]}.`) } as Record<string, Bilingual>)[key] ?? bi("", "");
     const rows = d.filter((x) => x[key] != null);
     all = rows.map((x) => Number(x[key]));
     items = rank(rows, (x) => Number(x[key]), n, order).map((x) => ({ key: String(x.item.code), label: clip(x.item.name, 120), value: round(x.value, 1), rank: x.rank,
-      sub: `${spoken(Number(x.item.open ?? 0))} open`, zone: null, lat: null, lon: null, action: "dept" as const }));
+      sub: L(c, `${spoken(Number(x.item.open ?? 0))} open`, `${spoken(Number(x.item.open ?? 0))} திறந்தவை`), zone: null, lat: null, lon: null, action: "dept" as const }));
   }
+  const label = L(c, labelBi.en, labelBi.ta), method = L(c, methodBi.en, methodBi.ta);
   const scope = scopeWords(w, s);
-  const title = `${order === "top" ? "Top" : "Bottom"} ${items.length} · ${label}${measure.startsWith("zone_") || measure.startsWith("dept_") ? ` · ${scope.en}` : ""}`;
+  const scoped = measure.startsWith("zone_") || measure.startsWith("dept_");
+  const titles = bi(`${order === "top" ? "Top" : "Bottom"} ${items.length} · ${labelBi.en}${scoped ? ` · ${scope.en}` : ""}`, `${order === "top" ? "முதல்" : "கடைசி"} ${items.length} · ${labelBi.ta}${scoped ? ` · ${scope.ta}` : ""}`);
+  const title = titles;
   if (!items.length) return { title, takeaway: null, say: bi("There is nothing to rank for this.", "இதற்கு வரிசைப்படுத்த எதுவும் இல்லை."), blocks: [] };
   const first = items[0];
   const vm = vsMedian(first.value, all);
   if (order === "top" && first.value === 0 && all.every((v) => v === 0)) {
     const nothing = bi(`Nothing to rank: all ${all.length} read 0${unit ? ` ${unit}` : ""}${asWhen ? ` as of ${asWhen}` : ""}.`, `வரிசைப்படுத்த எதுவும் இல்லை: ${all.length} அளவீடுகளும் 0${asWhen ? `, ${asWhen} நிலவரப்படி` : ""}.`);
     return { title, takeaway: nothing, say: measure === "rain" ? bi(`No rain in the last 24 hours at any of the ${all.length} stations${asWhen ? `, as of ${asWhen}` : ""}.`, `கடந்த 24 மணி நேரத்தில் ${all.length} நிலையங்களிலும் மழை இல்லை${asWhen ? `, ${asWhen} நிலவரப்படி` : ""}.`) : nothing,
-      blocks: [{ kind: "Ranking", id: "rank", title: label, unit, method, order, items }, ...(pts.length ? [{ kind: "MapView" as const, id: "map", title: "Stations", rule: null, shade: null, points: pts, outline: [] }] : [])] };
+      blocks: [{ kind: "Ranking", id: "rank", title: label, unit, method, order, items }, ...(pts.length ? [{ kind: "MapView" as const, id: "map", title: L(c, "Stations", "நிலையங்கள்"), rule: null, shade: null, points: pts, outline: [] }] : [])] };
   }
   // the Tamil lines name a zone and a department by their Tamil names (a zone by its number, a department by its code)
   const labelTaOf = (x: (typeof items)[number]) => (x.action === "zone" && x.zone != null ? zoneTa(w, x.zone) : x.action === "dept" ? deptTa(w, x.key) : null) ?? x.label;
@@ -1125,19 +1264,19 @@ async function ranking(c: Ctx): Promise<Part> {
     ? bi(`${first.label} is ${spoken(vm.ratio)}× the median of all ${all.length}.`, `${labelTaOf(first)}, அனைத்து ${all.length}-இன் இடைநிலையை விட ${spoken(vm.ratio)} மடங்கு.`)
     : bi(`${first.label} leads with ${spoken(first.value)}${unit && unit !== "points" ? ` ${unit}` : ""}.`, `${labelTaOf(first)} முதலிடம்: ${spoken(first.value)}.`);
   const blocks: BlockT[] = [{ kind: "Ranking", id: "rank", title: label, unit, method, order, items }];
-  if (shade || pts.length) blocks.push({ kind: "MapView", id: "map", title: shade ? `${label} by zone` : "On the map", rule: null, shade, points: pts, outline: items.filter((x) => x.zone).slice(0, 3).map((x) => x.zone as number) });
+  if (shade || pts.length) blocks.push({ kind: "MapView", id: "map", title: shade ? L(c, `${labelBi.en} by zone`, `${labelBi.ta}, மண்டல வாரியாக`) : L(c, "On the map", "வரைபடத்தில்"), rule: null, shade, points: pts, outline: items.filter((x) => x.zone).slice(0, 3).map((x) => x.zone as number) });
   const total = all.reduce((a, b) => a + b, 0);
   if (measure.startsWith("zone_") || measure === "taluk_open") {
-    blocks.unshift({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-      { key: "top", label: `${first.label}`, value: first.value, unit, prev: null, delta: null, tone: "bad", spark: [] },
-      { key: "total", label: "All areas together", value: total, unit, prev: null, delta: null, tone: "neutral", spark: [] },
-      { key: "share", label: `${first.label}'s share`, value: share(first.value, total) ?? 0, unit: "%", prev: null, delta: null, tone: "neutral", spark: [] }
+    blocks.unshift({ kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+      { key: "top", label: L(c, `${first.label}`, labelTaOf(first)), value: first.value, unit, prev: null, delta: null, tone: "bad", spark: [] },
+      { key: "total", label: L(c, "All areas together", "எல்லாப் பகுதிகளும் சேர்த்து"), value: total, unit, prev: null, delta: null, tone: "neutral", spark: [] },
+      { key: "share", label: L(c, `${first.label}'s share`, `${labelTaOf(first)} பங்கு`), value: share(first.value, total) ?? 0, unit: "%", prev: null, delta: null, tone: "neutral", spark: [] }
     ] });
   } else if (measure === "rain" || measure === "aqi" || measure === "lakes" || measure === "temp") {
-    blocks.unshift({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+    blocks.unshift({ kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
       { key: "top", label: first.label, value: first.value, unit, prev: null, delta: null, tone: "neutral", spark: [] },
-      { key: "median", label: "Median of all stations", value: round(median(all) ?? 0, 1), unit, prev: null, delta: null, tone: "neutral", spark: [] },
-      { key: "n", label: "Reporting", value: all.length, unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+      { key: "median", label: L(c, "Median of all stations", "எல்லா நிலையங்களின் இடைநிலை"), value: round(median(all) ?? 0, 1), unit, prev: null, delta: null, tone: "neutral", spark: [] },
+      { key: "n", label: L(c, "Reporting", "அளவீடு தந்தவை"), value: all.length, unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
     ] });
   }
   return { title, takeaway, say, blocks };
@@ -1163,15 +1302,17 @@ async function deptMeasures(c: Ctx): Promise<Row[]> {
 // ------------------------------------------------------------------ compare --
 
 const CMP_METRICS = [
-  { key: "n", label: "Reported" }, { key: "severe", label: "Severe" }, { key: "high", label: "High" }, { key: "open", label: "Open" },
-  { key: "complaints", label: "Open complaints" }, { key: "overdue", label: "Past deadline" }
+  { key: "n", label: "Reported", ta: "பதிவானவை" }, { key: "severe", label: "Severe", ta: "கடுமையானவை" }, { key: "high", label: "High", ta: "அதிக முக்கியத்துவம்" }, { key: "open", label: "Open", ta: "திறந்தவை" },
+  { key: "complaints", label: "Open complaints", ta: "திறந்த புகார்கள்" }, { key: "overdue", label: "Past deadline", ta: "காலக்கெடு தாண்டியவை" }
 ];
+/** a comparison's measures as the screen shows them, in its language */
+const metricsIn = (c: Pick<Ctx, "ta">, ms: { key: string; label: string; ta: string }[]) => ms.map((m) => ({ key: m.key, label: c.ta ? m.ta : m.label }));
 
 async function compare(c: Ctx): Promise<Part> {
   const { w, s, slots } = c;
   if (slots.depts.length >= 2) return compareDepts(c);
   const zones = [...new Set(slots.zones)].slice(0, 4);
-  if (zones.length < 2) return { title: "Compare", takeaway: null, say: bi("Which two areas should I compare?", "எந்த இரண்டு பகுதிகளை ஒப்பிட வேண்டும்?"), blocks: [] };
+  if (zones.length < 2) return { title: bi("Compare", "ஒப்பீடு"), takeaway: null, say: bi("Which two areas should I compare?", "எந்த இரண்டு பகுதிகளை ஒப்பிட வேண்டும்?"), blocks: [] };
   const base = { ...s, zone: null };
   const [zr, ...sides] = await Promise.all([
     call(c, "zones", { scope: scopeArg(base) }),
@@ -1185,44 +1326,57 @@ async function compare(c: Ctx): Promise<Part> {
     const d = cd.data as { totals: Row; categories: Row[] };
     const buckets = ((ser.data as { buckets: Row[] }).buckets ?? []);
     if (!seriesLabels.length) seriesLabels = buckets.map((b) => when(b.from)?.split(",")[0] ?? "");
-    return { key: String(z), label: zoneName(w, z) ?? `Zone ${z}`, zone: z,
+    return { key: String(z), label: (c.ta ? zoneTa(w, z) : zoneName(w, z)) ?? `Zone ${z}`, zone: z,
       values: { n: Number(row.n ?? d.totals?.n ?? 0), severe: Number(row.severe ?? 0), high: Number(row.high ?? 0), open: Number(row.open ?? 0), complaints: Number(row.complaints ?? 0), overdue: Number(d.totals?.overdue ?? 0) },
-      cats: (d.categories ?? []).slice(0, 6).map((x) => ({ code: String(x.code), label: clip(x.label, 80), n: Number(x.n) })),
+      cats: (d.categories ?? []).slice(0, 6).map((x) => ({ code: String(x.code), label: kindLabel(c, x), n: Number(x.n) })),
       series: buckets.map((b) => Number(b.n)) };
   });
   const gaps = largestGaps(out, CMP_METRICS.map((m) => m.key));
   const lab = (k: string) => CMP_METRICS.find((m) => m.key === k)?.label ?? k;
-  const title = `${out.map((x) => x.label).join(" vs ")} · ${PERIOD_EN[s.period]}`;
+  const labTa = (k: string) => CMP_METRICS.find((m) => m.key === k)?.ta ?? k;
+  // the sides are named in the screen's language; each line names them in its own
+  const en = (label: string) => zoneName(w, out.find((x) => x.label === label)?.zone) ?? label;
+  const tam = (label: string) => zoneTa(w, out.find((x) => x.label === label)?.zone) ?? label;
+  const titles = bi(`${out.map((x) => en(x.label)).join(" vs ")} · ${PERIOD_EN[s.period]}`, `${out.map((x) => tam(x.label)).join(" / ")} ஒப்பீடு · ${PERIOD_TA[s.period]}`);
+  const title = L(c, titles.en, titles.ta);
   const [a, b] = out;
   const g = gaps[0];
   const say = bi(
-    `${out.map((x) => `${x.label}: ${spoken(x.values.severe)} severe and ${spoken(x.values.open)} open.`).join(" ")}${g ? ` The biggest gap is ${lab(g.metric).toLowerCase()}: ${g.hi} ${spoken(g.hiValue)} against ${g.lo} ${spoken(g.loValue)}.` : ""}`,
-    `${out.map((x) => `${zoneTa(w, x.zone)}: ${spoken(x.values.severe)} கடுமையான, ${spoken(x.values.open)} திறந்தவை.`).join(" ")}${g ? ` பெரிய வேறுபாடு ${lab(g.metric)}: ${g.hi} ${spoken(g.hiValue)}, ${g.lo} ${spoken(g.loValue)}.` : ""}`
+    `${out.map((x) => `${en(x.label)}: ${spoken(x.values.severe)} severe and ${spoken(x.values.open)} open.`).join(" ")}${g ? ` The biggest gap is ${lab(g.metric).toLowerCase()}: ${en(g.hi)} ${spoken(g.hiValue)} against ${en(g.lo)} ${spoken(g.loValue)}.` : ""}`,
+    `${out.map((x) => `${tam(x.label)}: ${spoken(x.values.severe)} கடுமையான, ${spoken(x.values.open)} திறந்தவை.`).join(" ")}${g ? ` பெரிய வேறுபாடு ${labTa(g.metric)}: ${tam(g.hi)} ${spoken(g.hiValue)}, ${tam(g.lo)} ${spoken(g.loValue)}.` : ""}`
   );
-  const takeaway = g ? bi(`${g.hi} had ${g.ratio ? `${spoken(g.ratio)}×` : `${spoken(g.gap)} more`} the ${lab(g.metric).toLowerCase()} of ${g.lo} ${inPeriod(s.period)}.`,
-    `${PERIOD_TA[s.period]} ${g.hi}, ${g.lo}-ஐ விட ${g.ratio ? `${spoken(g.ratio)} மடங்கு` : `${spoken(g.gap)} கூடுதல்`} ${lab(g.metric)}.`) : null;
-  c.notes.push("Median resolution time is not kept per zone in the data; the board compares counts.");
-  return { title, takeaway, say, blocks: [
-    { kind: "Compare", id: "cmp", title, metrics: CMP_METRICS, sides: out, seriesLabels,
-      diffs: gaps.slice(0, 6).map((x) => ({ metric: x.metric, label: lab(x.metric), hi: x.hi, lo: x.lo, ratio: x.ratio, gap: x.gap })) },
-    { kind: "MapView", id: "map", title: out.length === 2 ? "Both areas" : `The ${out.length} areas`, rule: null, shade: { geo: "zone", label: "Severe incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.severe) })) }, points: [], outline: zones }
+  const takeaway = g ? bi(`${en(g.hi)} had ${g.ratio ? `${spoken(g.ratio)}×` : `${spoken(g.gap)} more`} the ${lab(g.metric).toLowerCase()} of ${en(g.lo)} ${inPeriod(s.period)}.`,
+    `${PERIOD_TA[s.period]} ${tam(g.hi)}, ${tam(g.lo)}-ஐ விட ${g.ratio ? `${spoken(g.ratio)} மடங்கு` : `${spoken(g.gap)} கூடுதல்`} ${labTa(g.metric)}.`) : null;
+  c.notes.push(bi("Median resolution time is not kept per zone in the data; the board compares counts.", "தீர்வு நேரத்தின் இடைநிலை மண்டல வாரியாகத் தரவில் இல்லை; இந்தப் பலகை எண்ணிக்கைகளை ஒப்பிடுகிறது."));
+  return { title: titles, takeaway, say, blocks: [
+    { kind: "Compare", id: "cmp", title, metrics: metricsIn(c, CMP_METRICS), sides: out, seriesLabels: c.ta ? seriesLabels.map(labelTa) : seriesLabels,
+      diffs: gaps.slice(0, 6).map((x) => ({ metric: x.metric, label: L(c, lab(x.metric), labTa(x.metric)), hi: x.hi, lo: x.lo, ratio: x.ratio, gap: x.gap })) },
+    { kind: "MapView", id: "map", title: out.length === 2 ? L(c, "Both areas", "இரு பகுதிகளும்") : L(c, `The ${out.length} areas`, `${out.length} பகுதிகள்`), rule: null,
+      shade: { geo: "zone", label: L(c, "Severe incidents", "கடுமையான சம்பவங்கள்"), values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.severe) })) }, points: [], outline: zones }
   ] };
 }
 
 async function compareDepts(c: Ctx): Promise<Part> {
   const d = await deptMeasures(c);
   const pick = c.slots.depts.slice(0, 4).map((code) => d.find((x) => x.code === code)).filter((x): x is Row => !!x);
-  const metrics = [{ key: "open", label: "Open" }, { key: "overdue", label: "Past deadline" }, { key: "severe", label: "Severe" }, { key: "days", label: "Avg age open (days)" }, { key: "closeDays", label: "Avg days to close" }];
-  const title = `${pick.map((x) => x.name).join(" vs ")} · ${PERIOD_EN[c.s.period]}`;
-  if (pick.length < 2) return { title, takeaway: null, say: bi("I could not find both departments in the data.", "இரண்டு துறைகளையும் தரவில் காண முடியவில்லை."), blocks: [] };
-  const sides = pick.map((x) => ({ key: String(x.code), label: clip(x.name, 80), zone: null, values: Object.fromEntries(metrics.map((m) => [m.key, Number(x[m.key] ?? 0)])), cats: [], series: [] }));
+  const metrics = [{ key: "open", label: "Open", ta: "திறந்தவை" }, { key: "overdue", label: "Past deadline", ta: "காலக்கெடு தாண்டியவை" }, { key: "severe", label: "Severe", ta: "கடுமையானவை" },
+    { key: "days", label: "Avg age open (days)", ta: "திறந்தவற்றின் சராசரி வயது (நாட்கள்)" }, { key: "closeDays", label: "Avg days to close", ta: "மூட ஆன சராசரி நாட்கள்" }];
+  // each body by its own name, in Tamil by its code (DEPT_TA covers every code)
+  const nameTa = (x: Row) => DEPT_TA[String(x.code)] ?? String(x.name);
+  const titles = bi(`${pick.map((x) => x.name).join(" vs ")} · ${PERIOD_EN[c.s.period]}`, `${pick.map(nameTa).join(" / ")} ஒப்பீடு · ${PERIOD_TA[c.s.period]}`);
+  const title = L(c, titles.en, titles.ta);
+  if (pick.length < 2) return { title: titles, takeaway: null, say: bi("I could not find both departments in the data.", "இரண்டு துறைகளையும் தரவில் காண முடியவில்லை."), blocks: [] };
+  const sides = pick.map((x) => ({ key: String(x.code), label: clip(c.ta ? nameTa(x) : x.name, 80), zone: null, values: Object.fromEntries(metrics.map((m) => [m.key, Number(x[m.key] ?? 0)])), cats: [], series: [] }));
   const gaps = largestGaps(sides, metrics.map((m) => m.key));
   const g = gaps[0];
   const lab = (k: string) => metrics.find((m) => m.key === k)?.label ?? k;
+  const labTa = (k: string) => metrics.find((m) => m.key === k)?.ta ?? k;
+  const en = (label: string) => String(pick.find((x) => clip(c.ta ? nameTa(x) : x.name, 80) === label)?.name ?? label);
+  const tam = (label: string) => { const x = pick.find((y) => clip(c.ta ? nameTa(y) : y.name, 80) === label); return x ? nameTa(x) : label; };
   return {
-    title, takeaway: g ? bi(`Largest gap: ${lab(g.metric)}, ${g.hi} ${spoken(g.hiValue)} against ${g.lo} ${spoken(g.loValue)}.`, `பெரிய வேறுபாடு: ${lab(g.metric)}, ${g.hi} ${spoken(g.hiValue)}, ${g.lo} ${spoken(g.loValue)}.`) : null,
-    say: bi(sides.map((x) => `${x.label}: ${spoken(x.values.open)} open, ${spoken(x.values.overdue)} past deadline`).join(". ") + ".", sides.map((x) => `${x.label}: ${spoken(x.values.open)} திறந்தவை, ${spoken(x.values.overdue)} காலக்கெடு தாண்டியவை`).join(". ") + "."),
-    blocks: [{ kind: "Compare", id: "cmp", title, metrics, sides, seriesLabels: [], diffs: gaps.slice(0, 5).map((x) => ({ metric: x.metric, label: lab(x.metric), hi: x.hi, lo: x.lo, ratio: x.ratio, gap: x.gap })) }]
+    title: titles, takeaway: g ? bi(`Largest gap: ${lab(g.metric)}, ${en(g.hi)} ${spoken(g.hiValue)} against ${en(g.lo)} ${spoken(g.loValue)}.`, `பெரிய வேறுபாடு: ${labTa(g.metric)}, ${tam(g.hi)} ${spoken(g.hiValue)}, ${tam(g.lo)} ${spoken(g.loValue)}.`) : null,
+    say: bi(sides.map((x) => `${en(x.label)}: ${spoken(x.values.open)} open, ${spoken(x.values.overdue)} past deadline`).join(". ") + ".", sides.map((x) => `${tam(x.label)}: ${spoken(x.values.open)} திறந்தவை, ${spoken(x.values.overdue)} காலக்கெடு தாண்டியவை`).join(". ") + "."),
+    blocks: [{ kind: "Compare", id: "cmp", title, metrics: metricsIn(c, metrics), sides, seriesLabels: [], diffs: gaps.slice(0, 5).map((x) => ({ metric: x.metric, label: L(c, lab(x.metric), labTa(x.metric)), hi: x.hi, lo: x.lo, ratio: x.ratio, gap: x.gap })) }]
   };
 }
 
@@ -1243,13 +1397,14 @@ async function trend(c: Ctx): Promise<Part> {
   const { w, s } = c;
   const scope = scopeWords(w, { ...s, cat: null });
   const subject = catLabel(w, s.cat) ?? "Incidents";
+  const subjectTa = catTa(w, s.cat) ?? "சம்பவங்கள்";
   // no kind named: "incidents", never "incidents of incidents" or "incidents reports" (same-number-21)
   const generic = !catLabel(w, s.cat);
-  const t = await seriesBlock(c, s, `${subject} over time`);
+  const t = await seriesBlock(c, s, L(c, `${subject} over time`, `${subjectTa}, காலவாரியாக`));
   const zr = await call(c, "zones", { scope: scopeArg({ ...s, zone: null }) });
   const zrows = (zr.data as { rows: Row[] }).rows;
   const zr5 = rank(zrows, (x) => Number(x.n), 5);
-  const title = `${subject} · ${scope.en}`;
+  const title = bi(`${subject} · ${scope.en}`, `${subjectTa} · ${scope.ta}`);
   if (!t.total) return { title, takeaway: null, say: bi(`No ${subject.toLowerCase()} in this period.`, "இந்தக் காலத்தில் எதுவும் இல்லை."), blocks: [t.block] };
   const p = peak(t.values)!;
   const half = Math.floor(t.values.length / 2);
@@ -1263,15 +1418,15 @@ async function trend(c: Ctx): Promise<Part> {
     ? bi(`${plural(t.block.marks.length, "period was", "periods were")} above the usual range; the peak was ${spoken(p.value)} around ${t.labels[p.i]}.`, `${t.block.marks.length} காலங்கள் வழக்கத்தை விட அதிகம்; உச்சம் ${spoken(p.value)}.`)
     : ch.pct != null ? bi(`${ch.pct >= 0 ? "Rising" : "Falling"}: ${spoken(Math.abs(ch.pct))}% ${ch.pct >= 0 ? "more" : "fewer"} in the second half of the period.`, `${ch.pct >= 0 ? "ஏறுமுகம்" : "இறங்குமுகம்"}: ${spoken(Math.abs(ch.pct))}%.`) : null;
   return { title, takeaway, say, blocks: [
-    { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-      { key: "total", label: `${subject}, ${PERIOD_EN[s.period]}`, value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
-      { key: "peak", label: `Peak (${t.labels[p.i]})`, value: p.value, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-      { key: "half", label: "Second half vs first", value: second, unit: null, prev: first, delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] }
+    { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+      { key: "total", label: L(c, `${subject}, ${PERIOD_EN[s.period]}`, `${subjectTa}, ${PERIOD_TA[s.period]}`), value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
+      { key: "peak", label: L(c, `Peak (${t.labels[p.i]})`, `உச்சம் (${labelTa(t.labels[p.i])})`), value: p.value, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+      { key: "half", label: L(c, "Second half vs first", "பின்பாதி / முன்பாதி"), value: second, unit: null, prev: first, delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] }
     ] },
     t.block,
-    { kind: "Ranking", id: "zones", title: `Zones with the most ${subject.toLowerCase()}`, unit: "incidents", method: `Incidents reported by zone, ${PERIOD_EN[s.period]}.`, order: "top",
-      items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: `${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
-    { kind: "MapView", id: "map", title: "By zone", rule: null, shade: { geo: "zone", label: subject, values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.n) })) }, points: [], outline: zr5.slice(0, 3).map((x) => Number(x.item.zone)) }
+    { kind: "Ranking", id: "zones", title: L(c, `Zones with the most ${subject.toLowerCase()}`, `அதிக ${subjectTa} உள்ள மண்டலங்கள்`), unit: "incidents", method: L(c, `Incidents reported by zone, ${PERIOD_EN[s.period]}.`, `மண்டல வாரியாகப் பதிவான சம்பவங்கள், ${PERIOD_TA[s.period]}.`), order: "top",
+      items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: L(c, `${spoken(Number(x.item.open))} open`, `${spoken(Number(x.item.open))} திறந்தவை`), zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
+    { kind: "MapView", id: "map", title: L(c, "By zone", "மண்டல வாரியாக"), rule: null, shade: { geo: "zone", label: L(c, subject, subjectTa), values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.n) })) }, points: [], outline: zr5.slice(0, 3).map((x) => Number(x.item.zone)) }
   ] };
 }
 
@@ -1285,12 +1440,12 @@ async function why(c: Ctx): Promise<Part> {
   const t = d.totals ?? {};
   const rises = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 3);
   const ch = change(Number(t.n ?? 0), num(t.prev));
-  const title = `Why · ${scope.en}`;
+  const title = bi(`Why · ${scope.en}`, `ஏன் · ${scope.ta}`);
   const reasons: string[] = [];
   const reasonsTa: string[] = [];
   if (rises[0]) {
     reasons.push(`${rises.map((x) => `${clip(x.label, 60).toLowerCase()} rose by ${spoken(Number(x.delta))}`).join(", ")}`);
-    reasonsTa.push(`${rises.map((x) => `${clip(x.label, 60)} ${spoken(Number(x.delta))} கூடியது`).join(", ")}`);
+    reasonsTa.push(`${rises.map((x) => `${clip(kindTa(x), 60)} ${spoken(Number(x.delta))} கூடியது`).join(", ")}`);
   }
   if (num(t.rainLinked)) { reasons.push(`${Number(t.rainLinked) === 1 ? "1 incident was" : `${spoken(Number(t.rainLinked))} incidents were`} rain-linked over ${plural(d.rainDays, "rain day", "rain days")}`); reasonsTa.push(`${spoken(d.rainDays)} மழை நாட்களில் ${spoken(Number(t.rainLinked))} மழை தொடர்பானவை`); }
   if (num(t.overdue)) { reasons.push(Number(t.overdue) === 1 ? "1 open incident is past its deadline" : `${spoken(Number(t.overdue))} open incidents are past their deadline`); reasonsTa.push(nTa(Number(t.overdue), "காலக்கெடு தாண்டியது", "காலக்கெடு தாண்டியவை")); }
@@ -1300,26 +1455,26 @@ async function why(c: Ctx): Promise<Part> {
     ? `${plural(Number(t.n), "incident", "incidents")} ${inPeriod(s.period)} against ${spoken(Number(t.prev))} the period before${ch.pct ? ` (${ch.pct > 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}%)` : ""}.`
     : `${plural(Number(t.n ?? 0), "incident", "incidents")} ${inPeriod(s.period)}.`;
   const headTa = `${PERIOD_TA[s.period]} ${spoken(Number(t.n ?? 0))} சம்பவங்கள்${num(t.prev) != null ? `, முந்தைய காலத்தில் ${spoken(Number(t.prev))}` : ""}.`;
-  const text = `${head} ${reasons.length ? `Main reasons: ${reasons.join("; ")}.` : ""}`;
+  const text = L(c, `${head} ${reasons.length ? `Main reasons: ${reasons.join("; ")}.` : ""}`, `${headTa}${reasonsTa.length ? ` முக்கியக் காரணங்கள்: ${reasonsTa.join("; ")}.` : ""}`);
   const blocks: BlockT[] = [
-    { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-      { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: Number(t.n ?? 0), unit: null, prev: num(t.prev), delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] },
-      { key: "severe", label: "Severe", value: Number(t.severe ?? 0), unit: null, prev: num(t.severePrev), delta: num(t.severePrev) != null ? Number(t.severe ?? 0) - Number(t.severePrev) : null, tone: "bad", spark: [] },
-      { key: "overdue", label: "Past deadline (open)", value: Number(t.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-      { key: "rain", label: "Rain-linked", value: Number(t.rainLinked ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+    { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+      { key: "n", label: L(c, `Reported, ${PERIOD_EN[s.period]}`, `பதிவானவை, ${PERIOD_TA[s.period]}`), value: Number(t.n ?? 0), unit: null, prev: num(t.prev), delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] },
+      { key: "severe", label: L(c, "Severe", "கடுமையானவை"), value: Number(t.severe ?? 0), unit: null, prev: num(t.severePrev), delta: num(t.severePrev) != null ? Number(t.severe ?? 0) - Number(t.severePrev) : null, tone: "bad", spark: [] },
+      { key: "overdue", label: L(c, "Past deadline (open)", "காலக்கெடு தாண்டியவை (திறந்தவை)"), value: Number(t.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+      { key: "rain", label: L(c, "Rain-linked", "மழை தொடர்பானவை"), value: Number(t.rainLinked ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
     ] },
-    { kind: "Answer", id: "answer", title: "What drives it", text, facts: [
-      ...rises.map((x) => ({ label: `${clip(x.label, 100)}: now vs before`, value: Number(x.n), unit: `(was ${spoken(Number(x.prev))})` })),
-      ...(d.depts ?? []).slice(0, 2).map((x) => ({ label: `${clip(x.name, 100)}: open past deadline`, value: Number(x.overdue ?? 0), unit: null }))
+    { kind: "Answer", id: "answer", title: L(c, "What drives it", "எது காரணம்"), text, facts: [
+      ...rises.map((x) => ({ label: L(c, `${clip(x.label, 100)}: now vs before`, `${clip(kindTa(x), 100)}: இப்போது / முன்பு`), value: Number(x.n), unit: L(c, `(was ${spoken(Number(x.prev))})`, `(முன்பு ${spoken(Number(x.prev))})`) })),
+      ...(d.depts ?? []).slice(0, 2).map((x) => ({ label: L(c, `${clip(x.name, 100)}: open past deadline`, `${clip(deptTaNamed(w, String(x.name)) ?? x.name, 100)}: காலக்கெடு தாண்டிய திறந்தவை`), value: Number(x.overdue ?? 0), unit: null }))
     ].slice(0, 12) }
   ];
   const cats = [...(d.categories ?? [])].sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 8);
-  if (cats.length) blocks.push({ kind: "Chart", id: "chart", title: "Change by kind of incident (now minus before)", chart: "hbar", unit: "incidents", labels: cats.map((x) => clip(x.label, 80)), values: cats.map((x) => Number(x.delta)) });
+  if (cats.length) blocks.push({ kind: "Chart", id: "chart", title: L(c, "Change by kind of incident (now minus before)", "வகைவாரி மாற்றம் (இப்போது − முன்பு)"), chart: "hbar", unit: "incidents", labels: cats.map((x) => kindLabel(c, x)), values: cats.map((x) => Number(x.delta)) });
   const top = (d.top ?? []).map((x) => caseRow({ ...x, sev: x.severity, why: null, reasons: x.reasons }, w));
-  if (top.length) blocks.push({ kind: "CaseList", id: "top", title: "The incidents behind it", source: "list", sev: null, total: top.length, rows: top });
+  if (top.length) blocks.push({ kind: "CaseList", id: "top", title: L(c, "The incidents behind it", "இதற்குப் பின்னால் உள்ள சம்பவங்கள்"), source: "list", sev: null, total: top.length, rows: top });
   return {
     title,
-    takeaway: rises[0] ? bi(`${clip(rises[0].label, 60)} rose the most: ${spoken(Number(rises[0].n))} against ${spoken(Number(rises[0].prev))}.`, `${clip(rises[0].label, 60)} அதிகம் உயர்ந்தது: ${spoken(Number(rises[0].n))}, முன்பு ${spoken(Number(rises[0].prev))}.`) : null,
+    takeaway: rises[0] ? bi(`${clip(rises[0].label, 60)} rose the most: ${spoken(Number(rises[0].n))} against ${spoken(Number(rises[0].prev))}.`, `${clip(kindTa(rises[0]), 60)} அதிகம் உயர்ந்தது: ${spoken(Number(rises[0].n))}, முன்பு ${spoken(Number(rises[0].prev))}.`) : null,
     say: bi(`${head} ${reasons.slice(0, 2).length ? `Mainly: ${reasons.slice(0, 2).join("; ")}.` : ""}`.trim(), `${headTa}${reasonsTa.length ? ` ${reasonsTa.slice(0, 2).join("; ")}.` : ""}`),
     blocks
   };
@@ -1341,35 +1496,40 @@ async function deptPerformance(c: Ctx): Promise<Part> {
   const overdue = mine.reduce((a, x) => a + Number(x.overdue ?? 0), 0);
   const closeDays = median(d.filter((x) => x.closeDays != null).map((x) => Number(x.closeDays)));
   const onTime = median(d.filter((x) => x.onTimePct != null).map((x) => Number(x.onTimePct)));
-  const t = await seriesBlock(c, s, "Still open, by when reported");
+  const t = await seriesBlock(c, s, L(c, "Still open, by when reported", "இன்னும் திறந்தவை, பதிவான காலவாரியாக"));
   t.block.values = t.open;
-  t.block.title = "Still open today, by when they were reported";
+  t.block.title = L(c, "Still open today, by when they were reported", "இன்னும் திறந்தவை, பதிவான காலவாரியாக");
   t.block.marks = [];
   t.block.normal = null;
   const heatRows = slowest.slice(0, 8).map((x) => x.item);
-  const cols = [{ k: "open", l: "Open" }, { k: "overdue", l: "Past deadline" }, { k: "serious", l: "Severe or high" }, { k: "awaiting", l: "Awaiting you" }, { k: "days", l: "Avg age (days)" }, { k: "closeDays", l: "Days to close" }];
-  const title = `Department performance${s.dept ? ` · ${deptName(c.w, s.dept) ?? s.dept}` : ""} · ${PERIOD_EN[s.period]}`;
+  const cols = [{ k: "open", l: "Open", ta: "திறந்தவை" }, { k: "overdue", l: "Past deadline", ta: "காலக்கெடு தாண்டியவை" }, { k: "serious", l: "Severe or high", ta: "கடுமை அல்லது அதிகம்" },
+    { k: "awaiting", l: "Awaiting you", ta: "உங்களுக்காகக் காத்திருப்பவை" }, { k: "days", l: "Avg age (days)", ta: "சராசரி வயது (நாட்கள்)" }, { k: "closeDays", l: "Days to close", ta: "மூட ஆன நாட்கள்" }];
+  // a body by its own name, in Tamil by its code
+  const nameOf = (x: Row) => (c.ta ? DEPT_TA[String(x.code)] ?? String(x.name) : String(x.name));
+  const nameTa = (x: Row) => DEPT_TA[String(x.code)] ?? String(x.name);
+  const title = bi(`Department performance${s.dept ? ` · ${deptName(c.w, s.dept) ?? s.dept}` : ""} · ${PERIOD_EN[s.period]}`, `துறைகளின் செயல்பாடு${s.dept ? ` · ${deptTa(c.w, s.dept) ?? s.dept}` : ""} · ${PERIOD_TA[s.period]}`);
   if (!slowest.length) return { title, takeaway: null, say: bi("No department has enough open incidents to rank.", "வரிசைப்படுத்த போதுமான தரவு இல்லை."), blocks: [] };
   const [a, b, cc] = slowest;
   const say = bi(
     `Slowest: ${a.item.name}, open incidents ${spoken(a.value)} days old on average.${b ? ` Then ${b.item.name} at ${spoken(b.value)}${cc ? ` and ${cc.item.name} at ${spoken(cc.value)}` : ""}.` : ""}`,
-    `மிக மெதுவானது: ${a.item.name}, திறந்த சம்பவங்கள் சராசரியாக ${spoken(a.value)} நாட்கள்.${b ? ` அடுத்து ${b.item.name} ${spoken(b.value)}${cc ? `, ${cc.item.name} ${spoken(cc.value)}` : ""}.` : ""}`
+    `மிக மெதுவானது: ${nameTa(a.item)}, திறந்த சம்பவங்கள் சராசரியாக ${spoken(a.value)} நாட்கள்.${b ? ` அடுத்து ${nameTa(b.item)} ${spoken(b.value)}${cc ? `, ${nameTa(cc.item)} ${spoken(cc.value)}` : ""}.` : ""}`
   );
   const vm = vsMedian(a.value, d.filter((x) => x.days != null).map((x) => Number(x.days)));
   return { title,
-    takeaway: vm.ratio ? bi(`${a.item.name}'s open incidents are ${spoken(vm.ratio)}× older than the median department's.`, `${a.item.name}-இன் திறந்த சம்பவங்கள் இடைநிலைத் துறையை விட ${spoken(vm.ratio)} மடங்கு பழையவை.`) : null,
+    takeaway: vm.ratio ? bi(`${a.item.name}'s open incidents are ${spoken(vm.ratio)}× older than the median department's.`, `${nameTa(a.item)}-இன் திறந்த சம்பவங்கள் இடைநிலைத் துறையை விட ${spoken(vm.ratio)} மடங்கு பழையவை.`) : null,
     say, blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "open", label: `Open${s.dept ? `, ${deptName(c.w, s.dept) ?? s.dept}` : ""}, ${PERIOD_EN[s.period]}`, value: totalOpen, unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
-        { key: "overdue", label: "Past deadline", value: overdue, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        { key: "close", label: "Median days to close", value: round(closeDays ?? 0, 1), unit: "days", prev: null, delta: null, tone: "neutral", spark: [] },
-        { key: "ontime", label: "Median closed on time", value: round(onTime ?? 0, 0), unit: "%", prev: null, delta: null, tone: "neutral", spark: [] }
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+        { key: "open", label: L(c, `Open${s.dept ? `, ${deptName(c.w, s.dept) ?? s.dept}` : ""}, ${PERIOD_EN[s.period]}`, `திறந்தவை${s.dept ? `, ${deptTa(c.w, s.dept) ?? s.dept}` : ""}, ${PERIOD_TA[s.period]}`), value: totalOpen, unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
+        { key: "overdue", label: L(c, "Past deadline", "காலக்கெடு தாண்டியவை"), value: overdue, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        { key: "close", label: L(c, "Median days to close", "மூட ஆன இடைநிலை நாட்கள்"), value: round(closeDays ?? 0, 1), unit: "days", prev: null, delta: null, tone: "neutral", spark: [] },
+        { key: "ontime", label: L(c, "Median closed on time", "உரிய நேரத்தில் மூடியவை (இடைநிலை)"), value: round(onTime ?? 0, 0), unit: "%", prev: null, delta: null, tone: "neutral", spark: [] }
       ] },
-      { kind: "Ranking", id: "rank", title: "Slowest departments first", unit: "days", method: "Average age of open incidents, departments with 5 or more open (the console's backlog card).", order: "top",
+      { kind: "Ranking", id: "rank", title: L(c, "Slowest departments first", "மிக மெதுவான துறைகள் முதலில்"), unit: "days",
+        method: L(c, "Average age of open incidents, departments with 5 or more open (the console's backlog card).", "திறந்த சம்பவங்களின் சராசரி வயது; 5 அல்லது அதிகம் திறந்தவை உள்ள துறைகள் (கன்சோலின் நிலுவை அட்டை)."), order: "top",
         items: slowest.map((x) => ({ key: String(x.item.code), label: clip(x.item.name, 120), value: round(x.value, 1), rank: x.rank,
-          sub: `${spoken(Number(x.item.open ?? x.item.backlogOpen ?? 0))} open · ${spoken(Number(x.item.overdue ?? 0))} past deadline`, zone: null, lat: null, lon: null, action: "dept" as const })) },
+          sub: L(c, `${spoken(Number(x.item.open ?? x.item.backlogOpen ?? 0))} open · ${spoken(Number(x.item.overdue ?? 0))} past deadline`, `${spoken(Number(x.item.open ?? x.item.backlogOpen ?? 0))} திறந்தவை · ${spoken(Number(x.item.overdue ?? 0))} காலக்கெடு தாண்டியவை`), zone: null, lat: null, lon: null, action: "dept" as const })) },
       t.block,
-      { kind: "Heat", id: "heat", title: "Department × measure (darker = worse within the column)", rows: heatRows.map((x) => clip(x.name, 80)), cols: cols.map((x) => x.l),
+      { kind: "Heat", id: "heat", title: L(c, "Department × measure (darker = worse within the column)", "துறை × அளவு (அடர் நிறம் = அந்த நெடுவரிசையில் மோசம்)"), rows: heatRows.map((x) => clip(nameOf(x), 80)), cols: cols.map((x) => L(c, x.l, x.ta)),
         cells: heatRows.map((x) => cols.map((col) => round(Number(x[col.k] ?? 0), 1))) }
     ] };
 }
@@ -1379,11 +1539,12 @@ async function zonePerformance(c: Ctx): Promise<Part> {
   const r = await call(c, "zones", { scope: scopeArg({ ...s, zone: null }) });
   const rows = (r.data as { rows: Row[] }).rows;
   const ranked = rank(rows, (x) => Number(x.score), 15);
-  const t = await seriesBlock(c, { ...s, zone: null }, "Incidents reported over time");
-  const cols = [{ k: "n", l: "Reported" }, { k: "severe", l: "Severe" }, { k: "high", l: "High" }, { k: "open", l: "Open" }, { k: "complaints", l: "Complaints" }];
+  const t = await seriesBlock(c, { ...s, zone: null }, L(c, "Incidents reported over time", "காலவாரியாகப் பதிவான சம்பவங்கள்"));
+  const cols = [{ k: "n", l: "Reported", ta: "பதிவானவை" }, { k: "severe", l: "Severe", ta: "கடுமையானவை" }, { k: "high", l: "High", ta: "அதிக முக்கியத்துவம்" }, { k: "open", l: "Open", ta: "திறந்தவை" }, { k: "complaints", l: "Complaints", ta: "புகார்கள்" }];
   const tot = (k: string) => rows.reduce((a, x) => a + Number(x[k] ?? 0), 0);
   const sum = (v: number[]) => v.reduce((a, x) => a + x, 0);
-  const title = `Zone performance · all zones · ${PERIOD_EN[s.period]}`;
+  const zoneOf = (x: Row) => clip((c.ta ? zoneTa(w, Number(x.zone)) : null) ?? x.name, 80);
+  const title = bi(`Zone performance · all zones · ${PERIOD_EN[s.period]}`, `மண்டலங்களின் செயல்பாடு · அனைத்து மண்டலங்களும் · ${PERIOD_TA[s.period]}`);
   const [a, b] = ranked;
   if (!a) return { title, takeaway: null, say: bi("No zone data for this period.", "இந்தக் காலத்துக்கு மண்டலத் தரவு இல்லை."), blocks: [] };
   const vm = vsMedian(a.value, rows.map((x) => Number(x.score)));
@@ -1392,20 +1553,21 @@ async function zonePerformance(c: Ctx): Promise<Part> {
     say: bi(`${a.item.name} needs the most attention: ${spoken(Number(a.item.severe))} severe and ${spoken(Number(a.item.open))} open.${b ? ` Then ${b.item.name}.` : ""}`,
       `${zoneTa(w, Number(a.item.zone))}: ${spoken(Number(a.item.severe))} கடுமையான, ${spoken(Number(a.item.open))} திறந்தவை.${b ? ` அடுத்து ${zoneTa(w, Number(b.item.zone))}.` : ""}`),
     blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
         // the trend beside it counts every incident, those with no zone too: the tile is that count, so the two agree (RC-09, PB-067)
-        { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
+        { key: "n", label: L(c, `Reported, ${PERIOD_EN[s.period]}`, `பதிவானவை, ${PERIOD_TA[s.period]}`), value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
         // Severe and Open are read from the same series as Reported: the zone rows leave out the incidents with no zone, and the whole-district
         // figure on every other screen includes them (QA4 gate, gate-oracle-3)
-        { key: "severe", label: "Severe", value: sum(t.severe), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        { key: "open", label: "Open", value: sum(t.open), unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
-        { key: "complaints", label: "Open complaints", value: tot("complaints"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+        { key: "severe", label: L(c, "Severe", "கடுமையானவை"), value: sum(t.severe), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        { key: "open", label: L(c, "Open", "திறந்தவை"), value: sum(t.open), unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
+        { key: "complaints", label: L(c, "Open complaints", "திறந்த புகார்கள்"), value: tot("complaints"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
       ] },
-      { kind: "Ranking", id: "rank", title: "Zones by attention score (worst first)", unit: "points", method: "Attention score = 3 × severe + high, as the console's 'Hotspot zones' tile.", order: "top",
-        items: ranked.slice(0, 15).map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: `${spoken(Number(x.item.severe))} severe · ${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
-      { kind: "MapView", id: "map", title: "Attention score by zone", rule: null, shade: { geo: "zone", label: "Attention score", values: rows.map((x) => ({ key: Number(x.zone), value: Number(x.score) })) }, points: [], outline: ranked.slice(0, 3).map((x) => Number(x.item.zone)) },
+      { kind: "Ranking", id: "rank", title: L(c, "Zones by attention score (worst first)", "கவனப் புள்ளிப்படி மண்டலங்கள் (மோசமானவை முதலில்)"), unit: "points",
+        method: L(c, "Attention score = 3 × severe + high, as the console's 'Hotspot zones' tile.", "கவனப் புள்ளி = 3 × கடுமையானவை + அதிக முக்கியத்துவம் (கன்சோலின் மையப் பகுதி மண்டலங்கள் அட்டை போல)."), order: "top",
+        items: ranked.slice(0, 15).map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: L(c, `${spoken(Number(x.item.severe))} severe · ${spoken(Number(x.item.open))} open`, `${spoken(Number(x.item.severe))} கடுமையானவை · ${spoken(Number(x.item.open))} திறந்தவை`), zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
+      { kind: "MapView", id: "map", title: L(c, "Attention score by zone", "மண்டல வாரியாகக் கவனப் புள்ளி"), rule: null, shade: { geo: "zone", label: L(c, "Attention score", "கவனப் புள்ளி"), values: rows.map((x) => ({ key: Number(x.zone), value: Number(x.score) })) }, points: [], outline: ranked.slice(0, 3).map((x) => Number(x.item.zone)) },
       t.block,
-      { kind: "Heat", id: "heat", title: "Zone × measure (darker = worse within the column)", rows: ranked.slice(0, 10).map((x) => clip(x.item.name, 80)), cols: cols.map((x) => x.l),
+      { kind: "Heat", id: "heat", title: L(c, "Zone × measure (darker = worse within the column)", "மண்டலம் × அளவு (அடர் நிறம் = அந்த நெடுவரிசையில் மோசம்)"), rows: ranked.slice(0, 10).map((x) => zoneOf(x.item)), cols: cols.map((x) => L(c, x.l, x.ta)),
         cells: ranked.slice(0, 10).map((x) => cols.map((col) => Number(x.item[col.k] ?? 0))) }
     ] };
 }
@@ -1423,16 +1585,18 @@ async function dashboard(c: Ctx): Promise<Part> {
     call(c, "hotspots", { scope: scopeArg(s) }).catch(() => null),
     incidentList(c, { sort: "sev", status: "open" })
   ]);
-  const t = await seriesBlock(c, s, `${subject} over time`);
+  const subjectTa = catTa(w, s.cat) ?? "சம்பவங்கள்";
+  const t = await seriesBlock(c, s, L(c, `${subject} over time`, `${subjectTa}, காலவாரியாக`));
   const kd = k.data as { cur: Record<string, number>; prev: Record<string, number>; series: Record<string, number[]> };
   const zrows = (zr.data as { rows: Row[] }).rows;
   const zr5 = rank(zrows, (x) => Number(x.n), 5);
   const rows = list.rows.map((x) => caseRow(x, w)).slice(0, 8);
   const hot = ((hs?.data as { rows: Row[] } | undefined)?.rows ?? []).filter((x) => !s.cat || x.cat === s.cat).slice(0, 8);
-  const pts: PointT[] = [...points(rows, 3), ...hot.map((x, i) => ({ n: null, id: String(x.id), lat: Number(x.lat), lon: Number(x.lon), label: `Hotspot: ${clip(x.top_place, 60)} (${spoken(Number(x.incidents_30d))} in 30 days)`, sev: null, value: Number(x.incidents_30d), hot: i === 0 }))];
-  const tile = (key: string, label: string, tone: "bad" | "neutral") => ({ key, label, value: Number(kd.cur?.[key] ?? 0), unit: null, prev: num(kd.prev?.[key]), delta: num(kd.prev?.[key]) != null ? Number(kd.cur?.[key] ?? 0) - Number(kd.prev[key]) : null,
+  const pts: PointT[] = [...points(rows, 3), ...hot.map((x, i) => ({ n: null, id: String(x.id), lat: Number(x.lat), lon: Number(x.lon), label: L(c, `Hotspot: ${clip(x.top_place, 60)} (${spoken(Number(x.incidents_30d))} in 30 days)`, `மையப் பகுதி: ${clip(x.top_place, 60)} (30 நாட்களில் ${spoken(Number(x.incidents_30d))})`), sev: null, value: Number(x.incidents_30d), hot: i === 0 }))];
+  const TILE: Record<string, string> = { reported: "பதிவானவை", severe: "கடுமையானவை", ongoing: "இன்னும் திறந்தவை", complaints: "திறந்த புகார்கள்" };
+  const tile = (key: string, label: string, tone: "bad" | "neutral") => ({ key, label: L(c, label, TILE[key] ?? label), value: Number(kd.cur?.[key] ?? 0), unit: null, prev: num(kd.prev?.[key]), delta: num(kd.prev?.[key]) != null ? Number(kd.cur?.[key] ?? 0) - Number(kd.prev[key]) : null,
     pct: change(Number(kd.cur?.[key] ?? 0), num(kd.prev?.[key])).pct, tone, spark: (kd.series?.[key] ?? []).slice(-30) });
-  const title = `${subject} dashboard · ${scope.en}`;
+  const title = bi(`${subject} dashboard · ${scope.en}`, `${subjectTa} டாஷ்போர்டு · ${scope.ta}`);
   const rep = Number(kd.cur?.reported ?? t.total);
   const prev = num(kd.prev?.reported);
   const ch = change(rep, prev);
@@ -1442,19 +1606,20 @@ async function dashboard(c: Ctx): Promise<Part> {
   if (!rep && !zrows.some((x) => Number(x.n) > 0)) {
     return { title, takeaway: bi(`No ${reportsOf(subject, generic)} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} ${generic ? "" : `${catTa(w, s.cat)} `}புகார்கள் இல்லை.`),
       say: bi(`No ${reportsOf(subject, generic)} ${inPeriod(s.period)}${prev ? `, against ${spoken(prev)} the period before` : ""}.`, `${PERIOD_TA[s.period]} ${generic ? "" : `${catTa(w, s.cat)} `}புகார்கள் இல்லை.`),
-      blocks: [{ kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad")] }, t.block] };
+      blocks: [{ kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad")] }, t.block] };
   }
   return { title,
     takeaway: topZone ? bi(`${topZone.item.name} has the most: ${spoken(topZone.value)} of ${spoken(zrows.reduce((a, x) => a + Number(x.n), 0))}.`, `${zoneTa(w, Number(topZone.item.zone))} அதிகம்: ${spoken(topZone.value)}.`) : null,
     say: bi(`${spoken(rep)} ${reportsOf(subject, generic, rep)} ${inPeriod(s.period)}${ch.pct != null ? `, ${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}% on the period before` : ""}. ${spoken(Number(kd.cur?.severe ?? 0))} severe.${topZone ? ` Most in ${topZone.item.name}.` : ""}`,
       `${PERIOD_TA[s.period]} ${generic ? "" : `${catTa(w, s.cat)}: `}${spoken(rep)} புகார்கள், ${nTa(Number(kd.cur?.severe ?? 0), "கடுமையானது", "கடுமையானவை")}.${topZone ? ` அதிகம் ${zoneTa(w, Number(topZone.item.zone))}.` : ""}`),
     blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad"), tile("ongoing", "Still open", "neutral"), tile("complaints", "Open complaints", "neutral")] },
-      { kind: "MapView", id: "map", title: "Where", rule: "Numbered pins are the cases below; rings are hotspots (3+ incidents within 250 m in 30 days).", shade: { geo: "zone", label: subject, values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.n) })) }, points: pts, outline: [] },
-      { kind: "Ranking", id: "zones", title: "Zones with the most", unit: "incidents", method: `${subject} reported by zone, ${PERIOD_EN[s.period]}.`, order: "top",
-        items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: `${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad"), tile("ongoing", "Still open", "neutral"), tile("complaints", "Open complaints", "neutral")] },
+      { kind: "MapView", id: "map", title: L(c, "Where", "இடம்"), rule: L(c, "Numbered pins are the cases below; rings are hotspots (3+ incidents within 250 m in 30 days).", "எண்ணிட்ட குறிகள் கீழே உள்ள சம்பவங்கள்; வளையங்கள் மையப் பகுதிகள் (30 நாட்களில் 250 மீ-க்குள் 3+ சம்பவங்கள்)."),
+        shade: { geo: "zone", label: L(c, subject, subjectTa), values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.n) })) }, points: pts, outline: [] },
+      { kind: "Ranking", id: "zones", title: L(c, "Zones with the most", "அதிகம் உள்ள மண்டலங்கள்"), unit: "incidents", method: L(c, `${subject} reported by zone, ${PERIOD_EN[s.period]}.`, `மண்டல வாரியாகப் பதிவான ${subjectTa}, ${PERIOD_TA[s.period]}.`), order: "top",
+        items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: L(c, `${spoken(Number(x.item.open))} open`, `${spoken(Number(x.item.open))} திறந்தவை`), zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
       t.block,
-      { kind: "CaseList", id: "cases", title: "Open cases, most serious first", source: "list", sev: null, total: Number(list.incidents ?? list.total ?? rows.length), rows }
+      { kind: "CaseList", id: "cases", title: L(c, "Open cases, most serious first", "திறந்த சம்பவங்கள், மிகத் தீவிரமானவை முதலில்"), source: "list", sev: null, total: Number(list.incidents ?? list.total ?? rows.length), rows }
     ] };
 }
 
@@ -1475,6 +1640,10 @@ export function metres(a: { lat: number; lon: number }, b: { lat: number; lon: n
   return Math.round(2 * R * Math.asin(Math.sqrt(x)));
 }
 
+/** the map's layers (Ask the Map's context points) in Tamil */
+const LAYER_TA: Record<string, string> = { schools: "பள்ளிகள்", hospitals: "மருத்துவமனைகள்", shelters: "தங்குமிடங்கள்", police: "காவல் நிலையங்கள்", fire: "தீயணைப்பு நிலையங்கள்",
+  wards: "வார்டுகள்", places: "இடங்கள்", lakes: "ஏரிகள்", markets: "சந்தைகள்", parks: "பூங்காக்கள்", temples: "கோயில்கள்", bus: "பேருந்து நிறுத்தங்கள்" };
+
 async function nearby(c: Ctx): Promise<Part> {
   let q = c.slots.q ?? c.heard;
   c.runs.push("ask_map");
@@ -1485,7 +1654,10 @@ async function nearby(c: Ctx): Promise<Part> {
     const q2 = q.replace(new RegExp(zone.name, "i"), `${zone.name} zone`);
     c.runs.push("ask_map");
     const r2 = await c.h.map(q2);
-    if (Number(r2.total ?? 0) > 0) { r = r2; c.notes.push(`Read "${zone.name}" as Zone ${zone.n} ${zone.name}: the ${zone.name} locality itself had no results.`); q = q2; }
+    if (Number(r2.total ?? 0) > 0) {
+      r = r2; q = q2;
+      c.notes.push(bi(`Read "${zone.name}" as Zone ${zone.n} ${zone.name}: the ${zone.name} locality itself had no results.`, `"${zone.name}" என்பதை ${zoneTa(c.w, zone.n)} மண்டலமாக (மண்டலம் ${zone.n}) எடுத்தேன்: அந்த இடத்துக்குத் தனியாக முடிவுகள் இல்லை.`));
+    }
   }
   c.sources.add("Ask the Map");
   c.asOf ??= r.asOf?.data ?? null;
@@ -1493,13 +1665,21 @@ async function nearby(c: Ctx): Promise<Part> {
   const feats = ((r.features ?? []) as Row[]).filter((f) => num(f.lat) != null);
   const placesNear = ((r.context?.points ?? []) as Row[]).filter((p) => num(p.lat) != null);
   const notes = ((r.trace ?? []) as Row[]).map((t) => String(t.note_en ?? ""));
+  const notesTa = ((r.trace ?? []) as Row[]).map((t) => String(t.note_ta ?? ""));
   const radius = (() => {
     for (const n of notes) { const m = n.match(/within (\d+(?:\.\d+)?)\s*(km|m)\b/); if (m) return Number(m[1]) * (m[2] === "km" ? 1000 : 1); }
     return 1000;
   })();
   const headline = clip(String(r.answer?.headline ?? r.say?.en ?? "").replace(/\s*·\s*map layer ready\.?$/i, ""), 300);
-  const title = clip(q, 200);
-  const rule = `${notes.filter(Boolean).slice(-3).join(" ")}`.slice(0, 240) || null;
+  // the map answers in the language it was asked in: a Tamil screen keeps a Tamil headline, else says the count in Tamil
+  const total = Number(r.total ?? 0);
+  const headlineTa = /[஀-௿]/.test(headline) ? headline.replace(/\s*·\s*வரைபட அடுக்கு தயார்\.?$/, "") : total ? `வரைபடத்தில் ${spoken(total)} முடிவுகள்.` : "";
+  // the question as asked, shown without a figure of its own (Finding 51); on a Tamil screen, the Collector's own Tamil words when they were Tamil
+  const asked = words(c, q, 200);
+  const title = bi(asked || "Ask the Map", /[஀-௿]/.test(c.heard) ? clip(c.heard, 200) : topicTa(c, asked) || "வரைபடக் கேள்வி");
+  // what Ask the Map found and how (its own words, code's): under the map, never in a title, which carries the request's words
+  const rule = L(c, [headline && `${headline.replace(/\.$/, "")}.`, ...notes.filter(Boolean).slice(-3)].filter(Boolean).join(" ").slice(0, 240),
+    [headlineTa && `${headlineTa.replace(/\.$/, "")}.`, ...notesTa.filter(Boolean).slice(-3)].filter(Boolean).join(" ").slice(0, 240)) || null;
   // the places (schools, hospitals ...) next to the results, nearest first: each with its distance to the closest result
   const ranked = placesNear.map((p) => {
     let best = Infinity, to: Row | null = null;
@@ -1513,20 +1693,23 @@ async function nearby(c: Ctx): Promise<Part> {
     ...ranked.map((x, i) => ({ n: i + 1, id: String(x.p.id), lat: Number(x.p.lat), lon: Number(x.p.lon), label: `${clip(x.p.name ?? x.p.kind, 100)} · ${spoken(x.m)} m`, sev: null, value: x.m, hot: i < 3 })),
     ...rows.slice(0, 60).filter((x) => x.lat != null).map((x) => ({ n: null, id: x.id, lat: x.lat as number, lon: x.lon as number, label: x.title, sev: x.sev, value: null, hot: false }))
   ];
-  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: clip(headline || title, 160), rule, shade: null, points: pts, outline: [] });
+  const layer = clip(ranked[0]?.p.layer ?? "places", 30);
+  const layerTa = LAYER_TA[layer.toLowerCase()] ?? "இடங்கள்";
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L(c, "On the map", "வரைபடத்தில்"), rule, shade: null, points: pts, outline: [] });
   if (ranked.length) {
-    blocks.push({ kind: "Ranking", id: "near", title: `${within} ${clip(ranked[0].p.layer ?? "places", 30)} within ${spoken(radius)} m${within > ranked.length ? `, nearest ${ranked.length} listed` : ""}`, unit: "m", method: `Straight-line distance from each place to the closest result, within ${spoken(radius)} m (Ask the Map's rule).`, order: "bottom",
+    blocks.push({ kind: "Ranking", id: "near", title: L(c, `${within} ${layer} within ${spoken(radius)} m${within > ranked.length ? `, nearest ${ranked.length} listed` : ""}`, `${spoken(radius)} மீ-க்குள் ${within} ${layerTa}${within > ranked.length ? `, அருகிலுள்ள ${ranked.length}` : ""}`), unit: "m",
+      method: L(c, `Straight-line distance from each place to the closest result, within ${spoken(radius)} m (Ask the Map's rule).`, `ஒவ்வொரு இடத்திலிருந்தும் அருகிலுள்ள முடிவுக்கு நேர்க்கோட்டுத் தூரம், ${spoken(radius)} மீ-க்குள் (வரைபடத்தின் விதி).`), order: "bottom",
       items: ranked.map((x, i) => ({ key: String(x.p.id), label: clip(x.p.name ?? `${x.p.kind} (no name on the map)`, 120), value: x.m, rank: i + 1, sub: x.to ? safeText(x.to.title, 120) : null, zone: null, lat: Number(x.p.lat), lon: Number(x.p.lon), action: "none" as const })) });
   }
-  if (rows.length) blocks.push({ kind: "CaseList", id: "cases", title: "The incidents", source: "map", sev: null, total: Number(r.total ?? rows.length), rows: rows.slice(0, 30) });
+  if (rows.length) blocks.push({ kind: "CaseList", id: "cases", title: L(c, "The incidents", "சம்பவங்கள்"), source: "map", sev: null, total: Number(r.total ?? rows.length), rows: rows.slice(0, 30) });
   const nearest = ranked[0];
   const placeWord = clip(nearest?.p.layer ?? "place", 30).replace(/s$/, "");
   return {
-    title, takeaway: headline ? bi(headline, headline) : null,
+    title, takeaway: headline ? bi(headline, headlineTa) : null,
     say: ranked.length
       ? bi(`${plural(within, placeWord, `${placeWord}s`)} within ${spoken(radius)} metres of the results${within > ranked.length ? `; the nearest ${ranked.length} are listed` : ""}. The nearest: ${clip(nearest.p.name ?? placeWord, 80)}, ${spoken(nearest.m)} metres away.`,
-        `${within} இடங்கள் ${spoken(radius)} மீட்டருக்குள். மிக அருகில்: ${clip(nearest.p.name ?? placeWord, 80)}, ${spoken(nearest.m)} மீட்டர்.`)
-      : headline ? bi(headline, headline) : bi("Ask the Map found nothing for that.", "வரைபடத்தில் எதுவும் கிடைக்கவில்லை."),
+        `${within} ${layerTa} ${spoken(radius)} மீட்டருக்குள். மிக அருகில்: ${clip(nearest.p.name ?? placeWord, 80)}, ${spoken(nearest.m)} மீட்டர்.`)
+      : headline ? bi(headline, headlineTa || "வரைபடத்தில் முடிவுகள் உள்ளன.") : bi("Ask the Map found nothing for that.", "வரைபடத்தில் எதுவும் கிடைக்கவில்லை."),
     blocks
   };
 }
@@ -1595,9 +1778,9 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const src = recordsOf(org ? `${org}-` : codes[0]);
   const age = freshness(c.asOf);
   if (!rows.length && reported == null) {
-    return { title: `${name} · brief`, takeaway: null,
+    return { title: bi(`${name} · brief`, `${ta ?? name} · சுருக்கம்`), takeaway: null,
       say: bi(`${pre.en}I have no records for ${name} ${inPeriod(c.s.period)}. ${src.en} ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${src.ta} ${age.ta}`),
-      blocks: [{ kind: "Note", id: "empty", text: `No records for ${name} in this period. ${src.en}` }] };
+      blocks: [{ kind: "Note", id: "empty", text: L(c, `No records for ${name} in this period. ${src.en}`, `${ta ?? name}: இந்தக் காலத்தில் பதிவுகள் இல்லை. ${src.ta}`) }] };
   }
   // the one thing to say first: what needs attention, as a judgement made from the figures
   const pressing = overdue > 0 && open > 0 && overdue / open >= 0.15;
@@ -1614,8 +1797,10 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const whereTa = zTa ? ` முதலில் பார்க்க வேண்டியது ${zTa} பகுதியில்.` : worst && org ? ` பெரும்பகுதி ${DEPT_TA[String(worst.code)] ?? clip(worst.name, 60)} துறையிடம்.` : "";
   const advice = pressing ? " That backlog is the thing to chase today." : "";
   // a place the data cannot narrow to: said, so the Collector knows the figures are the district's
-  const wide = c.slots.name && !c.s.zone ? ` I can't narrow these records to ${clip(c.slots.name, 40)}, so this is the whole district.` : "";
-  const wideTa = c.slots.name && !c.s.zone ? ` இவற்றை ${clip(c.slots.name, 40)} பகுதிக்கு மட்டும் பிரிக்க முடியவில்லை; இது மாவட்டம் முழுவதற்குமானது.` : "";
+  // the place as asked, said without a figure of its own (Finding 51: a model's name slot was said as it came)
+  const placeAsked = words(c, c.slots.name, 40);
+  const wide = placeAsked && !c.s.zone ? ` I can't narrow these records to ${placeAsked}, so this is the whole district.` : "";
+  const wideTa = placeAsked && !c.s.zone ? ` இவற்றை ${placeAsked} பகுதிக்கு மட்டும் பிரிக்க முடியவில்லை; இது மாவட்டம் முழுவதற்குமானது.` : "";
   const adviceTa = pressing ? " இந்த நிலுவையைத்தான் இன்று கேட்க வேண்டும்." : "";
   // every point carries its Tamil line (the sentences code builds); a record's own title stays as the record has it: no English sentence in a Tamil brief (RC-15, PB-207)
   const points = [
@@ -1627,19 +1812,19 @@ async function bodyBrief(c: Ctx): Promise<Part> {
     { text: `${src.en} ${age.en}`, ta: `${src.ta} ${age.ta}`, incidentId: null }
   ].slice(0, 10);
   return {
-    title: `${name}${zAsked ? ` · ${zAsked}` : ""} · brief, ${PERIOD_EN[c.s.period]}`,
+    title: bi(`${name}${zAsked ? ` · ${zAsked}` : ""} · brief, ${PERIOD_EN[c.s.period]}`, `${ta ?? name}${zAsked ? ` · ${zoneTa(c.w, c.s.zone) ?? zAsked}` : ""} · சுருக்கம், ${PERIOD_TA[c.s.period]}`),
     takeaway: bi(`${head}${stand ? `; ${stand}` : ""}.`, `${headTa}${standTa ? `; ${standTa}` : ""}.`),
     // the name once: after "Taking that as X." it is not said again
     say: bi(`${pre.en || `${name}: `}${cap1(head)}${stand ? `; ${stand}` : ""}.${where}${advice}${wide} ${src.en} ${age.en}`.replace(/\s+/g, " ").trim(),
       `${pre.ta || `${ta ?? name}: `}${headTa}${standTa ? `; ${standTa}` : ""}.${whereTa}${adviceTa}${wideTa} ${src.ta} ${age.ta}`.replace(/\s+/g, " ").trim()),
     blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        ...(reported != null ? [{ key: "reported", label: "Reported", value: reported, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : []),
-        { key: "open", label: "Open", value: open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] },
-        { key: "overdue", label: "Past deadline", value: overdue, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] },
-        { key: "serious", label: "Serious", value: serious, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] }
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+        ...(reported != null ? [{ key: "reported", label: L(c, "Reported", "பதிவானவை"), value: reported, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : []),
+        { key: "open", label: L(c, "Open", "திறந்தவை"), value: open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] },
+        { key: "overdue", label: L(c, "Past deadline", "காலக்கெடு தாண்டியவை"), value: overdue, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] },
+        { key: "serious", label: L(c, "Serious", "தீவிரமானவை"), value: serious, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] }
       ] },
-      { kind: "Brief", id: "brief", title: "The brief", points }
+      { kind: "Brief", id: "brief", title: L(c, "The brief", "சுருக்கம்"), points }
     ]
   };
 }
@@ -1683,22 +1868,22 @@ async function brief(c: Ctx): Promise<Part> {
     return condTa && p.text.startsWith("Conditions: ") ? { ...p, ta: condTa } : { ...p, ta: "" };
   });
   return {
-    title: `Briefing · ${PERIOD_EN[c.s.period]}`,
+    title: bi(`Briefing · ${PERIOD_EN[c.s.period]}`, `சுருக்கம் · ${PERIOD_TA[c.s.period]}`),
     takeaway: points[0] ? bi(points[0].text, leadTa) : null,
     say: bi(`${points.length} points in the brief for ${PERIOD_EN[c.s.period]}. ${points[0]?.text ?? ""}`, `${PERIOD_TA[c.s.period]} சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0] ? leadTa : ""}`),
     blocks: [
-      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "reported", label: "Reported", value: Number(st.reported ?? 0), unit: null, prev: null, delta: null, pct: num(st.change), tone: "neutral", spark: [] },
-        { key: "severe", label: "Severe", value: Number(st.severe ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        { key: "overdue", label: "Past deadline", value: Number(st.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        { key: "newsOnly", label: "In the news only", value: Number(st.newsOnly ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
+      { kind: "Kpis", id: "kpis", title: KEY_NUMBERS(c), items: [
+        { key: "reported", label: L(c, "Reported", "பதிவானவை"), value: Number(st.reported ?? 0), unit: null, prev: null, delta: null, pct: num(st.change), tone: "neutral", spark: [] },
+        { key: "severe", label: L(c, "Severe", "கடுமையானவை"), value: Number(st.severe ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        { key: "overdue", label: L(c, "Past deadline", "காலக்கெடு தாண்டியவை"), value: Number(st.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        { key: "newsOnly", label: L(c, "In the news only", "செய்தியில் மட்டும்"), value: Number(st.newsOnly ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
       ] },
-      { kind: "Brief", id: "brief", title: "The brief", points: pointsTa }
+      { kind: "Brief", id: "brief", title: L(c, "The brief", "சுருக்கம்"), points: pointsTa }
     ]
   };
 }
 
-async function drafts(): Promise<Part> {
-  return { title: "Waiting for your approval", takeaway: null, say: bi("Here are the drafts waiting for your approval.", "உங்கள் ஒப்புதலுக்காகக் காத்திருக்கும் வரைவுகள் இவை."),
-    blocks: [{ kind: "Drafts", id: "drafts", title: "Approval tray" }] };
+async function drafts(c: Ctx): Promise<Part> {
+  return { title: bi("Waiting for your approval", "உங்கள் ஒப்புதலுக்குக் காத்திருப்பவை"), takeaway: null, say: bi("Here are the drafts waiting for your approval.", "உங்கள் ஒப்புதலுக்காகக் காத்திருக்கும் வரைவுகள் இவை."),
+    blocks: [{ kind: "Drafts", id: "drafts", title: L(c, "Approval tray", "ஒப்புதல் தட்டு") }] };
 }

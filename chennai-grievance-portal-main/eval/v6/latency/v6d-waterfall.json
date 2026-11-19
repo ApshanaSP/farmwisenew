@@ -1,0 +1,621 @@
+{
+ "tag": "v6d",
+ "parts": {
+  "closed": {
+   "n": 12,
+   "lanes": {
+    "none": 12
+   },
+   "firstKinds": {
+    "pcm": 12
+   },
+   "ends": {
+    "first sound (any: earcon, voice)": {
+     "n": 12,
+     "p50": 163,
+     "p90": 185
+    },
+    "first speech (a voice, not a tone)": {
+     "n": 12,
+     "p50": 163,
+     "p90": 185
+    },
+    "answer handed to the voice (console's finding mark)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first word of the answer (the voice's own start)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "voice start delay (handed → first word)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "answer in hand, on screen (the console's answer mark)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "end of the answer (its last word spoken)": {
+     "n": 12,
+     "p50": 739,
+     "p90": 1149
+    },
+    "screen change": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "transcript at the page (transcribed mark)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    }
+   },
+   "spans": {
+    "detector lag (true end → detector's last voiced sample)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "end-of-turn wait (last voiced → end decided)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "upload (end decided → upload sent)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "server → speech-to-text sent": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "speech-to-text (sent → decode back)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "transcript to the page (decode back → page has it)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "address gate and rules": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "gate → planner call sent": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "planner (call sent → back)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "tools and first sentence (planner back → tools done)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first streamed event (gate → first event)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "to speak() (gate → speak called)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "TTS (speak called → voice start)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    }
+   },
+   "woke": 12
+  },
+  "en": {
+   "n": 2,
+   "lanes": {
+    "planner": 2
+   },
+   "firstKinds": {
+    "tone": 2
+   },
+   "ends": {
+    "first sound (any: earcon, voice)": {
+     "n": 2,
+     "p50": 401,
+     "p90": 401
+    },
+    "first speech (a voice, not a tone)": {
+     "n": 2,
+     "p50": 1799,
+     "p90": 1799
+    },
+    "answer handed to the voice (console's finding mark)": {
+     "n": 2,
+     "p50": 2402,
+     "p90": 2402
+    },
+    "first word of the answer (the voice's own start)": {
+     "n": 2,
+     "p50": 3020,
+     "p90": 3020
+    },
+    "voice start delay (handed → first word)": {
+     "n": 2,
+     "p50": 618,
+     "p90": 618
+    },
+    "answer in hand, on screen (the console's answer mark)": {
+     "n": 2,
+     "p50": 2379,
+     "p90": 2379
+    },
+    "end of the answer (its last word spoken)": {
+     "n": 2,
+     "p50": 38210,
+     "p90": 38210
+    },
+    "screen change": {
+     "n": 2,
+     "p50": 2402,
+     "p90": 2402
+    },
+    "transcript at the page (transcribed mark)": {
+     "n": 2,
+     "p50": 755,
+     "p90": 755
+    }
+   },
+   "spans": {
+    "detector lag (true end → detector's last voiced sample)": {
+     "n": 2,
+     "p50": 74,
+     "p90": 74
+    },
+    "end-of-turn wait (last voiced → end decided)": {
+     "n": 2,
+     "p50": 331,
+     "p90": 331
+    },
+    "upload (end decided → upload sent)": {
+     "n": 2,
+     "p50": 4,
+     "p90": 4
+    },
+    "server → speech-to-text sent": {
+     "n": 2,
+     "p50": 13,
+     "p90": 13
+    },
+    "speech-to-text (sent → decode back)": {
+     "n": 2,
+     "p50": 354,
+     "p90": 354
+    },
+    "transcript to the page (decode back → page has it)": {
+     "n": 2,
+     "p50": 16,
+     "p90": 16
+    },
+    "address gate and rules": {
+     "n": 2,
+     "p50": 12,
+     "p90": 12
+    },
+    "gate → planner call sent": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "planner (call sent → back)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "tools and first sentence (planner back → tools done)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first streamed event (gate → first event)": {
+     "n": 2,
+     "p50": 1154,
+     "p90": 1154
+    },
+    "to speak() (gate → speak called)": {
+     "n": 2,
+     "p50": 1654,
+     "p90": 1654
+    },
+    "TTS (speak called → voice start)": {
+     "n": 2,
+     "p50": 630,
+     "p90": 630
+    }
+   }
+  },
+  "ta": {
+   "n": 3,
+   "lanes": {
+    "planner": 3
+   },
+   "firstKinds": {
+    "tone": 3
+   },
+   "ends": {
+    "first sound (any: earcon, voice)": {
+     "n": 3,
+     "p50": 423,
+     "p90": 428
+    },
+    "first speech (a voice, not a tone)": {
+     "n": 3,
+     "p50": 1825,
+     "p90": 1852
+    },
+    "answer handed to the voice (console's finding mark)": {
+     "n": 3,
+     "p50": 2791,
+     "p90": 2902
+    },
+    "first word of the answer (the voice's own start)": {
+     "n": 3,
+     "p50": 3889,
+     "p90": 4073
+    },
+    "voice start delay (handed → first word)": {
+     "n": 3,
+     "p50": 987,
+     "p90": 1282
+    },
+    "answer in hand, on screen (the console's answer mark)": {
+     "n": 3,
+     "p50": 2756,
+     "p90": 2872
+    },
+    "end of the answer (its last word spoken)": {
+     "n": 3,
+     "p50": 37906,
+     "p90": 39168
+    },
+    "screen change": {
+     "n": 3,
+     "p50": 2791,
+     "p90": 2903
+    },
+    "transcript at the page (transcribed mark)": {
+     "n": 3,
+     "p50": 852,
+     "p90": 857
+    }
+   },
+   "spans": {
+    "detector lag (true end → detector's last voiced sample)": {
+     "n": 3,
+     "p50": 76,
+     "p90": 91
+    },
+    "end-of-turn wait (last voiced → end decided)": {
+     "n": 3,
+     "p50": 342,
+     "p90": 342
+    },
+    "upload (end decided → upload sent)": {
+     "n": 3,
+     "p50": 3,
+     "p90": 4
+    },
+    "server → speech-to-text sent": {
+     "n": 3,
+     "p50": 13,
+     "p90": 13
+    },
+    "speech-to-text (sent → decode back)": {
+     "n": 3,
+     "p50": 401,
+     "p90": 403
+    },
+    "transcript to the page (decode back → page has it)": {
+     "n": 3,
+     "p50": 16,
+     "p90": 17
+    },
+    "address gate and rules": {
+     "n": 3,
+     "p50": 15,
+     "p90": 23
+    },
+    "gate → planner call sent": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "planner (call sent → back)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "tools and first sentence (planner back → tools done)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first streamed event (gate → first event)": {
+     "n": 3,
+     "p50": 1957,
+     "p90": 2007
+    },
+    "to speak() (gate → speak called)": {
+     "n": 3,
+     "p50": 1971,
+     "p90": 2015
+    },
+    "TTS (speak called → voice start)": {
+     "n": 3,
+     "p50": 1009,
+     "p90": 1304
+    }
+   }
+  },
+  "tg": {
+   "n": 2,
+   "lanes": {
+    "planner": 2
+   },
+   "firstKinds": {
+    "tone": 2
+   },
+   "ends": {
+    "first sound (any: earcon, voice)": {
+     "n": 2,
+     "p50": 423,
+     "p90": 423
+    },
+    "first speech (a voice, not a tone)": {
+     "n": 2,
+     "p50": 1828,
+     "p90": 1828
+    },
+    "answer handed to the voice (console's finding mark)": {
+     "n": 2,
+     "p50": 5876,
+     "p90": 5876
+    },
+    "first word of the answer (the voice's own start)": {
+     "n": 2,
+     "p50": 7006,
+     "p90": 7006
+    },
+    "voice start delay (handed → first word)": {
+     "n": 2,
+     "p50": 1130,
+     "p90": 1130
+    },
+    "answer in hand, on screen (the console's answer mark)": {
+     "n": 2,
+     "p50": 5847,
+     "p90": 5847
+    },
+    "end of the answer (its last word spoken)": {
+     "n": 2,
+     "p50": 38531,
+     "p90": 38531
+    },
+    "screen change": {
+     "n": 2,
+     "p50": 5877,
+     "p90": 5877
+    },
+    "transcript at the page (transcribed mark)": {
+     "n": 2,
+     "p50": 830,
+     "p90": 830
+    }
+   },
+   "spans": {
+    "detector lag (true end → detector's last voiced sample)": {
+     "n": 2,
+     "p50": 76,
+     "p90": 76
+    },
+    "end-of-turn wait (last voiced → end decided)": {
+     "n": 2,
+     "p50": 341,
+     "p90": 341
+    },
+    "upload (end decided → upload sent)": {
+     "n": 2,
+     "p50": 4,
+     "p90": 4
+    },
+    "server → speech-to-text sent": {
+     "n": 2,
+     "p50": 12,
+     "p90": 12
+    },
+    "speech-to-text (sent → decode back)": {
+     "n": 2,
+     "p50": 401,
+     "p90": 401
+    },
+    "transcript to the page (decode back → page has it)": {
+     "n": 2,
+     "p50": 16,
+     "p90": 16
+    },
+    "address gate and rules": {
+     "n": 2,
+     "p50": 15,
+     "p90": 15
+    },
+    "gate → planner call sent": {
+     "n": 1,
+     "p50": 51,
+     "p90": 51
+    },
+    "planner (call sent → back)": {
+     "n": 1,
+     "p50": 2454,
+     "p90": 2454
+    },
+    "tools and first sentence (planner back → tools done)": {
+     "n": 1,
+     "p50": 2491,
+     "p90": 2491
+    },
+    "first streamed event (gate → first event)": {
+     "n": 2,
+     "p50": 166,
+     "p90": 166
+    },
+    "to speak() (gate → speak called)": {
+     "n": 2,
+     "p50": 5013,
+     "p90": 5013
+    },
+    "TTS (speak called → voice start)": {
+     "n": 2,
+     "p50": 1150,
+     "p90": 1150
+    }
+   }
+  },
+  "wake": {
+   "n": 7,
+   "lanes": {
+    "none": 7
+   },
+   "firstKinds": {
+    "pcm": 7
+   },
+   "ends": {
+    "first sound (any: earcon, voice)": {
+     "n": 7,
+     "p50": 189,
+     "p90": 227
+    },
+    "first speech (a voice, not a tone)": {
+     "n": 7,
+     "p50": 189,
+     "p90": 227
+    },
+    "answer handed to the voice (console's finding mark)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first word of the answer (the voice's own start)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "voice start delay (handed → first word)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "answer in hand, on screen (the console's answer mark)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "end of the answer (its last word spoken)": {
+     "n": 7,
+     "p50": 952,
+     "p90": 1256
+    },
+    "screen change": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "transcript at the page (transcribed mark)": {
+     "n": 7,
+     "p50": 624,
+     "p90": 793
+    }
+   },
+   "spans": {
+    "detector lag (true end → detector's last voiced sample)": {
+     "n": 7,
+     "p50": 63,
+     "p90": 94
+    },
+    "end-of-turn wait (last voiced → end decided)": {
+     "n": 7,
+     "p50": 204,
+     "p90": 214
+    },
+    "upload (end decided → upload sent)": {
+     "n": 7,
+     "p50": 5,
+     "p90": 6
+    },
+    "server → speech-to-text sent": {
+     "n": 7,
+     "p50": 13,
+     "p90": 32
+    },
+    "speech-to-text (sent → decode back)": {
+     "n": 7,
+     "p50": 305,
+     "p90": 469
+    },
+    "transcript to the page (decode back → page has it)": {
+     "n": 7,
+     "p50": 14,
+     "p90": 23
+    },
+    "address gate and rules": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "gate → planner call sent": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "planner (call sent → back)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "tools and first sentence (planner back → tools done)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "first streamed event (gate → first event)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "to speak() (gate → speak called)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    },
+    "TTS (speak called → voice start)": {
+     "n": 0,
+     "p50": null,
+     "p90": null
+    }
+   }
+  }
+ }
+}

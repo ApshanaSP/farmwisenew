@@ -1,0 +1,314 @@
+{
+ "model": "gemini-3.1-flash-lite",
+ "provider": "gemini",
+ "tally": {
+  "v7": 10,
+  "v6": 1,
+  "tie": 0,
+  "split": 2,
+  "none": 35
+ },
+ "signTestP": 0.01171875,
+ "verdicts": [
+  {
+   "id": "d-inc-1",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 63,
+    "v6": 47
+   }
+  },
+  {
+   "id": "d-inc-2",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 50,
+    "v6": 45
+   }
+  },
+  {
+   "id": "d-inc-5",
+   "kind": "incident",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 25,
+    "v6": 28
+   }
+  },
+  {
+   "id": "d-inc-6",
+   "kind": "incident",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 14,
+    "v6": 25
+   }
+  },
+  {
+   "id": "d-inc-7",
+   "kind": "incident",
+   "lang": "tg",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 25,
+    "v6": 24
+   }
+  },
+  {
+   "id": "d-inc-8",
+   "kind": "incident",
+   "lang": "en",
+   "first": "v7",
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 50,
+    "v6": 73
+   }
+  },
+  {
+   "id": "d-news-1",
+   "kind": "news",
+   "lang": "en",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 23,
+    "v6": 199
+   }
+  },
+  {
+   "id": "d-news-4",
+   "kind": "news",
+   "lang": "ta",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 35,
+    "v6": 185
+   }
+  },
+  {
+   "id": "d-news-6",
+   "kind": "news",
+   "lang": "en",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 43,
+    "v6": 199
+   }
+  },
+  {
+   "id": "d-news-7",
+   "kind": "news",
+   "lang": "ta",
+   "first": "v7",
+   "second": "v6",
+   "verdict": "split",
+   "words": {
+    "v7": 27,
+    "v6": 185
+   }
+  },
+  {
+   "id": "d-news-8",
+   "kind": "news",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 46,
+    "v6": 84
+   }
+  },
+  {
+   "id": "d-cmp-1",
+   "kind": "compare",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 52,
+    "v6": 24
+   }
+  },
+  {
+   "id": "d-cmp-5",
+   "kind": "compare",
+   "lang": "ta",
+   "first": "v7",
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 35,
+    "v6": 19
+   }
+  },
+  {
+   "id": "d-cmp-7",
+   "kind": "compare",
+   "lang": "tg",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 12,
+    "v6": 17
+   }
+  },
+  {
+   "id": "d-why-1",
+   "kind": "why",
+   "lang": "en",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 88,
+    "v6": 38
+   }
+  },
+  {
+   "id": "d-why-3",
+   "kind": "why",
+   "lang": "en",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 48,
+    "v6": 52
+   }
+  },
+  {
+   "id": "d-why-4",
+   "kind": "why",
+   "lang": "en",
+   "first": "v6",
+   "second": "v7",
+   "verdict": "split",
+   "words": {
+    "v7": 50,
+    "v6": 27
+   }
+  },
+  {
+   "id": "d-why-6",
+   "kind": "why",
+   "lang": "ta",
+   "first": "v6",
+   "second": "v6",
+   "verdict": "v6",
+   "words": {
+    "v7": 44,
+    "v6": 42
+   }
+  },
+  {
+   "id": "d-why-8",
+   "kind": "why",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 49,
+    "v6": 22
+   }
+  },
+  {
+   "id": "d-fol-1",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 28,
+    "v6": 124
+   }
+  },
+  {
+   "id": "d-fol-2",
+   "kind": "followup",
+   "lang": "en",
+   "first": "v7",
+   "second": "v7",
+   "verdict": "v7",
+   "words": {
+    "v7": 32,
+    "v6": 38
+   }
+  },
+  {
+   "id": "d-fol-3",
+   "kind": "followup",
+   "lang": "en",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 57,
+    "v6": 41
+   }
+  },
+  {
+   "id": "d-fol-5",
+   "kind": "followup",
+   "lang": "ta",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 24,
+    "v6": 104
+   }
+  },
+  {
+   "id": "d-fol-6",
+   "kind": "followup",
+   "lang": "tg",
+   "first": null,
+   "second": null,
+   "verdict": "none",
+   "words": {
+    "v7": 30,
+    "v6": 36
+   }
+  },
+  {
+   "id": "d-out-4",
+   "kind": "outside",
+   "lang": "en",
+   "first": null,
+   "second": "tie",
+   "verdict": "none",
+   "words": {
+    "v7": 27,
+    "v6": 27
+   }
+  }
+ ]
+}

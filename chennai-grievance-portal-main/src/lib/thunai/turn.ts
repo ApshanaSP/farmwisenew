@@ -3,9 +3,14 @@
  * fixes, then extended for Jarvis mode). It takes events from the ears, the mouth and the transcriber, and returns the next
  * model and the actions the browser must take, in order. No timers, no browser objects: every rule is unit-tested.
  *
- * Two-stage barge-in: while Jarvis talks, the energy gate's onset PAUSES the voice at once (quickOnset). Silero confirms
- * speech, and only speech held for bargeMs cancels the turn. Speech that ends short at the VAD end event (a cough, a door)
- * RESUMES from where it stopped, and an energy onset Silero never confirms resumes too.
+ * Barge-in that ignores "mm-hmm" (v4; the patterns of Pipecat's MinWordsInterruptionStrategy and LiveKit's false-interruption
+ * resume, no dependency): while Jarvis talks, an onset (the energy gate's, or Silero's) DUCKS the voice at once; it is never
+ * paused. The voice stops, and the turn with it, only when the speech is a bid for the turn: Silero-confirmed speech held
+ * TUNING.bargeHoldMs (600 ms; over the voice only frames a voice over it gives count, vad.ts `strong`), or live caption words with at least TUNING.bargeWords words that are not backchannels
+ * (backchannel.ts), or a sentence that lasted that long. A cough, or an energy onset Silero never confirms, brings the voice
+ * back up where it was. A shorter sentence is read by Whisper while the voice stays ducked ("overVoice"): "mm-hmm", சரி,
+ * "seri" or nothing at all bring it back up and it carries on; a hold word, the name alone or a request stop it. Earcons never
+ * duck it.
  *
  * Every question sent out carries a generation (gen); anything that comes back under an older one is dropped, so an old
  * answer can never speak after an interruption. After a cancel the query frame stays (frame.ts), so "no, Anna Nagar"
@@ -13,22 +18,32 @@
  */
 import { TUNING } from "./vad";
 import { isStopWord } from "./addressed";
+import { bargesIn, isBackchannel } from "./backchannel";
 
+/** "paused" is the voice DUCKED under speech (it still plays, quietly), kept under its old name for the HUD's states. */
 export type TurnState = "off" | "listening" | "hearing" | "thinking" | "speaking" | "paused" | "interrupted" | "holding";
 
 export type TurnEvent =
   | { type: "open" } | { type: "close" }
-  /** the energy gate's onset while Jarvis talks: pause now, Silero decides */
-  | { type: "quickOnset"; at: number }
+  /** the energy gate's onset while Jarvis talks: duck now, Silero decides. `earcon`: one of Jarvis's own earcons is playing */
+  | { type: "quickOnset"; at: number; earcon?: boolean }
   /** the energy gate fell quiet and Silero never confirmed */
   | { type: "quickEnd"; at: number }
-  | { type: "vadStart"; at: number } | { type: "vadEnd"; at: number; ms: number; short: boolean }
+  /** `strong`: how much of it was a voice even over Jarvis's own (vad.ts): over the voice, only that part may stop it */
+  | { type: "vadStart"; at: number; earcon?: boolean } | { type: "vadEnd"; at: number; ms: number; short: boolean; strong?: number }
   /** time passes with speech held (for barge-in confirmation) */
   | { type: "tick"; at: number; heldMs: number }
+  /** the browser captions' live words for the speech being heard (never acted on; they only decide a barge-in) */
+  | { type: "words"; text: string }
   /** ack: the acknowledgement, while the question it stands for may still be in flight */
   | { type: "ttsStart"; ack?: boolean } | { type: "ttsEnd"; ack?: boolean }
-  /** the transcriber's words for the sentence of generation `gen` (typed text passes through handle directly) */
-  | { type: "text"; text: string; gen?: number }
+  /**
+   * the transcriber's words for the sentence of generation `gen` (typed text passes through handle directly). `yesWanted`: an
+   * ask card is waiting for a yes, so a "yes" said over the voice is an answer, not a backchannel
+   */
+  | { type: "text"; text: string; gen?: number; yesWanted?: boolean }
+  /** the transcriber heard only the name ("Jarvis", and a pause) */
+  | { type: "nameOnly"; gen?: number }
   | { type: "answered" }
   /** the hold's extra listening time ran out */
   | { type: "holdOver" }
@@ -36,7 +51,8 @@ export type TurnEvent =
   | { type: "stop" };
 
 export type TurnAction =
-  | { a: "pauseVoice" } | { a: "resumeVoice" } | { a: "cancelVoice" }
+  /** the voice to about a fifth of its level (mouth.ts), and back up */
+  | { a: "duckVoice" } | { a: "unduckVoice" } | { a: "cancelVoice" }
   /** abort the in-flight question and bump the turn generation */
   | { a: "cancelTurn" }
   | { a: "capture" } | { a: "dropCapture" } | { a: "transcribe"; gen: number }
@@ -50,18 +66,23 @@ export interface TurnModel {
   bargeAt: number | null;
   bargeIns: number;
   minSpeechMs: number;
+  /** speech held this long while Jarvis thinks (no voice) cancels the question in flight */
   bargeMs: number;
+  /** speech over the voice held this long stops it (shorter speech only ducks it) */
+  bargeHoldMs: number;
+  /** live words holding this many non-backchannel words stop the voice */
+  bargeWords: number;
   /** a sentence was sent to speech-to-text and its words are still to come (the acknowledgement may be playing meanwhile) */
   awaiting: boolean;
   /** the generation of the sentence being transcribed or answered */
   gen: number;
-  /** Silero has confirmed the speech that paused the voice */
+  /** Silero has confirmed the speech that ducked the voice */
   confirmed: boolean;
   /** what was going on when speech started, to go back to if it turns out to be noise */
   before: "thinking" | null;
   /** an answer was interrupted, or held, and "continue" can bring it back */
   canContinue: boolean;
-  /** the voice was paused by a noise-or-voice onset, and has not been cancelled */
+  /** the voice was ducked by a noise-or-voice onset, and has not been cancelled */
   held: boolean;
   /** a sentence was handed on and its answer has not begun: speech now is speech over a question in flight */
   handling: boolean;
@@ -69,10 +90,20 @@ export interface TurnModel {
   voice: boolean;
   /** a transcript that came back while a sound was still being judged: it counts if the sound was only noise */
   parked: string | null;
+  /** a short sentence said over the ducked voice is at the transcriber: its words decide whether the voice stops or comes back up */
+  overVoice: boolean;
+  /**
+   * v5 D3: speech over the voice cut it (a barge-in) and that speech's words are still to come. Words that hold no bid for the turn
+   * (only a backchannel) make it a false interruption: the answer is said again from the start of the sentence it was cut on
+   * (resumeAnswer: mouth.ts continueAnswer, a cancel and a fresh utterance, never pause/resume). No words at all is conductor.ts's
+   * (backOn, v4), so the machine does nothing more there and the answer is never said twice.
+   */
+  cut?: boolean;
 }
 
-export const turnStart = (o: { minSpeechMs?: number; bargeMs?: number } = {}): TurnModel =>
-  ({ state: "off", bargeAt: null, bargeIns: 0, minSpeechMs: o.minSpeechMs ?? TUNING.minSpeechMs, bargeMs: o.bargeMs ?? TUNING.bargeMs, awaiting: false, gen: 0, confirmed: false, before: null, canContinue: false, held: false, handling: false, voice: false, parked: null });
+export const turnStart = (o: { minSpeechMs?: number; bargeMs?: number; bargeHoldMs?: number; bargeWords?: number } = {}): TurnModel =>
+  ({ state: "off", bargeAt: null, bargeIns: 0, minSpeechMs: o.minSpeechMs ?? TUNING.minSpeechMs, bargeMs: o.bargeMs ?? TUNING.bargeMs, bargeHoldMs: o.bargeHoldMs ?? TUNING.bargeHoldMs,
+    bargeWords: o.bargeWords ?? TUNING.bargeWords, awaiting: false, gen: 0, confirmed: false, before: null, canContinue: false, held: false, handling: false, voice: false, parked: null, overVoice: false, cut: false });
 
 /** Words that hold Jarvis without being a request. */
 const HOLD = /^(stop|wait|wait a (sec|second|minute|moment)|hold on|hold|one (sec|second|minute|moment)|just a (sec|second|minute|moment)|pause|shh+|quiet|enough for now|nirutthu|niruthu|nillu|iru|oru nimisham|oru nimisham iru|wait pannu|konjam iru|நிறுத்து|நில்லு|இரு|இருங்க|ஒரு நிமிஷம்|ஒரு நிமிடம்|கொஞ்சம் இரு)[.!,]?$/i;
@@ -93,36 +124,62 @@ export function afterHold(t: string): string | null {
 /** One step of the conversation. Pure: returns the next model and the actions the client must take, in order. */
 export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnAction[] } {
   const to = (state: TurnState, act: TurnAction[] = [], patch: Partial<TurnModel> = {}) => ({ m: { ...m, ...patch, state }, act });
-  if (e.type === "close") return to("off", m.state === "speaking" || m.state === "paused" ? [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "dropCapture" }] : [{ a: "cancelTurn" }, { a: "dropCapture" }], { bargeAt: null, awaiting: false, confirmed: false, before: null, held: false, canContinue: false, handling: false, voice: false, parked: null });
+  /** the ducked voice comes back up where it was; if it ended meanwhile, back to what Jarvis was doing */
+  const unduck = (patch: Partial<TurnModel> = {}) => {
+    const n = { ...m, ...patch };
+    return to(n.voice ? "speaking" : n.handling || n.awaiting ? "thinking" : "listening", [{ a: "dropCapture" }, { a: "unduckVoice" }], { ...patch, bargeAt: null, confirmed: false, held: false });
+  };
+  /** a bid for the turn while Jarvis talks: the voice stops, and the turn in flight with it */
+  const barge = () => to("interrupted", [{ a: "cancelVoice" }, { a: "cancelTurn" }], { bargeIns: m.bargeIns + 1, canContinue: true, held: false, gen: m.gen + 1, handling: false, voice: false, parked: null, overVoice: false, cut: true });
+  if (e.type === "close") return to("off", m.state === "speaking" || m.state === "paused" ? [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "dropCapture" }] : [{ a: "cancelTurn" }, { a: "dropCapture" }], { bargeAt: null, awaiting: false, confirmed: false, before: null, held: false, canContinue: false, handling: false, voice: false, parked: null, overVoice: false, cut: false });
   if (m.state === "off") return e.type === "open" ? to("listening") : { m, act: [] };
   switch (e.type) {
     case "stop":
       // Esc: everything stops at once; the frame stays
-      return to("listening", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "dropCapture" }], { bargeAt: null, awaiting: false, confirmed: false, before: null, held: false, canContinue: m.state === "speaking" || m.state === "paused" || m.canContinue, gen: m.gen + 1, handling: false, voice: false, parked: null });
+      return to("listening", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "dropCapture" }], { bargeAt: null, awaiting: false, confirmed: false, before: null, held: false, canContinue: m.state === "speaking" || m.state === "paused" || m.canContinue, gen: m.gen + 1, handling: false, voice: false, parked: null, overVoice: false, cut: false });
     case "quickOnset":
-      if (m.state === "speaking") return to("paused", [{ a: "pauseVoice" }, { a: "capture" }], { bargeAt: e.at, confirmed: false, held: true });
+      // an earcon is Jarvis's own sound: it never ducks the voice
+      if (m.state === "speaking" && !e.earcon) return to("paused", [{ a: "duckVoice" }, { a: "capture" }], { bargeAt: e.at, confirmed: false, held: true });
       return { m, act: [] };
     case "quickEnd":
-      // the gate heard something, Silero never agreed: it was not a voice, so Jarvis goes on from where it stopped
-      if (m.state === "paused" && !m.confirmed) return to("speaking", [{ a: "dropCapture" }, { a: "resumeVoice" }], { bargeAt: null, held: false });
+      // the gate heard something, Silero never agreed: it was not a voice, so the voice comes back up where it was
+      if (m.state === "paused" && !m.confirmed && !m.overVoice) return unduck();
       return { m, act: [] };
     case "vadStart":
       if (m.state === "listening" || m.state === "holding") return to("hearing", [{ a: "capture" }], { before: null });
-      if (m.state === "speaking") return to("paused", [{ a: "pauseVoice" }, { a: "capture" }], { bargeAt: e.at, confirmed: true, held: true });
-      if (m.state === "paused") return { m: { ...m, confirmed: true }, act: [] };
+      if (m.state === "speaking") return e.earcon ? { m, act: [] } : to("paused", [{ a: "duckVoice" }, { a: "capture" }], { bargeAt: e.at, confirmed: true, held: true });
+      // more speech while a short sentence said over the voice is being read: it is captured too (the conductor joins the two)
+      if (m.state === "paused") return m.overVoice ? to("paused", [{ a: "capture" }], { confirmed: true }) : { m: { ...m, confirmed: true }, act: [] };
       // speech while Jarvis thinks: captured, and the question is not cancelled until it is held long enough to be a person
       if (m.state === "thinking") return to("hearing", [{ a: "capture" }], { before: "thinking", confirmed: true });
       return { m, act: [] };
     case "tick":
-      if (m.state === "paused" && m.confirmed && e.heldMs >= m.bargeMs) return to("interrupted", [{ a: "cancelVoice" }, { a: "cancelTurn" }], { bargeIns: m.bargeIns + 1, canContinue: true, held: false, gen: m.gen + 1, handling: false, voice: false, parked: null });
+      if (m.state === "paused" && m.confirmed && e.heldMs >= m.bargeHoldMs) return barge();
       if (m.state === "hearing" && m.before === "thinking" && e.heldMs >= m.bargeMs) return to("hearing", [...(m.voice ? [{ a: "cancelVoice" } as TurnAction] : []), { a: "cancelTurn" }], { before: null, bargeIns: m.bargeIns + 1, awaiting: false, gen: m.gen + 1, handling: false, voice: false, parked: null });
+      return { m, act: [] };
+    case "words":
+      // the captions' live words: two that are not backchannels are a bid for the turn ("mm-hmm", சரி, "seri" are not).
+      // Once a short sentence is with Whisper, its words decide instead
+      if (m.state === "paused" && !m.overVoice && bargesIn(e.text, m.bargeWords)) return barge();
       return { m, act: [] };
     case "vadEnd": {
       const short = e.short || e.ms < m.minSpeechMs;
       if (m.state === "paused") {
-        if (short) return to("speaking", [{ a: "dropCapture" }, { a: "resumeVoice" }], { bargeAt: null, confirmed: false, held: false });
         const gen = m.gen + 1;
-        return to("thinking", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "transcribe", gen }], { bargeAt: null, bargeIns: m.bargeIns + 1, awaiting: true, confirmed: false, held: false, canContinue: true, gen, handling: false, voice: false, parked: null });
+        // a sentence held long enough is a barge-in, whatever the ticks said: the voice and the turn stop, and it is read. Only its
+        // strong part counts: the ducked voice's own residue can keep a detector in speech for as long as the answer lasts
+        const held = e.strong ?? e.ms;
+        const cut = () => to("thinking", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "transcribe", gen }], { bargeAt: null, bargeIns: m.bargeIns + 1, awaiting: true, confirmed: false, held: false, canContinue: true, gen, handling: false, voice: false, parked: null, overVoice: false, cut: true });
+        if (m.overVoice) {
+          // a cough while the short sentence is read: the voice stays ducked until its words come back
+          if (short) return to("paused", [{ a: "dropCapture" }], { confirmed: false });
+          if (held >= m.bargeHoldMs) return cut();
+          return to("paused", [{ a: "transcribe", gen }], { gen, awaiting: true, confirmed: false });
+        }
+        if (short) return unduck();
+        if (held >= m.bargeHoldMs) return cut();
+        // shorter, and no live words claimed the turn: Whisper reads it while the voice plays on, ducked (LiveKit's false-interruption resume)
+        return to("paused", [{ a: "transcribe", gen }], { gen, awaiting: true, overVoice: true, confirmed: false, bargeAt: null });
       }
       if (m.state === "hearing" || m.state === "interrupted") {
         if (short) {
@@ -131,10 +188,11 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
             const r = turn({ ...m, state: "thinking", awaiting: true, before: null, confirmed: false, parked: null }, { type: "text", text: m.parked });
             return { m: r.m, act: [{ a: "dropCapture" }, ...r.act] };
           }
-          return to(m.voice ? "speaking" : m.handling || m.awaiting ? "thinking" : "listening", [{ a: "dropCapture" }], { bargeAt: null, before: null, confirmed: false, parked: null });
+          return to(m.voice ? "speaking" : m.handling || m.awaiting ? "thinking" : "listening", [{ a: "dropCapture" }], { bargeAt: null, before: null, confirmed: false, parked: null, cut: false });
         }
         const gen = m.gen + 1;
-        return to("thinking", [...(m.voice ? [{ a: "cancelVoice" } as TurnAction] : []), ...(m.before === "thinking" ? [{ a: "cancelTurn" } as TurnAction] : []), { a: "transcribe", gen }], { bargeAt: null, awaiting: true, before: null, confirmed: false, gen, handling: false, voice: false, parked: null });
+        // the speech that cut the voice (interrupted) is read now: its words decide (D3); a new sentence after listening was no cut
+        return to("thinking", [...(m.voice ? [{ a: "cancelVoice" } as TurnAction] : []), ...(m.before === "thinking" ? [{ a: "cancelTurn" } as TurnAction] : []), { a: "transcribe", gen }], { bargeAt: null, awaiting: true, before: null, confirmed: false, gen, handling: false, voice: false, parked: null, cut: m.state === "interrupted" && !!m.cut });
       }
       return { m, act: [] };
     }
@@ -145,11 +203,25 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
       // (the acknowledgement may already be playing, "speaking": the words still count)
       if (!m.awaiting || m.state === "hearing" || m.state === "interrupted") return { m: { ...m, awaiting: m.state === "hearing" ? false : m.awaiting, parked: m.state === "hearing" && m.before === "thinking" && m.awaiting && e.text.trim() ? e.text.trim() : m.parked }, act: [] };
       const t = e.text.trim();
-      const done = { awaiting: false };
-      // the acknowledgement was paused by a noise at that moment: it is cut, and the words are acted on
+      const done = { awaiting: false, cut: false };
+      // v5 D3: the speech that cut the voice held only a backchannel ("mm-hmm", "okay", சரி, "seri"): a false interruption. The answer
+      // is said again from the start of the sentence it was cut on. A yes an ask card waits for is an answer, never a backchannel
+      if (m.cut && m.canContinue && t && !e.yesWanted && isBackchannel(t)) return to("speaking", [{ a: "resumeAnswer" }], { ...done, canContinue: false, handling: false });
+      if (m.state === "paused" && m.overVoice) {
+        const over = { ...done, overVoice: false };
+        // nothing, a backchannel ("mm-hmm", சரி, "seri") or "continue": the voice comes back up and carries on
+        if (!t || isContinue(t) || (!e.yesWanted && isBackchannel(t))) return unduck(over);
+        const stopped = { ...over, bargeAt: null, confirmed: false, held: false, bargeIns: m.bargeIns + 1, voice: false, handling: false };
+        if (isGoodbye(t)) return to("off", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "endSession" }], { ...stopped, canContinue: false });
+        // "wait", "stop", இரு: silent, nothing on screen changes, a little longer to think; "continue" brings the answer back
+        if (isHoldOnly(t)) return to("holding", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "hold", ms: TUNING.holdExtendMs }], { ...stopped, canContinue: true });
+        // a request, or "wait, show Anna Nagar": the voice and the turn stop, and the words are acted on
+        return to("thinking", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "dropCapture" }, { a: "handle", text: afterHold(t) ?? t, gen: m.gen }], { ...stopped, canContinue: false, handling: true });
+      }
+      // the acknowledgement was ducked by a noise at that moment: it is cut, and the words are acted on
       if (m.state === "paused" && t && !isGoodbye(t) && !isHoldOnly(t) && !isContinue(t)) return to("thinking", [{ a: "cancelVoice" }, { a: "dropCapture" }, { a: "handle", text: t, gen: m.gen }], { ...done, bargeAt: null, confirmed: false, held: false, handling: true, voice: false });
-      // nothing was said after all: a paused voice goes on, it is never left waiting
-      const goOn = () => to("speaking", [{ a: "dropCapture" }, { a: "resumeVoice" }], { ...done, bargeAt: null, confirmed: false, held: false });
+      // nothing was said after all: a ducked voice comes back up, it is never left waiting
+      const goOn = () => unduck(done);
       if (!t) return m.state === "paused" ? goOn() : to(m.state === "speaking" ? "speaking" : m.handling ? "thinking" : "listening", [], done);
       if (isGoodbye(t)) return to("off", [{ a: "cancelVoice" }, { a: "endSession" }], { ...done, canContinue: false, handling: false, voice: false });
       // "wait": silent, nothing on screen changes, and a little longer to think; the hold word itself gets no answer
@@ -158,6 +230,14 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
       const rest = afterHold(t);
       return to("thinking", [{ a: "handle", text: rest ?? t, gen: m.gen }], { ...done, canContinue: false, handling: true });
     }
+    case "nameOnly":
+      if (e.gen != null && e.gen !== m.gen) return { m, act: [] };
+      // "Jarvis" said over the voice: it stops talking and listens (a hold, so "continue" can bring the answer back)
+      if (m.state === "paused" && m.overVoice && m.awaiting) {
+        return to("holding", [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "hold", ms: TUNING.holdExtendMs }], { awaiting: false, overVoice: false, bargeAt: null, confirmed: false, held: false, bargeIns: m.bargeIns + 1, voice: false, handling: false, canContinue: true });
+      }
+      // anywhere else the name alone is not a request: as an empty sentence
+      return turn(m, { type: "text", text: "", gen: e.gen });
     case "holdOver":
       if (m.state === "holding") return to("listening");
       return { m, act: [] };

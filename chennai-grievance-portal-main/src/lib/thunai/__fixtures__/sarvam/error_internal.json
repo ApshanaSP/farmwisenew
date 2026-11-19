@@ -1,0 +1,7 @@
+{
+  "error": {
+    "request_id": "synthetic_err_internal_1",
+    "message": "Internal server error",
+    "code": "internal_server_error"
+  }
+}

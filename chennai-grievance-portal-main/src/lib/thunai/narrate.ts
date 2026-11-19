@@ -166,16 +166,17 @@ export function plainWho(code: string | null, name: string | null): { en: string
 }
 
 /** "about four days", never a figure: the voice says time in words. */
+/** Time in words that hold no figure, so the number gate on speech has nothing to refuse (v4: "இரண்டு நாட்களாக" was read as 2). */
 export function ageWords(hours: number | null): { en: string; ta: string } | null {
   if (hours == null || !Number.isFinite(hours) || hours < 0) return null;
-  if (hours < 3) return { en: "a couple of hours", ta: "இரண்டு மணி நேரமாக" };
+  if (hours < 3) return { en: "a couple of hours", ta: "ஓரிரு மணி நேரமாக" };
   if (hours < 20) return { en: "several hours", ta: "சில மணி நேரமாக" };
   if (hours < 36) return { en: "about a day", ta: "ஏறக்குறைய ஒரு நாளாக" };
-  if (hours < 72) return { en: "a couple of days", ta: "இரண்டு நாட்களாக" };
+  if (hours < 72) return { en: "a couple of days", ta: "ஓரிரு நாட்களாக" };
   if (hours < 24 * 6) return { en: "several days", ta: "பல நாட்களாக" };
   if (hours < 24 * 10) return { en: "about a week", ta: "ஏறக்குறைய ஒரு வாரமாக" };
-  if (hours < 24 * 21) return { en: "a couple of weeks", ta: "இரண்டு வாரங்களாக" };
-  return { en: "well over three weeks", ta: "மூன்று வாரங்களுக்கும் மேலாக" };
+  if (hours < 24 * 21) return { en: "a couple of weeks", ta: "ஓரிரு வாரங்களாக" };
+  return { en: "several weeks", ta: "பல வாரங்களாக" };
 }
 
 /** "6 hours", "4 days", "2 weeks" as the store writes open_for, in hours. */

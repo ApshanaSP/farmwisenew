@@ -1,0 +1,1084 @@
+{
+ "item": "B5 free local Tamil decode: measurement only",
+ "date": "2026-11-16T18:25:41.917Z",
+ "machine": {
+  "cpu": "AMD Ryzen 5 5600H (Zen 3, 6 cores / 12 threads, AVX2, no AVX-512 and no AVX-VNNI)",
+  "ramGB": 15.3,
+  "os": "Windows 11 Pro 10.0.26200",
+  "node": "v24.21.0"
+ },
+ "runtime": {
+  "package": "sherpa-onnx-node@2.0.1",
+  "prebuilt": "sherpa-onnx-win-x64@2.0.1",
+  "onnxruntimeDll": "1.28.2",
+  "provider": "cpu",
+  "featConfig": {
+   "sampleRate": 16000,
+   "featureDim": 80
+  }
+ },
+ "clips": {
+  "dataset": "google/fleurs ta_in test",
+  "testRows": 591,
+  "uniqueSentenceIds": 336,
+  "seed": 20261115,
+  "shuffle": "mulberry32 + Fisher-Yates over row indices in TSV order, first 200",
+  "chosen": 200,
+  "chosenDurationSec": {
+   "min": 3.48,
+   "p50": 11.52,
+   "max": 53.52,
+   "totalSec": 2617.6199999999976
+  },
+  "audioFormat": {
+   "16000Hz/1ch/32bit/fmt3": 236
+  },
+  "resampled": 0,
+  "conversion": "FLEURS WAVs are already 16 kHz mono (32-bit float); written as 16-bit PCM WAV in Node, no resampling needed",
+  "timingSet": "every natural 5-7 s clip in the whole test split (50 clips; 14 also among the 200)",
+  "reference": "raw_transcription column (TSV field 3), same normaliser as the hypotheses"
+ },
+ "normaliser": "s.normalize('NFC').replace(/\\p{P}/gu,' ').replace(/\\p{Script=Latin}/gu, c => c.toLowerCase()).replace(/\\s+/g,' ').trim()",
+ "scorer": "hand-rolled Levenshtein; WER over whitespace words, CER over code points of the normalised string (spaces kept); corpus rates = summed errors / summed reference length",
+ "groq": {
+  "model": "whisper-large-v3",
+  "params": "language=ta, response_format=json, no prompt",
+  "requests": 200,
+  "ok": 200,
+  "statuses": {
+   "200": 200
+  },
+  "pacing": "one attempt per clip, no retries, start-to-start gap 4,100 ms (<= 15/min)",
+  "latencyMs": {
+   "p50": 602,
+   "p90": 2732.8999999999996
+  },
+  "rateLimitHeaders": [
+   {
+    "n": 1,
+    "x-ratelimit-limit-audio-seconds": "7200",
+    "x-ratelimit-limit-requests": "2000",
+    "x-ratelimit-remaining-audio-seconds": "7190",
+    "x-ratelimit-remaining-requests": "1999",
+    "x-ratelimit-reset-audio-seconds": "5s",
+    "x-ratelimit-reset-requests": "43.2s"
+   },
+   {
+    "n": 50,
+    "x-ratelimit-limit-audio-seconds": "7200",
+    "x-ratelimit-limit-requests": "2000",
+    "x-ratelimit-remaining-audio-seconds": "6953",
+    "x-ratelimit-remaining-requests": "1950",
+    "x-ratelimit-reset-audio-seconds": "2m3.5s",
+    "x-ratelimit-reset-requests": "36m0s"
+   },
+   {
+    "n": 100,
+    "x-ratelimit-limit-audio-seconds": "7200",
+    "x-ratelimit-limit-requests": "2000",
+    "x-ratelimit-remaining-audio-seconds": "6677",
+    "x-ratelimit-remaining-requests": "1900",
+    "x-ratelimit-reset-audio-seconds": "4m21.5s",
+    "x-ratelimit-reset-requests": "1h12m0s"
+   },
+   {
+    "n": 150,
+    "x-ratelimit-limit-audio-seconds": "7200",
+    "x-ratelimit-limit-requests": "2000",
+    "x-ratelimit-remaining-audio-seconds": "6489",
+    "x-ratelimit-remaining-requests": "1850",
+    "x-ratelimit-reset-audio-seconds": "5m55.5s",
+    "x-ratelimit-reset-requests": "1h48m0s"
+   },
+   {
+    "n": 200,
+    "x-ratelimit-limit-audio-seconds": "7200",
+    "x-ratelimit-limit-requests": "2000",
+    "x-ratelimit-remaining-audio-seconds": "6256",
+    "x-ratelimit-remaining-requests": "1800",
+    "x-ratelimit-reset-audio-seconds": "7m52s",
+    "x-ratelimit-reset-requests": "2h24m0s"
+   }
+  ],
+  "all200": {
+   "n": 200,
+   "wer": 56.426239240130606,
+   "cer": 18.884462151394423,
+   "refWords": 3369,
+   "refChars": 30120
+  }
+ },
+ "models": {
+  "csn-int8": {
+   "all200": {
+    "n": 200,
+    "wer": 30.899376669634908,
+    "cer": 12.549800796812749,
+    "refWords": 3369,
+    "refChars": 30120
+   },
+   "pairedVsGroq": {
+    "nPaired": 200,
+    "groqWer": 56.426239240130606,
+    "localWer": 30.899376669634908,
+    "groqCer": 18.884462151394423,
+    "localCer": 12.549800796812749,
+    "werPointsLocalBelowGroq": 25.526862570495698,
+    "werDiffBoot95": [
+     21.721798149520637,
+     29.240246172634325
+    ],
+    "cerPointsLocalBelowGroq": 6.334661354581675,
+    "cerDiffBoot95": [
+     3.0804419324312096,
+     9.603049094998905
+    ],
+    "perClipWer": {
+     "localBetter": 171,
+     "localWorse": 16,
+     "tie": 13,
+     "signTestMidP2Sided": 3.388319148701603e-34
+    },
+    "gateWer10PointsBelow": true
+   },
+   "loadMs": {
+    "t4": 2976.6095,
+    "t2": 3771.8654
+   },
+   "decode5to7s": {
+    "t4": {
+     "n": 50,
+     "p50": 1020.4062,
+     "p90": 1136.84143,
+     "mean": 1023.9400260000002,
+     "meanDur": 6.1076000000000015
+    },
+    "t4Source": "separate timing-only rerun at 4 threads",
+    "t4InFullRun": {
+     "n": 50,
+     "p50": 1015.2773,
+     "p90": 1163.68771,
+     "mean": 1010.826648,
+     "meanDur": 6.1076000000000015
+    },
+    "t4Rerun": {
+     "n": 50,
+     "p50": 1020.4062,
+     "p90": 1136.84143,
+     "mean": 1023.9400260000002,
+     "meanDur": 6.1076000000000015
+    },
+    "t2": {
+     "n": 50,
+     "p50": 1222.08855,
+     "p90": 1371.60014,
+     "mean": 1213.0719759999997,
+     "meanDur": 6.1076000000000015
+    }
+   },
+   "coresBusyDuringTiming": {
+    "t4Rerun": 3.8287886259553594
+   },
+   "decode5_5to6_5s": {
+    "t4": {
+     "n": 24,
+     "p50": 975.07025,
+     "p90": 1080.08949
+    },
+    "t2": {
+     "n": 24,
+     "p50": 1171.65675,
+     "p90": 1408.1327800000001
+    }
+   },
+   "full200AtT4": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 480179.026,
+    "rtf": 0.18344107471672758,
+    "p50": 1948.3595,
+    "p90": 3961.464119999999,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "peakRssShortClipsMB": 486.1015625,
+   "peakRssShortClipsNote": "process peak RSS after load, warm-up and the 5-7 s clips only (max over the t4 and t2 runs)",
+   "peakRssFull200MB": 1362.75390625,
+   "peakRssFull200Note": "process peak RSS over the whole t4 run, including the 200 FLEURS clips up to 53.5 s long",
+   "loadRssAfterMB": {
+    "t4": 232.92578125,
+    "t2": 234.2890625
+   },
+   "gates": {
+    "wer10PointsBelowGroq": true,
+    "p50le700msAt4": false,
+    "p90le1500msAt4": true,
+    "rssLe1536MBShortClips": true,
+    "all": false
+   },
+   "rssLe1536MBOverFull200": true
+  },
+  "ovos-fp32": {
+   "decoded": false
+  },
+  "ovos-int8": {
+   "decoded": false
+  },
+  "ovos-fp32-meta": {
+   "all200": {
+    "n": 200,
+    "wer": 29.088750371029978,
+    "cer": 12.06175298804781,
+    "refWords": 3369,
+    "refChars": 30120
+   },
+   "pairedVsGroq": {
+    "nPaired": 200,
+    "groqWer": 56.426239240130606,
+    "localWer": 29.088750371029978,
+    "groqCer": 18.884462151394423,
+    "localCer": 12.06175298804781,
+    "werPointsLocalBelowGroq": 27.33748886910063,
+    "werDiffBoot95": [
+     23.48106238293722,
+     31.0447143738624
+    ],
+    "cerPointsLocalBelowGroq": 6.822709163346614,
+    "cerDiffBoot95": [
+     3.4841309331742396,
+     10.149511098670216
+    ],
+    "perClipWer": {
+     "localBetter": 171,
+     "localWorse": 17,
+     "tie": 12,
+     "signTestMidP2Sided": 1.8954734831939958e-33
+    },
+    "gateWer10PointsBelow": true
+   },
+   "loadMs": {
+    "t4": 5504.5383,
+    "t2": 2348.552
+   },
+   "decode5to7s": {
+    "t4": {
+     "n": 50,
+     "p50": 270.03515000000004,
+     "p90": 316.68069,
+     "mean": 274.800884,
+     "meanDur": 6.1076000000000015
+    },
+    "t4Source": "timing phase of the full run",
+    "t4InFullRun": {
+     "n": 50,
+     "p50": 270.03515000000004,
+     "p90": 316.68069,
+     "mean": 274.800884,
+     "meanDur": 6.1076000000000015
+    },
+    "t2": {
+     "n": 50,
+     "p50": 422.92625,
+     "p90": 497.45738,
+     "mean": 426.791504,
+     "meanDur": 6.1076000000000015
+    }
+   },
+   "coresBusyDuringTiming": {
+    "t4": 3.914926664895391,
+    "t2": 1.9665358102778616
+   },
+   "decode5_5to6_5s": {
+    "t4": {
+     "n": 24,
+     "p50": 272.96395,
+     "p90": 313.10227
+    },
+    "t2": {
+     "n": 24,
+     "p50": 414.2439,
+     "p90": 472.00136
+    }
+   },
+   "full200AtT4": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 135522.9682,
+    "rtf": 0.0517733544975971,
+    "p50": 516.8672,
+    "p90": 1201.5623099999998,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "peakRssShortClipsMB": 673.73828125,
+   "peakRssShortClipsNote": "process peak RSS after load, warm-up and the 5-7 s clips only (max over the t4 and t2 runs)",
+   "peakRssFull200MB": 1207.16796875,
+   "peakRssFull200Note": "process peak RSS over the whole t4 run, including the 200 FLEURS clips up to 53.5 s long",
+   "loadRssAfterMB": {
+    "t4": 489.65625,
+    "t2": 489.8046875
+   },
+   "gates": {
+    "wer10PointsBelowGroq": true,
+    "p50le700msAt4": true,
+    "p90le1500msAt4": true,
+    "rssLe1536MBShortClips": true,
+    "all": true
+   },
+   "rssLe1536MBOverFull200": true
+  },
+  "ovos-int8-meta": {
+   "all200": {
+    "n": 200,
+    "wer": 31.582071831403976,
+    "cer": 12.709163346613545,
+    "refWords": 3369,
+    "refChars": 30120
+   },
+   "pairedVsGroq": {
+    "nPaired": 200,
+    "groqWer": 56.426239240130606,
+    "localWer": 31.582071831403976,
+    "groqCer": 18.884462151394423,
+    "localCer": 12.709163346613545,
+    "werPointsLocalBelowGroq": 24.84416740872663,
+    "werDiffBoot95": [
+     21.047549041796028,
+     28.584055498875585
+    ],
+    "cerPointsLocalBelowGroq": 6.175298804780878,
+    "cerDiffBoot95": [
+     2.9051270542811976,
+     9.476439061924255
+    ],
+    "perClipWer": {
+     "localBetter": 170,
+     "localWorse": 21,
+     "tie": 9,
+     "signTestMidP2Sided": 2.0299562117641836e-30
+    },
+    "gateWer10PointsBelow": true
+   },
+   "loadMs": {
+    "t4": 1700.4916,
+    "t2": 1628.6433
+   },
+   "decode5to7s": {
+    "t4": {
+     "n": 50,
+     "p50": 1476.6732,
+     "p90": 1742.14672,
+     "mean": 1445.1932360000003,
+     "meanDur": 6.1076000000000015
+    },
+    "t4Source": "timing phase of the full run",
+    "t4InFullRun": {
+     "n": 50,
+     "p50": 1476.6732,
+     "p90": 1742.14672,
+     "mean": 1445.1932360000003,
+     "meanDur": 6.1076000000000015
+    },
+    "t2": {
+     "n": 50,
+     "p50": 1758.1236,
+     "p90": 1930.68224,
+     "mean": 1741.34281,
+     "meanDur": 6.1076000000000015
+    }
+   },
+   "coresBusyDuringTiming": {
+    "t4": 3.9163294019733454,
+    "t2": 1.991236313713133
+   },
+   "decode5_5to6_5s": {
+    "t4": {
+     "n": 24,
+     "p50": 1455.9643,
+     "p90": 1572.00281
+    },
+    "t2": {
+     "n": 24,
+     "p50": 1733.52195,
+     "p90": 1865.6489
+    }
+   },
+   "full200AtT4": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 497803.58820000023,
+    "rtf": 0.19017412313475626,
+    "p50": 2145.7309999999998,
+    "p90": 3884.3450199999993,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "peakRssShortClipsMB": 396.0546875,
+   "peakRssShortClipsNote": "process peak RSS after load, warm-up and the 5-7 s clips only (max over the t4 and t2 runs)",
+   "peakRssFull200MB": 1107.00390625,
+   "peakRssFull200Note": "process peak RSS over the whole t4 run, including the 200 FLEURS clips up to 53.5 s long",
+   "loadRssAfterMB": {
+    "t4": 246.4609375,
+    "t2": 246.8203125
+   },
+   "gates": {
+    "wer10PointsBelowGroq": true,
+    "p50le700msAt4": false,
+    "p90le1500msAt4": false,
+    "rssLe1536MBShortClips": true,
+    "all": false
+   },
+   "rssLe1536MBOverFull200": true
+  },
+  "doc600-ta-int8": {
+   "all200": {
+    "n": 200,
+    "wer": 31.01810626298605,
+    "cer": 12.4269588313413,
+    "refWords": 3369,
+    "refChars": 30120
+   },
+   "pairedVsGroq": {
+    "nPaired": 200,
+    "groqWer": 56.426239240130606,
+    "localWer": 31.01810626298605,
+    "groqCer": 18.884462151394423,
+    "localCer": 12.4269588313413,
+    "werPointsLocalBelowGroq": 25.408132977144557,
+    "werDiffBoot95": [
+     21.717753024823413,
+     28.958403505483627
+    ],
+    "cerPointsLocalBelowGroq": 6.457503320053123,
+    "cerDiffBoot95": [
+     3.205299414814083,
+     9.676724269625847
+    ],
+    "perClipWer": {
+     "localBetter": 169,
+     "localWorse": 17,
+     "tie": 14,
+     "signTestMidP2Sided": 6.283877904532611e-33
+    },
+    "gateWer10PointsBelow": true
+   },
+   "loadMs": {
+    "t4": 10071.8286,
+    "t2": 12037.0708
+   },
+   "decode5to7s": {
+    "t4": {
+     "n": 50,
+     "p50": 2750.13655,
+     "p90": 2967.1549,
+     "mean": 2687.029821999999,
+     "meanDur": 6.1076000000000015
+    },
+    "t4Source": "timing phase of the full run",
+    "t4InFullRun": {
+     "n": 50,
+     "p50": 2750.13655,
+     "p90": 2967.1549,
+     "mean": 2687.029821999999,
+     "meanDur": 6.1076000000000015
+    },
+    "t2": {
+     "n": 50,
+     "p50": 4286.62055,
+     "p90": 4726.52076,
+     "mean": 4227.431872,
+     "meanDur": 6.1076000000000015
+    }
+   },
+   "coresBusyDuringTiming": {
+    "t4": 3.8737447149461706,
+    "t2": 1.9508547268375256
+   },
+   "decode5_5to6_5s": {
+    "t4": {
+     "n": 24,
+     "p50": 2699.64275,
+     "p90": 2963.37558
+    },
+    "t2": {
+     "n": 24,
+     "p50": 4196.3330000000005,
+     "p90": 4555.123619999999
+    }
+   },
+   "full200AtT4": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 1062501.0668000004,
+    "rtf": 0.40590347980226366,
+    "p50": 4715.87945,
+    "p90": 8331.588479999999,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "peakRssShortClipsMB": 845.3046875,
+   "peakRssShortClipsNote": "process peak RSS after load, warm-up and the 5-7 s clips only (max over the t4 and t2 runs)",
+   "peakRssFull200MB": 1260.1640625,
+   "peakRssFull200Note": "process peak RSS over the whole t4 run, including the 200 FLEURS clips up to 53.5 s long",
+   "loadRssAfterMB": {
+    "t4": 741.74609375,
+    "t2": 744.1328125
+   },
+   "gates": {
+    "wer10PointsBelowGroq": true,
+    "p50le700msAt4": false,
+    "p90le1500msAt4": false,
+    "rssLe1536MBShortClips": true,
+    "all": false
+   },
+   "rssLe1536MBOverFull200": true
+  }
+ },
+ "runs": {
+  "csn-int8-t4": {
+   "startedAt": "2026-11-15T17:17:35.055Z",
+   "cpuLoadBefore": 1,
+   "freeMBBefore": 3123,
+   "waitedMs": 453647,
+   "key": "csn-int8",
+   "threads": 4,
+   "mode": "full",
+   "loadMs": 2976.6095,
+   "warmupMs": 1008.3618,
+   "rssBeforeMB": 50.625,
+   "rssAfterLoadMB": 232.92578125,
+   "timing5to7": {
+    "n": 50,
+    "p50": 1015.2773,
+    "p90": 1163.68771,
+    "mean": 1010.826648,
+    "meanDur": 6.1076000000000015
+   },
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 996.58285,
+    "p90": 1077.52254
+   },
+   "full": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 480179.026,
+    "rtf": 0.18344107471672758,
+    "p50": 1948.3595,
+    "p90": 3961.464119999999,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "rssEndMB": 1327.52734375,
+   "peakRssSampledMB": 1359.48046875,
+   "maxRssOsMB": 1362.75390625
+  },
+  "csn-int8-t2": {
+   "startedAt": "2026-11-15T17:26:36.843Z",
+   "cpuLoadBefore": 29,
+   "freeMBBefore": 7407,
+   "waitedMs": 1512,
+   "key": "csn-int8",
+   "threads": 2,
+   "mode": "timing",
+   "loadMs": 3771.8654,
+   "warmupMs": 1375.5652,
+   "rssBeforeMB": 52.5078125,
+   "rssAfterLoadMB": 234.2890625,
+   "timing5to7": {
+    "n": 50,
+    "p50": 1222.08855,
+    "p90": 1371.60014,
+    "mean": 1213.0719759999997,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 485.36328125,
+   "maxRssOsAfterTimingMB": 485.36328125,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 1171.65675,
+    "p90": 1408.1327800000001
+   },
+   "rssEndMB": 485.36328125,
+   "peakRssSampledMB": 485.36328125,
+   "maxRssOsMB": 485.36328125
+  },
+  "ovos-fp32-t4": {
+   "startedAt": "2026-11-15T17:27:58.684Z",
+   "freeMBBefore": 6843,
+   "exitCode": 4294967295,
+   "signal": null,
+   "skipped": null,
+   "error": [
+    "D:\\a\\sherpa-onnx\\sherpa-onnx\\sherpa-onnx\\csrc\\offline-nemo-enc-dec-ctc-model.cc:Init:122 'vocab_size' does not exist in the metadata"
+   ]
+  },
+  "ovos-int8-t4": {
+   "startedAt": "2026-11-15T17:28:08.422Z",
+   "freeMBBefore": 6596,
+   "exitCode": 4294967295,
+   "signal": null,
+   "skipped": null,
+   "error": [
+    "D:\\a\\sherpa-onnx\\sherpa-onnx\\sherpa-onnx\\csrc\\offline-nemo-enc-dec-ctc-model.cc:Init:122 'vocab_size' does not exist in the metadata"
+   ]
+  },
+  "csn-int8-t4timing": {
+   "startedAt": "2026-11-15T17:28:15.174Z",
+   "cpuLoadBefore": 1,
+   "freeMBBefore": 6422,
+   "waitedMs": 1190,
+   "key": "csn-int8",
+   "threads": 4,
+   "mode": "timing",
+   "loadMs": 2553.1679,
+   "warmupMs": 986.0122,
+   "coresBusyDuringTiming": 3.8287886259553594,
+   "rssBeforeMB": 52.59765625,
+   "rssAfterLoadMB": 234.25390625,
+   "timing5to7": {
+    "n": 50,
+    "p50": 1020.4062,
+    "p90": 1136.84143,
+    "mean": 1023.9400260000002,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 486.1015625,
+   "maxRssOsAfterTimingMB": 486.1015625,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 975.07025,
+    "p90": 1080.08949
+   },
+   "rssEndMB": 486.1015625,
+   "peakRssSampledMB": 486.1015625,
+   "maxRssOsMB": 486.1015625
+  },
+  "doc600-ta-int8-t4": {
+   "startedAt": "2026-11-15T17:29:13.625Z",
+   "cpuLoadBefore": 37,
+   "freeMBBefore": 5762,
+   "waitedMs": 1194,
+   "key": "doc600-ta-int8",
+   "threads": 4,
+   "mode": "full",
+   "loadMs": 10071.8286,
+   "warmupMs": 2543.3939,
+   "coresBusyDuringTiming": 3.8737447149461706,
+   "rssBeforeMB": 52.8671875,
+   "rssAfterLoadMB": 741.74609375,
+   "timing5to7": {
+    "n": 50,
+    "p50": 2750.13655,
+    "p90": 2967.1549,
+    "mean": 2687.029821999999,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 842.234375,
+   "maxRssOsAfterTimingMB": 842.234375,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 2699.64275,
+    "p90": 2963.37558
+   },
+   "full": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 1062501.0668000004,
+    "rtf": 0.40590347980226366,
+    "p50": 4715.87945,
+    "p90": 8331.588479999999,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "rssEndMB": 1149.25390625,
+   "peakRssSampledMB": 1240.23828125,
+   "maxRssOsMB": 1260.1640625
+  },
+  "doc600-ta-int8-t2": {
+   "startedAt": "2026-11-16T16:46:16.580Z",
+   "cpuLoadBefore": 93,
+   "freeMBBefore": 3846,
+   "waitedMs": 1743,
+   "key": "doc600-ta-int8",
+   "threads": 2,
+   "mode": "timing",
+   "loadMs": 12037.0708,
+   "warmupMs": 4990.9403,
+   "coresBusyDuringTiming": 1.9508547268375256,
+   "rssBeforeMB": 56.32421875,
+   "rssAfterLoadMB": 744.1328125,
+   "timing5to7": {
+    "n": 50,
+    "p50": 4286.62055,
+    "p90": 4726.52076,
+    "mean": 4227.431872,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 845.3046875,
+   "maxRssOsAfterTimingMB": 845.3046875,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 4196.3330000000005,
+    "p90": 4555.123619999999
+   },
+   "rssEndMB": 845.3046875,
+   "peakRssSampledMB": 845.3046875,
+   "maxRssOsMB": 845.3046875
+  },
+  "ovos-fp32-meta-t4": {
+   "startedAt": "2026-11-16T18:10:40.802Z",
+   "cpuLoadBefore": 28,
+   "freeMBBefore": 4528,
+   "waitedMs": 13139,
+   "key": "ovos-fp32-meta",
+   "threads": 4,
+   "mode": "full",
+   "loadMs": 5504.5383,
+   "warmupMs": 699.5245,
+   "coresBusyDuringTiming": 3.914926664895391,
+   "rssBeforeMB": 62.640625,
+   "rssAfterLoadMB": 489.65625,
+   "timing5to7": {
+    "n": 50,
+    "p50": 270.03515000000004,
+    "p90": 316.68069,
+    "mean": 274.800884,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 673.73046875,
+   "maxRssOsAfterTimingMB": 673.73828125,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 272.96395,
+    "p90": 313.10227
+   },
+   "full": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 135522.9682,
+    "rtf": 0.0517733544975971,
+    "p50": 516.8672,
+    "p90": 1201.5623099999998,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "rssEndMB": 1170.98046875,
+   "peakRssSampledMB": 1202.34375,
+   "maxRssOsMB": 1207.16796875
+  },
+  "ovos-fp32-meta-t2": {
+   "startedAt": "2026-11-16T18:13:21.194Z",
+   "cpuLoadBefore": 63,
+   "freeMBBefore": 3896,
+   "waitedMs": 767,
+   "key": "ovos-fp32-meta",
+   "threads": 2,
+   "mode": "timing",
+   "loadMs": 2348.552,
+   "warmupMs": 399.1614,
+   "coresBusyDuringTiming": 1.9665358102778616,
+   "rssBeforeMB": 62.65625,
+   "rssAfterLoadMB": 489.8046875,
+   "timing5to7": {
+    "n": 50,
+    "p50": 422.92625,
+    "p90": 497.45738,
+    "mean": 426.791504,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 673.71484375,
+   "maxRssOsAfterTimingMB": 673.72265625,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 414.2439,
+    "p90": 472.00136
+   },
+   "rssEndMB": 673.734375,
+   "peakRssSampledMB": 673.734375,
+   "maxRssOsMB": 673.734375
+  },
+  "ovos-int8-meta-t4": {
+   "startedAt": "2026-11-16T18:13:47.854Z",
+   "cpuLoadBefore": 30,
+   "freeMBBefore": 3760,
+   "waitedMs": 622,
+   "key": "ovos-int8-meta",
+   "threads": 4,
+   "mode": "full",
+   "loadMs": 1700.4916,
+   "warmupMs": 1378.6334,
+   "coresBusyDuringTiming": 3.9163294019733454,
+   "rssBeforeMB": 62.63671875,
+   "rssAfterLoadMB": 246.4609375,
+   "timing5to7": {
+    "n": 50,
+    "p50": 1476.6732,
+    "p90": 1742.14672,
+    "mean": 1445.1932360000003,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 395.27734375,
+   "maxRssOsAfterTimingMB": 395.28515625,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 1455.9643,
+    "p90": 1572.00281
+   },
+   "full": {
+    "n": 200,
+    "audioSec": 2617.6199999999976,
+    "decodeMs": 497803.58820000023,
+    "rtf": 0.19017412313475626,
+    "p50": 2145.7309999999998,
+    "p90": 3884.3450199999993,
+    "emptyHyps": 0,
+    "tamilScriptShare": 1
+   },
+   "rssEndMB": 1104.62109375,
+   "peakRssSampledMB": 1104.62109375,
+   "maxRssOsMB": 1107.00390625
+  },
+  "ovos-int8-meta-t2": {
+   "startedAt": "2026-11-16T18:23:25.055Z",
+   "cpuLoadBefore": 2,
+   "freeMBBefore": 6771,
+   "waitedMs": 923,
+   "key": "ovos-int8-meta",
+   "threads": 2,
+   "mode": "timing",
+   "loadMs": 1628.6433,
+   "warmupMs": 1926.377,
+   "coresBusyDuringTiming": 1.991236313713133,
+   "rssBeforeMB": 62.57421875,
+   "rssAfterLoadMB": 246.8203125,
+   "timing5to7": {
+    "n": 50,
+    "p50": 1758.1236,
+    "p90": 1930.68224,
+    "mean": 1741.34281,
+    "meanDur": 6.1076000000000015
+   },
+   "peakRssSampledAfterTimingMB": 396.046875,
+   "maxRssOsAfterTimingMB": 396.0546875,
+   "timing5_5to6_5": {
+    "n": 24,
+    "p50": 1733.52195,
+    "p90": 1865.6489
+   },
+   "rssEndMB": 396.0546875,
+   "peakRssSampledMB": 396.0546875,
+   "maxRssOsMB": 396.0546875
+  }
+ },
+ "downloads": {
+  "source": "plain HTTPS GET of huggingface.co resolve/main URLs (curl -L); none gated; none refused",
+  "repoRevisions": {
+   "csndhanasekar/sherpa-onnx-indicconformer-ta-int8": "a41ba03ed8e489eda5e108cb49099b7c9cf83e8b",
+   "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx": "10e43940d12106763c3aebe1922b70d37fc0c6fd",
+   "Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8": "9fa6d9a76a863c4449935086f56155d3bc3994c1",
+   "google/fleurs": "70bb2e84b976b7e960aa89f1c648e09c59f894dd"
+  },
+  "files": [
+   {
+    "repo": "google/fleurs",
+    "path": "data/ta_in/test.tsv",
+    "bytes": 846022,
+    "sha256": "9ecedf850940ae13b75c1eecee692c581a44b7f560feecd9a53eaf5a3e838be7",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "google/fleurs",
+    "path": "data/ta_in/audio/test.tar.gz",
+    "bytes": 406616353,
+    "sha256": "244344ef4ca6ee0d9a0a4815686ab633ec2e8d0b70dcb7f63d53033266b99d6e",
+    "matchesHfLfsOid": true
+   },
+   {
+    "repo": "csndhanasekar/sherpa-onnx-indicconformer-ta-int8",
+    "path": "LICENSE",
+    "bytes": 207,
+    "sha256": "1c6a777dde0576732ae572cdf23f327c86dff916f6ab0197fa04b5e2add59731",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "csndhanasekar/sherpa-onnx-indicconformer-ta-int8",
+    "path": "README.md",
+    "bytes": 1650,
+    "sha256": "8e26faf63f619ef3cc56f68c6d7c83afbd9039f7ea43708c68e7af89c94f68e6",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "csndhanasekar/sherpa-onnx-indicconformer-ta-int8",
+    "path": "tokens.txt",
+    "bytes": 3299,
+    "sha256": "61c6ad5e1d4b28ebbd38853209cf169bdc4dcd62cc32d9ec5185f3530371636d",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "csndhanasekar/sherpa-onnx-indicconformer-ta-int8",
+    "path": "model.int8.onnx",
+    "bytes": 137563718,
+    "sha256": "dfedd42ca1a143fa0f08808b6b5d8f03d1a86e904d68375b335e39417128c0de",
+    "matchesHfLfsOid": true
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "README.md",
+    "bytes": 816,
+    "sha256": "9f9ca7fa5e1d0bffbb9dffa6635a35c0da21e04bcc8ae5646905b551a34bf691",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "config.json",
+    "bytes": 119,
+    "sha256": "4bfb1d53736f8b675b784d6ece61f5b8e7ae73ca2c0ed4c232e9135ac44ab909",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "vocab.txt",
+    "bytes": 3042,
+    "sha256": "f5a7955261f7eb7156521eecaf17a89521a507d2b740a3a60a2e6f6fb9b3ad36",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "model.onnx",
+    "bytes": 685514,
+    "sha256": "3ed6bfab7afc58a7b6924c6f45c060c75e7d45172dd624e51c38482f882514cc",
+    "matchesHfLfsOid": true
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "model.onnx_data",
+    "bytes": 481381380,
+    "sha256": "abdbaeb8976b3945c475c6a0d8a285c1b276e03381d89b76c83bc1b526ed7997",
+    "matchesHfLfsOid": true
+   },
+   {
+    "repo": "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx",
+    "path": "model.int8.onnx",
+    "bytes": 137677313,
+    "sha256": "b96af48383b0bd4b31014cddf3810e253c89865776264562a88926bfec339b48",
+    "matchesHfLfsOid": true
+   },
+   {
+    "repo": "Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8",
+    "path": "README.md",
+    "bytes": 3950,
+    "sha256": "2528e1bd42d7ffb98ac45c216c08d7b9367d45f42eca5f4485743ec83bc08a34",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8",
+    "path": "indicconformer-tokens.txt",
+    "bytes": 68875,
+    "sha256": "d4130fcac3d8300b5c225070b01a23487087835465b6898ea5ebf7023e7e55b4",
+    "matchesHfLfsOid": null
+   },
+   {
+    "repo": "Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8",
+    "path": "indicconformer-ta.int8.onnx",
+    "bytes": 658569148,
+    "sha256": "89773ffd03c20f150ec28406d8fb7e21a6a2017fa7d994eec03521dda85c65a7",
+    "matchesHfLfsOid": true
+   }
+  ]
+ },
+ "licences": {
+  "sherpa-onnx-node@2.0.1": "no LICENSE file in the installed package (files: README.md, package.json, *.js); package.json license field Apache-2.0 only",
+  "sherpa-onnx-win-x64@2.0.1": "no LICENSE file in the installed package (README.md, index.js, package.json, DLLs, sherpa-onnx.node); package.json license field Apache-2.0; bundles onnxruntime.dll 1.28.2 with no ONNX Runtime licence or notice file beside it",
+  "csndhanasekar/sherpa-onnx-indicconformer-ta-int8": "LICENSE file present (207 bytes) but it is a three-line attribution note naming MIT and the AI4Bharat source, not the MIT licence text; README YAML license: mit",
+  "OpenVoiceOS/ai4bharat-indicconformer-ta-onnx": "no LICENSE file in the repo; README YAML license: mit (tag only)",
+  "Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8": "no LICENSE file in the repo; README says MIT and that the int8 weights come from a further community export (abid1010/indic-conformer-600m-onnx)",
+  "google/fleurs": "dataset card YAML license cc-by-4.0; no standalone LICENSE file read; test use only"
+ },
+ "modelNotes": {
+  "csn-int8": "120M Tamil mono, CTC head, dynamic int8 (README); 257 tokens; README self-reports FLEURS ta_in test (first 100 distinct sentences) WER 33.5 / CER 16.7 for this file",
+  "ovos-fp32": "onnx-asr export, fp32 weights in external data file model.onnx_data; config.json model_type nemo-conformer-ctc, subsampling_factor 4; vocab.txt 257 lines in sherpa sym-id format",
+  "ovos-int8": "onnx-asr export, int8, same vocab",
+  "doc600-ta-int8": "600M multilingual encoder with a constant mask to the 256 Tamil tokens + blank over the shared 5,633-token CTC head (README); int8"
+ },
+ "onnxHeaders": {
+  "csn-int8": {
+   "opset": 17,
+   "producer": "onnx.quantize 0.1.0",
+   "sherpaMetadata": {
+    "vocab_size": 257,
+    "normalize_type": "per_feature",
+    "subsampling_factor": 4,
+    "model_type": "EncDecCTCModelBPE"
+   },
+   "inputs": [
+    "audio_signal",
+    "length"
+   ],
+   "output": "logprobs",
+   "quantOps": {
+    "DynamicQuantizeLinear": 158,
+    "ConvInteger": 54,
+    "MatMulInteger": 154
+   }
+  },
+  "ovos-fp32": {
+   "opset": 16,
+   "producer": "pytorch 2.12.1",
+   "sherpaMetadata": "none (no metadata_props at all)",
+   "externalInitializers": 603,
+   "inputs": [
+    "audio_signal",
+    "length"
+   ],
+   "output": "logprobs"
+  },
+  "ovos-int8": {
+   "opset": 16,
+   "producer": "onnx.quantize 0.1.0",
+   "sherpaMetadata": "none (only onnx.infer)",
+   "inputs": [
+    "audio_signal",
+    "length"
+   ],
+   "output": "logprobs",
+   "quantOps": {
+    "DynamicQuantizeLinear": 158,
+    "ConvInteger": 54,
+    "MatMulInteger": 154
+   }
+  },
+  "doc600-ta-int8": {
+   "opset": 16,
+   "producer": "onnx.compose.merge_models 1.0",
+   "sherpaMetadata": {
+    "vocab_size": 5633,
+    "normalize_type": "per_feature",
+    "subsampling_factor": 8,
+    "model_type": "EncDecCTCModelBPE"
+   },
+   "inputs": [
+    "audio_signal",
+    "length"
+   ],
+   "output": "logprobs",
+   "quantOps": {
+    "DynamicQuantizeLinear": 224,
+    "ConvInteger": 78,
+    "MatMulInteger": 217
+   }
+  }
+ },
+ "onnxHeadersHow": "read with a hand-written protobuf field walker (scripts/onnxmeta.js), no model loaded",
+ "notes": {
+  "patchedCopies": "The OpenVoiceOS fp32 and int8 files do NOT load in sherpa-onnx as they are: the process exits with 'vocab_size' does not exist in the metadata (exit code -1). For measurement only, a copy of each was made with four ModelProto.metadata_props entries appended at the end of the file (vocab_size=257, normalize_type=per_feature, subsampling_factor=4, model_type=EncDecCTCModelBPE; 108 bytes, scripts/addmeta.js); graph and weights untouched. Those copies are ovos-fp32-meta and ovos-int8-meta. The fp32 copy keeps its weights in the external file model.onnx_data and loaded with the decoder process working directory set to the model folder.",
+  "tokens": "OpenVoiceOS vocab.txt is identical to csndhanasekar tokens.txt apart from CRLF line endings (257 tokens).",
+  "gateRssBasis": "RSS gate read on the process peak after load, warm-up and the 50 natural 5-7 s clips (max of the 4- and 2-thread runs). Over the whole 200 (clips up to 53.5 s) every model peaked between 1.1 and 1.4 GB, still under 1.5 GB.",
+  "timingBasis": "Per-decode wall time = createStream + acceptWaveform + decode + getResult, audio already in memory, one warm-up decode excluded. 5-7 s set = all 50 natural 5-7 s clips of the 591-row test split (mean 6.11 s).",
+  "contention": "Another session ran a Next dev server and Playwright on the same laptop during the runs. Machine CPU load just before each run is in runs[].cpuLoadBefore (1-93 %); coresBusyDuringTiming shows the decoder process itself got about 3.8-3.9 cores at 4 threads and about 1.95 at 2 threads. The 120M int8 4-thread timing was repeated on an idle CPU (1 %) and matched (p50 1,020 vs 1,015 ms).",
+  "sleep": "The laptop slept during the 600M 4-thread full run (resume events 02:03 and 22:00 on 16 Nov). Its 5-7 s timing phase finished before the sleep; the largest per-clip real-time factor in the full run was 0.62 against a median 0.42, so no clip time carries the sleep.",
+  "cpu": "AMD Ryzen 5 5600H is Zen 3: AVX2, no AVX-512, no AVX-VNNI. Every int8 file here is dynamic-quantised (DynamicQuantizeLinear + MatMulInteger + ConvInteger) and none failed to load on the CPU provider (no ConvInteger error), but each was slower than fp32: same export, fp32 270 ms vs int8 1,477 ms p50 at 4 threads.",
+  "groqBudget": "Groq x-ratelimit-remaining-requests read 1999 after request 1 and 1800 after request 200 (daily limit 2,000). Audio-seconds remaining (rolling hourly window of 7,200) read 6,256 after request 200.",
+  "notMeasured": "No Groq run with the app's own prompt; no Tanglish or code-mixed audio (FLEURS is read Tamil); no office or phone-mic audio; no run inside Next 15; no streaming. Accuracy on this laptop's microphone and on the Collector's Tanglish is unverified."
+ }
+}

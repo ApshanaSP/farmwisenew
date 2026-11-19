@@ -1,0 +1,29 @@
+{
+ "at": "2026-11-15 21:35-21:41 IST",
+ "commit": "f830efbd",
+ "vitest": {
+  "command": "npx vitest run",
+  "passed": 5515,
+  "failed": 0,
+  "skipped": 13,
+  "total": 5528,
+  "success": true,
+  "seconds": 73
+ },
+ "tsc": {
+  "command": "npx tsc --noEmit --incremental false",
+  "exit": 0,
+  "seconds": 38
+ },
+ "build": {
+  "command": "npx next build",
+  "exit": 0,
+  "seconds": 131
+ },
+ "specs": {
+  "command": "npx playwright test (the seven Jarvis spec files)",
+  "passed": 39,
+  "failed": 0,
+  "minutes": 15.3
+ }
+}

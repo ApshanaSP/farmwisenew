@@ -1,0 +1,120 @@
+{
+ "tally": {
+  "n": 48,
+  "model": 46,
+  "fallback": 0,
+  "capacity": 0,
+  "grounded": 48,
+  "sentences": 114,
+  "failedAgain": 0,
+  "lists": 0,
+  "over4": 1,
+  "wordsP50": 35,
+  "outside": {
+   "n": 8,
+   "abstained": 6,
+   "found": 1,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 124
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 6,
+    "firstMsP50": 1092
+   },
+   "news": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": 1050
+   },
+   "compare": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 10,
+    "firstMsP50": 1031
+   },
+   "why": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 963
+   },
+   "followup": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 908
+   },
+   "outside": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 1122
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 30,
+    "model": 28,
+    "fallback": 0,
+    "rejected": 22,
+    "firstMsP50": 943
+   },
+   "ta": {
+    "n": 11,
+    "model": 11,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 1068
+   },
+   "tg": {
+    "n": 7,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 2,
+    "firstMsP50": 1122
+   }
+  },
+  "byModel": {
+   "claude-haiku-5-5": {
+    "n": 46,
+    "model": 46,
+    "fallback": 0,
+    "rejected": 29,
+    "firstMsP50": 1007
+   },
+   "none": {
+    "n": 2,
+    "model": 0,
+    "fallback": 0,
+    "rejected": 0,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {
+   "absolute": 6,
+   "name": 5,
+   "multiplier": 2,
+   "length": 2,
+   "list": 6,
+   "number": 3,
+   "superlative": 3,
+   "uncited": 1,
+   "misbound": 2,
+   "copy": 1
+  }
+ },
+ "problems": []
+}

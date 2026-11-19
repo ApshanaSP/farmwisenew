@@ -11,7 +11,12 @@ describe("choosing between forced decodes", () => {
   it("takes the more confident decode, leaning a little to the site's language", () => {
     expect(choose([dec("ta", "அடையாறு புகார்கள் காட்டு", -0.25), dec("en", "a dire pugar kaattu", -0.9)], "en")?.lang).toBe("ta");
     expect(choose([dec("ta", "ஷோ மீ த கேசஸ்", -0.7), dec("en", "show me the cases", -0.2)], "ta")?.lang).toBe("en");
-    expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("ta");
+    // v8 (the owner's example 4): two decodes that are translations of each other are weighed by their confidence alone (stt.v8.test.ts);
+    // the lean to the site's language stays for the same sounds in two scripts, and v7's rule under JARVIS_UNDERSTAND=v7
+    expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("en");
+    expect(choose([dec("ta", "அடையாறு புகார்", -0.35), dec("en", "Adyar pugar", -0.3)], "ta")?.lang).toBe("ta");
+    process.env.JARVIS_UNDERSTAND = "v7";
+    try { expect(choose([dec("ta", "அடையாறு நிலவரம்", -0.35), dec("en", "Adyar status", -0.3)], "ta")?.lang).toBe("ta"); } finally { delete process.env.JARVIS_UNDERSTAND; }
   });
   it("refuses no-speech, a looping text, high compression, a prompt echo and the wrong script", () => {
     expect(scoreDecode(dec("en", "hello", -0.2, { no_speech_prob: 0.7 })).why).toBe("no-speech");
@@ -33,7 +38,6 @@ describe("choosing between forced decodes", () => {
     expect(scoreDecode(dec("en", "Storm water drain", -0.9)).why).toBe("echo");
     expect(scoreDecode(dec("en", "Storm water drain", -0.3, { no_speech_prob: 0.4 })).why).toBe("echo");
     expect(scoreDecode(dec("en", "storm water drain, waterlogging, dengue", -0.3)).why).toBe("echo");
-    expect(scoreDecode({ ...dec("ta", "அண்ணா நகர் வெள்ளம்", -0.75), via: "gemini" }).ok).toBe(true);
   });
   it("reads a clip's length from the WAV header", () => {
     const b = new ArrayBuffer(44 + 32000), v = new DataView(b);
@@ -49,7 +53,8 @@ describe("hearing an utterance", () => {
   beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), "jv-stt-")); vi.stubEnv("THUNAI_DIR", dir); vi.stubEnv("GROQ_API_KEY", "x"); resetLedger(); });
   afterEach(() => { vi.unstubAllEnvs(); resetLedger(); });
 
-  it("an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with the prompt", async () => {
+  // v4 (ULTIMATE_JARVIS Pillar 5): one prompt per language, so the Tamil decode's names are in Tamil script (was: one prompt, "Adyar" in both)
+  it("an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with its own language's prompt", async () => {
     const seen: { model: string; lang: string; prompt: string }[] = [];
     const fetcher = (async (_u: string, init: RequestInit) => {
       const f = init.body as FormData;
@@ -58,7 +63,8 @@ describe("hearing an utterance", () => {
     }) as unknown as typeof fetch;
     const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(seen.map((x) => `${x.lang}:${x.model}`).sort()).toEqual(["en:whisper-large-v3-turbo", "ta:whisper-large-v3"]);
-    expect(seen.every((x) => x.prompt.includes("Adyar"))).toBe(true);
+    expect(seen.find((x) => x.lang === "en")?.prompt).toContain("Adyar");
+    expect(seen.find((x) => x.lang === "ta")?.prompt).toContain("அடையாறு");
     expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta", noise: false });
   });
   it("each model's budget is its own: turbo cooling leaves a named turn on large-v3; large-v3 cooling stops Tamil ambient with no post", async () => {
@@ -89,20 +95,17 @@ describe("hearing an utterance", () => {
     expect(calls).toBe(8);
     expect(h).toMatchObject({ budget: "low", text: "" });
   });
-  it("Whisper unsure of an engaged turn: the third racer is asked, and is not asked for an ambient sentence or a sure one", async () => {
+  // v5 B1: the Gemini third racer is gone; Whisper unsure of an engaged turn is answered by Whisper alone (stt.v5.test.ts)
+  it("Whisper unsure of an engaged turn: no third racer is asked, with or without GEMINI_API_KEY", async () => {
     vi.stubEnv("GEMINI_API_KEY", "g");
     const urls: string[] = [];
     const fetcher = (async (u: string) => {
       urls.push(u);
-      if (u.includes("generativelanguage")) return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ audioTranscription: { text: "அடையாறு புகார்கள் காட்டு" } }] } }] }), { status: 200 });
       return new Response(JSON.stringify({ text: "adhe arru", segments: [{ avg_logprob: -1.3, no_speech_prob: 0.1, compression_ratio: 1.2 }] }), { status: 200 });
     }) as unknown as typeof fetch;
-    const h = await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
-    expect(urls.some((u) => u.includes("gemini-3.5-transcribe"))).toBe(true);
-    expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta" });
-    urls.length = 0;
-    await hearUtterance(wav(), { lane: "ambient", site: "en", fetcher });
+    await hearUtterance(wav(), { lane: "engaged", site: "ta", fetcher });
     expect(urls.some((u) => u.includes("generativelanguage"))).toBe(false);
+    expect(urls.length).toBe(2);
   });
   it("a 429 is reported as low budget, not as a transcript or a crash", async () => {
     const fetcher = (async () => new Response("{}", { status: 429 })) as unknown as typeof fetch;

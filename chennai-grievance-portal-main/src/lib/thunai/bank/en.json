@@ -1,0 +1,1936 @@
+[
+ {
+  "recipe": "cases",
+  "text": "Bring up all the severe ones",
+  "slots": {
+   "sev": "Severe"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "List the open garbage complaints in Royapuram",
+  "slots": {
+   "zones": [
+    5
+   ],
+   "cat": "SOLID_WASTE",
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Police complaints still pending in Adyar",
+  "slots": {
+   "dept": "POL-GCP",
+   "zones": [
+    13
+   ],
+   "status": "open"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "What's overdue with storm water drains this week",
+  "slots": {
+   "dept": "GCC-SWD",
+   "status": "overdue",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Could you pull up the dengue cases in Kodambakkam, please",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Top five high severity incidents today, sorted by complaints",
+  "slots": {
+   "sev": "High",
+   "n": 5,
+   "period": "daily",
+   "sort": "complaints"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "streetlight issues, Anna Nagar, latest first",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    8
+   ],
+   "sort": "time"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Cases about the Pallikaranai marsh",
+  "slots": {
+   "q": "Pallikaranai marsh"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Show flooding cases in Manali, no, Madhavaram",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Resolved water supply cases this month in Valasaravakkam",
+  "slots": {
+   "status": "resolved",
+   "cat": "WATER_SUPPLY",
+   "period": "monthly",
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Just the medium ones in Mylapore taluk",
+  "slots": {
+   "sev": "Medium",
+   "taluk": "TLK-MYL"
+  }
+ },
+ {
+  "recipe": "cases",
+  "text": "Any stray dog complaints near Besant Nagar",
+  "slots": {
+   "cat": "STRAY_ANIMALS",
+   "q": "Besant Nagar"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Read today's headlines",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Any news on waterlogging in Velachery",
+  "slots": {
+   "q": "waterlogging Velachery"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "What's the press saying this week",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Read me the stories on the dengue outbreak",
+  "slots": {
+   "q": "dengue outbreak"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Headlines about the Ennore oil spill",
+  "slots": {
+   "q": "Ennore oil spill"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "news, garbage strike, this month",
+  "slots": {
+   "q": "garbage strike",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Could you read out the news on the metro rail work",
+  "slots": {
+   "q": "metro rail work"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Latest on the Perungudi dump yard fire",
+  "slots": {
+   "q": "Perungudi dump yard fire"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Today's news about Chembarambakkam lake, please",
+  "slots": {
+   "q": "Chembarambakkam lake",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "What's been reported on the cyclone warning",
+  "slots": {
+   "q": "cyclone warning"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Read the news... sorry, just the ones on road accidents this week",
+  "slots": {
+   "q": "road accidents",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "news",
+  "text": "Any headlines on the protest at Valluvar Kottam",
+  "slots": {
+   "q": "protest Valluvar Kottam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "How full is Puzhal",
+  "slots": {
+   "metric": "lakes",
+   "name": "Puzhal"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Reservoir levels, all of them",
+  "slots": {
+   "metric": "lakes"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "What's the air quality at Manali right now",
+  "slots": {
+   "metric": "aqi",
+   "name": "Manali"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Rainfall at Nungambakkam in the last day",
+  "slots": {
+   "metric": "rain",
+   "name": "Nungambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Is Chembarambakkam close to full",
+  "slots": {
+   "metric": "lakes",
+   "name": "Chembarambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "temperature readings across the city",
+  "slots": {
+   "metric": "temp"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "How humid is it at Meenambakkam",
+  "slots": {
+   "metric": "humidity",
+   "name": "Meenambakkam"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Check the AQI at all stations, please",
+  "slots": {
+   "metric": "aqi"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "How much did it rain at Alandur",
+  "slots": {
+   "metric": "rain",
+   "name": "Alandur"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Poondi, no, I mean Cholavaram, what's the storage",
+  "slots": {
+   "metric": "lakes",
+   "name": "Cholavaram"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Air at Velachery, how bad",
+  "slots": {
+   "metric": "aqi",
+   "name": "Velachery"
+  }
+ },
+ {
+  "recipe": "readings",
+  "text": "Show me the rain gauges",
+  "slots": {
+   "metric": "rain"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Which three gauges got the most rain",
+  "slots": {
+   "measure": "rain",
+   "n": 3
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Worst zones this week",
+  "slots": {
+   "measure": "zone_attention",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Which departments have the biggest backlog",
+  "slots": {
+   "measure": "dept_backlog"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Top five zones by severe incidents",
+  "slots": {
+   "measure": "zone_severe",
+   "n": 5
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Rank departments by overdue cases",
+  "slots": {
+   "measure": "dept_overdue"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Which zones have the fewest open cases",
+  "slots": {
+   "measure": "zone_open",
+   "order": "bottom"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "The hotspots, top ten",
+  "slots": {
+   "measure": "hotspots",
+   "n": 10
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Where's the air worst, top four stations",
+  "slots": {
+   "measure": "aqi",
+   "n": 4
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Zones with the most garbage complaints this month",
+  "slots": {
+   "measure": "zone_complaints",
+   "cat": "SOLID_WASTE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Rank the taluks by open incidents",
+  "slots": {
+   "measure": "taluk_open"
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Hottest places in the city, top three",
+  "slots": {
+   "measure": "temp",
+   "n": 3
+  }
+ },
+ {
+  "recipe": "ranking",
+  "text": "Which zones reported the most incidents, sorry, the most flooding incidents this quarter",
+  "slots": {
+   "measure": "zone_incidents",
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Compare Ambattur and Anna Nagar this week",
+  "slots": {
+   "zones": [
+    7,
+    8
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Teynampet versus Kodambakkam",
+  "slots": {
+   "zones": [
+    9,
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "How do Manali, Madhavaram and Thiruvottiyur stack up",
+  "slots": {
+   "zones": [
+    2,
+    3,
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Put storm water drains side by side with metro water",
+  "slots": {
+   "depts": [
+    "GCC-SWD",
+    "CMWSSB"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Adyar against Perungudi on severe cases this month",
+  "slots": {
+   "zones": [
+    13,
+    14
+   ],
+   "sev": "Severe",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "compare police and the corporation's solid waste team",
+  "slots": {
+   "depts": [
+    "POL-GCP",
+    "GCC-SWM"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Royapuram vs Tondiarpet, quarterly",
+  "slots": {
+   "zones": [
+    5,
+    4
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Could you compare Alandur and Valasaravakkam for me",
+  "slots": {
+   "zones": [
+    12,
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Sholinganallur and Perungudi, how different are they today",
+  "slots": {
+   "zones": [
+    15,
+    14
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Compare Adyar and Ambattur, no wait, Adyar and Alandur",
+  "slots": {
+   "zones": [
+    13,
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Public health versus medical services versus the pollution board",
+  "slots": {
+   "depts": [
+    "GCC-HLT",
+    "HLT-DMS",
+    "TNPCB"
+   ]
+  }
+ },
+ {
+  "recipe": "compare",
+  "text": "Anna Nagar, Teynampet, Kodambakkam and Valasaravakkam side by side for high severity",
+  "slots": {
+   "zones": [
+    8,
+    9,
+    10,
+    11
+   ],
+   "sev": "High"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "How has dengue been trending over the quarter in Teynampet",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    9
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Trend of garbage complaints this month",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Show flooding over time in Adyar",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Has road damage gone up in Ambattur this week",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "zones": [
+    7
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Water supply issues over the last three months",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "trend, streetlights, Manali",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "How have incidents in Sholinganallur moved this month",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Could you show me how air pollution complaints have risen and fallen",
+  "slots": {
+   "cat": "AIR_POLLUTION"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Sewage overflow over time in Royapuram, quarterly",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    5
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Trend for road accidents, no, traffic jams, this week",
+  "slots": {
+   "cat": "TRAFFIC_OBSTRUCTION",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "How's the fever situation trending in Kodambakkam",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "trend",
+  "text": "Stray dog complaints in Anna Nagar, the trend over the month",
+  "slots": {
+   "cat": "STRAY_ANIMALS",
+   "zones": [
+    8
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why is Royapuram so bad this week",
+  "slots": {
+   "zones": [
+    5
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "What's behind the rise in garbage complaints in Ambattur",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "cat": "SOLID_WASTE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why did flooding jump in Velachery today",
+  "slots": {
+   "zones": [
+    13
+   ],
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Reasons for more dengue in Teynampet",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "cat": "VECTOR_DISEASE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "why so many complaints in Madhavaram lately",
+  "slots": {
+   "zones": [
+    3
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Can you tell me why road accidents went up this month",
+  "slots": {
+   "cat": "ROAD_ACCIDENT",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why's Kodambakkam spiking",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "What's driving the sewage complaints in Tondiarpet",
+  "slots": {
+   "zones": [
+    4
+   ],
+   "cat": "DRAINAGE_SEWAGE"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why are there more streetlight problems in Alandur this week",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why is Anna Nagar, no, Valasaravakkam, so high this quarter",
+  "slots": {
+   "zones": [
+    11
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Reason behind the water supply surge in Thiruvottiyur",
+  "slots": {
+   "zones": [
+    1
+   ],
+   "cat": "WATER_SUPPLY"
+  }
+ },
+ {
+  "recipe": "why",
+  "text": "Why did tree fall complaints rise across the city",
+  "slots": {
+   "cat": "TREES_PARKS"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "How are the departments performing this week",
+  "slots": {
+   "by": "dept",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Zone-wise performance this month",
+  "slots": {
+   "by": "zone",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Which department is the slowest to close",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "How's each zone doing on closures",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Show me the departments' resolution rates for the quarter",
+  "slots": {
+   "by": "dept",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "how is the storm water team doing",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Rate the zones on how fast they're clearing complaints today",
+  "slots": {
+   "by": "zone",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Who's lagging among the departments",
+  "slots": {
+   "by": "dept"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Performance by zone, please, quarterly",
+  "slots": {
+   "by": "zone",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Department performance, no, make it zone-wise",
+  "slots": {
+   "by": "zone"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Are the corporation teams closing cases on time this month",
+  "slots": {
+   "by": "dept",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "performance",
+  "text": "Scorecard for the zones this week",
+  "slots": {
+   "by": "zone",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Build a flooding dashboard for Adyar",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Dengue dashboard, this month",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Give me a dashboard for Ambattur",
+  "slots": {
+   "zones": [
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Set up a garbage dashboard for Royapuram this week",
+  "slots": {
+   "cat": "SOLID_WASTE",
+   "zones": [
+    5
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Could you put together a road damage dashboard for the quarter",
+  "slots": {
+   "cat": "ROAD_DAMAGE",
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "dashboard, water supply, Manali",
+  "slots": {
+   "cat": "WATER_SUPPLY",
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "A full dashboard on today for Perungudi",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "I want a dashboard on air pollution",
+  "slots": {
+   "cat": "AIR_POLLUTION"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Make a dashboard for Teynampet, no, Kodambakkam",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Streetlight dashboard for Anna Nagar this month",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    8
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Dashboard of sewage problems in Tondiarpet, quarterly view",
+  "slots": {
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    4
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "dashboard",
+  "text": "Create a flood relief dashboard for this week",
+  "slots": {
+   "cat": "FLOOD_RELIEF",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Put the severe cases on a map",
+  "slots": {
+   "what": "severe"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Where are the hotspots, on the map",
+  "slots": {
+   "what": "hotspots"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Map out flooding in Adyar",
+  "slots": {
+   "what": "cases",
+   "cat": "FLOOD_WATERLOGGING",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Plot the garbage complaints across Ambattur",
+  "slots": {
+   "what": "cases",
+   "cat": "SOLID_WASTE",
+   "zones": [
+    7
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Overlay the high severity incidents",
+  "slots": {
+   "what": "cases",
+   "sev": "High"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "map, dengue, Kodambakkam",
+  "slots": {
+   "what": "cases",
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Can you show me Perungudi's hotspots on the map",
+  "slots": {
+   "what": "hotspots",
+   "zones": [
+    14
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Plot every road accident on the map",
+  "slots": {
+   "what": "cases",
+   "cat": "ROAD_ACCIDENT"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Map the severe ones in Royapuram, sorry, Tondiarpet",
+  "slots": {
+   "what": "severe",
+   "zones": [
+    4
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Show sewage complaints on the map for Teynampet and Alandur",
+  "slots": {
+   "what": "cases",
+   "cat": "DRAINAGE_SEWAGE",
+   "zones": [
+    9,
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Where are the fallen trees, put them on the map",
+  "slots": {
+   "what": "cases",
+   "cat": "TREES_PARKS"
+  }
+ },
+ {
+  "recipe": "map",
+  "text": "Overlay severe flooding cases on the map",
+  "slots": {
+   "what": "severe",
+   "cat": "FLOOD_WATERLOGGING"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Which schools are within a kilometre of the flooding in Perungudi",
+  "slots": {
+   "q": "Which schools are within a kilometre of the flooding in Perungudi"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Hospitals near Royapuram",
+  "slots": {
+   "q": "Hospitals near Royapuram"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Shelters within two kilometres of Manali",
+  "slots": {
+   "q": "Shelters within two kilometres of Manali"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "What wards border Velachery",
+  "slots": {
+   "q": "What wards border Velachery"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Nearest relief shelter to Kotturpuram",
+  "slots": {
+   "q": "Nearest relief shelter to Kotturpuram"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Are there schools close to the waterlogging in Saidapet",
+  "slots": {
+   "q": "Are there schools close to the waterlogging in Saidapet"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Any hospital within half a kilometre of the fire in Tondiarpet",
+  "slots": {
+   "q": "Any hospital within half a kilometre of the fire in Tondiarpet"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Which shelters are near the Thiruvottiyur coast",
+  "slots": {
+   "q": "Which shelters are near the Thiruvottiyur coast"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "How far is the nearest hospital from Pallikaranai",
+  "slots": {
+   "q": "How far is the nearest hospital from Pallikaranai"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Schools within three kilometres of Ennore creek",
+  "slots": {
+   "q": "Schools within three kilometres of Ennore creek"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Wards around Koyambedu, please",
+  "slots": {
+   "q": "Wards around Koyambedu, please"
+  }
+ },
+ {
+  "recipe": "nearby",
+  "text": "Shelters near Kodambakkam, no, near Vadapalani",
+  "slots": {
+   "q": "Shelters near Vadapalani"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Brief me",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "How do things stand across the district today",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Give me the morning brief",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Summary of the day, please",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Weekly brief",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "What do I need to know this morning",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Catch me up on the month",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Read me today's briefing",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Quick rundown of the district",
+  "slots": {}
+ },
+ {
+  "recipe": "brief",
+  "text": "Brief me on the week, no, just today",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Quarterly summary for the district",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "brief",
+  "text": "Where do things stand overall",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Open the approval tray",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Show me the drafts",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "What's waiting for my approval",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Pull up the pending drafts, large",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Drafts, please",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Let me see the letters you've prepared",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Anything in the tray for me to sign off",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Bring up the draft tray",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Show the notices I haven't approved yet",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Open drafts, no, the full approval tray",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "What have you drafted so far",
+  "slots": {}
+ },
+ {
+  "recipe": "drafts",
+  "text": "Approval queue",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Who's the zonal officer for Anna Nagar",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Is there an IMD warning in force right now",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Are all the data feeds up to date",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "How long is the verification queue",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Which news reports have no matching case on the console",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Which zone does Nanganallur fall under",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Is anything developing around Kodungaiyur",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "What kinds of incidents are coming from T. Nagar",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "How many people died in incidents this month",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "Who do I call in the storm water department for Perungudi",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "When did the news feed last refresh",
+  "slots": {}
+ },
+ {
+  "recipe": "answer",
+  "text": "What share of today's incidents are rated severe",
+  "slots": {}
+ },
+ {
+  "recipe": "prices",
+  "text": "Tomato rates at Koyambedu today",
+  "slots": {
+   "q": "tomato Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Onion prices",
+  "slots": {
+   "q": "onion"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "How much is small onion going for",
+  "slots": {
+   "q": "small onion"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Market prices for potato, please",
+  "slots": {
+   "q": "potato"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "What are drumstick rates like",
+  "slots": {
+   "q": "drumstick"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Rice price at the wholesale market",
+  "slots": {
+   "q": "rice"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Has the price of brinjal gone up",
+  "slots": {
+   "q": "brinjal"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Mandi rates for green chilli",
+  "slots": {
+   "q": "green chilli"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "banana price, Koyambedu",
+  "slots": {
+   "q": "banana Koyambedu"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Check the price of carrots, no, beans",
+  "slots": {
+   "q": "beans"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Coconut prices this week",
+  "slots": {
+   "q": "coconut"
+  }
+ },
+ {
+  "recipe": "prices",
+  "text": "Show me the vegetable market prices",
+  "slots": {
+   "q": "vegetables"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "What needs my attention first",
+  "slots": {}
+ },
+ {
+  "recipe": "advise",
+  "text": "What should I look at first in Adyar",
+  "slots": {
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Where should I focus today",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "On flooding, what needs me first this week",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "What's most urgent in Royapuram",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Advise me, what should I take up first on garbage",
+  "slots": {
+   "cat": "SOLID_WASTE"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "Any priorities for me in Sholinganallur this month",
+  "slots": {
+   "zones": [
+    15
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "What do you recommend I act on today in Ambattur",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "top priority on dengue, Teynampet",
+  "slots": {
+   "cat": "VECTOR_DISEASE",
+   "zones": [
+    9
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "What needs me in Manali, no, Madhavaram",
+  "slots": {
+   "zones": [
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "If I can only do one thing this week, what should it be",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "advise",
+  "text": "What should I push on first for streetlights in Alandur",
+  "slots": {
+   "cat": "STREETLIGHT_ELECTRICAL",
+   "zones": [
+    12
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "What stands out this week",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Any outliers in Anna Nagar",
+  "slots": {
+   "zones": [
+    8
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Anything unusual today",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "What's odd about Perungudi this month",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Give me the insights for the quarter",
+  "slots": {
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "What jumps out in Kodambakkam",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Any anomalies I should know about",
+  "slots": {}
+ },
+ {
+  "recipe": "insight",
+  "text": "Spot the outliers in Ambattur and Madhavaram",
+  "slots": {
+   "zones": [
+    7,
+    3
+   ]
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "insights, Royapuram, this week",
+  "slots": {
+   "zones": [
+    5
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "What stands out in Adyar, no, Alandur, today",
+  "slots": {
+   "zones": [
+    12
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Is anything out of the ordinary across the city this month",
+  "slots": {
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "insight",
+  "text": "Pull out the surprises for Thiruvottiyur",
+  "slots": {
+   "zones": [
+    1
+   ]
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "What's still unresolved",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Fill in the missing data",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "List the pending work",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "What's left unfinished from the follow-ups",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Complete the relief camp register",
+  "slots": {
+   "name": "relief camp register"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Fill the gaps in the ward contacts sheet",
+  "slots": {
+   "name": "ward contacts sheet"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Which cases are still hanging",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "What work is pending in Tondiarpet",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Can you fill in what's blank in the monsoon preparedness list",
+  "slots": {
+   "name": "monsoon preparedness list"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Show me everything left undone",
+  "slots": {}
+ },
+ {
+  "recipe": "complete",
+  "text": "Complete the... sorry, the desilting tracker, fill it in",
+  "slots": {
+   "name": "desilting tracker"
+  }
+ },
+ {
+  "recipe": "complete",
+  "text": "Unresolved items, please",
+  "slots": {}
+ },
+ {
+  "recipe": "changed",
+  "text": "What changed since yesterday",
+  "slots": {
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What's new this week",
+  "slots": {
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What changed in Adyar since yesterday",
+  "slots": {
+   "zones": [
+    13
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "How have severe incidents changed this month",
+  "slots": {
+   "metricId": "severe_reported",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What changed for storm water drains this week",
+  "slots": {
+   "dept": "GCC-SWD",
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What's different about flooding since yesterday",
+  "slots": {
+   "cat": "FLOOD_WATERLOGGING",
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Have open citizen complaints changed",
+  "slots": {
+   "metricId": "complaints_open"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "Anything new in Kodambakkam",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What changed with the reservoirs",
+  "slots": {
+   "metricId": "lakes"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What's changed in Ambattur this month, no, this quarter",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "How have rain days changed this month",
+  "slots": {
+   "metricId": "rain_days",
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "changed",
+  "text": "What changed for the police in Teynampet this week",
+  "slots": {
+   "dept": "POL-GCP",
+   "zones": [
+    9
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "Explain the Adyar part of this change",
+  "slots": {
+   "what": "change",
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "Explain the storm water drains line on this screen",
+  "slots": {
+   "what": "change",
+   "dept": "GCC-SWD"
+  }
+ },
+ {
+  "recipe": "explain",
+  "text": "What's behind the flooding row here, explain it",
+  "slots": {
+   "what": "change",
+   "cat": "FLOOD_WATERLOGGING"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "What's the situation in Adyar",
+  "slots": {
+   "zones": [
+    13
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "How are things in Ambattur today",
+  "slots": {
+   "zones": [
+    7
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Give me the full picture for Royapuram",
+  "slots": {
+   "zones": [
+    5
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Situation in Perungudi this week",
+  "slots": {
+   "zones": [
+    14
+   ],
+   "period": "weekly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "What's happening in Manali right now",
+  "slots": {
+   "zones": [
+    2
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "How's Teynampet looking this month",
+  "slots": {
+   "zones": [
+    9
+   ],
+   "period": "monthly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Kodambakkam, where do things stand",
+  "slots": {
+   "zones": [
+    10
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Could you give me the lay of the land in Sholinganallur",
+  "slots": {
+   "zones": [
+    15
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "Situation report for Thiruvottiyur, quarterly",
+  "slots": {
+   "zones": [
+    1
+   ],
+   "period": "quarterly"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "What's it like in Alandur, no, Valasaravakkam",
+  "slots": {
+   "zones": [
+    11
+   ]
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "The whole picture for Anna Nagar today, please",
+  "slots": {
+   "zones": [
+    8
+   ],
+   "period": "daily"
+  }
+ },
+ {
+  "recipe": "situation",
+  "text": "How is Madhavaram holding up this week",
+  "slots": {
+   "zones": [
+    3
+   ],
+   "period": "weekly"
+  }
+ }
+]

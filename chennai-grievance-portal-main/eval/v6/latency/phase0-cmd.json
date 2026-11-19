@@ -1,0 +1,472 @@
+{
+ "tag": "phase0",
+ "part": "cmd",
+ "at": "2026-11-17T06:38:20.371Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "cmd_trends",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 425,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": 1180,
+   "vadEnd": 419,
+   "transcribed": 774,
+   "trace": {
+    "lane": "rules",
+    "zeroVsTrue": 86,
+    "at": {
+     "voicedEnd": 86,
+     "eou": 419,
+     "uploadSent": 423,
+     "sttSent": 436,
+     "sttBack": 758,
+     "hearBack": 774,
+     "gateDone": 823
+    }
+   },
+   "voices": [],
+   "heard": "Go to Trends.",
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "cmd_severe",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 773,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2469,
+   "handed": 1654,
+   "ackMark": 1138,
+   "finding": 2469,
+   "answerEnd": 25751,
+   "screen": null,
+   "vadEnd": 768,
+   "transcribed": 1126,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 95,
+    "at": {
+     "voicedEnd": 95,
+     "eou": 768,
+     "uploadSent": 771,
+     "sttSent": 784,
+     "sttBack": 1107,
+     "hearBack": 1126,
+     "gateDone": 1138,
+     "firstEvent": 1558,
+     "speakCalled": 1582,
+     "toolsDone": 1534,
+     "voiceStart": 2469
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "Show the severe cases.",
+   "provider": null,
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_briefing",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 399,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 3040,
+   "handed": 1739,
+   "ackMark": 1206,
+   "finding": 3040,
+   "answerEnd": 15062,
+   "screen": null,
+   "vadEnd": 394,
+   "transcribed": 1172,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 73,
+    "at": {
+     "voicedEnd": 73,
+     "eou": 394,
+     "uploadSent": 397,
+     "sttSent": 403,
+     "sttBack": 1151,
+     "hearBack": 1172,
+     "gateDone": 1206,
+     "firstEvent": 1281,
+     "toolsDone": 1706,
+     "speakCalled": 1734,
+     "voiceStart": 3040
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "புத்தியின் பாடல் பின்னிருந்து.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 143,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_annanagar",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 408,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": 403,
+   "transcribed": 796,
+   "trace": {
+    "lane": "rules",
+    "zeroVsTrue": 62,
+    "at": {
+     "voicedEnd": 62,
+     "eou": 403,
+     "uploadSent": 407,
+     "sttSent": 420,
+     "sttBack": 772,
+     "hearBack": 796,
+     "gateDone": 814
+    }
+   },
+   "voices": [],
+   "heard": "Show Ananagar on the map.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 143,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_weekly",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 402,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2141,
+   "handed": 1560,
+   "ackMark": 819,
+   "finding": 2141,
+   "answerEnd": 19619,
+   "screen": null,
+   "vadEnd": 397,
+   "transcribed": 796,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 76,
+    "at": {
+     "voicedEnd": 76,
+     "eou": 397,
+     "uploadSent": 401,
+     "sttSent": 414,
+     "sttBack": 780,
+     "hearBack": 796,
+     "gateDone": 819,
+     "firstEvent": 863,
+     "plannerSent": 856,
+     "plannerBack": 1525,
+     "toolsDone": 1529,
+     "speakCalled": 1556,
+     "voiceStart": 2141
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "சுவிட்டு விளக்கில் பார்த்துக்கொள்ளுங்கள்.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2637,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_high",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 423,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2125,
+   "handed": 1289,
+   "ackMark": 843,
+   "finding": 2125,
+   "answerEnd": 24687,
+   "screen": null,
+   "vadEnd": 418,
+   "transcribed": 828,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 97,
+    "at": {
+     "voicedEnd": 97,
+     "eou": 418,
+     "uploadSent": 421,
+     "sttSent": 435,
+     "sttBack": 813,
+     "hearBack": 828,
+     "gateDone": 843,
+     "firstEvent": 1255,
+     "speakCalled": 1268,
+     "toolsDone": 1244,
+     "voiceStart": 2125
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "Show the high severity cases.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_env",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 445,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": 1194,
+   "vadEnd": 440,
+   "transcribed": 825,
+   "trace": {
+    "lane": "rules",
+    "zeroVsTrue": 97,
+    "at": {
+     "voicedEnd": 97,
+     "eou": 440,
+     "uploadSent": 443,
+     "sttSent": 456,
+     "sttBack": 803,
+     "hearBack": 825,
+     "gateDone": 837
+    }
+   },
+   "voices": [],
+   "heard": "Go to the environment page.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_monthly",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 421,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2822,
+   "handed": 4034,
+   "ackMark": 809,
+   "finding": 5293,
+   "answerEnd": 29750,
+   "screen": null,
+   "vadEnd": 416,
+   "transcribed": 790,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 73,
+    "at": {
+     "voicedEnd": 73,
+     "eou": 416,
+     "uploadSent": 419,
+     "sttSent": 432,
+     "sttBack": 773,
+     "hearBack": 790,
+     "gateDone": 808,
+     "firstEvent": 847,
+     "speakCalled": 4008,
+     "plannerSent": 841,
+     "plannerBack": 1432,
+     "toolsDone": 3984,
+     "voiceStart": 5293
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "Show me the monthly view.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 1828,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_studio",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 435,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2297,
+   "handed": 3681,
+   "ackMark": 1324,
+   "finding": 4360,
+   "answerEnd": 6254,
+   "screen": null,
+   "vadEnd": 430,
+   "transcribed": 1301,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 88,
+    "at": {
+     "voicedEnd": 88,
+     "eou": 430,
+     "uploadSent": 433,
+     "sttSent": 447,
+     "sttBack": 1278,
+     "hearBack": 1301,
+     "gateDone": 1324,
+     "firstEvent": 2436,
+     "plannerSent": 1368,
+     "plannerBack": 3645,
+     "toolsDone": 3650,
+     "speakCalled": 3676,
+     "voiceStart": 4360
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "பார்த்துக்கொண்டு செய்தியில் பாய்ப்படுத்தினேன்.",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4612,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_overview",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 394,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": 1192,
+   "vadEnd": 389,
+   "transcribed": 805,
+   "trace": {
+    "lane": "rules",
+    "zeroVsTrue": 57,
+    "at": {
+     "voicedEnd": 57,
+     "eou": 389,
+     "uploadSent": 392,
+     "sttSent": 405,
+     "sttBack": 787,
+     "hearBack": 805,
+     "gateDone": 822
+    }
+   },
+   "voices": [],
+   "heard": "Go back to the overview.",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4612,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_taluks",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 424,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 56,
+   "firstSpeech": 2603,
+   "handed": 4157,
+   "ackMark": 833,
+   "finding": 5130,
+   "answerEnd": 32881,
+   "screen": null,
+   "vadEnd": 419,
+   "transcribed": 812,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 88,
+    "at": {
+     "voicedEnd": 88,
+     "eou": 419,
+     "uploadSent": 423,
+     "sttSent": 435,
+     "sttBack": 797,
+     "hearBack": 812,
+     "gateDone": 833,
+     "firstEvent": 868,
+     "speakCalled": 4129,
+     "plannerSent": 861,
+     "plannerBack": 1795,
+     "toolsDone": 4110,
+     "voiceStart": 5130
+    }
+   },
+   "voices": [
+    "Microsoft பல்லவி Online (Natural) - Tamil (India)"
+   ],
+   "heard": "திருவிக்கையார்கள் பார்த்துக்கொள்ளுங்கள்.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 2787,
+   "path": "browser"
+  },
+  {
+   "clip": "cmd_medium",
+   "kind": "cmd",
+   "lang": "en",
+   "firstSound": 430,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 55,
+   "firstSpeech": 2187,
+   "handed": 1329,
+   "ackMark": 862,
+   "finding": 2187,
+   "answerEnd": 21609,
+   "screen": null,
+   "vadEnd": 425,
+   "transcribed": 845,
+   "trace": {
+    "lane": "planner",
+    "zeroVsTrue": 104,
+    "at": {
+     "voicedEnd": 104,
+     "eou": 425,
+     "uploadSent": 429,
+     "sttSent": 441,
+     "sttBack": 825,
+     "hearBack": 845,
+     "gateDone": 862,
+     "firstEvent": 1302,
+     "speakCalled": 1324,
+     "toolsDone": 1291,
+     "voiceStart": 2187
+    }
+   },
+   "voices": [
+    "Microsoft Neerja Online (Natural) - English (India)"
+   ],
+   "heard": "Show the medium cases.",
+   "provider": "qwen/qwen3.8-27b",
+   "tokens": 0,
+   "path": "browser"
+  }
+ ]
+}

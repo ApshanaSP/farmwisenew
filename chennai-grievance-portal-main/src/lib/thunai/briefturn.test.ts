@@ -33,7 +33,12 @@ describe("a brief on a named body, decided in code", () => {
   });
   it("the same answer, whichever way the police were named", async () => {
     const figures = new Set<string>();
-    for (const s of POLICE) { const r = await turn(s); figures.add(JSON.stringify(r.stage?.blocks.find((b) => b.kind === "Kpis"))); }
+    // the figures, not their labels: a Tamil or Tanglish naming gets the same tiles with Tamil labels (v4 brief, defect 9)
+    for (const s of POLICE) {
+      const r = await turn(s);
+      const k = r.stage?.blocks.find((b) => b.kind === "Kpis");
+      figures.add(JSON.stringify(k && k.kind === "Kpis" ? k.items.map(({ key, value, unit, prev, delta, tone }) => ({ key, value, unit, prev, delta, tone })) : null));
+    }
     expect(figures.size).toBe(1);
   });
   it("says what it took the words to mean when they were not the name", async () => {

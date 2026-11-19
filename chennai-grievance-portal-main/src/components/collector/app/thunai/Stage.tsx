@@ -16,10 +16,13 @@ import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 import StudioMap from "../studio/StudioMap";
 import { I, type IconName } from "../icons";
 import StageChart from "./StageChart";
+import { chartHeight, chartSpecOf } from "./chartspec";
+import { UNIT_TA } from "@/lib/thunai/stagelocal";
 import "leaflet/dist/leaflet.css";
 import "../studio/studio.css";
 import { CountUp } from "./countup";
 import { tabStop } from "./hudstore";
+import { SETTLE_MS } from "./hudview";
 import "./stage.css";
 
 /** Jarvis mode is on: the tiles count up */
@@ -72,8 +75,11 @@ interface Props {
   brain: { model: string | null; ms: number; rounds: number; calls: number } | null;
   filtered: string | null;
   saveAsk: string | null;
-  /** the subtitles: what was heard and what Thunai is saying (the console's dock hides while the Stage is open) */
-  caption: { heard: string; reply: string; alt?: string; interim: boolean; by: string | null };
+  /**
+   * the subtitles: what was heard and what Thunai is saying (the console's dock hides while the Stage is open). `streaming`: the
+   * answer's words are still arriving (the live region waits for all of them, then reads the answer once)
+   */
+  caption: { heard: string; reply: string; alt?: string; interim: boolean; by: string | null; streaming?: boolean };
   a: StageActions;
 }
 
@@ -82,6 +88,8 @@ const PERIODS = [["daily", "Today", "இன்று"], ["weekly", "Week", "வ�
 const SCOPED = new Set(["cases", "map", "dashboard", "trend", "why", "news", "performance", "ranking", "compare", "brief"]);
 const fmt = (v: number) => (Number.isInteger(v) ? v.toLocaleString("en-IN") : (Math.round(v * 10) / 10).toLocaleString("en-IN"));
 const reduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+/** a unit as the screen's language says it (the data's units are English codes: "incidents", "days", "₹/kg") */
+const unitIn = (u: string | null, lang: Lang): string | null => (u && lang === "ta" ? UNIT_TA[u] ?? (u === "points" ? "புள்ளிகள்" : u) : u);
 
 /** "2026-10-28 07:41:25" -> "28 Oct, 7:41 AM" */
 function when(t: string | null | undefined): string {
@@ -186,6 +194,15 @@ function Stage(p: Props) {
   const setPeriod = (period: string) => a.direct(doc.recipe, { ...slots, period }, `${doc.title} (${period})`);
   const setZone = (z: number | null) => a.direct(doc.recipe, doc.recipe === "compare" ? slots : { ...slots, zones: z ? [z] : [] }, doc.title);
   const metric = typeof slots.metric === "string" ? slots.metric : typeof slots.measure === "string" && ["rain", "aqi", "lakes", "temp"].includes(slots.measure as string) ? (slots.measure as string) : null;
+  // for screen readers: what the screen is doing, or the answer once it has stopped growing (half a second settled, and never while
+  // its words are still streaming in), so an answer is read once, not again with every sentence
+  const liveNow = p.busy ?? (p.caption.streaming ? null : p.caption.reply);
+  const [announced, setAnnounced] = useState(liveNow ?? "");
+  useEffect(() => {
+    if (liveNow == null) return;
+    const t = setTimeout(() => setAnnounced(liveNow), SETTLE_MS);
+    return () => clearTimeout(t);
+  }, [liveNow]);
 
   return createPortal(
     <div className="st-root" lang={p.lang} data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
@@ -199,7 +216,7 @@ function Stage(p: Props) {
               {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")} title={T(lang, "Previous screen", "முந்தைய திரை")}><I n="refresh" /></button>}
               <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Jarvis</span>
             </div>
-            <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.title}</h2>
+            <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.titles?.[lang] || doc.title}</h2>
             {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[lang]}</p>}
             {!!doc.next?.length && (
               <div className="st-sugg" role="group" aria-label={T(lang, "Suggested next", "அடுத்து")}>
@@ -289,10 +306,11 @@ function Stage(p: Props) {
           {p.busy && <div className="st-busy"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
         </main>
 
-        <p className="st-sr" role="status" aria-live="polite">{p.busy ?? p.caption.reply}</p>
+        <p className="st-sr" role="status" aria-live="polite">{announced}</p>
         <footer className="st-foot">
           {doc.asOf && <span title={`${T(lang, "From", "ஆதாரம்")}: ${doc.sources.join(", ") || "-"}`}><I n="clock" />{T(lang, "Data as of", "தரவு நேரம்")} {when(doc.asOf)}</span>}
-          {doc.notes.map((n) => <span key={n} className="note">{n}</span>)}
+          {/* the notes in the reader's language; a note with nothing in it is not shown as a blank */}
+          {(doc.notesBi?.map((n) => n[lang]) ?? doc.notes).filter((n) => n && n.trim()).map((n) => <span key={n} className="note">{n}</span>)}
         </footer>
       </div>
     </div>,
@@ -355,7 +373,7 @@ function BlockBody(p: BP) {
           {b.items.map((k) => (
             <div key={k.key} className={`st-kpi t-${k.tone}`}>
               <span className="lbl">{k.label}</span>
-              <b className="val">{hudOn() ? <CountUp value={k.value} format={fmt} /> : fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${k.unit}`}</small>}</b>
+              <b className="val">{hudOn() ? <CountUp value={k.value} format={fmt} /> : fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${unitIn(k.unit, lang)}`}</small>}</b>
               {k.delta == null && k.pct != null && k.pct !== 0 && <span className={`dl ${k.pct > 0 ? "up" : "down"}`}><I n={k.pct > 0 ? "up" : "down"} />{`${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%`}<em>{T(lang, " vs the period before", " முந்தைய காலத்துடன்")}</em></span>}
               {k.delta != null && k.delta !== 0 && (
                 <span className={`dl ${k.delta > 0 ? "up" : "down"}`}><I n={k.delta > 0 ? "up" : "down"} />{fmt(Math.abs(k.delta))}{k.pct != null ? ` (${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%)` : ""}{k.prev != null ? <em>{T(lang, ` vs ${fmt(k.prev)}`, ` / ${fmt(k.prev)}`)}</em> : null}</span>
@@ -378,9 +396,9 @@ function BlockBody(p: BP) {
             const vs = x.mean28 != null && x.mean28 > 0 ? Math.round(((x.value - x.mean28) / x.mean28) * 100) : null;
             return (
               <button key={x.id} className={`st-gauge${i === 0 ? " first" : ""}${p.reading?.key === x.name ? " reading" : ""}`} onClick={() => a.station(x.name, b.metric)}>
-                {pct != null ? <Ring pct={pct} /> : <span className="big">{fmt(x.value)}<small>{b.unit}</small></span>}
+                {pct != null ? <Ring pct={pct} /> : <span className="big">{fmt(x.value)}<small>{unitIn(b.unit, lang)}</small></span>}
                 <span className="nm">{x.name}</span>
-                {pct != null && <span className="v">{fmt(x.value)}{b.unit.includes("%") ? "% full" : ` ${b.unit}`}</span>}
+                {pct != null && <span className="v">{fmt(x.value)}{b.unit.includes("%") ? T(lang, "% full", "% நிரம்பியது") : ` ${unitIn(b.unit, lang)}`}</span>}
                 {vs != null && <span className={`vs ${vs >= 0 ? "up" : "down"}`}>{vs >= 0 ? "+" : "-"}{Math.abs(vs)}% {T(lang, "vs 28-day mean", "28 நாள் சராசரியுடன்")}</span>}
                 {x.anomaly && <span className="flag"><I n="alert" />{T(lang, "Unusual", "வழக்கத்துக்கு மாறானது")}</span>}
                 <time>{when(x.t)}</time>
@@ -413,14 +431,14 @@ function BlockBody(p: BP) {
                       <span className="rk">{x.rank}</span>
                       <span className="nm">{x.label}{x.sub && <small>{x.sub}</small>}</span>
                       <span className="bar" aria-hidden="true"><i /></span>
-                      <b>{fmt(x.value)}{b.unit && b.unit !== "points" ? <small> {b.unit}</small> : null}</b>
+                      <b>{fmt(x.value)}{b.unit && b.unit !== "points" ? <small> {unitIn(b.unit, lang)}</small> : null}</b>
                     </button>
                   </li>
                 );
               })}
             </ol>
           )}
-          {v === "table" && <Table cols={["#", T(lang, "Name", "பெயர்"), `${T(lang, "Value", "மதிப்பு")}${b.unit ? ` (${b.unit})` : ""}`, T(lang, "Detail", "விவரம்")]} rows={b.items.map((x) => [x.rank, x.label, fmt(x.value), x.sub ?? ""])} />}
+          {v === "table" && <Table cols={["#", T(lang, "Name", "பெயர்"), `${T(lang, "Value", "மதிப்பு")}${b.unit ? ` (${unitIn(b.unit, lang)})` : ""}`, T(lang, "Detail", "விவரம்")]} rows={b.items.map((x) => [x.rank, x.label, fmt(x.value), x.sub ?? ""])} />}
           {v === "map" && <MapBox geo={p.geo} title={b.title} shade={b.items.some((x) => x.zone != null && x.lat == null) ? { geo: "zone", label: b.title, values: b.items.filter((x) => x.zone != null).map((x) => ({ key: x.zone as number, value: x.value })) } : null}
             pins={b.items.filter((x) => x.lat != null && x.lon != null).map((x) => ({ n: x.rank, id: x.key, lat: x.lat as number, lon: x.lon as number, label: `${x.label}: ${fmt(x.value)}`, sev: null, hot: x.rank <= 3 }))}
             outline={b.items.filter((x) => x.zone != null).slice(0, 3).map((x) => x.zone as number)} onZone={a.zone} />}
@@ -447,18 +465,18 @@ function BlockBody(p: BP) {
           </Head>
           {!b.values.length ? <p className="st-empty">{T(lang, "No data for this period.", "இந்தக் காலத்துக்குத் தரவு இல்லை.")}</p>
             : v === "chart" ? <StageChart spec={{ type: "trend", labels: b.labels, values: b.values, unit: b.unit, marks: b.marks, normal: b.normal }} height={230} title={b.title} />
-              : <Table cols={[T(lang, "Period", "காலம்"), b.unit]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
+              : <Table cols={[T(lang, "Period", "காலம்"), unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
         </>
       );
     }
     case "Chart": {
       const v = p.view ?? "chart";
+      // a line chart is a line (chartspec.ts): it was drawn as upright bars
       return (
         <>
-          <Head title={b.title} icon={b.chart === "donut" ? "donut" : "barH"}><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
-          {v === "chart" ? <StageChart spec={b.chart === "donut" ? { type: "donut", labels: b.labels, values: b.values, unit: b.unit } : { type: "bars", labels: b.labels, values: b.values, keys: b.labels, unit: b.unit, horizontal: b.chart !== "bar" && b.chart !== "line", highlight: null }}
-            height={Math.max(180, Math.min(320, b.labels.length * 30 + 30))} title={b.title} />
-            : <Table cols={["", b.unit ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
+          <Head title={b.title} icon={b.chart === "donut" ? "donut" : b.chart === "line" ? "line" : "barH"}><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
+          {v === "chart" ? <StageChart spec={chartSpecOf(b)} height={chartHeight(b)} title={b.title} />
+            : <Table cols={["", unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
         </>
       );
     }

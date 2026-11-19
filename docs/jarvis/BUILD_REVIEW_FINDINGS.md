@@ -1,4 +1,47 @@
-# Review findings on the build prompt (read-only review, 4 Nov 2026)
+# Build review findings (v5 on top; the read-only review of the v3 build prompt, 4 Nov 2026, follows its own heading below)
+
+## v5 (16 Nov 2026): the Phase 7 review
+
+Five fresh reviewers, one per risk area (numbers and privacy; address gate, captions and wake; planner, prompt and quota; voice, detector and latency; evaluation honesty), each read-only on the diff from START `f830efbd`, then one skeptic per area who tried to refute every finding; at most four agents at once. **31 findings: the skeptics upheld 20, upheld part of 11, refuted 0.** Every high and medium finding the skeptics upheld is fixed with a test that failed first (25 fixed in all); the lows left are written down with the reason. Three fix lanes did most fixes; the lead did the rest.
+
+| Id | Reviewer | Skeptic | Where | Finding | Status |
+|---|---|---|---|---|---|
+| gate-captions-wake-1 | medium | upheld / medium | `src/lib/thunai/addressed.ts:144` | C1 only half done: the two tier-3 returns still fire inside the 20 s window, no switch removes them there, and RESULTS says this is a minor effect when on holdout3 it is most of the engaged acts | fixed: 367bf790 (failing test 10574124): both command returns only with JARVIS_GATE_COMMAND_TIER=1; side talk re-measured (6831ef74) |
+| gate-captions-wake-2 | medium | partly / low | `src/components/collector/app/thunai/conductor.ts:573` | With NEXT_PUBLIC_JARVIS_STRICT_AUDIO_GATE=1 and C5 cut, nothing can address Jarvis by voice while it is on and outside the window, "Jarvis, ..." included | not fixed (by design): the strict gate is off by default for this reason; in the handover |
+| gate-captions-wake-3 | low | upheld / low | `src/components/collector/app/thunai/conductor.ts:487` | laneNow's spokenOver branch is not bounded by ENGAGED_MS: after a cut answer, room speech stays on the uncapped engaged lane, and in an outage the stand-in recogniser streams it | fixed: 68436376 (failing test 5e8308d2) |
+| gate-captions-wake-4 | low | upheld / low | `tests/e2e/mode.spec.ts:147` | No browser spec now reaches the "Say Jarvis first" refusal of a level B step from a tier-3 sentence, which can still happen inside the window | not fixed (low): the in-window tier-3 path is gone after the C1 fix |
+| numbers-privacy-1 | high | upheld / high | `src/lib/thunai/numberwords.ts:202` | F1 reads every code-written count of 10,000 or more digit by digit | fixed: d39d2281 (failing test c61e1096): a bare count is said as a number; digit by digit only for codes (leading zero, a PIN after PIN or a place, an id word, over 15 digits) |
+| numbers-privacy-2 | medium | upheld / medium | `src/lib/thunai/shown.ts:11` | G3 copy check misses complaint titles on the Filled (complete) screen | fixed: e8864eaa (failing test before it) |
+| numbers-privacy-3 | low | upheld / low | `src/components/collector/app/thunai/Thunai.tsx:801` | G3 reads the Stage and turn id when the yes comes, not when the note was asked | not fixed (low): the shown text and turn id are read at the yes; written down for the owner |
+| numbers-privacy-4 | low | partly / low | `src/lib/thunai/store.ts:225` | Notes that never had a spoken-sentence check are still stamped collector-spoken | not fixed (low): only a hand-made request reaches it; the app never sends a legacy note |
+| voice-detector-latency-1 | medium | upheld / medium | `src/components/collector/app/thunai/trace.ts:52` | Trace stamps land on whichever trace is open, not on the turn that made them | fixed: 47cfecff, f3fbf3f6 (failing tests b7259de4, b028625e): every stamp lands on its own turn |
+| voice-detector-latency-2 | medium | upheld / low | `src/lib/thunai/stt.ts:173` | B2 echo rule (a) only fires when the whole transcript is a run of the prompt, so an echo with one extra word gets through | not fixed (low, skeptic): rule (a) is narrow on purpose so a real request holding names is never dropped |
+| voice-detector-latency-3 | low | upheld / low | `src/components/collector/app/thunai/mouth.ts:403` | Browser voiceStart is the first word boundary, never the voice's onstart | fixed: c672de31 (failing test 8576c824) |
+| voice-detector-latency-4 | low | partly / low | `src/components/collector/app/thunai/conductor.ts:266` | E2 caps early requests per detector sentence, not per turn | not fixed (low): E2 ships off |
+| voice-detector-latency-5 | low | partly / low | `src/components/collector/app/assistant/AnswerCard.tsx:71` | Read-aloud on Jarvis's answer cards hands digits straight to speechSynthesis (outside F1) | fixed: 09c08a2a (failing test 30d1a4be); Ask District IQ's read-aloud also says numbers in words now |
+| planner-quota-1 | medium | upheld / medium | `src/lib/thunai/quick.ts:616` | A4: a what-changed question that names two metrics gets a cases list from the rules, not the planner | fixed: 13f86e1b (failing test 01169bfd) |
+| planner-quota-2 | medium | partly / low | `src/lib/thunai/metrics.ts:139` | A4: names for metrics that have no earlier figure turn answerable what-changed questions into 'I can't show a change' | fixed: 13f86e1b (failing test 01169bfd) |
+| planner-quota-3 | medium | partly / low | `src/lib/thunai/metrics.ts:143` | A4 reads 'complaints' / 'புகார்கள்' as the open-citizen-complaints KPI, while every other rule reads them as cases | fixed: 13f86e1b (failing test 01169bfd) |
+| planner-quota-4 | medium | upheld / medium | `src/lib/thunai/deploycheck.ts:196` | Deploy check Step 4 looks for 'v5final-groq-planner-live60.json', but the brief's final-run command writes 'v5final-planner-live60.json' | fixed: 3d2e9555 (failing test f1ccddb7) |
+| planner-quota-5 | low | upheld / high | `src/lib/thunai/deploycheck.ts:185` | Steps 2-3 of the deploy check may use enough of the ledger's Claude day that Step 4's 720K-token guard refuses the live-60 | fixed: 7e7800fd (failing test 0f6bc9a5): the check keeps its own ledger; an unrun Step 4 prints the lead as undecided |
+| planner-quota-6 | low | partly / low | `src/lib/thunai/llm.ts:46` | JARVIS_CLAUDE_MODEL=claude-opus-5-5 still puts Opus on the first rung | fixed: 6d8f0acf (failing test 43f5f230): Opus, named by env, goes after the Groq ladder |
+| planner-quota-7 | low | partly / low | `playwright.config.ts:21` | Nothing in the default config enforces 'no live Claude call'; it depends on the shell | fixed: 9f10b3fc (failing test 98b5f702) |
+| planner-quota-8 | low | upheld / low | `src/lib/thunai/llm.ts:153` | A2 is incomplete: cancelled, hedge-lost and deadline calls are still recorded without the schema | fixed: aa560150 (failing test bdbc8ef7); v4 oracle updated 0b23e8b6 |
+| planner-quota-9 | low | upheld / low | `package.json:77` | undici 8.12.4 (E3, default on) needs Node >=22.19.0; the app declares engines node 22.x | fixed: 76e5e380 (failing test 802d1f1e): an older Node keeps the built-in fetch |
+| evaluation-honesty-1 | high | upheld / high | `src/lib/thunai/deploycheck.ts:195` | The deploy check never finds the v5 final run under the brief's tag, so it compares Haiku with v4's 39/60 run | fixed: 3d2e9555 (with planner-quota-4) |
+| evaluation-honesty-2 | medium | upheld / medium | `src/lib/thunai/grid.live.ts:52` | The grid counts a strict-mode 400 with no usable draft (and a 5xx 'busy') as a wrong answer | fixed: 3c67fd8e (grid files rescored) |
+| evaluation-honesty-3 | medium | upheld / medium | `eval/RESULTS.md:57` | Cells D and E did not run on 'the same 15 sentences' as A and B, and the H1/H2 conclusion rests on comparisons across days | fixed: b83c386e |
+| evaluation-honesty-4 | medium | partly / low | `src/lib/thunai/grid.live.ts:54` | Grid summaries and the RESULTS grid tables give only the clean-turn score, with no all-turn score and no capacity-failure label | fixed: 3c67fd8e |
+| evaluation-honesty-5 | medium | partly / medium | `src/lib/thunai/holdout.live.ts:287` | The owed repeat runs have no harness: no seeded 20-id subset, no script for pass^1, pass^3 or majority | fixed: ac8e06bd |
+| evaluation-honesty-6 | low | upheld / low | `src/lib/thunai/keepalive.live.ts:60` | The measurement that turns E3 on by default has no result file | fixed: 0c3e0535 (measurement rerun with its file) |
+| evaluation-honesty-7 | low | upheld / low | `eval/RESULTS.md:5` | Baseline figures and the stated raw-file folder are not in the branch | fixed: 537ca2a4 |
+| evaluation-honesty-8 | low | upheld / low | `eval/RESULTS.md:93` | Small mismatches between the latency figures and their result files | fixed: b83c386e |
+| evaluation-honesty-9 | low | partly / low | `eval/RESULTS.md:52` | The v5 section has stale lines, a pointer to commands that are not there, and no 'Not verified' or owed list yet | fixed in the final write-up (owed runs in HANDOVER, Not verified in RESULTS) |
+
+What the reviewers checked and found right (one line per area, from their reports): see the session notes `V5_REVIEW_FINDINGS.json` (checkedOk). Not in any table above: the reviewers found no path where a model-written figure reaches speech, no stored audio, no transcript in a trace or log, and no live Claude call in the build's runners.
+
+
+## The v3 build prompt review (4 Nov 2026)
 
 Written against an earlier draft, so section numbers refer to that draft. OPUS_BUILD_PROMPT_V3.md wins where they differ. A skeptic pass had not finished when this was saved: re-check a finding before relying on it.
 

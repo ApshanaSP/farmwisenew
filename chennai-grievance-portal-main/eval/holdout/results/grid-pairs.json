@@ -1,0 +1,90 @@
+{
+ "at": "2026-11-16T17:15:10.044Z",
+ "note": "b = right only in the first cell, c = right only in the second; exact two-sided McNemar. Direction rule (7.5): X beats Y when b - c >= 3 on a model and no model that ran both shows the opposite sign by 3 or more. With 16-24 pairs only large effects show.",
+ "pairs": [
+  {
+   "model": "openai/gpt-oss-120b",
+   "pair": "A vs B",
+   "n": 12,
+   "right A": 10,
+   "right B": 11,
+   "b": 0,
+   "c": 1,
+   "p": 1,
+   "midP": 0.5,
+   "reading": "about equal"
+  },
+  {
+   "model": "openai/gpt-oss-20b",
+   "pair": "A vs B",
+   "n": 10,
+   "right A": 9,
+   "right B": 6,
+   "b": 3,
+   "c": 0,
+   "p": 0.25,
+   "midP": 0.125,
+   "reading": "A beats B on this model"
+  },
+  {
+   "model": "openai/gpt-oss-20b",
+   "pair": "A vs D",
+   "n": 11,
+   "right A": 9,
+   "right D": 11,
+   "b": 0,
+   "c": 2,
+   "p": 0.5,
+   "midP": 0.25,
+   "reading": "about equal"
+  },
+  {
+   "model": "openai/gpt-oss-20b",
+   "pair": "A vs E",
+   "n": 10,
+   "right A": 8,
+   "right E": 8,
+   "b": 2,
+   "c": 2,
+   "p": 1,
+   "midP": 1,
+   "reading": "about equal"
+  },
+  {
+   "model": "openai/gpt-oss-20b",
+   "pair": "G vs A",
+   "n": 9,
+   "right G": 6,
+   "right A": 8,
+   "b": 0,
+   "c": 2,
+   "p": 0.5,
+   "midP": 0.25,
+   "reading": "about equal"
+  },
+  {
+   "model": "openai/gpt-oss-20b",
+   "pair": "G vs B",
+   "n": 12,
+   "right G": 9,
+   "right B": 8,
+   "b": 4,
+   "c": 3,
+   "p": 1,
+   "midP": 0.727,
+   "reading": "about equal"
+  },
+  {
+   "model": "qwen/qwen3.8-27b",
+   "pair": "A vs B",
+   "n": 8,
+   "right A": 7,
+   "right B": 7,
+   "b": 0,
+   "c": 0,
+   "p": 1,
+   "midP": 1,
+   "reading": "about equal"
+  }
+ ]
+}

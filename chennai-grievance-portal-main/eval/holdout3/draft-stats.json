@@ -1,0 +1,110 @@
+{
+ "at": "2026-11-15T03:39:37.332Z",
+ "attempt": 3,
+ "drafter": "gemini-3.5-flash-lite",
+ "labellers": [
+  "groq:openai/gpt-oss-120b"
+ ],
+ "seed": 20261115,
+ "over": 1.6,
+ "oldRows": 719,
+ "rounds": 2,
+ "drafted": 242,
+ "filtered": 1,
+ "duplicate": 0,
+ "labelDropped": 50,
+ "langDropped": 2,
+ "unlabelled": 0,
+ "agreed": 189,
+ "borrowed": 0,
+ "understanding": 120,
+ "target": 120,
+ "shortfall": 0,
+ "byLang": {
+  "en": 35,
+  "ta": 50,
+  "tanglish": 35
+ },
+ "byIntent": {
+  "followup": 28,
+  "howknow": 12,
+  "mission": 14,
+  "explain": 20,
+  "recall": 8,
+  "changed": 18,
+  "brief": 10,
+  "remember": 10
+ },
+ "followupExpect": {
+  "readings": 2,
+  "changed": 2,
+  "mission": 2,
+  "ranking": 2,
+  "map": 2,
+  "why": 3,
+  "howknow": 2,
+  "explain": 1,
+  "brief": 4,
+  "recall": 4,
+  "compare": 1,
+  "cases": 1,
+  "news": 1,
+  "remember": 1
+ },
+ "byLangIntent": {
+  "ta": {
+   "howknow": 5,
+   "explain": 8,
+   "followup": 12,
+   "changed": 8,
+   "recall": 3,
+   "brief": 4,
+   "mission": 6,
+   "remember": 4
+  },
+  "en": {
+   "followup": 8,
+   "mission": 4,
+   "howknow": 3,
+   "changed": 5,
+   "explain": 6,
+   "brief": 3,
+   "remember": 3,
+   "recall": 3
+  },
+  "tanglish": {
+   "recall": 2,
+   "changed": 5,
+   "explain": 6,
+   "brief": 3,
+   "mission": 4,
+   "howknow": 4,
+   "followup": 8,
+   "remember": 3
+  }
+ },
+ "live": 30,
+ "liveByLang": {
+  "en": 9,
+  "tanglish": 9,
+  "ta": 12
+ },
+ "ambient": 40,
+ "ambientTarget": 40,
+ "ambientShortfall": 0,
+ "ambientByLang": {
+  "tanglish": 12,
+  "ta": 16,
+  "en": 12
+ },
+ "ambientDraft": {
+  "rounds": 1,
+  "drafted": 76,
+  "filtered": 0,
+  "duplicate": 0,
+  "heardAsAddressed": 23,
+  "langDropped": 0,
+  "unlabelled": 0,
+  "agreed": 53
+ }
+}

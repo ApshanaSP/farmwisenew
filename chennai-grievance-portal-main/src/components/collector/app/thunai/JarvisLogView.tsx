@@ -2,13 +2,18 @@
 /**
  * The chatbot's second tab: what was asked of Jarvis and what it answered, newest at the bottom, in the chat's own look. An answer
  * that opened a screen can open it again, and an answer's chart stays with it until the page reloads.
+ *
+ * v5 (D2): it is also the measurement view. Under the list, folded away, the echo canceller the microphone really got and the last
+ * turn's per-stage timings (trace.ts), real numbers only, never in the bottom bar (rule 6).
  */
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { MapGeo } from "@/lib/collector/geo";
 import { useLang } from "@/lib/i18n/lang";
 import AnswerCard from "../assistant/AnswerCard";
 import { I } from "../icons";
 import { jarvisLog } from "./jarvislog";
+import { hud, measureLines } from "./hudstore";
+import { traceRows, traces } from "./trace";
 import StudioAnswer from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import "./jarvislog.css";
@@ -21,6 +26,15 @@ export default function JarvisLogView({ geo, onClose }: { geo: MapGeo | null; on
   const ta = lang === "ta";
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight }); }, [list.length]);
+  // the measurement view (D2): the echo canceller the track reports, and the last turn's trace, read after mount (they live in this
+  // browser only) and again as the list grows or the fold is opened
+  const echo = useSyncExternalStore(hud.subscribe, () => hud.get().strip.echo, () => null);
+  const [look, setLook] = useState(0);
+  const [measured, setMeasured] = useState<string[]>([]);
+  useEffect(() => {
+    const t = traces().at(-1);
+    setMeasured(measureLines(echo, t ? { rows: traceRows(t), lane: t.lane } : null, ta));
+  }, [echo, list.length, look, ta]);
   const again = (detail: { recipe: string; slots: Record<string, unknown>; title: string }) => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:open-pin", { detail })); };
   const ask = (q: string) => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); };
   return (
@@ -49,6 +63,12 @@ export default function JarvisLogView({ geo, onClose }: { geo: MapGeo | null; on
           </div>
         ))}
       </div>
+      {measured.length > 0 && (
+        <details className="jl-measure" data-jarvis-measure onToggle={() => setLook((n) => n + 1)} style={{ margin: "0 16px 8px", fontSize: 12, opacity: 0.8 }}>
+          <summary style={{ cursor: "pointer" }}>{ta ? "அளவீடுகள்" : "Measurements"}</summary>
+          {measured.map((l) => <p key={l} style={{ margin: "4px 0", fontVariantNumeric: "tabular-nums" }}>{l}</p>)}
+        </details>
+      )}
       {list.length > 0 && <div className="jl-foot"><button onClick={() => jarvisLog.clear()}><I n="trash" />{ta ? "பதிவை அழி" : "Clear this list"}</button></div>}
     </>
   );

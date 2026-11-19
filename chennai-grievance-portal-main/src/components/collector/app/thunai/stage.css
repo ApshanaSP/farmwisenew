@@ -36,6 +36,8 @@
   background: var(--bg); border: 1px solid var(--line-2); border-radius: 20px; box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .06);
   backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); animation: st-open .42s cubic-bezier(.16, 1, .3, 1) both;
 }
+/* v4 performance: no viewport blur on a machine with four cores or fewer, or under reduced motion (Thunai.tsx sets html.jv-lowfx once) */
+.jv-lowfx .st-frame { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--surface); }
 @keyframes st-open { from { opacity: 0; transform: translateY(14px) scale(.985); } }
 
 /* header */

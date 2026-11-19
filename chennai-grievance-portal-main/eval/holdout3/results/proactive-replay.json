@@ -1,0 +1,2538 @@
+{
+ "generatedAt": "2026-11-14T19:37:56.094Z",
+ "note": "Replay of the local store's cached history through src/lib/thunai/signals.ts and watch.ts. No model, no network. Alerts a day are the watch's signals at each day's end; 'new' are keys not raised the day before. The share 'real' is by a person's rule, not ground truth.",
+ "store": {
+  "incidents": "incidents-7086ed9a1e945692cc17009ed04106685065e609e294db45049b029acc139cb6.json.gz",
+  "observations": "observations-e6d4ba1b06e53c5ff77536740c2acf454bba63fbad68d731751f2589a7e5d36a.json.gz",
+  "incidentRows": 28049
+ },
+ "span": {
+  "from": "2026-05-08 19:19:54",
+  "to": "2026-11-04 19:10:00",
+  "days": 181
+ },
+ "replayed": {
+  "from": "2026-06-12",
+  "to": "2026-11-04",
+  "days": 146,
+  "firstJudgedAfterDays": 35
+ },
+ "readings": {
+  "rain": {
+   "rows": 141,
+   "synthetic": 0
+  },
+  "lakes": {
+   "rows": 3240,
+   "synthetic": 3240
+  },
+  "warnings": {
+   "rows": 310,
+   "synthetic": 0
+  },
+  "rainFrom": "2026-09-25 08:30:00"
+ },
+ "detector": {
+  "weeks": 4,
+  "window": 1,
+  "season": 7,
+  "q": 0.995,
+  "minCount": 5,
+  "persist": 2,
+  "cooldown": 7,
+  "worse": 1.5,
+  "minBaseline": 6,
+  "method": "negative-binomial threshold, improved-Farrington idea (Noufaily 2013), detect.ts"
+ },
+ "totals": {
+  "alerts": 102,
+  "alertsPerDay": {
+   "mean": 0.7,
+   "median": 1,
+   "max": 6,
+   "daysWithNone": 69
+  },
+  "newAlertsPerDay": {
+   "mean": 0.38,
+   "median": 0,
+   "max": 6
+  },
+  "byKind": {
+   "reservoir": 60,
+   "rise": 26,
+   "warning": 3,
+   "rain": 5,
+   "gap": 8
+  },
+  "bySeverity": {
+   "high": 83,
+   "medium": 19
+  },
+  "ruleReal": {
+   "all": {
+    "n": 102,
+    "real": 101,
+    "share": 99
+   },
+   "rises": {
+    "n": 26,
+    "real": 25,
+    "share": 96.2
+   },
+   "risesLooseRule": {
+    "rule": "count >= 1.5x baseline and >= 5",
+    "n": 26,
+    "real": 25,
+    "share": 96.2
+   },
+   "newRises": {
+    "n": 24,
+    "real": 23,
+    "share": 95.8
+   },
+   "byConstructionKinds": [
+    "reservoir",
+    "warning",
+    "rain",
+    "gap"
+   ]
+  },
+  "interjectionsPerDemoHour": {
+   "model": "11:00-12:00 Chennai time on each replayed day, the watch asked every minute, the Collector idle all hour (the most the policy allows)",
+   "withBriefAtPowerOn": {
+    "mean": 0.01,
+    "median": 0,
+    "max": 1,
+    "hoursWithNone": 144
+   },
+   "withoutBrief": {
+    "mean": 0.54,
+    "median": 0,
+    "max": 3,
+    "hoursWithNone": 79
+   }
+  }
+ },
+ "ms": 5679,
+ "days": [
+  {
+   "date": "2026-06-12",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-13",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-14",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-15",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-16",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-17",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-18",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-19",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-20",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-21",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-22",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-23",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-24",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-25",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-26",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-27",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-28",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-29",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-06-30",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-01",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-02",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-03",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-04",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-05",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-06",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-07",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-08",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-09",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-10",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-11",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-12",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-13",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-14",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-15",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-16",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-17",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-07-18",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 99,
+     "expected": 81.4,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-19",
+   "alerts": [
+    {
+     "key": "rise:cat:::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 10,
+     "expected": 3.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:palavanthangal lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 81.8,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "rise:dept::GCC-SWD:",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 24,
+     "expected": 9.9,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 2
+   }
+  },
+  {
+   "date": "2026-07-20",
+   "alerts": [
+    {
+     "key": "rise:dept::GCC-SWD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 44,
+     "expected": 11,
+     "new": false,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 82.3,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 2
+   }
+  },
+  {
+   "date": "2026-07-21",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 82.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-22",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 83.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-23",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 83.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-24",
+   "alerts": [
+    {
+     "key": "reservoir:palavanthangal lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 84.2,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-25",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 84.7,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-26",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 85.2,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-27",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 85.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-28",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 86.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-29",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 86.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-30",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 87.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-07-31",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 87.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-01",
+   "alerts": [
+    {
+     "key": "reservoir:nolambur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 88.3,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-02",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 88.8,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-03",
+   "alerts": [
+    {
+     "key": "reservoir:ambattur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 89.3,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-04",
+   "alerts": [
+    {
+     "key": "reservoir:chetpet lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 82,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-05",
+   "alerts": [
+    {
+     "key": "reservoir:chetpet lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 83,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-06",
+   "alerts": [
+    {
+     "key": "reservoir:chetpet lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 84,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-07",
+   "alerts": [
+    {
+     "key": "reservoir:chetpet lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 85,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-08",
+   "alerts": [
+    {
+     "key": "reservoir:chetpet lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 91,
+     "expected": 86,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-09",
+   "alerts": [
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 99,
+     "expected": 92.3,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-10",
+   "alerts": [
+    {
+     "key": "rise:zonecat:13::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 5,
+     "expected": 0.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:zonecat:5::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 5,
+     "expected": 0.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:dept::PWD-WRD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 34,
+     "expected": 7.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:dept::GCC-SWD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 43,
+     "expected": 11.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:adambakkam lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 99,
+     "expected": 93,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 1,
+    "noBrief": 3
+   }
+  },
+  {
+   "date": "2026-08-11",
+   "alerts": [
+    {
+     "key": "rise:cat:::DRAIN_WORKS_SAFETY",
+     "kind": "rise",
+     "severity": "high",
+     "value": 14,
+     "expected": 2.1,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:kolathur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 89.9,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "rise:cat:::DRAINAGE_SEWAGE",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 24,
+     "expected": 8.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 2
+   }
+  },
+  {
+   "date": "2026-08-12",
+   "alerts": [
+    {
+     "key": "reservoir:kolathur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 90.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-13",
+   "alerts": [
+    {
+     "key": "reservoir:kolathur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 91.5,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-14",
+   "alerts": [
+    {
+     "key": "reservoir:kolathur lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 92.2,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-15",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 87.6,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-16",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 88,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-17",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 88.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-18",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 88.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-19",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 89,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-20",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 89.4,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-21",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 89.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-22",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 90.1,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-23",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 93,
+     "expected": 80.9,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-24",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 81.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-25",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 82.6,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-26",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 92,
+     "expected": 83.4,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-27",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 91,
+     "expected": 84.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-28",
+   "alerts": [
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 99,
+     "expected": 92.2,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-29",
+   "alerts": [
+    {
+     "key": "rise:dept::GCC-SWD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 36,
+     "expected": 10.2,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:cat:::DRAIN_WORKS_SAFETY",
+     "kind": "rise",
+     "severity": "high",
+     "value": 11,
+     "expected": 2.9,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:madhavaram lake",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 98,
+     "expected": 92.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "rise:dept::GCC-ELE:",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 22,
+     "expected": 8.9,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:cat:::STREETLIGHT_ELECTRICAL",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 22,
+     "expected": 10.1,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 3
+   }
+  },
+  {
+   "date": "2026-08-30",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 87.2,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-08-31",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 88.2,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-01",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 89.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-02",
+   "alerts": [
+    {
+     "key": "reservoir:puzhal reservoir (red hills)",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 90.3,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-03",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 85.4,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-04",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 94,
+     "expected": 86.9,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-05",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 94,
+     "expected": 88.4,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-06",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 90,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-07",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 90.9,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-08",
+   "alerts": [
+    {
+     "key": "reservoir:chembarambakkam reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 91.1,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-09",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 96,
+     "expected": 86.8,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-10",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 87.2,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-11",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 95,
+     "expected": 87.7,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-12",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 94,
+     "expected": 88.1,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-13",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 94,
+     "expected": 88.6,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-14",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-15",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-16",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-17",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-18",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-19",
+   "alerts": [
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 91.2,
+     "new": true,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-09-20",
+   "alerts": [
+    {
+     "key": "rise:dept::PWD-WRD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 42,
+     "expected": 5.6,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:cat:::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 35,
+     "expected": 4.9,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "reservoir:cholavaram reservoir",
+     "kind": "reservoir",
+     "severity": "high",
+     "value": 97,
+     "expected": 91.8,
+     "new": false,
+     "rule": "storage >= 80 % full and >= 5 points over its 28-day mean",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "rise:dept::POL-GCP:",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 82,
+     "expected": 54.9,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": false,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": false,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 3
+   }
+  },
+  {
+   "date": "2026-09-21",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-22",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-23",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-24",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-25",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-26",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-27",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-28",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-29",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-09-30",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-01",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-02",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-03",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-04",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-05",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-06",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-07",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-08",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-09",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-10",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-11",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-12",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-13",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-14",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-15",
+   "alerts": [
+    {
+     "key": "rise:dept::DIST-DM:",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 8,
+     "expected": 0.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:cat:::FLOOD_RISK_SIGNAL",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 7,
+     "expected": 0.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-16",
+   "alerts": [
+    {
+     "key": "rise:dept::DIST-DM:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 12,
+     "expected": 0.8,
+     "new": false,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-10-17",
+   "alerts": [
+    {
+     "key": "warning:2026-10-17",
+     "kind": "warning",
+     "severity": "high",
+     "value": 2,
+     "expected": null,
+     "new": true,
+     "rule": "IMD warning level >= 2 (orange)",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "rain:chennai-nungambakkam",
+     "kind": "rain",
+     "severity": "medium",
+     "value": 70,
+     "expected": 64.5,
+     "new": true,
+     "rule": "24-hour rain >= 64.5 mm (IMD heavy)",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-10-18",
+   "alerts": [
+    {
+     "key": "rain:chennai-ennore",
+     "kind": "rain",
+     "severity": "high",
+     "value": 223,
+     "expected": 64.5,
+     "new": true,
+     "rule": "24-hour rain >= 64.5 mm (IMD heavy)",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-10-19",
+   "alerts": [
+    {
+     "key": "rain:chennai-ennore",
+     "kind": "rain",
+     "severity": "high",
+     "value": 223,
+     "expected": 64.5,
+     "new": false,
+     "rule": "24-hour rain >= 64.5 mm (IMD heavy)",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "warning:2026-10-19",
+     "kind": "warning",
+     "severity": "high",
+     "value": 2,
+     "expected": null,
+     "new": true,
+     "rule": "IMD warning level >= 2 (orange)",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 2
+   }
+  },
+  {
+   "date": "2026-10-20",
+   "alerts": [
+    {
+     "key": "warning:2026-10-20",
+     "kind": "warning",
+     "severity": "high",
+     "value": 2,
+     "expected": null,
+     "new": true,
+     "rule": "IMD warning level >= 2 (orange)",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-10-21",
+   "alerts": [
+    {
+     "key": "rain:chennai-meenambakkam",
+     "kind": "rain",
+     "severity": "high",
+     "value": 129,
+     "expected": 64.5,
+     "new": true,
+     "rule": "24-hour rain >= 64.5 mm (IMD heavy)",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 1
+   }
+  },
+  {
+   "date": "2026-10-22",
+   "alerts": [
+    {
+     "key": "rise:zonecat:5::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 8,
+     "expected": 0.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:cat:::DRAIN_WORKS_SAFETY",
+     "kind": "rise",
+     "severity": "high",
+     "value": 17,
+     "expected": 2.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:zonecat:10::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 6,
+     "expected": 0.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:dept::GCC-SWD:",
+     "kind": "rise",
+     "severity": "high",
+     "value": 46,
+     "expected": 12,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:zonecat:13::FLOOD_WATERLOGGING",
+     "kind": "rise",
+     "severity": "high",
+     "value": 6,
+     "expected": 1.3,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    },
+    {
+     "key": "rise:dept::PWD-WRD:",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 34,
+     "expected": 13.8,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 1,
+    "noBrief": 3
+   }
+  },
+  {
+   "date": "2026-10-23",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-24",
+   "alerts": [
+    {
+     "key": "rise:zone:8::",
+     "kind": "rise",
+     "severity": "medium",
+     "value": 26,
+     "expected": 12.1,
+     "new": true,
+     "rule": "count >= 2x baseline and >= 5",
+     "real": true,
+     "looseRule": "count >= 1.5x baseline and >= 5",
+     "looseReal": true,
+     "byConstruction": false
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-25",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-26",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-27",
+   "alerts": [],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-28",
+   "alerts": [
+    {
+     "key": "gap:1",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 1,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-29",
+   "alerts": [
+    {
+     "key": "gap:5",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 5,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-30",
+   "alerts": [
+    {
+     "key": "gap:9",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 9,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-10-31",
+   "alerts": [
+    {
+     "key": "gap:12",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 12,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-11-01",
+   "alerts": [
+    {
+     "key": "gap:16",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 16,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-11-02",
+   "alerts": [
+    {
+     "key": "rain:chennai-nungambakkam",
+     "kind": "rain",
+     "severity": "medium",
+     "value": 87,
+     "expected": 64.5,
+     "new": true,
+     "rule": "24-hour rain >= 64.5 mm (IMD heavy)",
+     "real": true,
+     "byConstruction": true
+    },
+    {
+     "key": "gap:19",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 19,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-11-03",
+   "alerts": [
+    {
+     "key": "gap:24",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 24,
+     "expected": null,
+     "new": true,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  },
+  {
+   "date": "2026-11-04",
+   "alerts": [
+    {
+     "key": "gap:24",
+     "kind": "gap",
+     "severity": "medium",
+     "value": 24,
+     "expected": null,
+     "new": false,
+     "rule": ">= 1 story in >= 2 outlets with no department record",
+     "real": true,
+     "byConstruction": true
+    }
+   ],
+   "interjections": {
+    "withBrief": 0,
+    "noBrief": 0
+   }
+  }
+ ]
+}

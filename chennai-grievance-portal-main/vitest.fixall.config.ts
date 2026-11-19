@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { defineConfig } from "vitest/config";
 
@@ -7,5 +8,7 @@ import { defineConfig } from "vitest/config";
 //   npx vitest run --config vitest.fixall.config.ts <files>
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
-  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 15_000 }
+  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 15_000,
+    // v6: mocked Claude calls' pretend costs go to a temporary spend record, never the owner's real one
+    env: { JARVIS_CLAUDE_BUDGET_FILE: path.join(os.tmpdir(), `jv-claude-budget-test-${process.pid}.sqlite`) } }
 });

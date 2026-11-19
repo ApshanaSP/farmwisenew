@@ -3,6 +3,7 @@
  * deletion breaks the chain. Text only: what was heard, the plan, the risk, approvals and the outcome. Never audio.
  */
 import crypto from "crypto";
+import type { DecisionRecord } from "./decisions";
 
 export interface AuditEvent {
   id: string;
@@ -13,6 +14,8 @@ export interface AuditEvent {
   risk: "A" | "B" | "C";
   approval: { how: "none" | "tap" | "spoken"; count?: number } | null;
   outcome: string;
+  /** v4: the decision record of an answer or a tray approval (decisions.ts); hashed with the rest of the line, absent on older lines */
+  record?: DecisionRecord;
 }
 
 export interface AuditLine extends AuditEvent { prev: string; hash: string }

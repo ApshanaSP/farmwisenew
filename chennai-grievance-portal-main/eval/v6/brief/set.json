@@ -1,0 +1,2354 @@
+{
+ "summary": {
+  "at": "2026-11-17T11:32:30.828Z",
+  "n": 34,
+  "news": 8,
+  "v5": {
+   "n": 34,
+   "numbersGrounded": 34,
+   "namesGrounded": 34,
+   "nextStep": 34,
+   "speechLike": 34,
+   "offer": 0,
+   "words": {
+    "p50": 31,
+    "p90": 36
+   },
+   "sentences2to4": 34
+  },
+  "v6": {
+   "n": 34,
+   "numbersGrounded": 34,
+   "namesGrounded": 34,
+   "nextStep": 34,
+   "speechLike": 34,
+   "offer": 34,
+   "words": {
+    "p50": 42,
+    "p90": 46
+   },
+   "sentences2to4": 34
+  },
+  "judge": {
+   "model": "gemini-3.5-flash-lite",
+   "en": {
+    "n": 22,
+    "v6": 17,
+    "v5": 5,
+    "tie": 0
+   },
+   "ta": {
+    "n": 22,
+    "v6": 12,
+    "v5": 10,
+    "tie": 0
+   }
+  }
+ },
+ "items": [
+  {
+   "id": "INC-20261117-869EF1",
+   "sev": "High",
+   "zone": null,
+   "news": true,
+   "facts": {
+    "what": "Road accident",
+    "place": "Chennai",
+    "zone": null,
+    "t": "2026-11-17 00:20:35",
+    "sla_due": "2026-11-17 06:20:35",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 12:20 AM",
+      "publisher": "The Hindu"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "சாலை விபத்து இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident reported early this morning. It's one of the serious ones: The Hindu reported it early this morning. The police have it, but no officer is named and the deadline passed this morning. I'd ask the police for an update today. Want the details?",
+    "ta": "இன்று அதிகாலையிலிருந்து சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று: The Hindu செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 29,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v5",
+    "reason": "Briefing A sounds more natural and concise, whereas B includes awkward repetition and an unnecessary closing question.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A includes the location (Chennai) and mentions what is stuck and who has it, whereas B omits key details like the location.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-F9A69A",
+   "sev": "High",
+   "zone": "Anna Nagar",
+   "news": true,
+   "facts": {
+    "what": "Crimes against women & children",
+    "place": "Arumbakkam",
+    "zone": "Anna Nagar",
+    "t": "2026-11-16 19:22:07",
+    "sla_due": "2026-11-17 01:22:07",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 7:44 AM",
+      "publisher": "Hindu Tamil Thisai"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a crime report at Arumbakkam. It's been open for about a day, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "அண்ணா நகர் பகுதியில் குற்றப் புகார் இருக்கிறது. ஏறக்குறைய ஒரு நாளாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A crime report at Arumbakkam came in yesterday evening. It's one of the serious ones: Hindu Tamil Thisai reported it this morning. The police have it, but no officer is named and the deadline passed early this morning. I'd ask the police for an update today. Want the details?",
+    "ta": "அண்ணா நகர் பகுதியில் நேற்று மாலையிலிருந்து குற்றப் புகார் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று: Hindu Tamil Thisai செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று அதிகாலை முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 32,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 49,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v5",
+    "reason": "Briefing A is concise, sounds like natural speech, and accurately captures the key details from the record without adding unverified information.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A includes all essential details like what and where, severity, SLA status, department involvement, and a clear next step in natural speech.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-4EC784",
+   "sev": "High",
+   "zone": null,
+   "news": true,
+   "facts": {
+    "what": "Road accident",
+    "place": "Chennai",
+    "zone": null,
+    "t": "2026-11-17 07:46:37",
+    "sla_due": "2026-11-17 13:46:37",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 7:46 AM",
+      "publisher": "The New Indian Express"
+     },
+     {
+      "t": "17 Nov 2026, 1:59 PM",
+      "publisher": "The Times of India"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "சாலை விபத்து இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident reported this morning. It's one of the serious ones: The New Indian Express reported it this morning. The police have it, but no officer is named and the deadline passed this afternoon. I'd ask the police for an update today. Want the details?",
+    "ta": "இன்று காலையிலிருந்து சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று: The New Indian Express செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று மதியம் முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 29,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A sounds more like natural speech and includes more relevant context from the record, such as the news publisher and specific details about the assigned officer and deadline.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A mentions the location and newspaper reports from the record, sounding more natural and informative than B.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-C3B142",
+   "sev": "High",
+   "zone": "Teynampet",
+   "news": true,
+   "facts": {
+    "what": "Violent crime",
+    "place": "Pattinapakkam",
+    "zone": "Teynampet",
+    "t": "2026-11-17 07:45:08",
+    "sla_due": "2026-11-17 13:45:08",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 7:45 AM",
+      "publisher": "The New Indian Express"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a crime report at Pattinapakkam. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "தேனாம்பேட்டை பகுதியில் குற்றப் புகார் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A crime report at Pattinapakkam came in this morning. It's one of the serious ones: The New Indian Express reported it this morning. The police have it, but no officer is named and the deadline passed this afternoon. I'd ask the police for an update today. Want the details?",
+    "ta": "தேனாம்பேட்டை பகுதியில் இன்று காலையிலிருந்து குற்றப் புகார் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று: The New Indian Express செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று மதியம் முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 31,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 49,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v5",
+    "reason": "Briefing A is more accurate to the record since the assigned officer is null, whereas B incorrectly claims the police have it when no officer is assigned.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing A is concise, sounds like natural speech, and covers all essential points without misstating the SLA deadline like B does.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-601E95",
+   "sev": "High",
+   "zone": "Teynampet",
+   "news": true,
+   "facts": {
+    "what": "Road accident",
+    "place": "Marina Beach",
+    "zone": "Teynampet",
+    "t": "2026-11-17 08:08:00",
+    "sla_due": "2026-11-17 14:08:00",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 8:08 AM",
+      "publisher": "Hindu Tamil Thisai"
+     },
+     {
+      "t": "17 Nov 2026, 8:08 AM",
+      "publisher": "Hindu Tamil Thisai"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident at Marina Beach. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "தேனாம்பேட்டை பகுதியில் சாலை விபத்து இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident at Marina Beach reported this morning. It's one of the serious ones: Hindu Tamil Thisai reported it this morning. The police have it, but no officer is named and the deadline passed this afternoon. I'd ask the police for an update today. Want the details?",
+    "ta": "தேனாம்பேட்டை பகுதியில் இன்று காலையிலிருந்து சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று: Hindu Tamil Thisai செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று மதியம் முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 32,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 48,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v5",
+    "reason": "Briefing B is more natural, concise, and sticks strictly to the record without adding conversational filler.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "A is shorter, sounds more like natural speech, and avoids hallucinating details like newspaper reports not mentioned in the record.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-08CBFD",
+   "sev": "Medium",
+   "zone": "Perungudi",
+   "news": true,
+   "facts": {
+    "what": "Theft, snatching & fraud",
+    "place": "Madipakkam",
+    "zone": "Perungudi",
+    "t": "2026-11-16 19:51:53",
+    "sla_due": "2026-11-19 19:51:53",
+    "status": "Open",
+    "sev": "Medium",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 7:51 PM",
+      "publisher": "Free Press Journal"
+     },
+     {
+      "t": "16 Nov 2026, 10:36 PM",
+      "publisher": "The Hindu"
+     },
+     {
+      "t": "17 Nov 2026, 7:21 AM",
+      "publisher": "DT Next"
+     },
+     {
+      "t": "17 Nov 2026, 3:36 PM",
+      "publisher": "Thanthi TV"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a crime report at Madipakkam. It's been open for about a day. I'd ask the police for an update.",
+    "ta": "பெருங்குடி பகுதியில் குற்றப் புகார் இருக்கிறது. ஏறக்குறைய ஒரு நாளாக தீர்க்கப்படாமல் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A crime report at Madipakkam came in yesterday evening. Free Press Journal reported it yesterday evening. The police have it, but no officer is named. I'd ask the police for an update. Want the details?",
+    "ta": "பெருங்குடி பகுதியில் நேற்று மாலையிலிருந்து குற்றப் புகார் இருக்கிறது. Free Press Journal செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை. காவல்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 20,
+     "sentences": 3,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 35,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A includes more key details from the record such as the location, the department handling it, and the missing assigned officer, while sounding natural.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A provides more relevant context from the record such as the timeline, media reports, and department involvement while sounding natural.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-FFD17C",
+   "sev": "Low",
+   "zone": "Perungudi",
+   "news": true,
+   "facts": {
+    "what": "Theft, snatching & fraud",
+    "place": "Perungudi",
+    "zone": "Perungudi",
+    "t": "2026-11-17 11:58:27",
+    "sla_due": "2026-11-24 11:58:27",
+    "status": "Open",
+    "sev": "Low",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 10:36 AM",
+      "publisher": "Dinakaran"
+     },
+     {
+      "t": "17 Nov 2026, 10:36 AM",
+      "publisher": "Dinakaran"
+     },
+     {
+      "t": "17 Nov 2026, 11:58 AM",
+      "publisher": "Dinakaran"
+     },
+     {
+      "t": "17 Nov 2026, 12:21 PM",
+      "publisher": "Daily Thanthi"
+     },
+     {
+      "t": "17 Nov 2026, 2:25 PM",
+      "publisher": "Thanthi TV"
+     },
+     {
+      "t": "17 Nov 2026, 2:48 PM",
+      "publisher": "ETV Bharat"
+     },
+     {
+      "t": "17 Nov 2026, 3:34 PM",
+      "publisher": "ETV Bharat"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a crime report at Perungudi. It's been open for several hours. I'd ask the police for an update.",
+    "ta": "பெருங்குடி பகுதியில் குற்றப் புகார் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A crime report at Perungudi came in this morning. Dinakaran reported it this morning. The police have it, but no officer is named. I'd ask the police for an update. Want the details?",
+    "ta": "பெருங்குடி பகுதியில் இன்று காலையிலிருந்து குற்றப் புகார் இருக்கிறது. Dinakaran செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை. காவல்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 19,
+     "sentences": 3,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 33,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A covers what happened, where, status, who has it, what is stuck, and a next step in a natural tone.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A is more natural, mentions the specific location and media reports, and suggests a clear next step without adding unsupported information.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-F4FB87",
+   "sev": "Medium",
+   "zone": "Teynampet",
+   "news": true,
+   "facts": {
+    "what": "Protests & public nuisance",
+    "place": "Marina Beach",
+    "zone": "Teynampet",
+    "t": "2026-11-16 21:21:30",
+    "sla_due": "2026-11-17 21:21:30",
+    "status": "Open",
+    "sev": "Medium",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 9:21 PM",
+      "publisher": "Dinamalar"
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a protest or public nuisance at Marina Beach. It's been open for several hours. I'd ask the police for an update.",
+    "ta": "தேனாம்பேட்டை பகுதியில் போராட்டம் அல்லது பொதுத் தொல்லை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A protest or public nuisance at Marina Beach since last night. Dinamalar reported it last night. The police have it, but no officer is named; it is due tonight. I'd ask the police for an update. Want the details?",
+    "ta": "தேனாம்பேட்டை பகுதியில் நேற்று இரவிலிருந்து போராட்டம் அல்லது பொதுத் தொல்லை இருக்கிறது. Dinamalar செய்தியிலும் வந்திருக்கிறது. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று இரவு வரை நேரம் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 22,
+     "sentences": 3,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 39,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A covers what happened, where, status, severity timeline, who has it, and a clear next step, whereas B misses several key details.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "A is shorter, sounds more like natural speech, and delivers the key points directly without rambling about missing officer names or SLA deadlines like B.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-E4E858",
+   "sev": "Severe",
+   "zone": "Valasaravakkam",
+   "news": false,
+   "facts": {
+    "what": "Unsafe buildings & walls",
+    "place": "Valasaravakkam",
+    "zone": "Valasaravakkam",
+    "t": "2026-11-17 08:44:30",
+    "sla_due": "2026-11-17 14:44:30",
+    "status": "Open",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 8:44 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's an unsafe building or wall at Valasaravakkam. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the PWD for an update today.",
+    "ta": "வளசரவாக்கம் பகுதியில் பாதுகாப்பற்ற கட்டடம் அல்லது சுவர் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "An unsafe building or wall at Valasaravakkam since this morning. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed this afternoon. I'd ask the PWD for an update today. Want the details?",
+    "ta": "வளசரவாக்கம் பகுதியில் இன்று காலையிலிருந்து பாதுகாப்பற்ற கட்டடம் அல்லது சுவர் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று மதியம் முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 33,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A sounds more like natural speech, mentions who has it and what is stuck, and offers details effectively.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing B is better because it clearly mentions that no officer is assigned yet and highlights the exact SLA deadline status, sounding natural and informative.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-440607",
+   "sev": "Severe",
+   "zone": "Royapuram",
+   "news": false,
+   "facts": {
+    "what": "Health services & hospital capacity",
+    "place": "Institute of Child Health and Hospital",
+    "zone": "Royapuram",
+    "t": "2026-11-17 00:00:00",
+    "sla_due": "2026-11-17 06:00:00",
+    "status": "Open",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "Government Hospitals",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "14 Nov 2026, 12:00 AM",
+      "publisher": null
+     },
+     {
+      "t": "17 Nov 2026, 12:00 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a hospital or health service problem at Royapuram. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today.",
+    "ta": "ராயபுரம் பகுதியில் மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A hospital or health service problem at Royapuram since early this morning. It's one of the serious ones. The health department has it, but no officer is named and the deadline passed this morning. I'd ask the health department for an update today. Want the details?",
+    "ta": "ராயபுரம் பகுதியில் இன்று அதிகாலையிலிருந்து மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 35,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "A sounds more like a natural spoken briefing and includes helpful conversational prompts while accurately reflecting the record.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A mentions the exact location, severity, department, deadline status, and sounds more like a natural, complete briefing with a clear next step.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-00C8D2",
+   "sev": "Severe",
+   "zone": "Royapuram",
+   "news": false,
+   "facts": {
+    "what": "Health services & hospital capacity",
+    "place": "Rajiv Gandhi Government General Hospital",
+    "zone": "Royapuram",
+    "t": "2026-11-17 00:00:00",
+    "sla_due": "2026-11-17 06:00:00",
+    "status": "Open",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "Government Hospitals",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 12:00 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a hospital or health service problem at Royapuram. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today.",
+    "ta": "ராயபுரம் பகுதியில் மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A hospital or health service problem at Royapuram since early this morning. It's one of the serious ones. The health department has it, but no officer is named and the deadline passed this morning. I'd ask the health department for an update today. Want the details?",
+    "ta": "ராயபுரம் பகுதியில் இன்று அதிகாலையிலிருந்து மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 35,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v5",
+    "reason": "Briefing A sounds more like natural speech and accurately reflects the record without inventing details like who has the task.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI service is busy. Try again in 10 s.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-6DF091",
+   "sev": "Severe",
+   "zone": "Royapuram",
+   "news": false,
+   "facts": {
+    "what": "Health services & hospital capacity",
+    "place": "Obstetrics and Gynecology Hospital Egmore",
+    "zone": "Royapuram",
+    "t": "2026-11-17 00:00:00",
+    "sla_due": "2026-11-17 06:00:00",
+    "status": "Open",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "Government Hospitals",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 12:00 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a hospital or health service problem at Egmore. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today.",
+    "ta": "ராயபுரம் பகுதியில் மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A hospital or health service problem at Egmore since early this morning. It's one of the serious ones. The health department has it, but no officer is named and the deadline passed this morning. I'd ask the health department for an update today. Want the details?",
+    "ta": "ராயபுரம் பகுதியில் இன்று அதிகாலையிலிருந்து மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 35,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-B4AF8F",
+   "sev": "Severe",
+   "zone": "Royapuram",
+   "news": false,
+   "facts": {
+    "what": "Health services & hospital capacity",
+    "place": "Stanley Medical College and Hospital",
+    "zone": "Royapuram",
+    "t": "2026-11-17 00:00:00",
+    "sla_due": "2026-11-17 06:00:00",
+    "status": "Open",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "Government Hospitals",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 12:00 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a hospital or health service problem at Royapuram. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today.",
+    "ta": "ராயபுரம் பகுதியில் மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A hospital or health service problem at Royapuram since early this morning. It's one of the serious ones. The health department has it, but no officer is named and the deadline passed this morning. I'd ask the health department for an update today. Want the details?",
+    "ta": "ராயபுரம் பகுதியில் இன்று அதிகாலையிலிருந்து மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. சுகாதாரத் துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 35,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-A4884F",
+   "sev": "Severe",
+   "zone": "Madhavaram",
+   "news": false,
+   "facts": {
+    "what": "Unsafe buildings & walls",
+    "place": "Mathur",
+    "zone": "Madhavaram",
+    "t": "2026-11-16 23:59:35",
+    "sla_due": "2026-11-17 05:59:35",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 11:59 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's an unsafe building or wall at Madhavaram. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the PWD for an update today.",
+    "ta": "மாதவரம் பகுதியில் பாதுகாப்பற்ற கட்டடம் அல்லது சுவர் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "An unsafe building or wall at Madhavaram since last night. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed this morning. I'd ask the PWD for an update today. Want the details?",
+    "ta": "மாதவரம் பகுதியில் நேற்று இரவிலிருந்து பாதுகாப்பற்ற கட்டடம் அல்லது சுவர் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 33,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-C62ACB",
+   "sev": "Severe",
+   "zone": "Alandur",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Nandambakkam (Adyar River - Nandambakkam stretch)",
+    "zone": "Alandur",
+    "t": "2026-11-16 23:24:09",
+    "sla_due": "2026-11-17 05:24:09",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 7:29 AM",
+      "publisher": null
+     },
+     {
+      "t": "16 Nov 2026, 11:24 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Adyar. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there today.",
+    "ta": "ஆலந்தூர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே."
+   },
+   "v6": {
+    "en": "Standing water at Adyar since last night. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed this morning. I'd ask the PWD to send a pump and check the drain there today. Want the details?",
+    "ta": "ஆலந்தூர் பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே. மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 36,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 45,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing A sounds more natural and concise, whereas B includes unnecessary conversational filler at the end.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-4E7CC9",
+   "sev": "Severe",
+   "zone": "Anna Nagar",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Chetpet",
+    "zone": "Anna Nagar",
+    "t": "2026-11-16 23:10:05",
+    "sla_due": "2026-11-17 05:10:05",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 11:10 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Anna Nagar. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police to send a pump and check the drain there today.",
+    "ta": "அண்ணா நகர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே."
+   },
+   "v6": {
+    "en": "Standing water at Anna Nagar since last night. It's one of the serious ones. The police have it, but no officer is named and the deadline passed this morning. I'd ask the police to send a pump and check the drain there today. Want the details?",
+    "ta": "அண்ணா நகர் பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. காவல்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே. மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 37,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A correctly identifies the location as Chetpet in Anna Nagar from the record, mentions the missed deadline, and adopts a natural conversational tone.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A covers what happened, location, severity, current status, and next steps more naturally and completely based on the record.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-356961",
+   "sev": "Severe",
+   "zone": "Teynampet",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Santhome (Adyar River - Estuary stretch)",
+    "zone": "Teynampet",
+    "t": "2026-11-16 22:13:14",
+    "sla_due": "2026-11-17 04:13:14",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 1,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 10:13 PM",
+      "publisher": null
+     },
+     {
+      "t": "17 Nov 2026, 9:43 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Santhome. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there today.",
+    "ta": "தேனாம்பேட்டை பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே."
+   },
+   "v6": {
+    "en": "Standing water at Santhome since last night. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed early this morning. I'd ask the PWD to send a pump and check the drain there today. Want the details?",
+    "ta": "தேனாம்பேட்டை பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று அதிகாலை முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே. மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 36,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A sounds more natural and includes critical details from the record such as the department involved and the overdue SLA status.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI service is busy. Try again in 10 s.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-2BB394",
+   "sev": "Severe",
+   "zone": "Sholinganallur",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Semmancheri",
+    "zone": "Sholinganallur",
+    "t": "2026-11-16 21:51:39",
+    "sla_due": "2026-11-17 03:51:39",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 9:51 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Semmancheri. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there today.",
+    "ta": "சோழிங்கநல்லூர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே."
+   },
+   "v6": {
+    "en": "Standing water at Semmancheri since last night. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed early this morning. I'd ask the PWD to send a pump and check the drain there today. Want the details?",
+    "ta": "சோழிங்கநல்லூர் பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று அதிகாலை முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே. மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 36,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-D25A2C",
+   "sev": "Severe",
+   "zone": "Thiru-Vi-Ka-Nagar",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Otteri",
+    "zone": "Thiru-Vi-Ka-Nagar",
+    "t": "2026-11-16 20:20:41",
+    "sla_due": "2026-11-17 02:20:41",
+    "status": "In progress",
+    "sev": "Severe",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 8:20 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Otteri. It's been open for about a day, and it's past its deadline. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there today.",
+    "ta": "திருவிக நகர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. ஏறக்குறைய ஒரு நாளாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே."
+   },
+   "v6": {
+    "en": "Standing water at Otteri since yesterday evening. It's one of the serious ones. The PWD has it, but no officer is named and the deadline passed early this morning. I'd ask the PWD to send a pump and check the drain there today. Want the details?",
+    "ta": "திருவிக நகர் பகுதியில் நேற்று மாலையிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று அதிகாலை முடிந்துவிட்டது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம், இன்றே. மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 37,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 46,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-215EE0",
+   "sev": "High",
+   "zone": "Anna Nagar",
+   "news": false,
+   "facts": {
+    "what": "Road accident",
+    "place": "Kilpauk",
+    "zone": "Anna Nagar",
+    "t": "2026-11-17 15:35:53",
+    "sla_due": "2026-11-17 21:35:53",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 3:35 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident at Kilpauk. It's been open for a couple of hours. It's one of the serious ones. I'd ask the police for an update.",
+    "ta": "அண்ணா நகர் பகுதியில் சாலை விபத்து இருக்கிறது. ஓரிரு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident at Kilpauk reported in the last hour or two. It's one of the serious ones. The police have it, but no officer is named; it is due tonight. I'd ask the police for an update. Want the details?",
+    "ta": "அண்ணா நகர் பகுதியில் கடந்த ஓரிரு மணி நேரமாக சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று இரவு வரை நேரம் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 27,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 41,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-C42650",
+   "sev": "High",
+   "zone": "Kodambakkam",
+   "news": false,
+   "facts": {
+    "what": "Street lights & electrical hazards",
+    "place": "West Jones Road, Saidapet West, Saidapet West",
+    "zone": "Kodambakkam",
+    "t": "2026-11-17 13:21:00",
+    "sla_due": "2026-11-18 13:21:00",
+    "status": "Under review",
+    "sev": "High",
+    "complaints": 1,
+    "dept": "Street Lighting & Electrical",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 1:21 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a street light or electrical problem at Saidapet. It's been open for several hours. It's one of the serious ones. I'd ask the corporation for an update.",
+    "ta": "கோடம்பாக்கம் பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A street light or electrical problem at Saidapet since this afternoon. It's one of the serious ones. The corporation has it, but no officer is named; it is due tomorrow. I'd ask the corporation for an update. Want the details?",
+    "ta": "கோடம்பாக்கம் பகுதியில் இன்று மதியத்திலிருந்து தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. மாநகராட்சி பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; நாளை வரை நேரம் இருக்கிறது. மாநகராட்சியிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 28,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 40,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing B is shorter, sounds more natural, and correctly includes what happened, where, and the next steps without unnecessary conversational filler.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-7F2917",
+   "sev": "High",
+   "zone": "Tondiarpet",
+   "news": false,
+   "facts": {
+    "what": "Protests & public nuisance",
+    "place": "Korukkupet",
+    "zone": "Tondiarpet",
+    "t": "2026-11-17 11:45:18",
+    "sla_due": "2026-11-17 17:45:18",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 11:45 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a protest or public nuisance at Tondiarpet. It's been open for several hours. It's one of the serious ones. I'd ask the police for an update.",
+    "ta": "தண்டையார்பேட்டை பகுதியில் போராட்டம் அல்லது பொதுத் தொல்லை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A protest or public nuisance at Tondiarpet since this morning. It's one of the serious ones. The police have it, but no officer is named; it is due this evening. I'd ask the police for an update. Want the details?",
+    "ta": "தண்டையார்பேட்டை பகுதியில் இன்று காலையிலிருந்து போராட்டம் அல்லது பொதுத் தொல்லை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று மாலை வரை நேரம் இருக்கிறது. காவல்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 27,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 40,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing B includes more relevant details from the record, such as the SLA deadline and the unassigned officer status, while sounding natural.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing B is shorter, sounds more like natural speech, and avoids reading out administrative metadata like deadlines and unassigned officers.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-94F205",
+   "sev": "High",
+   "zone": "Valasaravakkam",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Maduravoyal",
+    "zone": "Valasaravakkam",
+    "t": "2026-11-17 11:19:49",
+    "sla_due": "2026-11-18 11:19:49",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 11:19 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Maduravoyal. It's been open for several hours. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there.",
+    "ta": "வளசரவாக்கம் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்."
+   },
+   "v6": {
+    "en": "Standing water at Maduravoyal since this morning. It's one of the serious ones. The PWD has it, but no officer is named; it is due tomorrow. I'd ask the PWD to send a pump and check the drain there. Want the details?",
+    "ta": "வளசரவாக்கம் பகுதியில் இன்று காலையிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; நாளை வரை நேரம் இருக்கிறது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 30,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "A covers what happened, where, severity, department, and next steps in a natural tone, while B leaves out the department.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "A sounds more natural and concise for a spoken briefing to a busy official, whereas B reads out raw data like SLA times and unassigned officer details.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-41A46A",
+   "sev": "High",
+   "zone": "Madhavaram",
+   "news": false,
+   "facts": {
+    "what": "Road accident",
+    "place": "Moolakadai",
+    "zone": "Madhavaram",
+    "t": "2026-11-17 09:20:02",
+    "sla_due": "2026-11-17 15:20:02",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 9:20 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident at Madhavaram. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "மாதவரம் பகுதியில் சாலை விபத்து இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident at Madhavaram reported this morning. It's one of the serious ones. The police have it, but no officer is named and the deadline passed this afternoon. I'd ask the police for an update today. Want the details?",
+    "ta": "மாதவரம் பகுதியில் இன்று காலையிலிருந்து சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று மதியம் முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 31,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 40,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A sounds more like natural speech with conversational engagement while covering the required details from the record.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A correctly mentions the specific location Moolakadai, includes the SLA deadline details, and sounds natural while covering all required points from the record.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-405E9C",
+   "sev": "High",
+   "zone": "Madhavaram",
+   "news": false,
+   "facts": {
+    "what": "Lakes, bunds & sluices",
+    "place": "Madhavaram (Madhavaram Lake)",
+    "zone": "Madhavaram",
+    "t": "2026-11-17 08:47:14",
+    "sla_due": "2026-11-18 08:47:14",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 8:47 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a lake or bund problem at Madhavaram. It's been open for several hours. It's one of the serious ones. I'd ask the PWD for an update.",
+    "ta": "மாதவரம் பகுதியில் ஏரி அல்லது கரைப் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A lake or bund problem at Madhavaram since this morning. It's one of the serious ones. The PWD has it, but no officer is named; it is due tomorrow. I'd ask the PWD for an update. Want the details?",
+    "ta": "மாதவரம் பகுதியில் இன்று காலையிலிருந்து ஏரி அல்லது கரைப் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; நாளை வரை நேரம் இருக்கிறது. பொதுப்பணித்துறையிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 27,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 39,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing B includes more relevant details from the record such as the timing, department, assigned officer status, and due date.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "A is shorter, sounds more like natural speech, and avoids unnecessary operational details present in B.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261117-CDECE0",
+   "sev": "High",
+   "zone": "Ambattur",
+   "news": false,
+   "facts": {
+    "what": "Street lights & electrical hazards",
+    "place": "South Phase 1St Street, Bharath Petrol Bunk, Mannurpet",
+    "zone": "Ambattur",
+    "t": "2026-11-17 05:12:00",
+    "sla_due": "2026-11-18 05:12:00",
+    "status": "Under review",
+    "sev": "High",
+    "complaints": 1,
+    "dept": "Street Lighting & Electrical",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 5:12 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a street light or electrical problem at Ambattur. It's been open for several hours. It's one of the serious ones. I'd ask the corporation for an update.",
+    "ta": "அம்பத்தூர் பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A street light or electrical problem at Ambattur since this morning. It's one of the serious ones. The corporation has it, but no officer is named; it is due tomorrow. I'd ask the corporation for an update. Want the details?",
+    "ta": "அம்பத்தூர் பகுதியில் இன்று காலையிலிருந்து தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. மாநகராட்சி பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; நாளை வரை நேரம் இருக்கிறது. மாநகராட்சியிடம் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 28,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 40,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "A includes more specific details from the record like the severity and the status of the assigned officer while sounding natural.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI service is busy. Try again in 10 s.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261117-3E166F",
+   "sev": "High",
+   "zone": "Valasaravakkam",
+   "news": false,
+   "facts": {
+    "what": "Road accident",
+    "place": "Valasaravakkam",
+    "zone": "Valasaravakkam",
+    "t": "2026-11-17 02:43:32",
+    "sla_due": "2026-11-17 08:43:32",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "17 Nov 2026, 2:43 AM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a road accident at Valasaravakkam. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "வளசரவாக்கம் பகுதியில் சாலை விபத்து இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A road accident at Valasaravakkam reported early this morning. It's one of the serious ones. The police have it, but no officer is named and the deadline passed this morning. I'd ask the police for an update today. Want the details?",
+    "ta": "வளசரவாக்கம் பகுதியில் இன்று அதிகாலையிலிருந்து சாலை விபத்து இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று காலை முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 31,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 41,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-E131A1",
+   "sev": "High",
+   "zone": "Ambattur",
+   "news": false,
+   "facts": {
+    "what": "Drainage & sewage",
+    "place": "Ambattur",
+    "zone": "Ambattur",
+    "t": "2026-11-16 23:59:33",
+    "sla_due": "2026-11-19 23:59:33",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 1,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "14 Nov 2026, 6:52 PM",
+      "publisher": null
+     },
+     {
+      "t": "16 Nov 2026, 11:59 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a drainage or sewage problem at Ambattur. It's been open for several hours. It's one of the serious ones. I'd ask the PWD for a status by this evening.",
+    "ta": "அம்பத்தூர் பகுதியில் வடிகால் அல்லது கழிவுநீர் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A drainage or sewage problem at Ambattur since last night. It's one of the serious ones. The PWD has it, but no officer is named. I'd ask the PWD for a status by this evening. Want the details?",
+    "ta": "அம்பத்தூர் பகுதியில் நேற்று இரவிலிருந்து வடிகால் அல்லது கழிவுநீர் பிரச்சினை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை. பொதுப்பணித்துறையிடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 30,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 38,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-BC9430",
+   "sev": "High",
+   "zone": "Anna Nagar",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Chintadripet",
+    "zone": "Anna Nagar",
+    "t": "2026-11-16 23:59:15",
+    "sla_due": "2026-11-17 23:59:15",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 11:59 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Chintadripet. It's been open for several hours. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there.",
+    "ta": "அண்ணா நகர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்."
+   },
+   "v6": {
+    "en": "Standing water at Chintadripet since last night. It's one of the serious ones. The PWD has it, but no officer is named; it is due tonight. I'd ask the PWD to send a pump and check the drain there. Want the details?",
+    "ta": "அண்ணா நகர் பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று இரவு வரை நேரம் இருக்கிறது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 30,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-305770",
+   "sev": "High",
+   "zone": "Adyar",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Thiruvanmiyur",
+    "zone": "Adyar",
+    "t": "2026-11-16 22:53:39",
+    "sla_due": "2026-11-17 22:53:39",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 10:53 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Thiruvanmiyur. It's been open for several hours. It's one of the serious ones. I'd ask the police to send a pump and check the drain there.",
+    "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்."
+   },
+   "v6": {
+    "en": "Standing water at Thiruvanmiyur since last night. It's one of the serious ones. The police have it, but no officer is named; it is due tonight. I'd ask the police to send a pump and check the drain there. Want the details?",
+    "ta": "அடையாறு பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று இரவு வரை நேரம் இருக்கிறது. காவல்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 30,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": null,
+    "reason": "error: The AI call failed.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "A covers what happened, where, severity, who has it, stuck status, and next steps naturally, whereas B misses the status and next steps.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-7304EC",
+   "sev": "High",
+   "zone": "Adyar",
+   "news": false,
+   "facts": {
+    "what": "Roads, footpaths & bridges",
+    "place": "Taramani",
+    "zone": "Adyar",
+    "t": "2026-11-16 22:34:45",
+    "sla_due": "2026-11-19 22:34:45",
+    "status": "Open",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 10:34 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a damaged road at Taramani. It's been open for several hours. It's one of the serious ones. I'd ask the PWD for a repair date.",
+    "ta": "அடையாறு பகுதியில் சேதமான சாலை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் சரிசெய்யும் தேதி கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A damaged road at Taramani since last night. It's one of the serious ones. The PWD has it, but no officer is named. I'd ask the PWD for a repair date. Want the details?",
+    "ta": "அடையாறு பகுதியில் நேற்று இரவிலிருந்து சேதமான சாலை இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை. பொதுப்பணித்துறையிடம் சரிசெய்யும் தேதி கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 26,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 34,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing B is better because it mentions that the PWD has it and no officer is named, which matches the record better.",
+    "v6First": false
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing A is more natural and concise, avoiding unnecessary conversational filler while covering the essential details from the record.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-322162",
+   "sev": "High",
+   "zone": "Kodambakkam",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "T. Nagar (Mambalam Canal Macro Drain)",
+    "zone": "Kodambakkam",
+    "t": "2026-11-16 22:19:53",
+    "sla_due": "2026-11-17 22:19:53",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 10:19 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Mambalam. It's been open for several hours. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there.",
+    "ta": "கோடம்பாக்கம் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்."
+   },
+   "v6": {
+    "en": "Standing water at Mambalam since last night. It's one of the serious ones. The PWD has it, but no officer is named; it is due tonight. I'd ask the PWD to send a pump and check the drain there. Want the details?",
+    "ta": "கோடம்பாக்கம் பகுதியில் நேற்று இரவிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று இரவு வரை நேரம் இருக்கிறது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 30,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A includes more key details from the record such as the department involved and the SLA deadline, sounding like a natural and informative spoken briefing.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing A is better because it covers the time elapsed, severity, department, missing officer details, SLA deadline, and a clear next step in natural spoken Tamil.",
+    "v6First": true
+   }
+  },
+  {
+   "id": "INC-20261116-3F3147",
+   "sev": "High",
+   "zone": "Sholinganallur",
+   "news": false,
+   "facts": {
+    "what": "Violent crime",
+    "place": "Kannagi Nagar",
+    "zone": "Sholinganallur",
+    "t": "2026-11-16 22:02:41",
+    "sla_due": "2026-11-17 04:02:41",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "Greater Chennai Police",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 10:02 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's a crime report at Sholinganallur. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+    "ta": "சோழிங்கநல்லூர் பகுதியில் குற்றப் புகார் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம்."
+   },
+   "v6": {
+    "en": "A crime report at Sholinganallur came in last night. It's one of the serious ones. The police have it, but no officer is named and the deadline passed early this morning. I'd ask the police for an update today. Want the details?",
+    "ta": "சோழிங்கநல்லூர் பகுதியில் நேற்று இரவிலிருந்து குற்றப் புகார் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. காவல்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; கெடு இன்று அதிகாலை முடிந்துவிட்டது. காவல்துறையிடம் இன்றே நிலவரம் கேட்கலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 31,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 42,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "Briefing A sounds more natural, mentions the specific department handling it, notes the unassigned officer, and offers further details.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v6",
+    "reason": "Briefing B includes more accurate details from the record, such as the timing and the unassigned officer status, while sounding natural.",
+    "v6First": false
+   }
+  },
+  {
+   "id": "INC-20261116-BFB294",
+   "sev": "High",
+   "zone": "Kodambakkam",
+   "news": false,
+   "facts": {
+    "what": "Flooding & waterlogging",
+    "place": "Ashok Nagar",
+    "zone": "Kodambakkam",
+    "t": "2026-11-16 19:03:59",
+    "sla_due": "2026-11-17 19:03:59",
+    "status": "In progress",
+    "sev": "High",
+    "complaints": 0,
+    "dept": "PWD Water Resources",
+    "assigned_officer": null,
+    "reports": [
+     {
+      "t": "16 Nov 2026, 7:03 PM",
+      "publisher": null
+     }
+    ]
+   },
+   "v5": {
+    "en": "There's standing water at Ashok Nagar. It's been open for about a day. It's one of the serious ones. I'd ask the PWD to send a pump and check the drain there.",
+    "ta": "கோடம்பாக்கம் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. ஏறக்குறைய ஒரு நாளாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்."
+   },
+   "v6": {
+    "en": "Standing water at Ashok Nagar since yesterday evening. It's one of the serious ones. The PWD has it, but no officer is named; it is due this evening. I'd ask the PWD to send a pump and check the drain there. Want the details?",
+    "ta": "கோடம்பாக்கம் பகுதியில் நேற்று மாலையிலிருந்து தண்ணீர் தேக்கம் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. பொதுப்பணித்துறை பொறுப்பில் இருக்கிறது, ஆனால் எந்த அதிகாரியும் குறிப்பிடப்படவில்லை; இன்று மாலை வரை நேரம் இருக்கிறது. பொதுப்பணித்துறையிடம் பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம். மேலும் விவரம் வேண்டுமா?"
+   },
+   "score": {
+    "v5": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 32,
+     "sentences": 4,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": false
+    },
+    "v6": {
+     "numbersGrounded": true,
+     "namesGrounded": true,
+     "badNums": [],
+     "badNames": [],
+     "words": 44,
+     "sentences": 5,
+     "nextStep": true,
+     "speechLike": true,
+     "offer": true
+    }
+   },
+   "judge_en": {
+    "winner": "v6",
+    "reason": "A covers what happened, where, severity, department, and next steps in a natural tone while staying strictly within the record.",
+    "v6First": true
+   },
+   "judge_ta": {
+    "winner": "v5",
+    "reason": "Briefing A sounds more like natural speech and directly covers the essential points without unnecessary administrative details, unlike B which reads out raw status data.",
+    "v6First": false
+   }
+  }
+ ]
+}

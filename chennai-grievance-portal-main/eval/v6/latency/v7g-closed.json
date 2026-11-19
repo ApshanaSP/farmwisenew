@@ -1,0 +1,613 @@
+{
+ "tag": "v7g",
+ "part": "closed",
+ "at": "2026-11-17T18:25:20.994Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "flags": null,
+ "rows": [
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -225,
+     "ev": "final:"
+    },
+    {
+     "at": 2644,
+     "ev": "final:"
+    },
+    {
+     "at": 5559,
+     "ev": "final:"
+    },
+    {
+     "at": 8485,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": true,
+   "firstSound": 172,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 172,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 737,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [
+    "pcm"
+   ],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@172",
+    "pcmEnd@737",
+    "uttStart(silent)[.]@945",
+    "uttEnd(silent)@946",
+    "uttStart(silent)[.]@1088",
+    "uttEnd(silent)@1089",
+    "wakeWord@131",
+    "wakeReply@167",
+    "prewarm@169"
+   ],
+   "sr": [
+    {
+     "at": -1323,
+     "ev": "speechend"
+    },
+    {
+     "at": 178,
+     "ev": "error:aborted"
+    },
+    {
+     "at": 189,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 912,
+     "ev": "final:"
+    },
+    {
+     "at": 3854,
+     "ev": "final:"
+    },
+    {
+     "at": 6684,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -1444,
+     "ev": "speechend"
+    },
+    {
+     "at": -773,
+     "ev": "final:"
+    },
+    {
+     "at": -773,
+     "ev": "end"
+    },
+    {
+     "at": -619,
+     "ev": "start"
+    },
+    {
+     "at": -602,
+     "ev": "audiostart"
+    },
+    {
+     "at": 1083,
+     "ev": "speechstart"
+    },
+    {
+     "at": 1083,
+     "ev": "final:"
+    },
+    {
+     "at": 3868,
+     "ev": "final:"
+    },
+    {
+     "at": 6723,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-closed",
+   "woke": true,
+   "firstSound": 156,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 156,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 757,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [
+    "pcm"
+   ],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@156",
+    "pcmEnd@757",
+    "uttStart(silent)[.]@931",
+    "uttEnd(silent)@932",
+    "uttStart(silent)[.]@1111",
+    "uttEnd(silent)@1111",
+    "wakeWord@56",
+    "wakeReply@151",
+    "prewarm@151"
+   ],
+   "sr": [
+    {
+     "at": -988,
+     "ev": "final:"
+    },
+    {
+     "at": 186,
+     "ev": "speechend"
+    },
+    {
+     "at": 191,
+     "ev": "error:aborted"
+    },
+    {
+     "at": 192,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_charon",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 1107,
+     "ev": "final:"
+    },
+    {
+     "at": 3676,
+     "ev": "final:"
+    },
+    {
+     "at": 6802,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_kore_ta",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -1335,
+     "ev": "speechend"
+    },
+    {
+     "at": -134,
+     "ev": "final:"
+    },
+    {
+     "at": -134,
+     "ev": "end"
+    },
+    {
+     "at": 18,
+     "ev": "start"
+    },
+    {
+     "at": 30,
+     "ev": "audiostart"
+    },
+    {
+     "at": 2271,
+     "ev": "speechstart"
+    },
+    {
+     "at": 2271,
+     "ev": "final:"
+    },
+    {
+     "at": 5261,
+     "ev": "final:"
+    },
+    {
+     "at": 8149,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-closed",
+   "woke": true,
+   "firstSound": 170,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 170,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1227,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [
+    "pcm"
+   ],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@170",
+    "uttStart(silent)[.]@908",
+    "uttEnd(silent)@908",
+    "uttStart(silent)[.]@1079",
+    "uttEnd(silent)@1080",
+    "pcmEnd@1227",
+    "wakeWord@131",
+    "wakeReply@165",
+    "prewarm@166"
+   ],
+   "sr": [
+    {
+     "at": 201,
+     "ev": "speechend"
+    },
+    {
+     "at": 206,
+     "ev": "error:aborted"
+    },
+    {
+     "at": 206,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 1259,
+     "ev": "final:"
+    },
+    {
+     "at": 4229,
+     "ev": "final:"
+    },
+    {
+     "at": 7130,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": true,
+   "firstSound": 141,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 141,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 707,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [
+    "pcm"
+   ],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@141",
+    "pcmEnd@707",
+    "uttStart(silent)[.]@831",
+    "uttEnd(silent)@831",
+    "uttStart(silent)[.]@980",
+    "uttEnd(silent)@980",
+    "wakeWord@133",
+    "wakeReply@136",
+    "prewarm@137"
+   ],
+   "sr": [
+    {
+     "at": -1298,
+     "ev": "speechend"
+    },
+    {
+     "at": -631,
+     "ev": "final:"
+    },
+    {
+     "at": -631,
+     "ev": "end"
+    },
+    {
+     "at": -478,
+     "ev": "start"
+    },
+    {
+     "at": -466,
+     "ev": "audiostart"
+    },
+    {
+     "at": 176,
+     "ev": "error:aborted"
+    },
+    {
+     "at": 176,
+     "ev": "end"
+    }
+   ]
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": 728,
+     "ev": "final:"
+    },
+    {
+     "at": 3463,
+     "ev": "final:"
+    },
+    {
+     "at": 6463,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [],
+   "sr": [
+    {
+     "at": -1429,
+     "ev": "speechend"
+    },
+    {
+     "at": -1372,
+     "ev": "final:"
+    },
+    {
+     "at": -1372,
+     "ev": "end"
+    },
+    {
+     "at": -1222,
+     "ev": "start"
+    },
+    {
+     "at": -1205,
+     "ev": "audiostart"
+    },
+    {
+     "at": -565,
+     "ev": "speechstart"
+    },
+    {
+     "at": 598,
+     "ev": "interim:do you know"
+    },
+    {
+     "at": 776,
+     "ev": "final:Do you know travels?"
+    },
+    {
+     "at": 3626,
+     "ev": "final:"
+    },
+    {
+     "at": 6426,
+     "ev": "final:"
+    }
+   ]
+  }
+ ]
+}

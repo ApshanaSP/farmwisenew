@@ -1,0 +1,1033 @@
+{
+ "tag": "v6c",
+ "part": "wake",
+ "at": "2026-11-17T09:31:30.449Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "flags": null,
+ "rows": [
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 170,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 170,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 911,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 251,
+   "transcribed": 775,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 48,
+    "at": {
+     "voicedEnd": 48,
+     "eou": 251,
+     "uploadSent": 254,
+     "sttSent": 288,
+     "sttBack": 756,
+     "hearBack": 775
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@170",
+    "uttStart(silent)[.]@810",
+    "uttEnd(silent)@811",
+    "pcmEnd@911",
+    "uttStart(silent)[.]@985",
+    "uttEnd(silent)@986",
+    "vadStart@-656",
+    "kws@64",
+    "wakeWord@93",
+    "wakeReply@165",
+    "wakeReply@165",
+    "prewarm@166",
+    "vadEnd@251",
+    "transcribed@775"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 182,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 182,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 976,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 263,
+   "transcribed": 622,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 59,
+    "at": {
+     "voicedEnd": 59,
+     "eou": 263,
+     "uploadSent": 271,
+     "sttSent": 287,
+     "sttBack": 590,
+     "hearBack": 621
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "events": [
+    "pcm@182",
+    "pcmEnd@976",
+    "uttStart(silent)[.]@1580",
+    "uttEnd(silent)@1580",
+    "uttStart(silent)[.]@1784",
+    "uttEnd(silent)@1785",
+    "vadStart@-559",
+    "kws@75",
+    "wakeWord@105",
+    "wakeReply@177",
+    "wakeReply@177",
+    "prewarm@177",
+    "vadEnd@263",
+    "transcribed@622"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 180,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 180,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 943,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 250,
+   "transcribed": 545,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 47,
+    "at": {
+     "voicedEnd": 47,
+     "eou": 250,
+     "uploadSent": 255,
+     "sttSent": 268,
+     "sttBack": 526,
+     "hearBack": 545
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "pcm@180",
+    "uttStart(silent)[.]@690",
+    "uttEnd(silent)@691",
+    "uttStart(silent)[.]@843",
+    "uttEnd(silent)@843",
+    "pcmEnd@943",
+    "vadStart@-443",
+    "kws@47",
+    "wakeWord@72",
+    "wakeReply@175",
+    "wakeReply@175",
+    "prewarm@175",
+    "vadEnd@250",
+    "transcribed@545"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 209,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 209,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 769,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 258,
+   "transcribed": 598,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 65,
+    "at": {
+     "voicedEnd": 65,
+     "eou": 258,
+     "uploadSent": 264,
+     "sttSent": 278,
+     "sttBack": 582,
+     "hearBack": 598
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4485,
+   "path": "browser",
+   "events": [
+    "pcm@209",
+    "tone@263",
+    "pcmEnd@769",
+    "uttStart(silent)[.]@896",
+    "uttEnd(silent)@899",
+    "uttStart(silent)[.]@1119",
+    "uttEnd(silent)@1120",
+    "vadStart@-616",
+    "kws@97",
+    "wakeWord@122",
+    "wakeReply@204",
+    "wakeReply@204",
+    "prewarm@204",
+    "vadEnd@258",
+    "transcribed@598"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 214,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 214,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 784,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 294,
+   "transcribed": 630,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 80,
+    "at": {
+     "voicedEnd": 80,
+     "eou": 294,
+     "uploadSent": 298,
+     "sttSent": 311,
+     "sttBack": 616,
+     "hearBack": 630
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4485,
+   "path": "browser",
+   "events": [
+    "pcm@214",
+    "uttStart(silent)[.]@725",
+    "uttEnd(silent)@726",
+    "pcmEnd@784",
+    "uttStart(silent)[.]@892",
+    "uttEnd(silent)@892",
+    "vadStart@-548",
+    "kws@48",
+    "wakeWord@72",
+    "wakeReply@208",
+    "wakeReply@209",
+    "prewarm@209",
+    "vadEnd@294",
+    "transcribed@630"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 223,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 223,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1241,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 293,
+   "transcribed": 693,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 90,
+    "at": {
+     "voicedEnd": 90,
+     "eou": 293,
+     "uploadSent": 298,
+     "sttSent": 310,
+     "sttBack": 679,
+     "hearBack": 693
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 4485,
+   "path": "browser",
+   "events": [
+    "pcm@223",
+    "uttStart(silent)[.]@962",
+    "uttEnd(silent)@963",
+    "uttStart(silent)[.]@1201",
+    "uttEnd(silent)@1202",
+    "pcmEnd@1241",
+    "vadStart@-443",
+    "kws@10",
+    "wakeWord@40",
+    "wakeReply@218",
+    "wakeReply@218",
+    "prewarm@218",
+    "vadEnd@293",
+    "transcribed@693"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 185,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 185,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1000,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 265,
+   "transcribed": 835,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 51,
+    "at": {
+     "voicedEnd": 51,
+     "eou": 265,
+     "uploadSent": 270,
+     "sttSent": 282,
+     "sttBack": 819,
+     "hearBack": 835
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "pcm@185",
+    "pcmEnd@1000",
+    "uttStart(silent)[.]@1585",
+    "uttEnd(silent)@1586",
+    "uttStart(silent)[.]@1724",
+    "uttEnd(silent)@1724",
+    "vadStart@-631",
+    "kws@99",
+    "wakeWord@128",
+    "wakeReply@179",
+    "wakeReply@180",
+    "prewarm@180",
+    "vadEnd@265",
+    "transcribed@835"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 198,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 198,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 769,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 247,
+   "transcribed": 630,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 54,
+    "at": {
+     "voicedEnd": 54,
+     "eou": 247,
+     "uploadSent": 251,
+     "sttSent": 264,
+     "sttBack": 615,
+     "hearBack": 630
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "pcm@198",
+    "uttStart(silent)[.]@766",
+    "uttEnd(silent)@767",
+    "pcmEnd@769",
+    "uttStart(silent)[.]@915",
+    "uttEnd(silent)@916",
+    "vadStart@-564",
+    "kws@86",
+    "wakeWord@111",
+    "wakeReply@193",
+    "wakeReply@193",
+    "prewarm@193",
+    "vadEnd@247",
+    "transcribed@630"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 176,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 176,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1195,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 257,
+   "transcribed": 678,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 54,
+    "at": {
+     "voicedEnd": 54,
+     "eou": 257,
+     "uploadSent": 260,
+     "sttSent": 273,
+     "sttBack": 663,
+     "hearBack": 678
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 2997,
+   "path": "browser",
+   "events": [
+    "pcm@176",
+    "pcmEnd@1195",
+    "uttStart(silent)[.]@1225",
+    "uttEnd(silent)@1226",
+    "uttStart(silent)[.]@1390",
+    "uttEnd(silent)@1390",
+    "vadStart@-447",
+    "kws@70",
+    "wakeWord@100",
+    "wakeReply@171",
+    "wakeReply@171",
+    "prewarm@171",
+    "vadEnd@257",
+    "transcribed@678"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 191,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 191,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 762,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 271,
+   "transcribed": 660,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 68,
+    "at": {
+     "voicedEnd": 68,
+     "eou": 271,
+     "uploadSent": 275,
+     "sttSent": 288,
+     "sttBack": 646,
+     "hearBack": 660
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 2997,
+   "path": "browser",
+   "events": [
+    "pcm@191",
+    "pcmEnd@762",
+    "uttStart(silent)[.]@882",
+    "uttEnd(silent)@883",
+    "uttStart(silent)[.]@1112",
+    "uttEnd(silent)@1112",
+    "vadStart@-635",
+    "kws@84",
+    "wakeWord@114",
+    "wakeReply@186",
+    "wakeReply@186",
+    "prewarm@186",
+    "vadEnd@271",
+    "transcribed@660"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 212,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 212,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1007,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 282,
+   "transcribed": 3122,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 78,
+    "at": {
+     "voicedEnd": 78,
+     "eou": 282,
+     "uploadSent": 286,
+     "sttSent": 299,
+     "sttBack": 3105,
+     "hearBack": 3122
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 2997,
+   "path": "browser",
+   "events": [
+    "pcm@212",
+    "pcmEnd@1007",
+    "uttStart(silent)[.]@1658",
+    "uttEnd(silent)@1659",
+    "uttStart(silent)[.]@1867",
+    "uttEnd(silent)@1867",
+    "vadStart@-561",
+    "kws@78",
+    "wakeWord@103",
+    "wakeReply@207",
+    "wakeReply@207",
+    "prewarm@207",
+    "vadEnd@282",
+    "transcribed@3122"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 215,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 215,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 786,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 295,
+   "transcribed": 1134,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 92,
+    "at": {
+     "voicedEnd": 92,
+     "eou": 295,
+     "uploadSent": 299,
+     "sttSent": 312,
+     "sttBack": 1121,
+     "hearBack": 1134
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 2997,
+   "path": "browser",
+   "events": [
+    "pcm@215",
+    "pcmEnd@786",
+    "uttErr(silent)@1276",
+    "vadStart@-451",
+    "kws@28",
+    "wakeWord@52",
+    "wakeReply@210",
+    "wakeReply@210",
+    "prewarm@210",
+    "vadEnd@295",
+    "transcribed@1134"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 212,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 212,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 975,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 261,
+   "transcribed": 657,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 68,
+    "at": {
+     "voicedEnd": 68,
+     "eou": 261,
+     "uploadSent": 264,
+     "sttSent": 277,
+     "sttBack": 640,
+     "hearBack": 657
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "pcm@212",
+    "pcmEnd@975",
+    "uttStart(silent)[.]@1254",
+    "uttEnd(silent)@1255",
+    "uttStart(silent)[.]@1492",
+    "uttEnd(silent)@1493",
+    "vadStart@-614",
+    "kws@100",
+    "wakeWord@124",
+    "wakeReply@207",
+    "wakeReply@207",
+    "prewarm@207",
+    "vadEnd@261",
+    "transcribed@657"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 188,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 188,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1207,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 269,
+   "transcribed": 689,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 55,
+    "at": {
+     "voicedEnd": 55,
+     "eou": 269,
+     "uploadSent": 273,
+     "sttSent": 286,
+     "sttBack": 674,
+     "hearBack": 689
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 2838,
+   "path": "browser",
+   "events": [
+    "uttStart(silent)[.]@-401",
+    "uttEnd(silent)@-400",
+    "uttStart(silent)[.]@-229",
+    "uttEnd(silent)@-228",
+    "pcm@188",
+    "tone@275",
+    "pcmEnd@1207",
+    "vadStart@-573",
+    "prewarm@-573",
+    "kws@103",
+    "wakeWord@132",
+    "wakeReply@183",
+    "wakeReply@183",
+    "vadEnd@269",
+    "transcribed@689"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 242,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 242,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 834,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 290,
+   "transcribed": 620,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 98,
+    "at": {
+     "voicedEnd": 98,
+     "eou": 290,
+     "uploadSent": 293,
+     "sttSent": 306,
+     "sttBack": 606,
+     "hearBack": 620
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "pcm@242",
+    "tone@295",
+    "uttStart(silent)[.]@327",
+    "uttEnd(silent)@327",
+    "uttStart(silent)[.]@539",
+    "uttEnd(silent)@539",
+    "pcmEnd@834",
+    "vadStart@-424",
+    "prewarm@-424",
+    "kws@50",
+    "wakeWord@80",
+    "wakeReply@237",
+    "wakeReply@237",
+    "vadEnd@290",
+    "transcribed@620"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 181,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 181,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 762,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 262,
+   "transcribed": 615,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 48,
+    "at": {
+     "voicedEnd": 48,
+     "eou": 262,
+     "uploadSent": 265,
+     "sttSent": 277,
+     "sttBack": 600,
+     "hearBack": 615
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "uttStart(silent)[.]@-63",
+    "uttEnd(silent)@-63",
+    "uttStart(silent)[.]@-37",
+    "uttEnd(silent)@-37",
+    "pcm@181",
+    "tone@267",
+    "pcmEnd@762",
+    "vadStart@-645",
+    "prewarm@-645",
+    "kws@112",
+    "wakeWord@136",
+    "wakeReply@176",
+    "wakeReply@176",
+    "vadEnd@262",
+    "transcribed@615"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 205,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 205,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 1234,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 254,
+   "transcribed": 679,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 61,
+    "at": {
+     "voicedEnd": 61,
+     "eou": 254,
+     "uploadSent": 256,
+     "sttSent": 270,
+     "sttBack": 664,
+     "hearBack": 679
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "uttStart(silent)[.]@134",
+    "uttEnd(silent)@134",
+    "pcm@205",
+    "tone@259",
+    "uttStart(silent)[.]@332",
+    "uttEnd(silent)@333",
+    "pcmEnd@1234",
+    "vadStart@-557",
+    "prewarm@-557",
+    "kws@13",
+    "wakeWord@43",
+    "wakeReply@200",
+    "wakeReply@200",
+    "vadEnd@254",
+    "transcribed@679"
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-open",
+   "firstSound": 181,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 181,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 773,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 251,
+   "transcribed": 654,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 48,
+    "at": {
+     "voicedEnd": 48,
+     "eou": 251,
+     "uploadSent": 255,
+     "sttSent": 269,
+     "sttBack": 635,
+     "hearBack": 654
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "uttStart(silent)[.]@-270",
+    "uttEnd(silent)@-270",
+    "uttStart(silent)[.]@-106",
+    "uttEnd(silent)@-105",
+    "pcm@181",
+    "tone@256",
+    "pcmEnd@773",
+    "vadStart@-442",
+    "prewarm@-442",
+    "kws@48",
+    "wakeWord@73",
+    "wakeReply@176",
+    "wakeReply@177",
+    "vadEnd@251",
+    "transcribed@654"
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 184,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 56,
+   "firstSpeech": 184,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 777,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 265,
+   "transcribed": 630,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 52,
+    "at": {
+     "voicedEnd": 52,
+     "eou": 265,
+     "uploadSent": 270,
+     "sttSent": 283,
+     "sttBack": 614,
+     "hearBack": 630
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "uttErr(silent)@136",
+    "pcm@184",
+    "tone@271",
+    "pcmEnd@777",
+    "uttStart(silent)[.]@806",
+    "uttEnd(silent)@806",
+    "vadStart@-640",
+    "prewarm@-640",
+    "kws@116",
+    "wakeWord@140",
+    "wakeReply@179",
+    "wakeReply@180",
+    "vadEnd@265",
+    "transcribed@630"
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-open",
+   "firstSound": 187,
+   "firstSoundKind": "pcm",
+   "firstSoundLat": 55,
+   "firstSpeech": 187,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": 992,
+   "screen": null,
+   "answerReady": null,
+   "vadEnd": 268,
+   "transcribed": 634,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 54,
+    "at": {
+     "voicedEnd": 54,
+     "eou": 268,
+     "uploadSent": 271,
+     "sttSent": 283,
+     "sttBack": 617,
+     "hearBack": 634
+    }
+   },
+   "voices": [
+    "pcm"
+   ],
+   "heard": "Yes?",
+   "provider": "openai/gpt-oss-120b",
+   "tokens": 0,
+   "path": "browser",
+   "events": [
+    "uttStart(silent)[.]@137",
+    "uttEnd(silent)@137",
+    "pcm@187",
+    "tone@273",
+    "uttStart(silent)[.]@312",
+    "uttEnd(silent)@313",
+    "pcmEnd@992",
+    "vadStart@-575",
+    "prewarm@-575",
+    "kws@102",
+    "wakeWord@132",
+    "wakeReply@182",
+    "wakeReply@182",
+    "vadEnd@268",
+    "transcribed@634"
+   ]
+  }
+ ]
+}

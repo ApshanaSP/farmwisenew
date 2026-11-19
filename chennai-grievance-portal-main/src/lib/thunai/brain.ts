@@ -11,7 +11,9 @@ import { AiPlanLenient, AiPlanSchema, checkPlan, systemPrompt, userPrompt, type 
 import type { ScreenState, World } from "./types";
 import { lineProblem, safeOptions, turnRecords } from "./exitgate";
 import { stepsAskedFor } from "./injection";
-import { asksForbidden, asksPrivate, NEVER_REPLY, PRIVACY_REPLY } from "./privacy";
+import { asksPrivate, NEVER_REPLY, PRIVACY_REPLY } from "./privacy";
+import { asksForbiddenOrder } from "./router";
+import { RECIPES } from "./stage";
 
 const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock" ? "bedrock" : "groq");
 
@@ -43,7 +45,7 @@ export async function think(text: string, state: ScreenState, world: World, ctx:
   const lang = /[஀-௿]/.test(text) ? "ta" : "en";
   // refused in code before any model, as on /round and /agent
   if (asksPrivate(text)) return { plan: { kind: "refuse", reply: PRIVACY_REPLY[lang], lang }, ms: 0, model: null };
-  if (asksForbidden(text)) return { plan: { kind: "refuse", reply: NEVER_REPLY[lang], lang }, ms: 0, model: null };
+  if (asksForbiddenOrder(text)) return { plan: { kind: "refuse", reply: NEVER_REPLY[lang], lang }, ms: 0, model: null };
   try {
     const r = await generateJson({
       // on Groq the "reasoning" list starts with gpt-oss-120b; Nova Lite is the "fast" model on Bedrock
@@ -55,6 +57,33 @@ export async function think(text: string, state: ScreenState, world: World, ctx:
     return { plan: { kind: "none", lang: /[஀-௿]/.test(text) ? "ta" : "en" }, ms: Date.now() - t0, model: null, error: (e as Error).message.slice(0, 200) };
   }
 }
+
+/** a turn's slots, kept small on the way in: only what is set, strings to 60 characters, lists to 6 items, about 300 characters in all */
+const compactSlots = (s: Record<string, unknown> | null | undefined): Record<string, unknown> | undefined => {
+  if (!s) return undefined;
+  const out: Record<string, unknown> = {};
+  let size = 2;
+  for (const [k, v] of Object.entries(s)) {
+    if (v == null || v === "" || (Array.isArray(v) && !v.length) || typeof v === "object" && !Array.isArray(v)) continue;
+    const val = typeof v === "string" ? v.slice(0, 60) : Array.isArray(v) ? v.filter((x) => typeof x === "string" || typeof x === "number").slice(0, 6).map((x) => (typeof x === "string" ? x.slice(0, 40) : x)) : typeof v === "number" || typeof v === "boolean" ? v : null;
+    if (val == null) continue;
+    const add = JSON.stringify(k).length + JSON.stringify(val).length + 2;
+    if (size + add > 300) break;
+    out[k] = val; size += add;
+  }
+  return out;
+};
+
+/**
+ * One earlier turn as the browser sends it (v4): what was heard and done, and when a screen answered, its recipe, its slots and a one-line
+ * result. Tight limits: the planner reads all four.
+ */
+export const TurnBody = z.object({
+  heard: z.string().max(300), did: z.string().max(300),
+  recipe: z.enum(RECIPES).nullish(),
+  slots: z.record(z.string().max(24), z.unknown()).nullish().transform(compactSlots),
+  result: z.string().max(200).nullish()
+});
 
 /** What the console posts: the sentence, the screen (ids and codes only) and the last few turns. */
 export const PlanBody = z.object({
@@ -71,7 +100,7 @@ export const PlanBody = z.object({
     lastPlace: z.string().max(80).nullable().optional(),
     numbers: z.boolean().optional()
   }),
-  turns: z.array(z.object({ heard: z.string().max(300), did: z.string().max(300) })).max(4).optional()
+  turns: z.array(TurnBody).max(4).optional()
 });
 
 export function screenOf(state: z.infer<typeof PlanBody>["state"]): ScreenState {

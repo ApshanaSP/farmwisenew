@@ -14,11 +14,12 @@ import { fuzzyNames, romanise } from "./xlit";
 import { normalise } from "./normalise";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
-import { asksForbidden } from "./privacy";
+import { asksForbiddenOrder } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
 import { cityTopic } from "@/lib/city/topic";
+import { metricNamedIn } from "./metrics";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -49,6 +50,18 @@ export function tamilAt(t: string, w: string): number {
 const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && tamilAt(t, w) >= 0));
 
 const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|கம்பே|கம்பா)/.test(t);
+
+/**
+ * v6: a place's state asked loosely, in the normalised text (quick.ts norm: lower case, no apostrophes, one space): "what's happening",
+ * "what's going on", "how is X doing / looking", "how are things", "what's worst", "anything serious"; Tanglish "enna nadakkudhu",
+ * "eppadi irukku"; Tamil "என்ன நடக்குது", "எப்படி இருக்கு". Read only with one place named and no kind or severity (the situation rule).
+ */
+const PLACE_STATUS_EN = /\b(whats|what is) (happening|going on)\b|\bhow (is|s) [a-z]+( [a-z]+)? (doing|looking|faring)\b|\bhow are things\b|\b(whats|what is) (the )?worst\b|\banything serious\b|\bis (anything|something) serious\b/;
+const PLACE_STATUS_TG = /\b(enna|ena) (nadakkudhu|nadakuthu|nadakudhu|nadakkuthu|nadakkudu)\b|\b(epdi|eppadi|epadi|eppudi) (irukku|iruku|irukudhu|irukkudhu)\b/;
+const PLACE_STATUS_TA = /என்ன நடக்குது|என்ன நடக்கிறது|எப்படி இருக்கு|எப்படி இருக்கிறது|எப்படி உள்ளது|மோசமா இருக்கு|மோசமாக இருக்கிறது|மோசமானது என்ன/;
+/** another subject in the place (an incident by number, the river, the weather, an officer): its own question, not the place's state (the independent check, 17 Nov) */
+const OTHER_SUBJECT = /\b(?:incident|case|complaint|ticket|petition)s? (?:no\.? ?|number |#)?\d+|\b(?:river|rivers|lake|lakes|reservoir|weather|rain|rainfall|air|aqi|traffic|officer|officers|ae|aee|ee|je|engineer|commissioner|inspector|collector|minister|mla|councillor|department|dept)\b/;
+export const placeStatus = (t: string): boolean => !OTHER_SUBJECT.test(t) && (PLACE_STATUS_EN.test(t) || PLACE_STATUS_TG.test(t) || PLACE_STATUS_TA.test(t));
 
 /** the zones named in the sentence (by their names in either language, or a locality inside one), in the order said */
 export function zonesIn(t: string, w: World): number[] {
@@ -212,6 +225,8 @@ const DASHBOARD = ["dashboard", "டாஷ்போர்டு", "டேஷ்�
 const ON_MAP = ["on a map", "on the map", "on map", "map the", "map of", "plot", "map la", "வரைபடத்தில்", "மேப்ல", "மேப்பில்"];
 const NEARBY = /\b(within|near|nearby|close to|around|km|kilometre|kilometer|metres?)\b|அருகில்|பக்கத்தில்|கிமீ|கி\.மீ|pakkathula|kitta/;
 const FACILITY = /(school|hospital|shelter|fire station|police station|பள்ளி|மருத்துவமனை|முகாம்|hospitals|schools|shelters)/;
+/** asking how things stand in one place, all of it at once */
+const SITUATION = ["situation", "the situation", "ground situation", "how are things", "overall picture", "big picture", "whole picture", "nilavaram", "nelavaram", "nilamai", "நிலவரம்", "நிலைமை", "சூழ்நிலை"];
 const ATTENTION = ["attention", "priority", "priorities", "what is happening", "whats happening", "brief", "briefing", "summary", "update", "கவனம்", "சுருக்கம்", "நிலவரம்", "என்ன நடக்குது", "என்ன நடக்கிறது"];
 
 /** words that tie a question to the district and this console (any one of them keeps the question in) */
@@ -259,7 +274,7 @@ const PLAIN = new Set(("a an the this that these those is are was were be been a
   + "la le ku kku lla ah a nu oru enna ennaa epdi eppadi enga yen evlo evvalavu ethana irukku iruku irukka irukkaa sollu sollunga kaattu kaatu kattu katu kaami kaatunga kattunga paaru paarunga pannu pannunga podu eduthu vaa konjam inga anga ellam ella "
   + "என்ன என்னென்ன எங்க எங்கே எப்படி ஏன் எத்தனை எவ்வளவு இருக்கு இருக்கா இருக்கிறது உள்ள காட்டு காட்டுங்க காட்டுங்கள் சொல்லு சொல்லுங்க பாரு பாருங்க போடு எல்லாம் ஒரு இந்த அந்த கொஞ்சம் இப்போ இப்போது").split(" "));
 const words = (list: string[]) => list.flatMap((x) => norm(x).trim().split(" ")).filter(Boolean);
-const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
+const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...SITUATION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
 /**
  * Is this (roman) word one the fast lane knows, in any of the three languages: a word of its lists, the sentence's grammar, a topic, a place or a body of ours, in Tamil letters
  * or romanised, with a case ending? A word nothing here knows, in front of an agency word, is another place's or body's name (RC-01).
@@ -321,7 +336,8 @@ export function unreadClauseIn(t: string, w: World): boolean {
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
-  if (asksForbidden(text)) return "forbidden-order";
+  // (a question about how fast things are closed is a question, not the order to close them: privacy.ts asksForbiddenOrder)
+  if (asksForbiddenOrder(text)) return "forbidden-order";
   const all = t.trim().split(" ");
   // the words a slot reader reads are not unknown: a status said as a phrase ("காலக்கெடு தாண்டிய", "past the deadline") and the time the sentence names
   // ("கடந்த வாரம்", "pona vaaram"); counted as unknown, "last week's overdue complaints" in Tamil fell to the model (pass4-open-14)
@@ -361,7 +377,12 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).text} `)?.[1]) || 5;
 
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
-export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
+/**
+ * `analysis`: also read the analysis questions (what changed, a place's situation) as screens. The server's fast lane asks for them; the
+ * address gate's "are the rules sure?" does not, so side talk that holds these words ("what changed since yesterday in Adyar", said to a
+ * colleague) is never acted on without the name (lane D2's rule). `noBail` readers get them too.
+ */
+export function quickScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean } = {}): Quick | null {
   // the city now (live traffic, the rain, flood streets, power and trains in heavy rain): one shared answer (lib/city/now.ts),
   // read before anything else so "traffic in Adyar" is never taken for traffic complaints
   const ct = cityTopic(text);
@@ -385,6 +406,13 @@ export const asksCount = (text: string): boolean => /\b(how many|how much|count|
  */
 function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   if (!needsDates(spec)) return q;
+  // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the last 24 hours
+  // against the 24 before, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
+  if (q.recipe === "changed" || q.recipe === "explain" || q.recipe === "situation") {
+    // v6: a place's situation "right now" ("இப்போ", "ippo") is its state today, the last 24 hours its screen already reads (its own default)
+    const key = spec.kind === "day" || (spec.kind === "now" && q.recipe === "situation") ? "daily" : spec.kind === "compare" || spec.kind === "last" || spec.kind === "lastWeekOf" ? keyOf(spec) : null;
+    return key ? { ...q, slots: { ...q.slots, period: key } } : null;
+  }
   if (spec.kind === "compare") {
     if (q.recipe !== "cases" || q.slots.status === "resolved") return null;
     return { recipe: "trend", slots: { cat: q.slots.cat ?? null, zones: q.slots.zones ?? [], sev: q.slots.sev ?? null, status: q.slots.status ?? null, period: spec.key, span: spec, fresh: true } };
@@ -403,13 +431,20 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
 const ZONE_WORDS = ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "மண்டலத்", "மண்டலங்களி", "பகுதி", "பகுதிகள்"];
 
 /** The fast lane's reading of one sentence, before the time it named is put on it. */
-function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: PeriodSpec): Quick | null {
+function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean }, spec: PeriodSpec): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
   // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
   if (foreignIn(text, w)) return null;
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
+  // "what changed since yesterday", "what's new in Adyar", "Adyar la enna maarichu": the change and where it sits (recipes/changed.ts), never this window's list
+  const analysis = !!(o.noBail || o.analysis);
+  const changed = changedScreen(text, t, w, spec);
+  if (changed === "planner") return null;
+  if (changed) return analysis ? changed : null;
+  // the other new intents are flows of their own: "build me a flood board for Adyar" is not Adyar's cases, "how do you know" is no screen (v4)
+  if (!o.noBail && leavesFastLane(text)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   // "open" is the verb of a follow-up ("open 3", "open the first one") unless it is the status of the cases ("open cases in Adyar", "cases open now": OPEN_RE), and "that" and "those" point back at
   // an earlier answer unless they open a relative clause ("complaints that are open"): a status said in the sentence is applied in the slots, not handed on (g-review 4)
@@ -434,7 +469,8 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
     const isSevWord = (x: string) => SEV_WORDS.some(([s]) => x === s.toLowerCase() || (/[஀-௿]/.test(s) && x.startsWith(s)));
     const isCatWord = (x: string) => isSevWord(x) || catWords.some((c) => x === c || (/[஀-௿]/.test(c) && c.length >= 3 && x.startsWith(c.replace(/[்ுூ]$/, ""))));
     const namedOther = t.trim().split(" ").some((x) => !ASKING.has(x) && !LISTED.has(x) && !isZoneWord(x) && !isCatWord(x));
-    if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
+    // the explain recipe (recipes/explain.ts): with no id, the most urgent open case of what was named, told the way an aide would (v4)
+    if (!namedOther) return { recipe: "explain", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
     if (!o.noBail) return null;
   }
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
@@ -459,6 +495,11 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, AIR)) return { recipe: "readings", slots: { metric: "aqi", zones: zones.slice(0, 1), name: zones.length ? w.zones.find((z) => z.n === zones[0])?.name ?? null : null } };
   const reservoir = reservoirIn(t);
   if (reservoir) return { recipe: "readings", slots: { metric: "lakes", name: reservoir } };
+  // "what's the situation in Adyar", "Perungudi la nilavaram enna", "அடையாறு நிலவரம் என்ன": everything about one place at once (recipes/situation.ts).
+  // A kind named with it ("the flooding situation") stays with the screens that read that kind; the whole district's day is the brief
+  // v6 (Phase 2 fast path, Phase 5): the same for a place's state asked loosely ("what's happening in Royapuram", "how is Teynampet doing this
+  // week", "what's worst in Adyar today", "Kodambakkam la enna nadakkudhu", "தேனாம்பேட்டை எப்படி இருக்கு"): code answers it, no planner
+  if (analysis && (has(t, SITUATION) || placeStatus(t)) && zones.length === 1 && !cat && !sev && !has(t, RAIN)) return { recipe: "situation", slots: { zones, period: period ?? "daily", fresh: true } };
   if (has(t, LAKE) && !cat) return { recipe: "readings", slots: { metric: "lakes" } };
   if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   // a comparison the rules cannot fill (two departments, a period against another) is the planner's, never a plain list
@@ -490,3 +531,114 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   if (has(t, ATTENTION) && !zones.length) return { recipe: "brief", slots: { period: period ?? "daily" } };
   return null;
 }
+
+// ------------------------------------------------------------------ the new intents (Jarvis v4, lane D2) --
+
+/**
+ * "How do you know?", "where's that from?", "what is this based on?", "how sure are you?", "source?", in English, Tamil and Tanglish: the whole
+ * sentence asks where the answer came from (never "how do you know him", never "why", which asks for the reasons).
+ */
+const HOWKNOW_EN = /^ (?:(?:so|ok|okay|and|but|wait|hmm|jarvis|sir) )*(?:how do you know(?: (?:that|this|it|so|for sure|all this|those numbers|these numbers))?|how did you (?:get|work out|figure out|come up with|arrive at|find) (?:that|this|it|those|these|those numbers|these numbers)|how (?:was|is|were|are) (?:this|that|these|those)(?: numbers?| figures?)? (?:calculated|computed|worked out|counted|arrived at)|where (?:is|does|did) (?:that|this|it) (?:come from|coming from|from|get from)|wheres (?:that|this|it) (?:from|coming from)|where did you get (?:that|this|it|those numbers|these numbers)(?: from)?|what (?:is|s) (?:this|that|it) based on|whats (?:this|that|it) based on|based on what|what are you basing (?:that|this|it) on|how sure are you|how confident are you|how reliable is (?:this|that)|whats your source|what is your source|what are your sources|whats the source(?: of (?:this|that))?|what is the source(?: of (?:this|that))?|sources? please|show me your sources)(?: (?:jarvis|sir|exactly|then|please))* $/;
+const HOWKNOW_TG = /^ (?:(?:jarvis|sari|seri|ok) )*(?:(?:idhu|ithu|adhu|athu) )?(?:epdi|eppadi|yepdi) (?:theriyum|therinjudhu|therinjuthu|therinjathu|kandupidicheenga|kandupidichinga|solreenga|solringa|solra|sonneenga|sonninga)|^ (?:(?:jarvis|sari) )*(?:idhu|ithu|adhu|athu|indha (?:number|data|figure)|intha (?:number|data|figure)) (?:enga|engey|engirundhu) (?:irundhu|irunthu)?(?: ?(?:vandhuchu|vanthuchu|vandhadhu|vandhudhu|kedachudhu|kidaichadhu|eduththeenga|edutheenga))?|^ (?:(?:idhu|ithu|adhu) )?(?:source|sources|aadharam|adharam|aadhaaram|moolam) (?:enna|ennanga|enna sir|edhu)|^ (?:edha|edhai|etha|ethai) (?:vechu|vachu|vaichu) (?:solreenga|solringa|solra|sollreenga|sonneenga|sonninga)|^ (?:evlo|evvalavu) (?:sure|uruthi|urudhi)/;
+const HOWKNOW_TA = /எப்படித் தெரியும்|எப்படி தெரியும்|எப்படித் தெரிஞ்சது|எப்படி தெரிஞ்சது|எப்படிக் கண்டுபிடிச்ச|(?:^|\s)(?:இது|அது|இந்த எண்|இந்தத் தரவு)\s*(?:எங்கிருந்து|எங்கேருந்து|எங்க இருந்து|எங்கே இருந்து)|ஆதாரம் என்ன|மூலம் என்ன|எதை வச்சு(?:ச்)? சொல்ற|எதை வைத்து(?:ச்)? சொல்ற|எவ்வளவு உறுதி|சோர்ஸ் என்ன/;
+/** Does the sentence ask where the last answer came from? (EN, Tamil, Tanglish; at most ten words, so a longer sentence that only holds the words is not one) */
+export function asksHowKnow(text: string): boolean {
+  const t = norm(text);
+  if (t.trim().split(" ").length > 10) return false;
+  if (HOWKNOW_EN.test(t) || HOWKNOW_TG.test(t) || HOWKNOW_TA.test(text)) return true;
+  // "source?" alone is the question only when asked: the bare word opens the sources panel (understand.ts)
+  return /^ (?:the )?sources?(?: jarvis)? $/.test(t) && /\?\s*$/.test(text.trim());
+}
+
+/**
+ * The new intents, as markers only: which flow a sentence asks for, and the words that flow needs (the note to keep, the place a board is for, what
+ * to do instead). The recipes and flows themselves (explain, changed, situation, missions, memory) are other lanes'; these readers only name them so the
+ * coordinator can route. They never act, and they are not "the rules are sure" for the address gate: side talk that holds one of them still needs
+ * the name or an engaged turn (addressed.ts). Each reads the whole sentence (a sentence with one of these words inside it is not one).
+ */
+export type IntentKind = "explain" | "changed" | "howknow" | "brief" | "remember" | "recall" | "forget" | "mission" | "stop" | "skip" | "instead";
+export interface IntentMarker { intent: IntentKind; rest: string | null }
+
+const LEAD = String.raw`^ (?:(?:jarvis|hey jarvis|ok|okay|so|now|please|pls|kindly|can you|could you|sari|seri|konjam) )*`;
+const END = String.raw`(?: (?:please|pls|jarvis|sir|now|for me|konjam|nga))* $`;
+/** "explain this one", "explain the second one", "what's going on with that one", "idha vilakkunga", "இதை விளக்குங்க" (the item on screen, not a topic: quick.ts EXPLAIN reads those) */
+const EXPLAIN_THIS_EN = new RegExp(`${LEAD}(?:explain|tell me (?:more )?about|walk me through|break down|whats going on with|what is going on with|whats wrong with|what is wrong with|what happened (?:with|to)) (this|that|it|this one|that one|these|those|the (?:first|second|third|fourth|fifth|last|top|next|previous) one|the \\w+ one|this case|that case|this chart|that chart|this screen|this graph|that graph)(?: (?:simply|in simple words|in detail|briefly|again))?${END}`);
+const EXPLAIN_THIS_TG = /^ (?:(?:jarvis|sari|konjam) )*(?:idha|idhai|adha|adhai|indha|andha|ithu|idhu|adhu|rendavadhu|rendavadha|mudhal|kadaisi)(?: \w+){0,2} (?:konjam )?(?:vilakkunga|vilakku|vilakki sollu|vilakki sollunga|vilakkama sollu|vilakkama sollunga|explain pannu|explain pannunga|explain panni sollu|enna nu sollu|ennanu sollu|enna aachu)(?: nga| please)? $/;
+const EXPLAIN_THIS_TA = /^\s*(?:இதை|அதை|இது|அது|இந்த|அந்த|இரண்டாவதை|முதலாவதை|கடைசியை)(?:\s+\S+){0,2}\s+(?:கொஞ்சம்\s+)?(?:விளக்குங்க|விளக்குங்கள்|விளக்கு|விளக்கமா சொல்லுங்க|விளக்கமா சொல்லு|விளக்கிச் சொல்லுங்க|விளக்கி சொல்லு|என்னன்னு சொல்லுங்க|என்னன்னு சொல்லு)\s*[.!?]*\s*$/;
+/** "what changed since yesterday / this week", "what's new since Monday", "nethu lerndhu enna maarichu", "இந்த வாரம் என்ன மாறியிருக்கு" */
+const CHANGED_EN = new RegExp(`${LEAD}(?:what|whats|what has|what have|anything|has anything|did anything|what all)(?: has| have)? (?:changed|is new|s new|new) ?(since (?:yesterday|last night|this morning|morning|last week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|the last (?:brief|briefing|update)|i last asked|my last brief|last time)|(?:today|this week|this month|overnight|in the last (?:day|week|month))|(?:in|for|at) [a-z ]{3,30}(?: since (?:yesterday|last week|this morning))?)?${END}`);
+const CHANGED_TG = /(?:^| )(?:enna|yenna|ennalam|enna ellam) (?:maarichu|maaruchu|maaridhu|maariyirukku|maari irukku|maarirukku|change aachu|change aagirukku|maattram|maatram|changes|puthusa|pudhusa)(?: \w+){0,3} $|^ (?:nethu|nethiku|nethu lerndhu|nethulerndhu|indha vaaram|intha vaaram|ippo varaikkum|kaalaila irundhu|morning lerndhu) (?:\w+ ){0,3}(?:enna|yenna) (?:maarichu|maaruchu|maaridhu|maariyirukku|change|changes|puthusa|pudhusa)/;
+const CHANGED_TA = /என்ன\s*(?:மாறியிருக்கு|மாறியிருக்கிறது|மாறிருக்கு|மாறுச்சு|மாறியது|மாற்றம்|மாற்றங்கள்|புதுசா|புதிதாக)|(?:நேத்து|நேற்று|இந்த வாரம்|காலையிலிருந்து|காலைலேர்ந்து)\S*\s+(?:\S+\s+){0,3}(?:என்ன\s+)?(?:மாற்றம்|மாறியிருக்கு|மாறுச்சு|மாறியது|மாற்றங்கள்)/;
+/** "brief me", "catch me up", "what do I need to know", "brief sollunga", "இன்றைய சுருக்கம் சொல்லுங்க" (a brief on a body is entities.ts briefTurn's) */
+const BRIEF_ME = new RegExp(`${LEAD}(?:brief me|give me (?:the|my|a|today s|todays) (?:brief|briefing|morning brief)|(?:the |my |todays |today s )?morning brief(?:ing)?|catch me up|bring me up to speed|what do i need to know(?: today)?|what should i know(?: today)?|whats my brief|what is my brief|brief pannu|brief pannunga|brief sollu|brief sollunga|innaiku brief|innaikku brief|inniki brief)( (?:on|about|for) .+)?${END}`);
+const BRIEF_TA = /^\s*(?:இன்றைய\s+)?சுருக்கம்\s*(?:சொல்லு|சொல்லுங்க|சொல்லுங்கள்|கொடு|கொடுங்க|தா)?\s*[.!?]*\s*$|^\s*இன்னைக்கு\s+(?:என்ன\s+)?(?:தெரிஞ்சுக்கணும்|சுருக்கம்)/;
+/** "remember …" (the note), "note that …", "<note> nyabagam vechukko", "<note> ஞாபகம் வச்சுக்கோ" */
+const REMEMBER_EN = /^ (?:(?:jarvis|please|ok|okay) )*(?:remember|note|make a note|keep in mind|dont forget)(?: that)? (.{3,})$/;
+const REMEMBER_TG = /^ (.{3,}?) (?:nu |nnu )?(?:nyabagam|gnabagam|nyabagama|ninaivula|ninaivil) (?:vechukko|vechuko|vachukko|vachuko|vechukonga|vachukonga|vai|vechiko)(?: \w+)? $/;
+const REMEMBER_TA = /^\s*(.{3,}?)\s*(?:ன்னு|னு|என்று)?\s*(?:ஞாபகம்|நினைவில்|நினைவுல)\s*(?:வச்சுக்கோ|வச்சுக்கோங்க|வெச்சுக்கோ|வைத்துக்கொள்|வை|வச்சுக்கங்க)[஀-௿]*\s*[.!?]*\s*$/;
+/** "what do you remember (about me)?", "what do you know about me", "show my memory", "enna nyabagam vechirukka", "என்னைப் பத்தி என்ன ஞாபகம் இருக்கு" */
+const RECALL_EN = new RegExp(`${LEAD}(?:what do you remember(?: about me)?|what have you remembered|what did you remember|what do you know about me|what do you have on me|show (?:me )?(?:my )?memory|show (?:me )?what you remember|whats in your memory|what is in your memory|memory kaattu|memory kaatu)${END}`);
+const RECALL_TG = /(?:enna|ennalam|enna ellam) (?:nyabagam|gnabagam) (?:vechirukka|vechirukeenga|vachirukka|irukku)|en(?:na)? pathi (?:enna|ennalam) (?:theriyum|nyabagam)/;
+const RECALL_TA = /(?:என்ன|என்னென்ன)\s*(?:ஞாபகம்|நினைவு)\s*(?:வச்சிருக்க|வச்சிருக்கீங்க|இருக்கு|வைத்திருக்கிறாய்)|என்னைப்\s*(?:பத்தி|பற்றி)\s*என்ன\s*(?:தெரியும்|ஞாபகம்|நினைவு)|உனக்கு என்ன நினைவிருக்கு/;
+/** "forget that", "forget everything", "adha marandhudu", "அதை மறந்துடு" */
+const FORGET_EN = /^ (?:(?:jarvis|please|ok|okay) )*(?:forget (?:that|it|this|the last one|the last thing|what i (?:just )?said|everything|all|all of it|about it)|never ?mind that note|scratch that note|delete that note|drop that note)(?: (?:please|jarvis))* $/;
+const FORGET_TG = /^ (?:(?:adha|adhai|idha|ellaam|ellathaiyum|ellathayum) )?(?:marandhudu|maranthudu|marandhurunga|marandhudunga|marandhidu)(?: nga| please)? $/;
+const FORGET_TA = /^\s*(?:அதை|இதை|எல்லாத்தையும்|எல்லாவற்றையும்)?\s*(?:மறந்துடு|மறந்துவிடு|மறந்துடுங்க|மறந்துவிடுங்கள்)\s*[.!?]*\s*$/;
+/** "build me a water-crisis board for Velachery", "set up a war room for the floods", "Velachery ku oru board ready pannu" (a board of several steps: a mission, not one dashboard) */
+const MISSION_EN = /^ (?:(?:jarvis|please|ok|okay|can you|could you) )*(?:build|make|create|set up|setup|put together|prepare|assemble|start|run|plan) (?:me |us )?(?:a |an |the )?(.{0,40}?)(?:board|war room|control room|mission|game plan|action plan|command centre|command center)(?: (?:for|on|about|in|around) (.{2,40}))?(?: (?:please|jarvis|now))* $/;
+const MISSION_TG = /^ (.{2,40}?) (?:ku|kku|ukku) (?:oru )?(.{0,30}?)(?:board|war room|mission|plan) (?:ready |set |thayar |tayar )?(?:pannu|pannunga|panni kudu|podu|podunga)(?: nga)? $/;
+const MISSION_TA = /^\s*(.{2,40}?)(?:க்கு|ுக்கு)\s+(?:ஒரு\s+)?(.{0,30}?)(?:போர்டு|போர்ட்|திட்டம்|மிஷன்)\s+(?:தயார்\s+)?(?:பண்ணு|பண்ணுங்க|செய்|செய்யுங்க|போடு)\s*[.!?]*\s*$/;
+/** "stop", "cancel that", "abort the plan", "niruthu", "நிறுத்து" (also addressed.ts isStopWord, which needs no name) */
+const STOP_ANY = /^ (?:(?:jarvis|please|ok|okay) )*(?:stop|stop it|stop that|stop this|stop now|cancel|cancel that|cancel it|cancel the plan|cancel the mission|abort|abort the plan|abort the mission|halt|stop the plan|stop the mission|enough|niruthu|nirutthu|niruthunga|nirutthunga|stop pannu|stop pannunga|cancel pannu|podhum|நிறுத்து|நிறுத்துங்க|போதும்|ரத்து செய்|கேன்சல்)(?: (?:please|jarvis|now))* $/;
+/** "skip that", "skip this step", "move on", "adha vidu", "அதை விடு" */
+const SKIP_ANY = /^ (?:(?:jarvis|please|ok|okay) )*(?:skip|skip that|skip this|skip it|skip this one|skip that one|skip this step|skip that step|skip the step|next step|move on|leave that|leave it|leave that one|vidu|adha vidu|adhai vidu|idha vidu|skip pannu|skip pannunga|அதை விடு|இதை விடு|விடு|ஸ்கிப்)(?: (?:please|jarvis|now))* $/;
+/** "instead do X", "actually, show X instead", "rather X", "adhukku badhila X", "அதுக்கு பதிலா X" */
+const INSTEAD_EN = /^ (?:(?:jarvis|no|ok|okay|actually) )*(?:instead|rather|do this instead|instead of that)(?: of that)?,? (?:do |show |make |use |go with |try )?(.{3,})$|^ (?:(?:jarvis|no|actually) )*(.{3,}?) instead(?: of that| of this)?(?: please)? $/;
+const INSTEAD_TG = /^ (?:(?:jarvis|illa|venam) )*(?:adhukku|athukku|idhukku|ithukku) (?:badhila|bathila|badhilaa|bathilaa) (.{3,})$/;
+const INSTEAD_TA = /^\s*(?:அதுக்கு|இதுக்கு|அதற்கு|இதற்கு)\s+(?:பதிலா|பதிலாக|பதில்)\s+(.{3,})$/;
+
+/** Which new intent a whole sentence asks for (English, Tamil, Tanglish), with the words its flow needs; null for anything else. */
+export function intentMarker(text: string): IntentMarker | null {
+  const raw = String(text ?? "").trim().slice(0, 300);
+  if (!raw) return null;
+  const t = norm(raw);
+  const restOf = (m: RegExpExecArray | null, ...ks: number[]): string | null => { if (!m) return null; for (const k of ks) if (m[k] && m[k].trim()) return m[k].trim(); return null; };
+  if (STOP_ANY.test(t)) return { intent: "stop", rest: null };
+  if (SKIP_ANY.test(t)) return { intent: "skip", rest: null };
+  if (asksHowKnow(raw)) return { intent: "howknow", rest: null };
+  let m: RegExpExecArray | null;
+  if ((m = FORGET_EN.exec(t)) || FORGET_TG.test(t) || FORGET_TA.test(raw)) return { intent: "forget", rest: /everything|all|ellaam|ellath|எல்லா/.test(t) ? "all" : null };
+  if (RECALL_EN.test(t) || RECALL_TG.test(t) || RECALL_TA.test(raw)) return { intent: "recall", rest: null };
+  // the note is kept as said (the Collector's own words, with their casing), never the normalised text
+  if ((m = /^\s*(?:(?:jarvis|please|ok|okay)[\s,]+)*(?:remember|note|make a note|keep in mind|don'?t forget)(?:\s+that)?[\s,:]+(.{3,})$/i.exec(raw)) && REMEMBER_EN.test(t)) return { intent: "remember", rest: m[1].trim() };
+  if ((m = REMEMBER_TG.exec(t))) return { intent: "remember", rest: restOf(m, 1) };
+  if ((m = REMEMBER_TA.exec(raw))) return { intent: "remember", rest: restOf(m, 1) };
+  if ((m = CHANGED_EN.exec(t)) || CHANGED_TG.test(t) || CHANGED_TA.test(raw)) return { intent: "changed", rest: restOf(m, 1) };
+  if ((m = BRIEF_ME.exec(t)) || BRIEF_TA.test(raw)) return { intent: "brief", rest: restOf(m, 1) };
+  if (EXPLAIN_THIS_EN.test(t) || EXPLAIN_THIS_TG.test(t) || EXPLAIN_THIS_TA.test(raw)) { const e = EXPLAIN_THIS_EN.exec(t); return { intent: "explain", rest: restOf(e, 1) }; }
+  if ((m = MISSION_EN.exec(t)) && !/\bdashboard\b/.test(t)) return { intent: "mission", rest: [restOf(m, 1), restOf(m, 2)].filter(Boolean).join(" for ") || null };
+  if ((m = MISSION_TG.exec(t))) return { intent: "mission", rest: [restOf(m, 2), restOf(m, 1)].filter(Boolean).join(" for ") || null };
+  if ((m = MISSION_TA.exec(raw))) return { intent: "mission", rest: [restOf(m, 2), restOf(m, 1)].filter(Boolean).join(" ") || null };
+  if ((m = INSTEAD_EN.exec(t)) || (m = INSTEAD_TG.exec(t))) return { intent: "instead", rest: restOf(m, 1, 2) };
+  if ((m = INSTEAD_TA.exec(raw))) return { intent: "instead", rest: restOf(m, 1) };
+  return null;
+}
+/** "what has changed in Adyar since last week", beyond intentMarker's whole-sentence forms: a question about change, never about the news */
+const CHANGED_LOOSE = /^ (?:(?:jarvis|so|ok|okay|and|now|tell me|show me) )*(?:what|whats|what all|anything|has anything|did anything)(?: has| have| all)? (?:changed|is new|new) /;
+/** The change and where it sits, when that is what was asked (intentMarker's "changed", or the plain English question): its place, kind and window. */
+function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Quick | "planner" | null {
+  if (intentMarker(text)?.intent !== "changed" && !(CHANGED_LOOSE.test(t) && !has(t, NEWS))) return null;
+  // two places or a comparison is another question; a window no lane holds ("two weeks ago") was refused before this
+  const zones = zonesIn(t, w);
+  if (zones.length > 1 || isComparing(t)) return null;
+  const period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  // v5 A4: one metric named in code sets metricId; two named: the planner decides (no screen from the rules); none: the incidents change
+  const metric = metricNamedIn(text);
+  // (review planner-quota-1) two metrics named: no screen from the rules at all, so the planner decides (not this window's cases list)
+  if (metric === "ambiguous") return "planner";
+  return { recipe: "changed", slots: { zones, cat: catIn(t), period: period ?? "daily", fresh: true, ...(metric ? { metricId: metric } : {}) } };
+}
+
+/** the intents the fast lane must leave alone: a screen read from one of their words would answer another question ("what changed this week" is not this week's list) */
+const NOT_A_SCREEN = new Set<IntentKind>(["changed", "howknow", "recall", "forget", "remember", "mission", "skip", "instead", "stop"]);
+export const leavesFastLane = (text: string): boolean => { const m = intentMarker(text); return !!m && NOT_A_SCREEN.has(m.intent); };

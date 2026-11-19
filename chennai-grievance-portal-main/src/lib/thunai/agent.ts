@@ -18,8 +18,8 @@ import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { detectLang } from "./normalise";
-import { figuresIn, zoneLabelsOut } from "./numbergate";
-import { AiStep, checkPlan, codesText, stateCard, type AiPlan, type Context } from "./plan";
+import { figuresIn, stripFigures, zoneLabelsOut } from "./numbergate";
+import { AiStep, checkPlan, codesText, ownWords, stateCard, type AiPlan, type Context } from "./plan";
 import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
 import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
 import type { Lang, PeriodKey, ScreenState, Sev, Step, View, World } from "./types";
@@ -37,7 +37,8 @@ export const AGENT_TOOLS = ["overview_kpis", "zones", "zone_profile", "departmen
   "incidents", "incident_detail", "briefing", "source_health", "resolve_place", "search_records"] as const;
 const ENV_METRIC: Record<string, string> = { rain: "rainfall_24h_mm", aqi: "aqi", lakes: "lake_pct_full", temp: "temp_max_c", humidity: "humidity_pct" };
 export const STAGE_OPS = ["open", "draft", "read", "next", "prev", "stop", "filter", "sort", "view", "pin", "export", "save", "close", "explain", "map"] as const;
-export type StageOp = { op: (typeof STAGE_OPS)[number]; n: number | null; text: string | null };
+/** `id`: the item the register resolved in code ("the second one", "that Velachery one"), when it knows it (frame.ts) */
+export type StageOp = { op: (typeof STAGE_OPS)[number]; n: number | null; text: string | null; id?: string | null };
 
 const PERIODS = ["daily", "weekly", "monthly", "quarterly"] as const;
 const SEVS = ["Severe", "High", "Medium", "Low"] as const;
@@ -55,7 +56,11 @@ export const Screen = z.object({
   order: z.enum(["top", "bottom"]).nullable(), n: z.number().int().nullable(),
   item: z.number().int().nullable().describe("case: the item's number on the open Stage"), id: z.string().nullable().describe("case: an INC- id the Collector said"),
   name: z.string().nullable().describe("readings: a station or reservoir name"),
-  what: z.enum(["severe", "hotspots", "cases"]).nullable(), sort: z.enum(["priority", "complaints", "time"]).nullable()
+  what: z.enum(["severe", "hotspots", "cases", "change"]).nullable().describe("map: what to show; explain: change, to explain one part of a change"),
+  sort: z.enum(["priority", "complaints", "time"]).nullable(),
+  // one nullable string more (the wire writes it as a plain string, "" for none: claude.ts); explaining a part of a change uses what "change"
+  // with the one zone, dept or cat, so no nullable object is added (structured outputs' 24 optional parameters)
+  metricId: z.string().nullable().describe("changed: a metric id from the list, or null for incidents reported")
 });
 export const Call = z.object({
   tool: z.enum(AGENT_TOOLS), period: z.enum(PERIODS).nullable(), zone: z.number().int().nullable(), dept: z.string().nullable(), cat: z.string().nullable(),
@@ -149,6 +154,8 @@ export interface AgentInput {
   stage: StageContext | null;
   /** what the screen shows, as the model read it this turn: titles and headlines on it can carry text written by anyone */
   screen?: string[];
+  /** the turn's language (round.ts replyLang: the words and how they were heard); absent, the plan's and the words' decide */
+  lang?: Lang;
 }
 
 export function agentPrompt(a: AgentInput, w: World, observations: string[], round: number): string {
@@ -190,32 +197,54 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (typeof s.taluk === "string" && w.taluks.some((t) => t.code === s.taluk)) out.taluk = s.taluk;
   if ((SEVS as readonly string[]).includes(s.sev as string)) out.sev = s.sev as Sev;
   if (s.status === "open" || s.status === "overdue" || s.status === "resolved") out.status = s.status;
-  out.q = clip(s.q, recipe === "cases" ? 80 : 240) || null;
+  // the model's own words reach a title, a note or what Jarvis says: no figure of its own goes with them (Finding 51). A real zone's
+  // label ("Zone 13") stays a name; the map question keeps its distances for Ask the Map (screens.ts shows it without them), and a
+  // dataset's name stays as the Studio has it for the lookup (the screen shows the dataset's own name)
+  const zoneNs = w.zones.map((x) => x.n);
+  const words = (v: unknown, n: number) => { const t = clip(v, n); return t ? stripFigures(t, zoneNs) || null : null; };
+  out.q = recipe === "nearby" ? clip(s.q, 240) || null : words(s.q, recipe === "cases" ? 80 : 240);
   if ((METRICS as readonly string[]).includes(s.metric as string)) out.metric = s.metric as Slots["metric"];
   if ((MEASURES as readonly string[]).includes(s.measure as string)) out.measure = s.measure as Slots["measure"];
   if (s.by === "dept" || s.by === "zone") out.by = s.by;
   if (s.order === "bottom") out.order = "bottom";
   if (typeof s.n === "number" && s.n >= 1 && s.n <= 30) out.n = Math.round(s.n);
-  out.name = clip(s.name, 80) || null;
+  out.name = recipe === "complete" ? clip(s.name, 80) || null : words(s.name, 80);
   if (s.what === "severe" || s.what === "hotspots" || s.what === "cases") out.what = s.what;
+  // explain one part of a change: "change" with the one zone, department or kind named, or a {dim, key} that names a real one
+  if (recipe === "explain") {
+    if (s.what === "change") out.what = "change";
+    const ch = s.change as { dim?: unknown; key?: unknown } | null | undefined;
+    const key = ch && typeof ch.key === "string" ? ch.key.trim() : typeof ch?.key === "number" ? String(ch.key) : "";
+    const real = ch?.dim === "zone" ? w.zones.some((z) => String(z.n) === key) : ch?.dim === "dept" ? w.depts.some((d) => d.code === key) : ch?.dim === "cat" ? w.cats.some((c) => c.code === key) : false;
+    if (real) out.change = { dim: ch!.dim as "zone" | "dept" | "cat", key };
+  }
+  // what changed: a metric registry id is a code (letters and underscores), never words or a figure; an id not in the registry is the recipe's error
+  // (letters and underscores can still spell a figure, "three_hundred_deaths": its number words go, as in q and name; review, Numbers 5)
+  if (recipe === "changed" && typeof s.metricId === "string" && /^[A-Za-z_]{1,40}$/.test(s.metricId.trim())) {
+    const id = stripFigures(s.metricId.trim().replace(/_+/g, " "), [])?.trim().replace(/\s+/g, "_");
+    if (id) out.metricId = id;
+  }
   if (s.sort === "priority" || s.sort === "complaints" || s.sort === "time") out.sort = s.sort;
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
   if (recipe === "complete" && Array.isArray(s.ids)) {
-    const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x)))].slice(0, 30);
+    // an id is a code: one spelled with number words ("INC-THREE-HUNDRED") is a model's figure, not an incident
+    const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x) && !figuresIn(x).length))].slice(0, 30);
     if (ids.length) out.ids = ids;
   }
-  if (recipe === "case") {
+  if (recipe === "case" || recipe === "explain") {
     const id = clip(s.id, 80).toUpperCase();
-    if (/^INC-[A-Z0-9-]{4,60}$/.test(id)) out.id = id;
+    // (explain is handed the id the server resolved from the open Stage's own items, which may be short: INC-A5)
+    if ((recipe === "explain" ? /^INC-[A-Z0-9_-]{2,60}$/ : /^INC-[A-Z0-9-]{4,60}$/).test(id) && !figuresIn(id).length) out.id = id;
     else if (typeof s.item === "number" && stage) {
       // "the third one": the third case on the open Stage
-      const ids = stage.blocks.find((b) => b.kind === "CaseList" && b.ids.length)?.ids ?? stage.blocks.find((b) => b.kind === "MapView")?.ids ?? [];
+      const ids = stage.blocks.find((b) => b.kind === "CaseList" && b.ids.length)?.ids ?? stage.blocks.find((b) => b.kind === "MapView")?.ids ?? stage.blocks.find((b) => b.kind === "CaseDetail")?.ids ?? [];
       const id2 = ids[Math.round(s.item) - 1];
       if (id2 && /^INC-/.test(id2)) out.id = id2;
     }
-    // no number said: the incident that matters most in what was named (a zone, a kind, words)
-    if (!out.id && !(out.zones.length || out.cat || out.q)) return null;
+    // no number said: the incident that matters most in what was named (a zone, a kind, words); explain may also name a part of a change,
+    // or nothing at all (the scope's most urgent open case)
+    if (recipe === "case" && !out.id && !(out.zones.length || out.cat || out.q)) return null;
   }
   if (recipe === "compare" && out.zones.length < 2 && out.depts.length < 2) return null;
   if (recipe === "nearby" && !out.q) return null;
@@ -353,7 +382,7 @@ export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Rec
 /** The console steps that make the console agree with the screen (one view, one period), replacing the model's own. */
 export function syncSteps(recipe: Recipe, slots: Slots, scope: ScopeT, state: ScreenState): Step[] {
   const out: Step[] = [];
-  const scoped = ["cases", "map", "dashboard", "trend", "why"].includes(recipe);
+  const scoped = ["cases", "map", "dashboard", "trend", "why", "changed", "situation"].includes(recipe);
   if (scoped) {
     const v: View = {};
     if (scope.zone !== state.zone) v.zone = scope.zone;
@@ -469,6 +498,32 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
   return finish(plan, input, d, { t0, rounds, model, results, clock, until });
 }
 
+/** v5 G3 (a): the Stage's blocks that hold news or complaint text (headlines, complaint titles, a case's what and timeline, brief points) */
+const NEWS_OR_COMPLAINT = new Set<string>(["NewsReader", "CaseList", "CaseDetail", "Brief", "Filled", "MapView"]);
+/**
+ * v5 G3 (a): the news or complaint text the Stage showed in this turn, or null when it showed none. Read from the Stage's blocks of those
+ * kinds (their labels, when the browser sent them), the screen digest's "news:" and "cases(N):" items (stagelocal.ts stageDigest), and,
+ * when there is any, what the tools returned this turn. The Stage's own title is code's wording and is not counted.
+ */
+function newsOrComplaintShown(input: AgentInput, results: { result: ToolResult }[]): string[] | null {
+  const blocks = (input.stage?.blocks ?? []).filter((b) => NEWS_OR_COMPLAINT.has(b.kind) && (b.ids.length > 0 || (b.labels?.length ?? 0) > 0));
+  const texts: string[] = blocks.flatMap((b) => (b.labels ?? []).filter((x) => typeof x === "string"));
+  let fromDigest = false;
+  for (const raw of input.screen ?? []) {
+    let items: unknown = null;
+    try { items = (JSON.parse(raw) as { items?: unknown })?.items; } catch { continue; }
+    if (typeof items !== "string") continue;
+    for (const seg of items.split(" | ")) {
+      const m = /^(?:news|cases\(\d+\)):\s*/.exec(seg);
+      if (!m) continue;
+      fromDigest = true;
+      texts.push(...seg.slice(m[0].length).split(/;\s*(?=\d+=)/).map((x) => x.replace(/^\d+=/, "").trim()).filter(Boolean));
+    }
+  }
+  if (!blocks.length && !fromDigest) return null;
+  return [...texts, ...recordText(results)];
+}
+
 export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
   const w = d.world;
   // after a data round, every line Jarvis says as its own states one of the results' figures, as the answer screen's must: a line with
@@ -479,7 +534,7 @@ export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, 
   const facts = run.results.some((r) => r.result.facts.length > 0);
   const cites = (s: string | null | undefined) => !s || citesResults(s, run.results);
   const plan: AgentPlan = plan0.kind === "chat" && facts ? { ...plan0, kind: "do", reply: null, say: plan0.reply, calls: [], steps: [], screen: null, stage: null } : plan0;
-  const lang: Lang = plan.lang === "ta" ? "ta" : detectLang(input.text) === "ta" ? "ta" : "en";
+  const lang: Lang = input.lang ?? (plan.lang === "ta" ? "ta" : detectLang(input.text) === "ta" ? "ta" : "en");
   const base: AgentResult = { ...none(lang, run.t0, null, run.model), rounds: run.rounds, calls: run.results.map((r) => r.name) };
   // v1's checker reads the kind, the reply and the steps: unreal codes and figures the Collector did not say are dropped
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
@@ -501,6 +556,13 @@ export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, 
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
   // 3: steps beyond showing data (typing, the voice mode, theme, language, memory, drafts, presses) only when the Collector's own words asked
   let modelSteps = stepsAskedFor((v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? ""))), input.text);
+  // v5 G3 (a): the Stage showed news or complaint text this turn: a note is kept only in the Collector's own words, from his sentence
+  // and not read off the screen (plan.ts ownWords); store.ts checks the same again at the write, given what the Stage showed
+  const shownNews = newsOrComplaintShown(input, run.results);
+  if (shownNews) {
+    const places = w.zones.flatMap((z) => [z.name, z.ta ?? ""]).filter(Boolean);
+    modelSteps = modelSteps.filter((s) => s.a !== "remember" || ownWords(s.text, input.text, shownNews, places));
+  }
   const reply = v1.kind === "do" && !bad(v1.reply) && cites(v1.reply) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
   // a body of another city ("Mumbai police", "Coimbatore corporation") is not ours: whatever the model made of it, our department filter is not put on
@@ -553,7 +615,7 @@ export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, 
   if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang, [...(input.screen ?? []), ...(input.stage?.title ? [input.stage.title] : []), ...turnRecords(input.ctx?.turns)]);
   else {
     try {
-      stage = (await within(buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text), Math.max(2500, run.until - run.clock() + 2000), "the data took too long")).doc;
+      stage = (await within(buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text, undefined, lang), Math.max(2500, run.until - run.clock() + 2000), "the data took too long")).doc;
     } catch {
       return { ...base, note: "deadline", ms: run.clock() - run.t0 };
     }
@@ -611,7 +673,7 @@ export async function directScreen(recipe: Recipe, rawSlots: unknown, state: Scr
   const t0 = Date.now();
   const sc = checkScreen({ ...(rawSlots as object), recipe }, w, null);
   if (!sc || recipe === "answer") return none(lang, t0, "checker");
-  const stage = (await buildScreen(sc.recipe, sc.slots, scopeAfter(state, []), w, hands, heard)).doc;
+  const stage = (await buildScreen(sc.recipe, sc.slots, scopeAfter(state, []), w, hands, heard, undefined, lang)).doc;
   return { kind: "do", lang, reply: null, steps: syncSteps(sc.recipe, sc.slots, stage.scope, state), stage, stageOp: null, say: stage.say[lang], options: [], rounds: 0, calls: [],
     model: null, ms: Date.now() - t0, note: null };
 }

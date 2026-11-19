@@ -21,8 +21,8 @@ import { betterCategory, saidStems } from "./catlabels";
 import { CAT_LABEL_TA } from "./narrate";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
-import { asksForbidden, NEVER_REPLY } from "./privacy";
-import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
+import { asksForbiddenOrder, NEVER_REPLY } from "./privacy";
+import { intentMarker, statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
 import { needsDates, readPeriod } from "@/lib/period/read";
 import { heldPeriod, windowIn } from "@/lib/windowspan";
 
@@ -316,6 +316,15 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // missions
   if (/morning brief|brief me|today'?s brief|todays brief|read (me )?(the |todays |today'?s )?brief|இன்றைய சுருக்கம்|சுருக்கம் சொல்|brief sollu|innaiku brief/.test(s)) return done([{ a: "mission", name: "brief" }]);
   if (/(prepare|get ready|be ready|ready)( us)? for .*(rain|மழை)|rain readiness|rain check|heavy rain.*(ready|pannu|prepare)|(கனமழை|மழை).*(தயார்|ready)|mazhai.*ready|rain.*ready pannu/.test(s)) return done([{ a: "mission", name: "rain" }]);
+  // the new intents that are flows of their own (Jarvis v4): "what changed since yesterday" is not a question about a window the console holds, "build me a
+  // water-crisis board for Velachery" is not a taluk filter, "how do you know?" is not a question for Ask District IQ. Handed on, never acted on by the rules
+  // (and so never "sure" for the address gate); quick.ts intentMarker names them for the coordinator
+  // a save said after another request ("show Adyar and save this workspace as Daily") is a level-B request in the same breath: the rules
+  // would act on the first half and read the name as a period, so the whole sentence goes on, where the save waits for the name and a
+  // yes (v4 spec finding, mode.spec "a level B request with no name does not run")
+  if (!/^save\b/.test(s) && /\bsave\s+(?:(?:this|the|my|current|it)\s+)?(?:(?:view|screen|layout|workspace|page|dashboard)\s+)?as\b/.test(s)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  const marker = intentMarker(heard);
+  if (marker && (marker.intent === "changed" || marker.intent === "mission" || (marker.intent === "howknow" && !/^(the )?sources?$/.test(s)))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
 
   // settings
   if (/\b(dark (mode|theme)|night mode)\b|^dark$|டார்க் (மோட்|mode)|^dark mode on$/.test(s)) return done([{ a: "theme", theme: "dark" }]);
@@ -360,7 +369,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   }
   // an order Jarvis never carries out (close, send, approve, delete ... records): the refusal says so, in the console too: it was a filter for "Severe" and the word "close" went unanswered (RC-04, PB-283)
   // (closing a panel, or all of them, is the console's own tidy-up: those exact commands are handled below)
-  if (asksForbidden(heard) && !/^close (all|everything|it|this|that|the panel)$|^close all (panels|windows)$|^(close pannu|மூடு|இதை மூடு)$|எல்லாவற்றையும் மூடு|ellaam close/.test(s)) return { kind: "refuse", lang, heard, why: b(NEVER_REPLY.en, NEVER_REPLY.ta) };
+  if (asksForbiddenOrder(heard) && !/^close (all|everything|it|this|that|the panel)$|^close all (panels|windows)$|^(close pannu|மூடு|இதை மூடு)$|எல்லாவற்றையும் மூடு|ellaam close/.test(s)) return { kind: "refuse", lang, heard, why: b(NEVER_REPLY.en, NEVER_REPLY.ta) };
   // Ask District IQ, by name
   const askDiq = /^(ask|ask district iq|ask the assistant|ask the chatbot)( to| about| whether| if)?\s+(.+)$/.exec(s);
   if (askDiq && !/^(ask )?the map\b/.test(askDiq[3])) {

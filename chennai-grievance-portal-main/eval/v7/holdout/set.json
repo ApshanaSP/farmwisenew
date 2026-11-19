@@ -1,0 +1,58 @@
+{
+  "about": "v7 answer holdout: written and hashed on 17 Nov 2026 before any tuning, run once at the end (src/lib/thunai/aide7/eval7.live.ts). 48 questions, 8 a kind (incident, news, compare, why, follow-up, outside-dashboard), English, Tamil (ta) and Tanglish (tg), other places and phrasings than the dev set's. Model-drafted, not checked by a Tamil speaker. Gold facts are computed by code from the dry-run store at run time.",
+  "items": [
+    { "id": "h-inc-1", "kind": "incident", "lang": "en", "text": "what's the Sholinganallur issue" },
+    { "id": "h-inc-2", "kind": "incident", "lang": "en", "text": "tell me about the problem in Ambattur" },
+    { "id": "h-inc-3", "kind": "incident", "lang": "en", "text": "explain the issue in Alandur" },
+    { "id": "h-inc-4", "kind": "incident", "lang": "ta", "text": "தேனாம்பேட்டை பிரச்சினை என்ன" },
+    { "id": "h-inc-5", "kind": "incident", "lang": "ta", "text": "கோடம்பாக்கம் பிரச்சனை பற்றி சொல்லு" },
+    { "id": "h-inc-6", "kind": "incident", "lang": "tg", "text": "Manali issue enna" },
+    { "id": "h-inc-7", "kind": "incident", "lang": "tg", "text": "Alandur problem pathi sollu" },
+    { "id": "h-inc-8", "kind": "incident", "lang": "en", "text": "what's wrong with the drains in Royapuram" },
+
+    { "id": "h-news-1", "kind": "news", "lang": "en", "text": "explain this news", "news": 5 },
+    { "id": "h-news-2", "kind": "news", "lang": "en", "text": "what's this report about", "news": 6 },
+    { "id": "h-news-3", "kind": "news", "lang": "en", "text": "tell me more about that story", "news": 7 },
+    { "id": "h-news-4", "kind": "news", "lang": "ta", "text": "இந்தச் செய்தியைப் பற்றி சொல்லுங்க", "news": 8 },
+    { "id": "h-news-5", "kind": "news", "lang": "tg", "text": "indha news enna", "news": 9 },
+    { "id": "h-news-6", "kind": "news", "lang": "en", "text": "what's in today's news" },
+    { "id": "h-news-7", "kind": "news", "lang": "ta", "text": "செய்திகளைச் சுருக்கமா சொல்லு" },
+    { "id": "h-news-8", "kind": "news", "lang": "en", "text": "any news about Royapuram" },
+
+    { "id": "h-cmp-1", "kind": "compare", "lang": "en", "text": "compare Teynampet and Kodambakkam" },
+    { "id": "h-cmp-2", "kind": "compare", "lang": "en", "text": "compare all the zones" },
+    { "id": "h-cmp-3", "kind": "compare", "lang": "en", "text": "how do the departments compare" },
+    { "id": "h-cmp-4", "kind": "compare", "lang": "en", "text": "compare today with yesterday" },
+    { "id": "h-cmp-5", "kind": "compare", "lang": "ta", "text": "தேனாம்பேட்டை, கோடம்பாக்கம் ஒப்பிடு" },
+    { "id": "h-cmp-6", "kind": "compare", "lang": "ta", "text": "துறைகளை ஒப்பிடு" },
+    { "id": "h-cmp-7", "kind": "compare", "lang": "tg", "text": "ella zone um compare pannu" },
+    { "id": "h-cmp-8", "kind": "compare", "lang": "en", "text": "Perungudi versus Sholinganallur" },
+
+    { "id": "h-why-1", "kind": "why", "lang": "en", "text": "why are complaints going up in Royapuram" },
+    { "id": "h-why-2", "kind": "why", "lang": "en", "text": "why is Teynampet worse than Kodambakkam" },
+    { "id": "h-why-3", "kind": "why", "lang": "en", "text": "what changed this week" },
+    { "id": "h-why-4", "kind": "why", "lang": "en", "text": "why are there so many road complaints in Anna Nagar" },
+    { "id": "h-why-5", "kind": "why", "lang": "ta", "text": "ராயபுரத்தில் புகார்கள் ஏன் அதிகரிக்கின்றன" },
+    { "id": "h-why-6", "kind": "why", "lang": "ta", "text": "இந்த வாரம் என்ன மாறியது" },
+    { "id": "h-why-7", "kind": "why", "lang": "tg", "text": "Adyar la yen complaints jaasthi" },
+    { "id": "h-why-8", "kind": "why", "lang": "en", "text": "what changed in Adyar since yesterday" },
+
+    { "id": "h-fol-1", "kind": "followup", "lang": "en", "before": "what is happening in Teynampet", "text": "what about Kodambakkam?" },
+    { "id": "h-fol-2", "kind": "followup", "lang": "en", "before": "compare Royapuram and Tondiarpet", "text": "why is that?" },
+    { "id": "h-fol-3", "kind": "followup", "lang": "en", "before": "show the severe cases in Adyar", "text": "tell me about the second one" },
+    { "id": "h-fol-4", "kind": "followup", "lang": "en", "before": "what changed this week", "text": "and since yesterday?" },
+    { "id": "h-fol-5", "kind": "followup", "lang": "ta", "before": "ராயபுரம் நிலவரம் என்ன", "text": "அடையாறு எப்படி?" },
+    { "id": "h-fol-6", "kind": "followup", "lang": "tg", "before": "Teynampet la enna nadakkudhu", "text": "Adyar la?" },
+    { "id": "h-fol-7", "kind": "followup", "lang": "en", "before": "which department is slowest", "text": "tell me more about that one" },
+    { "id": "h-fol-8", "kind": "followup", "lang": "en", "before": "what's the Royapuram issue", "text": "since when?" },
+
+    { "id": "h-out-1", "kind": "outside", "lang": "en", "text": "the Chief Minister is coming to Royapuram tomorrow, brief me" },
+    { "id": "h-out-2", "kind": "outside", "lang": "en", "text": "what did the Mayor announce about the stormwater drains" },
+    { "id": "h-out-3", "kind": "outside", "lang": "en", "text": "is the Governor visiting the flood camps" },
+    { "id": "h-out-4", "kind": "outside", "lang": "en", "text": "how many people were killed in the Mumbai building collapse" },
+    { "id": "h-out-5", "kind": "outside", "lang": "ta", "text": "அமைச்சர் ராயபுரம் வருகிறாரா" },
+    { "id": "h-out-6", "kind": "outside", "lang": "ta", "text": "மேயர் மழைநீர் வடிகால் பற்றி என்ன அறிவித்தார்" },
+    { "id": "h-out-7", "kind": "outside", "lang": "tg", "text": "minister Adyar ku varaara" },
+    { "id": "h-out-8", "kind": "outside", "lang": "en", "text": "what happened in Bengaluru today" }
+  ]
+}

@@ -1,0 +1,173 @@
+import { describe, expect, it } from "vitest";
+import type { AgentResult } from "../agent";
+import { WORLD } from "../fixture";
+import type { Rung } from "../llm";
+import type { StageDocT } from "../stage";
+import { findGap, gapPhrase, gapWords, matches, nothingLine } from "./gap";
+import { aideAnswer } from "./index";
+import type { OpenRung, RungCall } from "./stream";
+
+const Q = "CM Vijay is visiting Adyar, what should I know";
+const DOC: StageDocT = {
+  v: 1, id: "st-x", recipe: "situation", title: "The situation · Adyar · the last 24 hours", takeaway: null, say: { en: "In Adyar, 12 incidents came in over the last 24 hours against 15 the 24 hours before.", ta: "x" },
+  blocks: [{ kind: "Kpis", id: "kpis", title: "The situation", items: [{ key: "now", label: "Reported in Adyar, the last 24 hours", value: 12, unit: null, prev: 15, delta: -3, tone: "good", spark: [] }] }],
+  scope: { period: "daily", zone: 13, dept: null, cat: null, taluk: null, sev: null }, slots: {}, sources: [], asOf: null, notes: [], lang: "en"
+};
+const R = { kind: "do", lang: "en", reply: null, steps: [], stage: DOC, stageOp: null, say: DOC.say.en, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "asks7:outside" } as AgentResult & { stage: StageDocT };
+const RUNGS: Rung[] = [{ provider: "groq", model: "qwen/qwen3.8-27b" }];
+/** first call: the dashboard part, no gap named; second call (the gap's reports): one sentence citing the report */
+const writer = (calls: RungCall[]): OpenRung => async (rung, c, onText) => {
+  calls.push(c);
+  if (/only this part/.test(c.prompt)) onText("GAP: none\nS: The Hindu reports that CM Vijay is to visit the Adyar flood areas on Friday. [F1]\n");
+  else { const id = c.prompt.match(/^(F\d+) .*Reported in Adyar/m)?.[1]; onText(`GAP: none\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [${id}]\n`); }
+  return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null };
+};
+const NOW = Date.parse("2026-11-17T10:00:00+05:30");
+
+describe("v7: the part the dashboard does not hold", () => {
+  it("reads the gap's words from the question, and matches a report only on them and the event", () => {
+    expect(gapWords("CM Vijay's visit to Adyar", Q, WORLD)).toEqual(["cm", "vijay"]);
+    expect(gapPhrase("cm vijay visiting", Q)).toBe("CM Vijay visiting");
+    expect(matches("CM Vijay to visit Adyar flood areas on Friday", ["cm", "vijay"], Q)).toBe(true);
+    expect(matches("CM Vijay reviews the budget", ["cm", "vijay"], Q)).toBe(false);
+  });
+  it("found in an outlet's feed: one more checked sentence naming the outlet, and the report as a link", async () => {
+    const calls: RungCall[] = [];
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer(calls), rungs: () => RUNGS },
+      dashboardNews: async () => [], feeds: async () => [{ outlet: "The Hindu", outletTa: "தி இந்து", title: "CM Vijay to visit Adyar flood areas on Friday", url: "https://www.thehindu.com/x", at: NOW - 2 * 3600_000, from: "web" }] });
+    expect(a.written.sentences[0]).toMatch(/^Adyar had 12 incidents/);
+    expect(a.gap?.status).toBe("ok");
+    expect(a.result.say).toMatch(/The Hindu reports that CM Vijay is to visit/);
+    expect(a.result.stage?.blocks.some((b) => b.kind === "NewsReader" && b.id === "aide-gap")).toBe(true);
+    expect(calls).toHaveLength(2);
+  });
+  it("found nowhere: said plainly, in the Collector's own words, and nothing invented", async () => {
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS },
+      dashboardNews: async () => [], feeds: async () => [{ outlet: "DT Next", outletTa: null, title: "Metro work on OMR delayed", url: "https://dtnext.in/y", at: NOW, from: "web" }] });
+    expect(a.gap?.status).toBe("nothing");
+    expect(a.result.say).toContain("Nothing in the dashboard or the latest news mentions CM Vijay visiting.");
+    expect(a.result.say).not.toMatch(/Friday|Metro/);
+  });
+  it("the dashboard's own news first: the web is not read when it has the report", async () => {
+    let fed = false;
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS },
+      dashboardNews: async () => [{ outlet: "The Hindu", outletTa: null, title: "CM Vijay to visit Adyar flood areas on Friday", url: null, at: NOW - 3600_000, from: "dashboard" }],
+      feeds: async () => { fed = true; return []; } });
+    expect(a.gap?.hits[0].from).toBe("dashboard");
+    expect(fed).toBe(false);
+  });
+  it("a cause or a why is no gap to look up (the record answers it: it shows what moved, not why)", async () => {
+    const calls: RungCall[] = [];
+    const why = (c: RungCall[]): OpenRung => async (rung, c2, onText) => { c.push(c2); onText("GAP: the cause of the rise; the facts only show what moved, not why\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [F2]\n"); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    let searched = false;
+    const a = await aideAnswer({ ...R, note: null }, { question: "why are complaints rising in Adyar", world: WORLD, user: "t", now: () => NOW, write: { open: why(calls), rungs: () => RUNGS },
+      dashboardNews: async () => { searched = true; return []; }, feeds: async () => { searched = true; return []; } });
+    expect(searched).toBe(false);
+    expect(a.gap).toBeNull();
+    expect(a.result.say).not.toMatch(/nothing on/i);
+  });
+  it("a place name alone is no search: the gap's words must name something besides the place", () => {
+    expect(gapWords("Adyar", "tell me about the Adyar issue", WORLD)).toEqual([]);
+    expect(gapWords("CM Vijay's visit to Adyar", Q, WORLD)).toEqual(["cm", "vijay"]);
+  });
+  it("the writer's gap in its own words ('the Chief Minister's visit'): the question's own words are looked for", async () => {
+    let seen: string[] = [];
+    const own: OpenRung = async (rung, c2, onText) => { onText(/only this part/.test(c2.prompt) ? "GAP: none\nS: The Hindu reports that CM Vijay is to visit the Adyar flood areas on Friday. [F1]\n" : "GAP: the Chief Minister's visit itself\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [F2]\n"); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: own, rungs: () => RUNGS },
+      dashboardNews: async (w) => { seen = w; return []; }, feeds: async () => [{ outlet: "The Hindu", outletTa: null, title: "CM Vijay to visit Adyar flood areas on Friday", url: "https://www.thehindu.com/x", at: NOW - 3600_000, from: "web" }] });
+    expect(seen).toEqual(["cm", "vijay"]);
+    expect(a.gap?.status).toBe("ok");
+    expect(a.result.say).toMatch(/CM Vijay is to visit/);
+  });
+  it("the nothing line says only what was searched", () => {
+    expect(nothingLine("முதல்வர் வருகை", "ta", "news")).toBe("முதல்வர் வருகை பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+    expect(nothingLine("CM Vijay visiting", "en", "dashboard")).toBe("The dashboard has nothing on CM Vijay visiting.");
+    expect(nothingLine("CM Vijay visiting", "en", "unavailable")).toBe("The dashboard has nothing on CM Vijay visiting, and the news feeds could not be read just now.");
+  });
+  it("no web search (switched off): the line claims only the dashboard", async () => {
+    const prev = process.env.JARVIS_AIDE_WEB;
+    process.env.JARVIS_AIDE_WEB = "0";
+    try {
+      const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS } });
+      expect(a.result.say).toContain("The dashboard has nothing on CM Vijay visiting.");
+      expect(a.result.say).not.toMatch(/news mentions/);
+    } finally { if (prev == null) delete process.env.JARVIS_AIDE_WEB; else process.env.JARVIS_AIDE_WEB = prev; }
+  });
+  it("the feeds could not be read: said so, never 'nothing in the news'", async () => {
+    const a = await aideAnswer(R, { question: Q, world: WORLD, user: "t", now: () => NOW, gapHint: ["cm", "vijay", "visiting"], write: { open: writer([]), rungs: () => RUNGS },
+      dashboardNews: async () => [], feeds: async () => { throw new Error("feeds unavailable"); } });
+    expect(a.gap?.status).toBe("unavailable");
+    expect(a.result.say).toContain("could not be read just now");
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): the nothing line in good words, and no match on two letters", () => {
+  it("the writer's gap, when every word of it is the Collector's, is said as written; a 'what did X say' is said as 'what X said'", () => {
+    expect(gapPhrase("the CM Vijay's visit to Adyar", Q)).toBe("the CM Vijay's visit to Adyar");
+    expect(gapPhrase("what did the Governor say about the floods", "what did the Governor say about the floods")).toBe("what the Governor said about the floods");
+    expect(gapPhrase("who won the by-election in Kolathur yesterday", "who won the by-election in Kolathur yesterday")).toBe("who won the by-election in Kolathur yesterday");
+    expect(gapPhrase("முதல்வர் அடையாறுக்கு வருவது", "முதல்வர் அடையாறுக்கு வருகிறாரா")).toBe("முதல்வர் அடையாறுக்கு வருவது");
+  });
+  it("a gap in the writer's own words falls back to the Collector's own span, never a heap of words ('CM Vijay Adyar')", () => {
+    expect(gapPhrase("the Chief Minister's tour of Adyar", Q)).toBe("that CM Vijay is visiting Adyar");
+    expect(nothingLine(gapPhrase("the Chief Minister's tour of Adyar", Q), "en", "news")).toBe("Nothing in the dashboard or the latest news mentions that CM Vijay is visiting Adyar.");
+  });
+  it("a report matches on whole words, and two letters alone ('cm') search for nothing", () => {
+    const q = "CM Royapuram ku eppo varaaru";
+    expect(matches("CMWSSB to desilt drains in Royapuram", ["cm"], q)).toBe(false);
+    expect(matches("Acme fire at Ennore", ["cm", "vijay"], Q)).toBe(false);
+    expect(gapWords("CM-இன் வருகை எப்போது என்பது", q, WORLD)).toEqual([]);
+  });
+});
+
+describe("v7 (the Haiku dev run, 17 Nov): the question reaches the checker", () => {
+  it("'I have nothing on the Governor visiting Adyar' is kept: the Collector named the Governor", async () => {
+    const say: OpenRung = async (rung, c2, onText) => { const id = c2.prompt.match(/^(F\d+) .*Reported in Adyar/m)?.[1]; onText(`GAP: none\nS: I have nothing on the Governor visiting Adyar. [${id}]\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [${id}]\n`); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    const a = await aideAnswer({ ...R, note: null }, { question: "Is the Governor visiting Adyar?", world: WORLD, user: "t", now: () => NOW, write: { open: say, rungs: () => RUNGS }, dashboardNews: async () => [], feeds: async () => [] });
+    expect(a.written.sentences[0]).toBe("I have nothing on the Governor visiting Adyar.");
+  });
+});
+
+describe("v7 (the tuned Haiku dev run, 17 Nov): the nothing line for a yes/no question, in Tamil, and from Tanglish", () => {
+  it("a yes/no question is said as 'whether ...'", () => {
+    expect(gapPhrase("the Minister's plans to inaugurate the Kathipara flyover today", "is the minister inaugurating the Kathipara flyover today")).toBe("whether the minister is inaugurating the Kathipara flyover today");
+    expect(gapPhrase("CM Vijay coming", "is CM Vijay coming to Adyar")).toBe("CM Vijay coming");
+  });
+  it("Tamil: a question-form phrase takes 'என்பது'; Tanglish words are not said inside a Tamil sentence", () => {
+    expect(nothingLine("முதல்வர் அடையாறுக்கு வருகிறாரா", "ta", "news")).toBe("முதல்வர் அடையாறுக்கு வருகிறாரா என்பது பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+    expect(nothingLine("CM ku eppo varaaru", "ta", "news")).toBe("அதைப் பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை.");
+  });
+});
+
+describe("v7 (the round-2 Haiku dev run, 17 Nov): a Tamil place name alone is no search either", () => {
+  it("'முதல்வரின் அடையாறு வருகை' searches no word of Adyar's (it matched an Adyar river report and Dinamalar's Adyar news)", () => {
+    const q = "முதல்வர் அடையாறுக்கு வருகிறாரா";
+    expect(gapWords("முதல்வரின் அடையாறு வருகை", q, WORLD)).toEqual([]);
+    expect(gapWords("முதல்வர் அடையாறுக்கு வருகிறாரா", q, WORLD)).toEqual(["முதல்வர்", "வருகிறாரா"]);
+  });
+});
+
+describe("v7 (the independent review, 18 Nov): the gap's matches, the nothing line's figures, a cut-off line, a cause-only reply", () => {
+  it("a two-word department name alone does not match a longer gap; an undated web item is not today's news", async () => {
+    expect(matches("Metro Water supply cut in Anna Nagar", ["metro", "water", "pipeline", "burst"], "any news on the metro water pipeline burst")).toBe(false);
+    expect(matches("Metro Water pipeline burst floods road", ["metro", "water", "pipeline", "burst"], "any news on the metro water pipeline burst")).toBe(true);
+    const f = await findGap("metro water pipeline burst", "any news on the metro water pipeline burst", { feeds: async () => [{ outlet: "DT Next", outletTa: null, title: "Metro Water pipeline burst floods road", url: null, at: null, from: "web" }], now: () => NOW });
+    expect(f.status).toBe("nothing");
+  });
+  it("the nothing line never repeats a figure (it is the Collector's, not checked)", () => {
+    expect(gapPhrase("the 500 crore announcement", "did the minister announce 500 crore for drains")).toBe("");
+  });
+  it("a reply cut off mid-line says nothing of the cut line", async () => {
+    const cut: OpenRung = async (rung, c2, onText) => { const id = c2.prompt.match(/^(F[0-9]+) .*Reported in Adyar/m)?.[1]; onText(`GAP: none\nS: Adyar had 12 incidents in the last 24 hours, down from 15. [${id}]\nS: Want the`); return { provider: rung.provider, model: rung.model, tokens: 30, firstMs: 1, ms: 2, stop: null }; };
+    const a = await aideAnswer({ ...R, note: null }, { question: "how is Adyar", world: WORLD, user: "t", now: () => NOW, write: { open: cut, rungs: () => RUNGS } });
+    expect(a.written.sentences).toEqual(["Adyar had 12 incidents in the last 24 hours, down from 15."]);
+  });
+  it("a reply that is only a cause 'gap' still says the recipe's line, without its announcement", async () => {
+    const only: OpenRung = async (rung, _c2, onText) => { onText("GAP: the cause of the rise\n"); return { provider: rung.provider, model: rung.model, tokens: 10, firstMs: 1, ms: 2, stop: null }; };
+    const said: string[] = [];
+    const d = { ...DOC, say: { en: "12 headlines. Reading them now.", ta: "x" } };
+    const a = await aideAnswer({ ...R, stage: d, note: null }, { question: "why are complaints rising", world: WORLD, user: "t", now: () => NOW, emit: (s) => said.push(s), write: { open: only, rungs: () => RUNGS } });
+    expect(said.length).toBeGreaterThan(0);
+    expect(a.result.say).toBe("12 headlines.");
+  });
+});

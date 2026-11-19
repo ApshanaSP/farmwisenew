@@ -282,8 +282,17 @@ describe("the rules lane does not act on what it read and drop what it could not
 // RC-15: the conditions line (rain, air, reservoirs) is the district's: a brief on a zone does not carry it as if it were the zone's, in any language
 describe("the district's conditions line is in the district brief only", () => {
   const points = async (text: string) => { const r = await say(text); const b = r.stage?.blocks.find((x) => x.kind === "Brief"); return b && b.kind === "Brief" ? b.points : null; };
-  it.each([["English", "Kodambakkam zone situation summary"], ["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Kodambakkam nelamai konjam summary sollu"]])("a zone's brief has no conditions point: %s", async (_n, text) => {
-    const p = await points(text);
+  it.each([["English", "Kodambakkam zone situation summary"], ["English, a zone summary", "Kodambakkam zone summary"], ["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Kodambakkam nelamai konjam summary sollu"]])("a zone's brief has no conditions point: %s", async (_n, text) => {
+    const r = await say(text);
+    // v4 (docs/jarvis/ULTIMATE_JARVIS.md Pillar 3, situation synthesis): "situation" opens the place's situation screen, which has no Brief block; the
+    // district's warning on it is said as the district's (V4_EXPECTED_CHANGES.md). A zone summary is still the zone's brief, checked below.
+    if (r.stage?.recipe === "situation") {
+      expect(r.stage.blocks.some((x) => x.kind === "Brief"), text).toBe(false);
+      for (const f of r.stage.blocks.flatMap((x) => (x.kind === "Findings" ? x.items : []))) if (/\bIMD\b|வானிலை மைய/.test(f.title)) expect(f.caveat, text).toMatch(/district|மாவட்ட/);
+      return;
+    }
+    const b = r.stage?.blocks.find((x) => x.kind === "Brief");
+    const p = b && b.kind === "Brief" ? b.points : null;
     expect(p, text).toBeTruthy();
     expect(p!.some((x) => /^Conditions: |நிலைமைகள்/.test(x.text) || /நிலைமைகள்/.test(x.ta ?? "")), text).toBe(false);
   });
@@ -296,8 +305,17 @@ describe("the district's conditions line is in the district brief only", () => {
 
 // RC-15: a Tamil brief's point for a record names its body and place in Tamil; the record's own English headline is not read out as part of a Tamil line
 describe("a Tamil brief point holds no English headline", () => {
-  it.each([["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Tiruvottiyur la situation epdi iruku"], ["Tamil letters, a follow-up zone", "அம்பத்தூர் சுருக்கம்"]])("%s", async (_n, text) => {
+  const latinRun = (s: string) => s.split(/\s+/).reduce((m: { cur: number; max: number }, w) => (/^[A-Za-z][A-Za-z'.,-]*$/.test(w) ? { cur: m.cur + 1, max: Math.max(m.max, m.cur + 1) } : { cur: 0, max: m.max }), { cur: 0, max: 0 }).max;
+  it.each([["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Tiruvottiyur la situation epdi iruku"], ["Tanglish, a zone summary", "Tiruvottiyur summary sollu"], ["Tamil letters, a follow-up zone", "அம்பத்தூர் சுருக்கம்"]])("%s", async (_n, text) => {
     const r = await say(text);
+    // v4 (Pillar 3, situation synthesis): "situation" opens the situation screen, which has no Brief block; its Tamil line and its findings hold no
+    // English headline either (V4_EXPECTED_CHANGES.md)
+    if (r.stage?.recipe === "situation") {
+      expect(r.stage.say.ta, text).toMatch(/[஀-௿]/);
+      expect(latinRun(r.stage.say.ta), `${text}: ${r.stage.say.ta}`).toBeLessThan(4);
+      if (r.stage.lang === "ta") for (const f of r.stage.blocks.flatMap((x) => (x.kind === "Findings" ? x.items : []))) expect(latinRun(f.title), `${text}: ${f.title}`).toBeLessThan(4);
+      return;
+    }
     const b = r.stage?.blocks.find((x) => x.kind === "Brief");
     expect(b, text).toBeTruthy();
     if (b?.kind !== "Brief") return;

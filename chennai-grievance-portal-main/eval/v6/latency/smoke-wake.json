@@ -1,0 +1,70 @@
+{
+ "tag": "smoke",
+ "part": "wake",
+ "at": "2026-11-17T06:28:55.122Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "wake_david",
+   "kind": "wake-open",
+   "firstSound": 950,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 11,
+   "firstSpeech": null,
+   "finding": null,
+   "ackMark": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": 427,
+   "transcribed": 928,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 96,
+    "at": {
+     "voicedEnd": 96,
+     "eou": 427,
+     "uploadSent": 432,
+     "sttSent": 462,
+     "sttBack": 906,
+     "hearBack": 928
+    }
+   },
+   "voices": [],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-open",
+   "firstSound": 690,
+   "firstSoundKind": "tone",
+   "firstSoundLat": 11,
+   "firstSpeech": null,
+   "finding": null,
+   "ackMark": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": 388,
+   "transcribed": 668,
+   "trace": {
+    "lane": null,
+    "zeroVsTrue": 67,
+    "at": {
+     "voicedEnd": 67,
+     "eou": 388,
+     "uploadSent": 395,
+     "sttSent": 406,
+     "sttBack": 650,
+     "hearBack": 667
+    }
+   },
+   "voices": [],
+   "heard": "Yes?",
+   "provider": null,
+   "tokens": null,
+   "path": null
+  }
+ ]
+}

@@ -22,11 +22,14 @@ export type StageChartSpec =
   | { type: "donut"; labels: string[]; values: number[]; unit: string | null }
   | { type: "trend"; labels: string[]; values: number[]; unit: string; marks: { i: number; why: string }[]; normal: { lo: number; hi: number } | null }
   | { type: "group"; categories: string[]; series: { name: string; values: number[] }[]; unit: string | null }
-  | { type: "lines"; labels: string[]; series: { name: string; values: number[] }[]; unit: string | null };
+  | { type: "lines"; labels: string[]; series: { name: string; values: number[] }[]; unit: string | null }
+  /** one measure over its labels, drawn as a line (a Chart block's "line": it was drawn as bars, v4 defect 9) */
+  | { type: "line"; labels: string[]; values: number[]; unit: string | null };
 
 const fmt = (v: number) => (Math.abs(v) >= 1e5 ? `${+(v / 1e5).toFixed(1)}L` : Math.abs(v) >= 1e4 ? `${+(v / 1e3).toFixed(1)}k` : Number.isInteger(v) ? String(v) : v.toFixed(1));
 
-function option(s: StageChartSpec, ink: Ink, title: string, reduce: boolean): echarts.EChartsCoreOption {
+/** The ECharts option for a spec (exported for its tests): `reduce` is the reader's reduced-motion setting, which turns every animation off. */
+export function option(s: StageChartSpec, ink: Ink, title: string, reduce: boolean): echarts.EChartsCoreOption {
   const font = currentFont();
   const series = ink.viz;
   const tip = { confine: true, backgroundColor: ink.elev, borderColor: ink.line, borderWidth: 1, textStyle: { color: ink.text, fontFamily: font, fontSize: 12.5 },
@@ -70,6 +73,18 @@ function option(s: StageChartSpec, ink: Ink, title: string, reduce: boolean): ec
           data: [[{ yAxis: s.normal.lo }, { yAxis: s.normal.hi }]] } : undefined,
         markPoint: { symbol: "circle", symbolSize: 11, itemStyle: { color: ink.sev, borderColor: ink.surface, borderWidth: 2 }, label: { show: false },
           data: [...s.marks.map((m) => ({ coord: [m.i, s.values[m.i]], name: m.why })), ...(s.marks.some((m) => m.i === peak) ? [] : [{ coord: [peak, s.values[peak]], itemStyle: { color: ink.text } }])] } }] };
+  }
+  if (s.type === "line") {
+    // one line over the labels, its axes and the value on each point while they fit; long labels (Tamil months, place names) are cut, never overlapped
+    const neg = s.values.some((v) => v < 0);
+    return { ...base, tooltip: { ...tip, trigger: "axis", valueFormatter: (v: number) => `${fmt(v)}${s.unit ? ` ${s.unit}` : ""}` },
+      grid: { left: 4, right: 14, top: 26, bottom: 4, containLabel: true },
+      xAxis: { type: "category", data: s.labels, boundaryGap: false, axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } },
+        axisLabel: { ...axisLabel, hideOverlap: true, width: 96, overflow: "truncate" as const } },
+      yAxis: { ...valAxis, min: neg ? undefined : 0 },
+      series: [{ type: "line", data: s.values, smooth: false, symbol: "circle", symbolSize: 6, lineStyle: { width: 2, color: series[0] },
+        itemStyle: { color: series[0], borderColor: ink.surface, borderWidth: 2 },
+        label: { show: s.values.length <= 16, position: "top", color: ink.text, fontSize: 11, fontWeight: 600, formatter: (x: { value: number }) => fmt(x.value) } }] };
   }
   if (s.type === "group") {
     return { ...base, tooltip: { ...tip, trigger: "axis", axisPointer: { type: "shadow" } },

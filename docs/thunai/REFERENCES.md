@@ -1,4 +1,132 @@
-# Thunai: references checked
+# Thunai and Jarvis: references checked
+
+## v6 Phases 2, 3 and 6, 17 Nov 2026: speed, briefings, the feel
+
+Nothing was installed from npm. The research notes are in `docs/jarvis/v6-research/` (10 turn-taking, 20 voice-agent speed, 30 local speech, 40 news and web) with their own sources; the lines below are what this build relies on.
+
+| Item | Exact value | Licence (file read) | Used for |
+|---|---|---|---|
+| LiveKit WakeWord, "hey jarvis" model | `hey_jarvis.onnx` from `@livekit/wakeword` 2.1.2 (the model file only, not installed as a dependency: v5 found that install moves onnxruntime-web) | Apache-2.0 for code and weights (its LICENSE and NOTICE read; copied to `public/thunai/LICENSE-livekit-wakeword.txt`) | the on-device "Hey Jarvis" (`public/thunai/kws.worker.js`, on the page's own onnxruntime-web); offline 3/3 "Hey Jarvis", 0/48 false fires, "Hi Jarvis" not caught (`eval/v6/kws/offline-hey_jarvis.json`) |
+| onnxruntime-web | as installed (through `@huggingface/transformers`) | MIT (v5's record) | the wake word's and Silero's runtime |
+| LiveKit's turn detectors | not used | the LiveKit Model License says they "can only" be used with LiveKit Agents (research 10 §1) | — |
+| Gemini TTS (free tier) | `gemini-2.5-flash-preview-tts`, `gemini-3.1-flash-tts-preview`, voice Despina | Google's terms: outputs usable; free-tier inputs used to improve Google's products (an owner decision, HANDOVER) | the nine wake replies (`public/thunai/wake/`), made once; the ten briefing samples (`docs/jarvis/samples/v6/`); test clips |
+| Edge's natural voices (Neerja, Pallavi) | the browser's own | Microsoft's: text and audio deleted after conversion (v5's record) | the answer's voice; the warm-up utterance and the Tamil first-chunk length were measured on them (`eval/v6/latency/voiceprobe.json`) |
+| Windows voices (David, Zira, Mark, Ravi, Heera) | SAPI and OneCore through WinRT | the operating system's | synthetic test clips only (`tests/e2e/fixtures/v6/winvoices.ps1`) |
+
+### Methods
+
+| Item | Source | Where |
+|---|---|---|
+| Nearest-rank percentiles, n with every figure | the brief (section 4) | `scripts/jarvis6/waterfall.mjs`, `compare.mjs`, `news-latency.mjs` |
+| Blind pairwise judging with a seeded A/B order | the brief (section 8) | `src/lib/thunai/brief6.live.ts` |
+| Exact McNemar on paired rows | v5's `evalstats.ts` (the brief's vectors) | the understanding finals |
+
+
+## v6 Phase 4, 17 Nov 2026: Jarvis reads the news and the web (`src/lib/thunai/web/`)
+
+Nothing new was installed. Licences of the packages used were read from the licence file in the installed package on 17 Nov 2026. Sources and probes are in the research note `docs/jarvis/v6-research/40-news-web.md` (not committed here); the lines below say what this build relies on.
+
+### Dependencies (already in `package.json`)
+
+| Item | Exact value | Licence (file read) | Used for |
+|---|---|---|---|
+| @mozilla/readability | 0.6.0 (installed) | Apache-2.0 (`node_modules/@mozilla/readability/LICENSE.md` read: "Copyright (c) 2010 Arc90 Inc", "Licensed under the Apache License, Version 2.0") | the article's main text (`src/lib/collector/pageread.ts`, shared with the console's article view) |
+| linkedom | 0.18.13 (installed) | ISC (`node_modules/linkedom/LICENSE` read: "ISC License, Copyright (c) 2021, Andrea Giammarchi, @WebReflection") | the DOM Readability runs on; block-aware text (`web/read.ts`) |
+| zod | as installed | (existing dependency, not re-read) | the domain list's and the model reply's schemas |
+
+### Sources read at run time (allow-list: `config/jarvis-web-domains.json`)
+
+| Source | Terms as relied on | Status |
+|---|---|---|
+| The outlets' own RSS feeds and news sitemaps (The Hindu, Times of India, DT Next, New Indian Express, Dinamani, Dinamalar, Daily Thanthi) | public feeds; robots.txt honoured for `ChennaiDistrictNewsDataset` on every request and redirect hop | all 7 feeds and their robots.txt answered 200 in this build's timing runs; each publisher's feed terms were **not read** (as the research note's "Not verified") |
+| NDMA SACHET CAP RSS `https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml` | the feed states "public domain" (research probe; not re-read in this build) | used only for the Met department's warnings; no query sent |
+| Wikipedia REST (`/w/rest.php/v1/search/page`, `/api/rest_v1/page/summary/`) | CC BY-SA 4.0 (attribution and licence on screen); Wikimedia User-Agent policy (bot UA, never a browser's); the owner's file exempts these two API paths from robots.txt's `/api/` and `/w/` disallow (the research's reading that the API policy sanctions them; **an owner decision**, `robotsExempt`) | not called live in this build (tests only) |
+| Google News RSS | refused (denied on the list): its robots.txt disallows `/rss` | never fetched |
+| GDELT DOC 2.0 | not used (11-16 s and 429s in the research probes) | denied on the list |
+
+### Methods
+
+| Item | Source | Where |
+|---|---|---|
+| robots.txt: 4xx allows all, 5xx or unreachable disallows all, follow at least 5 redirects | RFC 9309, https://www.rfc-editor.org/rfc/rfc9309.html | `web/fetch.ts` robotsOk |
+| SSRF: allow-list, every DNS answer checked, connection pinned to the checked address, each redirect re-checked | OWASP SSRF Prevention Cheat Sheet, https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html | `web/fetch.ts` (with `lib/netsafe.ts` and `lib/studio/fetchurl.ts` pinnedFetchWith) |
+| Datamarking (spotlighting) for page text given to a model | Hines et al., arXiv 2403.14720, https://arxiv.org/abs/2403.14720 | `web/compare.ts`, optional step (`JARVIS_WEB_MODEL=1`, default off) |
+| Untrusted input never triggers an action; quoted claims checked verbatim | Beurer-Kellner et al., arXiv 2506.08837, https://arxiv.org/abs/2506.08837 ; OWASP LLM01:2025, https://genai.owasp.org/llmrisk/llm01-prompt-injection/ | `web/compare.ts`, `web/serve.ts` (events carry no steps or tools) |
+
+## v5, 15-16 Nov 2026 (brief: docs/jarvis/JARVIS_V5_BUILD_2.md, section 17)
+
+"Verified" and "unverified" are as the research graded them on 15 Nov 2026 unless this build checked a line itself (marked "checked in this build"). No grade was raised without opening the source. Licences of dependencies were read from the licence file in the installed package.
+
+### Dependencies and models
+
+| Item | Exact value | Licence (file read) | Status | Shipped? |
+|---|---|---|---|---|
+| undici (E3, keep-alive connection) | 8.12.4, exact (`package.json`); used with its own `fetch` and `Agent({ keepAliveTimeout: 60_000, keepAliveMaxTimeout: 600_000 })` (`keepalive.ts`); loaded on first use only, and on a Node older than its engines (>= 22.19) the built-in fetch is kept | MIT (`node_modules/undici/LICENSE` read: "MIT License, Copyright (c) Matteo Collina and Undici contributors") | option names `keepAliveTimeout`, `keepAliveMaxTimeout` as the brief states (verified for v8.10.0 by the research); behaviour under Next 15 measured in this build (see RESULTS) | yes (`JARVIS_KEEPALIVE`, default on) |
+| @livekit/wakeword (C5) | 2.1.2 tried, **not installed**: `npm install` moved `onnxruntime-web` out of the top-level `node_modules`, which the page's `/thunai-ort/` route reads; reverted | Apache-2.0 (research; LICENSE and NOTICE); not re-read because nothing shipped | package and licence verified by the research; accuracy on our phrases unverified | no (C5 cut) |
+| sherpa-onnx-node and sherpa-onnx-win-x64 (B5 measurement only) | 2.0.1, outside the repo | Apache-2.0 by each `package.json` only: neither installed package has a LICENSE file, and the bundled `onnxruntime.dll` 1.28.2 has no licence or notice file beside it | measured in a scratch folder; never installed in the app | no |
+| IndicConformer Tamil exports (B5, test only) | `csndhanasekar/sherpa-onnx-indicconformer-ta-int8` (rev a41ba03e), `OpenVoiceOS/ai4bharat-indicconformer-ta-onnx` (rev 10e43940), `Docglasses-AI/indic-conformer-600m-sherpa-onnx-int8` (rev 9fa6d9a7); SHA-256 of each file in `eval/b5/b5-results.json` | code MIT (AI4Bharat's GitHub LICENSE); upstream HF weights gated, tag only. csndhanasekar: a 207-byte LICENSE that is an attribution note naming MIT, not the MIT text; OpenVoiceOS: `license: mit` tag, no file; Docglasses: README says MIT, no file, weights from a further community export | test only, deleted after, never committed | no |
+| FLEURS `ta_in` test (B5 clips) | Hugging Face `google/fleurs` (rev 70bb2e84) | CC-BY-4.0 (YAML header; no standalone licence file) | test only, deleted after | no |
+| Silero VAD v5 (D1) | `silero_vad_v5.onnx` as shipped, now fed `[1, 576]` | MIT (https://raw.githubusercontent.com/snakers4/silero-vad/master/LICENSE) | the 64-sample context matches upstream `utils_vad.py` and `vad-web`'s `silero.ts` (research, code read) | yes (already in the app) |
+| ONNX runtime in the page | `/thunai-ort/`, onnxruntime-web 1.31.0-dev.20260914-8d85527a0, one copy | MIT | unchanged | yes (already) |
+
+### Hosted services (no new one added)
+
+| Item | Exact value | Status | Source |
+|---|---|---|---|
+| Groq planner ids | `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.8-27b` (Preview) | verified; all three answered in this build | B, https://console.groq.com/docs/models |
+| Groq limits, free plan | 8K tokens and 30 requests a minute, 200K tokens and 1K requests a day, per model, per organisation | **checked in this build:** `x-ratelimit-limit-tokens: 8000`, `x-ratelimit-limit-requests: 1000` on the first calls; the request allowance refills one request every 86.4 s (inferred) | B, https://console.groq.com/docs/rate-limits |
+| Groq strict structured outputs | `json_schema`, `strict: true` | verified; **in this build most gpt-oss first calls came back `json_validate_failed` with a usable draft** | B, https://console.groq.com/docs/structured-outputs |
+| Groq prompt cache | automatic on gpt-oss; `usage.prompt_tokens_details.cached_tokens` | verified; surfaced by `ai 7.0.122` as `inputTokenDetails.cacheReadTokens` (checked in this build); hits were rare at this traffic | B, https://console.groq.com/docs/prompt-caching |
+| Groq Whisper | `whisper-large-v3` (forced Tamil), `whisper-large-v3-turbo` (forced English) | verified | B, https://console.groq.com/docs/speech-to-text |
+| Anthropic | `claude-haiku-5-5` leads at deploy; `claude-opus-5-5` by explicit env only | **not called in this build**; the key returned 401 on 15 Nov 2026 | B, https://platform.claude.com/docs/en/about-claude/models/overview |
+| Haiku 5.5 price | $0.10 / $0.50 per million input / output; cache write $0.125, read $0.01 | verified by the research; used for the deploy check's US$0.50 cap | B, https://platform.claude.com/docs/en/about-claude/pricing |
+| Anthropic request fields | `thinking: {type: "disabled"}` always on Haiku's voice lane; `output_config.effort` low (medium allowed); no temperature, top_p, top_k or prefill | verified by the research; tested with a mocked client in this build | B, https://platform.claude.com/docs/en/build-with-claude/thinking ; https://platform.claude.com/docs/en/build-with-claude/effort ; https://platform.claude.com/docs/en/build-with-claude/structured-outputs |
+| Claude audio input | none | verified (absence) | B, https://platform.claude.com/docs/en/api/messages |
+| Gemini ids in `gateway.ts` | `gemini-3.5-flash-lite` verified; `gemini-3.5-flash` and `gemini-flash-lite-latest` unverified, left as they were | as stated | research area A2 |
+
+### Methods
+
+| Item | Source |
+|---|---|
+| Wilson interval at small n (no bootstrap, no normal approximation) | A/B, https://arxiv.org/html/2503.01747v3 ; https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval |
+| Exact McNemar with mid-p | https://en.wikipedia.org/wiki/McNemar%27s_test |
+| pass^k | https://arxiv.org/html/2406.12045 |
+| Run-to-run variation of API models set to be deterministic (up to 15 % accuracy) | https://arxiv.org/html/2408.04667v5 |
+| Text-only address gates near 11-20 % error | B, https://arxiv.org/abs/1808.02504 ; https://arxiv.org/html/2411.00023v2 |
+| Shortlist gains at many tools (+2.3 to +6.5 F1) and example order | B, https://arxiv.org/html/2606.17519 ; https://arxiv.org/html/2309.10954v2 |
+| Context rot (more prompt text hurts) | B, https://trychroma.com/research/context-rot |
+| Memory write rules (G3, rules a and c) | B, https://arxiv.org/html/2605.01970v4 |
+
+
+## v4, 15 Nov 2026 (brief: docs/jarvis/ULTIMATE_JARVIS.md, section 10)
+
+**No npm dependency was added in v4** (`package.json` and `package-lock.json` are unchanged from `main` `38d96d2f`). Each source below is used as a pattern, written in our own code, or is listed as decided against. "Checked" says what this build itself read. Where it says "brief", the line is taken from the brief's own research of 14 Nov and was not re-read here.
+
+| Source | What it is | Licence | Checked | Used how |
+|---|---|---|---|---|
+| AG-UI (`ag-ui-protocol/ag-ui`) | Event vocabulary for agent UIs | MIT (brief) | brief | Event names only (`RUN_STARTED`, `STEP_STARTED`, `TEXT_MESSAGE_CONTENT`, `STATE_SNAPSHOT`, `RUN_FINISHED`) in `src/lib/thunai/events.ts`; `@ag-ui/core` not added |
+| LLMCompiler (arXiv 2312.04511), ReWOO (arXiv 2305.18323) | Plan all tool calls at once, run in parallel, avoid a second model pass | papers; LLMCompiler code MIT (brief) | brief | One planner call emits up to 3 reads, `Promise.allSettled`, code fills the answer ("stop at tools") in `round.ts` |
+| OpenAI Agents SDK `StopAtTools` | Finish a run on a tool's result with no further model turn | SDK docs (brief) | brief | Pattern only, as above |
+| ReALM (arXiv 2403.20329) | Reference resolution over on-screen entities | paper | brief | `register.ts`: ordered on-screen entities, carried slots and provenance; "the second one" resolved in code |
+| Adtributor (Bhagwan et al., NSDI 2014) | Root-cause localisation by explanatory power and surprise | paper | brief | `recipes/adtributor.ts`: share of change and a Jensen-Shannon surprise per segment; thresholds (10 %, 67 %, 3 segments) are this build's choice, not the paper's |
+| Noufaily et al. 2013, improved Farrington algorithm | Count-aware outbreak detection with a negative-binomial threshold and down-weighted past outbreaks | paper | brief; the 99.5 % quantile used here is this build's choice, the paper's default unverified | `detect.ts`, written from the idea, no R code copied |
+| dbt, semantic layer vs text-to-SQL (Apr 2026) | Evidence that named metrics beat generated queries | blog (brief) | brief | Why `metrics.ts` exists: the planner names metric ids, code computes values |
+| MINJA memory poisoning (arXiv 2503.03704) | Injected instructions persisted through an agent's memory | paper | brief | `store.ts`: only the Collector's own Level-B "remember" sentences are written; notes that read as orders are refused |
+| τ-bench pass^k | Reliability over k repeated runs | paper (brief) | brief | pass^3 reported in `eval/RESULTS.md` |
+| Pipecat `MinWordsInterruptionStrategy`, LiveKit false-interruption resume | Barge-in only on real words; resume after a non-interruption | Pipecat BSD-2 (brief); LiveKit pattern only | brief | Pattern only in `turn.ts`/`backchannel.ts`: duck, stop on 2 non-backchannel words or 600 ms held, resume otherwise. Neither library added |
+| Chromium/Edge 141 `echoCancellation: "all"` | Removes all system playout from the mic, including `speechSynthesis` | Chrome 141 beta blog, Edge 141 notes (brief) | brief; whether `getSettings()` reports it: unverified (no browser run) | `ears.ts` asks for it and falls back to `true` |
+| Claude API structured outputs | `output_config.format` limits: 16 union-typed, 24 optional parameters, 20 strict tools, shared between format and strict tools; a changed format invalidates the prompt cache | Anthropic docs | **read 15 Nov** by the ladder lane | `claude.ts` rewrites schemas for the wire under the limits |
+| Anthropic SDK 1.4.0 types | `max_tokens: 0` warms the cache and is rejected with `output_config.format`; `between_tools` thinking exists | MIT | **read 15 Nov** (installed package types) | `claudeWarm()`; per-model thinking settings |
+| Gemini speech generation docs | Streaming TTS over `interactions?alt=sse`, 24 kHz L16 | Google docs | **read 15 Nov** by the mouth lane; the docs disagree on the voice field | Built behind `JARVIS_TTS_STREAM=1`, off by default, unverified |
+| Pipecat Smart Turn v3.2, `santhosh-005/smart-turn-tamil` | Turn-completion models | BSD-2 (cards, brief) | not downloaded | **Not shipped**: WASM latency above the 120 ms budget, Worker deferred, Tamil provenance unverified |
+| sherpa-onnx keyword spotting, microWakeWord | On-device wake word | Apache-2.0 (brief) | not downloaded | **Not shipped** (optional item) |
+| openWakeWord pre-trained models, Porcupine | Wake word | CC BY-NC-SA 4.0 / proprietary | brief | Excluded by licence |
+| Horvitz 1999; Amershi et al. 2019; Nielsen response-time limits | Mixed-initiative principles; human-AI guidelines; 0.1/1/10 s | papers and articles | brief | The interjection policy (`watch.ts`), the honest ack and the 10 s Stop card |
+| ChatGPT Pulse, Gemini Daily Brief | Finite daily briefs with a source per item | product pages (brief) | brief | The brief always ends ("That's everything for now") |
+| OpenSLR SLR65 (Tamil) | Read Tamil speech | CC BY-SA 4.0, test only | not on this machine this session | The STT probe was not run (see BUILD_LOG) |
+
+The earlier sections below are kept as they were.
+
 
 Checked on 29 Oct 2026 with web searches and the sources' own pages, where they could be reached. **No new npm
 dependency was added**: every idea below is used as a pattern, written in our own code. Licences matter only if a

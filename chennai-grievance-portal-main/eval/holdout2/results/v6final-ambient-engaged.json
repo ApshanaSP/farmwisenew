@@ -1,0 +1,858 @@
+{
+ "at": "2026-11-17T13:35:13.751Z",
+ "summary": {
+  "lastTurn5sAgo": {
+   "sideFalseActs": 14,
+   "sideN": 60,
+   "sideLevelBC": 14,
+   "commandsAccepted": 37,
+   "commandsN": 40,
+   "sideInterval": "14/60 (23.3 %, 14.4-35.4)",
+   "commandsRefused": 3,
+   "byTier": {
+    "engaged": 14
+   },
+   "byLang": {
+    "en": {
+     "sideFalseActs": 4,
+     "side": 20,
+     "accepted": 12,
+     "commands": 12
+    },
+    "ta": {
+     "sideFalseActs": 6,
+     "side": 20,
+     "accepted": 14,
+     "commands": 16
+    },
+    "tanglish": {
+     "sideFalseActs": 4,
+     "side": 20,
+     "accepted": 11,
+     "commands": 12
+    }
+   }
+  },
+  "lastTurn10sAgo": {
+   "windowMs8000": {
+    "sideFalseActs": 0,
+    "sideN": 60,
+    "sideInterval": "0/60 (0.0 %, 0.0-6.0)",
+    "sideLevelBC": 0,
+    "commandsAccepted": 0,
+    "commandsN": 40
+   },
+   "windowMs20000": {
+    "sideFalseActs": 14,
+    "sideN": 60,
+    "sideInterval": "14/60 (23.3 %, 14.4-35.4)",
+    "sideLevelBC": 14,
+    "commandsAccepted": 37,
+    "commandsN": 40
+   }
+  },
+  "shippedEngagedMs": 20000
+ },
+ "rows": [
+  {
+   "id": "b001",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b002",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b003",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b004",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b005",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b006",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b007",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b008",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b009",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b010",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "b011",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b012",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b013",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b014",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b015",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b016",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b017",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "b018",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b019",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b020",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b021",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b022",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b023",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b024",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b025",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b026",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b027",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b028",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b029",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b030",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b031",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b032",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b033",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "b034",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b035",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b036",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b037",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b038",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b039",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b040",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b041",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b042",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b043",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b044",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b045",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b046",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b047",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b048",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b049",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "b050",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b051",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b052",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "b053",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b054",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b055",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b056",
+   "kind": "command",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b057",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b058",
+   "kind": "command",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b059",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b060",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b061",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b062",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b063",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b064",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b065",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b066",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b067",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b068",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b069",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b070",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b071",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b072",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b073",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b074",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b075",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b076",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b077",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b078",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b079",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b080",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b081",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b082",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "b083",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b084",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b085",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b086",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b087",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b088",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b089",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b090",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b091",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b092",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b093",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b094",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b095",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "b096",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b097",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b098",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b099",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "b100",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  }
+ ]
+}

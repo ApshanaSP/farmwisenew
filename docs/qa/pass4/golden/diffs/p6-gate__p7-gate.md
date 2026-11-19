@@ -1,20 +1,20 @@
 # Golden-master diff: p6-gate to p7-gate
 
-Compared 3277 requests with 3273. **342 changed, 17 added, 21 removed.**
+Compared 3277 requests with 3298. **373 changed, 44 added, 23 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to SWKEUJgzHqBCQjD1NS_2D
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to AsDHaFEqgR-8G-NbTpFL0
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
 | /api/officer/grievances | 75 | officerA, officerB | 200 -> 400 | $.rows[*].breached (404), $.rows[*] (24), $.rows[*].id (14), $.rows[*].title (14), $.rows[*].zone (14) |
+| /api/collector/thunai/agent/round | 50 | collector | none | $.timing (50), $.result.stage.lang (31), $.result.stage.titles (31), $.result.stage.notesBi (31), $.result.stage.say.ta (26) |
 | /api/map/ask | 47 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
 | /api/collector/overview | 31 | collector | none | $.stories.threads[*].records (261), $.stories.threads[*].placed (261), $.map.pins[*].id (120), $.map.pins[*].lat (120), $.map.pins[*].lon (120) |
 | /api/officer/overview | 29 | officerA, officerB | none | $.map.pins[*].stage (152), $.queue.new[*].breached (150), $.queue.action[*].breached (140), $.board.bell[*] (64), $.queue.action[*].id (59) |
-| /api/collector/thunai/agent/round | 24 | collector | none | $.result.stage.say.ta (21), $.result.say (20), $.result.stage.blocks[*].points[*] (17), $.result.stage.say.en (14), $.result.stage.blocks[*].rows[*].id (12) |
 | /api/collector/insights | 21 | collector | none | $.gaps[*].open_now (273), $.review.unplaced[*].open_now (91), $.deptActions[*].awaiting (50), $.book.departments[*].ai.asOf (24), $.book.health.ai.asOf (20) |
 | /api/collector/incidents/[id] | 19 | collector | none | $.incident.officer_step (19), $.officerStep (19), $.incident.status (2), $.incident.why.attention[*] (2), $.incident.why.why[*] (2) |
 | /api/collector/stories | 18 | collector | none | $.threads[*].records (249), $.threads[*].placed (249) |
@@ -22,14 +22,15 @@ Compared 3277 requests with 3273. **342 changed, 17 added, 21 removed.**
 | /api/collector/assistant/chat | 11 | collector, officerA | none | $[*].data.answerMarkdown (8), $[*].data.voiceSummary (8), $[*].data.headline (7), $[*].data.scopeLine (7), $[*].data.sources.tools[*].args.hours (5) |
 | /api/officer/grievances/[id] | 11 | officerA, officerB | none | $.grievance.breached (11), $.rejected (11), $.next (6), $.grievance.stage (3), $.sources[*].note (3) |
 | /api/collector/pattern | 7 | collector | none | $.incidents[*].open_now (195) |
+| /api/collector/thunai/agent | 7 | collector | none | $.result.stage.blocks[*].points[*] (12), $.result.say (5), $.result.stage.say.ta (5), $.result.stage.lang (5), $.result.stage.titles (5) |
 | /api/officer/search | 6 | officerA, officerB | none | $.rows[*].breached (41), $.rows[*].stage (10) |
-| /api/collector/thunai/agent | 4 | collector | none | $.result.stage.blocks[*].points[*] (12), $.result.stage.next[*].ids[*] (5), $.result.say (4), $.result.steps.length (3), $.result.steps[*] (3) |
 | /api/map/export | 4 | collector | none | $.line[*] (67), $.lines (2), $.properties.window (2) |
 | /api/collector/audit | 3 | collector | none | $.log[*].id (481), $.log[*].record_id (335), $.log[*].at (272), $.log[*].after_value (221), $.log[*].action (98) |
 | /api/collector/studio/[id] | 3 | collector | 200 -> 428 | $.line[*] (834), $.lines (3) |
 | /api/collector/list | 2 | collector | 200 -> 400 | $.rows (2), $.total (2), $.incidents (2), $.complaints (2), $.error (2) |
 | /api/collector/assistant/sessions/[id] | 2 | collector, officerA | none | $.messages[*].text (1), $.messages[*].card.headline (1), $.messages[*].card.answerMarkdown (1), $.messages[*].card.voiceSummary (1), $.messages[*].card.scopeLine (1) |
 | /api/officer/grievances/[id]/report | 2 | officerA | 428 -> 409, 428 -> 404 | $.error (2), $.confirm (2) |
+| /api/collector/thunai/memory | 2 | collector | 200 -> 403 | $.notes (1), $.habits (1), $.pending (1), $.prefs (1), $.reminders (1) |
 | /api/complaints | 1 | citizenA | none | $.queueNote.en (1), $.queueNote.ta (1) |
 | /api/complaints/[code] | 1 | citizenA | none | $.checker (1) |
 | /api/collector/search | 1 | collector | none | $.incidents[*].lat (1), $.incidents[*].lon (1), $.incidents[*].sev (1), $.incidents[*].sla_due (1), $.incidents[*].severity_reasons (1) |
@@ -38,6 +39,31 @@ Compared 3277 requests with 3273. **342 changed, 17 added, 21 removed.**
 
 ## Added requests
 
+- anonymous GET /api/collector/thunai/brief: 401
+- anonymous GET /api/collector/thunai/follow: 401
+- anonymous GET /api/collector/thunai/watch: 401
+- anonymous GET /api/dev/thunai/brief: 404
+- anonymous GET /api/dev/thunai/watch: 404
+- citizenA GET /api/collector/thunai/brief: 401
+- citizenA GET /api/collector/thunai/follow: 401
+- citizenA GET /api/collector/thunai/watch: 401
+- citizenA GET /api/dev/thunai/brief: 404
+- citizenA GET /api/dev/thunai/watch: 404
+- officerA GET /api/collector/thunai/brief: 401
+- officerA GET /api/collector/thunai/follow: 401
+- officerA GET /api/collector/thunai/watch: 401
+- officerA GET /api/dev/thunai/brief: 404
+- officerA GET /api/dev/thunai/watch: 404
+- officerB GET /api/collector/thunai/brief: 401
+- officerB GET /api/collector/thunai/follow: 401
+- officerB GET /api/collector/thunai/watch: 401
+- officerB GET /api/dev/thunai/brief: 404
+- officerB GET /api/dev/thunai/watch: 404
+- collector GET /api/collector/thunai/brief: 200
+- collector GET /api/collector/thunai/follow: 200
+- collector GET /api/collector/thunai/watch: 200
+- collector GET /api/dev/thunai/brief: 404
+- collector GET /api/dev/thunai/watch: 404
 - collector POST /api/map/insight: 200
 - officerA POST /api/map/insight: 200
 - citizenA POST /api/map/insight: 401
@@ -48,6 +74,8 @@ Compared 3277 requests with 3273. **342 changed, 17 added, 21 removed.**
 - officerA POST /api/map/export: 428
 - officerA POST /api/map/export: 200
 - collector POST /api/map/send: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
@@ -68,6 +96,8 @@ Compared 3277 requests with 3273. **342 changed, 17 added, 21 removed.**
 - officerA POST /api/map/export: 428
 - officerA POST /api/map/export: 200
 - collector POST /api/map/send: 200
+- collector POST /api/collector/thunai/agent/round: 200
+- collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
 - collector POST /api/collector/thunai/agent/round: 200
@@ -1600,30 +1630,70 @@ Session reads, id 73d03742afa4295d, 73119 bytes to 73118 bytes.
 
 ### collector POST /api/collector/thunai/agent
 
-Session reads, id 8cf390975fbb8b52, 171 bytes to 14872 bytes.
+Session reads, id 8cf390975fbb8b52, 171 bytes to 15113 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.kind | none | do |
 | $.result.steps.length | 0 | 1 |
 | $.result.steps[0] | (absent) | {object with 2 keys} |
-| $.result.stage | null | {object with 13 keys} |
+| $.result.stage | null | {object with 16 keys} |
 | $.result.say | null | 17 cases still open today (6 Nov, since midnight). One is past its deadline and needs you first: Road accident at Ekkattuthangal in Adyar. S... (214 chars) |
 | $.result.note | model | quick |
 
 ### collector POST /api/collector/thunai/agent
 
-Session reads, id b709a6b7afee2afd, 11927 bytes to 11548 bytes.
+Session reads, id 91a65392a4b15c8f, 4202 bytes to 4945 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | கடந்த 30 நாட்களில் Ambattur, Madhavaram-ஐ விட 2 மடங்கு High. | கடந்த 30 நாட்களில் அம்பத்தூர், மாதவரம்-ஐ விட 2 மடங்கு அதிக முக்கியத்துவம். |
+| $.result.stage.say.ta | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு High: Ambattur 2, Madhavaram 1. | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு அதிக முக்கியத்துவம்: அம்பத்தூர் 2, மாதவரம் 1. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 1] |
+
+### collector POST /api/collector/thunai/agent
+
+Session reads, id c95036250204487a, 3913 bytes to 4357 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.say.en | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). ரெண்டு சம்பவங்கள் தான், அதனால பெருசா எடுத்துக... (152 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+
+### collector POST /api/collector/thunai/agent
+
+Session reads, id 9f090385895630b2, 1014 bytes to 1112 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | 13 hospitals within 1 km of Velachery. |  |
+| $.result.stage.say.ta | 13 hospitals within 1 km of Velachery. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+
+### collector POST /api/collector/thunai/agent
+
+Session reads, id b709a6b7afee2afd, 11927 bytes to 11780 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Durgadevi Nagar 5... (339 chars) | 122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Tondiarpet, and u... (216 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 122 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Durgadevi Nagar 5Th Cross St 2Nd Lane, Dur... (327 chars) | இந்த வாரம் 122 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, தண்டையார்பேட்டை; அகற்றப்படாத குப்பை, வளசரவ... (194 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Durgadevi Nagar 5... (339 chars) | 122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Tondiarpet, and u... (216 chars) |
 
 ### collector POST /api/collector/thunai/agent
 
-Session reads, id ea25e31de4431e9c, 12118 bytes to 3470 bytes.
+Session reads, id ea25e31de4431e9c, 12118 bytes to 4362 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -1633,31 +1703,31 @@ Session reads, id ea25e31de4431e9c, 12118 bytes to 3470 bytes.
 | $.result.steps[0].period | (absent) | weekly |
 | $.result.steps[1] | {object with 2 keys} | (absent) |
 | $.result.stage.recipe | cases | ranking |
-| $.result.stage.title | கடுமையான சம்பவங்கள் · இந்த வாரம் | Top 5 · Severe incidents · this week |
+| $.result.stage.title | கடுமையான சம்பவங்கள் · இந்த வாரம் | முதல் 5 · கடுமையான சம்பவங்கள் · இந்த வாரம் |
 | $.result.stage.takeaway.en | 54 are past their deadline. | Royapuram is 4× the median of all 15. |
 | $.result.stage.takeaway.ta | 54 காலக்கெடுவைத் தாண்டியவை. | ராயபுரம், அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு. |
 | $.result.stage.say.en | 52 severe cases this week; here are the 12 that matter most. 54 are past their deadline and need you first: standing water at Pulianthope (B... (281 chars) | Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7. |
 | $.result.stage.say.ta | இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars) | அதிகம்: ராயபுரம், 16 சம்பவங்கள். அடுத்து திருவொற்றியூர் 9, அண்ணா நகர் 7. |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
 | $.result.stage.blocks[0].items.length | 2 | 3 |
 | $.result.stage.blocks[0].items[0].key | total | top |
-| $.result.stage.blocks[0].items[0].label | கடுமையான சம்பவங்கள், இந்த வாரம் | Royapuram |
+| $.result.stage.blocks[0].items[0].label | கடுமையான சம்பவங்கள், இந்த வாரம் | ராயபுரம் |
 | $.result.stage.blocks[0].items[0].value | 52 | 16 |
 | $.result.stage.blocks[0].items[0].unit | null | incidents |
 | $.result.stage.blocks[0].items[1].key | late | total |
-| $.result.stage.blocks[0].items[1].label | காலக்கெடு தாண்டியவை | All areas together |
+| $.result.stage.blocks[0].items[1].label | காலக்கெடு தாண்டியவை | எல்லாப் பகுதிகளும் சேர்த்து |
 | $.result.stage.blocks[0].items[1].value | 54 | 65 |
 | $.result.stage.blocks[0].items[1].unit | null | incidents |
 | $.result.stage.blocks[0].items[1].tone | bad | neutral |
 | $.result.stage.blocks[0].items[2] | (absent) | {object with 8 keys} |
 | $.result.stage.blocks[1].kind | CaseList | Ranking |
 | $.result.stage.blocks[1].id | cases | rank |
-| $.result.stage.blocks[1].title | கடுமையான சம்பவங்கள் · இந்த வாரம் | Severe incidents |
 
-...and 75 more paths (see the JSON file).
+...and 79 more paths (see the JSON file).
 
 ### collector POST /api/collector/thunai/agent
 
-Session reads, id 8207e2765a8903b7, 171 bytes to 3359 bytes.
+Session reads, id 8207e2765a8903b7, 171 bytes to 3557 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -1665,7 +1735,7 @@ Session reads, id 8207e2765a8903b7, 171 bytes to 3359 bytes.
 | $.result.lang | ta | en |
 | $.result.steps.length | 0 | 1 |
 | $.result.steps[0] | (absent) | {object with 2 keys} |
-| $.result.stage | null | {object with 13 keys} |
+| $.result.stage | null | {object with 16 keys} |
 | $.result.say | null | Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7. |
 | $.result.note | model | quick |
 
@@ -5313,50 +5383,151 @@ Session ask, id c0fbdcc5b3a3252d, 3358 bytes to 3444 bytes.
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 8213db3c1be53f5d, 309 bytes to 15055 bytes.
+Session ask, id 8213db3c1be53f5d, 309 bytes to 15333 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.kind | none | do |
 | $.result.steps.length | 0 | 1 |
 | $.result.steps[0] | (absent) | {object with 2 keys} |
-| $.result.stage | null | {object with 13 keys} |
+| $.result.stage | null | {object with 16 keys} |
 | $.result.say | null | 17 cases still open today (6 Nov, since midnight). One is past its deadline and needs you first: Road accident at Ekkattuthangal in Adyar. S... (214 chars) |
 | $.result.note | no-model | quick |
 | $.trace.length | 1 | 2 |
 | $.trace[0].label | Thinking | Reading the data |
 | $.trace[1] | (absent) | {object with 3 keys} |
 | $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id bc94a14cdfe5ac48, 7475 bytes to 7308 bytes.
+Session ask, id eb1562d1e045703b, 3537 bytes to 3772 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id bc94a14cdfe5ac48, 7475 bytes to 7630 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தேன... (312 chars) | இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, My... (243 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a00a263949adc0de, 3551 bytes to 3577 bytes.
+Session ask, id 3d1d878d45cabe62, 4388 bytes to 5168 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | கடந்த 30 நாட்களில் Ambattur, Madhavaram-ஐ விட 2 மடங்கு High. | கடந்த 30 நாட்களில் அம்பத்தூர், மாதவரம்-ஐ விட 2 மடங்கு அதிக முக்கியத்துவம். |
+| $.result.stage.say.ta | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு High: Ambattur 2, Madhavaram 1. | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு அதிக முக்கியத்துவம்: அம்பத்தூர் 2, மாதவரம் 1. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 37d0cd78d6587370, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 915af0152152346b, 2742 bytes to 2969 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 9a26d7a1fffe86cd, 4095 bytes to 4576 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.say.en | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). ரெண்டு சம்பவங்கள் தான், அதனால பெருசா எடுத்துக... (152 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 63dfe3dee1ac56e0, 309 bytes to 5111 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 7 headlines about deaths reported last hours. Reading them now. |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | Thinking | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a00a263949adc0de, 3551 bytes to 3738 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 157508256127d2ef, 3924 bytes to 3950 bytes.
+Session ask, id 47837972a243c09b, 1154 bytes to 1289 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | 13 hospitals within 1 km of Velachery. |  |
+| $.result.stage.say.ta | 13 hospitals within 1 km of Velachery. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 157508256127d2ef, 3924 bytes to 4113 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.ta | Manali, Chennai - CPCB: 121 AQI, 4 Nov, 5:00 PM நிலவரப்படி. | Manali, Chennai - CPCB: 121 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 091763a4e6e28326, 2558 bytes to 309 bytes.
+Session ask, id 091763a4e6e28326, 2558 bytes to 402 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5370,10 +5541,11 @@ Session ask, id 091763a4e6e28326, 2558 bytes to 309 bytes.
 | $.trace[0].label | Reading the data | Thinking |
 | $.trace[1] | {object with 3 keys} | (absent) |
 | $.lane | quick | no-model |
+| $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 1959186f8ccc0a1e, 3691 bytes to 3874 bytes.
+Session ask, id 1959186f8ccc0a1e, 3691 bytes to 4176 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5384,11 +5556,58 @@ Session ask, id 1959186f8ccc0a1e, 3691 bytes to 3874 bytes.
 | $.result.stage.say.ta | திடக்கழிவு மேலாண்மைத் துறை: இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. இங்குள்ள பெரும்பாலான புகார... (188 chars) | திடக்கழிவு மேலாண்மைத் துறை: கடந்த 24 மணி நேரத்தில் 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. இங்குள்ள ... (205 chars) |
 | $.result.stage.blocks[1].points[0].text | 18 new incidents came in today; 18 cases are still open, and none is past the deadline. | 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. |
 | $.result.stage.blocks[1].points[0].ta | இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. | கடந்த 24 மணி நேரத்தில் 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars) | Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id ac136777a4aee429, 12469 bytes to 15939 bytes.
+Session ask, id 1d6314d83173a46a, 309 bytes to 402 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a2346a02ae7c8845, 420 bytes to 457 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 7255cb0e3505beda, 351 bytes to 388 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a453571182cf725c, 449 bytes to 2528 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.kind | chat | do |
+| $.result.reply | I can't reason about that right now. Ask me about the district: incidents, news, rain, air, reservoirs, prices or departments. | null |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 1 headline about won last cricket world cup. Reading them now. |
+| $.result.note | general-fallback | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | General knowledge | Reading the data |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | general | quick |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ac136777a4aee429, 12469 bytes to 16246 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5397,6 +5616,7 @@ Session ask, id ac136777a4aee429, 12469 bytes to 15939 bytes.
 | $.result.stage.takeaway.ta | 23-இல் 2 காலக்கெடுவைத் தாண்டியவை. | 17-இல் 1 காலக்கெடுவைத் தாண்டியவை. |
 | $.result.stage.say.en | 23 cases today; here are the 12 that matter most. 2 are past their deadline and need you first: standing water at Saidapet (Adyar River - Sa... (243 chars) | 17 cases still open today (6 Nov, since midnight). One is past its deadline and needs you first: Road accident at Ekkattuthangal in Adyar. S... (214 chars) |
 | $.result.stage.say.ta | இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; ... (225 chars) | இன்று (6 நவம்பர், நள்ளிரவு முதல்) 17 சம்பவங்கள் இன்னும் நிலுவையில். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: சாலை விபத்து, Ekkattut... (232 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
 | $.result.stage.blocks[0].items[0].label | எல்லா சம்பவங்கள், இன்று | எல்லா சம்பவங்கள் இன்னும் நிலுவையில், இன்று |
 | $.result.stage.blocks[0].items[0].value | 23 | 17 |
 | $.result.stage.blocks[0].items[1].value | 2 | 1 |
@@ -5416,13 +5636,12 @@ Session ask, id ac136777a4aee429, 12469 bytes to 15939 bytes.
 | $.result.stage.blocks[1].rows[1].id | INC-20261106-444D4F | INC-20261106-D39D78 |
 | $.result.stage.blocks[1].rows[1].title | Two-wheeler skids near Ekkattuthangal Metro Station; rider injured | Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan |
 | $.result.stage.blocks[1].rows[1].sev | High | Medium |
-| $.result.stage.blocks[1].rows[1].status | In progress | Open |
 
-...and 188 more paths (see the JSON file).
+...and 193 more paths (see the JSON file).
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f1e6ac2ad90ac282, 12391 bytes to 3732 bytes.
+Session ask, id f1e6ac2ad90ac282, 12391 bytes to 4661 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5432,153 +5651,419 @@ Session ask, id f1e6ac2ad90ac282, 12391 bytes to 3732 bytes.
 | $.result.steps[0].period | (absent) | weekly |
 | $.result.steps[1] | {object with 2 keys} | (absent) |
 | $.result.stage.recipe | cases | ranking |
-| $.result.stage.title | கடுமையான சம்பவங்கள் · இந்த வாரம் | Top 5 · Severe incidents · this week |
+| $.result.stage.title | கடுமையான சம்பவங்கள் · இந்த வாரம் | முதல் 5 · கடுமையான சம்பவங்கள் · இந்த வாரம் |
 | $.result.stage.takeaway.en | 54 are past their deadline. | Royapuram is 4× the median of all 15. |
 | $.result.stage.takeaway.ta | 54 காலக்கெடுவைத் தாண்டியவை. | ராயபுரம், அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு. |
 | $.result.stage.say.en | 52 severe cases this week; here are the 12 that matter most. 54 are past their deadline and need you first: standing water at Pulianthope (B... (281 chars) | Highest: Royapuram, 16 incidents. Then Thiruvottiyur 9, Anna Nagar 7. |
 | $.result.stage.say.ta | இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars) | அதிகம்: ராயபுரம், 16 சம்பவங்கள். அடுத்து திருவொற்றியூர் 9, அண்ணா நகர் 7. |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
 | $.result.stage.blocks[0].items.length | 2 | 3 |
 | $.result.stage.blocks[0].items[0].key | total | top |
-| $.result.stage.blocks[0].items[0].label | கடுமையான சம்பவங்கள், இந்த வாரம் | Royapuram |
+| $.result.stage.blocks[0].items[0].label | கடுமையான சம்பவங்கள், இந்த வாரம் | ராயபுரம் |
 | $.result.stage.blocks[0].items[0].value | 52 | 16 |
 | $.result.stage.blocks[0].items[0].unit | null | incidents |
 | $.result.stage.blocks[0].items[1].key | late | total |
-| $.result.stage.blocks[0].items[1].label | காலக்கெடு தாண்டியவை | All areas together |
+| $.result.stage.blocks[0].items[1].label | காலக்கெடு தாண்டியவை | எல்லாப் பகுதிகளும் சேர்த்து |
 | $.result.stage.blocks[0].items[1].value | 54 | 65 |
 | $.result.stage.blocks[0].items[1].unit | null | incidents |
 | $.result.stage.blocks[0].items[1].tone | bad | neutral |
 | $.result.stage.blocks[0].items[2] | (absent) | {object with 8 keys} |
 | $.result.stage.blocks[1].kind | CaseList | Ranking |
 | $.result.stage.blocks[1].id | cases | rank |
-| $.result.stage.blocks[1].title | கடுமையான சம்பவங்கள் · இந்த வாரம் | Severe incidents |
 
-...and 76 more paths (see the JSON file).
+...and 81 more paths (see the JSON file).
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 484c3e63acc4f70c, 11437 bytes to 11374 bytes.
+Session ask, id 484c3e63acc4f70c, 11437 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars) | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampe... (271 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
 | $.result.stage.blocks[0].items[2].label | Solid Waste Management வசம் | திடக்கழிவு மேலாண்மைத் துறை வசம் |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 0401451bde1ac789, 6197 bytes to 6056 bytes.
+Session ask, id 0401451bde1ac789, 6197 bytes to 6431 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Srinivasa Nagar V Cross Road, Srini... (216 chars) | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Kolathur in Madhavaram. Say "read t... (169 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 2941e2ef55b91f8b, 3654 bytes to 3706 bytes.
+Session ask, id 22ca9732094d9994, 337 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 2941e2ef55b91f8b, 3654 bytes to 3965 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.title | Reservoir storage | நீர்த்தேக்க இருப்பு |
 | $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.result.stage.blocks[0].title | Reservoir storage | நீர்த்தேக்க இருப்பு |
+| $.result.stage.blocks[1].title | Stations | நிலையங்கள் |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id fa394469d1d31521, 11073 bytes to 10939 bytes.
+Session ask, id 28f22571a1767a13, 337 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.result.stage.say.en | 91 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River... (247 chars) | 91 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet in Adyar, an... (207 chars) |
-| $.result.stage.say.ta | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars) | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. "... (185 chars) |
-| $.result.say | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars) | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. "... (185 chars) |
+| $.timing | (absent) | {object with 3 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9f079c06d08640a4, 337 bytes to 3732 bytes.
+Session ask, id 14927ecce74c7a51, 337 bytes to 5479 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.kind | none | do |
 | $.result.steps.length | 0 | 1 |
 | $.result.steps[0] | (absent) | {object with 2 keys} |
-| $.result.stage | null | {object with 13 keys} |
+| $.result.stage | null | {object with 16 keys} |
+| $.result.say | null | 5 தலைப்புச் செய்திகள். படிக்கிறேன். |
+| $.result.note | no-model | asks7:outside |
+| $.trace.length | 1 | 2 |
+| $.trace[0].label | யோசிக்கிறேன் | தரவைப் படிக்கிறேன் |
+| $.trace[1] | (absent) | {object with 3 keys} |
+| $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 6f62837a7c869338, 2021 bytes to 2454 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.blocks[0].text | Nothing in the data matches this, for this scope. | இந்தப் பார்வைக்குத் தரவில் எதுவும் பொருந்தவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 7ee55bdb05ba2342, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 26e6e07a67a03b48, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 3f81a784548e2a8c, 709 bytes to 746 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id fa394469d1d31521, 11073 bytes to 11530 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.title | Cases · Adyar · this week | சம்பவங்கள் · அடையாறு · இந்த வாரம் |
+| $.result.stage.say.en | 91 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet (Adyar River... (247 chars) | 91 cases this week; here are the 12 that matter most. 42 are past their deadline and need you first: standing water at Saidapet in Adyar, an... (207 chars) |
+| $.result.stage.say.ta | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars) | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. "... (185 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
+| $.result.stage.blocks[0].items[0].label | All cases, this week | எல்லா சம்பவங்கள், இந்த வாரம் |
+| $.result.stage.blocks[0].items[1].label | Past their deadline | காலக்கெடு தாண்டியவை |
+| $.result.stage.blocks[1].title | Cases · Adyar · this week | சம்பவங்கள் · அடையாறு · இந்த வாரம் |
+| $.result.stage.blocks[2].title | Where they are | எங்கே உள்ளன |
+| $.result.stage.blocks[2].rule | Numbered as in the list; cases without an exact place are not drawn. | பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.result.say | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars) | இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet, அடையாறு; தண்ணீர் தேக்கம், அடையாறு. "... (185 chars) |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 9f079c06d08640a4, 337 bytes to 4661 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.kind | none | do |
+| $.result.steps.length | 0 | 1 |
+| $.result.steps[0] | (absent) | {object with 2 keys} |
+| $.result.stage | null | {object with 16 keys} |
 | $.result.say | null | அதிகம்: ராயபுரம், 16 சம்பவங்கள். அடுத்து திருவொற்றியூர் 9, அண்ணா நகர் 7. |
 | $.result.note | no-model | quick |
 | $.trace.length | 1 | 2 |
 | $.trace[0].label | யோசிக்கிறேன் | தரவைப் படிக்கிறேன் |
 | $.trace[1] | (absent) | {object with 3 keys} |
 | $.lane | no-model | quick |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f09bcf697432c0ab, 10951 bytes to 10836 bytes.
+Session ask, id f09bcf697432c0ab, 10951 bytes to 11725 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.stage.title | Cases · Teynampet · Garbage & solid waste · this week | சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம் |
 | $.result.stage.say.en | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars) | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampe... (271 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
+| $.result.stage.blocks[0].items[0].label | All cases, this week | எல்லா சம்பவங்கள், இந்த வாரம் |
+| $.result.stage.blocks[0].items[1].label | Past their deadline | காலக்கெடு தாண்டியவை |
+| $.result.stage.blocks[0].items[2].label | Held by Solid Waste Management | திடக்கழிவு மேலாண்மைத் துறை வசம் |
+| $.result.stage.blocks[1].title | Cases · Teynampet · Garbage & solid waste · this week | சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம் |
+| $.result.stage.blocks[2].title | Where they are | எங்கே உள்ளன |
+| $.result.stage.blocks[2].rule | Numbered as in the list; cases without an exact place are not drawn. | பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id f025856d46a1ca5f, 6116 bytes to 6165 bytes.
+Session ask, id f025856d46a1ca5f, 6116 bytes to 7100 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.result.stage.title | Cases · Ambattur · Street lights & electrical hazards · this week | சம்பவங்கள் · அம்பத்தூர் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம் |
 | $.result.stage.say.en | 3 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Church Road, Padi, Mogappair in Amb... (233 chars) | 3 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Mogappair in Ambattur. Street Light... (214 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars) | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Mogappair, அம்பத்தூர். தெருவிள... (217 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
+| $.result.stage.blocks[0].items[0].label | All cases, this week | எல்லா சம்பவங்கள், இந்த வாரம் |
+| $.result.stage.blocks[0].items[1].label | Past their deadline | காலக்கெடு தாண்டியவை |
+| $.result.stage.blocks[0].items[2].label | Held by Street Lighting & Electrical | தெருவிளக்கு மற்றும் மின் துறை வசம் |
+| $.result.stage.blocks[1].title | Cases · Ambattur · Street lights & electrical hazards · this week | சம்பவங்கள் · அம்பத்தூர் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம் |
+| $.result.stage.blocks[2].title | Where they are | எங்கே உள்ளன |
+| $.result.stage.blocks[2].rule | Numbered as in the list; cases without an exact place are not drawn. | பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars) | இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Mogappair, அம்பத்தூர். தெருவிள... (217 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id 9ef6d6c5b729a804, 3654 bytes to 3706 bytes.
+Session ask, id bcf00976700038f4, 337 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 9ef6d6c5b729a804, 3654 bytes to 3965 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.title | Reservoir storage | நீர்த்தேக்க இருப்பு |
 | $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.result.stage.blocks[0].title | Reservoir storage | நீர்த்தேக்க இருப்பு |
+| $.result.stage.blocks[1].title | Stations | நிலையங்கள் |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round
 
-Session ask, id a3c117ff746b0a57, 8200 bytes to 8219 bytes.
+Session ask, id 21e564f32b745b4f, 337 bytes to 430 bytes.
 
 | Path | A | B |
 |---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 0f560ec72f462bb0, 309 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.lang | en | ta |
+| $.trace[0].label | Thinking | யோசிக்கிறேன் |
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id ea1f39f6c1384abd, 1252 bytes to 1717 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.title | Velachery pakkathula hospital enga iruku? | சுகாதாரச் சேவைகள் மற்றும் மருத்துவமனைத் திறன், Velachery |
+| $.result.stage.takeaway.ta | within 1 km of Velachery-la 13 hospitals irukku. |  |
+| $.result.stage.say.ta | within 1 km of Velachery-la 13 hospitals irukku. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.result.stage.blocks[0].text | Nothing in the data matches this, for this scope. | இந்தப் பார்வைக்குத் தரவில் எதுவும் பொருந்தவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.result.say | within 1 km of Velachery-la 13 hospitals irukku. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id a3c117ff746b0a57, 8200 bytes to 9070 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.title | Cases · Adyar · Drain works site safety · this week | சம்பவங்கள் · அடையாறு · வடிகால் பணியிடப் பாதுகாப்பு · இந்த வாரம் |
 | $.result.stage.say.en | 7 cases this week. The most urgent: a safety problem at a drain worksite at Periyar 5Th Salai in Adyar. Storm Water Drain holds 7 of them. S... (179 chars) | 7 cases this week. The most urgent: a safety problem at a drain worksite in Adyar. Storm Water Drain holds 7 of them. Say "read them", or "o... (158 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, Periyar 5Th Salai, அடையாறு. Storm Water Drain வசம் 7. "... (185 chars) | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, அடையாறு. மழைநீர் வடிகால் துறை வசம் 7. "படி" அல்லது "திற... (169 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
+| $.result.stage.blocks[0].items[0].label | All cases, this week | எல்லா சம்பவங்கள், இந்த வாரம் |
+| $.result.stage.blocks[0].items[1].label | Past their deadline | காலக்கெடு தாண்டியவை |
+| $.result.stage.blocks[0].items[2].label | Held by Storm Water Drain | மழைநீர் வடிகால் துறை வசம் |
+| $.result.stage.blocks[1].title | Cases · Adyar · Drain works site safety · this week | சம்பவங்கள் · அடையாறு · வடிகால் பணியிடப் பாதுகாப்பு · இந்த வாரம் |
+| $.result.stage.blocks[2].title | Where they are | எங்கே உள்ளன |
+| $.result.stage.blocks[2].rule | Numbered as in the list; cases without an exact place are not drawn. | பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை. |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, Periyar 5Th Salai, அடையாறு. Storm Water Drain வசம் 7. "... (185 chars) | இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, அடையாறு. மழைநீர் வடிகால் துறை வசம் 7. "படி" அல்லது "திற... (169 chars) |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round
+
+Session ask, id 377b43d3f4637d99, 337 bytes to 430 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.timing | (absent) | {object with 3 keys} |
+
+### collector POST /api/collector/thunai/agent/round (direct, sentence 1)
+
+Session ask, id a88392c79b867872, 3489 bytes to 3724 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 2)
 
-Session ask, id 374abbf925411872, 7427 bytes to 7260 bytes.
+Session ask, id 374abbf925411872, 7427 bytes to 7582 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தேன... (312 chars) | இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, My... (243 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars) | 5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampet, and uncleared garbage at Mylapor... (236 chars) |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round (direct, sentence 3)
+
+Session ask, id 78433e1b88e12ccf, 4340 bytes to 5120 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | கடந்த 30 நாட்களில் Ambattur, Madhavaram-ஐ விட 2 மடங்கு High. | கடந்த 30 நாட்களில் அம்பத்தூர், மாதவரம்-ஐ விட 2 மடங்கு அதிக முக்கியத்துவம். |
+| $.result.stage.say.ta | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு High: Ambattur 2, Madhavaram 1. | அம்பத்தூர்: 0 கடுமையான, 3 திறந்தவை. மாதவரம்: 0 கடுமையான, 2 திறந்தவை. பெரிய வேறுபாடு அதிக முக்கியத்துவம்: அம்பத்தூர் 2, மாதவரம் 1. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 1] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round (direct, sentence 5)
+
+Session ask, id 04eb4463a66d39c9, 2694 bytes to 2921 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round (direct, sentence 6)
+
+Session ask, id 224b008e8bbe8b08, 4047 bytes to 4528 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.say.en | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). | இந்த வாரம் 2 சம்பவங்கள், முந்தைய காலத்தில் 4. 2 காலக்கெடு தாண்டியவை; அதிக இடம் K.K. Nagar (1). ரெண்டு சம்பவங்கள் தான், அதனால பெருசா எடுத்துக... (152 chars) |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.result.say | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (169 chars) | 2 incidents this week against 4 the period before (down 50%). Mainly: 2 open incidents are past their deadline; the busiest spot is K.K. Nag... (218 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 8)
 
-Session ask, id be3f567754865da5, 3503 bytes to 3529 bytes.
+Session ask, id be3f567754865da5, 3503 bytes to 3690 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
+
+### collector POST /api/collector/thunai/agent/round (direct, sentence 9)
+
+Session ask, id fe4f72a16d13d08f, 1107 bytes to 1242 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.result.stage.takeaway.ta | 13 hospitals within 1 km of Velachery. |  |
+| $.result.stage.say.ta | 13 hospitals within 1 km of Velachery. | வரைபடத்தில் முடிவுகள் உள்ளன. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 10)
 
-Session ask, id 72847463243eb5f3, 3876 bytes to 3902 bytes.
+Session ask, id 72847463243eb5f3, 3876 bytes to 4065 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.ta | Manali, Chennai - CPCB: 121 AQI, 4 Nov, 5:00 PM நிலவரப்படி. | Manali, Chennai - CPCB: 121 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 12)
 
-Session ask, id 555df8086cdb06ba, 3624 bytes to 3807 bytes.
+Session ask, id 555df8086cdb06ba, 3624 bytes to 4109 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5589,37 +6074,27 @@ Session ask, id 555df8086cdb06ba, 3624 bytes to 3807 bytes.
 | $.result.stage.say.ta | திடக்கழிவு மேலாண்மைத் துறை: இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. இங்குள்ள பெரும்பாலான புகார... (188 chars) | திடக்கழிவு மேலாண்மைத் துறை: கடந்த 24 மணி நேரத்தில் 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. இங்குள்ள ... (205 chars) |
 | $.result.stage.blocks[1].points[0].text | 18 new incidents came in today; 18 cases are still open, and none is past the deadline. | 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. |
 | $.result.stage.blocks[1].points[0].ta | இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. | கடந்த 24 மணி நேரத்தில் 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை. |
+| $.result.stage.lang | (absent) | en |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | Solid Waste Management: 18 new incidents came in today; 18 cases are still open, and none is past the deadline. Most complaint records here ... (187 chars) | Solid Waste Management: 18 new incidents came in the last 24 hours; 18 cases are still open, and none is past the deadline. Most complaint r... (199 chars) |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### collector POST /api/collector/thunai/agent/round (direct, sentence 19)
 
-Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11290 bytes.
+Session ask, id 61ed15dc04e17ba5, 11353 bytes to 11641 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.result.stage.say.en | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars) | 11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Chepauk in Teynampe... (271 chars) |
 | $.result.stage.say.ta | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
+| $.result.stage.blocks[0].title | Key numbers | முக்கிய எண்கள் |
 | $.result.stage.blocks[0].items[2].label | Solid Waste Management வசம் | திடக்கழிவு மேலாண்மைத் துறை வசம் |
+| $.result.stage.lang | (absent) | ta |
+| $.result.stage.titles | (absent) | {object with 2 keys} |
+| $.result.stage.notesBi | (absent) | [array of 0] |
 | $.result.say | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars) | இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Chepauk, தேனாம்பேட்டை; அகற்றப்படாத குப்பை, M... (244 chars) |
-
-### collector POST /api/collector/thunai/agent/round (direct, sentence 20)
-
-Session ask, id f0ed9bee243901b3, 6113 bytes to 5972 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.say.en | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Srinivasa Nagar V Cross Road, Srini... (216 chars) | 2 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Kolathur in Madhavaram. Say "read t... (169 chars) |
-| $.result.stage.say.ta | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
-| $.result.say | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars) | இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியது, முதலில் கவனிக்க வேண்டியது: தெருவிளக்கு அல்லது மின் பிரச்சினை, Kolathur, மாதவரம். "படி" அல்லத... (175 chars) |
-
-### collector POST /api/collector/thunai/agent/round (direct, sentence 22)
-
-Session ask, id 75892bd131e3b8c5, 3570 bytes to 3622 bytes.
-
-| Path | A | B |
-|---|---|---|
-| $.result.stage.say.ta | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
-| $.result.say | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி. | 6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி. |
+| $.timing | (absent) | {object with 1 keys} |
 
 ### officerA POST /api/collector/assistant/chat
 
@@ -5701,12 +6176,12 @@ Session writes, id 1a74f77c3d8d08f6, 1435 bytes to 1458 bytes.
 
 ### collector GET /api/collector/search?q=<new-complaint-code-1>
 
-Session writes, id cd47878c4defdb30, 1202 bytes to 1251 bytes.
+Session writes, id cd47878c4defdb30, 1202 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.01596568627451 |
-| $.incidents[0].lon | 80.21072974509804 | 80.20999249019607 |
+| $.incidents[0].lat | 13.016499019607844 | 13.017220588235295 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21127876470588 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |
@@ -5793,7 +6268,7 @@ Session writes, id 312d7e3e75cbc3a0, 3536 bytes to 3257 bytes.
 
 ### collector GET /api/collector/overview
 
-Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
+Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -5827,7 +6302,7 @@ Session writes, id ea0ab3f25bc17c26, 232509 bytes to 235191 bytes.
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
-Session writes, id 3f54c3ecc14de285, 140493 bytes to 139122 bytes.
+Session writes, id 3f54c3ecc14de285, 140493 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -6069,6 +6544,33 @@ Session writes, id aa11adf02a83df15, 156711 bytes to 157370 bytes.
 | $.news[2].breached | (absent) | 1 |
 
 ...and 124 more paths (see the JSON file).
+
+### collector POST /api/collector/thunai/memory
+
+Session writes, id 2055d0c48e9a7302, 180 bytes to 201 bytes.
+- status: 200 to 403
+
+| Path | A | B |
+|---|---|---|
+| $.notes | [array of 1] | (absent) |
+| $.habits | {object with 0 keys} | (absent) |
+| $.pending | {object with 0 keys} | (absent) |
+| $.prefs | {object with 0 keys} | (absent) |
+| $.reminders | [array of 0] | (absent) |
+| $.recent | [array of 0] | (absent) |
+| $.pins | [array of 0] | (absent) |
+| $.error | (absent) | That needs your yes first. |
+| $.needsYes | (absent) | true |
+| $.reply | (absent) | {object with 2 keys} |
+
+### collector GET /api/collector/thunai/memory
+
+Session writes, id a95b5799769ae086, 180 bytes to 85 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.notes.length | 1 | 0 |
+| $.notes[0] | {object with 3 keys} | (absent) |
 
 ### collector POST /api/collector/assistant/chat
 

@@ -1,0 +1,137 @@
+{
+ "tally": {
+  "n": 48,
+  "model": 46,
+  "fallback": 0,
+  "capacity": 0,
+  "grounded": 47,
+  "sentences": 118,
+  "failedAgain": 1,
+  "lists": 0,
+  "over4": 0,
+  "wordsP50": 37,
+  "outside": {
+   "n": 8,
+   "abstained": 6,
+   "found": 1,
+   "hallucinated": 0
+  },
+  "readsScreen": 0,
+  "v6Lines": 90
+ },
+ "breakdown": {
+  "byKind": {
+   "incident": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 1129
+   },
+   "news": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 1,
+    "firstMsP50": 1086
+   },
+   "compare": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 1113
+   },
+   "why": {
+    "n": 8,
+    "model": 8,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 1046
+   },
+   "followup": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 5,
+    "firstMsP50": 894
+   },
+   "outside": {
+    "n": 8,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 3,
+    "firstMsP50": 1137
+   }
+  },
+  "byLang": {
+   "en": {
+    "n": 30,
+    "model": 28,
+    "fallback": 0,
+    "rejected": 13,
+    "firstMsP50": 911
+   },
+   "ta": {
+    "n": 11,
+    "model": 11,
+    "fallback": 0,
+    "rejected": 1,
+    "firstMsP50": 1113
+   },
+   "tg": {
+    "n": 7,
+    "model": 7,
+    "fallback": 0,
+    "rejected": 6,
+    "firstMsP50": 1164
+   }
+  },
+  "byModel": {
+   "claude-haiku-5-5": {
+    "n": 46,
+    "model": 46,
+    "fallback": 0,
+    "rejected": 20,
+    "firstMsP50": 1057
+   },
+   "none": {
+    "n": 2,
+    "model": 0,
+    "fallback": 0,
+    "rejected": 0,
+    "firstMsP50": null
+   }
+  },
+  "rejectedKinds": {
+   "multiplier": 5,
+   "misbound": 5,
+   "copy": 3,
+   "name": 3,
+   "time": 1,
+   "uncited": 1,
+   "list": 6,
+   "superlative": 1,
+   "cause": 1
+  }
+ },
+ "problems": [
+  {
+   "id": "d-out-5",
+   "sentence": "அடையாறு பற்றி இன்று மாலை தினமலர் வெளியிட்ட செய்திகளில் முதல்வர் வருகை குறித்து எதுவும் இல்லை.",
+   "problems": [
+    "name: தினமலர் is in no cited fact",
+    "time: \"evening\" is in no cited fact"
+   ]
+  },
+  {
+   "id": "d-out-5",
+   "sentence": "அடையாறு ஆற்றில் ஒரு ஆண் சடலம் கிடைத்தது குறித்த செய்தியும் நேற்று இரவு தினத்தந்தியில் வந்துள்ளது.",
+   "problems": [
+    "name: தினத்தந்தி is in no cited fact",
+    "time: \"yesterday\" is in no cited fact",
+    "time: \"night\" is in no cited fact"
+   ]
+  }
+ ]
+}

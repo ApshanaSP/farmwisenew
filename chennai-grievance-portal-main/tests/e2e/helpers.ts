@@ -23,15 +23,25 @@ export interface Ctx {
   sayCalls: string[];
   /** the /say mock's delay */
   sayDelay: number;
+  /** keep the browser's own voices (default false: the PCM path, see init) */
+  browserVoices?: boolean;
 }
 
 export const chat = (reply: string, lang: "en" | "ta" = "en") => ({ kind: "chat", lang, reply, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 1, calls: [], model: "mock", ms: 5, note: null });
 export const steps = (s: unknown[], reply: string | null = null) => ({ kind: "do", lang: "en", reply, steps: s, stage: null, stageOp: null, say: null, options: [], rounds: 1, calls: [], model: "mock", ms: 5, note: null });
 
-const init = () => {
+const init = (browserVoices: boolean) => {
   const W = window as unknown as Record<string, unknown>;
   // the morning greeting would talk over the first test
   try { localStorage.setItem("thunai-greeted", new Date().toDateString()); localStorage.setItem("jarvis-mode-seen", "1"); } catch { /* opaque origin */ }
+  // Since the teammate's redo (4346998b, final) mouth.ts natural() takes ANY browser voice in the language, so on a Windows PC
+  // with its SAPI voices (Zira, David) Chromium speaks through speechSynthesis and never takes the PCM path these specs mock
+  // (/api/jarvis/say) and time. The PCM path is made certain by listing one voice in a language Jarvis never speaks: the list is
+  // not empty (mouth's voicesReady() would otherwise wait its 1.2 s on every answer), and no English or Tamil voice is found.
+  if (!browserVoices && "speechSynthesis" in window) {
+    const none = [{ name: "spec voice", lang: "fr-FR", localService: true, default: true, voiceURI: "spec voice" }] as unknown as SpeechSynthesisVoice[];
+    try { Object.defineProperty(window.speechSynthesis, "getVoices", { configurable: true, value: () => none }); } catch { /* left as it is */ }
+  }
   const A = window.AudioContext;
   const c = new A({ sampleRate: 48000 });
   let dest: MediaStreamAudioDestinationNode | null = null;
@@ -61,9 +71,20 @@ const init = () => {
   };
 };
 
+/**
+ * The dev server's hot reload stays out of a running spec: an edit to src/ while a spec runs (another lane working in the same tree)
+ * re-mounted Thunai mid-test (Fast Refresh, sometimes "a full reload due to a runtime error"), which reset window.__jv and closed the
+ * microphone, and the spec failed for nothing it tests. The page keeps the code it loaded; the next page load gets the edit. The
+ * socket is mocked, open and silent (Playwright routeWebSocket with no connectToServer).
+ */
+export async function noHotReload(page: Page) {
+  await page.routeWebSocket(/\/_next\/webpack-hmr/, () => undefined);
+}
+
 export async function setup(page: Page, o: Partial<Ctx> = {}): Promise<Ctx> {
   const ctx: Ctx = { hear: [], hearCalls: [], agent: () => ({ result: chat("Done.") }), agentCalls: [], sayCalls: [], sayDelay: 40, ...o };
-  await page.addInitScript(init);
+  await page.addInitScript(init, !!ctx.browserVoices);
+  await noHotReload(page);
   await page.route("**/api/dev/thunai/hear**", async (r: Route) => {
     const u = new URL(r.request().url());
     ctx.hearCalls.push({ lane: u.searchParams.get("lane") ?? "", bytes: r.request().postDataBuffer()?.length ?? 0, at: Date.now() });

@@ -3,8 +3,11 @@ import { exportMeta } from "@/lib/collector/intel";
 import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { serverHands } from "@/lib/thunai/data";
-import { planRound, RoundBody } from "@/lib/thunai/round";
+import type { TurnEvent } from "@/lib/thunai/events";
+import { logDecision } from "@/lib/thunai/decisions";
+import { decisionOf, planRound, RoundBody, type RoundOut } from "@/lib/thunai/round";
 import { readMemory } from "@/lib/thunai/store";
+import { roundStream } from "@/lib/thunai/streamturn";
 import { serverWorld } from "@/lib/thunai/world";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +16,10 @@ export const runtime = "nodejs";
 /**
  * One round of Jarvis's thinking (lib/thunai/round.ts): the browser drives the rounds, applies the steps and sends the digest. A
  * disconnected browser (a barge-in, Esc) aborts the model and the tools through req.signal. Read-only: drafts go to the tray and
- * the tray's button is the Collector's own tap.
+ * the tray's button is the Collector's own tap. With `stream: true` in the body the round answers as NDJSON events (events.ts), the
+ * last of which (RUN_FINISHED) carries the same object the JSON reply does; without it the reply is that JSON, as it always was.
+ * A round that ends with an answer is put on the decision record (decisions.ts: the Collector's words cleaned, the data's time, the tools,
+ * the model, the lane and the time taken; no citizen text); a record that cannot be written never fails the answer.
  */
 export async function POST(req: NextRequest) {
   const s = await collectorSession();
@@ -24,10 +30,16 @@ export async function POST(req: NextRequest) {
   const parsed = RoundBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ done: true, result: { kind: "none" }, why: "bad request" }, { status: 400 });
   const mem = readMemory(s.userId);
+  const record = (o: RoundOut) => {
+    const d = decisionOf(parsed.data, o);
+    if (d) try { logDecision(s.email, d); } catch (e) { console.error("thunai decision record failed", (e as Error).message); }
+    return o;
+  };
+  const run = async (emit?: (e: TurnEvent) => void) => record(await planRound(parsed.data, await serverWorld(), serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal), `collector:${s.userId}`,
+    { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit }));
+  if (parsed.data.stream) return roundStream(run, { turnId: parsed.data.turnId, round: parsed.data.round }, req.signal);
   try {
-    const out = await planRound(parsed.data, await serverWorld(), serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal), `collector:${s.userId}`,
-      { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? "") });
-    return NextResponse.json(out);
+    return NextResponse.json(await run());
   } catch (e) {
     if (req.signal.aborted) return new NextResponse(null, { status: 499 });
     console.error("thunai round failed", e);

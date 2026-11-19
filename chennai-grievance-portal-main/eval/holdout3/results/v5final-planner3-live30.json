@@ -1,0 +1,1161 @@
+{
+ "at": "2026-11-16T18:22:45.660Z",
+ "v5": {
+  "label": "capacity failures present",
+  "allTurns": {
+   "k": 7,
+   "n": 30,
+   "p": 23.3,
+   "lo": 11.8,
+   "hi": 40.9
+  },
+  "cleanTurns": {
+   "k": 7,
+   "n": 28,
+   "p": 25,
+   "lo": 12.7,
+   "hi": 43.4
+  },
+  "capacityFailures": 2,
+  "rateLimited": 0,
+  "jsonValidateFailed": 7,
+  "fellBack": 0,
+  "byModel": {
+   "openai/gpt-oss-120b": {
+    "k": 0,
+    "n": 4,
+    "p": 0,
+    "lo": 0,
+    "hi": 49
+   },
+   "gemini-3.5-flash-lite": {
+    "k": 2,
+    "n": 4,
+    "p": 50,
+    "lo": 15,
+    "hi": 85
+   },
+   "openai/gpt-oss-20b": {
+    "k": 2,
+    "n": 5,
+    "p": 40,
+    "lo": 11.8,
+    "hi": 76.9
+   },
+   "qwen/qwen3.8-27b": {
+    "k": 2,
+    "n": 10,
+    "p": 20,
+    "lo": 5.7,
+    "hi": 51
+   },
+   "none": {
+    "k": 1,
+    "n": 7,
+    "p": 14.3,
+    "lo": 2.6,
+    "hi": 51.3
+   }
+  },
+  "tokens": {
+   "prompt": 42622,
+   "completion": 5131,
+   "cached": 4864
+  },
+  "ladderOrders": [
+   "groq/qwen/qwen3.8-27b > groq/openai/gpt-oss-20b > groq/openai/gpt-oss-120b > gemini/gemini-3.5-flash-lite",
+   "groq/qwen/qwen3.8-27b > gemini/gemini-3.5-flash-lite",
+   "gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-20b > groq/openai/gpt-oss-120b > groq/qwen/qwen3.8-27b > gemini/gemini-3.5-flash-lite",
+   "groq/qwen/qwen3.8-27b > groq/openai/gpt-oss-120b > gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-120b > groq/qwen/qwen3.8-27b > gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-20b > groq/qwen/qwen3.8-27b > gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-20b > gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-120b > groq/openai/gpt-oss-20b > gemini/gemini-3.5-flash-lite",
+   "groq/qwen/qwen3.8-27b > groq/openai/gpt-oss-20b > gemini/gemini-3.5-flash-lite",
+   "groq/qwen/qwen3.8-27b > groq/openai/gpt-oss-120b > groq/openai/gpt-oss-20b > gemini/gemini-3.5-flash-lite",
+   "groq/openai/gpt-oss-120b > groq/openai/gpt-oss-20b > groq/qwen/qwen3.8-27b > gemini/gemini-3.5-flash-lite"
+  ]
+ },
+ "tokensAll": 69093,
+ "modelTurns": 21,
+ "byLang": {
+  "all": {
+   "n": 30,
+   "right": 7,
+   "deferred": 0,
+   "wrong": 21,
+   "capacity": 2,
+   "pct": {
+    "p": 25,
+    "lo": 12.7,
+    "hi": 43.4
+   }
+  },
+  "en": {
+   "n": 9,
+   "right": 4,
+   "deferred": 0,
+   "wrong": 5,
+   "capacity": 0,
+   "pct": {
+    "p": 44.4,
+    "lo": 18.9,
+    "hi": 73.3
+   }
+  },
+  "ta": {
+   "n": 12,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 7,
+   "capacity": 2,
+   "pct": {
+    "p": 30,
+    "lo": 10.8,
+    "hi": 60.3
+   }
+  },
+  "tanglish": {
+   "n": 9,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 9,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 29.9
+   }
+  }
+ },
+ "byIntent": {
+  "explain": {
+   "n": 5,
+   "right": 2,
+   "deferred": 0,
+   "wrong": 3,
+   "capacity": 0,
+   "pct": {
+    "p": 40,
+    "lo": 11.8,
+    "hi": 76.9
+   }
+  },
+  "changed": {
+   "n": 3,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 1,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "howknow": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "mission": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "brief": {
+   "n": 3,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 33.3,
+    "lo": 6.1,
+    "hi": 79.2
+   }
+  },
+  "remember": {
+   "n": 4,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 4,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 49
+   }
+  },
+  "recall": {
+   "n": 2,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 0,
+   "pct": {
+    "p": 50,
+    "lo": 9.5,
+    "hi": 90.5
+   }
+  },
+  "followup": {
+   "n": 9,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 5,
+   "capacity": 1,
+   "pct": {
+    "p": 37.5,
+    "lo": 13.7,
+    "hi": 69.4
+   }
+  }
+ },
+ "byLane": {
+  "planner": {
+   "n": 21,
+   "right": 5
+  },
+  "resolve": {
+   "n": 3,
+   "right": 0
+  },
+  "no-model": {
+   "n": 2,
+   "right": 0
+  },
+  "quick": {
+   "n": 3,
+   "right": 1
+  },
+  "browser": {
+   "n": 1,
+   "right": 1
+  }
+ },
+ "rows": [
+  {
+   "id": "w065",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-120b",
+   "ms": 963,
+   "tokens": 4596,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-120b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 2166,
+    "completion_tokens": 279,
+    "cached_tokens": 0,
+    "ms": 4796,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-20b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 3
+   }
+  },
+  {
+   "id": "w087",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "gemini-3.5-flash-lite",
+   "ms": 1636,
+   "tokens": 4482,
+   "calls": 1,
+   "rec": {
+    "model_used": "gemini-3.5-flash-lite",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2165,
+    "completion_tokens": 188,
+    "cached_tokens": 0,
+    "ms": 5169,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w023",
+   "lang": "ta",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "recall",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "gemini-3.5-flash-lite",
+   "ms": 2144,
+   "tokens": 4106,
+   "calls": 1,
+   "rec": {
+    "model_used": "gemini-3.5-flash-lite",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2144,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w038",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-20b",
+   "ms": 783,
+   "tokens": 4261,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-20b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 4056,
+    "completion_tokens": 205,
+    "cached_tokens": 3840,
+    "ms": 783,
+    "ladder_order": [
+     "groq/openai/gpt-oss-20b",
+     "groq/openai/gpt-oss-120b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w097",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "why",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 851,
+   "tokens": 2418,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2216,
+    "completion_tokens": 202,
+    "cached_tokens": 0,
+    "ms": 851,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w115",
+   "lang": "ta",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 17,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 17,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w068",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "trend",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-120b",
+   "ms": 1701,
+   "tokens": 4368,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-120b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1701,
+    "ladder_order": [
+     "groq/openai/gpt-oss-120b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w117",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "explain",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-20b",
+   "ms": 796,
+   "tokens": 4282,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-20b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 4018,
+    "completion_tokens": 264,
+    "cached_tokens": 0,
+    "ms": 796,
+    "ladder_order": [
+     "groq/openai/gpt-oss-20b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w090",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "prices",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 952,
+   "tokens": 2431,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2194,
+    "completion_tokens": 237,
+    "cached_tokens": 0,
+    "ms": 952,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w040",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "gemini-3.5-flash-lite",
+   "ms": 1602,
+   "tokens": 4375,
+   "calls": 1,
+   "rec": {
+    "model_used": "gemini-3.5-flash-lite",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 2803,
+    "completion_tokens": 768,
+    "cached_tokens": 0,
+    "ms": 5389,
+    "ladder_order": [
+     "groq/openai/gpt-oss-120b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 3
+   }
+  },
+  {
+   "id": "w110",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "why",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 4265,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": "openai/gpt-oss-20b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 5388,
+    "ladder_order": [
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 2
+   }
+  },
+  {
+   "id": "w089",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 22,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 22,
+    "ladder_order": [
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w072",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 19,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 19,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w018",
+   "lang": "en",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "why",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-120b",
+   "ms": 1278,
+   "tokens": 2765,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-120b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2475,
+    "completion_tokens": 290,
+    "cached_tokens": 0,
+    "ms": 1278,
+    "ladder_order": [
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w051",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "dashboard",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 722,
+   "tokens": 1540,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 1365,
+    "completion_tokens": 175,
+    "cached_tokens": 0,
+    "ms": 722,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w035",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "howknow",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 11,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 30,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w001",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 9,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 1512,
+    "completion_tokens": 158,
+    "cached_tokens": 0,
+    "ms": 695,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w046",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "recall",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 614,
+   "tokens": 1188,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 1007,
+    "completion_tokens": 181,
+    "cached_tokens": 0,
+    "ms": 617,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w113",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "browser",
+   "model": null,
+   "ms": 1,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w092",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "explain",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-20b",
+   "ms": 861,
+   "tokens": 2867,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-20b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2495,
+    "completion_tokens": 372,
+    "cached_tokens": 1024,
+    "ms": 861,
+    "ladder_order": [
+     "groq/openai/gpt-oss-20b",
+     "groq/openai/gpt-oss-120b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w057",
+   "lang": "en",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 696,
+   "tokens": 1138,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 946,
+    "completion_tokens": 192,
+    "cached_tokens": 0,
+    "ms": 696,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w073",
+   "lang": "tanglish",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 10,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 10,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w020",
+   "lang": "tanglish",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "situation",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1488,
+   "tokens": 2601,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2194,
+    "completion_tokens": 407,
+    "cached_tokens": 0,
+    "ms": 1488,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w049",
+   "lang": "tanglish",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "answer",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-120b",
+   "ms": 2452,
+   "tokens": 3017,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-120b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2753,
+    "completion_tokens": 264,
+    "cached_tokens": 0,
+    "ms": 2452,
+    "ladder_order": [
+     "groq/openai/gpt-oss-120b",
+     "groq/openai/gpt-oss-20b",
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w026",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "clarify",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "openai/gpt-oss-20b",
+   "ms": 948,
+   "tokens": 4678,
+   "calls": 1,
+   "rec": {
+    "model_used": "openai/gpt-oss-20b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 1687,
+    "completion_tokens": 160,
+    "cached_tokens": 0,
+    "ms": 1683,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-20b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 2
+   }
+  },
+  {
+   "id": "w005",
+   "lang": "tanglish",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "remember",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 676,
+   "tokens": 1385,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 1216,
+    "completion_tokens": 169,
+    "cached_tokens": 0,
+    "ms": 676,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w045",
+   "lang": "tanglish",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 902,
+   "tokens": 1319,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 1219,
+    "completion_tokens": 100,
+    "cached_tokens": 0,
+    "ms": 902,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 2
+   }
+  },
+  {
+   "id": "w118",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "remember",
+   "got": "refuse",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "gemini-3.5-flash-lite",
+   "ms": 2100,
+   "tokens": 8711,
+   "calls": 2,
+   "rec": {
+    "model_used": "gemini-3.5-flash-lite",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": true,
+    "prompt_tokens": 1923,
+    "completion_tokens": 167,
+    "cached_tokens": 0,
+    "ms": 2844,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "groq/openai/gpt-oss-120b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 2
+   }
+  },
+  {
+   "id": "w085",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "advise",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1143,
+   "tokens": 2565,
+   "calls": 1,
+   "rec": {
+    "model_used": "qwen/qwen3.8-27b",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 2212,
+    "completion_tokens": 353,
+    "cached_tokens": 0,
+    "ms": 1143,
+    "ladder_order": [
+     "groq/qwen/qwen3.8-27b",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 1
+   }
+  },
+  {
+   "id": "w060",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 36,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 36,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  }
+ ]
+}

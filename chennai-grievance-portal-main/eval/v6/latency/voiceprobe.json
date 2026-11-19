@@ -1,0 +1,126 @@
+{
+ "at": "2026-11-17T09:53:32.979Z",
+ "note": "Edge headless, natural online voices, warm (a silent utterance 400 ms before); startMs = speak() -> the utterance's start event",
+ "rows": [
+  {
+   "kind": "ta-short",
+   "lang": "ta-IN",
+   "chars": 33,
+   "startMs": 811
+  },
+  {
+   "kind": "ta-mid",
+   "lang": "ta-IN",
+   "chars": 109,
+   "startMs": 2159
+  },
+  {
+   "kind": "ta-long",
+   "lang": "ta-IN",
+   "chars": 236,
+   "startMs": 2833
+  },
+  {
+   "kind": "en-short",
+   "lang": "en-IN",
+   "chars": 28,
+   "startMs": 237
+  },
+  {
+   "kind": "en-long",
+   "lang": "en-IN",
+   "chars": 213,
+   "startMs": 285
+  },
+  {
+   "kind": "ta-short",
+   "lang": "ta-IN",
+   "chars": 33,
+   "startMs": 208
+  },
+  {
+   "kind": "ta-mid",
+   "lang": "ta-IN",
+   "chars": 109,
+   "startMs": 254
+  },
+  {
+   "kind": "ta-long",
+   "lang": "ta-IN",
+   "chars": 236,
+   "startMs": 3030
+  },
+  {
+   "kind": "en-short",
+   "lang": "en-IN",
+   "chars": 28,
+   "startMs": 188
+  },
+  {
+   "kind": "en-long",
+   "lang": "en-IN",
+   "chars": 213,
+   "startMs": 317
+  },
+  {
+   "kind": "ta-short",
+   "lang": "ta-IN",
+   "chars": 33,
+   "startMs": 181
+  },
+  {
+   "kind": "ta-mid",
+   "lang": "ta-IN",
+   "chars": 109,
+   "startMs": 316
+  },
+  {
+   "kind": "ta-long",
+   "lang": "ta-IN",
+   "chars": 236,
+   "startMs": 346
+  },
+  {
+   "kind": "en-short",
+   "lang": "en-IN",
+   "chars": 28,
+   "startMs": 185
+  },
+  {
+   "kind": "en-long",
+   "lang": "en-IN",
+   "chars": 213,
+   "startMs": 564
+  },
+  {
+   "kind": "ta-short",
+   "lang": "ta-IN",
+   "chars": 33,
+   "startMs": 213
+  },
+  {
+   "kind": "ta-mid",
+   "lang": "ta-IN",
+   "chars": 109,
+   "startMs": 173
+  },
+  {
+   "kind": "ta-long",
+   "lang": "ta-IN",
+   "chars": 236,
+   "startMs": 171
+  },
+  {
+   "kind": "en-short",
+   "lang": "en-IN",
+   "chars": 28,
+   "startMs": 205
+  },
+  {
+   "kind": "en-long",
+   "lang": "en-IN",
+   "chars": 213,
+   "startMs": 257
+  }
+ ]
+}

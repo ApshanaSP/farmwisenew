@@ -1,0 +1,65 @@
+{
+ "org": "groq",
+ "model": "openai/gpt-oss-120b",
+ "at": "2026-11-17T07:12:51.262Z",
+ "set": "eval/holdout/tuning24.jsonl, seed 20261117 balanced order",
+ "und": [],
+ "speed": [
+  {
+   "id": "t-u011",
+   "lang": "en",
+   "ttftMs": 1217,
+   "totalMs": 1218,
+   "outTokens": 231,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-n03",
+   "lang": "ta",
+   "ttftMs": 1096,
+   "totalMs": 1097,
+   "outTokens": 162,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-u124",
+   "lang": "tanglish",
+   "ttftMs": null,
+   "totalMs": 217,
+   "outTokens": null,
+   "tps": null,
+   "status": 429,
+   "err": "{\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3pwrjf6e4mr5p0rdf4q7wet`"
+  },
+  {
+   "id": "t-u053",
+   "lang": "en",
+   "ttftMs": 1053,
+   "totalMs": 1053,
+   "outTokens": 210,
+   "tps": null,
+   "status": 200
+  },
+  {
+   "id": "t-u072",
+   "lang": "ta",
+   "ttftMs": null,
+   "totalMs": 217,
+   "outTokens": null,
+   "tps": null,
+   "status": 429,
+   "err": "{\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3pwrjf6e4mr5p0rdf4q7wet`"
+  },
+  {
+   "id": "t-n06",
+   "lang": "tanglish",
+   "ttftMs": 937,
+   "totalMs": 938,
+   "outTokens": 177,
+   "tps": null,
+   "status": 200
+  }
+ ]
+}

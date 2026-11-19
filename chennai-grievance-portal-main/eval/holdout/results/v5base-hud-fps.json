@@ -1,0 +1,21 @@
+{
+ "listening": {
+  "pageFps": 57.7,
+  "worstGapMs": 50,
+  "coreFps": 12.9
+ },
+ "speaking": {
+  "pageFps": 57,
+  "worstGapMs": 50,
+  "coreFps": 56.9
+ },
+ "reducedMotion": {
+  "pageFps": 58.8,
+  "worstGapMs": 33,
+  "coreFps": 0
+ },
+ "browser": "chromium",
+ "channel": "chromium",
+ "version": "153.0.8010.12",
+ "note": "headless, software rendering unless the channel says otherwise; 20 s each with the HUD on the console (/dev/collector). pageFps: a requestAnimationFrame count (the page's frame rate, not the HUD's); coreFps: frames the core's canvas drew (hudcore.ts drawCore, counted by its clearRect)"
+}

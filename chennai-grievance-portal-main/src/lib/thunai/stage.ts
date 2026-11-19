@@ -70,7 +70,9 @@ export type BlockT = z.infer<typeof Block>;
 export type BlockKind = BlockT["kind"];
 export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as BlockKind[];
 
-export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete", "city"] as const;
+// v4 (lane A2, registered at integration): what changed with its drivers, explain one case or one part of a change, a place's situation
+export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete",
+  "changed", "explain", "situation", "city"] as const;
 export type Recipe = (typeof RECIPES)[number];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),
@@ -87,7 +89,7 @@ export const StageDoc = z.object({
   v: z.literal(1),
   id: str(40),
   recipe: z.enum(RECIPES),
-  /** the question, restated (the screen's title) */
+  /** the question, restated (the screen's title), in the screen's language (`lang`) */
   title: str(200),
   /** the one finding that matters, computed by code */
   takeaway: Bi.nullable(),
@@ -100,10 +102,22 @@ export const StageDoc = z.object({
   slots: z.record(z.unknown()),
   sources: z.array(str(80)).max(10),
   asOf: str(40).nullable(),
-  /** honest limits ("no history before the dataset starts") */
+  /** honest limits ("no history before the dataset starts"), in the screen's language; never a blank line */
   notes: z.array(str(300)).max(4),
   /** what Thunai suggests next, computed by code */
-  next: z.array(NextStep).max(3).optional()
+  next: z.array(NextStep).max(3).optional(),
+  /** the language the screen's own words are in (its title, its blocks' titles, its notes): the turn's (v4 brief, defect 9) */
+  lang: z.enum(["en", "ta"]).optional(),
+  /** the title in both languages; `title` is the one in `lang` (older screens and pins carry `title` alone) */
+  titles: Bi.optional(),
+  /** the notes in both languages; `notes` are the ones in `lang` */
+  notesBi: z.array(Bi).max(4).optional(),
+  /**
+   * v7: what was said for this screen was written by the aide (lib/thunai/aide7: a model's answer, every sentence checked against the
+   * screen's facts by code) or is its fallback (the recipe's own line). The browser then says it and reads no item aloud unless asked;
+   * `figures` are the figures the checked answer says (the browser's number gate allows them: the server checked each against its facts)
+   */
+  voice: z.object({ by: z.enum(["aide7", "fallback"]), model: str(80).nullable(), figures: z.array(num).max(200) }).optional()
 });
 export type StageDocT = z.infer<typeof StageDoc>;
 
@@ -118,7 +132,9 @@ export function checkStage(d: unknown): { ok: true; doc: StageDocT } | { ok: fal
 }
 
 /** The open Stage as the agent sees it with the next sentence (Tambo's "interactable"): kind, ids, nothing else. */
-export interface StageContext { recipe: Recipe; title: string; blocks: { kind: BlockKind; ids: string[] }[]; slots: Record<string, unknown>; focus: number | null }
+export interface StageContext { recipe: Recipe; title: string; blocks: { kind: BlockKind; ids: string[];
+  /** a short label per id, same order, when the browser sends them (register.ts labelsOf): untrusted text from the screen */
+  labels?: string[] }[]; slots: Record<string, unknown>; focus: number | null }
 
 /** the longest digest of a screen the browser may send with a round */
 export const STAGE_DIGEST_MAX = 1800;

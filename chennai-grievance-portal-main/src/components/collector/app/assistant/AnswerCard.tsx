@@ -10,6 +10,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 
 const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 import { canSpeak, speak, stopSpeaking } from "./speech";
+import { wordsAloud } from "../thunai/mouth";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
 import type { MapGeo } from "@/lib/collector/geo";
@@ -68,7 +69,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
   useEffect(() => () => { if (speaking) stopSpeaking(); }, [speaking]);
   const readAloud = () => {
     if (speaking) { stopSpeaking(); setSpeaking(false); return; }
-    if (speak(card.voiceSummary || card.headline, card.voiceLang, () => setSpeaking(false))) setSpeaking(true);
+    if (readCardAloud(card, () => setSpeaking(false))) setSpeaking(true);
   };
   const copy = async () => {
     const plain = card.answerMarkdown.replace(/\*\*/g, "").replace(/^\s*[-*]\s+/gm, "• ");
@@ -146,6 +147,16 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       </div>}
     </article>
   );
+}
+
+/**
+ * Read the card aloud: its spoken summary (else its headline) with every number in words, through the mouth's own step (thunai/mouth.ts
+ * wordsAloud; v5 F1, no digit reaches any voice: the Jarvis tab shows this card for Jarvis's answers). A sentence that would still hold a
+ * number sign is left out; false, and nothing said, when none is left or the browser cannot speak.
+ */
+export function readCardAloud(card: Card, onEnd: () => void): boolean {
+  const said = wordsAloud(card.voiceSummary || card.headline, card.voiceLang);
+  return !!said && speak(said, card.voiceLang, onEnd);
 }
 
 function actionIcon(a: ConsoleAction): IconName {

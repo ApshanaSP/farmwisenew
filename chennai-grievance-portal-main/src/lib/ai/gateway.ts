@@ -12,15 +12,16 @@
  * model, tokens and latency, never with the prompt (it can carry untrusted text), and each
  * user has a daily token budget.
  */
-import { APICallError, Output, generateText, zodSchema, type LanguageModel } from "ai";
+import { APICallError, Output, generateText, streamText, zodSchema, type LanguageModel } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
-import { ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
+import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
+import { groqFetch } from "@/lib/thunai/keepalive";
 
 export type Role = "fast" | "reasoning";
 export type ProviderName = "gemini" | "bedrock" | "groq" | "openai" | "anthropic";
@@ -121,13 +122,23 @@ function anthropic(): Provider | null {
       if (until > Date.now()) throw new ClaudeBusyError(Math.ceil((until - Date.now()) / 1000), "resting");
       // Claude thinks before it answers: a console step's short deadline (5 s, set for the free models) gets at least 10 s here;
       // a Jarvis turn keeps its own, and its model and effort (no role)
-      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
-        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal });
-      const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1 };
+      // v8: a Jarvis rung names its Claude model (the deep model on a hard turn, deep8.ts); a console step keeps its role's
+      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
+        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
+        // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
+        const b = billedOf(e);
+        if (b) {
+          charge(c.user, b.inputTokens - b.cacheReadTokens + b.outputTokens);
+          if (jarvis) ledger().record("anthropic", b.model, { tokens: b.inputTokens + b.outputTokens, lane: c.lane ?? "other" });
+        }
+        throw e;
+      });
+      const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1,
+        path: r.path, cacheReadTokens: r.cacheReadTokens, cacheWriteTokens: r.cacheWriteTokens };
       charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
       // the ledger's Claude ceiling is Jarvis's own: the console's steps must not use it up (they have the per-user daily budget)
       if (jarvis) ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
-      console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache)`);
+      console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache, ${r.cacheWriteTokens} written), ${r.path}`);
       return { object: r.object, info };
     }
   };
@@ -136,7 +147,8 @@ function anthropic(): Provider | null {
 function groq(): Provider | null {
   const apiKey = env("GROQ_API_KEY");
   if (!apiKey) return null;
-  const p = createGroq({ apiKey });
+  // v5 E3: groqFetch is undici's fetch on a keep-alive Agent with JARVIS_KEEPALIVE on (keepalive.ts), else the built-in fetch
+  const p = createGroq({ apiKey, fetch: groqFetch });
   // more keys (GROQ_API_KEY_2 ... GROQ_API_KEY_5) bring their own allowance: each key's models join the pool after the one
   // before, so they answer once those are rate-limited or out for the day. Their model ids carry "#2", "#3"... (logs, cooling,
   // per-minute use). A key given twice counts once.
@@ -145,7 +157,7 @@ function groq(): Provider | null {
     const key = env(`GROQ_API_KEY_${k}`);
     if (!key || seen.has(key)) return [];
     seen.add(key);
-    return [{ tag: `#${k}`, p: createGroq({ apiKey: key }) }];
+    return [{ tag: `#${k}`, p: createGroq({ apiKey: key, fetch: groqFetch }) }];
   });
   // three free models, 8,000 tokens a minute each (about 1 s a call when not rate-limited); qwen also writes strict JSON
   const ids = {
@@ -271,8 +283,41 @@ export interface JsonCall<T> {
   only?: { provider: ProviderName; models: string[] };
 }
 
-export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
+export interface CallInfo {
+  step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number;
+  /** Claude only: how the answer was asked for (structured outputs "format", or plain "json") */
+  path?: "format" | "tool" | "json";
+  /** Claude only: usage.cache_read_input_tokens and usage.cache_creation_input_tokens */
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+}
 export interface JsonResult<T> { object: T; info: CallInfo }
+
+/**
+ * One attempt on one model, as the evaluation runs record it (v5 build, 6.2): what happened, the provider's own token counts
+ * (cached input tokens included: Groq's prompt cache), and the provider's x-ratelimit-* response headers (names and values
+ * only). No prompt, no reply, no key. Listeners are for the live runners and telemetry; the app adds none by default.
+ */
+export type AttemptOutcome = "ok" | "rate_limited" | "json_validate_failed" | "draft_used" | "timeout" | "busy" | "error";
+export interface AttemptEvent {
+  name: string; provider: ProviderName; model: string; outcome: AttemptOutcome; status?: number; ms: number; lane?: Lane;
+  inputTokens?: number; outputTokens?: number; cachedTokens?: number; rateHeaders?: Record<string, string>
+}
+const attemptListeners = new Set<(e: AttemptEvent) => void>();
+/** Listen to every model attempt; returns the way to stop listening. */
+export function onAttempt(fn: (e: AttemptEvent) => void): () => void {
+  attemptListeners.add(fn);
+  return () => { attemptListeners.delete(fn); };
+}
+function emitAttempt(e: AttemptEvent) {
+  for (const f of attemptListeners) try { f(e); } catch { /* a listener never breaks a call */ }
+}
+/** Only the x-ratelimit-* and retry-after headers, names and values. */
+const rateHeaders = (h: Record<string, string> | undefined): Record<string, string> | undefined => {
+  if (!h) return undefined;
+  const out = Object.fromEntries(Object.entries(h).filter(([k]) => /^x-ratelimit-|^retry-after$/i.test(k)));
+  return Object.keys(out).length ? out : undefined;
+};
 
 const sleep = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
@@ -309,7 +354,8 @@ export function retryAfterSeconds(e: APICallError): number | null {
 }
 
 /** One call's rough tokens, before it is made or when the provider does not say. */
-const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: number }) => Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
+/** (v5 A2 a: the schema the provider is sent counts too) */
+const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: number; schema?: z.ZodTypeAny }) => Math.ceil((c.system.length + c.prompt.length + (c.schema ? schemaText(c.schema).length : 0)) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
@@ -358,11 +404,15 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       };
       // keep the preferred order while a model has room; models that would go over this minute's allowance go last
       const order = [...models].sort((a, b) => Number(room(b) < 0) - Number(room(a) < 0) || a.rank - b.rank);
+      // a model whose reply strict mode refused (after its one retry) is not asked again on another pooled key (v5 A5)
+      const schemaFailed = new Set<string>();
       for (const m of order) {
         if (Date.now() >= state.until) break;
+        if (schemaFailed.has(m.bare)) continue;
         if (room(m) < 0 && order.some((x) => room(x) >= 0)) continue;
         const r = await tryModel(c, p, m.id, m.lm, state);
         if (r.result) return r.result;
+        if (r.schemaFailed) schemaFailed.add(m.bare);
         if (r.longBusy) console.warn(`[assistant] ${c.name}: ${m.key} is busy or rate-limited; next model`);
       }
       // every model is out of this minute's allowance, but one frees up within seconds: waiting for it beats a template answer
@@ -457,7 +507,7 @@ export function jsonIn(text: string): unknown {
 }
 
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
-  state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
+  state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean; schemaFailed?: boolean }> {
   const key = `${p.name}/${id}`;
   // a 429 cools the bare model: the organisation's, so the other pooled keys are out too, even with this call's order already built
   if ((cooling.get(key) ?? 0) > Date.now() || (cooling.get(key.split("#")[0]) ?? 0) > Date.now()) return { longBusy: true };
@@ -501,19 +551,25 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
         output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
+      // Groq's prompt cache (gpt-oss): cached input tokens do not count toward its limits; logged per call (v5 A2 b)
+      const cached = r.usage?.inputTokenDetails?.cacheReadTokens;
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
-        inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
+        inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0, ...(cached != null ? { cacheReadTokens: cached } : {}) };
       charge(c.user, info.inputTokens + info.outputTokens);
       recordUse(key, info.inputTokens + info.outputTokens, c.lane);
       strikes.delete(key);
       keyWorks(p.name);
-      console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
+      emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "ok", ms: info.ms, lane: c.lane, inputTokens: info.inputTokens, outputTokens: info.outputTokens,
+        cachedTokens: cached ?? undefined, rateHeaders: rateHeaders((r.response as { headers?: Record<string, string> } | undefined)?.headers) });
+      console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens${cached ? ` (${cached} cached)` : ""}`);
       return { result: { object: r.output as T, info }, longBusy: false };
     } catch (e) {
       if (c.abortSignal?.aborted) throw e;
       state.lastError = e;
       // too slow: this model rests (longer each time in a row) and the next one answers
+      const errHeaders = APICallError.isInstance(e) ? rateHeaders(e.responseHeaders) : undefined;
       if (deadline.aborted) {
+        emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "timeout", ms: Date.now() - t0, lane: c.lane });
         console.warn(`[assistant] ${c.name} ${p.name}/${id} took over ${(limit / 1000).toFixed(1)} s; next model`);
         cooling.set(key, Date.now() + restFor(key));
         state.busyFor = Math.max(state.busyFor ?? 0, 10);
@@ -529,24 +585,37 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
             const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts, inputTokens: need, outputTokens: 0 };
             charge(c.user, need);
             recordUse(key, need, c.lane);
+            emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "draft_used", status: 400, ms: info.ms, lane: c.lane, rateHeaders: errHeaders });
             console.info(`[assistant] ${c.name} ${p.name}/${id}: provider rejected the draft; it passed our schema, used it`);
             return { result: { object: parsed.data, info }, longBusy: false };
           }
           const issue = parsed.error.issues[0];
+          emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "json_validate_failed", status: 400, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
           console.warn(`[assistant] ${c.name} draft off-schema at ${issue?.path.join(".")}: ${issue?.message}`);
           state.lastError = new Error(`off-schema output at ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
+          // v5 A5: a schema failure, not a capacity one: one retry on this model, then the next model (never its other pooled keys)
           if (attempt === 0) continue;
-          return { longBusy: false };
+          return { longBusy: false, schemaFailed: true };
         }
       }
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
       // Gemini refusing the schema itself: put it in the instructions and try again at once (remembered)
-      if (p.name === "gemini" && status === 400 && /invalid argument/i.test((e as Error).message ?? "") && !plain) {
+      // (v5: also "too many states for serving", Gemini's refusal of a schema whose constraint is too large: the wide planner schema)
+      if (p.name === "gemini" && status === 400 && /invalid argument|too many states/i.test((e as Error).message ?? "") && !plain) {
         console.warn(`[assistant] ${c.name} ${p.name}/${id} refused the schema; sending it as instructions instead`);
         schemaInPrompt.add(plainKey);
         continue;
       }
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
+      const jvf = status === 400 && /json_validate_failed|does not match the expected schema/i.test(`${APICallError.isInstance(e) ? e.responseBody ?? "" : ""} ${(e as Error).message ?? ""}`);
+      emitAttempt({ name: c.name, provider: p.name, model: id, outcome: status === 429 ? "rate_limited" : jvf ? "json_validate_failed" : busy ? "busy" : "error", status, ms: Date.now() - t0, lane: c.lane, rateHeaders: errHeaders });
+      // v5 A5: strict mode refused the reply and left no usable draft: one retry on this model, then the next model (not its other
+      // pooled keys: the same model would refuse the same way), recorded as a schema failure, never as a capacity one
+      if (jvf) {
+        console.warn(`[assistant] ${c.name} ${p.name}/${id}: strict mode refused the reply (json_validate_failed)${attempt === 0 ? "; asking once more" : "; next model"}`);
+        if (attempt === 0) continue;
+        return { longBusy: false, schemaFailed: true };
+      }
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
       // a refused or expired key is remembered for the console's admin banner (keyhealth.ts), not only logged
       if (isKeyRefusal(status, (e as Error).message ?? "") || /refused the AWS keys/.test((e as Error).message ?? "")) keyRefused(p.name, status ?? (e as Error).name, (e as Error).message);
@@ -583,4 +652,65 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     }
   }
   return { longBusy: false };
+}
+
+// ------------------------------------------------------------ v7: plain text, streamed --
+
+/** One streamed plain-text call to one free model (v7's answer writer, lib/thunai/aide7): Groq or Gemini, no schema. */
+export interface PlainCall {
+  provider: "groq" | "gemini"; model: string; name: string; system: string; prompt: string; maxOutputTokens: number; temperature?: number;
+  abortSignal?: AbortSignal; lane?: Lane; user: string;
+}
+export interface PlainUsage { provider: ProviderName; model: string; inputTokens: number; outputTokens: number; ms: number; firstMs: number | null }
+
+/**
+ * Stream one model's text to `onText` as it comes; resolves with the usage once the model is done, throws on a refusal, a rate limit (the
+ * model cools, as for the JSON calls), an error or the caller's abort. The tokens are recorded in the ledger as every call's are; a call
+ * stopped before it finished is recorded at its rough size (it was asked, and the free tier counts it). Thinking is kept off or low: a
+ * spoken answer cannot wait for it (Groq qwen: reasoning_effort none; gpt-oss: low, hidden; Gemini: low).
+ */
+export async function streamPlainText(c: PlainCall, onText: (t: string) => void): Promise<PlainUsage> {
+  const p = makers()[c.provider]?.();
+  const lm = p?.pool?.("fast").find((m) => m.id === c.model)?.lm ?? p?.pool?.("reasoning").find((m) => m.id === c.model)?.lm;
+  if (!p || !lm) throw new AiUnavailableError();
+  const key = `${p.name}/${c.model}`;
+  const rest = cooling.get(key) ?? 0;
+  if (rest > Date.now()) throw new AiBusyError(Math.ceil((rest - Date.now()) / 1000));
+  if (!budgetLeft(c.user)) throw new AiBudgetError();
+  const t0 = Date.now();
+  let firstMs: number | null = null, got = 0;
+  const providerOptions = c.provider === "groq"
+    ? { groq: c.model.startsWith("openai/") ? { reasoningEffort: "low", reasoningFormat: "hidden" } : { reasoningEffort: "none" } }
+    : { google: { thinkingConfig: { thinkingLevel: env("AI_REASONING_EFFORT") || "low" } } };
+  let failure: unknown = null;
+  const r = streamText({ model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature ?? 0, maxOutputTokens: Math.min(c.maxOutputTokens, p.maxOut?.(c.model) ?? Infinity),
+    maxRetries: 0, abortSignal: c.abortSignal, providerOptions: providerOptions as never, onError: ({ error }) => { failure = error; } });
+  let usage = { inputTokens: 0, outputTokens: 0 };
+  try {
+    for await (const part of r.fullStream) {
+      if (part.type === "text-delta" && part.text) { if (firstMs == null) firstMs = Date.now() - t0; got += part.text.length; onText(part.text); }
+      else if (part.type === "error") { failure = part.error; break; }
+      else if (part.type === "finish") usage = { inputTokens: part.totalUsage?.inputTokens ?? 0, outputTokens: part.totalUsage?.outputTokens ?? 0 };
+    }
+  } catch (e) { failure ??= e; }
+  if (failure || c.abortSignal?.aborted) {
+    // asked, so it counts: at its rough size when the provider never said
+    recordUse(key, usage.inputTokens + usage.outputTokens || roughTokens({ system: c.system, prompt: c.prompt, maxOutputTokens: Math.ceil(got / 3.5) || 1 }), c.lane);
+    const e = failure ?? new DOMException("aborted", "AbortError");
+    if (APICallError.isInstance(e) && (e.statusCode === 429 || (e.statusCode ?? 0) >= 500)) {
+      const secs = retryAfterSeconds(e) ?? 20;
+      cooling.set(key, Date.now() + Math.min(10 * 60_000, secs * 1000));
+      emitAttempt({ name: c.name, provider: p.name, model: c.model, outcome: e.statusCode === 429 ? "rate_limited" : "busy", status: e.statusCode, ms: Date.now() - t0, lane: c.lane });
+      throw new AiBusyError(secs);
+    }
+    if (APICallError.isInstance(e) && isKeyRefusal(e.statusCode, e.message)) keyRefused(p.name, e.statusCode ?? 401, e.message);
+    throw e;
+  }
+  const tokens = usage.inputTokens + usage.outputTokens;
+  charge(c.user, tokens);
+  recordUse(key, tokens, c.lane);
+  keyWorks(p.name);
+  emitAttempt({ name: c.name, provider: p.name, model: c.model, outcome: "ok", ms: Date.now() - t0, lane: c.lane, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
+  console.info(`[assistant] ${c.name} ${p.name}/${c.model} streamed ${Date.now() - t0} ms (first text ${firstMs ?? "-"} ms), ${usage.inputTokens}+${usage.outputTokens} tokens`);
+  return { provider: p.name, model: c.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, ms: Date.now() - t0, firstMs };
 }

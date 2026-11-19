@@ -1,0 +1,265 @@
+{
+ "runs": [
+  {
+   "clip": "b6",
+   "lane": "rules",
+   "heard": "",
+   "ack": null,
+   "answer": null,
+   "firstAudio": null,
+   "finding": null,
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "cmd_trends",
+   "lane": "rules",
+   "heard": "",
+   "ack": null,
+   "answer": null,
+   "firstAudio": null,
+   "finding": null,
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "cmd_adyar",
+   "lane": "rules",
+   "heard": "",
+   "ack": null,
+   "answer": null,
+   "firstAudio": null,
+   "finding": null,
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "b3",
+   "lane": "rules",
+   "heard": "",
+   "ack": null,
+   "answer": null,
+   "firstAudio": null,
+   "finding": null,
+   "provider": null,
+   "tokens": null,
+   "path": null
+  },
+  {
+   "clip": "open_ended",
+   "lane": "planner",
+   "heard": "put together something useful for my morning.",
+   "ack": 3301,
+   "answer": null,
+   "firstAudio": 4095,
+   "finding": null,
+   "provider": null,
+   "tokens": null,
+   "path": "browser"
+  },
+  {
+   "clip": "open_ended2",
+   "lane": "planner",
+   "heard": "how is the metro water backlog looking overall?",
+   "ack": 940,
+   "answer": 6661,
+   "firstAudio": 6674,
+   "finding": 6674,
+   "provider": null,
+   "tokens": 3608,
+   "path": "browser"
+  }
+ ],
+ "rules": {
+  "ack_p50": null,
+  "firstAudio_p50": null,
+  "finding_p50": null,
+  "answer_p50": null
+ },
+ "planner": {
+  "ack_p50": 3301,
+  "firstAudio_p50": 6674,
+  "finding_p50": 6674,
+  "answer_p50": 6661
+ },
+ "note": "real Whisper, real planner, real voice ladder, injected audio, production bundle. firstAudio can be the acknowledgement; finding is the first spoken answer",
+ "heard": [
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 19,
+    "sttBack": 428
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 15,
+    "sttBack": 712
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 5,
+    "sttBack": 372
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 13,
+    "sttBack": 549
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 14,
+    "sttBack": 658
+   }
+  },
+  {
+   "lane": "ambient",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 14,
+    "sttBack": 335
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "ta",
+   "timing": {
+    "sttSent": 29,
+    "sttBack": 1444
+   }
+  },
+  {
+   "lane": "engaged",
+   "status": 200,
+   "lang": "en",
+   "timing": {
+    "sttSent": 7,
+    "sttBack": 504
+   }
+  }
+ ],
+ "trace": {
+  "planner": {
+   "voicedEnd": {
+    "n": 2,
+    "p50": 0,
+    "p90": 0
+   },
+   "eou": {
+    "n": 2,
+    "p50": 342,
+    "p90": 342
+   },
+   "uploadSent": {
+    "n": 2,
+    "p50": 348,
+    "p90": 348
+   },
+   "sttSent": {
+    "n": 2,
+    "p50": 362,
+    "p90": 362
+   },
+   "sttBack": {
+    "n": 2,
+    "p50": 844,
+    "p90": 844
+   },
+   "hearBack": {
+    "n": 2,
+    "p50": 894,
+    "p90": 894
+   },
+   "gateDone": {
+    "n": 2,
+    "p50": 972,
+    "p90": 972
+   },
+   "firstEvent": {
+    "n": 2,
+    "p50": 1132,
+    "p90": 1132
+   },
+   "plannerSent": {
+    "n": 1,
+    "p50": 5869,
+    "p90": 5869
+   },
+   "plannerBack": {
+    "n": 1,
+    "p50": 6614,
+    "p90": 6614
+   },
+   "toolsDone": {
+    "n": 1,
+    "p50": 6615,
+    "p90": 6615
+   },
+   "speakCalled": {
+    "n": 1,
+    "p50": 6696,
+    "p90": 6696
+   },
+   "voiceStart": {
+    "n": 1,
+    "p50": 6987,
+    "p90": 6987
+   }
+  }
+ },
+ "traces": [
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 342,
+    "uploadSent": 348,
+    "sttSent": 362,
+    "sttBack": 683,
+    "hearBack": 717,
+    "gateDone": 782,
+    "firstEvent": 1015
+   }
+  },
+  {
+   "lane": "planner",
+   "stages": {
+    "voicedEnd": 0,
+    "eou": 332,
+    "uploadSent": 340,
+    "sttSent": 347,
+    "sttBack": 844,
+    "hearBack": 894,
+    "gateDone": 972,
+    "firstEvent": 1132,
+    "plannerSent": 5869,
+    "plannerBack": 6614,
+    "toolsDone": 6615,
+    "speakCalled": 6696,
+    "voiceStart": 6987
+   }
+  }
+ ]
+}

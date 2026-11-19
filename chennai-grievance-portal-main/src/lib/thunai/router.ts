@@ -6,7 +6,9 @@
  */
 import { z } from "zod";
 import { detectLang } from "./normalise";
-import { asksForbidden, asksPrivate } from "./privacy";
+import { asksForbiddenOrder, asksPrivate } from "./privacy";
+
+export { asksForbiddenOrder };
 import { districtNounIn, namesZone, quickScreen } from "./quick";
 import type { World } from "./types";
 
@@ -25,10 +27,11 @@ const STAGE = /\b(this|these|that|those|the (first|second|third|fourth|fifth|las
 const MEMORY = /\b(remember|remind|note that|make a note|note this|save|saved|workspace|forget|pin|bookmark|keep (this|it))\b|(நினைவில்|நினைவூட்டு|சேமி|சேவ்|பின் செய்|குறித்து வை|மறந்துவிடு|பின் பண்ண|ஒர்க்ஸ்பேஸ்)|\b(nyabagam|gnabagam|save pannu|note pannu|pin pannu|ninaivu|vachuko|vechuko)\b/i;
 const DATA = /\b(how many|how much|total|count|number of|percent|percentage|price|rate|contact|who is the|officer of|source|feed|fresh|resolution|backlog|follow.?ups?|gaps?|in the news but|verification|queue|stories|unusual|rises?|outliers?|anomal|stand out|stands out|find|search|look up)\b|(எத்தனை|எவ்வளவு|மொத்தம்|விலை|அதிகாரி|தொடர்பு)|\b(ethana|evlo|evvalavu)\b/i;
 
+
 /** The lane by rules, when they are sure. lane null: the tiny router call decides. */
 export function routeByRules(text: string, w: World, stageOpen: boolean): Route {
   if (asksPrivate(text)) return { lane: "refuse", bundle: null, why: "privacy" };
-  if (asksForbidden(text)) return { lane: "refuse", bundle: null, why: "never" };
+  if (asksForbiddenOrder(text)) return { lane: "refuse", bundle: null, why: "never" };
   const district = districtNounIn(text, w);
   if (!district && SUBJECTS.test(text)) return { lane: "general", bundle: null, why: "subject" };
   if (PLAINLY_OTHER.test(text) && !namesZone(text, w)) return { lane: "general", bundle: null, why: "subject" };

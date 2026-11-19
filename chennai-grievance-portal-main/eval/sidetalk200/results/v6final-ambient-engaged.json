@@ -1,0 +1,2138 @@
+{
+ "at": "2026-11-17T12:06:26.013Z",
+ "summary": {
+  "lastTurn5sAgo": {
+   "sideFalseActs": 58,
+   "sideN": 200,
+   "sideLevelBC": 58,
+   "commandsAccepted": 54,
+   "commandsN": 60,
+   "sideInterval": "58/200 (29.0 %, 23.2-35.6)",
+   "commandsRefused": 6,
+   "byTier": {
+    "engaged": 58
+   },
+   "byLang": {
+    "en": {
+     "sideFalseActs": 17,
+     "side": 67,
+     "accepted": 20,
+     "commands": 20
+    },
+    "ta": {
+     "sideFalseActs": 22,
+     "side": 67,
+     "accepted": 18,
+     "commands": 20
+    },
+    "tanglish": {
+     "sideFalseActs": 19,
+     "side": 66,
+     "accepted": 16,
+     "commands": 20
+    }
+   }
+  },
+  "lastTurn10sAgo": {
+   "windowMs8000": {
+    "sideFalseActs": 0,
+    "sideN": 200,
+    "sideInterval": "0/200 (0.0 %, 0.0-1.9)",
+    "sideLevelBC": 0,
+    "commandsAccepted": 0,
+    "commandsN": 60
+   },
+   "windowMs20000": {
+    "sideFalseActs": 58,
+    "sideN": 200,
+    "sideInterval": "58/200 (29.0 %, 23.2-35.6)",
+    "sideLevelBC": 58,
+    "commandsAccepted": 54,
+    "commandsN": 60
+   }
+  },
+  "shippedEngagedMs": 20000
+ },
+ "rows": [
+  {
+   "id": "s118",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s289",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s048",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s175",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s052",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s176",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s144",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s019",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s056",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s133",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s296",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s222",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s307",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s226",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s098",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s012",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s033",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s244",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s255",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s132",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s066",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s147",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s164",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s120",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s306",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s017",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s249",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s116",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s313",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s139",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s141",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s277",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s293",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s260",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s220",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s046",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s238",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s005",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s137",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s111",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s272",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s039",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s286",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s145",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s233",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s227",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s203",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s020",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s232",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s209",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s250",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s252",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s236",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s218",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s129",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s219",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s211",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s199",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s200",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s314",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s243",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s010",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s027",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s303",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s311",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s194",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s085",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s038",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s271",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s191",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s007",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s239",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s297",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s308",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s018",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s224",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s049",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s280",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s103",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s124",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s259",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s084",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s143",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s136",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s112",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s282",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s024",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s122",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s135",
+   "kind": "command",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s287",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s126",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s097",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s283",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s279",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s312",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s197",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s152",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s172",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s096",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s061",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s107",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s105",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s208",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s229",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s011",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s206",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s193",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s119",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s268",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s288",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s002",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s294",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s051",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s274",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s221",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s310",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s177",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s075",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s108",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s032",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s102",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s071",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s216",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s003",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s087",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s264",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s265",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s034",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s241",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s247",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s092",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s165",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s261",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s015",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s028",
+   "kind": "command",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s146",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s026",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s089",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s014",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s234",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s157",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s217",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s230",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s213",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s086",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s062",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s070",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s043",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s240",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s170",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s110",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s316",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s148",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s044",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s109",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s155",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s114",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s060",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s029",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s009",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s295",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s080",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s083",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s006",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s016",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s180",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s231",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s179",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s101",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s035",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s278",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s149",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s315",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s192",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s214",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s047",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s181",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s256",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s168",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s169",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s201",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s063",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s290",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s178",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s186",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s281",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s025",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s159",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s301",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s140",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s008",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s262",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s001",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s275",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s113",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s150",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s319",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s094",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s134",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s196",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s215",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s065",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s245",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s131",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s204",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s117",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s099",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s184",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s013",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s106",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s284",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s022",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s069",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s050",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s045",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s138",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s207",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s167",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s223",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s317",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s253",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s104",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s300",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s292",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s187",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s171",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s183",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s266",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s076",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s053",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s055",
+   "kind": "command",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s130",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s205",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s305",
+   "kind": "command",
+   "lang": "tanglish",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s042",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s173",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s073",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s210",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s090",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s190",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s251",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s269",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s270",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s166",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s304",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s263",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s023",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s320",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "unaddressed"
+  },
+  {
+   "id": "s276",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s161",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s088",
+   "kind": "side",
+   "lang": "ta",
+   "act": false,
+   "tier": 0,
+   "why": "aside"
+  },
+  {
+   "id": "s158",
+   "kind": "side",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s202",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s036",
+   "kind": "side",
+   "lang": "tanglish",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s188",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s225",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s248",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s078",
+   "kind": "side",
+   "lang": "en",
+   "act": false,
+   "tier": 0,
+   "why": "side"
+  },
+  {
+   "id": "s082",
+   "kind": "side",
+   "lang": "en",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  },
+  {
+   "id": "s195",
+   "kind": "command",
+   "lang": "ta",
+   "act": true,
+   "tier": 2,
+   "why": "engaged"
+  }
+ ]
+}

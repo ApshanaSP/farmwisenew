@@ -1,0 +1,1104 @@
+{
+ "at": "2026-11-17T14:17:36.522Z",
+ "v5": {
+  "label": "capacity failures present",
+  "allTurns": {
+   "k": 8,
+   "n": 30,
+   "p": 26.7,
+   "lo": 14.2,
+   "hi": 44.4
+  },
+  "cleanTurns": {
+   "k": 8,
+   "n": 29,
+   "p": 27.6,
+   "lo": 14.7,
+   "hi": 45.7
+  },
+  "capacityFailures": 1,
+  "rateLimited": 0,
+  "jsonValidateFailed": 0,
+  "fellBack": 0,
+  "byModel": {
+   "claude-haiku-5-5": {
+    "k": 7,
+    "n": 24,
+    "p": 29.2,
+    "lo": 14.9,
+    "hi": 49.2
+   },
+   "none": {
+    "k": 1,
+    "n": 6,
+    "p": 16.7,
+    "lo": 3,
+    "hi": 56.4
+   }
+  },
+  "tokens": {
+   "prompt": 0,
+   "completion": 0,
+   "cached": 0
+  },
+  "ladderOrders": [
+   "anthropic/claude-haiku-5-5 > gemini/gemini-3.5-flash-lite"
+  ]
+ },
+ "tokensAll": 165675,
+ "modelTurns": 23,
+ "byLang": {
+  "all": {
+   "n": 30,
+   "right": 8,
+   "deferred": 0,
+   "wrong": 21,
+   "capacity": 1,
+   "pct": {
+    "p": 27.6,
+    "lo": 14.7,
+    "hi": 45.7
+   }
+  },
+  "en": {
+   "n": 9,
+   "right": 4,
+   "deferred": 0,
+   "wrong": 5,
+   "capacity": 0,
+   "pct": {
+    "p": 44.4,
+    "lo": 18.9,
+    "hi": 73.3
+   }
+  },
+  "ta": {
+   "n": 12,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 9,
+   "capacity": 0,
+   "pct": {
+    "p": 25,
+    "lo": 8.9,
+    "hi": 53.2
+   }
+  },
+  "tanglish": {
+   "n": 9,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 7,
+   "capacity": 1,
+   "pct": {
+    "p": 12.5,
+    "lo": 2.2,
+    "hi": 47.1
+   }
+  }
+ },
+ "byIntent": {
+  "explain": {
+   "n": 5,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 4,
+   "capacity": 0,
+   "pct": {
+    "p": 20,
+    "lo": 3.6,
+    "hi": 62.4
+   }
+  },
+  "changed": {
+   "n": 3,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 33.3,
+    "lo": 6.1,
+    "hi": 79.2
+   }
+  },
+  "howknow": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "mission": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 1,
+   "capacity": 1,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 79.3
+   }
+  },
+  "brief": {
+   "n": 3,
+   "right": 1,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 33.3,
+    "lo": 6.1,
+    "hi": 79.2
+   }
+  },
+  "remember": {
+   "n": 4,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 4,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 49
+   }
+  },
+  "recall": {
+   "n": 2,
+   "right": 0,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 0,
+    "lo": 0,
+    "hi": 65.8
+   }
+  },
+  "followup": {
+   "n": 9,
+   "right": 5,
+   "deferred": 0,
+   "wrong": 4,
+   "capacity": 0,
+   "pct": {
+    "p": 55.6,
+    "lo": 26.7,
+    "hi": 81.1
+   }
+  }
+ },
+ "byLane": {
+  "planner": {
+   "n": 22,
+   "right": 6
+  },
+  "resolve": {
+   "n": 3,
+   "right": 0
+  },
+  "quick": {
+   "n": 3,
+   "right": 1
+  },
+  "browser": {
+   "n": 1,
+   "right": 1
+  },
+  "no-model": {
+   "n": 1,
+   "right": 0
+  }
+ },
+ "rows": [
+  {
+   "id": "w065",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "recall",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1439,
+   "tokens": 8185,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 5937,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w087",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1390,
+   "tokens": 8809,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 6419,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w023",
+   "lang": "ta",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1967,
+   "tokens": 8005,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1967,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w038",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "situation",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2850,
+   "tokens": 8283,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2850,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w097",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "why",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2409,
+   "tokens": 8179,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2409,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w115",
+   "lang": "ta",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 27,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 27,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w068",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "changed",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2415,
+   "tokens": 8202,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2415,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w117",
+   "lang": "ta",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2216,
+   "tokens": 8155,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2216,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w090",
+   "lang": "ta",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "prices",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2342,
+   "tokens": 8136,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2342,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w040",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1487,
+   "tokens": 8737,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 5497,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w110",
+   "lang": "ta",
+   "intent": "followup",
+   "gold": "why",
+   "got": "prices",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2290,
+   "tokens": 8647,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 5021,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w089",
+   "lang": "ta",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "situation",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2488,
+   "tokens": 8327,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2488,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w072",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 25,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 25,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w018",
+   "lang": "en",
+   "intent": "changed",
+   "gold": "changed",
+   "got": "why",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2318,
+   "tokens": 5049,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2318,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w051",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "situation",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1943,
+   "tokens": 5078,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1943,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w035",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "howknow",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 9,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 31,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w001",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 12,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1974,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w046",
+   "lang": "en",
+   "intent": "followup",
+   "gold": "recall",
+   "got": "recall",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1926,
+   "tokens": 4714,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1928,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w113",
+   "lang": "en",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "browser",
+   "model": null,
+   "ms": 1,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w092",
+   "lang": "en",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "explain",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2136,
+   "tokens": 5153,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2136,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w057",
+   "lang": "en",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1939,
+   "tokens": 4657,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1939,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w073",
+   "lang": "tanglish",
+   "intent": "howknow",
+   "gold": "howknow",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "quick",
+   "model": null,
+   "ms": 14,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 14,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w020",
+   "lang": "tanglish",
+   "intent": "brief",
+   "gold": "brief",
+   "got": "situation",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2695,
+   "tokens": 8213,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2695,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w049",
+   "lang": "tanglish",
+   "intent": "explain",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2211,
+   "tokens": 5497,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2211,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w026",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1986,
+   "tokens": 8566,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 3898,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w005",
+   "lang": "tanglish",
+   "intent": "recall",
+   "gold": "recall",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 1926,
+   "tokens": 4997,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 1926,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w045",
+   "lang": "tanglish",
+   "intent": "remember",
+   "gold": "remember",
+   "got": "navigate",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2222,
+   "tokens": 5107,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 2222,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w118",
+   "lang": "tanglish",
+   "intent": "followup",
+   "gold": "remember",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "planner",
+   "model": "claude-haiku-5-5",
+   "ms": 2129,
+   "tokens": 8689,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 4053,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w085",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": true,
+   "lane": "no-model",
+   "model": null,
+   "ms": 8025,
+   "tokens": 8290,
+   "calls": 1,
+   "rec": {
+    "model_used": "claude-haiku-5-5",
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 8025,
+    "ladder_order": [
+     "anthropic/claude-haiku-5-5",
+     "gemini/gemini-3.5-flash-lite"
+    ],
+    "attempts": 0
+   }
+  },
+  {
+   "id": "w060",
+   "lang": "tanglish",
+   "intent": "mission",
+   "gold": "mission",
+   "got": "chat",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "lane": "resolve",
+   "model": null,
+   "ms": 35,
+   "tokens": 0,
+   "calls": 0,
+   "rec": {
+    "model_used": null,
+    "rate_limited": false,
+    "fell_back": false,
+    "json_validate_failed": false,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "cached_tokens": 0,
+    "ms": 35,
+    "ladder_order": [],
+    "attempts": 0
+   }
+  }
+ ]
+}

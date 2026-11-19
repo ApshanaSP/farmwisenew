@@ -107,12 +107,14 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await page.waitForFunction(() => (localStorage.getItem("thunai-pins") ?? "").includes("Severe today"), null, { timeout: 15_000 });
   });
 
-  test("three commands with no click and no name: the console acts", async ({ page }) => {
+  // v5 C1: an unnamed command with Jarvis not engaged is refused; the first command carries the name, and the next two, inside the
+  // follow-up window, need no name (docs/qa/pass7/V5_EXPECTED_CHANGES.md)
+  test("three commands with no click: the first with the name, the next two without it inside the window: the console acts", async ({ page }) => {
     const ctx = await setup(page, {
       agent: (t) => /Adyar/.test(t) ? { result: steps([{ a: "view", view: { zone: 13 } }]) } : /Anna Nagar/.test(t) ? { result: steps([{ a: "view", view: { zone: 8 } }]) } : { result: chat("Done.") }
     });
     await modeOn(page);
-    ctx.hear.push({ text: "Go to the trends page." });
+    ctx.hear.push({ text: "Jarvis, go to the trends page." });
     await say(page, "cmd_trends");
     await expect(page.getByTestId("harness-state")).toContainText('"page": "trends"', { timeout: 15_000 });
     await page.waitForTimeout(800);
@@ -140,12 +142,16 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     expect(ctx.hearCalls[0].lane).toBe("ambient");
   });
 
+  // v5 C1: with no name and Jarvis not engaged the whole sentence is now ignored (a faint line), so its level B part cannot run; before,
+  // its level A part acted and the save was answered "Say Jarvis first" (docs/qa/pass7/V5_EXPECTED_CHANGES.md)
   test("the name works anywhere; a level B request with no name does not run", async ({ page }) => {
     const ctx = await setup(page, { agent: () => ({ result: steps([{ a: "workspace", op: "save", name: "Daily" }]) }) });
     await modeOn(page);
     ctx.hear.push({ text: "show Adyar and save this workspace as Daily" });
     await say(page, "cmd_adyar");
-    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { answer: string } } }).__jv.hud().answer.includes("Say Jarvis first"), null, { timeout: 15_000 });
+    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint.includes("save this workspace"), null, { timeout: 15_000 });
+    expect(ctx.agentCalls.length).toBe(0);
+    await expect(page.getByRole("dialog").filter({ hasText: /Daily/ })).toHaveCount(0);
     await page.waitForTimeout(600);
     ctx.hear.push({ text: "Jarvis, save this workspace as Daily" });
     await say(page, "cmd_trends");
@@ -184,14 +190,23 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
   });
 });
 
-test("a sentence that goes on after a pause reaches Whisper whole, with its first part still there", async ({ page }) => {
+test("a sentence that goes on after a pause is handled whole, its first part read once and never posted again", async ({ page }) => {
   test.setTimeout(90_000);
   const ctx = await setup(page);
   await modeOn(page);
-  ctx.hear.push({ text: "Jarvis, show", delay: 4000 }, { text: "Jarvis, show the trends page" });
+  // v4 (conductor.ts carryLive and transcribe, heard.ts joinHeard; ULTIMATE_JARVIS.md section 5: "never re-post the first half of a
+  // split sentence"): the first part's reading, still at Whisper when the second part begins, is kept and joined to the second
+  // part's. So the second post carries the second part only, and what is handled is the whole sentence. (Before v4 the second post
+  // re-sent the whole audio, and this spec asserted bytes[1] > 1.5 x bytes[0].)
+  ctx.hear.push({ text: "Jarvis, show", delay: 4000 }, { text: "the trends page" });
   await say(page, "cmd_trends");
   await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(1);
   await say(page, "cmd_trends");
   await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(2);
-  expect(ctx.hearCalls[1].bytes).toBeGreaterThan(ctx.hearCalls[0].bytes * 1.5);
+  // what handle() took, as the Questions list keeps it (jarvislog.ts; a dashboard move leaves no answer card to read it from)
+  const asked = () => page.evaluate(() => (JSON.parse(localStorage.getItem("jarvis-log") ?? "[]") as { who: string; text: string }[]).filter((x) => x.who === "you").map((x) => x.text));
+  await expect.poll(asked, { timeout: 15_000 }).toEqual(["show the trends page"]);
+  await expect(page.getByTestId("harness-state")).toContainText('"page": "trends"', { timeout: 15_000 });
+  // the same clip both times: a second post of the second part alone is about the first's size, never the two together
+  expect(ctx.hearCalls[1].bytes).toBeLessThan(ctx.hearCalls[0].bytes * 1.5);
 });

@@ -1,0 +1,452 @@
+{
+ "tag": "phase0",
+ "part": "closed",
+ "at": "2026-11-17T07:09:52.345Z",
+ "note": "timings in ms from the clip's true last voiced sample; synthetic clips; real providers; Edge natural voices",
+ "rows": [
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 1496,
+     "ev": "final:"
+    },
+    {
+     "at": 4432,
+     "ev": "final:"
+    },
+    {
+     "at": 7260,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 608,
+     "ev": "final:"
+    },
+    {
+     "at": 3437,
+     "ev": "final:"
+    },
+    {
+     "at": 6421,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 635,
+     "ev": "speechend"
+    },
+    {
+     "at": 635,
+     "ev": "error:network"
+    },
+    {
+     "at": 636,
+     "ev": "end"
+    },
+    {
+     "at": 792,
+     "ev": "start"
+    },
+    {
+     "at": 808,
+     "ev": "audiostart"
+    },
+    {
+     "at": 3080,
+     "ev": "speechstart"
+    },
+    {
+     "at": 3081,
+     "ev": "final:"
+    },
+    {
+     "at": 5904,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": -934,
+     "ev": "final:"
+    },
+    {
+     "at": 1994,
+     "ev": "interim:do you know"
+    },
+    {
+     "at": 2207,
+     "ev": "final:Do you know which?"
+    },
+    {
+     "at": 5187,
+     "ev": "final:"
+    },
+    {
+     "at": 7988,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_mark",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 1116,
+     "ev": "final:"
+    },
+    {
+     "at": 5196,
+     "ev": "speechend"
+    },
+    {
+     "at": 5196,
+     "ev": "error:network"
+    },
+    {
+     "at": 5196,
+     "ev": "end"
+    },
+    {
+     "at": 5347,
+     "ev": "start"
+    },
+    {
+     "at": 5368,
+     "ev": "audiostart"
+    },
+    {
+     "at": 7966,
+     "ev": "speechstart"
+    },
+    {
+     "at": 7966,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_charon",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 1427,
+     "ev": "final:"
+    },
+    {
+     "at": 4209,
+     "ev": "final:"
+    },
+    {
+     "at": 7499,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_kore_ta",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 1771,
+     "ev": "final:How did you miss?"
+    },
+    {
+     "at": 4773,
+     "ev": "final:"
+    },
+    {
+     "at": 8055,
+     "ev": "final:"
+    }
+   ]
+  },
+  {
+   "clip": "wake_g_puck",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": []
+  },
+  {
+   "clip": "wake_david",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": []
+  },
+  {
+   "clip": "wake_zira",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": []
+  },
+  {
+   "clip": "wake_ravi",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": []
+  },
+  {
+   "clip": "wake_heera",
+   "kind": "wake-closed",
+   "woke": false,
+   "firstSound": null,
+   "firstSoundKind": null,
+   "firstSoundLat": null,
+   "firstSpeech": null,
+   "handed": null,
+   "ackMark": null,
+   "finding": null,
+   "answerEnd": null,
+   "screen": null,
+   "vadEnd": null,
+   "transcribed": null,
+   "trace": null,
+   "voices": [],
+   "heard": "",
+   "provider": null,
+   "tokens": null,
+   "path": null,
+   "sr": [
+    {
+     "at": 3938,
+     "ev": "speechend"
+    },
+    {
+     "at": 3938,
+     "ev": "error:network"
+    },
+    {
+     "at": 3938,
+     "ev": "end"
+    },
+    {
+     "at": 4089,
+     "ev": "start"
+    },
+    {
+     "at": 4106,
+     "ev": "audiostart"
+    },
+    {
+     "at": 6569,
+     "ev": "speechstart"
+    },
+    {
+     "at": 6569,
+     "ev": "final:"
+    }
+   ]
+  }
+ ]
+}

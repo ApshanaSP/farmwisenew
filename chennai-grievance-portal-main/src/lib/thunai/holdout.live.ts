@@ -3,6 +3,9 @@
  *   HOLDOUT=rules    all 150 through rules and router, no model
  *   HOLDOUT=planner  the frozen sample through the planner (HOLDOUT_SET=baseline20|final40); checks the ledger first and
  *                    refuses to start a run that cannot finish; a 429 is a capacity failure, not a wrong answer
+ *   HOLDOUT=planner3 (HOLDOUT_DIR=holdout3) the v4 set through the browser's routing and planRound, three-turn scripts played first
+ *                    (holdout3.ts); HOLDOUT_SET=live30 (default) or all; checks the ledger first; prints ids, gold and got only
+ *   HOLDOUT=rules3   the same routing with no model at all: rules, frames and the fast lane; what is left to the planner is "defer"
  * Results go to eval/holdout/results/<HOLDOUT_TAG>-<mode>.json. Run with:
  *   set HOLDOUT=rules&& npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts
  */
@@ -12,11 +15,13 @@ import path from "path";
 import { expect, it } from "vitest";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
-import { callLlm } from "./llm";
+import { callLlm, plannerLead } from "./llm";
+import { claudeLeadsPlanner, runRoom, waitForRoom } from "./holdoutroom";
+import { understandV8 } from "./v8/flag8";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
-import { ledger } from "./ledger";
+import { Ledger, MemoryStore, ledger } from "./ledger";
 import { ZONE_TA_NAME } from "./lexicon";
 import { isPlainMove } from "./plan";
 import { offTopic, quickScreen } from "./quick";
@@ -29,15 +34,26 @@ import { clearCaches, planRound, RoundBody } from "./round";
 import { districtNounIn } from "./quick";
 import { resolveFrame } from "./frame";
 import type { StageContext } from "./stage";
+import os from "os";
+import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
+import { runItem3, summary3, type Item3, type Row3 } from "./holdout3";
+import { groqOnly, liveSummary, recordTurn, type TurnRecord } from "./liverecord";
+import { modelCounts, pairRows, repeatStats, resultRows, resultTotal, seededIds } from "./evalpair";
+import { ENGAGED_MS } from "./addressed";
+import { scoreLine } from "./evalstats";
+
+// v5: no live Claude call in this build (owner): every run in this file pins Groq before any model is asked
+groqOnly();
 
 const world = { ...WORLD, ...referenceWorld(), zones: WORLD.zones.map((z) => ({ ...z, ta: ZONE_TA_NAME[z.n] ?? null })), depts: WORLD.depts };
 // HOLDOUT_DIR=holdout2 is the set frozen on 4 Nov 2026 after eval/holdout had been read; a run refuses it if a hash has changed
 const SET_DIR = process.env.HOLDOUT_DIR ?? "holdout";
-const DIR = path.join(process.cwd(), "eval", SET_DIR);
+// (resolve: an absolute HOLDOUT_DIR is a set elsewhere, as the harness's own check on a synthetic set in a temporary folder uses)
+const DIR = path.resolve(process.cwd(), "eval", SET_DIR);
 if (SET_DIR !== "holdout") for (const line of fs.readFileSync(path.join(DIR, "HASHES.txt"), "utf8").trim().split(/\r?\n/)) {
   const [hash, rel] = line.split(" *");
   // git may change the line endings on checkout: the hash is of the text
-  const now = crypto.createHash("sha256").update(fs.readFileSync(path.join(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n")).digest("hex");
+  const now = crypto.createHash("sha256").update(fs.readFileSync(path.resolve(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n")).digest("hex");
   if (now !== hash) throw new Error(`${rel} no longer matches its frozen hash`);
 }
 const items = () => fs.readFileSync(path.join(DIR, "understanding.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as HoldoutItem);
@@ -75,6 +91,8 @@ function resultIntent(r: AgentResult): string {
 const SAME: Record<string, string[]> = { insight: ["insight", "answer", "why", "ranking", "trend"], complete: ["complete", "answer"], general: ["general", "chat", "refuse"], case: ["case", "stage_op"], stage_op: ["stage_op", "case"] };
 const matches = (gold: string, got: string) => got === gold || (SAME[gold] ?? []).includes(got);
 
+/** Claude leads the planner's ladder (llm.ts): a working key under the spend ceiling, no JARVIS_PLANNER_LEAD=groq, Haiku (or Sonnet under v8) */
+const haikuLeads = () => claudeLeadsPlanner({ configured: claudeConfigured(), lead: plannerLead(), model: claudeModel(), v8: understandV8() });
 const mode = process.env.HOLDOUT ?? "rules";
 
 it.runIf(mode === "rules")("rules on all 150", () => {
@@ -149,20 +167,70 @@ it.runIf(mode === "rules2")("rules and router on all 150, the shipped pipeline: 
   expect(rows.length).toBe(items().length);
 });
 
-it.runIf(mode === "ambient")("the address gate on 40 side conversations and 40 unnamed commands", () => {
+/**
+ * The address gate on a set's side lines and unnamed commands, with no model. `lastAgo`: Jarvis's last turn that many ms ago (null:
+ * never, the unengaged case). `commandTier`: the v4 unengaged command tier on (true) or off (v5 default, C1); undefined leaves the
+ * gate's own default. Counts and the tier that fired only: never a sentence (11.4).
+ */
+function gateRun(lastAgo: number | null, commandTier?: boolean, engagedMs?: number) {
   const rows = fs.readFileSync(path.join(DIR, "ambient.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as { id: string; text: string; lang: string; kind: "side" | "command" });
+  const now = Date.now();
   const out = rows.map((x) => {
     const q = quickScreen(x.text, world);
     const u = q ? null : understand(x.text, START, world, { speechConf: 0.95 });
-    const g = addressed({ text: x.text, lastTurnAt: null, now: Date.now(), rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(x.text, world) });
+    // engaged by the window: a shorter or longer ENGAGED_MS is modelled by moving the last turn out of (or into) the gate's own window
+    const last = lastAgo == null ? null : engagedMs != null && lastAgo > engagedMs ? now - ENGAGED_MS - 1 : now - lastAgo;
+    const input = { text: x.text, lastTurnAt: last, now, rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(x.text, world), ...(commandTier === undefined ? {} : { commandTier }) };
+    const g = addressed(input as Parameters<typeof addressed>[0]);
     return { id: x.id, kind: x.kind, lang: x.lang, act: g.act, tier: g.tier, why: g.why };
   });
   const side = out.filter((x) => x.kind === "side"), cmd = out.filter((x) => x.kind === "command");
   const summary = { sideFalseActs: side.filter((x) => x.act).length, sideN: side.length, sideLevelBC: side.filter((x) => x.act && x.tier !== 3).length, commandsAccepted: cmd.filter((x) => x.act).length, commandsN: cmd.length,
+    sideInterval: scoreLine(side.filter((x) => x.act).length, side.length), commandsRefused: cmd.filter((x) => !x.act).length,
+    byTier: Object.fromEntries([...new Set(side.filter((x) => x.act).map((x) => x.why))].map((w) => [w, side.filter((x) => x.act && x.why === w).length])),
     byLang: Object.fromEntries(["en", "ta", "tanglish"].map((l) => [l, { sideFalseActs: side.filter((x) => x.lang === l && x.act).length, side: side.filter((x) => x.lang === l).length, accepted: cmd.filter((x) => x.lang === l && x.act).length, commands: cmd.filter((x) => x.lang === l).length }])) };
-  write("ambient", { at: new Date().toISOString(), summary, rows: out });
-  console.log(JSON.stringify(summary));
-  expect(summary.sideLevelBC).toBe(0);
+  return { summary, rows: out };
+}
+
+it.runIf(mode === "ambient")("the address gate on the side conversations and the unnamed commands", () => {
+  // C1 is reported beside the v4 behaviour: the unengaged command tier off (shipped) and on (JARVIS_GATE_COMMAND_TIER=1)
+  const shipped = gateRun(null), v4tier = gateRun(null, true);
+  write("ambient", { at: new Date().toISOString(), summary: shipped.summary, withCommandTier: v4tier.summary, rows: shipped.rows });
+  console.log(JSON.stringify({ ...shipped.summary, withCommandTier: { sideFalseActs: v4tier.summary.sideFalseActs, sideLevelBC: v4tier.summary.sideLevelBC, commandsAccepted: v4tier.summary.commandsAccepted, commandsN: v4tier.summary.commandsN } }));
+  expect(shipped.summary.sideLevelBC).toBe(0);
+});
+
+// C2: the same side lines with Jarvis's last turn 5 s ago (inside the follow-up window), and at windows of 8 s and 20 s
+it.runIf(mode === "ambient-engaged")("the address gate on the side lines inside the engaged window", () => {
+  const at5 = gateRun(5_000);
+  // a window of 8 s: a last turn 10 s ago is outside it; 20 s (the shipped ENGAGED_MS): 10 s ago is inside
+  const win8 = gateRun(10_000, undefined, 8_000), win20 = gateRun(10_000, undefined, 20_000);
+  const pick = (s: ReturnType<typeof gateRun>["summary"]) => ({ sideFalseActs: s.sideFalseActs, sideN: s.sideN, sideInterval: s.sideInterval, sideLevelBC: s.sideLevelBC, commandsAccepted: s.commandsAccepted, commandsN: s.commandsN });
+  const summary = { lastTurn5sAgo: at5.summary, lastTurn10sAgo: { windowMs8000: pick(win8.summary), windowMs20000: pick(win20.summary) }, shippedEngagedMs: ENGAGED_MS };
+  write("ambient-engaged", { at: new Date().toISOString(), summary, rows: at5.rows });
+  console.log(JSON.stringify({ lastTurn5sAgo: pick(at5.summary), lastTurn10sAgo: summary.lastTurn10sAgo }));
+});
+
+// the repeats (11.3): pass^1, pass^3 and the majority of three result files of the same sentences, by script, counts only
+//   HOLDOUT=passk HOLDOUT_DIR=holdout2 PASSK_FILES=v5final-r1-planner-rep20.json,v5final-r2-planner-rep20.json,v5final-r3-planner-rep20.json
+it.runIf(mode === "passk")("three runs of the same sentences: pass^1, pass^3, majority", () => {
+  const files = (process.env.PASSK_FILES ?? "").split(",").map((f) => f.trim()).filter(Boolean);
+  expect(files).toHaveLength(3);
+  const s = repeatStats(files.map((f) => resultRows(path.join(DIR, "results", f))));
+  console.log(JSON.stringify({ ...s, pass1: Math.round(s.pass1 * 1000) / 10, pass3: Math.round(s.pass3 * 1000) / 10, note: "percent; a capacity failure counts as wrong" }));
+});
+
+// Step 0 (6.3) and every paired comparison on a frozen set: b, c and p only, never ids, gold, got or text
+it.runIf(mode === "pair")("two result files of the same sentences, paired", () => {
+  const fx = path.join(DIR, "results", process.env.PAIR_X ?? ""), fy = path.join(DIR, "results", process.env.PAIR_Y ?? "");
+  const expectTotals = (process.env.PAIR_EXPECT ?? "").split(",").filter(Boolean).map(Number);
+  if (expectTotals.length === 2) {
+    const tx = resultTotal(fx), ty = resultTotal(fy);
+    if (tx !== expectTotals[0] || ty !== expectTotals[1]) { console.log(JSON.stringify({ skipped: true, why: "a file's total is not the one expected", totals: [tx, ty], expected: expectTotals })); return; }
+  }
+  const x = resultRows(fx), y = resultRows(fy);
+  const out = pairRows(x, y);
+  console.log(JSON.stringify({ ...out, modelsX: modelCounts(x), modelsY: modelCounts(y) }));
 });
 
 // a trial, not the shipped gate: would a small model, asked only about what the rules would already act on, cut the false acts? It can
@@ -229,18 +297,25 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const lists = JSON.parse(fs.readFileSync(path.join(DIR, sample), "utf8")) as Record<string, string[]>;
   const all = items();
   // for tuning, on the old set only: the Tamil sentences outside the 40, which no planner change was made against
-  const ids = which === "tamilrest" ? all.filter((x) => x.lang === "ta" && !lists.final40.includes(x.id)).map((x) => x.id) : lists[which];
+  // rep20 (11.3's fallback for the repeats): 20 of the live-60 by a fixed seeded shuffle done here, ids never printed
+  const ids = which === "tamilrest" ? all.filter((x) => x.lang === "ta" && !lists.final40.includes(x.id)).map((x) => x.id)
+    : which === "rep20" ? seededIds(lists.live60, 20, Number(process.env.REP_SEED ?? 20261116)) : lists[which];
   const set = ids.map((id) => all.find((x) => x.id === id)!);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
-  const models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
-  const left = models.reduce((a, m) => a + Math.max(0, ledger().room("groq", m).left.tpd), 0);
-  if (left < set.length * 3000) { write(`planner-${which}`, { refused: true, left }); console.log(`not started: ${left} tokens left`); return; }
-  const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null })[] = [];
+  // v6: Claude's day when Haiku leads the planner (the owner's "do with claude", 17 Nov), else the Groq planners' (holdoutroom.ts)
+  const { who, left } = runRoom(ledger(), { leads: haikuLeads(), model: claudeModel() });
+  if (left < set.length * 3000) { write(`planner-${which}`, { refused: true, left, who }); console.log(`not started: ${left} tokens left (${who})`); return; }
+  console.log(`room: ${who}, ${left} tokens`);
+  const rows: (Scored & { model: string | null; ms: number; tokens: number; calls: number; lane: string; note: string | null; rec: TurnRecord })[] = [];
   clearCaches();
   for (const x of set) {
+    // v6: one model turn needs about 8-12K tokens of the lead's minute window; wait for it rather than score a turn the ledger stopped
+    const waited = await waitForRoom(ledger(), { who, model: claudeModel() }, 12_000);
+    if (waited) console.log(`waited ${waited} ms for the minute window`);
     const gold = goldIntent(x);
     const turnId = `h-${x.id}-${Date.now()}`;
     const t0 = Date.now();
+    const recorder = recordTurn();
     let r = null, tokens = 0, calls = 0, lane = "", failed = false;
     try {
       for (let round = 0; round < 3; round++) {
@@ -251,9 +326,11 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
         if (o.done) { r = o.result; break; }
       }
     } catch (e) { failed = true; console.warn(x.id, (e as Error).message.slice(0, 160)); }
-    const capacity = failed || !r || (r.kind === "none" && r.note === "no-model");
+    const rec = recorder.stop(r?.model ?? null);
+    // a turn that met a 429 is a capacity failure, never a plain right or wrong (6.2)
+    const capacity = failed || !r || (r.kind === "none" && r.note === "no-model") || rec.rate_limited;
     const got = r ? (r.note === "general-fallback" ? "general-fallback" : resultIntent(r)) : "error";
-    rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null });
+    rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null, rec });
     if (SET_DIR === "holdout") console.log(x.id, gold, "->", got, lane, capacity ? "(capacity)" : "", tokens, "tokens", calls, "calls");
     // kept as it goes: a run cut off by a lost connection still says how far it got, and is marked as not finished
     write(`planner-${which}`, { at: new Date().toISOString(), partial: true, done: rows.length, of: set.length, rows });
@@ -263,7 +340,69 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
   const used = rows.filter((x) => x.calls > 0);
   const avg = (k: "tokens" | "calls") => (used.length ? Math.round((used.reduce((a, x) => a + x[k], 0) / used.length) * 10) / 10 : 0);
   const tokensAll = rows.reduce((a, x) => a + x.tokens, 0);
-  write(`planner-${which}`, { at: new Date().toISOString(), summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
-  console.log(JSON.stringify({ summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
+  const v5 = liveSummary(rows.map((r) => ({ ok: r.ok, capacity: r.capacity, lang: r.lang, rec: r.rec })));
+  write(`planner-${which}`, { at: new Date().toISOString(), summary, v5, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
+  console.log(JSON.stringify({ summary, v5, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
 });
 void FINAL;
+
+// ------------------------------------------------------------------ the third set (v4) --
+
+/** the v4 set's rows: live30 (default) or all of them; never printed */
+function set3(): Item3[] {
+  const which = process.env.HOLDOUT_SET ?? "live30";
+  const all = items() as Item3[];
+  if (which === "all") return all;
+  const ids = (JSON.parse(fs.readFileSync(path.join(DIR, "live30.json"), "utf8")) as Record<string, string[]>)[which] ?? [];
+  return ids.map((id) => all.find((x) => x.id === id)).filter((x): x is Item3 => !!x);
+}
+const write3 = (name: string, rows: Row3[], extra: Record<string, unknown> = {}) =>
+  write(`${name}-${process.env.HOLDOUT_SET ?? "live30"}`, { at: new Date().toISOString(), ...extra, ...summary3(rows), rows });
+
+it.runIf(mode === "planner3")("the v4 set through the browser's routing and the shipped planner", async () => {
+  const set = set3();
+  // a run that cannot finish is not started: up to three planner turns an item (a script of two, then the sentence), about 3K tokens each
+  const need = set.length * 3 * 3000;
+  const { who, left } = runRoom(ledger(), { leads: haikuLeads(), model: claudeModel() });
+  if (left < need) { write3("planner3", [], { refused: true, left, need, who }); console.log(`not started: ${left} left, ${need} needed (${who})`); return; }
+  console.log(`room: ${who}, ${left} tokens`);
+  const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
+  const rows: (Row3 & { rec?: TurnRecord })[] = [];
+  clearCaches();
+  for (const x of set) {
+    // v6: up to three wide planner turns an item, about 8-10K tokens each, back to back: wait until the lead's minute window has room
+    // for all three (the first Claude-led live30 lost 21 of 30 turns to a full window: holdoutroom.ts)
+    const waited = await waitForRoom(ledger(), { who, model: claudeModel() }, 30_000);
+    if (waited) console.log(`waited ${waited} ms for the minute window`);
+    const recorder = recordTurn();
+    const row0 = await runItem3(x, { world, hands: () => fakeHands(), user: "holdout" });
+    const rec = recorder.stop();
+    // a turn that met a 429 is a capacity failure, never a plain right or wrong (6.2)
+    const row = rec.rate_limited ? { ...row0, capacity: true, ok: false, rec } : { ...row0, rec };
+    rows.push(row);
+    // ids, gold and got only: never a sentence
+    console.log(row.id, row.gold, "->", row.got, row.lane, row.capacity ? "(capacity)" : "");
+    write3("planner3", rows, { partial: true, done: rows.length, of: set.length });
+    if (row.calls > 0) await sleep(gap);
+  }
+  const s = summary3(rows);
+  const v5 = liveSummary(rows.map((r) => ({ ok: r.ok, capacity: r.capacity, lang: r.lang, rec: r.rec })));
+  write3("planner3", rows, { v5, tokensAll: rows.reduce((a, r) => a + r.tokens, 0), modelTurns: rows.filter((r) => r.calls > 0).length });
+  console.log(JSON.stringify({ all: s.byLang.all, v5, byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n}`])) }));
+});
+
+it.runIf(mode === "rules3")("the v4 set through the browser's routing, rules, frames and the fast lane, with no model", async () => {
+  // nothing of this run reaches the shared telemetry or the ledger: no model is asked
+  if (!process.env.THUNAI_DIR) process.env.THUNAI_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "jv-rules3-"));
+  const noModel = { generate: async () => { throw new Error("no model in rules3"); }, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false, claudeOk: () => false } as never;
+  const set = set3();
+  const rows: Row3[] = [];
+  clearCaches();
+  for (const x of set) rows.push(await runItem3(x, { world, hands: () => fakeHands(), user: "holdout", deps: { llm: noModel }, rulesOnly: true }));
+  const s = summary3(rows);
+  write3("rules3", rows);
+  // totals only
+  console.log(JSON.stringify({ all: s.byLang.all, en: s.byLang.en, ta: s.byLang.ta, tanglish: s.byLang.tanglish,
+    byIntent: Object.fromEntries(Object.entries(s.byIntent).map(([k, t]) => [k, `${t.right}/${t.n} (defer ${t.deferred})`])), byLane: s.byLane }));
+  expect(rows.length).toBe(set.length);
+});

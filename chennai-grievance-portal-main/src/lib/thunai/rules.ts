@@ -22,6 +22,8 @@ export function ruleIntent(text: string, world: World, state: ScreenState, ctx: 
   const frame = resolveFrame({ text, stage, turns: [], lastPlace: null, lastText: ctx.after ?? null, world });
   if (frame.kind === "screen") return { intent: frame.recipe, lane: "frame", bundle: null };
   if (frame.kind === "stageOp") return { intent: "stage_op", lane: "frame", bundle: null };
+  // "how do you know?" is answered by code from the screen's provenance; several items named is a question back about the Stage
+  if (frame.kind === "reply") return { intent: frame.why === "howknow" ? "howknow" : "stage_op", lane: "frame", bundle: null };
   if (route.lane === "general") return { intent: "general", lane: "general", bundle: null };
   const q = quickScreen(text, world);
   if (q) return { intent: q.recipe, lane: "quick", bundle: null };

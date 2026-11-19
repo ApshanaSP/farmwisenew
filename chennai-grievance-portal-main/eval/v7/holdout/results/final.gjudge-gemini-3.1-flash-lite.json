@@ -1,0 +1,291 @@
+{
+ "model": "gemini-3.1-flash-lite",
+ "clean": 22,
+ "flagged": 24,
+ "none": 2,
+ "rows": [
+  {
+   "id": "h-inc-1",
+   "by": "model",
+   "unsupported": [
+    "A word with PWD Water Resources for an update on the canal overflow would be the next step."
+   ]
+  },
+  {
+   "id": "h-inc-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-inc-3",
+   "by": "model",
+   "unsupported": [
+    "a word with PWD Water Resources on its progress would help"
+   ]
+  },
+  {
+   "id": "h-inc-4",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-inc-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-inc-6",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-inc-7",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-inc-8",
+   "by": "model",
+   "unsupported": [
+    "Water pools up to about the size of a bus stop with every rain"
+   ]
+  },
+  {
+   "id": "h-news-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-news-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-news-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-news-4",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-news-5",
+   "by": "model",
+   "unsupported": [
+    "செய்தியின் முழு விவரம் ஸ்கிரீனில் உள்ள அந்த இணைப்பில்தான் இருக்கிறது."
+   ]
+  },
+  {
+   "id": "h-news-6",
+   "by": "fallback",
+   "unsupported": [
+    "12 headlines"
+   ]
+  },
+  {
+   "id": "h-news-7",
+   "by": "model",
+   "unsupported": [
+    "மெட்ரோ போக்குவரத்து"
+   ]
+  },
+  {
+   "id": "h-news-8",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-cmp-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-cmp-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-cmp-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-cmp-4",
+   "by": "model",
+   "unsupported": [
+    "nothing there needs you yet"
+   ]
+  },
+  {
+   "id": "h-cmp-5",
+   "by": "model",
+   "unsupported": [
+    "குப்பை மற்றும் திடக்கழிவு இரு இடங்களிலும் முக்கியப் பிரச்சினையாக இருக்கிறது, ஆனால் தேனாம்பேட்டையில் அது மிக அதிகம்."
+   ]
+  },
+  {
+   "id": "h-cmp-6",
+   "by": "model",
+   "unsupported": [
+    "இதற்கு நேரடியாக உங்கள் தலையீடு தேவையில்லை, ஆனால் பொதுப்பணித்துறை கட்டடங்கள் துறையிடம் நிலுவை பற்றிய புதுப்பிப்பு கேட்கலாம்."
+   ]
+  },
+  {
+   "id": "h-cmp-7",
+   "by": "model",
+   "unsupported": [
+    "ராயபுரத்தில் 14 கடுமையான சம்பவங்களும் 112 திறந்த சம்பவங்களும் இருக்கின்றன, இது மற்ற மண்டலங்களைவிட அதிகம்."
+   ]
+  },
+  {
+   "id": "h-cmp-8",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-why-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-why-2",
+   "by": "model",
+   "unsupported": [
+    "Teynampet has more high-severity complaints than Kodambakkam this week, 21 against 10."
+   ]
+  },
+  {
+   "id": "h-why-3",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-why-4",
+   "by": "model",
+   "unsupported": [
+    "Three of those 4 came on rainy days"
+   ]
+  },
+  {
+   "id": "h-why-5",
+   "by": "model",
+   "unsupported": [
+    "பதிவு எதனால் மாறியது என்று காட்டவில்லை; எந்தப் பிரிவு அதிகம் மாறியது என்பதை மட்டுமே காட்டுகிறது."
+   ]
+  },
+  {
+   "id": "h-why-6",
+   "by": "model",
+   "unsupported": [
+    "மாற்றத்தில் அதிகம் குறைந்தது வெள்ளம் மற்றும் நீர்த்தேக்கம், 88 குறைவு; அடுத்தது வானிலை எச்சரிக்கைகள், 27 குறைவு."
+   ]
+  },
+  {
+   "id": "h-why-7",
+   "by": "model",
+   "unsupported": [
+    "அடையாறில் இந்த வாரம் 101 சம்பவங்கள் பதிவாகியுள்ளன"
+   ]
+  },
+  {
+   "id": "h-why-8",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-fol-1",
+   "by": "model",
+   "unsupported": [
+    "A word with the department on that street light would be the next step."
+   ]
+  },
+  {
+   "id": "h-fol-2",
+   "by": "model",
+   "unsupported": [
+    "The record shows what moved, not why, so no single cause is confirmed."
+   ]
+  },
+  {
+   "id": "h-fol-3",
+   "by": "model",
+   "unsupported": [
+    "Violent crime in Adyar rose from 2 to 4 reports over the last 7 days"
+   ]
+  },
+  {
+   "id": "h-fol-4",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-fol-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-fol-6",
+   "by": "model",
+   "unsupported": [
+    "வன்முறைக் குற்றம் மட்டும் 0-இலிருந்து 2 ஆக உயர்ந்திருக்கிறது, இதில் கொட்டூர்புரம் கொலையும் லிட்டில் மவுண்ட் கொலையும் அடங்கும்."
+   ]
+  },
+  {
+   "id": "h-out-1",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-out-2",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-out-3",
+   "by": "model",
+   "unsupported": [
+    "The console has no record of the Governor visiting the flood camps this week.",
+    "Nothing in the dashboard or the latest news mentions the Governor's visit to the flood camps."
+   ]
+  },
+  {
+   "id": "h-out-4",
+   "by": null,
+   "unsupported": [
+    "I have no data on Mumbai.",
+    "This console holds Chennai district's own records",
+    "I can brief you on the corporation, the police, Metrowater, PWD or any zone."
+   ]
+  },
+  {
+   "id": "h-out-5",
+   "by": "model",
+   "unsupported": []
+  },
+  {
+   "id": "h-out-6",
+   "by": "model",
+   "unsupported": [
+    "இந்த வாரத்தின் செய்திகளில் சென்னை மழை முன்னறிவிப்பும், ஒருங்கிணைந்த மாஸ்டர் திட்டத்துக்கான நிதியும் மட்டுமே உள்ளன."
+   ]
+  },
+  {
+   "id": "h-out-7",
+   "by": "model",
+   "unsupported": [
+    "அதைப் பற்றி டாஷ்போர்டிலும் சமீபத்திய செய்திகளிலும் எதுவும் இல்லை."
+   ]
+  },
+  {
+   "id": "h-out-8",
+   "by": null,
+   "unsupported": [
+    "I have no data on Bengaluru.",
+    "This console holds Chennai district's own records",
+    "I can brief you on the corporation, the police, Metrowater, PWD or any zone."
+   ]
+  }
+ ]
+}

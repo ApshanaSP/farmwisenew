@@ -69,6 +69,9 @@ test.describe("holding", () => {
     ctx.hear.push({ text: "Jarvis, go to sleep." });
     await say(page, "cmd_trends");
     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 15_000 });
-    await expect(page.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    // the teammate's redo (final) has no top-bar switch: Jarvis's own button above the chat button (JarvisFab.tsx, aria-pressed)
+    // says whether it is on, and off means no bar at all
+    await expect(page.locator("button.jvf")).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator(".hud")).toHaveCount(0);
   });
 });

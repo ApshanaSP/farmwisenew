@@ -1,0 +1,11 @@
+{
+  "request_id": "synthetic_timestamps_1",
+  "transcript": "Show the severe cases in Perungudi.",
+  "language_code": "en-IN",
+  "language_probability": 0.96,
+  "timestamps": {
+    "words": ["Show the severe cases", "in Perungudi."],
+    "start_time_seconds": [0.4, 1.6],
+    "end_time_seconds": [1.5, 2.3]
+  }
+}
