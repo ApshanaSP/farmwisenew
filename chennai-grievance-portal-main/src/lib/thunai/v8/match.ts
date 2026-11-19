@@ -148,7 +148,9 @@ export const enStem = (w: string): string => {
   const x = w.toLowerCase();
   // (v10, the second review of v9: and -ised/-ized, -ment, -age: "hospitalised" is "hospital", "encroachments" "encroach", "drainage" "drain";
   // v10 review 2, round 2: those three only for the civic words of DERIVED)
-  const m = DERIVED.get(x) ?? /^(.{4,}?)(?:ations|ation|ated|ating|ates|ate|ions|ion|ings|ing|ers|er|ed|es|s)$/.exec(x)?.[1];
+  // (v10, the finals: a noun in -ure is its verb's, "seizure" "seizes", "closure" "closed", "failure" "failed": news9 n9-newsTopic-1 live, the
+  // store of 20 Nov; a stem of four letters or more, so "nature" and "future" stay whole)
+  const m = DERIVED.get(x) ?? /^(.{4,}?)(?:ations|ation|ated|ating|ates|ate|ions|ion|ings|ing|ures|ure|ers|er|ed|es|s)$/.exec(x)?.[1];
   return m ? m.replace(/([^aeiou])\1$/, "$1") : x;
 };
 

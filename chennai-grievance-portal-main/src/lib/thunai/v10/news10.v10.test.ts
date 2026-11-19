@@ -9,6 +9,7 @@ import { newsLane8 } from "../v8/browser";
 import { newsAsk } from "../newsask";
 import { WORLD } from "../fixture";
 import { referenceWorld } from "../world";
+import { enStem } from "../v8/match";
 
 const stories = [
   { id: "a", title: "Bid to smuggle drugs into Puzhal jail, two held" },
@@ -366,5 +367,24 @@ describe("v10 dev2: dA-news-6, a question whether a public project is coming ('i
     expect(pick("Adyar-la pudhu drain project varudhaa?")).toBeNull();
     expect(newsRequest("mazhai varuma?")).toBeNull();
     expect(newsRequest("will it rain tomorrow?")).toBeNull();
+  });
+});
+
+describe("v10: a noun in -ure shares its verb's stem (news9 n9-newsTopic-1 live on the store of 20 Nov: 'seizure' was not 'seizes')", () => {
+  it("'open that D R I heroin seizure' reads the DRI heroin story, not a heroin story without DRI", () => {
+    const items = [{ id: "dri", title: "DRI seizes Rs 500-cr heroin from ice-cream van in Chennai" },
+      { id: "flay", title: "DMK, AIADMK flay TVK govt for heroin seizure in Chennai" },
+      { id: "kg", title: "71 kg Heroin Bound For Sri Lanka Seized In Chennai, 2 Arrested" },
+      ...Array.from({ length: 40 }, (_, i) => ({ id: `f${i}`, title: `Civic notice number ${i} about ${["parks", "schools", "markets", "libraries"][i % 4]}` }))];
+    const r = newsRequest("Jarvis, open that D R I heroin seizure.")!;
+    expect(pickStory(rankStories(r, items)).pick?.id).toBe("dri");
+  });
+  it("the stems: seizure/seizes, closure/closed, failure/failed, pressure/pressed; 'nature' and 'future' stay whole", () => {
+    expect(enStem("seizure")).toBe(enStem("seizes"));
+    expect(enStem("closure")).toBe(enStem("closed"));
+    expect(enStem("failure")).toBe(enStem("failed"));
+    expect(enStem("pressure")).toBe(enStem("pressed"));
+    expect(enStem("nature")).toBe("nature");
+    expect(enStem("future")).toBe("future");
   });
 });
