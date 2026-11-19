@@ -13,6 +13,7 @@ import { referenceWorld } from "../world";
 import { browserLaneV8, userLang8 } from "../v8/browser";
 import { browserLaneV10, cutOff, joinCut, v10Front, type BrowserCtx10, type BrowserLane10 } from "./browser10";
 import { buildLexicon } from "./lexicon10";
+import { earOrdinals } from "./screen10";
 
 const world = { ...WORLD, ...referenceWorld() };
 const STORIES = [
@@ -323,5 +324,50 @@ describe("v10 review 2, round 2: every line the gate holds as cut off takes its 
     ["Tell me which", "zone has the most", "Tell me which zone has the most"], ["What’s the", "level at Poondi", "What’s the level at Poondi"]])("'%s' ... '%s'", (held, rest, joined) => {
     expect(cutOff(held)).toBe(true);
     expect(joinCut({ text: held, at: 0 }, rest, 1000)).toBe(joined);
+  });
+});
+
+describe("v10 review 2, round 3: a question asked inside a request is whole however it is framed (finding 19)", () => {
+  // v10 review 2, round 3: round 2 took for the frame only a listed verb right before the question word, so an adverb in between ("Tell me exactly
+  // where") or a frame not on the list ("Any idea who", "Do you remember who", "Can you find where") was cut off again, held and never answered;
+  // the rule is round 1's again, less the two shapes round 2 named: a cleft (only a filler or the name before the question word) and a relative
+  // clause ("the complaints where")
+  it.each(["Tell me exactly where the Adyar zonal office is", "Tell me again what the IMD warning is", "Can you tell me quickly how many complaints there are",
+    "Any idea who the AE for Velachery is?", "Do you remember who the AE for Adyar is?", "Can you find where the relief centres are?",
+    "Can you look up who the AE for Adyar is?"])("'%s' is whole", (said) => {
+    expect(cutOff(said)).toBe(false);
+    expect(lane(said).lane).not.toBe("wait");
+  });
+});
+
+describe("v10 review 2, round 3: a greeting or a thanks said alone is answered, never waited on as a noise word", () => {
+  // v10 review 2, round 3: the wake path's same-breath rest reaches the lanes as spoken (round 2), and the one-word wait took "vanakkam" for a noise
+  // word: "Hey Jarvis, vanakkam" got an earcon and no reply
+  const c = (source: "typed" | "captions" | "whisper", said: string): BrowserCtx10 => ({ stage: null, news: { items: [] }, state: state(), world, listenLang: "en",
+    heardLang: /[஀-௿]/u.test(said) ? "ta" : "en", v7: true, lex, source });
+  it.each(["vanakkam", "Vanakkam.", "வணக்கம்", "nandri", "Namaskaram", "நன்றி"])("'%s' spoken goes where it goes typed", (said) => {
+    const typed = browserLaneV10(said, c("typed", said)).lane;
+    expect(`${browserLaneV10(said, c("captions", said)).lane} ${browserLaneV10(said, c("whisper", said)).lane}`).toBe(`${typed} ${typed}`);
+  });
+  it("a noise word still waits ('வாயமுர்ரா.')", () => {
+    expect(browserLaneV10("வாயமுர்ரா.", c("captions", "வாயமுர்ரா.")).lane).toBe("wait");
+  });
+});
+
+describe("v10 review 2, round 3: 'the Fort' after a view verb is the Fort; a position said with no article is a position (finding 25)", () => {
+  // v10 review 2, round 3: round 2's verbs on an item took "show me" and "pull up", so "Show me the Fort." over a list went to the server as "Show me
+  // the Fourth."; a by-ear form written as a name (a capital) is what was said. And the round-2 rule needed "the" before the word, so "Open fast."
+  // (the article dropped) was a news search for "fast"
+  const items = STORIES.map((s) => ({ id: s.id, title: s.title, source: "DT Next" }));
+  const c = (): BrowserCtx10 => ({ stage: newsList as never, news: { items }, state: state(), world, listenLang: "en", heardLang: "en", v7: true, lex });
+  it.each(["Show me the Fort.", "Pull up the Fort."])("'%s' stays as said", (said) => {
+    expect(earOrdinals(said, { list: true })).toBe(said);
+    expect(v10Front(said, c()).said).toBe(said);
+  });
+  it.each([["Open fast.", "Open first."], ["Read out fast.", "Read out first."]])("'%s' over a news list is '%s'", (said, plain) => {
+    expect(`${v10Front(said, c()).said} => ${JSON.stringify(browserLaneV10(said, c()))}`).toBe(`${plain} => ${JSON.stringify(browserLaneV10(plain, c()))}`);
+  });
+  it("'Open fast.' opens the first item", () => {
+    expect(JSON.stringify(browserLaneV10("Open fast.", c()))).toContain(`"n":1`);
   });
 });

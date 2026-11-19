@@ -65,6 +65,8 @@ const BEFORE = /^(?:the|that|this|open|read|play|tell|about|explain)$/;
  * ("fast", "fort", "fist") ends a sentence as a position only after one of these; after a preposition it is what was said ("Any news from the
  * Fort?", "What about the fast?") */
 const ON_ITEM = /(?:^| )(?:open|read|play|pick|select|choose|click|show|show me|give me|read me|tell me|read out|pull up|bring up|open up)$/;
+/** of those, the ones that open or read the item, said with the article dropped ("Open fast.", "Read out fast.": v10 review 2, round 3) */
+const OPEN_ITEM = /(?:^| )(?:open|read|play|pick|select|choose|click|read me|read out|open up)$/;
 
 /**
  * A position said by ear, read as the position, with a list on screen. "Tell me about the fast news" -> "Tell me about the first news".
@@ -89,8 +91,12 @@ export function earOrdinals(text: string, o: { list: boolean }): string {
     // is what was said ("Any news from the Fort?", "Any update on the fast?": v10 review 2, finding 25); "secand", "thurd" may end one
     // Round 2: after a verb that opens or reads one item ("Open the fast.", "Read out the fist.", "Can you open the forth?") it is the position all
     // the same: a news search for "fast" was v9's defect (v10 review 2, round 2)
-    const end = next === "" && (!isEnglishWord(w) || (/^(?:the|that|this)$/.test(prev) && ON_ITEM.test(words.slice(0, i).filter(Boolean).slice(0, -1).join(" "))));
-    if (!(BEFORE.test(prev) && (AFTER.test(next) || end)) && !(prev === "the" && AFTER.test(next))) continue;
+    // Round 3: so is one said with the article dropped after a verb that opens or reads ("Open fast.", "Read out fast."); one written as a name, with a
+    // capital, is what was said ("Show me the Fort.", "Pull up the Fort.": the server was sent "the Fourth")
+    const lead = words.slice(0, i).filter(Boolean);
+    const bare = OPEN_ITEM.test(lead.join(" "));
+    const end = next === "" && (!isEnglishWord(w) || (!/^[^A-Za-z]*[A-Z]/.test(parts[i]) && (bare || (/^(?:the|that|this)$/.test(prev) && ON_ITEM.test(lead.slice(0, -1).join(" "))))));
+    if (!((BEFORE.test(prev) || (bare && end)) && (AFTER.test(next) || end)) && !(prev === "the" && AFTER.test(next))) continue;
     parts[i] = parts[i].replace(/[A-Za-z]+/, (m) => (m[0] === m[0].toUpperCase() ? ord![0].toUpperCase() + ord!.slice(1) : ord!));
   }
   return parts.join("");

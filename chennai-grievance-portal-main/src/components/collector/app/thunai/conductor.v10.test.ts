@@ -13,6 +13,7 @@ vi.mock("./mouth", () => ({
 
 import { addressed, type Addressed } from "@/lib/thunai/addressed";
 import { Conductor, type ConductorHooks } from "./conductor";
+import { cutOff } from "@/lib/thunai/v10/browser10";
 
 type Inner = { gateFor(t: string): Addressed; ignored(t: string, g: Addressed): void; inWindow(now?: number): boolean };
 const boot = (ig: [string, string | undefined][], lastTurn: number) => new Conductor({
@@ -81,5 +82,50 @@ describe("v10 review 2, round 2: the rest of a held cut-off line is gated with i
     c.ignored("Tell me about the", c.gateFor("Tell me about the"));
     expect(c.gateFor("accident in Velachery yesterday").act).toBe(true);
     expect(c.gateFor("he said the contractor will finish the drain work by Friday").act).toBe(false);
+  });
+});
+
+describe("v10 review 2, round 3: a remark of its own after a held line stays the remark it was (finding 20)", () => {
+  // v10 review 2, round 3: the gate read the held line with any remark it let go as talk, and a held request ("Tell me about the") lent the remark
+  // its shape: "Tell me about the the driver is waiting downstairs" was acted on. A remark that is a sentence of its own (a statement) is no rest
+  it.each([["Tell me about the", "the driver is waiting downstairs"], ["Show me the", "the driver is waiting downstairs"], ["Tell me about the", "I will be back in ten minutes"],
+    ["What are the", "my phone is not working"], ["Show me the", "your car is ready downstairs"]])("'%s' ... '%s'", (held, side) => {
+    const alone = boot([], Date.now() - 3000).gateFor(side);
+    const c = boot([], Date.now() - 3000);
+    c.ignored(held, c.gateFor(held));
+    const after = c.gateFor(side);
+    expect(`alone:${alone.act}/${alone.why} after:${after.act}/${after.why} text:${after.text}`).toBe(`alone:false/${alone.why} after:false/${alone.why} text:${side}`);
+  });
+});
+
+describe("v10 review 2, round 3: a cut-off line said with the name, or held by the page, takes its rest too (finding 20)", () => {
+  // v10 review 2, round 3: only a line the gate turned away was held, so "Jarvis, tell me about the" (named: the page waits for its rest) left its
+  // rest "accident in Velachery yesterday" to be gated alone and dropped as side talk; so did the wake path's same-breath rest, held by the page
+  it("'Jarvis, tell me about the' ... 'accident in Velachery yesterday' (3 s after Jarvis spoke)", () => {
+    const c = boot([], Date.now() - 3000);
+    const g = c.gateFor("Jarvis, tell me about the");
+    expect(`${g.act} ${g.why} ${g.text}`).toBe("true named tell me about the");
+    expect(cutOff(g.text)).toBe(true);
+    const r = c.gateFor("accident in Velachery yesterday");
+    expect(`${r.act} ${r.why}`).toBe("true engaged");
+  });
+  it("said with the name and no turn before it, the rest is still taken", () => {
+    const c = boot([], 0);
+    expect(c.gateFor("Jarvis, tell me about the").act).toBe(true);
+    expect(c.gateFor("accident in Velachery yesterday").act).toBe(true);
+  });
+  it("a named line that is whole holds nothing: side talk after it is side talk", () => {
+    const c = boot([], Date.now() - 3000);
+    expect(c.gateFor("Jarvis, tell me about the rain").act).toBe(true);
+    expect(c.gateFor("accident in Velachery yesterday").act).toBe(false);
+  });
+  it("a line the page holds ('Hey Jarvis, tell me about the', the wake path's rest) takes its rest", () => {
+    const held = { text: "tell me about the", at: Date.now() - 2000 };
+    const c = new Conductor({
+      hearUrl: () => "/x", siteLang: () => "en", onSentence: () => undefined, cancelTurn: () => undefined, onIgnored: () => undefined, onState: () => undefined,
+      rules: () => ({ sure: false, districtNoun: false }), lastTurnAt: () => Date.now() - 2000, heldCut: () => held
+    } as unknown as ConductorHooks) as unknown as Inner;
+    expect(c.gateFor("accident in Velachery yesterday").act).toBe(true);
+    expect(boot([], Date.now() - 2000).gateFor("accident in Velachery yesterday").act).toBe(false);
   });
 });

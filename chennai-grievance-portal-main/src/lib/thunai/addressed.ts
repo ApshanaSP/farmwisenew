@@ -76,12 +76,20 @@ const ACK8 = new Set(["ok", "okay", "okk", "yes", "yeah", "sari", "seri", "haan"
 /** a sentence cut off before its point: it ends on a word that cannot end one ("Who is this assigned to?", "Open that." can: the review, 18 Nov) */
 const DANGLING8 = / (?:the|a|an|and|or|but|of|my|your|our|their|is|are|was|were|if|because|than|what|which|whats) $/;
 /** v10: a question embedded in a request ends on its verb and is whole ("Tell me where the Adyar zonal office is", "Find out who the AE for
- * Velachery is"): a verb that asks or tells right before the question word, two words or more after it. Not "if", "whether", "why" or "which"
- * ("Tell me if the drain is" is cut off). v10 review 2, finding 19: these were held as cut off, and never answered. Round 2: the frame is that verb,
- * not any word before the question word, so a cleft ("And what I need is", "Okay what I want is") or a relative clause ("Show me the complaints
- * where the status is") cut off before its point stays cut off */
-const EMBEDDED_ASK = /^(?:\S+ )*(?:tell (?:me|us)|show (?:me|us)|let (?:me|us) know|remind (?:me|us)|find out|figure out|work out|check|know|ask|explain|see|confirm|wonder|wondering) (?:where|what|who|when|how) \S+(?: \S+)* (?:is|are|was|were)$/;
-export const embeddedAsk = (text: string): boolean => EMBEDDED_ASK.test(norm(text).trim());
+ * Velachery is"): words before the question word, two words or more after it. Not "if", "whether", "why" or "which" ("Tell me if the drain is"
+ * is cut off). v10 review 2, finding 19: these were held as cut off, and never answered. Round 2: a cleft ("And what I need is", "Okay what I want
+ * is") or a relative clause ("Show me the complaints where the status is") cut off before its point stays cut off. Round 3: those two shapes are
+ * all that is left out (round 2 took only a listed verb right before the question word for the frame, and "Tell me exactly where ...", "Any idea
+ * who ...", "Can you find where ..." were cut off again) */
+const EMBEDDED_ASK = /^(?:\S+ )+(?:where|what|who|when|how) \S+(?: \S+)* (?:is|are|was|were)$/;
+/** the cleft: nothing but a filler or the name before the question word ("and what I need is", "jarvis what I need is") */
+const CLEFT = /^(?:(?:and|so|ok|okay|but|now|well|then|also|yes|yeah|right|haan|seri|sari|hey|hi|jarvis|ஜார்விஸ்) )+(?:where|what|who|when|how) /;
+/** the relative clause: the question word right after a noun the sentence names ("the complaints where", "those wards where") */
+const RELATIVE = /(?:^| )(?:the|these|those) \S+ (?:where|when|who) /;
+export const embeddedAsk = (text: string): boolean => {
+  const t = norm(text).trim();
+  return EMBEDDED_ASK.test(t) && !CLEFT.test(t) && !RELATIVE.test(t);
+};
 /** one Tamil word that is a whole command or answer ("அடுத்து": next) */
 const ONE_WORD_TA8 = /^(?:அடுத்து|அடுத்தது|முந்தையது|நிறுத்து|போதும்|மீண்டும்|மூடு|திற|படி|காட்டு|சரி|பின்னால்|வேண்டாம்|இல்லை|ஆமாம்|ஆம்)$/u;
 /** a request said with its verb at the end: "the Nungambakkam subway one, open it"; "Supreme Court news open pannunga" */
@@ -216,6 +224,9 @@ export const isImperative = (text: string): boolean => {
 /** asked as a request or a question, whatever its length (v8: a verb at the end too, "the X one, open it", "news open pannunga") */
 const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text) || (understandV8() && LATE_VERB8.test(t));
 const statement = (text: string, t: string) => STATEMENT_EN.test(t) || ASIDE_TA.test(text) || (FINITE_TA.test(text) && !QUESTION_TA.test(text));
+/** v10 review 2, round 3: a statement of its own ("the driver is waiting downstairs", "my phone is not working", "மழை வருது"): never the rest of a
+ * line held as cut off (conductor.ts gateFor) */
+export const isStatement = (text: string): boolean => statement(text, norm(text));
 /** a chore for someone in the room, not work for the console */
 const chore = (text: string, engaged = false): boolean => {
   const t = norm(text);

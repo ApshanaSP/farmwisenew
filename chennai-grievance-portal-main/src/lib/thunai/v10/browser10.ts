@@ -67,6 +67,9 @@ const DANGLING_TA = /(?:அந்த|இந்த|எந்த|ஒரு)\s*$/u;
 const DANGLING_TG = /\b(?:andha|indha|endha|oru)\s*$/i;
 /** a line of words that carry nothing alone ("தயவுசெய்து,", "Please.", "hmm"): not a thanks, a yes or a no (each a whole answer) */
 const FILLERS = /^(?:(?:please|pls|hmm*|mm+|uh|um|ah|oh|aha|தயவுசெய்து|ம்ம்|ம்)[\s,.!?…]*)+$/iu;
+/** a greeting or a thanks said alone, in Tanglish or Tamil script ("vanakkam", "வணக்கம்", "nandri", "Namaskaram"; the English ones are English words):
+ * whole, never a noise word (v10 review 2, round 3: "Hey Jarvis, vanakkam" got an earcon and no reply) */
+const GREETING = /^(?:vanakkam|vanakam|vannakam|vanakkom|namaskaram|namaskar|namaste|namasthe|nandri|nanri|nandrigal|வணக்கம்|நமஸ்காரம்|நமஸ்தே|நன்றி|நன்றிகள்)[\s,.!?…]*$/iu;
 
 /** Is this line cut off before its point? Its words, the punctuation the speech-to-text put at the end aside. */
 export function cutOff(text: string): boolean {
@@ -156,7 +159,7 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   const typed = c.source === "typed";
   if (!typed && cutOff(said0)) return { lane: "wait", why: "cut-off", lang };
   // (a name of the day or the news word said alone is no noise: "Akvan", "Arlekar", "அக்வான்", "Seithi"; v10 review 2, finding 23)
-  if (!typed && unclearWord(said0, districtNounIn(said0, c.world)) && !NEWS_WORD.test(said0)
+  if (!typed && unclearWord(said0, districtNounIn(said0, c.world)) && !NEWS_WORD.test(said0) && !GREETING.test(said0.normalize("NFC").trim())
     && !(c.lex?.length && findMentions(said0, c.lex, { kinds: ["storm", "name"] }).length)) return { lane: "wait", why: "one-word", lang };
   // fillers alone carry nothing ("தயவுசெய்து,", "Please.": the brief's Part 3, v10 review 2, finding 27); a thanks, a yes or a no is whole. Typed, they
   // are answered as typed: a typed line never waits (round 2: a typed "Please." got no reply at all)

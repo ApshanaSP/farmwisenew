@@ -120,3 +120,13 @@ describe("v10 review 2, round 2: a typed line never waits, fillers alone include
     expect(browserLaneV10(said, c("captions")).lane).toBe("wait");
   });
 });
+
+describe("v10 review 2, round 3: a question asked inside a request is acted on in the engaged window (finding 19)", () => {
+  // v10 review 2, round 3: round 2's frame (a listed verb right before the question word) cut these off again: held on the open mic, never answered
+  it.each(["Tell me exactly where the Adyar zonal office is", "Tell me again what the IMD warning is", "Can you tell me quickly how many complaints there are",
+    "Any idea who the AE for Velachery is?", "Do you remember who the AE for Adyar is?", "Can you find where the relief centres are?",
+    "Can you look up who the AE for Adyar is?"])("'%s' (3 s after Jarvis spoke) is acted on", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
+});

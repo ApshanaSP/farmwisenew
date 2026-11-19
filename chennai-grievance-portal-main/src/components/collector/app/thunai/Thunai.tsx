@@ -2727,6 +2727,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // (v10: a name asked back, "Cyclone Akvan?", waits for its yes too)
       wantsYes: () => !!pendingBRef.current || !!confirmRef.current,
       offerPending: () => !!offerRef.current,
+      // v10: the line this page holds for its rest (the wake path's same-breath rest goes straight to handle()): the conductor gates the rest with it
+      heldCut: () => cutRef.current,
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
       // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service);
