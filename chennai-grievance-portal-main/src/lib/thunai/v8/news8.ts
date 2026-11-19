@@ -30,6 +30,8 @@ export interface NewsReq {
   outlet: string | null;
   /** "that one", "this news": the story in focus or on screen is meant */
   ref: boolean;
+  /** v9: topic words in a spoken Tamil verb form, that count at a fifth when no story has them */
+  weak?: string[];
 }
 
 export interface StoryItem { id: string; title: string; titleEn?: string | null; outlets?: string[]; place?: string | null; story?: string | null; t?: string | null; onScreen?: number | null }
@@ -55,7 +57,13 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
   // Tamil script (romanised by fold): செய்தி, சேதி, திற, படி, சொல், காட்டு, பற்றி, என்ன, இருக்கா, அந்த, இந்த, ஏதாவது, விளக்கு, கட்டுரை, அறிக்கை
   "seyti seytiyai seytiyait seytiyaip seytiyil seytikal seytikalai seti setiyai tirankal tiranka tira tiraku tirantu tirakavum patiyunkal patinka pati patikkavum " +
   "sollunkal sollunka sol sollu kattunkal kattunka kattu parri parriya enna irukka irukkiratha antha inta intha etavatu etavatu vilakku vilakkunkal katturai katturaiyai " +
-  "arikkai arikkaiyai vantirukku vantirukkiratu ullatu ullana").split(/\s+/));
+  "arikkai arikkaiyai vantirukku vantirukkiratu ullatu ullana " +
+  // v9: spoken Tanglish around the topic (v8's holdout: "Marina la enna aachu? edhavadhu news irukka?", "Pattinapakam la nadandha vettu sambavam
+  // news sollunga", "news ah konjam padinga"): what happened, an incident, anything, a little, about, that one, the pronouns
+  "aachu achu aacha aachaa ennaachu ennachu nadandha nadantha nadandhadhu nadanthathu nadandhathu nadandhuchu nadanthuchu nadandhurukku nadanthirukku " +
+  "sambavam sambhavam sambavathai sambavatha edhavadhu ethavathu edhachum ethachum edhaavadhu vandhucha vandhuchu vanthucha vanthuchu vandhurukka vandhurukku " +
+  "konjam pathina patthina paththina pathiya pathuna pathunna sambandhamana sammandhamana thodarbana kuritha kurithu onnu onna onnai ondru adha idha adhai idhai " +
+  "aana oru solreengala sollreengala sollungalen padingalen kaattungalen he she hes shes they theyre im").split(/\s+/));
 
 const NEWS_NOUN = /\b(?:news|story|stories|article|piece|report|headline|coverage|seithi|seidhi|seythi|sethi)\b|செய்தி|சேதி|கட்டுரை/iu;
 const STORY_VERB = /\b(?:open|read|play|brief me|tell me|tell us|explain|summari[sz]e|sum up|go through|pull up|show me)\b|\b(?:padi|padinga|padiunga|sollu|sollunga|open pannu|open pannunga|kaattu|kaattunga|thira|thiranga)\b|திற|படி|சொல்|காட்டு|விளக்கு/iu;
@@ -174,7 +182,54 @@ export const sameOutlet = (storyOutlet: string, asked: string): boolean => outle
 
 /** Tamil-script words that are the request's own (news nouns, verbs, references, question words), as whole words with their endings: முதல்வர் (the
  * CM), இந்திய and காட்டுப்பள்ளி are topics, not "first", "this" and "show" (the review, 18 Nov) */
-const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்)?|திற(?:ங்க|ங்கள்|ந்து|க்கவும்|க்க)?|படி(?:ங்க|யுங்கள்|யுங்க|க்கவும்|த்து)?|சொல்(?:லு|லுங்க|லுங்கள்|லவும்)?|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பத்தி|குறித்து|என்ன|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|ஏதாவது|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
+// v9: and the spoken forms around a topic (v8's holdout: "தீபம் பத்தின செய்தியைச் சொல்லுங்க", "செய்தி என்ன? அதைப் படிங்க"): about (பத்தின,
+// பற்றிய, குறித்த, தொடர்பான), that and this (அதை, இதை, அது, அதுல), what happened (ஆச்சு, நடந்த), an incident, anything, one (ஒண்ணு), the
+// verbs' polite and spoken endings (படிங்களேன், படிச்சு, திறக்கணும், சொல்றாங்க)
+const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யைச்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்|ல)?|திற(?:ங்க|ங்கள்|ங்களேன்|ங்கோ|ந்து|க்கவும்|க்க|க்கணும்)?|படி(?:ங்க|யுங்கள்|யுங்க|ங்களேன்|க்கவும்|க்கணும்|த்து|ச்சு|ச்சுக்)?|சொல்(?:லு|லுங்க|லுங்கள்|லுங்களேன்|லவும்|லணும்)?|சொல்றாங்க|சொல்லிருக்காங்க|போட்டிருக்காங்க|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பற்றிய|பத்தி|பத்தின|பத்துன|பத்தியான|குறித்து|குறித்த|தொடர்பான|சம்பந்தமான|என்ன|என்னாச்சு|ஆச்சு|நடந்த|நடந்தது|நடந்துச்சு|நடந்திருக்கு|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|வந்துச்சா|வந்துச்சு|வந்ததா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|அதை|அதைப்|அதைத்|அதைச்|இதை|இதைப்|இதைத்|இதைச்|அது|இது|அதுல|இதுல|ஏதாவது|ஏதும்|ஏதாச்சும்|சம்பவம்|சம்பவத்தை|சம்பவத்தைப்|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒன்றை|ஒன்றைப்|ஒரு|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
+/**
+ * v9: a Tamil-script word in a spoken verb form, a participle or a finite ending (மிரண்டு, ஓடின, நடந்த, வைத்த, போட்டாங்க): the event in the
+ * Collector's own words, which an English headline does not carry; when no story has it, it counts at a fifth, as a fragment does ("மெரினாவுல
+ * குதிரை மிரண்டு ஓடின": v8 let "மிரண்டு ஓடின" outweigh the place and the horse). A name or a noun keeps its weight ("கேரளா வெள்ளம்").
+ */
+const TA_VERBISH = /(?:ண்டு|ந்து|ட்டு|த்து|ன்று|ச்சு|ஞ்சு|ின|ிய|ந்த|ட்ட|த்த|ன்ன|ச்ச|ாங்க|ாங்களாம்|ாராம்|ானாம்|ிட்டாங்க|ிருக்காங்க)$/u;
+/** Tanglish: a past participle's ending ("vettu", "mirandu", "vandhu", "pottu"), said in small letters (a name is written with a capital: "Hindu"),
+ * no English word and no place */
+const TG_VERBISH = /^[a-z]{2,}(?:ndu|ndhu|nthu|ttu|tthu|chu|cchu|nju)$/;
+const weakWords = (text: string): string[] => [
+  ...(text.match(/[஀-௿]+/gu) ?? []).filter((w) => TA_VERBISH.test(w)).flatMap((w) => tokensOf(w)),
+  ...(text.match(/[A-Za-z]+/g) ?? []).filter((w) => TG_VERBISH.test(w) && !isEnglishWord(w) && !placeWord(w))
+];
+
+/**
+ * v9: the event and civic nouns the Collector says in Tamil or Tanglish, in the English a headline uses (a Tamil request about an English-only
+ * report: "Pattinapakam la ... vettu" is "Man hacked ... in Pattinapakkam"; "குடிநீர் தட்டுப்பாடு" is a drinking water shortage, not the RBI's
+ * "தடுப்பது" that keys like it). A word matched this way counts as 0.9 of the headline's own. Each Tamil-script word and its Tanglish spellings ->
+ * the English words. (Not every word: ones a headline also uses in English, "hospital", "metro", are said in English.)
+ */
+const GLOSS_SRC: [string[], string[]][] = [
+  [["வெட்டு", "vettu", "vetti"], ["hack", "hacked", "slash", "attack"]], [["குத்து", "kuthu", "kutthu"], ["stab", "stabbed"]],
+  [["கொலை", "kolai"], ["murder", "murdered", "kill", "killed"]], [["தீ", "thee", "தீவிபத்து", "theevibathu"], ["fire", "blaze"]],
+  [["விபத்து", "vibathu", "vibaththu", "vibatthu"], ["accident", "crash", "collide", "collision"]], [["கைது", "kaidhu", "kaithu"], ["arrest", "arrested", "held"]],
+  [["போராட்டம்", "porattam", "poraattam", "poratam"], ["protest", "agitation", "stir", "strike"]], [["ஆர்ப்பாட்டம்", "aarpattam", "arpattam"], ["protest", "demonstration"]],
+  [["மறியல்", "marial", "maraiyal"], ["blockade", "roko", "protest"]], [["வெடிப்பு", "vedippu", "வெடிவிபத்து"], ["blast", "explosion", "explode"]],
+  [["தற்கொலை", "tharkolai", "tarkolai"], ["suicide"]], [["மரணம்", "maranam", "உயிரிழப்பு", "பலி", "saavu", "சாவு"], ["death", "dead", "die", "killed"]],
+  [["மோசடி", "mosadi"], ["fraud", "scam", "cheat"]], [["கொள்ளை", "kollai"], ["robbery", "loot", "heist"]],
+  [["கஞ்சா", "ganja", "kanja"], ["ganja", "cannabis"]], [["போதைப்பொருள்", "bodhai", "போதை"], ["drug", "drugs", "narcotic"]],
+  [["மழை", "mazhai", "mazha"], ["rain", "rainfall"]], [["வெள்ளம்", "vellam"], ["flood", "flooding", "inundation", "waterlogging"]], [["புயல்", "puyal"], ["cyclone", "storm"]],
+  [["குடிநீர்", "kudineer", "kudinir"], ["drinking", "water"]], [["தட்டுப்பாடு", "thattuppadu", "thattupaadu"], ["shortage", "scarcity"]],
+  [["கழிவுநீர்", "kazhivuneer", "சாக்கடை", "saakkadai"], ["sewage", "drain"]], [["குப்பை", "kuppai"], ["garbage", "waste", "trash", "dump"]],
+  [["மின்தடை", "mintadai", "minthadai"], ["shutdown", "outage"]], [["பள்ளம்", "pallam"], ["pothole", "crater"]], [["மரம்", "maram"], ["tree"]],
+  [["நாய்", "naai", "naay", "தெருநாய்"], ["dog", "dogs"]], [["குதிரை", "kudhirai", "kuthirai"], ["horse"]], [["பாம்பு", "paambu", "pambu"], ["snake"]],
+  [["மாடு", "maadu", "மாடுகள்"], ["cattle", "cow"]], [["பேருந்து", "perundhu"], ["bus"]], [["ரயில்"], ["train", "rail"]], [["கடல்", "kadal"], ["sea"]],
+  [["மீனவர்", "meenavar", "மீனவர்கள்"], ["fisher", "fishermen", "fishers"]], [["நீதிமன்றம்", "needhimandram"], ["court"]], [["அமைச்சர்", "amaichar"], ["minister"]],
+  [["ஆட்சியர்", "aatchiyar"], ["collector"]], [["கோயில்", "கோவில்", "kovil", "koil"], ["temple"]], [["தேர்தல்", "therthal", "thaerthal"], ["election", "poll"]],
+  [["விமானம்", "vimanam"], ["flight", "plane", "airport"]]
+];
+const GLOSS = new Map<string, { k: string; en: string | null }[]>();
+for (const [said, en] of GLOSS_SRC) {
+  const to = en.map((w) => ({ k: looseKey(w), en: w.length >= 5 ? looseKey(enStem(w)) : null }));
+  for (const s of said) for (const t of tokensOf(s)) { const k = looseKey(t); if (k) GLOSS.set(k, [...(GLOSS.get(k) ?? []), ...to]); }
+}
 /** Tanglish news words with their endings ("seithiya", "seidhila"); "pannunga" as Whisper spells it ("panyunga", "panunga": the real run o8b) */
 const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(?:nga|ngal|ngo)?$/;
 
@@ -216,14 +271,19 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   if (!newsy && !theOne && words.every((w) => placeWord(w))) return null;
   if (ORDINAL_ONLY.test(text.replace(/[.?!,]+$/g, "").trim())) return null;
   const ref = REF.test(text) && words.length <= 3;
-  if (asks && !STORY_VERB.test(text.replace(/\bshow me\b/i, ""))) return { kind: "ask", words, outlet, ref };
+  const weak = weakWords(text).filter((w) => words.includes(w));
+  const extra = weak.length ? { weak } : {};
+  if (asks && !STORY_VERB.test(text.replace(/\bshow me\b/i, ""))) return { kind: "ask", words, outlet, ref, ...extra };
   // "what happened at X" with no news word is a question about the district, unless it names a story's topic: the ranking decides
-  return { kind: STORY_VERB.test(text) || theOne || (newsy && !asks) ? "story" : "ask", words, outlet, ref };
+  return { kind: STORY_VERB.test(text) || theOne || (newsy && !asks) ? "story" : "ask", words, outlet, ref, ...extra };
 }
 
 // ---- ranking
 
-interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null }[]>; latin: boolean }
+interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null }[]>; latin: boolean;
+  /** v9: its words as written (romanised), its English words' stems, and its English title's keys and stems when the headline is Tamil */
+  raw: Set<string>; stems: Set<string>; en: { keys: Set<string>; stems: Set<string> } | null }
+const enStems = (toks: string[]) => new Set(toks.filter((w) => /^[a-z]{5,}$/.test(w)).map((w) => looseKey(enStem(w))));
 /** a story's words, keyed once (and kept for the next request: the same stored stories come back) */
 const docMemo = new Map<string, Doc>();
 const docOf = (x: StoryItem): Doc => {
@@ -244,25 +304,36 @@ const docOf = (x: StoryItem): Doc => {
     const e = { k, en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null };
     const l = byFirst.get(k[0]); if (l) l.push(e); else byFirst.set(k[0], [e]);
   }
-  const d: Doc = { item: x, keys, byFirst, latin: !/[஀-௿]/u.test(x.title) };
+  const latin = !/[஀-௿]/u.test(x.title);
+  const enToks = !latin && x.titleEn ? part(x.titleEn) : null;
+  const d: Doc = { item: x, keys, byFirst, latin, raw: new Set(toks), stems: enStems(toks), en: enToks?.length ? { keys: new Set(enToks.map(looseKey).filter(Boolean)), stems: enStems(enToks) } : null };
   if (docMemo.size > 20_000) docMemo.clear();
   docMemo.set(memoKey, d);
   return d;
 };
 
-/** one topic word, worked out once: its key, its stems' keys, its English stem */
-interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null }
-const qOf = (w: string): QWord => ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null });
+/** one topic word, worked out once: its key, its stems' keys, its English stem, and (v9) its English in a headline (GLOSS) */
+interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null; gloss: { k: string; en: string | null }[] | null }
+const glossOf = (k: string, stems: string[]): { k: string; en: string | null }[] | null => GLOSS.get(k) ?? stems.map((s) => GLOSS.get(s)).find(Boolean) ?? null;
+const qOf = (w: string): QWord => {
+  const k = looseKey(w), stems = stemsOf(w).map(looseKey).filter((s) => s.length >= 4);
+  return { w, k, stems, en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null, gloss: glossOf(k, stemsOf(w).map(looseKey)) };
+};
+/** a word's English (GLOSS) among a headline's words: the same key, or the same English stem ("hacked", "hack") */
+const glossIn = (g: { k: string; en: string | null }[], keys: Set<string>, stems: Set<string>): boolean => g.some((x) => keys.has(x.k) || (x.en != null && stems.has(x.en)));
 
 /** a long name cut short by the ears ("Palikana" for Pallikaranai): the same first six letters or more, most of the shorter word */
 const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
 
 /** how well one topic word is in one story: its best word, 0 below 0.8 (the memo holds each word pair's score across the stories) */
 function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
-  if (d.keys.has(q.k)) return 1;
+  // v9: a Tamil word with an English gloss that the story has only by spelling ("தட்டுப்பாடு", shortage, keys like "தடுப்பது", preventing), in a
+  // story whose English title lacks its English: not that word (a story with a Tamil headline carries its English title in the store)
+  const byEarOnly = q.gloss != null && d.en != null && !d.raw.has(q.w) && !glossIn(q.gloss, d.en.keys, d.en.stems);
+  if (!byEarOnly && d.keys.has(q.k)) return 1;
   if (q.says && q.says.every((k) => d.keys.has(k))) return 1;
   let best = 0;
-  for (const { k: tk, en: ten } of d.byFirst.get(q.k[0]) ?? []) {
+  for (const { k: tk, en: ten } of byEarOnly ? [] : d.byFirst.get(q.k[0]) ?? []) {
     const mk = `${q.k}|${tk}`;
     let s = memo.get(mk);
     if (s === undefined) {
@@ -276,6 +347,8 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
     if (s > best) best = s;
     if (best >= 1) break;
   }
+  // v9: the word's English in the headline ("vettu" in "Man hacked ...")
+  if (best < 0.9 && q.gloss && glossIn(q.gloss, d.keys, d.stems)) best = 0.9;
   return best >= 0.8 ? best : 0;
 }
 
@@ -303,7 +376,7 @@ function joinedIn(q: QWord, d: Doc, memo: Map<string, number>): number {
 export interface Places { names: string[] }
 
 /** Score every candidate story against the request. Stories on screen first; ties go to the newer. */
-export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: StoryItem[], o: { places?: string[] } = {}): Ranked[] {
+export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak">, items: StoryItem[], o: { places?: string[] } = {}): Ranked[] {
   if (!items.length || (!req.words.length && !req.outlet)) return [];
   const docs = items.map(docOf);
   const n = docs.length;
@@ -335,7 +408,10 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
   const maxIdf = Math.max(...idf, 0.0001);
   // a word no story holds counts at half weight (something the news does not have: "Kerala floods"); a short fragment that is no word at all
   // ("Imash" in "Palikana Imash", the ears' "Pallikaranai marsh", the real run 18 Nov) at a fifth
-  const weight = idf.map((v, i) => (sims[i].some((s) => s > 0) ? v : (qs[i].w.length <= 5 && /^[a-z]+$/.test(qs[i].w) && !isEnglishWord(qs[i].w) ? 0.2 : 0.5) * maxIdf));
+  // (v9: a spoken verb form, Tamil or Tanglish, counts at a fifth whether or not a story has it: newsRequest's `weak`; v8 gave "மிரண்டு" its full
+  // weight because three other stories had it, and the horse story, which says "தறிகெட்டு", fell under the floor)
+  const weak = new Set(req.weak ?? []);
+  const weight = idf.map((v, i) => (weak.has(qs[i].w) ? 0.2 * maxIdf : sims[i].some((s) => s > 0) ? v : (qs[i].w.length <= 5 && /^[a-z]+$/.test(qs[i].w) && !isEnglishWord(qs[i].w) ? 0.2 : 0.5) * maxIdf));
   const total = weight.reduce((a, b) => a + b, 0) || 1;
   return docs.map((d, j) => {
     let s = 0, hits = 0;

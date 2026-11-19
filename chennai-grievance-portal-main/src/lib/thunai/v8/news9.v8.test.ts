@@ -119,7 +119,13 @@ describe("v9: colloquial Tamil left in the topic", () => {
     expect(topicWords("திருப்பரங்குன்றம் தீபம் பத்தின செய்தியைச் சொல்லுங்க", null)).toHaveLength(2);
     expect(topicWords("Marina la enna aachu? edhavadhu news irukka?", null)).toEqual(["marina"]);
     expect(topicWords("Pattinapakam la nadandha vettu sambavam news sollunga", null)).toEqual(["pattinapakam", "vettu"]);
-    expect(topicWords("மெரினாவுல குதிரை மிரண்டு ஓடின செய்தி என்ன? அதைப் படிங்க", null)).not.toContain(topicWords("அதைப்", null)[0]);
+    // (அதைப் "that", என்ன, செய்தி and படிங்க are the request's; the place, the horse and what it did are the topic)
+    expect(topicWords("மெரினாவுல குதிரை மிரண்டு ஓடின செய்தி என்ன? அதைப் படிங்க", null)).toEqual(topicWords("மெரினாவுல குதிரை மிரண்டு ஓடின", null));
+    expect(topicWords("மெரினாவுல குதிரை மிரண்டு ஓடின", null)).toHaveLength(4);
+    expect(topicWords("அதைப் படிங்க", null)).toEqual([]);
+  });
+  it("the spoken locative (-வுல, -யுல) is a case ending on a place", () => {
+    expect(find("மெரினாவுல குதிரை செய்தி")?.pick?.id).toBe("s3");
   });
   it("the stories are found", () => {
     expect(find("Jarvis, திருப்பரங்குன்றம் தீபம் பத்தின செய்தியைச் சொல்லுங்க")?.pick?.id).toBe("s5");
@@ -132,6 +138,45 @@ describe("v9: colloquial Tamil left in the topic", () => {
   });
   it("what the news does not have is still not matched (Kerala's floods in Tamil)", () => {
     expect(find("கேரளா வெள்ளம் பத்தின செய்தி இருக்கா?")?.pick ?? null).toBeNull();
+  });
+});
+
+describe("v9: the event in the Collector's own Tamil words, against the store's headlines (19 Nov)", () => {
+  // the real store: the horse story says தறிகெட்டு (ran amok), not மிரண்டு; மிரண்டு is in other stories; four Pattinapakkam stories, one of a man
+  // hacked; தடுப்பது (preventing) keys like தட்டுப்பாடு (shortage)
+  const REAL: StoryItem[] = [
+    { id: "h1", title: "மெரினாவில் சவாரி குதிரை தறிகெட்டு ஓடியதில் தாய், மகள் உட்பட 3 பேர் படுகாயம்", titleEn: "3 people including mother and daughter severely injured after a riding horse goes berserk in Marina", outlets: ["Dinamani"], t: "2026-11-17 20:00" },
+    { id: "h2", title: "The cascade water tank in Marina, Chennai has broken; repair work has started", outlets: ["DT Next"], t: "2026-11-17 18:00" },
+    { id: "d1", title: "காட்டு யானை மிரண்டு ஓடியதால் பொதுமக்கள் அச்சம்", titleEn: "Public panic as wild elephant runs amok", outlets: ["Dinamalar"], t: "2026-11-16 18:00" },
+    { id: "d2", title: "மழையைக் கண்டு மிரண்டு நின்ற வாகனங்கள்", titleEn: "Vehicles stalled in the rain", outlets: ["Dinamalar"], t: "2026-11-16 17:00" },
+    { id: "k1", title: "Man hacked after dispute over honking in Pattinapakkam, four arrested", outlets: ["The Times of India"], t: "2026-11-18 09:00" },
+    { id: "k2", title: "Unorganised workers' federation seeks withdrawal of G.O. for new secretariat at Pattinapakkam", outlets: ["The Hindu"], t: "2026-11-18 12:00" },
+    { id: "k3", title: "Pattinapakkam Secretariat stuck in stir, fishers' lives in limbo", outlets: ["The New Indian Express"], t: "2026-11-18 11:00" },
+    { id: "k4", title: "சென்னை கண்ணதாசன் நகர் பேருந்து நிலையத்தில் நடத்துநருக்கு சரமாரி அரிவாள் வெட்டு", titleEn: "At Chennai Kannadhasan Nagar bus stand, conductor attacked with a sickle", outlets: ["Dinamani"], t: "2026-11-18 08:00" },
+    { id: "w1", title: "இணையவழி பண மோசடி தடுப்பது குறித்து சென்னை போலீஸ் கமிஷனருடன் ரிசர்வ் வங்கி இயக்குநர் ஆலோசனை", titleEn: "RBI Director consults Chennai Police Commissioner on preventing online financial fraud", outlets: ["Dinamani"], t: "2026-11-18 10:00" },
+    { id: "w2", title: "Drinking water has not come for a month! People outraged! | Chennai", outlets: ["Dinamani"], t: "2026-11-17 10:00" },
+    { id: "f1", title: "Fire breaks out at godown in Vyasarpadi; no casualties", outlets: ["DT Next"], t: "2026-11-17 09:00" },
+    { id: "m1", title: "Youth murdered by gang near Tondiarpet; police search for suspects", outlets: ["The Hindu"], t: "2026-11-16 09:00" },
+    ...STORE.filter((s) => !["s2", "s3", "s4"].includes(s.id))
+  ];
+  const findR = (t: string) => find(t, { items: REAL });
+  it("a spoken verb no headline of that story has does not outweigh the place and the horse", () => {
+    expect(findR("மெரினாவுல குதிரை மிரண்டு ஓடின செய்தி என்ன? அதைப் படிங்க")?.pick?.id).toBe("h1");
+  });
+  it("Tamil event words find an English headline (vettu: hacked; kolai: murdered; தீ: fire)", () => {
+    expect(findR("Jarvis, Pattinapakam la nadandha vettu sambavam news sollunga")?.pick?.id).toBe("k1");
+    expect(findR("Tondiarpet kolai news padinga")?.pick?.id).toBe("m1");
+    expect(findR("வியாசர்பாடி தீ விபத்து செய்தியைப் படிங்க")?.pick?.id).toBe("f1");
+  });
+  it("a Tamil word that only spells like another is not that word (தட்டுப்பாடு is not தடுப்பது)", () => {
+    const ask = "Jarvis, குடிநீர் தட்டுப்பாடு பத்தி ஏதாவது செய்தி இருக்கா?";
+    expect(findR(ask)?.stories.map((s) => s.id) ?? []).not.toContain("w1");
+    const withShortage = [...REAL, { id: "w3", title: "Drinking water shortage hits Ambattur residents", outlets: ["DT Next"], t: "2026-11-17 08:00" }];
+    expect(find(ask, { items: withShortage })?.stories[0]?.id).toBe("w3");
+  });
+  it("a capitalised name is no Tanglish verb ('Hindu' keeps its weight)", () => {
+    expect(newsRequest("Hindu Munnani protest news padinga", {})?.weak ?? []).toEqual([]);
+    expect(newsRequest("Pattinapakam la vettu news sollunga", {})?.weak).toEqual(["vettu"]);
   });
 });
 
