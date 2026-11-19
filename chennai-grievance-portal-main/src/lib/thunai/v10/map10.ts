@@ -359,9 +359,12 @@ const SEVERE_WORD = /\bsevere\b|\bserious\b|\bcritical\b|\bkadumaiyana\w*|கட
 
 /** the words that name which tour, between "a" or "the" and "tour" ("give me the news tour", "start a quick district tour": v10 review 2, round 2) */
 const TOUR_KIND = "(?:(?:district|city|hotspots?|news|flood|morning|full|whole|quick|short|guided|narrated|today'?s|todays|map) )*";
+/** the same words where a tour is given: a day or a size only before the map tour's name ("give me today's news tour"; "give me today's tour
+ * programme" and "the full tour plan for tomorrow" are the Collector's own: v10 review 2, round 3) */
+const TOUR_NAMED = "(?:(?:(?:morning|full|whole|quick|short|today'?s|todays) )*(?:district|city|hotspots?|news|flood|guided|narrated|map) )*";
 /** a tour asked for in so many words: "take me round", "give me a tour", "start the news tour", "suthi kaattu", "சுற்றிக் காட்டு", "சுற்றுலா தொடங்கு" */
 const TOUR_FRAME = [
-  "\\btake me (?:a)?round\\b", `\\btake me on (?:a |the )?${TOUR_KIND}(?:tour|round)\\b`, "\\bshow me (?:a)?round\\b", `\\bgive me (?:a |the )?${TOUR_KIND}tour\\b`,
+  "\\btake me (?:a)?round\\b", `\\btake me on (?:a |the )?${TOUR_KIND}(?:tour|round)\\b`, "\\bshow me (?:a)?round\\b", `\\bgive me (?:a |the )?${TOUR_NAMED}tour\\b`,
   "\\bgo (?:a)?round the (?:district|city)\\b",
   `\\b(?:start|begin|do|run|play) (?:a |the )?${TOUR_KIND}tour\\b`, "\\b(?:start|begin|do|run|play) (?:a |the )?(?:district|city|hotspots?|morning) round\\b",
   "\\bwalk me through (?:the |today'?s |todays )?(?:district|hotspots|city)\\b", "\\bfly me (?:a)?round\\b", "^(?:(?:the|a|today'?s|todays) )*news tour$",
@@ -369,8 +372,9 @@ const TOUR_FRAME = [
   "\\btour (?:of|round|around|through) (?:the |today'?s |todays )?(?:(?:places|spots|locations|stories|areas|hotspots) (?:in|from|of) (?:the |today'?s |todays )?)?(?:news|headlines)\\b",
   "சுற்றிக் ?காட்டு", "சுற்றிப் ?பார்க்க",
   // the Tamil nouns for a tour only with a verb that starts one, or goes, or takes the Collector on it: alone they are tourism and the CM's tours
-  // in the news (v10 review 2, finding 12; round 2: "சுற்றுலா செல்வோம்", "சுற்றுலா அழைத்துச் செல்லுங்கள்" were not heard; never போதும், enough)
-  "(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:தொடங்கு|ஆரம்பி|காட்டு|காண்பி|நடத்து|போகலாம்|போவோம்|போங்க|போ(?=\\s|$)|செல்வோம்|செல்லலாம்|செல்லுங்க|செல்லவும்|செல்(?=\\s|$)|(?:அழைத்து|கூட்டி)\\S*\\s*(?:செல்|போ(?!தும்))\\S*)",
+  // in the news (v10 review 2, finding 12; round 2: "சுற்றுலா செல்வோம்", "சுற்றுலா அழைத்துச் செல்லுங்கள்" were not heard; never போதும், enough;
+  // round 3: நடத்து only as asked, never the CM's "சுற்றுப்பயணம் நடத்துகிறார்" or "நடத்தும்")
+  "(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:தொடங்கு|ஆரம்பி|காட்டு|காண்பி|நடத்து(?:ங்கள்|ங்க|வோம்)?(?=\\s|$)|போகலாம்|போவோம்|போங்க|போ(?=\\s|$)|செல்வோம்|செல்லலாம்|செல்லுங்க|செல்லவும்|செல்(?=\\s|$)|(?:அழைத்து|கூட்டி)\\S*\\s*(?:செல்|போ(?!தும்))\\S*)",
   "\\b(?:suthi|suththi|sutthi|chuthi|suthi) ?(?:kaattu|kattu|kaatu|kaami|kaaminga|kaatunga|kaattunga|paakalam|paaru)\\b", "\\bround (?:kootitu po|kootittu po|pogalam|kaattu|adikkalam)\\b",
   "\\btour (?:kaattu|pannu|pannalam|kootitu po|start pannu|pogalam)\\b"
 ];
@@ -383,10 +387,11 @@ const TOUR_START = new RegExp([...TOUR_FRAME, "\\btour (?:of |round |around )?(?
   "மாவட்ட\\S*\\s+(?:சுற்றுலா|சுற்றுப்பயண)\\S*$"].join("|"), "u");
 const STOP_VERB = /\b(?:stop|end|cancel|finish|quit|halt|niruthu\w*|nirutthu\w*|podhum|pothum)\b|நிறுத்து|போதும்/u;
 /** "stop" and "end" said as nouns ("the next stop", "at the end of this round") and a stop said not to ("don't stop the tour", "niruthaadheenga"
- * is not a stop verb at all): blanked before a stop is looked for (v10 review 2, round 2: these ended a running tour) */
+ * is not a stop verb at all): blanked before a stop is looked for (v10 review 2, round 2: these ended a running tour; round 3: "an end" is a
+ * stop, "bring the tour to an end", and the not only right before the stop, "never mind, stop the tour" and "not now, stop the tour" stop it) */
 const stopWords = (t: string): string =>
-  t.replace(/\b(?:next|the|a|an|this|that|each|every|last|first|second|third|previous|final|one|another|any|its|bus)(?: tour| touring)? (?:stop|stops|end|halt)\b/g, " ")
-    .replace(/\b(?:dont|don t|do not|never|not|no need to|shouldnt|should not|wont|will not|cant|cannot|without)\s+(?:\w+\s+)?(?:stop|end|cancel|finish|quit|halt)\w*/g, " ")
+  t.replace(/\b(?:next|the|this|that|each|every|last|first|second|third|previous|final|one|another|any|its|bus)(?: tour| touring)? (?:stop|stops|end|halt)\b/g, " ")
+    .replace(/\b(?:dont|don t|do not|never|not|no need to|shouldnt|should not|wont|will not|cant|cannot|without)\s+(?:stop|end|cancel|finish|quit|halt)\w*/g, " ")
     .replace(/(?:niruthu|nirutthu|stop pannu|நிறுத்து|நிறுத்த)\S*\s+(?:vendaam|venaam|vendam|வேண்டாம்|வேணாம்)/gu, " ");
 /** the tour named as what is stopped, wherever it is said ("ok stop the news tour", "alright, end the district tour", "news tour-a niruthu",
  * "செய்திச் சுற்றுலாவை நிறுத்து", "சுற்றுலா போதும்"): it ends a running tour, news word or not, and never starts one (v10 review 2, finding 10:
@@ -420,9 +425,10 @@ function tourCmd(t: string, c: MapCtx10): MapCmd | null {
   const s = stopWords(t);
   const stopVerb = STOP_VERB.test(s), stopsTour = STOP_TOUR.test(s);
   if (c.tour) {
-    // the tour named as what is stopped; or a stop verb and a tour word with no news asked for ("please stop touring now"; "news about the tour
-    // being cancelled" is the news; "round" is a tour's word only while one runs: "stop the round of calls")
-    if (stopsTour || (stopVerb && !news && TOUR_WORD.test(t) && !TOUR_ASKED.test(t))) return { op: "tour", tour: "stop" };
+    // the tour named as what is stopped; or a stop verb and a tour word, a news word only in a stop said first ("please stop touring now", "end
+    // the headlines tour", "stop playing the news tour"; "news about the tour being cancelled" is the news; "round" is a tour's word only while
+    // one runs: "stop the round of calls") (v10 review 2, round 3)
+    if (stopsTour || (stopVerb && TOUR_WORD.test(t) && !TOUR_ASKED.test(t) && (!news || /^(?:stop|end|cancel|finish|quit|halt)\b/.test(t)))) return { op: "tour", tour: "stop" };
     if (TOUR_STOP.test(t) || (c.tourCheck && TOUR_NO.test(t))) return { op: "tour", tour: "stop" };
     // the tour's other words only with the map on screen: once it is shrunk "go back" is the console's undo again, and "show me more news" the
     // news (v10 review 2, finding 14)
@@ -433,8 +439,9 @@ function tourCmd(t: string, c: MapCtx10): MapCmd | null {
       if (TOUR_DEEPER.test(t) && !news && words(t).length <= 8) return { op: "tour", tour: "deeper" };
     }
   } else if (STOP_ALONE.test(t)) return { op: "tour", tour: "stop" };
-  // a stop never starts a tour; a stop verb only beside a tour asked for in so many words ("take me round the district and stop at each hotspot")
-  if (stopsTour || (stopVerb && !TOUR_ASKED.test(t)) || (news && !TOUR_ASKED.test(t))) return null;
+  // a stop never starts a tour; a stop word, verb or noun, only beside a tour asked for in so many words ("take me round the district and stop at
+  // each hotspot"; "what was the last stop of the district tour" is the Collector's own: v10 review 2, round 3)
+  if (stopsTour || (STOP_VERB.test(t) && !TOUR_ASKED.test(t)) || (news && !TOUR_ASKED.test(t))) return null;
   if (TOUR_START.test(t) && !/\b(?:page|tab|report|workspace)\b/.test(t)) {
     const source = NEWS.test(t) ? "news" : /\bflood\w*|\bstorm\b|\bcyclone\b|\brain\w*|\bwaterlog\w*|\bpuyal\b|\bmazhai\b|\bvellam\b|வெள்ள|புயல்|மழை/u.test(t) ? "flood" : "hotspots";
     const full = /\b(?:full|whole|complete|entire|long|all) (?:round|tour)\b|\bfull\b|முழு/u.test(t);
@@ -563,7 +570,12 @@ const DEPT_WORDS: Set<string> = (() => {
   }
   return s;
 })();
-const deptWord = (said: string): boolean => words(said).some((w) => DEPT_WORDS.has(w.replace(/s$/, "")));
+/** every word said a department's ("Family Welfare", "town planning"): one of them beside a person ("the road contractor", "the hospital dean",
+ * "the victim's family") is the planner's (v10 review 2, round 3) */
+const deptWord = (said: string): boolean => {
+  const ws = words(said).filter((w) => !/^(?:and|of|department|dept)$/.test(w));
+  return ws.length > 0 && ws.every((w) => DEPT_WORDS.has(w.replace(/s$/, "")));
+};
 /** the map's answer plainly the thing sent ("send these", "send the results", "idha ... anuppu") */
 const MAP_OBJECT = /\b(?:these|them|the (?:answer|list|results|lot)|this list|idha|idhai|ithu|ithai|ivai|ellaam|ellam)\b|இவற்றை|இவை|இதை/u;
 /** the department said with a send: "send these to Storm Water Drains", "idha Metro Water-ku anuppu", "இதை மெட்ரோ வாட்டருக்கு அனுப்பு" */
@@ -618,7 +630,9 @@ function insightCmd(t: string, c: MapCtx10): MapCmd | null {
 // (round 2: any words for a question suggested, "suggest a question", "suggest another question"; "suggest" with "ask" at the end, "what do you
 // suggest I ask", "suggest something to ask"; and the suggestions asked for with only words that read or show them, "read out the suggestions",
 // "tell me the suggestions", "suggestions sollu", "enna suggestions irukku", "பரிந்துரைகளைக் காட்டு")
-const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\bsuggest(?:ed)? (?:me |us )?(?:(?:a|an|some|few|more|other|any|another|one|two|three|good|useful|next|new|follow up|followup) )*(?:questions?|queries|query|follow ups?|followups?)\b|\bsuggest\w*(?: \w+){0,3} (?:to )?ask(?: (?:the map|here|it|next|now))?$|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
+// (round 3: "ask" at the end only after "I" or "something", never a person, "suggest who to ask", "suggest someone to ask"; a follow-up only as
+// the whole thing suggested, never "suggest a follow up action for this case")
+const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\bsuggest(?:ed)? (?:me |us )?(?:(?:a|an|some|few|more|other|any|another|one|two|three|good|useful|next|new|follow up|followup) )*(?:(?:questions?|queries|query)\b|(?:follow ups?|followups?)$)|\bsuggest\w* (?:(?:i|we) (?:should |could |can )?|(?:something|anything) (?:(?:i|we) (?:can|could|should) |to )?)ask(?: (?:the map|here|it|next|now))?$|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
 const SUGGEST_NOUN = /^(?:suggestions?|பரிந்துரைகள்\S*|பரிந்துரைகளை\S*)$/u;
 const SUGGEST_FILL = new Set(("show read out tell list give open what whats are is the your some any map maps me us all again please now say those these tray its " +
   "sollu sollunga solunga kaattu kaattunga kaatu kaatunga kattu kattunga padi padinga irukku iruku irukka enna ena ennenna காட்டு காட்டுங்கள் சொல் சொல்லு சொல்லுங்கள் படி " +

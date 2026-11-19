@@ -512,3 +512,43 @@ describe("v10 review 2, round 2: the map lane's round-1 fixes held one word away
     }
   });
 });
+
+describe("v10 review 2, round 3: the round-2 guards that blocked what the Collector needs", () => {
+  const ANS: MapCtx10 = { open: true, hasAnswer: true, kind: "answer", total: 12, shots: 4, shot: 0, chips: [], chipOpts: [], suggest: [], lang: "en" };
+  const TOURING: MapCtx10 = { ...ANS, chips: ["Flooding", "Open"], tour: true };
+  const each = (ss: string[], c: MapCtx10) => Object.fromEntries(ss.map((s) => [s, mapCommand10(s, c)]));
+  const all = (ss: string[], v: unknown) => Object.fromEntries(ss.map((s) => [s, v]));
+
+  it("v10 review 2, round 3: a running tour is stopped by everyday stop phrasings (a 'never mind' or 'not now' before the stop, 'an end', the news tour)", () => {
+    const ss = ["never mind, stop the tour", "not now, stop the tour", "don't continue, stop the tour", "I'm not interested, stop the tour", "bring the tour to an end",
+      "put an end to this tour", "stop playing the news tour", "end the headlines tour"];
+    expect(each(ss, TOURING)).toEqual(all(ss, { op: "tour", tour: "stop" }));
+  });
+
+  it("v10 review 2, round 3: a Tamil sentence about the CM's tour (நடத்துகிறார், நடத்தும்) never starts the map tour", () => {
+    const ss = ["முதல்வர் நாளை சுற்றுப்பயணம் நடத்துகிறார்", "முதல்வர் சுற்றுப்பயணம் நடத்தும் செய்திகள்", "அமைச்சர் சுற்றுப்பயணம் நடத்துவது பற்றிய செய்தி"];
+    expect(each(ss, CLOSED)).toEqual(all(ss, null));
+    // the tour asked for with நடத்து still starts it
+    expect(mapCommand10("சுற்றுலா நடத்துங்கள்", CLOSED)).toMatchObject({ op: "tour", tour: "start" });
+  });
+
+  it("v10 review 2, round 3: the Collector's own tour programme never starts the map tour", () => {
+    const ss = ["give me today's tour programme", "give me the full tour plan for tomorrow", "what was the last stop of the district tour"];
+    expect(each(ss, CLOSED)).toEqual(all(ss, null));
+    // a named map tour asked for still starts
+    expect(mapCommand10("give me today's news tour", CLOSED)).toEqual({ op: "tour", tour: "start", source: "news" });
+    expect(mapCommand10("give me the full district tour", CLOSED)).toEqual({ op: "tour", tour: "start", source: "hotspots", full: true });
+  });
+
+  it("v10 review 2, round 3: a send to a person is the planner's even with a department word in it", () => {
+    const ss = ["send this to the road contractor", "send this to the building owner", "forward this to the hospital dean", "send it to the victim's family"];
+    expect(each(ss, ANS)).toEqual(all(ss, null));
+  });
+
+  it("v10 review 2, round 3: 'suggest' about a person or a case's action is not the map's suggested questions", () => {
+    const S: MapCtx10 = { ...ANS, suggest: ["severe cases this week", "garbage near schools"] };
+    const ss = ["suggest who to ask", "suggest a follow up action for this case", "suggest whom I should ask", "suggest someone to ask"];
+    expect(each(ss, S)).toEqual(all(ss, null));
+    expect(mapCommand10("suggest a follow up question", S)).toEqual({ op: "suggest" });
+  });
+});
