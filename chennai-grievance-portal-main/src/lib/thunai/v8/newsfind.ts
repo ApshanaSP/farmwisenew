@@ -15,7 +15,7 @@ import type { World } from "../types";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { newsRequest, pickStory, rankStories, SOFT_FLOOR, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { eventForms, newsRequest, pickStory, rankStories, SOFT_FLOOR, type NewsReq, type Picked, type StoryItem } from "./news8";
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
@@ -128,8 +128,10 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   const floor = req.soft ? SOFT_FLOOR : f.exclude?.length ? MORE_FLOOR : undefined;
   let ranked = rankStories(req, items, { places: placesOf(d.world) });
   if (req.soft && req.event?.length) {
-    const ev = { words: req.event, outlet: null };
-    ranked = ranked.filter((r) => r.score < SOFT_FLOOR || (rankStories(ev, [r.item])[0]?.hits ?? 0) > 0);
+    // (and a word that names it: "open the NEET protest" read an AIADMK protest on "protest" alone; the review, 19 Nov)
+    const ev = { words: req.event, outlet: null, gloss: eventForms(req) ?? undefined };
+    const named = { words: req.which ?? [], outlet: null, gloss: req.gloss };
+    ranked = ranked.filter((r) => r.score < SOFT_FLOOR || ((rankStories(ev, [r.item])[0]?.hits ?? 0) > 0 && (!named.words.length || (rankStories(named, [r.item])[0]?.hits ?? 0) > 0)));
   }
   return { req, picked: pickStory(ranked, f.lang, floor) };
 }

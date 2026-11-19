@@ -258,26 +258,26 @@ describe("v9: 'open the X protest' with no news word: the news, softly", () => {
     // "Velachery residents protest" is close; "Fire in Adyar: protest planned" names neither the place said nor this fire
     const items: StoryItem[] = [{ id: "v1", title: "Velachery residents stage protest over drinking water", outlets: ["DT Next"], t: "2026-11-18 10:00" },
       { id: "a1", title: "Fire breaks out in Adyar godown; no casualties", outlets: ["The Hindu"], t: "2026-11-18 09:00" }];
-    const near = await findNews({ q: "open the Velachery protest", lang: "en" }, { world, stories: async () => items });
+    const near = await findNews({ q: "open the Velachery drinking water protest", lang: "en" }, { world, stories: async () => items });
     expect(near?.req.soft).toBe(true);
     expect(near?.picked.pick?.id).toBe("v1");
-    const far = await foundStory({ q: "open the Kodambakkam protest", lang: "en" }, { world, stories: async () => items });
+    const far = await foundStory({ q: "open the Kodambakkam drinking water protest", lang: "en" }, { world, stories: async () => items });
     expect(far?.soft).toBe(true);
     expect(far?.pick ?? null).toBeNull();
     let feeds = 0;
     const ev: string[] = [];
-    for await (const e of newsEvents({ find: { q: "open the Kodambakkam protest", lang: "en" } }, {
+    for await (const e of newsEvents({ find: { q: "open the Kodambakkam drinking water protest", lang: "en" } }, {
       loadDoc: async () => null, related: false, find: async (f) => foundStory(f, { world, stories: async () => items }),
       feedLines: async () => { feeds++; return { en: ["x"], ta: ["x"], links: [] }; } })) ev.push(e.type);
     expect(ev).toEqual(["none", "done"]);
     expect(feeds).toBe(0);
   });
-  it("a soft pick has the event itself, not the place alone (a Velachery film launch is no 'Velachery protest')", async () => {
+  it("a soft pick has the event itself (a Velachery film launch is no 'Velachery film protest')", async () => {
     const { findNews } = await import("./newsfind");
     // many protest stories make "protest" a common word: the place alone would clear the soft floor
     const protests: StoryItem[] = Array.from({ length: 30 }, (_, i) => ({ id: `p${i}`, title: `Residents protest over issue number ${i} in Chennai`, outlets: ["DT Next"], t: `2026-11-1${i % 9} 10:00` }));
     const items: StoryItem[] = [...protests, { id: "f1", title: "Film team meets the press at a Velachery mall", outlets: ["News18"], place: "Velachery", t: "2026-11-18 10:00" }];
-    const r = await findNews({ q: "open the Velachery protest", lang: "en" }, { world, stories: async () => items });
+    const r = await findNews({ q: "open the Velachery film protest", lang: "en" }, { world, stories: async () => items });
     expect(r?.req.soft).toBe(true);
     expect(r?.picked.pick ?? null).toBeNull();
   });

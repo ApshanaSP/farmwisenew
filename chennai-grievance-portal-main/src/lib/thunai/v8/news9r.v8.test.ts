@@ -272,3 +272,56 @@ describe("v9 review, group 4: a position is a position only where it is said as 
     expect(bl.lane === "news" && bl.na.kind === "read" && "id" in bl.na.body && bl.na.body.id).toBe("n7");
   });
 });
+
+describe("v9 review, group 5: the soft search takes a named event, never the console's own views, reminders or a case in focus", () => {
+  const state = (o: Record<string, unknown> = {}) => ({ page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false, ...o }) as never;
+  const laneOf = async (t: string, o: { stage?: unknown; st?: Record<string, unknown>; incident?: string | null } = {}) => {
+    const { browserLaneV8 } = await import("./browser");
+    return browserLaneV8(t, { stage: (o.stage ?? null) as never, news: { items: [] }, state: state(o.st), world, listenLang: "en", heardLang: /[஀-௿]/u.test(t) ? "ta" : "en", incident: o.incident ?? null, v7: true });
+  };
+  it("#6/#15: a plural event, 'all', 'today's', a place alone or a generic word is the console's (no soft find)", async () => {
+    for (const t of ["Open the accidents in Anna Nagar", "Open the protests in Royapuram", "Bring up the Royapuram protests", "Open all the fires in Adyar",
+      "Open today's accidents in Anna Nagar", "Open the dog attacks in Anna Nagar", "Open the demolitions in Adyar", "Royapuram protest ellam open pannunga",
+      "Tell me about the accidents in Anna Nagar today", "Pull up the protests in Royapuram", "open the road accident deaths", "open the Adyar fire", "pull up the Adyar fire",
+      "open the Velachery protest"])
+      expect(newsRequest(t, {})?.soft ?? false, t).toBe(false);
+  });
+  it("#7/#11: reminders, notes and the console's Tamil and Tanglish nouns are not soft finds", async () => {
+    for (const t of ["Remind me to open the Royapuram protest at 5 pm", "What did I say about the Adyar fire? Read it", "Read my note on the Adyar fire",
+      "Adyar fire pugar open pannunga", "Kodungaiyur fire nilavaram sollunga", "கொடுங்கையூர் தீ நிலவரம் சொல்லுங்க", "Adyar fire sambavam open pannunga", "Kodungaiyur fire situation sollunga"])
+      expect(newsRequest(t, {})?.soft ?? false, t).toBe(false);
+  });
+  it("#15/#6: never with a case in focus: a case on the Stage, the console's incident, or 'the X one' over the console's list", async () => {
+    const detail = { recipe: "case", blocks: [{ kind: "CaseDetail" }], scope: { zone: null } };
+    const l1 = await laneOf("tell me about the IOCL plant fire", { stage: detail });
+    expect(l1.lane === "news" && l1.na.kind === "find").toBe(false);
+    const l2 = await laneOf("open the IOCL plant fire", { incident: "INC-7" });
+    expect(l2.lane === "news" && l2.na.kind === "find").toBe(false);
+    const l3 = await laneOf("Open the IOCL fire one", { st: { listLength: 3 } });
+    expect(l3.lane === "news" && l3.na.kind === "find").toBe(false);
+    // and with nothing in focus, a named event is still a soft find
+    const l4 = await laneOf("Jarvis, open the Kodungayur empty pot protest");
+    expect(l4.lane === "news" && l4.na.kind === "find" && l4.na.soft).toBe(true);
+  });
+  it("#16: a soft pick has the word that names it ('open the NEET protest' is no other party's protest)", async () => {
+    const items = [story("AIADMK cadres stage protest against property tax hike in Tambaram", { id: "s17" }), story("Kodungaiyur residents stage empty pot protest over drinking water", { id: "s6" }),
+      ...FILLER];
+    for (const q of ["Jarvis, open the NEET protest", "open the PMK protest", "read the NTK protest"]) {
+      const r = await findNews({ q, lang: "en" }, { world, stories: async () => items });
+      expect(r?.req.soft, q).toBe(true);
+      expect(r?.picked.pick ?? null, q).toBeNull();
+    }
+    const ok = await findNews({ q: "open the Kodungaiyur empty pot protest", lang: "en" }, { world, stories: async () => items });
+    expect(ok?.picked.pick?.id).toBe("s6");
+  });
+  it("the event may be in the headline's own words ('the Pattinapakkam honking attack' is 'Man hacked after dispute over honking'; the real store)", async () => {
+    const items = [story("Man hacked after dispute over honking in Pattinapakkam, four arrested", { id: "pk1" }), story("Pattinapakkam Secretariat stuck in stir, fishers' lives in limbo", { id: "pk2" }), ...FILLER];
+    const r = await findNews({ q: "read the Pattinapakkam honking attack", lang: "en" }, { world, stories: async () => items });
+    expect(r?.picked.pick?.id).toBe("pk1");
+  });
+  it("still soft: the holdout's named events (the IOCL fire, the Kodungaiyur empty pot protest, the Pattinapakkam honking attack, the Puzhal jail smuggling)", () => {
+    for (const t of ["the IOCL fire, open that", "Jarvis, open the Kodungayur empty pot protest", "read the Pattinapakkam honking attack", "open the Puzhal jail drug smuggling",
+      "tell me about the Madhavaram drug seizure", "கொடுங்கையூர் காலிக்குடம் போராட்டத்தைத் திறங்க"])
+      expect(newsRequest(t, { onScreen: /IOCL/.test(t) })?.soft, t).toBe(true);
+  });
+});

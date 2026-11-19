@@ -39,6 +39,8 @@ export interface NewsReq {
   soft?: boolean;
   /** v9, soft: the event's own words ("protest"): a soft pick must have one (not the place alone) */
   event?: string[];
+  /** v9, soft: the words that name it ("iocl", "empty", "pot"): a soft pick must have one too ("open the NEET protest" is no other protest) */
+  which?: string[];
 }
 
 export interface StoryItem { id: string; title: string; titleEn?: string | null; outlets?: string[]; place?: string | null; story?: string | null; t?: string | null; onScreen?: number | null }
@@ -110,8 +112,18 @@ const EVENT_TG = "porattam|poraattam|poratam|aarpattam|arpattam|marial|maraiyal|
 const EVENT_TA = "போராட்ட|ஆர்ப்பாட்ட|மறியல்|உண்ணாவிரத|வேலைநிறுத்த|தீவிபத்|விபத்|வெடி|கொலை|கொள்ளை|கைது|சோதனை|ரெய்டு|பறிமுதல்|மோசடி|தற்கொலை|மரண|உயிரிழ|பலி|மோதல்|" +
   "கலவர|திறப்பு|தடை|தீர்ப்பு|இடிப்பு";
 const EVENT = new RegExp(String.raw`\b(?:${EVENT_EN}|${EVENT_TG})\b|(?:^|\s)(?:${EVENT_TA})|(?:^|\s)தீ(?:\s|$|யில்|யை)`, "iu");
-/** the console's own words: a soft request with one is the console's ("open the fire department's backlog", "the strike rate chart") */
-const SOFT_NOT = /\b(?:departments?|dept|backlog|pending|overdue|sla|officers?|staff|charts?|graphs?|map|maps|page|panel|tab|trends?|ranking|rate|score|dashboard|list|table|counts?|numbers?|stats|statistics|data|summary|alerts?|warnings?|forecast|view|filter|category|categories|severe|severity|open cases|status)\b|புகார்|மனு|மண்டல|வார்டு/iu;
+/** the console's own words: a soft request with one is the console's ("open the fire department's backlog", "the strike rate chart"); v9, the
+ * review (19 Nov): and its Tamil and Tanglish nouns ("pugar", "sambavam", "nilavaram"), a situation or status, and a reminder or a note
+ * ("Remind me to open the Royapuram protest at 5 pm", "what did I say about the Adyar fire? Read it") */
+const SOFT_NOT = new RegExp(String.raw`\b(?:departments?|dept|backlog|pending|overdue|sla|officers?|staff|charts?|graphs?|map|maps|page|panel|tab|trends?|ranking|rate|score|dashboard|list|table|counts?|numbers?|stats|statistics|data|summary|alerts?|warnings?|forecast|view|filter|category|categories|severe|severity|open cases|status|situation|` +
+  String.raw`pugar\w*|pugaar\w*|pukar\w*|sambav\w*|nilavaram|nilamai|remind\w*|notes?|noted|said|say|told|remember|recall|my|tomorrow|later|pm|o'?clock)\b|\bat \d|புகார்|மனு|மண்டல|வார்டு|நிலவரம்|நிலைமை|கேஸ்|ஞாபக|நினைவு`, "iu");
+/** v9, the review: the console's lists, not one story: an event in the plural ("the protests in Royapuram"), all or every, today's */
+const SOFT_MANY = /\b(?:protests|agitations|demonstrations|strikes|rallies|fires|blasts|explosions|accidents|crashes|collisions|collapses|murders|killings|stabbings|attacks|assaults|arrests|raids|seizures|busts|robberies|burglaries|thefts|frauds|scams|suicides|deaths|drownings|clashes|riots|evictions|demolitions|leaks|outbreaks|all|every|each|ellam|ellaam|anaithu|today'?s?|todays|tonight|yesterday'?s?|daily|weekly)\b|\b(?:this|last) (?:week|month|year)\b|அனைத்து|எல்லா/iu;
+/** v9, the review: words that name no particular event ("open the road accident deaths", "the Adyar fire": a place or a kind of thing is the
+ * console's view of it) */
+const GENERIC_WHICH = new Set(("road roads traffic public city chennai district local major minor big small huge new old recent latest water drainage sewage garbage " +
+  "power electricity street streets light lights area areas people residents resident man men woman women youth boy boys girl girls child children police cop cops " +
+  "govt government state one two three four five first second").split(/\s+/));
 
 /** a negation: "don't open the news" */
 const NEGATED = /\b(?:don'?t|dont|do not|never|no need|stop)\b|வேண்டாம்|வேணாம்|\bvenaam\b|\bvendaam\b/iu;
@@ -256,6 +268,7 @@ const GLOSS8: Gloss[] = [
   { ta: ["கைது", "கைதான"], tg: ["kaidhu", "kaithu"], en: ["arrest", "nab"] },
   { ta: ["போராட்ட", "ஆர்ப்பாட்ட"], tg: ["porattam", "poraattam", "poratam", "poraatam", "aarpattam", "arpattam"], en: ["protest", "agitation", "stir", "dharna", "demonstration"] },
   { ta: ["மறியல்"], tg: ["marial", "maraiyal"], en: ["blockade", "roko"] }, { ta: ["உண்ணாவிரத"], tg: ["unnaviratham"], en: ["hunger"] },
+  { ta: ["காலிக்குட", "காலிக்கும"], tg: ["kaalikudam", "kalikudam"], en: ["empty", "pot"] },
   { ta: ["வெடிவிபத்", "வெடிப்பு", "வெடித்து", "வெடித்த", "வெடிகுண்டு"], tg: ["vedi", "vedippu"], en: ["blast", "explosion", "explode", "bomb"] },
   { ta: ["தற்கொலை"], tg: ["tharkolai", "tarkolai"], en: ["suicide"] },
   { ta: ["மரண", "உயிரிழ", "சாவு", "பலியா"], taExact: ["பலி"], tg: ["maranam"], en: ["death", "dead", "die", "kill"] },
@@ -277,6 +290,30 @@ const GLOSS8: Gloss[] = [
   { taExact: ["பள்ளி", "பள்ளியில்", "பள்ளிகள்", "பள்ளிக்கு", "பள்ளியின்", "பள்ளிகளில்"], en: ["school"] },
   { ta: ["அமைச்ச"], en: ["minister"] }, { ta: ["ஆட்சியர"], en: ["collector"] }
 ];
+/**
+ * v9: an event a soft request names, in the words headlines use for it ("the Pattinapakkam honking attack" is "Man hacked after dispute over
+ * honking"): only for the soft find's check that a pick has the event, never in the ranking itself.
+ */
+const EVENT_SYN: [RegExp, string[]][] = [
+  [/^attack/, ["attack", "assault", "hack", "stab", "slash", "beat", "thrash"]], [/^(?:fire|blaze)/, ["fire", "blaze", "gutted", "flames", "gutted"]],
+  [/^(?:accident|crash|collision)/, ["accident", "crash", "collision", "collide", "ram", "mishap", "overturn"]],
+  [/^(?:protest|agitation|dharna|demonstration|stir)/, ["protest", "agitation", "stir", "dharna", "demonstration", "blockade", "roko", "picket"]],
+  [/^(?:murder|killing)/, ["murder", "kill", "killing", "hacked", "slain"]], [/^(?:seizure|bust|haul)/, ["seizure", "seize", "bust", "haul", "confiscate"]],
+  [/^arrest/, ["arrest", "held", "nab", "detain"]], [/^smuggl/, ["smuggle", "smuggling"]], [/^(?:theft|robbery|heist|burglary|snatching)/, ["theft", "steal", "stole", "stolen", "rob", "robbery", "loot", "snatch", "burglary", "heist"]],
+  [/^(?:blast|explosion)/, ["blast", "explosion", "explode", "bomb"]], [/^(?:death|drowning|suicide)/, ["death", "dead", "die", "kill", "drown", "suicide", "body"]],
+  [/^(?:collapse|cave)/, ["collapse", "cave"]], [/^(?:ban)$/, ["ban", "prohibit", "freeze"]], [/^(?:verdict|ruling|judge?ment|plea|hearing)/, ["verdict", "ruling", "judgment", "judgement", "order", "plea", "hearing", "court"]],
+  [/^(?:demolition|eviction)/, ["demolition", "demolish", "eviction", "evict", "bulldoze"]], [/^(?:raid)/, ["raid", "search", "inspection"]]
+];
+/** the soft find's event words with the forms a headline may use for them (EVENT_SYN, then GLOSS8's for a Tamil or Tanglish event word) */
+export const eventForms = (req: Pick<NewsReq, "event" | "gloss">): Record<string, string[]> | null => {
+  const out: Record<string, string[]> = {};
+  for (const w of req.event ?? []) {
+    const syn = EVENT_SYN.find(([re]) => re.test(w))?.[1];
+    const forms = [...(syn ? syn.flatMap(englishForms) : []), ...(req.gloss?.[w] ?? [])];
+    if (forms.length) out[w] = forms;
+  }
+  return Object.keys(out).length ? out : null;
+};
 /** an English word and its regular forms ("rain": rains, rained, raining; "stab": stabbed; "explode": exploded, exploding) */
 const englishForms = (w: string): string[] => {
   const ends = ["", "s", "es", "ed", "d", "ing", "ings", "er", "ers"];
@@ -357,19 +394,21 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   const theOne = ((!!xOne && !ordWordsOf(xOne[1]).some((w) => ordWord(w) != null)) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
   // v9: "open the Kodungaiyur empty pot protest", "the IOCL fire, open that": a story-like topic with no news word (soft: found only above
   // SOFT_FLOOR, else the console's own lanes take the sentence, as they did in v8)
-  const soft = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text);
+  const soft = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text) && !SOFT_MANY.test(text);
   if (!newsy && !theOne && !asks && !soft) return null;
   // at most 12 topic words (a request at the schema's 400 characters must not hold the server: the review, 19 Nov)
   const words = topicWords(text, outlet).slice(0, 12);
   // a soft request names which one: a word besides the event ("the protest" alone is the console's PUBLIC_ORDER view)
   if (soft) {
     const eventToks = new Set(text.split(/\s+/).filter((w) => EVENT.test(w)).flatMap((w) => tokensOf(w)));
-    const which = words.filter((w) => !eventToks.has(w));
     const event = words.filter((w) => eventToks.has(w));
+    // the words that name this event: neither a place nor a kind of thing ("the Adyar fire", "the road accident deaths" are the console's views;
+    // "the IOCL fire", "the Kodungaiyur empty pot protest" name one: the review, 19 Nov)
+    const which = words.filter((w) => !eventToks.has(w) && !placeWord(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w));
     if (!which.length || !event.length) return null;
     const weak = weakWords(text).filter((w) => words.includes(w));
     const gloss = glossesOf(text, words);
-    return { kind: "story", words, outlet: null, ref: false, soft: true, event, ...(weak.length ? { weak } : {}), ...(gloss ? { gloss } : {}) };
+    return { kind: "story", words, outlet: null, ref: false, soft: true, event, which, ...(weak.length ? { weak } : {}), ...(gloss ? { gloss } : {}) };
   }
   // "read the second story", "open the news": no topic of its own (ordinals and the panel are other lanes')
   if (!words.length && !outlet) return null;

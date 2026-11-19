@@ -58,7 +58,7 @@ import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
-import { casesOnStage, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
+import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -1304,18 +1304,26 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * repeats is not said twice); the screen shows what was said and every source as a link (a Note and a NewsReader list, the panels
    * the Stage already draws). Nothing a page said becomes a step: the events carry sentences and links only.
    */
-  // (v9: false when a soft find, a story-like topic with no news word, found nothing close: nothing was said, and the turn goes on to the
-  // console's own lanes; true otherwise)
-  const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<boolean> => {
-    if (na.kind === "which") { earcon("need"); out(whichLine(na, lang), lang, "ready"); return true; }
-    traceDecided("rules");
-    setBrainNow({ by: "instant", model: null, ms: 0 });
+  // (v9: "none" when a soft find, a story-like topic with no news word, found nothing close or failed before it found anything: nothing was
+  // said, and the turn goes on to the console's own lanes, as the evaluation runner does; "aborted" when the turn was cut off; "done"
+  // otherwise. A soft probe's bookkeeping, the trace's lane, the brain line and the busy line, waits until it has something: the review, 19 Nov)
+  const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<"done" | "none" | "aborted"> => {
+    if (na.kind === "which") { earcon("need"); out(whichLine(na, lang), lang, "ready"); return "done"; }
+    const soft = na.kind === "find" && na.soft === true;
     const t0 = performance.now();
     const doing = na.kind === "lookup" ? (lang === "ta" ? "இணையத்தில் தேடுகிறேன்" : "Looking it up on the web")
       : na.kind === "find" ? (lang === "ta" ? "செய்தியைத் தேடுகிறேன்" : "Finding that story") : (lang === "ta" ? "செய்தியைப் படிக்கிறேன்" : "Reading the report");
+    let begun = false;
+    const begin = () => {
+      if (begun) return;
+      begun = true;
+      traceDecided("rules");
+      setBrainNow({ by: "instant", model: null, ms: 0 });
+      hud.set({ doing }); setReply(doing); setPhase("thinking");
+    };
+    if (!soft) begin();
     // v8: the story a find picks, and another close one to offer at the end ("say 'the other one'")
     let found: { id: string; other: { id: string; outlet: string | null } | null } | null = null;
-    hud.set({ doing }); setReply(doing); setPhase("thinking");
     const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
     const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
     const said = new Set<string>();
@@ -1343,10 +1351,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang } } : na.body;
       if (na.kind !== "find") lastFound.current = na.kind === "read" && "id" in na.body && lastFound.current?.other?.id === na.body.id ? { id: na.body.id, other: null } : null;
       const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sent), signal });
-      if (!alive()) return true;
+      if (!alive()) return "aborted";
       if (!res.ok || !res.body) st.fail = "failed";
       else await readNdjson(res.body, (e) => {
         if (!alive()) return;
+        // (a soft probe begins its turn on the first thing it has; "none", "error" and "done" are nothing)
+        if (e.type !== "none" && e.type !== "error" && e.type !== "done") begin();
         if (e.type === "first") {
           jvMark("newsFirst");
           const f = e as { en?: string; ta?: string };
@@ -1410,13 +1420,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         else if (e.type === "error") st.fail = String((e as { why?: string }).why ?? "failed");
       }, alive);
     } catch {
-      if (!alive() || signal.aborted) return true;
+      if (!alive() || signal.aborted) return "aborted";
       st.fail = "failed";
     }
-    if (!alive()) return true;
+    if (!alive()) return "aborted";
     setStageBusy(null);
     hud.set({ doing: "" });
-    if (st.none && !st.answered) { lastFound.current = null; return false; }
+    // v9: a soft probe that found nothing close, or failed before it found anything (a 429, a 5xx, the network, an error event), says
+    // nothing and goes on to the lanes; once it found a story, the turn is the news's, its failure said as any news turn's
+    if (soft && !found && !st.answered) { lastFound.current = null; return "none"; }
+    if (st.none && !st.answered) { lastFound.current = null; return "none"; }
     if (!st.answered) {
       // nothing came back to tell: say why, on whatever screen is up (and no old story is left to offer)
       if (na.kind === "find") lastFound.current = null;
@@ -1424,14 +1437,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       earcon("blocked");
       out(failLine(st.fail ?? "failed", lang), lang, "ready");
       remember(heardText, na.kind === "lookup" ? "tried to look it up on the web: nothing came back" : "tried to read the news report: nothing came back");
-      return true;
+      return "done";
     }
     const all = (lang === "ta" ? st.ta : st.en).join(" ");
     pushMsg({ who: "jarvis", text: all, lang });
     remember(heardText, na.kind === "lookup" ? "looked it up on the web and said what it found, with sources" : "read the news report and other outlets' coverage aloud, with links", { doc: stageRef.current });
     const done = () => setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
     if (q?.speaking) { setPhase("speaking"); q.then(done); } else done();
-    return true;
+    return "done";
   };
 
   const draftMany = async (ids: string[], lang: Lang) => {
@@ -1708,12 +1721,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
     if (!original && v8) {
-      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current,
-        panel: onNewsPanel(stageRef.current, buildState()), cases: casesOnStage(stageRef.current) });
+      const onScreen8 = newsOnScreen(stageRef.current, buildState());
+      const n8 = newsLane8(said, { news: onScreen8, world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current,
+        panel: onNewsPanel(stageRef.current, buildState()), cases: caseInFocus(stageRef.current, buildState(), onScreen8.incident, said) });
       if (n8) {
         const t0 = performance.now();
-        // (v9: a soft find, a story-like topic with no news word, that found nothing close goes on to the lanes below, as v8 sent it)
-        if (await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal)) {
+        // (v9: a soft find, a story-like topic with no news word, that found nothing close goes on to the lanes below, as v8 sent it; a
+        // probe cut off records no decision)
+        const r8n = await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal);
+        if (r8n === "aborted") return;
+        if (r8n === "done") {
           decide({ kind: "answer", query: said, lang: ulang ?? "en", lane: "instant", ms: performance.now() - t0 });
           return;
         }

@@ -134,6 +134,12 @@ export const onNewsPanel = (stage: BrowserCtx["stage"], state: Pick<ScreenState,
 
 /** v9: the open Stage shows a list of cases (a soft find never runs over one) */
 export const casesOnStage = (stage: BrowserCtx["stage"]): boolean => !!stage && stage.blocks.some((b) => b.kind === "CaseList" && Array.isArray(b.rows) && b.rows.length > 0);
+/** v9, the review (19 Nov): a case is in focus, so a story-like topic means it, not the news: a case list or a case on the Stage, the console's
+ * incident open, or "the X one" over the console's own list ("tell me about the Adyar fire" with that case open is the planner's) */
+export const caseInFocus = (stage: BrowserCtx["stage"], state: Pick<ScreenState, "list">, incident: string | null | undefined, said: string): boolean =>
+  casesOnStage(stage) || !!stage?.blocks.some((b) => b.kind === "CaseDetail") || !!incident ||
+  // (the console's state carries its list; a request body and the runners carry only its length)
+  (/\bone\b/i.test(said) && (state.list?.length ?? (state as { listLength?: number }).listLength ?? 0) > 0);
 
 /** v8: a case on the open Stage's list the sentence points at (refs8.ts), or null */
 export function refLane8(said: string, stage: BrowserCtx["stage"]): { op: "open" | "explain"; n: number } | null {
@@ -149,7 +155,7 @@ export const userLang8 = (said: string, last: Lang | null): Lang => replyLang8(s
 export function browserLaneV8(said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null }): BrowserLane {
   if (!understandV8()) return browserLaneV7(said, c);
   const lang = userLang8(said, c.lastLang ?? null);
-  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: onNewsPanel(c.stage, c.state), cases: casesOnStage(c.stage) });
+  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: onNewsPanel(c.stage, c.state), cases: caseInFocus(c.stage, c.state, c.incident ?? c.news.incident, said) });
   if (n8 && !(n8.kind === "find" && n8.soft)) return { lane: "news", na: n8, lang };
   const behind = ((): BrowserLane => {
     // a case on the list on screen, by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க")
