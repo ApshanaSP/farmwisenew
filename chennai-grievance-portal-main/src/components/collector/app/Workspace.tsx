@@ -127,17 +127,17 @@ export function CustomizeBody({ c }: { c: Console }) {
         {([["briefing", "Briefing: written briefing, department follow-ups, news-only incidents"], ["trends", "Trends: categories over time, taluks, spikes, hotspots"],
           ["environment", "Environment & markets: rain, air, reservoirs, mandi prices by Chennai market, developing stories"],
           ["studio", "Data Studio: add a department's file or link; AI cleans, maps, links and explains it"]] as const).map(([k, t]) => (
-          <label key={k} className="chk"><input type="checkbox" checked={l.pages[k]} onChange={(e) => setPage(k, e.target.checked)} />{t}</label>
+          <label key={k} className="chk"><input type="checkbox" checked={l.pages[k]} onChange={(e) => setPage(k, e.target.checked)} data-voice={`customize.page.${k}`} />{t}</label>
         ))}
       </section>
       <section>
         <h4>Overview panels</h4>
         {([["map", "Satellite map"], ["snapshot", "District snapshot"], ["brief", "Latest news"], ["severity", "Severity-based incidents"], ["tasks", "My tasks"]] as const).map(([k, t]) => (
-          <label key={k} className="chk"><input type="checkbox" checked={l.panels[k]} disabled={l.panels[k] && panelCount === 1} onChange={(e) => setPanel(k, e.target.checked)} />{t}</label>
+          <label key={k} className="chk"><input type="checkbox" checked={l.panels[k]} disabled={l.panels[k] && panelCount === 1} onChange={(e) => setPanel(k, e.target.checked)} data-voice={`customize.panel.${k}`} />{t}</label>
         ))}
         <h4 style={{ marginTop: 14 }}>Headline cards</h4>
         {Object.entries(KPI_LABELS).map(([k, t]) => (
-          <label key={k} className="chk"><input type="checkbox" checked={l.kpis.includes(k)} onChange={() => toggleKpi(k)} />{t}</label>
+          <label key={k} className="chk"><input type="checkbox" checked={l.kpis.includes(k)} onChange={() => toggleKpi(k)} data-voice={`customize.kpi.${k}`} />{t}</label>
         ))}
       </section>
       <div className="cust-f">

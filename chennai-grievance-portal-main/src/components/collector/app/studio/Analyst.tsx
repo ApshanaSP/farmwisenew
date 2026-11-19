@@ -92,7 +92,7 @@ export function AlertsTab({ data, id, c, onChanged }: { data: DatasetData; id: s
       <form className="ds-alert-f" onSubmit={(e) => { e.preventDefault(); add(); }}>
         <label>Tell me when…</label>
         <div><input value={text} onChange={(e) => setText(e.target.value)} placeholder="any zone has more than 20 open works" maxLength={280} aria-label="Alert" />
-          <button className="ds-btn sm" disabled={busy || text.trim().length < 6}>{busy ? <span className="ds-spin sm" /> : <I n="plus" />}Add</button></div>
+          <button className="ds-btn sm" disabled={busy || text.trim().length < 6} data-jarvis-never>{busy ? <span className="ds-spin sm" /> : <I n="plus" />}Add</button></div>
         {msg && <small className="ds-alert-m">{msg}</small>}
       </form>
       {!data.alerts.length && (

@@ -9,7 +9,7 @@
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
  * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
-import { keepsSomething, workspaceIds } from "./guards";
+import { workspaceIds } from "./guards";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Overview } from "@/lib/collector/intel";
@@ -41,7 +41,8 @@ import { spokenPart as spoken } from "@/lib/thunai/chunker";
 import { ackFor, ackTemplated, localStageCommand, narrationOf, stageDigest, stageReducer, toCsv, type LocalCmd, type StageEffect, type StageModel } from "@/lib/thunai/stagelocal";
 import { cannotLine, NO_MODEL_LINE } from "@/lib/thunai/reach";
 import type { Console } from "../CollectorApp";
-import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
+import { byName, clickables, frontRows, press, pressControl, readChart, scroll, spotlight, targetFor, typeInto, verdictFor, visibleControls, type Clickable } from "./dom";
+import { candidates10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
@@ -75,7 +76,6 @@ import type { StudioContext } from "../studio/Dataset";
 import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import { confirmLine } from "@/lib/thunai/say";
-import { isDangerButton } from "@/lib/thunai/skeleton";
 import { stageShownText } from "@/lib/thunai/shown";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
@@ -400,6 +400,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const lastSteps = useRef<Step[]>([]);
   /** the incident an "item" step opened in the plan now running */
   const justOpened = useRef<string | null>(null);
+  /** v10: the row of the window's list opened last by voice, for "next" and "previous" there */
+  const rowAt = useRef<number | null>(null);
   /** the last four turns, so "same for Adyar" and "open that" make sense to the brain: what was heard and done, the screen's recipe
    * and slots, and a one-line result (turnstate.ts memTurn: no citizen's words, no figure a model wrote); all four go to the round */
   const turns = useRef<MemTurn[]>([]);
@@ -736,6 +738,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         else window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         return null;
       case "item": {
+        // v10: the window open's own list, as shown ("open the third one" in the Incident list window), before the Overview's list behind it
+        const rows = frontRows(h.modal ?? null);
+        if (rows) {
+          const r = itemPick(step.which, rows.length, rowAt.current);
+          if ("none" in r) return line("noItem", lang);
+          if ("past" in r) return lang === "ta" ? `பட்டியலில் ${r.past} மட்டுமே உள்ளன.` : `There ${r.past === 1 ? "is only 1 item" : `are only ${r.past} items`} in the list.`;
+          rowAt.current = r.idx;
+          press(rows[r.idx]);
+          return null;
+        }
         const st = buildState();
         if (!st.list.length) return line("noItem", lang);
         let idx = typeof step.which === "number" ? step.which - 1 : st.list.indexOf(st.incident ?? "") + (step.which === "next" ? 1 : -1);
@@ -812,10 +824,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         setNumbers(null);
         if (!t) return line("notUnderstood", lang, { heard: heardText, examples: "show numbers, click 3" });
         // Jarvis never presses send, approve or delete, by number or by name
-        // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never)
-        if (t.el.closest("[data-jarvis-never]") || isDangerButton(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
-        // saving, pinning or a bare "Yes" keeps something (level B): a spoken click never presses it, the Collector's tap does (BUG-014)
-        if (keepsSomething(t.name, t.el.textContent)) return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
+        // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never); saving, pinning or a bare
+        // "Yes" keeps something (level B): a spoken click never presses it, the Collector's tap does (BUG-014). v10: one verdict for both
+        // (press10.ts pressVerdict), with the harmless controls a word in their name refused let through by element (the chatbot's Send, …)
+        const v = verdictFor(t.el, t.name ?? "");
+        if (v === "never") return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
+        if (v === "keep") return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
         press(t.el);
         return null;
       }
@@ -1751,7 +1765,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!original && understandV10()) {
       const st10 = buildState();
       const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
-        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7() });
+        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)) });
       if (f10.lane?.lane === "wait") {
         // nothing said: the rest of the sentence is joined to it when it comes (joinCut), and Jarvis keeps listening
         cutRef.current = { text: said, at: Date.now() };
@@ -1792,9 +1806,45 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (f10.lane.which) { earcon("need"); out(lg === "ta" ? f10.lane.which.ta : f10.lane.which.en, lg, "waiting"); return; }
         if (f10.lane.level === "never") { earcon("blocked"); out(lg === "ta" ? "அதை நீங்களே தட்ட வேண்டும்." : "That one is yours to tap.", lg, "ready"); return; }
         if (f10.lane.steps?.length) {
-          if (needsName(planRisk(f10.lane.steps), lg)) return;
+          const risk = planRisk(f10.lane.steps);
+          if (needsName(risk, lg)) return;
           setBrainNow({ by: "instant", model: null, ms: 0 });
+          // a level-B step (forget everything) waits for the Collector's yes, as the rules' own
+          if (risk === "B") { gateB(f10.lane.steps, said, lg); return; }
           await run(f10.lane.steps, lg, said, "rules");
+          return;
+        }
+        // v10: the control itself pressed (dom.ts pressControl): through its menu, past the one guard (data-jarvis-never, the danger and keep
+        // words, the allow list), a select set to the option said, a checkbox ticked, a box typed into; Jarvis's own cards only when marked own.
+        // A level-B control (it keeps something) asks first and is pressed on the Collector's yes
+        const cl = f10.lane;
+        if (cl.press) {
+          const lvl = cl.level === "B" || cl.level === "C" ? cl.level : "A";
+          if (needsName(lvl, lg)) return;
+          setBrainNow({ by: "instant", model: null, ms: 0 });
+          const t0 = performance.now();
+          const go = async (yes: boolean) => {
+            const r = await pressControl(cl.press!, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes });
+            remember(said, `pressed ${cl.id}`, { doc: null });
+            audit(said, [], `control ${cl.id}: ${r.ok ? "pressed" : r.why}`);
+            decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
+            if (r.ok) { earcon("done"); setPhase("ready"); return; }
+            const say = r.why === "never" ? (lg === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.")
+              : r.why === "keep" ? (lg === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே." : "Saving and pinning need your tap.")
+                : r.why === "noOption" ? (lg === "ta" ? "அந்தத் தேர்வு அந்தப் பட்டியலில் இல்லை." : "That option isn't in that list.")
+                  : (lg === "ta" ? "அது இப்போது திரையில் இல்லை. \"எண்களைக் காட்டு\" என்று சொல்லுங்கள்." : "I don't see that on the screen now. Say show numbers.");
+            earcon(r.why === "missing" || r.why === "noOption" ? "need" : "blocked");
+            out(say, lg, "ready");
+          };
+          if (lvl === "B") {
+            const name = lg === "ta" ? cl.label?.ta ?? cl.id : cl.label?.en ?? cl.id;
+            const q = lg === "ta" ? `"${name}" அழுத்தட்டுமா? "ஆம்" என்று சொல்லுங்கள்.` : `Press "${name}"? Say yes.`;
+            setPendingB({ text: q, steps: [], heard: said, lang: lg, act: () => void go(true) });
+            earcon("need");
+            out(q, lg, "asking");
+            return;
+          }
+          await go(false);
           return;
         }
       }
@@ -1894,7 +1944,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // Studio's own analyst did. Going to another page ("go to trends") and the instant controls (stop, quieter) still work
     const sd = studioRef.current;
     const pageMove = rules.kind === "do" && rules.steps.length > 0 && rules.steps.every((x) => x.a === "page");
-    if (sd && hostRef.current.c.page === "studio" && !pageMove && !(rules.kind === "do" && isReflex(rules.steps, st))) {
+    // v10: a plain console command (a page, a panel, the theme, close, a named console filter) still reaches the console there (controls10.ts)
+    if (sd && hostRef.current.c.page === "studio" && !pageMove && !(rules.kind === "do" && (isReflex(rules.steps, st) || studioLetsThrough(said, rules.steps, rules.confidence)))) {
       audit(said, [], `to the dataset ${sd.name}`);
       await askDataset(sd, said, rules.lang); // eslint-disable-line @typescript-eslint/no-use-before-define
       return;

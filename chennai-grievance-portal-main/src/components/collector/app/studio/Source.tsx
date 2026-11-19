@@ -94,7 +94,7 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
                   <span className="ds-pop-ic"><I n={KIND_IC[x.kind] ?? "table"} /></span>
                   <div><b>{x.label}</b><small>{x.why}</small>{x.headers.length > 0 && <code>{x.headers.slice(0, 6).join(" · ")}</code>}</div>
                   <span className="ds-score" style={{ ["--s" as string]: `${x.score}%` }}><i />{x.score}</span>
-                  {x.id === cx.choice ? <em className="ds-inuse">In use</em> : <button className="ds-btn sm" onClick={() => { setOpen(null); onChoose(x.id); }}>Use this</button>}
+                  {x.id === cx.choice ? <em className="ds-inuse">In use</em> : <button className="ds-btn sm" onClick={() => { setOpen(null); onChoose(x.id); }} data-jarvis-never>Use this</button>}
                 </li>
               ))}
             </ul>
@@ -103,8 +103,8 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
         {open === "sync" && cx && (
           <motion.div className="ds-pop" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}>
             <header><b>Keep it up to date</b><small>A refresh reads the link again with the same sign-in. Nothing is rebuilt when the data has not changed; a failed refresh keeps the last good data.</small></header>
-            <div className="ds-seg wide">{EVERY.map((e) => <button key={String(e.v)} className={(cx.every ?? null) === e.v ? "on" : ""} onClick={() => schedule(e.v)}>{e.t}</button>)}</div>
-            <button className="ds-btn wide" onClick={() => { setOpen(null); onRefresh(); }}><I n="refresh" />Fetch now</button>
+            <div className="ds-seg wide">{EVERY.map((e) => <button key={String(e.v)} className={(cx.every ?? null) === e.v ? "on" : ""} onClick={() => schedule(e.v)} data-jarvis-never>{e.t}</button>)}</div>
+            <button className="ds-btn wide" data-jarvis-never onClick={() => { setOpen(null); onRefresh(); }}><I n="refresh" />Fetch now</button>
             {!live && <button className="ds-ghost wide" onClick={keep} title="A Live Connector reads the source on a schedule, adds what is new, says when data is late, and holds suspicious changes for your review"><I n="flow" />Keep this updated (Live Connector)</button>}
             {cx.lastError && <p className="ds-pop-err"><I n="alert" />{cx.lastError}</p>}
             <ol className="ds-hist">

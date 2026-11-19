@@ -704,7 +704,7 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
   const age = ins ? dataAge(ins.markets.byMarket.latest, ins.now) : null;
   const head = (
     <div className="ch"><I n="chart" /><h2>Vegetable and fruit prices</h2>
-      <div className="seg sm" style={{ marginLeft: "auto" }}>
+      <div className="seg sm" style={{ marginLeft: "auto" }} data-voice="markets.scope">
         <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">{age?.stale ? "Latest prices" : "Prices today"}</button>
         <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Chennai market side by side (Uzhavar Sandhai farmer markets)">Compare markets</button>
         <button className={scope === "chennai" ? "on" : ""} onClick={() => setScope("chennai")} title="Weekly average over Thiruvallur, Kancheepuram and Chengalpattu">Around Chennai</button>

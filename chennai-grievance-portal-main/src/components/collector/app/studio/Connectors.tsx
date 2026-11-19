@@ -123,11 +123,11 @@ export default function Connectors({ c, onOpen, onChanged }: { c: Console; onOpe
                 </div>
               )}
               <div className="ds-out-acts">
-                <button className="ds-btn sm" disabled={!!busy || !!k.proposal || !!k.quarantine} onClick={() => act(k.id, "run")}>{busy === `${k.id}:run` ? <span className="ds-spin sm" /> : <I n="play" />}<span lang={lang}>{t.run}</span></button>
-                <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, k.paused ? "resume" : "pause")}><I n={k.paused ? "play" : "stop"} /><span lang={lang}>{k.paused ? t.resume : t.pause}</span></button>
+                <button className="ds-btn sm" disabled={!!busy || !!k.proposal || !!k.quarantine} onClick={() => act(k.id, "run")} data-jarvis-never>{busy === `${k.id}:run` ? <span className="ds-spin sm" /> : <I n="play" />}<span lang={lang}>{t.run}</span></button>
+                <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, k.paused ? "resume" : "pause")} data-jarvis-never><I n={k.paused ? "play" : "stop"} /><span lang={lang}>{k.paused ? t.resume : t.pause}</span></button>
                 <button className="ds-ghost" aria-expanded={o === "edit"} onClick={() => setOpen((x) => ({ ...x, [k.id]: o === "edit" ? null : "edit" }))}><I n="cal" /><span lang={lang}>{t.edit}</span></button>
                 <button className="ds-ghost" aria-expanded={o === "history"} onClick={() => setOpen((x) => ({ ...x, [k.id]: o === "history" ? null : "history" }))}><I n="clock" /><span lang={lang}>{t.history}</span></button>
-                {k.locate === "newest-file-matching" && <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "backfill", { days: 10 })}><I n="download" /><span lang={lang}>{t.backfill}</span></button>}
+                {k.locate === "newest-file-matching" && <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "backfill", { days: 10 })} data-jarvis-never><I n="download" /><span lang={lang}>{t.backfill}</span></button>}
                 <button className="ds-ghost" onClick={() => onOpen(k.id)}><I n="right" /><span lang={lang}>{t.open}</span></button>
               </div>
               {o === "edit" && <ScheduleForm k={k} t={t} lang={lang} onSave={(s) => { act(k.id, "schedule", s); setOpen((x) => ({ ...x, [k.id]: null })); }} onCancel={() => setOpen((x) => ({ ...x, [k.id]: null }))} />}
