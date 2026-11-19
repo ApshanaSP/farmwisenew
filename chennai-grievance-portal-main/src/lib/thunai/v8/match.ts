@@ -104,8 +104,9 @@ export function stemsOf(word: string): string[] {
   return [...new Set(out)];
 }
 
-/** how close a heard key is to a name's key, by the research's length bands; 0 when not close enough */
-export function keySim(q: string, t: string): number {
+/** how close a heard key is to a name's key, by the research's length bands; 0 when not close enough. v9: `cut` false leaves out the "cut short"
+ * rule (a Tamil word is not an English word that begins like it: "maram", a tree, is not "marathon"; the review, 19 Nov) */
+export function keySim(q: string, t: string, cut = true): number {
   if (!q || !t) return 0;
   if (q === t) return 1;
   const n = q.length;
@@ -114,7 +115,7 @@ export function keySim(q: string, t: string): number {
   const dl = editDistance(q, t);
   if (n <= 7 ? jw >= 0.9 && dl <= 1 : jw >= 0.88 && dl <= 2) return jw;
   // a cut-off word: all but its last letter begin the longer name ("palikan" in "palikaranai")
-  if (n >= 5 && t.length >= n + 2 && t.startsWith(q.slice(0, -1))) return 0.9;
+  if (cut && n >= 5 && t.length >= n + 2 && t.startsWith(q.slice(0, -1))) return 0.9;
   // across scripts: the same consonants in the same order ("suprim" for "suprem")
   const sq = skeleton(q), st = skeleton(t);
   if (sq.length >= 4 && sq === st) return 0.88;

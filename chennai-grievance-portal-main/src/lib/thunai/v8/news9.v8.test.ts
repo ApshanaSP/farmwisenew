@@ -172,15 +172,17 @@ describe("v9: the event in the Collector's own Tamil words, against the store's 
     expect(findR("Tondiarpet kolai news padinga")?.pick?.id).toBe("m1");
     expect(findR("வியாசர்பாடி தீ விபத்து செய்தியைப் படிங்க")?.pick?.id).toBe("f1");
   });
-  it("a Tamil word that only spells like another is not that word (தட்டுப்பாடு is not தடுப்பது)", () => {
+  it("a water shortage report comes before the RBI's 'preventing' (தட்டுப்பாடு and தடுப்பது key alike: v8's, left as it was; the gloss lifts the real one)", () => {
+    // (the first v9 try dropped such spelling matches when the English title lacked the gloss; the review, 19 Nov, found it threw away real
+    // inflected matches, கொலையான, மழையால், so it is gone: the collision itself is older than v9)
     const ask = "Jarvis, குடிநீர் தட்டுப்பாடு பத்தி ஏதாவது செய்தி இருக்கா?";
-    expect(findR(ask)?.stories.map((s) => s.id) ?? []).not.toContain("w1");
     const withShortage = [...REAL, { id: "w3", title: "Drinking water shortage hits Ambattur residents", outlets: ["DT Next"], t: "2026-11-17 08:00" }];
     expect(find(ask, { items: withShortage })?.stories[0]?.id).toBe("w3");
   });
-  it("a capitalised name is no Tanglish verb ('Hindu' keeps its weight)", () => {
+  it("a capitalised name is no Tanglish verb ('Hindu' keeps its weight); a noun is none either ('vettu', a hacking: the review)", () => {
     expect(newsRequest("Hindu Munnani protest news padinga", {})?.weak ?? []).toEqual([]);
-    expect(newsRequest("Pattinapakam la vettu news sollunga", {})?.weak).toEqual(["vettu"]);
+    expect(newsRequest("Pattinapakam la vettu news sollunga", {})?.weak ?? []).toEqual([]);
+    expect(newsRequest("Marina la kudhirai mirandu odina news padinga", {})?.weak).toEqual(["mirandu"]);
   });
 });
 
