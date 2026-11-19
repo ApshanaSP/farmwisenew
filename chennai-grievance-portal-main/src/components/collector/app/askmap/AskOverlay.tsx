@@ -8,12 +8,13 @@
  * slower than before.
  */
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import { fmtDistance } from "@/lib/map/geom";
 import { I } from "../icons";
 import { Legend, type Overlay } from "./Chrome";
-import { downloadAnswer, googleMapsLink, saveView, visitOrder } from "./actions";
+import { downloadAnswer, googleMapsLink, planVisits, saveView, visitOrder } from "./actions";
+import { onMapCmd } from "./bridge";
 import type { MapAsk } from "./useMapAsk";
 
 const AskMapPanel = dynamic(() => import("./AskMapPanel"), { ssr: false, loading: () => <aside className="amp" aria-busy="true"><div className="amp-busy" style={{ margin: 14 }} /></aside> });
@@ -44,6 +45,20 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
   }, [ask.grown]);
   const r: AskResponse | null = ask.resp;
   const question = ask.history[ask.history.length - 1] ?? null;
+  // v10: Jarvis's voice opens the Export sheet and the Send dialog's drafts (bridge.ts "diq:map-cmd"); Approve stays the Collector's own tap
+  const live = useRef({ ask, role });
+  live.current = { ask, role };
+  useEffect(() => onMapCmd(["exportSheet", "send"], (op, a) => {
+    const { ask: m, role: who } = live.current;
+    const cur = m.resp;
+    if (!m.grown) return { ok: false, why: "closed" };
+    if (!cur || cur.kind !== "answer" || !cur.plan) return { ok: false, why: "no-answer" };
+    if (!cur.total) return { ok: false, why: "empty" };
+    if (op === "exportSheet") { setExporting(true); return { ok: true }; }
+    if (who !== "collector") return { ok: false, why: "role" };
+    setSending({ dept: typeof a.dept === "string" ? a.dept : null });
+    return { ok: true };
+  }), []);
   if (!ask.grown) {
     const label = r?.kind === "answer" ? r.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") : r?.kind === "brief" ? r.brief?.label.en : null;
     return (
@@ -64,11 +79,8 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
         onSend: role === "collector" ? (_a, dept) => setSending({ dept }) : undefined,
         onExport: exportIt,
         onSave: (a) => saveView(a, role, question).then((m) => toast(m)).catch((e) => toast(e.message, "alert")),
-        onVisits: role === "officer" ? (a) => {
-          const route = visitOrder(a, null);
-          if (!route.stops.length) { toast("No open case in this answer has an exact place to visit.", "alert"); return; }
-          ask.setRoute(route);
-        } : undefined
+        // the officer's button, and "plan my visits" said or typed on either console (the panel shows the button to the officer only)
+        onVisits: (a) => { if (!planVisits(a, ask.setRoute)) toast("No open case in this answer has an exact place to visit.", "alert"); }
       }} />
       <Legend r={r} overlays={overlays} />
       {layersMenu}

@@ -81,6 +81,32 @@ export function visitOrder(r: AskResponse, start: LatLon | null, max = 10): Rout
   return { stops: best, legs, total_m: bestLen, start };
 }
 
+/**
+ * The visit order put on the map ("Plan my visits", the officer's button; "plan my visits" said or typed on either console; Jarvis's field visit):
+ * the route, or null when no open case of the answer has an exact place. The card (AskOverlay's VisitCard) shows whenever a route is set.
+ */
+export function planVisits(r: AskResponse, setRoute: (route: Route) => void, start: LatLon | null = null): Route | null {
+  const route = visitOrder(r, start);
+  if (!route.stops.length) return null;
+  setRoute(route);
+  return route;
+}
+
+export type CueAct = { act: "send"; dept: string | null } | { act: "export" } | { act: "visits" } | null;
+/**
+ * What the panel does with a "ui" answer ("send these to SWD", "export", "plan my visits") on a console of this role. A cue already acted on
+ * (`seenSeq`, the last cue's seq the panel acted on, kept across its mounts) is not acted on again: the panel unmounts when the map shrinks, and
+ * growing it again must not reopen the Send dialog or the Export sheet by itself (v10, anatomy 4.4 bug 2); a cue that came before the panel's
+ * first mount is still acted on. "plan my visits" plans them on the Collector's console too (bug 1).
+ */
+export function cueAct(cue: { seq: number; ui: AskResponse["ui"]; dept: string | null } | null, role: "collector" | "officer", seenSeq: number | null): CueAct {
+  if (!cue || (seenSeq != null && cue.seq <= seenSeq)) return null;
+  if (cue.ui === "send") return role === "collector" ? { act: "send", dept: cue.dept } : null;
+  if (cue.ui === "export") return { act: "export" };
+  if (cue.ui === "visits") return { act: "visits" };
+  return null;
+}
+
 /** A Google Maps directions link for the route: coordinates only, at most 9 waypoints. Opened only by the officer's click. */
 export function googleMapsLink(route: Route): string {
   const pts = [...(route.start ? [route.start] : []), ...route.stops];
