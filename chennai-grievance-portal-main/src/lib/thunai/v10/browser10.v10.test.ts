@@ -113,6 +113,29 @@ describe("v10: the owner's replayed turns, dry (19 Nov): three misses", () => {
   });
 });
 
+describe("v10: no \"did you mean\" for an English word or a Tamil verb (v8's dev set, d-na-8 and d-na-12, the first dry run)", () => {
+  const lexB = buildLexicon([{ id: "v1", title: "வண்டலூர் உயிரியல் பூங்கா மீண்டும் திறப்பு", titleEn: "Vandalur Zoo to reopen tomorrow", t: "2026-11-17 20:20" },
+    { id: "b1", title: "Bharati statue cleaned before anniversary", t: "2026-11-18 10:00" }], world);
+  const c = (said: string): BrowserCtx10 => ({ stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: /[஀-௿]/u.test(said) ? "ta" : "en", v7: true, lex: lexB });
+  it.each(["பள்ளிக்கரணை பற்றி செய்தியில என்ன வந்திருக்கு?", "What's the latest on the bird flu at the zoo?"])("'%s' is not asked back", (said) => {
+    expect(browserLaneV10(said, c(said)).lane).not.toBe("confirm");
+  });
+  it("a name heard by ear still is ('Bharathi statue' is Bharati)", () => {
+    const b = browserLaneV10("tell me about the Bharathi statue", c("x"));
+    expect(findOf(b)?.entity?.name ?? (b.lane === "confirm" ? "asked" : null)).toBeTruthy();
+  });
+});
+
+describe("v10: a named event the lexicon does not know is still the news, never the look-up or the planner's memory (4.4)", () => {
+  it.each(["Tell me about the Zorbo protest", "what happened at the Kelvar fire?", "any update on the Mirvan accident"])("'%s' searches the news", (said) => {
+    const f = findOf(lane(said));
+    expect(f, said).not.toBeNull();
+  });
+  it.each(["Tell me about the protests in Adyar", "show the fire department's backlog", "open the Adyar fire"])("'%s' is not this lane's", (said) => {
+    expect(findOf(lane(said))?.entity ?? null).toBeNull();
+  });
+});
+
 describe("v10: a story on the screen named by its topic, with no news word (the owner's \"Open the GCC issue.\", 18 Nov)", () => {
   const panelStories = [{ id: "p1", title: "DRI Officials Seize 70 Kg Heroin Worth Rs 140 Crore In Chennai; Two Arrested", source: "DT Next" },
     { id: "p25", title: "GCC issues 124 de-occupation notices for coastal buildings", source: "The Hindu" }];
@@ -123,7 +146,9 @@ describe("v10: a story on the screen named by its topic, with no news word (the 
     expect(f?.onlyScreen).toBe(true);
     expect(b.lane === "news" && b.na.kind === "find" && b.na.soft).toBe(true);
   });
-  it.each(["Open the trends page.", "Open the Adyar complaints.", "Close the panel.", "Open the news panel."])("'%s' over the panel is not", (said) => {
+  it.each(["Open the trends page.", "Open the Adyar complaints.", "Close the panel.", "Open the news panel.",
+    // v8's own: "that one" and an outlet's story are its lanes' (v8's dev set, d-own-2 and d-ref-11, regressed in the first dry run)
+    "Open that one, that's Supreme Court order.", "Open the DT Next one."])("'%s' over the panel is not", (said) => {
     expect(findOf(onPanel(said))?.onlyScreen ?? false).toBe(false);
   });
   it("the server finds it among the screen's stories only", async () => {

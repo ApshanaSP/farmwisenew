@@ -44,6 +44,8 @@ const STOPWORDS = new Set(("a an the this that these those it its is are was wer
   "jarvis hey hi ok okay yes no sir madam la le ku pathi patthi paththi enna sollu sollunga padinga padi kaattu kaattunga thiranga thira pannunga pannu adha idha andha indha " +
   "seithi seidhi").split(/\s+/));
 const TA_STOP = /^(?:பற்றி|பத்தி|என்ன|சொல்லுங்க|சொல்லு|படிங்க|படி|காட்டு|காட்டுங்க|திறங்க|திற|செய்தி|நியூஸ்|அந்த|இந்த|அது|இது)/u;
+/** a Tamil verb's spoken and written endings (has come, is there, they said, it happened ...): never a name */
+const TA_VERB = /(?:ருக்கு|ருக்கா|ருக்கும்|ருக்கிறது|ருக்கின்றன|ச்சு|ச்சா|ந்தது|ந்துச்சு|றாங்க|ராங்க|ிங்க|ுங்க|ீங்க|ாங்க|ுது|ுதா|ிறது|ின்றன|ின்றது|கிறார்|கிறார்கள்|ட்டாங்க|ட்டார்|னார்|னாங்க|லாம்|ணும்|ணுமா|வேண்டும்)$/u;
 
 const wordsOf = (text: string): W[] => text.normalize("NFC").split(/[^\p{L}\p{M}\p{N}'’]+/u).filter(Boolean).map((raw) => {
   const f = fold(raw);
@@ -64,8 +66,10 @@ export function findMentions(text: string, lex: Entity10[], o: { kinds?: Entity1
       if (span.some((w) => w.stop || w.cls) && n > 1) break;
       const heard = span.map((w) => w.raw).join(" ");
       const hf = span.map((w) => w.f).join(" ");
-      // a lone English word is no name by ear ("fast", "sea", "park"): only an exact spelling counts for it
-      const english = n === 1 && /^[a-z]+$/.test(hf) && isEnglishWord(hf);
+      // an English word is no name by ear ("fast", "sea", "bird" is not Bharati: v8's dev set): a span with one counts only by an exact spelling
+      const english = span.some((w) => /^[a-z]+$/.test(w.f) && isEnglishWord(w.f));
+      // nor a Tamil verb or a word with a verb's ending ("வந்திருக்கு" is not Vandalur's வண்டலூர்)
+      if (span.some((w) => /[஀-௿]/u.test(w.raw) && TA_VERB.test(w.raw.normalize("NFC")))) break;
       if (hf.replace(/\s+/g, "").length < 3) continue;
       // the class word right before or after the run ("Cyclone Aquan", "Murasar Saikilon", "அக்வான் புயல்")
       const cls = ws[i - 1]?.cls ?? ws[i + n]?.cls ?? null;

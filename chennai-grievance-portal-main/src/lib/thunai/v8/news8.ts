@@ -469,9 +469,13 @@ const docOf = (x: StoryItem): Doc => {
 };
 
 /** one topic word, worked out once: its key, its stems' keys, its English stem, and (v9) its gloss's English forms (GLOSS8) */
-interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null; gloss: string[] | null }
+interface QWord { w: string; k: string; stems: string[]; en: string | null; says: string[] | null; gloss: string[] | null;
+  /** v10: a long English word (six letters or more): matched by its spelling, never by its consonants alone ("volcano" is not வழக்கின், both
+   * v-l-k-n: the real store, 19 Nov); the consonants-only match is for a name heard by ear ("suprim") and a short word across scripts ("court") */
+  engLong: boolean }
 const qOf = (w: string, gloss: string[] | null = null): QWord =>
-  ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null, gloss });
+  ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null, gloss,
+    engLong: w.length >= 6 && /^[a-z]+$/.test(w) && isEnglishWord(w) });
 
 /** a long name cut short by the ears ("Palikana" for Pallikaranai): the same first six letters or more, most of the shorter word */
 const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
@@ -482,15 +486,15 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
   if (q.says && q.says.every((k) => d.keys.has(k))) return 1;
   let best = 0;
   for (const { k: tk, en: ten, eng } of d.byFirst.get(q.k[0]) ?? []) {
-    const mk = `${q.k}|${tk}|${eng ? 1 : 0}`;
+    const mk = `${q.k}|${tk}|${eng ? 1 : 0}|${q.engLong ? 1 : 0}`;
     let s = memo.get(mk);
     if (s === undefined) {
       // (v9: a headline word that is an English word is not reached by the "cut short" or shared-head rules: those are for a name the ears cut
       // short, "Palikan", and a Tamil word in its Tamil ending, மரம் in மரங்கள்; "maram", a tree, is not "marathon": the review, 19 Nov)
-      s = keySim(q.k, tk, !eng);
-      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk, !eng) * 0.98);
+      s = keySim(q.k, tk, !eng, !q.engLong);
+      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk, !eng, !q.engLong) * 0.98);
       if (s < 0.8 && q.en && ten && q.en === ten) s = 0.92;
-      if (s < 0.8 && q.k.length >= 4 && tk.length >= 4 && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
+      if (s < 0.8 && !q.engLong && q.k.length >= 4 && tk.length >= 4 && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
       if (s < 0.8 && !eng) { const h = sharedHead(q.k, tk); if (h >= 6 && h >= 0.6 * Math.min(q.k.length, tk.length)) s = 0.85; }
       memo.set(mk, s);
     }

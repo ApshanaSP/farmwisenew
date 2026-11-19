@@ -18,7 +18,7 @@ import type { Lang, Step } from "../types";
 import { mapCommand10, type MapCmd, type MapCtx10 } from "./map10";
 import { controlCommand10, type ControlHit } from "./controls10";
 import { browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "../v8/browser";
-import { topicWords } from "../v8/news8";
+import { newsRequest, topicWords } from "../v8/news8";
 import { userLang8 } from "../v8/browser";
 import { classMention, findMentions, type Mention } from "./entity10";
 import type { Entity10 } from "./lexicon10";
@@ -182,7 +182,9 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // 4. a story on the screen named by its topic with no news word ("Open the GCC issue." over the news panel: the owner, 18 Nov): a find among the
   // screen's stories only, soft (nothing that close: the lanes behind take the sentence, as v8 sent it)
   const main = sm.lists[0];
-  if (main?.kind === "news" && !consoleThing && SCREEN_VERB.test(said) && !NEWS_WORD.test(said) && !PANEL_WORD.test(said) && topicWords(said, null).length) {
+  // (only what v8's own news lane does not read: "open that one, that's ...", "the DT Next one", an outlet's story are its: v8's dev set)
+  if (main?.kind === "news" && !consoleThing && SCREEN_VERB.test(said) && !NEWS_WORD.test(said) && !PANEL_WORD.test(said) && topicWords(said, null).length
+    && !newsRequest(said, { onScreen: true })) {
     const items = main.items.filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
     return { lane: "news", na: { kind: "find", body: { find: { q: said.slice(0, 400), lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? String(x.source).slice(0, 300) : null })), onlyScreen: true } }, soft: true } as NewsAskT, lang, soft: browserLaneV8(said, c) };
   }

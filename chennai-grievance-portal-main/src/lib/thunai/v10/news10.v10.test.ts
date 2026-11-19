@@ -49,6 +49,20 @@ describe("v10: the Tamil-script loanwords for the news are news words", () => {
   });
 });
 
+describe("v10: a long English word is never matched by its consonants alone (the real store, 19 Nov)", () => {
+  it("'volcano' is not வழக்கின் (of the case): both are v-l-k-n", () => {
+    const items = [{ id: "per", title: "பெரியார் அறிவுலக ஊழல்! திமுக வழக்கின் விசாரணை ஒத்திவைப்பு!", titleEn: "Periyar World corruption! DMK case hearing adjourned!", place: "Chennai" }];
+    const r = newsRequest("Is there any news about a volcano in Chennai?")!;
+    const ranked = rankStories(r, items);
+    expect(ranked[0].hits).toBeLessThan(2);
+    expect(pickStory(ranked, "en").pick).toBeNull();
+  });
+  it("a by-ear form still is ('suprim' for Supreme), and a short word across scripts ('court' for கோர்ட்)", () => {
+    expect(pickStory(rankStories(newsRequest("open the suprim court news")!, [{ id: "sc", title: "Supreme Court stays the construction ban" }])).pick?.id).toBe("sc");
+    expect(rankStories(newsRequest("court news padinga")!, [{ id: "k", title: "கோர்ட் உத்தரவு: கட்டுமானத் தடை" }])[0].hits).toBeGreaterThan(0);
+  });
+});
+
 describe("v10: two stories as close, the one in the request's language", () => {
   it("an English request about Cyclone Akvan reads an English report when a Tamil one scores as close (the dry replay, 19 Nov)", () => {
     const items = [
