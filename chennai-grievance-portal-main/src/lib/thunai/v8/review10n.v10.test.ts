@@ -240,3 +240,72 @@ describe("v10 review 2, round 2: news-4c, 'number twenty one' is the 21st (low)"
     expect(what(browserLaneV8("open news number twenty one", ctx))).toBe("read:s21");
   });
 });
+
+describe("v10 review 2, round 3: news-3, the dead or murdered person a story names is private however it is said (high)", () => {
+  const PANEL = [{ id: "gold", title: "Gold rate today in Chennai", source: "DT Next" }, { id: "enn", title: "Ennore murder: victim identified as fisherman, three held", source: "DT Next" }];
+  const DOCS: Record<string, StoredDoc> = Object.fromEntries(PANEL.map((p) => [p.id, { id: p.id, url: `https://www.dtnext.in/news/chennai/${p.id}`, title: p.title, publisher: "DT Next", publisher_domain: "dtnext.in",
+    body: `${p.title}. Police said the victim, whose name, age and home address the report prints in full, was found on Tuesday night near the fishing harbour. Three men were held on Wednesday and produced before a magistrate.`, t: "2026-11-18 10:00" }]));
+  const RUNGS: Rung[] = [{ provider: "groq", model: "stub-model" } as Rung];
+  const writer = (calls: RungCall[]): OpenRung => async (rung, c, onText) => { calls.push(c); onText("GAP: none\nDT Next reports it. [F1]\n"); return { provider: rung.provider, model: rung.model, tokens: 10, firstMs: 1, ms: 2, stop: null }; };
+  const deps = (calls: RungCall[]) => ({ loadDoc: async (id: string) => DOCS[id] ?? null, related: false, telemetry: () => undefined,
+    aide: newsAide(world, { user: "probe", write: { open: writer(calls), rungs: () => RUNGS } }),
+    find: async () => ({ kind: "story", words: ["ennore"], pick: { id: "enn", title: PANEL[1].title, outlet: "DT Next" }, other: null, stories: [] }) }) as never;
+  const ctx = (lang: "en" | "ta") => ({ stage: null, news: { items: PANEL, incident: null, reading: null }, state: state({ panel: "news" }), world, listenLang: lang, heardLang: lang, incident: null, v7: true, lastLang: null, lastFound: null }) as never;
+  it.each(["read the Ennore murder story and tell me the dead man's name", "read the Ennore murder story and tell me the murdered fisherman's name",
+    "Ennore murder news padinga, kolai aanavar peru enna", "எண்ணூர் கொலை செய்தியை படிங்க, கொல்லப்பட்டவர் யார்",
+    // (one word away: the name asked first, "who", Tanglish "yaaru", a Tamil name, another word for the dead)
+    "tell me the name of the murdered fisherman", "who was the dead woman in the Ennore story?", "Ennore news la kolai aanavar yaaru", "கொல்லப்பட்ட மீனவரின் பெயர் என்ன", "இறந்தவர் யார்"])(
+    "%s: the round refuses it, no writer is called", async (q) => {
+      const lang = /[஀-௿]/u.test(q) ? "ta" : "en";
+      const bl = browserLaneV10(q, ctx(lang)) as any;
+      const calls: RungCall[] = [];
+      if (bl?.lane === "news" && (bl.na.kind === "read" || bl.na.kind === "find")) for await (const e of newsEvents(NewsBody.parse(bl.na.body), deps(calls))) void e;
+      expect(calls.length).toBe(0);
+      expect(asksPrivate(q)).toBe(true);
+    });
+  it.each(["read the Ennore murder story", "Royapuram kolai news padinga", "how many people died in the Ennore fire?", "what is the number of dead in the Ennore fire?",
+    "எத்தனை பேர் கொல்லப்பட்டனர்", "Ennore la kolai aana news number 2 padinga", "read the news about the dead fish in the Adyar river"])("%s is not a private ask", (q) => {
+    expect(asksPrivate(q)).toBe(false);
+  });
+});
+
+describe("v10 review 2, round 3: news-9, an English word said in Tamil letters still finds its headline word by its consonants (medium)", () => {
+  const items: StoryItem[] = [
+    // (each other story at the place is the newer one: a tie on the place alone reads it)
+    { id: "mayor", title: "Mayor inspects stormwater drain work in Velachery", t: "2026-11-18 09:00" }, { id: "lake", title: "Velachery lake restoration work begins", t: "2026-11-19 09:00" },
+    { id: "power", title: "Power cut in Tambaram for six hours on Saturday", t: "2026-11-18 09:00" }, { id: "bus", title: "Tambaram bus stand renovation to begin", t: "2026-11-19 09:00" },
+    { id: "ration", title: "Ration shop staff in Ambattur go on strike", t: "2026-11-18 09:00" }, { id: "amb", title: "Ambattur estate fire doused", t: "2026-11-19 09:00" }];
+  it.each([["வேளச்சேரி மேயர் செய்தி படிங்க", "mayor"], ["தாம்பரம் பவர் கட் செய்தி படிங்க", "power"], ["அம்பத்தூர் ரேஷன் கடை செய்தி படிங்க", "ration"]] as [string, string][])(
+    "%s reads %s", async (q, want) => {
+      const r = await findNews({ q, lang: "ta" }, { world, stories: async () => items });
+      expect(r?.picked.pick?.id ?? null).toBe(want);
+    });
+});
+
+describe("v10 review 2, round 3: news-4, 'any' said with -avadhu (edhavadhu, ஏதாவது) is no position (medium)", () => {
+  const ctx = panelCtx(PANEL23);
+  it.each(["edhavadhu oru news padinga", "ஏதாவது ஒரு செய்தியை படிங்க", "read the article, ethavathu important irukka",
+    // (one word away: anyone, sometime)
+    "yaaravadhu pathi news padinga", "எப்போதாவது வந்த செய்தியை படிங்க"])("%s: not 'which report?'", (t) => {
+    expect(what(browserLaneV10(t, /[஀-௿]/u.test(t) ? panelCtx(PANEL23, "ta") : ctx))).not.toBe("which:none");
+  });
+  it("a word in an ordinal's form that no position reads still names no story ('moonzhaavadhu')", () => {
+    const r = newsAsk("moonzhaavadhu news padinga", { items: PANEL23 }, { v7: true }) as any;
+    expect(r?.kind === "read" && r.body.id === "s1").toBe(false);
+  });
+});
+
+describe("v10 review 2, round 3: news-12, 'report aana' (was reported) is the press, not the console's own report (medium)", () => {
+  const ctx = { stage: null, news: { items: [], incident: null, reading: null }, state: state(), world, listenLang: "en", heardLang: "en", incident: null, v7: true, lastLang: null, lastFound: null } as never;
+  const ctxTa = { ...(ctx as object), listenLang: "ta", heardLang: "ta" } as never;
+  it.each(["Pallikaranai news padinga", "Pallikaranai pathi nethu report aana news padinga", "Ennore murder pathi innaiku report aana news sollunga", "இன்னைக்கு ரிப்போர்ட் ஆன பள்ளிக்கரணை செய்தி படிங்க",
+    // (one word away: "report aachu", "report pannina", ரிப்போர்ட்டான)
+    "Pallikaranai pathi nethu report pannina news padinga", "நேத்து ரிப்போர்ட்டான பள்ளிக்கரணை செய்தி படிங்க"])("%s is a news find", (t) => {
+    expect(what(browserLaneV10(t, /[஀-௿]/u.test(t) ? ctxTa : ctx))).toBe("find:q");
+  });
+  it.each(["innaiku report kaattunga", "இன்னைக்கு ரிப்போர்ட் காட்டுங்க", "நேத்து ரிப்போர்ட்டை காட்டுங்க",
+    // (the verb only as "that was reported": making or finishing the console's report is not the press)
+    "mazhai report panna sollunga", "மழை ரிப்போர்ட் பண்ண சொல்லுங்க", "weekly report aachaa sollunga", "வார ரிப்போர்ட் ஆச்சா சொல்லுங்க"])("%s is still the console's own report", (t) => {
+    expect(newsRequest(t)).toBeNull();
+  });
+});

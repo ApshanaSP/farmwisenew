@@ -100,8 +100,10 @@ const TELL_EN = [
 const TELL_TA = [/(?:இந்த|இந்தச்|அந்த|அந்தச்)\s*(?:செய்தி|சேதி|கட்டுரை|ரிப்போர்ட்)(?:யை|யைப்|யின்)?\s*(?:பற்றி|பத்தி)?\s*(?:சொல்|விளக்கு|சுருக்கமா)/u];
 const TELL_TG = [/\b(?:indha|andha|intha|antha)\s+(?:news|story|article|report|seithi)\s*(?:a\s*|ah\s*)?(?:pathi|patthi|paththi)?\s*(?:sollu|sollunga|explain pannu|enna)\b/];
 const NEWSY = /\b(?:article|news report|news item|coverage|papers|newspapers?|press|outlets?|hindu|times of india|dt ?next|indian express|dinamani|dinamalar|thanthi)\b/;
-/** v10 review 2, round 2 (news-4): a word in an ordinal's form ("-aavadhu", "-ாவது") that no position reads */
-const ORDISH = /^[a-z]{3,}(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)$|^[஀-௿]+ாவது$/u;
+/** v10 review 2, round 2 (news-4): a word in an ordinal's form ("-aavadhu", "-ாவது") that no position reads. (Round 3: never "any", "anyone",
+ * "sometime", "anywhere" or "at least", which take the same ending: edhavadhu, ஏதாவது, yaaravadhu, யாராவது, eppovadhu, எங்காவது, konjamaavadhu;
+ * "edhavadhu oru news padinga" asked "which report?" over an open panel) */
+const ORDISH = /^(?!e[dt]h|yaa?r|epp|eng|konj)[a-z]{3,}(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)$|^(?!ஏத|யார|எப்ப|எப்போ|எங்க|எதை|கொஞ்ச)[஀-௿]+ாவது$/u;
 /** an outlet: as said, as an item's source names it (a story's source may list several outlets), and its own name to say */
 const OUTLETS: [RegExp, RegExp, string][] = [
   // the second pattern is an outlet's WHOLE name as a screen lists it (one of a story's " · "-joined outlets): Hindu Tamil Thisai is not

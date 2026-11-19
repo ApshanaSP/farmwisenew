@@ -585,6 +585,9 @@ const qOf = (w: string, gloss: string[] | null = null): QWord =>
   ({ w, k: looseKey(w), stems: stemsOf(w).map(looseKey).filter((s) => s.length >= 4), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, says: SAYS_FOR[w]?.map(looseKey) ?? null, gloss,
     engLong: w.length >= 6 && /^[a-z]+$/.test(w) && isEnglishWord(w) });
 
+/** a key's consonants and vowel runs, in order ("meyar" and "mayor" are both CVCVC; "pokso" is CVCCV, "puks", books, CVCC) */
+const cvShape = (k: string): string => k.replace(/[aeiou]+/g, "V").replace(/[^V]/g, "C");
+
 /** a long name cut short by the ears ("Palikana" for Pallikaranai): the same first six letters or more, most of the shorter word */
 const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++; return i; };
 
@@ -611,7 +614,9 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
       if (s < 0.8 && q.en && ten && q.en === ten) s = 0.92;
       // (v10 review 2, round 2, news-9: against an English headline word, only a short request word, "kort" for court; a longer one's three
       // consonants are any English word's: "POCSO" (p-k-s) read "... the purchase of books" over the POCSO story itself)
-      if (s < 0.8 && !q.engLong && q.k.length >= 4 && tk.length >= 4 && (!eng || q.k.length <= 4) && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
+      // (v10 review 2, round 3: or a longer one whose vowels fall where the headline word's do, an English word said in Tamil letters: மேயர்
+      // "meyar" is Mayor, பவர் Power, ரேஷன் Ration, each consonant-vowel-consonant-vowel-consonant; "pokso" is still no "books")
+      if (s < 0.8 && !q.engLong && q.k.length >= 4 && tk.length >= 4 && (!eng || q.k.length <= 4 || cvShape(q.k) === cvShape(tk)) && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
       if (s < 0.8 && !eng) { const h = sharedHead(q.k, tk); if (h >= 6 && h >= 0.6 * Math.min(q.k.length, tk.length)) s = 0.85; }
       memo.set(mk, s);
     }
