@@ -80,7 +80,9 @@ function items(): Item8[] {
   return ONLY.length ? all.filter((x) => ONLY.includes(x.id)) : all;
 }
 
-const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as unknown as ScreenState;
+// (v10, the second review of v9: the console's overview always shows its severity tab's list, so "the X one" there is a case: listLength 3, as the
+// holdout and grid runners have it)
+const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } as unknown as ScreenState;
 type NewsRow = { id: string; source: string | null; title: string };
 interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[]; lex?: unknown[] | null; sem?: Parameters<typeof foundStory>[1]["sem"] }
 
@@ -112,7 +114,8 @@ const newsOn = (c: Ctx, s: Scene) => {
   if ((!s.stage || s.stage.slots?.web) && s.state.panel === "news") return { items: c.panel.map((x) => ({ id: x.id, source: x.source, title: x.title })), incident: null, reading: null };
   const nr = s.stage?.blocks.find((b) => b.kind === "NewsReader");
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
-  return { items: nr?.kind === "NewsReader" && !s.stage?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [], incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, reading: null };
+  // (v10, the second review: with no Stage, the console's own incident open or in the map's focus, as Thunai.tsx newsOnScreen has it)
+  return { items: nr?.kind === "NewsReader" && !s.stage?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [], incident: cd?.kind === "CaseDetail" ? cd.incident.id : s.stage ? null : ((s.state as { incident?: string | null }).incident ?? null), reading: null };
 };
 
 async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; source: "whisper" | "typed" }, noModel: boolean, o: Outcome8): Promise<{ stage: StageDocT | null; say: string | null }> {

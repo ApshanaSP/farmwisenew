@@ -1297,7 +1297,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // (v9: Jarvis's read of one story over the open panel, `slots.web`, leaves the panel's stories the news on screen: the review, 19 Nov)
     if ((!doc || doc.slots?.web) && cs.panel === "news") {
       const all = (hostRef.current.ov as { allNews?: { id: string; docIds?: string[]; outletNames?: string[]; title?: string }[] | null } | null)?.allNews ?? [];
-      return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.length ? x.outletNames.join(" · ") : null, title: x.title })), incident: null, reading: null };
+      // (v10, the second review of v9: under Jarvis's read of one story, "this story" is the one read, never the panel's first)
+      const readId = doc?.slots?.web && typeof doc.slots.read === "string" ? doc.slots.read : null;
+      return { items: all.map((x) => ({ id: x.docIds?.[0] ?? x.id, source: x.outletNames?.length ? x.outletNames.join(" · ") : null, title: x.title })), incident: null, reading: readId, afterRead: !!doc?.slots?.web };
     }
     const nr = doc?.blocks.find((b) => b.kind === "NewsReader");
     const cd = doc?.blocks.find((b) => b.kind === "CaseDetail");
@@ -1343,7 +1345,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     };
     // the screen: put up once without stopping the voice (putStage would cut the first line), then updated in place
     const draw = () => {
-      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", outlet: st.outlet, en: st.en, ta: st.ta, links: st.links });
+      // (v10: the story read is kept on its screen, so "this story" next means it: the second review of v9)
+      const readId = (found as { id: string } | null)?.id ?? (na.kind === "read" && "id" in na.body ? na.body.id : null);
+      const d = newsScreen({ lang, kind: na.kind === "lookup" ? "lookup" : "read", outlet: st.outlet, en: st.en, ta: st.ta, links: st.links, readId });
       if (!d || !alive()) return;
       if (!st.shown) {
         st.shown = true;

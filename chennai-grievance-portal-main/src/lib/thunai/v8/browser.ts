@@ -16,6 +16,7 @@ import { missionIntent } from "../missions.words";
 import { understand } from "../understand";
 import { isNavCommand, isPlainMove, isReflex } from "../plan";
 import { planRisk } from "../risk";
+import { asksPrivate } from "../privacy";
 import type { Lang, ScreenState, Step, World } from "../types";
 import { asksWhatToday, followAsk } from "@/components/collector/app/thunai/aide";
 import { understandV8 } from "./flag8";
@@ -106,6 +107,9 @@ const OTHER_ONE = /^(?:no,? |nope,? )?(?:the )?other (?:one|story|news|report|ar
 export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null; panel?: boolean; cases?: boolean }): NewsAskT | null {
   if (!understandV8()) return null;
   const t = said.trim();
+  // v10 (the second review of v9): what the console refuses for privacy (a victim's name, address, details) is never found or read here: the
+  // round's rules refuse it before any model
+  if (asksPrivate(t)) return null;
   // a mission or a memory request is never the news lane's; "brief me on the Minjur desal plant story" names a story, so it is
   const im = intentMarker(said);
   const briefOnStory = /\bbrief\b/i.test(t) && STORY_NOUN.test(t);
@@ -139,7 +143,8 @@ export const casesOnStage = (stage: BrowserCtx["stage"]): boolean => !!stage && 
 export const caseInFocus = (stage: BrowserCtx["stage"], state: Pick<ScreenState, "list">, incident: string | null | undefined, said: string): boolean =>
   casesOnStage(stage) || !!stage?.blocks.some((b) => b.kind === "CaseDetail") || !!incident ||
   // (the console's state carries its list; a request body and the runners carry only its length)
-  (/\bone\b/i.test(said) && (state.list?.length ?? (state as { listLength?: number }).listLength ?? 0) > 0);
+  // (v10, the second review: and "one" in Tanglish and Tamil, "IOCL fire onnu open pannunga", "அந்த ... ஒண்ணைத் திறங்க")
+  (/\b(?:one|onnu|onna|onnai)\b|ஒண்ண|ஒன்றை/iu.test(said) && (state.list?.length ?? (state as { listLength?: number }).listLength ?? 0) > 0);
 
 /** v8: a case on the open Stage's list the sentence points at (refs8.ts), or null */
 export function refLane8(said: string, stage: BrowserCtx["stage"]): { op: "open" | "explain"; n: number } | null {

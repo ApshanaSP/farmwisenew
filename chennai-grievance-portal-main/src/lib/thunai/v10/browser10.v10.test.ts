@@ -120,6 +120,11 @@ describe("v10: no \"did you mean\" for an English word or a Tamil verb (v8's dev
   it.each(["பள்ளிக்கரணை பற்றி செய்தியில என்ன வந்திருக்கு?", "What's the latest on the bird flu at the zoo?"])("'%s' is not asked back", (said) => {
     expect(browserLaneV10(said, c(said)).lane).not.toBe("confirm");
   });
+  it("a Tamil verb of what went or happened is no name ('திருட்டு போனது' was asked back as Pondy: news9, the dry run of 19 Nov)", () => {
+    const lexP = buildLexicon([{ id: "p1", title: "பாண்டி பஜாரில் நடைபாதை கடைகள் அகற்றம்", titleEn: "Pavement shops removed at Pondy Bazaar", t: "2026-11-18 10:00" }], world);
+    const said = "கோயில்ல திருட்டு போனது பத்தி ஏதாவது நியூஸ்?";
+    expect(browserLaneV10(said, { ...c(said), lex: lexP }).lane).not.toBe("confirm");
+  });
   it("a name heard by ear still is ('Bharathi statue' is Bharati)", () => {
     const b = browserLaneV10("tell me about the Bharathi statue", c("x"));
     expect(findOf(b)?.entity?.name ?? (b.lane === "confirm" ? "asked" : null)).toBeTruthy();

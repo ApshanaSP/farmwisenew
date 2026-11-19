@@ -26,7 +26,7 @@ const TG_END = ["avadhu", "aavadhu", "avathu", "aavathu", "vadhu", "vathu", "ava
 /** Tamil: a number's stem (without its closing vowel sign) and an ordinal ending (ஏழாவது, ஏழாவதை, ஏழாவதைத்) */
 const TA_STEM: [string[], number][] = [[["இரண்ட", "ரெண்ட"], 2], [["மூன்ற", "மூண"], 3], [["நான்க", "நால"], 4], [["ஐந்த", "அஞ்ச"], 5], [["ஆற"], 6], [["ஏழ"], 7], [["எட்ட"], 8],
   // (v9, the review: the spoken ஒம்பது, the spellings பன்னிரெண்டு and பதினோர், and the -ஆம் ordinal, ஏழாம்)
-  [["ஒன்பத", "ஒம்பத"], 9], [["பத்த"], 10], [["பதினொன்ற", "பதினோர"], 11], [["பன்னிரண்ட", "பன்னிரெண்ட"], 12],
+  [["ஒன்பத", "ஒம்பத"], 9], [["பத்த"], 10], [["பதினொன்ற", "பதினோர", "பதினொன்ன"], 11], [["பன்னிரண்ட", "பன்னிரெண்ட", "பன்னெண்ட"], 12],
   // v10: the teens, the twentieth and the thirtieth as one word (பதினெட்டாவது, இருபதாவது), and ஒன்றாவது
   [["பதின்மூன்ற", "பதிமூன்ற"], 13], [["பதினான்க", "பதினாலா"], 14], [["பதினைந்த", "பதினஞ்ச"], 15], [["பதினாற"], 16], [["பதினேழ"], 17], [["பதினெட்ட"], 18],
   [["பத்தொன்பத", "பத்தொம்பத"], 19], [["இருபத"], 20], [["முப்பத"], 30], [["ஒன்ற"], 1]];
@@ -36,7 +36,7 @@ EN_ORDS.forEach((w, i) => ORD_WORD.set(w, i + 1));
 for (const [stems, n] of TG_STEM) for (const s of stems) for (const e of TG_END) ORD_WORD.set(s + e, n);
 for (const [stems, n] of TA_STEM) for (const s of stems) for (const e of TA_END) ORD_WORD.set(s + e, n);
 for (const w of ["mudhal", "mudhalavadhu", "mudhalaavadhu", "mudhalavathu", "mudhalaavathu", "modhal", "முதல்", "முதலாவது", "முதலாவதை", "முதலாவதைத்"]) ORD_WORD.set(w, 1);
-for (const w of ["last", "final", "kadaisi", "kadasi", "kadaisiya", "கடைசி", "கடைசியை", "கடைசியைப்", "கடைசியா", "கடைசியாக"]) ORD_WORD.set(w, -1);
+for (const w of ["last", "kadaisi", "kadasi", "kadaisiya", "கடைசி", "கடைசியை", "கடைசியைப்", "கடைசியா", "கடைசியாக"]) ORD_WORD.set(w, -1);
 ORD_WORD.set("thirtieth", 30);
 
 /**
@@ -65,24 +65,30 @@ const taCompound = (w: string): number | null => {
   return null;
 };
 
-/** the words of a sentence (letters with their marks, or digits), lower case; "7-வது" and "7 வது" one word */
+/** the words of a sentence (letters with their marks, or digits), lower case; "7-வது", "7 வது" and (v10, the review) "7ஆம்", "7-ஆம்" one word */
 export const ordWordsOf = (text: string): string[] =>
-  text.normalize("NFC").toLowerCase().replace(/(\d)\s*-?\s*(வது|ஆவது)/gu, "$1$2").split(/[^\p{L}\p{M}\p{N}]+/u).filter(Boolean);
+  text.normalize("NFC").toLowerCase().replace(/(\d)\s*-?\s*(வது|ஆவது|ஆம்)/gu, "$1$2").split(/[^\p{L}\p{M}\p{N}]+/u).filter(Boolean);
 
-/** one word as a position (-1: the last): an ordinal word, or a number with an ordinal ending ("7th", "7வது", "7ஆவது"); else null */
+/** one word as a position (-1: the last): an ordinal word, or a number with an ordinal ending ("7th", "7வது", "7ஆவது", "7ஆம்"); else null */
 export const ordWord = (w: string): number | null => {
   const v = ORD_WORD.get(w);
   if (v != null) return v;
   // v10: a Tamil compound as one word (இருபத்திரண்டாவது)
   if (/^(?:இருபத்|முப்பத்)/u.test(w)) { const c = taCompound(w); if (c != null) return c; }
-  const m = /^(\d{1,2})(?:st|nd|rd|th|வது|ஆவது|ாவது|avadhu|aavadhu|avathu|vathu|vadhu)$/u.exec(w);
+  const m = /^(\d{1,2})(?:st|nd|rd|th|வது|ஆவது|ாவது|ஆம்|avadhu|aavadhu|avathu|vathu|vadhu)$/u.exec(w);
   return m && Number(m[1]) >= 1 ? Number(m[1]) : null;
 };
 /** v10: a tens word ("twenty", "irubathi", "இருபத்தி"): its value, else null */
 export const tensWord = (w: string | null | undefined): number | null => (w ? TENS.get(w) ?? null : null);
 
-/** the word after a position that makes it a street or a floor, not a place on a list */
-const STREET = /^(?:line|street|st|main|avenue|cross|road|lane|floor|block|stage|phase|sector)$/;
+/** the word after a position that makes it a street or a floor, not a place on a list. v10 (the second review of v9): and in Tamil (ஏழாவது
+ * தெரு, இரண்டாம் கட்ட), a date (ஏழாம் தேதி, "21st November"), a period ("the last one hour", "the last week") */
+const STREET = /^(?:line|street|st|main|avenue|cross|road|lane|floor|block|stage|phase|sector)$|^(?:தெரு|சாலை|குறுக்கு|மாடி|கட்ட|கட்டம்|கட்டத்|பிளாக்)/u;
+const DATE_AFTER = /^(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december|date)$|^(?:தேதி|ஜனவரி|பிப்ரவரி|மார்ச்|ஏப்ரல்|மே|ஜூன்|ஜூலை|ஆகஸ்ட்|செப்டம்பர்|அக்டோபர்|நவம்பர்|டிசம்பர்)/u;
+const PERIOD = /^(?:hour|hours|day|days|week|weeks|month|months|year|years|minute|minutes|night|nights|time|times|quarter|fortnight)$|^(?:மணி|நாள்|நாட்கள்|வாரம்|வார|மாதம்|மாத|ஆண்டு|வருட)/u;
+const ONE_WORD = /^(?:one|onnu|onna|ஒரு|ஒண்ணு)$/u;
+/** the month said before a number ("November 21st", "நவம்பர் பத்தாம்"): a date */
+const MONTH_BEFORE = /^(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)$|^(?:ஜனவரி|பிப்ரவரி|மார்ச்|ஏப்ரல்|ஜூன்|ஜூலை|ஆகஸ்ட்|செப்டம்பர்|அக்டோபர்|நவம்பர்|டிசம்பர்)$/u;
 
 /** Where a sentence names a position: its value (-1: the last), its word's index, the words around it (or null), whether it is said in the
  * accusative ("ஏழாவதை", "ezhavadhai": the thing itself, no noun needed), and what kind of word it is: an English one ("seventh", "7th",
@@ -90,7 +96,13 @@ const STREET = /^(?:line|street|st|main|avenue|cross|road|lane|floor|block|stage
  * "number 7" ("no. 9", "நம்பர் 7"; "no one" is no position: the review, 19 Nov). */
 export interface OrdinalAt { n: number; i: number; prev: string | null; prev2: string | null; next: string | null; acc: boolean; kind: "en" | "ta" | "number"; words: string[] }
 export function ordinalAt(text: string): OrdinalAt | null {
+  return ordinalsAt(text)[0] ?? null;
+}
+/** v10 (the second review of v9): every position a sentence names, in order ("Wait a second, read the third news": the second and the third;
+ * the callers take the first said as a position) */
+export function ordinalsAt(text: string): OrdinalAt[] {
   const w = ordWordsOf(text);
+  const out: OrdinalAt[] = [];
   for (let i = 0; i < w.length; i++) {
     let n = ordWord(w[i]);
     let at = i;
@@ -103,14 +115,19 @@ export function ordinalAt(text: string): OrdinalAt | null {
     if (n == null) continue;
     const next = w[at + 1] ?? null;
     if (next && STREET.test(next)) continue;
+    // v10 (the review): a date ("ஏழாம் தேதி", "21st November", "November 21st") or a period ("the last one hour", "the last week") is no position
+    if (next && (DATE_AFTER.test(next) || PERIOD.test(next))) continue;
+    if (next && ONE_WORD.test(next) && w[at + 2] && PERIOD.test(w[at + 2])) continue;
+    if (w[i - 1] && MONTH_BEFORE.test(w[i - 1]) && kind !== "number") continue;
     // v10: a tens word before a unit's ordinal is one position ("irubathi rendavadhu", "twenty second"): its words before the tens word are the
     // position's own ("open the twenty second news": "the" before it)
     const tens = kind !== "number" && n >= 1 && n <= 9 ? tensWord(w[i - 1]) : null;
     if (tens != null) n += tens;
     const b = tens != null ? i - 1 : i;
-    return { n, i: at, prev: w[b - 1] ?? null, prev2: w[b - 2] ?? null, next, acc: /(?:ை|ைத்|ைப்|ைச்|adhai|athai|aavadhai|aavathai)$/u.test(w[at]), kind, words: w };
+    out.push({ n, i: at, prev: w[b - 1] ?? null, prev2: w[b - 2] ?? null, next, acc: /(?:ை|ைத்|ைப்|ைச்|adhai|athai|aavadhai|aavathai)$/u.test(w[at]), kind, words: w });
+    i = at;
   }
-  return null;
+  return out;
 }
 
 /** the position a sentence names (-1: the last), or null */

@@ -16,8 +16,10 @@
  */
 import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { placeWord } from "./lang8";
-import { ordWord, ordWordsOf } from "./ord8";
+import { ordWord, ordWordsOf, ordinalsAt } from "./ord8";
 import { isEnglishWord } from "../english";
+import { AREA_WORDS } from "../areas";
+import { CAT_ALIASES, ZONES } from "../lexicon";
 
 /** what the Collector says short for a name the headlines spell out: each must be in the headline, all its words */
 const SAYS_FOR: Record<string, string[]> = { cm: ["chief", "minister"], hc: ["high", "court"], sc: ["supreme", "court"], dmk: ["dmk"], gcc: ["corporation"],
@@ -120,14 +122,51 @@ const EVENT = new RegExp(String.raw`\b(?:${EVENT_EN}|${EVENT_TG})\b|(?:^|\s)(?:$
  * review (19 Nov): and its Tamil and Tanglish nouns ("pugar", "sambavam", "nilavaram"), a situation or status, and a reminder or a note
  * ("Remind me to open the Royapuram protest at 5 pm", "what did I say about the Adyar fire? Read it") */
 const SOFT_NOT = new RegExp(String.raw`\b(?:departments?|dept|backlog|pending|overdue|sla|officers?|staff|charts?|graphs?|map|maps|page|panel|tab|trends?|ranking|rate|score|dashboard|list|table|counts?|numbers?|stats|statistics|data|summary|alerts?|warnings?|forecast|view|filter|category|categories|severe|severity|open cases|status|situation|` +
-  String.raw`pugar\w*|pugaar\w*|pukar\w*|sambav\w*|nilavaram|nilamai|remind\w*|notes?|noted|said|say|told|remember|recall|my|tomorrow|later|pm|o'?clock)\b|\bat \d|புகார்|மனு|மண்டல|வார்டு|நிலவரம்|நிலைமை|கேஸ்|ஞாபக|நினைவு`, "iu");
+  String.raw`pugar\w*|pugaar\w*|pukar\w*|sambav\w*|nilavaram|nilamai|remind\w*|nyabag\w*|nyaabag\w*|gnabag\w*|nyabak\w*|ninaivoot\w*|ninaivu\w*|notes?|noted|said|say|told|remember|recall|my|tomorrow|later|pm|o'?clock)\b|\bat \d|புகார்|மனு|மண்டல|வார்டு|நிலவரம்|நிலைமை|கேஸ்|ஞாபக|நினைவு`, "iu");
 /** v9, the review: the console's lists, not one story: an event in the plural ("the protests in Royapuram"), all or every, today's */
 const SOFT_MANY = /\b(?:protests|agitations|demonstrations|strikes|rallies|fires|blasts|explosions|accidents|crashes|collisions|collapses|murders|killings|stabbings|attacks|assaults|arrests|raids|seizures|busts|robberies|burglaries|thefts|frauds|scams|suicides|deaths|drownings|clashes|riots|evictions|demolitions|leaks|outbreaks|all|every|each|ellam|ellaam|anaithu|today'?s?|todays|tonight|yesterday'?s?|daily|weekly)\b|\b(?:this|last) (?:week|month|year)\b|அனைத்து|எல்லா/iu;
 /** v9, the review: words that name no particular event ("open the road accident deaths", "the Adyar fire": a place or a kind of thing is the
  * console's view of it) */
-const GENERIC_WHICH = new Set(("road roads traffic public city chennai district local major minor big small huge new old recent latest water drainage sewage garbage " +
+const GENERIC_WHICH = new Set([...("road roads traffic public city chennai district local major minor big small huge new old recent latest water drainage sewage garbage " +
   "power electricity street streets light lights area areas people residents resident man men woman women youth boy boys girl girls child children police cop cops " +
-  "govt government state one two three four five first second").split(/\s+/));
+  "govt government state one two three four five first second " +
+  // v10 (the second review of v9): a kind of thing the console files a case under ("the stray dog attack", "the wall collapse", "the chain
+  // snatching", "the bus accident" are its category views), and a time in Tamil ("இந்த வாரம்")
+  "stray dog dogs cattle cow cows animal animals wall walls building buildings chain bus buses bike bikes car cars lorry lorries truck trucks van auto autos " +
+  "vehicle vehicles house houses hut huts shop shops tree trees pothole potholes manhole drain drains toilet toilets " +
+  "varam vaaram vaarathula naal masam maasam matham maatham innaiku inniku indru netru nethu").split(/\s+/),
+  ...Object.values(CAT_ALIASES).flat().filter((a) => /^[a-z]{3,}$/.test(a))]);
+/** v10 (the second review of v9): a place by ear, as the console spells it or not: in Tamil letters romanised ("ataiyaru"), with a case ending
+ * joined on ("adyarla", "ataiyaril"), or a letter off ("Velacheri", "Kodungayur"); a soft request's naming word is never one */
+let PLACE_KEYS: Map<string, string[]> | null = null;
+const placeKeys = (): Map<string, string[]> => {
+  if (PLACE_KEYS) return PLACE_KEYS;
+  const m = new Map<string, string[]>();
+  for (const w of [...AREA_WORDS, ...Object.values(ZONES).flatMap((z) => z.en.flatMap((n) => n.toLowerCase().split(/[\s-]+/)))]) {
+    if (!/^[a-z]{5,}$/.test(w) || isEnglishWord(w)) continue;
+    const k = looseKey(w);
+    if (k.length < 4) continue;
+    const a = m.get(k[0]) ?? [];
+    if (!a.includes(k)) a.push(k);
+    m.set(k[0], a);
+  }
+  return (PLACE_KEYS = m);
+};
+const CASE_END = /(?:ukku|kku|ile|ila|il|la|le|lu|oda|odu|ku)$/;
+/** a word's key against a place's key: the same, or a vowel off with the same consonants ("atayar" for "atyar"; never "kalikutam", an empty
+ * pot, for Kallikuppam) */
+export const placeKeyMatch = (k: string, pk: string): boolean => pk === k || (pk[0] === k[0] && skeleton(k) === skeleton(pk) && keySim(k, pk, false, false) >= 0.88);
+export function placeByEar(w: string): boolean {
+  if (placeWord(w)) return true;
+  if (!/^[a-z]{4,}$/.test(w) || isEnglishWord(w)) return false;
+  for (const v of new Set([w, w.replace(CASE_END, "")])) {
+    if (v.length < 4) continue;
+    if (placeWord(v)) return true;
+    const k = looseKey(v);
+    if (k.length >= 4 && (placeKeys().get(k[0]) ?? []).some((pk) => placeKeyMatch(k, pk))) return true;
+  }
+  return false;
+}
 
 /** a negation: "don't open the news" */
 const NEGATED = /\b(?:don'?t|dont|do not|never|no need|stop)\b|வேண்டாம்|வேணாம்|\bvenaam\b|\bvendaam\b/iu;
@@ -143,7 +182,11 @@ const REF = /\b(?:that|this|it)\b|\b(?:andha|antha|indha|intha|adhu|idhu)\b|அ�
  * word after the name that makes it something else ("Hindu Munnani", "Thanthi TV"). v8 read exact spellings only: "Deccan Chronical" and
  * "ETV Bharath" were no outlet, and "the Indian Express one" was The New Indian Express (the holdout's h-reference-3 and -4).
  */
-interface OutletDef { name: string; words: string[]; notBefore?: string[] }
+interface OutletDef { name: string; words: string[]; notBefore?: string[];
+  /** v10: a one-word name that is also an everyday sound: the outlet only in a sentence about the news */
+  needsNews?: boolean;
+  /** v10: matched only as spelled, never by its loose key */
+  spelled?: boolean }
 const OUTLETS: OutletDef[] = [
   { name: "Hindu Tamil Thisai", words: ["hindu", "tamil", "thisai"] }, { name: "Hindu Tamil Thisai", words: ["hindu", "tamil"] }, { name: "Hindu Tamil Thisai", words: ["indhu", "tamil"] },
   { name: "The Times of India", words: ["times", "of", "india"] }, { name: "The Times of India", words: ["toi"] },
@@ -152,7 +195,9 @@ const OUTLETS: OutletDef[] = [
   { name: "Deccan Chronicle", words: ["deccan", "chronicle"] }, { name: "ETV Bharat", words: ["etv", "bharat"] }, { name: "Free Press Journal", words: ["free", "press", "journal"] },
   { name: "Thanthi TV", words: ["thanthi", "tv"] }, { name: "Thanthi TV", words: ["thanthi", "tivi"] },
   { name: "Daily Thanthi", words: ["daily", "thanthi"] }, { name: "Daily Thanthi", words: ["dina", "thanthi"] }, { name: "Daily Thanthi", words: ["dinathanthi"] },
-  { name: "Daily Thanthi", words: ["thanthi"], notBefore: ["tv", "tivi"] },
+  // (v10, the second review of v9: "thanthi" alone keys as தாண்டி, "thaandi" (crossed: the console's own "கெடு தாண்டி"); alone it is the paper only in
+  // a sentence about the news)
+  { name: "Daily Thanthi", words: ["thanthi"], notBefore: ["tv", "tivi"], needsNews: true },
   { name: "DT Next", words: ["dt", "next"] }, { name: "DT Next", words: ["dtnext"] },
   { name: "Makkal Kural", words: ["makkal", "kural"] }, { name: "Polimer News", words: ["polimer"] }, { name: "Puthiya Thalaimurai", words: ["puthiya", "thalaimurai"] },
   { name: "Malaimurasu Seithikal", words: ["malaimurasu"] }, { name: "DD News", words: ["dd", "news"] }, { name: "DD News", words: ["doordarshan"] },
@@ -164,7 +209,8 @@ const OUTLETS: OutletDef[] = [
   // (not "Times Now", "India Today" or "News7": ordinary words in a sentence, "three times now", "open news 7")
   // "தி இந்து" (the paper's name said in Tamil); "இந்து" alone is the religion ("இந்து அறநிலையத் துறை")
   { name: "The Hindu", words: ["ti", "indhu"] },
-  { name: "The Hindu", words: ["hindu"], notBefore: ["tamil", "munnani", "makkal", "temple", "temples", "religious", "religion", "endowments", "outfit", "outfits", "organisation", "organisations", "organization", "organizations", "festival", "festivals", "devotees", "mahasabha", "front"] }
+  // (v10, the second review: spelled "hindu", never by its key: "hind" and "hint" key alike, "Jai Hind Nagar", "give me a hint")
+  { name: "The Hindu", words: ["hindu"], spelled: true, notBefore: ["tamil", "munnani", "makkal", "temple", "temples", "religious", "religion", "endowments", "outfit", "outfits", "organisation", "organisations", "organization", "organizations", "festival", "festivals", "devotees", "mahasabha", "front"] }
 ];
 /** an outlet's word worked out once: as written, its loose key, and whether it is matched only as itself (short, or with a digit) */
 interface OWord { w: string; k: string; exact: boolean }
@@ -181,12 +227,16 @@ interface HWord { w: string; k: string; ear: boolean }
 const outletWord = (h: HWord, o: OWord, byEar: boolean): number => {
   if (o.exact || /\d/.test(h.w)) return h.w === o.w ? 1 : 0;
   if (h.k && h.k === o.k) return 1;
-  if (!byEar || !h.ear || o.w.length < 6 || h.k.length < 5 || h.k[0] !== o.k[0] || Math.abs(h.k.length - o.k.length) > 2) return 0;
+  if (!byEar || !h.ear || o.w.length < 6 || h.k.length < 5 || h.k[0] !== o.k[0] || Math.abs(h.k.length - o.k.length) > 1) return 0;
   const jw = jaroWinkler(h.k, o.k);
   if (jw < 0.88) return 0;
+  // (v10, the second review of v9: one edit at most, whatever the length: two let தினசரி (daily) be Dinamani and மழை அளவு (rainfall) Maalaimalar)
   const dl = editDistance(h.k, o.k);
-  return (Math.min(h.k.length, o.k.length) <= 7 ? jw >= 0.9 && dl <= 1 : dl <= 2) ? jw : 0;
+  return jw >= 0.9 && dl <= 1 ? jw : 0;
 };
+/** v10: words of the request too short to be an outlet's word misheard ("to", "do", "it": "do next" is not DT Next, "switch it to Tamil" not
+ * Hindu Tamil Thisai; isEnglishWord knows no word under three letters) */
+const SHORT = (w: string) => w.length < 3;
 /** the last few readings (topicWords reads the same words again for the outlet's place in them) */
 const outletMemo = new Map<string, { name: string; i: number; n: number } | null>();
 /** the outlet named in these words, and where (its first word and how many words it takes), or null: an exact name anywhere first, then the
@@ -194,14 +244,25 @@ const outletMemo = new Map<string, { name: string; i: number; n: number } | null
 export function outletRun(toks: string[]): { name: string; i: number; n: number } | null {
   const memoKey = toks.join(" ");
   if (outletMemo.has(memoKey)) return outletMemo.get(memoKey)!;
-  const hs: HWord[] = toks.map((w) => ({ w, k: looseKey(w), ear: !/\d/.test(w) && !isEnglishWord(w) }));
-  // a name said in parts ("dina malar", "maalai malar", "news 18"), as one heard word (misheard only if a part is no English word: "the next")
-  const joinedAt = (i: number, n: number): HWord => { const w = toks.slice(i, i + n).join(""); return { w, k: looseKey(w), ear: !/\d/.test(w) && hs.slice(i, i + n).some((h) => h.ear) }; };
+  const hs: HWord[] = toks.map((w) => ({ w, k: looseKey(w), ear: !/\d/.test(w) && !isEnglishWord(w) && !SHORT(w) }));
+  // a name said in parts ("dina malar", "maalai malar", "news 18"), as one heard word (misheard only if a part is no English word: "the next"; v10:
+  // and no part a short word, "to next", "it to tamil"). Worked out once a position (v10, the second review: not once an outlet, 25 ms a sentence)
+  const joins = new Map<string, HWord>();
+  const joinedAt = (i: number, n: number): HWord => {
+    const key = `${i}:${n}`;
+    let h = joins.get(key);
+    if (!h) { const w = toks.slice(i, i + n).join(""); h = { w, k: looseKey(w), ear: !/\d/.test(w) && hs.slice(i, i + n).some((x) => x.ear) && !hs.slice(i, i + n).some((x) => SHORT(x.w)) }; joins.set(key, h); }
+    return h;
+  };
+  // v10: a one-word name that is also an everyday sound ("thanthi" as "thaandi") counts only in a sentence about the news
+  const newsy = toks.some((w) => /^(?:news|paper|papers|newspaper|report|story|article|seithi|seidhi|tv|channel|editorial)$/.test(w)) || NEWS_NOUN.test(toks.join(" "));
   let best: { name: string; i: number; n: number; s: number } | null = null;
   for (const byEar of [false, true]) {
     for (const { o, words, joined } of OUTLET_KEYS) {
+      if (o.needsNews && !newsy) continue;
       for (let i = 0; i < hs.length; i++) {
         const after = (n: number) => !o.notBefore?.includes(toks[i + n] ?? "");
+        if (o.spelled && !words.every((w, k) => toks[i + k] === w.w)) continue;
         if (i + words.length <= hs.length && after(words.length)) {
           // a word of a longer name may be misheard when another of its words was heard exactly ("Deccan Chronical": "chronical" is an old
           // English word, so it is no outlet's word alone)
@@ -289,13 +350,21 @@ const GLOSS8: Gloss[] = [
   { ta: ["மாடு", "மாடுக", "மாட்டுக்"], tg: ["maadu"], en: ["cattle", "cow", "bull"] }, { ta: ["பேருந்து"], tg: ["perundhu"], en: ["bus"] },
   { ta: ["ரயில்", "ரெயில்"], en: ["train", "rail"] }, { ta: ["கடலோர"], taExact: ["கடல்", "கடலில்", "கடலுக்கு", "கடலின்"], tg: ["kadal"], en: ["sea", "coast", "coastal"] },
   { ta: ["மீனவ"], tg: ["meenavar", "meenavargal"], en: ["fishermen", "fisherman", "fisher", "fisherfolk"] },
-  { ta: ["நீதிமன்ற", "உயர்நீதிமன்ற", "உச்சநீதிமன்ற"], en: ["court"] }, { ta: ["கோயில", "கோவில"], tg: ["kovil", "koil"], en: ["temple"] },
+  // (v10, the second review of v9: the High Court and the Supreme Court in Tamil are those courts, never any headline that says "court": two words
+  // a form, both in the headline, or its short name)
+  { ta: ["உயர்நீதிமன்ற", "உயர்நீதிமன்றம"], en: ["high court", "hc"] }, { ta: ["உச்சநீதிமன்ற", "உச்சநீதிமன்றம"], en: ["supreme court", "sc", "apex court"] },
+  { ta: ["நீதிமன்ற"], en: ["court"] }, { ta: ["கோயில", "கோவில"], tg: ["kovil", "koil"], en: ["temple"] },
   { ta: ["தேர்தல"], tg: ["therthal"], en: ["election", "poll"] }, { ta: ["விமான"], tg: ["vimanam"], en: ["flight", "plane", "aircraft"] },
   { taExact: ["பள்ளி", "பள்ளியில்", "பள்ளிகள்", "பள்ளிக்கு", "பள்ளியின்", "பள்ளிகளில்"], en: ["school"] },
   { ta: ["அமைச்ச"], en: ["minister"] }, { ta: ["ஆட்சியர"], en: ["collector"] },
   // v10: words a Tamil request about an English headline says in Tamil or Tamil letters (a vaccine, a jail, the police, a bus stop, a hospital)
   { ta: ["தடுப்பூசி"], tg: ["thaduppoosi", "thaduppusi"], en: ["vaccine", "vaccination", "vaccinate", "jab"] },
-  { ta: ["ஜெயில்", "ஜெயிலில்", "சிறை"], tg: ["jeyil", "jail", "siraichalai"], en: ["jail", "prison"] },
+  // (any ending: "ஜெயிலுக்குள்ள", inside the jail; news9, the dry run of 19 Nov)
+  { ta: ["ஜெயில", "சிறை"], tg: ["jeyil", "jail", "siraichalai"], en: ["jail", "prison"] },
+  { ta: ["மருந்"], tg: ["marundhu", "marunthu"], en: ["drug", "medicine"] },
+  { ta: ["கடத்த", "கடத்தல்"], tg: ["kadathal", "kadathu", "kadatha"], en: ["smuggle", "smuggling", "kidnap", "abduct"] },
+  { ta: ["மரக்கன்", "மரக்கண்"], tg: ["marakkannu", "marakandru", "marakkandru"], en: ["sapling"] },
+  { ta: ["நடுற", "நடும்", "நட்ட", "நடவு", "நடப்பட்ட"], tg: ["naduradhu", "nadurathu"], en: ["plant", "planting"] },
   { ta: ["போலீஸ்", "போலீசார்", "காவல்துறை"], tg: ["police", "polees", "poleesu"], en: ["police", "cop", "cops"] },
   { ta: ["ஆஸ்பத்திரி", "மருத்துவமனை", "ஹாஸ்பிடல்"], tg: ["aaspathiri", "aspathiri", "hospital"], en: ["hospital"] },
   { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] }
@@ -347,10 +416,19 @@ const glossesOf = (text: string, words: string[]): Record<string, string[]> | nu
   for (const raw of text.split(/\s+/)) {
     const g = glossOfWord(raw);
     if (!g) continue;
-    for (const t of tokensOf(raw)) if (words.includes(t)) out[t] = [...GLOSS_FORMS.get(g)!];
+    // v10 (the second review of v9): a word with another sense beside its context words: வெட்டு / "vettu" with a road or the power is a cut, not
+    // a hacking; வெடி / "vedi" with Deepavali or a shop is crackers, not a bomb
+    const alt = SENSES.find((x) => x.of(g) && x.near.test(text));
+    for (const t of tokensOf(raw)) if (words.includes(t)) out[t] = alt ? alt.en.flatMap(englishForms) : [...GLOSS_FORMS.get(g)!];
   }
   return Object.keys(out).length ? out : null;
 };
+const SENSES: { of: (g: Gloss) => boolean; near: RegExp; en: string[] }[] = [
+  { of: (g) => g.en.includes("hack"), near: /\b(?:road|roads|saalai|salai|street|pipe|pipeline|min|current|power|electricity|cable|tree|trees|maram)\b|மின்|சாலை|ரோடு|தெரு|மரம்|மரங்/iu,
+    en: ["dig", "dug", "cut", "outage", "shutdown", "felled", "fell"] },
+  { of: (g) => g.en.includes("bomb"), near: /\b(?:deepavali|diwali|deepawali|kadai|kadaigal|pattasu|cracker|crackers|shop|shops)\b|தீபாவளி|பட்டாசு|கடை/iu,
+    en: ["firecracker", "cracker", "crackers", "fireworks"] }
+];
 
 /**
  * v9: a word in a spoken verb form: the event in the Collector's own words, which a headline may say otherwise (the horse story says
@@ -359,7 +437,7 @@ const glossesOf = (text: string, words: string[]): Record<string, string[]> | nu
  * (மிரண்டு); not -ந்து, -ட்டு, -த்து or -ச்சு, which end as many nouns (பேருந்து, மின்வெட்டு, விபத்து, பேச்சு: the review, 19 Nov). Tanglish in small
  * letters: -ndu, -chu ("mirandu"), no English word and no place. Never a word with a gloss or an event's own word.
  */
-const TA_VERBISH = /(?:ின|ிய|ந்த|ட்ட|த்த|ன்ன|ச்ச|ண்டு|ாங்க|ாங்களாம்|ாராம்|ானாம்|ிட்டாங்க|ிருக்காங்க)$/u;
+const TA_VERBISH = /(?:ின|ிய|ந்த|ட்ட|த்த|ன்ன|ச்ச|ண்டு|ாங்க|ாங்களாம்|ாராம்|ானாம்|ிட்டாங்க|ிருக்காங்க|ாங்களே|ாங்களா|ாங்களாமே)$/u;
 const TA_NOT_VERB = /^(?:வெடி)?குண்டு$|^(?:துண்டு|வண்டு|ரவுண்டு)$/u;
 const TG_VERBISH = /^[a-z]{3,}(?:ndu|chu|cchu)$/;
 const TG_NOT_VERB = new Set(["gundu", "kundu", "thundu", "vandu", "pechu", "moochu", "pochu"]);
@@ -404,7 +482,8 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   // "the Nungambakkam subway one", "the one about ...", and "open that one, that's the Supreme Court order" (the owner's words, 18 Nov)
   // (v9: "the last one", "the seventh one" are positions, refs8.ts's, never "the X one" with X a topic)
   const xOne = /\b(?:the|that|this|andha|antha)\s+([\p{L}\p{M}\s.'’-]{2,60}?)\s+one\b/iu.exec(text);
-  const theOne = ((!!xOne && !ordWordsOf(xOne[1]).some((w) => ordWord(w) != null)) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
+  // (v10, the second review of v9: a street's ordinal is no position, "the Second Line Beach one", "the First Main Road one": ord8's own reading)
+  const theOne = ((!!xOne && !ordinalsAt(xOne[1]).length) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
   // v9: "open the Kodungaiyur empty pot protest", "the IOCL fire, open that": a story-like topic with no news word (soft: found only above
   // SOFT_FLOOR, else the console's own lanes take the sentence, as they did in v8)
   const soft = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text) && !SOFT_MANY.test(text);
@@ -417,7 +496,7 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
     const event = words.filter((w) => eventToks.has(w));
     // the words that name this event: neither a place nor a kind of thing ("the Adyar fire", "the road accident deaths" are the console's views;
     // "the IOCL fire", "the Kodungaiyur empty pot protest" name one: the review, 19 Nov)
-    const which = words.filter((w) => !eventToks.has(w) && !placeWord(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w));
+    const which = words.filter((w) => !eventToks.has(w) && !placeByEar(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w));
     if (!which.length || !event.length) return null;
     const weak = weakWords(text).filter((w) => words.includes(w));
     const gloss = glossesOf(text, words);
@@ -450,7 +529,8 @@ const docOf = (x: StoryItem): Doc => {
   if (hit) return { ...hit, item: x };
   // (at most 40 words a headline, each headline on its own: a 400-character title sent from a screen is cut, and a long Tamil headline
   // never pushes the English one out; the live dev re-check, 19 Nov)
-  const part = (s: string | null | undefined) => tokensOf(s ?? "").filter((w) => w.length >= 2).slice(0, 40);
+  // (v10, the second review of v9: a possessive's 's off, as for the request: "DMK's Arasakumar" is "dmk")
+  const part = (s: string | null | undefined) => tokensOf((s ?? "").replace(/(\p{L})['’]s\b/gu, "$1")).filter((w) => w.length >= 2).slice(0, 40);
   const toks = [...new Set([...part(x.title), ...part(x.titleEn), ...part(x.place).slice(0, 8)])];
   const keys = new Set(toks.map(looseKey).filter(Boolean));
   const byFirst = new Map<string, { k: string; en: string | null; eng: boolean }[]>();
@@ -482,6 +562,13 @@ const sharedHead = (a: string, b: string): number => { let i = 0; while (i < a.l
 
 /** how well one topic word is in one story: its best word, 0 below 0.8 (the memo holds each word pair's score across the stories) */
 function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
+  // v10 (the second review of v9): a word of three letters or fewer (an acronym, said letter by letter or not: "gcc", "rss", "iit", "cm", "dri")
+  // is the same word or its spelled-out name, never a loose key (gcc keys as "k", which "70 Kg" has; rss as Rs; iit as IT; cm as km; dri as
+  // "they"); its gloss still counts (தீ: fire)
+  if (q.w.length <= 3) {
+    if (d.raw.has(q.w) || (q.says && q.says.every((k) => d.keys.has(k)))) return 1;
+    return q.gloss && q.gloss.some((f) => (f.includes(" ") ? f.split(" ").every((t) => d.raw.has(t)) : d.raw.has(f))) ? 0.9 : 0;
+  }
   if (d.keys.has(q.k)) return 1;
   if (q.says && q.says.every((k) => d.keys.has(k))) return 1;
   let best = 0;
@@ -502,7 +589,8 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
     if (best >= 1) break;
   }
   // v9: the word's English in the headline, word for word ("vettu" in "Man hacked ...")
-  if (best < 0.9 && q.gloss && q.gloss.some((f) => d.raw.has(f))) best = 0.9;
+  // (v10: a form of two words counts when the headline has both: "high court", "supreme court")
+  if (best < 0.9 && q.gloss && q.gloss.some((f) => (f.includes(" ") ? f.split(" ").every((t) => d.raw.has(t)) : d.raw.has(f)))) best = 0.9;
   return best >= 0.8 ? best : 0;
 }
 
@@ -512,16 +600,20 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
  */
 function joinedIn(q: QWord, d: Doc, memo: Map<string, number>, parts: QWord[]): number {
   let best = 0;
-  for (const { k: tk, eng } of d.byFirst.get(q.k[0]) ?? []) {
+  for (const { k: tk, en: ten, eng } of d.byFirst.get(q.k[0]) ?? []) {
     const mk = `j|${parts.map((p) => p.k).join("+")}|${tk}|${eng ? 1 : 0}`;
     let s = memo.get(mk);
     if (s === undefined) {
       // (by its spelling: no consonants-only match, and no "cut short" against an English word: "beach horse" is not "fisheries")
       s = keySim(q.k, tk, !eng, false);
       for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk, !eng, false) * 0.98);
+      // (v10, the second review: an English compound said in two words shares the headline word's stem: "water logging" is "waterlogged")
+      if (s < 0.88 && q.en && ten && q.en === ten) s = 0.92;
       // v9 (the review, 19 Nov): only a headline word the parts are not ("kasimedu" is neither "kasi" nor "medu"); "adyar hc" and "வேளச்சேரி மழை"
       // joined match "Adyar" and "வேளச்சேரியில்", which the place alone already is, and must not credit "hc" or "மழை" to every story of it
-      if (s >= 0.88 && parts.some((p) => keySim(p.k, tk) >= 0.8 || p.stems.some((st) => keySim(st, tk) >= 0.8))) s = 0;
+      // (v10, the second review: by the same gate as the match, no "cut short" against an English word: "street" is not "streetlights" cut short,
+      // so "street light" joined is that headline's word)
+      if (s >= 0.88 && parts.some((p) => keySim(p.k, tk, !eng, false) >= 0.8 || p.stems.some((st) => keySim(st, tk, !eng, false) >= 0.8))) s = 0;
       memo.set(mk, s);
     }
     if (s > best) best = s;

@@ -127,8 +127,9 @@ export function keySim(q: string, t: string, cut = true, skel = true): number {
 /** an English word without its ending ("inauguration", "inaugurated" -> "inaugur"; "constables" -> "constable") */
 export const enStem = (w: string): string => {
   const x = w.toLowerCase();
-  const m = /^(.{4,}?)(?:ations|ation|ated|ating|ates|ate|ions|ion|ings|ing|ers|er|ed|es|s)$/.exec(x);
-  return m ? m[1] : x;
+  // (v10, the second review of v9: and -ised/-ized, -ment, -age: "hospitalised" is "hospital", "encroachments" "encroach", "drainage" "drain")
+  const m = /^(.{4,}?)(?:isations|izations|isation|ization|ations|ation|ated|ating|ates|ate|ised|ized|ises|izes|ise|ize|ments|ment|ages|age|ions|ion|ings|ing|ers|er|ed|es|s)$/.exec(x);
+  return m ? m[1].replace(/([^aeiou])\1$/, "$1") : x;
 };
 
 /** one heard word against one word of a name or headline: its key, then its stems' keys (a little less) */

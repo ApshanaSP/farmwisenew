@@ -45,7 +45,9 @@ const STOPWORDS = new Set(("a an the this that these those it its is are was wer
   "seithi seidhi").split(/\s+/));
 const TA_STOP = /^(?:பற்றி|பத்தி|என்ன|சொல்லுங்க|சொல்லு|படிங்க|படி|காட்டு|காட்டுங்க|திறங்க|திற|செய்தி|நியூஸ்|அந்த|இந்த|அது|இது)/u;
 /** a Tamil verb's spoken and written endings (has come, is there, they said, it happened ...): never a name */
-const TA_VERB = /(?:ருக்கு|ருக்கா|ருக்கும்|ருக்கிறது|ருக்கின்றன|ச்சு|ச்சா|ந்தது|ந்துச்சு|றாங்க|ராங்க|ிங்க|ுங்க|ீங்க|ாங்க|ுது|ுதா|ிறது|ின்றன|ின்றது|கிறார்|கிறார்கள்|ட்டாங்க|ட்டார்|னார்|னாங்க|லாம்|ணும்|ணுமா|வேண்டும்)$/u;
+const TA_VERB = new RegExp(`(?:ருக்கு|ருக்கா|ருக்கும்|ருக்கிறது|ருக்கின்றன|ச்சு|ச்சா|ந்தது|ந்துச்சு|றாங்க|ராங்க|ிங்க|ுங்க|ீங்க|ாங்க|ுது|ுதா|ிறது|ின்றன|ின்றது|கிறார்|கிறார்கள்|ட்டாங்க|ட்டார்|னார்|னாங்க|லாம்|ணும்|ணுமா|வேண்டும்|` +
+  // (and what went or happened, "திருட்டு போனது" as Pondy: news9, the dry run of 19 Nov)
+  `னது|னதா|னதை|ட்டது|த்தது|ச்சது|ண்டது|ன்னது)$|^(?:போன|போய்|வந்த|போனா|வந்தா|போகும்|வரும்)$`, "u");
 
 const wordsOf = (text: string): W[] => text.normalize("NFC").split(/[^\p{L}\p{M}\p{N}'’]+/u).filter(Boolean).map((raw) => {
   const f = fold(raw);

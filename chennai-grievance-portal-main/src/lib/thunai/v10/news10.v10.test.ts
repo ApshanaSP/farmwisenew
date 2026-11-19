@@ -75,3 +75,31 @@ describe("v10: two stories as close, the one in the request's language", () => {
     expect(pickStory(rankStories(newsRequest("அக்வான் புயல் செய்தி படிங்க")!, items), "ta").pick?.id).toBe("ta1");
   });
 });
+
+describe("v10: spoken Tamil about a story (news9, the dry run of 19 Nov: v10 said 'nothing' where the store has it)", () => {
+  // the 19 Nov store's own headlines (public), among 40 about nothing asked here
+  const FILL = ["Gold rate today in Chennai", "School students visit the planetarium", "New ration shops open in north Chennai", "Book fair to begin at YMCA grounds",
+    "Corporation council meeting approves budget", "Free eye camp held for senior citizens", "Marathon to be held on Sunday", "Lake restoration work begins",
+    "Vegetable prices fall at Koyambedu market", "IT firms hire more freshers this year", "Health camp for sanitary workers", "New bus routes announced",
+    "Chennai airport handles record passengers", "Library gets a digital makeover", "Heritage walk planned for the weekend", "Power utility upgrades substations",
+    "Cricket academy opens new nets", "Film festival line-up announced", "Startups pitch at an innovation summit", "Museum extends its hours",
+    "Traffic police launch helmet awareness drive", "Swimming pool reopens after repairs", "College fest draws large crowds", "Art exhibition opens at Lalit Kala",
+    "Housing board allots flats", "Water body survey completed", "Sapling distribution in parks", "Senior citizens' helpline launched",
+    "Port trust records higher cargo", "Science expo for students", "Music season to begin next month", "Ration card camp held", "Park gets a new play area",
+    "Bus depot gets solar panels", "Fishing ban period ends", "Yoga camp at the beach", "Road safety week observed", "Toll plaza fee revised",
+    "Metro rail work: traffic diversions on Poonamallee High Road", "Chennai Corporation to install 500 new streetlights"].map((title, i) => ({ id: `f${i}`, title }));
+  const week = [
+    { id: "pz1", title: "Bid to smuggle drugs into Puzhal jail, two held" },
+    { id: "pz2", title: "Two women arrested for supplying drugs to Puzhal prison inmate" },
+    { id: "pz3", title: "மூன்றாம் முறையாக புழல் சிறையில் மகேஷூடன் உதயநிதி சந்திப்பு", titleEn: "Udhayanidhi meets Mahesh in Puzhal prison for the third time" },
+    { id: "sp1", title: "12 லட்சம் மரக்கன்றுகள்..! சென்னையின் பசுமைப் பரப்பை அதிகரிக்க மாநகராட்சி நடவடிக்கை..!", titleEn: "12 lakh saplings! Municipal action to increase green cover in Chennai!" },
+    { id: "sp2", title: "மணலி மண்டலத்தில் 1.30 லட்சம் மரக்கன்றுகள் நடும் பணி: இணை ஆணையாளர் கற்பகம் ஆய்வு", titleEn: "Planting of 130,000 saplings in the Manali region: Joint Commissioner Karpagam inspects" },
+    ...FILL];
+  const found = (said: string) => { const r = newsRequest(said); return r ? pickStory(rankStories(r, week)).pick?.id ?? null : null; };
+  it("'புழல் ஜெயிலுக்குள்ள போதை மருந்து கடத்தப் பாத்தாங்களே': the jail with its ending, the drug, the smuggling, a spoken verb", () => {
+    expect(found("ஜார்விஸ், புழல் ஜெயிலுக்குள்ள போதை மருந்து கடத்தப் பாத்தாங்களே, அந்த நியூஸ படிங்க.")).toBe("pz1");
+  });
+  it("'மரக்கன்னு நடுறது': saplings planted", () => {
+    expect(["sp1", "sp2"]).toContain(found("ஜார்விஸ், மரக்கன்னு நடுறது பத்தி ஏதாவது நியூஸ் இருக்கா?"));
+  });
+});

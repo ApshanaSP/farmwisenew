@@ -12,11 +12,14 @@ import { asOf } from "@/lib/collector/intel";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 import type { RowDataPacket } from "mysql2";
 import type { World } from "../types";
+import { asksPrivate } from "../privacy";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { eventForms, newsRequest, pickStory, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
-import { looseKey, tokensOf } from "./match";
+import { eventForms, newsRequest, pickStory, placeKeyMatch, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { fold, looseKey, tokensOf } from "./match";
+/** a Tamil or Tanglish case ending joined on a place ("adyarla", "ataiyaril") */
+const PLACE_CASE = /(?:ukku|kku|ile|ila|il|la|le|lu|oda|odu|ku)$/;
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
@@ -128,6 +131,8 @@ export const SEM_LEX = 0.3;
 export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]>;
   /** v10: the meaning of the request against the candidates (v10/sem10.ts semScores, passed by the news route and the runners); absent: none asked */
   sem?: ((q: string, items: StoryItem[]) => Promise<Map<string, number> | null>) | null }): Promise<Found | null> {
+  // v10 (the second review of v9): what the console refuses for privacy (a victim's name, address, details) is never found, read or handed to a model
+  if (asksPrivate(f.q)) return null;
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
   // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
   let req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
@@ -137,6 +142,17 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
     if (words.length) req = { kind: "story", words, outlet: null, ref: false, soft: true };
   }
   if (!req) return null;
+  // v10 (the second review of v9): a soft request's naming word is never one of the district's places, as its world spells them ("open the
+  // Pattinapakkam fire" names a place and an event: the console's view, as "open the Adyar fire" is); none left, nothing is found softly
+  if (req.soft && req.which?.length) {
+    const keys = placesOf(d.world).map((p) => looseKey(fold(p).replace(/\s+/g, ""))).filter((k) => k.length >= 4);
+    const which = req.which.filter((w) => ![w, w.replace(PLACE_CASE, "")].some((v) => {
+      const k = looseKey(v);
+      return k.length >= 4 && keys.some((pk) => placeKeyMatch(k, pk));
+    }));
+    if (!which.length) return null;
+    req = { ...req, which };
+  }
   const stored = await (d.stories ?? storeStories)().catch(() => [] as StoryItem[]);
   const byId = new Map(stored.map((s) => [s.id, s]));
   // the screen's stories first (their own titles, and the store's English title when it has one), then the rest of the store. A panel row

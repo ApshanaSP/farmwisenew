@@ -35,6 +35,9 @@ export interface NewsOnScreen {
   items?: { id: string; source: string | null; title?: string }[];
   /** the item being read aloud now (the Stage's highlight), if any */
   reading?: string | null;
+  /** v10 (the second review of v9): Jarvis's read of one story is on screen over the console's panel: "this story" is the one read (`reading`),
+   * never the panel's first */
+  afterRead?: boolean;
 }
 
 const ID = /^[A-Za-z0-9_:.-]{1,80}$/;
@@ -119,6 +122,9 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
   for (const [said, src, name] of OUTLETS) {
     if (said.test(t)) { const x = items.find((y) => namesOf(y.source).some((n) => src.test(n))); return x ? { id: x.id } : { why: "outlet", outlet: name }; }
   }
+  // v10 (the second review of v9): after a read of one story over the panel, "this story" is the one read, on the panel or not; with no read
+  // known, none (the planner or "which report?"), never the panel's first story
+  if (on.afterRead) return on.reading ? { id: on.reading } : null;
   const r = on.reading ? items.find((x) => x.id === on.reading) : null;
   return { id: (r ?? items[0]).id };
 };
@@ -179,7 +185,8 @@ export const failLine = (why: string | undefined, lang: "en" | "ta"): string => 
 export interface NewsLink { outlet: string; title: string; url: string; publishedAt: string | null }
 
 /** The Stage document for a news answer: what was said (a Note) and every source as a link (a NewsReader list). Checked; null if it fails. */
-export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outlet: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number }): StageDocT | null {
+export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outlet: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number;
+  /** v10: the stored story read (its id), kept in the screen's slots so "this story" next means it */ readId?: string | null }): StageDocT | null {
   const L = (en: string, ta: string) => (o.lang === "ta" ? ta : en);
   const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
   const said = (o.lang === "ta" ? o.ta : o.en).join(" ").trim();
@@ -197,7 +204,7 @@ export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outl
   const doc = {
     v: 1, id: `news-${(o.now ?? Date.now()).toString(36)}`, recipe: "news", title, takeaway: null,
     say: { en: clip(o.en.join(" "), 600), ta: clip(o.ta.join(" "), 900) }, blocks,
-    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { web: true },
+    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { web: true, ...(o.readId && ID.test(o.readId) ? { read: o.readId } : {}) },
     sources: [...new Set(links.map((x) => clip(x.outlet, 80)))].slice(0, 10), asOf: null,
     notes: [L("From the web: read just now, nothing kept. Quotes are the outlets' own.", "இணையத்திலிருந்து: இப்போது படித்தது, எதுவும் சேமிக்கப்படவில்லை. மேற்கோள்கள் அந்தந்த ஊடகங்களுடையவை.")],
     lang: o.lang, titles

@@ -1,0 +1,1215 @@
+{
+ "about": "Public headlines of the console store news panel (daily, in order) and stored news of the week, as eval/v8/ref/news.json had them on 19 Nov 2026 (store build of 15:13 IST); for the review tests. Headlines only, no citizens words.",
+ "daily": [
+  {
+   "title": "DRI Officials Seize 70 Kg Heroin Worth Rs 140 Crore In Chennai; Two Arrested",
+   "outlets": [
+    "Maalaimalar",
+    "ETV Bharat",
+    "Polimer News",
+    "Thanthi TV",
+    "The Indian Express",
+    "Dinakaran",
+    "Daily Thanthi",
+    "DT Next",
+    "Dinamalar",
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Queen Mary's College | Four people arrested after touching at Chennai Queen Mary College",
+   "outlets": [
+    "Thanthi TV"
+   ]
+  },
+  {
+   "title": "TN Governor Rajendra Arlekar admitted to private hospital in Chennai",
+   "outlets": [
+    "DT Next"
+   ]
+  },
+  {
+   "title": "Drug prevention police check at 10 places in Chennai",
+   "outlets": [
+    "Polimer News"
+   ]
+  },
+  {
+   "title": "Will a new bus stand be built opposite Pondhathalli metro station..? – Public expectation",
+   "outlets": [
+    "Dinamani"
+   ]
+  },
+  {
+   "title": "Cyclone Akvan to cross Odisha coast tomorrow; rain likely in Chennai on November 23, 24",
+   "outlets": [
+    "DT Next",
+    "Dinamani",
+    "The Hindu"
+   ]
+  },
+  {
+   "title": "Police raid on Chennai OMR, ECR – 5 women arrested with pills",
+   "outlets": [
+    "Thanthi TV"
+   ]
+  },
+  {
+   "title": "Three fugitives arrested in Chennai",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ]
+  },
+  {
+   "title": "Bid to smuggle drugs into Puzhal jail, two held",
+   "outlets": [
+    "The New Indian Express",
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Greater Chennai Corporation begins repair of AC bus shelters",
+   "outlets": [
+    "The New Indian Express"
+   ]
+  },
+  {
+   "title": "Greater Chennai Corporation to begin beautification of 6 more flyovers",
+   "outlets": [
+    "DT Next",
+    "The Indian Express"
+   ]
+  },
+  {
+   "title": "Chennai: Arunthathiyar Nagar residents in Perambur await PDS shop for 10 years",
+   "outlets": [
+    "DT Next"
+   ]
+  },
+  {
+   "title": "Destruction of banned tobacco products worth Rs 1.25 crore in Chennai",
+   "outlets": [
+    "Maalaimalar"
+   ]
+  },
+  {
+   "title": "Electricity theft in 24 locations in Chennai: Rs 52.77 lakh compensation collected",
+   "outlets": [
+    "Dinamani"
+   ]
+  },
+  {
+   "title": "BIS seizes 113 unauthorised water cans",
+   "outlets": [
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Chennai stares at another summer of power woes as grid projects drag on",
+   "outlets": [
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Lecturers get comfy chairs, 3,500 students suffer: Ambedkar Arts College in Chennai has just two drinking water taps, broken pipes in urinals",
+   "outlets": [
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Pharmacy owner, two chefs arrested for supplying narcotic drugs in Chennai",
+   "outlets": [
+    "The Times of India"
+   ]
+  },
+  {
+   "title": "Rise in balloon prices; Plan to hold hunger strike in Chennai: Decorators interview",
+   "outlets": [
+    "The Indian Express"
+   ]
+  },
+  {
+   "title": "6,824 square feet of municipal land occupied in Annanagar: complaint pending for 3 months",
+   "outlets": [
+    "Dinamalar"
+   ]
+  },
+  {
+   "title": "2 new service vehicles for livelihood enhancement of persons with disabilities: Chennai Collector flags off",
+   "outlets": [
+    "Daily Thanthi"
+   ]
+  },
+  {
+   "title": "Health Department and Rotary Club of Madras partner to take forward HPV vaccination",
+   "outlets": [
+    "The Hindu"
+   ]
+  },
+  {
+   "title": "Construction Ban In Chennai's Pallikaranai: HC Gives Liberty To Petitioners To Approach SC",
+   "outlets": [
+    "ETV Bharat"
+   ]
+  },
+  {
+   "title": "Aquan found with sea surge at Chennai Kasimedu fishing harbour due to storm",
+   "outlets": [
+    "Dinamalar"
+   ]
+  },
+  {
+   "title": "GCC issues 124 de-occupation notices for coastal buildings",
+   "outlets": [
+    "The Hindu"
+   ]
+  },
+  {
+   "title": "Officials removed Vinayagar temple near Chennai; people involved in the protest clashed violently with police",
+   "outlets": [
+    "The Indian Express"
+   ]
+  },
+  {
+   "title": "Crimes are lower this year compared to 10 years ago; DIG Mahesh Kumar Agrawal",
+   "outlets": [
+    "Dinamalar"
+   ]
+  },
+  {
+   "title": "Chief Minister Vijay inaugurated 12 completed project works in Chennai Municipal Corporation",
+   "outlets": [
+    "Daily Thanthi"
+   ]
+  }
+ ],
+ "weekly": [
+  {
+   "title": "DRI Officials Seize 70 Kg Heroin Worth Rs 140 Crore In Chennai; Two Arrested",
+   "outlets": [
+    "Maalaimalar",
+    "ETV Bharat",
+    "Polimer News",
+    "Thanthi TV",
+    "The Indian Express",
+    "Dinakaran",
+    "Daily Thanthi",
+    "DT Next",
+    "Dinamalar",
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-19 13:46:41"
+  },
+  {
+   "title": "Queen Mary's College | Four people arrested after touching at Chennai Queen Mary College",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-19 13:04:35"
+  },
+  {
+   "title": "TN Governor Rajendra Arlekar admitted to private hospital in Chennai",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-19 11:57:50"
+  },
+  {
+   "title": "Drug prevention police check at 10 places in Chennai",
+   "outlets": [
+    "Polimer News"
+   ],
+   "place": null,
+   "t": "2026-11-19 11:54:36"
+  },
+  {
+   "title": "Will a new bus stand be built opposite Pondhathalli metro station..? – Public expectation",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-19 11:47:57"
+  },
+  {
+   "title": "Cyclone Akvan to cross Odisha coast tomorrow; rain likely in Chennai on November 23, 24",
+   "outlets": [
+    "DT Next",
+    "Dinamani",
+    "The Hindu",
+    "Makkal Kural",
+    "BBC",
+    "DD News",
+    "Dinamalar",
+    "Daily Thanthi",
+    "News18",
+    "The Indian Express",
+    "Polimer News",
+    "Hindu Tamil Thisai",
+    "Maalaimalar",
+    "Dinakaran",
+    "Malaimurasu Seithikal",
+    "The Times of India",
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-19 11:36:29"
+  },
+  {
+   "title": "Police raid on Chennai OMR, ECR – 5 women arrested with pills",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-19 09:55:56"
+  },
+  {
+   "title": "Three fugitives arrested in Chennai",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-19 07:59:53"
+  },
+  {
+   "title": "Bid to smuggle drugs into Puzhal jail, two held",
+   "outlets": [
+    "The New Indian Express",
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-19 07:57:41"
+  },
+  {
+   "title": "Greater Chennai Corporation begins repair of AC bus shelters",
+   "outlets": [
+    "The New Indian Express",
+    "DT Next",
+    "The Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-19 07:55:49"
+  },
+  {
+   "title": "Chennai: Arunthathiyar Nagar residents in Perambur await PDS shop for 10 years",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-19 07:42:30"
+  },
+  {
+   "title": "Destruction of banned tobacco products worth Rs 1.25 crore in Chennai",
+   "outlets": [
+    "Maalaimalar"
+   ],
+   "place": null,
+   "t": "2026-11-19 07:08:20"
+  },
+  {
+   "title": "Electricity theft in 24 locations in Chennai: Rs 52.77 lakh compensation collected",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-19 00:49:20"
+  },
+  {
+   "title": "BIS seizes 113 unauthorised water cans",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-19 00:24:35"
+  },
+  {
+   "title": "Chennai stares at another summer of power woes as grid projects drag on",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-19 00:16:01"
+  },
+  {
+   "title": "Lecturers get comfy chairs, 3,500 students suffer: Ambedkar Arts College in Chennai has just two drinking water taps, broken pipes in urinals",
+   "outlets": [
+    "The Times of India",
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 23:06:33"
+  },
+  {
+   "title": "Pharmacy owner, two chefs arrested for supplying narcotic drugs in Chennai",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-18 22:56:53"
+  },
+  {
+   "title": "Rise in balloon prices; Plan to hold hunger strike in Chennai: Decorators interview",
+   "outlets": [
+    "The Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-18 21:50:37"
+  },
+  {
+   "title": "6,824 square feet of municipal land occupied in Annanagar: complaint pending for 3 months",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 21:43:53"
+  },
+  {
+   "title": "2 new service vehicles for livelihood enhancement of persons with disabilities: Chennai Collector flags off",
+   "outlets": [
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-18 20:36:22"
+  },
+  {
+   "title": "Health Department and Rotary Club of Madras partner to take forward HPV vaccination",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-18 20:29:49"
+  },
+  {
+   "title": "Construction Ban In Chennai's Pallikaranai: HC Gives Liberty To Petitioners To Approach SC",
+   "outlets": [
+    "ETV Bharat",
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-18 20:14:40"
+  },
+  {
+   "title": "Aquan found with sea surge at Chennai Kasimedu fishing harbour due to storm",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 20:10:14"
+  },
+  {
+   "title": "GCC issues 124 de-occupation notices for coastal buildings",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-18 19:36:02"
+  },
+  {
+   "title": "Two arrested for assaulting traffic police constable near R.K. Salai in Chennai",
+   "outlets": [
+    "The Indian Express",
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-18 16:23:33"
+  },
+  {
+   "title": "Crimes are lower this year compared to 10 years ago; DIG Mahesh Kumar Agrawal",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 16:20:00"
+  },
+  {
+   "title": "Chief Minister Vijay inaugurated 12 completed project works in Chennai Municipal Corporation",
+   "outlets": [
+    "Daily Thanthi",
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-18 15:24:24"
+  },
+  {
+   "title": "CHENNAI: RESIDENTS STAGE EMPTY-POT PROTEST OVER FOUR-MONTH WATER SHORTAGE IN KODUNGAIYUR",
+   "outlets": [
+    "Dinamani",
+    "Dinakaran",
+    "Maalaimalar",
+    "PTI"
+   ],
+   "place": null,
+   "t": "2026-11-18 14:32:26"
+  },
+  {
+   "title": "Manithaneya Makkal Katchi Protests In Chennai, Seeks Release Of 22 Muslim Convicts",
+   "outlets": [
+    "NDTV",
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-18 13:09:08"
+  },
+  {
+   "title": "Unauthorised Buildings Major Enforcement Challenge in Chennai",
+   "outlets": [
+    "Deccan Chronicle"
+   ],
+   "place": null,
+   "t": "2026-11-18 12:09:17"
+  },
+  {
+   "title": "TN: Chennai man gets 20 yrs jail under POCSO act for sexually assaulting 3 minors | India News",
+   "outlets": [
+    "Hindustan Times",
+    "The Hindu",
+    "The New Indian Express",
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 08:41:00"
+  },
+  {
+   "title": "Sea appeared turbulent in the morning due to Cyclone Murasu in Chennai. Location: Tiruvanmiyur.",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 08:17:58"
+  },
+  {
+   "title": "Cyber Fraudsters Swindle Rs 1.03 Crore From Chennai IT Firm's Account",
+   "outlets": [
+    "Thanthi TV",
+    "ETV Bharat",
+    "Dinakaran"
+   ],
+   "place": null,
+   "t": "2026-11-18 08:08:51"
+  },
+  {
+   "title": "Young woman commits suicide by jumping from 9th floor in Sholinganallur",
+   "outlets": [
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-18 07:52:19"
+  },
+  {
+   "title": "TN sanctions Rs 45.5 crore for integrated master plan for expanded Chennai Metropolitan Area of 5,904 sq km",
+   "outlets": [
+    "ETV Bharat",
+    "DT Next",
+    "The Hindu",
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-18 07:41:20"
+  },
+  {
+   "title": "Chennai || Tenant snatches jewellery from house owner in Chennai",
+   "outlets": [
+    "Thanthi TV",
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-18 07:40:48"
+  },
+  {
+   "title": "Chennai Metropolitan Area faces 500 MLD water deficit; another desal plant planned at Minjur",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-18 07:14:17"
+  },
+  {
+   "title": "Police nod holds up renovation of Nungambakkam and Duraisamy subways",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-18 07:13:38"
+  },
+  {
+   "title": "Tamil Nadu: Fire at IOCL plant in Chennai; worker killed in explosion",
+   "outlets": [
+    "The Economic Times"
+   ],
+   "place": null,
+   "t": "2026-11-18 02:47:26"
+  },
+  {
+   "title": "Madras HC orders mandatory licensing and tagging of cattle in urban areas across Tamil Nadu to prevent motor accidents",
+   "outlets": [
+    "The Hindu",
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-18 00:58:20"
+  },
+  {
+   "title": "RBI officials meet Chennai Police Commissioner to discuss ways to curb online banking frauds",
+   "outlets": [
+    "Dinakaran",
+    "The Hindu",
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-18 00:01:48"
+  },
+  {
+   "title": "Child rape case: Veeramani’s daughter moves HC alleging harassment by SIT",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-17 23:56:51"
+  },
+  {
+   "title": "210 tonnes of waste collected in 10 months in Chennai incinerated separately",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-17 23:10:00"
+  },
+  {
+   "title": "Intelligent Transport System to start operations in Chennai next month",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-17 22:45:40"
+  },
+  {
+   "title": "Puducherry man held for cheating Chennai gold firm of ₹11.59 lakh with fake pledge receipt",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-17 21:59:00"
+  },
+  {
+   "title": "Tamil Nadu government continuously blocking the lighting of Deepam on top of Thiruparankundram hill",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 21:50:00"
+  },
+  {
+   "title": "12 lakh saplings! Municipal action to increase green cover in Chennai!",
+   "outlets": [
+    "News18"
+   ],
+   "place": null,
+   "t": "2026-11-17 21:11:00"
+  },
+  {
+   "title": "Hospital in Chennai performs complex aortic surgery on 10-year-old boy with rare vascular disease",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-17 21:05:41"
+  },
+  {
+   "title": "Senthil Balaji petition to delay trial; judge expresses displeasure in money laundering case",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 20:55:00"
+  },
+  {
+   "title": "Lawyers from Thiruvottiyur protest at Manali police station for illegally detaining Sivaraman",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 20:23:49"
+  },
+  {
+   "title": "Vandalur Zoo closed due to bird flu to reopen tomorrow!",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-17 20:20:48"
+  },
+  {
+   "title": "In Chennai city, with high fever disease spread, drone spraying medicine in Koomam River and other canals",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 17:34:05"
+  },
+  {
+   "title": "Power shutdown announcement for coming Thursday in Chennai.. Do you know in which areas?",
+   "outlets": [
+    "News18"
+   ],
+   "place": null,
+   "t": "2026-11-17 17:31:00"
+  },
+  {
+   "title": "Akwan Cyclone Update | Asuran cyclone effect.. Warning issued for northern districts including Chennai",
+   "outlets": [
+    "Thanthi TV",
+    "Dinamalar",
+    "BBC"
+   ],
+   "place": null,
+   "t": "2026-11-17 16:25:02"
+  },
+  {
+   "title": "‘It’s been 13 years’: Chennai company declares holiday for employees to mark GTA 6 release",
+   "outlets": [
+    "The Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-17 15:44:38"
+  },
+  {
+   "title": "Chola-era lakes supplying drinking water to Chennai",
+   "outlets": [
+    "Hindu Tamil Thisai",
+    "Dinakaran",
+    "Maalaimalar",
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-17 14:48:41"
+  },
+  {
+   "title": "Chennai-Yangon weekly flight cancelled in both directions due to Cyclone Akvan",
+   "outlets": [
+    "News On AIR"
+   ],
+   "place": null,
+   "t": "2026-11-17 14:06:11"
+  },
+  {
+   "title": "Chennai Corporation opens free public toilets at 853 locations",
+   "outlets": [
+    "Daily Thanthi",
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-17 14:04:41"
+  },
+  {
+   "title": "Two men die in two separate road accidents",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-17 14:03:16"
+  },
+  {
+   "title": "Biker dies after funeral garland gets entangled in two-wheeler near Avadi",
+   "outlets": [
+    "The Times of India",
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-17 13:59:07"
+  },
+  {
+   "title": "Chennai Communist Protest | Marxist Communist protest in front of Ripon Building..",
+   "outlets": [
+    "News18"
+   ],
+   "place": null,
+   "t": "2026-11-17 11:56:20"
+  },
+  {
+   "title": "Do not turn public libraries into garbage dumps: Perumal Murugan",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 08:56:00"
+  },
+  {
+   "title": "3 people including mother and daughter severely injured after a riding horse goes berserk in Marina",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-17 08:08:33"
+  },
+  {
+   "title": "Man hacked after dispute over honking in Pattinapakkam, four arrested",
+   "outlets": [
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-17 07:45:08"
+  },
+  {
+   "title": "Chennai: Woman harassed - Two TVK functionaries arrested",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-17 07:44:43"
+  },
+  {
+   "title": "Comfort in sight: 433 more spots in Chennai to get free toilets",
+   "outlets": [
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-17 07:43:39"
+  },
+  {
+   "title": "Chennai || Van overturns and accidents - Singa Penn Padai rescues the driver",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-17 07:37:50"
+  },
+  {
+   "title": "Chennai Corporation invites bids to re-lay 753 roads at Rs 121.85 crore",
+   "outlets": [
+    "DT Next",
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-17 07:10:37"
+  },
+  {
+   "title": "Sensation as drone crashes and smashes in Thiruvottiyur",
+   "outlets": [
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-17 06:29:08"
+  },
+  {
+   "title": "25-year-old killed as two-wheeler crashes into truck",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-17 00:20:35"
+  },
+  {
+   "title": "I took money on the instructions of DMK's Arasakumar: Confession of former MLA Muthukumar: Net tightens around 'former' Mahesh",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 23:09:00"
+  },
+  {
+   "title": "DVAC registers criminal case over alleged irregularities in the purchase of books",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-16 22:36:46"
+  },
+  {
+   "title": "Impact of Cyclone Akwan; Signal number 2 warning hoisted at 9 ports",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 22:11:00"
+  },
+  {
+   "title": "North Chennai gears up for Cyclone Akvan; 69 Relief centres kept ready",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-16 21:59:54"
+  },
+  {
+   "title": "CPI MP Venkatesan's simplicity: Justice G.R. Swaminathan recalls being impressed",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 21:34:00"
+  },
+  {
+   "title": "Schoolchildren in uniform wandering on Marina Beach were detained by police and a Singaporean woman for questioning, parents summoned",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 21:21:30"
+  },
+  {
+   "title": "Cyclone depression at 650 km southeast of Chennai!",
+   "outlets": [
+    "Dinamalar",
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-16 20:22:00"
+  },
+  {
+   "title": "Chennai: Tipper lorry taking sudden turn triggers accident, girl crushed under wheels",
+   "outlets": [
+    "Thanthi TV",
+    "ETV Bharat",
+    "Makkal Kural",
+    "DT Next",
+    "The Times of India",
+    "Maalaimalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 20:10:45"
+  },
+  {
+   "title": "Embezzlement Of Rs 22.3-Crore Govt Fund: Seven Arrested, Rs 39 Lakh Recovered, Say Chennai Police",
+   "outlets": [
+    "ETV Bharat"
+   ],
+   "place": null,
+   "t": "2026-11-16 19:53:14"
+  },
+  {
+   "title": "Chennai Publisher Accused Of Using ChatGPT To Create Books Under Fake Author Names, FIR Flags Suspected",
+   "outlets": [
+    "Free Press Journal"
+   ],
+   "place": null,
+   "t": "2026-11-16 19:51:53"
+  },
+  {
+   "title": "Cyclone Asuran… ‘Asuran’ storm… major twist for Chennai… update by Pradeep John",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-16 18:45:42"
+  },
+  {
+   "title": "130km monstrous speed.. Chennai, Tiruvallur, Chengalpattu in the list of areas to be battered...",
+   "outlets": [
+    "Thanthi TV",
+    "Polimer News",
+    "News18"
+   ],
+   "place": null,
+   "t": "2026-11-16 16:59:25"
+  },
+  {
+   "title": "Fire Accident | Bike burst into flames right in the middle of the road.. Sensation in Chennai",
+   "outlets": [
+    "Thanthi TV",
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-16 16:17:33"
+  },
+  {
+   "title": "Gang drags young man and hacks him indiscriminately in Pattinapakkam, Chennai",
+   "outlets": [
+    "Maalaimalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 14:54:34"
+  },
+  {
+   "title": "307 out of 347 RWH structures in high-rise buildings full functional: Chennai Metro Water board",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-16 14:39:19"
+  },
+  {
+   "title": "DMK rule will dawn soon; Says Stalin",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-16 11:23:00"
+  },
+  {
+   "title": "Slushy stretch near Nehru Nagar park puts Old Washermenpet residents at risk",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-16 08:19:28"
+  },
+  {
+   "title": "Sanitary worker falls to death in tank at Avadi sewage treatment plant",
+   "outlets": [
+    "The New Indian Express",
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-16 08:04:13"
+  },
+  {
+   "title": "Broken pavements, encroachments force Ambattur pedestrians onto busy roads",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-15 22:51:41"
+  },
+  {
+   "title": "GCC to hand over 100km of roads to highways dept",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-15 22:50:59"
+  },
+  {
+   "title": "Action to build 433 dressing rooms and 193 toilets in Chennai",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-15 21:30:00"
+  },
+  {
+   "title": "Factions supporting Vijay and Stalin: Infighting in Tamil Nadu Congress",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-15 21:04:00"
+  },
+  {
+   "title": "SIT calls off search for victim’s body at Veeramani’s house",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-15 20:10:48"
+  },
+  {
+   "title": "Forest Department initiates measures to protect Olive Ridley turtles this nesting season",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-15 19:56:34"
+  },
+  {
+   "title": "Train service changes at Tiruchendur, Chennai",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-15 18:50:00"
+  },
+  {
+   "title": "Youth defrauded with promise of house in Othikkal, charged Rs 2.80 lakh – Woman arrested",
+   "outlets": [
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-15 15:59:17"
+  },
+  {
+   "title": "Chennai | Crime | Youth bit and spat at mini bus conductor’s ear",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-15 15:00:24"
+  },
+  {
+   "title": "At Chennai Kannadhasan Nagar bus stand, conductor stabbed with a sword in front of passengers!!",
+   "outlets": [
+    "Dinakaran"
+   ],
+   "place": null,
+   "t": "2026-11-15 14:53:07"
+  },
+  {
+   "title": "Chennai | Person looking for rental house in Chennai faces shock",
+   "outlets": [
+    "Thanthi TV"
+   ],
+   "place": null,
+   "t": "2026-11-15 12:10:08"
+  },
+  {
+   "title": "Ambattur: 3 people arrested for breaking locks and robbing in temples",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-15 09:58:20"
+  },
+  {
+   "title": "Uneven, pothole-ridden Mylappa Street irks Ayanavaram residents",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-15 08:22:16"
+  },
+  {
+   "title": "Sanitation workers who cleared firecracker waste dumped on roads everywhere in Chennai city for Deepavali festival",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-15 07:55:44"
+  },
+  {
+   "title": "Mosquito menace bites hard, Chennai residents call for intensified fogging",
+   "outlets": [
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-15 07:01:55"
+  },
+  {
+   "title": "DT Impact | Damaged stretches on Paper Mills Road in Perambur repaired, restored",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-15 07:00:00"
+  },
+  {
+   "title": "Call to make toilet near court in Saidapet disabled-friendly",
+   "outlets": [
+    "The New Indian Express"
+   ],
+   "place": null,
+   "t": "2026-11-15 06:56:29"
+  },
+  {
+   "title": "Residents urge GCC to remove encroachments on roads in congested areas",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-15 01:01:15"
+  },
+  {
+   "title": "Tambaram City police arrest 26 in special drive against ganja and banned tobacco products",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-15 00:44:05"
+  },
+  {
+   "title": "Modernized roads built in Chennai so that they won't be dug up again for works! Central Government award for pedestrian street!",
+   "outlets": [
+    "Dinamani"
+   ],
+   "place": null,
+   "t": "2026-11-15 00:23:00"
+  },
+  {
+   "title": "MP Kanimozhi questions Vijay’s silence on missing Gingee girl",
+   "outlets": [
+    "The Times of India"
+   ],
+   "place": null,
+   "t": "2026-11-15 00:08:10"
+  },
+  {
+   "title": "In the case of missing Rs 22 crore of Rural Development Department... 7 people arrested! : 3 people in Chennai; 4 people rounded up in Sivagangai, Madurai",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-14 23:46:00"
+  },
+  {
+   "title": "Chennai Corporation clears 78 metric tonnes of waste from TNUHDB tenements",
+   "outlets": [
+    "DT Next",
+    "Daily Thanthi"
+   ],
+   "place": null,
+   "t": "2026-11-14 22:00:30"
+  },
+  {
+   "title": "Chennai: Gang posing as cops, IT officials robs family; three arrested",
+   "outlets": [
+    "DT Next"
+   ],
+   "place": null,
+   "t": "2026-11-14 20:37:53"
+  },
+  {
+   "title": "Chennai Corporation plans ₹200-crore infrastructure upgrade for Guindy, Ambattur industrial estates",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-14 19:54:31"
+  },
+  {
+   "title": "‘Watch out for this open SWD near MEPZ’",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-14 18:36:38"
+  },
+  {
+   "title": "Three arrested in two temple burglary cases in Chennai",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-14 16:18:30"
+  },
+  {
+   "title": "Framing life from the margins",
+   "outlets": [
+    "The Hindu"
+   ],
+   "place": null,
+   "t": "2026-11-14 13:46:11"
+  },
+  {
+   "title": "Buried bodies? Police dig and inspect behind Veeramani's house",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-14 13:37:00"
+  },
+  {
+   "title": "Wall in the path of receding floodwater: New danger in South Pallikaranai",
+   "outlets": [
+    "Hindu Tamil Thisai"
+   ],
+   "place": null,
+   "t": "2026-11-14 12:31:42"
+  },
+  {
+   "title": "Let us unite on the Cauvery issue; Convene all-party meeting: Stalin's letter to CM Vijay",
+   "outlets": [
+    "Dinamalar"
+   ],
+   "place": null,
+   "t": "2026-11-14 12:19:00"
+  },
+  {
+   "title": "Roads turned into death pits in Manjampakkam, Madhavaram constituency: Traders decide to protest",
+   "outlets": [
+    "Dinakaran"
+   ],
+   "place": null,
+   "t": "2026-11-14 09:28:20"
+  }
+ ]
+}
