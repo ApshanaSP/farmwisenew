@@ -14,7 +14,10 @@
 import { type StageDocT, checkStage } from "./stage";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
-export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } }
+export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string }; /** v10: "read it fully": the whole story, not its brief */ full?: boolean }
+  | { kind: "lookup"; body: { question: string } }
+  /** v10, news to ground truth: what the console holds on the story read last (v10/offer10.ts asks it) */
+  | { kind: "ground"; body: { ground: { id: string; lang: "en" | "ta"; q?: string } } }
   /** v8: a story by its topic or a news question, found on the server among the screen's stories and the dashboard's (v8/news8.ts) */
   | { kind: "find"; body: { find: { q: string; lang: "en" | "ta"; screen: { id: string; title: string | null; source: string | null }[]; exclude?: string[];
     /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have ("Akvan", "Akwan") */
@@ -67,6 +70,14 @@ const READ_TG = [
   /\b(?:news|paper|papers|article|report)\s*(?:la|le|il)\s*enna\s*(?:solr|solraanga|sollirukaanga|potrukaanga|pottirukanga|vandhirukku|irukku)\b/,
   /\bmatha (?:papers|paper|news|channels)\b/
 ];
+/**
+ * v10: "read it fully", "read the whole thing", "read the full article", "full-a padinga", "முழுசா படிங்க": the whole story, not its brief (the
+ * route reads the stored body, or the page, in the asked language: v10/brief10.ts)
+ */
+const FULL_EN = /\b(?:read|go through|read out|read me|give me|let me hear)\b.{0,30}?\b(?:fully|in full|completely|all of it|word for word|from start to finish|(?:the )?(?:whole|full|entire|complete) (?:thing|story|article|report|piece|text|news|one))\b|^(?:(?:the )?(?:whole|full|entire) (?:thing|story|article|report|text)|in full|fully)(?: please)?$|\bread (?:the )?rest(?: of it)?\b/;
+const FULL_TG = /\b(?:full|fulla|fullah|muzhusa|muzhusaa|muzhusaga|muzhuvadhum|muluvathum|muzhumaiya)\b\s*(?:-?\s*(?:a|ah|aa)\b)?\s*(?:padi|padinga|padingo|padichu|vaasi|vaasinga|sollu|sollunga|read)\b/;
+const FULL_TA = /(?:முழுசா|முழுசாக|முழுவதும்|முழுவதையும்|முழுமையாக|முழுச்\s*செய்தி\S*|முழு\s*செய்தி\S*|ஃபுல்லா\S*|ஃபுல்\S*)\s*(?:\S+\s*)?(?:படி|வாசி|சொல்)/u;
+export const fullRead = (raw: string): boolean => { const t = norm(raw); return !!t && (FULL_EN.test(t) || FULL_TG.test(t) || FULL_TA.test(raw.normalize("NFC"))); };
 /**
  * v7: "tell me about this news", "what is this story about", "explain that article": a request to be told about ONE report on the screen (the one
  * in focus, the one named by its place or outlet, else the first), said with "this/that" or an ordinal. "Tell me about the news" in general is
@@ -141,9 +152,11 @@ export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } 
   }
   if (reads) {
     const item = pickItem(t, on);
-    if (item && "id" in item) return { kind: "read", body: item };
+    // v10: "read the third article in full": the whole story
+    const full = fullRead(raw) ? { full: true } : {};
+    if (item && "id" in item) return { kind: "read", body: item, ...full };
     if (item) return { kind: "which", ...item };
-    if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident } };
+    if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident }, ...full };
     // "what are other papers saying" about nothing on screen: the web, if a public subject is named; else ask which
     if ((WEB_CUE.test(t) || FORECAST.test(t)) && !CONSOLE.test(t)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
     // nothing on screen to read: "which report?" only when it plainly means the press ("the weekly report" is the planner's)
