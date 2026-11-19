@@ -82,7 +82,7 @@ function items(): Item8[] {
 
 const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as unknown as ScreenState;
 type NewsRow = { id: string; source: string | null; title: string };
-interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[]; lex?: unknown[] | null }
+interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[]; lex?: unknown[] | null; sem?: Parameters<typeof foundStory>[1]["sem"] }
 
 async function context(): Promise<Ctx> {
   const world = await serverWorld();
@@ -92,7 +92,8 @@ async function context(): Promise<Ctx> {
   const panel = r.rows.map((x) => ({ id: String(((x.docIds as string[] | undefined) ?? [])[0] ?? x.id), source: ((x.outletNames as string[] | undefined) ?? []).join(" · ") || null, title: String(x.title ?? "") }));
   // v10: the day's lexicon, as the console fetches it when Jarvis opens
   const lex = V === "v10" ? await import("../v10/lexserver").then(async (m) => m.lexForBrowser(await m.dayLexicon(world))).catch(() => null) : null;
-  return { world, hands, panel, lex };
+  const sem = V === "v10" ? (await import("../v10/sem10")).semScores : undefined;
+  return { world, hands, panel, lex, sem };
 }
 
 /** where one turn leaves the browser: the screen it shows, the console's state and the turns remembered */
@@ -180,7 +181,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   if (own.lane === "confirm") { o.kind = "clarify"; o.lane = "confirm"; o.lang = own.lang ?? null; o.reply = own.lang === "ta" ? own.ask?.ta ?? null : own.ask?.en ?? null; o.ms = Date.now() - t0; return { o, scene: s }; }
   // v9: a soft find (a story-like topic with no news word) that finds nothing close goes on to the lane behind it, as Thunai.tsx does
   if (bl.lane === "news" && bl.soft && bl.na.kind === "find") {
-    const f = await foundStory(bl.na.body.find, { world: c.world }).catch(() => null);
+    const f = await foundStory(bl.na.body.find, { world: c.world, sem: c.sem }).catch(() => null);
     if (!f?.pick) bl = bl.soft;
   }
   let scene: Scene = { ...s, lastTurnAt: now, lastLang: wordsLang(said, { isName: placeWord }) ?? s.lastLang ?? null };
@@ -207,7 +208,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         remember("read the news report aloud", doc, null);
       } else if (bl.na.kind === "find") {
         // v8: the server's finder, on the same store; nothing found: the outlets' feeds (none in a dry run: no network)
-        const f = await foundStory(bl.na.body.find, { world: c.world });
+        const f = await foundStory(bl.na.body.find, { world: c.world, sem: c.sem });
         o.lane = "news8";
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);

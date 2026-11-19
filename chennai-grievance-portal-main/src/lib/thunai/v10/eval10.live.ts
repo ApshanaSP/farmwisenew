@@ -56,13 +56,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** the browser's lanes of the checkout this runs in: v10's (browser10.ts and the day's lexicon), else v9's own */
 type AnyLane = { lane: string; [k: string]: unknown };
-interface Lanes { v: "v10" | "v9"; lane: (said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null; lex?: unknown; suggest?: string[] | null }) => AnyLane; lex: unknown }
+interface Lanes { v: "v10" | "v9"; lane: (said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null; lex?: unknown; suggest?: string[] | null }) => AnyLane; lex: unknown; sem?: (q: string, items: never[]) => Promise<Map<string, number> | null> }
 async function lanes(world: World): Promise<Lanes> {
   try {
     const b10 = (await import(/* @vite-ignore */ "./browser10" as string)) as { browserLaneV10: Lanes["lane"] };
     const lx = (await import(/* @vite-ignore */ "./lexserver" as string)) as { dayLexicon: (w: World) => Promise<unknown[]>; lexForBrowser: (l: unknown[]) => unknown[] };
     const lex = lx.lexForBrowser(await lx.dayLexicon(world));
-    return { v: "v10", lane: b10.browserLaneV10, lex };
+    const s10 = (await import(/* @vite-ignore */ "./sem10" as string)) as { semScores: Lanes["sem"] };
+    return { v: "v10", lane: b10.browserLaneV10, lex, sem: s10.semScores };
   } catch {
     return { v: "v9", lane: browserLaneV8 as unknown as Lanes["lane"], lex: null };
   }
@@ -214,7 +215,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
   let bl = c.lanes.lane(said, ctx);
   // a soft find that finds nothing close goes on to the lane behind it, as the console does (v9)
   if (bl.lane === "news" && (bl as unknown as { soft?: AnyLane }).soft && (bl as unknown as { na: { kind: string } }).na.kind === "find") {
-    const f = await foundStory((bl as unknown as { na: { body: { find: Parameters<typeof foundStory>[0] } } }).na.body.find, { world: c.world }).catch(() => null);
+    const f = await foundStory((bl as unknown as { na: { body: { find: Parameters<typeof foundStory>[0] } } }).na.body.find, { world: c.world, sem: c.lanes.sem as never }).catch(() => null);
     if (!f?.pick) bl = (bl as unknown as { soft: AnyLane }).soft;
   }
   let scene: Scene = { ...s, lastLang: wordsLang(said, { isName: placeWord }) ?? s.lastLang ?? null };
@@ -259,7 +260,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
       } else if (na.kind === "find") {
         const find = (na.body as { find: Parameters<typeof foundStory>[0] & { weather?: boolean } }).find;
         o.weather = !!find.weather;
-        const f = await foundStory(find, { world: c.world });
+        const f = await foundStory(find, { world: c.world, sem: c.lanes.sem as never });
         o.lane = "news-find";
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);

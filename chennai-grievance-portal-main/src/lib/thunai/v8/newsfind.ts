@@ -15,8 +15,8 @@ import type { World } from "../types";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { eventForms, newsRequest, pickStory, rankStories, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
-import { tokensOf } from "./match";
+import { eventForms, newsRequest, pickStory, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { looseKey, tokensOf } from "./match";
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
@@ -120,7 +120,14 @@ async function readStore(now: string, days: number): Promise<StoryItem[]> {
 /** the floor for a search again on the story just found */
 export const MORE_FLOOR = 0.35;
 
-export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]> }): Promise<Found | null> {
+/** v10: the meaning ranker's guards (v10/sem10.ts; calibrated on v8's dev set and the build's own cases on the real store, 19 Nov) */
+export const SEM_ABS = 0.835;
+export const SEM_MARGIN = 0.03;
+export const SEM_LEX = 0.3;
+
+export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]>;
+  /** v10: the meaning of the request against the candidates (v10/sem10.ts semScores, passed by the news route and the runners); absent: none asked */
+  sem?: ((q: string, items: StoryItem[]) => Promise<Map<string, number> | null>) | null }): Promise<Found | null> {
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
   // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
   let req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
@@ -167,5 +174,31 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
     const named = { words: req.which ?? [], outlet: null, gloss: req.gloss };
     ranked = ranked.filter((r) => r.score < SOFT_FLOOR || ((rankStories(ev, [r.item])[0]?.hits ?? 0) > 0 && (!named.words.length || (rankStories(named, [r.item])[0]?.hits ?? 0) > 0)));
   }
-  return { req, picked: pickStory(ranked, f.lang, floor) };
+  const picked = pickStory(ranked, f.lang, floor);
+  // v10: nothing found by the words: the request's meaning (a Tamil request about an English headline), under the lexical guards; never for a thing
+  // named by ear (its spellings are the evidence), a soft find, a search for more on a story, or the screen alone
+  // (asked only when the caller passes it: the news route and the runners; a unit test or another caller never starts the model)
+  if (!picked.pick && !req.soft && !f.entity && !f.onlyScreen && !f.exclude?.length && d.sem) {
+    const sem = await d.sem(f.q, items.slice(0, 400)).catch(() => null);
+    const order = sem ? [...sem.entries()].filter(([id]) => items.some((x) => x.id === id)).sort((a, b) => b[1] - a[1]) : [];
+    const best = order[0] ? items.find((x) => x.id === order[0][0]) ?? null : null;
+    if (best && order[0][1] >= SEM_ABS) {
+      const memo = new Map<StoryItem, Set<string>>();
+      const next = order.find(([id]) => { const it = items.find((x) => x.id === id); return !!it && it.id !== best.id && !sameStory(it, best, memo); });
+      const lex = ranked.find((r) => r.item.id === best.id);
+      const tamil = /[஀-௿]/u.test(f.q);
+      // (the place veto: a district place the request names that the story lacks; rankStories caps such a story at 0.3)
+      const places = placesOf(d.world);
+      const placeWords = req.words.filter((w) => places.some((p) => keySimLoose(w, p)));
+      const vetoed = placeWords.length > 0 && rankStories({ words: placeWords, outlet: null }, [best], { places })[0]?.hits !== placeWords.length;
+      if (order[0][1] - (next?.[1] ?? 0) >= SEM_MARGIN && (tamil || (lex?.score ?? 0) >= SEM_LEX && (lex?.hits ?? 0) > 0) && !vetoed)
+        return { req, picked: { pick: best, score: lex?.score ?? 0, other: null, close: false, stories: [best] } };
+    }
+  }
+  return { req, picked };
 }
+/** a request word that names a district place (its loose key equal to a place's, or a place word's, four letters or more) */
+const keySimLoose = (w: string, place: string): boolean => {
+  const k = looseKey(w);
+  return k.length >= 4 && tokensOf(place).some((p) => looseKey(p) === k);
+};
