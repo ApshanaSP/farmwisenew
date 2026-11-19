@@ -362,7 +362,7 @@ const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(
 
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  const t = text.split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
+  const t = text.normalize("NFC").split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
   let toks = outletToks(t);
   // the outlet's own words are not the topic (found again on these words: the same reader as outletIn's)
   if (outlet) { const r = outletRun(toks); if (r && r.name === outlet) toks = [...toks.slice(0, r.i), ...toks.slice(r.i + r.n)]; }
@@ -375,7 +375,8 @@ export function topicWords(text: string, outlet: string | null): string[] {
  * "the X one" means a story there. Null: not this lane's.
  */
 export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsReq | null {
-  const text = raw.trim();
+  // (v9, the review: decomposed Tamil letters read as composed: the word lists below are written composed)
+  const text = raw.normalize("NFC").trim();
   if (!text || text.length > 400 || NEGATED.test(text)) return null;
   const outlet = outletIn(text);
   const consoleThing = CONSOLE.test(text) && !NEWS_NOUN.test(text);

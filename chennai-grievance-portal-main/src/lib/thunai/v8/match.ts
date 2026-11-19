@@ -88,7 +88,8 @@ export function editDistance(a: string, b: string): number {
 /** Latin case endings and clitics a Tamil or Tanglish word may carry, longest first (the research's R.4) */
 // (v9: and the spoken locative after a vowel, "-வுல"/"-யுல": "மெரினாவுல" -> merina, "சென்னையுல" -> chennai; v8's holdout)
 const ENDINGS = ["ilirundhu", "ilirunthu", "ilirundu", "lerundhu", "lirundhu", "lerunthu", "lendhu", "yikku", "vukku", "voda", "vooda", "ooda", "vula", "vule", "yula", "yule", "yila", "yile", "kitta", "kitte", "ukku",
-  "udan", "aale", "yil", "vila", "vil", "ula", "ule", "ile", "ila", "lla", "kku", "oda", "ode", "odu", "aal", "yin", "yai", "yum", "lae", "il", "la", "le", "ku", "in", "ai", "um", "aa", "ah", "ya", "e", "a"];
+  // (v9, the review: the accusative with the sandhi consonant before திற, படி, சொல்: -ஐத், -ஐப், -ஐச், "porattattaip")
+  "udan", "aale", "yaip", "yait", "yaic", "aip", "ait", "aic", "ais", "yil", "vila", "vil", "ula", "ule", "ile", "ila", "lla", "kku", "oda", "ode", "odu", "aal", "yin", "yai", "yum", "lae", "il", "la", "le", "ku", "in", "ai", "um", "aa", "ah", "ya", "e", "a"];
 
 /** a word and the stems its case endings may hide ("pallikaranaiyila" -> "pallikaranai"; "kodambakkathula" -> "kodambakkam") */
 export function stemsOf(word: string): string[] {

@@ -325,3 +325,20 @@ describe("v9 review, group 5: the soft search takes a named event, never the con
       expect(newsRequest(t, { onScreen: /IOCL/.test(t) })?.soft, t).toBe(true);
   });
 });
+
+describe("v9 review, group 6: decomposed Tamil letters, and the accusative's sandhi consonant", () => {
+  it("#24: a sentence in decomposed letters (NFD) is read as the composed one (NFC)", async () => {
+    const { topicWords } = await import("./news8");
+    for (const t of ["கொடுங்கையூர் காலிக்குடம் போராட்டத்தைத் திறங்க", "ராயபுரம் கொலை செய்தி", "தொடர்பான செய்தி", "சொல்றாங்க போட்டிருக்காங்க செய்தி"]) {
+      expect(newsRequest(t.normalize("NFD"), {}), t).toEqual(newsRequest(t, {}));
+      expect(topicWords(t.normalize("NFD"), null), t).toEqual(topicWords(t, null));
+    }
+  });
+  it("#18: -ஐத், -ஐப், -ஐச் before திற, படி, சொல் are case endings (போராட்டத்தைப் is போராட்டம்)", async () => {
+    const { stemsOf } = await import("./match");
+    expect(stemsOf("porattattaip")).toContain("porattam");
+    expect(stemsOf("palattait")).toContain("palam");
+    const p = story("பாலத்தில் விரிசல்: போக்குவரத்து மாற்றம்", { id: "pb", titleEn: "Crack on the bridge: traffic diverted" });
+    expect(pick("பாலத்தைப் பத்தின செய்தியைப் படிங்க", [p, ...FILLER])?.pick?.id).toBe("pb");
+  });
+});
