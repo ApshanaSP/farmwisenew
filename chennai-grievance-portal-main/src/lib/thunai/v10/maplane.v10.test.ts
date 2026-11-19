@@ -50,4 +50,18 @@ describe("the map's lane among the others", () => {
     // a cut-off line still waits for its rest
     expect(lane("take me round the").lane).toBe("wait");
   });
+  it("a news request about the rain, a tour or a round-up is the news's, as in v9 (v10 review 2, findings 9 and 12)", () => {
+    for (const s of ["show the latest rain news", "what's the news on rain and flooding", "news about flood prone areas", "கடந்த மழை செய்திகளைக் காட்டு", "mazhai vellam news kaattu",
+      "give me the news round-up", "news about the CM's district tour", "முதல்வர் சுற்றுப்பயணம் பற்றிய செய்தி", "மாமல்லபுரம் சுற்றுலா செய்திகள்"]) {
+      expect(lane(s).lane, s).toBe("news");
+    }
+  });
+  it("a visit's brief, a case on the map, a case assigned and side requests are not the map's (v10 review 2, findings 13, 15, 17 and 18)", () => {
+    expect(lane("I have a site visit in Velachery tomorrow, what should I know?").lane).not.toBe("map");
+    expect(lane("I have a field visit in Adyar tomorrow morning, brief me").lane).not.toBe("map");
+    const caseOpen = { ...(state as object), panel: "incident", incident: "INC-1" } as never;
+    const b = browserLaneV10("show this case on the map", { stage: null, news: { items: [] }, state: caseOpen, world, listenLang: "en", heardLang: "en", v7: true, lex, askMap: null, incident: "INC-1" } as BrowserCtx10);
+    expect(b.lane).not.toBe("map");
+    for (const s of ["assign this case to the AE", "send this to the zonal officer", "keep the map open", "suggest an action for this"]) expect(lane(s, ANSWER).lane, s).not.toBe("map");
+  });
 });

@@ -21,6 +21,7 @@ import { dayIn, rehearsalIntent } from "@/lib/rehearsal/intent";
 import { taNumber } from "../normalise";
 import { asciiDigits } from "../digits";
 import { placeWord } from "../v8/lang8";
+import { DEPT_CONFIG } from "@/lib/officer/departments";
 
 export type MapOp = "ask" | "followup" | "chip" | "circle" | "layer" | "shot" | "export" | "save" | "visit" | "insight" | "send" | "suggest" | "rain" | "tour";
 export interface MapCmd {
@@ -132,7 +133,7 @@ const ON_THE_MAP = /\b(?:on|in) (?:the )?map\b|\bmap la\b|\bmapla\b|\bmap le\b|�
 
 /** English, Tanglish and Tamil number words read as numbers (a distance's count) */
 const EN_NUM: Record<string, number> = {
-  a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20,
+  zero: 0, a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20,
   thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90, hundred: 100, thousand: 1000, half: 0.5, quarter: 0.25, couple: 2,
   // Tanglish
   oru: 1, onnu: 1, rendu: 2, randu: 2, irandu: 2, moonu: 3, munu: 3, naalu: 4, nalu: 4, anju: 5, aindhu: 5, aaru: 6, ezhu: 7, ettu: 8, ombodhu: 9, ombadhu: 9,
@@ -153,23 +154,66 @@ function oneNum(w: string): number | null {
   }
   return null;
 }
-/** a number said in the last words before a unit: "two", "2.5", "half a", "one and a half", "five hundred", "twenty five", "rendu", "இரண்டு" */
+/** "hundred" and "thousand" in the three languages: they multiply the count said before them ("two thousand", "anju nooru") */
+const MULT = (w: string): number => (/^(?:hundred|nooru|நூறு)$/u.test(w) ? 100 : /^(?:thousand|aayiram|ayiram|ஆயிரம்)$/u.test(w) ? 1000 : 0);
+/** the digits said after "point" ("two point five") */
+const POINT_DIGIT: Record<string, number> = { zero: 0, oh: 0, o: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+/** a whole number said in words: "twenty five", "two thousand", "twenty five hundred", "two hundred and fifty", "anju nooru"; null when the words
+ * are not one number ("one two", "within two") */
+function intPhrase(ws: string[]): number | null {
+  if (!ws.length) return null;
+  let total = 0, cur = 0, lastMul = 0;
+  let last: "num" | "mul" | "and" | null = null;
+  for (const w of ws) {
+    if (w === "and") { if (last !== "mul") return null; last = "and"; continue; }
+    const mul = MULT(w);
+    if (mul) {
+      if (last === "mul" || last === "and") return null;
+      if (mul === 100) cur = (cur || 1) * 100;
+      else { total += (cur || 1) * 1000; cur = 0; }
+      lastMul = mul; last = "mul"; continue;
+    }
+    const n = oneNum(w);
+    if (n == null || !Number.isInteger(n)) return null;
+    // a count joins the one before it only as tens and ones ("twenty five"), or after a hundred or a thousand when it is smaller ("two thousand
+    // five hundred", "two hundred and fifty")
+    if (last === "num") { if (!(cur % 100 >= 20 && cur % 10 === 0 && n < 10 && /^[a-z]+$/.test(w))) return null; }
+    else if (last && n >= lastMul) return null;
+    cur += n; last = "num";
+  }
+  return last === "and" ? null : total + cur;
+}
+/** words that are one number as said: one word ("two", "2.5", "arai", "இரண்டு"), "X and a half" / "X and half", "X point Y", or a whole number */
+function phraseNum(ws: string[]): number | null {
+  const k = ws.length;
+  if (!k) return null;
+  if (k === 1) return oneNum(ws[0]);
+  // "one and a half", "one and half" (both said in Indian English)
+  if (ws[k - 1] === "half" && ws[k - 2] === "and") { const x = intPhrase(ws.slice(0, -2)); return x == null ? null : x + 0.5; }
+  if (ws[k - 1] === "half" && ws[k - 2] === "a" && ws[k - 3] === "and") { const x = intPhrase(ws.slice(0, -3)); return x == null ? null : x + 0.5; }
+  // "two point five", "point five"
+  const p = ws.indexOf("point");
+  if (p >= 0) {
+    const whole = p === 0 ? 0 : intPhrase(ws.slice(0, p));
+    const ds = ws.slice(p + 1).map((w) => (/^\d$/.test(w) ? Number(w) : POINT_DIGIT[w] ?? null));
+    if (whole == null || !ds.length || ds.length > 2 || ds.some((x) => x == null)) return null;
+    return Number(`${whole}.${ds.join("")}`);
+  }
+  return intPhrase(ws);
+}
+/** a number said in the last words before a unit: "two", "2.5", "half a", "one and a half", "one and half", "two point five", "five hundred",
+ * "two thousand", "twenty five", "anju nooru", "rendu", "இரண்டு": the longest run of words that is one number (v10 review 2, finding 16: "one
+ * and half km" was 500 m, "two point five" 5 km, "two thousand metres" 1 km, "anju nooru meter" 100 m) */
 function numBefore(ws: string[]): { n: number; len: number } | null {
   const k = ws.length;
   const at = (i: number) => ws[k - i] ?? "";
-  // "one and a half", "two and a half"
-  if (at(1) === "half" && at(2) === "a" && at(3) === "and" && oneNum(at(4)) != null) return { n: (oneNum(at(4)) as number) + 0.5, len: 4 };
   // "half a", "half an", "a quarter of a"
   if ((at(1) === "a" || at(1) === "an") && at(2) === "half") return { n: 0.5, len: 2 };
   if ((at(1) === "a" || at(1) === "an") && at(2) === "of" && at(3) === "quarter") return { n: 0.25, len: at(4) === "a" ? 4 : 3 };
-  // "five hundred", "a hundred"
-  if (at(1) === "hundred" && oneNum(at(2)) != null) return { n: (oneNum(at(2)) as number) * 100, len: 2 };
-  // "twenty five"
-  const one = oneNum(at(1));
-  const tens = oneNum(at(2));
-  if (one != null && one < 10 && Number.isInteger(one) && tens != null && tens >= 20 && tens % 10 === 0 && tens < 100 && /^[a-z]+$/.test(at(2))) return { n: tens + one, len: 2 };
-  if (one != null && at(1) !== "a" && at(1) !== "an") return { n: one, len: 1 };
-  if (one != null) return { n: one, len: 1 };
+  for (let len = Math.min(k, 7); len >= 1; len--) {
+    const n = phraseNum(ws.slice(k - len));
+    if (n != null) return { n, len };
+  }
   return null;
 }
 const KM_UNIT = /^(?:km|kms|kilomet(?:er|re)s?|kilo|கிமீ\S*|கிலோமீட்ட\S*|கிலோ)$/u;
@@ -181,7 +225,7 @@ export function distance10(t: string): { km: number; from: number; to: number } 
   for (let i = 0; i < ws.length; i++) {
     const km = KM_UNIT.test(ws[i]), m = !km && M_UNIT.test(ws[i]);
     if (!km && !m) continue;
-    const nb = numBefore(ws.slice(Math.max(0, i - 4), i));
+    const nb = numBefore(ws.slice(Math.max(0, i - 7), i));
     if (!nb) continue;
     // "a km" alone is one; "m" needs a real number ("I'm", "m" said alone)
     if (m && ws[i] === "m" && !/^\d/.test(ws[i - 1] ?? "")) continue;
@@ -232,6 +276,8 @@ const SUBJECT_WORDS = new Set(("complaints complaint cases case incidents incide
   "accidents accident sewage drainage streetlights streetlight thefts theft crime fires fire dengue waterlogging pugar pugaar prachanai vellam kuppai open severe " +
   "serious closed pending overdue what's whats happening going").split(" "));
 const REL_EN = /^(?:within|inside|around|near|nearby|beside|surrounding|round|from|of)$/;
+/** a noun that makes the word before it part of a place's name ("fire station", "flood control office") */
+const PLACE_NOUN = /^(?:stations?|stands?|schools?|colleges?|hospitals?|offices?|depots?|markets?|bridges?|roads?|streets?|grounds?|rooms?|centres?|centers?)$/;
 
 /** The place a spatial sentence is about, as said (English and Tanglish title-cased, Tamil without its case ending). */
 export function anchorOf(t: string): string | null {
@@ -251,7 +297,7 @@ export function anchorOf(t: string): string | null {
       if (PLACE_STOP.has(ws[k]) || /^\d/.test(ws[k]) || KM_UNIT.test(ws[k]) || M_UNIT.test(ws[k]) || /[஀-௿]/u.test(ws[k])) break;
       name.push(ws[k]);
     }
-    if (name.length && !NOT_PLACE.has(name.join(" ")) && !SUBJECT_WORDS.has(name[0])) best = titleCase(name.join(" "));
+    if (name.length && !NOT_PLACE.has(name.join(" ")) && (!SUBJECT_WORDS.has(name[0]) || PLACE_NOUN.test(name[1] ?? ""))) best = titleCase(name.join(" "));
   }
   if (best) return best;
   // Tanglish: the words before a case clitic ("Kasimedu-la rendu km kulla", "Adyar pakkathula", "harbour kitta")
@@ -259,7 +305,8 @@ export function anchorOf(t: string): string | null {
     if (!/^(?:la|le|lerundhu|lerunthu|laerundhu|ilerundhu|kitta|kitte|pakkathula|pakkathil|pakkam|suthi|suththi|sutthi|arugil|arugey|aruge)$/.test(ws[i])) continue;
     const name: string[] = [];
     for (let k = i - 1; k >= 0 && name.length < 3; k--) {
-      if (PLACE_STOP.has(ws[k]) || SUBJECT_WORDS.has(ws[k]) || /^\d/.test(ws[k]) || oneNum(ws[k]) != null || /[஀-௿]/u.test(ws[k])) break;
+      // (a subject word is the place's own before a place noun: "Kasimedu fire station pakkathula": v10 review 2, round 2)
+      if (PLACE_STOP.has(ws[k]) || (SUBJECT_WORDS.has(ws[k]) && !PLACE_NOUN.test(name[0] ?? "")) || /^\d/.test(ws[k]) || oneNum(ws[k]) != null || /[஀-௿]/u.test(ws[k])) break;
       name.unshift(ws[k]);
     }
     if (name.length && !NOT_PLACE.has(name.join(" "))) return titleCase(name.join(" "));
@@ -310,15 +357,61 @@ const SEVERE_WORD = /\bsevere\b|\bserious\b|\bcritical\b|\bkadumaiyana\w*|கட
 
 // ------------------------------------------------------------------ tour --
 
-const TOUR_START = new RegExp([
-  "\\btake me (?:a)?round\\b", "\\btake me on (?:a |the )?(?:tour|round)\\b", "\\bshow me (?:a)?round\\b", "\\bgive me (?:a |the )?tour\\b", "\\bgo (?:a)?round the (?:district|city)\\b",
-  "\\b(?:start|begin|do|run|play) (?:a |the )?(?:district |city |hotspots? |news |flood |morning )?tour\\b", "\\b(?:start|begin|do|run|play) (?:a |the )?(?:district|city|hotspots?|morning) round\\b","\\btour (?:of |round |around )?(?:the |today'?s |todays )?(?:district|city|chennai|hotspots?|places)\\b",
-  "\\b(?:district|city|hotspots?|morning|daily|flood|news|storm) (?:tour|round)\\b", "\\bwalk me through (?:the |today'?s |todays )?(?:district|hotspots|city)\\b", "\\bfly me (?:a)?round\\b",
-  "சுற்றிக் ?காட்டு", "சுற்றிப் ?பார்க்க", "சுற்றுப்பயணம்", "சுற்றுலா", "ஒரு சுற்று",
+/** the words that name which tour, between "a" or "the" and "tour" ("give me the news tour", "start a quick district tour": v10 review 2, round 2) */
+const TOUR_KIND = "(?:(?:district|city|hotspots?|news|flood|morning|full|whole|quick|short|guided|narrated|today'?s|todays|map) )*";
+/** the same words where a tour is given: a day or a size only before the map tour's name ("give me today's news tour"; "give me today's tour
+ * programme" and "the full tour plan for tomorrow" are the Collector's own: v10 review 2, round 3) */
+const TOUR_NAMED = "(?:(?:(?:morning|full|whole|quick|short|today'?s|todays) )*(?:district|city|hotspots?|news|flood|guided|narrated|map) )*";
+/** a tour asked for in so many words: "take me round", "give me a tour", "start the news tour", "suthi kaattu", "சுற்றிக் காட்டு", "சுற்றுலா தொடங்கு" */
+const TOUR_FRAME = [
+  "\\btake me (?:a)?round\\b", `\\btake me on (?:a |the )?${TOUR_KIND}(?:tour|round)\\b`, "\\bshow me (?:a)?round\\b", `\\bgive me (?:a |the )?${TOUR_NAMED}tour\\b`,
+  "\\bgo (?:a)?round the (?:district|city)\\b",
+  `\\b(?:start|begin|do|run|play) (?:a |the )?${TOUR_KIND}tour\\b`, "\\b(?:start|begin|do|run|play) (?:a |the )?(?:district|city|hotspots?|morning) round\\b",
+  "\\bwalk me through (?:the |today'?s |todays )?(?:district|hotspots|city)\\b", "\\bfly me (?:a)?round\\b", "^(?:(?:the|a|today'?s|todays) )*news tour$",
+  // a tour of the news itself ("tour of the places in the news", "a tour of today's headlines"): "news about the CM's tour of the district" is the news
+  "\\btour (?:of|round|around|through) (?:the |today'?s |todays )?(?:(?:places|spots|locations|stories|areas|hotspots) (?:in|from|of) (?:the |today'?s |todays )?)?(?:news|headlines)\\b",
+  "சுற்றிக் ?காட்டு", "சுற்றிப் ?பார்க்க",
+  // the Tamil nouns for a tour only with a verb that starts one, or goes, or takes the Collector on it: alone they are tourism and the CM's tours
+  // in the news (v10 review 2, finding 12; round 2: "சுற்றுலா செல்வோம்", "சுற்றுலா அழைத்துச் செல்லுங்கள்" were not heard; never போதும், enough;
+  // round 3: நடத்து only as asked, never the CM's "சுற்றுப்பயணம் நடத்துகிறார்" or "நடத்தும்")
+  "(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:தொடங்கு|ஆரம்பி|காட்டு|காண்பி|நடத்து(?:ங்கள்|ங்க|வோம்)?(?=\\s|$)|போகலாம்|போவோம்|போங்க|போ(?=\\s|$)|செல்வோம்|செல்லலாம்|செல்லுங்க|செல்லவும்|செல்(?=\\s|$)|(?:அழைத்து|கூட்டி)\\S*\\s*(?:செல்|போ(?!தும்))\\S*)",
   "\\b(?:suthi|suththi|sutthi|chuthi|suthi) ?(?:kaattu|kattu|kaatu|kaami|kaaminga|kaatunga|kaattunga|paakalam|paaru)\\b", "\\bround (?:kootitu po|kootittu po|pogalam|kaattu|adikkalam)\\b",
   "\\btour (?:kaattu|pannu|pannalam|kootitu po|start pannu|pogalam)\\b"
+];
+const TOUR_ASKED = new RegExp(TOUR_FRAME.join("|"), "u");
+/** the tour named with no frame ("today's hotspots tour", "the full round of the district tour", "மாவட்டச் சுற்றுலா"): a start when no news is
+ * asked about ("news round-up" and "the CM's district tour" are the news: v10 review 2, finding 12) */
+const TOUR_START = new RegExp([...TOUR_FRAME, "\\btour (?:of |round |around )?(?:the |today'?s |todays )?(?:district|city|chennai|hotspots?|places)\\b",
+  "\\b(?:district|city|hotspots?|morning|daily|flood|storm) (?:tour|round)\\b", "ஒரு சுற்று",
+  // "district tour" in Tamil, said as the whole request ("மாவட்டச் சுற்றுலா அலுவலர்", the District Tourism Officer, is not one: v10 review 2, round 2)
+  "மாவட்ட\\S*\\s+(?:சுற்றுலா|சுற்றுப்பயண)\\S*$"].join("|"), "u");
+const STOP_VERB = /\b(?:stop|end|cancel|finish|quit|halt|niruthu\w*|nirutthu\w*|podhum|pothum)\b|நிறுத்து|போதும்/u;
+/** "stop" and "end" said as nouns ("the next stop", "at the end of this round") and a stop said not to ("don't stop the tour", "niruthaadheenga"
+ * is not a stop verb at all): blanked before a stop is looked for (v10 review 2, round 2: these ended a running tour; round 3: "an end" is a
+ * stop, "bring the tour to an end", and the not only right before the stop, "never mind, stop the tour" and "not now, stop the tour" stop it) */
+const stopWords = (t: string): string =>
+  t.replace(/\b(?:next|the|this|that|each|every|last|first|second|third|previous|final|one|another|any|its|bus)(?: tour| touring)? (?:stop|stops|end|halt)\b/g, " ")
+    .replace(/\b(?:dont|don t|do not|never|not|no need to|shouldnt|should not|wont|will not|cant|cannot|without)\s+(?:stop|end|cancel|finish|quit|halt)\w*/g, " ")
+    .replace(/(?:niruthu|nirutthu|stop pannu|நிறுத்து|நிறுத்த)\S*\s+(?:vendaam|venaam|vendam|வேண்டாம்|வேணாம்)/gu, " ");
+/** the tour named as what is stopped, wherever it is said ("ok stop the news tour", "alright, end the district tour", "news tour-a niruthu",
+ * "செய்திச் சுற்றுலாவை நிறுத்து", "சுற்றுலா போதும்"): it ends a running tour, news word or not, and never starts one (v10 review 2, finding 10:
+ * these restarted the tour; round 2: one word before the stop and the news tour kept running) */
+const STOP_TOUR = new RegExp([
+  `\\b(?:stop|end|cancel|finish|quit|halt|close|exit)\\s+(?:(?:the|this|that|our|a) )?${TOUR_KIND}(?:tour|touring|round)\\b`,
+  "\\b(?:tour|round)(?: ?a| ?ah| ?ai)? (?:niruthu\\w*|nirutthu\\w*|stop pannu\\w*|end pannu\\w*|podhum|pothum)\\b",
+  "(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:நிறுத்து\\S*|போதும்|முடி(?:க்கவும்|யுங்கள்|ங்கள்|த்துவிடு\\S*)?(?=\\s|$))"
 ].join("|"), "u");
+/** with no tour running, the whole sentence a stop of the map's tour ("stop the tour", "end the news tour", "tour-a niruthu"): told none is
+ * running; "cancel my tour tomorrow" and "cancel tomorrow's tour" are the Collector's own and the planner's (v10 review 2, round 2) */
+const STOP_ALONE = new RegExp([
+  "^(?:(?:ok|okay|now|alright|so) )*(?:stop|end|cancel|finish|quit|halt) (?:(?:the|this|that) )?(?:(?:district|news|hotspots?|city|flood|map|narrated|guided) )?(?:tour|touring)(?: now)?$",
+  "^(?:the )?(?:(?:district|news|hotspots?|city|flood) )?tour(?: ?a| ?ah| ?ai)? (?:niruthu\\w*|nirutthu\\w*|stop pannu\\w*)$",
+  "^(?:\\S+ )?(?:சுற்றுலா|சுற்றுப்பயண)\\S*\\s+(?:நிறுத்து\\S*|போதும்)$"
+].join("|"), "u");
+const TOUR_WORD = /\b(?:tour|touring|round)\b|சுற்றுலா|சுற்றுப்பயண/u;
 const TOUR_NEXT = /^(?:next|next stop|next one|next place|go on|go ahead|continue|carry on|keep going|move on|onwards?|next please|aduthu|adutha|aduththu|adutha(?:dhu|thu)|adutha (?:stop|idam|place)|next po|adutha po|அடுத்து|அடுத்தது|அடுத்த இடம்|அடுத்த நிறுத்தம்|தொடர்|தொடருங்கள்|தொடரவும்|அடுத்ததுக்கு போ|அடுத்து போ)$/u;
+/** the next stop asked for in a sentence ("next stop on the tour", "go to the next stop of the tour": v10 review 2, round 2) */
+const TOUR_NEXT_SAID = /^(?:(?:go|move|take me|skip|fly|on) (?:on )?to )?(?:the )?next (?:stop|place|one)(?: (?:on|of|in) (?:the |this )?(?:tour|round))?(?: please| now)?$/;
 const TOUR_YES = /^(?:yes|yeah|yep|yup|ok|okay|sure|go on|please do|do it|yes please|yes go on|sari|seri|saringa|aama|aamaa|aamam|ஆம்|ஆமா|ஆமாம்|சரி|சரி போ|சரி தொடர்)$/u;
 const TOUR_NO = /^(?:no|nope|no thanks|not now|that'?s it|illa|illai|vendaam|venaam|இல்லை|இல்ல|வேண்டாம்|வேணாம்)$/u;
 const TOUR_BACK = /^(?:back|go back|previous|previous stop|previous one|previous place|last stop|the one before|before that|munnadi|munnaadi|pinnaadi|pinnadi|munnadi po|pinnadi po|munnadi stop|முந்தைய(?:து| இடம்| நிறுத்தம்)?|பின்னால்|பின்னாடி|முன்பு இருந்தது)$/u;
@@ -327,13 +420,28 @@ const TOUR_STOP = /^(?:stop|stop it|stop the tour|end the tour|end tour|finish t
 const TOUR_DEEPER = /\b(?:go deeper|deeper|dig deeper|dig in|zoom in here|look closer|tell me more(?: about (?:this|here|it|this place|this one))?|more (?:about|on) (?:this|here|this place)|what(?:s| is) happening here|what(?:s| is) going on here|show me more(?: here)?|details? here|more details?)\b|\binga (?:enna nadakkudhu|enna nadakudhu|detail\w*|innum)\b|\binge enna\b|\bdeeper po\b|இங்கே என்ன நடக்கிறது|இங்கு என்ன|இதைப் பற்றி மேலும்|இன்னும் விவரமாக|ஆழமாக|விவரமாக சொல்/u;
 
 function tourCmd(t: string, c: MapCtx10): MapCmd | null {
+  const news = NEWS.test(t);
+  // stop works wherever the console is, so the Collector can always end the tour; "stop" said as a noun or said not to is no stop
+  const s = stopWords(t);
+  const stopVerb = STOP_VERB.test(s), stopsTour = STOP_TOUR.test(s);
   if (c.tour) {
+    // the tour named as what is stopped; or a stop verb and a tour word, a news word only in a stop said first ("please stop touring now", "end
+    // the headlines tour", "stop playing the news tour"; "news about the tour being cancelled" is the news; "round" is a tour's word only while
+    // one runs: "stop the round of calls") (v10 review 2, round 3)
+    if (stopsTour || (stopVerb && TOUR_WORD.test(t) && !TOUR_ASKED.test(t) && (!news || /^(?:stop|end|cancel|finish|quit|halt)\b/.test(t)))) return { op: "tour", tour: "stop" };
     if (TOUR_STOP.test(t) || (c.tourCheck && TOUR_NO.test(t))) return { op: "tour", tour: "stop" };
-    if (TOUR_NEXT.test(t) || (c.tourCheck && TOUR_YES.test(t))) return { op: "tour", tour: "next" };
-    if (TOUR_BACK.test(t)) return { op: "tour", tour: "back" };
-    if (TOUR_REPEAT.test(t)) return { op: "tour", tour: "repeat" };
-    if (TOUR_DEEPER.test(t) && words(t).length <= 8) return { op: "tour", tour: "deeper" };
-  }
+    // the tour's other words only with the map on screen: once it is shrunk "go back" is the console's undo again, and "show me more news" the
+    // news (v10 review 2, finding 14)
+    if (c.open) {
+      if (TOUR_NEXT.test(t) || TOUR_NEXT_SAID.test(t) || (c.tourCheck && TOUR_YES.test(t))) return { op: "tour", tour: "next" };
+      if (TOUR_BACK.test(t)) return { op: "tour", tour: "back" };
+      if (TOUR_REPEAT.test(t)) return { op: "tour", tour: "repeat" };
+      if (TOUR_DEEPER.test(t) && !news && words(t).length <= 8) return { op: "tour", tour: "deeper" };
+    }
+  } else if (STOP_ALONE.test(t)) return { op: "tour", tour: "stop" };
+  // a stop never starts a tour; a stop word, verb or noun, only beside a tour asked for in so many words ("take me round the district and stop at
+  // each hotspot"; "what was the last stop of the district tour" is the Collector's own: v10 review 2, round 3)
+  if (stopsTour || (STOP_VERB.test(t) && !TOUR_ASKED.test(t)) || (news && !TOUR_ASKED.test(t))) return null;
   if (TOUR_START.test(t) && !/\b(?:page|tab|report|workspace)\b/.test(t)) {
     const source = NEWS.test(t) ? "news" : /\bflood\w*|\bstorm\b|\bcyclone\b|\brain\w*|\bwaterlog\w*|\bpuyal\b|\bmazhai\b|\bvellam\b|வெள்ள|புயல்|மழை/u.test(t) ? "flood" : "hotspots";
     const full = /\b(?:full|whole|complete|entire|long|all) (?:round|tour)\b|\bfull\b|முழு/u.test(t);
@@ -361,7 +469,10 @@ function rainCmd(t: string, c: MapCtx10): MapCmd | null {
     if (CLOSE_RAIN.test(t)) return { op: "rain", act: "close" };
     if (BACK_RAIN.test(t)) return { op: "rain", act: "back" };
   }
-  // a past rain: "show the 21 October rain", "replay the last rain", "October 21 mazhai kaattu", "அக்டோபர் 21 மழையைக் காட்டு"
+  // a news request about the rain is the news's ("show the latest rain news", "mazhai vellam news kaattu", "news on power cuts when it rains":
+  // v10 review 2, finding 9; v9 sent all of them to the news)
+  if (NEWS.test(t)) return null;
+  // a past rain:"show the 21 October rain", "replay the last rain", "October 21 mazhai kaattu", "அக்டோபர் 21 மழையைக் காட்டு"
   if (RAIN_WORD.test(t) && !/\b(?:will|forecast|tomorrow|tonight|going to)\b|நாளை/u.test(t)) {
     let en = t;
     for (const [re, m] of TA_MONTH) en = en.replace(re, ` ${m} `);
@@ -396,10 +507,16 @@ function rainCmd(t: string, c: MapCtx10): MapCmd | null {
 
 const VISIT = new RegExp([
   "\\b(?:plan|schedule|organi[sz]e|arrange|map out|work out|route|sequence)\\s+(?:my |a |the |our |today'?s |tomorrow'?s |todays |tomorrows )?(?:field |site |inspection )?(?:visits?|trip|inspections?|round)\\b",
-  "\\bvisit (?:order|plan|route|list|sequence)\\b", "\\b(?:which|what) order (?:should|do|can|shall) i (?:visit|go)\\b", "\\bfield visits?\\b", "\\bsite visits?\\b",
+  // (a field or site visit only with a verb that plans it: said alone it is a visit mentioned, "I have a site visit in Velachery tomorrow": v10
+  // review 2, finding 13)
+  "\\bvisit (?:order|plan|route|list|sequence)\\b", "\\b(?:which|what) order (?:should|do|can|shall) i (?:visit|go)\\b",
   "\\bvisit (?:plan |order )?(?:pannu|podu|kaattu)\\b", "\\bpoi paakka plan\\b", "\\bvisit pannanum\\b",
-  "வருகை(?:யை|களை|களைத்|களைத்)?\\s*(?:திட்டமிடு|வரிசை)", "பார்வையிடும் வரிசை", "பார்வையிட(?:த்)?\\s*திட்டமிடு", "களப் ?பயண", "ஆய்வுப் ?பயண", "செல்ல திட்டமிடு", "சென்று பார்க்க"
+  "வருகை(?:யை|களை|களைத்|களைத்)?\\s*(?:திட்டமிடு|வரிசை)", "பார்வையிடும் வரிசை", "பார்வையிட(?:த்)?\\s*திட்டமிடு", "(?:களப் ?|ஆய்வுப் ?)பயண\\S*\\s*(?:திட்டமிடு|ஏற்பாடு|வரிசை)",
+  "செல்ல திட்டமிடு", "சென்று பார்க்க"
 ].join("|"), "u");
+/** a visit told of or a brief asked for it, not a route to plan: "I have a site visit in X, what should I know?", "brief me", "how many field
+ * visits" (v7's visit brief and the planner's, as in v9: v10 review 2, finding 13) */
+const VISIT_BRIEF = /\bwhat (?:should|do|must) i (?:know|look (?:at|for|out for)|check|ask)\b|\bbrief me\b|\bbriefing\b|\bhow many\b|என்ன தெரிந்து|என்ன தெரிய/u;
 const WHEN: [RegExp, { en: string; ta: string }][] = [
   [/\btomorrow morning\b|\bnaalaiku kaalai\w*|\bnaalai kaalai\w*|நாளை காலை/u, { en: "tomorrow morning", ta: "நாளை காலை" }],
   [/\btomorrow evening\b|\bnaalaiku saayangalam\b|நாளை மாலை/u, { en: "tomorrow evening", ta: "நாளை மாலை" }],
@@ -423,7 +540,7 @@ function visitPlace(t: string): string | null {
   return ta ? taBase(ta) : null;
 }
 function visitCmd(t: string, c: MapCtx10): MapCmd | null {
-  if (!VISIT.test(t)) return null;
+  if (!VISIT.test(t) || VISIT_BRIEF.test(t)) return null;
   const when = WHEN.find(([re]) => re.test(t))?.[1] ?? null;
   const cat = catOf(t);
   const place = visitPlace(t);
@@ -434,11 +551,36 @@ function visitCmd(t: string, c: MapCtx10): MapCmd | null {
   return { op: "visit", question, ...(place ? { place } : {}), ...(when ? { when } : {}) };
 }
 
-const SEND_VERB = /\b(?:send|forward|mail|email|e mail|escalate|assign)\b|\banupp?u\w*|அனுப்பு/u;
+// ("assign" is the console's case action, never the map's drafts: v10 review 2, finding 17)
+const SEND_VERB = /\b(?:send|forward|mail|email|e mail|escalate)\b|\banupp?u\w*|அனுப்பு/u;
 const NEVER_SEND = /\b(?:drafts?|tray|approve|approved|all of them now|everything now)\b|ஒப்புதல்/u;
+/** a case sent, or a person sent to: the planner's, which has the case in focus ("send this case to SWD", "send this to the zonal officer": v10
+ * review 2, finding 17) */
+const SEND_CASE = /\b(?:this|that|the) (?:case|incident|complaint|ticket|petition)\b|\b(?:officers?|ae|aee|ee|je|engineers?|commissioner|inspector|collector|secretary|minister|mla|councillor|him|her|staff|deputy|assistant)\b|அதிகாரி|பொறியாளர்|ஆணையர்/u;
+/** a department's own words ("Storm Water Drains", "SWD", "Metro Water", "the electricity board"; any Tamil name the console reads) */
+const DEPT_LIKE = /\b(?:department|dept|board|drains?|drainage|water|waste|works|corporation|police|electricity|power|metro|metrowater|highways?|health|revenue|fire|sanitation|wing|swd|swm|pwd|gcc|tangedco|tneb|cmwssb|tnpcb)\b|[஀-௿]/u;
+/** the console's departments' own words, from their names and short names ("Parks", "Buildings", "Bridges", "Electrical", "Education", "Town
+ * Planning", "Family Welfare"), singular or plural: a send to any of them is the map's drafts (v10 review 2, round 2: DEPT_LIKE knew only some) */
+const DEPT_WORDS: Set<string> = (() => {
+  const s = new Set<string>();
+  for (const [code, d] of Object.entries(DEPT_CONFIG)) {
+    for (const w of `${code.replace(/^[A-Z]+-/, "")} ${d.short} ${d.portalName ?? ""}`.toLowerCase().replace(/[()&,]/g, " ").split(/\s+/)) {
+      if (w.length >= 3 && !/^(?:department|dept|the|and|unit|general|management|mgmt|play|field|fields)$/.test(w)) s.add(w.replace(/s$/, ""));
+    }
+  }
+  return s;
+})();
+/** every word said a department's ("Family Welfare", "town planning"): one of them beside a person ("the road contractor", "the hospital dean",
+ * "the victim's family") is the planner's (v10 review 2, round 3) */
+const deptWord = (said: string): boolean => {
+  const ws = words(said).filter((w) => !/^(?:and|of|department|dept)$/.test(w));
+  return ws.length > 0 && ws.every((w) => DEPT_WORDS.has(w.replace(/s$/, "")));
+};
+/** the map's answer plainly the thing sent ("send these", "send the results", "idha ... anuppu") */
+const MAP_OBJECT = /\b(?:these|them|the (?:answer|list|results|lot)|this list|idha|idhai|ithu|ithai|ivai|ellaam|ellam)\b|இவற்றை|இவை|இதை/u;
 /** the department said with a send: "send these to Storm Water Drains", "idha Metro Water-ku anuppu", "இதை மெட்ரோ வாட்டருக்கு அனுப்பு" */
 function deptSaid(t: string): string | null {
-  const en = /\b(?:send|forward|mail|email|e mail|escalate|assign)\b(?: (?:this|these|them|it|the (?:answer|list|cases|results|lot)|all))?(?: (?:over|across))? (?:to|with) (?:the )?(.+?)(?: (?:department|dept|team|office|wing))?$/.exec(t);
+  const en = /\b(?:send|forward|mail|email|e mail|escalate)\b(?: (?:this|these|them|it|the (?:answer|list|cases|results|lot)|all))?(?: (?:over|across))? (?:to|with) (?:the )?(.+?)(?: (?:department|dept|team|office|wing))?$/.exec(t);
   if (en) return en[1].trim() || null;
   const tg = /^(?:idha|idhai|ithu|ithai|indha|ivai|ivanga|ivangala|ivangalai|these|this|ellaam|ellam)?\s*(.+?) (?:ku|kku|kitta) (?:anuppu|anupu|anuppunga|anupunga|send pannu|forward pannu)\b/.exec(t);
   if (tg) return tg[1].trim() || null;
@@ -452,12 +594,14 @@ function deptSaid(t: string): string | null {
   return null;
 }
 function sendCmd(t: string, c: MapCtx10): MapCmd | null {
-  if (!SEND_VERB.test(t) || NEVER_SEND.test(t) || !c.hasAnswer || !(c.open || MAP_WORD.test(t))) return null;
+  if (!SEND_VERB.test(t) || NEVER_SEND.test(t) || SEND_CASE.test(t) || !c.hasAnswer || !(c.open || MAP_WORD.test(t))) return null;
   // a send needs something to send: "send these", "send it to SWD", "idha SWD-ku anuppu"
   const dept = deptSaid(t);
   if (!dept && !/\b(?:these|them|this|it)\b|இதை|இவற்றை|\bidha\b/u.test(t)) return null;
   const d = dept && !/^(?:me|us|my (?:phone|email|mail)|whatsapp|someone|everyone|all|it|them|these)$/.test(dept) ? dept.replace(/^(?:the) /, "") : null;
   if (dept && !d) return null;
+  // the map's drafts only for a department, or for the map's answer plainly sent; anyone else is the planner's
+  if (d && !DEPT_LIKE.test(d) && !deptWord(d) && !MAP_OBJECT.test(t)) return null;
   return { op: "send", dept: d };
 }
 
@@ -468,9 +612,10 @@ function exportCmd(t: string, c: MapCtx10): MapCmd | null {
   return { op: "export", format };
 }
 
-const SAVE = /\b(?:save|keep|bookmark|store)\b(?: (?:this|the|my|that))?(?: map)? (?:view|answer|question|map|search|result|results|it|this)\b|\bsave (?:this|it)\b|\bview (?:a )?save pannu\b|\bsave pannu\b|சேமி|பார்வையைச் சேமி|save/u;
+// (save or bookmark only: "keep the map open" is not a save: v10 review 2, finding 18)
+const SAVE = /\b(?:save|bookmark)\b(?: (?:this|the|my|that))?(?: map)? (?:view|answer|question|map|search|result|results|it|this)\b|\bsave (?:this|it)\b|\bview (?:a )?save pannu\b|\bsave pannu\b|சேமி|பார்வையைச் சேமி|save/u;
 function saveCmd(t: string, c: MapCtx10): MapCmd | null {
-  if (!/\bsave\b|\bkeep\b|\bbookmark\b|சேமி/u.test(t) || !SAVE.test(t) || NOT_MINE.test(t) || EXPORT.test(t) || !c.hasAnswer || !(c.open || MAP_WORD.test(t))) return null;
+  if (!/\bsave\b|\bbookmark\b|சேமி/u.test(t) || !SAVE.test(t) || NOT_MINE.test(t) || EXPORT.test(t) || !c.hasAnswer || !(c.open || MAP_WORD.test(t))) return null;
   if (/\b(?:note|reminder|remember)\b/.test(t)) return null;
   const nm = /\b(?:as|called|named) (.{2,60})$/.exec(t);
   return { op: "save", ...(nm ? { name: titleCase(nm[1].trim()) } : {}) };
@@ -481,11 +626,26 @@ function insightCmd(t: string, c: MapCtx10): MapCmd | null {
   return INSIGHT.test(t) && c.hasAnswer && c.open ? { op: "insight" } : null;
 }
 
-const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\b(?:suggest|suggested|suggestions?)\b|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
+// ("suggest" only about questions, and "suggestions" asked for alone: "suggest an action for this" is the planner's: v10 review 2, finding 18)
+// (round 2: any words for a question suggested, "suggest a question", "suggest another question"; "suggest" with "ask" at the end, "what do you
+// suggest I ask", "suggest something to ask"; and the suggestions asked for with only words that read or show them, "read out the suggestions",
+// "tell me the suggestions", "suggestions sollu", "enna suggestions irukku", "பரிந்துரைகளைக் காட்டு")
+// (round 3: "ask" at the end only after "I" or "something", never a person, "suggest who to ask", "suggest someone to ask"; a follow-up only as
+// the whole thing suggested, never "suggest a follow up action for this case")
+const SUGGEST_READ = /\bwhat (?:else )?(?:can|should|could|may) (?:i|we) ask(?: (?:the map|here|it|next))?\b|\bsuggest(?:ed)? (?:me |us )?(?:(?:a|an|some|few|more|other|any|another|one|two|three|good|useful|next|new|follow up|followup) )*(?:(?:questions?|queries|query)\b|(?:follow ups?|followups?)$)|\bsuggest\w* (?:(?:i|we) (?:should |could |can )?|(?:something|anything) (?:(?:i|we) (?:can|could|should) |to )?)ask(?: (?:the map|here|it|next|now))?$|\bgive me (?:some )?(?:ideas|questions)\b|\bwhat questions\b|\bwhat can (?:you|the map) (?:answer|do)\b|\benna (?:kekkalaam|kekalaam|kekalam|ketkalaam|ketkalam|kelvi kekkalam)\b|என்ன கேட்கலாம்|கேள்விகள் பரிந்துரை|பரிந்துரைக்கப்பட்ட கேள்வி/u;
+const SUGGEST_NOUN = /^(?:suggestions?|பரிந்துரைகள்\S*|பரிந்துரைகளை\S*)$/u;
+const SUGGEST_FILL = new Set(("show read out tell list give open what whats are is the your some any map maps me us all again please now say those these tray its " +
+  "sollu sollunga solunga kaattu kaattunga kaatu kaatunga kattu kattunga padi padinga irukku iruku irukka enna ena ennenna காட்டு காட்டுங்கள் சொல் சொல்லு சொல்லுங்கள் படி " +
+  "என்ன என்னென்ன உள்ளன").split(" "));
+/** the suggestions asked for, and nothing but words that read or show them ("any suggestions for this case" is the planner's) */
+const suggestionsAsked = (t: string): boolean => {
+  const ws = words(t);
+  return ws.length <= 6 && ws.some((w) => SUGGEST_NOUN.test(w)) && ws.every((w) => SUGGEST_NOUN.test(w) || SUGGEST_FILL.has(w));
+};
 const ORD: [RegExp, number][] = [[/\b(?:first|1st|mudhal|muthal|number (?:1|one))\b|முதல்|முதலாவது|ஒன்றாவது/u, 1], [/\b(?:second|2nd|rendaavadhu|randaavadhu|number (?:2|two))\b|இரண்டாவது|ரெண்டாவது/u, 2],
   [/\b(?:third|3rd|moonaavadhu|number (?:3|three))\b|மூன்றாவது/u, 3], [/\b(?:fourth|4th|naalaavadhu|number (?:4|four))\b|நான்காவது/u, 4]];
 function suggestCmd(t: string, c: MapCtx10): MapCmd | null {
-  if (SUGGEST_READ.test(t) && (c.open || MAP_WORD.test(t)) && words(t).length <= 9) return { op: "suggest" };
+  if ((SUGGEST_READ.test(t) || suggestionsAsked(t)) && (c.open || MAP_WORD.test(t)) && words(t).length <= 9) return { op: "suggest" };
   // "ask the second one", "the second suggestion", "rendaavadhu kelvi kelu", "இரண்டாவது கேள்வியைக் கேள்"
   const asks = /\bask\b|\bkelu\b|\bkel\b|கேள்|கேளுங்கள்/u.test(t) || /\bsuggestion\b/.test(t);
   if (asks && c.suggest?.length && words(t).length <= 6 && !NEWS.test(t)) {
@@ -578,6 +738,27 @@ function chipCmd(t: string, c: MapCtx10): MapCmd | null {
 
 const REL = /\b(?:within|inside|around|near|nearby|close to|next to|right by|beside|surrounding|radius|circle|kulla|ulla|kitta|pakkathula|pakkathil|pakkam|suthi|suththi|arugil)\b|க்குள்|அருகில்|அருகே|பக்கத்தில்|சுற்றி|லிருந்து/u;
 const DRAW = /\bdraw (?:a |the )?circle\b|\bcircle (?:of|around)\b|வட்டம் வரை/u;
+/** what a circle asks about beyond the case categories: a map layer or a reading, in the map's English words ("schools within 2 km of Adyar",
+ * "Adyar la rendu km kulla schools") */
+const CIRCLE_SUBJECT: [RegExp, string][] = [
+  [/\bschools?\b|\bschoolu\b|பள்ளி/u, "schools"], [/\bcolleges?\b|கல்லூரி/u, "colleges"], [/\bhospitals?\b|\baaspathri\b|மருத்துவமனை/u, "hospitals"],
+  [/\bfire stations?\b|தீயணைப்பு/u, "fire stations"], [/\bpolice(?: stations?)?\b|காவல் நிலைய/u, "police stations"],
+  [/\b(?:metro|railway|rail|train) stations?\b|மெட்ரோ நிலைய|ரயில் நிலைய/u, "metro stations"], [/\blakes?\b|\bponds?\b|ஏரி|குளம்/u, "lakes"],
+  [/\brain(?:fall)?\b|\bmazhai\b|மழை/u, "rainfall"]
+];
+const subjectOf = (t: string): string | null => catOf(t) ?? CIRCLE_SUBJECT.find(([re]) => re.test(t))?.[1] ?? null;
+/** where the place's own words are in the sentence (its last mention; a Tamil word by its base, "மருத்துவமனையிலிருந்து"), so what a place is named
+ * for ("Stanley Hospital", "the Adyar school", "Egmore railway station") is never read as what was asked about (v10 review 2, round 2) */
+function placeAt(ws: string[], place: string): Set<number> {
+  const pw = words(place.toLowerCase());
+  for (let i = ws.length - pw.length; i >= 0; i--) {
+    if (pw.every((w, k) => ws[i + k] === w || (/[஀-௿]/u.test(w) && taBase(ws[i + k]) === w))) return new Set(pw.map((_, k) => i + k));
+  }
+  return new Set();
+}
+/** words that ask only "what is there" around a place: with nothing else said, the circle asks what is happening there */
+const CIRCLE_FILL = new Set(("show me us tell give what whats is are there happening going on in the a an within inside around near nearby of from close to next right by " +
+  "beside surrounding radius circle draw map maps everything anything all please can could you say").split(" "));
 
 function circleCmd(t: string, c: MapCtx10): MapCmd | null {
   if (!REL.test(t) && !DRAW.test(t)) return null;
@@ -585,21 +766,32 @@ function circleCmd(t: string, c: MapCtx10): MapCmd | null {
   const place = anchorOf(t);
   if (!place) return null;
   const tamil = /[஀-௿]/u.test(t);
-  const subjectEn = catOf(t);
+  // what was asked about: a case category, a layer or a reading; the rest said beside the place and the distance ("how many ...", "show ...")
+  // (v10 review 2, finding 11: "show schools within two kilometres of Adyar" was asked "what is happening within 2 km of Adyar")
+  // (read from the words beside the place, never the place's own: "near Stanley Hospital" is what is happening there, not hospitals: v10
+  // review 2, round 2)
+  const ws = words(t), placeWs = new Set(words(place.toLowerCase())), at = placeAt(ws, place);
+  const subject = subjectOf(ws.filter((_, i) => !at.has(i)).join(" "));
+  const said = ws.filter((w, i) => !(d && i >= d.from && i <= d.to) && !placeWs.has(w) && !CIRCLE_FILL.has(w));
   if (d) {
     const unit = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${Math.round(km * 1000) / 1000} km`);
     // the question the map's rules read: the sentence with digits (English, Tamil), or the same in English words (Tanglish, a drawn circle)
     const english = !tamil && !/\b(?:la|kulla|ulla|irundhu|lerundhu|kitta|pakkathula|suthi|enna|kaattu|nadakkudhu)\b/.test(t) && !DRAW.test(t);
-    const question = tamil ? `${withDigits(t)}${subjectEn ? "" : " என்ன நடக்கிறது"}`
-      : english && subjectEn ? withDigits(t).replace(place.toLowerCase(), place) : `${subjectEn ?? "what is happening"} within ${unit(d.km)} of ${place}`;
+    const question = tamil ? `${withDigits(t)}${subject ? "" : " என்ன நடக்கிறது"}`
+      : english && (subject || said.length) ? withDigits(t).replace(place.toLowerCase(), place) : `${subject ?? "what is happening"} within ${unit(d.km)} of ${place}`;
     return { op: "circle", place, km: d.km, question };
   }
   // "near the harbour" with no distance: the map's, when the map is open or named; the radius by what the place is, said back
   if (!(c.open || MAP_WORD.test(t) || DRAW.test(t))) return null;
-  if (anchorKind(place) === "area") return { op: "ask", question: `what is happening in ${place}` };
+  if (anchorKind(place) === "area") return { op: "ask", question: `${subject ?? "what is happening"} in ${place}` };
   const km = nearKm(place);
   const unit = km < 1 ? `${Math.round(km * 1000)} m` : `${km} km`;
-  return { op: "circle", place, km, near: true, question: `${subjectEn ?? "what is happening"} within ${unit} of ${place}` };
+  // something else said in English and no subject read here ("how many toilets near Adyar"): the sentence, with the radius in place of "near"
+  const nearRe = new RegExp(`\\b(?:near|nearby|around|close to|next to|right by|beside|surrounding)(?: the)? ${place.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "u");
+  if (!subject && !tamil && said.length && nearRe.test(t)) {
+    return { op: "circle", place, km, near: true, question: t.replace(nearRe, `within ${unit} of ${place}`).replace(/\s+(?:on|in) (?:the )?map$/, "") };
+  }
+  return { op: "circle", place, km, near: true, question: `${subject ?? "what is happening"} within ${unit} of ${place}` };
 }
 
 /** Tamil and Tanglish follow-ups in the words the map's rules read (edits.ts and route.ts's time words) */
@@ -656,6 +848,9 @@ const placeOnly = (q: string): boolean => {
   return ws.length > 0 && ws.length <= 3 && ws.every((w) => placeWord(w) || placeWord(w.charAt(0).toUpperCase() + w.slice(1)));
 };
 
+/** "this case", "that incident", "it", "these", "this one": a thing on the screen, not a question */
+const REF_ONLY = /^(?:this|that|these|those|it|them)(?: (?:case|cases|incident|incidents|complaint|complaints|ticket|tickets|one|ones|issue|issues))?$|^(?:idhu|idha|adhu|adha|இதை|அதை|இது|அது)$/u;
+
 function askCmd(t: string, c: MapCtx10): MapCmd | null {
   if (OPEN_ASK.test(t)) return { op: "ask", question: null };
   const m = ASK_MAP.exec(t);
@@ -666,6 +861,9 @@ function askCmd(t: string, c: MapCtx10): MapCmd | null {
     // (a zone or a place alone, "map la Manali zone kaattu", is the console's own map view, the rules' zone on the map page: news9's
     // n9-command-7, the merged dry run of 19 Nov)
     if (placeOnly(q)) return null;
+    // (a reference alone, "show this case on the map", "show it on the map", is not a question the map can read: the planner has the case in
+    // focus, as in v9: v10 review 2, finding 15)
+    if (REF_ONLY.test(q)) return null;
     return { op: "ask", question: withDigits(q) };
   }
   // the map open: a place question is the map's ("where are garbage complaints clustering", "what is happening in Teynampet")

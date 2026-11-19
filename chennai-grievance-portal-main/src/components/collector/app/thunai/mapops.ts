@@ -66,13 +66,19 @@ export interface MapOpsDeps {
 let tour: { s: TourState; resp: AskResponse } | null = null;
 /** the suggested questions Jarvis read out last, and the answer on the map then ("ask the second one" means these while it is still there) */
 let readOut: { list: string[]; resp: AskResponse | null } | null = null;
+/** a tour the Collector left by shrinking the map: ended there, but its spotted cases and the HUD's reticle still on its last stop until the next
+ * map operation clears them; "stop the tour" then says it ended (v10 review 2, round 2: they stayed, and "stop" said no tour was running) */
+let left: TourState | null = null;
 export const tourNow = (): TourState | null => (tour?.s.phase === "running" ? tour.s : null);
 /** for tests */
-export function resetMapOps() { tour = null; readOut = null; }
+export function resetMapOps() { tour = null; readOut = null; left = null; }
 
 /** Ask the Map's state for Jarvis's lanes (map10.ts MapCtx10 without the language), from the console's useMapAsk instance. */
 export function mapSnap10(m: Partial<MapAsk> | null | undefined, o: { rainOpen?: boolean } = {}): Omit<MapCtx10, "lang"> {
   const r = m?.resp ?? null;
+  // the tour lives on the grown map: the map found shrunk (the Collector moved on without saying stop) ends it, so its "go back", "again" and
+  // "show me more" are the console's again, and it does not come back when the map is grown for another question (v10 review 2, finding 14)
+  if (tour && !m?.grown) { left = tour.s; tour = null; }
   const t = tourNow();
   const cur = r ? (m?.turns ?? []).find((x) => x.resp === r) ?? null : null;
   return {
@@ -201,6 +207,14 @@ const sentences = (t: string | null | undefined) => (t ?? "").split(/(?<=[.!?।
 // ------------------------------------------------------------------ the operations --
 
 export async function runMapCmd(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
+  // a tour left by shrinking the map: what it showed goes first (its spotted cases, the reticle), and a stop says it ended
+  if (left) {
+    const was = left;
+    left = null;
+    d.map?.()?.setSpot(null);
+    d.point?.(null);
+    if (cmd.op === "tour" && cmd.tour === "stop") { const mv = tourStep(was, "stop"); return L(mv.say.en, mv.say.ta); }
+  }
   // the dev harness and an old console (no Ask the Map to drive): v9's way, a question asked and nothing said
   if (!d.map?.()) {
     if ((cmd.op === "ask" || cmd.op === "followup" || cmd.op === "circle") && cmd.question && d.askOnMap) { d.askOnMap(cmd.question); return null; }
@@ -513,7 +527,16 @@ async function tourOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
       takeaway: s.stops.map((x, i) => `${i + 1}. ${cap(x.place.en)}: ${x.n}`).join("\n"), figures: [{ label: "Stops", value: s.stops.length, unit: null }], source: "Ask the Map" });
     return L(mv.say.en, mv.say.ta);
   }
-  if (!tour || tour.s.phase !== "running") return L("No tour is running. Say: take me round the district.", "சுற்றுலா எதுவும் நடக்கவில்லை. மாவட்டத்தைச் சுற்றிக் காட்டு என்று சொல்லுங்கள்.");
+  if (!tour || tour.s.phase !== "running") {
+    return ev === "stop" ? L("No tour is running.", "சுற்றுலா எதுவும் நடக்கவில்லை.")
+      : L("No tour is running. Say: take me round the district.", "சுற்றுலா எதுவும் நடக்கவில்லை. மாவட்டத்தைச் சுற்றிக் காட்டு என்று சொல்லுங்கள்.");
+  }
+  // stop ends the tour wherever the console is, without growing the map again (v10 review 2, finding 14)
+  if (ev === "stop") {
+    const mv = tourStep(tour.s, "stop");
+    endTour(d);
+    return L(mv.say.en, mv.say.ta);
+  }
   if (ev === "deeper") {
     const mv = tourStep(tour.s, "deeper");
     tour = { ...tour, s: mv.s };

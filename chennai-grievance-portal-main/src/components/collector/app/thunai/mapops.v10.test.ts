@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
-import type { MapCmd } from "@/lib/thunai/v10/map10";
+import { mapCommand10, type MapCmd } from "@/lib/thunai/v10/map10";
 import { briefAnswer, hotspotAnswer, withinAnswer } from "@/lib/thunai/v10/mapfix.testkit";
 import type { BridgeOp, BridgeReply } from "../askmap/bridge";
 import type { MapAsk } from "../askmap/useMapAsk";
@@ -351,6 +351,72 @@ describe("the narrated district tour", () => {
     const empty = fakeMap(null, () => hotspotAnswer(0));
     expect((await run({ op: "tour", tour: "start", source: "flood" }, deps(empty).d))?.en).toBe("Nothing clusters enough for a tour today or this week.");
     expect(empty.ask.mock.calls.map((c) => c[0])).toEqual(["hotspots of open flooding this week", "hotspots of flooding in the last 30 days"]);
+  });
+  it("a tour left when the map is shrunk ends there: 'go back' is the console's undo again, and the console is not pulled back to the map (v10 review 2, finding 14)", async () => {
+    const r = hotspotAnswer(5);
+    const m = fakeMap(null, () => r);
+    const { d } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    // the Collector shrinks the map and moves on, without saying stop
+    m.grown = false;
+    m.setGrown.mockClear();
+    const snap = mapSnap10(m as unknown as MapAsk);
+    expect(snap).toMatchObject({ open: false, tour: false, tourCheck: false });
+    expect(mapCommand10("go back", { ...snap, lang: "en" })).toBe(null);
+    expect(tourNow()).toBe(null);
+    // the map grown again for another question: the old tour does not come back
+    m.grown = true;
+    expect(mapSnap10(m as unknown as MapAsk).tour).toBe(false);
+    expect(m.setGrown).not.toHaveBeenCalled();
+  });
+  it("stop ends a tour wherever the console is, without growing the map again (v10 review 2, finding 14)", async () => {
+    const m = fakeMap(null, () => hotspotAnswer(5));
+    const { d } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    m.grown = false;
+    m.setGrown.mockClear();
+    expect((await run({ op: "tour", tour: "stop" }, d))?.en).toBe("Tour ended. The map stays where it is.");
+    expect(m.setGrown).not.toHaveBeenCalled();
+    expect(tourNow()).toBe(null);
+    expect((await run({ op: "tour", tour: "stop" }, d))?.en).toBe("No tour is running.");
+  });
+  it("v10 review 2, round 2: a tour ended by the shrunk map leaves no reticle and no spotted cases: 'stop the tour' clears them", async () => {
+    const m = fakeMap(null, () => hotspotAnswer(5));
+    const { d, calls } = deps(m);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, d);
+    expect(calls.points.at(-1)).not.toBe(null);
+    m.grown = false;
+    const cmd = mapCommand10("stop the tour", { ...mapSnap10(m as unknown as MapAsk), lang: "en" });
+    const line = cmd ? await run(cmd, d) : null;
+    expect({ said: line?.en, reticle: calls.points.at(-1), spot: m.setSpot.mock.calls.at(-1)?.[0] }).toEqual({ said: "Tour ended. The map stays where it is.", reticle: null, spot: null });
+    expect(m.setGrown).toHaveBeenCalledTimes(1);
+    // and any other map operation first clears what the left tour showed
+    resetMapOps();
+    const m2 = fakeMap(null, () => hotspotAnswer(5));
+    const x = deps(m2);
+    await run({ op: "tour", tour: "start", source: "hotspots" }, x.d);
+    m2.grown = false;
+    mapSnap10(m2 as unknown as MapAsk);
+    await run({ op: "layer", layer: "schools", on: true }, x.d);
+    expect({ reticle: x.calls.points.at(-1), spot: m2.setSpot.mock.calls.at(-1)?.[0] }).toEqual({ reticle: null, spot: null });
+    expect((await run({ op: "tour", tour: "stop" }, x.d))?.en).toBe("No tour is running.");
+  });
+});
+
+describe("v10 review 2, round 2: a send to any of the console's departments opens the map's drafts", () => {
+  it("Parks, Buildings, Bridges, Electrical, Education, by name and by short name", () => {
+    const DEPTS = [{ code: "GCC-PRK", name: "Parks & Play Fields Department" }, { code: "GCC-BLD", name: "Buildings Department" }, { code: "GCC-BRG", name: "Bridges Department" },
+      { code: "GCC-ELE", name: "Electrical Department" }, { code: "GCC-EDU", name: "Education Department" }, { code: "GCC-HLT", name: "Health Department" },
+      { code: "GCC-ENG", name: "Engineering Department (Town Planning & Building Permissions)" }, { code: "GCC-FWD", name: "Family Welfare Department" }];
+    const ANS = { ...mapSnap10(fakeMap(withinAnswer()) as unknown as MapAsk), open: true, lang: "en" as const };
+    for (const [s, code] of [["send this to the Parks department", "GCC-PRK"], ["forward this to the Buildings department", "GCC-BLD"], ["send it to Bridges", "GCC-BRG"],
+      ["send this to Electrical", "GCC-ELE"], ["send it to Education", "GCC-EDU"], ["send these to the bridge department", "GCC-BRG"], ["send it to town planning", "GCC-ENG"],
+      ["send this to Family Welfare", "GCC-FWD"]]) {
+      const cmd = mapCommand10(s, ANS);
+      expect({ op: cmd?.op ?? null, dept: cmd?.dept ? deptCode(cmd.dept, DEPTS)?.code ?? null : null }, s).toEqual({ op: "send", dept: code });
+    }
+    // a person or a case is still the planner's (finding 17)
+    for (const s of ["send this to the zonal officer", "assign this case to the AE", "send this to Ramesh", "send it to my PA"]) expect(mapCommand10(s, ANS), s).toBe(null);
   });
 });
 
