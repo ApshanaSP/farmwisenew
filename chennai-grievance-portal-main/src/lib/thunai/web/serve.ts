@@ -18,6 +18,7 @@ import { type LookupAnswer, webLookup } from "./lookup";
 import { type ArticleRead, readArticle } from "./read";
 import { type NewsItemInput, relatedCoverage } from "./related";
 import { coverageLine, type NewsAide } from "../aide7/news";
+import { asksPrivate, PRIVACY_REPLY } from "../privacy";
 import type { CaseRowT } from "../stage";
 import type { NewsBrief10 } from "../v10/brief10";
 import type { OfferPayload, Story10 } from "../v10/ground10";
@@ -115,6 +116,14 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   let ask = "ask" in asked ? asked.ask ?? null : null;
   // v10: "read it fully" (the whole story), and news to ground truth (what the console holds on the story read last)
   const full = "full" in asked && asked.full === true;
+  // v10 review 2, round 2 (news-3): what the console refuses for privacy (a victim's name, address, details) is never found, read or handed to a
+  // model here either, whichever way the browser sent it: the round's own refusal is said instead
+  const said0 = "find" in asked ? asked.find.q : "ground" in asked ? asked.ground.q ?? null : ask?.q ?? null;
+  if (said0 && asksPrivate(said0)) {
+    yield { type: "said", en: [PRIVACY_REPLY.en], ta: [PRIVACY_REPLY.ta], links: [] };
+    yield { type: "done", ms: ms() };
+    return;
+  }
   if ("ground" in asked) { yield* groundEvents(asked.ground, d, ms); return; }
   // v10: a storm's weather readings, read while the story is found and read, said after it
   const weatherP = "find" in asked && asked.find.weather && d.weather ? d.weather().catch(() => null) : null;

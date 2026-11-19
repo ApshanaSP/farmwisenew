@@ -16,7 +16,7 @@ import { asksPrivate } from "../privacy";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { eventForms, newsRequest, pickStory, placeKeyMatch, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { eventForms, namingWords, newsRequest, pickStory, placeKeyMatch, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
 import { fold, looseKey, tokensOf } from "./match";
 /** a Tamil or Tanglish case ending joined on a place ("adyarla", "ataiyaril") */
 const PLACE_CASE = /(?:ukku|kku|ile|ila|il|la|le|lu|oda|odu|ku)$/;
@@ -137,9 +137,13 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
   let req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
   // v10: a story named on screen with no news word: the request's own topic words, found softly among the screen's stories only
+  // (v10 review 2, round 2, news-1: with a soft request's guards: a word that names it, neither a place, the event nor a kind of thing, else
+  // nothing is found and the console's view takes it: "Open Adyar", "open the Royapuram protest", "அடையாறு திறங்க" read a story there)
   if (!req && f.onlyScreen && screen.length) {
     const words = topicWords(f.q, null).slice(0, 12);
-    if (words.length) req = { kind: "story", words, outlet: null, ref: false, soft: true };
+    const { event, which } = namingWords(f.q, words);
+    if (!which.length) return null;
+    req = { kind: "story", words, outlet: null, ref: false, soft: true, which, ...(event.length ? { event } : {}) };
   }
   if (!req) return null;
   // v10 (the second review of v9): a soft request's naming word is never one of the district's places, as its world spells them ("open the
@@ -206,7 +210,9 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
       // (the place veto: a district place the request names that the story lacks; rankStories caps such a story at 0.3)
       const places = placesOf(d.world);
       const placeWords = req.words.filter((w) => places.some((p) => keySimLoose(w, p)));
-      const vetoed = placeWords.length > 0 && rankStories({ words: placeWords, outlet: null }, [best], { places })[0]?.hits !== placeWords.length;
+      // (v10 review 2, round 2, news-6: and the ranking's own place veto, which sees a place with its case ending or said in two words, "அடையாறில்",
+      // "Adyarla", "அண்ணா நகரில்": an exact key alone did not, and the meaning read a story at another place)
+      const vetoed = !!lex?.placeVetoed || (placeWords.length > 0 && rankStories({ words: placeWords, outlet: null }, [best], { places })[0]?.hits !== placeWords.length);
       if (order[0][1] - (next?.[1] ?? 0) >= SEM_MARGIN && (tamil || (lex?.score ?? 0) >= SEM_LEX && (lex?.hits ?? 0) > 0) && !vetoed)
         return { req, picked: { pick: best, score: lex?.score ?? 0, other: null, close: false, stories: [best] } };
     }

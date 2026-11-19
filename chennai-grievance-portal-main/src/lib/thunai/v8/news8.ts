@@ -17,6 +17,7 @@
 import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { placeWord } from "./lang8";
 import { ordWord, ordWordsOf, ordinalsAt } from "./ord8";
+import { ownReport } from "./ownreport8";
 import { isEnglishWord } from "../english";
 import { AREA_WORDS } from "../areas";
 import { CAT_ALIASES, ZONES } from "../lexicon";
@@ -46,7 +47,10 @@ export interface NewsReq {
 }
 
 export interface StoryItem { id: string; title: string; titleEn?: string | null; outlets?: string[]; place?: string | null; story?: string | null; t?: string | null; onScreen?: number | null }
-export interface Ranked { item: StoryItem; score: number; hits: number }
+export interface Ranked { item: StoryItem; score: number; hits: number;
+  /** v10 review 2, round 2 (news-6): a place the request names that the story does not mention capped it (the place veto); the meaning ranker
+   * takes no such story either */
+  placeVetoed?: boolean }
 
 // ---- the request's own words: not the topic
 const STOP = new Set(("a an the this that these those it its is are was were be been am do does did please pls can could would will shall should you me us my our i we " +
@@ -80,7 +84,8 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
 
 // (v10: and the press's English said in Tamil letters, as Whisper writes it: நியூஸ், ஆர்டிகிள், ஹெட்லைன், ஸ்டோரி, ரிப்போர்ட், பேப்பர்: v9's blind set,
 // "புழல் ஜெயில் நியூஸ் படிங்க" made no news request at all)
-const TA_LOAN_NEWS = "நியூஸ|நியூஸ்|ஆர்டிகிள்|ஆர்ட்டிக்கிள்|ஹெட்லைன்|ஸ்டோரி|ரிப்போர்ட்|ரிப்போர்ட்ட|பேப்பர்|பேப்பர";
+// (v10 review 2, round 2, news-4b: each without its closing virama, so any ending glued on is still the word: ஹெட்லைனை, ஆர்டிகிளை, not "hetlainai")
+const TA_LOAN_NEWS = "நியூஸ|ஆர்டிகிள|ஆர்ட்டிக்கிள|ஹெட்லைன|ஸ்டோரி|ரிப்போர்ட|பேப்பர";
 const NEWS_NOUN = new RegExp(String.raw`\b(?:news|story|stories|article|piece|report|headline|coverage|seithi|seidhi|seythi|sethi)\b|செய்தி|சேதி|கட்டுரை|${TA_LOAN_NEWS}`, "iu");
 const STORY_VERB = /\b(?:open|read|play|brief me|tell me|tell us|explain|summari[sz]e|sum up|go through|pull up|show me)\b|\b(?:padi|padinga|padiunga|sollu|sollunga|open pannu|open pannunga|kaattu|kaattunga|thira|thiranga)\b|திற|படி|சொல்|காட்டு|விளக்கு/iu;
 const ASK_EN = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:any|is there (?:any|anything)|anything|what(?:'s| is| are)? the (?:latest|news|update|story)|what(?:'s| is) (?:new|happening|the latest)|what (?:are|do|did|does) (?:the )?(?:papers|newspapers|media|press|news|reports?|outlets?)|latest|what happened (?:at|to|with|in)|any (?:update|word))\b/i;
@@ -89,8 +94,6 @@ const ASK_TA = /(?:பற்றி|குறித்து|பத்தி)\s*(
 const ASK_TG = /\b(?:pathi|patthi|paththi)\s+(?:enna\s+)?(?:news|seithi|seidhi)\b|\b(?:news|seithi|seidhi)\s+(?:la|le|il)\s+(?:enna|edhavadhu)\b|\b(?:news|seithi)\s+(?:irukka|irukkaa|iruka|undaa|vandhirukka)\b/i;
 /** the console's own records: a case, a complaint, a reading is never a story */
 const CONSOLE = /\b(?:cases?|complaints?|grievances?|petitions?|incidents?|tickets?|readings?|rainfall|reservoirs?|lakes?|aqi|officers?|departments? (?:performance|backlog)|zones?|wards?|taluks?|drafts?|tray)\b|புகார்|சம்பவ|மனு|மண்டல/iu;
-/** a report of the console's own (an officer's, an action-taken, a weekly one, the rainfall or the zone's): not the press (v7's newsask OWN_REPORT, the review 18 Nov) */
-const OWN_REPORT = /\b(?:officer'?s?|action[- ]taken|atr|status|progress|weekly|monthly|daily|quarterly|annual|inspection|field|audit|my|our|department'?s?|dept|zone|ward|sla|incident|police|fir|rainfall|rain|situation|briefing|brief|summary|performance|collector'?s?) reports?\b/i;
 /** the press, in a news question's frame ("what are the papers saying", "what is the media saying") */
 const PRESS = /\b(?:papers|newspapers?|media|press)\b/i;
 const PRESS_SAYS = /\bwhat(?:'s| is| are| do| does)? (?:the )?(?:papers|newspapers?|media|press|news) (?:saying|say|reporting|report)\b/i;
@@ -369,7 +372,9 @@ const GLOSS8: Gloss[] = [
   { ta: ["நடுற", "நடும்", "நட்ட", "நடவு", "நடப்பட்ட"], tg: ["naduradhu", "nadurathu"], en: ["plant", "planting"] },
   { ta: ["போலீஸ்", "போலீசார்", "காவல்துறை"], tg: ["police", "polees", "poleesu"], en: ["police", "cop", "cops"] },
   { ta: ["ஆஸ்பத்திரி", "மருத்துவமனை", "ஹாஸ்பிடல்"], tg: ["aaspathiri", "aspathiri", "hospital"], en: ["hospital"] },
-  { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] }
+  { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] },
+  // (v10 review 2, round 2, news-10: a legal case, "பள்ளிக்கரணை வழக்கு", "Senthil Balaji valakku"; not வழக்கறிஞர், a lawyer)
+  { ta: ["வழக்கு"], taExact: ["வழக்கை", "வழக்கைப்", "வழக்கைத்", "வழக்கில்", "வழக்கின்", "வழக்கிலும்"], tg: ["valakku", "vazhakku", "valakkil", "vazhakkil", "valakka", "vazhakka"], en: ["case", "lawsuit"] }
 ];
 /**
  * v9: an event a soft request names, in the words headlines use for it ("the Pattinapakkam honking attack" is "Man hacked after dispute over
@@ -463,6 +468,17 @@ export function topicWords(text: string, outlet: string | null): string[] {
 }
 
 /**
+ * A soft request's words: the event's own ("protest", "fire", போராட்டம்), and the words that name this one event, neither the event, a place (as
+ * the console spells it or by ear: "ataiyaru", "adyarla"), a kind of thing nor a number ("the Adyar fire", "the road accident deaths" are the
+ * console's views; "the IOCL fire", "the Kodungaiyur empty pot protest" name one: the review, 19 Nov). v10 review 2, round 2 (news-1): one
+ * reading for every soft find, v9's (newsRequest) and v10's story named on screen with no news word ("Open Adyar" names no story).
+ */
+export function namingWords(text: string, words: string[]): { event: string[]; which: string[] } {
+  const eventToks = new Set(text.normalize("NFC").split(/\s+/).filter((w) => EVENT.test(w)).flatMap((w) => tokensOf(w)));
+  return { event: words.filter((w) => eventToks.has(w)), which: words.filter((w) => !eventToks.has(w) && !placeByEar(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w)) };
+}
+
+/**
  * Is this a story asked for by its topic, or a news question? `o.onScreen`: news is on the screen (Jarvis's list or the console's panel), so
  * "the X one" means a story there. Null: not this lane's.
  */
@@ -472,7 +488,9 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   if (!text || text.length > 400 || NEGATED.test(text)) return null;
   const outlet = outletIn(text);
   const consoleThing = CONSOLE.test(text) && !NEWS_NOUN.test(text);
-  if (consoleThing || OWN_REPORT.test(text)) return null;
+  // (a report of the console's own, an officer's, a weekly one, the rain's, is not the press: v7's newsask OWN_REPORT, the review 18 Nov; v10
+  // review 2, round 2, news-12: in Tanglish and Tamil letters too, ownreport8.ts)
+  if (consoleThing || ownReport(text)) return null;
   if (FORECAST.test(text) && !NEWS_NOUN.test(text)) return null;
   const newsy = NEWS_NOUN.test(text) || !!outlet;
   // a news question names the news ("any NEWS on the cyclone", "what are the PAPERS saying"): "anything urgent?", "latest numbers for Adyar?",
@@ -494,11 +512,7 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   const words = topicWords(text, outlet).slice(0, 12);
   // a soft request names which one: a word besides the event ("the protest" alone is the console's PUBLIC_ORDER view)
   if (soft) {
-    const eventToks = new Set(text.split(/\s+/).filter((w) => EVENT.test(w)).flatMap((w) => tokensOf(w)));
-    const event = words.filter((w) => eventToks.has(w));
-    // the words that name this event: neither a place nor a kind of thing ("the Adyar fire", "the road accident deaths" are the console's views;
-    // "the IOCL fire", "the Kodungaiyur empty pot protest" name one: the review, 19 Nov)
-    const which = words.filter((w) => !eventToks.has(w) && !placeByEar(w) && !GENERIC_WHICH.has(w) && !/^\d+$/.test(w));
+    const { event, which } = namingWords(text, words);
     if (!which.length || !event.length) return null;
     const weak = weakWords(text).filter((w) => words.includes(w));
     const gloss = glossesOf(text, words);
@@ -595,7 +609,9 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
       s = keySim(q.k, tk, !eng, !q.engLong);
       for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk, !eng, !q.engLong) * 0.98);
       if (s < 0.8 && q.en && ten && q.en === ten) s = 0.92;
-      if (s < 0.8 && !q.engLong && q.k.length >= 4 && tk.length >= 4 && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
+      // (v10 review 2, round 2, news-9: against an English headline word, only a short request word, "kort" for court; a longer one's three
+      // consonants are any English word's: "POCSO" (p-k-s) read "... the purchase of books" over the POCSO story itself)
+      if (s < 0.8 && !q.engLong && q.k.length >= 4 && tk.length >= 4 && (!eng || q.k.length <= 4) && skeleton(q.k).length >= 3 && skeleton(q.k) === skeleton(tk)) s = 0.85;
       if (s < 0.8 && !eng) { const h = sharedHead(q.k, tk); if (h >= 6 && h >= 0.6 * Math.min(q.k.length, tk.length)) s = 0.85; }
       memo.set(mk, s);
     }
@@ -647,7 +663,11 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
   const qs = req.words.map((w) => qOf(w, req.gloss?.[w] ?? null));
   // the request's place words, decided once a word: a topic word that names a district place ("Palikan" -> Pallikaranai)
   const placeKeys = [...new Set((o.places ?? []).map((p) => looseKey(fold(p).replace(/\s+/g, ""))).filter((k) => k.length >= 4))];
-  const placeOf = qs.map((q) => q.k.length >= 4 && placeKeys.some((pk) => pk[0] === q.k[0] && (pk === q.k || keySim(q.k, pk) >= 0.88 || q.stems.some((st) => st === pk))));
+  // (v10 review 2, round 2, news-10: a place cut short by the ears only from a key of six letters or more, "Palikan" for Pallikaranai; a shorter key
+  // that begins a place is an everyday word as often, வழக்கு / "valakku", a legal case, keys "valak", the first letters of Valasaravakkam, and
+  // vetoed every story of a case elsewhere)
+  const placeSim = (k: string, pk: string) => pk[0] === k[0] && (pk === k || keySim(k, pk, k.length >= 6) >= 0.88);
+  const placeOf = qs.map((q) => q.k.length >= 4 && placeKeys.some((pk) => placeSim(q.k, pk) || q.stems.some((st) => st === pk)));
   const memo = new Map<string, number>();
   const sims = qs.map((q) => docs.map((d) => simIn(q, d, memo)));
   // v9: a name the ears split in two or three ("Kasi medu" for Kasimedu, "Palli Karanai" for Pallikaranai: v8's holdout): in each story, the
@@ -663,7 +683,7 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
       const joined = req.words.slice(i, i + span).join("");
       if (joined.length < 6) continue;
       const jq = qOf(joined);
-      const isPlace = placeKeys.some((pk) => pk[0] === jq.k[0] && (pk === jq.k || keySim(jq.k, pk) >= 0.88));
+      const isPlace = placeKeys.some((pk) => placeSim(jq.k, pk));
       docs.forEach((d, j) => {
         const s = joinedIn(jq, d, memo, parts);
         if (s > 0) { for (let k = i; k < i + span; k++) if (sims[k][j] < s) sims[k][j] = s; }
@@ -697,8 +717,9 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
     }
     if (d.item.onScreen != null) score += 0.1;
     // a place the request names that the story does not mention: never this story
-    if (placeOf.some((p, i) => p && sims[i][j] === 0) || vetoed.has(j)) score = Math.min(score, 0.3);
-    return { item: d.item, score, hits };
+    const placeVetoed = placeOf.some((p, i) => p && sims[i][j] === 0) || vetoed.has(j);
+    if (placeVetoed) score = Math.min(score, 0.3);
+    return { item: d.item, score, hits, ...(placeVetoed ? { placeVetoed } : {}) };
   }).sort((a, b) => b.score - a.score || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")));
 }
 

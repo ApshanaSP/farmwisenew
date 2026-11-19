@@ -12,6 +12,9 @@
  * Pure: no network, no React. The client (Thunai.tsx newsTurn) streams /news and calls these.
  */
 import { type StageDocT, checkStage } from "./stage";
+import { asksPrivate } from "./privacy";
+import { ownReport } from "./v8/ownreport8";
+import { ordinalsAt, ordWordsOf } from "./v8/ord8";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
 export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string }; /** v10: "read it fully": the whole story, not its brief */ full?: boolean }
@@ -97,11 +100,8 @@ const TELL_EN = [
 const TELL_TA = [/(?:இந்த|இந்தச்|அந்த|அந்தச்)\s*(?:செய்தி|சேதி|கட்டுரை|ரிப்போர்ட்)(?:யை|யைப்|யின்)?\s*(?:பற்றி|பத்தி)?\s*(?:சொல்|விளக்கு|சுருக்கமா)/u];
 const TELL_TG = [/\b(?:indha|andha|intha|antha)\s+(?:news|story|article|report|seithi)\s*(?:a\s*|ah\s*)?(?:pathi|patthi|paththi)?\s*(?:sollu|sollunga|explain pannu|enna)\b/];
 const NEWSY = /\b(?:article|news report|news item|coverage|papers|newspapers?|press|outlets?|hindu|times of india|dt ?next|indian express|dinamani|dinamalar|thanthi)\b/;
-const ORD: [RegExp, number][] = [
-  [/\b(?:first|1st|mudhal)\b|முதல்/u, 1], [/\b(?:second|2nd|rendavathu|rendaavadhu)\b|இரண்டாவது|ரெண்டாவது/u, 2], [/\b(?:third|3rd|moonavathu|moonaavadhu)\b|மூன்றாவது/u, 3],
-  [/\b(?:fourth|4th)\b|நான்காவது/u, 4], [/\b(?:fifth|5th)\b|ஐந்தாவது/u, 5], [/\b(?:sixth|6th)\b|ஆறாவது/u, 6], [/\b(?:seventh|7th)\b|ஏழாவது/u, 7],
-  [/\b(?:eighth|8th)\b|எட்டாவது/u, 8], [/\b(?:ninth|9th)\b|ஒன்பதாவது/u, 9], [/\b(?:tenth|10th)\b|பத்தாவது/u, 10]
-];
+/** v10 review 2, round 2 (news-4): a word in an ordinal's form ("-aavadhu", "-ாவது") that no position reads */
+const ORDISH = /^[a-z]{3,}(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)$|^[஀-௿]+ாவது$/u;
 /** an outlet: as said, as an item's source names it (a story's source may list several outlets), and its own name to say */
 const OUTLETS: [RegExp, RegExp, string][] = [
   // the second pattern is an outlet's WHOLE name as a screen lists it (one of a story's " · "-joined outlets): Hindu Tamil Thisai is not
@@ -127,8 +127,12 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
   if (!items.length) return null;
   const num = /\b(?:number|no|item|article|report|story|headline)\s*(\d{1,2})\b/.exec(t);
   if (num) { const i = Number(num[1]) - 1; return items[i] ? { id: items[i].id } : { why: "count", n: items.length }; }
-  for (const [re, n] of ORD) if (re.test(t)) return items[n - 1] ? { id: items[n - 1].id } : { why: "count", n: items.length };
-  if (/\blast\b|கடைசி|kadaisi/u.test(t)) return { id: items[items.length - 1].id };
+  // v10 review 2, round 2 (news-4): a position as ord8 reads it, in all three languages and past the tenth ("rendavadhu", "pathinettavadhu", the
+  // twelfth, the last), never a date, a street or a period ("a second time"); v7's own list knew ten and two Tanglish spellings, and read the
+  // first story for any other. A word in an ordinal's form that no position reads names no story here (never the first in its place)
+  const at = ordinalsAt(t).find((a) => !(a.kind === "en" && a.prev === "a"));
+  if (at) { const k = at.n === -1 ? items.length : at.n; return items[k - 1] ? { id: items[k - 1].id } : { why: "count", n: items.length }; }
+  if (ordWordsOf(t).some((w) => ORDISH.test(w))) return null;
   // an outlet named: its report, or that it is not on the screen (never another outlet's in its place)
   for (const [said, src, name] of OUTLETS) {
     if (said.test(t)) { const x = items.find((y) => namesOf(y.source).some((n) => src.test(n))); return x ? { id: x.id } : { why: "outlet", outlet: name }; }
@@ -145,12 +149,18 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
 export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } = {}): NewsAskT | null {
   const t = norm(raw);
   if (!t || t.length > 300) return null;
+  // v10 review 2, round 2 (news-3): what the console refuses for privacy (a victim's name, address, details) is never read here either: the
+  // round's rules refuse it before any model (v8's news lane already stood aside, and the sentence came on to this read of the panel's first story)
+  if (asksPrivate(raw)) return null;
   // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov); "brief me on this news" names one report (v7)
   const thisReport = o.v7 !== false && TELL_EN.some((re) => re.test(t)) && /\b(?:this|that)\b/.test(t);
   if (NEGATED.test(t) || NEGATED.test(raw) || ((MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) && !thisReport)) return null;
-  const reads = !OWN_REPORT.test(t) && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
+  // (v10 review 2, round 2, news-12: and the console's own report in Tanglish or Tamil letters, "மழை ரிப்போர்ட் படிங்க", "read the rain report": v8's
+  // reading, ownreport8.ts; with the news panel open it read the panel's first story)
+  const own = OWN_REPORT.test(t) || ownReport(raw);
+  const reads = !own && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
   // v7: "tell me about this news" is a read of the report on the screen, when there is one (else the news screen and its summary answer it)
-  const tells = o.v7 !== false && !reads && !OWN_REPORT.test(t) && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
+  const tells = o.v7 !== false && !reads && !own && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
   if (tells) {
     const item = pickItem(t, on);
     if (item && "id" in item) return { kind: "read", body: item };

@@ -10,7 +10,8 @@ const EN_ORDS = ["first", "second", "third", "fourth", "fifth", "sixth", "sevent
 const EN_CARD = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
   "nineteen", "twenty"];
 /** Tanglish: a number's stem and an ordinal ending ("ezhavadhu", "ettaavathu", "pathavadhu") */
-const TG_STEM: [string[], number][] = [[["rend", "irand", "rand"], 2], [["moon", "mun", "moond", "moonr"], 3], [["naal", "naang", "nang"], 4], [["anj", "ainth", "aind"], 5], [["aar", "ar"], 6],
+// (v10 review 2, round 2, news-4: and three as "moondru" is said, "moondraavadhu")
+const TG_STEM: [string[], number][] = [[["rend", "irand", "rand"], 2], [["moon", "mun", "moond", "moonr", "moondr", "moondhr", "mundr", "munr"], 3], [["naal", "naang", "nang"], 4], [["anj", "ainth", "aind"], 5], [["aar", "ar"], 6],
   [["ezh", "yezh", "eezh", "el", "ezhu"], 7], [["ett", "et"], 8], [["onbad", "onbadh", "onbath", "ombad", "ombadh", "ombath", "onpath"], 9], [["path", "padh", "patth", "paath"], 10],
   // (v9, the review: 11 and 12 as said, "padhinonnavadhu", "pannendavadhu")
   [["padhinon", "pathinon", "padhinonn", "pathinonn", "padhinor", "pathinor"], 11], [["pannend", "pannirend", "pannirand", "pannendu"], 12],
@@ -80,6 +81,16 @@ export const ordWord = (w: string): number | null => {
 };
 /** v10: a tens word ("twenty", "irubathi", "இருபத்தி"): its value, else null */
 export const tensWord = (w: string | null | undefined): number | null => (w ? TENS.get(w) ?? null : null);
+/** v10 review 2, round 2 (news-4c): a number said after "number" ("number seven", "number rendu", "நம்பர் ஏழு"): a unit, a teen or a tens word in
+ * English, Tanglish or Tamil letters, else null */
+const CARD = new Map<string, number>([
+  ...EN_CARD.map((w, i) => [w, i + 1] as [string, number]),
+  ...([["onnu", "ondru", "onru"], ["rendu", "irandu", "randu"], ["moonu", "munu", "moondru", "munru"], ["naalu", "naangu", "nangu"], ["anju", "ainthu", "aindhu"], ["aaru"],
+    ["ezhu", "yezhu"], ["ettu"], ["ombodhu", "onbadhu", "ombadhu", "onbathu", "ombathu"], ["pathu", "patthu", "paththu"]]).flatMap((ws, i) => ws.map((w) => [w, i + 1] as [string, number])),
+  ...([["ஒன்று", "ஒண்ணு", "ஒன்னு"], ["இரண்டு", "ரெண்டு"], ["மூன்று", "மூணு"], ["நான்கு", "நாலு"], ["ஐந்து", "அஞ்சு"], ["ஆறு"], ["ஏழு"], ["எட்டு"], ["ஒன்பது", "ஒம்பது"], ["பத்து"]])
+    .flatMap((ws, i) => ws.map((w) => [w, i + 1] as [string, number]))
+]);
+const cardinal = (w: string | null | undefined): number | null => (w ? CARD.get(w) ?? tensWord(w) : null);
 
 /** the word after a position that makes it a street or a floor, not a place on a list. v10 (the second review of v9): and in Tamil (ஏழாவது
  * தெரு, இரண்டாம் கட்ட), a date (ஏழாம் தேதி, "21st November"), a period ("the last one hour", "the last week") */
@@ -109,8 +120,13 @@ export function ordinalsAt(text: string): OrdinalAt[] {
     let kind: OrdinalAt["kind"] = /^(?:[a-z]+|\d{1,2}(?:st|nd|rd|th))$/.test(w[i]) && !/(?:vadhu|vathu|adhai|athai|adha|atha)$|^(?:mudhal|modhal|kadaisi|kadasi)/.test(w[i]) ? "en" : "ta";
     if (n == null && /^(?:number|no|item|nambar|நம்பர்|எண்)$/u.test(w[i]) && w[i + 1]) {
       // a number after "no" only as digits ("no. 9"): "no one" is nobody
-      const c = /^\d{1,2}$/.test(w[i + 1]) ? Number(w[i + 1]) : w[i] === "no" ? 0 : EN_CARD.indexOf(w[i + 1]) + 1;
+      const c = /^\d{1,2}$/.test(w[i + 1]) ? Number(w[i + 1]) : w[i] === "no" ? 0 : cardinal(w[i + 1]) ?? 0;
       if (c >= 1) { n = c; at = i + 1; kind = "number"; }
+      // v10 review 2, round 2 (news-4c): a tens word and a unit after it are one number, as "twenty first" is one position ("number twenty one"
+      // read the 20th; "நம்பர் இருபத்தி ஒன்று", "number irubathu rendu")
+      const tens = c >= 1 && w[i] !== "no" ? tensWord(w[i + 1]) : null;
+      const unit = tens != null ? cardinal(w[i + 2]) : null;
+      if (tens != null && unit != null && unit >= 1 && unit <= 9) { n = tens + unit; at = i + 2; }
     }
     if (n == null) continue;
     const next = w[at + 1] ?? null;
