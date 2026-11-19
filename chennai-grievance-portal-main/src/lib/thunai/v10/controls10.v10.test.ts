@@ -10,8 +10,10 @@ import path from "path";
 import { describe, expect, it } from "vitest";
 import type { ScreenState } from "../types";
 import { ACTION_LEVEL } from "../reach";
-import { controlCommand10, coverage10, decide10, stepsLevel, words10, type Control10, type ControlCtx10 } from "./controls10";
+import { WORLD } from "../fixture";
+import { controlCommand10, coverage10, decide10, stepsLevel, studioLetsThrough, words10, type Control10, type ControlCtx10 } from "./controls10";
 import { CONTROLS10, REGIONS10, SKIP10 } from "./controls10.data";
+import { v10Front, type BrowserCtx10 } from "./browser10";
 
 const IDS = JSON.parse(readFileSync(path.join(__dirname, "controls10.ids.json"), "utf8")) as { screens: string[]; controls: [string, number, string, string, string][] };
 const ids = IDS.controls.map((r) => r[0]);
@@ -183,5 +185,233 @@ describe("v10 matching: names, frames, the margin and the question back", () => 
   it("a control the console says is not on screen is not taken", () => {
     expect(controlCommand10("click data detective", ctx({ page: "studio" }, { visible: [] }))).toBeNull();
     expect(controlCommand10("click data detective", ctx({ page: "studio" }, { visible: ["ds.tab.detective"] }))?.id).toBe("ds.tab.detective");
+  });
+});
+
+describe("v10 review 2: the controls' findings, each a failing test first", () => {
+  /** the lane v10Front gives a sentence, as the console runs it */
+  const lane = (said: string, o: Partial<ScreenState>, visible: string[] | null, x: Partial<BrowserCtx10> = {}) =>
+    v10Front(said, { stage: null, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible, ...x }).lane;
+
+  // v10 review 2, finding 28: with Take action open, a sentence with "message" or "subject" in it cleared that box and typed the rest into it
+  const TA = ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"];
+  it.each(["read the message", "what does the message say", "approve and send the message", "செய்தியை அனுப்பு", "message anuppu", "what is the subject"])(
+    "'%s' does not clear and retype the Take action draft", (said) => {
+      const l = lane(said, { panel: "incident", incident: "INC-1" }, TA);
+      expect(l && l.lane === "control" && l.press && l.value ? `${l.id} <- "${l.value}"` : null).toBeNull();
+    });
+  it("a text box takes the words a typing frame gives it, the frame's verb not typed", () => {
+    expect(controlCommand10("type drain overflow in the subject", ctx({ panel: "incident" }, { visible: TA }))).toMatchObject({ id: "ta.subject", value: "drain overflow" });
+    expect(controlCommand10("subject la drain overflow type pannunga", ctx({ panel: "incident" }, { visible: TA }))).toMatchObject({ id: "ta.subject", value: "drain overflow" });
+    expect(controlCommand10("click the message", ctx({ panel: "incident" }, { visible: TA }))).toMatchObject({ id: "ta.message", value: null });
+  });
+
+  // v10 review 2, finding 29: in the incident list, a question naming a column was set as that column's filter ("That option isn't in that list.")
+  const LIST = ["list.filter", "list.department", "list.severity", "list.status", "list.timeRange", "list.page.next", "list.page.prev"];
+  it.each(["what is the status of the second one", "what's the severity of the first one", "which department is the third one", "why is the status open"])(
+    "'%s' in the incident list is a question, not a column's filter", (said) => {
+      const l = lane(said, { panel: "list" }, LIST);
+      expect(l?.lane === "control" ? `${l.id} value="${l.value}"` : null).toBeNull();
+    });
+  it("a column's filter is still set to the option said", () => {
+    expect(controlCommand10("set the status to resolved", ctx({ panel: "list" }, { visible: LIST }))).toMatchObject({ id: "list.status", value: "resolved" });
+    expect(controlCommand10("status resolved", ctx({ panel: "list" }, { visible: LIST }))).toMatchObject({ id: "list.status", value: "resolved" });
+  });
+
+  // v10 review 2, finding 30: with a dataset open on the Data Studio, the console's clear-filters and period ran before the dataset's intercept
+  it.each(["clear the filters", "remove all filters", "this month", "show it per day"])("'%s' with a dataset open on the Studio is the dataset's", (said) => {
+    const l = lane(said, { page: "studio" }, [], { studio: true });
+    const steps = l?.lane === "control" ? l.steps ?? [] : [];
+    expect(steps.length === 0 || studioLetsThrough(said, steps, 1)).toBe(true);
+  });
+  it("a plain console command still reaches the console with a dataset open, and the period with none open", () => {
+    expect(lane("go to the trends page", { page: "studio" }, [], { studio: true })).toMatchObject({ lane: "control", steps: [{ a: "page", page: "trends" }] });
+    expect(lane("this month", { page: "studio" }, [])).toMatchObject({ lane: "control", steps: [{ a: "period", period: "monthly" }] });
+  });
+
+  // v10 review 2, finding 31 is the console's (src/components/collector/app/thunai/controls.v10.test.ts)
+
+  // v10 review 2, finding 32: with Customize open, "go to trends" flipped the window's Trends tick instead of going to Trends
+  it.each(["go to trends", "open the briefing", "go to the data studio", "போக்குகள் பக்கத்துக்குப் போங்க"])("'%s' with Customize open goes to the page", (said) => {
+    const l = lane(said, { panel: "customize" }, ["customize.page.briefing", "customize.page.trends", "customize.page.environment", "customize.page.studio"]);
+    expect(l?.lane === "control" ? l.steps ?? l.id : null).toEqual([{ a: "page", page: said.includes("brief") ? "briefing" : said.includes("studio") ? "studio" : "trends" }]);
+  });
+  it("Customize's ticks are still ticked by name there", () => {
+    expect(controlCommand10("untick trends", ctx({ panel: "customize" }))).toMatchObject({ id: "customize.page.trends", tick: false });
+    expect(controlCommand10("click Trends", ctx({ panel: "customize" }))).toMatchObject({ id: "customize.page.trends" });
+  });
+
+  // v10 review 2, finding 33: Take action's Redraft (the inventory's "draft") was level A: pressed from the open mic, the Collector's edits lost
+  it("every draft-risk press is C (the name first) or never", () => {
+    const bad = CONTROLS10.filter((e) => riskOf.get(e.id.split(":")[0]) === "draft" && "press" in e.act && e.act.input !== "text" && !["C", "never"].includes(e.level))
+      .map((e) => `${e.id}=${e.level}`);
+    expect(bad).toEqual([]);
+  });
+
+  // v10 review 2, finding 34: a Tamil word that only begins like a loanword was read as that word (சர்ச்சை, controversy, as "search")
+  it("a Tamil word that only begins like a loanword stays itself; a loanword's case endings still fold", () => {
+    expect(words10("சர்ச்சையைக் காட்டு")).toEqual(["சர்ச்சையைக்", "காட்டு"]);
+    expect(words10("சாட்சி மோட்டார்")).toEqual(["சாட்சி", "மோட்டார்"]);
+    expect(words10("சாட்டிலைட்")).toEqual(["satellite"]);
+    expect(words10("மேப்பில் லேயர்களை மெனுவைத் டேட்டாவுல ரிப்போர்ட்டை பிரீஃபிங்குக்கு")).toEqual(["map", "layer", "menu", "data", "report", "briefing"]);
+    const l = lane("சர்ச்சையைக் காட்டு", {}, []);
+    expect(l?.lane === "control" ? l.id : null).toBeNull();
+  });
+});
+
+describe("v10 review 2, round 2: the verifier's problems with the round-1 fixes", () => {
+  const lane = (said: string, o: Partial<ScreenState>, visible: string[] | null, x: Partial<BrowserCtx10> = {}) =>
+    v10Front(said, { stage: null, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible, ...x }).lane;
+  const TA = ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"];
+  const typed = (said: string, o: Partial<ScreenState>, visible: string[]) => {
+    const l = lane(said, o, visible);
+    return l && l.lane === "control" && l.press && l.value ? `${l.id} <- "${l.value}"` : null;
+  };
+
+  // v10 review 2, round 2: finding 30's drop also dropped Jarvis's own controls (stop, off, forget) with a dataset open: they went to askDataset
+  it.each(["stop speaking", "பேச்சை நிறுத்து", "pesradha niruthu", "Stop the long answer", "long answer stop pannu", "ஜார்விஸை அணை", "close Jarvis and go back",
+    "Close Jarvis", "forget all my notes", "எல்லாம் மற"])("'%s' with a dataset open still stops, switches Jarvis off or forgets", (said) => {
+    const off = lane(said, { page: "studio" }, []);
+    const on = lane(said, { page: "studio" }, [], { studio: true });
+    expect(off?.lane === "control" ? off.steps : null).toBeTruthy();
+    expect(on?.lane === "control" ? on.steps : null).toEqual(off?.lane === "control" ? off.steps : null);
+  });
+
+  // v10 review 2, round 2: finding 28 one word away: a sentence about the draft with a typing word in it still typed its left-over words
+  it.each(["write the message in Tamil", "செய்தியைத் தமிழில் எழுது", "message-a tamil la ezhudhu", "change the message to a formal tone",
+    "find the message from the zonal officer", "set the subject in Tamil", "write the subject in Tamil", "தலைப்பைத் தமிழில் எழுது",
+    "make the message shorter", "rewrite the subject in English", "subject-a english la maathu",
+    // the same frames one word away: someone the draft is for, a thing to write about, a question about what to write
+    "write a message to the zonal officer", "add a line to the message", "write the address in the subject", "address-a message la podu", "முகவரியைச் செய்தியில் சேர்",
+    "what should I write in the message", "why did you type drain overflow in the subject", "செய்தியைச் சுருக்கமாக மாற்று"])("'%s' does not type into the Take action draft", (said) => {
+    expect(typed(said, { panel: "incident", incident: "INC-1" }, TA)).toBeNull();
+  });
+
+  // v10 review 2, round 2: finding 28's typing words left out the Tanglish and Tamil "put" (podu, போடு)
+  it.each([
+    ["subject la drain overflow podu", "ta.subject", "drain overflow"],
+    // the quotative nu ("as") is the frame, never typed
+    ["subject la drain overflow nu podunga", "ta.subject", "drain overflow"],
+    ["தலைப்பில் வடிகால் அடைப்பு போடு", "ta.subject", "வடிகால் அடைப்பு"],
+    ["தலைப்பில் வடிகால் அடைப்பு என்று போடுங்க", "ta.subject", "வடிகால் அடைப்பு"],
+    ["workspace name box la adyar floods podu", "workspace.name", "adyar floods"],
+    ["put drain overflow in the subject", "ta.subject", "drain overflow"],
+    ["add inspect by Friday to the message", "ta.message", "inspect by friday"],
+    ["set the subject to drain overflow at Adyar", "ta.subject", "drain overflow at adyar"],
+    ["set the subject as drain overflow", "ta.subject", "drain overflow"],
+    ["change the message to say inspect today", "ta.message", "inspect today"],
+    ["type the drain is blocked in the subject", "ta.subject", "drain is blocked"],
+    ["subject-a drain overflow nu maathu", "ta.subject", "drain overflow"],
+    ["தலைப்பை வடிகால் அடைப்பு என்று மாற்று", "ta.subject", "வடிகால் அடைப்பு"],
+    ["list la adyar thedu", "list.filter", "adyar"],
+    ["பட்டியலில் அடையாறு தேடு", "list.filter", "அடையாறு"]
+  ])("'%s' types into the box", (said, id, want) => {
+    const ws = id.startsWith("workspace"), list = id.startsWith("list");
+    const r = controlCommand10(said, ctx({ panel: ws ? "workspace" : list ? "list" : "incident" }, { visible: ws ? ["workspace.name"] : list ? ["list.filter"] : TA }));
+    expect(r).toMatchObject({ id, value: want });
+  });
+
+  // v10 review 2, round 2: finding 32's move words left out "switch to", "change to", maathu, மாத்து: the Customize tick was flipped
+  const CUST = ["customize.page.briefing", "customize.page.trends", "customize.page.environment", "customize.page.studio"];
+  it.each(["switch to trends", "change to trends", "move to the briefing", "trends ku maathu", "போக்குகளுக்கு மாத்து", "trends", "the briefing please"])(
+    "'%s' with Customize open goes to the page", (said) => {
+      const l = lane(said, { panel: "customize" }, CUST);
+      expect(l?.lane === "control" ? l.steps ?? l.id : null).toEqual([{ a: "page", page: said.includes("brief") ? "briefing" : "trends" }]);
+    });
+  it("Customize's ticks are still ticked with a tick or press word", () => {
+    expect(controlCommand10("tick trends", ctx({ panel: "customize" }, { visible: CUST }))).toMatchObject({ id: "customize.page.trends", tick: true });
+    expect(controlCommand10("hide the briefing", ctx({ panel: "customize" }, { visible: CUST }))).toMatchObject({ id: "customize.page.briefing", tick: false });
+    expect(controlCommand10("trends tick pannu", ctx({ panel: "customize" }, { visible: CUST }))).toMatchObject({ id: "customize.page.trends" });
+  });
+
+  // v10 review 2, round 2: finding 29's guard looked for question words in the value; "the status of the second one" still set the filter, and
+  // "search the list for complaints about garbage" (typed before the fix) was dropped
+  const LIST = ["list.filter", "list.department", "list.severity", "list.status", "list.timeRange", "list.page.next", "list.page.prev"];
+  it.each(["show me the status of the second one", "status of the second one", "second one oda status sollu", "the severity of the first one",
+    "department of the third one please", "the second one's status", "இரண்டாவதின் நிலை"])("'%s' in the incident list is not a column filter set to it", (said) => {
+    const l = lane(said, { panel: "list" }, LIST);
+    expect(l?.lane === "control" && l.value ? `${l.id} value="${l.value}"` : null).toBeNull();
+  });
+  it.each([["search the list for complaints about garbage", "complaints about garbage"], ["filter the list for latest updates", "latest updates"],
+    ["search the list for how to apply", "how to apply"]])("'%s' still types into the list's search", (said, want) => {
+    expect(controlCommand10(said, ctx({ panel: "list" }, { visible: LIST }))).toMatchObject({ id: "list.filter", value: want });
+  });
+  it("a question about what was searched is still not typed", () => {
+    expect(controlCommand10("what did I search the list for", ctx({ panel: "list" }, { visible: LIST }))).toBeNull();
+  });
+
+  // v10 review 2, round 2: finding 34's closed ending list stopped folding a loanword's plural and its glide after -i
+  it("a loanword's plural, its case endings with a clitic and the ய glide after -i still fold", () => {
+    expect(["ஃபில்டர்ஸ்", "லேயர்களையும்", "சிஎஸ்வியா", "சிஎஸ்வியில்", "ஃபில்டர்ஸை", "மெனுவையும்", "டேட்டாவிலும்"].map((w) => words10(w).join(" ")))
+      .toEqual(["filter", "layer", "csv", "csv", "filter", "menu", "data"]);
+    expect(controlCommand10("ஃபில்டர்ஸ் எல்லாம் எடு", ctx({}, { lang: "ta" }))?.id).toBe("account.clearFilters");
+    expect(controlCommand10("சிஎஸ்வியா பதிவிறக்கு", ctx({ page: "studio" }, { lang: "ta", visible: ["ds.download.csv", "ds.download.xlsx"] }))?.id).toBe("ds.download.csv");
+  });
+  // v10 review 2, round 2: finding 34 one word away: சர்ச்சை (controversy) is spelled as சர்ச் + its accusative, and சாட்டை (a whip) as சாட் + its own
+  it("a Tamil word spelled like a loanword's case form stays itself", () => {
+    expect(["சர்ச்சை", "சர்ச்சையும்", "சர்ச்சைக்குரிய", "சாட்டை", "சாட்டையால்"].map((w) => words10(w).join(" "))).toEqual(["சர்ச்சை", "சர்ச்சையும்", "சர்ச்சைக்குரிய", "சாட்டை", "சாட்டையால்"]);
+    const l = lane("இந்த சர்ச்சை", {}, [], { listenLang: "ta" });
+    expect(l?.lane === "control" ? l.id : null).toBeNull();
+  });
+
+  // v10 review 2, round 2: a value said in a "set … to" frame replaces the box's words (the console's side is in controls.v10.test.ts)
+  it("'set the message to …' asks for the draft to be replaced; 'add … to the message' to be added to", () => {
+    expect(controlCommand10("set the message to inspect tomorrow", ctx({ panel: "incident" }, { visible: TA }))).toMatchObject({ id: "ta.message", value: "inspect tomorrow", replace: true });
+    expect(controlCommand10("add inspect by Friday to the message", ctx({ panel: "incident" }, { visible: TA }))?.replace).toBeFalsy();
+  });
+});
+
+describe("v10 review 2, round 3: the verifier's problems with the round-2 controls fixes", () => {
+  const lane = (said: string, o: Partial<ScreenState>, visible: string[] | null, x: Partial<BrowserCtx10> = {}) =>
+    v10Front(said, { stage: null, news: {}, state: { ...base, ...o }, world: WORLD, listenLang: "en", visible, ...x }).lane;
+  const TA = ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"];
+  const LIST = ["list.filter", "list.department", "list.severity", "list.status", "list.timeRange", "list.page.next", "list.page.prev"];
+  const INC: Partial<ScreenState> = { panel: "incident", incident: "INC-1" };
+  const typed = (said: string, o: Partial<ScreenState>, visible: string[], listenLang: "en" | "ta" = "en") => {
+    const l = lane(said, o, visible, { listenLang });
+    return l && l.lane === "control" && l.press && l.value ? `${l.id} <- "${l.value}"` : null;
+  };
+
+  // v10 review 2, round 3: the set frame's replace wiped the draft for a redraft request one word away from the manner guard (the console's side,
+  // the draft itself, is in controls.v10.test.ts)
+  it.each(["change the message to be more polite", "replace the message with a new draft", "change the message to a more polite one"])(
+    "'%s' never asks for the draft to be replaced", (said) => {
+      const l = lane(said, INC, TA);
+      expect(l?.lane === "control" ? !!l.replace : false).toBe(false);
+    });
+  it("'set the message to …' still replaces the draft, and the subject is still set to words with a manner word among them", () => {
+    expect(controlCommand10("set the message to inspect tomorrow", ctx(INC, { visible: TA }))).toMatchObject({ id: "ta.message", value: "inspect tomorrow", replace: true });
+    expect(controlCommand10("set the subject to water shortage in Adyar", ctx(INC, { visible: TA }))).toMatchObject({ id: "ta.subject", value: "water shortage in adyar" });
+  });
+
+  // v10 review 2, round 3: a question, or a thing to write about, was typed into the draft word for word (round 2 excused a typed box's question words)
+  it.each(["write what happened at Adyar in the message", "add what happened at Adyar to the message", "write why the drain is blocked in the message",
+    "add his phone number to the message", "add something about the inspection to the message"])("'%s' does not type into the Take action draft", (said) => {
+    expect(typed(said, INC, TA)).toBeNull();
+  });
+  it("a question about the list is not typed into its search; a title's 'how to' still is", () => {
+    expect(typed("search the list for which ones are overdue", { panel: "list" }, LIST)).toBeNull();
+    expect(controlCommand10("search the list for how to apply", ctx({ panel: "list" }, { visible: LIST }))).toMatchObject({ id: "list.filter", value: "how to apply" });
+  });
+
+  // v10 review 2, round 3: Tamil dictation whose last word ends in ஐ (மழை, குப்பை, சாலை, பிரச்சினை) was read as an object's case and dropped
+  it.each([["தலைப்பில் வடிகால் பிரச்சினை எழுது", "வடிகால் பிரச்சினை"], ["தலைப்பில் மழை பிரச்சினை என்று எழுது", "மழை பிரச்சினை"],
+    ["தலைப்பில் அண்ணா சாலை போடு", "அண்ணா சாலை"], ["தலைப்பில் மழை போடு", "மழை"], ["தலைப்பில் குப்பை போடு", "குப்பை"]])("'%s' types into the subject", (said, want) => {
+    expect(typed(said, INC, TA, "ta")).toBe(`ta.subject <- "${want}"`);
+  });
+
+  // v10 review 2, round 3: the verb said after the locative, and "set" with no "to", typed in round 1 and were dropped in round 2
+  it.each([["in the subject type drain overflow", "ta.subject", "drain overflow"], ["in the subject put drain overflow", "ta.subject", "drain overflow"],
+    ["set the subject: drain overflow", "ta.subject", "drain overflow"], ["set subject drain overflow", "ta.subject", "drain overflow"],
+    ["in the message write please inspect by Friday", "ta.message", "inspect by friday"]])("'%s' types into the box", (said, id, want) => {
+    expect(typed(said, INC, TA)).toBe(`${id} <- "${want}"`);
+  });
+
+  // v10 review 2, round 3: சர்ச்சை (controversy) kept as itself also kept the loanword's own accusative: "சர்ச்சைத் திற" (open the search)
+  it("'சர்ச்சைத் திற' opens the search; the controversy stays itself", () => {
+    const l = lane("சர்ச்சைத் திற", {}, [], { listenLang: "ta" });
+    expect(l?.lane === "control" ? l.id : null).toBe("topbar.search.open");
+    expect(words10("சர்ச்சைத்")).toEqual(["search"]);
+    expect(words10("இந்த சர்ச்சை")).toEqual(["இந்த", "சர்ச்சை"]);
   });
 });

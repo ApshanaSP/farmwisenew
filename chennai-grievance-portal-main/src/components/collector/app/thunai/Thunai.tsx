@@ -1817,6 +1817,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
         // typed or spoken: a typed line is finished when Enter is pressed, so it never waits for its rest (v10 review 2, finding 19)
         source: sourceRef.current,
+        // v10 review 2, finding 30: with a dataset open, the control lane leaves the dataset's own sentences to the intercept below
+        studio: !!studioRef.current && hostRef.current.c.page === "studio",
         // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
         askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
       if (f10.lane?.lane === "wait") {
@@ -1895,7 +1897,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           setBrainNow({ by: "instant", model: null, ms: 0 });
           const t0 = performance.now();
           const go = async (yes: boolean) => {
-            const r = await pressControl(cl.press!, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes });
+            const r = await pressControl(cl.press!, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes, replace: !!cl.replace });
             remember(said, `pressed ${cl.id}`, { doc: null });
             audit(said, [], `control ${cl.id}: ${r.ok ? "pressed" : r.why}`);
             decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });

@@ -36,7 +36,7 @@ export type BrowserLane10 = BrowserLane
   /** Ask the Map by voice (map10.ts): one map operation; the console runs it (mapops.ts) */
   | { lane: "map"; cmd: MapCmd; lang: Lang }
   /** a dashboard control by voice (controls10.ts): its id, and its steps or the control pressed, or a question back */
-  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; value?: string | null; tick?: boolean | null; own?: boolean; which?: ControlHit["which"]; level: ControlHit["level"]; label?: ControlHit["label"]; lang: Lang };
+  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; value?: string | null; tick?: boolean | null; replace?: boolean; own?: boolean; which?: ControlHit["which"]; level: ControlHit["level"]; label?: ControlHit["label"]; lang: Lang };
 
 export interface BrowserCtx10 extends BrowserCtx {
   lastLang?: Lang | null;
@@ -51,6 +51,8 @@ export interface BrowserCtx10 extends BrowserCtx {
   visible?: string[] | null;
   /** how the sentence came (Thunai.tsx sourceRef); unset: spoken. A typed line is finished when Enter is pressed: it never waits for its rest */
   source?: "whisper" | "captions" | "typed" | null;
+  /** a dataset is open in the Data Studio (the console's studioRef on the Studio page): its own sentences are its intercept's */
+  studio?: boolean;
 }
 
 /** words a sentence cannot end on: a line cut off before its point (v8's addressed.ts DANGLING8) */
@@ -170,7 +172,7 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // 2b. Ask the Map by voice, then a dashboard control by voice (each module answers only for what is plainly its own)
   const mc = mapCommand10(said, { ...(c.askMap ?? { open: false, hasAnswer: false }), lang });
   if (mc) return { lane: "map", cmd: mc, lang };
-  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null, stage: !!c.stage });
+  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null, stage: !!c.stage, studio: !!c.studio });
   if (cc) return { ...cc, lane: "control", lang };
   // 3. a named thing: the day's lexicon, by ear
   const consoleThing = CONSOLE.test(said) && !/\b(?:news|story|article|seithi|seidhi)\b|செய்தி|நியூஸ்/iu.test(said);

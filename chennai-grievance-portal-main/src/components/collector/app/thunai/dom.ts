@@ -134,7 +134,7 @@ export type PressResult = { ok: true; el: HTMLElement } | { ok: false; why: "mis
  * Press a registry control (v10, controls10.ts): through its menu first when it lives in one ("a >> b"), then the guard (verdictFor), then by
  * its kind: a select set to the value said, a checkbox ticked or unticked, a text box focused and the value typed, anything else clicked.
  */
-export async function pressControl(spec: string, o: { own?: boolean; value?: string | null; tick?: boolean | null; yes?: boolean } = {}): Promise<PressResult> {
+export async function pressControl(spec: string, o: { own?: boolean; value?: string | null; tick?: boolean | null; yes?: boolean; replace?: boolean } = {}): Promise<PressResult> {
   const steps = parseSpec(spec);
   const last = steps[steps.length - 1];
   let el = findStep(last.css, last.words, !!o.own);
@@ -155,7 +155,12 @@ export async function pressControl(spec: string, o: { own?: boolean; value?: str
     if (o.value) { if (!chooseOption(el as HTMLSelectElement, o.value)) return { ok: false, why: "noOption" }; }
     else el.focus();
   } else if (k === "check") setTick(el as HTMLInputElement, o.tick ?? null);
-  else if (k === "focus") { el.focus(); if (o.value) { typeInto("", true); typeInto(o.value); } }
+  else if (k === "focus") {
+    el.focus();
+    // a box holding a draft (Take action's message) is added to, never cleared: the model's draft and the Collector's edits have no undo; a search
+    // or a name box is replaced (v10 review 2, finding 28); so is a draft the Collector said to set ("set the message to …": `replace`, round 2)
+    if (o.value) { if (o.replace || !(el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value.trim())) typeInto("", true); typeInto(o.value); }
+  }
   else el.click();
   return { ok: true, el };
 }

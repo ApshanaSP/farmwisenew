@@ -13,10 +13,14 @@
  */
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
-import { describe, expect, it } from "vitest";
+import { parseHTML } from "linkedom";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { isDangerButton } from "@/lib/thunai/skeleton";
+import type { ScreenState } from "@/lib/thunai/types";
 import { CONTROLS10 } from "@/lib/thunai/v10/controls10.data";
-import { itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
+import { controlCommand10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
+import { v10Front } from "@/lib/thunai/v10/browser10";
+import { WORLD } from "@/lib/thunai/fixture";
 import { ITEM_ROWS, PRESS_ALLOW, TARGETS, bestOption, parseSpec, pressKind, pressVerdict } from "./press10";
 
 const APP = path.join(__dirname, "..");
@@ -211,6 +215,98 @@ describe("finding 7: the pointer's targets are elements that exist", () => {
     }
     expect(TARGETS.theme[0]).toMatch(/data-key="theme"/);
   });
+});
+
+describe("v10 review 2: the console's side of the controls' findings", () => {
+  it("the console tells the control lane a dataset is open, so the dataset's own sentences reach its intercept (v10 review 2, finding 30)", () => {
+    const i = thunai.indexOf("const f10 = v10Front(said, {");
+    expect(i).toBeGreaterThan(0);
+    expect(thunai.slice(i, thunai.indexOf("});", i))).toMatch(/studio: !!studioRef\.current && hostRef\.current\.c\.page === "studio"/);
+  });
+});
+
+describe("v10 review 2: a registry press on a page (linkedom)", () => {
+  const HTML = `<html><body>
+    <div class="ds-spot" role="dialog"><header><button class="ds-ghost" aria-label="Close">x</button></header>
+      <footer><button class="ds-ghost">On the dashboard</button><button class="ds-btn">Add to this dashboard</button></footer></div>
+    <div class="ta"><div class="ta-f grow"><textarea>Inspect the drain.</textarea></div></div>
+    <div class="modal"><div class="filters"><input type="search" value="adyar"></div></div>
+  </body></html>`;
+  const clicked: string[] = [];
+  const keep = new Map<string, unknown>();
+  const GLOBALS = ["window", "document", "getComputedStyle", "HTMLInputElement", "HTMLTextAreaElement", "Event"] as const;
+  let dom: typeof import("./dom");
+  beforeAll(async () => {
+    const { window, document } = parseHTML(HTML);
+    Object.assign(window, { innerWidth: 1200, innerHeight: 900 });
+    for (const k of GLOBALS) keep.set(k, (globalThis as Record<string, unknown>)[k]);
+    Object.assign(globalThis, { window, document, getComputedStyle: () => ({ visibility: "visible", display: "block", opacity: "1" }),
+      HTMLInputElement: window.HTMLInputElement, HTMLTextAreaElement: window.HTMLTextAreaElement, Event: window.Event });
+    // what linkedom lacks: layout, and the focused element
+    (window.Element.prototype as unknown as { getBoundingClientRect: () => object }).getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 40, width: 100, height: 30 });
+    (document as unknown as { elementFromPoint: () => unknown }).elementFromPoint = () => document.body;
+    let active: unknown = null;
+    (window.HTMLElement.prototype as unknown as { focus: () => void }).focus = function (this: unknown) { active = this; };
+    Object.defineProperty(document, "activeElement", { get: () => active, configurable: true });
+    for (const b of document.querySelectorAll("button")) b.addEventListener("click", () => clicked.push(b.textContent ?? ""));
+    dom = await import("./dom");
+  });
+  afterAll(() => { for (const [k, v] of keep) (globalThis as Record<string, unknown>)[k] = v; });
+  const spec = (id: string) => { const e = CONTROLS10.find((x) => x.id === id)!; return "press" in e.act ? e.act.press : ""; };
+
+  // v10 review 2, finding 31: the large chart's pin toggle was pressed in either state (a yes unpinned a chart on the dashboard); its "Add to this
+  // dashboard" was looked for as a .ds-ghost, but it is a .ds-btn
+  it("'Add the large chart to the dashboard' (yes said) never unpins a chart already on it", async () => {
+    clicked.length = 0;
+    await dom.pressControl(spec("ds.spot.toDashboard"), { yes: true });
+    expect(clicked).not.toContain("On the dashboard");
+  });
+  it("the large chart's 'Add to this dashboard' is found and pressed", async () => {
+    clicked.length = 0;
+    const r = await dom.pressControl(spec("ds.spot.addHere"), { yes: true });
+    expect(r.ok ? clicked : r.why).toEqual(["Add to this dashboard"]);
+  });
+
+  // v10 review 2, finding 28: a value typed into Take action's message cleared the draft first (the model's draft and the Collector's edits lost)
+  it("a value typed into a box that holds a draft is added to it, never wiping it; a search box is replaced", async () => {
+    const r = await dom.pressControl(spec("ta.message"), { value: "by Friday" });
+    expect(r.ok).toBe(true);
+    expect(document.querySelector("textarea")?.value).toBe("Inspect the drain. by Friday");
+    await dom.pressControl(spec("list.filter"), { value: "velachery" });
+    expect((document.querySelector("input[type=search]") as HTMLInputElement | null)?.value).toBe("velachery");
+  });
+  // v10 review 2, round 2: finding 28's add-to rule also added when the sentence said to replace: "set the message to inspect tomorrow" put the
+  // words after the draft, where before the fix they replaced it
+  it("'set the message to …' replaces the draft; a plain value is still added to it", async () => {
+    const state: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: "incident",
+      incident: "INC-1", list: [], lastFilter: null, lastPlace: null, numbers: false, now: 0 };
+    const hit = controlCommand10("set the message to inspect tomorrow", { state, lang: "en", visible: ["ta.message"] });
+    expect(hit).toMatchObject({ id: "ta.message", value: "inspect tomorrow", replace: true });
+    const r = await dom.pressControl(spec("ta.message"), { value: hit?.value ?? null, replace: !!hit?.replace });
+    expect(r.ok).toBe(true);
+    expect(document.querySelector("textarea")?.value).toBe("inspect tomorrow");
+    await dom.pressControl(spec("ta.message"), { value: "by Friday" });
+    expect(document.querySelector("textarea")?.value).toBe("inspect tomorrow by Friday");
+  });
+  it("the console passes the lane's replace to the press (v10 review 2, round 2)", () => {
+    const i = thunai.indexOf("const r = await pressControl(cl.press!");
+    expect(i).toBeGreaterThan(0);
+    expect(thunai.slice(i, thunai.indexOf(");", i))).toMatch(/replace: !!cl\.replace/);
+  });
+  // v10 review 2, round 3: a redraft request one word away from the manner guard ("change the message to be more polite") carried the set frame's
+  // replace: the console cleared Take action's whole draft and typed the words, with no yes and no undo
+  it.each(["change the message to be more polite", "replace the message with a new draft", "change the message to a more polite one"])(
+    "'%s' never wipes the draft (v10 review 2, round 3)", async (said) => {
+      const DRAFT = "Dear Zonal Officer, please inspect the blocked drain at Adyar and report by Friday.";
+      const ta = document.querySelector("textarea")!;
+      ta.value = DRAFT;
+      const state: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: "incident",
+        incident: "INC-1", list: [], lastFilter: null, lastPlace: null, numbers: false, now: 0 };
+      const cl = v10Front(said, { stage: null, news: {}, state, world: WORLD, listenLang: "en", visible: ["ta.subject", "ta.message", "ta.redraft", "ta.copy", "ta.cancel", "ta.back"] }).lane;
+      // as Thunai.tsx runs a control lane's press
+      if (cl?.lane === "control" && cl.press) await dom.pressControl(cl.press, { own: !!cl.own, value: cl.value ?? null, tick: cl.tick ?? null, yes: false, replace: !!cl.replace });
+      expect(ta.value).toContain("Dear Zonal Officer");
+    });
 });
 
 describe("the registry's press selectors name elements the console has", () => {

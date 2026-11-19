@@ -431,7 +431,8 @@ c("petition.viewer.close", "petition", "A", P(".mn-lb-bar button::close"), "Clos
 c("ta.back", "takeaction", "A", P(".ta .ta-h .xbtn"), "Back to the incident|close the draft", "சம்பவத்துக்குத் திரும்பு|வரைவை மூடு", "incident ku thirumbu|draft close pannu", INC);
 c("ta.subject", "takeaction", "A", P(".ta .ta-f:not(.grow) input", { input: "text" }), "Subject|draft subject", "தலைப்பு|வரைவின் தலைப்பு", "subject|draft subject", INC);
 c("ta.message", "takeaction", "A", P(".ta .ta-f.grow textarea", { input: "text" }), "Message|draft message", "செய்தி|வரைவின் செய்தி", "message|draft message", INC);
-c("ta.redraft", "takeaction", "A", P(".ta .ta-f2 .btn:nth-of-type(1)"), "Redraft|draft it again", "மீண்டும் வரைவு செய்|மறுவரைவு", "redraft pannu|thirumba draft pannu", INC);
+// (C, as risk.ts runs a draft: it asks the model again and replaces the draft and the Collector's edits, so it needs the name: v10 review 2, finding 33)
+c("ta.redraft", "takeaction", "C", P(".ta .ta-f2 .btn:nth-of-type(1)"), "Redraft|draft it again", "மீண்டும் வரைவு செய்|மறுவரைவு", "redraft pannu|thirumba draft pannu", INC);
 c("ta.copy", "takeaction", "A", P(".ta .ta-f2 .btn:nth-of-type(2)"), "Copy the draft|copy", "வரைவை நகலெடு|நகலெடு", "draft copy pannu|copy", INC);
 c("ta.cancel", "takeaction", "A", P(".ta .btn.plain::cancel|ரத்து"), "Cancel the draft|cancel", "வரைவை ரத்து செய்|ரத்து", "draft cancel pannu|cancel", INC);
 c("ta.approve", "takeaction", NEVER, N("sends the instruction to the officer"), "Approve and send|send the instruction", "ஒப்புதல் அளித்து அனுப்பு", "approve panni anuppu", INC);
@@ -480,8 +481,10 @@ c("ds.map.tools", "dataset", "A", P(".ds-map-tools button:nth-of-type(1)"), "Zoo
 c("ds.map.tools:out", "dataset", "A", P(".ds-map-tools button:nth-of-type(2)"), "Zoom out of the dataset map|dataset map zoom out", "தரவு வரைபடத்தைச் சிறிதாக்கு", "dataset map zoom out", ST);
 c("ds.map.tools:fit", "dataset", "A", P(".ds-map-tools button:nth-of-type(3)"), "Whole district on the dataset map|dataset map whole district", "தரவு வரைபடத்தில் முழு மாவட்டம்", "dataset map full district", ST);
 c("ds.spot.close", "dataset", "A", P(".ds-spot .ds-ghost"), "Close the large chart|close open large", "பெரிய வரைபடத்தை மூடு", "large chart close pannu", ST);
-c("ds.spot.toDashboard", "dataset", "B", P(".ds-spot .ds-ghost::dashboard"), "Add the large chart to the dashboard|large chart to dashboard", "பெரிய வரைபடத்தை டாஷ்போர்டில் சேர்", "large chart dashboard la podu", ST);
-c("ds.spot.addHere", "dataset", "B", P(".ds-spot .ds-ghost::add to this dashboard"), "Add to this dashboard|add it here", "இந்த டாஷ்போர்டில் சேர்", "indha dashboard la podu", ST);
+// the large chart's pin is a toggle ("Add to dashboard" / "On the dashboard"): only its unpinned state adds; "Add to this dashboard" is a .ds-btn
+// (v10 review 2, finding 31: a yes unpinned a chart already on the dashboard, and the second was never found)
+c("ds.spot.toDashboard", "dataset", "B", P(".ds-spot .ds-ghost::add to dashboard"), "Add the large chart to the dashboard|large chart to dashboard", "பெரிய வரைபடத்தை டாஷ்போர்டில் சேர்", "large chart dashboard la podu", ST);
+c("ds.spot.addHere", "dataset", "B", P(".ds-spot .ds-btn::add to this dashboard"), "Add to this dashboard|add it here", "இந்த டாஷ்போர்டில் சேர்", "indha dashboard la podu", ST);
 c("drill.back", "drill", "A", P(".ds-drill-h > .ds-icon:first-child"), "Back in the details|details back", "விவரங்களில் பின்னால்", "details la back", ST);
 c("drill.close", "drill", "A", P(".ds-drill-h > .ds-icon:last-child"), "Close the details|close details", "விவரங்களை மூடு", "details close pannu", ST);
 c("drill.focus", "drill", "A", P(".ds-drill-acts .ds-btn"), "Focus the dashboard on this|focus on this", "டாஷ்போர்டை இதில் கவனி", "dashboard idhula focus pannu", ST);
