@@ -125,6 +125,12 @@ describe("v10: no \"did you mean\" for an English word or a Tamil verb (v8's dev
     const said = "கோயில்ல திருட்டு போனது பத்தி ஏதாவது நியூஸ்?";
     expect(browserLaneV10(said, { ...c(said), lex: lexP }).lane).not.toBe("confirm");
   });
+  it("a contraction is an English word, never half of a name said in two words ('one, that's' was asked back as 'Unittas?': v8's dev d-own-2)", () => {
+    const lexU = buildLexicon([{ id: "u1", title: "Unittas meets Collector over land dispute", t: "2026-11-18 10:00" },
+      { id: "u2", title: "Unittas plea heard in court", t: "2026-11-17 10:00" }], world);
+    const said = "Open that one, that's Supreme Court order.";
+    expect(browserLaneV10(said, { ...c(said), lex: lexU }).lane).not.toBe("confirm");
+  });
   it("a name heard by ear still is ('Bharathi statue' is Bharati)", () => {
     const b = browserLaneV10("tell me about the Bharathi statue", c("x"));
     expect(findOf(b)?.entity?.name ?? (b.lane === "confirm" ? "asked" : null)).toBeTruthy();

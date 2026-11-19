@@ -199,7 +199,9 @@ const OUTLETS: OutletDef[] = [
   // a sentence about the news)
   { name: "Daily Thanthi", words: ["thanthi"], notBefore: ["tv", "tivi"], needsNews: true },
   { name: "DT Next", words: ["dt", "next"] }, { name: "DT Next", words: ["dtnext"] },
-  { name: "Makkal Kural", words: ["makkal", "kural"] }, { name: "Polimer News", words: ["polimer"] }, { name: "Puthiya Thalaimurai", words: ["puthiya", "thalaimurai"] },
+  { name: "Makkal Kural", words: ["makkal", "kural"] }, { name: "Polimer News", words: ["polimer"] },
+  // (v10: as the English word "polymer" only with "news" after it: the names research's must-match list; "the polymer factory" is no outlet)
+  { name: "Polimer News", words: ["polymer", "news"], spelled: true }, { name: "Puthiya Thalaimurai", words: ["puthiya", "thalaimurai"] },
   { name: "Malaimurasu Seithikal", words: ["malaimurasu"] }, { name: "DD News", words: ["dd", "news"] }, { name: "DD News", words: ["doordarshan"] },
   // (News On AIR by its spoken names, never "news on air ...": "any news on air quality" is a topic; the review, 19 Nov)
   { name: "News On AIR", words: ["all", "india", "radio"] }, { name: "News On AIR", words: ["akashvani"] },

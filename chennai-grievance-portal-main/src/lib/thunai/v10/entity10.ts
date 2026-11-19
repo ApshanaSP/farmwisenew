@@ -12,7 +12,7 @@
  * Pure. Thresholds from the research (v10-research/20-names-by-ear.md) and the owner's own turns; tuned on the dev set only.
  */
 import { isEnglishWord } from "../english";
-import { fold } from "../v8/match";
+import { editDistance, fold } from "../v8/match";
 import { placeWord } from "../v8/lang8";
 import type { Entity10 } from "./lexicon10";
 import { classOf, earKeyJoined, phraseSim, type EntityClass } from "./phon10";
@@ -70,6 +70,9 @@ export function findMentions(text: string, lex: Entity10[], o: { kinds?: Entity1
       const hf = span.map((w) => w.f).join(" ");
       // an English word is no name by ear ("fast", "sea", "bird" is not Bharati: v8's dev set): a span with one counts only by an exact spelling
       const english = span.some((w) => /^[a-z]+$/.test(w.f) && isEnglishWord(w.f));
+      // (a name the ears split into words, one of them English, "Vela cherry", "Deccan Chronical": by ear when sure, never asked; the names
+      // research's must-match list, 20-names-by-ear.md 7.4)
+      const mixed = english && n >= 2 && span.some((w) => /^[a-z]{3,}$/.test(w.f) && !isEnglishWord(w.f) && !/['’]/.test(w.raw));
       // nor a Tamil verb or a word with a verb's ending ("வந்திருக்கு" is not Vandalur's வண்டலூர்)
       if (span.some((w) => /[஀-௿]/u.test(w.raw) && TA_VERB.test(w.raw.normalize("NFC")))) break;
       if (hf.replace(/\s+/g, "").length < 3) continue;
@@ -87,13 +90,16 @@ export function findMentions(text: string, lex: Entity10[], o: { kinds?: Entity1
         // Latin names, "வந்திருக்கு" like Vandalur, on the real store, 19 Nov)
         const taHeard = /[஀-௿]/u.test(heard);
         for (const sp of e.spellings) {
-          if (english && fold(sp) !== hf) continue;
+          // (or English words that, joined, are the name's letters but one: "Vela cherry" is "velacherry", Velachery)
+          const joined = n >= 2 && hf.replace(/\s+/g, "").length >= 7 && editDistance(hf.replace(/\s+/g, ""), fold(sp).replace(/\s+/g, "")) <= 1;
+          if (english && !mixed && !joined && fold(sp) !== hf) continue;
           if (taHeard && !cls && !/[஀-௿]/u.test(sp)) continue;
           s = Math.max(s, phraseSim(heard, sp));
           if (s >= 1) break;
         }
         if (s < ASK_FLOOR) continue;
         const sure = cls && e.kind === "storm" ? SURE_WITH_CLASS : cls ? SURE_WITH_CLASS + 0.02 : SURE;
+        if (english && s < sure) continue;
         // a place said by itself is the console's own matter; it is a mention only when it sounds like the place (no "ask" band for places)
         if (e.kind === "place" && s < sure) continue;
         found.push({ entity: e, score: s + (cls && e.cls === cls ? 0.02 : 0), band: s >= sure ? "sure" : "ask", heard, at: [i, i + n], cls });

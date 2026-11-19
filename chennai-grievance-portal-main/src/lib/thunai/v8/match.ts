@@ -27,6 +27,8 @@ export function fold(text: string): string {
 export function looseKey(word: string): string {
   let s = word.toLowerCase().replace(/[^a-z]/g, "");
   if (!s) return "";
+  // (v10: "chr" is said "kr", Chronicle, Chrome(pet), Christian: the names research, 20-names-by-ear.md 7.4)
+  s = s.replace(/^chr/, "kr");
   s = s.replace(/tion$/, "san").replace(/ck/g, "k").replace(/ou/g, "u");
   s = s.replace(/zh/g, "l").replace(/sh/g, "s").replace(/ch/g, "s").replace(/ph/g, "p").replace(/f/g, "p").replace(/q/g, "k").replace(/x/g, "ks").replace(/w/g, "v").replace(/z/g, "s");
   // c: s before e, i, y; k otherwise
