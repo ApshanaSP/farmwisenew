@@ -1,0 +1,50 @@
+/**
+ * v10 (docs/jarvis/JARVIS_V10.md Part 8, RESULTS v9 "Where v9 still misses" 1): "நியூஸ்" is the Tamil-script "news" Whisper writes, and it was
+ * no news word: "புழல் ஜெயில் நியூஸ் படிங்க" made no news request at all (six of v9's blind Tamil requests). The other loanwords a Tamil speaker
+ * says for the press too (ஆர்டிகிள், ஹெட்லைன், ஸ்டோரி, ரிப்போர்ட், பேப்பர்). Failing first on v9's news8.ts.
+ */
+import { describe, expect, it } from "vitest";
+import { newsRequest, pickStory, rankStories, topicWords } from "../v8/news8";
+
+const stories = [
+  { id: "a", title: "Bid to smuggle drugs into Puzhal jail, two held" },
+  { id: "b", title: "Cyclone Akvan to cross Odisha coast tomorrow; rain likely in Chennai on November 23, 24" },
+  { id: "c", title: "CHENNAI: RESIDENTS STAGE EMPTY-POT PROTEST OVER FOUR-MONTH WATER SHORTAGE IN KODUNGAIYUR" },
+  { id: "d", title: "Health Department and Rotary Club of Madras partner to take forward HPV vaccination" }
+];
+const pick = (said: string) => {
+  const r = newsRequest(said);
+  return r ? pickStory(rankStories(r, stories)).pick?.id ?? null : null;
+};
+
+describe("v10: the Tamil-script loanwords for the news are news words", () => {
+  it.each([
+    ["புழல் ஜெயில் நியூஸ் படிங்க", "a"],
+    ["புழல் ஜெயில் நியூஸை படிங்க", "a"],
+    ["கொடுங்கையூர் போராட்டம் நியூஸ் காட்டுங்க", "c"],
+    ["அக்வான் புயல் நியூஸ் சொல்லுங்க", "b"],
+    ["HPV தடுப்பூசி நியூஸ்ஸ படிங்க", "d"]
+  ])("%s -> a story request that finds %s", (said, id) => {
+    expect(newsRequest(said)).not.toBeNull();
+    expect(pick(said)).toBe(id);
+  });
+
+  it("the loanword is no topic word itself", () => {
+    expect(topicWords("புழல் ஜெயில் நியூஸ் படிங்க", null)).not.toContain("niyus");
+    expect(topicWords("புழல் ஜெயில் நியூஸ்ல என்ன இருக்கு", null)).not.toContain("niyusla");
+  });
+
+  it.each([
+    ["மழை பத்தி என்ன நியூஸ் இருக்கு?"],
+    ["புயல் பத்தி ஏதாவது நியூஸ் இருக்கா"],
+    ["கொடுங்கையூர் பத்தி நியூஸ்ல என்ன வந்திருக்கு"]
+  ])("a Tamil news question with நியூஸ்: %s", (said) => {
+    const r = newsRequest(said);
+    expect(r).not.toBeNull();
+    expect(r?.kind).toBe("ask");
+  });
+
+  it.each([["ஹெட்லைன்ஸ் படிங்க"], ["நியூஸ் படிங்க"], ["நியூஸ் பேனல் திறங்க"]])("the news with no topic is no story request: %s", (said) => {
+    expect(newsRequest(said)).toBeNull();
+  });
+});

@@ -76,10 +76,14 @@ const STOP = new Set(("a an the this that these those it its is are was were be 
   "konjam pathina patthina paththina pathiya pathuna pathunna sambandhamana sammandhamana thodarbana kuritha kurithu onnu onna onnai ondru adha idha adhai idhai " +
   "aana oru solreengala sollreengala sollungalen padingalen kaattungalen he she hes shes they theyre im").split(/\s+/));
 
-const NEWS_NOUN = /\b(?:news|story|stories|article|piece|report|headline|coverage|seithi|seidhi|seythi|sethi)\b|செய்தி|சேதி|கட்டுரை/iu;
+// (v10: and the press's English said in Tamil letters, as Whisper writes it: நியூஸ், ஆர்டிகிள், ஹெட்லைன், ஸ்டோரி, ரிப்போர்ட், பேப்பர்: v9's blind set,
+// "புழல் ஜெயில் நியூஸ் படிங்க" made no news request at all)
+const TA_LOAN_NEWS = "நியூஸ|நியூஸ்|ஆர்டிகிள்|ஆர்ட்டிக்கிள்|ஹெட்லைன்|ஸ்டோரி|ரிப்போர்ட்|ரிப்போர்ட்ட|பேப்பர்|பேப்பர";
+const NEWS_NOUN = new RegExp(String.raw`\b(?:news|story|stories|article|piece|report|headline|coverage|seithi|seidhi|seythi|sethi)\b|செய்தி|சேதி|கட்டுரை|${TA_LOAN_NEWS}`, "iu");
 const STORY_VERB = /\b(?:open|read|play|brief me|tell me|tell us|explain|summari[sz]e|sum up|go through|pull up|show me)\b|\b(?:padi|padinga|padiunga|sollu|sollunga|open pannu|open pannunga|kaattu|kaattunga|thira|thiranga)\b|திற|படி|சொல்|காட்டு|விளக்கு/iu;
 const ASK_EN = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:any|is there (?:any|anything)|anything|what(?:'s| is| are)? the (?:latest|news|update|story)|what(?:'s| is) (?:new|happening|the latest)|what (?:are|do|did|does) (?:the )?(?:papers|newspapers|media|press|news|reports?|outlets?)|latest|what happened (?:at|to|with|in)|any (?:update|word))\b/i;
-const ASK_TA = /(?:பற்றி|குறித்து)\s*(?:ஏதாவது|என்ன)?\s*(?:செய்தி|சேதி)|(?:செய்தி|சேதி)(?:யில்|ல|களில்)?\s*(?:என்ன|ஏதாவது)|(?:செய்தி|சேதி)\s*(?:இருக்கா|இருக்கிறதா|உண்டா|வந்திருக்கா)/u;
+// (v10: நியூஸ் beside செய்தி, the spoken பத்தி beside பற்றி, and "என்ன நியூஸ் இருக்கு")
+const ASK_TA = /(?:பற்றி|குறித்து|பத்தி)\s*(?:ஏதாவது|என்ன)?\s*(?:செய்தி|சேதி|நியூஸ்)|(?:செய்தி|சேதி|நியூஸ்)(?:யில்|ல|களில்|ஸ்ல|்ல)?\s*(?:என்ன|ஏதாவது)|(?:செய்தி|சேதி|நியூஸ்)\s*(?:இருக்கா|இருக்கிறதா|உண்டா|வந்திருக்கா)|என்ன\s*(?:செய்தி|சேதி|நியூஸ்)\s*(?:இருக்கு|வந்திருக்கு|வந்துச்சு)/u;
 const ASK_TG = /\b(?:pathi|patthi|paththi)\s+(?:enna\s+)?(?:news|seithi|seidhi)\b|\b(?:news|seithi|seidhi)\s+(?:la|le|il)\s+(?:enna|edhavadhu)\b|\b(?:news|seithi)\s+(?:irukka|irukkaa|iruka|undaa|vandhirukka)\b/i;
 /** the console's own records: a case, a complaint, a reading is never a story */
 const CONSOLE = /\b(?:cases?|complaints?|grievances?|petitions?|incidents?|tickets?|readings?|rainfall|reservoirs?|lakes?|aqi|officers?|departments? (?:performance|backlog)|zones?|wards?|taluks?|drafts?|tray)\b|புகார்|சம்பவ|மனு|மண்டல/iu;
@@ -288,7 +292,13 @@ const GLOSS8: Gloss[] = [
   { ta: ["நீதிமன்ற", "உயர்நீதிமன்ற", "உச்சநீதிமன்ற"], en: ["court"] }, { ta: ["கோயில", "கோவில"], tg: ["kovil", "koil"], en: ["temple"] },
   { ta: ["தேர்தல"], tg: ["therthal"], en: ["election", "poll"] }, { ta: ["விமான"], tg: ["vimanam"], en: ["flight", "plane", "aircraft"] },
   { taExact: ["பள்ளி", "பள்ளியில்", "பள்ளிகள்", "பள்ளிக்கு", "பள்ளியின்", "பள்ளிகளில்"], en: ["school"] },
-  { ta: ["அமைச்ச"], en: ["minister"] }, { ta: ["ஆட்சியர"], en: ["collector"] }
+  { ta: ["அமைச்ச"], en: ["minister"] }, { ta: ["ஆட்சியர"], en: ["collector"] },
+  // v10: words a Tamil request about an English headline says in Tamil or Tamil letters (a vaccine, a jail, the police, a bus stop, a hospital)
+  { ta: ["தடுப்பூசி"], tg: ["thaduppoosi", "thaduppusi"], en: ["vaccine", "vaccination", "vaccinate", "jab"] },
+  { ta: ["ஜெயில்", "ஜெயிலில்", "சிறை"], tg: ["jeyil", "jail", "siraichalai"], en: ["jail", "prison"] },
+  { ta: ["போலீஸ்", "போலீசார்", "காவல்துறை"], tg: ["police", "polees", "poleesu"], en: ["police", "cop", "cops"] },
+  { ta: ["ஆஸ்பத்திரி", "மருத்துவமனை", "ஹாஸ்பிடல்"], tg: ["aaspathiri", "aspathiri", "hospital"], en: ["hospital"] },
+  { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] }
 ];
 /**
  * v9: an event a soft request names, in the words headlines use for it ("the Pattinapakkam honking attack" is "Man hacked after dispute over
@@ -360,9 +370,11 @@ const weakWords = (text: string): string[] => [
 /** Tanglish news words with their endings ("seithiya", "seidhila"); "pannunga" as Whisper spells it ("panyunga", "panunga": the real run o8b) */
 const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(?:nga|ngal|ngo)?$/;
 
+/** v10: the press's English in Tamil letters, with any ending glued on (நியூஸை, நியூஸ்ல, நியூஸ்ஸ, ஹெட்லைன்ஸ், ரிப்போர்ட்டை): the request's own word */
+const TA_LOAN_OWN = new RegExp(String.raw`^(?:${TA_LOAN_NEWS}|பேனல்|பேஜ்|டேப்)`, "u");
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  const t = text.normalize("NFC").split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
+  const t = text.normalize("NFC").split(/\s+/).filter((w) => { const ta = w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""); return !TA_OWN.test(ta) && !TA_LOAN_OWN.test(ta) && !(ta && ordWord(ta) != null); }).join(" ");
   let toks = outletToks(t);
   // the outlet's own words are not the topic (found again on these words: the same reader as outletIn's)
   if (outlet) { const r = outletRun(toks); if (r && r.name === outlet) toks = [...toks.slice(0, r.i), ...toks.slice(r.i + r.n)]; }
