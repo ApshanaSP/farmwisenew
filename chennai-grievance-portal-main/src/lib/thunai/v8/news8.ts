@@ -14,7 +14,7 @@
  *
  * Pure: no network. The server (v8/newsfind.ts) supplies the store's stories; the browser sends the sentence and what is on screen.
  */
-import { enStem, fold, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
+import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
 import { placeWord } from "./lang8";
 import { isEnglishWord } from "../english";
 
@@ -84,15 +84,93 @@ const ORDINAL_ONLY = /^(?:the )?(?:first|second|third|fourth|fifth|last|1st|2nd|
 /** a reference to the story in focus: "that one", "this news", "andha news", "அந்தச் செய்தி" */
 const REF = /\b(?:that|this|it)\b|\b(?:andha|antha|indha|intha|adhu|idhu)\b|அந்த|இந்த/iu;
 
-/** the outlets a request may name (spoken forms -> the outlet's name as the console lists it) */
-export const OUTLET_NAMES: [RegExp, string][] = [
-  [/\b(?:the )?hindu\b(?! tamil)/i, "The Hindu"], [/\bhindu tamil\b|இந்து தமிழ்/iu, "Hindu Tamil Thisai"], [/\b(?:times of india|toi)\b/i, "The Times of India"],
-  [/\bdt ?next\b|\bd\.? ?t\.? next\b/i, "DT Next"], [/\b(?:new )?indian express\b/i, "The New Indian Express"], [/\bdinamani\b|தினமணி/iu, "Dinamani"],
-  [/\bdina?malar\b|தினமலர்/iu, "Dinamalar"], [/\b(?:daily |dina )?thanthi\b(?! tv)|தினத்தந்தி/iu, "Daily Thanthi"], [/\bthanthi tv\b/i, "Thanthi TV"],
-  [/\bdinakaran\b|தினகரன்/iu, "Dinakaran"], [/\beconomic times\b/i, "The Economic Times"], [/\bdeccan chronicle\b/i, "Deccan Chronicle"], [/\betv bharat\b/i, "ETV Bharat"],
-  [/\bndtv\b/i, "NDTV"], [/\bnews ?18\b/i, "News18"], [/\bbbc\b/i, "BBC"], [/\bmakkal kural\b/i, "Makkal Kural"]
+/**
+ * The outlets a request may name, as words (the console's name for each, as the store's publisher names it). v9: read word by word on the
+ * request's own words (Tamil script romanised, an acronym said letter by letter joined, a possessive's 's off), each word by its Tamil-loose key;
+ * a word of six letters or more may be misheard ("Chronical", "Dinmalar"), a name said in two parts is joined ("Dina malar", "Maalai Malar").
+ * The most specific name first ("Hindu Tamil Thisai" before "The Hindu", "The New Indian Express" before "The Indian Express"). `notBefore`: a
+ * word after the name that makes it something else ("Hindu Munnani", "Thanthi TV"). v8 read exact spellings only: "Deccan Chronical" and
+ * "ETV Bharath" were no outlet, and "the Indian Express one" was The New Indian Express (the holdout's h-reference-3 and -4).
+ */
+interface OutletDef { name: string; words: string[]; notBefore?: string[] }
+const OUTLETS: OutletDef[] = [
+  { name: "Hindu Tamil Thisai", words: ["hindu", "tamil", "thisai"] }, { name: "Hindu Tamil Thisai", words: ["hindu", "tamil"] }, { name: "Hindu Tamil Thisai", words: ["indhu", "tamil"] },
+  { name: "The Times of India", words: ["times", "of", "india"] }, { name: "The Times of India", words: ["toi"] },
+  { name: "The New Indian Express", words: ["new", "indian", "express"] }, { name: "The Indian Express", words: ["indian", "express"] },
+  { name: "The Economic Times", words: ["economic", "times"] }, { name: "Hindustan Times", words: ["hindustan", "times"] },
+  { name: "Deccan Chronicle", words: ["deccan", "chronicle"] }, { name: "ETV Bharat", words: ["etv", "bharat"] }, { name: "Free Press Journal", words: ["free", "press", "journal"] },
+  { name: "Thanthi TV", words: ["thanthi", "tv"] }, { name: "Thanthi TV", words: ["thanthi", "tivi"] },
+  { name: "Daily Thanthi", words: ["daily", "thanthi"] }, { name: "Daily Thanthi", words: ["dina", "thanthi"] }, { name: "Daily Thanthi", words: ["dinathanthi"] },
+  { name: "Daily Thanthi", words: ["thanthi"], notBefore: ["tv", "tivi"] },
+  { name: "DT Next", words: ["dt", "next"] }, { name: "DT Next", words: ["dtnext"] },
+  { name: "Makkal Kural", words: ["makkal", "kural"] }, { name: "Polimer News", words: ["polimer"] }, { name: "Puthiya Thalaimurai", words: ["puthiya", "thalaimurai"] },
+  { name: "Malaimurasu Seithikal", words: ["malaimurasu"] }, { name: "DD News", words: ["dd", "news"] }, { name: "DD News", words: ["doordarshan"] }, { name: "News On AIR", words: ["news", "on", "air"] },
+  { name: "Dinamani", words: ["dinamani"] }, { name: "Dinamalar", words: ["dinamalar"] }, { name: "Dinakaran", words: ["dinakaran"] }, { name: "Maalaimalar", words: ["maalaimalar"] },
+  { name: "NDTV", words: ["ndtv"] }, { name: "News18", words: ["news18"] }, { name: "BBC", words: ["bbc"] }, { name: "PTI", words: ["pti"] },
+  { name: "BusinessLine", words: ["businessline"] }, { name: "Mathrubhumi English", words: ["mathrubhumi"] },
+  // (not "Times Now", "India Today" or "News7": ordinary words in a sentence, "three times now", "open news 7")
+  // "தி இந்து" (the paper's name said in Tamil); "இந்து" alone is the religion ("இந்து அறநிலையத் துறை")
+  { name: "The Hindu", words: ["thi", "indhu"] },
+  { name: "The Hindu", words: ["hindu"], notBefore: ["tamil", "munnani", "makkal", "temple", "temples", "religious", "religion", "endowments", "outfit", "outfits", "organisation", "organisations", "organization", "organizations", "festival", "festivals", "devotees", "mahasabha", "front"] }
 ];
-export const outletIn = (text: string): string | null => OUTLET_NAMES.find(([re]) => re.test(text))?.[1] ?? null;
+/**
+ * one heard word against one word of an outlet's name, 0..1: the same loose key 1 (a name with a digit: the same word, "News18"); `byEar`, a
+ * word of six letters or more one or two edits away (Jaro-Winkler and the edit distance's first band only: no "cut short" or consonants-only
+ * match, which made "malar" Malaimurasu and the four Dina- papers one another)
+ */
+const outletWord = (tok: string, w: string, byEar: boolean): number => {
+  if (/\d/.test(w)) return tok === w ? 1 : 0;
+  const a = looseKey(tok), b = looseKey(w);
+  if (a && a === b) return 1;
+  if (!byEar || w.length < 6 || a.length < 5) return 0;
+  const jw = jaroWinkler(a, b), dl = editDistance(a, b);
+  return (Math.min(a.length, b.length) <= 7 ? jw >= 0.9 && dl <= 1 : jw >= 0.88 && dl <= 2) ? jw : 0;
+};
+/** the outlet named in these words, and where (its first word and how many words it takes), or null: an exact name anywhere first, then the
+ * closest name by ear */
+export function outletRun(toks: string[]): { name: string; i: number; n: number } | null {
+  let best: { name: string; i: number; n: number; s: number } | null = null;
+  for (const byEar of [false, true]) {
+    for (const o of OUTLETS) {
+      const joinedName = o.words.join("");
+      for (let i = 0; i < toks.length; i++) {
+        const after = (n: number) => !o.notBefore?.includes(toks[i + n] ?? "");
+        if (i + o.words.length <= toks.length && after(o.words.length)) {
+          const s = Math.min(...o.words.map((w, k) => outletWord(toks[i + k], w, byEar)));
+          if (s > 0 && (!best || s > best.s)) best = { name: o.name, i, n: o.words.length, s };
+        }
+        // a name said in parts ("dina malar", "maalai malar", "news 18")
+        for (let n = 2; n <= 3 && i + n <= toks.length; n++) {
+          if (n === o.words.length || !after(n)) continue;
+          const said = toks.slice(i, i + n).join("");
+          const s = said.length >= 5 ? outletWord(said, joinedName, byEar) : 0;
+          if (s > 0 && (!best || s > best.s)) best = { name: o.name, i, n, s };
+        }
+      }
+      if (!byEar && best) return { name: best.name, i: best.i, n: best.n };
+    }
+  }
+  return best ? { name: best.name, i: best.i, n: best.n } : null;
+}
+/** a request's own words for the outlets: the possessive's 's taken off ("The Hindu's piece") */
+const outletToks = (text: string): string[] => tokensOf(text.replace(/(\p{L})['’]s\b/gu, "$1"));
+export const outletIn = (text: string): string | null => outletRun(outletToks(text))?.name ?? null;
+/** the console's own name for an outlet a story lists (its whole name, word for word, "the" aside), memoised */
+const outletNameMemo = new Map<string, string | null>();
+const outletOfName = (name: string): string | null => {
+  let v = outletNameMemo.get(name);
+  if (v === undefined) {
+    const toks = outletToks(name).filter((t) => t !== "the");
+    v = OUTLETS.find((o) => o.words.length === toks.length && o.words.every((w, k) => looseKey(toks[k]) === looseKey(w)))?.name ?? null;
+    if (outletNameMemo.size > 2000) outletNameMemo.clear();
+    outletNameMemo.set(name, v);
+  }
+  return v;
+};
+const plainName = (s: string) => s.toLowerCase().replace(/^the\s+/, "").replace(/\s+/g, " ").trim();
+/** a story's outlet is the one asked for: the same console name, or the same name as written ("Polimer News"); "The New Indian Express" is never
+ * "The Indian Express" (v8 matched any outlet whose name held the one asked for) */
+export const sameOutlet = (storyOutlet: string, asked: string): boolean => outletOfName(storyOutlet) === asked || plainName(storyOutlet) === plainName(asked);
 
 /** Tamil-script words that are the request's own (news nouns, verbs, references, question words), as whole words with their endings: முதல்வர் (the
  * CM), இந்திய and காட்டுப்பள்ளி are topics, not "first", "this" and "show" (the review, 18 Nov) */
@@ -102,9 +180,11 @@ const TG_NEWS = /^(?:seithi|seidhi|seythi|sethi|seyti|seiti|seti)|^pa+n+[iy]?u+(
 
 /** the topic words of a request: its own verbs, news nouns, references and fillers out; Tamil romanised */
 export function topicWords(text: string, outlet: string | null): string[] {
-  let t = text.split(/\s+/).filter((w) => !TA_OWN.test(w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""))).join(" ");
-  if (outlet) for (const [re] of OUTLET_NAMES.filter(([, n]) => n === outlet)) t = t.replace(re, " ");
-  return tokensOf(t).filter((w) => !STOP.has(w) && !TG_NEWS.test(w) && !/^\d+$/.test(w) && w.length >= 2 && !STOP.has(w.replace(/(?:a|ah|ai|ae|e|il|la|le)$/, "")));
+  const t = text.split(/\s+/).filter((w) => !TA_OWN.test(w.replace(/^[^஀-௿]+/u, "").replace(/[^஀-௿]+$/u, ""))).join(" ");
+  let toks = outletToks(t);
+  // the outlet's own words are not the topic (found again on these words: the same reader as outletIn's)
+  if (outlet) { const r = outletRun(toks); if (r && r.name === outlet) toks = [...toks.slice(0, r.i), ...toks.slice(r.i + r.n)]; }
+  return toks.filter((w) => !STOP.has(w) && !TG_NEWS.test(w) && !/^\d+$/.test(w) && w.length >= 2 && !STOP.has(w.replace(/(?:a|ah|ai|ae|e|il|la|le)$/, "")));
 }
 
 /**
@@ -143,7 +223,7 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
 
 // ---- ranking
 
-interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null }[]>; outlets: string[]; latin: boolean }
+interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by their first letter: every match path needs that letter equal */ byFirst: Map<string, { k: string; en: string | null }[]>; latin: boolean }
 /** a story's words, keyed once (and kept for the next request: the same stored stories come back) */
 const docMemo = new Map<string, Doc>();
 const docOf = (x: StoryItem): Doc => {
@@ -164,7 +244,7 @@ const docOf = (x: StoryItem): Doc => {
     const e = { k, en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null };
     const l = byFirst.get(k[0]); if (l) l.push(e); else byFirst.set(k[0], [e]);
   }
-  const d: Doc = { item: x, keys, byFirst, outlets: (x.outlets ?? []).map((n) => n.toLowerCase()), latin: !/[஀-௿]/u.test(x.title) };
+  const d: Doc = { item: x, keys, byFirst, latin: !/[஀-௿]/u.test(x.title) };
   if (docMemo.size > 20_000) docMemo.clear();
   docMemo.set(memoKey, d);
   return d;
@@ -257,13 +337,13 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
   // ("Imash" in "Palikana Imash", the ears' "Pallikaranai marsh", the real run 18 Nov) at a fifth
   const weight = idf.map((v, i) => (sims[i].some((s) => s > 0) ? v : (qs[i].w.length <= 5 && /^[a-z]+$/.test(qs[i].w) && !isEnglishWord(qs[i].w) ? 0.2 : 0.5) * maxIdf));
   const total = weight.reduce((a, b) => a + b, 0) || 1;
-  const outletKey = req.outlet ? req.outlet.toLowerCase().replace(/^the /, "") : null;
   return docs.map((d, j) => {
     let s = 0, hits = 0;
     req.words.forEach((q, i) => { const v = sims[i][j]; if (v > 0) hits++; s += weight[i] * v; });
     let score = req.words.length ? s / total : 0;
-    if (outletKey) {
-      const has = d.outlets.some((x) => x.replace(/^the /, "") === outletKey || x.includes(outletKey));
+    if (req.outlet) {
+      const asked = req.outlet;
+      const has = (d.item.outlets ?? []).some((x) => sameOutlet(x, asked));
       score = req.words.length ? (has ? score + 0.15 : score - 0.3) : has ? 0.7 : 0;
       if (has && !req.words.length) hits = 1;
     }

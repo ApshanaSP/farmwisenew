@@ -103,7 +103,14 @@ describe("v9: an outlet misheard", () => {
   it("a word near an outlet's is not the outlet ('chronic', 'Bharathi')", () => {
     expect(outletIn("the chronic water shortage news")).toBeNull();
     expect(outletIn("Bharathi Pasarai art competition news")).toBeNull();
-    expect(outletIn("the Hindu Munnani protest news")).toBe("The Hindu");
+    // Hindu Munnani is an organisation (the store's "Hindu Munnani members protest in Chennai Egmore"), not The Hindu
+    expect(outletIn("the Hindu Munnani protest news")).toBeNull();
+    expect(outletIn("read the Hindu's piece on the Metro")).toBe("The Hindu");
+    expect(outletIn("N D T V story")).toBe("NDTV");
+    expect(outletIn("News 18 report")).toBe("News18");
+    expect(outletIn("show me the news")).toBeNull();
+    expect(outletIn("தினமணி செய்தியைப் படிங்க")).toBe("Dinamani");
+    expect(outletIn("மாலைமலர் செய்தி")).toBe("Maalaimalar");
   });
 });
 
