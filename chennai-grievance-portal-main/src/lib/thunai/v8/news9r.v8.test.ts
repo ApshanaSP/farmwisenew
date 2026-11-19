@@ -132,3 +132,51 @@ describe("v9 review, group 1: the gloss is the Tamil word's, not its loose key's
     }
   }, 30_000);
 });
+
+describe("v9 review, group 2: a joined place stands for its parts only when it is a word the parts are not", () => {
+  const horse = story("மெரினாவில் சவாரி குதிரை மிரண்டு ஓடியதில் தாய், மகள் உள்பட 3 பேர் படுகாயம்", { id: "s3", titleEn: "3 people including mother and daughter severely injured after a riding horse goes berserk in Marina", t: "2026-11-17 20:00" });
+  const tank = story("The cascade water tank in Marina, Chennai has broken; repair work has started", { id: "s4", t: "2026-11-17 18:00" });
+  const dhoni = story("Thala Forever: CSK Pay Special Tribute To MS Dhoni With Drone At Chennai's Marina Beach", { id: "s8", t: "2026-11-18 10:00" });
+  it("#0: 'Marina beach' said in full does not veto the stories that say 'Marina'", () => {
+    // ("beach" is only in the Dhoni story and "horse" only in the horse story: a tie, as in v8, which offers the other; v9's first try vetoed it)
+    const r = pick("Jarvis, open the Marina beach horse news", [horse, tank, dhoni, ...FILLER]);
+    expect([r?.pick?.id, r?.other?.id]).toContain("s3");
+    expect(pick("Marina beach water tank news", [horse, tank, dhoni, ...FILLER])?.pick?.id).toBe("s4");
+  });
+  it("#0/#28: தி.நகர் (T. Nagar in Tamil) finds the English T. Nagar stories", () => {
+    const sky = story("T. Nagar skywalk to be extended to Mambalam station", { id: "t1" });
+    const crowd = story("Diwali shopping: crowds throng Ranganathan Street in T. Nagar", { id: "t2" });
+    const fire = story("Fire at textile showroom godown in T. Nagar; no casualties", { id: "t3" });
+    expect(pick("தி.நகர் skywalk செய்தி", [sky, crowd, fire, ...FILLER])?.pick?.id).toBe("t1");
+    expect(pick("தி.நகர் ரங்கநாதன் தெரு செய்தியைப் படிங்க", [crowd, story("Fire breaks out at godown in Vyasarpadi; no casualties", { id: "b2" }), ...FILLER])?.pick?.id).toBe("t2");
+    expect(pick("தி.நகர் பத்தி ஏதாவது செய்தி இருக்கா?", [sky, crowd, fire, ...FILLER])?.stories.map((s) => s.id).sort()).toEqual(["t1", "t2", "t3"]);
+  });
+  it("#3: '<place> HC' or '<place> MLA' does not credit HC or MLA to every story of the place", () => {
+    const panel = { ...story("Adyar residents complain of irregular garbage collection", { id: "ap" }), onScreen: 1 };
+    const hc = story("HC orders removal of encroachments along Adyar river", { id: "ah" });
+    expect(pick("open the Adyar HC news", [panel, hc, ...FILLER], true)?.pick?.id).toBe("ah");
+    const kp = { ...story("Kodambakkam flyover repair work to start next week", { id: "kp" }), onScreen: 1 };
+    const mla = story("MLA inaugurates new ration shop in Kodambakkam", { id: "km" });
+    expect(pick("Kodambakkam MLA news padinga", [kp, mla, ...FILLER], true)?.pick?.id).toBe("km");
+  });
+  it("#29: '<place> மழை' is not credited to a story that has the place with -யில் (வேளச்சேரியில்)", () => {
+    const rain = story("மழையால் வேளச்சேரி சாலைகளில் வெள்ளம்", { id: "r1", titleEn: "Heavy rains leave Velachery roads flooded", t: "2026-11-16 10:00" });
+    const prot = story("வேளச்சேரியில் குப்பை கொட்டுவதைக் கண்டித்து போராட்டம்", { id: "w1", titleEn: "Protest in Velachery against garbage dumping", t: "2026-11-18 10:00" });
+    expect(pick("வேளச்சேரி மழை செய்தி", [rain, prot, ...FILLER])?.pick?.id).toBe("r1");
+    const grain = story("கிண்டியில் கனமழை: சாலைகளில் தண்ணீர் தேக்கம்", { id: "g1", titleEn: "Heavy rain in Guindy: water stagnates on roads", t: "2026-11-16 10:00" });
+    const gprot = story("கிண்டியில் தொழிற்பேட்டை தொழிலாளர்கள் போராட்டம்", { id: "g2", titleEn: "Guindy industrial estate workers protest", t: "2026-11-18 10:00" });
+    expect(pick("கிண்டி மழை செய்தி", [grain, gprot, ...FILLER])?.pick?.id).toBe("g1");
+  });
+  it("a joined pair is matched by its spelling, not by its consonants: 'beach horse' is not 'fisheries' (the real store, 19 Nov)", () => {
+    const fish = story("Climate change threatens marine livelihoods: Tamil Nadu Fisheries Minister", { id: "fm", t: "2026-11-18 10:00" });
+    const r = pick("Marina beach horse news", [horse, fish, dhoni, ...FILLER]);
+    expect(r?.pick?.id).not.toBe("fm");
+    expect([r?.pick?.id, r?.other?.id]).toContain("s3");
+  });
+  it("still: a name the ears split is found joined ('Kasi medu', 'Palli Karanai')", () => {
+    const kasi = story("Aquaan storm caused sea turbulence at Chennai Kasimedu fishing harbor", { id: "km1" });
+    const party = story("Manithaneya Makkal Katchi Protests In Chennai, Seeks Release Of 22 Muslim Convicts", { id: "mm" });
+    expect(pick("Jarvis, open the Kasi medu news", [kasi, party, ...FILLER])?.pick?.id).toBe("km1");
+    expect(pick("Palli Karanai construction ban news", [story("Construction Ban In Chennai's Pallikaranai: HC Gives Liberty To Petitioners To Approach SC", { id: "pc" }), ...FILLER])?.pick?.id).toBe("pc");
+  });
+});

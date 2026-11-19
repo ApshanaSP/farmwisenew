@@ -431,14 +431,18 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
  * v9: a joined word ("Kasi medu" said for Kasimedu) in one story: its whole key, or a case ending's stem, against one headline word (0 below 0.88).
  * No shared head and no consonants-only match: those would let "Pallikaranai marsh" joined stand for "marsh" in every Pallikaranai story.
  */
-function joinedIn(q: QWord, d: Doc, memo: Map<string, number>): number {
+function joinedIn(q: QWord, d: Doc, memo: Map<string, number>, parts: QWord[]): number {
   let best = 0;
-  for (const { k: tk } of d.byFirst.get(q.k[0]) ?? []) {
-    const mk = `j|${q.k}|${tk}`;
+  for (const { k: tk, eng } of d.byFirst.get(q.k[0]) ?? []) {
+    const mk = `j|${parts.map((p) => p.k).join("+")}|${tk}|${eng ? 1 : 0}`;
     let s = memo.get(mk);
     if (s === undefined) {
-      s = keySim(q.k, tk);
-      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk) * 0.98);
+      // (by its spelling: no consonants-only match, and no "cut short" against an English word: "beach horse" is not "fisheries")
+      s = keySim(q.k, tk, !eng, false);
+      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk, !eng, false) * 0.98);
+      // v9 (the review, 19 Nov): only a headline word the parts are not ("kasimedu" is neither "kasi" nor "medu"); "adyar hc" and "வேளச்சேரி மழை"
+      // joined match "Adyar" and "வேளச்சேரியில்", which the place alone already is, and must not credit "hc" or "மழை" to every story of it
+      if (s >= 0.88 && parts.some((p) => keySim(p.k, tk) >= 0.8 || p.stems.some((st) => keySim(st, tk) >= 0.8))) s = 0;
       memo.set(mk, s);
     }
     if (s > best) best = s;
@@ -462,20 +466,23 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
   const memo = new Map<string, number>();
   const sims = qs.map((q) => docs.map((d) => simIn(q, d, memo)));
   // v9: a name the ears split in two or three ("Kasi medu" for Kasimedu, "Palli Karanai" for Pallikaranai: v8's holdout): in each story, the
-  // joined word's match stands for its parts when it is better than theirs; a joined place the story does not mention vetoes it, unless the
-  // story has every part as a word of its own ("Anna Nagar" written apart)
+  // joined word's match stands for its parts when it is a headline word the parts are not (joinedIn); a joined place vetoes a story that has
+  // none of its parts. (The review, 19 Nov: no part of two letters, தி.நகர்'s "ti", nor a last part of three, "Adyar HC"; and a story that says
+  // "Marina" is not vetoed for "Marina beach", nor an English "T. Nagar" story for தி.நகர்)
   const vetoed = new Set<number>();
   for (let i = 0; i < qs.length; i++) {
     for (const span of [2, 3]) {
       if (i + span > qs.length) break;
+      const parts = qs.slice(i, i + span);
+      if (parts.some((p) => p.w.length <= 2) || parts[span - 1].w.length <= 3) continue;
       const joined = req.words.slice(i, i + span).join("");
       if (joined.length < 6) continue;
       const jq = qOf(joined);
       const isPlace = placeKeys.some((pk) => pk[0] === jq.k[0] && (pk === jq.k || keySim(jq.k, pk) >= 0.88));
       docs.forEach((d, j) => {
-        const s = joinedIn(jq, d, memo);
+        const s = joinedIn(jq, d, memo, parts);
         if (s > 0) { for (let k = i; k < i + span; k++) if (sims[k][j] < s) sims[k][j] = s; }
-        else if (isPlace && !sims.slice(i, i + span).every((row) => row[j] > 0)) vetoed.add(j);
+        else if (isPlace && sims.slice(i, i + span).every((row) => row[j] === 0)) vetoed.add(j);
       });
     }
   }
