@@ -180,3 +180,37 @@ describe("v9 review, group 2: a joined place stands for its parts only when it i
     expect(pick("Palli Karanai construction ban news", [story("Construction Ban In Chennai's Pallikaranai: HC Gives Liberty To Petitioners To Approach SC", { id: "pc" }), ...FILLER])?.pick?.id).toBe("pc");
   });
 });
+
+describe("v9 review, group 3: an outlet heard by ear is a long name's word, never a common English word; 'news on air' is no outlet; the scan is cheap", () => {
+  it("#14: 'next' and 'text' are not DT Next (the Stage's own 'next' stays the Stage's)", async () => {
+    const { outletIn } = await import("./news8");
+    for (const t of ["next", "Jarvis, next", "next one", "read the text", "go to the next page", "what's planned for next week in Adyar", "what's next?"]) expect(outletIn(t), t).toBeNull();
+    expect(outletIn("read the DT Next story")).toBe("DT Next");
+    expect(outletIn("D T Next story padinga")).toBe("DT Next");
+    const { browserLaneV8 } = await import("./browser");
+    const state = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as never;
+    const stage = { recipe: "news", blocks: [{ kind: "NewsReader", rows: [] }], scope: { zone: null } };
+    const bl = browserLaneV8("next", { stage, news: { items: [{ id: "n1", source: "The Hindu", title: "One" }, { id: "n2", source: "DT Next", title: "Two" }] }, state, world, listenLang: "en", heardLang: "en", v7: true });
+    expect(bl.lane).not.toBe("news");
+  });
+  it("#10: 'any news on air quality' keeps 'air' in the topic; All India Radio is News On AIR", async () => {
+    const { outletIn, topicWords } = await import("./news8");
+    expect(outletIn("Is there any news on air quality today?")).toBeNull();
+    expect(topicWords("Is there any news on air quality today?", null)).toEqual(["air", "quality"]);
+    expect(outletIn("Any news on Air India?")).toBeNull();
+    expect(outletIn("Any news from All India Radio?")).toBe("News On AIR");
+    const aq = story("Chennai air quality dips to poor as Bhogi smoke lingers", { id: "aq", outlets: ["The Hindu"] });
+    const wq = story("Metrowater steps up drinking water quality checks across Chennai", { id: "wq" });
+    expect(pick("Is there any news on air quality today?", [aq, wq, ...FILLER])?.stories[0]?.id).toBe("aq");
+  });
+  it("#22: reading the outlets costs well under a millisecond a sentence once warm, at any length", async () => {
+    const { outletIn, newsRequest: nr } = await import("./news8");
+    outletIn("warm up the Deccan Chronical one");
+    const long = `${"please open the latest report on the Kodungaiyur protest and the water supply in the northern zones ".repeat(3)} open the Deccan Chronical story`.slice(0, 400);
+    const t0 = performance.now();
+    for (let i = 0; i < 20; i++) { outletIn("Show me the severe cases in Adyar."); outletIn(long); nr(long, {}); }
+    const per = (performance.now() - t0) / 20;
+    expect(outletIn(long)).toBe("Deccan Chronicle");
+    expect(per).toBeLessThan(15);
+  });
+});

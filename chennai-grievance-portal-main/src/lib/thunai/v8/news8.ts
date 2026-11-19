@@ -139,7 +139,9 @@ const OUTLETS: OutletDef[] = [
   { name: "Daily Thanthi", words: ["thanthi"], notBefore: ["tv", "tivi"] },
   { name: "DT Next", words: ["dt", "next"] }, { name: "DT Next", words: ["dtnext"] },
   { name: "Makkal Kural", words: ["makkal", "kural"] }, { name: "Polimer News", words: ["polimer"] }, { name: "Puthiya Thalaimurai", words: ["puthiya", "thalaimurai"] },
-  { name: "Malaimurasu Seithikal", words: ["malaimurasu"] }, { name: "DD News", words: ["dd", "news"] }, { name: "DD News", words: ["doordarshan"] }, { name: "News On AIR", words: ["news", "on", "air"] },
+  { name: "Malaimurasu Seithikal", words: ["malaimurasu"] }, { name: "DD News", words: ["dd", "news"] }, { name: "DD News", words: ["doordarshan"] },
+  // (News On AIR by its spoken names, never "news on air ...": "any news on air quality" is a topic; the review, 19 Nov)
+  { name: "News On AIR", words: ["all", "india", "radio"] }, { name: "News On AIR", words: ["akashvani"] },
   { name: "Dinamani", words: ["dinamani"] }, { name: "Dinamalar", words: ["dinamalar"] }, { name: "Dinakaran", words: ["dinakaran"] }, { name: "Maalaimalar", words: ["maalaimalar"] },
   { name: "NDTV", words: ["ndtv"] }, { name: "News18", words: ["news18"] }, { name: "BBC", words: ["bbc"] }, { name: "PTI", words: ["pti"] },
   { name: "BusinessLine", words: ["businessline"] }, { name: "Mathrubhumi English", words: ["mathrubhumi"] },
@@ -148,45 +150,66 @@ const OUTLETS: OutletDef[] = [
   { name: "The Hindu", words: ["ti", "indhu"] },
   { name: "The Hindu", words: ["hindu"], notBefore: ["tamil", "munnani", "makkal", "temple", "temples", "religious", "religion", "endowments", "outfit", "outfits", "organisation", "organisations", "organization", "organizations", "festival", "festivals", "devotees", "mahasabha", "front"] }
 ];
+/** an outlet's word worked out once: as written, its loose key, and whether it is matched only as itself (short, or with a digit) */
+interface OWord { w: string; k: string; exact: boolean }
+const oWord = (w: string): OWord => ({ w, k: looseKey(w), exact: /\d/.test(w) || w.length <= 3 });
+const OUTLET_KEYS = OUTLETS.map((o) => ({ o, words: o.words.map(oWord), joined: oWord(o.words.join("")) }));
+/** a heard word worked out once: as written and its loose key; whether it may be an outlet's word misheard (no English word: "next", "text") */
+interface HWord { w: string; k: string; ear: boolean }
 /**
- * one heard word against one word of an outlet's name, 0..1: the same loose key 1 (a name with a digit: the same word, "News18"); `byEar`, a
- * word of six letters or more one or two edits away (Jaro-Winkler and the edit distance's first band only: no "cut short" or consonants-only
- * match, which made "malar" Malaimurasu and the four Dina- papers one another)
+ * one heard word against one word of an outlet's name, 0..1: the same loose key 1 (a short word or one with a digit: the same word, "News18",
+ * "dd"; "9th" keys like "dd"); `byEar`, an outlet's word of six letters or more misheard: a heard word that is no English word, with the same
+ * first letter and a length within two, one or two edits away (Jaro-Winkler and the edit distance's first band: no "cut short" or
+ * consonants-only match, which made "malar" Malaimurasu, the four Dina- papers one another, and "next" DT Next: the review, 19 Nov)
  */
-const outletWord = (tok: string, w: string, byEar: boolean): number => {
-  // a short word ("dd", "tv", "of", "etv") or one with a digit is the word itself: "9th" keys like "dd" ("open the 9th news" was DD News)
-  if (/\d/.test(w) || /\d/.test(tok) || w.length <= 3) return tok === w ? 1 : 0;
-  const a = looseKey(tok), b = looseKey(w);
-  if (a && a === b) return 1;
-  if (!byEar || w.length < 6 || a.length < 5) return 0;
-  const jw = jaroWinkler(a, b), dl = editDistance(a, b);
-  return (Math.min(a.length, b.length) <= 7 ? jw >= 0.9 && dl <= 1 : jw >= 0.88 && dl <= 2) ? jw : 0;
+const outletWord = (h: HWord, o: OWord, byEar: boolean): number => {
+  if (o.exact || /\d/.test(h.w)) return h.w === o.w ? 1 : 0;
+  if (h.k && h.k === o.k) return 1;
+  if (!byEar || !h.ear || o.w.length < 6 || h.k.length < 5 || h.k[0] !== o.k[0] || Math.abs(h.k.length - o.k.length) > 2) return 0;
+  const jw = jaroWinkler(h.k, o.k);
+  if (jw < 0.88) return 0;
+  const dl = editDistance(h.k, o.k);
+  return (Math.min(h.k.length, o.k.length) <= 7 ? jw >= 0.9 && dl <= 1 : dl <= 2) ? jw : 0;
 };
+/** the last few readings (topicWords reads the same words again for the outlet's place in them) */
+const outletMemo = new Map<string, { name: string; i: number; n: number } | null>();
 /** the outlet named in these words, and where (its first word and how many words it takes), or null: an exact name anywhere first, then the
  * closest name by ear */
 export function outletRun(toks: string[]): { name: string; i: number; n: number } | null {
+  const memoKey = toks.join(" ");
+  if (outletMemo.has(memoKey)) return outletMemo.get(memoKey)!;
+  const hs: HWord[] = toks.map((w) => ({ w, k: looseKey(w), ear: !/\d/.test(w) && !isEnglishWord(w) }));
+  // a name said in parts ("dina malar", "maalai malar", "news 18"), as one heard word (misheard only if a part is no English word: "the next")
+  const joinedAt = (i: number, n: number): HWord => { const w = toks.slice(i, i + n).join(""); return { w, k: looseKey(w), ear: !/\d/.test(w) && hs.slice(i, i + n).some((h) => h.ear) }; };
   let best: { name: string; i: number; n: number; s: number } | null = null;
   for (const byEar of [false, true]) {
-    for (const o of OUTLETS) {
-      const joinedName = o.words.join("");
-      for (let i = 0; i < toks.length; i++) {
+    for (const { o, words, joined } of OUTLET_KEYS) {
+      for (let i = 0; i < hs.length; i++) {
         const after = (n: number) => !o.notBefore?.includes(toks[i + n] ?? "");
-        if (i + o.words.length <= toks.length && after(o.words.length)) {
-          const s = Math.min(...o.words.map((w, k) => outletWord(toks[i + k], w, byEar)));
-          if (s > 0 && (!best || s > best.s)) best = { name: o.name, i, n: o.words.length, s };
+        if (i + words.length <= hs.length && after(words.length)) {
+          // a word of a longer name may be misheard when another of its words was heard exactly ("Deccan Chronical": "chronical" is an old
+          // English word, so it is no outlet's word alone)
+          const exact = words.map((w, k) => outletWord(hs[i + k], w, false));
+          const anyExact = words.length >= 2 && exact.some((x) => x > 0);
+          let s = 1;
+          for (let k = 0; k < words.length && s > 0; k++) s = Math.min(s, exact[k] || (byEar ? outletWord(anyExact ? { ...hs[i + k], ear: true } : hs[i + k], words[k], true) : 0));
+          if (s > 0 && (!best || s > best.s)) best = { name: o.name, i, n: words.length, s };
         }
-        // a name said in parts ("dina malar", "maalai malar", "news 18")
-        for (let n = 2; n <= 3 && i + n <= toks.length; n++) {
-          if (n === o.words.length || !after(n)) continue;
-          const said = toks.slice(i, i + n).join("");
-          const s = said.length >= 5 ? outletWord(said, joinedName, byEar) : 0;
+        for (let n = 2; n <= 3 && i + n <= hs.length; n++) {
+          if (n === words.length || !after(n)) continue;
+          const h = joinedAt(i, n);
+          const s = h.w.length >= 5 ? outletWord(h, joined, byEar) : 0;
           if (s > 0 && (!best || s > best.s)) best = { name: o.name, i, n, s };
         }
       }
-      if (!byEar && best) return { name: best.name, i: best.i, n: best.n };
+      if (!byEar && best) break;
     }
+    if (best) break;
   }
-  return best ? { name: best.name, i: best.i, n: best.n } : null;
+  const r = best ? { name: best.name, i: best.i, n: best.n } : null;
+  if (outletMemo.size > 500) outletMemo.clear();
+  outletMemo.set(memoKey, r);
+  return r;
 }
 /** a request's own words for the outlets: the possessive's 's taken off ("The Hindu's piece") */
 const outletToks = (text: string): string[] => tokensOf(text.replace(/(\p{L})['’]s\b/gu, "$1"));
