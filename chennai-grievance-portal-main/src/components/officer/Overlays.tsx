@@ -48,7 +48,7 @@ export function ListBody({ c, cat, flag, sev, tab = "all" }: { c: Ctx; cat: stri
     if (q.length >= 2) p.set("q", q);
     setErr(null);
     fetch(`/api/officer/grievances?${p}`, { cache: "no-store" })
-      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || "Could not load grievances."); if (live) setData(j); })
+      .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Could not load grievances."); if (live) setData(j); })
       .catch((e) => live && setErr(e.message));
     return () => { live = false; };
   }, [page, q, cat, flag, sev, tab, c.scopeQs, c.reloadKey]);

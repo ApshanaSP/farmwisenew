@@ -9,6 +9,7 @@ import { manuDeptLabel, type RepeatMatch, type Repeats } from "./constants";
 import { asciiDigits, maskAadhaar, similarity, squash, tenDigits } from "./clean";
 import { grievanceCategory } from "./grade";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
+import { piiMatch, piiParams } from "@/lib/pii";
 
 /** `category`: the kind of problem (the unified category codes: the reader's for a petition, the complaint type's for an online one). */
 export interface Candidate { mobile: string | null; name: string | null; street: string | null; ward: number | null; dept: string | null; problem: string | null; category?: string | null; excludeId?: number }
@@ -342,11 +343,12 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
   // to one department the person's own older petition was cut and "came before" missed it (hunt2-desk-14). The same mobile and the same
   // name each have their own limit: sharing one, 200 newer petitions from others of a common name ("R. Kumar") cut the person's own
   // petition by mobile again (reviewerC-05)
+  // saved locked (lib/pii.ts): an exact match by the value's fingerprint, or by the value itself on a row saved before
   const person = (col: "mobile" | "name", value: string) => pool.query<RowDataPacket[]>(
     `SELECT ${COLS} FROM petitions p LEFT JOIN complaints c ON c.complaint_code = p.complaint_code
-      WHERE p.status = 'filed' AND p.id <> ? AND p.${col} = ?
+      WHERE p.status = 'filed' AND p.id <> ? AND ${piiMatch(`p.${col}`)}
       ORDER BY p.filed_at DESC LIMIT 200`,
-    [c.excludeId ?? 0, value]
+    [c.excludeId ?? 0, ...piiParams(col, value)]
   );
   const [byMobile] = await person("mobile", mobile);
   const [byName] = await person("name", name);
@@ -369,9 +371,9 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
   const [online] = await pool.query<RowDataPacket[]>(
     `SELECT c.complaint_code AS code, DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') AS filed_at, c.status, c.title AS problem, c.mobile_number, c.first_name, c.street_address, c.ward_number, d.name AS dept_name
        FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
-      WHERE COALESCE(c.is_synthetic, 0) = 0 AND COALESCE(c.is_anonymous, 0) = 0 AND c.mobile_number = ?
+      WHERE COALESCE(c.is_synthetic, 0) = 0 AND COALESCE(c.is_anonymous, 0) = 0 AND ${piiMatch("c.mobile_number")}
         AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL) ORDER BY c.created_at DESC LIMIT 50`,
-    [mobile]
+    piiParams("mobile", mobile)
   );
   // an online complaint's kind of problem, from its type and sub-type as the pipeline reads them (grade.ts). Best effort: a store with no
   // taxonomy leaves it unknown, and the words alone decide

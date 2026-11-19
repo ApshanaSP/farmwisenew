@@ -43,13 +43,23 @@
 
 /* ---- the map card has no header: the map starts at the top; its name and Zones/Taluks sit in the row under it */
 .dic .a-map .map-cb{padding:10px 10px 6px}
-.dic .a-map .map-leg2{align-items:center;flex-wrap:nowrap;overflow:hidden;padding:2px 10px 9px}
+/* every key item stays in sight: the row wraps onto a second line rather than cutting items off at the card's edge */
+.dic .a-map .map-leg2{align-items:center;flex-wrap:wrap;overflow:visible;row-gap:5px;padding:2px 10px 9px}
 .dic .a-map .map-title{flex:none;display:inline-flex;align-items:center;gap:6px;margin:0 6px 0 2px;font:750 13.5px/1 var(--font-ui);letter-spacing:-.01em;color:var(--text);white-space:nowrap}
 .dic .a-map .map-title .ic,.dic .a-map .map-title svg{width:15px;height:15px;color:var(--accent-2)}
 .dic .a-map .map-leg2 button{flex:none}
 .dic .a-map .map-seg{flex:none;margin-left:auto}
 .dic .a-map .map-seg button{height:22px;padding:0 9px;border:0;font-size:12px}
-@media (max-width:1100px){.dic .a-map .map-leg2{flex-wrap:wrap}}
+/* full screen (the map tools' button): the card fills the screen, the map grows, the key stays under it. .map-full is the
+   same for a browser that refuses the Fullscreen API: the card fills the window */
+.dic .a-map:fullscreen{width:100vw;height:100vh;max-width:none;max-height:none;margin:0;border:0;border-radius:0;background:var(--surface);animation:none;transform:none}
+.dic .card.map-full{position:fixed;inset:0;z-index:2000;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;background:var(--surface);animation:none;transform:none}
+.dic .a-map:fullscreen .map-cb,.dic .card.map-full .map-cb{flex:1;min-height:0;padding:10px 12px 6px}
+.dic .a-map:fullscreen .map-wrap,.dic .card.map-full .map-wrap{flex:1;min-height:0}
+.dic .a-map:fullscreen .map-leg2,.dic .card.map-full .map-leg2{flex:none;padding:4px 12px 10px}
+.dic .a-map:fullscreen::backdrop{background:var(--surface,#fff)}
+/* the page's entrance animation leaves filter: blur(0) on its wrapper, which would hold a fixed card inside the page */
+.dic :has(> .p1 > .map-full),.dic :has(> .map-full){filter:none!important;transform:none!important;animation:none!important}
 /* a narrow map card: the band already names the area, so the row under the map drops its title and tightens */
 .dic .a-map{container-type:inline-size;container-name:amap}
 @container amap (max-width:860px){

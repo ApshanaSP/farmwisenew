@@ -593,7 +593,7 @@ export function PatternBody({ p, c }: { p: Pattern; c: Console }) {
   const ai = useAi<PatternBrief>(`${q.replace(/^kind=/, "kind=pattern&what=")}`);
   useEffect(() => {
     fetch(`/api/collector/pattern?${q}`).then(async (r) => {
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Could not load it.");
       setD(j);
     }).catch((e) => setErr(e.message));

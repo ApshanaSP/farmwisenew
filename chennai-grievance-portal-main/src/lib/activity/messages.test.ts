@@ -34,7 +34,7 @@ describe("what the site says it is doing", () => {
 
   it("says something sensible about a route nobody has worded yet", () => {
     expect(noticeFor("GET", "/api/collector/brand-new")?.doing).toBe("Retrieving the requested information");
-    expect(noticeFor("POST", "/api/collector/brand-new")).toMatchObject({ doing: "Processing your request", done: "Your request has been completed." });
+    expect(noticeFor("POST", "/api/collector/brand-new")).toMatchObject({ doing: "Processing your request" });
   });
 
   it("claims nothing has been done when something was only read", () => {
@@ -61,6 +61,17 @@ describe("the requests the site makes by itself", () => {
   it("still announces uploading a complaint's photo, though its pictures load quietly", () => {
     expect(noticeFor("POST", "/api/complaints/media")?.doing).toBe("Uploading the attachment");
     expect(noticeFor("GET", "/api/complaints/media/a.jpg")).toBeNull();
+  });
+});
+
+describe("screens that show their own progress (17 Nov 2026: no second 'please wait' on top)", () => {
+  it.each([
+    ["POST", "/api/map/ask"], ["POST", "/api/map/insight"], ["GET", "/api/map/layers/schools"], ["GET", "/api/rehearsal/rains"],
+    ["GET", "/api/rehearsal/impacts"], ["GET", "/api/rehearsal/traffic/live"], ["POST", "/api/collector/assistant/chat"]
+  ])("%s %s is not announced", (m, p) => expect(noticeFor(m, p)).toBeNull());
+  it("drafting emails in the Send dialog is quiet, sending them is announced", () => {
+    expect(noticeFor("POST", "/api/map/send", JSON.stringify({ action: "draft" }))).toBeNull();
+    expect(noticeFor("POST", "/api/map/send", JSON.stringify({ action: "send" }))?.done).toBe("The work has been forwarded to the departments.");
   });
 });
 

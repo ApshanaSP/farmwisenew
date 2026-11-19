@@ -3,7 +3,7 @@
 import type { Overview as OverviewData, Station } from "@/lib/collector/intel";
 import type { MapGeo } from "@/lib/collector/geo";
 import { I, type IconName } from "./icons";
-import SatMap, { type MapStation } from "./SatMap";
+import SatMap, { exitMapFullscreen, type MapStation } from "./SatMap";
 import {
   CAT_COL, Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, deptIcon, fmtDate, fmtTime, fullTitle,
   fmtShort, ms, plural, rel, sevTone, sum, type Row
@@ -14,7 +14,7 @@ import { MarketsCard } from "./Insights";
 import { AddedRow } from "./Added";
 import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AttentionCard } from "./Attention";
 import YourData from "./YourData";
 import AskOverlay from "./askmap/AskOverlay";
@@ -24,6 +24,8 @@ import type { RainLayer } from "./rehearsal/rainLayer";
 
 // Rain & flooding loads only when it is opened (the top bar's Rain button, the rain band, Ask the Map)
 const RainView = dynamic(() => import("./rehearsal/RainView"), { ssr: false });
+// Live traffic too: its own view on the map (traffic/TrafficView.tsx), beside Rain
+const TrafficView = dynamic(() => import("./traffic/TrafficView"), { ssr: false });
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
 import { sevIncident } from "@/lib/sev-label";
 
@@ -41,6 +43,29 @@ function RainPill({ c }: { c: Console }) {
       title={warn && a?.line ? `Rain & flooding: ${a.line}. Where water stood in past heavy rains, and the jobs to send before the next one.` : "Rain & flooding: where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one"}>
       <I n="cloud" /><span>Rain</span>
       {warn && <em className="rp-w">{warn === "act" ? "Heavy rain soon" : warn === "rehearse" ? "Heavy rain likely" : "Rain watch"}</em>}
+    </button>
+  );
+}
+
+/**
+ * Live traffic, beside Rain on the map: how many spots need action now (read every five minutes, as TomTom is), and
+ * one click to the Traffic view.
+ */
+function TrafficPill({ c }: { c: Console }) {
+  const [n, setN] = useState<{ act: number; very: number } | null>(null);
+  useEffect(() => {
+    let on = true;
+    const f = () => fetch("/api/traffic", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (on && j?.enabled) setN({ act: j.counts.action, very: j.counts.very }); }).catch(() => undefined);
+    f();
+    const t = setInterval(f, 5 * 60_000);
+    return () => { on = false; clearInterval(t); };
+  }, []);
+  return (
+    <button className="ampill trafficpill" onClick={() => c.openCity?.({ kind: "traffic" })}
+      title={n ? `Live traffic: ${n.very} very congested stretches now, ${n.act} spots need action. Jams, closed and flooded roads, the spots that keep coming back, and who to send them to.`
+        : "Live traffic: jams, closed and flooded roads now, the spots that keep coming back, and who to send them to"}>
+      <I n="flow" /><span>Traffic</span>{n && n.act > 0 && <em className="tp-n">{n.act}</em>}
     </button>
   );
 }
@@ -101,6 +126,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const chrome = useMapChrome(c.mapAsk ?? null);
   // Rain & flooding: the map grows, and draws the rain view's streets and reports instead of the console's pins
   const rv = c.rainView?.open ? c.rainView : null;
+  const tv = !rv && c.trafficView?.open ? c.trafficView : null;
+  const view = !!rv || !!tv;
   const [rainLayer, setRainLayer] = useState<RainLayer | null>(null);
   const L = c.layout;
   let ix = 4;
@@ -147,19 +174,22 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
               <div className="map-wrap">
                 <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={d.map.pins} zone={d.zone} layers={c.layers} stations={env.mapStations}
                   added={addedPins} onItem={(i) => c.openItem(i)}
-                  mode={c.mapMode} taluk={c.taluk} focus={c.focus}
+                  mode={c.mapMode} taluk={c.taluk} focus={c.focus} onClearFocus={c.clearFocus}
                   onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)} onPin={(id) => c.openInc(id)} zoneTip={c.zoneTip}
                   onStation={(st) => { c.setEnvSel(st.kind, st.id); c.setPage("environment"); c.toast(`${st.name} selected on the Environment page.`); }}
-                  ask={rv ? null : c.mapAsk} grown={!!rv || !!c.mapAsk?.grown} extraTools={!rv && c.mapAsk?.grown ? chrome.tools : undefined}
-                  base={rv ? "streets" : chrome.base} overlays={rv ? undefined : chrome.overlays}
-                  drawCircle={!rv && chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openInc(id)} heat={!rv && chrome.heat}
-                  rain={rv ? rainLayer : null} />
+                  ask={view ? null : c.mapAsk} grown={view || !!c.mapAsk?.grown} extraTools={!view && c.mapAsk?.grown ? chrome.tools : undefined}
+                  base={view ? "streets" : chrome.base} overlays={view ? undefined : chrome.overlays}
+                  drawCircle={!view && chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openInc(id)} heat={!view && chrome.heat}
+                  rain={view ? rainLayer : null} />
                 {rv ? (
                   <RainView key={rv.open!.seq} geo={c.geo} api={rv.api} start={rv.open!} onClose={rv.close} onLayer={setRainLayer}
-                    onOpenIncident={(id) => c.openInc(id)} toast={c.toast} escRef={rv.esc} />
+                    onOpenIncident={(id) => { exitMapFullscreen(); c.openInc(id); }} toast={c.toast} escRef={rv.esc} onLive={c.openCity ? () => c.openCity!({ kind: "traffic" }) : undefined} />
+                ) : tv ? (
+                  <TrafficView key={tv.open!.seq} start={tv.open!} onClose={tv.close} onLayer={setRainLayer} canSend
+                    onOpenIncident={(id) => { exitMapFullscreen(); c.openInc(id); }} toast={c.toast} escRef={tv.esc} />
                 ) : c.mapAsk && (
-                  <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => c.openInc(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays}
-                    beside={c.openRain && <RainPill c={c} />} />
+                  <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => { exitMapFullscreen(); c.openInc(id); }} layersMenu={chrome.layersMenu} overlays={chrome.overlays}
+                    beside={<>{c.openRain && <RainPill c={c} />}{c.openCity && <TrafficPill c={c} />}</>} />
                 )}
                 {c.mapMode === "zones"
                   ? <div className="map-heat"><span>Incidents by zone</span><div /><span><em>Fewer</em><em>More</em></span></div>

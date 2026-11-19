@@ -33,6 +33,17 @@ export const BACKGROUND: RegExp[] = [
   /^\/api\/manu\/photos\//, /^\/api\/complaints\/media\/.+/, /^\/api\/rehearsal\/(photo|traffic\/\d)/
 ];
 
+/**
+ * Requests whose own screen already shows that it is working: Ask the Map's "Working it out…", Rain's spinner, the
+ * chatbot's dots, a map layer filling in. A second notice at the top of the screen would only say the same thing again,
+ * so these are never announced (owner, 17 Nov 2026: "keep only the necessary indicators").
+ */
+export const OWN_PROGRESS: RegExp[] = [
+  /^\/api\/map\/(ask|insight)$/, /^\/api\/map\/layers\//,
+  /^\/api\/rehearsal\/(rains|impacts|reach|dev|traffic\/live|route)$/,
+  /^\/api\/collector\/assistant\/(chat|briefing)$/
+];
+
 const manuAction = (b: Record<string, unknown>): Notice | null => {
   switch (b.action) {
     case "file": return said("Approving the petition and forwarding it to the department", "The petition has been approved and forwarded.");
@@ -111,17 +122,11 @@ const RULES: Rule[] = [
   ["GET", /^\/api\/collector\/assistant\/sessions\//, said("Retrieving the earlier conversation")],
 
   // ---- the map and the rain plan
-  ["POST", /^\/api\/map\/ask$/, said("Examining the map for your question")],
-  ["POST", /^\/api\/map\/insight$/, said("Preparing the analysis of this area")],
+  // (asking the map, its layers and Rain's records show their own progress: OWN_PROGRESS)
   ["POST", /^\/api\/map\/export$/, said("Preparing the map export", "The map export is ready.")],
-  ["POST", /^\/api\/map\/send$/, said("Forwarding the work to the departments", "The work has been forwarded to the departments.")],
-  ["GET", /^\/api\/map\/layers\//, said("Loading the map layer")],
-  ["GET", /^\/api\/rehearsal\/rains$/, said("Retrieving past rainfall records")],
-  ["GET", /^\/api\/rehearsal\/impacts$/, said("Retrieving the flood impact records")],
-  ["GET", /^\/api\/rehearsal\/reach$/, said("Calculating the areas affected")],
-  ["GET", /^\/api\/rehearsal\/traffic\/live$/, said("Retrieving live traffic")],
+  // the drafts are made inside the Send dialog, which shows its own progress; only sending is announced
+  ["POST", /^\/api\/map\/send$/, (b) => (b.action === "draft" ? null : said("Forwarding the work to the departments", "The work has been forwarded to the departments."))],
   ["POST", /^\/api\/rehearsal\/plan$/, said("Preparing the rain response plan")],
-  ["POST", /^\/api\/rehearsal\/route$/, said("Calculating the route")],
   ["GET", /^\/api\/rehearsal\/tasks$/, said("Retrieving the assigned tasks")],
   ["POST", /^\/api\/rehearsal\/tasks$/, said("Forwarding the tasks to the departments", "The tasks have been forwarded to the departments.")],
 
@@ -150,17 +155,20 @@ const RULES: Rule[] = [
 
 export const isBackground = (method: string, path: string): boolean =>
   BACKGROUND.some((r) => r.test(path)) || (method === "GET" && path === "/api/manu/petitions");
+/** the screen that asked shows its own progress (OWN_PROGRESS) */
+export const showsOwnProgress = (path: string): boolean => OWN_PROGRESS.some((r) => r.test(path));
 
 /** The notice for a request a click started; null when it is one that is never announced. */
 export function noticeFor(method: string, path: string, body?: unknown): Notice | null {
   const m = method.toUpperCase();
-  if (isBackground(m, path)) return null;
+  if (isBackground(m, path) || showsOwnProgress(path)) return null;
   let parsed: Record<string, unknown> = {};
   if (typeof body === "string") { try { parsed = JSON.parse(body) as Record<string, unknown>; } catch { /* not JSON */ } }
   for (const [rm, re, n] of RULES) {
     if ((rm === "*" || rm === m) && re.test(path)) return typeof n === "function" ? n(parsed) : n;
   }
-  return m === "GET" ? said("Retrieving the requested information") : said("Processing your request", "Your request has been completed.");
+  // a request with no words of its own says it is working only if it is slow (install.ts showAfter), and nothing when done
+  return m === "GET" ? said("Retrieving the requested information") : said("Processing your request");
 }
 
 export const SIGNING_OUT = RULES[0][2] as Notice;

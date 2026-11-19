@@ -102,7 +102,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
     setError(null);
     fetch(`/api/collector/incidents/${encodeURIComponent(id)}`)
       .then(async (r) => {
-        const j = await r.json();
+        const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || "Could not load the incident.");
         if (live) setData(j);
       })

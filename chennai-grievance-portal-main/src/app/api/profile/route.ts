@@ -161,6 +161,14 @@ export async function PUT(req: NextRequest) {
     zone_id: data.zoneId || null,
     ward_number: data.wardNumber || null
   };
+  // which columns this request speaks for: the complaint form saves only the few details it asked for, and the
+  // fields it never sent (date of birth, area, zone, ward...) must keep their saved values, not become NULL
+  const sent = (k: string) => body !== null && typeof body === "object" && Object.prototype.hasOwnProperty.call(body, k);
+  const columnOf: Record<string, keyof typeof fields> = {
+    firstName: "first_name", lastName: "last_name", gender: "gender", dateOfBirth: "date_of_birth",
+    alternateEmail: "alternate_email", doorNoAndStreet: "door_no_and_street", area: "area", locality: "locality",
+    pincode: "pincode", zoneId: "zone_id", wardNumber: "ward_number"
+  };
 
   if (existing.length === 0) {
     await pool.query(
@@ -184,26 +192,11 @@ export async function PUT(req: NextRequest) {
       ]
     );
   } else {
-    await pool.query(
-      `UPDATE user_profiles SET
-        first_name = ?, last_name = ?, gender = ?, date_of_birth = ?, alternate_email = ?,
-        door_no_and_street = ?, area = ?, locality = ?, pincode = ?, zone_id = ?, ward_number = ?
-       WHERE user_id = ?`,
-      [
-        fields.first_name,
-        fields.last_name,
-        fields.gender,
-        fields.date_of_birth,
-        fields.alternate_email,
-        fields.door_no_and_street,
-        fields.area,
-        fields.locality,
-        fields.pincode,
-        fields.zone_id,
-        fields.ward_number,
-        session.userId
-      ]
-    );
+    // only the columns this request sent (the mobile number is saved on its own, below)
+    const keys = Object.keys(columnOf).filter((k) => k === "firstName" || sent(k));
+    const sets = keys.map((k) => `${columnOf[k]} = ?`);
+    const values: unknown[] = keys.map((k) => fields[columnOf[k]]);
+    await pool.query(`UPDATE user_profiles SET ${sets.join(", ")} WHERE user_id = ?`, [...values, session.userId]);
   }
 
   // the number on its own, never verified, and only into an empty slot; another account taking it in between is not an error either

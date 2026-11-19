@@ -10,7 +10,7 @@ import type { CondPlace, World } from "./types";
 
 export interface Condition {
   id: string;
-  kind: "weather" | "rain" | "lakes" | "works" | "hospital" | "air";
+  kind: "weather" | "rain" | "lakes" | "works" | "hospital" | "air" | "traffic";
   tone: "alert" | "warn" | "info" | "good";
   en: string;
   ta: string;
@@ -121,6 +121,35 @@ export function conditionsNear(w: World, opts: { fams: Set<string>; center: LatL
     }
   }
   return out.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 4).map(({ score: _s, ...x }) => x);
+}
+
+/** the live traffic an answer needs (lib/city/traffic.ts TrafficNow, only the fields read here) */
+export interface LiveTraffic { enabled: boolean; at: string | null; spots: { id: string; level: string; name: string; delayMin: number | null; lat: number; lon: number; zoneName: string | null; repeat: { n: number } }[] }
+const ROAD_FAMS = new Set(["FLOOD", "DRAINAGE", "ROADS_TRAFFIC", "PUBLIC_SAFETY", "WORKS", "PUBLIC_ORDER"]);
+
+/**
+ * Live traffic where an answer is (TomTom, read every five minutes): the jams, flooded roads and accidents in its area,
+ * worst first, for answers about flooding, drains, roads and accidents, or "what is happening here". Null when none.
+ */
+export function trafficCondition(t: LiveTraffic | null, opts: { fams: Set<string>; box: Bbox; wide: boolean }): Condition | null {
+  if (!t?.enabled) return null;
+  if (opts.fams.size && ![...opts.fams].some((f) => ROAD_FAMS.has(f))) return null;
+  const area = grow(opts.box, 800);
+  // worst first: water or an accident, then very congested, then congested; the longest delay first within each
+  const rank = (lv: string) => (lv === "flood" || lv === "accident" ? 3 : lv === "very" ? 2 : 1);
+  const hot = t.spots.filter((s) => ["very", "congested", "flood", "accident"].includes(s.level) && (opts.wide || inBox(s, area)))
+    .sort((a, b) => rank(b.level) - rank(a.level) || (b.delayMin ?? 0) - (a.delayMin ?? 0));
+  if (!hot.length) return null;
+  const very = hot.filter((s) => s.level === "very").length, wet = hot.filter((s) => s.level === "flood").length, acc = hot.filter((s) => s.level === "accident").length;
+  const top = hot[0];
+  const at = t.at ? new Date(t.at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) : "";
+  const parts = [very ? `${very} very congested` : "", wet ? `${wet} with water on the road` : "", acc ? `${acc} accident${acc === 1 ? "" : "s"}` : ""].filter(Boolean);
+  const where = opts.wide ? "in the district" : "here";
+  return { id: "traffic", kind: "traffic", tone: very || wet || acc ? "alert" : "warn",
+    en: `Live traffic ${where}${at ? ` at ${at}` : ""}: ${hot.length} jammed ${hot.length === 1 ? "stretch" : "stretches"}${parts.length ? ` (${parts.join(", ")})` : ""}; worst ${top.name}${top.delayMin ? `, about ${top.delayMin} min delay` : ""}.`,
+    ta: `${opts.wide ? "மாவட்டத்தில்" : "இங்கே"} நேரடி போக்குவரத்து: ${hot.length} இடங்களில் நெரிசல்${top.delayMin ? `; மோசம் ${top.name}, ${top.delayMin} நிமிட தாமதம்` : ""}.`,
+    pts: hot.slice(0, 10).map((s) => ({ lat: s.lat, lon: s.lon, label: s.name, value: s.delayMin ? `${s.delayMin} min` : s.level === "flood" ? "water" : s.level === "accident" ? "accident" : "jam", kind: "traffic" as const })),
+    at: t.at ?? "" };
 }
 
 /** The families an answer is about: its filter's categories and families, else (for "all incidents") none. */

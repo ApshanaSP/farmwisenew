@@ -423,6 +423,21 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
           title: "Incident types against the period before", subtitle: period }) };
     }
 
+    case "city_now": {
+      // the city now (lib/city/now.ts): what needs attention, place by place, and the headline counts as tiles
+      const ds: Dataset = { id: "city", title: String((d.headline as Row)?.en ?? "The city now"),
+        fields: [F.cat("part", "What"), F.text("place", "Where"), F.text("detail", "Detail"), F.dec("value", "Figure"), F.text("unit", "Unit"), F.geo("lat", "Latitude"), F.geo("lon", "Longitude")],
+        rows: (d.rows as Row[]).map((x) => pick(x, ["part", "place", "detail", "value", "unit", "lat", "lon"])) };
+      const facts = r.facts;
+      const by = (id: string) => facts.find((x) => x.id === `city.${id}`);
+      const tiles = (d.topic === "traffic" || d.topic === "all" ? ["traffic.very", "traffic.congested", "traffic.flooded", "traffic.clusters"]
+        : d.topic === "power" ? ["power.wards", "power.often", "power.avgHours"] : d.topic === "metro" ? ["metro.late", "metro.lines", "metro.avgMin"]
+          : d.topic === "flood" ? ["flood.likely", "flood.chokes", "flood.jobs"] : ["rain.level", "rain.today.top", "flood.likely", "power.wards"])
+        .map(by).filter((x): x is NonNullable<typeof x> => !!x);
+      return { datasets: ds.rows.length ? [ds] : [], chart: null, table: ds.rows.length ? "city" : null, display: ds.rows.length ? "table" : "kpi",
+        kpis: tiles.map((x) => ({ label: x.label, value: x.value, ...(x.unit ? { unit: x.unit } : {}), tone: /very|flooded|clusters|chokes/.test(x.id) && x.value > 0 ? "high" as const : undefined })) };
+    }
+
     default:
       return none;
   }

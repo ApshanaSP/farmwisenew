@@ -240,7 +240,7 @@ export function ExportBody({ c }: { c: Console }) {
     setBusy("pdf");
     try {
       const r = await fetch(`/api/collector/report?${q()}`);
-      const data = await r.json();
+      const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || "Could not build the report.");
       const { buildReport } = await import("./reportPdf");
       await buildReport(data, reportOpt(c, `${stem}-report.pdf`));

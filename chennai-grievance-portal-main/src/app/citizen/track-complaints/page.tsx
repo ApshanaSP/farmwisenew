@@ -63,6 +63,7 @@ export default function TrackComplaintsPage() {
   const [copied, setCopied] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
 
+  const listSeq = useRef(0);
   useEffect(() => {
     fetch("/api/auth/me").then((r) => (r.ok ? r.json() : null)).then((d) => d && setMe(d.user));
     loadComplaints().then((list) => {
@@ -75,6 +76,8 @@ export default function TrackComplaintsPage() {
   }, []);
 
   async function loadComplaints(codeQuery?: string, status?: string): Promise<ComplaintListItem[] | null> {
+    // only the newest request may fill the list: a slow search landing after a quicker status chip showed the wrong list
+    const seq = ++listSeq.current;
     setLoading(true);
     setListError(false);
     const params = new URLSearchParams();
@@ -86,11 +89,11 @@ export default function TrackComplaintsPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       list = data.complaints || [];
-      setComplaints(list!);
+      if (seq === listSeq.current) setComplaints(list!);
     } catch {
-      setListError(true);
+      if (seq === listSeq.current) setListError(true);
     } finally {
-      setLoading(false);
+      if (seq === listSeq.current) setLoading(false);
     }
     return list;
   }

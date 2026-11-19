@@ -1,0 +1,124 @@
+/* Live traffic on the Overview map (TrafficView.tsx): the panel (Rain's .amp.rv box, traffic red-orange), its lists and
+   cards, the map key, and the moving lines SatMap draws for each jam. Console tokens, so light and dark both work. */
+
+.dic .rv.tf{--rv:#C2410C;--rv-soft:#FFEDD5;--rv-line:#FDBA74}
+.dic[data-theme="dark"] .rv.tf{--rv:#FDBA74;--rv-soft:#3B1D0B;--rv-line:#9A3412}
+.dic .tf-live{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 7px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font:700 10px var(--font-ui);letter-spacing:.04em;text-transform:uppercase;vertical-align:2px}
+.dic[data-theme="dark"] .tf-live{background:#450A0A;color:#FCA5A5}
+.dic .tf-live i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:tfPulse 1.6s ease-in-out infinite}
+@keyframes tfPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+
+/* tabs: four, the same box as Rain's */
+.dic .tf-tabs button.on{color:var(--rv)}
+
+/* updated · road colours · refresh */
+.dic .tf-strip{display:flex;align-items:center;gap:8px;margin:0 12px 6px;font-size:11.5px;color:var(--text-3)}
+.dic .tf-at{display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .tf-at svg{width:12px;height:12px}
+.dic .tf-flow-t{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-2);white-space:nowrap}
+.dic .tf-flow-t input{accent-color:var(--rv);margin:0}
+.dic .tf-rf{all:unset;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;cursor:pointer;color:var(--text-2);box-shadow:0 0 0 1px var(--line-2)}
+.dic .tf-rf:hover{background:var(--surface-2);color:var(--text)}
+.dic .tf-rf:disabled{opacity:.6;cursor:default}
+.dic .tf-rf svg{width:13px;height:13px}
+
+/* the five counts */
+.dic .tf-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.dic .tf-kpis > div{padding:7px 6px 6px;border-radius:10px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:2px;min-width:0}
+.dic .tf-kpis b{font:750 19px/1 var(--font-num,var(--font-ui));color:var(--lc,var(--text))}
+.dic .tf-kpis span{display:flex;align-items:center;gap:4px;font-size:10.5px;line-height:1.2;color:var(--text-3)}
+.dic .tf-kpis span i{flex:none;width:8px;height:3px;border-radius:2px;background:var(--lc)}
+.dic .tf-kpis .zero b{color:var(--text-4,var(--text-3))}
+.dic .l-very{--lc:#B91C1C}.dic .l-congested{--lc:#EA580C}.dic .l-slow{--lc:#CA8A04}.dic .l-flood{--lc:#0284C7}.dic .l-accident{--lc:#7C3AED}.dic .l-closed{--lc:#475569}.dic .l-works{--lc:#A16207}
+.dic[data-theme="dark"] .l-very{--lc:#F87171}.dic[data-theme="dark"] .l-congested{--lc:#FB923C}.dic[data-theme="dark"] .l-slow{--lc:#FACC15}.dic[data-theme="dark"] .l-flood{--lc:#38BDF8}
+.dic[data-theme="dark"] .l-accident{--lc:#A78BFA}.dic[data-theme="dark"] .l-closed{--lc:#94A3B8}.dic[data-theme="dark"] .l-works{--lc:#FBBF24}
+
+.dic .tf-zone{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:var(--rv-soft);font:600 12px var(--font-ui);color:var(--text)}
+.dic .tf-zone span{flex:1}
+.dic .tf-zone button{all:unset;display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--rv);font-weight:650}
+.dic .tf-zone svg{width:12px;height:12px}
+
+/* the lists: a level bar, the road and why, the delay; Send beside it */
+.dic .tf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .tf-list li{display:flex;align-items:stretch;gap:5px}
+.dic .tf-list li > button:first-child{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:7px 9px 7px 7px;border-radius:10px;cursor:pointer;
+  background:var(--surface);box-shadow:0 0 0 1px var(--line);transition:box-shadow .15s,background .15s}
+.dic .tf-list li > button:first-child:hover{box-shadow:0 0 0 1px var(--lc,var(--line-2)),0 6px 16px -10px rgba(0,0,0,.35)}
+.dic .tf-list li > button:first-child:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.dic .tf-bar{flex:none;align-self:stretch;width:4px;border-radius:3px;background:var(--lc)}
+.dic .tf-sn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.dic .tf-sn b{font:650 12.5px/1.3 var(--font-ui);color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dic .tf-sn small{font-size:11.5px;line-height:1.3;color:var(--text-2)}
+.dic .tf-sn em{font-style:normal;font-size:10.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .tf-v{flex:none;display:flex;flex-direction:column;align-items:center;min-width:34px;color:var(--lc)}
+.dic .tf-v b{font:750 17px/1 var(--font-num,var(--font-ui))}
+.dic .tf-v small{font-size:9.5px;color:var(--text-3)}
+.dic .tf-v svg{width:16px;height:16px}
+.dic .tf-n{color:var(--rv)}
+.dic .tf-send{all:unset;flex:none;display:grid;place-items:center;width:34px;border-radius:10px;cursor:pointer;background:var(--rv-soft);color:var(--rv);box-shadow:inset 0 0 0 1px var(--rv-line)}
+.dic .tf-send:hover{background:var(--rv);color:#fff}
+.dic .tf-send:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.dic .tf-send svg{width:15px;height:15px}
+.dic .tf-zbar i{background:var(--rv)}
+.dic .tf-vz{font-weight:600;color:#B91C1C}
+
+/* a spot's card */
+.dic .tf-now{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:10px;background:var(--surface-2);box-shadow:inset 3px 0 0 var(--lc)}
+.dic .tf-now small{font-size:11px;color:var(--text-3)}
+.dic .tf-now b{font:700 14px/1.3 var(--font-ui);color:var(--lc)}
+.dic .tf-now span{font-size:12px;color:var(--text-2)}
+.dic .tf-owner{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line)}
+.dic .tf-owner > svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--rv)}
+.dic .tf-owner span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.dic .tf-owner small{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)}
+.dic .tf-owner b{font:700 13px var(--font-ui)}
+.dic .tf-owner em{font-style:normal;font-size:11.5px;color:var(--text-2);line-height:1.35}
+.dic .tf-link{all:unset;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:600 12px var(--font-ui);color:var(--rv);line-height:1.35}
+.dic .tf-link:hover{text-decoration:underline}
+.dic .tf-link svg{width:13px;height:13px;flex:none}
+.dic .tf-rep{background:var(--rv) !important;color:#fff}
+.dic .tf-rep b{font:800 13px var(--font-num,var(--font-ui));color:#fff}
+.dic .tf-mini{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.dic .tf-mini button{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:8px;cursor:pointer;font-size:12px}
+.dic .tf-mini button:hover{background:var(--surface-2)}
+.dic .tf-mini i{flex:none;width:12px;height:4px;border-radius:2px}
+.dic .tf-mini span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .tf-mini small{color:var(--text-3)}
+.dic .tf-src p{font-size:11.5px;line-height:1.45;color:var(--text-2);margin:6px 0 0}
+.dic .tf-src p.warn{color:var(--high)}
+.dic .rv-list i.news{background:#7C3AED}
+.dic .tf-note{display:block;font-size:11.5px;color:var(--text-3);margin:2px 0 6px}
+
+/* the map key: a moving sample of each line */
+.dic .tf-leg .rv-leg-t svg:first-child{color:#C2410C}
+.dic .tf-sw{flex:none;width:28px;height:8px;overflow:visible}
+.dic .tf-sw line{stroke-width:4;stroke-linecap:round}
+.dic .tf-g{background:#C2410C;border-radius:50% !important}
+.dic .tf-grad{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 8px;margin-top:6px;font-size:11px;color:var(--text-2)}
+.dic .tf-grad i{height:6px;border-radius:3px;background:linear-gradient(90deg,#22C55E,#EAB308,#F97316,#DC2626,#7F1D1D)}
+.dic .tf-grad small{grid-column:2;display:flex;justify-content:space-between;color:var(--text-3)}
+.dic .tf-grad em{font-style:normal}
+
+/* the moving lines: dashes run along the road in its direction of travel; the worse the jam, the slower they crawl */
+.tf-anim{stroke-dasharray:9 7;animation:tfFlow linear infinite}
+.tf-anim.tf-slow{animation-duration:.9s}
+.tf-anim.tf-congested{animation-duration:1.6s}
+.tf-anim.tf-very{stroke-dasharray:6 6;animation-duration:3.2s}
+.tf-anim.tf-accident{stroke-dasharray:4 5;animation-duration:2.6s}
+.tf-anim.tf-flood{stroke-dasharray:12 6;animation-duration:2.2s}
+.tf-anim.tf-works{stroke-dasharray:5 5;animation-duration:2.4s}
+.tf-closed{stroke-dasharray:2 6;stroke-linecap:butt}
+@keyframes tfFlow{to{stroke-dashoffset:-32}}
+/* the moving lines carry meaning (direction and speed of traffic), so they keep moving with reduced motion on (the
+   console's own rule stops every other animation: collector.css), at a calmer pace */
+@media (prefers-reduced-motion:reduce){
+  .dic .tf-live i{animation:none}
+  .dic path.tf-anim,.dic line.tf-anim{animation:tfFlow 4s linear infinite!important}
+  .dic path.tf-anim.tf-slow,.dic line.tf-anim.tf-slow{animation-duration:3s!important}
+  .dic path.tf-anim.tf-very,.dic line.tf-anim.tf-very{animation-duration:7s!important}
+}
+
+/* the Traffic button on the map, beside Rain */
+.dic .ampill.trafficpill svg{color:#C2410C}
+.dic .ampill.trafficpill .tp-n{font-style:normal;margin-left:2px;padding:1px 7px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font:700 11px var(--font-num,var(--font-ui))}
+.dic[data-theme="dark"] .ampill.trafficpill .tp-n{background:#450A0A;color:#FCA5A5}

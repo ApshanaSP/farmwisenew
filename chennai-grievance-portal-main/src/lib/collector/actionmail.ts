@@ -374,3 +374,114 @@ export async function sendBatchAction(input: unknown, user: string, factor: Fact
         : status === "failed" ? `The email could not be sent (${error}); the officer still sees the cases on the console.` : dv.note }
   };
 }
+
+// ------------------------------------------------------------ live traffic --
+
+/**
+ * The Traffic view's "Send to <body>": one email about a live jam, closure, flooded road or a trouble spot that keeps
+ * coming back (lib/city/traffic.ts), to the body that answers for it (Traffic Police, Storm Water Drains, Roads, Bridges).
+ * A plain template from the live facts and the district's records near it, no AI. The spot is re-read on the server
+ * (never taken from the browser), sent only after the Collector approves, under the same delivery rule as every other
+ * email (sandbox by default), with a follow-up for each related open case of that body and an audit row.
+ */
+export interface TrafficDraft { key: string; dept: string; deptName: string; subject: string; body: string; ids: string[]; to: Recipient | null; delivery: Delivery; title: string }
+
+const TrafficSchema = z.object({
+  key: z.string().regex(/^(spot|cluster):[A-Za-z0-9_.:-]{2,120}$/),
+  subject: z.string().trim().min(5).max(160),
+  body: z.string().trim().min(40).max(8000)
+});
+
+async function trafficFacts(key: string) {
+  const { trafficNow } = await import("@/lib/city/traffic");
+  const t = await trafficNow();
+  const kind = key.slice(0, key.indexOf(":")), id = key.slice(key.indexOf(":") + 1);
+  if (kind === "spot") {
+    const s = t.spots.find((x) => x.id === id);
+    return s ? { t, title: s.name, owner: s.owner, where: [s.zoneName, s.ward ? `ward ${s.ward}` : null].filter(Boolean).join(", "), level: s.level, delayMin: s.delayMin,
+      lengthM: s.lengthM, reports: s.repeat.reports, news: s.repeat.news, lat: s.lat, lon: s.lon } : null;
+  }
+  const c = t.clusters.find((x) => x.id === id);
+  if (!c) return null;
+  return { t, title: c.name, owner: c.owner, where: [c.zoneName, c.ward ? `ward ${c.ward}` : null].filter(Boolean).join(", "), level: c.level, delayMin: c.delayMin,
+    lengthM: null as number | null, reports: c.reports, news: c.news, lat: c.lat, lon: c.lon };
+}
+
+const TRAFFIC_ASK: Record<string, string> = {
+  very: "Please post traffic personnel at the junctions on this stretch now, open a diversion if it does not ease within 30 minutes, and tell the public through the usual channels.",
+  congested: "Please post traffic personnel at the main junction on this stretch and keep the signals on manual until it clears.",
+  slow: "Please keep an eye on this stretch and post personnel if it worsens.",
+  accident: "Please clear the vehicle or the accident from the road, attend to anyone hurt, and post personnel until traffic moves.",
+  closed: "Please set and sign a diversion around the closure and keep it manned at peak hours.",
+  works: "Please make the works safe, barricade and light them, and open a lane at peak hours or finish them on a night shift.",
+  flood: "Please send suction pumps to clear the water, check the drain inlets on this stretch, and coordinate a diversion with the Traffic Police until it is dry."
+};
+
+export async function draftTrafficAction(key: string): Promise<TrafficDraft | { error: string; status: number }> {
+  const f = await trafficFacts(key);
+  if (!f) return { error: "That spot is no longer in the live traffic: it may have cleared. Refresh the Traffic view.", status: 404 };
+  const { to } = await recipients(f.owner.dept, []);
+  const officer = to?.name ?? "Officer";
+  const at = f.t.at ? new Date(f.t.at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) : "now";
+  const open = f.reports.filter((r) => r.open && r.dept === f.owner.dept);
+  const recent = f.reports.slice(0, 8);
+  const what = f.level === "very" ? "very congested" : f.level === "congested" ? "congested" : f.level === "flood" ? "under water" : f.level === "accident" ? "blocked by an accident or a broken-down vehicle"
+    : f.level === "closed" ? "closed" : f.level === "works" ? "slowed by road works" : "slow";
+  const urgent = f.level === "very" || f.level === "flood" || f.level === "accident";
+  const subject = `${urgent ? "Urgent: " : ""}${f.title.slice(0, 80)} is ${what}${key.startsWith("cluster:") ? " again" : ""}`.slice(0, 160);
+  const len = f.lengthM ? ` over ${f.lengthM >= 1000 ? `${(f.lengthM / 1000).toFixed(1)} km` : `${f.lengthM} m`}` : "";
+  const day = (s: string) => s.slice(0, 10).split("-").reverse().join("/");
+  const lines = [
+    `Dear ${officer},`,
+    `Live traffic at ${at} shows ${f.title}${f.where ? ` (${f.where})` : ""} ${what}${f.delayMin ? `, with a delay of about ${f.delayMin} minutes` : ""}${len}.`,
+    recent.length ? [`This is not the first time: the district has ${f.reports.length} ${f.reports.length === 1 ? "report" : "reports"} on this stretch in the last 30 days${open.length ? `, ${open.length} of them still open with your department` : ""}:`,
+      ...recent.map((r, k) => `${k + 1}. ${String(r.title).slice(0, 120)} (${r.id}), ${r.catLabel.toLowerCase()}, ${day(r.at)}${r.open ? ", open" : ""}`)].join("\n") : "",
+    f.news.length ? `It was also in the news: ${f.news.slice(0, 2).map((n) => `"${n.title.slice(0, 90)}" (${n.outlet})`).join("; ")}.` : "",
+    TRAFFIC_ASK[f.level] ?? TRAFFIC_ASK.congested,
+    recent.length >= 3 ? "As it keeps coming back, please also send a short note on the lasting fix (signal timing, a no-parking stretch, a slip road, or the drain) within a week." : "",
+    `Location: https://www.google.com/maps?q=${f.lat.toFixed(5)},${f.lon.toFixed(5)}`,
+    "Send a short report with a photo through the District IQ officer console within 24 hours.",
+    "District Collector, Chennai"
+  ].filter(Boolean);
+  return { key, dept: f.owner.dept, deptName: f.owner.name, subject, body: tidyEmail(lines.join("\n\n"), officer), ids: open.map((r) => r.id), to, delivery: delivery(to?.email ?? null), title: f.title };
+}
+
+export async function sendTrafficAction(input: unknown, user: string, factor: Factor | null = null): Promise<{ status: number; body: Row }> {
+  const parsed = TrafficSchema.safeParse(input);
+  if (!parsed.success) return { status: 400, body: { error: "Write a subject and a message before sending." } };
+  const { key, subject, body } = parsed.data;
+  const d = await draftTrafficAction(key);
+  if ("error" in d) return { status: d.status, body: { error: d.error } };
+  const dv = d.delivery;
+  const at = istNow(), st = { owner: user, subject, bodyHash: bodyHash(body), at };
+  let status = "console_only", error: string | null = null, deliveredTo: string | null = null;
+  if (dv.to) {
+    const sandbox = dv.mode === "sandbox";
+    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${d.to?.name ?? "the department officer"} <${d.to?.email ?? "no address"}>.` : null, stampHtml(st, factor));
+    const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html);
+    if (r.ok) { status = "sent"; deliveredTo = dv.to; } else { status = "failed"; error = r.reason === "send_failed" ? r.detail : "not configured"; }
+  }
+  const [res] = await intelPool.query(
+    `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
+       approved_at, sent_at, delivered_to, body_hash, error)
+     VALUES (?, ?, NULL, ?, ?, ?, 'en', ?, ?, ?, ?, ?, ?, ?)`,
+    [user, JSON.stringify(d.to ? [d.to] : []), d.ids[0] ?? null, subject, body, dv.mode, status, at, status === "sent" ? istNow() : null, deliveredTo, st.bodyHash, error]
+  ) as unknown as [{ insertId: number }];
+  const emailId = Number(res?.insertId ?? 0);
+  // the related open cases of that body each get a follow-up due in 24 hours: the officer's drawer finds the instruction through them
+  if (d.ids.length) {
+    const due = istNow(24), summary = batchFollowupSummary(d.dept);
+    await intelPool.query(`INSERT INTO ${ops("followups")} (email_id, contact_id, incident_id, summary, due_date, status) VALUES
+      ${d.ids.map(() => "(?, ?, ?, ?, ?, 'pending')").join(", ")}`, d.ids.flatMap((id) => [emailId, d.to?.id ?? 0, id, summary, due]));
+  }
+  await intelPool.query(
+    `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'traffic:send', 'outbound_emails', ?, ?, ?)`,
+    [user, String(emailId), JSON.stringify({ key }), JSON.stringify({ email_id: emailId, dept: d.dept, title: d.title, cases: d.ids.length, to: d.to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo, ref: emailRef(st), confirmed_with: factor })]
+  );
+  return {
+    status: 201,
+    body: { id: emailId, status, deliveredTo, mode: dv.mode, to: d.to, followups: d.ids.length, ref: emailRef(st), deptName: d.deptName,
+      note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
+        : status === "failed" ? `The email could not be sent (${error}).` : dv.note }
+  };
+}

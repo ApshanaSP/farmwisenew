@@ -2,6 +2,8 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { localOnly } from "@/lib/thunai/devguard";
+// the e-mail or number a code went to is saved as its fingerprint when a data key is set (lib/pii.ts)
+import { otpIdentifier } from "@/lib/pii";
 import {
   OTP_LENGTH,
   OTP_EXPIRY_MINUTES,
@@ -9,6 +11,18 @@ import {
   OTP_RESEND_COOLDOWN_SECONDS
 } from "@/lib/constants";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+
+/**
+ * A time read back from the store, in ms. The AWS store keeps every time as IST wall-clock text ("YYYY-MM-DD HH:MM:SS",
+ * lib/aws/dialect.ts); read as the server's own zone it was 5.5 hours off on a server not set to IST (codes valid for
+ * hours, a resend wait of hours). MySQL's text keeps the old reading.
+ */
+function storeTime(v: unknown): number {
+  if (v instanceof Date) return v.getTime();
+  const s = String(v);
+  if (process.env.DATA_BACKEND === "aws" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) return Date.parse(`${s.slice(0, 19).replace(" ", "T")}+05:30`);
+  return new Date(s).getTime();
+}
 
 export type OtpPurpose =
   | "password_reset"
@@ -79,11 +93,11 @@ async function issueOtp(identifier: string, purpose: OtpPurpose, userId: number 
     `SELECT created_at FROM password_resets
      WHERE identifier = ? AND purpose = ? AND used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
 
   if (rows.length > 0) {
-    const lastCreated = new Date(rows[0].created_at as string).getTime();
+    const lastCreated = storeTime(rows[0].created_at);
     const elapsedSeconds = (Date.now() - lastCreated) / 1000;
     if (elapsedSeconds < OTP_RESEND_COOLDOWN_SECONDS) {
       return {
@@ -101,13 +115,13 @@ async function issueOtp(identifier: string, purpose: OtpPurpose, userId: number 
   await pool.query(
     `UPDATE password_resets SET used = TRUE
      WHERE identifier = ? AND purpose = ? AND used = FALSE`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
 
   await pool.query<ResultSetHeader>(
     `INSERT INTO password_resets (user_id, purpose, identifier, otp_hash, expires_at)
      VALUES (?, ?, ?, ?, ?)`,
-    [userId, purpose, identifier, otpHash, expiresAt]
+    [userId, purpose, otpIdentifier(identifier), otpHash, expiresAt]
   );
 
   return { otp };
@@ -119,7 +133,7 @@ export async function discardOtp(identifier: string, purpose: OtpPurpose): Promi
   await pool.query(
     `UPDATE password_resets SET used = TRUE
      WHERE identifier = ? AND purpose = ? AND used = FALSE`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
 }
 
@@ -151,14 +165,14 @@ export async function verifyAndConsumeOtp(
     `SELECT id, user_id, otp_hash, expires_at, attempts FROM password_resets
      WHERE identifier = ? AND purpose = ? AND used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
 
   if (rows.length === 0) return { ok: false, reason: "not_found" };
 
   const record = rows[0];
 
-  if (new Date(record.expires_at as string).getTime() < Date.now()) {
+  if (storeTime(record.expires_at) < Date.now()) {
     return { ok: false, reason: "expired" };
   }
 
@@ -206,10 +220,10 @@ export async function getResendCooldown(
     `SELECT created_at FROM password_resets
      WHERE identifier = ? AND purpose = ? AND used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
   if (rows.length === 0) return 0;
-  const elapsed = (Date.now() - new Date(rows[0].created_at as string).getTime()) / 1000;
+  const elapsed = (Date.now() - storeTime(rows[0].created_at)) / 1000;
   return Math.max(0, Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - elapsed));
 }
 
@@ -228,13 +242,13 @@ export async function verifyOtp(
     `SELECT id, otp_hash, expires_at, attempts FROM password_resets
      WHERE identifier = ? AND purpose = ? AND used = FALSE
      ORDER BY created_at DESC LIMIT 1`,
-    [identifier, purpose]
+    [otpIdentifier(identifier), purpose]
   );
 
   if (rows.length === 0) return { ok: false, reason: "not_found" };
   const record = rows[0];
 
-  if (new Date(record.expires_at as string).getTime() < Date.now()) {
+  if (storeTime(record.expires_at) < Date.now()) {
     return { ok: false, reason: "expired" };
   }
   if ((record.attempts as number) >= OTP_MAX_ATTEMPTS) {
@@ -253,13 +267,15 @@ export async function verifyOtp(
   return { ok: true };
 }
 
-/** Marks the most recent unused OTP for this identifier/purpose as used. */
+/**
+ * Marks the unused OTP for this identifier/purpose as used. createOtp already supersedes older codes, so at most one
+ * is unused; no ORDER BY ... LIMIT on the UPDATE, which SQLite (the aws store) rejects as a syntax error.
+ */
 export async function consumeOtp(identifier: string, purpose: OtpPurpose): Promise<void> {
   await pool.query(
     `UPDATE password_resets SET used = TRUE
-     WHERE identifier = ? AND purpose = ? AND used = FALSE
-     ORDER BY created_at DESC LIMIT 1`,
-    [identifier, purpose]
+     WHERE identifier = ? AND purpose = ? AND used = FALSE`,
+    [otpIdentifier(identifier), purpose]
   );
 }
 

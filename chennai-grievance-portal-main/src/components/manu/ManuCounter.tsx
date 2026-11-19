@@ -4,7 +4,7 @@ import ManuDesk from "./ManuDesk";
 import "./manu.css";
 
 export default function ManuCounter({ user }: { user: string }) {
-  const signOut = async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; };
+  const signOut = async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); window.location.href = "/login"; };
   return (
     <div className="mn-page">
       <header className="mn-band">

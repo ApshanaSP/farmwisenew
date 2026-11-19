@@ -275,14 +275,24 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     return () => clearTimeout(t);
   }, [anim]);
 
-  // New grievances, Collector decisions and new pipeline builds: checked every minute.
+  // New grievances, Collector decisions, new pipeline builds and a changed IMD warning (read live every 10 minutes,
+  // lib/live/imd.ts): checked every OFFICER.pollMs (20 s).
   const isBusy = () => !!(drawer || modal || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)));
-  useEffect(() => {
-    const t = setInterval(async () => {
+  const lastWarn = useRef<number | null>(null);
+  // The check reads this render's state through a ref and the timer is made once: with a timer re-made on every
+  // render, the 30 s clock re-rendered the console before the check was due, so it never ran.
+  const pollTick = useRef<() => Promise<void>>(async () => {});
+  pollTick.current = async () => {
       try {
         const m = await api("/api/officer/overview?meta=1");
         const was = pulse.current;
         let changed = m.exportedAt !== was.exportedAt;
+        const warn = typeof m.live?.imdV === "number" ? m.live.imdV as number : null;
+        if (warn != null && lastWarn.current != null && warn !== lastWarn.current && !changed) {
+          toast(`Live update: ${m.live.imdNote || "the IMD warning for Chennai changed"}.`, "alert");
+          changed = true;
+        }
+        if (warn != null) lastWarn.current = warn;
         if (was.newCount >= 0 && m.newCount > was.newCount) {
           const k = m.newCount - was.newCount;
           toast(`${k} new grievance${k === 1 ? "" : "s"} for ${dept.short} waiting for your approval.`, "alert", { label: "View", run: () => goGrievances("new") });
@@ -301,10 +311,13 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           if (isBusy()) dirty.current = true;
           else setReloadKey((k) => k + 1);
         }
-      } catch { /* offline: try again next minute */ }
-    }, OFFICER.pollMs);
+      } catch { /* offline: try again at the next check */ }
+  };
+  useEffect(() => {
+    void pollTick.current(); // learn the live version at once, so the first change after opening is shown
+    const t = setInterval(() => { void pollTick.current(); }, OFFICER.pollMs);
     return () => clearInterval(t);
-  });
+  }, []);
 
   // ---------------------------------------------------------- navigation --
   const closeAll = useCallback(() => {
@@ -569,7 +582,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "contacts" }); }}><I n="phone" /><span><b>Department contacts</b><small>Head of department and officials</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 {(zone || taluk) && <button className="pop-i" onClick={() => { setPop(null); setZone(null); setTaluk(null); }}><I n="home" /><span><b>Clear the area filter</b><small>Every zone and taluk</small></span></button>}
-                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
+                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); window.location.href = "/login"; }}>
                   <I n="user" /><span><b>Sign out</b></span>
                 </button>
               </div>

@@ -8,6 +8,18 @@ import AuthShell from "@/components/AuthShell";
 import ConsoleLoader from "@/components/ConsoleLoader";
 import { authError, authLeave } from "@/components/auth/AuthCard";
 
+/**
+ * Where to go after signing in: back to the page that sent the user here (?redirect=, set by the middleware when a
+ * session lapsed) when it is this site's own path and belongs to the role's own console or the profile; else the
+ * role's landing page.
+ */
+function backTo(redirect: string | null, landing: string): string {
+  if (!redirect || !/^\/(?!\/)[\w\-/?=&.%]*$/.test(redirect) || !landing) return landing;
+  const path = redirect.split("?")[0];
+  const own = path === landing || path.startsWith(`${landing}/`) || path === "/profile";
+  return own ? redirect : landing;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,7 +57,7 @@ function LoginForm() {
         authError();
         return;
       }
-      await go(data.redirectTo);
+      await go(backTo(searchParams.get("redirect"), data.redirectTo));
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);

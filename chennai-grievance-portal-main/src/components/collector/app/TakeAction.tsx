@@ -28,7 +28,7 @@ export function TakeAction({ id, c, onClose, onSent }: { id: string; c: Console;
     const t = setInterval(() => setTick((k) => Math.min(k + 1, WORKING.length - 1)), 900);
     fetch(`/api/collector/incidents/${encodeURIComponent(id)}/action`)
       .then(async (r) => {
-        const j = await r.json();
+        const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || "Could not prepare the action.");
         if (live) { setD(j); setSubject(j.subject); setBody(j.body); }
       })
@@ -43,7 +43,7 @@ export function TakeAction({ id, c, onClose, onSent }: { id: string; c: Console;
       const r = await fetch(`/api/collector/incidents/${encodeURIComponent(id)}/action`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, body })
       });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Could not send.");
       setDone(j);
       c.toast(j.status === "sent" ? `Instruction sent to ${j.to?.role ?? "the department"}.` : `Instruction recorded for ${j.to?.role ?? "the department"}.`);

@@ -8,6 +8,7 @@
 import { randomBytes } from "crypto";
 import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
+import { decryptFile, encryptFile } from "@/lib/pii";
 
 export const PHOTO_PREFIX = "/api/profile/photo/";
 /** a stored file's name: p-<20 hex>.jpg|png */
@@ -28,14 +29,15 @@ export function photoName(stored: string | null | undefined): string | null {
 export async function savePhoto(buf: Buffer, ext: "jpg" | "png"): Promise<string> {
   const name = `p-${randomBytes(10).toString("hex")}.${ext}`;
   await mkdir(photoRoot(), { recursive: true });
-  await writeFile(path.join(photoRoot(), name), buf, { flag: "wx" });
+  await writeFile(path.join(photoRoot(), name), encryptFile(buf, "profile-photo"), { flag: "wx" }); // locked on disk (lib/pii.ts)
   return PHOTO_PREFIX + name;
 }
 
 export async function readPhoto(name: string): Promise<{ buf: Buffer; type: string } | null> {
   if (!PHOTO_NAME_RE.test(name)) return null;
   try {
-    return { buf: await readFile(path.join(photoRoot(), name)), type: TYPES[name.split(".").pop() as keyof typeof TYPES] };
+    const buf = decryptFile(await readFile(path.join(photoRoot(), name)), "profile-photo");
+    return buf ? { buf, type: TYPES[name.split(".").pop() as keyof typeof TYPES] } : null;
   } catch {
     return null;
   }

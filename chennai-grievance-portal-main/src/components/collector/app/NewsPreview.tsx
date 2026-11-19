@@ -29,7 +29,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
     let live = true;
     fetch(`/api/collector/news?ids=${encodeURIComponent(s.docIds.join(","))}`)
       .then(async (r) => {
-        const j = await r.json();
+        const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || "Could not load the reports.");
         // the same headline from the same outlet twice is one report; the story's own headline first
         const seen = new Set<string>();

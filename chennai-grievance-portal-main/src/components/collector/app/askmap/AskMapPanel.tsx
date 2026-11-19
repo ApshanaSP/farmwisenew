@@ -373,7 +373,7 @@ function FilterLine({ r, lang, open, onToggle }: { r: AskResponse; lang: "en" | 
   );
 }
 
-const COND_ICON = { weather: "cloud", rain: "drop", lakes: "drop", works: "cone", hospital: "health", air: "wind" } as const;
+const COND_ICON = { weather: "cloud", rain: "drop", lakes: "drop", works: "cone", hospital: "health", air: "wind", traffic: "flow" } as const;
 
 function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk }) {
   const a = r.answer!;

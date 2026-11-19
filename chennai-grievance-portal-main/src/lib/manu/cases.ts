@@ -11,6 +11,7 @@ import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { effectiveSql } from "@/lib/collector/effective";
 import { addHours, maskAadhaar } from "./clean";
+import { decryptRow } from "@/lib/pii";
 import { SLA_COLUMN, gradeGrievance, grievanceCategory, pipelineTitle, type Grade } from "./grade";
 
 type Row = Record<string, any>;
@@ -265,7 +266,8 @@ export function petitionCase(p: Row): CaseInput {
 /** Build step (derive.ts): every filing the website holds goes into each new build. */
 export async function websiteCases(db: DatabaseSync): Promise<void> {
   const wrap: Db = {
-    all: async (sql, params = []) => db.prepare(sql).all(...(params as never[])) as Row[],
+    // straight on the build, not through the store's queries: personal values are unlocked here (lib/pii.ts)
+    all: async (sql, params = []) => (db.prepare(sql).all(...(params as never[])) as Row[]).map((r) => decryptRow(r as Record<string, unknown>) as Row),
     run: async (sql, params = []) => { db.prepare(sql).run(...(params as never[])); }
   };
   const has = async (t: string) => (await wrap.all(`SELECT name FROM pragma_table_info('${t}')`)).length > 0;

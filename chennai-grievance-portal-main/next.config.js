@@ -35,10 +35,18 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // middleware redirects keep the address the browser used: without this, Next rewrote 127.0.0.1 (what start-fast.bat
+  // opens) to "localhost" in every redirect to sign-in, a different site to the browser (other cookies; may not resolve).
+  // App Router has no /_next/data URLs, which is all else this switch changes.
+  skipMiddlewareUrlNormalize: true,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   reactStrictMode: true,
+  // Dev server only (`npm run dev`): keep compiled pages and API routes for an hour instead of dropping them after a minute
+  // unused. Each drop meant a 10-20 s recompile on the next click or Jarvis turn on this PC (measured 15 Nov 2026). The site
+  // itself should run the production build: start-fast.bat.
+  onDemandEntries: { maxInactiveAge: 60 * 60 * 1000, pagesBufferLength: 200 },
   // No page uses next/image (the logo is a plain <img>), so the Image Optimization API (/_next/image) is off: it is where
   // Next 14's critical advisories GHSA-2xp9-vwfh-vxw4 and GHSA-2464-fhr4-w9xw (remote code execution via AVIF/SVG) and
   // its image DoS advisories live. docs/SECURITY_AUDIT.md lists the rest and what an upgrade to Next 16 would close.

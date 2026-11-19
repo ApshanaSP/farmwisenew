@@ -19,6 +19,7 @@
  * Text columns are created COLLATE NOCASE (store.ts), which gives MySQL's case-insensitive = and ORDER BY.
  */
 import type { DatabaseSync } from "node:sqlite";
+import { registerPii } from "@/lib/pii";
 
 type Tok = { t: "s" | "id" | "c" | "n" | "w" | "p" | "q" | "ws"; v: string };
 
@@ -442,6 +443,8 @@ export function registerFunctions(db: DatabaseSync): void {
   const fn = (name: string, f: (...a: any[]) => unknown, deterministic = true) => {
     for (const n of new Set([name, name.toLowerCase()])) db.function(n, { deterministic, varargs: true }, f as any);
   };
+  // the triggers that lock personal data on save (lib/pii.ts) run on whichever connection writes the durable tables
+  registerPii(db);
   fn("NOW", () => istNow(), false);
   fn("CURRENT_TIMESTAMP", () => istNow(), false);
   fn("SYSDATE", () => istNow(), false);

@@ -31,7 +31,7 @@ const KIND: Record<string, string> = {
   release: "Warn wards below a releasing reservoir"
 };
 
-export default function RainView({ geo, api, start, onClose, onLayer, onOpenIncident, toast, escRef }: {
+export default function RainView({ geo, api, start, onClose, onLayer, onOpenIncident, toast, escRef, onLive }: {
   geo: MapGeo | null;
   api: RainApi;
   start: RainStart;
@@ -41,6 +41,8 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   toast: (msg: string, kind?: "ok" | "alert") => void;
   /** Escape goes back one level here; false when there is nothing to go back from (the console then closes the view) */
   escRef: React.MutableRefObject<(() => boolean) | null>;
+  /** opens the live Traffic view (its own view on the map: Rain shows what heavy rain does) */
+  onLive?: () => void;
 }) {
   const [d, setD] = useState<RehearsalState | null>(null);
   const [past, setPast] = useState<PastRain[] | null>(null);
@@ -178,7 +180,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   const phone = typeof window !== "undefined" && window.innerWidth < 768;
   const drag = useDragPanel("rain", phone);
   const SUB: Record<"flood" | Lens, string> = {
-    flood: "Where water stood in past heavy rains, and what to do before the next one", traffic: "Roads where traffic jams when it rains, and why",
+    flood: "Where water stood in past heavy rains, and what to do before the next one", traffic: "Roads where traffic jams in heavy rain, and why (live traffic has its own view)",
     power: "Wards that lose power in heavy rain, and for how long", metro: "How late trains run in heavy rain, and which stations close"
   };
   const head = (
@@ -445,12 +447,12 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
         <NowStrip d={d} />
         <div className="rv-b">
           {lens !== "flood" ? (
-            <ImpactView lens={lens} api={api} rains={rains} rainId={rainNow} data={imp[lens] ?? null} escRef={childEsc} onLayer={onLayer} onOpenIncident={onOpenIncident}
+            <ImpactView lens={lens} api={api} rains={rains} rainId={rainNow} data={imp[lens] ?? null} escRef={childEsc} onLayer={onLayer} onOpenIncident={onOpenIncident} onLive={onLive}
               onRain={(id) => { setPick(null); setView(id ? { kind: "rain", id, zone: null } : { kind: "all", zone: null }); }} />
           ) : card ? <><button className="rv-back" onClick={() => setPick(null)}><I n="chevl" />Back to {backTo}</button><div className="rv-card">{card}</div></> : body}
         </div>
       </aside>
-      {lens === "flood" ? <Legend rain={!!rain} /> : <ImpactLegend lens={lens} rain={!!rain} lines={imp.metro?.items ?? []} />}
+      {lens === "flood" ? <Legend rain={!!rain} left={drag.right} /> : <ImpactLegend lens={lens} rain={!!rain} lines={imp.metro?.items ?? []} left={drag.right} />}
       {plan && (
         <PlanSheet d={sheetJobs ? { ...d, jobs: d.jobs.filter((j) => j.task || sheetJobs.has(j.key)) } : d} lang="en" manual={false} planUrl={api.plan}
           onClose={() => setPlan(null)} onSent={(m) => { toast(m, "ok"); reloadState(); }}
@@ -501,8 +503,26 @@ function JobsBox({ title, jobs, onSend, sent = 0, done = 0, depts, big, empty }:
   );
 }
 
+/**
+ * The map's key, in the map's bottom-right corner (bottom-left when the panel has been moved to the right), so it never
+ * covers the panel or what it shows. Its title folds it to one line; that choice is kept in this browser.
+ */
+function MapKey({ title, left, wide, children, foot }: { title: React.ReactNode; left?: boolean; wide?: boolean; children: React.ReactNode; foot?: string }) {
+  const [shut, setShut] = useState(false);
+  useEffect(() => { try { setShut(localStorage.getItem("diq.rain.keyShut") === "1"); } catch { /* open */ } }, []);
+  const flip = () => setShut((v) => { try { localStorage.setItem("diq.rain.keyShut", v ? "0" : "1"); } catch { /* not kept */ } return !v; });
+  return (
+    <div className={`rv-leg${left ? " at-left" : ""}${wide ? " wide" : ""}${shut ? " shut" : ""}`} aria-label="Map key">
+      <button type="button" className="rv-leg-t" onClick={flip} aria-expanded={!shut} title={shut ? "Show the map key" : "Fold the map key"}>
+        {title}<I n={shut ? "up" : "chevd"} />
+      </button>
+      {!shut && <>{children}{foot && <small>{foot}</small>}</>}
+    </div>
+  );
+}
+
 /** the other tabs' map key */
-function ImpactLegend({ lens, rain, lines }: { lens: Lens; rain: boolean; lines: ImpactData["items"] }) {
+function ImpactLegend({ lens, rain, lines, left }: { lens: Lens; rain: boolean; lines: ImpactData["items"]; left?: boolean }) {
   const ln = (c: string, h = 4, o = 1) => <i className="ln" style={{ background: c, height: h, opacity: o }} />;
   const rows: [React.ReactNode, string][] = lens === "traffic"
     ? rain ? [[ln("#C2410C", 5), "Jammed badly in this rain"], [ln("#F97316", 4), "Jammed in this rain"], [ln("#94A3B8", 2, 0.6), "Not jammed this time"], [<span key="u" className="g" style={{ background: "#C2410C" }}>U</span>, "Underpass with water in it"]]
@@ -514,25 +534,22 @@ function ImpactLegend({ lens, rain, lines }: { lens: Lens; rain: boolean; lines:
         [<span key="x" className="g" style={{ background: "#5B21B6", borderRadius: "50%" }}>×</span>, rain ? "Station closed in this rain" : "Station closed in 2 or more rains"],
         ...(rain ? [[ln("#94A3B8", 3, 0.6), "On time in this rain"] as [React.ReactNode, string]] : [])];
   return (
-    <div className="rv-leg" aria-label="Map key">
-      <b><I n={LENS_WORD[lens].icon} />{lens === "metro" ? (rain ? "Lines in this rain: thicker = later" : "Lines: thicker = late in more rains") : `${LENS_WORD[lens].title} ${rain ? "in this rain" : "in heavy rains"}`}</b>
-      <ul>{rows.map(([k, l]) => <li key={l}>{k}{l}</li>)}</ul>
-      {lens === "traffic" && <small>Zoom in to see the roads themselves</small>}
-    </div>
+    <MapKey left={left} wide={lens === "metro"} foot={lens === "traffic" ? "Zoom in to see the roads; point at one for its name" : lens === "power" ? "Point at a ward for its name and hours" : undefined}
+      title={<><I n={LENS_WORD[lens].icon} />{lens === "metro" ? (rain ? "Lines in this rain: thicker = later" : "Lines: thicker = late in more rains") : `${LENS_WORD[lens].title} ${rain ? "in this rain" : "in heavy rains"}`}</>}>
+      <ul>{rows.map(([k, l]) => <li key={l}>{k}<span>{l}</span></li>)}</ul>
+    </MapKey>
   );
 }
 
-/** the map's key, bottom right */
-function Legend({ rain }: { rain: boolean }) {
+/** Flooding's map key */
+function Legend({ rain, left }: { rain: boolean; left?: boolean }) {
   const rows: [string, string][] = rain
     ? [["d-rep", "Report on a street that flooded before"], ["d-new", "Report in a new place"], ["l-3", "Flood street with a report in this rain"], ["l-0", "Other flood streets"]]
     : [["l-3", "Flooded in 5 or more rains"], ["l-2", "Flooded in 3 or 4 rains"], ["l-1", "Flooded in 1 or 2 rains"]];
   const icon: IconName = rain ? "pin" : "drop";
   return (
-    <div className="rv-leg" aria-label="Map key">
-      <b><I n={icon} />{rain ? "This rain" : "Flood streets"}</b>
-      <ul>{rows.map(([k, l]) => <li key={k}><i className={k} />{l}</li>)}</ul>
-      <small>Zoom in to see the roads themselves</small>
-    </div>
+    <MapKey left={left} foot="Zoom in to see the roads themselves" title={<><I n={icon} />{rain ? "This rain" : "Flood streets"}</>}>
+      <ul>{rows.map(([k, l]) => <li key={k}><i className={k} /><span>{l}</span></li>)}</ul>
+    </MapKey>
   );
 }

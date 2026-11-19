@@ -7,6 +7,7 @@ import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { pdfImages } from "@/lib/studio/ocr";
 import { MANU_LIMITS } from "./constants";
+import { decryptFile, encryptFile } from "@/lib/pii";
 
 export const PHOTO_NAME = /^[a-f0-9]{32}\.(jpg|png)$/;
 const dir = () => process.env.PETITION_UPLOAD_DIR || path.join(process.cwd(), "data", "private-uploads", "petitions");
@@ -43,7 +44,7 @@ export async function savePages(files: Buffer[]): Promise<string[]> {
   const names: string[] = [];
   for (const i of images) {
     const name = `${randomBytes(16).toString("hex")}.${i.ext}`;
-    await writeFile(path.join(dir(), name), i.b);
+    await writeFile(path.join(dir(), name), encryptFile(i.b, "petition-page")); // locked on disk with the data key (lib/pii.ts)
     names.push(name);
   }
   return names;
@@ -51,7 +52,7 @@ export async function savePages(files: Buffer[]): Promise<string[]> {
 
 export async function readPhoto(name: string): Promise<Buffer | null> {
   if (!PHOTO_NAME.test(name)) return null;
-  try { return await readFile(path.join(dir(), name)); } catch { return null; }
+  try { return decryptFile(await readFile(path.join(dir(), name)), "petition-page"); } catch { return null; }
 }
 
 export async function removePhoto(name: string): Promise<void> {

@@ -64,6 +64,7 @@ import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, w
 import { mapCard } from "@/lib/map/assistant";
 import { syncEpoch } from "@/lib/collector/epoch";
 import { zoneNoIn } from "@/lib/zone-no";
+import { cityTopic, type CityRow } from "@/lib/city/now";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1335,6 +1336,18 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const placeData = message.trim().length < 2 ? null
     : await runTool("resolve_place", { text: message.slice(0, 120) }).then((r) => r.data as Row | null).catch(orNull("pipeline:resolve_place"));
   const place = placeData ? JSON.stringify(placeData) : "";
+  // the city now (live traffic, the rain, the streets that flood, power and trains in heavy rain): one shared source
+  // (lib/city/now.ts), answered at once from its own sentences, with no model: the same words Jarvis and Ask the Map say
+  if (!i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData))) {
+    const topic = cityTopic(message);
+    if (topic) {
+      i.stage("fetching");
+      const t0 = Date.now();
+      const args = { topic, zone: topic === "traffic" && placeData?.zone != null && !placeData?.taluk_named ? Number(placeData.zone) : null };
+      const r = await runTool("city_now", args).catch((e) => { console.warn("[assistant] city_now failed:", (e as Error).message); return null; });
+      if (r) return finish(cityCard(card0(null), r, args, lang, message, Date.now() - t0), { intent: "city_now", tools: [{ name: "city_now", args }] });
+    }
+  }
   // an input that is read but cannot be applied (zone 99, a place the district does not have, "last 0 days", "31 February", a year to come) is
   // said so, not answered with the whole district or the last 90 days (RC-43)
   if (!i.pinId && !i.insightKey) {
@@ -2412,4 +2425,44 @@ async function planAndRun(i: ChatInput, route: Route, message: string, now: stri
     }
   }
   throw last ?? new CompileError("The plan could not be compiled.");
+}
+
+// ------------------------------------------------------------- the city now --
+
+const CITY_NEXT: Record<string, string[]> = {
+  traffic: ["Which roads are very congested now?", "Where do traffic jams keep coming back?", "How do the streets flood in heavy rain?"],
+  flood: ["Which streets flood the most?", "Live traffic now", "Which wards lose power in heavy rain?"],
+  rain: ["Which streets flood in heavy rain?", "Live traffic now", "Which metro lines run late in heavy rain?"],
+  power: ["Which streets flood in heavy rain?", "Which metro lines run late in heavy rain?", "Live traffic now"],
+  metro: ["Which wards lose power in heavy rain?", "Live traffic now", "Which streets flood in heavy rain?"],
+  all: ["Where do traffic jams keep coming back?", "Which streets flood in heavy rain?", "Which wards lose power in heavy rain?"]
+};
+
+/** The city now as a card: the shared sentences (lib/city/now.ts), its tiles and its table; every figure is one of the tool's facts. */
+function cityCard(card: AnswerCard, r: ToolResult, args: { topic: string; zone: number | null }, lang: Lang, message: string, ms: number): AnswerCard {
+  const d = r.data as { topic: string; headline: { en: string; ta: string }; say: { en: string; ta: string }; rows: CityRow[]; view: { kind: string; lens?: string }; missing: string[] };
+  const p = presentAll([r], message, lang);
+  const ta = lang === "ta";
+  card.kind = "answer";
+  card.headline = ta ? d.headline.ta : d.headline.en;
+  card.answerMarkdown = ta ? d.say.ta : d.say.en;
+  card.voiceSummary = (ta ? d.say.ta : d.say.en).split(/(?<=\.)\s+/).slice(0, 2).join(" ");
+  card.voiceLang = ta ? "ta-IN" : "en-IN";
+  card.datasets = p.datasets;
+  card.kpis = p.kpis;
+  card.table = p.table;
+  card.display = p.table ? "table" : p.kpis.length ? "kpi" : "text";
+  card.caveats = [...r.caveats];
+  card.followUps = CITY_NEXT[args.topic] ?? CITY_NEXT.all;
+  const view: "traffic" | "flood" | "power" | "metro" = d.view.kind === "traffic" ? "traffic" : d.view.lens === "power" || d.view.lens === "metro" ? d.view.lens : "flood";
+  card.consoleActions = [{ action: "show_city", label: view === "traffic" ? (ta ? "நேரடி போக்குவரத்தை வரைபடத்தில் காட்டு" : "Show live traffic on the map")
+    : ta ? "மழை வரைபடத்தில் காட்டு" : `Show on the map (Rain · ${view === "flood" ? "Flooding" : view === "power" ? "Power" : "Metro"})`, view }];
+  card.sources.tools = [{ name: "city_now", args, ms }];
+  card.sources.refs = r.sources;
+  card.sources.incidentIds = r.incidentIds;
+  card.sources.rows = p.datasets.reduce((a, x) => a + x.rows.length, 0);
+  card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
+  card.asOf = r.asOf;
+  card.intent = "city_now";
+  return card;
 }

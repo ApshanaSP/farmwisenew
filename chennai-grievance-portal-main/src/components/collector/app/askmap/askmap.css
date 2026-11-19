@@ -336,7 +336,7 @@
 .am-cond{display:inline-flex;align-items:center;gap:4px;height:19px;padding:0 7px 0 5px;border-radius:999px;background:#fff;color:#0F1B2D;font:800 10.5px/19px var(--font-num,system-ui);white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3),0 0 0 1.5px var(--kc,#64748B);transform:translate(-50%,0);cursor:default}
 .am-cond i{width:8px;height:8px;border-radius:50%;background:var(--kc,#64748B)}
 .am-cond.hi{box-shadow:0 1px 4px rgba(0,0,0,.3),0 0 0 2px #E0364A}
-.am-cond.k-rain{--kc:#0EA5E9}.am-cond.k-lakes{--kc:#2563EB}.am-cond.k-works{--kc:#D97706}.am-cond.k-hospital{--kc:#DB2777}.am-cond.k-air{--kc:#16A34A}
+.am-cond.k-traffic{--kc:#C2410C}.am-cond.k-rain{--kc:#0EA5E9}.am-cond.k-lakes{--kc:#2563EB}.am-cond.k-works{--kc:#D97706}.am-cond.k-hospital{--kc:#DB2777}.am-cond.k-air{--kc:#16A34A}
 .dic .amlive{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--kc,#64748B);flex:none}
 .dic .amlive.k-rain{--kc:#0EA5E9}.dic .amlive.k-lakes{--kc:#2563EB}.dic .amlive.k-works{--kc:#D97706}.dic .amlive.k-hospital{--kc:#DB2777}.dic .amlive.k-air{--kc:#16A34A}
 .dic .amleg .amlive{margin-right:0;width:10px;height:10px}

@@ -7,6 +7,7 @@ import { OFFICER } from "@/lib/officer/departments";
 import type { Period } from "@/lib/collector/intel";
 import OfficerApp from "@/components/officer/OfficerApp";
 import ManuCounter from "@/components/manu/ManuCounter";
+import SignOutLink from "@/components/SignOutLink";
 import { PETITION_DEPT } from "@/lib/manu/constants";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ function Unavailable({ title, text, back = "/login" }: { title: string; text: st
     <main style={{ maxWidth: 640, margin: "80px auto", padding: 24, fontFamily: "system-ui" }}>
       <h1 style={{ fontSize: 20 }}>{title}</h1>
       <p>{text}</p>
-      <p><a href={back}>{back === "/collector" ? "Back to the Collector console" : "Back to sign in"}</a></p>
+      <p><a href={back}>{back === "/collector" ? "Back to the Collector console" : "Back to sign in"}</a> · <SignOutLink label="Sign out and use another account" /></p>
     </main>
   );
 }
@@ -59,7 +60,7 @@ export default async function OfficerPage() {
       <Unavailable title="Officer console unavailable"
         text={missing
           ? "The district intelligence store or the officer tables are not in MySQL yet. Load the store (in district_intel: python run_pipeline.py mysql), then run: npm run setup:officer"
-          : "The district intelligence store could not be read. Check that MySQL is running."} />
+          : "The district intelligence store could not be read. Check that the data store is reachable, then reload this page."} />
     );
   }
 }

@@ -59,7 +59,7 @@ describe("click-layer-03: a busy control keeps its clicks", () => {
   it("the stylesheet no longer lets the hit test skip a busy control (pointer-events: none)", () => {
     const css = fs.readFileSync(path.join(process.cwd(), "src", "components", "activity", "activity.css"), "utf8");
     const rule = css.match(/\[data-diq-busy\]\s*\{[^}]*\}/)?.[0] ?? "";
-    expect(rule).toMatch(/opacity/);
+    expect(rule).toMatch(/opacity|diq-dim/); // dimmed after a second (the diq-dim animation), so a quick click does not flicker
     expect(rule).not.toMatch(/pointer-events\s*:\s*none/);
   });
 });

@@ -70,7 +70,7 @@ export type BlockT = z.infer<typeof Block>;
 export type BlockKind = BlockT["kind"];
 export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as BlockKind[];
 
-export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete"] as const;
+export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete", "city"] as const;
 export type Recipe = (typeof RECIPES)[number];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),

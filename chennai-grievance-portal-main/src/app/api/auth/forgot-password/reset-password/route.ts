@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { forgotPasswordResetSchema } from "@/lib/validators";
-import { verifyOtp, consumeOtp } from "@/lib/otp";
+import { verifyAndConsumeOtp } from "@/lib/otp";
 import { RowDataPacket } from "mysql2";
 import { revokeSessions } from "@/lib/auth";
 
@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
 
     const { email, otp, newPassword } = parsed.data;
 
-    // Re-verify the OTP at reset time too (defense in depth — the OTP
-    // must still be valid, unused, and not over the attempt limit).
-    const verifyResult = await verifyOtp(email, "password_reset", otp);
+    // Verify AND claim the code before the password changes: the code is single-use even if a step below fails, and
+    // two requests racing with one code cannot both reset the password.
+    const verifyResult = await verifyAndConsumeOtp(email, "password_reset", otp);
     if (!verifyResult.ok) {
       return NextResponse.json({ error: "OTP is invalid or has expired. Please start over." }, { status: 400 });
     }
@@ -30,15 +30,13 @@ export async function POST(req: NextRequest) {
       [email]
     );
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Account not found." }, { status: 404 });
+      return NextResponse.json({ error: "OTP is invalid or has expired. Please start over." }, { status: 400 });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, rows[0].id]);
     // whoever held the old password is signed out everywhere
     await revokeSessions(Number(rows[0].id));
-
-    await consumeOtp(email, "password_reset");
 
     return NextResponse.json({ message: "Password reset successfully." });
   } catch (err) {

@@ -69,7 +69,7 @@
 .mn-f input, .mn-f select, .mn-f textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--line-3); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; }
 .mn-f textarea { resize: vertical; line-height: 1.5; }
 .mn-f small { font-size: 11.5px; color: var(--text-3); }
-.mn-f.flag input, .mn-f.flag textarea, .mn-f.flag select { background: #FFF7E5; border-color: #E0A92E; }
+.mn-f.flag input, .mn-f.flag textarea, .mn-f.flag select { background: #FFF7E5; border-color: #E0A92E; color: #2A1F00; } /* dark text on the fixed cream: the theme's text colour is near-white in dark mode */
 .mn-f.flag small { color: #8A5A00; font-weight: 600; }
 .mn-urgent { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); font-size: 13px; }
 .mn-note { margin: 0; font-size: 12.5px; color: var(--text-3); }

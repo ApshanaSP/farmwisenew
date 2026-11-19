@@ -11,6 +11,12 @@
  * map pin, which legitimately can fall outside the approximate area_wards
  * list, and the text a real citizen typed into the "Other" box
  * (otherDescription) is used for routing but not stored.
+ *
+ * Paper petitions filed at the Collector's office (the Manu Desk, src/lib/manu/petitions.ts) are real complaints
+ * that never went through the website's form: the desk picks a department, not a GCC type and sub type, the place is
+ * typed (no area or locality from the list), Details holds the whole petition text, and the first event is
+ * "Complaint Filed" by the "Collector Office". Checks 2, 6, 9 and 10 apply the form's rules to website complaints
+ * only; a petition must still name a known department, replay its history and match the database's text.
  */
 const fs = require("fs");
 const os = require("os");
@@ -47,6 +53,8 @@ const REJECTER = {
   "Completed - Pending Collector Verification": "Collector"
 };
 const ROLES = new Set(["Citizen", "System", "Department Officer", "Collector"]);
+/** The role of a paper petition's first event (Manu Desk). */
+const PAPER_ROLE = "Collector Office";
 const CODE_RE = /^(\d{4})-\d{3}[A-Z]{3}$/;
 const TS_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 const TAMIL = /[஀-௿]/;
@@ -77,6 +85,11 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
     const H = csv.parseObjects(hText);
     const rows = G.rows;
     const synthetic = rows.filter((r) => r["Is Synthetic"] === "1");
+    // paper petitions (Manu Desk): real complaints whose first event is "Complaint Filed" by the Collector Office
+    const paper = new Set(H.rows
+      .filter((h) => h.Status === "Complaint Filed" && h["Changed By Role"] === PAPER_ROLE && h["Is Synthetic"] !== "1")
+      .map((h) => h["Complaint No"]));
+    const isPaper = (r) => paper.has(r["Complaint No"]);
     const nowMin = new Date(intel.nowIst()).toISOString().slice(0, 16).replace("T", " ");
 
     // ---- reference data ---------------------------------------------------
@@ -132,8 +145,12 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
     {
       const f = [];
       for (const r of rows) {
-        const cands = taxo.get(r["Complaint Type"] + "|" + r["Complaint Sub Type"]);
         const tag = r["Complaint No"] + ": ";
+        if (isPaper(r)) { // filed by department, without a GCC type
+          if (!deptNames.includes(r.Department)) f.push(tag + "paper petition to unknown department " + r.Department);
+          continue;
+        }
+        const cands = taxo.get(r["Complaint Type"] + "|" + r["Complaint Sub Type"]);
         if (!cands) {
           f.push(tag + "unknown type/sub type " + r["Complaint Type"] + " / " + r["Complaint Sub Type"]);
           continue;
@@ -152,7 +169,8 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
           if (expected !== r.Department) f.push(tag + "Other routed to " + r.Department + ", classifier says " + expected);
         }
       }
-      check(2, "Type / sub type / department / routing basis match the DB", f, `${rows.length} rows`);
+      check(2, "Type / sub type / department / routing basis match the DB", f,
+        `${rows.length} rows` + (paper.size ? ` (${paper.size} paper petitions: department only)` : ""));
     }
 
     // ---- 3. routing flag ---------------------------------------------------
@@ -208,7 +226,7 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
     // ---- 6. typed street <=> blank area/locality ---------------------------
     {
       const f = rows
-        .filter((r) => (r["Street Source"] === "Typed by citizen") !== (r.Area === "" && r.Locality === ""))
+        .filter((r) => !isPaper(r) && (r["Street Source"] === "Typed by citizen") !== (r.Area === "" && r.Locality === ""))
         .map((r) => r["Complaint No"] + ": " + r["Street Source"] + " area='" + r.Area + "' locality='" + r.Locality + "'");
       check(6, "Typed by citizen <=> Area and Locality blank", f, "consistent");
     }
@@ -259,12 +277,13 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
           f.push(code + ": no history");
           continue;
         }
-        if (hs[0].Status !== "Complaint Filed" || hs[0]["Changed By Role"] !== "Citizen") f.push(code + ": first event is " + hs[0].Status);
+        const filer = isPaper(r) ? PAPER_ROLE : "Citizen";
+        if (hs[0].Status !== "Complaint Filed" || hs[0]["Changed By Role"] !== filer) f.push(code + ": first event is " + hs[0].Status);
         if (hs[0]["Changed On"] !== r["Filed On"]) f.push(code + ": first event " + hs[0]["Changed On"] + " != Filed On " + r["Filed On"]);
         for (let i = 0; i < hs.length; i++) {
           const h = hs[i];
           if (h["Is Synthetic"] !== r["Is Synthetic"]) f.push(code + ": history Is Synthetic differs");
-          if (!ROLES.has(h["Changed By Role"])) f.push(code + ": role " + h["Changed By Role"]);
+          if (!ROLES.has(h["Changed By Role"]) && !(i === 0 && h["Changed By Role"] === filer)) f.push(code + ": role " + h["Changed By Role"]);
           if (!STATUSES.includes(h.Status)) f.push(code + ": status " + h.Status);
           if (h["Changed On"] > nowMin) f.push(code + ": event in the future " + h["Changed On"]);
           if (i === 0) continue;
@@ -290,8 +309,9 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
     {
       const f = [];
       for (const r of rows) {
-        if (r.Title.length > 200) f.push(r["Complaint No"] + ": Title " + r.Title.length);
-        if (r.Details.length > 400) f.push(r["Complaint No"] + ": Details " + r.Details.length);
+        // the website form's limits; a paper petition keeps its whole text (the desk keeps a title up to 250)
+        if (r.Title.length > (isPaper(r) ? 250 : 200)) f.push(r["Complaint No"] + ": Title " + r.Title.length);
+        if (!isPaper(r) && r.Details.length > 400) f.push(r["Complaint No"] + ": Details " + r.Details.length);
         if (r.Landmark.length > 500) f.push(r["Complaint No"] + ": Landmark " + r.Landmark.length);
       }
       if (!Buffer.from(gText, "utf8").equals(gBuf)) f.push("grievances.csv is not valid UTF-8");

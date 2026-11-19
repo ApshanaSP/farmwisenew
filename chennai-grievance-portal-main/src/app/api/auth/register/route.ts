@@ -67,6 +67,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "Account created successfully. Please sign in." });
   } catch (err) {
+    // two sign-ups for one email at the same moment: the second hits the unique email, which is a 409, not a crash
+    const e = err as { code?: string; message?: string };
+    if (e?.code === "ER_DUP_ENTRY" || /UNIQUE constraint failed: users\.email/i.test(String(e?.message))) {
+      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+    }
     console.error("[api/auth/register]", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

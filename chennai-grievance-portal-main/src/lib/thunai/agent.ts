@@ -107,6 +107,7 @@ dashboard [cat, zones, period]: a 5-block screen. "make me a flooding dashboard 
 map [what severe|hotspots|cases, sev, cat, zones]: "map the severe cases" -> what severe. "show hotspots on a map" -> what hotspots.
 nearby [q]: places and distances (schools, hospitals, shelters, wards near something), answered by Ask the Map. q = the full question with places named: "schools within 1 km of flooding in Adyar zone".
 brief: the morning brief, read aloud. drafts: the approval tray, large.
+city [q traffic|flood|rain|power|metro|all, zones]: the city on the ground now, from one shared source: live traffic (jams, very congested roads, closed or flooded roads, accidents, the spots that keep coming back and who to send them to), the rain warning, the streets that flood, wards that lose power and trains that run late in heavy rain. "how is the traffic now" -> q traffic. "which streets flood" -> q flood. "power cuts in rain" -> q power. "metro delays in rain" -> q metro. "how is the city now" -> q all.
 answer: ONLY for a data question no recipe fits: first send calls (done false); after reading the results, recipe answer with say = 1-3 short sentences using only figures from the results.
 
 THE OPEN STAGE (when "Stage:" is given): the Collector is looking at it; "this", "these", "the third one" mean its items.

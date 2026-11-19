@@ -5,12 +5,12 @@
  * it hit, with what happened there in one line), then a place's card (how often, what happened in the chosen rain,
  * what to do before the next one), with Back. The map shows the places only: roads, wards, rail lines; Traffic keeps
  * the reports behind a road on its card, under "Where this comes from". Data: /api/rehearsal/impacts
- * (lib/rehearsal/impacts.ts). Traffic adds live flow and incidents when the server has a TomTom key.
+ * (lib/rehearsal/impacts.ts). Live traffic is not here (Rain is about what heavy rain does): it has its own view on the
+ * map (traffic/TrafficView.tsx), one click from the Traffic tab.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { I, type IconName } from "../icons";
 import type { ImpactData, ImpactItem, ImpactReport, Lens } from "@/lib/rehearsal/impacts";
-import type { LiveIncident } from "@/lib/rehearsal/traffic";
 import type { PastRain } from "@/lib/rehearsal/types";
 import type { RainApi, RainLayer } from "./rainLayer";
 import { fmtT, n0, plural, RainDots, range } from "./rainKit";
@@ -20,9 +20,10 @@ export const LENS_WORD: Record<Lens, { title: string; icon: IconName; item: stri
   power: { title: "Power", icon: "bolt", item: "ward", items: "Wards", often: "Power went off here", inRain: (n) => `${plural(n, "ward")} lost power` },
   metro: { title: "Metro", icon: "pin", item: "line", items: "Lines", often: "Trains ran late", inRain: (n, of) => `${n} of ${of} lines late` }
 };
+const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
 const SOURCE_WORD: Record<ImpactReport["source"], string> = { police: "Police report", citizen: "Citizen complaint", news: "News", flood: "Flood record" };
 
-export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, onOpenIncident, escRef, data: given }: {
+export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, onOpenIncident, escRef, data: given, onLive }: {
   lens: Lens;
   api: RainApi;
   /** the rains, newest first (the same as Flooding's) */
@@ -35,14 +36,14 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
   escRef: React.MutableRefObject<(() => boolean) | null>;
   /** already loaded by RainView (for the tabs' counts) */
   data: ImpactData | null;
+  /** opens the live Traffic view (the Traffic tab's link) */
+  onLive?: () => void;
 }) {
   const w = LENS_WORD[lens];
   const [d, setD] = useState<ImpactData | null>(given);
   const [err, setErr] = useState<string | null>(null);
   const [pick, setPick] = useState<string | null>(null);
   const [all, setAll] = useState(false);
-  const [live, setLive] = useState<{ enabled: boolean; at: string | null; incidents: LiveIncident[]; why: string | null } | null>(null);
-  const [liveOn, setLiveOn] = useState(false);
   useEffect(() => { setPick(null); setAll(false); }, [lens, rainId]);
   useEffect(() => {
     if (given) { setD(given); return; }
@@ -51,10 +52,6 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
     fetch(api.impacts + lens).then((r) => r.json().then((j) => { if (!on) return; if (r.ok) setD(j); else setErr(j.error ?? "Could not load."); })).catch(() => on && setErr("Could not load."));
     return () => { on = false; };
   }, [lens, api, given]);
-  useEffect(() => {
-    if (lens !== "traffic") return;
-    fetch(api.live).then((r) => (r.ok ? r.json() : null)).then((j) => j && setLive(j)).catch(() => undefined);
-  }, [lens, api]);
 
   const oldestFirst = useMemo(() => [...rains].reverse(), [rains]);
   const rain = rainId ? rains.find((r) => r.id === rainId) ?? null : null;
@@ -78,7 +75,19 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
     const key = `${lens}|${rainId}|${pick}`;
     if (shot.current.key !== key) shot.current = { key, seq: shot.current.seq + 1 };
     const lvl = (x: ImpactItem): 0 | 1 | 2 | 3 => (rain ? x.byRain[rain.id]?.level ?? 0 : x.level);
-    const tip = (x: ImpactItem) => `${x.label} · ${rain ? x.byRain[rain.id]?.why ?? "not hit in this rain" : x.rains.length ? `${w.often.toLowerCase()} in ${x.rains.length} of ${rains.length} rains` : x.facts[0] ?? ""}`;
+    // what hovering a road, a ward or a line says: its name, where it is, what happened in the chosen rain, and in which rains
+    const tip = (x: ImpactItem) => {
+      const hitIn = rains.filter((r) => x.byRain[r.id]); // newest first
+      const now = rain ? x.byRain[rain.id] : null;
+      const quiet = lens === "traffic" ? "no jam reported here" : lens === "power" ? "power stayed on" : "trains ran on time";
+      const out = [`<b>${esc(x.label)}</b>`, `<span class="tl dim">${esc(x.sub)}</span>`];
+      if (rain) out.push(`<span class="tl">In the ${esc(range(rain))} rain: <b class="in">${esc(now?.why ?? quiet)}</b></span>`);
+      out.push(hitIn.length
+        ? `<span class="tl">${esc(w.often)} in ${hitIn.length} of ${rains.length} heavy rains: ${esc(hitIn.slice(0, 4).map((r) => range(r)).join(", "))}${hitIn.length > 4 ? ` and ${hitIn.length - 4} more` : ""}</span>`
+        : `<span class="tl">${esc(x.facts[0] ?? `Not hit in the past heavy rains`)}</span>`);
+      out.push(`<span class="tl dim">Click for the details</span>`);
+      return out.join("");
+    };
     const streets: RainLayer["streets"] = items.filter((x) => x.lines?.length).map((x) => ({ key: x.key, lines: x.lines!, at: [x.lat, x.lon], level: lvl(x), tip: tip(x) }));
     const areas: RainLayer["areas"] = items.filter((x) => x.rings?.length).map((x) => ({ key: x.key, rings: x.rings!, level: lvl(x), tip: tip(x) }));
     const rails: RainLayer["rails"] = items.filter((x) => x.path?.length).map((x) => ({ id: x.key, color: x.color ?? "#6D28D9", path: x.path!, level: rain ? lvl(x) : (Math.max(1, x.level) as 1 | 2 | 3), tip: tip(x) }));
@@ -91,7 +100,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
         for (const c of h.closed ?? []) { const k = `${x.key}#${c.name}`; seen.set(k, { x, c, n: (seen.get(k)?.n ?? 0) + 1 }); }
       }
       for (const [k, { x, c, n }] of seen) if (rain || n >= 2)
-        points.push({ key: k, lat: c.lat, lon: c.lon, level: 3, glyph: "×", tip: `${c.name} (${x.label}) · ${rain ? `closed about ${c.hours} h` : `closed in ${n} rains`}${c.use ? ` · use ${c.use}` : ""}` });
+        points.push({ key: k, lat: c.lat, lon: c.lon, level: 3, glyph: "×", tip: `<b>${esc(c.name)}</b><span class="tl dim">${esc(x.label)}</span><span class="tl">${rain ? `Closed about ${c.hours} h in the ${esc(range(rain))} rain` : `Closed in ${n} heavy rains`}${c.use ? ` · use ${esc(c.use)}` : ""}</span>` });
     }
     const hitPts = (x: ImpactItem): [number, number][] => (x.lines?.length ? x.lines.flat() : x.rings?.length ? x.rings.flat() : x.path?.length ? x.path : [[x.lat, x.lon]]);
     let pts: [number, number][] | null = rain ? items.filter((x) => x.byRain[rain.id]).flatMap((x) => (lens === "traffic" ? [[x.lat, x.lon] as [number, number]] : hitPts(x)))
@@ -102,13 +111,11 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
     if (sel) { pts = hitPts(sel); maxZoom = sel.kind === "line" ? 13 : 16; }
     return {
       theme: lens, streets, dots: [], points, areas, rails,
-      tiles: lens === "traffic" && liveOn && live?.enabled ? api.tiles : null,
-      live: lens === "traffic" && liveOn ? (live?.incidents ?? []).map((x) => ({ id: x.id, path: x.path, flooding: x.flooding, tip: `${x.kind}: ${x.label}${x.delayMin ? ` · ${x.delayMin} min delay` : ""}${x.from ? ` · ${x.from} → ${x.to}` : ""}` })) : [],
       sel: sel ? { kind: sel.rings ? "area" : sel.path ? "line" : sel.lines ? "street" : "point", id: sel.key } : null,
       fit: { seq: shot.current.seq, pts, maxZoom },
       onPick: (_kind, id) => { const k = id.split("#")[0]; if (itemBy.has(k)) setPick(k); }
     };
-  }, [d, lens, rain, rainId, pick, items, itemBy, liveOn, live, api, rains.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [d, lens, rain, rainId, pick, items, itemBy, rains.length]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { onLayer(layer); }, [layer, onLayer]);
 
   if (!d) return (
@@ -218,7 +225,9 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
     <>
       <section className="rv-kpis">{d.kpis.map((k) => <div key={k.label}><b>{k.n}</b><span>{k.label}</span></div>)}</section>
       {d.insights.length > 0 && <p className="rv-insight"><I n="bulb" /><span>{d.insights.map((s) => <span key={s} style={{ display: "block" }}>{s}</span>)}</span></p>}
-      {lens === "traffic" && live?.enabled && <LiveBox live={live} on={liveOn} set={setLiveOn} />}
+      {lens === "traffic" && onLive && (
+        <button className="rv-livelink" onClick={onLive}><span className="dot" /><span><b>Live traffic now</b><small>Jams, closed and flooded roads at this moment, and who to send them to</small></span><I n="chevr" /></button>
+      )}
       <h4 className="rv-sec">Past heavy rains <small>newest first · click one to see what it hit</small></h4>
       <ul className="rv-rains">
         {rains.map((r) => (
@@ -307,17 +316,5 @@ function Sources({ lens, list, onOpenIncident }: { lens: Lens; list: ImpactRepor
       </ul>
       {list.length > 6 && <button className="rv-more" onClick={() => setMore((v) => !v)}>{more ? "Show fewer" : `Show all ${n0(list.length)}`}</button>}
     </details>
-  );
-}
-
-function LiveBox({ live, on, set }: { live: { enabled: boolean; at: string | null; incidents: LiveIncident[]; why: string | null }; on: boolean; set: (v: boolean) => void }) {
-  const jams = live.incidents.filter((x) => x.kind === "Jam").length, closed = live.incidents.filter((x) => x.kind === "Road closed").length, flood = live.incidents.filter((x) => x.flooding).length;
-  return (
-    <section className="rv-live on">
-      <h4><span className="dot" />Live traffic now <span className={`rv-tag k-live`} style={{ marginLeft: "auto" }}>Live</span></h4>
-      <p>{live.incidents.length ? `${plural(jams, "jam")}, ${plural(closed, "closed road")}${flood ? `, ${plural(flood, "flooded road")}` : ""} over the district${live.at ? `, as of ${new Date(live.at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" })}` : ""}.` : "No traffic incident over the district right now."}</p>
-      <label><input type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} />Show live speeds and incidents on the map (TomTom)</label>
-      {live.why && <p>{live.why}</p>}
-    </section>
   );
 }

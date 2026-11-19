@@ -20,7 +20,8 @@
 
 /* the running line along the top edge */
 #diq-line { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2147483001; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity .12s; }
-#diq-line[data-on] { opacity: 1; }
+/* not drawn any more: the notice itself says the site is working, and the consoles have their own loading bar (17 Nov 2026) */
+#diq-line[data-on] { opacity: 0; }
 #diq-line::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: #22C55E; animation: diq-run 1.05s ease-in-out infinite; }
 
 /* signing out: the page is covered, so nothing else can be started */
@@ -33,8 +34,10 @@
 [data-diq-press] { filter: brightness(.9); }
 /* busy: dimmed, and its clicks are kept and dropped by the activity layer (install.ts), never passed through to what is under it
    (pointer-events: none let a double click's second click land on the row, card or backdrop behind: click-layer-03) */
-[data-diq-busy] { opacity: .68; cursor: progress; }
-html[data-diq-working], html[data-diq-working] * { cursor: progress !important; }
+/* dimmed only once it has been busy for a second (install.ts SHOW_AFTER_MS): a quick click does not flicker the button */
+[data-diq-busy] { cursor: progress; animation: diq-dim 0s linear 1s forwards; }
+/* (the whole page no longer turns to the busy cursor: the control pressed and the notice are enough) */
+@keyframes diq-dim { to { opacity: .68; } }
 
 @keyframes diq-spin { to { transform: rotate(360deg); } }
 @keyframes diq-run { 0% { left: -40%; } 100% { left: 100%; } }

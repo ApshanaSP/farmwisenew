@@ -114,7 +114,9 @@ const ACTION_LABEL: Record<ConsoleActionName, (a: ConsoleAction, n: RefNames, la
   open_story: (_a, _n, l) => L("Open developing stories", "வளரும் செய்திகளைத் திற", "Developing stories open pannu")[l],
   open_briefing: (_a, _n, l) => L("Open the Briefing page", "சுருக்க அறிக்கைப் பக்கத்தைத் திற", "Briefing page open pannu")[l],
   save_briefing: (a, _n, l) => L(`Save this ${a.period ?? "daily"} briefing as a workspace`, "இந்த அறிக்கையைப் பணியிடமாகச் சேமி", "Indha briefing-a workspace-a save pannu")[l],
-  show_on_map: (_a, _n, l) => L("Show on the console map", "கன்சோல் வரைபடத்தில் காட்டு", "Console map-la kaattu")[l]
+  show_on_map: (_a, _n, l) => L("Show on the console map", "கன்சோல் வரைபடத்தில் காட்டு", "Console map-la kaattu")[l],
+  show_city: (a, _n, l) => (a.view === "traffic" ? L("Show live traffic on the map", "நேரடி போக்குவரத்தை வரைபடத்தில் காட்டு", "Live traffic map-la kaattu")
+    : L("Show it on the map (Rain)", "மழை வரைபடத்தில் காட்டு", "Rain map-la kaattu"))[l]
 };
 
 /** Keep only actions whose codes exist in the store (and incidents the answer is about), with labels in the reply language. */
@@ -127,10 +129,11 @@ export function validActions(raw: Partial<ConsoleAction>[], n: RefNames, lang: L
       || (a.action === "filter_taluk" && !!a.taluk && n.taluks.has(a.taluk)) || (a.action === "filter_cat" && !!a.cat && n.cats.has(a.cat))
       || (a.action === "set_period" && ["daily", "weekly", "monthly", "quarterly"].includes(String(a.period)))
       || (a.action === "open_incident" && !!a.id && /^INC-[A-Z0-9-]{4,40}$/.test(a.id) && incidentIds.includes(a.id))
-      || a.action === "open_story" || (a.action === "show_on_map" && (a.zone == null || n.zones.has(Number(a.zone))));
+      || a.action === "open_story" || (a.action === "show_on_map" && (a.zone == null || n.zones.has(Number(a.zone))))
+      || (a.action === "show_city" && ["traffic", "flood", "power", "metro", "rain"].includes(String(a.view)));
     if (!ok) continue;
     const act: ConsoleAction = { action: a.action, label: "", zone: a.zone == null ? null : Number(a.zone), dept: a.dept ?? null, taluk: a.taluk ?? null, cat: a.cat ?? null,
-      period: (a.period as Period) ?? null, id: a.id ?? null };
+      period: (a.period as Period) ?? null, id: a.id ?? null, ...(a.action === "show_city" ? { view: a.view ?? null } : {}) };
     act.label = ACTION_LABEL[a.action](act, n, lang);
     if (!out.some((x) => x.label === act.label)) out.push(act);
   }
