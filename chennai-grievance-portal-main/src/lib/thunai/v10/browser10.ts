@@ -14,7 +14,9 @@
  * Ask the Map by voice (map10.ts) and the dashboard's controls (controls10.ts) sit between 3 and 5 when their modules answer.
  */
 import type { NewsAskT } from "../newsask";
-import type { Lang } from "../types";
+import type { Lang, Step } from "../types";
+import { mapCommand10, type MapCmd, type MapCtx10 } from "./map10";
+import { controlCommand10, type ControlHit } from "./controls10";
 import { browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "../v8/browser";
 import { userLang8 } from "../v8/browser";
 import { classMention, findMentions, type Mention } from "./entity10";
@@ -28,7 +30,11 @@ export type BrowserLane10 = BrowserLane
   /** a cut-off line or a lone unclear word: nothing said; the next sentence is joined to it (Thunai.tsx keeps it a few seconds) */
   | { lane: "wait"; why: "cut-off" | "one-word"; lang: Lang }
   /** a name heard half-surely: asked back in a few words; a yes runs `then` */
-  | { lane: "confirm"; ask: { en: string; ta: string }; then: string; mention: { id: string; name: string }; lang: Lang };
+  | { lane: "confirm"; ask: { en: string; ta: string }; then: string; mention: { id: string; name: string }; lang: Lang }
+  /** Ask the Map by voice (map10.ts): one map operation; the console runs it (mapops.ts) */
+  | { lane: "map"; cmd: MapCmd; lang: Lang }
+  /** a dashboard control by voice (controls10.ts): its id, and its steps or the control pressed, or a question back */
+  | { lane: "control"; id: string; steps?: Step[]; press?: string | null; which?: ControlHit["which"]; level: ControlHit["level"]; lang: Lang };
 
 export interface BrowserCtx10 extends BrowserCtx {
   lastLang?: Lang | null;
@@ -37,6 +43,10 @@ export interface BrowserCtx10 extends BrowserCtx {
   lex?: Entity10[] | null;
   /** Ask the Map's suggested questions, when they show */
   suggest?: string[] | null;
+  /** Ask the Map's state as the console publishes it (map10.ts MapCtx10 without the language); null: not known */
+  askMap?: Omit<MapCtx10, "lang"> | null;
+  /** the controls visible now, by registry id, when the console knows them */
+  visible?: string[] | null;
 }
 
 /** words a sentence cannot end on: a line cut off before its point (v8's addressed.ts DANGLING8) */
@@ -126,6 +136,11 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // 2. a position by ear, read as the position, when a list is on screen
   const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
   const said = earOrdinals(said0, { list: sm.lists.length > 0 });
+  // 2b. Ask the Map by voice, then a dashboard control by voice (each module answers only for what is plainly its own)
+  const mc = mapCommand10(said, { ...(c.askMap ?? { open: false, hasAnswer: false }), lang });
+  if (mc) return { lane: "map", cmd: mc, lang };
+  const cc = controlCommand10(said, { state: c.state, lang, visible: c.visible ?? null });
+  if (cc) return { lane: "control", id: cc.id, ...(cc.steps ? { steps: cc.steps } : {}), ...(cc.press ? { press: cc.press } : {}), ...(cc.which ? { which: cc.which } : {}), level: cc.level, lang };
   // 3. a named thing: the day's lexicon, by ear
   const consoleThing = CONSOLE.test(said) && !/\b(?:news|story|article|seithi|seidhi)\b|செய்தி|நியூஸ்/iu.test(said);
   if (!consoleThing && c.lex?.length) {

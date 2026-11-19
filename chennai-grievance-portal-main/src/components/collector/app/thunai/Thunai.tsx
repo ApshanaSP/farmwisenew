@@ -62,6 +62,7 @@ import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFoun
 import { joinCut, v10Front } from "@/lib/thunai/v10/browser10";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
 import type { Entity10 } from "@/lib/thunai/v10/lexicon10";
+import { runMapCmd } from "./mapops";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -1773,6 +1774,29 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (r10 === "aborted") return;
         decide({ kind: "answer", query: said, lang: f10.lane.lang, lane: "instant", ms: performance.now() - t0 });
         return;
+      }
+      if (f10.lane?.lane === "map") {
+        // v10: Ask the Map by voice (map10.ts, mapops.ts): one operation on the map, its own words said by code
+        const lg = f10.lane.lang;
+        const t0 = performance.now();
+        setBrainNow({ by: "instant", model: null, ms: 0 }); remember(said, `Ask the Map: ${f10.lane.cmd.op}`, { doc: null });
+        const line = await runMapCmd(f10.lane.cmd, { askOnMap: hostRef.current.c.askOnMap, lang: lg });
+        if (!alive()) return;
+        if (line) { earcon("done"); out(lg === "ta" ? line.ta : line.en, lg, "ready"); } else setPhase("ready");
+        decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
+        return;
+      }
+      if (f10.lane?.lane === "control") {
+        // v10: a dashboard control by voice (controls10.ts): its steps, or a question back when two controls match
+        const lg = f10.lane.lang;
+        if (f10.lane.which) { earcon("need"); out(lg === "ta" ? f10.lane.which.ta : f10.lane.which.en, lg, "waiting"); return; }
+        if (f10.lane.level === "never") { earcon("blocked"); out(lg === "ta" ? "அதை நீங்களே தட்ட வேண்டும்." : "That one is yours to tap.", lg, "ready"); return; }
+        if (f10.lane.steps?.length) {
+          if (needsName(planRisk(f10.lane.steps), lg)) return;
+          setBrainNow({ by: "instant", model: null, ms: 0 });
+          await run(f10.lane.steps, lg, said, "rules");
+          return;
+        }
       }
       said = f10.said;
     }
