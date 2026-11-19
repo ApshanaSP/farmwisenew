@@ -1,0 +1,161 @@
+/**
+ * v10: the browser's lanes, in front of v8's (docs/jarvis/JARVIS_V10.md 4.3-4.8). One pure function the console (Thunai.tsx handle()) and the
+ * evaluation (eval10.live.ts) both run, so what is measured is what the console does.
+ *
+ *   1. a cut-off line ("Tell me about the", "What are the") or a lone unclear word waits for the rest: nothing is answered, the next sentence
+ *      within a few seconds is joined to it (the owner's turns, 18-19 Nov: answered as if they were requests)
+ *   2. the screen model (screen10.ts): a position said by ear ("the fast news") is read as the position when a list is on screen
+ *   3. a named event or name said by ear (entity10.ts against the day's lexicon): "Tell me about Cyclone Aquan" is the news about Cyclone Akvan,
+ *      with the weather readings for a storm; a name heard only half-surely is asked back in a few words ("Cyclone Akvan?"); a class word with a
+ *      name the lexicon does not know ("Cyclone Zorbo") still searches the news, never the instant look-up
+ *   4. the news in Tamil script's own loanword ("நியூஸ்"), and a story described with no news word ("adha kaattu"): news8.ts
+ *   5. then v8's lanes as they were (browser.ts browserLaneV8)
+ *
+ * Ask the Map by voice (map10.ts) and the dashboard's controls (controls10.ts) sit between 3 and 5 when their modules answer.
+ */
+import type { NewsAskT } from "../newsask";
+import type { Lang } from "../types";
+import { browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "../v8/browser";
+import { userLang8 } from "../v8/browser";
+import { classMention, findMentions, type Mention } from "./entity10";
+import type { Entity10 } from "./lexicon10";
+import { earOrdinals, screenModel, type ScreenModel } from "./screen10";
+import { understandV10 } from "./flag10";
+import { unclearWord } from "../addressed";
+import { districtNounIn } from "../quick";
+
+export type BrowserLane10 = BrowserLane
+  /** a cut-off line or a lone unclear word: nothing said; the next sentence is joined to it (Thunai.tsx keeps it a few seconds) */
+  | { lane: "wait"; why: "cut-off" | "one-word"; lang: Lang }
+  /** a name heard half-surely: asked back in a few words; a yes runs `then` */
+  | { lane: "confirm"; ask: { en: string; ta: string }; then: string; mention: { id: string; name: string }; lang: Lang };
+
+export interface BrowserCtx10 extends BrowserCtx {
+  lastLang?: Lang | null;
+  lastFound?: LastFound | null;
+  /** the day's lexicon (lexicon10.ts), from the server; null until it has come */
+  lex?: Entity10[] | null;
+  /** Ask the Map's suggested questions, when they show */
+  suggest?: string[] | null;
+}
+
+/** words a sentence cannot end on: a line cut off before its point (v8's addressed.ts DANGLING8) */
+const DANGLING = /(?:^|\s)(?:the|a|an|and|or|but|of|my|your|our|their|is|are|was|were|if|because|than|what|which|whats)\s*$/i;
+/** a request's frame that wants its object and was cut off before it ("tell me about", "any news on", "what about"); a question may end on a
+ * preposition otherwise ("Who is this case assigned to?") */
+const DANGLING_FRAME = /\b(?:tell (?:me|us)|talk|read|news|update|updates|anything|something|what|how|more)\s+(?:about|on|for|regarding|from)\s*$/i;
+/** a whole short request that ends on such a word all the same ("what's going on", "carry on", "log in", "zoom in", "which one is it about") */
+const WHOLE = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:what'?s going on|what is going on|go on|carry on|move on|log in|sign in|zoom in|come in|hold on|turn (?:it )?on|switch (?:it )?on|what are you up to|what is it about|what'?s it about|what is this about|what'?s this about|which one is it about)\s*$/i;
+/** Tamil and Tanglish lines cut off before the verb: an object, a postposition, "about", with no verb after it */
+const DANGLING_TA = /(?:பற்றி|பத்தி|குறித்து|என்ன|அந்த|இந்த|எந்த|ஒரு)\s*$/u;
+const DANGLING_TG = /\b(?:pathi|patthi|paththi|andha|indha|endha|oru|la|le)\s*$/i;
+
+/** Is this line cut off before its point? Its words, the punctuation the speech-to-text put at the end aside. */
+export function cutOff(text: string): boolean {
+  const t = text.normalize("NFC").replace(/[.!?,;:…]+\s*$/u, "").trim();
+  if (!t) return false;
+  if (WHOLE.test(t)) return false;
+  const words = t.split(/\s+/);
+  // one word that is a whole request (a verb, a yes, a place) is not cut off: only the dangling words count
+  if (DANGLING.test(` ${t}`) || DANGLING_FRAME.test(t)) return true;
+  if (words.length >= 2 && (DANGLING_TA.test(t) || DANGLING_TG.test(t))) return true;
+  return false;
+}
+
+/** a fresh request of its own: a verb or a question word first (not the rest of a cut-off line) */
+const FRESH = /^(?:(?:hey |hi |ok |okay )?jarvis,? )?(?:show|open|read|tell|go|what|which|who|where|when|how|why|close|stop|compare|any|is|are|can|could|please|pull|bring|give|take|list|filter|draft|send|play|explain)\b|^(?:காட்டு|திற|படி|சொல்|என்ன|எந்த|யார்|எங்கே)/iu;
+const flat = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+/**
+ * v10: the rest of a cut-off line. A sentence said within `ms` of a line cut off before its point is its rest ("Tell me about the" ... "fast
+ * news"), unless it says the cut line over again whole (the owner did: "Tell me about the" then "Tell me about the fast news.") or is a fresh
+ * request of its own.
+ */
+export function joinCut(cut: { text: string; at: number } | null, said: string, now: number, ms = 12_000): string {
+  const n = said.trim();
+  if (!cut || now - cut.at > ms || now < cut.at) return n;
+  const c = cut.text.replace(/[.!?,…]+\s*$/u, "").trim();
+  if (!c) return n;
+  if (flat(n).includes(flat(c)) || FRESH.test(n)) return n;
+  return `${c} ${n}`;
+}
+
+/** a find body for a named thing: the request with the name the store spells, and the spellings a headline may have */
+function entityFind(said: string, m: Mention, c: BrowserCtx10, lang: Lang, weather: boolean): NewsAskT {
+  const words = said.split(/(\s+)/);
+  // the heard words swapped for the store's own spelling ("Cyclone Aquan" -> "Cyclone Akvan"), the rest as said
+  const q = said.replace(m.heard, m.entity.core).slice(0, 400);
+  void words;
+  const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));
+  return { kind: "find", body: { find: { q, lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })),
+    entity: { name: m.entity.name, kind: m.entity.kind, spellings: m.entity.spellings.slice(0, 12) }, ...(weather ? { weather: true } : {}) } } } as NewsAskT;
+}
+
+/** the console's own records and controls: a sentence about them is the console's, a name in it notwithstanding ("show the complaints in Adyar") */
+const CONSOLE = /\b(?:complaints?|grievances?|petitions?|cases?|incidents?|tickets?|officers?|departments?|backlog|sla|overdue|readings?|rainfall|reservoirs?|lakes?|aqi|zones?|wards?|taluks?|drafts?|tray|map|maps|page|panel|tab|trends?|chart|graph|filter|period|weekly|monthly|dashboard|briefing|layer|layers)\b|புகார்|சம்பவ|மனு|மண்டல|வார்டு|வரைபட/iu;
+/** a forecast question with no name: the weather look-up's, as in v6 ("will it rain tonight", "IMD forecast") */
+const FORECAST_ONLY = /\b(?:will it rain|going to rain|forecast|nowcast|red alert|orange alert|yellow alert|weather (?:warning|alert|forecast|bulletin))\b|வானிலை\s*(?:முன்னறிவிப்பு|எச்சரிக்கை)|நாளை மழை/iu;
+/** asked about a name: "tell me about", "what about", "any news on", "the latest on", "update on", "explain", "what happened to", "who is", "read",
+ * "open", and the Tamil and Tanglish "pathi", பற்றி, பத்தி */
+const ABOUT = /\b(?:tell (?:me|us) (?:more )?about|what about|how about|anything (?:on|about)|news (?:on|about)|latest (?:on|about)|updates? (?:on|about)|explain|what happened (?:to|with|at)|what'?s happening (?:to|with)|who is|who'?s|read|open|pull up|brief me on|health|status of)\b|\b(?:pathi|patthi|paththi|enna aachu|enna achu)\b|பற்றி|பத்தி|என்ன ஆச்சு|என்னாச்சு/iu;
+/** a news-like ask about a storm with no name ("what's the latest on the cyclone", "puyal pathi enna news"): the news, with the weather */
+const STORM_ASK = /\b(?:latest|update|updates|news|happening|happened|status|where is|tell me about|what about|explain)\b|\b(?:enna aachu|enna nilamai|pathi enna|pathi sollu\w*)\b|என்ன ஆச்சு|பற்றி|நிலவரம்|செய்தி|நியூஸ்/iu;
+
+/** v10's order: the cut-off wait, the by-ear positions, the named thing, then v8's lanes. */
+export function browserLaneV10(said0: string, c: BrowserCtx10): BrowserLane10 {
+  const f = v10Front(said0, c);
+  return f.lane ?? browserLaneV8(f.said, c);
+}
+
+/**
+ * v10's own lanes, in front of v8's: the lane they take (null: none of v10's), and the sentence as v8's lanes are to read it (a position by ear
+ * read as the position). Thunai.tsx runs this, then its own inline v8 lanes on `said`, as browserLaneV10 runs browserLaneV8.
+ */
+export function v10Front(said0: string, c: BrowserCtx10): { said: string; lane: BrowserLane10 | null } {
+  if (!understandV10()) return { said: said0, lane: null };
+  const lane = v10Lane(said0, c);
+  const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
+  return { said: earOrdinals(said0, { list: sm.lists.length > 0 }), lane: lane && lane.lane !== "server" ? lane : null };
+}
+
+function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
+  const lang = userLang8(said0, c.lastLang ?? null);
+  // 1. cut off before its point: wait for the rest (the gate silences it on the open mic; here, named or engaged, it is not answered either);
+  // and a lone word no lexicon knows ("வாயமுர்ரா.": the owner's turn, answered by the planner on 18 Nov)
+  if (cutOff(said0)) return { lane: "wait", why: "cut-off", lang };
+  if (unclearWord(said0, districtNounIn(said0, c.world))) return { lane: "wait", why: "one-word", lang };
+  // 2. a position by ear, read as the position, when a list is on screen
+  const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
+  const said = earOrdinals(said0, { list: sm.lists.length > 0 });
+  // 3. a named thing: the day's lexicon, by ear
+  const consoleThing = CONSOLE.test(said) && !/\b(?:news|story|article|seithi|seidhi)\b|செய்தி|நியூஸ்/iu.test(said);
+  if (!consoleThing && c.lex?.length) {
+    const ms = findMentions(said, c.lex, { kinds: ["storm", "name"] });
+    // a person's or a body's name is the news only when asked about ("tell me about Arlekar", "any update on the IOCL"), or said alone; "CM Vijay is
+    // visiting Adyar, what should I know?" is a visit's brief (v7's asks7), not a story
+    const m = ms.find((x) => x.entity.kind === "storm" || ABOUT.test(said) || said.replace(/[.?!,]/g, "").trim().split(/\s+/).length <= 3);
+    if (m) {
+      const storm = m.entity.kind === "storm";
+      if (m.band === "ask") {
+        const then = said.replace(m.heard, m.entity.core);
+        return { lane: "confirm", ask: { en: `${m.entity.name}?`, ta: storm ? `${m.entity.core} புயலா?` : `${m.entity.name}-ஆ?` }, then, mention: { id: m.entity.id, name: m.entity.name }, lang };
+      }
+      return { lane: "news", na: entityFind(said, m, c, lang, storm), lang };
+    }
+  }
+  // a class word with a name the lexicon does not know ("Cyclone Zorbo"): still the news (and the weather for a storm), never the look-up
+  if (!consoleThing) {
+    const cm = classMention(said);
+    if (cm && cm.cls === "storm") {
+      const fake: Mention = { entity: { id: `storm:${cm.name}`, kind: "storm", name: `Cyclone ${cm.name}`, core: cm.name, spellings: [cm.name], keys: [], docs: [], n: 0 }, score: 1, band: "sure", heard: cm.name, at: [0, 0], cls: "storm" };
+      return { lane: "news", na: entityFind(said, fake, c, lang, true), lang };
+    }
+    // a storm asked about with no name ("what's the latest on the cyclone"): the news about the storm, with the weather; a forecast stays v6's
+    const stormWord = /\b(?:cyclone|storm|puyal)\b|புயல்|சைக்ளோன்|சைக்கிளோன்/iu.test(said);
+    if (stormWord && STORM_ASK.test(said) && !FORECAST_ONLY.test(said)) {
+      const items = (c.news.items ?? []).filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id) && !/^web-\d/.test(x.id));
+      return { lane: "news", na: { kind: "find", body: { find: { q: `news on the cyclone ${said}`.slice(0, 400), lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })), weather: true } } } as NewsAskT, lang };
+    }
+  }
+  // 5. none of v10's: v8's lanes take it (with the by-ear positions read)
+  return null;
+}

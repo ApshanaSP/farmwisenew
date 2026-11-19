@@ -8,6 +8,8 @@ import { aideReady, answerStyle } from "@/lib/thunai/aide7";
 import { newsAide } from "@/lib/thunai/aide7/news";
 import { serverWorld } from "@/lib/thunai/world";
 import { feedLines, foundStory, type FindAsk } from "@/lib/thunai/v8/newsfind";
+import { serverHands } from "@/lib/thunai/data";
+import { weatherLines } from "@/lib/thunai/v10/weather10";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,5 +31,8 @@ export async function POST(req: NextRequest) {
   // v8: a story by its topic and a news question (the owner's examples 1 and 2); the world is read only when one is asked; JARVIS_UNDERSTAND=v7 turns them off
   // (served whatever the server's switch says: a browser built with v8 asks for it; the switch decides what the browser asks: the review, 19 Nov)
   const v8 = { find: async (f: FindAsk) => foundStory(f, { world: await serverWorld() }), feedLines: async (f: FindAsk, words: string[]) => feedLines(f, words, { world: await serverWorld() }) };
-  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}`, aide, ...v8 }));
+  // v10: a storm's weather readings (the rain gauges, IMD's warning), read from the console's own records when a find asks for them
+  const hands = serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal);
+  const v10 = { weather: () => weatherLines((n, a) => hands.tool(n, a)) };
+  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: `collector:${s.userId}`, aide, ...v8, ...v10 }));
 }

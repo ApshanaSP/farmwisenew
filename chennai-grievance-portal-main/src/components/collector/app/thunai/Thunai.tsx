@@ -59,6 +59,9 @@ import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
 import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
+import { joinCut, v10Front } from "@/lib/thunai/v10/browser10";
+import { understandV10 } from "@/lib/thunai/v10/flag10";
+import type { Entity10 } from "@/lib/thunai/v10/lexicon10";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -318,6 +321,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const lastAckSaid = useRef<string | null>(null);
   /** v8: the story found by its topic last, and the other one offered with it ("the other one") */
   const lastFound = useRef<LastFound | null>(null);
+  /** v10: the day's names (storms and names in the news, lexicon10.ts), from the server; a line cut off before its point, kept a few seconds for
+   * its rest; a name heard half-surely, asked back ("Cyclone Akvan?"), and the request a yes runs */
+  const lexRef = useRef<Entity10[] | null>(null);
+  const cutRef = useRef<{ text: string; at: number } | null>(null);
+  const confirmRef = useRef<{ then: string; lang: Lang; at: number } | null>(null);
   const listenLangRef = useRef<Lang>("en");
   /** what was asked and answered goes to the chatbot's Jarvis tab: nothing stacks over the dashboard */
   const pushMsg = (m: Omit<JLog, "id" | "at">) => jarvisLog.add(m);
@@ -1409,6 +1417,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         } else if (e.type === "none") {
           // v9: a soft find found nothing close: say nothing here; the turn goes on to the console's lanes
           st.none = true;
+        } else if (e.type === "weather") {
+          // v10: a storm's weather readings (the rain gauges, IMD's warning), said by code after its story, and shown under it
+          const w = e as { en?: string[]; ta?: string[] };
+          const wen = (w.en ?? []).map(String), wta = (w.ta ?? []).map(String);
+          if (wen.length || wta.length) { st.answered = true; markAnswer(); st.en = [...st.en, ...wen]; st.ta = [...st.ta, ...wta]; draw(); sayLines(wen, wta); }
         } else if (e.type === "done") {
           jvMark("newsDone");
           // v8: another story matched almost as well: offered in one line, never read uninvited
@@ -1617,7 +1630,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * done on the spot. When the brain cannot be reached, the built-in rules answer instead and the dock says so.
    */
   const handle = async (text: string, conf = 0.95, original?: string, opts: { gate?: Addressed | null; source?: "whisper" | "captions" | "typed"; lang?: Lang } = {}) => {
-    const said = text.trim();
+    // v10: the rest of a line cut off a moment ago ("Tell me about the" ... "fast news") is joined to it (browser10.ts joinCut)
+    const cutBefore = cutRef.current;
+    cutRef.current = null;
+    let said = original || !understandV10() ? text.trim() : joinCut(cutBefore, text, Date.now());
     if (!said) return;
     // the trace (v5): the turn this answers, for the answer's own stamps (the spoken sentence's trace; none for typed text)
     traceAnswer(traceOf.current);
@@ -1702,6 +1718,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (/^(no|cancel|வேண்டாம்|illa|vendaam)$/i.test(said)) { setPendingB(null); setPhase("ready"); return; }
       setPendingB(null);
     }
+    // v10: a name heard half-surely was asked back ("Cyclone Akvan?"): a yes runs the request with that name, a no drops it; anything else is a
+    // new request of its own
+    const cf = confirmRef.current;
+    if (cf && !original) {
+      confirmRef.current = null;
+      if (Date.now() - cf.at < 30_000) {
+        if (plainYes(said)) { await handle(cf.then, conf, undefined, { ...opts, lang: cf.lang }); return; }
+        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)\b/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
+      }
+    }
     // the next step offered after a screen (Level A): a plain yes, or "show me", builds it; anything else puts the offer away
     if (offerRef.current && !original) {
       if (plainYes(said)) { takeOffer(); return; }
@@ -1718,6 +1744,38 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v6 (Phase 4): the report on screen read, its coverage compared, or a public question looked up on the web (newsask.ts). Before the
     // Stage's own commands: over a news list "read the first one" stays the Stage's headline reading, but "read the first article" is the
     // article itself (the 17 Nov news run: the Stage took it and read the headline)
+    // v10 (docs/jarvis/JARVIS_V10.md 4.2-4.4): in front of v8's lanes, a line cut off before its point waits for its rest; a name heard by ear
+    // ("Tell me about Cyclone Aquan") is the news about the thing the store names (with the weather readings for a storm), or is asked back in a
+    // few words when only half sure; a position said by ear ("the fast news") is read as the position when a list is on screen
+    if (!original && understandV10()) {
+      const st10 = buildState();
+      const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
+        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7() });
+      if (f10.lane?.lane === "wait") {
+        // nothing said: the rest of the sentence is joined to it when it comes (joinCut), and Jarvis keeps listening
+        cutRef.current = { text: said, at: Date.now() };
+        setBrainNow({ by: "instant", model: null, ms: 0 });
+        setPhase("listening");
+        return;
+      }
+      if (f10.lane?.lane === "confirm") {
+        const lg = f10.lane.lang;
+        confirmRef.current = { then: f10.lane.then, lang: lg, at: Date.now() };
+        setBrainNow({ by: "instant", model: null, ms: 0 });
+        earcon("need");
+        out(lg === "ta" ? f10.lane.ask.ta : f10.lane.ask.en, lg, "waiting");
+        decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: 0 });
+        return;
+      }
+      if (f10.lane?.lane === "news") {
+        const t0 = performance.now();
+        const r10 = await newsTurn(f10.lane.na, said, f10.lane.lang, alive, ctl.signal);
+        if (r10 === "aborted") return;
+        decide({ kind: "answer", query: said, lang: f10.lane.lang, lane: "instant", ms: performance.now() - t0 });
+        return;
+      }
+      said = f10.said;
+    }
     // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
     if (!original && v8) {
@@ -2475,8 +2533,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onSentence: (h) => onSentenceRef.current(h),
       cancelTurn: () => cancelTurn(),
       onReach: (ok) => setOffline(!ok),
-      onIgnored: (t) => {
+      onIgnored: (t, why) => {
         hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000);
+        // v10: a line cut off before its point, said to Jarvis: its rest, said next, is joined to it (handle(): joinCut)
+        if (why === "cut-off-held") cutRef.current = { text: t, at: Date.now() };
         // a measuring build only: the line the gate left unanswered, for the real-path spec (the words stay in this page; nothing is logged)
         if (SPEC) { jvMark("ignored"); (window as unknown as { __jvIgnored?: string[] }).__jvIgnored = [...((window as unknown as { __jvIgnored?: string[] }).__jvIgnored ?? []), t].slice(-10); }
       },
@@ -2518,7 +2578,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // v4 ears (lane L4): the open Stage's names go with the audio; a yes awaited makes "yes" over the voice an answer; a sentence not
       // transcribed in time is said calmly to be missed
       vocab: () => vocabOf(stageRef.current),
-      wantsYes: () => !!pendingBRef.current,
+      // (v10: a name asked back, "Cyclone Akvan?", waits for its yes too)
+      wantsYes: () => !!pendingBRef.current || !!confirmRef.current,
       offerPending: () => !!offerRef.current,
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
@@ -2801,6 +2862,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     void loadMemory();
     // asked each time Jarvis opens: the server also works out the district's overviews then, ahead of the first question
     fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && !ref.cats.length) setRef(j); }).catch(() => undefined);
+    // v10: the day's names in the news (storms, people, bodies), for names said by ear; asked each time Jarvis opens
+    if (understandV10()) fetch("/api/collector/thunai/lexicon").then((r) => (r.ok ? r.json() : null)).then((j: { entities?: Entity10[] } | null) => { if (j?.entities) lexRef.current = j.entities; }).catch(() => undefined);
     warmVoices();
   }, [loadMemory, ref.cats.length]); // eslint-disable-line react-hooks/exhaustive-deps
 

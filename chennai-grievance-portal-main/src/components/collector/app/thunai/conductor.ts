@@ -51,6 +51,7 @@ import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, set
 import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
+import { understandV10 } from "@/lib/thunai/v10/flag10";
 
 /** this turn's trace is still the open one: a stamp for an older turn never lands on a newer turn's trace */
 const isCurrent = (tr: TurnTrace | null): boolean => !!tr && traces().at(-1) === tr;
@@ -111,8 +112,9 @@ export interface ConductorHooks {
   onSentence: (h: HeardLine) => void;
   /** abort the question in flight and bump the turn's generation */
   cancelTurn: () => void;
-  /** a sentence the gate turned away: a faint line for two seconds, not logged */
-  onIgnored: (text: string) => void;
+  /** a sentence the gate turned away: a faint line for two seconds, not logged. v10: `why` "cut-off-held", a line cut off before its point
+   * said to Jarvis (called or engaged): kept a few seconds for its rest (Thunai.tsx joinCut), and the window stays open for it */
+  onIgnored: (text: string, why?: string) => void;
   onState: (s: TurnState) => void;
   /** mic level, 0..1, every frame */
   onLevel?: (v: number) => void;
@@ -612,10 +614,23 @@ export class Conductor {
     this.lastLang = lang;
     // the same gate as Whisper's words: side talk goes no further than this browser
     const gate = this.gateFor(text);
-    if (!gate.act) { this.h.onIgnored(text); return; }
+    if (!gate.act) { this.ignored(text, gate); return; }
     this.pending = { lang, source: "captions", gate, conf: CAPTIONS_CONF };
     if (this.m.state === "listening") this.m = { ...this.m, awaiting: true, state: "thinking" };
     this.dispatch({ type: "text", text: gate.text, gen: this.m.gen });
+  }
+
+  /**
+   * A line the gate turned away. v10 (docs/jarvis/JARVIS_V10.md Part 3: "Tell me about the" was answered as a request): a line cut off before its
+   * point that was said to Jarvis (just called, or in the conversation) is held for its rest: the window stays open, and the page joins the next
+   * sentence to it. Said to no one in particular, it is let go as before.
+   */
+  private ignored(text: string, gate: Addressed) {
+    if (gate.why === "cut-off" && understandV10()) {
+      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || 0;
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.engage(); this.h.onIgnored(text, "cut-off-held"); return; }
+    }
+    this.h.onIgnored(text, gate.why);
   }
 
   private gateFor(text: string): Addressed {
@@ -824,7 +839,7 @@ export class Conductor {
     }
     const gate = this.gateFor(t);
     if (!gate.act) {
-      this.h.onIgnored(t);
+      this.ignored(t, gate);
       this.dispatch({ type: "text", text: "", gen });
       this.backOn(interrupted);
       return;

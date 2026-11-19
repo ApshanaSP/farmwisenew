@@ -31,7 +31,10 @@ export const NewsBody = z.union([
   z.object({ find: z.object({ q: z.string().trim().min(2).max(400), lang: z.enum(["en", "ta"]),
     screen: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/), title: z.string().max(400).nullable().optional(), source: z.string().max(300).nullable().optional() })).max(250).optional(),
     // the story already read, left out of a search for more on it
-    exclude: z.array(z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/)).max(5).optional() }).strict() }).strict()
+    exclude: z.array(z.string().regex(/^[A-Za-z0-9_:.-]{1,80}$/)).max(5).optional(),
+    // v10: a named thing heard by ear (its name and the store's spellings of it), and a storm's weather readings wanted with the news
+    entity: z.object({ name: z.string().trim().min(1).max(80), kind: z.string().max(20), spellings: z.array(z.string().trim().min(1).max(80)).max(12) }).strict().optional(),
+    weather: z.boolean().optional() }).strict() }).strict()
 ]);
 export type NewsBodyT = z.infer<typeof NewsBody>;
 
@@ -52,6 +55,8 @@ export type NewsEvent =
   | { type: "said"; en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }
   /** v9: a soft find (a story-like topic with no news word) found nothing close: nothing is said; the console's own lanes take the sentence */
   | { type: "none" }
+  /** v10: a storm's weather readings, said by code after the news (v10/weather10.ts) */
+  | { type: "weather"; en: string[]; ta: string[] }
   | { type: "error"; why: "not_found" | "failed" | "no_news" }
   | { type: "done"; ms: number };
 
@@ -68,6 +73,8 @@ export interface ServeDeps extends WebDeps, CompareOptions {
   find?: (f: Extract<NewsBodyT, { find: unknown }>["find"]) => Promise<FoundStory | null>;
   /** v8: nothing in the dashboard: the outlets' feeds, said by code (v8/newsfind.ts feedLines) */
   feedLines?: (f: Extract<NewsBodyT, { find: unknown }>["find"], words: string[]) => Promise<{ en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }>;
+  /** v10: a storm's weather readings (v10/weather10.ts weatherLines), when a find asks for them */
+  weather?: () => Promise<{ en: string[]; ta: string[] } | null>;
 }
 
 /** v8: what a { find } found (v8/newsfind.ts): the request's kind and topic words, the story picked (or none), another close one, the matches */
@@ -90,6 +97,9 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
   const ms = () => Math.round(performance.now() - t0);
   let body: Exclude<NewsBodyT, { incident: string } | { find: unknown }>;
   let ask = "ask" in asked ? asked.ask ?? null : null;
+  // v10: a storm's weather readings, read while the story is found and read, said after it
+  const weatherP = "find" in asked && asked.find.weather && d.weather ? d.weather().catch(() => null) : null;
+  const weatherEvent = async (): Promise<NewsEvent | null> => { const w = weatherP ? await weatherP : null; return w && (w.en.length || w.ta.length) ? { type: "weather", en: w.en, ta: w.ta } : null; };
   if ("find" in asked) {
     // v8: the story the Collector named by its topic, else (a news question with nothing in the dashboard) what the outlets' feeds have
     let f: FoundStory | null = null;
@@ -100,6 +110,9 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
       const said = d.feedLines ? await d.feedLines(asked.find, f.words).catch(() => null) : null;
       if (!said) { yield { type: "error", why: "not_found" }; return; }
       yield { type: "said", ...said };
+      // (a storm with nothing in the news still has its readings)
+      const w = await weatherEvent();
+      if (w) yield w;
       yield { type: "done", ms: ms() };
       return;
     }
@@ -162,6 +175,8 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
     }
   }
   if (!aideLines) yield { type: "brief", stage: "article", status: primary.status, brief: codeBrief, ms: ms() };
+  // v10: a storm's readings after its story
+  { const w = await weatherEvent(); if (w) yield w; }
 
   if (relP) {
     const rel = await relP;
