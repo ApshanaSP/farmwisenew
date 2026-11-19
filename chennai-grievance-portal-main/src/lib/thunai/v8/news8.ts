@@ -523,6 +523,19 @@ interface Doc { item: StoryItem; keys: Set<string>; /** the story's word keys by
   raw: Set<string> }
 /** a story's words, keyed once (and kept for the next request: the same stored stories come back) */
 const docMemo = new Map<string, Doc>();
+/** a headline word's key, English stem and whether it is an English word, worked out once a word (v10: a week of new headlines is mostly the
+ * same words; the review's 3,000-report case spent ~0.1 ms a headline recomputing them) */
+type WordInfo = { k: string; en: string | null; eng: boolean };
+const wordMemo = new Map<string, WordInfo>();
+const wordInfoOf = (w: string): WordInfo => {
+  let e = wordMemo.get(w);
+  if (!e) {
+    e = { k: looseKey(w), en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, eng: /^[a-z]+$/.test(w) && isEnglishWord(w) };
+    if (wordMemo.size > 50_000) wordMemo.clear();
+    wordMemo.set(w, e);
+  }
+  return e;
+};
 const docOf = (x: StoryItem): Doc => {
   const memoKey = `${x.id}|${x.title}|${x.titleEn ?? ""}|${x.place ?? ""}`;
   const hit = docMemo.get(memoKey);
@@ -532,15 +545,14 @@ const docOf = (x: StoryItem): Doc => {
   // (v10, the second review of v9: a possessive's 's off, as for the request: "DMK's Arasakumar" is "dmk")
   const part = (s: string | null | undefined) => tokensOf((s ?? "").replace(/(\p{L})['’]s\b/gu, "$1")).filter((w) => w.length >= 2).slice(0, 40);
   const toks = [...new Set([...part(x.title), ...part(x.titleEn), ...part(x.place).slice(0, 8)])];
-  const keys = new Set(toks.map(looseKey).filter(Boolean));
-  const byFirst = new Map<string, { k: string; en: string | null; eng: boolean }[]>();
+  const infos = toks.map(wordInfoOf);
+  const keys = new Set(infos.map((e) => e.k).filter(Boolean));
+  const byFirst = new Map<string, WordInfo[]>();
   const seen = new Set<string>();
-  for (const w of toks) {
-    const k = looseKey(w);
-    if (!k || seen.has(k)) continue;
-    seen.add(k);
-    const e = { k, en: /^[a-z]{5,}$/.test(w) ? looseKey(enStem(w)) : null, eng: /^[a-z]+$/.test(w) && isEnglishWord(w) };
-    const l = byFirst.get(k[0]); if (l) l.push(e); else byFirst.set(k[0], [e]);
+  for (const e of infos) {
+    if (!e.k || seen.has(e.k)) continue;
+    seen.add(e.k);
+    const l = byFirst.get(e.k[0]); if (l) l.push(e); else byFirst.set(e.k[0], [e]);
   }
   const d: Doc = { item: x, keys, byFirst, latin: !/[஀-௿]/u.test(x.title), raw: new Set(toks) };
   if (docMemo.size > 20_000) docMemo.clear();
