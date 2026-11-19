@@ -49,7 +49,8 @@ import { z } from "zod";
 groqOnly();
 if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
 const MODE = process.env.EVAL8 ?? "";
-const SET = (process.env.SET ?? "dev") as "dev" | "holdout";
+// (v9: "news9", the blind news set written for v9's fixes; any set but dev is hash-checked against eval/v8/HASHES.txt)
+const SET = (process.env.SET ?? "dev") as "dev" | "holdout" | "news9";
 const V = (process.env.V ?? "v8") as "v7" | "v8";
 // V=v7 in this tree: every v8 layer off by its rollback switch (the v7 commit itself is run from its own checkout for the finals)
 if (V === "v7") process.env.JARVIS_UNDERSTAND = "v7";
@@ -64,10 +65,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function items(): Item8[] {
   const raw = norm(fs.readFileSync(path.join(DIR, "set.json"), "utf8"));
-  if (SET === "holdout") {
-    const want = fs.readFileSync(path.resolve(process.cwd(), "eval", "v8", "HASHES.txt"), "utf8").match(/^([0-9a-f]{64}) \*eval\/v8\/holdout\/set\.json$/m)?.[1];
+  if (SET !== "dev") {
+    const hashes = norm(fs.readFileSync(path.resolve(process.cwd(), "eval", "v8", "HASHES.txt"), "utf8"));
+    const want = hashes.split("\n").map((l) => /^([0-9a-f]{64}) \*eval\/v8\/([a-z0-9]+)\/set\.json$/.exec(l.trim())).find((m) => m?.[2] === SET)?.[1];
     const got = createHash("sha256").update(raw).digest("hex");
-    if (want !== got) throw new Error(`the holdout set changed since it was hashed (${got} != ${want})`);
+    if (want !== got) throw new Error(`the ${SET} set changed since it was hashed, or was never hashed (${got} != ${want})`);
   }
   const all = (JSON.parse(raw) as { items: Item8[] }).items;
   const bad = checkSet(all);
@@ -164,7 +166,12 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   const listen: Lang = it.ui ?? "en";
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   const ctx: BrowserCtx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone } } : null, news: newsOn(c, s), state: s.state, world: c.world, listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true };
-  const bl = v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
+  let bl = v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
+  // v9: a soft find (a story-like topic with no news word) that finds nothing close goes on to the lane behind it, as Thunai.tsx does
+  if (bl.lane === "news" && bl.soft && bl.na.kind === "find") {
+    const f = await foundStory(bl.na.body.find, { world: c.world }).catch(() => null);
+    if (!f?.pick) bl = bl.soft;
+  }
   let scene: Scene = { ...s, lastTurnAt: now, lastLang: wordsLang(said, { isName: placeWord }) ?? s.lastLang ?? null };
   const remember = (did: string, doc: StageDocT | null, result: string | null) => {
     scene.turns = [...s.turns, { heard: said.slice(0, 300), did: did.slice(0, 300), ...(doc ? { recipe: doc.recipe } : {}), ...(result ? { result: result.slice(0, 200) } : {}) }].slice(-4) as Scene["turns"];
