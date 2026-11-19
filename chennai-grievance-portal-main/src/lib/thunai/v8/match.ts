@@ -140,8 +140,18 @@ export function tokenSim(q: string, t: string): number {
   return best;
 }
 
-/** the words of a text, Tamil romanised */
-export const tokensOf = (text: string): string[] => fold(text).split(" ").filter(Boolean);
+/**
+ * v9: an acronym said letter by letter, as the speech-to-text writes it ("I O C L", "R.B.I.", "H-P-V"), is one word ("IOCL"): capital letters
+ * standing alone, two or more in a row; small ones only three or more in a row ("a" and "i" are words). "T. Nagar" (a letter and a word) and
+ * "I read" stay as they are. The holdout's "anything new on that I O C L blast?" (v8's RESULTS, "Where v8 still misses").
+ */
+const SPELLED_UP = /(?<![\p{L}\p{N}])[A-Z](?:[.\-\s]{1,3}[A-Z](?![\p{L}\p{N}]))+\.?/gu;
+const SPELLED_LOW = /(?<![\p{L}\p{N}])[a-z](?:[.\-\s]{1,3}[a-z](?![\p{L}\p{N}])){2,}\.?/gu;
+export const joinSpelled = (text: string): string =>
+  text.replace(SPELLED_UP, (m) => ` ${m.replace(/[^A-Z]/g, "")} `).replace(SPELLED_LOW, (m) => ` ${m.replace(/[^a-z]/g, "")} `);
+
+/** the words of a text, Tamil romanised (an acronym said letter by letter joined first) */
+export const tokensOf = (text: string): string[] => fold(joinSpelled(text)).split(" ").filter(Boolean);
 
 /** words that tell one multi-word name from another only together with the rest ("Anna Nagar" is not "Anna Salai") */
 const GENERIC = new Set(["nagar", "salai", "road", "street", "main", "east", "west", "north", "south", "colony", "the", "new", "old"]);
