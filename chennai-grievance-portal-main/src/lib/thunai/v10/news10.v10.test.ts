@@ -103,3 +103,38 @@ describe("v10: spoken Tamil about a story (news9, the dry run of 19 Nov: v10 sai
     expect(["sp1", "sp2"]).toContain(found("ஜார்விஸ், மரக்கன்னு நடுறது பத்தி ஏதாவது நியூஸ் இருக்கா?"));
   });
 });
+
+describe("v10: a story that has only the request's place is not its story (v8's dev d-out-2 after the review's fixes, the store of 20 Nov)", () => {
+  const FILL2 = ["Gold rate today: 24K, 22K and 18K prices across Delhi, Kerala, Chennai and other cities", "Flood-prone areas to be monitored using drones in Chennai",
+    "Metro rail work: traffic diversions on Poonamallee High Road", "Chennai Corporation to install 500 new streetlights", "School students visit the planetarium",
+    "New ration shops open in north Chennai", "Book fair to begin at YMCA grounds", "Free eye camp held for senior citizens", "Marathon to be held on Sunday",
+    "Lake restoration work begins", "Vegetable prices fall at Koyambedu market", "Adyar residents complain of irregular water supply",
+    // (as in the real week: "flood" in several stories, so the request's place word weighs more than its event word)
+    "Flood relief kits handed out in Velachery", "Flood water drains out of Mudichur", "Officials review flood preparedness in Chennai", "Dietary advice from staff nurses help in blood sugar control",
+    ...Array.from({ length: 60 }, (_, i) => `Civic notice number ${i} about ${["parks", "schools", "markets", "libraries", "buses", "ration"][i % 6]}`)].map((title, i) => ({ id: `k${i}`, title }));
+  const found = (said: string) => { const r = newsRequest(said); return r ? pickStory(rankStories(r, FILL2)).pick?.id ?? null : null; };
+  it("'Any news on the Kerala floods?': the gold-rate story says Kerala, never the floods: nothing is read", () => {
+    expect(found("Any news on the Kerala floods?")).toBeNull();
+  });
+  it("a place alone is still found ('Any news on Kerala?')", () => {
+    expect(found("Any news on Kerala?")).toBe("k0");
+  });
+  it("'any news on the Adyar fire?' is not the Adyar water story", () => {
+    expect(found("Any news on the Adyar fire?")).toBeNull();
+  });
+});
+
+describe("v10: 'திருட்டு போனது' (got stolen): போனது is no topic word (news9 n9-newsAsk-11, the store of 20 Nov: a Pondy Bazaar story read for a temple theft)", () => {
+  it("the topic words are the temple and the theft", () => {
+    expect(topicWords("கோயில்ல திருட்டு போனது பத்தி ஏதாவது நியூஸ்?", null)).not.toContain("ponatu");
+    expect(topicWords("போன வாரம் கோயில்ல திருட்டு நியூஸ் சொல்லுங்க", null)).not.toContain("pona");
+  });
+  it("the temple story, never the Pondy Bazaar one", () => {
+    const items = [{ id: "pb", title: "உலகையே திரும்பிப் பார்க்க வைத்த பாண்டி பஜார்!அண்ணா நகர்!" },
+      { id: "tm", title: "சென்னை வடபழனி முருகன் கோவிலில் மாக கந்த சஷ்டி பெருவிழாவில் இறுதி நிகழ்வான திருக்கல்யாண வைபவம் நடந்தது.", titleEn: "Final event of the grand Kanda Shasti festival held at Murugan Temple in Vadapalani" },
+      { id: "th", title: "சென்னையில் 24 இடங்களில் மின் திருட்டு: ரூ.52.77 லட்சம் அபராதம்" },
+      ...Array.from({ length: 40 }, (_, i) => ({ id: `f${i}`, title: `Civic notice number ${i} about ${["parks", "schools", "markets", "libraries"][i % 4]}` }))];
+    const r = newsRequest("கோயில்ல திருட்டு போனது பத்தி ஏதாவது நியூஸ்?")!;
+    expect(pickStory(rankStories(r, items)).pick?.id).not.toBe("pb");
+  });
+});

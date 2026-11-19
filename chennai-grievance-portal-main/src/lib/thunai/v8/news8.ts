@@ -15,10 +15,11 @@
  * Pure: no network. The server (v8/newsfind.ts) supplies the store's stories; the browser sends the sentence and what is on screen.
  */
 import { editDistance, enStem, fold, jaroWinkler, keySim, looseKey, skeleton, stemsOf, tokensOf } from "./match";
-import { placeWord } from "./lang8";
+import { areaWord, placeWord } from "./lang8";
 import { ordWord, ordWordsOf, ordinalsAt } from "./ord8";
 import { ownReport } from "./ownreport8";
 import { isEnglishWord } from "../english";
+import { outsideIn } from "../outside";
 import { AREA_WORDS } from "../areas";
 import { CAT_ALIASES, ZONES } from "../lexicon";
 
@@ -318,7 +319,7 @@ export const sameOutlet = (storyOutlet: string, asked: string): boolean => outle
 // v9: and the spoken forms around a topic (v8's holdout: "தீபம் பத்தின செய்தியைச் சொல்லுங்க", "செய்தி என்ன? அதைப் படிங்க"): about (பத்தின,
 // பற்றிய, குறித்த, தொடர்பான), that and this (அதை, இதை, அது, அதுல), what happened (ஆச்சு, நடந்த), an incident, anything, one (ஒண்ணு), the
 // verbs' polite and spoken endings (படிங்களேன், படிச்சு, திறக்கணும், சொல்றாங்க)
-const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யைச்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்|ல)?|திற(?:ங்க|ங்கள்|ங்களேன்|ங்கோ|ந்து|க்கவும்|க்க|க்கணும்)?|படி(?:ங்க|யுங்கள்|யுங்க|ங்களேன்|க்கவும்|க்கணும்|த்து|ச்சு|ச்சுக்)?|சொல்(?:லு|லுங்க|லுங்கள்|லுங்களேன்|லவும்|லணும்)?|சொல்றாங்க|சொல்லிருக்காங்க|போட்டிருக்காங்க|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பற்றிய|பத்தி|பத்தின|பத்துன|பத்தியான|குறித்து|குறித்த|தொடர்பான|சம்பந்தமான|என்ன|என்னாச்சு|ஆச்சு|நடந்த|நடந்தது|நடந்துச்சு|நடந்திருக்கு|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|வந்துச்சா|வந்துச்சு|வந்ததா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|அதை|அதைப்|அதைத்|அதைச்|இதை|இதைப்|இதைத்|இதைச்|அது|இது|அதுல|இதுல|ஏதாவது|ஏதும்|ஏதாச்சும்|சம்பவம்|சம்பவத்தை|சம்பவத்தைப்|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒன்றை|ஒன்றைப்|ஒரு|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
+const TA_OWN = /^(?:(?:செய்தி|சேதி|கட்டுரை|அறிக்கை)(?:யை|யைப்|யைத்|யைச்|யில்|யில|யின்|கள்|களை|களில்|யா|யும்|ல)?|திற(?:ங்க|ங்கள்|ங்களேன்|ங்கோ|ந்து|க்கவும்|க்க|க்கணும்)?|படி(?:ங்க|யுங்கள்|யுங்க|ங்களேன்|க்கவும்|க்கணும்|த்து|ச்சு|ச்சுக்)?|சொல்(?:லு|லுங்க|லுங்கள்|லுங்களேன்|லவும்|லணும்)?|சொல்றாங்க|சொல்லிருக்காங்க|போட்டிருக்காங்க|காட்டு(?:ங்க|ங்கள்)?|காமி(?:ங்க)?|விளக்கு(?:ங்க|ங்கள்)?|பற்றி|பற்றிய|பத்தி|பத்தின|பத்துன|பத்தியான|குறித்து|குறித்த|தொடர்பான|சம்பந்தமான|என்ன|என்னாச்சு|ஆச்சு|நடந்த|நடந்தது|போன|போனது|போனதா|போச்சு|போச்சா|போயிடுச்சு|போயிருக்கு|நடந்துச்சு|நடந்திருக்கு|இருக்கா|இருக்கு|இருக்கிறதா|வந்திருக்கு|வந்திருக்கா|வந்துச்சா|வந்துச்சு|வந்ததா|அந்த|அந்தச்|அந்தத்|இந்த|இந்தச்|இந்தத்|அதை|அதைப்|அதைத்|அதைச்|இதை|இதைப்|இதைத்|இதைச்|அது|இது|அதுல|இதுல|ஏதாவது|ஏதும்|ஏதாச்சும்|சம்பவம்|சம்பவத்தை|சம்பவத்தைப்|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒன்றை|ஒன்றைப்|ஒரு|போடு(?:ங்க)?|தயவுசெய்து|கொஞ்சம்|முதல்|முதலாவது|இரண்டாவது|ரெண்டாவது|மூன்றாவது|கடைசி)$/u;
 /**
  * v9: the event and civic nouns the Collector says in Tamil or Tanglish, in the English a headline uses (a Tamil request about an English-only
  * report: "Pattinapakam la ... vettu" is "Man hacked ... in Pattinapakkam"). A headline word matched this way counts as 0.9 of its own.
@@ -373,8 +374,9 @@ const GLOSS8: Gloss[] = [
   { ta: ["போலீஸ்", "போலீசார்", "காவல்துறை"], tg: ["police", "polees", "poleesu"], en: ["police", "cop", "cops"] },
   { ta: ["ஆஸ்பத்திரி", "மருத்துவமனை", "ஹாஸ்பிடல்"], tg: ["aaspathiri", "aspathiri", "hospital"], en: ["hospital"] },
   { ta: ["பஸ்", "பஸ்ஸ்டாப்", "பஸ்டாப்"], tg: ["bus"], en: ["bus"] },
-  // (v10 review 2, round 2, news-10: a legal case, "பள்ளிக்கரணை வழக்கு", "Senthil Balaji valakku"; not வழக்கறிஞர், a lawyer)
-  { ta: ["வழக்கு"], taExact: ["வழக்கை", "வழக்கைப்", "வழக்கைத்", "வழக்கில்", "வழக்கின்", "வழக்கிலும்"], tg: ["valakku", "vazhakku", "valakkil", "vazhakkil", "valakka", "vazhakka"], en: ["case", "lawsuit"] }
+  // (v10 review 2, round 2, news-10: a legal case, "பள்ளிக்கரணை வழக்கு", "Senthil Balaji valakku"; not வழக்கறிஞர், a lawyer; as headlines say
+  // one: a court, the HC or SC, a petition, a plea, a hearing, a verdict)
+  { ta: ["வழக்கு"], taExact: ["வழக்கை", "வழக்கைப்", "வழக்கைத்", "வழக்கில்", "வழக்கின்", "வழக்கிலும்"], tg: ["valakku", "vazhakku", "valakkil", "vazhakkil", "valakka", "vazhakka"], en: ["case", "lawsuit", "court", "hc", "sc", "petition", "petitioner", "plea", "hearing", "verdict"] }
 ];
 /**
  * v9: an event a soft request names, in the words headlines use for it ("the Pattinapakkam honking attack" is "Man hacked after dispute over
@@ -705,6 +707,8 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
   // (v9: a spoken verb form, newsRequest's `weak`, costs a story that does not have it a fifth, and counts in full in a story that has it: v8 gave
   // "மிரண்டு" its full weight against the horse story, which says "தறிகெட்டு", because three other stories had it)
   const weakAt = qs.map((q) => (req.weak ?? []).includes(q.w));
+  // (v10: a place word: the district's, as placeOf reads it, or a state's or town's outside it)
+  const isPlaceAt = qs.map((q, i) => placeOf[i] || areaWord(q.w) || !!outsideIn([q.w]));
   return docs.map((d, j) => {
     let s = 0, hits = 0, total = 0;
     req.words.forEach((q, i) => {
@@ -724,6 +728,11 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet" | "weak" | "gl
     // a place the request names that the story does not mention: never this story
     const placeVetoed = placeOf.some((p, i) => p && sims[i][j] === 0) || vetoed.has(j);
     if (placeVetoed) score = Math.min(score, 0.3);
+    // v10: and the other way round: a story that has only the request's places (the district's, or another state's or town's) and none of what
+    // it asks about there ("the Kerala floods" is not a gold-rate story that names Kerala; "the Adyar fire" is not Adyar's water story): v8's
+    // dev d-out-2 on the store of 20 Nov
+    const placeOnly = hits > 0 && req.words.every((_, i) => sims[i][j] === 0 || isPlaceAt[i]) && req.words.some((w, i) => sims[i][j] === 0 && !isPlaceAt[i] && !weakAt[i] && w.length >= 4);
+    if (placeOnly) score = Math.min(score, 0.45);
     return { item: d.item, score, hits, ...(placeVetoed ? { placeVetoed } : {}) };
   }).sort((a, b) => b.score - a.score || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")));
 }
