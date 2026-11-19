@@ -61,6 +61,10 @@ const EAR_MAP = new Map<string, string>(EAR_ORD.flatMap(([o, ws]) => ws.map((w) 
 /** after the by-ear word: a list's noun, "one", a verb or the end (the position is said); before it: "the", "that", "this", or a verb */
 const AFTER = /^(?:news|story|stories|article|report|headline|item|one|case|complaint|question|stop|seithi|seidhi|onnu|open|read|please|padinga|padi|thiranga)$/;
 const BEFORE = /^(?:the|that|this|open|read|play|tell|about|explain)$/;
+/** the words before "the" that open or read one item of a list ("open", "read out", "show me", "can you play"): a by-ear form that is an English word
+ * ("fast", "fort", "fist") ends a sentence as a position only after one of these; after a preposition it is what was said ("Any news from the
+ * Fort?", "What about the fast?") */
+const ON_ITEM = /(?:^| )(?:open|read|play|pick|select|choose|click|show|show me|give me|read me|tell me|read out|pull up|bring up|open up)$/;
 
 /**
  * A position said by ear, read as the position, with a list on screen. "Tell me about the fast news" -> "Tell me about the first news".
@@ -83,7 +87,9 @@ export function earOrdinals(text: string, o: { list: boolean }): string {
     if (w === "fifty" && !AFTER.test(next)) continue;
     // a by-ear form that is itself an English word ("fort", "fast", "fist") is a position only with a list's word after it: at a sentence's end it
     // is what was said ("Any news from the Fort?", "Any update on the fast?": v10 review 2, finding 25); "secand", "thurd" may end one
-    const end = next === "" && !isEnglishWord(w);
+    // Round 2: after a verb that opens or reads one item ("Open the fast.", "Read out the fist.", "Can you open the forth?") it is the position all
+    // the same: a news search for "fast" was v9's defect (v10 review 2, round 2)
+    const end = next === "" && (!isEnglishWord(w) || (/^(?:the|that|this)$/.test(prev) && ON_ITEM.test(words.slice(0, i).filter(Boolean).slice(0, -1).join(" "))));
     if (!(BEFORE.test(prev) && (AFTER.test(next) || end)) && !(prev === "the" && AFTER.test(next))) continue;
     parts[i] = parts[i].replace(/[A-Za-z]+/, (m) => (m[0] === m[0].toUpperCase() ? ord![0].toUpperCase() + ord!.slice(1) : ord!));
   }

@@ -96,3 +96,27 @@ describe("v10 review 2: a yes or a no in Tamil and Tanglish is no hearsay (findi
     expect(gate(said, { engagedSec: 3 }).why).toBe("hearsay");
   });
 });
+
+describe("v10 review 2, round 2: a cleft or a relative clause cut off is held on the open mic (finding 19)", () => {
+  // v10 review 2, round 2: the embedded-question rule took any word before what/where for a request's frame, so the gate acted on these half
+  // sentences in the engaged window and the lanes answered them
+  it.each(["And what I need is", "Okay what I want is", "Show me the complaints where the status is", "List the wards where the water level is", "So what we need is"])("'%s' (3 s after Jarvis spoke) is cut off", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act} ${g.why}`).toBe("false cut-off");
+  });
+  it.each(["Can you tell me where the relief centres are", "Find out who the AE for Velachery is"])("'%s' is still acted on", (said) => {
+    expect(gate(said, { engagedSec: 3 }).act).toBe(true);
+  });
+});
+
+describe("v10 review 2, round 2: a typed line never waits, fillers alone included (finding 27)", () => {
+  // v10 review 2, round 2: the fillers' wait ran whatever the source, so a typed "Please." got no reply at all
+  const c = (source: "typed" | "whisper" | "captions") => ({ stage: null, news: { items: [] }, state, world, listenLang: "en" as const, heardLang: null, v7: true, lex: [], source });
+  it.each(["Please.", "hmm", "தயவுசெய்து", "Please, please.", "ம்ம்"])("typed '%s' does not wait", (said) => {
+    expect(browserLaneV10(said, c("typed")).lane).not.toBe("wait");
+  });
+  it.each(["Please.", "தயவுசெய்து,"])("spoken '%s' still waits", (said) => {
+    expect(browserLaneV10(said, c("whisper")).lane).toBe("wait");
+    expect(browserLaneV10(said, c("captions")).lane).toBe("wait");
+  });
+});

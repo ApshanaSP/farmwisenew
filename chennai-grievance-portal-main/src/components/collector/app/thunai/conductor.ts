@@ -52,6 +52,7 @@ import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
+import { joinCut } from "@/lib/thunai/v10/browser10";
 
 /** this turn's trace is still the open one: a stamp for an older turn never lands on a newer turn's trace */
 const isCurrent = (tr: TurnTrace | null): boolean => !!tr && traces().at(-1) === tr;
@@ -631,12 +632,31 @@ export class Conductor {
   private ignored(text: string, gate: Addressed) {
     if (gate.why === "cut-off" && understandV10()) {
       const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
-      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.h.onIgnored(text, "cut-off-held"); return; }
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held"); return; }
     }
     this.h.onIgnored(text, gate.why);
   }
+  /** v10: the line held last for its rest, and when (ignored()); the page joins the same rest to it (Thunai.tsx cutRef, joinCut) */
+  private held: { text: string; at: number } | null = null;
 
   private gateFor(text: string): Addressed {
+    const g = this.gateOne(text);
+    // v10 review 2, round 2: the rest of a line held as cut off is the line's own rest, so it is gated with it ("Tell me about the" ... "accident in
+    // Velachery yesterday" is a request; the rest alone, with its "yesterday", is side talk and was dropped). Only a rest the gate let go as talk
+    // (side, aside, unaddressed, unclear) is read again; one said to someone else (another assistant, a title, a name, an errand) or a filler
+    // stays theirs, and a rest that is itself cut off is held in its turn (ignored())
+    const h = this.held;
+    if (!h || !understandV10()) return g;
+    if (g.act) { this.held = null; return g; }
+    if (!/^(?:side|aside|unaddressed|unclear)$/.test(g.why)) return g;
+    const joined = joinCut(h, text, Date.now());
+    if (joined === text.trim()) return g;
+    const j = this.gateOne(joined);
+    if (!j.act) return g;
+    this.held = null;
+    return j;
+  }
+  private gateOne(text: string): Addressed {
     const r = this.h.rules(text);
     const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
     // talking over Jarvis counts as engaged: it was speaking a moment ago

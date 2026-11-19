@@ -43,12 +43,17 @@ const STOPWORDS = new Set(("a an the this that these those it its is are was wer
   "and or but so then now just any some what whats which who how when where why tell show open read give get news story article report latest today update updates " +
   "jarvis hey hi ok okay yes no sir madam la le ku pathi patthi paththi enna sollu sollunga padinga padi kaattu kaattunga thiranga thira pannunga pannu adha idha andha indha " +
   "seithi seidhi " +
-  // (the Tanglish he, she, they and this one, never a name: "avan" sounded as Akvan, v10 review 2, finding 22)
+  // (the Tanglish he, she, they and this one, never a name: "avan" sounded as Akvan, v10 review 2, finding 22; their case forms: TG_PRON)
   "avan aval avar avaru avanga avangal ivan ival ivar ivaru ivanga").split(/\s+/));
+/** the Tanglish he, she, they and this one with the case and question endings the ears write ("avana", "avanukku", "avanoda", "avankitta",
+ * "avangalukku", "avanaa"): never a name. v10 review 2, round 2: the bare forms alone were stopped, and "avana pathi sollu" was still asked back
+ * "Cyclone Akvan?". Whole words only: "Avadi", "Avaniyapuram" are places */
+const TG_PRON = /^[ai]va(?:n|l|r|ru|nga|ngal|rgal)(?:a|aa|ai|e|ey|o|um|ukku|kku|uku|ukkum|oda|odu|ode|odaya|udaya|kitta|kita|kitte|ta|tta|ala|aala|ale|aale|dhaan|thaan|daan|than)?$/;
 const TA_STOP = /^(?:பற்றி|பத்தி|என்ன|சொல்லுங்க|சொல்லு|படிங்க|படி|காட்டு|காட்டுங்க|திறங்க|திற|செய்தி|நியூஸ்|அந்த|இந்த|அது|இது)/u;
 /** the Tamil he, she, they and this one, with their case endings (அவன், அவனை, அவருக்கு, அவங்க): never a name (அவன் sounded as அக்வான், v10 review 2,
- * finding 22); whole words only, so a place that begins so (அவனியாபுரம்) still is one */
-const TA_PRON = /^(?:அவ|இவ)(?:ன்|ள்|ர்|ரு|ங்க|ர்கள்|ங்கள்|னை|ளை|ரை|ங்களை|னுக்கு|ளுக்கு|ருக்கு|ங்களுக்கு|னோட|ளோட|ரோட|ன்கிட்ட|ள்கிட்ட|ர்கிட்ட|ங்ககிட்ட)$/u;
+ * finding 22); whole words only, so a place that begins so (அவனியாபுரம்) still is one. Round 2: the stem with any of its spoken endings, the bare
+ * spoken object and the question too (அவன, அவனா, அவனும், அவன்தான், அவனால், அவனிடம், அவங்கள, அவங்களோட): one letter off, they were still asked back */
+const TA_PRON = /^(?:அவ|இவ)(?:(?:ன|ள|ர|ங்கள|ர்கள)(?:்|ை|ா|ே|ும்|ுக்கு|ுக்கா|ுக்கும்|ோட|ோடு|ோட்ட|ுடைய|ுட|ிடம்|ால்|ாலே|்கிட்ட|்கிட்டே|்ட|்ட்ட|்தான்|ைப்|ைத்தான்|ைதான்)?|ங்க(?:கிட்ட|தான்)?|ரு)$/u;
 /** a Tamil verb's spoken and written endings (has come, is there, they said, it happened ...): never a name */
 const TA_VERB = new RegExp(`(?:ருக்கு|ருக்கா|ருக்கும்|ருக்கிறது|ருக்கின்றன|ச்சு|ச்சா|ந்தது|ந்துச்சு|றாங்க|ராங்க|ிங்க|ுங்க|ீங்க|ாங்க|ுது|ுதா|ிறது|ின்றன|ின்றது|கிறார்|கிறார்கள்|ட்டாங்க|ட்டார்|னார்|னாங்க|லாம்|ணும்|ணுமா|வேண்டும்|` +
   // (and what went or happened, "திருட்டு போனது" as Pondy: news9, the dry run of 19 Nov)
@@ -57,7 +62,7 @@ const TA_VERB = new RegExp(`(?:ருக்கு|ருக்கா|ருக�
 const wordsOf = (text: string): W[] => text.normalize("NFC").split(/[^\p{L}\p{M}\p{N}'’]+/u).filter(Boolean).map((raw) => {
   const f = fold(raw);
   const ta = /[஀-௿]/u.test(raw);
-  return { raw, f, cls: classOf(raw), stop: ta ? TA_STOP.test(raw) || TA_PRON.test(raw) : STOPWORDS.has(f) };
+  return { raw, f, cls: classOf(raw), stop: ta ? TA_STOP.test(raw) || TA_PRON.test(raw) : STOPWORDS.has(f) || TG_PRON.test(f) };
 });
 
 /** The names the request says, best first; spans never overlap (the better mention keeps its words). */

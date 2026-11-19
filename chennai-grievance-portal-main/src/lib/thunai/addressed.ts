@@ -76,9 +76,11 @@ const ACK8 = new Set(["ok", "okay", "okk", "yes", "yeah", "sari", "seri", "haan"
 /** a sentence cut off before its point: it ends on a word that cannot end one ("Who is this assigned to?", "Open that." can: the review, 18 Nov) */
 const DANGLING8 = / (?:the|a|an|and|or|but|of|my|your|our|their|is|are|was|were|if|because|than|what|which|whats) $/;
 /** v10: a question embedded in a request ends on its verb and is whole ("Tell me where the Adyar zonal office is", "Find out who the AE for
- * Velachery is"): a frame before the question word, two words or more after it. Not "if", "whether", "why" or "which" ("Tell me if the drain is"
- * is cut off). v10 review 2, finding 19: these were held as cut off, and never answered */
-const EMBEDDED_ASK = /^(?:\S+ )+(?:where|what|who|when|how) \S+(?: \S+)* (?:is|are|was|were)$/;
+ * Velachery is"): a verb that asks or tells right before the question word, two words or more after it. Not "if", "whether", "why" or "which"
+ * ("Tell me if the drain is" is cut off). v10 review 2, finding 19: these were held as cut off, and never answered. Round 2: the frame is that verb,
+ * not any word before the question word, so a cleft ("And what I need is", "Okay what I want is") or a relative clause ("Show me the complaints
+ * where the status is") cut off before its point stays cut off */
+const EMBEDDED_ASK = /^(?:\S+ )*(?:tell (?:me|us)|show (?:me|us)|let (?:me|us) know|remind (?:me|us)|find out|figure out|work out|check|know|ask|explain|see|confirm|wonder|wondering) (?:where|what|who|when|how) \S+(?: \S+)* (?:is|are|was|were)$/;
 export const embeddedAsk = (text: string): boolean => EMBEDDED_ASK.test(norm(text).trim());
 /** one Tamil word that is a whole command or answer ("அடுத்து": next) */
 const ONE_WORD_TA8 = /^(?:அடுத்து|அடுத்தது|முந்தையது|நிறுத்து|போதும்|மீண்டும்|மூடு|திற|படி|காட்டு|சரி|பின்னால்|வேண்டாம்|இல்லை|ஆமாம்|ஆம்)$/u;

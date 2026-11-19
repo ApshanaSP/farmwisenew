@@ -70,7 +70,10 @@ const FILLERS = /^(?:(?:please|pls|hmm*|mm+|uh|um|ah|oh|aha|தயவுசெ�
 
 /** Is this line cut off before its point? Its words, the punctuation the speech-to-text put at the end aside. */
 export function cutOff(text: string): boolean {
-  const t = text.normalize("NFC").replace(/[.!?,;:…]+\s*$/u, "").trim();
+  // the words as the gate reads them (addressed.ts norm): "what's" is "whats", and a dash, an ellipsis or a comma the speech-to-text wrote is no word,
+  // so every line the open mic's gate holds as cut off is cut off here too, and joinCut gives it its rest ("Tell me what's", "Show me the—": v10
+  // review 2, round 2)
+  const t = text.normalize("NFC").replace(/[’']/g, "").replace(/[^\p{L}\p{M}\p{N}\s]+/gu, " ").replace(/\s+/g, " ").trim();
   if (!t) return false;
   // (a question embedded in a request ends on its verb and is whole: "Tell me where the Adyar zonal office is", v10 review 2, finding 19)
   if (WHOLE.test(t) || embeddedAsk(t)) return false;
@@ -95,7 +98,8 @@ const flat = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{
 export function joinCut(cut: { text: string; at: number } | null, said: string, now: number, ms = 12_000): string {
   const n = said.trim();
   if (!cut || now - cut.at > ms || now < cut.at) return n;
-  const c = cut.text.replace(/[.!?,…]+\s*$/u, "").trim();
+  // (the end's punctuation off, a dash the speech-to-text wrote for the pause too: "Tell me about the-" ... "fast news")
+  const c = cut.text.replace(/[\s.!?,;:…\-‐‑‒–—―]+$/u, "").trim();
   if (!c) return n;
   // only a line cut off before its point has a rest: a noise word that waited ("வாயமுர்ரா.") is dropped, never put in front of the next request
   // (it flipped the answer to Tamil: v10 review 2, finding 26); a lone determiner ("அந்த") is cut off all the same
@@ -154,8 +158,9 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // (a name of the day or the news word said alone is no noise: "Akvan", "Arlekar", "அக்வான்", "Seithi"; v10 review 2, finding 23)
   if (!typed && unclearWord(said0, districtNounIn(said0, c.world)) && !NEWS_WORD.test(said0)
     && !(c.lex?.length && findMentions(said0, c.lex, { kinds: ["storm", "name"] }).length)) return { lane: "wait", why: "one-word", lang };
-  // fillers alone carry nothing ("தயவுசெய்து,", "Please.": the brief's Part 3, v10 review 2, finding 27); a thanks, a yes or a no is whole
-  if (FILLERS.test(said0.normalize("NFC").trim())) return { lane: "wait", why: "filler", lang };
+  // fillers alone carry nothing ("தயவுசெய்து,", "Please.": the brief's Part 3, v10 review 2, finding 27); a thanks, a yes or a no is whole. Typed, they
+  // are answered as typed: a typed line never waits (round 2: a typed "Please." got no reply at all)
+  if (!typed && FILLERS.test(said0.normalize("NFC").trim())) return { lane: "wait", why: "filler", lang };
   // 2. a position by ear, read as the position, when a list is on screen
   const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
   const said = earOrdinals(said0, { list: sm.lists.length > 0 });

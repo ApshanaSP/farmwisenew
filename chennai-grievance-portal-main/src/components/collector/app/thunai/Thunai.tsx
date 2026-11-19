@@ -1766,8 +1766,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       confirmRef.current = null;
       if (Date.now() - cf.at < 30_000) {
         if (plainYes(said)) { await handle(cf.then, conf, undefined, { ...opts, lang: cf.lang }); return; }
-        // (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil "no": v10 review 2, finding 24)
-        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)(?=[\s,.!?]|$)/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
+        // (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil "no": v10 review 2, finding 24; the no ends at anything that is
+        // no letter, mark or digit, so "No…" and "No-" are a no as they were under \b: round 2)
+        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)(?![\p{L}\p{M}\p{N}])/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
       }
     }
     // the next step offered after a screen (Level A): a plain yes, or "show me", builds it; anything else puts the offer away
@@ -2912,7 +2913,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // the spoken reply only for the name alone; with a question in the same breath the answer is the reply
       if (!rest) sayWake(listenLangRef.current); else earcon("open");
       // the question said in the same breath ("Hi Jarvis, show the severe cases")
-      if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95), 60); }
+      // (said, not typed: the browser's own speech service heard it, so a cut-off rest waits as any spoken line does: v10 review 2, round 2)
+      if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95, undefined, { source: "captions" }), 60); }
     };
     // v6 (the independent check, 17 Nov): the name heard on the device. A pause after it opens Jarvis with the reply at once; a sentence
     // said straight on ("Hey Jarvis, show the severe cases") is left to the browser's recogniser, which brings its words whole (rest, as in

@@ -267,3 +267,61 @@ describe("v10 review 2: a noise word that waited is never glued to the next requ
     expect(joinCut({ text: "அந்த", at: 0 }, "Adyar report", 1000)).toBe("அந்த Adyar report");
   });
 });
+
+describe("v10 review 2, round 2: only a question asked inside a request is whole; a cleft or a relative clause cut off is not (finding 19)", () => {
+  // v10 review 2, round 2: the embedded-question rule took any word before what/where/who for the request's frame, so "And what I need is" and
+  // "Show me the complaints where the status is" were whole, and the half sentence was answered; the frame is now a verb that asks
+  it.each(["And what I need is", "Okay what I want is", "So what we need is", "Jarvis, what I need is", "Show me the complaints where the status is",
+    "List the wards where the water level is", "Show me the zones where the backlog is", "Open the cases where the officer is"])("'%s' is cut off", (said) => {
+    expect(cutOff(said)).toBe(true);
+  });
+  it.each(["Tell me where the Adyar zonal office is", "Tell me what the IMD warning is", "Find out who the AE for Velachery is", "Tell me where the relief centres are",
+    "Can you tell me where the relief centres are", "Do you know who the AE for Adyar is", "Let me know when the next high tide is",
+    "I want to know how many complaints there are", "Check what the water level at Chembarambakkam is", "Show me where the flooded subways are"])("'%s' is whole", (said) => {
+    expect(cutOff(said)).toBe(false);
+  });
+});
+
+describe("v10 review 2, round 2: a by-ear position at a sentence's end after a verb on the list (finding 25)", () => {
+  // v10 review 2, round 2: the English-word guard kept every English by-ear form from ending a sentence as a position, so "Open the fast." over a
+  // news list searched the news for "fast" (v9's defect); after a verb that opens or reads an item it is the position, after a preposition it is not
+  const items = STORIES.map((s) => ({ id: s.id, title: s.title, source: "DT Next" }));
+  const c = (): BrowserCtx10 => ({ stage: newsList as never, news: { items }, state: state(), world, listenLang: "en", heardLang: "en", v7: true, lex });
+  it.each([["Open the fast.", "Open the first.", 1], ["Read the fast.", "Read the first.", 1], ["Open the forth.", "Open the fourth.", 4], ["Play the fast", "Play the first", 1],
+    ["Please open the fast.", "Please open the first.", 1], ["Can you read the fast?", "Can you read the first?", 1], ["Jarvis, open the forth", "Jarvis, open the fourth", 4],
+    ["Read out the fist.", "Read out the first.", 1], ["Show me the fast.", "Show me the first.", 1]] as const)("'%s' over a news list is '%s'", (said, read, n) => {
+    expect(v10Front(said, c()).said).toBe(read);
+    // taken exactly as the position said plainly is ("Read the first." goes where v8's lanes send it); "Open" opens the item
+    expect(browserLaneV10(said, c())).toEqual(browserLaneV10(read, c()));
+    if (/^open/i.test(said)) expect(JSON.stringify(browserLaneV10(said, c()))).toContain(`"n":${n}`);
+  });
+  it.each(["Any news from the Fort?", "Any update on the fast?", "What about the fast?", "Any news on the fast?"])("'%s' stays as said", (said) => {
+    expect(v10Front(said, c()).said).toBe(said);
+  });
+});
+
+describe("v10 review 2, round 2: he, him, to him in Tamil and Tanglish are not Cyclone Akvan (finding 22)", () => {
+  // v10 review 2, round 2: the stop list had only the bare pronouns, so their case forms one letter away (avana, avanukku, அவன, அவனா) were still
+  // asked back "Cyclone Akvan?"; the pronoun's stem with any case ending is now no name
+  const lexA = buildLexicon([...STORIES, { id: "ta1", title: "அக்வான் புயல் நாளை கரையைக் கடக்கும்", titleEn: "Cyclone Akvan to cross the coast tomorrow", t: "2026-11-19 09:00" }], world);
+  const c = (said: string): BrowserCtx10 => ({ stage: null, news: { items: [] }, state: state(), world, listenLang: "en", heardLang: /[஀-௿]/u.test(said) ? "ta" : "en", v7: true, lex: lexA });
+  it.each(["avana pathi sollu", "அவன பத்தி சொல்லு", "avanukku phone pannunga", "avana kooptu", "அவனா?", "அவனுக்கு phone பண்ணுங்க", "avanoda phone number enna",
+    "avangalukku sollunga", "ivana pathi sollu", "அவளா?", "அவரோட office எங்க?", "அவனும் வந்தான்", "avankitta kelunga", "அவங்கள பத்தி சொல்லு", "avanaa?"])("'%s' is not asked back", (said) => {
+    const b = browserLaneV10(said, c(said));
+    expect(b.lane === "confirm" ? b.ask.en : null).toBeNull();
+  });
+  it.each(["Akvan pathi sollu", "அக்வான் புயல் பற்றி சொல்லுங்க"])("the storm itself still is ('%s')", (said) => {
+    expect(findOf(browserLaneV10(said, c(said)))?.entity?.name).toBe("Cyclone Akvan");
+  });
+});
+
+describe("v10 review 2, round 2: every line the gate holds as cut off takes its rest (finding 26)", () => {
+  // v10 review 2, round 2: the gate holds a line by its normalised words ("what's" is "whats", a dash is no word), the join asked cutOff of the
+  // raw text, so "Tell me what's", "Tell me about the-" and "Show me the—" were held and their rest answered without them
+  it.each([["Tell me what's", "happening in Adyar", "Tell me what's happening in Adyar"], ["Tell me about the-", "fast news", "Tell me about the fast news"],
+    ["Show me the—", "overdue ones in Adyar", "Show me the overdue ones in Adyar"], ["What are the –", "readings at Poondi", "What are the readings at Poondi"],
+    ["Tell me which", "zone has the most", "Tell me which zone has the most"], ["What’s the", "level at Poondi", "What’s the level at Poondi"]])("'%s' ... '%s'", (held, rest, joined) => {
+    expect(cutOff(held)).toBe(true);
+    expect(joinCut({ text: held, at: 0 }, rest, 1000)).toBe(joined);
+  });
+});

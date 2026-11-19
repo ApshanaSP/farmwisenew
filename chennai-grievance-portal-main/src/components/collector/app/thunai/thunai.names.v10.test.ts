@@ -30,3 +30,30 @@ describe("v10 review 2: the lanes know a typed line (finding 19)", () => {
     expect(handle.indexOf("sourceRef.current = opts.source")).toBeLessThan(handle.indexOf("const f10 = v10Front(said"));
   });
 });
+
+describe("v10 review 2, round 2: a no the speech-to-text ends with an ellipsis or a dash is a no (finding 24)", () => {
+  // v10 review 2, round 2: the lookahead allowed only a space, a comma, . ! ? or the end after the no, narrower than the \b it replaced for Latin
+  // text: "No…", "No-" were taken as a new request; the no now ends at anything that is no letter, mark or digit
+  const m = /if \(\/(\^\(\?:no\|nope\|not that[^/]+)\/iu\.test\(said\)\)/.exec(confirm);
+  it.each(["No…", "No-", "Nope…", "No—", "no;", "No:", "இல்லை…", "இல்ல-", "வேண்டாம்…", "illa…", "Not that…"])("'%s' is a no", (s) => {
+    expect(new RegExp(m![1], "iu").test(s)).toBe(true);
+  });
+  it.each(["nobody told me", "illaiyaam", "இல்லையாம்", "notice the Adyar one", "Nopes", "no1", "nothing yet"])("'%s' is not", (s) => {
+    expect(new RegExp(m![1], "iu").test(s)).toBe(false);
+  });
+});
+
+describe("v10 review 2, round 2: the wake word's spoken rest is spoken, not typed (finding 19)", () => {
+  // v10 review 2, round 2: the on-device wake path called handleRef.current(rest, 0.95) with no source, so handle() took the same-breath rest
+  // ("Hey Jarvis, tell me about the") for typed text, and it skipped the cut-off and one-word waits
+  const wake = src.slice(src.indexOf("const woke = (rest: string) =>"), src.indexOf("const named = (w: WakeEars) =>"));
+  it("the wake path hands its rest over as the browser's speech (captions)", () => {
+    expect(wake).toMatch(/handleRef\.current\(rest, 0\.95, undefined, \{ source: "captions" \}\)/);
+    expect(wake).not.toMatch(/handleRef\.current\(rest, 0\.95\)/);
+  });
+  it("every handleRef call in the wake path says how the words came", () => {
+    const calls = wake.match(/handleRef\.current\([^)]*\)/g) ?? [];
+    expect(calls.length).toBeGreaterThan(0);
+    for (const call of calls) expect(call).toMatch(/source: "(?:captions|whisper)"/);
+  });
+});
