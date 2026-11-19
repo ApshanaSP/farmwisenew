@@ -24,6 +24,13 @@ const FILER_POSS = /\b(?:that|the)\s+(?:girl|boy|woman|man|lady|child|kid|victim
 const DETAIL = /அட்ரஸ்\S*|\b(?:name|names|phone|mobile|number|contact|whatsapp|e-?mail|address|residence|aadhaar|aadhar|peru?|nambar)\b|பெயர்|பேரு|தொலைபேசி|போன்|நம்பர்|மொபைல்|முகவரி|மின்னஞ்சல்|வீடு/i;
 /** a person who complained, as a subject: "the people who complained", "complainants in Adyar" */
 const FILER_REF = /\b(?:victims?|deceased|survivors?|suicides?|missing\s+(?:persons?|people|children|girls?))\b|(?:தற்கொலை|இறந்த|பாதிக்கப்பட்ட|காணாமல்)\S*|\b(?:person|people|persons|residents?|citizens?|aal|aalu|one|guy|man|woman)s?\s+who\s+(?:complained|filed|lodged|reported|raised|called|wrote|sent|made)\b|\bcomplainants?\b|\bcomplainers?\b|\bcallers?\b/i;
+/**
+ * v10 review 2, round 3 (news-3): a person a story says was killed or died, named as that one person: "the dead man", "the murdered fisherman",
+ * Tanglish "kolai aanavar", Tamil கொல்லப்பட்டவர், இறந்தவர். Asked for by a detail (name, peru, பெயர்) or as who they were (who, yaaru, யார்);
+ * a count of the dead ("the number of dead", எத்தனை பேர் கொல்லப்பட்டனர்) and the story itself ("kolai aana news") are not that.
+ */
+const SLAIN = /\b(?:the|that|this)\s+(?:dead|murdered|killed|slain|deceased|drowned)\s+(?:[a-z]*m[ae]n|boy|girl|child|kid|person|youth|teen(?:ager)?|student|worker|labourer|driver|rider)s?\b|\bkolai\s*(?:aana|seyyappatta|seiyappatta|pannappatta)(?:var|van|val|vanga|vangal)\b|\bkolla?ppatt(?:avar|avan|aval|avanga)\b|\b(?:irandh|iranth|seth|setth)(?:avar|avan|aval|avanga)\b|\bpali\s*aana(?:var|van|val|vanga)\b|(?:கொல்லப்பட்ட|கொலை\s*செய்யப்பட்ட)\S*|(?:கொலையான|கொலையுண்ட|உயிரிழந்த|பலியான|செத்த|இறந்த)வ\S*/i;
+const WHO_SLAIN = /\bwho\b|\byaaru?\b|(?:^|\s)(?:யார்|யாரு)(?=$|[\s,.!?])/i;
 const NAME_OF = /\bnames?\s+of\b.{0,30}(?:person|people)|(name|names|பெயர்|\bperu\b).{0,30}(citizen(?!s?\s+complaints?)|complainant|caller|who\s+complained|resident|victim|petitioner|புகார்|குடிமக|pugar|complaint\s*kuduth)|(citizen(?!s?\s+complaints?)|complainant|caller|resident|victim|petitioner|புகார்தாரர்|புகார்\s*(?:கொடுத்தவர்|தந்தவர்|செய்தவர்)|குடிமக|குடிமகன்|pugar\s*kuduthavar).{0,30}(name|names|பெயர்|\bper\s*(?:enna|sollu|kudu|kaattu|$)|\bperu\b)/i;
 const STATE_ID = /(aadhaar|aadhar|aadar|voter\s*id|ஆதார்)/i;
 const PRIVATE_ID = /(home\s*address|residential\s*address|வீட்டு\s*முகவரி|முகவரி|personal\s*(details|info))/i;
@@ -85,6 +92,7 @@ export function asksPrivate(text: string): boolean {
   // a pronoun or a "person who complained", with an ask for their details; a head-count is not that
   { const k = t.replace(HEAD_COUNT, "a count");
     if (!counting && DETAIL.test(k) && (FILER_POSS.test(k) || FILER_REF.test(k))) return true;
+    if (!counting && SLAIN.test(k) && (DETAIL.test(k) || WHO_SLAIN.test(k))) return true;
     if (/\bwho\s+is\s+behind\b|\bwhich\s+(?:citizen|resident|person|complainant|caller|reporter)\b.{0,40}\b(?:complained|filed|lodged|reported|raised|called|wrote|sent|made)\b|(?:list|names?|show|give).{0,12}\b(?:complainants|complainers|callers|petitioners)\b/i.test(t)) return true;
     if (/\byaaru?\b/i.test(t) && /(?:complaint|pugar)\s*(?:la\s+)?(?:kudu|kodu|pann|podu|potta|vech|ezhudh)/i.test(t)) return true;
     if (/(?:மனு|புகார்)\S*\s*(?:கொடுத்த|அளித்த|தந்த|செய்த)\S*/.test(t) && /(யார்|யாரு|பெயர்|பேரு|பேர்|எங்கே|வசி|எண்|நம்பர்)/.test(t)) return true; }

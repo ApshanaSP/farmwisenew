@@ -62,8 +62,10 @@ export function stageRef8(text: string, rows: RowRef[]): { op: "open" | "explain
 }
 
 /** a news word right after the position ("the third news", "rendavadhu news", "இரண்டாவது செய்தி", "ஏழாவது செய்தியைத்", "எட்டாவது நியூஸ்");
- * (v9, the review: not "item", the console's word for a Stage's rows: "open the second item" is a case) */
-const NEWS_AFTER = /^(?:news|story|article|report|headline|piece|seithi|seidhi|seythi|sethi|seithiya|seidhiya)$|^(?:செய்தி|சேதி|கட்டுரை|நியூஸ்)/u;
+ * (v9, the review: not "item", the console's word for a Stage's rows: "open the second item" is a case)
+ * (v10 review 2, round 2, news-4 and news-4b: with its spoken Tanglish case, "rendavadhu newsa padinga", "storya", "seithiya"; and the press's
+ * English in Tamil letters with any ending, as news8.ts reads it: நியூஸை, ஹெட்லைனை, ஆர்டிகிளை, ஸ்டோரியை, ரிப்போர்ட்டை) */
+const NEWS_AFTER = /^(?:news|story|stori|article|report|headline|piece|seithi|seidhi|seythi|sethi)(?:a|ah|aa|ai|ae|ya|yah|yai|ye|u|la|le|il)?$|^(?:செய்தி|சேதி|கட்டுரை|நியூஸ|ஹெட்லைன|ஸ்டோரி|ஆர்டிகிள|ஆர்ட்டிக்கிள|ரிப்போர்ட)/u;
 /** "one" right after it ("the seventh one", "kadaisi onnu", "ஏழாவது ஒண்ணைப்", "கடைசி ஒன்னைப்"), or a verb ("the seventh, open it", "seventh padinga") */
 const ONE_AFTER = /^(?:one|onnu|onna|onnai|onnaiya|ஒண்ணு|ஒண்ணை|ஒண்ணைப்|ஒண்ணைத்|ஒன்னு|ஒன்னை|ஒன்னைப்|ஒன்னைத்|ஒன்று|ஒன்றை|ஒன்றைப்|ஒன்றைத்)$/u;
 const VERB_AFTER = /^(?:open|read|play|please|padi\w*|thira\w*|sollu\w*|kaattu\w*)$|^(?:திற|படி|சொல்|காட்டு)/u;

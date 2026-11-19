@@ -18,7 +18,7 @@ import type { Lang, Step } from "../types";
 import { mapCommand10, type MapCmd, type MapCtx10 } from "./map10";
 import { controlCommand10, type ControlHit } from "./controls10";
 import { browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "../v8/browser";
-import { newsRequest, topicWords } from "../v8/news8";
+import { namingWords, newsRequest, topicWords } from "../v8/news8";
 import { userLang8 } from "../v8/browser";
 import { classMention, findMentions, type Mention } from "./entity10";
 import type { Entity10 } from "./lexicon10";
@@ -209,7 +209,9 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   // screen's stories only, soft (nothing that close: the lanes behind take the sentence, as v8 sent it)
   const main = sm.lists[0];
   // (only what v8's own news lane does not read: "open that one, that's ...", "the DT Next one", an outlet's story are its: v8's dev set)
-  if (main?.kind === "news" && !consoleThing && SCREEN_VERB.test(said) && !NEWS_WORD.test(said) && !PANEL_WORD.test(said) && topicWords(said, null).length
+  // (v10 review 2, round 2, news-1: and only with a word that names a story, as a soft find's: "Open Adyar", "open the Royapuram protest" are
+  // the console's views, as in v9, never a story there)
+  if (main?.kind === "news" && !consoleThing && SCREEN_VERB.test(said) && !NEWS_WORD.test(said) && !PANEL_WORD.test(said) && namingWords(said, topicWords(said, null)).which.length
     && !newsRequest(said, { onScreen: true })) {
     const items = main.items.filter((x) => /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
     return { lane: "news", na: { kind: "find", body: { find: { q: said.slice(0, 400), lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? String(x.source).slice(0, 300) : null })), onlyScreen: true } }, soft: true } as NewsAskT, lang, soft: browserLaneV8(said, c) };
@@ -219,6 +221,7 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
 }
 /** a verb that opens, reads or tells about one thing on a list (not "show": the console's views) */
 const SCREEN_VERB = /\b(?:open|read|play|pull up|bring up|tell me about|tell me more about|explain)\b|\b(?:open pannu\w*|padi\w*|thira\w*|sollu\w*)\b|(?:^|\s)(?:திற|படி|சொல்)\S*/iu;
-const NEWS_WORD = /\b(?:news|story|stories|article|report|headline|piece|seithi|seidhi)\b|செய்தி|சேதி|நியூஸ்/iu;
+// (v10 review 2, round 2, news-4b: the press's English in Tamil letters with any ending, as news8.ts reads it)
+const NEWS_WORD = /\b(?:news|story|stories|article|report|headline|piece|seithi|seidhi)\b|செய்தி|சேதி|நியூஸ|ஹெட்லைன|ஸ்டோரி|ஆர்டிகிள|ஆர்ட்டிக்கிள|ரிப்போர்ட/iu;
 /** the console's own panels and pages, closing and switching: moves, never a story */
 const PANEL_WORD = /\b(?:panel|page|tab|window|screen|section|close|switch|filter|sort)\b|பேனல்|பக்கம்/iu;
