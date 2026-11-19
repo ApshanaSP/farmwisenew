@@ -31,8 +31,12 @@ export interface NewsReq {
   outlet: string | null;
   /** "that one", "this news": the story in focus or on screen is meant */
   ref: boolean;
-  /** v9: topic words in a spoken Tamil verb form, that count at a fifth when no story has them */
+  /** v9: topic words in a spoken verb form (Tamil, or Tanglish in small letters), that count at a fifth */
   weak?: string[];
+  /** v9: a story-like topic with no news word ("open the Kodungaiyur empty pot protest"): found only above SOFT_FLOOR, else the console's lanes */
+  soft?: boolean;
+  /** v9, soft: the event's own words ("protest"): a soft pick must have one (not the place alone) */
+  event?: string[];
 }
 
 export interface StoryItem { id: string; title: string; titleEn?: string | null; outlets?: string[]; place?: string | null; story?: string | null; t?: string | null; onScreen?: number | null }
@@ -89,6 +93,24 @@ const namedTopic = (text: string): boolean =>
   text.replace(/['’]s\b/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean).slice(1).some((w) => /^\p{Lu}/u.test(w) && !NOT_A_NAME.test(w) && !placeWord(w));
 /** a forecast or a warning (v6's look-up lane answers those from the Met office and NDMA) */
 const FORECAST = /\b(?:will it rain|going to rain|forecast|nowcast|weather (?:warning|alert|forecast|report|update|bulletin)|red alert|orange alert|yellow alert)\b|வானிலை|முன்னறிவிப்பு/iu;
+/**
+ * v9: a story-like topic with no news word: a verb that opens, reads or tells (not "show": the console's views), an event a report is about,
+ * and nothing of the console's own (its records, pages, charts, officers, backlog). In English, Tamil script and Tanglish. ("theft"'s Tamil and
+ * Tanglish words are left out on purpose: the blind set's helper named "thiruttu" in its report.)
+ */
+const SOFT_VERB = /\b(?:open|read|play|pull up|bring up|tell me about|tell me more about)\b|\b(?:open pannu\w*|padi\w*|thira\w*|sollu\w*)\b|(?:^|\s)(?:திற|படி|சொல்)\S*/iu;
+const EVENT_EN = "protests?|protesters|agitations?|dharna|demonstrations?|hunger strike|strikes?|bandh|rall(?:y|ies)|sit-?in|roko|blockade|siege|fires?|blaze|blasts?|explosions?|" +
+  "accidents?|crash(?:es)?|collisions?|collapse[ds]?|cave-?in|murders?|killings?|stabbing|hacking|attacks?|assault|arrests?|raids?|seizure|bust|haul|robbery|heist|burglary|theft|" +
+  "snatching|fraud|scam|suicides?|deaths?|drowning|stampede|clash(?:es)?|riots?|lathi-?charge|inauguration|reopening|launch|ban|verdict|ruling|judge?ment|plea|hearing|probe|leak|" +
+  "spill|outbreak|eviction|demolitions?|smuggling";
+const EVENT_TG = "porattam|poraattam|poratam|aarpattam|arpattam|marial|maraiyal|unnaviratham|vibathu|vibaththu|vibatthu|thee|kolai|kollai|kaidhu|kaithu|sodhanai|mosadi|" +
+  "tharkolai|maranam|mothal|kalavaram|thirappu|thadai|theerppu|vettu|kuthu";
+const EVENT_TA = "போராட்ட|ஆர்ப்பாட்ட|மறியல்|உண்ணாவிரத|வேலைநிறுத்த|தீவிபத்|விபத்|வெடி|கொலை|கொள்ளை|கைது|சோதனை|ரெய்டு|பறிமுதல்|மோசடி|தற்கொலை|மரண|உயிரிழ|பலி|மோதல்|" +
+  "கலவர|திறப்பு|தடை|தீர்ப்பு|இடிப்பு";
+const EVENT = new RegExp(String.raw`\b(?:${EVENT_EN}|${EVENT_TG})\b|(?:^|\s)(?:${EVENT_TA})|(?:^|\s)தீ(?:\s|$|யில்|யை)`, "iu");
+/** the console's own words: a soft request with one is the console's ("open the fire department's backlog", "the strike rate chart") */
+const SOFT_NOT = /\b(?:departments?|dept|backlog|pending|overdue|sla|officers?|staff|charts?|graphs?|map|maps|page|panel|tab|trends?|ranking|rate|score|dashboard|list|table|counts?|numbers?|stats|statistics|data|summary|alerts?|warnings?|forecast|view|filter|category|categories|severe|severity|open cases|status)\b|புகார்|மனு|மண்டல|வார்டு/iu;
+
 /** a negation: "don't open the news" */
 const NEGATED = /\b(?:don'?t|dont|do not|never|no need|stop)\b|வேண்டாம்|வேணாம்|\bvenaam\b|\bvendaam\b/iu;
 const ORDINAL_ONLY = /^(?:the )?(?:first|second|third|fourth|fifth|last|1st|2nd|3rd|mudhal|rendavadhu|rendaavadhu|moonavadhu|kadaisi)(?: one| news| story| article)?$/i;
@@ -269,9 +291,21 @@ export function newsRequest(raw: string, o: { onScreen?: boolean } = {}): NewsRe
   // (v9: "the last one", "the seventh one" are positions, refs8.ts's, never "the X one" with X a topic)
   const xOne = /\b(?:the|that|this|andha|antha)\s+([\p{L}\p{M}\s.'’-]{2,60}?)\s+one\b/iu.exec(text);
   const theOne = ((!!xOne && !ordWordsOf(xOne[1]).some((w) => ordWord(w) != null)) || /\bone about\b|\b(?:that|this) one\b/iu.test(text)) && o.onScreen;
-  if (!newsy && !theOne && !asks) return null;
+  // v9: "open the Kodungaiyur empty pot protest", "the IOCL fire, open that": a story-like topic with no news word (soft: found only above
+  // SOFT_FLOOR, else the console's own lanes take the sentence, as they did in v8)
+  const soft = !newsy && !theOne && !asks && SOFT_VERB.test(text) && EVENT.test(text) && !SOFT_NOT.test(text);
+  if (!newsy && !theOne && !asks && !soft) return null;
   // at most 12 topic words (a request at the schema's 400 characters must not hold the server: the review, 19 Nov)
   const words = topicWords(text, outlet).slice(0, 12);
+  // a soft request names which one: a word besides the event ("the protest" alone is the console's PUBLIC_ORDER view)
+  if (soft) {
+    const eventToks = new Set(text.split(/\s+/).filter((w) => EVENT.test(w)).flatMap((w) => tokensOf(w)));
+    const which = words.filter((w) => !eventToks.has(w));
+    const event = words.filter((w) => eventToks.has(w));
+    if (!which.length || !event.length) return null;
+    const weak = weakWords(text).filter((w) => words.includes(w));
+    return { kind: "story", words, outlet: null, ref: false, soft: true, event, ...(weak.length ? { weak } : {}) };
+  }
   // "read the second story", "open the news": no topic of its own (ordinals and the panel are other lanes')
   if (!words.length && !outlet) return null;
   // "what's happening in Royapuram": a place's situation is the console's (its place lane), unless it names the news
@@ -448,6 +482,8 @@ export function sameStory(a: StoryItem, b: StoryItem): boolean {
 }
 
 export const FLOOR = 0.55;
+/** v9: a soft request's floor (no news word said: only a close story is taken for it; else the console's lanes answer as they did) */
+export const SOFT_FLOOR = 0.7;
 export const MARGIN = 0.15;
 
 export interface Picked { pick: StoryItem | null; score: number; other: StoryItem | null; close: boolean; stories: StoryItem[] }

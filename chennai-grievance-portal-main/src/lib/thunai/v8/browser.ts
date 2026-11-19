@@ -24,7 +24,8 @@ import { newsRequest, outletIn, topicWords } from "./news8";
 import { newsOrdinal8, stageRef8, type RowRef } from "./refs8";
 
 export type BrowserLane =
-  | { lane: "news"; na: NewsAskT; lang: Lang }
+  /** v9: `soft`, a soft find's way back: the lane the sentence takes when the news has nothing that close (the console does the same) */
+  | { lane: "news"; na: NewsAskT; lang: Lang; soft?: BrowserLane }
   | { lane: "stage"; cmd: LocalCmd; lang: Lang; explain?: boolean }
   | { lane: "memory"; intent: "remember" | "forget" | "recall"; lang: Lang }
   | { lane: "today"; lang: Lang }
@@ -99,8 +100,10 @@ const OTHER_ONE = /^(?:no,? |nope,? )?(?:the )?other (?:one|story|news|report|ar
 /**
  * v8's news lane: a story by its topic, a news question, or "the other one" after a found story. Null: not this lane's. v9: `panel`, the news on
  * screen is the console's own news panel (no Stage open): "the seventh one", "the last one" there are its stories (refs8.ts newsOrdinal8).
+ * v9: a story-like topic with no news word ("open the Kodungaiyur empty pot protest") is a soft find (`soft: true`): found only when close,
+ * else the lanes behind this one take it; never over a list of cases on screen (`cases`: "open the Adyar fire one" there is a case).
  */
-export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null; panel?: boolean }): NewsAskT | null {
+export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null; panel?: boolean; cases?: boolean }): NewsAskT | null {
   if (!understandV8()) return null;
   const t = said.trim();
   // a mission or a memory request is never the news lane's; "brief me on the Minjur desal plant story" names a story, so it is
@@ -121,9 +124,12 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   const at = newsOrdinal8(t, items, { panel: c.panel === true });
   if (at) return { kind: "read", body: { id: at } };
   const req = newsRequest(t, { onScreen: items.length > 0 });
-  if (!req) return null;
-  return { kind: "find", body: { find: { q: t.slice(0, 400), lang: c.lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })) } } };
+  if (!req || (req.soft && c.cases)) return null;
+  return { kind: "find", body: { find: { q: t.slice(0, 400), lang: c.lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })) } }, ...(req.soft ? { soft: true } : {}) };
 }
+
+/** v9: the open Stage shows a list of cases (a soft find never runs over one) */
+export const casesOnStage = (stage: BrowserCtx["stage"]): boolean => !!stage && stage.blocks.some((b) => b.kind === "CaseList" && Array.isArray(b.rows) && b.rows.length > 0);
 
 /** v8: a case on the open Stage's list the sentence points at (refs8.ts), or null */
 export function refLane8(said: string, stage: BrowserCtx["stage"]): { op: "open" | "explain"; n: number } | null {
@@ -139,11 +145,15 @@ export const userLang8 = (said: string, last: Lang | null): Lang => replyLang8(s
 export function browserLaneV8(said: string, c: BrowserCtx & { lastLang?: Lang | null; lastFound?: LastFound | null }): BrowserLane {
   if (!understandV8()) return browserLaneV7(said, c);
   const lang = userLang8(said, c.lastLang ?? null);
-  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: !c.stage });
-  if (n8) return { lane: "news", na: n8, lang };
-  // a case on the list on screen, by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க")
-  const r8 = refLane8(said, c.stage);
-  if (r8) return { lane: "stage", cmd: { op: "open", n: r8.n }, lang, explain: r8.op === "explain" };
-  const v7 = browserLaneV7(said, { ...c, heardLang: lang, listenLang: lang });
-  return v7.lane === "server" ? v7 : { ...v7, lang };
+  const n8 = newsLane8(said, { news: c.news, world: c.world, lang, lastFound: c.lastFound, panel: !c.stage, cases: casesOnStage(c.stage) });
+  if (n8 && !(n8.kind === "find" && n8.soft)) return { lane: "news", na: n8, lang };
+  const behind = ((): BrowserLane => {
+    // a case on the list on screen, by its position or its place ("the Teynampet one", "ரெண்டாவது சம்பவத்தைத் திறங்க")
+    const r8 = refLane8(said, c.stage);
+    if (r8) return { lane: "stage", cmd: { op: "open", n: r8.n }, lang, explain: r8.op === "explain" };
+    const v7 = browserLaneV7(said, { ...c, heardLang: lang, listenLang: lang });
+    return v7.lane === "server" ? v7 : { ...v7, lang };
+  })();
+  // v9: a soft find first; nothing that close in the news, the lane it would have taken (Thunai.tsx goes on the same way)
+  return n8 ? { lane: "news", na: n8, lang, soft: behind } : behind;
 }

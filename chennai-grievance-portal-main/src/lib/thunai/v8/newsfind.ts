@@ -15,15 +15,16 @@ import type { World } from "../types";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { newsRequest, pickStory, rankStories, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { newsRequest, pickStory, rankStories, SOFT_FLOOR, type NewsReq, type Picked, type StoryItem } from "./news8";
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
-/** What the news route needs of a find: the request's kind and words, the pick, another close story, the distinct matches (at most 5) */
+/** What the news route needs of a find: the request's kind and words, the pick, another close story, the distinct matches (at most 5); v9:
+ * `soft`, a story-like topic with no news word (nothing found: the console's own lanes take it, nothing is said) */
 export async function foundStory(f: FindAsk, d: Parameters<typeof findNews>[1]): Promise<FoundStory | null> {
   const r = await findNews(f, d);
   if (!r) return null;
-  return { kind: r.req.kind, words: r.req.words, pick: brief(r.picked.pick), other: brief(r.picked.other), stories: r.picked.stories.map((s) => brief(s)!).slice(0, 5) };
+  return { kind: r.req.kind, words: r.req.words, pick: brief(r.picked.pick), other: brief(r.picked.other), stories: r.picked.stories.map((s) => brief(s)!).slice(0, 5), ...(r.req.soft ? { soft: true } : {}) };
 }
 
 /**
@@ -122,6 +123,13 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   // within one event, the report in the request's own language (the real run, 18 Nov: a Tamil headline was read in the English voice)
   // "what else is in the news about it": the topic is the one just found, so another outlet's report of it that words it differently is enough (a
   // lower floor; the place veto still holds: the live dev re-check, 19 Nov)
-  const floor = f.exclude?.length ? MORE_FLOOR : undefined;
-  return { req, picked: pickStory(rankStories(req, items, { places: placesOf(d.world) }), f.lang, floor) };
+  // (v9: a soft request, no news word said, takes only a close story that has the event itself: SOFT_FLOOR, and a hit on "protest", not the
+  // place alone)
+  const floor = req.soft ? SOFT_FLOOR : f.exclude?.length ? MORE_FLOOR : undefined;
+  let ranked = rankStories(req, items, { places: placesOf(d.world) });
+  if (req.soft && req.event?.length) {
+    const ev = { words: req.event, outlet: null };
+    ranked = ranked.filter((r) => r.score < SOFT_FLOOR || (rankStories(ev, [r.item])[0]?.hits ?? 0) > 0);
+  }
+  return { req, picked: pickStory(ranked, f.lang, floor) };
 }

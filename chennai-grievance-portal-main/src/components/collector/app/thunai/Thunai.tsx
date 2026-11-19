@@ -58,7 +58,7 @@ import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed
 import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
-import { newsLane8, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
+import { casesOnStage, newsLane8, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -1303,8 +1303,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * repeats is not said twice); the screen shows what was said and every source as a link (a Note and a NewsReader list, the panels
    * the Stage already draws). Nothing a page said becomes a step: the events carry sentences and links only.
    */
-  const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<void> => {
-    if (na.kind === "which") { earcon("need"); out(whichLine(na, lang), lang, "ready"); return; }
+  // (v9: false when a soft find, a story-like topic with no news word, found nothing close: nothing was said, and the turn goes on to the
+  // console's own lanes; true otherwise)
+  const newsTurn = async (na: NewsAskT, heardText: string, lang: Lang, alive: () => boolean, signal: AbortSignal): Promise<boolean> => {
+    if (na.kind === "which") { earcon("need"); out(whichLine(na, lang), lang, "ready"); return true; }
     traceDecided("rules");
     setBrainNow({ by: "instant", model: null, ms: 0 });
     const t0 = performance.now();
@@ -1316,7 +1318,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const voiceLang = lang === "ta" ? "ta-IN" : "en-IN";
     const q = outMode === "voice" ? new SayQueue((t, end) => speak(spoken(t), voiceLang, end, rate, voiceName), alive) : null;
     const said = new Set<string>();
-    const st = { outlet: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false };
+    const st = { outlet: null as string | null, en: [] as string[], ta: [] as string[], links: [] as NewsLink[], shown: false, fail: null as string | null, answered: false, none: false };
     const sayLines = (en: string[], ta: string[]) => {
       for (const t of lang === "ta" ? ta : en) { const k = t.trim(); if (!k || said.has(k)) continue; said.add(k); q?.push(k); }
       setReply([...said].join(" "));
@@ -1340,7 +1342,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const sent = na.kind === "read" ? { ...na.body, ask: { q: heardText.trim().slice(0, 400) || "read the report", lang } } : na.body;
       if (na.kind !== "find") lastFound.current = na.kind === "read" && "id" in na.body && lastFound.current?.other?.id === na.body.id ? { id: na.body.id, other: null } : null;
       const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sent), signal });
-      if (!alive()) return;
+      if (!alive()) return true;
       if (!res.ok || !res.body) st.fail = "failed";
       else await readNdjson(res.body, (e) => {
         if (!alive()) return;
@@ -1393,6 +1395,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           st.en = (a.en ?? []).map(String); st.ta = (a.ta ?? []).map(String);
           st.links = (a.links ?? []).filter((x) => x && typeof x.url === "string" && /^https?:\/\//.test(x.url));
           draw(); sayLines(st.en, st.ta);
+        } else if (e.type === "none") {
+          // v9: a soft find found nothing close: say nothing here; the turn goes on to the console's lanes
+          st.none = true;
         } else if (e.type === "done") {
           jvMark("newsDone");
           // v8: another story matched almost as well: offered in one line, never read uninvited
@@ -1404,12 +1409,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         else if (e.type === "error") st.fail = String((e as { why?: string }).why ?? "failed");
       }, alive);
     } catch {
-      if (!alive() || signal.aborted) return;
+      if (!alive() || signal.aborted) return true;
       st.fail = "failed";
     }
-    if (!alive()) return;
+    if (!alive()) return true;
     setStageBusy(null);
     hud.set({ doing: "" });
+    if (st.none && !st.answered) { lastFound.current = null; return false; }
     if (!st.answered) {
       // nothing came back to tell: say why, on whatever screen is up (and no old story is left to offer)
       if (na.kind === "find") lastFound.current = null;
@@ -1417,13 +1423,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       earcon("blocked");
       out(failLine(st.fail ?? "failed", lang), lang, "ready");
       remember(heardText, na.kind === "lookup" ? "tried to look it up on the web: nothing came back" : "tried to read the news report: nothing came back");
-      return;
+      return true;
     }
     const all = (lang === "ta" ? st.ta : st.en).join(" ");
     pushMsg({ who: "jarvis", text: all, lang });
     remember(heardText, na.kind === "lookup" ? "looked it up on the web and said what it found, with sources" : "read the news report and other outlets' coverage aloud, with links", { doc: stageRef.current });
     const done = () => setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
     if (q?.speaking) { setPhase("speaking"); q.then(done); } else done();
+    return true;
   };
 
   const draftMany = async (ids: string[], lang: Lang) => {
@@ -1700,12 +1707,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
     if (!original && v8) {
-      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current, panel: !stageRef.current });
+      const n8 = newsLane8(said, { news: newsOnScreen(stageRef.current, buildState()), world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current,
+        panel: !stageRef.current, cases: casesOnStage(stageRef.current) });
       if (n8) {
         const t0 = performance.now();
-        await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal);
-        decide({ kind: "answer", query: said, lang: ulang ?? "en", lane: "instant", ms: performance.now() - t0 });
-        return;
+        // (v9: a soft find, a story-like topic with no news word, that found nothing close goes on to the lanes below, as v8 sent it)
+        if (await newsTurn(n8, said, ulang ?? "en", alive, ctl.signal)) {
+          decide({ kind: "answer", query: said, lang: ulang ?? "en", lane: "instant", ms: performance.now() - t0 });
+          return;
+        }
+        if (!alive()) return;
       }
       // any other turn: the story found last is forgotten ("the other one" and "more on it" belong to the turn right after it: the review, 18 Nov)
       lastFound.current = null;

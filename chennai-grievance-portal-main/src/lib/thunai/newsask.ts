@@ -16,7 +16,9 @@ import { type StageDocT, checkStage } from "./stage";
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
 export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } }
   /** v8: a story by its topic or a news question, found on the server among the screen's stories and the dashboard's (v8/news8.ts) */
-  | { kind: "find"; body: { find: { q: string; lang: "en" | "ta"; screen: { id: string; title: string | null; source: string | null }[]; exclude?: string[] } } }
+  | { kind: "find"; body: { find: { q: string; lang: "en" | "ta"; screen: { id: string; title: string | null; source: string | null }[]; exclude?: string[] } };
+    /** v9: a story-like topic with no news word (not sent: the server reads the sentence itself): nothing close found, the lanes behind take it */
+    soft?: boolean }
   | { kind: "which"; why: "none" | "outlet" | "count"; /** the outlet's own name ("The Times of India") */ outlet?: string; n?: number };
 
 /** What is on Jarvis's screen that a "read the article" can mean. */

@@ -50,6 +50,8 @@ export type NewsEvent =
   | { type: "found"; id: string; title: string; outlet: string | null; other: { id: string; title: string; outlet: string | null } | null; stories: { id: string; title: string; outlet: string | null }[] }
   /** v8: lines said as they are (nothing in the dashboard's news: what the outlets' feeds have, or that nothing was found), with links */
   | { type: "said"; en: string[]; ta: string[]; links: { outlet: string; title: string; url: string; publishedAt: string | null }[] }
+  /** v9: a soft find (a story-like topic with no news word) found nothing close: nothing is said; the console's own lanes take the sentence */
+  | { type: "none" }
   | { type: "error"; why: "not_found" | "failed" | "no_news" }
   | { type: "done"; ms: number };
 
@@ -74,6 +76,8 @@ export interface FoundStory {
   pick: { id: string; title: string; outlet: string | null } | null;
   other: { id: string; title: string; outlet: string | null } | null;
   stories: { id: string; title: string; outlet: string | null }[];
+  /** v9: a story-like topic with no news word: found only when close (nothing found: "none", and nothing from the outlets' feeds) */
+  soft?: boolean;
 }
 
 const STORED_MIN = 200;
@@ -91,6 +95,7 @@ export async function* newsEvents(asked: NewsBodyT, d: ServeDeps): AsyncGenerato
     let f: FoundStory | null = null;
     try { f = d.find ? await d.find(asked.find) : null; } catch { yield { type: "error", why: "failed" }; return; }
     if (!f) { yield { type: "error", why: "not_found" }; return; }
+    if (!f.pick && f.soft) { yield { type: "none" }; yield { type: "done", ms: ms() }; return; }
     if (!f.pick) {
       const said = d.feedLines ? await d.feedLines(asked.find, f.words).catch(() => null) : null;
       if (!said) { yield { type: "error", why: "not_found" }; return; }
