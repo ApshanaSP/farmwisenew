@@ -199,6 +199,26 @@ function simIn(q: QWord, d: Doc, memo: Map<string, number>): number {
   return best >= 0.8 ? best : 0;
 }
 
+/**
+ * v9: a joined word ("Kasi medu" said for Kasimedu) in one story: its whole key, or a case ending's stem, against one headline word (0 below 0.88).
+ * No shared head and no consonants-only match: those would let "Pallikaranai marsh" joined stand for "marsh" in every Pallikaranai story.
+ */
+function joinedIn(q: QWord, d: Doc, memo: Map<string, number>): number {
+  let best = 0;
+  for (const { k: tk } of d.byFirst.get(q.k[0]) ?? []) {
+    const mk = `j|${q.k}|${tk}`;
+    let s = memo.get(mk);
+    if (s === undefined) {
+      s = keySim(q.k, tk);
+      for (const st of q.stems) if (st[0] === tk[0]) s = Math.max(s, keySim(st, tk) * 0.98);
+      memo.set(mk, s);
+    }
+    if (s > best) best = s;
+    if (best >= 1) break;
+  }
+  return best >= 0.88 ? best : 0;
+}
+
 /** the zones and places a request names (research 10, rec 4: a place the story does not mention vetoes it) */
 export interface Places { names: string[] }
 
@@ -213,6 +233,24 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
   const placeOf = qs.map((q) => q.k.length >= 4 && placeKeys.some((pk) => pk[0] === q.k[0] && (pk === q.k || keySim(q.k, pk) >= 0.88 || q.stems.some((st) => st === pk))));
   const memo = new Map<string, number>();
   const sims = qs.map((q) => docs.map((d) => simIn(q, d, memo)));
+  // v9: a name the ears split in two or three ("Kasi medu" for Kasimedu, "Palli Karanai" for Pallikaranai: v8's holdout): in each story, the
+  // joined word's match stands for its parts when it is better than theirs; a joined place the story does not mention vetoes it, unless the
+  // story has every part as a word of its own ("Anna Nagar" written apart)
+  const vetoed = new Set<number>();
+  for (let i = 0; i < qs.length; i++) {
+    for (const span of [2, 3]) {
+      if (i + span > qs.length) break;
+      const joined = req.words.slice(i, i + span).join("");
+      if (joined.length < 6) continue;
+      const jq = qOf(joined);
+      const isPlace = placeKeys.some((pk) => pk[0] === jq.k[0] && (pk === jq.k || keySim(jq.k, pk) >= 0.88));
+      docs.forEach((d, j) => {
+        const s = joinedIn(jq, d, memo);
+        if (s > 0) { for (let k = i; k < i + span; k++) if (sims[k][j] < s) sims[k][j] = s; }
+        else if (isPlace && !sims.slice(i, i + span).every((row) => row[j] > 0)) vetoed.add(j);
+      });
+    }
+  }
   const idf = sims.map((row) => { const df = row.filter((s) => s > 0).length; return Math.log(1 + (n - df + 0.5) / (df + 0.5)); });
   const maxIdf = Math.max(...idf, 0.0001);
   // a word no story holds counts at half weight (something the news does not have: "Kerala floods"); a short fragment that is no word at all
@@ -231,7 +269,7 @@ export function rankStories(req: Pick<NewsReq, "words" | "outlet">, items: Story
     }
     if (d.item.onScreen != null) score += 0.1;
     // a place the request names that the story does not mention: never this story
-    if (placeOf.some((p, i) => p && sims[i][j] === 0)) score = Math.min(score, 0.3);
+    if (placeOf.some((p, i) => p && sims[i][j] === 0) || vetoed.has(j)) score = Math.min(score, 0.3);
     return { item: d.item, score, hits };
   }).sort((a, b) => b.score - a.score || (a.item.onScreen ?? 999) - (b.item.onScreen ?? 999) || String(b.item.t ?? "").localeCompare(String(a.item.t ?? "")));
 }
