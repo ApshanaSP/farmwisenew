@@ -74,8 +74,11 @@ describe("captions only while hearing (defect 10)", () => {
     const a = src.indexOf("  // \"Hi Jarvis\": closed, the browser");
     const b = src.indexOf("}, [mode]);", a) + "}, [mode]);".length;
     expect(a).toBeGreaterThan(-1);
-    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("027e9d2df1f28d8c118797ce35d8f6bc0c641c8b8ac8f4155f2a3cfc99ef034f");
+    // (v10 review 2, round 2: the pin moves once more, for one change only: the same-breath rest is handed over as spoken, { source: "captions" },
+    // so a cut-off rest waits as any spoken line does; it was taken for typed text)
+    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("fdc45a21a6ad00f8b35429128304a4f6e9d12b03d544150163d79613d12cf115");
     const block = src.slice(a, b);
+    expect(block).toContain("handleRef.current(rest, 0.95, undefined, { source: \"captions\" })");
     // still: only while closed, after the first-use notice, with the microphone already allowed, never while the tab is hidden; the browser's
     // own recogniser still listens for the name
     expect(block).toContain('if (mode !== "off" || !canWake() || store.get("jarvis-mode-seen") !== "1") return;');

@@ -41,7 +41,7 @@
  *    decide the duck after its end, as before), 250 ms to TUNING.earlySttMaxMs (10 s) of speech so far, with Whisper reachable.
  *    The trace still opens at the last voiced sample; its "uploadSent" is the request the words came from.
  */
-import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
+import { addressed, ENGAGED_MS, isStatement, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
 import { confOf, joinHeard, type HearReply } from "@/lib/thunai/heard";
 import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from "@/lib/thunai/turn";
@@ -52,6 +52,7 @@ import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
+import { cutOff, joinCut } from "@/lib/thunai/v10/browser10";
 
 /** this turn's trace is still the open one: a stamp for an older turn never lands on a newer turn's trace */
 const isCurrent = (tr: TurnTrace | null): boolean => !!tr && traces().at(-1) === tr;
@@ -151,6 +152,8 @@ export interface ConductorHooks {
   wantsYes?: () => boolean;
   /** v8: a next step is on offer ("Want the details?"): a yes or a no is its answer */
   offerPending?: () => boolean;
+  /** v10: the line the page holds for its rest, and when (Thunai.tsx cutRef: the wake path's same-breath rest, "Hey Jarvis, tell me about the") */
+  heldCut?: () => { text: string; at: number } | null;
   /**
    * speech began (VAD onset): the browser's captions may start now. `engaged`: the turn is engaged by the lane's reckoning;
    * `fallback`: Whisper is out and the conductor's own recogniser hears this speech (the console's live captions stand aside)
@@ -537,7 +540,7 @@ export class Conductor {
 
   /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
   get engagedAt(): number | null {
-    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged);
+    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt);
     return t > 0 ? t : null;
   }
   /**
@@ -607,6 +610,9 @@ export class Conductor {
   /** The name was heard: the next sentences are engaged. */
   private engaged = 0;
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
+  /** v10: when a cut-off line was last held for its rest (ignored()): it keeps the window open, but it is no call (the gate's `called` is the name's
+   * alone; a hold that engaged took the next side talk at tier 1: v10 review 2, finding 20) */
+  private heldAt = 0;
   private fromCaptions(text: string) {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
     // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())
@@ -627,15 +633,45 @@ export class Conductor {
    */
   private ignored(text: string, gate: Addressed) {
     if (gate.why === "cut-off" && understandV10()) {
-      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || 0;
-      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.engage(); this.h.onIgnored(text, "cut-off-held"); return; }
+      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held"); return; }
     }
     this.h.onIgnored(text, gate.why);
   }
+  /** v10: the line held last for its rest, and when (ignored()); the page joins the same rest to it (Thunai.tsx cutRef, joinCut) */
+  private held: { text: string; at: number } | null = null;
 
   private gateFor(text: string): Addressed {
+    const g = this.gateOne(text);
+    // v10 review 2, round 2: the rest of a line held as cut off is the line's own rest, so it is gated with it ("Tell me about the" ... "accident in
+    // Velachery yesterday" is a request; the rest alone, with its "yesterday", is side talk and was dropped). Only a rest the gate let go as talk
+    // (side, aside, unaddressed, unclear) is read again; one said to someone else (another assistant, a title, a name, an errand) or a filler
+    // stays theirs, and a rest that is itself cut off is held in its turn (ignored())
+    if (!understandV10()) return g;
+    // round 3: a line said to Jarvis (named or engaged) and cut off before its point is held too, as the page holds it ("Jarvis, tell me about the"
+    // ... "accident in Velachery yesterday": the rest was gated alone and dropped); the hold keeps the window open, as ignored()'s does
+    if (g.act) {
+      if (cutOff(g.text)) { this.heldAt = Date.now(); this.held = { text: g.text, at: this.heldAt }; } else this.held = null;
+      return g;
+    }
+    // the line held here, or the page's own if newer (the wake path's same-breath rest goes to the page, not through this gate)
+    const p = this.h.heldCut?.() ?? null;
+    const h = p && (!this.held || p.at > this.held.at) ? p : this.held;
+    if (!h) return g;
+    if (!/^(?:side|aside|unaddressed|unclear)$/.test(g.why)) return g;
+    // round 3: a statement of its own is no rest ("Tell me about the" ... "the driver is waiting downstairs" was acted on: the held request lent it
+    // its shape)
+    if (isStatement(text)) return g;
+    const joined = joinCut(h, text, Date.now());
+    if (joined === text.trim()) return g;
+    const j = this.gateOne(joined);
+    if (!j.act) return g;
+    this.held = null;
+    return j;
+  }
+  private gateOne(text: string): Addressed {
     const r = this.h.rules(text);
-    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || null;
+    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
     // talking over Jarvis counts as engaged: it was speaking a moment ago
     const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler

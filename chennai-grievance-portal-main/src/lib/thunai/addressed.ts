@@ -55,8 +55,9 @@ const SCREEN_TALK_TG = /\b(?:idhu|idho|ithu|itho|inga|ingey|adho|atho)\b.*\b(?:p
 const SCREEN_TALK_TA = /(?:^|\s)(?:இதோ|இதைப்|இதை|இங்க|இங்கே|அதோ)\s*(?:பாருங்க|பாரு|பாருங்கள்|பாருங்கோ)/u;
 // (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil word)
 const PHONE_OPEN = /^\s*(?:hello|hallo|halo|ஹலோ)\s*[?!.,]+\s*(?:(?:haan|han|ha|aan|yes|yeah|ok|okay|sollunga|sollungo|sollu|speaking|tell me|sir|madam|ஆ|ஆமா|சொல்லுங்க|சொல்லு|சொல்லுங்கோ)(?=[\s,.!?]|$)[\s,.!?]*)+/iu;
-const HEARSAY_TG = /\b(?!aama?am\b)[a-z]{3,}(?:iyaam|yaam|maam|chaam|daam|taam)\s*[.!?]*\s*$/i;
-const HEARSAY_TA = /\S(?:மாம்|களாம்|ச்சாம்|தாம்)\s*[.!?]*\s*$/u;
+// (not a yes or a no that ends so: "aamaam", "Map vendaam", ஆமாம் is ஆ + மாம்: v10 review 2, finding 21)
+const HEARSAY_TG = /\b(?!(?:aama?am|vendaam|vendam|venaam)\b)[a-z]{3,}(?:iyaam|yaam|maam|chaam|daam|taam)\s*[.!?]*\s*$/i;
+const HEARSAY_TA = /\S(?<!(?:^|[\s,.!?])ஆ)(?:மாம்|களாம்|ச்சாம்|தாம்)\s*[.!?]*\s*$/u;
 /** a person addressed by a title, set off by a comma: "Sir, the car is ready", "Madam, ...", "..., sir" ("Amma Unavagam complaints" is no title) */
 const HONORIFIC8 = /^\s*(?:sir|madam|ma'?am|mam|saar|ayya|amma|akka|thambi|boss|anna)\s*[,.!]|,\s*(?:sir|madam|saar|boss)\s*[.!?]*\s*$/i;
 /** v10: the same in Tamil script ("சார், ...", "தம்பி, ...", "..., சார்"); "ஏங்க", "ஏய்", "டேய்" call a person with or without the comma. A title with
@@ -74,6 +75,21 @@ const FILLER8 = new Set(["hmm", "hm", "mm", "mmm", "uh", "um", "ah", "oh", "aha"
 const ACK8 = new Set(["ok", "okay", "okk", "yes", "yeah", "sari", "seri", "haan", "achha", "acha", "fine", "right", "சரி", "ஓகே", "ஆமா"]);
 /** a sentence cut off before its point: it ends on a word that cannot end one ("Who is this assigned to?", "Open that." can: the review, 18 Nov) */
 const DANGLING8 = / (?:the|a|an|and|or|but|of|my|your|our|their|is|are|was|were|if|because|than|what|which|whats) $/;
+/** v10: a question embedded in a request ends on its verb and is whole ("Tell me where the Adyar zonal office is", "Find out who the AE for
+ * Velachery is"): words before the question word, two words or more after it. Not "if", "whether", "why" or "which" ("Tell me if the drain is"
+ * is cut off). v10 review 2, finding 19: these were held as cut off, and never answered. Round 2: a cleft ("And what I need is", "Okay what I want
+ * is") or a relative clause ("Show me the complaints where the status is") cut off before its point stays cut off. Round 3: those two shapes are
+ * all that is left out (round 2 took only a listed verb right before the question word for the frame, and "Tell me exactly where ...", "Any idea
+ * who ...", "Can you find where ..." were cut off again) */
+const EMBEDDED_ASK = /^(?:\S+ )+(?:where|what|who|when|how) \S+(?: \S+)* (?:is|are|was|were)$/;
+/** the cleft: nothing but a filler or the name before the question word ("and what I need is", "jarvis what I need is") */
+const CLEFT = /^(?:(?:and|so|ok|okay|but|now|well|then|also|yes|yeah|right|haan|seri|sari|hey|hi|jarvis|ஜார்விஸ்) )+(?:where|what|who|when|how) /;
+/** the relative clause: the question word right after a noun the sentence names ("the complaints where", "those wards where") */
+const RELATIVE = /(?:^| )(?:the|these|those) \S+ (?:where|when|who) /;
+export const embeddedAsk = (text: string): boolean => {
+  const t = norm(text).trim();
+  return EMBEDDED_ASK.test(t) && !CLEFT.test(t) && !RELATIVE.test(t);
+};
 /** one Tamil word that is a whole command or answer ("அடுத்து": next) */
 const ONE_WORD_TA8 = /^(?:அடுத்து|அடுத்தது|முந்தையது|நிறுத்து|போதும்|மீண்டும்|மூடு|திற|படி|காட்டு|சரி|பின்னால்|வேண்டாம்|இல்லை|ஆமாம்|ஆம்)$/u;
 /** a request said with its verb at the end: "the Nungambakkam subway one, open it"; "Supreme Court news open pannunga" */
@@ -110,7 +126,7 @@ export function sideTalk8(text: string, o: { awaiting?: boolean; districtNoun?: 
   if (ERRAND8.test(t) || ERRAND8_TA.test(text) || ERRAND8_TG.test(t)) return "errand";
   if (YOU_PAST8.test(t)) return "asked-a-person";
   if (words.length && (words.every((w) => FILLER8.has(w)) || (words.length >= 2 && words.every((w) => ACK8.has(w) || FILLER8.has(w))))) return o.awaiting ? null : "filler";
-  if (DANGLING8.test(t) && !o.awaiting) return "cut-off";
+  if (DANGLING8.test(t) && !o.awaiting && !(understandV10() && embeddedAsk(text))) return "cut-off";
   if (words.length === 1 && ONE_WORD_TA8.test(words[0])) return null;
   // an ordinal or "both" alone is a follow-up on the list ("rendavadhu", "இரண்டாவது", "rendum")
   if (words.length <= 2 && (ordinalOf(text) != null || /^(?:rendum|irandum|ரெண்டும்|இரண்டும்|both)$/iu.test(words.join(" ")))) return null;
@@ -208,6 +224,9 @@ export const isImperative = (text: string): boolean => {
 /** asked as a request or a question, whatever its length (v8: a verb at the end too, "the X one, open it", "news open pannunga") */
 const shaped = (text: string, t: string) => REQUEST_EN.test(t) || isImperative(text) || QUESTION_TA.test(text) || QUESTION_TG.test(t) || /\?\s*$/.test(text) || (understandV8() && LATE_VERB8.test(t));
 const statement = (text: string, t: string) => STATEMENT_EN.test(t) || ASIDE_TA.test(text) || (FINITE_TA.test(text) && !QUESTION_TA.test(text));
+/** v10 review 2, round 3: a statement of its own ("the driver is waiting downstairs", "my phone is not working", "மழை வருது"): never the rest of a
+ * line held as cut off (conductor.ts gateFor) */
+export const isStatement = (text: string): boolean => statement(text, norm(text));
 /** a chore for someone in the room, not work for the console */
 const chore = (text: string, engaged = false): boolean => {
   const t = norm(text);

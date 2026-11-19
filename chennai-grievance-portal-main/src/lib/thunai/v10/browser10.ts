@@ -24,12 +24,13 @@ import { classMention, findMentions, type Mention } from "./entity10";
 import type { Entity10 } from "./lexicon10";
 import { earOrdinals, screenModel, type ScreenModel } from "./screen10";
 import { understandV10 } from "./flag10";
-import { unclearWord } from "../addressed";
+import { embeddedAsk, unclearWord } from "../addressed";
 import { districtNounIn } from "../quick";
 
 export type BrowserLane10 = BrowserLane
-  /** a cut-off line or a lone unclear word: nothing said; the next sentence is joined to it (Thunai.tsx keeps it a few seconds) */
-  | { lane: "wait"; why: "cut-off" | "one-word"; lang: Lang }
+  /** a cut-off line, a lone unclear word or a line of fillers ("Please."): nothing said; the next sentence is joined to a cut-off one (Thunai.tsx
+   * keeps it a few seconds) */
+  | { lane: "wait"; why: "cut-off" | "one-word" | "filler"; lang: Lang }
   /** a name heard half-surely: asked back in a few words; a yes runs `then` */
   | { lane: "confirm"; ask: { en: string; ta: string }; then: string; mention: { id: string; name: string }; lang: Lang }
   /** Ask the Map by voice (map10.ts): one map operation; the console runs it (mapops.ts) */
@@ -48,6 +49,8 @@ export interface BrowserCtx10 extends BrowserCtx {
   askMap?: Omit<MapCtx10, "lang"> | null;
   /** the controls visible now, by registry id, when the console knows them */
   visible?: string[] | null;
+  /** how the sentence came (Thunai.tsx sourceRef); unset: spoken. A typed line is finished when Enter is pressed: it never waits for its rest */
+  source?: "whisper" | "captions" | "typed" | null;
 }
 
 /** words a sentence cannot end on: a line cut off before its point (v8's addressed.ts DANGLING8) */
@@ -62,12 +65,21 @@ const WHOLE = /^(?:(?:hey |ok |okay )?jarvis,? )?(?:what'?s going on|what is goi
  * replay of the owner's turns, 19 Nov */
 const DANGLING_TA = /(?:அந்த|இந்த|எந்த|ஒரு)\s*$/u;
 const DANGLING_TG = /\b(?:andha|indha|endha|oru)\s*$/i;
+/** a line of words that carry nothing alone ("தயவுசெய்து,", "Please.", "hmm"): not a thanks, a yes or a no (each a whole answer) */
+const FILLERS = /^(?:(?:please|pls|hmm*|mm+|uh|um|ah|oh|aha|தயவுசெய்து|ம்ம்|ம்)[\s,.!?…]*)+$/iu;
+/** a greeting or a thanks said alone, in Tanglish or Tamil script ("vanakkam", "வணக்கம்", "nandri", "Namaskaram"; the English ones are English words):
+ * whole, never a noise word (v10 review 2, round 3: "Hey Jarvis, vanakkam" got an earcon and no reply) */
+const GREETING = /^(?:vanakkam|vanakam|vannakam|vanakkom|namaskaram|namaskar|namaste|namasthe|nandri|nanri|nandrigal|வணக்கம்|நமஸ்காரம்|நமஸ்தே|நன்றி|நன்றிகள்)[\s,.!?…]*$/iu;
 
 /** Is this line cut off before its point? Its words, the punctuation the speech-to-text put at the end aside. */
 export function cutOff(text: string): boolean {
-  const t = text.normalize("NFC").replace(/[.!?,;:…]+\s*$/u, "").trim();
+  // the words as the gate reads them (addressed.ts norm): "what's" is "whats", and a dash, an ellipsis or a comma the speech-to-text wrote is no word,
+  // so every line the open mic's gate holds as cut off is cut off here too, and joinCut gives it its rest ("Tell me what's", "Show me the—": v10
+  // review 2, round 2)
+  const t = text.normalize("NFC").replace(/[’']/g, "").replace(/[^\p{L}\p{M}\p{N}\s]+/gu, " ").replace(/\s+/g, " ").trim();
   if (!t) return false;
-  if (WHOLE.test(t)) return false;
+  // (a question embedded in a request ends on its verb and is whole: "Tell me where the Adyar zonal office is", v10 review 2, finding 19)
+  if (WHOLE.test(t) || embeddedAsk(t)) return false;
   const words = t.split(/\s+/);
   // one word that is a whole request (a verb, a yes, a place) is not cut off: only the dangling words count
   if (DANGLING.test(` ${t}`) || DANGLING_FRAME.test(t)) return true;
@@ -89,8 +101,12 @@ const flat = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{
 export function joinCut(cut: { text: string; at: number } | null, said: string, now: number, ms = 12_000): string {
   const n = said.trim();
   if (!cut || now - cut.at > ms || now < cut.at) return n;
-  const c = cut.text.replace(/[.!?,…]+\s*$/u, "").trim();
+  // (the end's punctuation off, a dash the speech-to-text wrote for the pause too: "Tell me about the-" ... "fast news")
+  const c = cut.text.replace(/[\s.!?,;:…\-‐‑‒–—―]+$/u, "").trim();
   if (!c) return n;
+  // only a line cut off before its point has a rest: a noise word that waited ("வாயமுர்ரா.") is dropped, never put in front of the next request
+  // (it flipped the answer to Tamil: v10 review 2, finding 26); a lone determiner ("அந்த") is cut off all the same
+  if (!cutOff(c) && !DANGLING_TA.test(c) && !DANGLING_TG.test(c)) return n;
   if (flat(n).includes(flat(c)) || FRESH.test(n)) return n;
   return `${c} ${n}`;
 }
@@ -139,8 +155,15 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   const lang = userLang8(said0, c.lastLang ?? null);
   // 1. cut off before its point: wait for the rest (the gate silences it on the open mic; here, named or engaged, it is not answered either);
   // and a lone word no lexicon knows ("வாயமுர்ரா.": the owner's turn, answered by the planner on 18 Nov)
-  if (cutOff(said0)) return { lane: "wait", why: "cut-off", lang };
-  if (unclearWord(said0, districtNounIn(said0, c.world))) return { lane: "wait", why: "one-word", lang };
+  // (a typed line is finished when Enter is pressed: it is answered as typed, as v9 did; v10 review 2, finding 19)
+  const typed = c.source === "typed";
+  if (!typed && cutOff(said0)) return { lane: "wait", why: "cut-off", lang };
+  // (a name of the day or the news word said alone is no noise: "Akvan", "Arlekar", "அக்வான்", "Seithi"; v10 review 2, finding 23)
+  if (!typed && unclearWord(said0, districtNounIn(said0, c.world)) && !NEWS_WORD.test(said0) && !GREETING.test(said0.normalize("NFC").trim())
+    && !(c.lex?.length && findMentions(said0, c.lex, { kinds: ["storm", "name"] }).length)) return { lane: "wait", why: "one-word", lang };
+  // fillers alone carry nothing ("தயவுசெய்து,", "Please.": the brief's Part 3, v10 review 2, finding 27); a thanks, a yes or a no is whole. Typed, they
+  // are answered as typed: a typed line never waits (round 2: a typed "Please." got no reply at all)
+  if (!typed && FILLERS.test(said0.normalize("NFC").trim())) return { lane: "wait", why: "filler", lang };
   // 2. a position by ear, read as the position, when a list is on screen
   const sm: ScreenModel = screenModel({ stage: c.stage, state: c.state, news: c.news, suggest: c.suggest ?? null });
   const said = earOrdinals(said0, { list: sm.lists.length > 0 });
@@ -154,8 +177,9 @@ function v10Lane(said0: string, c: BrowserCtx10): BrowserLane10 | null {
   if (!consoleThing && c.lex?.length) {
     const ms = findMentions(said, c.lex, { kinds: ["storm", "name"] });
     // a person's or a body's name is the news only when asked about ("tell me about Arlekar", "any update on the IOCL"), or said alone; "CM Vijay is
-    // visiting Adyar, what should I know?" is a visit's brief (v7's asks7), not a story
-    const m = ms.find((x) => x.entity.kind === "storm" || ABOUT.test(said) || said.replace(/[.?!,]/g, "").trim().split(/\s+/).length <= 3);
+    // visiting Adyar, what should I know?" is a visit's brief (v7's asks7), not a story. A storm heard only half-surely with no class word is asked
+    // about as a name is ("Adyar AE avan phone edukkala" was asked back "Cyclone Akvan?": v10 review 2, finding 22)
+    const m = ms.find((x) => (x.entity.kind === "storm" && (x.band === "sure" || x.cls === "storm")) || ABOUT.test(said) || said.replace(/[.?!,]/g, "").trim().split(/\s+/).length <= 3);
     if (m) {
       const storm = m.entity.kind === "storm";
       if (m.band === "ask") {

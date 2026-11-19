@@ -67,4 +67,66 @@ describe("v10: a lone unclear word or a cut-off line that reached the lanes wait
   it.each(["அடுத்து", "Adyar", "stop", "yes", "next", "நன்றி"])("'%s' does not", (said) => {
     expect(lane(said).lane).not.toBe("wait");
   });
+  // v10 review 2, finding 27: the brief's own one-word example and "Please." reached the lanes (unclearWord exempts a filler) and were answered
+  it.each(["தயவுசெய்து,", "Please.", "Please, please."])("a filler alone ('%s') waits", (said) => {
+    expect(lane(said).lane).toBe("wait");
+  });
+  it.each(["yes", "சரி", "no", "இல்லை", "okay"])("a yes, a no or an ack ('%s') is still an answer", (said) => {
+    expect(lane(said).lane).not.toBe("wait");
+  });
+});
+
+describe("v10 review 2: a whole question that ends on 'is' or 'are' is no cut-off line on the open mic either (finding 19)", () => {
+  // v10 review 2, finding 19: the gate's cut-off rule held "Tell me where the relief centres are" in the engaged window, and it was never answered
+  it.each(["Tell me where the relief centres are", "Tell me what the IMD warning is"])("'%s' (5 s after Jarvis spoke) is acted on", (said) => {
+    expect(gate(said, { engagedSec: 5 }).act).toBe(true);
+  });
+  it.each(["And the real problem is the", "What are the", "Tell me if the drain is"])("'%s' is still cut off", (said) => {
+    expect(gate(said, { engagedSec: 5 }).why).toBe("cut-off");
+  });
+});
+
+describe("v10 review 2: a yes or a no in Tamil and Tanglish is no hearsay (finding 21)", () => {
+  // v10 review 2, finding 21: HEARSAY_TA matched ஆமாம் (ஆ + மாம்) and HEARSAY_TG matched "vendaam" (ven + daam): these were silenced
+  it.each(["ஆமாம்", "சரி, ஆமாம்", "Map vendaam", "Adyar report vendaam"])("'%s' 3 s after Jarvis spoke is acted on", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act} ${g.why}`).toBe("true engaged");
+  });
+  it.each(["நாளைக்கு மழை வருமாம்", "Kodungaiyur la thanni illaiyaam"])("'%s' is still hearsay", (said) => {
+    expect(gate(said, { engagedSec: 3 }).why).toBe("hearsay");
+  });
+});
+
+describe("v10 review 2, round 2: a cleft or a relative clause cut off is held on the open mic (finding 19)", () => {
+  // v10 review 2, round 2: the embedded-question rule took any word before what/where for a request's frame, so the gate acted on these half
+  // sentences in the engaged window and the lanes answered them
+  it.each(["And what I need is", "Okay what I want is", "Show me the complaints where the status is", "List the wards where the water level is", "So what we need is"])("'%s' (3 s after Jarvis spoke) is cut off", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act} ${g.why}`).toBe("false cut-off");
+  });
+  it.each(["Can you tell me where the relief centres are", "Find out who the AE for Velachery is"])("'%s' is still acted on", (said) => {
+    expect(gate(said, { engagedSec: 3 }).act).toBe(true);
+  });
+});
+
+describe("v10 review 2, round 2: a typed line never waits, fillers alone included (finding 27)", () => {
+  // v10 review 2, round 2: the fillers' wait ran whatever the source, so a typed "Please." got no reply at all
+  const c = (source: "typed" | "whisper" | "captions") => ({ stage: null, news: { items: [] }, state, world, listenLang: "en" as const, heardLang: null, v7: true, lex: [], source });
+  it.each(["Please.", "hmm", "தயவுசெய்து", "Please, please.", "ம்ம்"])("typed '%s' does not wait", (said) => {
+    expect(browserLaneV10(said, c("typed")).lane).not.toBe("wait");
+  });
+  it.each(["Please.", "தயவுசெய்து,"])("spoken '%s' still waits", (said) => {
+    expect(browserLaneV10(said, c("whisper")).lane).toBe("wait");
+    expect(browserLaneV10(said, c("captions")).lane).toBe("wait");
+  });
+});
+
+describe("v10 review 2, round 3: a question asked inside a request is acted on in the engaged window (finding 19)", () => {
+  // v10 review 2, round 3: round 2's frame (a listed verb right before the question word) cut these off again: held on the open mic, never answered
+  it.each(["Tell me exactly where the Adyar zonal office is", "Tell me again what the IMD warning is", "Can you tell me quickly how many complaints there are",
+    "Any idea who the AE for Velachery is?", "Do you remember who the AE for Adyar is?", "Can you find where the relief centres are?",
+    "Can you look up who the AE for Adyar is?"])("'%s' (3 s after Jarvis spoke) is acted on", (said) => {
+    const g = gate(said, { engagedSec: 3 });
+    expect(`${g.act}/${g.why}`).toBe("true/engaged");
+  });
 });

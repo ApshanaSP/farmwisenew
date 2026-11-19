@@ -1766,7 +1766,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       confirmRef.current = null;
       if (Date.now() - cf.at < 30_000) {
         if (plainYes(said)) { await handle(cf.then, conf, undefined, { ...opts, lang: cf.lang }); return; }
-        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)\b/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
+        // (a lookahead, not \b: \b knows only ASCII letters, so it never ends a Tamil "no": v10 review 2, finding 24; the no ends at anything that is
+        // no letter, mark or digit, so "No…" and "No-" are a no as they were under \b: round 2)
+        if (/^(?:no|nope|not that|illa|illai|இல்லை|இல்ல|வேண்டாம்|vendaam|venaam)(?![\p{L}\p{M}\p{N}])/iu.test(said)) { setPhase("ready"); out(cf.lang === "ta" ? "சரி. எதைக் கேட்டீர்கள் என்று மீண்டும் சொல்லுங்கள்." : "Okay. Say the name again?", cf.lang, "ready"); return; }
       }
     }
     // the next step offered after a screen (Level A): a plain yes, or "show me", builds it; anything else puts the offer away
@@ -1813,6 +1815,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const st10 = buildState();
       const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
         lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
+        // typed or spoken: a typed line is finished when Enter is pressed, so it never waits for its rest (v10 review 2, finding 19)
+        source: sourceRef.current,
         // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
         askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
       if (f10.lane?.lane === "wait") {
@@ -2723,6 +2727,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // (v10: a name asked back, "Cyclone Akvan?", waits for its yes too)
       wantsYes: () => !!pendingBRef.current || !!confirmRef.current,
       offerPending: () => !!offerRef.current,
+      // v10: the line this page holds for its rest (the wake path's same-breath rest goes straight to handle()): the conductor gates the rest with it
+      heldCut: () => cutRef.current,
       onMissed: () => notHeardRef.current(),
       // the live captions run only while an addressed sentence is being heard (v4, defect 10): they start with the speech when the
       // conductor says it is engaged, or while a spoken yes is awaited, and stop at its end (they send room audio to the browser's service);
@@ -2909,7 +2915,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // the spoken reply only for the name alone; with a question in the same breath the answer is the reply
       if (!rest) sayWake(listenLangRef.current); else earcon("open");
       // the question said in the same breath ("Hi Jarvis, show the severe cases")
-      if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95), 60); }
+      // (said, not typed: the browser's own speech service heard it, so a cut-off rest waits as any spoken line does: v10 review 2, round 2)
+      if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95, undefined, { source: "captions" }), 60); }
     };
     // v6 (the independent check, 17 Nov): the name heard on the device. A pause after it opens Jarvis with the reply at once; a sentence
     // said straight on ("Hey Jarvis, show the severe cases") is left to the browser's recogniser, which brings its words whole (rest, as in
