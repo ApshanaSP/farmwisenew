@@ -95,7 +95,9 @@ async function context(): Promise<Ctx> {
   return { world, hands, panel, lanes: await lanes(world) };
 }
 
-interface Scene { stage: StageDocT | null; state: ScreenState; turns: NonNullable<RoundBodyT["turns"]>; lastLang?: Lang | null; lastFound?: LastFound | null; askMap?: string | null; cut?: { text: string; at: number } | null }
+interface Scene { stage: StageDocT | null; state: ScreenState; turns: NonNullable<RoundBodyT["turns"]>; lastLang?: Lang | null; lastFound?: LastFound | null; askMap?: string | null; cut?: { text: string; at: number } | null;
+  /** v10: the news brief's offer, kept for the next turn as Thunai.tsx keeps it (newsOffer: one pending offer, forgotten on any other turn) */
+  offer?: Record<string, unknown> | null }
 
 const titleOf = async (id: string): Promise<string | null> => {
   const d = (await newsDoc(id).catch(() => null)) as { title?: string | null; title_en?: string | null } | null;
@@ -172,15 +174,27 @@ async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; s
 }
 
 /** the news read as the console reads it (ANSWER=1): the lines said; the brief's parts found in them; the language they are in */
-async function readAloud(c: Ctx, body: { id: string } | { incident: string }, q: string, lang: Lang, extra: Record<string, unknown> = {}): Promise<{ lines: string[]; full: boolean }> {
+async function readAloud(c: Ctx, body: { id: string } | { incident: string } | { ground: { id: string; lang: Lang; q: string } }, q: string, lang: Lang, extra: Record<string, unknown> = {}): Promise<{ lines: string[]; full: boolean; offer: Record<string, unknown> | null }> {
   const aide = newsAide(c.world, { user: "eval:v10" });
+  // v10 (the finals, 20 Nov): the brief and the weather readings as the console's news route builds them (news/route.ts brief10, weather); the
+  // first blind run passed only v7's aide, so "read" was v7's recital there, not v10's brief. In v9's checkout there is no brief10: as before.
+  const v10 = await (async (): Promise<Record<string, unknown>> => {
+    try {
+      const [{ newsBrief10 }, { weatherLines }, { understandV10 }] = await Promise.all([import("./brief10"), import("./weather10"), import("./flag10")]);
+      if (!understandV10()) return {};
+      const tool = (n: string, a: Record<string, unknown>) => c.hands.tool(n, a);
+      return { brief10: newsBrief10({ world: c.world, user: "eval:v10", tool, weather: () => weatherLines(tool) }), weather: () => weatherLines(tool) };
+    } catch { return {}; }
+  })();
   const ev: NewsEvent[] = [];
-  try { for await (const e of newsEvents({ ...body, ask: { q: q.slice(0, 400), lang }, ...extra } as never, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, related: false, user: "eval:v10", aide })) ev.push(e); } catch { /* nothing read */ }
+  try { for await (const e of newsEvents(("ground" in body ? body : { ...body, ask: { q: q.slice(0, 400), lang }, ...extra }) as never, { loadDoc: (id: string) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, related: false, user: "eval:v10", aide, ...v10 } as never)) ev.push(e); } catch { /* nothing read */ }
   const last = ev.filter((e): e is Extract<NewsEvent, { type: "brief" }> => e.type === "brief").at(-1)?.brief;
   const first = ev.find((e): e is Extract<NewsEvent, { type: "first" }> => e.type === "first");
-  const more = ev.filter((e) => (e as { type: string }).type === "weather").flatMap((e) => ((e as unknown as Record<Lang, string[]>)[lang] ?? []));
+  // (the weather readings, and v10's news to ground truth: what the console has on the story)
+  const more = ev.filter((e) => ["weather", "ground"].includes((e as { type: string }).type)).flatMap((e) => ((e as unknown as Record<Lang, string[]>)[lang] ?? []));
   const lines = [...(first ? [first[lang]] : []), ...(last ? last[lang] : []), ...more].filter(Boolean);
-  return { lines, full: ev.some((e) => (e as { type: string; full?: boolean }).type === "brief" && (e as { full?: boolean }).full === true) };
+  const offer = (ev.filter((e) => (e as { type: string }).type === "offer").at(-1) ?? null) as Record<string, unknown> | null;
+  return { lines, full: ev.some((e) => (e as { type: string; full?: boolean }).type === "brief" && (e as { full?: boolean }).full === true), offer };
 }
 /** the brief's parts, read off what was said: where (a place of the district or the story's own), what the console knows (its records'
  * words with a figure), an offered next step */
@@ -209,6 +223,32 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
   }
   const heardLang: Lang = it.heard ?? (/[஀-௿]/.test(said) ? "ta" : "en");
   const listen: Lang = it.ui ?? "en";
+  // v10: a reply to the news brief's offer (offer10.ts), taken before the lanes as Thunai.tsx handle() takes it: "read it fully", "what do we
+  // have on this?", "show them on the map", "draft a note", "follow it", "no" (the finals, 20 Nov: the runner had no offers, so these were the
+  // lanes' there and not the console's). In v9's checkout there is no offer10: nothing changes.
+  const pending = s.offer ?? null;
+  s = { ...s, offer: null };
+  if (pending) {
+    const m = await import("./offer10").catch(() => null);
+    const off = m ? m.offerOf(pending, ((pending as { lang?: Lang }).lang ?? heardLang), now - 1000) : null;
+    const oa = m && off ? m.offerAct(said, off, now, c.world) : null;
+    if (oa && off) {
+      const lg: Lang = /[஀-௿]/.test(said) ? "ta" : off.lang;
+      o.lane = "offer"; o.lang = lg; o.kind = "do";
+      const turns = (did: string) => [...s.turns, { heard: said.slice(0, 300), did }].slice(-4) as Scene["turns"];
+      if (oa.act === "full") {
+        o.story = await titleOf(oa.id); o.storyId = oa.id;
+        if (ANSWER) { const r = await readAloud(c, { id: oa.id }, said, lg, { full: true }); o.spoken = r.lines; o.full = r.full; o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; } else o.full = true;
+      } else if (oa.act === "ground") {
+        o.recipe = "cases";
+        if (ANSWER) { const r = await readAloud(c, { ground: { id: oa.id, lang: lg, q: said.slice(0, 400) } }, said, lg); o.spoken = r.lines; o.briefHas = briefParts(r.lines, placeWord); }
+      } else if (oa.act === "map") o.mapOps = [{ op: "ask", question: oa.q }];
+      else if (oa.act === "draft") o.drafted = true;
+      else if (oa.act !== "follow") o.kind = "chat";
+      o.ms = Date.now() - t0;
+      return { o, scene: { ...s, turns: turns(`the brief's offer: ${oa.act}`) } };
+    }
+  }
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   const ctx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone }, slots: (s.stage.slots ?? null) as Record<string, unknown> | null } : null, news: newsOn(c, s), state: s.state, world: c.world,
     listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null, lex: c.lanes.lex, askMap: s.askMap ? { open: true, hasAnswer: true, kind: "answer", question: s.askMap } : null } as Parameters<Lanes["lane"]>[1];
@@ -254,7 +294,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
         const body = na.body as { id: string } | { incident: string };
         const id = "id" in body ? body.id : null;
         o.story = id ? await titleOf(id) : `incident ${(body as { incident: string }).incident}`; o.storyId = id;
-        if (ANSWER) { const r = await readAloud(c, body, said, lang, { ...(na.body.full ? { full: true } : {}) }); o.spoken = r.lines; o.full = r.full; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
+        if (ANSWER) { const r = await readAloud(c, body, said, lang, { ...(na.body.full ? { full: true } : {}) }); scene.offer = r.offer ? { ...r.offer, lang } : null; o.spoken = r.lines; o.full = r.full; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
         else if (na.body.full) o.full = true;
         remember("read the news report aloud", null, null);
       } else if (na.kind === "find") {
@@ -265,7 +305,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item10, "mic" | "en
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);
           scene.lastFound = { id: f.pick.id, title: f.pick.title, q: find.q, other: f.other ? { id: f.other.id } : null };
-          if (ANSWER) { const r = await readAloud(c, { id: f.pick.id }, said, lang); o.spoken = r.lines; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
+          if (ANSWER) { const r = await readAloud(c, { id: f.pick.id }, said, lang); scene.offer = r.offer ? { ...r.offer, lang } : null; o.spoken = r.lines; o.briefHas = briefParts(r.lines, placeWord); o.readLang = r.lines.join(" ") ? (wordsLang(r.lines.join(" "), {}) ?? null) : null; }
           remember("read the news report aloud", null, null);
         } else if (f) {
           const said8 = await feedLines(find, f.words, { world: c.world, ...(noModel ? { gap: { feeds: async () => [] } } : {}) });

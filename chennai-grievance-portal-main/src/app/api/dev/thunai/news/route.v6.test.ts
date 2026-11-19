@@ -7,7 +7,10 @@ import type { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ release: null as null | (() => void), session: true }));
-vi.mock("@/lib/collector/intel", () => ({
+// (v10: the route now also builds the console's hands, for a storm's weather readings, whose modules read intel's constants on load: the
+// module's own exports kept, the stored report stood in)
+vi.mock("@/lib/collector/intel", async (orig) => ({
+  ...(await orig<typeof import("@/lib/collector/intel")>()),
   newsDoc: async (id: string) => (id === "doc-1" ? { id, url: "https://www.thehindu.com/news/a", title: "Wall collapse in Velachery", publisher: "The Hindu", publisher_domain: "thehindu.com", body: null, t: "2026-11-17 08:00:00", place: "Velachery", cat: null } : null)
 }));
 vi.mock("@/lib/thunai/web/read", () => ({

@@ -246,6 +246,8 @@ describe("v10 review 2: a registry press on a page (linkedom)", () => {
     (window.Element.prototype as unknown as { getBoundingClientRect: () => object }).getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 40, width: 100, height: 30 });
     (document as unknown as { elementFromPoint: () => unknown }).elementFromPoint = () => document.body;
     let active: unknown = null;
+    // (the focused element, kept as linkedom has no focus of its own: the stub is the element's own method, so `this` is the element)
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     (window.HTMLElement.prototype as unknown as { focus: () => void }).focus = function (this: unknown) { active = this; };
     Object.defineProperty(document, "activeElement", { get: () => active, configurable: true });
     for (const b of document.querySelectorAll("button")) b.addEventListener("click", () => clicked.push(b.textContent ?? ""));
@@ -269,6 +271,9 @@ describe("v10 review 2: a registry press on a page (linkedom)", () => {
 
   // v10 review 2, finding 28: a value typed into Take action's message cleared the draft first (the model's draft and the Collector's edits lost)
   it("a value typed into a box that holds a draft is added to it, never wiping it; a search box is replaced", async () => {
+    // (the draft this test starts from: the tests share one page, and the QA gate runs them shuffled)
+    const box = document.querySelector("textarea") as HTMLTextAreaElement;
+    box.value = "Inspect the drain.";
     const r = await dom.pressControl(spec("ta.message"), { value: "by Friday" });
     expect(r.ok).toBe(true);
     expect(document.querySelector("textarea")?.value).toBe("Inspect the drain. by Friday");
