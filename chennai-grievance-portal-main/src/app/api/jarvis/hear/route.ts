@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
   try {
     // v10: Sarvam hears with the day's names (the storms and names in the news, then the Stage's names and the zones), never waiting on the store
-    const keyterms = lane !== "ambient" && sarvamKeyed() && sarvamMode() !== "off" ? dayKeytermsNow(await serverWorld(), { extra: body.vocab ?? [] }) : null;
+    // v10: the day's news names as Sarvam's keyterms only when asked for (JARVIS_SARVAM_DAY_KEYTERMS=1). Measured on 19 Nov (71 synthetic clips,
+    // paired): word error 0.127 with v9's fixed list, 0.156 with the day's, and a storm's name written into an unrelated question; names said by
+    // ear are matched after hearing (v10/entity10.ts) instead
+    const keyterms = process.env.JARVIS_SARVAM_DAY_KEYTERMS === "1" && lane !== "ambient" && sarvamKeyed() && sarvamMode() !== "off"
+      ? dayKeytermsNow(await serverWorld(), { extra: body.vocab ?? [] }) : null;
     return NextResponse.json(await hearUtterance(body.buf, { lane, site, signal: req.signal, vocab: body.vocab, lastLang: body.lastLang, clarify: body.clarify, speechMs: body.speechMs, clock, keyterms }));
   } catch (e) {
     if (req.signal.aborted) return NextResponse.json({ error: "aborted" }, { status: 499 });
