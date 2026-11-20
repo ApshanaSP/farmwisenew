@@ -480,3 +480,52 @@
 /* v2: what the speller read ("Read 'adayar' as Adyar.") under the question */
 .dic .amp-read{display:flex;gap:6px;align-items:center;margin:0 0 6px;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-2);font:500 12px/1.35 var(--font-ui);width:fit-content;max-width:100%}
 .dic .amp-read svg{flex:none;width:13px;height:13px;color:var(--accent)}
+
+/* ---- v2: the workspace. On a computer the docked chat takes the left of the grown map, full height, and the map the
+   rest; the line between them resizes; either side folds away (workspace.tsx). A panel dragged off its dock floats as before. */
+@media (min-width:768px){
+  .dic.map-grown .map-wrap.ws > .amp.dock{left:0;top:0;bottom:0;width:var(--ws-chat,430px);max-width:none;height:auto!important;border-radius:var(--r) 0 0 var(--r);
+    background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:inset -1px 0 0 var(--line-3);animation:none}
+  .dic.map-grown .map-wrap.ws > div[aria-label^="Satellite map"]{left:calc(var(--ws-chat,430px) + 7px)!important}
+  .dic.map-grown .map-wrap.ws .map-back{left:calc((100% + var(--ws-chat,430px)) / 2)}
+  .dic.map-grown .map-wrap.ws .amsheet{left:calc(var(--ws-chat,430px) + 20px)}
+  .dic.map-grown .map-wrap.ws .gt-plotcard,.dic.map-grown .map-wrap.ws .gt-tag.l{left:calc(var(--ws-chat,430px) + 20px)}
+  .dic.map-grown .map-wrap.ws .leaflet-control-scale{margin-left:calc(var(--ws-chat,430px) + 18px)}
+  .dic .ws-split{position:absolute;top:0;bottom:0;left:var(--ws-chat,430px);width:7px;z-index:566;cursor:col-resize;touch-action:none;display:grid;place-items:center;
+    background:var(--surface-2);box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+  .dic .ws-split span{width:3px;height:44px;border-radius:3px;background:var(--text-4);transition:background .15s,height .15s}
+  .dic .ws-split:hover span,.dic .ws-split.on span,.dic .ws-split:focus-visible span{background:var(--accent);height:72px}
+  .dic .ws-split:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .dic.map-grown .map-wrap.ws-nochat > .amp.dock{display:none}
+  .dic.map-grown .map-wrap.ws-nochat > div[aria-label^="Satellite map"]{left:0!important}
+  .dic.map-grown .map-wrap.ws-nomap > div[aria-label^="Satellite map"],.dic.map-grown .map-wrap.ws-nomap .map-tools,.dic.map-grown .map-wrap.ws-nomap .amleg,
+  .dic.map-grown .map-wrap.ws-nomap .leaflet-control-scale{visibility:hidden}
+  .dic.map-grown .map-wrap.ws-nomap > .amp.dock{border-radius:var(--r);box-shadow:none}
+  .dic.map-grown .map-wrap.ws-nomap > .amp.dock .amp-b{max-width:860px;width:100%;margin:0 auto}
+  .dic .ws-tab{position:absolute;left:12px;top:12px;z-index:566;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px 0 11px;border-radius:999px;
+    background:var(--accent);color:#fff;font:600 13px var(--font-ui);box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
+  .dic .ws-tab svg{width:16px;height:16px}
+  .dic .ws-tab:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+  .dic .ws-tools{display:inline-flex;gap:2px}
+}
+@media (max-width:767px){.dic .ws-split,.dic .ws-tab,.dic .ws-tools{display:none}}
+
+/* ---- v2: Play the period, the ward scorecard, Copy link and Print brief (V2Tools.tsx) */
+.dic .amp-play{margin:8px 0;padding:9px 11px 8px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line)}
+.dic .amp-play-h{display:flex;align-items:center;gap:8px}
+.dic .amp-play-h h5{display:flex;align-items:center;gap:6px;margin:0;font:700 12px var(--font-ui);color:var(--text);flex:1}
+.dic .amp-play-h h5 svg{width:14px;height:14px;color:var(--accent)}
+.dic .amp-play-h .amp-ib{min-width:30px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
+.dic .amp-play-h .amp-ib:last-child{background:var(--surface-3);color:var(--text-2)}
+.dic .amp-play-mode{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--font-ui);color:var(--text-2);cursor:pointer}
+.dic .amp-bars{display:flex;align-items:flex-end;gap:2px;height:46px;margin:8px 0 4px}
+.dic .amp-bars button{flex:1;min-width:2px;padding:0;border:0;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--accent) 30%,transparent);cursor:pointer}
+.dic .amp-bars button.on{background:var(--accent)}
+.dic .amp-bars button.cur{background:var(--warn,#D97706)}
+.dic .amp-play input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
+.dic .amp-play-f{display:flex;justify-content:space-between;gap:8px;margin:2px 0 0;font:500 11px var(--font-ui);color:var(--text-3)}
+.dic .amp-play-f b{color:var(--text);font-weight:600;text-align:center}
+.dic .amp-score .amp-tiles .amp-tile{cursor:default}
+.dic .amp-share{margin-top:-2px}
+.dic .amp-share a,.dic .amp-score a.pri{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+@media (prefers-reduced-motion:reduce){.dic .amp-bars button{transition:none}}

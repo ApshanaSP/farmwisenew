@@ -23,6 +23,8 @@ import { istDate } from "@/lib/ist-dates";
 import { cueAct } from "./actions";
 import { onMapCmd } from "./bridge";
 import { GapList, LeagueTable, RulePairs, ToolsBar } from "./CollectorTools";
+import { useWorkspace } from "./workspace";
+import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
 let cueSeen = 0;
@@ -63,6 +65,8 @@ export interface PanelActions {
   onSend?: (r: AskResponse, dept: string | null) => void;
   onExport?: (r: AskResponse) => void;
   onSave?: (r: AskResponse) => void;
+  /** v2: a short note to the officer (Copy link) */
+  toast?: (msg: string, kind?: "ok" | "alert") => void;
   onVisits?: (r: AskResponse) => void;
   suggestions: string[];
 }
@@ -79,6 +83,9 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   const [sheet, setSheet] = useState<"peek" | "half" | "full">("half");
   const phone = typeof window !== "undefined" && window.innerWidth < 768;
   const drag = useDragPanel("ask", phone);
+  // v2: on a computer, docked, the chat and the map share the screen side by side (workspace.tsx)
+  const docked = !phone && !drag.cls.includes("moved");
+  const ws = useWorkspace(drag.ref, docked, (r?.lang === "ta" || (!r && ui === "ta")), () => { if (ask.resp) ask.replay(0); });
   const [traceOn, setTraceOn] = useState<string | null>(null);
   const [tour, setTour] = useState(-1);
   // the plan's parts fold into one line; opened, each part is a chip that can be changed
@@ -160,12 +167,14 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
 
   const ta = lang === "ta";
   return (
-    <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}`} style={drag.style} data-h={sheet} aria-label={w.title}>
+    <>
+    <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}${docked ? " dock" : ""}`} style={drag.style} data-h={sheet} aria-label={w.title}>
       <button className="amp-grab" aria-label="Resize the panel" onClick={() => setSheet((s) => (s === "peek" ? "half" : s === "half" ? "full" : "peek"))} />
       <div className={`amp-h ${drag.handle.className}`} onPointerDown={drag.handle.onPointerDown} onDoubleClick={drag.handle.onDoubleClick}>
         <Grip off={phone} />
         <h3><I n="map" />{w.title}</h3>
         {drag.tools}
+        {ws.tools}
         {ask.turns.length > 0 && <button className="amp-x" onClick={() => { ask.clear(); setTray(false); input.current?.focus(); }} title={ta ? "புதிய உரையாடல்: கேள்விகளையும் வரைபடத்தையும் அழி" : "Start a new chat: clears the questions and the map"}><I n="plus" />{ta ? "புதியது" : "New chat"}</button>}
         <button className="amp-x" onClick={actions.onBack} title={`${w.back} (Esc)`}><I n="chevl" />{w.back}</button>
       </div>
@@ -219,7 +228,9 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     <LeagueTable r={r} ask={ask} lang={lang} />
                     <GapList r={r} lang={lang} />
                     <RulePairs r={r} lang={lang} />
+                    <PlayPeriod r={r} ask={ask} lang={lang} />
                     <Acts r={r} w={w} actions={actions} />
+                    <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
                     <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
@@ -229,7 +240,11 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                 )}
                 {r.kind === "brief" && r.brief && (
                   <>
+                    <ScorecardCard r={r} lang={lang} />
                     <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />
+                    {!r.scorecard && r.brief.area.kind === "ward" && (
+                      <div className="amp-tacts"><button onClick={() => submit(lang === "ta" ? `வார்டு ${(r.brief!.area as { id: number }).id} மதிப்பெண் அட்டை` : `ward ${(r.brief!.area as { id: number }).id} scorecard`)} disabled={ask.busy}><I n="chart" />{lang === "ta" ? "மதிப்பெண் அட்டை" : "Ward scorecard"}</button></div>
+                    )}
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                   </>
                 )}
@@ -252,6 +267,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         <button className="go" onClick={() => submit()} title={w.ask} aria-label={w.ask} disabled={ask.busy || !text.trim()}><I n="send" /></button>
       </div>
     </aside>
+    {ws.split}
+    </>
   );
 }
 

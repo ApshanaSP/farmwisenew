@@ -75,7 +75,7 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
   return (
     <>
       <AskMapPanel ask={ask} autoFocus={focusBox || !r} actions={{
-        role, suggestions, onBack: () => ask.setGrown(false), onOpen,
+        role, suggestions, onBack: () => ask.setGrown(false), onOpen, toast,
         onSend: role === "collector" ? (_a, dept) => setSending({ dept }) : undefined,
         onExport: exportIt,
         onSave: (a) => saveView(a, role, question).then((m) => toast(m)).catch((e) => toast(e.message, "alert")),

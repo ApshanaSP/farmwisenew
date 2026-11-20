@@ -24,6 +24,7 @@ import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { fitModelPlan, freshPlan, mapLang, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
+import { scorecard, scorecardWard, timelineOf, type Scorecard, type Timeline } from "./v2";
 import { categoryWords } from "@/lib/collector/nlp";
 import { isTanglishWord } from "@/lib/assistant/lang";
 import { followUps } from "./followups";
@@ -97,6 +98,8 @@ export interface AskResponse {
     /** a gap answer's measure: "ward" (90 % of its ground), "zone", or "place" (a neighbourhood's own point); `total` areas measured */
     gap?: { by: "ward" | "zone" | "place"; from: LayerId; beyond: number | null; total: number };
     /** a ranked change, the league table: every area with any report in either window, the biggest rise (or fall) first */
+    /** v2: the answer's incidents by the day first reported, for "Play the period" (v2.ts) */
+    timeline?: Timeline;
     rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; nowLabel: { en: string; ta: string }; beforeLabel: { en: string; ta: string };
       rows: { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }[] };
     /** a rule check: each place kept and the place it is too close to */
@@ -129,6 +132,8 @@ export interface AskResponse {
   ms: number;
   /** words read as other words ("adayar" as Adyar): said on the answer so the officer can see it */
   spelled: Fix[];
+  /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
+  scorecard: Scorecard | null;
 }
 
 const ROW_CAP = 200;
@@ -226,7 +231,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
     camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], city: null, insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
-    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: []
+    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: [], scorecard: null
   };
 }
 
@@ -251,6 +256,21 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
+  // v2: "ward 178 scorecard": the scorecard, with the ward's brief under it
+  const sw = input.text && !input.plan ? scorecardWard(input.text) : null;
+  if (sw != null) {
+    const sc = scorecard(sw, w, ctx, lock);
+    if (!sc) { out.say = { en: `There is no Ward ${sw}. Chennai has wards 1 to 200.`, ta: `வார்டு ${sw} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
+    out.kind = "brief";
+    out.brief = sc.brief;
+    out.scorecard = sc;
+    const area: AreaRef = { kind: "ward", id: sw };
+    out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
+    const box = areaBox(area, w, ctx);
+    out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: sc.label.en, label_ta: sc.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    return done(out);
+  }
   // two equally close readings of a word: ask, never guess
   if (sp?.ask) {
     out.say = { en: `Did you mean ${sp.ask.options.map((o) => o.label).join(" or ")}?`, ta: `${sp.ask.options.map((o) => o.label).join(" அல்லது ")} என்று சொன்னீர்களா?`,
@@ -412,6 +432,9 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     if (tc) res.conditions = [tc, ...res.conditions].slice(0, 4);
   }
   res.followups = followUps(res, r, fe);
+  // v2: Play the period: the answer's incidents day by day (the server's counts; the panel only shows them)
+  const tl = r.hits.length ? timelineOf(r.hits, w.now) : null;
+  if (tl) res.extra.timeline = tl;
   const store = answerCache();
   store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);

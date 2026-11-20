@@ -564,7 +564,8 @@ export default function SatMap(props: Props) {
       s.map.invalidateSize();
       // back to the overview: once the card is its own size again, the whole district (or the chosen zone or taluk) in view
       const p = cb.current;
-      if (shrank && !p.ask?.resp && !p.rain && !p.focus) {
+      // grown into Ask the Map's workspace (v2: the map takes the right of the screen beside the chat): the same, in its new pane
+      if ((shrank || (props.grown && p.ask)) && !p.ask?.resp && !p.rain && !p.focus) {
         const b = p.mode === "taluks" && p.taluk ? s.talukBounds.get(p.taluk) : p.zone ? s.zoneBounds.get(p.zone) : undefined;
         s.map.flyToBounds(b ?? s.district, { padding: b ? [24, 24] : [8, 8], duration: reduced ? 0 : 0.5, animate: !reduced });
       }
@@ -839,6 +840,8 @@ function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number
   if (sheet) return { tl: [16, 16], br: [16, box.offsetHeight - panel.offsetTop + 16] };
   // the legend sits in the bottom-right corner only: a little room for it, not its whole height across the map
   const rightRoom = 56 + (legend ? Math.min(120, Math.round(legend.offsetWidth / 2)) : 0);
+  // docked in Ask the Map's workspace (v2): the chat is beside the map, not over it
+  if (panel.classList.contains("dock") && box.parentElement?.classList.contains("ws")) return { tl: [24, 24], br: [rightRoom, 32] };
   // minimised to its header: room under the header only
   if (panel.classList.contains("min")) return { tl: [24, panel.offsetTop + panel.offsetHeight + 16], br: [rightRoom, 32] };
   // moved to the right half of the map (dragPanel.tsx): keep the fitted things clear of it on that side
