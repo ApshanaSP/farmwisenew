@@ -3,15 +3,15 @@
  "b": "p7-gate",
  "compared": {
   "a": 3273,
-  "b": 3298
+  "b": 3303
  },
  "changed": 89,
- "added": 37,
+ "added": 42,
  "removed": 12,
  "context": {
   "next_build_id": {
    "a": "CBdQM0A0VtrCiiuGe8KNC",
-   "b": "AsDHaFEqgR-8G-NbTpFL0"
+   "b": "F4MJOh5zzBsr9CbO0GW07"
   }
  },
  "routes": [
@@ -362,6 +362,13 @@
    "status": 401
   },
   {
+   "id": "1a61e6cd923c579e",
+   "role": "anonymous",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "c56a6a968e3cda65",
    "role": "anonymous",
    "method": "GET",
@@ -394,6 +401,13 @@
    "role": "citizenA",
    "method": "GET",
    "url": "/api/collector/thunai/follow",
+   "status": 401
+  },
+  {
+   "id": "8d0a7694f561fef5",
+   "role": "citizenA",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
    "status": 401
   },
   {
@@ -432,6 +446,13 @@
    "status": 401
   },
   {
+   "id": "5c2620a1ded65a71",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "2e637861eddc1757",
    "role": "officerA",
    "method": "GET",
@@ -467,6 +488,13 @@
    "status": 401
   },
   {
+   "id": "edce763490bd2de2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "8e6991f95838f7f0",
    "role": "officerB",
    "method": "GET",
@@ -499,6 +527,13 @@
    "role": "collector",
    "method": "GET",
    "url": "/api/collector/thunai/follow",
+   "status": 200
+  },
+  {
+   "id": "65ea5b14b462b851",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
    "status": 200
   },
   {
@@ -13538,12 +13573,12 @@
     {
      "path": "$.incidents[0].lat",
      "a": 13.01767549019608,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21344347058823,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     }
    ]
   },
@@ -13564,12 +13599,12 @@
     {
      "path": "$.severity.rows[32].lat",
      "a": 13.01767549019608,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.21344347058823,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     }
    ]
   },
@@ -13590,22 +13625,22 @@
     {
      "path": "$.map.pins[64].lat",
      "a": 13.01767549019608,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.21344347058823,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     },
     {
      "path": "$.severity.rows[27].lat",
      "a": 13.01767549019608,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.21344347058823,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     }
    ]
   },
@@ -13723,7 +13758,7 @@
     {
      "path": "$.confirm.scope",
      "a": "Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg",
-     "b": "TIcXV_poFnvlwUjQpxHTukfHbHBFMSJS"
+     "b": "a7FiVBr1FrKFkEuROE-owXw4xyc2lOAy"
     }
    ]
   },
@@ -13744,7 +13779,7 @@
     {
      "path": "$.confirm.scope",
      "a": "X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA",
-     "b": "cBMKyqe_ndFvi73AfRQeev4FttE1OOW7"
+     "b": "RSPMsE2Z3_UJJyN2Emy4ZZiv6ZXrZmZS"
     }
    ]
   },
@@ -13765,7 +13800,7 @@
     {
      "path": "$.confirm.scope",
      "a": "AeRzc1H2quqCdMD52ABXqL7MBEAPwo03",
-     "b": "wufqmqAjhgjJRPX8nuggeZ0FJCoio3nq"
+     "b": "OIK95Y-EHjNwjkCDRS0M99NKVx_npzln"
     }
    ]
   }

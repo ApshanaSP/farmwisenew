@@ -1,17 +1,17 @@
 {
- "generated": "2026-11-19T09:19:16.543Z",
+ "generated": "2026-11-20T02:27:36.308Z",
  "port": 3106,
- "routes": 131,
- "methods": 159,
- "cells": 1272,
+ "routes": 132,
+ "methods": 160,
+ "cells": 1281,
  "summary": {
-  "pass": 1270,
+  "pass": 1279,
   "skip": 0,
   "fail": 2
  },
  "denyProof": {
-  "denyPassing": 923,
-  "guard": 900,
+  "denyPassing": 931,
+  "guard": 908,
   "unproven": 23,
   "unprovenMethods": [
    "GET /api/collector/assistant/tools",
@@ -7339,6 +7339,104 @@
    "body": "{}"
   },
   {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "anonymous",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "citizenA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "officerA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "officerB",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "collector",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "allow",
+   "status": 200,
+   "verdict": "pass"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "manu",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "citizenA@officer-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "citizenA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/collector/thunai/lexicon",
+   "method": "GET",
+   "identity": "officerA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
    "route": "/api/collector/thunai/memory",
    "method": "GET",
    "identity": "anonymous",
@@ -14417,7 +14515,7 @@
    "expected": "deny",
    "status": 200,
    "verdict": "fail",
-   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-19T21:19:16.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-19 14:49:16\",\"action\":\""
+   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-20T14:27:35.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-20 07:57:35\",\"action\":\""
   },
   {
    "route": "/api/auth/security",

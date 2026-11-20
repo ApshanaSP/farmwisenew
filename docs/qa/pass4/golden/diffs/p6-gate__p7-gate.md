@@ -1,10 +1,10 @@
 # Golden-master diff: p6-gate to p7-gate
 
-Compared 3277 requests with 3298. **373 changed, 44 added, 23 removed.**
+Compared 3277 requests with 3303. **373 changed, 49 added, 23 removed.**
 
 ## What differs around the requests
 
-- next_build_id: 7W1366w-32VU0Pwhed8Oy to AsDHaFEqgR-8G-NbTpFL0
+- next_build_id: 7W1366w-32VU0Pwhed8Oy to F4MJOh5zzBsr9CbO0GW07
 
 ## By route
 
@@ -41,26 +41,31 @@ Compared 3277 requests with 3298. **373 changed, 44 added, 23 removed.**
 
 - anonymous GET /api/collector/thunai/brief: 401
 - anonymous GET /api/collector/thunai/follow: 401
+- anonymous GET /api/collector/thunai/lexicon: 401
 - anonymous GET /api/collector/thunai/watch: 401
 - anonymous GET /api/dev/thunai/brief: 404
 - anonymous GET /api/dev/thunai/watch: 404
 - citizenA GET /api/collector/thunai/brief: 401
 - citizenA GET /api/collector/thunai/follow: 401
+- citizenA GET /api/collector/thunai/lexicon: 401
 - citizenA GET /api/collector/thunai/watch: 401
 - citizenA GET /api/dev/thunai/brief: 404
 - citizenA GET /api/dev/thunai/watch: 404
 - officerA GET /api/collector/thunai/brief: 401
 - officerA GET /api/collector/thunai/follow: 401
+- officerA GET /api/collector/thunai/lexicon: 401
 - officerA GET /api/collector/thunai/watch: 401
 - officerA GET /api/dev/thunai/brief: 404
 - officerA GET /api/dev/thunai/watch: 404
 - officerB GET /api/collector/thunai/brief: 401
 - officerB GET /api/collector/thunai/follow: 401
+- officerB GET /api/collector/thunai/lexicon: 401
 - officerB GET /api/collector/thunai/watch: 401
 - officerB GET /api/dev/thunai/brief: 404
 - officerB GET /api/dev/thunai/watch: 404
 - collector GET /api/collector/thunai/brief: 200
 - collector GET /api/collector/thunai/follow: 200
+- collector GET /api/collector/thunai/lexicon: 200
 - collector GET /api/collector/thunai/watch: 200
 - collector GET /api/dev/thunai/brief: 404
 - collector GET /api/dev/thunai/watch: 404
@@ -6180,8 +6185,8 @@ Session writes, id cd47878c4defdb30, 1202 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.016499019607844 | 13.017220588235295 |
-| $.incidents[0].lon | 80.21072974509804 | 80.21127876470588 |
+| $.incidents[0].lat | 13.016499019607844 | 13.017471568627451 |
+| $.incidents[0].lon | 80.21072974509804 | 80.21225131372549 |
 | $.incidents[0].sev | Medium | Low |
 | $.incidents[0].sla_due | 2026-11-11 12:00:00 | 2026-11-10 12:00:00 |
 | $.incidents[0].severity_reasons |  | Civic issue: Burning of street light in daytime (+15) |

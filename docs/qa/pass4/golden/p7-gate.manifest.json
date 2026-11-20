@@ -5,7 +5,7 @@
  "frozen_now": "2026-11-06T06:30:00.000Z",
  "build_id": "2026-11-06 18:21:19|76734f481810",
  "dist": ".next-qa",
- "next_build_id": "AsDHaFEqgR-8G-NbTpFL0",
+ "next_build_id": "F4MJOh5zzBsr9CbO0GW07",
  "fixtures": {
   "aibrief.json": "f56ae871a3b1b21f",
   "analysis.json": null,
@@ -15,15 +15,15 @@
   "sachet-chennai.json": null,
   "map-questions.jsonl": "5ba32ac34818fb4a"
  },
- "routes": 131,
- "routes_with_get": 84,
- "request_count": 3298,
+ "routes": 132,
+ "routes_with_get": 85,
+ "request_count": 3303,
  "by_role": {
-  "anonymous": 564,
-  "citizenA": 574,
-  "officerA": 655,
-  "officerB": 608,
-  "collector": 897
+  "anonymous": 565,
+  "citizenA": 575,
+  "officerA": 656,
+  "officerB": 609,
+  "collector": 898
  },
  "gaps": [
   "/api/collector/thunai/audit: no values for ?today",
@@ -36,7 +36,7 @@
  ],
  "problems": [],
  "five_xx": 0,
- "seconds": 233,
+ "seconds": 226,
  "sessions": [
   {
    "name": "reads",
@@ -51,21 +51,21 @@
     "www.newindianexpress.com",
     "www.thanthitv.com"
    ],
-   "seconds": 80
+   "seconds": 85
   },
   {
    "name": "reads2",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 88
+   "seconds": 71
   },
   {
    "name": "ask",
    "server_error_lines": 0,
    "server_errors": [],
    "refused_hosts": [],
-   "seconds": 33
+   "seconds": 38
   },
   {
    "name": "writes",
@@ -376,6 +376,7 @@
   {"id":"48b728056c772e1c","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"53b91c82f3d8f481","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/brief","route":"/api/collector/thunai/brief","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"380bb570b330aa48","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/follow","route":"/api/collector/thunai/follow","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
+  {"id":"1a61e6cd923c579e","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/lexicon","route":"/api/collector/thunai/lexicon","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"bf29ddaf6a3d6556","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/memory","route":"/api/collector/thunai/memory","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"c56a6a968e3cda65","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/watch","route":"/api/collector/thunai/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"6a28fe003190cdc1","session":"reads","role":"anonymous","method":"GET","url":"/api/collector/thunai/world","route":"/api/collector/thunai/world","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
@@ -776,6 +777,7 @@
   {"id":"becabf942b938daa","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"dd84af5a63bd687b","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/brief","route":"/api/collector/thunai/brief","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"4fb0970385ebf7d7","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/follow","route":"/api/collector/thunai/follow","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
+  {"id":"8d0a7694f561fef5","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/lexicon","route":"/api/collector/thunai/lexicon","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"8d6964635ccbdfa8","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/memory","route":"/api/collector/thunai/memory","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"515ee61a255a1f1c","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/watch","route":"/api/collector/thunai/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"e939ee6cb54f24e1","session":"reads","role":"citizenA","method":"GET","url":"/api/collector/thunai/world","route":"/api/collector/thunai/world","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
@@ -1176,6 +1178,7 @@
   {"id":"d2c6d1efc057d619","session":"reads","role":"officerA","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"5fed7cf8021833fd","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/brief","route":"/api/collector/thunai/brief","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"5a22bd2873e1af99","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/follow","route":"/api/collector/thunai/follow","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
+  {"id":"5c2620a1ded65a71","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/lexicon","route":"/api/collector/thunai/lexicon","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"869ae3f912d0c16c","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/memory","route":"/api/collector/thunai/memory","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"2e637861eddc1757","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/watch","route":"/api/collector/thunai/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"f9c9ee3cf39ad107","session":"reads","role":"officerA","method":"GET","url":"/api/collector/thunai/world","route":"/api/collector/thunai/world","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
@@ -1576,6 +1579,7 @@
   {"id":"2315f86fd99fcd2e","session":"reads","role":"officerB","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"0e8bf553a59146d1","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/brief","route":"/api/collector/thunai/brief","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"e7242d4c016b4616","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/follow","route":"/api/collector/thunai/follow","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
+  {"id":"edce763490bd2de2","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/lexicon","route":"/api/collector/thunai/lexicon","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"e93f5a7aa3d39e59","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/memory","route":"/api/collector/thunai/memory","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"8e6991f95838f7f0","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/watch","route":"/api/collector/thunai/watch","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"4be8063511592943","session":"reads","role":"officerB","method":"GET","url":"/api/collector/thunai/world","route":"/api/collector/thunai/world","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
@@ -1976,6 +1980,7 @@
   {"id":"35b3fdf90e4fecca","session":"reads","role":"collector","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":200,"bytes":15,"sha256":"0cff26bf2ee4ff5a741fd326248fefb7cd0e663053a0f152a0d18b6c351721e0","type":"application/json"},
   {"id":"dbcbe78d041214d3","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/brief","route":"/api/collector/thunai/brief","status":200,"bytes":5826,"sha256":"c761969636071f7fe346e7d7edd05dee794f50580021e7960edf1eb0ec3bc68e","type":"application/json"},
   {"id":"f62ea2653e651056","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/follow","route":"/api/collector/thunai/follow","status":200,"bytes":14,"sha256":"09b43b579e0c33953bfe604d8cc4a098095b7af0ac9d8d5277a29b4c32df7daf","type":"application/json"},
+  {"id":"65ea5b14b462b851","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/lexicon","route":"/api/collector/thunai/lexicon","status":200,"bytes":77134,"sha256":"27823abbbc90c2b0874ee64098f7902d5ea28ab71023d38156bc2a7c7063044a","type":"application/json"},
   {"id":"ff6e51e63c51387f","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/memory","route":"/api/collector/thunai/memory","status":200,"bytes":85,"sha256":"7c6d95ec2b0e1e1971216c9011ad3c8c1cc128738f15c33ad2b093093ff9f186","type":"application/json"},
   {"id":"750f379e2f76aa9f","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/watch","route":"/api/collector/thunai/watch","status":200,"bytes":4004,"sha256":"7db2dc56f640dc49a2b4950f3c6cf2e06153cf8d7951a535057a8287ff731495","type":"application/json"},
   {"id":"ea2cfa097f29d356","session":"reads","role":"collector","method":"GET","url":"/api/collector/thunai/world","route":"/api/collector/thunai/world","status":200,"bytes":11689,"sha256":"05cb60c54414dba7a03f2d63468441795226c01894e0857649c79b892d4ab3d2","type":"application/json"},
@@ -3277,7 +3282,7 @@
   {"id":"fa88cd4b9204becc","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints","route":"/api/complaints","status":200,"bytes":462,"sha256":"75f07e4945d9486c9ee17944cd7011933847d7942ff05ed8f7a807db4920c5e7","type":"application/json"},
   {"id":"1a74f77c3d8d08f6","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints/<new-complaint-code-1>","route":"/api/complaints/[code]","status":200,"bytes":1458,"sha256":"868a83557c0e3b050390b136eb9aa08cea4522876967474104a20078d9166053","type":"application/json"},
   {"id":"eaa57c0fb9b28bbd","session":"writes","role":"citizenA","method":"GET","url":"/api/complaints?code=<new-complaint-code-1>","route":"/api/complaints","status":200,"bytes":462,"sha256":"75f07e4945d9486c9ee17944cd7011933847d7942ff05ed8f7a807db4920c5e7","type":"application/json"},
-  {"id":"cd47878c4defdb30","session":"writes","role":"collector","method":"GET","url":"/api/collector/search?q=<new-complaint-code-1>","route":"/api/collector/search","status":200,"bytes":1252,"sha256":"f424016efaa11c27bdfe2a5c0109d95a2cbb1ff895c76eb7100fc12fa4dbd349","type":"application/json"},
+  {"id":"cd47878c4defdb30","session":"writes","role":"collector","method":"GET","url":"/api/collector/search?q=<new-complaint-code-1>","route":"/api/collector/search","status":200,"bytes":1252,"sha256":"4ab0b326282a3e544816342e272420913f4d0bd991d926e3f364bd783725d64a","type":"application/json"},
   {"id":"3b289ebaec799b4a","session":"writes","role":"officerA","method":"GET","url":"/api/complaints/<new-complaint-code-1>","route":"/api/complaints/[code]","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"c36bb8980c05bc66","session":"writes","role":"collector","method":"POST","url":"/api/collector/decisions","route":"/api/collector/decisions","status":201,"bytes":100,"sha256":"59cdd0c634453020b2e28cff0b605c5af3ec7b7fcd24298826b9d40dac7433cd","request":"{\"incidentId\":\"INC-20260926-EB3B79\",\"decision\":\"note\",\"note\":\"Golden master note.\"}","type":"application/json"},
   {"id":"afc98c033d1a5398","session":"writes","role":"collector","method":"GET","url":"/api/collector/incidents/INC-20260926-EB3B79","route":"/api/collector/incidents/[id]","status":200,"bytes":7089,"sha256":"cdc8406a93dad6c2668af853a37f9fe29b7a49dc7ced2cd4ed154619150212e6","type":"application/json"},
@@ -3300,8 +3305,8 @@
   {"id":"5fe0b0ed335c49e4","session":"writes","role":"collector","method":"GET","url":"/api/collector/list","route":"/api/collector/list","status":200,"bytes":16484,"sha256":"19015aceb5112e631ec755153fedbd3f45122d31d6b30fa87e3b6911e9da4918","type":"application/json"},
   {"id":"c8d3fd2aa1ff2e9c","session":"writes","role":"collector","method":"GET","url":"/api/collector/list?status=awaiting","route":"/api/collector/list","status":200,"bytes":50,"sha256":"9921d2a68e5956e4169added0be67026b939709f48b5c47fd300bfa386e0ca8a","type":"application/json"},
   {"id":"50228dd8087cb116","session":"writes","role":"collector","method":"GET","url":"/api/collector/list?status=verified&period=quarterly","route":"/api/collector/list","status":200,"bytes":15173,"sha256":"a3ede69aabbdc6abeda1fcc83a79e42619b279af5783cd3c77385d5c1fa539e1","type":"application/json"},
-  {"id":"ea0ab3f25bc17c26","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview","route":"/api/collector/overview","status":200,"bytes":235192,"sha256":"fa69a0a3b830a9c23b63c993e8432a493ce6c4c15e3b0789dd81a9f1d55110de","type":"application/json","cache":"private, no-cache"},
-  {"id":"3f54c3ecc14de285","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview?period=weekly&zone=13","route":"/api/collector/overview","status":200,"bytes":139124,"sha256":"af350623499c2d897b786306066b69725ddbeceeffd8c440cfc91cd8bc76b48c","type":"application/json","cache":"private, no-cache"},
+  {"id":"ea0ab3f25bc17c26","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview","route":"/api/collector/overview","status":200,"bytes":235192,"sha256":"b9e882605af7f5ccc1984677b9252cc9dd6e62e278e07ce3b0d75c856e9c927b","type":"application/json","cache":"private, no-cache"},
+  {"id":"3f54c3ecc14de285","session":"writes","role":"collector","method":"GET","url":"/api/collector/overview?period=weekly&zone=13","route":"/api/collector/overview","status":200,"bytes":139124,"sha256":"6dfa11fab9fbcb600785fd998223bc51bf98d7a789a7099d548ca33589e8245c","type":"application/json","cache":"private, no-cache"},
   {"id":"78f15c9fa2f5ce11","session":"writes","role":"officerA","method":"GET","url":"/api/officer/grievances?tab=new&per=4","route":"/api/officer/grievances","status":200,"bytes":2693,"sha256":"547311d96dd6afd10c785f8e7ff0795559e5a5fabe0e7c621bdb079372a86850","type":"application/json","cache":"no-store, max-age=0"},
   {"id":"c923b5b87143a8e7","session":"writes","role":"officerA","method":"POST","url":"/api/officer/grievances/INC-20261106-0B725B","route":"/api/officer/grievances/[id]","status":201,"bytes":36,"sha256":"43052bfbd64f7842c3d09b8d18f9fc82a335a64e61821940c5a746ffcb498f2f","request":"{\"step\":\"approve\"}","type":"application/json","cache":"no-store, max-age=0"},
   {"id":"f5f598220fa678b3","session":"writes","role":"officerA","method":"GET","url":"/api/officer/grievances/INC-20261106-0B725B","route":"/api/officer/grievances/[id]","status":200,"bytes":1853,"sha256":"5355f95bbc11a5d4ee14add0e19d692efe6508a633c7653449d4e7b52b0c60b2","type":"application/json","cache":"no-store, max-age=0"},
@@ -3359,10 +3364,10 @@
   {"id":"f847d86616ba78a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/watch","route":"/api/collector/studio/watch","status":200,"bytes":236,"sha256":"aafc5f908c7d93fc6da40f11266c380747c6e37ffca57b4c0ec5313bcb3a547b","type":"application/json"},
   {"id":"626c21acd6f3dd1a","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>","route":"/api/collector/studio/[id]","status":200,"bytes":37657,"sha256":"9f816a658e3e945eb438f1797df3e3c1d4fa1fe4403349a3fb024456ed7dc536","type":"application/json"},
   {"id":"5d6f98b7dd30a96e","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?rows=1","route":"/api/collector/studio/[id]","status":200,"bytes":22816,"sha256":"0ad4d24a0954f5a989763339a2a83684905946de2993b2b0e3d72dca6629b051","type":"application/json"},
-  {"id":"d7a191781f17de43","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"6af89fb56219126f381046fa2c946e5b902cebce44db75828d8c0948a4178642","type":"application/json"},
-  {"id":"be094a0c735be649","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=xlsx","route":"/api/collector/studio/[id]","status":428,"bytes":188,"sha256":"b80fc9ddffb1d89d3853671a0b00a1cbc1358ce53cb31c7db0b08899f22262f1","type":"application/json"},
+  {"id":"d7a191781f17de43","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"fffc03d9f87982f73990c094954c23ae0c933a1ddf9d0354d7da649bbac0cd21","type":"application/json"},
+  {"id":"be094a0c735be649","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?export=xlsx","route":"/api/collector/studio/[id]","status":428,"bytes":188,"sha256":"b9bcd12620e164b5b7a36696926225763d8a9f39ad0350443334b60ead5c3899","type":"application/json"},
   {"id":"e10fa66e56c0b98e","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]","route":"/api/collector/studio/[id]","status":200,"bytes":38182,"sha256":"ad8f72d8e7ab7780eccfe754f1d6be3f99a52caf1fa1a155b52cbe4bd5d622e8","type":"application/json"},
-  {"id":"a91af3219ee7b0a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]&export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"eb1d7d44e9579cd789c08f67cca6f7583d06000e3b33590fca61c008c8961b68","type":"application/json"},
+  {"id":"a91af3219ee7b0a3","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=[{\"col\"%3A\"c0\"%2C\"op\"%3A\"neq\"%2C\"values\"%3A[\"no such value\"]}]&export=csv","route":"/api/collector/studio/[id]","status":428,"bytes":185,"sha256":"fc401bf60123fdf53bc2283746a37336282040087e9b5a2d465bdbe57f23a03c","type":"application/json"},
   {"id":"83707acfa20f18e0","session":"writes","role":"collector","method":"GET","url":"/api/collector/studio/<dataset-1>?f=bad","route":"/api/collector/studio/[id]","status":200,"bytes":37657,"sha256":"9f816a658e3e945eb438f1797df3e3c1d4fa1fe4403349a3fb024456ed7dc536","type":"application/json"},
   {"id":"bd31b047000ea0c6","session":"writes","role":"officerA","method":"GET","url":"/api/collector/studio/<dataset-1>","route":"/api/collector/studio/[id]","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
   {"id":"b04132e2370bfb8e","session":"writes","role":"anonymous","method":"GET","url":"/api/collector/audit","route":"/api/collector/audit","status":401,"bytes":29,"sha256":"4c9f9643d38f4f2c6dc4dbaba7f8b1a012fa042b680ede1f57af066a4af16f1e","type":"application/json"},
