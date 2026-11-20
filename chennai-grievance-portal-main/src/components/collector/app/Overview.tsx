@@ -257,7 +257,7 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, prevLabel, style, on
   const cls = same ? "" : (goodDown ? diff < 0 : diff > 0) ? "good" : "bad";
   const than = prevLabel.replace(/^prev\. /, "the previous ");
   return (
-    <button className="kpi" style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick}
+    <button className="kpi" data-k={k} style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick}
       title={tip ? `${tip}${sub ? ` (${sub}.)` : ""} Click for the list.` : sub}>
       <span className={`kpi-ic ${tone}`}><I n={icon} /></span>
       <span className="kpi-b">
@@ -285,7 +285,7 @@ const KC: Record<string, string> = { "t-sev": "var(--sev)", "t-high": "var(--hig
 
 function Tile({ onClick, l, v, tone, title, txt }: { onClick?: () => void; l: string; v: React.ReactNode; tone?: string; title?: string; txt?: boolean }) {
   return (
-    <button className={`stile${onClick ? "" : " static"}`} onClick={onClick} title={title ?? l} disabled={!onClick}>
+    <button className={`stile${onClick ? "" : " static"}`} data-l={l} onClick={onClick} title={title ?? l} disabled={!onClick}>
       <small>{l}</small>
       <b className={txt ? "txt" : undefined} style={tone ? { color: tone } : undefined}>{v}</b>
     </button>
@@ -580,7 +580,7 @@ function combine(stations: Station[], key: (t: string) => string = (t) => t) {
 function StationPicker({ c, kind, all }: { c: Console; kind: Kind; all: Station[] }) {
   return (
     <select className="sel" style={{ marginLeft: "auto", maxWidth: 170 }} value={c.envSel[kind] ?? "auto"} aria-label="Choose station"
-      onChange={(e) => c.setEnvSel(kind, e.target.value)}>
+      data-voice={`env.${kind}.station`} onChange={(e) => c.setEnvSel(kind, e.target.value)}>
       <option value="auto">All stations</option>
       {all.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
     </select>

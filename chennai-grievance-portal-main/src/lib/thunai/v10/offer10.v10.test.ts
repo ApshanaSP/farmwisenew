@@ -1,0 +1,348 @@
+/**
+ * v10 (docs/jarvis/JARVIS_V10.md 4.5 and 4.9 feature 1): after a news brief, its offered next steps work, in English, Tamil and Tanglish:
+ * "show them on the map", "draft a note to the officer", "follow it", "read it fully", "what do we have on this?"; one pending offer, gone
+ * after any other turn or two minutes; nothing is ever sent (a draft goes to the tray). The phrasings are MODEL-DRAFTED: a Tamil speaker
+ * should review them.
+ */
+import { describe, expect, it } from "vitest";
+import { WORLD } from "../fixture";
+import { fullRead, newsAsk } from "../newsask";
+import { referenceWorld } from "../world";
+import { groundAsk, groundScreen, OFFER_MS, offerAct, offerOf, offerSaid, type Offer10 } from "./offer10";
+
+const AT = 1_000_000;
+const OFFER: Offer10 = { story: "d1", lang: "en", offers: ["map", "draft"], map: "open drainage complaints near Kotturpuram", draft: ["INC-OLD"], follow: { zone: 13, en: "Adyar", ta: "அடையாறு" }, civic: true, at: AT };
+const act = (said: string, o: Offer10 | null = OFFER, now = AT + 5000) => offerAct(said, o, now);
+
+describe("v10: a reply to the brief's offer", () => {
+  it.each([
+    ["yes", { act: "map", q: OFFER.map }],
+    ["Yes please.", { act: "map", q: OFFER.map }],
+    ["ஆமா", { act: "map", q: OFFER.map }],
+    ["sari", { act: "map", q: OFFER.map }],
+    ["yes, show it on the map", { act: "map", q: OFFER.map }],
+    ["show them on the map", { act: "map", q: OFFER.map }],
+    ["show them", { act: "map", q: OFFER.map }],
+    ["map-la kaattunga", { act: "map", q: OFFER.map }],
+    ["வரைபடத்தில் காட்டுங்க", { act: "map", q: OFFER.map }],
+    ["மேப்ல காட்டுங்க", { act: "map", q: OFFER.map }],
+    ["draft a note to the officer", { act: "draft", ids: ["INC-OLD"] }],
+    ["Draft a note to the AE.", { act: "draft", ids: ["INC-OLD"] }],
+    ["send a note to the officer", { act: "draft", ids: ["INC-OLD"] }],
+    ["officer-ku oru note draft pannunga", { act: "draft", ids: ["INC-OLD"] }],
+    ["அதிகாரிக்கு ஒரு குறிப்பு எழுதுங்க", { act: "draft", ids: ["INC-OLD"] }],
+    ["follow it", { act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } }],
+    ["keep an eye on it for me", { act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } }],
+    ["follow pannunga", { act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } }],
+    ["ஃபாலோ பண்ணுங்க", { act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } }],
+    ["read it fully", { act: "full", id: "d1" }],
+    ["read the whole thing", { act: "full", id: "d1" }],
+    ["full-a padinga", { act: "full", id: "d1" }],
+    ["முழுசா படிங்க", { act: "full", id: "d1" }],
+    ["what do we have on this?", { act: "ground", id: "d1" }],
+    ["Do we have any complaints about this?", { act: "ground", id: "d1" }],
+    ["what does the console say about it", { act: "ground", id: "d1" }],
+    ["idha pathi namma kitta enna irukku", { act: "ground", id: "d1" }],
+    ["idhukku complaints irukka", { act: "ground", id: "d1" }],
+    ["இதைப் பற்றி நம்மகிட்ட என்ன இருக்கு?", { act: "ground", id: "d1" }],
+    ["இது பற்றி புகார் ஏதாவது இருக்கா?", { act: "ground", id: "d1" }],
+    ["no thanks", { act: "no" }],
+    ["வேண்டாம்", { act: "no" }],
+    ["don't draft anything", { act: "no" }]
+  ])("%s", (said, want) => {
+    expect(act(said)).toEqual(want);
+  });
+
+  it("anything else is no reply: the turn goes on, and the offer is forgotten", () => {
+    for (const s of ["show me the weather in Adyar", "how many complaints in Teynampet this week", "open the second news", "follow up with the department on the Adyar case", "what is the AQI"]) expect(act(s)).toBeNull();
+  });
+  it("Jarvis's own offer, overheard, is no reply to it", () => {
+    expect(act("Shall I show them on the map, or draft a note to the officer?")).toBeNull();
+    expect(act("வரைபடத்தில் காட்டட்டுமா, இல்லை அதிகாரிக்கு ஒரு குறிப்பு வரைவு செய்யட்டுமா?")).toBeNull();
+  });
+  it("one pending offer for a short while only", () => {
+    expect(act("yes", OFFER, AT + OFFER_MS + 1)).toBeNull();
+    expect(act("yes", null)).toBeNull();
+  });
+  it("a step the story has none of is said so, never done", () => {
+    const none: Offer10 = { ...OFFER, offers: ["map", "follow"], draft: [] };
+    expect(act("draft a note to the officer", none)).toEqual({ act: "none", what: "draft" });
+    expect(offerSaid({ act: "none", what: "draft" }, "en")).toMatch(/no open case on the console for this story/);
+    expect(act("yes", { ...OFFER, offers: ["full"], map: null, draft: [], follow: null })).toEqual({ act: "full", id: "d1" });
+    expect(act("follow it", { ...OFFER, follow: null })).toEqual({ act: "none", what: "follow" });
+  });
+  it("the offer event is checked: a bad id, an unknown step or a bad zone is dropped", () => {
+    expect(offerOf({ story: "bad id!", offers: ["map"] }, "en", AT)).toBeNull();
+    const o = offerOf({ story: "d1", offers: ["map", "send", "draft"], map: "open drainage complaints near Kotturpuram", draft: ["INC-1", "<x>"], follow: { zone: 99, en: "x", ta: "y" }, civic: true }, "ta", AT);
+    expect(o).toEqual({ story: "d1", lang: "ta", offers: ["map", "draft"], map: "open drainage complaints near Kotturpuram", draft: ["INC-1"], follow: null, civic: true, at: AT });
+  });
+});
+
+describe("v10 review 2 (finding 2): a sentence about another place, case, zone or kind is no reply to the story's offer", () => {
+  it.each([
+    ["are there any open complaints about garbage in Teynampet this week?"],
+    ["any complaints in Teynampet?"],
+    ["தேனாம்பேட்டையில் புகார் ஏதாவது இருக்கா?"],
+    ["Teynampet-la complaints irukka?"],
+    ["show the garbage complaints in Teynampet on the map"],
+    ["give me the full report on overdue cases in Adyar zone"],
+    ["draft a note to the officer on INC-123"],
+    ["Teynampet zone follow pannunga"],
+    ["officer-a follow pannunga"],
+    ["close the map"]
+  ])("%s: the lanes take it", (said) => {
+    expect(act(said)).toBeNull();
+  });
+  it("with the console's world: a locality or a taluk named elsewhere", () => {
+    expect(offerAct("show the complaints in T Nagar on the map", OFFER, AT + 5000, WORLD)).toBeNull();
+    expect(offerAct("any complaints in Velachery?", OFFER, AT + 5000, WORLD)).toBeNull();
+    expect(offerAct("show them on the map", OFFER, AT + 5000, WORLD)).toEqual({ act: "map", q: OFFER.map });
+  });
+  it("as the console calls it (no world): a locality the lexicon does not hold, named after 'in' or with '-la', is somewhere else", () => {
+    expect(act("show the complaints in Velachery on the map")).toBeNull();
+    expect(act("Velachery-la complaints irukka?")).toBeNull();
+    expect(act("draft a note to the officer in Besant Nagar")).toBeNull();
+    // the story's own place, its zone, and words that name no place are still a reply
+    expect(act("show them on the map near Kotturpuram")).toEqual({ act: "map", q: OFFER.map });
+    expect(act("show the cases in Adyar on the map")).toEqual({ act: "map", q: OFFER.map });
+    expect(act("show them on the map at once")).toEqual({ act: "map", q: OFFER.map });
+    expect(act("draft a note to the officer in charge")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+  });
+  it("a short ask that names where is a question of its own", () => {
+    expect(groundAsk("any complaints in Teynampet?")).toBe(false);
+    expect(groundAsk("are there any open complaints about garbage in Teynampet this week?")).toBe(false);
+  });
+  it("the story's own kind, zone, case and department are still the story's", () => {
+    expect(act("show the sewage complaints on the map")).toEqual({ act: "map", q: OFFER.map });
+    expect(act("are there any complaints about this sewage problem?")).toEqual({ act: "ground", id: "d1" });
+    expect(act("any complaints in this area?")).toEqual({ act: "ground", id: "d1" });
+    expect(act("draft a note to the officer on INC-OLD")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    expect(act("draft a note to Metro Water")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    expect(act("adha follow pannunga")).toEqual({ act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } });
+    expect(act("read the full report")).toEqual({ act: "full", id: "d1" });
+  });
+});
+
+describe("v10 review 2 (finding 8): an acknowledgement is no yes", () => {
+  it("'okay thanks' and 'thanks' put the offer away; 'yes thanks' is no plain yes (v9's plainYes)", () => {
+    expect(act("okay thanks")).toEqual({ act: "no" });
+    expect(act("thanks")).toEqual({ act: "no" });
+    expect(act("okay thank you")).toEqual({ act: "no" });
+    expect(act("yes thanks")).toBeNull();
+  });
+  it("an offer the brief never said aloud (after the whole story) takes no bare yes, only a step named", () => {
+    const unsaid = offerOf({ story: "d1", offers: ["map", "draft"], map: OFFER.map, draft: ["INC-OLD"], follow: null, civic: true, unsaid: true }, "en", AT);
+    expect(act("Okay.", unsaid)).toBeNull();
+    expect(act("draft a note to the officer", unsaid)).toEqual({ act: "draft", ids: ["INC-OLD"] });
+  });
+});
+
+describe("v10: \"read it fully\" in the news lane (newsask.ts)", () => {
+  it.each([["read it fully"], ["read the whole thing"], ["read the full article"], ["Read the whole story please"], ["read the rest"], ["full-a padinga"], ["fulla padinga"], ["muzhusa padinga"],
+    ["முழுசா படிங்க"], ["முழுச் செய்தியையும் படியுங்கள்"], ["முழுவதும் படிங்க"]])("%s", (said) => {
+    expect(fullRead(said)).toBe(true);
+  });
+  it.each([["read the article"], ["give me the full list of complaints"], ["read the first news"], ["tell me about the Puzhal jail story"]])("not the whole story: %s", (said) => {
+    expect(fullRead(said)).toBe(false);
+  });
+  it("over a news list, \"read the third article in full\" is the third story, whole", () => {
+    const items = [{ id: "a", source: "The Hindu" }, { id: "b", source: "DT Next" }, { id: "c", source: "Dinamani" }];
+    expect(newsAsk("read the third article in full", { items })).toEqual({ kind: "read", body: { id: "c" }, full: true });
+    expect(newsAsk("read the third article", { items })).toEqual({ kind: "read", body: { id: "c" } });
+  });
+});
+
+describe("v10: news to ground truth's words and screen", () => {
+  it("the ask points at the story (or is short); a question about elsewhere is not it", () => {
+    expect(groundAsk("what do we have on this?")).toBe(true);
+    expect(groundAsk("any complaints there?")).toBe(true);
+    expect(groundAsk("do we have complaints?")).toBe(true);
+    expect(groundAsk("do we have complaints about garbage in Teynampet from last month in ward 112?")).toBe(false);
+    expect(groundAsk("read it fully")).toBe(false);
+  });
+  it("the screen: what was said, and the open cases as a list the Stage draws (\"open the first one\" opens a case)", () => {
+    const row = { id: "INC-OLD", title: "Drain overflow at Kotturpuram", sev: "High", status: "Open", zone: 13, zoneName: "Adyar", place: "Kotturpuram", ward: null, dept: "CMWSSB", deptName: "Metro Water (CMWSSB)",
+      complaints: 2, t: "2026-11-07 09:00:00", overdue: true, lat: null, lon: null, why: null, cat: "Drainage & sewage" };
+    const d = groundScreen({ lang: "en", en: ["The console has 1 open drainage and sewage case at Kotturpuram, open 12 days, held by Metro Water."], ta: ["x"], rows: [row], title: { en: "On the console: Kotturpuram", ta: "கன்சோலில்: கோட்டூர்புரம்" }, now: AT });
+    expect(d?.blocks.map((b) => b.kind)).toEqual(["Note", "CaseList"]);
+    expect(d?.title).toBe("On the console: Kotturpuram");
+    // a malformed row: the note alone
+    const bad = groundScreen({ lang: "en", en: ["x"], ta: ["y"], rows: [{ id: 3 }], title: { en: "On the console", ta: "கன்சோலில்" }, now: AT });
+    expect(bad?.blocks.map((b) => b.kind)).toEqual(["Note"]);
+  });
+});
+
+describe("v10 review 2, round 2 (reading): a reply is the story's in every way it is said, and another place is never the story's", () => {
+  const Z13 = { act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } };
+  const FOLLOW: Offer10 = { ...OFFER, offers: ["map", "follow"], map: "open complaints near Kotturpuram", draft: [] };
+  it.each([
+    ["வேளச்சேரியில் புகார் ஏதாவது இருக்கா?"], ["மயிலாப்பூரில் புகார் ஏதாவது இருக்கா?"], ["velachery-la complaints irukka?"], ["show the drainage complaints in velachery on the map"],
+    // one word away: another locality, colloquial Tamil, "-la" after a space, "near" and "around", lower case
+    ["பெரம்பூர்ல புகார் ஏதாவது இருக்கா?"], ["kolathur la complaints irukka?"], ["any complaints near pallikaranai?"], ["show the drainage cases around saidapet on the map"],
+    ["any complaints in velachery?"], ["show the cases in velachery near adyar on the map"]
+  ])("v10 review 2, round 2: as Thunai calls it without the world, a locality named elsewhere: %s goes to the lanes", (said) => {
+    expect(act(said)).toBeNull();
+  });
+  it("v10 review 2, round 2: the story's own zone and place, and words that name no place, are still the story's in the three languages", () => {
+    expect(act("அடையாறில் புகார் ஏதாவது இருக்கா?")).toEqual({ act: "ground", id: "d1" });
+    expect(act("இந்தப் பகுதியில் புகார் ஏதாவது இருக்கா?")).toEqual({ act: "ground", id: "d1" });
+    expect(act("adyar-la complaints irukka?")).toEqual({ act: "ground", id: "d1" });
+    expect(act("show the drainage complaints in kotturpuram on the map")).toEqual({ act: "map", q: OFFER.map });
+    expect(act("any complaints in Kotturpuram?")).toEqual({ act: "ground", id: "d1" });
+  });
+
+  it.each([["read the full report in Tamil"], ["Read me the full report of The Hindu"], ["read the full article in English please"], ["read me the whole report from The Hindu"]])(
+    "v10 review 2, round 2: '%s' is the story read whole", (said) => {
+      expect(act(said)).toEqual({ act: "full", id: "d1" });
+    });
+  it("v10 review 2, round 2: a full report of the console's own is still no story", () => {
+    expect(act("give me the full report on overdue cases in Adyar zone")).toBeNull();
+    expect(act("give me the full report on the complaints")).toBeNull();
+  });
+
+  it.each([["Adyar zone-a follow pannunga"], ["அடையாறு மண்டலத்தைக் கவனியுங்க"], ["சரி ஜார்விஸ், இதை ஃபாலோ பண்ணுங்க"],
+    // one word away: the English of the offer's own words, the zone's name alone, a vocative in either script
+    ["follow Adyar zone"], ["yes, follow the Adyar zone for me"], ["Adyar-a follow pannunga"], ["ok jarvis follow pannunga"], ["அடையாறைக் கவனியுங்க"], ["ஜார்விஸ் அடையாறு மண்டலத்தை ஃபாலோ பண்ணுங்க"]])(
+    "v10 review 2, round 2: '%s' follows the zone the offer names", (said) => {
+      expect(act(said, FOLLOW)).toEqual(Z13);
+    });
+  it("v10 review 2, round 2: another zone, or an officer, is still not the story's to follow", () => {
+    for (const s of ["Teynampet zone follow pannunga", "தேனாம்பேட்டை மண்டலத்தைக் கவனியுங்க", "officer-a follow pannunga", "follow Teynampet zone"]) expect(act(s, FOLLOW)).toBeNull();
+  });
+
+  it.each([["any complaints at all?"], ["Any complaints in the system?"], ["any complaints for now?"], ["any complaints at the moment?"], ["any complaints at present?"], ["any cases in general?"], ["any complaints right now?"]])(
+    "v10 review 2, round 2: '%s' names no place or time: the story's ground truth", (said) => {
+      expect(groundAsk(said)).toBe(true);
+      expect(act(said)).toEqual({ act: "ground", id: "d1" });
+    });
+  it("v10 review 2, round 2: a short ask that names a place, as typed, is still its own", () => {
+    expect(groundAsk("any complaints in velachery?")).toBe(false);
+    expect(groundAsk("any complaints at Teynampet?")).toBe(false);
+  });
+
+  it.each([["draft a note to the officer at Metro Water"], ["draft a note to the officer at GCC"], ["draft a note to the engineer at CMWSSB"], ["draft a note to the officer at metro water"],
+    ["draft a note to the AE at the water board"], ["draft a note to the officer at the Corporation"], ["send a note to the officer at Greater Chennai Corporation"]])(
+    "v10 review 2, round 2: '%s' (a department, not a place) drafts on the story's case", (said) => {
+      expect(act(said)).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    });
+
+  it.each([["show the cases close to the bus stop on the map"], ["show them on the map and zoom in"], ["show the complaints close by on the map"], ["plot them on the map and save it"]])(
+    "v10 review 2, round 2: '%s' is the story's cases on the map", (said) => {
+      expect(act(said)).toEqual({ act: "map", q: OFFER.map });
+    });
+  it("v10 review 2, round 2: the map's own controls are still not the story's", () => {
+    for (const s of ["close the map", "zoom in on the map", "please hide the map", "switch the map to satellite", "show the legend on the map", "map-a close pannunga", "வரைபடத்தை மூடுங்க"]) expect(act(s)).toBeNull();
+  });
+});
+
+describe("v10 review 2, round 3 (reading): the offer's guards let the Collector's everyday words through, and still hold another place away", () => {
+  // the world as Thunai's /world route builds it: the console's zones and departments, and the district reference's taluks and places
+  const RW = { ...WORLD, ...referenceWorld() };
+  const actW = (said: string, o: Offer10 = OFFER) => offerAct(said, o, AT + 5000, RW);
+
+  it.each([["just close the map"], ["no, close the map"], ["sari, close the map"], ["you can hide the map now"],
+    // one word away: other words before the control, another control
+    ["could you just zoom in on the map"], ["okay so close the map"], ["you can clear the map"]])(
+    "v10 review 2, round 3: '%s' is the map's own control, never the story's map", (said) => {
+      expect(actW(said)).toBeNull();
+      expect(act(said)).toBeNull();
+    });
+  it("v10 review 2, round 3: 'don't follow it' in Tamil is no follow", () => {
+    expect(actW("இதை கவனிக்காதீங்க")?.act).not.toBe("follow");
+    // one word away: the other verb, the zone named, the formal form
+    expect(actW("இதை ஃபாலோ பண்ணாதீங்க")?.act).not.toBe("follow");
+    expect(actW("அடையாறு மண்டலத்தைக் கவனிக்காதீர்கள்")?.act).not.toBe("follow");
+    expect(actW("இதைக் கவனிக்காதே")?.act).not.toBe("follow");
+    // and in Tanglish, and for the map
+    expect(actW("map-la kaattadheenga")?.act).not.toBe("map");
+    expect(actW("வரைபடத்தில் காட்டாதீங்க")?.act).not.toBe("map");
+    // a follow is still one
+    expect(actW("இதை கவனியுங்க")).toEqual({ act: "follow", zone: 13, name: { en: "Adyar", ta: "அடையாறு" } });
+  });
+
+  it("v10 review 2, round 3: the story's own place in a Tamil case form is the story's; another such place is another's", () => {
+    expect(actW("கோட்டூர்புரத்தில் புகார் ஏதாவது இருக்கா?")).toEqual({ act: "ground", id: "d1" });
+    expect(actW("கோட்டூர்புரத்துல புகார் ஏதாவது இருக்கா?")).toEqual({ act: "ground", id: "d1" });
+    expect(actW("நுங்கம்பாக்கத்தில் புகார் ஏதாவது இருக்கா?")).toBeNull();
+    expect(actW("ராமாபுரத்தில் புகார் ஏதாவது இருக்கா?")).toBeNull();
+  });
+
+  it.each([
+    ["what do we have on this in terms of complaints?", { act: "ground", id: "d1" }],
+    ["draft a note to the officer in bullet points", { act: "draft", ids: ["INC-OLD"] }],
+    ["draft a note to the officer in simple English", { act: "draft", ids: ["INC-OLD"] }],
+    ["officer-ku email-la oru note anuppunga", { act: "draft", ids: ["INC-OLD"] }],
+    ["இது விஷயத்துல புகார் ஏதாவது இருக்கா?", { act: "ground", id: "d1" }],
+    ["தற்போதைய நிலையில் புகார் ஏதாவது இருக்கா?", { act: "ground", id: "d1" }],
+    ["அதிகாரிக்கு வாட்ஸ்அப்பில் ஒரு குறிப்பு அனுப்புங்க", { act: "draft", ids: ["INC-OLD"] }],
+    ["அதிகாரிக்கு சுருக்கமான வடிவில் குறிப்பு எழுதுங்க", { act: "draft", ids: ["INC-OLD"] }],
+    ["அந்த சம்பவத்தைப் பற்றி முழுசா படிங்க", { act: "full", id: "d1" }],
+    // one word away
+    ["draft a note to the officer in plain language", { act: "draft", ids: ["INC-OLD"] }],
+    ["officer-ku whatsapp-la oru note anuppunga", { act: "draft", ids: ["INC-OLD"] }],
+    ["அந்தப் புகாரைப் பற்றி முழுசா படிங்க", { act: "full", id: "d1" }],
+    ["அந்த வழக்கைப் பற்றி முழுசா சொல்லுங்க", { act: "full", id: "d1" }]
+  ])("v10 review 2, round 3: '%s' is a reply to the story's offer", (said, want) => {
+    expect(actW(said)).toEqual(want);
+  });
+  it("v10 review 2, round 3: a full report of the console's own records, in Tamil, is still no story", () => {
+    expect(actW("புகார்கள் பற்றி முழுசா சொல்லுங்க")).toBeNull();
+  });
+
+  it.each([["show the drainage complaints near OMR on the map"], ["any complaints near ECR?"], ["show the drainage complaints near Chetpet station on the map"],
+    ["show the drainage complaints near Central Station on the map"], ["any complaints from Medavakkam?"],
+    // one word away: another road, "around", another locality the world lacks
+    ["any complaints in OMR?"], ["show the complaints around Egmore station on the map"], ["any complaints from Selaiyur?"]])(
+    "v10 review 2, round 3: '%s' names another place: the lanes take it", (said) => {
+      expect(actW(said)).toBeNull();
+    });
+  it("v10 review 2, round 3: a department or body after 'at', 'from' the story's own place, are still the story's", () => {
+    expect(actW("draft a note to the officer at GCC")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    expect(actW("draft a note to the officer at Metro Water")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    expect(actW("draft a note to the officer at the police station")).toEqual({ act: "draft", ids: ["INC-OLD"] });
+    expect(actW("any complaints from Kotturpuram?")).toEqual({ act: "ground", id: "d1" });
+    expect(actW("any complaints from there?")).toEqual({ act: "ground", id: "d1" });
+    expect(actW("read me the whole report from The Hindu")).toEqual({ act: "full", id: "d1" });
+  });
+});
+
+describe("v10 review 2, round 4 (reading): a \"don't\" on another verb is no refusal, and a place the console lacks is never the story's", () => {
+  const RW = { ...WORLD, ...referenceWorld() };
+  const actW = (said: string, o: Offer10 = OFFER) => offerAct(said, o, AT + 5000, RW);
+  const MAPPED = { act: "map", q: OFFER.map }, DRAFTED = { act: "draft", ids: ["INC-OLD"] };
+
+  it.each([
+    ["அதிகாரிக்கு குறிப்பு எழுத மறக்காதீங்க", DRAFTED], ["அதிகாரிக்கு ஒரு குறிப்பு எழுத மறக்காதீர்கள்", DRAFTED], ["வரைபடத்தில் காட்ட மறக்காதீங்க", MAPPED],
+    ["officer-ku note anuppa marakkadheenga", DRAFTED], ["map-la kaatta marakkaadheenga", MAPPED], ["கவலைப்படாதீங்க, வரைபடத்தில் காட்டுங்க", MAPPED],
+    ["இதை முழுசா படிங்க, எதையும் விடாதீங்க", { act: "full", id: "d1" }], ["அதிகாரிக்கு குறிப்பு எழுதுங்க, தாமதிக்காதீங்க", DRAFTED],
+    // one word away: another reassurance, a colloquial "don't forget", Tanglish "don't worry", "don't hesitate"
+    ["தயங்காதீங்க, அதிகாரிக்கு குறிப்பு அனுப்புங்க", DRAFTED], ["வரைபடத்தில் காட்ட மறந்துடாதீங்க", MAPPED], ["kavalaippadaadheenga, map-la kaattunga", MAPPED]
+  ])("v10 review 2, round 4: '%s' asks for the step (a \"don't\" on forget, worry, delay or skip)", (said, want) => {
+    expect(actW(said)).toEqual(want);
+    expect(act(said)).toEqual(want);
+    expect(act(said, { ...OFFER, lang: "ta" })).toEqual(want);
+  });
+  it("v10 review 2, round 4: a \"don't\" on the offer's own verb is still a refusal", () => {
+    for (const s of ["அதிகாரிக்கு குறிப்பு அனுப்பாதீங்க", "officer-ku note anuppaadheenga", "இதை முழுசா படிக்காதீங்க", "follow pannaadheenga", "எதுவும் பண்ணாதீங்க, வரைபடம் வேண்டாம்",
+      // and its "go ahead and" form: "don't go and send it"
+      "அதிகாரிக்கு குறிப்பு அனுப்பிடாதீங்க", "வரைபடத்தில் காட்டிடாதீங்க", "officer-ku note anuppidaadheenga"]) {
+      expect(["map", "draft", "follow", "full"]).not.toContain(actW(s)?.act);
+    }
+  });
+
+  it.each([
+    ["சேத்துப்பட்டில் புகார் ஏதாவது இருக்கா?"], ["மேடவாக்கத்தில் புகார் ஏதாவது இருக்கா?"], ["தாம்பரத்தில் உள்ள புகார்களை வரைபடத்தில் காட்டுங்க"], ["any complaints in chetpet?"],
+    ["show the drainage complaints in chetpet on the map"], ["chetpet-la complaints irukka?"], ["chromepet-la complaints map-la kaattunga"],
+    // one word away: colloquial Tamil, another suburb, "near", a note
+    ["பல்லாவரத்துல புகார் ஏதாவது இருக்கா?"], ["குரோம்பேட்டையில் புகார் ஏதாவது இருக்கா?"], ["any complaints near medavakkam?"], ["selaiyur-la complaints irukka?"],
+    ["draft a note to the officer in tambaram"],
+    // the district itself, whose name has no locality's ending
+    ["சென்னையில் புகார் ஏதாவது இருக்கா?"], ["any complaints in chennai?"]
+  ])("v10 review 2, round 4: '%s' names a place the console's names lack (said in Tamil or lower case): the lanes take it", (said) => {
+    expect(actW(said)).toBeNull();
+  });
+  it("v10 review 2, round 4: the story's own place in lower case is still the story's", () => {
+    expect(actW("show the drainage complaints in kotturpuram on the map")).toEqual(MAPPED);
+    expect(actW("any complaints in kotturpuram?")).toEqual({ act: "ground", id: "d1" });
+  });
+});

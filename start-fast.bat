@@ -7,7 +7,7 @@ rem This script closes a server already on port 3000 (such as "npm run dev"), re
 rem changed since the last build (about 8 minutes on this PC), then starts the site. "start-fast.bat rebuild" forces a build.
 rem PaddleOCR, step one of reading a Manu, in its own small window. The desk still works without it.
 if exist "%~dp0manu_paddle_ocr\.venv\Scripts\python.exe" start "PaddleOCR" /min "%~dp0manu_paddle_ocr\start.bat"
-cd /d %~dp0chennai-grievance-portal-main
+cd /d "%~dp0chennai-grievance-portal-main"
 set NEXT_DIST_DIR=.next-prod
 rem Avast scans HTTPS with its own certificate: without it the AWS data download fails ("unable to verify the first certificate")
 if exist "C:\ProgramData\Avast Software\Avast\wscert.pem" set "NODE_EXTRA_CA_CERTS=C:\ProgramData\Avast Software\Avast\wscert.pem"

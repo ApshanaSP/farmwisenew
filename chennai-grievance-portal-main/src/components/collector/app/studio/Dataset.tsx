@@ -155,7 +155,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
                   <span><I n="info" />{m.rows <= 5 ? "A few figures: shown as numbers, not charts." : "A small table: shown sorted, with at most one chart."} Make it more useful:</span>
                   <button className="ds-ghost" onClick={() => setTab("card")}><I n="clock" />Compare with the last refresh</button>
                   <button className="ds-ghost" onClick={() => askJarvis("Is there a link with district incidents by zone?")}><I n="compare" />Compare with district incidents</button>
-                  {m.source.url && <button className="ds-ghost" onClick={() => onFindMore?.(m.source.url!)}><I n="search" />Find more on this site</button>}
+                  {m.source.url && <button className="ds-ghost" onClick={() => onFindMore?.(m.source.url!)} data-jarvis-never><I n="search" />Find more on this site</button>}
                   <button className="ds-ghost" disabled title="Needs ward and zone population: the district reference does not hold it yet"><I n="social" />Per 1,000 people (needs population)</button>
                   <button className="ds-ghost" onClick={() => askJarvis("What should these figures be compared with?")}><I n="target" />What should this be compared with?</button>
                 </div>
@@ -254,7 +254,7 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
         </div>
       </div>
       <div className="ds-acts">
-        {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again"><I n="refresh" /></button>}
+        {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again" data-jarvis-never><I n="refresh" /></button>}
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=csv`)} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=xlsx`)} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} onClick={viaConfirm(`/api/collector/studio/${m.id}?brief=pdf&lang=en`)} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
@@ -503,7 +503,7 @@ function MappingTab({ data, onRemap }: { data: DatasetData; onRemap: (changes: {
       <footer className="ds-map-f">
         <span>{changed.length ? `${changed.length} ${changed.length === 1 ? "change" : "changes"} not yet applied` : "Every column has a meaning. Change any of them to rebuild."}</span>
         <button className="ds-ghost" disabled={!changed.length} onClick={() => setRoles(Object.fromEntries(s.columns.map((c) => [c.key, c.role])))}>Undo</button>
-        <button className="ds-btn" disabled={!changed.length} onClick={() => onRemap(changed.map((c) => ({ key: c.key, role: roles[c.key] })))}><I n="refresh" />Rebuild with these meanings</button>
+        <button className="ds-btn" disabled={!changed.length} onClick={() => onRemap(changed.map((c) => ({ key: c.key, role: roles[c.key] })))} data-jarvis-never><I n="refresh" />Rebuild with these meanings</button>
       </footer>
     </div>
   );

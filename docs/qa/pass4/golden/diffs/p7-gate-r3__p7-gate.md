@@ -1,10 +1,10 @@
 # Golden-master diff: p7-gate-r3 to p7-gate
 
-Compared 3273 requests with 3298. **89 changed, 37 added, 12 removed.**
+Compared 3273 requests with 3303. **89 changed, 42 added, 12 removed.**
 
 ## What differs around the requests
 
-- next_build_id: CBdQM0A0VtrCiiuGe8KNC to AsDHaFEqgR-8G-NbTpFL0
+- next_build_id: CBdQM0A0VtrCiiuGe8KNC to F4MJOh5zzBsr9CbO0GW07
 
 ## By route
 
@@ -24,26 +24,31 @@ Compared 3273 requests with 3298. **89 changed, 37 added, 12 removed.**
 
 - anonymous GET /api/collector/thunai/brief: 401
 - anonymous GET /api/collector/thunai/follow: 401
+- anonymous GET /api/collector/thunai/lexicon: 401
 - anonymous GET /api/collector/thunai/watch: 401
 - anonymous GET /api/dev/thunai/brief: 404
 - anonymous GET /api/dev/thunai/watch: 404
 - citizenA GET /api/collector/thunai/brief: 401
 - citizenA GET /api/collector/thunai/follow: 401
+- citizenA GET /api/collector/thunai/lexicon: 401
 - citizenA GET /api/collector/thunai/watch: 401
 - citizenA GET /api/dev/thunai/brief: 404
 - citizenA GET /api/dev/thunai/watch: 404
 - officerA GET /api/collector/thunai/brief: 401
 - officerA GET /api/collector/thunai/follow: 401
+- officerA GET /api/collector/thunai/lexicon: 401
 - officerA GET /api/collector/thunai/watch: 401
 - officerA GET /api/dev/thunai/brief: 404
 - officerA GET /api/dev/thunai/watch: 404
 - officerB GET /api/collector/thunai/brief: 401
 - officerB GET /api/collector/thunai/follow: 401
+- officerB GET /api/collector/thunai/lexicon: 401
 - officerB GET /api/collector/thunai/watch: 401
 - officerB GET /api/dev/thunai/brief: 404
 - officerB GET /api/dev/thunai/watch: 404
 - collector GET /api/collector/thunai/brief: 200
 - collector GET /api/collector/thunai/follow: 200
+- collector GET /api/collector/thunai/lexicon: 200
 - collector GET /api/collector/thunai/watch: 200
 - collector GET /api/dev/thunai/brief: 404
 - collector GET /api/dev/thunai/watch: 404
@@ -1220,8 +1225,8 @@ Session writes, id cd47878c4defdb30, 1251 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.01767549019608 | 13.017220588235295 |
-| $.incidents[0].lon | 80.21344347058823 | 80.21127876470588 |
+| $.incidents[0].lat | 13.01767549019608 | 13.017471568627451 |
+| $.incidents[0].lon | 80.21344347058823 | 80.21225131372549 |
 
 ### collector GET /api/collector/overview
 
@@ -1229,8 +1234,8 @@ Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.severity.rows[32].lat | 13.01767549019608 | 13.017220588235295 |
-| $.severity.rows[32].lon | 80.21344347058823 | 80.21127876470588 |
+| $.severity.rows[32].lat | 13.01767549019608 | 13.017471568627451 |
+| $.severity.rows[32].lon | 80.21344347058823 | 80.21225131372549 |
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
@@ -1238,10 +1243,10 @@ Session writes, id 3f54c3ecc14de285, 139122 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.map.pins[64].lat | 13.01767549019608 | 13.017220588235295 |
-| $.map.pins[64].lon | 80.21344347058823 | 80.21127876470588 |
-| $.severity.rows[27].lat | 13.01767549019608 | 13.017220588235295 |
-| $.severity.rows[27].lon | 80.21344347058823 | 80.21127876470588 |
+| $.map.pins[64].lat | 13.01767549019608 | 13.017471568627451 |
+| $.map.pins[64].lon | 80.21344347058823 | 80.21225131372549 |
+| $.severity.rows[27].lat | 13.01767549019608 | 13.017471568627451 |
+| $.severity.rows[27].lon | 80.21344347058823 | 80.21225131372549 |
 
 ### collector POST /api/collector/thunai/memory
 
@@ -1276,7 +1281,7 @@ Session writes, id d7a191781f17de43, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | TIcXV_poFnvlwUjQpxHTukfHbHBFMSJS |
+| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | a7FiVBr1FrKFkEuROE-owXw4xyc2lOAy |
 
 ### collector GET /api/collector/studio/<dataset-1>?export=xlsx
 
@@ -1284,7 +1289,7 @@ Session writes, id be094a0c735be649, 188 bytes to 188 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | cBMKyqe_ndFvi73AfRQeev4FttE1OOW7 |
+| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | RSPMsE2Z3_UJJyN2Emy4ZZiv6ZXrZmZS |
 
 ### collector GET /api/collector/studio/<dataset-1>?f=[{"col"%3A"c0"%2C"op"%3A"neq"%2C"values"%3A["no such value"]}]&export=csv
 
@@ -1292,5 +1297,5 @@ Session writes, id a91af3219ee7b0a3, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | wufqmqAjhgjJRPX8nuggeZ0FJCoio3nq |
+| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | OIK95Y-EHjNwjkCDRS0M99NKVx_npzln |
 

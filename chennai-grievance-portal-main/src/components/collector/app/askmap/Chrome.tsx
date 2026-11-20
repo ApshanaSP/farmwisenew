@@ -5,8 +5,9 @@
  * layers from OpenStreetMap and the store), Satellite / Streets; and a legend built only from what is on the map,
  * with counts and sources, including the ward boundaries' origin. The console's existing + / − / fit stay as they are.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
+import { onMapCmd } from "./bridge";
 import { LAYER_WORD } from "@/lib/map/words";
 import type { LayerId } from "@/lib/map/types";
 import { I } from "../icons";
@@ -23,6 +24,8 @@ const LIVE = [
   { id: "live_works", k: "works", en: "PWD works under way", src: "PWD" }, { id: "live_hospitals", k: "hospital", en: "Govt hospital beds", src: "MIS" },
   { id: "live_air", k: "air", en: "Air quality", src: "CPCB" }
 ];
+/** every layer the menu can switch (what voice may ask for) */
+const LAYER_IDS = new Set<string>([...TOGGLE.map((t) => t.id as string), ...LIVE.map((t) => t.id), "news"]);
 export type Overlay = { id: string; kind: string; unplaced?: number; days?: number;
   features: { id: string; name: string | null; lat?: number; lon?: number; lines?: [number, number][][]; polys?: [number, number][][][]; url?: string | null; sub?: string | null; value?: string | null; kind?: string | null }[] };
 
@@ -47,6 +50,27 @@ export function useMapChrome(ask: MapAsk | null) {
     setOn((o) => ({ ...o, [id]: { id, kind: r.kind, features, unplaced: r.unplaced, days: r.days } }));
   };
   const overlays = Object.values(on);
+  // v10: Jarvis's voice reaches the layers, the heat view and the base map (bridge.ts "diq:map-cmd"); the answer says what is on now
+  const live = useRef({ on, loading, heat, base, ask, toggle });
+  live.current = { on, loading, heat, base, ask, toggle };
+  useEffect(() => onMapCmd(["layer", "heat", "base"], (op, a) => {
+    const s = live.current;
+    const layers = () => [...new Set([...Object.keys(s.on), ...s.loading])];
+    if (op === "layer") {
+      const id = String(a.id ?? "");
+      if (!LAYER_IDS.has(id)) return { ok: false, why: "unknown" };
+      const isOn = !!s.on[id] || s.loading.has(id), want = a.on !== false;
+      if (isOn !== want && !s.loading.has(id)) void s.toggle(id);
+      return { ok: true, state: { layers: layers(), changed: isOn !== want } };
+    }
+    if (op === "heat") {
+      if (s.ask?.resp?.kind !== "answer") return { ok: false, why: "no-answer" };
+      setHeat(a.on !== false);
+      return { ok: true, state: { heat: a.on !== false } };
+    }
+    setBase(a.base === "streets" ? "streets" : "sat");
+    return { ok: true, state: { base: a.base === "streets" ? "streets" : "sat" } };
+  }), []);
   const tools = (
     <>
       {ask?.resp && <button onClick={() => ask.replay(0)} title="Back to the answer" aria-label="Back to the answer"><I n="target" /></button>}

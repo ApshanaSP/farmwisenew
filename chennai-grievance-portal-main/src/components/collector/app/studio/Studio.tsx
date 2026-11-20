@@ -228,14 +228,14 @@ export default function Studio({ c }: { c: Console }) {
                 addLink({ url: t, name: null, auth: null, every: null });
               }} />
             <button type="button" className="alt" disabled={busy} onClick={() => setConnecting(true)} aria-label="Sign-in and refresh options" title="Sign-in and refresh options"><I n="sliders" /></button>
-            <button disabled={busy || link.trim().length < 10} aria-label="Read the link"><I n="right" /></button>
+            <button disabled={busy || link.trim().length < 10} aria-label="Read the link" data-jarvis-never><I n="right" /></button>
           </form>
           <button type="button" className="ds-connect-cta" disabled={busy} onClick={() => setConnecting(true)}><I n="shield" />Connect with sign-in or schedule</button>
           {!!list?.samples.length && (
             <div className="ds-samples">
               <small>Samples</small>
               {list.samples.map((s) => (
-                <button key={s.key} onClick={() => addSample(s.key)} disabled={busy} title={s.blurb}>
+                <button key={s.key} onClick={() => addSample(s.key)} disabled={busy} title={s.blurb} data-jarvis-never>
                   <span className={`ds-sample-ic ${s.icon}`}><I n={s.icon} /></span><span>{s.title}</span><em>{s.format}</em>
                 </button>
               ))}

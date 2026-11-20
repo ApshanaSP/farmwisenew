@@ -26,6 +26,10 @@ export interface WriteInput {
   last?: string | null;
   /** the code line said when no checked sentence comes (v6's, cut to two sentences) */
   fallback: string;
+  /** v10: the instructions for another kind of answer (a news brief, a report read in another language: v10/brief10.ts), fixed bytes; and its
+   * output room. Absent: the aide's own (prompt.ts) */
+  system?: string;
+  maxOut?: number;
 }
 export interface WriteOptions {
   user: string;
@@ -81,7 +85,8 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
   const out: Written = { sentences: [], by: "model", model: null, gap: null, rejected: [], firstMs: null, ms: 0, tokens: 0, calls: 0, hops: [], facts: input.sheet.facts.length };
   let retry: string | null = null;
   const prompt0 = userMessage({ question: input.question, lang: input.lang, note: input.note, facts: input.sheet.facts, last: input.last });
-  const rungs = (o.rungs ?? writerRungs)(writerTokens(prompt0, MAX_OUT, input.lang));
+  const maxOut = input.maxOut ?? MAX_OUT, system = input.system ?? writerSystem(input.lang);
+  const rungs = (o.rungs ?? writerRungs)(writerTokens(prompt0, maxOut, input.lang) + Math.ceil(Math.max(0, system.length - writerSystem(input.lang).length) / 3.5));
   let reasked = false;
   for (let i = 0; i < rungs.length && !out.sentences.length; ) {
     if (o.signal?.aborted) throw new DOMException("aborted", "AbortError");
@@ -135,7 +140,7 @@ export async function writeAnswer(input: WriteInput, o: WriteOptions): Promise<W
     out.calls++;
     let completed = false;
     try {
-      const done = await open(rung, { name: "jarvis_aide", system: writerSystem(input.lang), prompt, maxOutputTokens: MAX_OUT, user: o.user, signal, timeoutMs: Math.max(1000, o.until - now()) }, onText);
+      const done = await open(rung, { name: "jarvis_aide", system, prompt, maxOutputTokens: maxOut, user: o.user, signal, timeoutMs: Math.max(1000, o.until - now()) }, onText);
       completed = true;
       out.tokens += done.tokens;
       // the last line has no newline after it; a reply cut off at its token limit leaves an unfinished line, which is not said

@@ -201,10 +201,10 @@ function SourceList({ c }: { c: Console }) {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <span style={{ display: "inline-flex", gap: 6 }}>
-                      <button className="btn sm plain" disabled={busy === s.id || !s.enabled} onClick={() => run(s)}>
+                      <button className="btn sm plain" disabled={busy === s.id || !s.enabled} onClick={() => run(s)} data-jarvis-never>
                         <I n="refresh" className={busy === s.id ? "spin" : ""} />{s.kind === "pipeline" ? "Refresh" : "Run now"}</button>
                       {["rss", "html", "json"].includes(s.kind) && <button className="btn sm plain" onClick={() => show(s)}>Items</button>}
-                      {s.kind !== "pipeline" && <button className="btn sm plain" onClick={() => toggle(s)} title={s.enabled ? "Pause" : "Resume"}>{s.enabled ? "Pause" : "Resume"}</button>}
+                      {s.kind !== "pipeline" && <button className="btn sm plain" onClick={() => toggle(s)} title={s.enabled ? "Pause" : "Resume"} data-jarvis-never>{s.enabled ? "Pause" : "Resume"}</button>}
                       {["rss", "html", "json"].includes(s.kind) && <button className="btn sm plain" onClick={() => remove(s)} title="Remove"><I n="x" /></button>}
                     </span>
                   </td>

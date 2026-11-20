@@ -1,0 +1,222 @@
+{
+ "o10_aquan": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Tell me about Cyclone Aquan.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2610,
+  "durMs": 3140
+ },
+ "o10_goto": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Javes, go to news.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2330,
+  "durMs": 2860
+ },
+ "o10_fast": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Tell me about the fast news.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2520,
+  "durMs": 3050
+ },
+ "o10_cut1": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Tell me about the",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1460,
+  "durMs": 1990
+ },
+ "o10_cut2": {
+  "kind": "owner",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Puzhal jail drugs story.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2120,
+  "durMs": 2650
+ },
+ "o10_full": {
+  "kind": "read",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Read it fully.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1540,
+  "durMs": 2070
+ },
+ "o10_ground": {
+  "kind": "read",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "What do we have on this?",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1830,
+  "durMs": 2360
+ },
+ "o10_screen": {
+  "kind": "side",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "See, this one has gone up.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2110,
+  "durMs": 2640
+ },
+ "o10_phone": {
+  "kind": "side",
+  "lang": "tg",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Hello? Haan, sollunga.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3110,
+  "durMs": 3640
+ },
+ "o10_map_ask": {
+  "kind": "map",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Ask the map where garbage complaints are clustering.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3300,
+  "durMs": 3830
+ },
+ "o10_map_circle": {
+  "kind": "map",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Within two kilometres of Kasimedu.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 3090,
+  "durMs": 3620
+ },
+ "o10_map_tg": {
+  "kind": "map",
+  "lang": "tg",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Adyar flooding map-la kaattu.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2490,
+  "durMs": 3020
+ },
+ "o10_tour": {
+  "kind": "map",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Jarvis, take me round the district.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 2940,
+  "durMs": 3470
+ },
+ "o10_next": {
+  "kind": "map",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Next.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1110,
+  "durMs": 1640
+ },
+ "o10_tour_stop": {
+  "kind": "map",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Stop the tour.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1260,
+  "durMs": 1790
+ },
+ "o10_alerts": {
+  "kind": "control",
+  "lang": "en",
+  "source": "win",
+  "voice": "Heera",
+  "text": "Click the alerts bell.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1910,
+  "durMs": 2440
+ },
+ "o10_pins": {
+  "kind": "control",
+  "lang": "en",
+  "source": "win",
+  "voice": "Ravi",
+  "text": "Hide the severe pins.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1730,
+  "durMs": 2260
+ },
+ "o10_signout": {
+  "kind": "control",
+  "lang": "en",
+  "source": "win",
+  "voice": "Mark",
+  "text": "Sign out.",
+  "rate": 16000,
+  "speechMs": 620,
+  "endMs": 1060,
+  "durMs": 1590
+ },
+ "o10_ta_akvan": {
+  "kind": "owner",
+  "lang": "ta",
+  "source": "gemini",
+  "voice": "Kore",
+  "text": "அக்வான் புயல் பத்தி சொல்லுங்க.",
+  "rate": 24000,
+  "speechMs": 620,
+  "endMs": 2250,
+  "durMs": 2780
+ },
+ "o10_ta_sir": {
+  "kind": "side",
+  "lang": "ta",
+  "source": "gemini",
+  "voice": "Puck",
+  "text": "சார், ஒரு நிமிஷம் இங்க வாங்க.",
+  "rate": 24000,
+  "speechMs": 620,
+  "endMs": 2310,
+  "durMs": 2840
+ }
+}

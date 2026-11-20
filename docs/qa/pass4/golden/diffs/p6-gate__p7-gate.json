@@ -3,15 +3,15 @@
  "b": "p7-gate",
  "compared": {
   "a": 3277,
-  "b": 3298
+  "b": 3303
  },
  "changed": 373,
- "added": 44,
+ "added": 49,
  "removed": 23,
  "context": {
   "next_build_id": {
    "a": "7W1366w-32VU0Pwhed8Oy",
-   "b": "AsDHaFEqgR-8G-NbTpFL0"
+   "b": "F4MJOh5zzBsr9CbO0GW07"
   }
  },
  "routes": [
@@ -1045,6 +1045,13 @@
    "status": 401
   },
   {
+   "id": "1a61e6cd923c579e",
+   "role": "anonymous",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "c56a6a968e3cda65",
    "role": "anonymous",
    "method": "GET",
@@ -1077,6 +1084,13 @@
    "role": "citizenA",
    "method": "GET",
    "url": "/api/collector/thunai/follow",
+   "status": 401
+  },
+  {
+   "id": "8d0a7694f561fef5",
+   "role": "citizenA",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
    "status": 401
   },
   {
@@ -1115,6 +1129,13 @@
    "status": 401
   },
   {
+   "id": "5c2620a1ded65a71",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "2e637861eddc1757",
    "role": "officerA",
    "method": "GET",
@@ -1150,6 +1171,13 @@
    "status": 401
   },
   {
+   "id": "edce763490bd2de2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
+   "status": 401
+  },
+  {
    "id": "8e6991f95838f7f0",
    "role": "officerB",
    "method": "GET",
@@ -1182,6 +1210,13 @@
    "role": "collector",
    "method": "GET",
    "url": "/api/collector/thunai/follow",
+   "status": 200
+  },
+  {
+   "id": "65ea5b14b462b851",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/thunai/lexicon",
    "status": 200
   },
   {
@@ -63632,12 +63667,12 @@
     {
      "path": "$.incidents[0].lat",
      "a": 13.016499019607844,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21072974509804,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     },
     {
      "path": "$.incidents[0].sev",
@@ -66160,12 +66195,12 @@
     {
      "path": "$.severity.rows[32].lat",
      "a": 12.99715,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.197346,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     },
     {
      "path": "$.severity.rows[32].status",
@@ -67616,12 +67651,12 @@
     {
      "path": "$.map.pins[64].lat",
      "a": 13.0002073,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.2172367,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     },
     {
      "path": "$.map.pins[64].title",
@@ -67706,12 +67741,12 @@
     {
      "path": "$.severity.rows[27].lat",
      "a": 12.9795268,
-     "b": 13.017220588235295
+     "b": 13.017471568627451
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.2184424,
-     "b": 80.21127876470588
+     "b": 80.21225131372549
     },
     {
      "path": "$.severity.rows[27].status",

@@ -6,6 +6,7 @@
 import { getInstanceByDom } from "echarts/core";
 import { chartFacts, type ChartFacts } from "@/lib/thunai/explain";
 import type { Step } from "@/lib/thunai/types";
+import { ITEM_ROWS, PRESS_ALLOW, TARGETS, bestOption, parseSpec, pressKind, pressVerdict, type Verdict } from "./press10";
 
 const OWN = "[data-thunai-ui]";
 const CLICKABLE = "button, a[href], input:not([type=hidden]), select, textarea, summary, [role=button], [role=tab], [role=link], [role=menuitem], [role=checkbox], [role=switch], [tabindex]:not([tabindex='-1'])";
@@ -29,7 +30,10 @@ export function accessibleName(el: Element): string {
   const by = lb ? lb.split(" ").map((id) => document.getElementById(id)?.textContent ?? "").join(" ") : "";
   // the word on the control as well as its title: "Menu" on a button titled "Export, workspaces, customize, ...", so "click menu" finds it
   const shown = (h.innerText || h.textContent || "").replace(/\s+/g, " ").trim();
-  const named = (label || by).replace(/\s+/g, " ").trim();
+  // v10: a box or a tick named only by the <label> around it (Take action's Subject, Customize's ticks) is named by that label's words
+  const wrapped = !label && !by && !shown && /^(?:INPUT|TEXTAREA|SELECT)$/.test(h.tagName ?? "")
+    ? (el.closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim() : "";
+  const named = (label || by || wrapped).replace(/\s+/g, " ").trim();
   const both = named && shown && !named.toLowerCase().includes(shown.toLowerCase()) ? `${shown} ${named}` : named || shown;
   return both.slice(0, 80);
 }
@@ -66,9 +70,106 @@ export function byName(list: Clickable[], name: string): Clickable | null {
   return scored[0]?.c ?? null;
 }
 
+/** Press a control: a button is clicked, a checkbox ticked (a click, so React sees it), a select or a text box focused (v10: chooseOption and
+ * setTick change them; press() alone used to only focus a checkbox, so it could never be ticked by voice). */
 export function press(el: HTMLElement) {
-  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) { el.focus(); return; }
+  const k = pressKind(el.tagName, (el as HTMLInputElement).type);
+  if (k === "select" || k === "focus") { el.focus(); return; }
   el.click();
+}
+
+/** Set a select to the option a spoken value names (the native setter and a change event, so React's onChange runs). False: no such option. */
+export function chooseOption(el: HTMLSelectElement, said: string): boolean {
+  const v = bestOption([...el.options].map((o) => ({ text: o.text, value: o.value })), said);
+  if (v == null) return false;
+  const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+  setter?.call(el, v);
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
+
+/** Tick (true), untick (false) or flip (null) a checkbox, by a click as a hand would. */
+export function setTick(el: HTMLInputElement, on: boolean | null): void {
+  if (on == null || el.checked !== on) el.click();
+}
+
+/** Is this element one of the harmless controls a danger or keep word in its name would otherwise refuse (press10.ts PRESS_ALLOW)? */
+const allowedEl = (el: HTMLElement) => PRESS_ALLOW.some((sel) => !!el.closest(sel));
+/** The one guard for a spoken click and a registry press (press10.ts pressVerdict). */
+export function verdictFor(el: HTMLElement, name: string, yes = false): Verdict {
+  return pressVerdict({ name, text: el.textContent, never: !!el.closest("[data-jarvis-never]"), allowed: allowedEl(el), yes });
+}
+
+/** The element a registry press selector names (press10.ts parseSpec), visible; inside Jarvis's own UI only for a control marked own. */
+export function findControl(spec: string, own = false): HTMLElement | null {
+  const steps = parseSpec(spec);
+  const last = steps[steps.length - 1];
+  return findStep(last.css, last.words, own);
+}
+function findStep(css: string, words: string[], own: boolean): HTMLElement | null {
+  let all: HTMLElement[];
+  try { all = [...document.querySelectorAll<HTMLElement>(css)]; } catch { return null; }
+  for (const el of all) {
+    if ((!own && el.closest(OWN)) || (el as HTMLInputElement).disabled || !visible(el)) continue;
+    if (words.length) {
+      const n = `${accessibleName(el)} ${el.getAttribute("aria-label") ?? ""} ${el.getAttribute("title") ?? ""}`.toLowerCase();
+      if (!words.some((w) => n.includes(w))) continue;
+    }
+    return el;
+  }
+  return null;
+}
+
+/** The registry's press controls that are on screen now, of those asked about (the sentence's candidates): what the console sees. */
+export function visibleControls(cands: { id: string; press: string; own?: boolean }[]): string[] {
+  return cands.filter((c) => {
+    const steps = parseSpec(c.press);
+    // a menu's item counts as there when its menu button is (pressing goes through the menu)
+    return steps.some((s, i) => (i === steps.length - 1 || i === 0) && !!findStep(s.css, s.words, !!c.own));
+  }).map((c) => c.id);
+}
+
+export type PressResult = { ok: true; el: HTMLElement } | { ok: false; why: "missing" | "never" | "keep" | "noOption" };
+/**
+ * Press a registry control (v10, controls10.ts): through its menu first when it lives in one ("a >> b"), then the guard (verdictFor), then by
+ * its kind: a select set to the value said, a checkbox ticked or unticked, a text box focused and the value typed, anything else clicked.
+ */
+export async function pressControl(spec: string, o: { own?: boolean; value?: string | null; tick?: boolean | null; yes?: boolean; replace?: boolean } = {}): Promise<PressResult> {
+  const steps = parseSpec(spec);
+  const last = steps[steps.length - 1];
+  let el = findStep(last.css, last.words, !!o.own);
+  if (!el && steps.length > 1) {
+    for (const s of steps.slice(0, -1)) {
+      const m = findStep(s.css, s.words, !!o.own);
+      if (!m) return { ok: false, why: "missing" };
+      m.click();
+      await new Promise((r) => setTimeout(r, 140));
+    }
+    el = findStep(last.css, last.words, !!o.own);
+  }
+  if (!el) return { ok: false, why: "missing" };
+  const v = verdictFor(el, accessibleName(el), !!o.yes);
+  if (v !== "ok") return { ok: false, why: v };
+  const k = pressKind(el.tagName, (el as HTMLInputElement).type);
+  if (k === "select") {
+    if (o.value) { if (!chooseOption(el as HTMLSelectElement, o.value)) return { ok: false, why: "noOption" }; }
+    else el.focus();
+  } else if (k === "check") setTick(el as HTMLInputElement, o.tick ?? null);
+  else if (k === "focus") {
+    el.focus();
+    // a box holding a draft (Take action's message) is added to, never cleared: the model's draft and the Collector's edits have no undo; a search
+    // or a name box is replaced (v10 review 2, finding 28); so is a draft the Collector said to set ("set the message to …": `replace`, round 2)
+    if (o.value) { if (o.replace || !(el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value.trim())) typeInto("", true); typeInto(o.value); }
+  }
+  else el.click();
+  return { ok: true, el };
+}
+
+/** v10: the rows of the list in the window open, in the order shown (press10.ts ITEM_ROWS); null: that window has no list (or none is open). */
+export function frontRows(panel: string | null): HTMLElement[] | null {
+  const sel = panel ? ITEM_ROWS[panel] : undefined;
+  if (!sel) return null;
+  return [...document.querySelectorAll<HTMLElement>(sel)].filter((el) => !el.closest(OWN) && el.getClientRects().length > 0 && !el.querySelector(".empty"));
 }
 
 /** The control a step changes, so the pointer can glide to it (null: the orb only pulses). */
@@ -77,30 +178,32 @@ export function targetFor(step: Step): HTMLElement | null {
     const el = document.querySelector<HTMLElement>(sel);
     return el && !el.closest(OWN) && visible(el) ? el : null;
   };
+  // the first of a target's selectors on screen: a menu's item while the menu is open, else the Menu button it lives in
+  const first = (sels: string[]) => sels.reduce<HTMLElement | null>((f, s) => f ?? q(s), null);
   const withText = (sel: string, text: string) => {
     for (const el of document.querySelectorAll<HTMLElement>(sel)) if (!el.closest(OWN) && el.innerText?.toLowerCase().includes(text.toLowerCase()) && visible(el)) return el;
     return null;
   };
   switch (step.a) {
     case "page": return q(`.ptabs [data-key="${step.page}"]`);
-    case "period": return withText(`[aria-label="Period"] button, [aria-label="Period"] [role=radio]`, { daily: "day", weekly: "week", monthly: "month", quarterly: "quarter" }[step.period]);
+    case "period": return q(`.band .filters [data-key="${step.period}"]`);
     case "view": {
       const v = step.view;
-      if (v.zone !== undefined) return q(`select[aria-label="Zone"]`);
-      if (v.dept !== undefined) return q(`select[aria-label="Department"]`);
-      if (v.sev) return withText(".sevtab, .att-pills [role=tab]", v.sev);
+      if (v.zone !== undefined) return q(".band .filters label.fsel:nth-of-type(1) select");
+      if (v.dept !== undefined) return q(".band .filters label.fsel:nth-of-type(3) select");
+      if (v.sev) return withText(TARGETS.sev[0], v.sev);
       return null;
     }
-    case "mapMode": return withText("button", step.mode === "taluks" ? "Taluks" : "Zones");
-    case "theme": return q(".theme-t");
+    case "mapMode": return withText(".map-seg [role=tab]", step.mode === "taluks" ? "Taluks" : "Zones");
+    case "theme": return first(TARGETS.theme);
     case "panel":
-      if (step.panel === "export") return q(`[aria-label="Export report"]`);
-      if (step.panel === "workspace") return q(`[aria-label="Workspaces"]`);
-      if (step.panel === "customize") return q(`[aria-label="Customize"]`);
-      if (step.panel === "palette") return q(".cmdk");
-      if (step.panel === "assistant") return q(".ask-fab");
+      if (step.panel === "export") return first(TARGETS.export);
+      if (step.panel === "workspace") return first(TARGETS.workspace);
+      if (step.panel === "customize") return first(TARGETS.customize);
+      if (step.panel === "palette") return first(TARGETS.palette);
+      if (step.panel === "assistant") return first(TARGETS.assistant);
       return null;
-    case "ask": return q(".ask-fab");
+    case "ask": return first(TARGETS.assistant);
     default: return null;
   }
 }

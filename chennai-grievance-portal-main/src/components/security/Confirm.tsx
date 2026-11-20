@@ -144,7 +144,7 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
         </div>
         <div className="cfm-alt">
           {method === "email" && <button type="button" onClick={() => { setMethod("password"); setCode(""); setNote(null); }}>{w.usePassword}</button>}
-          <button type="button" onClick={email} disabled={busy}>{method === "email" ? w.another : w.emailMe}</button>
+          <button type="button" onClick={email} disabled={busy} data-jarvis-never>{method === "email" ? w.another : w.emailMe}</button>
         </div>
         <p className="cfm-why"><I n="lock" />{w.why}</p>
       </form>

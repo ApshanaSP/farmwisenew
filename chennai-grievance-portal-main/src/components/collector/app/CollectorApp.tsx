@@ -900,7 +900,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
-                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); try { localStorage.removeItem("thunai-pins"); localStorage.removeItem("jarvis-log"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
+                <button className="pop-i" data-jarvis-never onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); try { localStorage.removeItem("thunai-pins"); localStorage.removeItem("jarvis-log"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
                   <I n="user" /><span><b>Sign out</b></span>
                 </button>
               </div>

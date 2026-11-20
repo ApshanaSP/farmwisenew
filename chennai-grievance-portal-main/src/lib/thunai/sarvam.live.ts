@@ -11,6 +11,9 @@
  *   PowerShell: $env:SARVAM_BENCH="1"; npx vitest run --config vitest.live.config.ts src/lib/thunai/sarvam.live.ts
  * Results: data/thunai/sarvam-bench.json (git-ignored; THUNAI_DIR moves it), with each Sarvam reply's raw body (rows[].sarvam.body),
  * and a summary on the console.
+ * v10: SARVAM_BENCH_SET=v10 hears v8's and v10's clips too (the owner's examples and asks: tests/e2e/fixtures/v8, v10), and
+ * SARVAM_BENCH_KEYTERMS=1 sends the day's keyterms from the store's news (lexserver.ts dayKeyterms), as the console now does; results go to
+ * sarvam-bench-<set>[-keyterms].json, so v9's bench is kept.
  */
 import fs from "fs";
 import path from "path";
@@ -19,6 +22,18 @@ import { billedSeconds, SARVAM_MODEL, SARVAM_URL, sarvamLang, shadowSettled } fr
 import { hearUtterance, wavSeconds } from "./stt";
 
 const DIR = path.join(process.cwd(), "tests", "e2e", "fixtures", "v6");
+const SET = process.env.SARVAM_BENCH_SET ?? "v6";
+const KEYTERMS = process.env.SARVAM_BENCH_KEYTERMS === "1";
+/** v10: v8's and v10's clips beside v6's (each clip's own folder; "tg" is Tanglish) */
+const moreClips = (): Record<string, Clip & { dir: string }> => {
+  const out: Record<string, Clip & { dir: string }> = {};
+  for (const [v, file] of [["v8", "clips8.json"], ["v10", "clips10.json"]] as const) {
+    const dir = path.join(process.cwd(), "tests", "e2e", "fixtures", v);
+    const m = JSON.parse(fs.readFileSync(path.join(dir, file), "utf8")) as Record<string, { lang: string; kind: string; text: string }>;
+    for (const [k, c] of Object.entries(m)) if (fs.existsSync(path.join(dir, `${k}.wav`))) out[k] = { kind: c.kind, lang: c.lang === "tg" ? "tanglish" : (c.lang as Clip["lang"]), text: c.text, dir };
+  }
+  return out;
+};
 const RUPEES_PER_MIN = 0.49;
 type Clip = { kind: string; lang: "en" | "ta" | "tanglish"; text: string };
 
@@ -70,8 +85,13 @@ function console16k(file: string): ArrayBuffer {
 const ready = process.env.SARVAM_BENCH === "1" && !!process.env.SARVAM_API_KEY?.trim() && !!process.env.GROQ_API_KEY?.trim();
 
 it.runIf(ready)("Sarvam against today's Whisper race on 40 v6 clips: shadow, then tamil", async () => {
-  const clips = JSON.parse(fs.readFileSync(path.join(DIR, "clips.json"), "utf8")) as Record<string, Clip>;
-  const all = [...Object.keys(clips).filter((k) => /^q_(en|ta|tg)_/.test(k)), "news_ta_read1", "wake_g_kore_ta", "cmd_annanagar", "cmd_severe"];
+  const v6 = JSON.parse(fs.readFileSync(path.join(DIR, "clips.json"), "utf8")) as Record<string, Clip>;
+  const extra = SET === "v10" ? moreClips() : {};
+  const clips: Record<string, Clip & { dir?: string }> = { ...v6, ...extra };
+  const all = [...Object.keys(v6).filter((k) => /^q_(en|ta|tg)_/.test(k)), "news_ta_read1", "wake_g_kore_ta", "cmd_annanagar", "cmd_severe", ...Object.keys(extra)];
+  // v10: the day's keyterms, as the console's hear route sends them (the store's news names and the zones)
+  const keyterms = KEYTERMS ? await (await import("./v10/lexserver")).dayKeyterms(await (await import("./world")).serverWorld()) : undefined;
+  if (keyterms) console.log(`keyterms: ${keyterms.length}`);
   const n = Number(process.env.SARVAM_BENCH_N);
   const ids = Number.isFinite(n) && n > 0 ? all.slice(0, n) : all;
 
@@ -96,16 +116,16 @@ it.runIf(ready)("Sarvam against today's Whisper race on 40 v6 clips: shadow, the
   const rows: Record<string, unknown>[] = [];
   try {
     for (const id of ids) {
-      const c = clips[id], buf = console16k(path.join(DIR, `${id}.wav`)), want = c.lang === "en" ? "en" : "ta";
+      const c = clips[id], buf = console16k(path.join(c.dir ?? DIR, `${id}.wav`)), want = c.lang === "en" ? "en" : "ta";
       secs = wavSeconds(buf);
-      const group = id.startsWith("q_") ? id.slice(2, 4) : c.lang === "en" ? "en" : "ta";
+      const group = id.startsWith("q_") ? id.slice(2, 4) : c.lang === "en" ? "en" : c.lang === "tanglish" ? "tg" : "ta";
 
       // shadow: Sarvam is given 10 s here, so its true time is measured (the turn never waits for it); tamil: the shipped limit
       process.env.JARVIS_STT_SARVAM = "shadow";
       process.env.JARVIS_SARVAM_TIMEOUT_MS = "10000";
       wire = null;
       let t0 = Date.now();
-      const w = await hearUtterance(buf, { lane: "engaged", site: "en", fetcher: tap }).catch(() => null);
+      const w = await hearUtterance(buf, { lane: "engaged", site: "en", fetcher: tap, ...(keyterms ? { keyterms } : {}) }).catch(() => null);
       const wMs = Date.now() - t0;
       await shadowSettled();
       const s = readWire();
@@ -115,7 +135,7 @@ it.runIf(ready)("Sarvam against today's Whisper race on 40 v6 clips: shadow, the
       if (timeoutBefore == null) delete process.env.JARVIS_SARVAM_TIMEOUT_MS; else process.env.JARVIS_SARVAM_TIMEOUT_MS = timeoutBefore;
       wire = null;
       t0 = Date.now();
-      const t = await hearUtterance(buf, { lane: "engaged", site: "en", fetcher: tap }).catch(() => null);
+      const t = await hearUtterance(buf, { lane: "engaged", site: "en", fetcher: tap, ...(keyterms ? { keyterms } : {}) }).catch(() => null);
       const tMs = Date.now() - t0;
       await sleep(3200);
 
@@ -142,13 +162,13 @@ it.runIf(ready)("Sarvam against today's Whisper race on 40 v6 clips: shadow, the
     sarvamNoReply: xs.filter((x) => x.sarvam.text == null).length
   });
   const summary = {
-    at: new Date().toISOString(), site: "en", clips: rs.length, sarvamCalls: calls, sarvamBilledS: billed,
+    at: new Date().toISOString(), site: "en", set: SET, keyterms: keyterms?.length ?? 0, clips: rs.length, sarvamCalls: calls, sarvamBilledS: billed,
     rupeesBeforeGst: Math.round((billed / 60) * RUPEES_PER_MIN * 100) / 100,
     all: part(rs), en: part(rs.filter((x) => x.group === "en")), ta: part(rs.filter((x) => x.group === "ta")), tanglish: part(rs.filter((x) => x.group === "tg")),
     msP50: { whisperRace: pct(rs.map((x) => x.whisper.ms), 0.5), sarvamCall: pct(rs.map((x) => x.sarvam.ms), 0.5), tamilRace: pct(rs.map((x) => x.tamil.ms), 0.5) },
     msP90: { whisperRace: pct(rs.map((x) => x.whisper.ms), 0.9), sarvamCall: pct(rs.map((x) => x.sarvam.ms), 0.9), tamilRace: pct(rs.map((x) => x.tamil.ms), 0.9) }
   };
-  const out = path.join(process.env.THUNAI_DIR || path.join(process.cwd(), "data", "thunai"), "sarvam-bench.json");
+  const out = path.join(process.env.THUNAI_DIR || path.join(process.cwd(), "data", "thunai"), SET === "v6" && !KEYTERMS ? "sarvam-bench.json" : `sarvam-bench-${SET}${KEYTERMS ? "-keyterms" : ""}.json`);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify({ summary, rows }, null, 1));
   console.log(JSON.stringify(summary, null, 1));

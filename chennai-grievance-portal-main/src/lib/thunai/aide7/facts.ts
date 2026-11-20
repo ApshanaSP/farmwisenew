@@ -224,13 +224,15 @@ export function buildSheet(doc: StageDocT, lang: Lang, gaz: Gazetteer, now: numb
   if (scope.names.length || scope.times.length) b.add({ src: "dashboard", text: `This screen covers ${[...scope.names, ...scope.times.slice(0, 1)].join(", ")}`, times: scope.times });
   if (doc.takeaway?.en && doc.recipe !== "news") b.add({ src: "dashboard", text: `The takeaway code drew: ${doc.takeaway.en}`, dir: dirOfText(doc.takeaway.en) });
   if (x?.article) {
-    const a = x.article, w = a.publishedAt ? when(a.publishedAt.replace("T", " ").slice(0, 19), now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
+    // (the time whole: the news route hands it in UTC, and cut to its first 19 characters its "Z" was lost and it was read as IST, 5.5 hours
+    // early: 08:10 IST was "early this morning": v10, 19 Nov)
+    const a = x.article, w = a.publishedAt ? when(a.publishedAt, now) ?? (() => { const t = Date.parse(a.publishedAt as string); return Number.isFinite(t) ? { en: pointWords(t, now) ?? "", ta: relativeTime(a.publishedAt, now, "ta") ?? "" } : null; })() : null;
     const outlet = a.outlet ?? "The report";
     b.add({ src: a.outlet ?? "the news", doc: "article", text: `${outlet} reported${w?.en ? ` ${w.en}` : ""}: ${a.title}`, times: w ? [w.en, w.ta] : [], names: a.outletTa ? [a.outletTa] : [] });
     // the article's own sentences, a few, each a fact of that outlet's (code reads none of them as true: they are what the outlet said)
     for (const s of sentencesOf(a.text).slice(0, 6)) b.add({ src: a.outlet ?? "the news", doc: "article", text: `${outlet} wrote: ${s}`, cause: /\b(?:because|due to|caused|after)\b/i.test(s), names: a.outletTa ? [a.outletTa] : [] });
     if (a.incident) b.add({ src: "dashboard", text: "This report is linked to an incident on the console" });
-    for (const r of x.related ?? []) { const rw = r.publishedAt ? when(r.publishedAt.replace("T", " ").slice(0, 19), now) : null; b.add({ src: r.outlet, text: `${r.outlet} also covered it${rw ? ` (${rw.en})` : ""}: ${r.title}`, times: rw ? [rw.en, rw.ta] : [] }); }
+    for (const r of x.related ?? []) { const rw = r.publishedAt ? when(r.publishedAt, now) : null; b.add({ src: r.outlet, text: `${r.outlet} also covered it${rw ? ` (${rw.en})` : ""}: ${r.title}`, times: rw ? [rw.en, rw.ta] : [] }); }
   }
   // the facts that carry a point first (what stands out, the comparison, the ranking, the case), the tiles' totals after them: a model leads
   // with the first facts it is given, and the totals made it read the screen's numbers out (the dev run, 17 Nov)

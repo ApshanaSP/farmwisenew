@@ -9,13 +9,14 @@
  * `v8: false` is v7's order exactly (the evaluation's "before"); `v8: true` adds the v8 lanes (v8/understand8.ts) in front.
  */
 import type { NewsOnScreen, NewsAskT } from "../newsask";
-import { newsAsk } from "../newsask";
+import { fullRead, newsAsk } from "../newsask";
 import { localStageCommand, type LocalCmd } from "../stagelocal";
 import { intentMarker } from "../quick";
 import { missionIntent } from "../missions.words";
 import { understand } from "../understand";
 import { isNavCommand, isPlainMove, isReflex } from "../plan";
 import { planRisk } from "../risk";
+import { asksPrivate } from "../privacy";
 import type { Lang, ScreenState, Step, World } from "../types";
 import { asksWhatToday, followAsk } from "@/components/collector/app/thunai/aide";
 import { understandV8 } from "./flag8";
@@ -106,11 +107,18 @@ const OTHER_ONE = /^(?:no,? |nope,? )?(?:the )?other (?:one|story|news|report|ar
 export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; lang: Lang; lastFound?: LastFound | null; panel?: boolean; cases?: boolean }): NewsAskT | null {
   if (!understandV8()) return null;
   const t = said.trim();
+  // v10 (the second review of v9): what the console refuses for privacy (a victim's name, address, details) is never found or read here: the
+  // round's rules refuse it before any model
+  if (asksPrivate(t)) return null;
   // a mission or a memory request is never the news lane's; "brief me on the Minjur desal plant story" names a story, so it is
   const im = intentMarker(said);
   const briefOnStory = /\bbrief\b/i.test(t) && STORY_NOUN.test(t);
   if ((im && !(im.intent === "brief" && briefOnStory)) || (missionIntent(said, c.world) && !briefOnStory)) return null;
   if (c.lastFound?.other && OTHER_ONE.test(t)) return { kind: "read", body: { id: c.lastFound.other.id } };
+  // v10 dev2 (dA-reading-2): "read the whole thing, not the summary", "read it fully", "full-a padinga", "முழுசா படிங்க" right after a story was
+  // found: that story, in full (v10 sent it to the server, which put up the day's brief: a summary for "not the summary"); never a sentence that
+  // names a topic of its own ("read the full story on the Minjur plant" is that story), never a negation
+  if (c.lastFound?.id && fullRead(t) && !NO_READ.test(t) && !fullTopic(t)) return { kind: "read", body: { id: c.lastFound.id, full: true }, full: true };
   // more on the story found last: the other reports of it, the one already read left out
   // the Collector's own topic words from the turn that found it ("the Pallikaranai marsh"), else the found headline's: other outlets word the same
   // event differently, and a whole headline's words score them under the floor (the live dev re-check, 19 Nov)
@@ -128,6 +136,15 @@ export function newsLane8(said: string, c: { news: NewsOnScreen; world: World; l
   return { kind: "find", body: { find: { q: t.slice(0, 400), lang: c.lang, screen: items.slice(0, 250).map((x) => ({ id: x.id, title: x.title ? x.title.slice(0, 400) : null, source: x.source ? x.source.slice(0, 300) : null })) } }, ...(req.soft ? { soft: true } : {}) };
 }
 
+/** v10 dev2: a negation ("don't read the whole thing") */
+const NO_READ = /\b(?:don'?t|dont|do not|never|no need|stop)\b|வேண்டாம்|வேணாம்|\bvenaam\b|\bvendaam\b/iu;
+/** v10 dev2: the words of a full read itself, and of the brief it is not ("the whole thing, not the summary"): no topic */
+const FULL_OWN = new Set(["whole", "full", "fully", "entire", "complete", "completely", "thing", "summary", "summarise", "summarize", "brief", "short", "not", "just", "only", "rest",
+  "word", "start", "finish", "end", "beginning", "text", "verbatim", "fulla", "fullah", "muzhusa", "muzhusaa", "muzhusaga", "muzhuvadhum", "muluvathum", "muzhumaiya", "mulusa", "mulusaka", "muluca", "mulucaka",
+  "muluvatum", "muluvataiyum", "mulumaiyaka", "mulu", "pul", "pulla"]);
+/** the topic words a full read names besides its own ("read the full story on the Minjur plant": minjur, plant) */
+const fullTopic = (t: string): boolean => topicWords(t, outletIn(t)).some((w) => !FULL_OWN.has(w) && !FULL_OWN.has(w.replace(/(?:a|ah|aa)$/, "")));
+
 /** v9: the news on screen is the console's own news panel: no Stage open, or Jarvis's read of one story (`slots.web`) over the open panel
  * ("read the seventh one" after a first read still means the panel: the review, 19 Nov) */
 export const onNewsPanel = (stage: BrowserCtx["stage"], state: Pick<ScreenState, "panel">): boolean => !stage || (!!stage.slots?.web && state.panel === "news");
@@ -139,7 +156,8 @@ export const casesOnStage = (stage: BrowserCtx["stage"]): boolean => !!stage && 
 export const caseInFocus = (stage: BrowserCtx["stage"], state: Pick<ScreenState, "list">, incident: string | null | undefined, said: string): boolean =>
   casesOnStage(stage) || !!stage?.blocks.some((b) => b.kind === "CaseDetail") || !!incident ||
   // (the console's state carries its list; a request body and the runners carry only its length)
-  (/\bone\b/i.test(said) && (state.list?.length ?? (state as { listLength?: number }).listLength ?? 0) > 0);
+  // (v10, the second review: and "one" in Tanglish and Tamil, "IOCL fire onnu open pannunga", "அந்த ... ஒண்ணைத் திறங்க")
+  (/\b(?:one|onnu|onna|onnai)\b|ஒண்ண|ஒன்றை/iu.test(said) && (state.list?.length ?? (state as { listLength?: number }).listLength ?? 0) > 0);
 
 /** v8: a case on the open Stage's list the sentence points at (refs8.ts), or null */
 export function refLane8(said: string, stage: BrowserCtx["stage"]): { op: "open" | "explain"; n: number } | null {

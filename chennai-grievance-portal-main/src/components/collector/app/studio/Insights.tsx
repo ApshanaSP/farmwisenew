@@ -33,7 +33,7 @@ export function BriefCard({ brief, stale, busy, c, onReanalyse }: { brief: Brief
         <div className="ds-brief-k">
           <span className="ds-brief-badge"><I n="spark" />{busy ? "AI is analysing the data…" : brief.by === "ai" ? "AI brief" : stale ? "Quick brief" : "Brief (rules)"}</span>
           {!busy && <small>{brief.by === "ai" ? `${brief.model?.split("/").pop() ?? "AI"} · every number checked against the rows` : "Written from the computed insights"} · {brief.items.length} of {brief.considered} insights</small>}
-          <button className="ds-brief-re" onClick={onReanalyse} disabled={busy} title="Analyse again with the AI"><I n="refresh" />{busy ? "Analysing" : "Re-analyse"}</button>
+          <button className="ds-brief-re" onClick={onReanalyse} disabled={busy} data-jarvis-never title="Analyse again with the AI"><I n="refresh" />{busy ? "Analysing" : "Re-analyse"}</button>
         </div>
         <h3>{brief.verdict}</h3>
         <ul>{brief.summary.map((s, i) => <li key={i} style={{ ["--i" as string]: i }}>{s}</li>)}</ul>

@@ -29,7 +29,7 @@ export function TopMenu({ open, onToggle, items }: { open: boolean; onToggle: ()
       {open && (
         <div className="pop tm-pop" role="menu" data-pop>
           {items.map((it) => (
-            <button key={it.key} role="menuitem" className={`pop-i tm-i${it.on ? " on" : ""}`} onClick={() => { onToggle(); it.run(); }}>
+            <button key={it.key} role="menuitem" data-key={it.key} className={`pop-i tm-i${it.on ? " on" : ""}`} onClick={() => { onToggle(); it.run(); }}>
               <span className="tm-ic"><I n={it.icon} /></span><span><b>{it.label}</b>{it.sub && <small>{it.sub}</small>}</span>
             </button>
           ))}

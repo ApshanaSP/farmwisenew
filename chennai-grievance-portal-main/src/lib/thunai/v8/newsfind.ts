@@ -12,10 +12,14 @@ import { asOf } from "@/lib/collector/intel";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 import type { RowDataPacket } from "mysql2";
 import type { World } from "../types";
+import { asksPrivate } from "../privacy";
 import { findGap, gapPhrase, nothingLine, type GapDeps } from "../aide7/gap";
 import { relativeTime } from "../web/brief";
 import type { FoundStory } from "../web/serve";
-import { eventForms, newsRequest, pickStory, rankStories, SOFT_FLOOR, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { eventForms, namingWords, newsRequest, pickStory, placeKeyMatch, rankStories, sameStory, SOFT_FLOOR, topicWords, type NewsReq, type Picked, type StoryItem } from "./news8";
+import { fold, looseKey, tokensOf } from "./match";
+/** a Tamil or Tanglish case ending joined on a place ("adyarla", "ataiyaril") */
+const PLACE_CASE = /(?:ukku|kku|ile|ila|il|la|le|lu|oda|odu|ku)$/;
 
 const brief = (x: StoryItem | null) => (x ? { id: x.id, title: String(x.titleEn || x.title).slice(0, 300), outlet: x.outlets?.[0] ?? null } : null);
 
@@ -54,8 +58,34 @@ export async function feedLines(f: FindAsk, words: string[], d: { world: Pick<Wo
 }
 
 export interface ScreenStory { id: string; title?: string | null; source?: string | null }
-export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[]; exclude?: string[] }
+export interface FindAsk { q: string; lang: "en" | "ta"; screen?: ScreenStory[]; exclude?: string[];
+  /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have */
+  entity?: { name: string; kind: string; spellings: string[] } | null;
+  /** v10: a storm: the weather readings come with the news */
+  weather?: boolean;
+  /** v10: only the stories on the screen are candidates, found softly (a story named on screen with no news word) */
+  onlyScreen?: boolean }
 export interface Found { req: NewsReq; picked: Picked }
+
+/**
+ * v10: a request that names a thing by ear ("Tell me about Cyclone Aquan"), as the store spells it: its topic words (the request's own, which
+ * v10's browser already wrote with the store's spelling), each word of the name glossed with every spelling the store has for it (a headline
+ * that says "Akwan" matches "Akvan" at 0.9, as a Tamil word's English does). Never soft: the Collector named it. With no request of v8's shape
+ * ("tell me about X" has no news word), it is a story when said with a verb that reads or tells, else a news question.
+ */
+export function entityRequest(req: NewsReq | null, f: Pick<FindAsk, "q" | "entity">): NewsReq | null {
+  const e = f.entity;
+  if (!e || !e.spellings.length) return req;
+  const coreToks = [...new Set(e.spellings.flatMap((s) => tokensOf(s)).filter((w) => w.length >= 3))];
+  const own = tokensOf(e.spellings[0]).filter((w) => w.length >= 3);
+  const base = topicWords(f.q, null).slice(0, 12);
+  const words = [...new Set([...(req?.words ?? base), ...own])].slice(0, 12);
+  if (!words.length) return req;
+  const gloss: Record<string, string[]> = { ...(req?.gloss ?? {}) };
+  for (const w of own) gloss[w] = [...new Set([...(gloss[w] ?? []), ...coreToks])];
+  const kind: NewsReq["kind"] = req?.kind ?? (/\b(?:tell|read|open|explain|brief|about|show|play)\b|\b(?:sollu|padi|kaattu|thira)\w*|சொல்|படி|காட்டு|திற|விளக்கு/iu.test(f.q) ? "story" : "ask");
+  return { kind, words, outlet: req?.outlet ?? null, ref: false, gloss, ...(req?.weak ? { weak: req.weak } : {}) };
+}
 
 /** the district's own place names, for the place veto (a place named that a story does not mention is never that story) */
 export const placesOf = (w: Pick<World, "zones" | "places">): string[] => [...new Set([...w.zones.map((z) => z.name), ...w.places.flatMap((p) => [p.name, ...(p.aliases ?? [])])])].filter((n) => n && n.length >= 4);
@@ -93,10 +123,40 @@ async function readStore(now: string, days: number): Promise<StoryItem[]> {
 /** the floor for a search again on the story just found */
 export const MORE_FLOOR = 0.35;
 
-export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]> }): Promise<Found | null> {
+/** v10: the meaning ranker's guards (v10/sem10.ts; calibrated on v8's dev set and the build's own cases on the real store, 19 Nov) */
+export const SEM_ABS = 0.835;
+export const SEM_MARGIN = 0.03;
+export const SEM_LEX = 0.3;
+
+export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "places">; stories?: () => Promise<StoryItem[]>;
+  /** v10: the meaning of the request against the candidates (v10/sem10.ts semScores, passed by the news route and the runners); absent: none asked */
+  sem?: ((q: string, items: StoryItem[]) => Promise<Map<string, number> | null>) | null }): Promise<Found | null> {
+  // v10 (the second review of v9): what the console refuses for privacy (a victim's name, address, details) is never found, read or handed to a model
+  if (asksPrivate(f.q)) return null;
   const screen = (f.screen ?? []).filter((x) => x && /^[A-Za-z0-9_:.-]{1,80}$/.test(x.id));
-  const req = newsRequest(f.q, { onScreen: screen.length > 0 });
+  // v10: a thing named by ear comes with the store's spellings of it (entityRequest); without one, v8's reading of the sentence
+  let req = f.entity ? entityRequest(newsRequest(f.q, { onScreen: screen.length > 0 }), f) : newsRequest(f.q, { onScreen: screen.length > 0 });
+  // v10: a story named on screen with no news word: the request's own topic words, found softly among the screen's stories only
+  // (v10 review 2, round 2, news-1: with a soft request's guards: a word that names it, neither a place, the event nor a kind of thing, else
+  // nothing is found and the console's view takes it: "Open Adyar", "open the Royapuram protest", "அடையாறு திறங்க" read a story there)
+  if (!req && f.onlyScreen && screen.length) {
+    const words = topicWords(f.q, null).slice(0, 12);
+    const { event, which } = namingWords(f.q, words);
+    if (!which.length) return null;
+    req = { kind: "story", words, outlet: null, ref: false, soft: true, which, ...(event.length ? { event } : {}) };
+  }
   if (!req) return null;
+  // v10 (the second review of v9): a soft request's naming word is never one of the district's places, as its world spells them ("open the
+  // Pattinapakkam fire" names a place and an event: the console's view, as "open the Adyar fire" is); none left, nothing is found softly
+  if (req.soft && req.which?.length) {
+    const keys = placesOf(d.world).map((p) => looseKey(fold(p).replace(/\s+/g, ""))).filter((k) => k.length >= 4);
+    const which = req.which.filter((w) => ![w, w.replace(PLACE_CASE, "")].some((v) => {
+      const k = looseKey(v);
+      return k.length >= 4 && keys.some((pk) => placeKeyMatch(k, pk));
+    }));
+    if (!which.length) return null;
+    req = { ...req, which };
+  }
   const stored = await (d.stories ?? storeStories)().catch(() => [] as StoryItem[]);
   const byId = new Map(stored.map((s) => [s.id, s]));
   // the screen's stories first (their own titles, and the store's English title when it has one), then the rest of the store. A panel row
@@ -119,7 +179,8 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
   const seen = new Set(onScreen.map((x) => x.id));
   // a search for more on a story leaves out the report already read (its other outlets' reports are what is wanted)
   const skip = new Set(f.exclude ?? []);
-  const items = [...onScreen, ...stored.filter((s) => !seen.has(s.id))].filter((x) => !skip.has(x.id));
+  // (v10: a story named on screen with no news word is looked for on the screen alone)
+  const items = (f.onlyScreen ? onScreen : [...onScreen, ...stored.filter((s) => !seen.has(s.id))]).filter((x) => !skip.has(x.id));
   // within one event, the report in the request's own language (the real run, 18 Nov: a Tamil headline was read in the English voice)
   // "what else is in the news about it": the topic is the one just found, so another outlet's report of it that words it differently is enough (a
   // lower floor; the place veto still holds: the live dev re-check, 19 Nov)
@@ -133,5 +194,34 @@ export async function findNews(f: FindAsk, d: { world: Pick<World, "zones" | "pl
     const named = { words: req.which ?? [], outlet: null, gloss: req.gloss };
     ranked = ranked.filter((r) => r.score < SOFT_FLOOR || ((rankStories(ev, [r.item])[0]?.hits ?? 0) > 0 && (!named.words.length || (rankStories(named, [r.item])[0]?.hits ?? 0) > 0)));
   }
-  return { req, picked: pickStory(ranked, f.lang, floor) };
+  // (v10 dev2: the outlet asked for leads its event: "what Daily Thanthi wrote on ..." is Daily Thanthi's report of it)
+  const picked = pickStory(ranked, f.lang, floor, req.outlet);
+  // v10: nothing found by the words: the request's meaning (a Tamil request about an English headline), under the lexical guards; never for a thing
+  // named by ear (its spellings are the evidence), a soft find, a search for more on a story, or the screen alone
+  // (asked only when the caller passes it: the news route and the runners; a unit test or another caller never starts the model)
+  if (!picked.pick && !req.soft && !f.entity && !f.onlyScreen && !f.exclude?.length && d.sem) {
+    const sem = await d.sem(f.q, items.slice(0, 400)).catch(() => null);
+    const order = sem ? [...sem.entries()].filter(([id]) => items.some((x) => x.id === id)).sort((a, b) => b[1] - a[1]) : [];
+    const best = order[0] ? items.find((x) => x.id === order[0][0]) ?? null : null;
+    if (best && order[0][1] >= SEM_ABS) {
+      const memo = new Map<StoryItem, Set<string>>();
+      const next = order.find(([id]) => { const it = items.find((x) => x.id === id); return !!it && it.id !== best.id && !sameStory(it, best, memo); });
+      const lex = ranked.find((r) => r.item.id === best.id);
+      const tamil = /[஀-௿]/u.test(f.q);
+      // (the place veto: a district place the request names that the story lacks; rankStories caps such a story at 0.3)
+      const places = placesOf(d.world);
+      const placeWords = req.words.filter((w) => places.some((p) => keySimLoose(w, p)));
+      // (v10 review 2, round 2, news-6: and the ranking's own place veto, which sees a place with its case ending or said in two words, "அடையாறில்",
+      // "Adyarla", "அண்ணா நகரில்": an exact key alone did not, and the meaning read a story at another place)
+      const vetoed = !!lex?.placeVetoed || (placeWords.length > 0 && rankStories({ words: placeWords, outlet: null }, [best], { places })[0]?.hits !== placeWords.length);
+      if (order[0][1] - (next?.[1] ?? 0) >= SEM_MARGIN && (tamil || (lex?.score ?? 0) >= SEM_LEX && (lex?.hits ?? 0) > 0) && !vetoed)
+        return { req, picked: { pick: best, score: lex?.score ?? 0, other: null, close: false, stories: [best] } };
+    }
+  }
+  return { req, picked };
 }
+/** a request word that names a district place (its loose key equal to a place's, or a place word's, four letters or more) */
+const keySimLoose = (w: string, place: string): boolean => {
+  const k = looseKey(w);
+  return k.length >= 4 && tokensOf(place).some((p) => looseKey(p) === k);
+};

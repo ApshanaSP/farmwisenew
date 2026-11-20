@@ -45,3 +45,12 @@ describe("the wake word", () => {
     expect(talkedAbout(said)).toBe(true);
   });
 });
+
+describe("v10, the finals: Jarvis's name by ear, as one shape, not a list one spelling at a time (the real path on 20 Nov heard \"Jauvis, Go to news.\")", () => {
+  it.each(["Jauvis, go to news.", "Jaavis, go to news.", "Jarvees, go to news.", "Jervis go to news", "Jarwis, go to news."])("'%s' is Jarvis, and the request is 'go to news'", (said) => {
+    expect(wakeIn(said)?.toLowerCase().replace(/[.,]/g, "").trim()).toBe("go to news");
+  });
+  it.each(["javascript news today", "the java version is old", "jovial crowd at the beach"])("'%s' is no name", (said) => {
+    expect(wakeIn(said)).toBeNull();
+  });
+});

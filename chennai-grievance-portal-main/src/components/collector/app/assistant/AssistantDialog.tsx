@@ -335,12 +335,12 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
               </select>
             </label>
             {insights.length > 0 && items.length > 0 && (
-              <button className={`aq-hb${showIns ? " on" : ""}`} onClick={() => setShowIns((v) => !v)} title={x.insights} aria-label={x.insights} aria-expanded={showIns}>
+              <button className={`aq-hb${showIns ? " on" : ""}`} onClick={() => setShowIns((v) => !v)} title={x.insights} aria-label={x.insights} aria-expanded={showIns} data-voice="chat.insights">
                 <I n="bulb" /><em className="aq-count">{insights.length}</em></button>
             )}
-            <button className={`aq-hb${showPast ? " on" : ""}`} onClick={togglePast} title={t.history} aria-label={t.history} aria-expanded={showPast}><I n="clock" /></button>
-            <button className="aq-hb" onClick={reset} title={t.newChat} aria-label={t.newChat}><I n="plus" /></button>
-            <button className="aq-hb" onClick={() => setWide((w) => !w)} title={wide ? t.restore : t.maximize} aria-label={wide ? t.restore : t.maximize}><I n="expand" /></button>
+            <button className={`aq-hb${showPast ? " on" : ""}`} onClick={togglePast} title={t.history} aria-label={t.history} aria-expanded={showPast} data-voice="chat.history"><I n="clock" /></button>
+            <button className="aq-hb" onClick={reset} title={t.newChat} aria-label={t.newChat} data-voice="chat.newChat"><I n="plus" /></button>
+            <button className="aq-hb" onClick={() => setWide((w) => !w)} title={wide ? t.restore : t.maximize} aria-label={wide ? t.restore : t.maximize} data-voice="chat.maximize"><I n="expand" /></button>
             <button className="aq-hb" onClick={onClose} title={t.close} aria-label={t.close}><I n="x" /></button>
           </div>
         </header>

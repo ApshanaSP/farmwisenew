@@ -27,6 +27,8 @@ export function fold(text: string): string {
 export function looseKey(word: string): string {
   let s = word.toLowerCase().replace(/[^a-z]/g, "");
   if (!s) return "";
+  // (v10: "chr" is said "kr", Chronicle, Chrome(pet), Christian: the names research, 20-names-by-ear.md 7.4)
+  s = s.replace(/^chr/, "kr");
   s = s.replace(/tion$/, "san").replace(/ck/g, "k").replace(/ou/g, "u");
   s = s.replace(/zh/g, "l").replace(/sh/g, "s").replace(/ch/g, "s").replace(/ph/g, "p").replace(/f/g, "p").replace(/q/g, "k").replace(/x/g, "ks").replace(/w/g, "v").replace(/z/g, "s");
   // c: s before e, i, y; k otherwise
@@ -124,11 +126,32 @@ export function keySim(q: string, t: string, cut = true, skel = true): number {
   return 0;
 }
 
+/**
+ * v10 review 2, round 2 (news-11): a derivational ending (-age, -ment, -ise/-ize and their -isation) makes a word of its own far more often than
+ * another form of its stem: shortage is not short, storage not stored, footage not foot, hostage not host, passage not passed, statement not
+ * state, department not depart, organised not organ, otherwise not other (v10 stripped them all: "water shortage in Ambattur" read "Short circuit
+ * sparks fire in Ambattur shop"). Only the civic words a headline turns that way share their stem (drainage: drain, leakage: leak, encroachment:
+ * encroach, hospitalised: hospital), each stem as the generic reading leaves its -ed form ("displaced": displac). A list on purpose: the endings
+ * alone cannot tell "drainage" from "shortage".
+ */
+const IZE = ["ise", "ises", "ised", "ising", "isation", "isations", "ize", "izes", "ized", "izing", "ization", "izations"];
+const DERIVED_ROWS: [string[], string[]][] = [
+  [["drain", "seep", "leak", "break", "block", "spill", "wast"], ["age", "ages"]],
+  [["encroach", "harass", "recruit", "allot", "assess", "treat", "punish"], ["ment", "ments"]],
+  [["enforc", "displac", "resettl", "embezzl"], ["ement", "ements"]],
+  [["hospital", "regular", "vandal", "sanit", "urban"], IZE]
+];
+const DERIVED = new Map<string, string>(DERIVED_ROWS.flatMap(([stems, ends]) => stems.flatMap((s) => ends.map((e) => [s + e, s] as [string, string]))));
+
 /** an English word without its ending ("inauguration", "inaugurated" -> "inaugur"; "constables" -> "constable") */
 export const enStem = (w: string): string => {
   const x = w.toLowerCase();
-  const m = /^(.{4,}?)(?:ations|ation|ated|ating|ates|ate|ions|ion|ings|ing|ers|er|ed|es|s)$/.exec(x);
-  return m ? m[1] : x;
+  // (v10, the second review of v9: and -ised/-ized, -ment, -age: "hospitalised" is "hospital", "encroachments" "encroach", "drainage" "drain";
+  // v10 review 2, round 2: those three only for the civic words of DERIVED)
+  // (v10, the finals: a noun in -ure is its verb's, "seizure" "seizes", "closure" "closed", "failure" "failed": news9 n9-newsTopic-1 live, the
+  // store of 20 Nov; a stem of four letters or more, so "nature" and "future" stay whole)
+  const m = DERIVED.get(x) ?? /^(.{4,}?)(?:ations|ation|ated|ating|ates|ate|ions|ion|ings|ing|ures|ure|ers|er|ed|es|s)$/.exec(x)?.[1];
+  return m ? m.replace(/([^aeiou])\1$/, "$1") : x;
 };
 
 /** one heard word against one word of a name or headline: its key, then its stems' keys (a little less) */

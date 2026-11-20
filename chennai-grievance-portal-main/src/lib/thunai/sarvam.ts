@@ -97,6 +97,8 @@ export interface SarvamOpts {
   fetcher?: typeof fetch;
   /** this call's limit, ms (default JARVIS_SARVAM_TIMEOUT_MS) */
   ms?: number;
+  /** v10: the day's keyterms (the storms and names in the news, what is on screen, the zones: v10/lexserver.ts); absent, the fixed list */
+  keyterms?: readonly string[] | null;
 }
 
 const count = (t: string, re: RegExp) => t.match(re)?.length ?? 0;
@@ -147,7 +149,7 @@ export async function sarvamTranscribe(audio: Blob | ArrayBuffer, o: SarvamOpts)
   f.append("model", SARVAM_MODEL);
   f.append("mode", SARVAM_MODE);
   f.append("language_code", "unknown");
-  if (env("JARVIS_SARVAM_KEYTERMS") !== "0") f.append("keyterms", keytermsField());
+  if (env("JARVIS_SARVAM_KEYTERMS") !== "0") f.append("keyterms", keytermsField(o.keyterms?.length ? o.keyterms : SARVAM_KEYTERMS));
   l.record(SARVAM_ORG, SARVAM_MODEL, { audioS: billed, lane });
   const limit = AbortSignal.timeout(o.ms ?? sarvamTimeoutMs());
   const signal = o.signal ? AbortSignal.any([o.signal, limit]) : limit;

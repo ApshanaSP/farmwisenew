@@ -19,8 +19,14 @@ describe("keepsSomething", () => {
 
 describe("the Jarvis client uses the guard with both strings", () => {
   const src = fs.readFileSync(path.join(__dirname, "Thunai.tsx"), "utf8");
+  // v10: the click guard is one verdict for a spoken click and a registry press (press10.ts pressVerdict, through dom.ts verdictFor); it still
+  // hands the name and the text to keepsSomething apart
+  const dom = fs.readFileSync(path.join(__dirname, "dom.ts"), "utf8");
+  const press = fs.readFileSync(path.join(__dirname, "press10.ts"), "utf8");
   it("no call tests KEEP_BUTTON on one joined string", () => {
     expect(src).not.toMatch(/KEEP_BUTTON\.test\(/);
-    expect(src).toContain("keepsSomething(t.name, t.el.textContent)");
+    expect(src).toContain("verdictFor(t.el, t.name ?? \"\")");
+    expect(dom).toContain("pressVerdict({ name, text: el.textContent,");
+    expect(press).toContain("keepsSomething(o.name, o.text)");
   });
 });

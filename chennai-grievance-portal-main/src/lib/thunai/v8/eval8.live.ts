@@ -30,11 +30,11 @@ import { understand } from "../understand";
 import { clearCaches, planRound, RoundBody, type RoundBodyT, type RoundDeps } from "../round";
 import { stageContext, type StageDocT } from "../stage";
 import { stageDigest, stageEmpty, stageReducer } from "../stagelocal";
-import type { Lang, ScreenState, World } from "../types";
+import type { Lang, ScreenState, Step, World } from "../types";
 import { serverWorld } from "../world";
 import { addressed } from "../addressed";
 import { labelsOf } from "../register";
-import { browserLaneV7, browserLaneV8, type BrowserCtx, type LastFound } from "./browser";
+import { browserLaneV7, browserLaneV8, type BrowserCtx, type BrowserLane, type LastFound } from "./browser";
 import { wordsLang, placeWord } from "./lang8";
 import { feedLines, foundStory } from "./newsfind";
 import { checkSet, emptyOutcome, score8, tally8, type Item8, type Outcome8 } from "./eval8";
@@ -51,9 +51,12 @@ if (process.env.JARVIS_LIVE_CLAUDE !== "1") process.env.JARVIS_CLAUDE_OFF = "1";
 const MODE = process.env.EVAL8 ?? "";
 // (v9: "news9", the blind news set written for v9's fixes; any set but dev is hash-checked against eval/v8/HASHES.txt)
 const SET = (process.env.SET ?? "dev") as "dev" | "holdout" | "news9";
-const V = (process.env.V ?? "v8") as "v7" | "v8";
+// (v10: V=v10, the default in this tree, runs v10's lanes in front of v8's (v10/browser10.ts, with the day's lexicon); V=v8 is v9's lanes by
+// v10's rollback switch; the v9 commit itself is run from its own checkout for the finals)
+const V = (process.env.V ?? "v10") as "v7" | "v8" | "v10";
 // V=v7 in this tree: every v8 layer off by its rollback switch (the v7 commit itself is run from its own checkout for the finals)
 if (V === "v7") process.env.JARVIS_UNDERSTAND = "v7";
+if (V === "v8") process.env.JARVIS_UNDERSTAND = "v9";
 const TAG = process.env.TAG ?? "dry";
 const GAP = Number(process.env.LIVE_GAP_MS ?? 20000);
 const ONLY = (process.env.ONLY ?? "").split(",").filter(Boolean);
@@ -77,9 +80,11 @@ function items(): Item8[] {
   return ONLY.length ? all.filter((x) => ONLY.includes(x.id)) : all;
 }
 
-const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } as unknown as ScreenState;
+// (v10, the second review of v9: the console's overview always shows its severity tab's list, so "the X one" there is a case: listLength 3, as the
+// holdout and grid runners have it)
+const STATE: ScreenState = { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } as unknown as ScreenState;
 type NewsRow = { id: string; source: string | null; title: string };
-interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[] }
+interface Ctx { world: World; hands: ReturnType<typeof serverHands>; panel: NewsRow[]; lex?: unknown[] | null; sem?: Parameters<typeof foundStory>[1]["sem"] }
 
 async function context(): Promise<Ctx> {
   const world = await serverWorld();
@@ -87,7 +92,10 @@ async function context(): Promise<Ctx> {
   const r = await hands.news({ period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null });
   // the console's news panel, as Thunai.tsx newsOnScreen reads it: each story by its first stored document, every outlet that ran it
   const panel = r.rows.map((x) => ({ id: String(((x.docIds as string[] | undefined) ?? [])[0] ?? x.id), source: ((x.outletNames as string[] | undefined) ?? []).join(" · ") || null, title: String(x.title ?? "") }));
-  return { world, hands, panel };
+  // v10: the day's lexicon, as the console fetches it when Jarvis opens
+  const lex = V === "v10" ? await import("../v10/lexserver").then(async (m) => m.lexForBrowser(await m.dayLexicon(world))).catch(() => null) : null;
+  const sem = V === "v10" ? (await import("../v10/sem10")).semScores : undefined;
+  return { world, hands, panel, lex, sem };
 }
 
 /** where one turn leaves the browser: the screen it shows, the console's state and the turns remembered */
@@ -106,7 +114,8 @@ const newsOn = (c: Ctx, s: Scene) => {
   if ((!s.stage || s.stage.slots?.web) && s.state.panel === "news") return { items: c.panel.map((x) => ({ id: x.id, source: x.source, title: x.title })), incident: null, reading: null };
   const nr = s.stage?.blocks.find((b) => b.kind === "NewsReader");
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
-  return { items: nr?.kind === "NewsReader" && !s.stage?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [], incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, reading: null };
+  // (v10, the second review: with no Stage, the console's own incident open or in the map's focus, as Thunai.tsx newsOnScreen has it)
+  return { items: nr?.kind === "NewsReader" && !s.stage?.slots?.web ? nr.items.map((x) => ({ id: x.id, source: x.source, title: x.title })) : [], incident: cd?.kind === "CaseDetail" ? cd.incident.id : s.stage ? null : ((s.state as { incident?: string | null }).incident ?? null), reading: null };
 };
 
 async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; source: "whisper" | "typed" }, noModel: boolean, o: Outcome8): Promise<{ stage: StageDocT | null; say: string | null }> {
@@ -149,7 +158,7 @@ async function serverTurn(c: Ctx, text: string, s: Scene, heard: { lang: Lang; s
 }
 
 /** One request through the browser and the server; returns the outcome and the scene it leaves. */
-async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "engagedSec" | "heard" | "ui">, v: "v7" | "v8", noModel: boolean, gated: boolean): Promise<{ o: Outcome8; scene: Scene }> {
+async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "engagedSec" | "heard" | "ui">, v: "v7" | "v8" | "v10", noModel: boolean, gated: boolean): Promise<{ o: Outcome8; scene: Scene }> {
   const o = emptyOutcome();
   const t0 = Date.now();
   const now = Date.now();
@@ -167,10 +176,19 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
   const listen: Lang = it.ui ?? "en";
   const cd = s.stage?.blocks.find((b) => b.kind === "CaseDetail");
   const ctx: BrowserCtx = { stage: s.stage ? { recipe: s.stage.recipe, blocks: s.stage.blocks, scope: { zone: s.stage.scope.zone }, slots: (s.stage.slots ?? null) as Record<string, unknown> | null } : null, news: newsOn(c, s), state: s.state, world: c.world, listenLang: listen, heardLang, incident: cd?.kind === "CaseDetail" ? cd.incident.id : null, v7: true };
-  let bl = v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
+  let bl: BrowserLane = v === "v10" ? (await import("../v10/browser10")).browserLaneV10(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null, lex: (c.lex ?? null) as never }) as BrowserLane
+    : v === "v8" ? browserLaneV8(said, { ...ctx, lastLang: s.lastLang ?? null, lastFound: s.lastFound ?? null }) : browserLaneV7(said, ctx);
+  // v10's own lanes, read as the console acts on them: a wait is silence; "Cyclone Akvan?" is a question back
+  const own = bl as unknown as { lane: string; ask?: { en: string; ta: string }; lang?: Lang };
+  if (own.lane === "wait") { o.silent = true; o.why = "wait"; o.lane = "wait"; o.ms = Date.now() - t0; return { o, scene: s }; }
+  if (own.lane === "confirm") { o.kind = "clarify"; o.lane = "confirm"; o.lang = own.lang ?? null; o.reply = own.lang === "ta" ? own.ask?.ta ?? null : own.ask?.en ?? null; o.ms = Date.now() - t0; return { o, scene: s }; }
+  // v10: a dashboard control said by voice with the console's own steps (a page, a period, a panel) is those steps, as Thunai.tsx runs them
+  // (the merged dry run of 19 Nov: "Go to trends." through the control lane recorded no page)
+  const ctl = own.lane === "control" ? (bl as unknown as { steps?: Step[]; lang: Lang }) : null;
+  if (ctl?.steps?.length) bl = { lane: "rules", steps: ctl.steps, lang: ctl.lang, reflex: false } as BrowserLane;
   // v9: a soft find (a story-like topic with no news word) that finds nothing close goes on to the lane behind it, as Thunai.tsx does
   if (bl.lane === "news" && bl.soft && bl.na.kind === "find") {
-    const f = await foundStory(bl.na.body.find, { world: c.world }).catch(() => null);
+    const f = await foundStory(bl.na.body.find, { world: c.world, sem: c.sem }).catch(() => null);
     if (!f?.pick) bl = bl.soft;
   }
   let scene: Scene = { ...s, lastTurnAt: now, lastLang: wordsLang(said, { isName: placeWord }) ?? s.lastLang ?? null };
@@ -197,7 +215,7 @@ async function turn(c: Ctx, text: string, s: Scene, it: Pick<Item8, "mic" | "eng
         remember("read the news report aloud", doc, null);
       } else if (bl.na.kind === "find") {
         // v8: the server's finder, on the same store; nothing found: the outlets' feeds (none in a dry run: no network)
-        const f = await foundStory(bl.na.body.find, { world: c.world });
+        const f = await foundStory(bl.na.body.find, { world: c.world, sem: c.sem });
         o.lane = "news8";
         if (f?.pick) {
           o.story = (await titleOf(f.pick.id)) ?? f.pick.title; o.storyId = f.pick.id; o.stories = f.stories.map((x) => x.title);
@@ -258,7 +276,7 @@ async function readAloud(c: Ctx, body: { id: string } | { incident: string }, q:
   return { lines, facts: sh ? sh.facts.slice(0, 24).map((f) => `${f.id} [${f.src}] ${f.text}`) : [] };
 }
 
-async function sceneFor(c: Ctx, it: Item8, v: "v7" | "v8"): Promise<Scene> {
+async function sceneFor(c: Ctx, it: Item8, v: "v7" | "v8" | "v10"): Promise<Scene> {
   let s: Scene = { stage: null, state: { ...STATE }, turns: [], lastTurnAt: null };
   if (it.screen === "newsPanel") s = { ...s, state: { ...s.state, panel: "news" } };
   else if (it.screen) {
@@ -279,7 +297,7 @@ async function sceneFor(c: Ctx, it: Item8, v: "v7" | "v8"): Promise<Scene> {
 
 interface Row8 { id: string; kind: string; lang: string; v: string; ok: boolean; langOk: boolean | null; misses: string[]; deferred: boolean; o: Outcome8; at: string }
 
-async function runOne(c: Ctx, it: Item8, v: "v7" | "v8", noModel: boolean): Promise<Row8> {
+async function runOne(c: Ctx, it: Item8, v: "v7" | "v8" | "v10", noModel: boolean): Promise<Row8> {
   clearCaches();
   let s: Scene;
   try { s = await sceneFor(c, it, v); } catch (e) { const o = emptyOutcome(); o.error = (e as Error).message; return { id: it.id, kind: it.kind, lang: it.lang, v, ok: false, langOk: null, misses: [`setup: ${o.error}`], deferred: false, o, at: new Date().toISOString() }; }

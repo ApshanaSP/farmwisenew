@@ -12,11 +12,26 @@
  * Pure: no network, no React. The client (Thunai.tsx newsTurn) streams /news and calls these.
  */
 import { type StageDocT, checkStage } from "./stage";
+import { asksPrivate } from "./privacy";
+import { ownReport } from "./v8/ownreport8";
+import { ordinalsAt, ordWordsOf } from "./v8/ord8";
 
 export type NewsBodyOut = { id: string } | { incident: string } | { question: string };
-export type NewsAskT = { kind: "read"; body: { id: string } | { incident: string } } | { kind: "lookup"; body: { question: string } }
+export type NewsAskT = { kind: "read";
+  /** v10 dev2: `full` in the body too, as it is sent to the news route (Thunai.tsx sends the body) and as the runners read it (eval10.live.ts reads
+   * `na.body.full`: "read the whole thing" was a read, never a full one, there) */
+  body: ({ id: string } | { incident: string }) & { full?: boolean }; /** v10: "read it fully": the whole story, not its brief */ full?: boolean }
+  | { kind: "lookup"; body: { question: string } }
+  /** v10, news to ground truth: what the console holds on the story read last (v10/offer10.ts asks it) */
+  | { kind: "ground"; body: { ground: { id: string; lang: "en" | "ta"; q?: string } } }
   /** v8: a story by its topic or a news question, found on the server among the screen's stories and the dashboard's (v8/news8.ts) */
-  | { kind: "find"; body: { find: { q: string; lang: "en" | "ta"; screen: { id: string; title: string | null; source: string | null }[]; exclude?: string[] } };
+  | { kind: "find"; body: { find: { q: string; lang: "en" | "ta"; screen: { id: string; title: string | null; source: string | null }[]; exclude?: string[];
+    /** v10: a named thing heard by ear (entity10.ts): its name and the spellings a headline may have ("Akvan", "Akwan") */
+    entity?: { name: string; kind: string; spellings: string[] };
+    /** v10: a storm: the weather readings come with the news */
+    weather?: boolean;
+    /** v10: only the stories on the screen are candidates (a story named on screen with no news word: "Open the GCC issue.") */
+    onlyScreen?: boolean } };
     /** v9: a story-like topic with no news word (not sent: the server reads the sentence itself): nothing close found, the lanes behind take it */
     soft?: boolean }
   | { kind: "which"; why: "none" | "outlet" | "count"; /** the outlet's own name ("The Times of India") */ outlet?: string; n?: number };
@@ -29,6 +44,9 @@ export interface NewsOnScreen {
   items?: { id: string; source: string | null; title?: string }[];
   /** the item being read aloud now (the Stage's highlight), if any */
   reading?: string | null;
+  /** v10 (the second review of v9): Jarvis's read of one story is on screen over the console's panel: "this story" is the one read (`reading`),
+   * never the panel's first */
+  afterRead?: boolean;
 }
 
 const ID = /^[A-Za-z0-9_:.-]{1,80}$/;
@@ -64,6 +82,14 @@ const READ_TG = [
   /\bmatha (?:papers|paper|news|channels)\b/
 ];
 /**
+ * v10: "read it fully", "read the whole thing", "read the full article", "full-a padinga", "முழுசா படிங்க": the whole story, not its brief (the
+ * route reads the stored body, or the page, in the asked language: v10/brief10.ts)
+ */
+const FULL_EN = /\b(?:read|go through|read out|read me|give me|let me hear)\b.{0,30}?\b(?:fully|in full|completely|all of it|word for word|from start to finish|(?:the )?(?:whole|full|entire|complete) (?:thing|story|article|report|piece|text|news|one))\b|^(?:(?:the )?(?:whole|full|entire) (?:thing|story|article|report|text)|in full|fully)(?: please)?$|\bread (?:the )?rest(?: of it)?\b/;
+const FULL_TG = /\b(?:full|fulla|fullah|muzhusa|muzhusaa|muzhusaga|muzhuvadhum|muluvathum|muzhumaiya)\b\s*(?:-?\s*(?:a|ah|aa)\b)?\s*(?:padi|padinga|padingo|padichu|vaasi|vaasinga|sollu|sollunga|read)\b/;
+const FULL_TA = /(?:முழுசா|முழுசாக|முழுவதும்|முழுவதையும்|முழுமையாக|முழுச்\s*செய்தி\S*|முழு\s*செய்தி\S*|ஃபுல்லா\S*|ஃபுல்\S*)\s*(?:\S+\s*)?(?:படி|வாசி|சொல்)/u;
+export const fullRead = (raw: string): boolean => { const t = norm(raw); return !!t && (FULL_EN.test(t) || FULL_TG.test(t) || FULL_TA.test(raw.normalize("NFC"))); };
+/**
  * v7: "tell me about this news", "what is this story about", "explain that article": a request to be told about ONE report on the screen (the one
  * in focus, the one named by its place or outlet, else the first), said with "this/that" or an ordinal. "Tell me about the news" in general is
  * not this lane's: the news screen answers it, and the aide summarises it.
@@ -77,11 +103,10 @@ const TELL_EN = [
 const TELL_TA = [/(?:இந்த|இந்தச்|அந்த|அந்தச்)\s*(?:செய்தி|சேதி|கட்டுரை|ரிப்போர்ட்)(?:யை|யைப்|யின்)?\s*(?:பற்றி|பத்தி)?\s*(?:சொல்|விளக்கு|சுருக்கமா)/u];
 const TELL_TG = [/\b(?:indha|andha|intha|antha)\s+(?:news|story|article|report|seithi)\s*(?:a\s*|ah\s*)?(?:pathi|patthi|paththi)?\s*(?:sollu|sollunga|explain pannu|enna)\b/];
 const NEWSY = /\b(?:article|news report|news item|coverage|papers|newspapers?|press|outlets?|hindu|times of india|dt ?next|indian express|dinamani|dinamalar|thanthi)\b/;
-const ORD: [RegExp, number][] = [
-  [/\b(?:first|1st|mudhal)\b|முதல்/u, 1], [/\b(?:second|2nd|rendavathu|rendaavadhu)\b|இரண்டாவது|ரெண்டாவது/u, 2], [/\b(?:third|3rd|moonavathu|moonaavadhu)\b|மூன்றாவது/u, 3],
-  [/\b(?:fourth|4th)\b|நான்காவது/u, 4], [/\b(?:fifth|5th)\b|ஐந்தாவது/u, 5], [/\b(?:sixth|6th)\b|ஆறாவது/u, 6], [/\b(?:seventh|7th)\b|ஏழாவது/u, 7],
-  [/\b(?:eighth|8th)\b|எட்டாவது/u, 8], [/\b(?:ninth|9th)\b|ஒன்பதாவது/u, 9], [/\b(?:tenth|10th)\b|பத்தாவது/u, 10]
-];
+/** v10 review 2, round 2 (news-4): a word in an ordinal's form ("-aavadhu", "-ாவது") that no position reads. (Round 3: never "any", "anyone",
+ * "sometime", "anywhere" or "at least", which take the same ending: edhavadhu, ஏதாவது, yaaravadhu, யாராவது, eppovadhu, எங்காவது, konjamaavadhu;
+ * "edhavadhu oru news padinga" asked "which report?" over an open panel) */
+const ORDISH = /^(?!e[dt]h|yaa?r|epp|eng|konj)[a-z]{3,}(?:avadhu|aavadhu|avathu|aavathu|vadhu|vathu)$|^(?!ஏத|யார|எப்ப|எப்போ|எங்க|எதை|கொஞ்ச)[஀-௿]+ாவது$/u;
 /** an outlet: as said, as an item's source names it (a story's source may list several outlets), and its own name to say */
 const OUTLETS: [RegExp, RegExp, string][] = [
   // the second pattern is an outlet's WHOLE name as a screen lists it (one of a story's " · "-joined outlets): Hindu Tamil Thisai is not
@@ -107,12 +132,19 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
   if (!items.length) return null;
   const num = /\b(?:number|no|item|article|report|story|headline)\s*(\d{1,2})\b/.exec(t);
   if (num) { const i = Number(num[1]) - 1; return items[i] ? { id: items[i].id } : { why: "count", n: items.length }; }
-  for (const [re, n] of ORD) if (re.test(t)) return items[n - 1] ? { id: items[n - 1].id } : { why: "count", n: items.length };
-  if (/\blast\b|கடைசி|kadaisi/u.test(t)) return { id: items[items.length - 1].id };
+  // v10 review 2, round 2 (news-4): a position as ord8 reads it, in all three languages and past the tenth ("rendavadhu", "pathinettavadhu", the
+  // twelfth, the last), never a date, a street or a period ("a second time"); v7's own list knew ten and two Tanglish spellings, and read the
+  // first story for any other. A word in an ordinal's form that no position reads names no story here (never the first in its place)
+  const at = ordinalsAt(t).find((a) => !(a.kind === "en" && a.prev === "a"));
+  if (at) { const k = at.n < 0 ? items.length + 1 + at.n : at.n; return items[k - 1] ? { id: items[k - 1].id } : { why: "count", n: items.length }; }
+  if (ordWordsOf(t).some((w) => ORDISH.test(w))) return null;
   // an outlet named: its report, or that it is not on the screen (never another outlet's in its place)
   for (const [said, src, name] of OUTLETS) {
     if (said.test(t)) { const x = items.find((y) => namesOf(y.source).some((n) => src.test(n))); return x ? { id: x.id } : { why: "outlet", outlet: name }; }
   }
+  // v10 (the second review of v9): after a read of one story over the panel, "this story" is the one read, on the panel or not; with no read
+  // known, none (the planner or "which report?"), never the panel's first story
+  if (on.afterRead) return on.reading ? { id: on.reading } : null;
   const r = on.reading ? items.find((x) => x.id === on.reading) : null;
   return { id: (r ?? items[0]).id };
 };
@@ -122,12 +154,21 @@ const pickItem = (t: string, on: NewsOnScreen): Pick => {
 export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } = {}): NewsAskT | null {
   const t = norm(raw);
   if (!t || t.length > 300) return null;
+  // v10 review 2, round 2 (news-3): what the console refuses for privacy (a victim's name, address, details) is never read here either: the
+  // round's rules refuse it before any model (v8's news lane already stood aside, and the sentence came on to this read of the panel's first story)
+  if (asksPrivate(raw)) return null;
   // a negation, a mission or a brief is never this lane's (the independent check, 17 Nov); "brief me on this news" names one report (v7)
   const thisReport = o.v7 !== false && TELL_EN.some((re) => re.test(t)) && /\b(?:this|that)\b/.test(t);
   if (NEGATED.test(t) || NEGATED.test(raw) || ((MISSION_LIKE.test(t) || MISSION_LIKE.test(raw)) && !thisReport)) return null;
-  const reads = !OWN_REPORT.test(t) && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
+  // (v10 review 2, round 2, news-12: and the console's own report in Tanglish or Tamil letters, "மழை ரிப்போர்ட் படிங்க", "read the rain report": v8's
+  // reading, ownreport8.ts; with the news panel open it read the panel's first story)
+  const own = OWN_REPORT.test(t) || ownReport(raw);
+  const reads = !own && (READ_EN.some((re) => re.test(t)) || READ_TA.some((re) => re.test(raw)) || READ_TG.some((re) => re.test(t)));
   // v7: "tell me about this news" is a read of the report on the screen, when there is one (else the news screen and its summary answer it)
-  const tells = o.v7 !== false && !reads && !OWN_REPORT.test(t) && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
+  // v10 dev2 (dA-reading-2): "read the whole thing", "read it fully", "முழுசா படிங்க" with no report named: the story read last on screen, in full;
+  // with none read, no story is in focus (never the panel's first read in full for it)
+  if (!reads && !own && fullRead(raw) && on.reading && ID.test(on.reading)) return { kind: "read", body: { id: on.reading, full: true }, full: true };
+  const tells = o.v7 !== false && !reads && !own && (TELL_EN.some((re) => re.test(t)) || TELL_TA.some((re) => re.test(raw)) || TELL_TG.some((re) => re.test(t)));
   if (tells) {
     const item = pickItem(t, on);
     if (item && "id" in item) return { kind: "read", body: item };
@@ -137,9 +178,11 @@ export function newsAsk(raw: string, on: NewsOnScreen = {}, o: { v7?: boolean } 
   }
   if (reads) {
     const item = pickItem(t, on);
-    if (item && "id" in item) return { kind: "read", body: item };
+    // v10: "read the third article in full": the whole story
+    const full = fullRead(raw) ? { full: true } : {};
+    if (item && "id" in item) return { kind: "read", body: item, ...full };
     if (item) return { kind: "which", ...item };
-    if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident } };
+    if (on.incident && ID.test(on.incident)) return { kind: "read", body: { incident: on.incident }, ...full };
     // "what are other papers saying" about nothing on screen: the web, if a public subject is named; else ask which
     if ((WEB_CUE.test(t) || FORECAST.test(t)) && !CONSOLE.test(t)) return { kind: "lookup", body: { question: raw.trim().slice(0, 500) } };
     // nothing on screen to read: "which report?" only when it plainly means the press ("the weekly report" is the planner's)
@@ -173,7 +216,8 @@ export const failLine = (why: string | undefined, lang: "en" | "ta"): string => 
 export interface NewsLink { outlet: string; title: string; url: string; publishedAt: string | null }
 
 /** The Stage document for a news answer: what was said (a Note) and every source as a link (a NewsReader list). Checked; null if it fails. */
-export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outlet: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number }): StageDocT | null {
+export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outlet: string | null; en: string[]; ta: string[]; links: NewsLink[]; now?: number;
+  /** v10: the stored story read (its id), kept in the screen's slots so "this story" next means it */ readId?: string | null }): StageDocT | null {
   const L = (en: string, ta: string) => (o.lang === "ta" ? ta : en);
   const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
   const said = (o.lang === "ta" ? o.ta : o.en).join(" ").trim();
@@ -191,7 +235,7 @@ export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outl
   const doc = {
     v: 1, id: `news-${(o.now ?? Date.now()).toString(36)}`, recipe: "news", title, takeaway: null,
     say: { en: clip(o.en.join(" "), 600), ta: clip(o.ta.join(" "), 900) }, blocks,
-    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { web: true },
+    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { web: true, ...(o.readId && ID.test(o.readId) ? { read: o.readId } : {}) },
     sources: [...new Set(links.map((x) => clip(x.outlet, 80)))].slice(0, 10), asOf: null,
     notes: [L("From the web: read just now, nothing kept. Quotes are the outlets' own.", "இணையத்திலிருந்து: இப்போது படித்தது, எதுவும் சேமிக்கப்படவில்லை. மேற்கோள்கள் அந்தந்த ஊடகங்களுடையவை.")],
     lang: o.lang, titles

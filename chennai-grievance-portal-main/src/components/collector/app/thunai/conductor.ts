@@ -41,7 +41,7 @@
  *    decide the duck after its end, as before), 250 ms to TUNING.earlySttMaxMs (10 s) of speech so far, with Whisper reachable.
  *    The trace still opens at the last voiced sample; its "uploadSent" is the request the words came from.
  */
-import { addressed, ENGAGED_MS, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
+import { addressed, ENGAGED_MS, isStatement, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
 import { confOf, joinHeard, type HearReply } from "@/lib/thunai/heard";
 import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from "@/lib/thunai/turn";
@@ -51,6 +51,8 @@ import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, set
 import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
+import { understandV10 } from "@/lib/thunai/v10/flag10";
+import { cutOff, joinCut } from "@/lib/thunai/v10/browser10";
 
 /** this turn's trace is still the open one: a stamp for an older turn never lands on a newer turn's trace */
 const isCurrent = (tr: TurnTrace | null): boolean => !!tr && traces().at(-1) === tr;
@@ -82,6 +84,16 @@ export const WAKE_SAME_CALL_MS = 5000;
 /** v8: how long after the name the first sentence still counts as the call's own request (the gate's `called`) */
 export const CALL_MS = 12_000;
 
+// v10 review 2, round 4: the rest of a held line that is shaped as a statement and is still the line's own (gateFor)
+/** the words alone, lower case (a dash or an ellipsis the speech-to-text wrote for the pause is no word) */
+const plain = (s: string): string => s.toLowerCase().replace(/[’']/g, "").replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim();
+/** the held line opens a clause and stops before its subject: "Tell me what the", "Check whether the", "Tell me if the", "Tell me why" */
+const OPENS_CLAUSE = /(?:^| )(?:what|whats|why|where|when|how|who|which|whether|if)(?: (?:the|a|an|this|these|those))?$/;
+/** a rest whose subject is a person or the speaker's own thing is a remark of its own ("my phone is not working", "I will be back") */
+const OWN_SUBJECT = /^(?:i|im|ive|ill|id|my|you|your|youre|he|she|his|her|him|we|our|they|their|them)(?: |$)/;
+/** a noun with its relative clause, the verb inside it: "wards where water is stagnant", "complaints that are still open" */
+const NOUN_RELATIVE = /^(?:(?:the|all|any|some|these|those) )?(?:(?!(?:is|are|was|were|will|has|have|had|it|its|this|i|im|my|you|your|he|she|we|our|they|their|there)(?: |$))\S+ ){1,3}(?:where|that|which|who|whose|when) /;
+
 export interface HeardLine {
   text: string;
   /** the language the server heard it in (Whisper's forced decode that won, or the captions' script) */
@@ -111,8 +123,9 @@ export interface ConductorHooks {
   onSentence: (h: HeardLine) => void;
   /** abort the question in flight and bump the turn's generation */
   cancelTurn: () => void;
-  /** a sentence the gate turned away: a faint line for two seconds, not logged */
-  onIgnored: (text: string) => void;
+  /** a sentence the gate turned away: a faint line for two seconds, not logged. v10: `why` "cut-off-held", a line cut off before its point
+   * said to Jarvis (called or engaged): kept a few seconds for its rest (Thunai.tsx joinCut), and the window stays open for it */
+  onIgnored: (text: string, why?: string) => void;
   onState: (s: TurnState) => void;
   /** mic level, 0..1, every frame */
   onLevel?: (v: number) => void;
@@ -149,6 +162,8 @@ export interface ConductorHooks {
   wantsYes?: () => boolean;
   /** v8: a next step is on offer ("Want the details?"): a yes or a no is its answer */
   offerPending?: () => boolean;
+  /** v10: the line the page holds for its rest, and when (Thunai.tsx cutRef: the wake path's same-breath rest, "Hey Jarvis, tell me about the") */
+  heldCut?: () => { text: string; at: number } | null;
   /**
    * speech began (VAD onset): the browser's captions may start now. `engaged`: the turn is engaged by the lane's reckoning;
    * `fallback`: Whisper is out and the conductor's own recogniser hears this speech (the console's live captions stand aside)
@@ -535,7 +550,7 @@ export class Conductor {
 
   /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
   get engagedAt(): number | null {
-    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged);
+    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt);
     return t > 0 ? t : null;
   }
   /**
@@ -607,6 +622,9 @@ export class Conductor {
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
   /** The name opened Jarvis from closed (the console's wake listener): the next sentence is the call's own request, as after kws */
   called() { this.engage(); }
+  /** v10: when a cut-off line was last held for its rest (ignored()): it keeps the window open, but it is no call (the gate's `called` is the name's
+   * alone; a hold that engaged took the next side talk at tier 1: v10 review 2, finding 20) */
+  private heldAt = 0;
   private fromCaptions(text: string) {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
     // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())
@@ -614,15 +632,61 @@ export class Conductor {
     this.lastLang = lang;
     // the same gate as Whisper's words: side talk goes no further than this browser
     const gate = this.gateFor(text);
-    if (!gate.act) { this.h.onIgnored(text); return; }
+    if (!gate.act) { this.ignored(text, gate); return; }
     this.pending = { lang, source: "captions", gate, conf: CAPTIONS_CONF };
     if (this.m.state === "listening") this.m = { ...this.m, awaiting: true, state: "thinking" };
     this.dispatch({ type: "text", text: gate.text, gen: this.m.gen });
   }
 
+  /**
+   * A line the gate turned away. v10 (docs/jarvis/JARVIS_V10.md Part 3: "Tell me about the" was answered as a request): a line cut off before its
+   * point that was said to Jarvis (just called, or in the conversation) is held for its rest: the window stays open, and the page joins the next
+   * sentence to it. Said to no one in particular, it is let go as before.
+   */
+  private ignored(text: string, gate: Addressed) {
+    if (gate.why === "cut-off" && understandV10()) {
+      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held"); return; }
+    }
+    this.h.onIgnored(text, gate.why);
+  }
+  /** v10: the line held last for its rest, and when (ignored()); the page joins the same rest to it (Thunai.tsx cutRef, joinCut) */
+  private held: { text: string; at: number } | null = null;
+
   private gateFor(text: string): Addressed {
+    const g = this.gateOne(text);
+    // v10 review 2, round 2: the rest of a line held as cut off is the line's own rest, so it is gated with it ("Tell me about the" ... "accident in
+    // Velachery yesterday" is a request; the rest alone, with its "yesterday", is side talk and was dropped). Only a rest the gate let go as talk
+    // (side, aside, unaddressed, unclear) is read again; one said to someone else (another assistant, a title, a name, an errand) or a filler
+    // stays theirs, and a rest that is itself cut off is held in its turn (ignored())
+    if (!understandV10()) return g;
+    // round 3: a line said to Jarvis (named or engaged) and cut off before its point is held too, as the page holds it ("Jarvis, tell me about the"
+    // ... "accident in Velachery yesterday": the rest was gated alone and dropped); the hold keeps the window open, as ignored()'s does
+    if (g.act) {
+      if (cutOff(g.text)) { this.heldAt = Date.now(); this.held = { text: g.text, at: this.heldAt }; } else this.held = null;
+      return g;
+    }
+    // the line held here, or the page's own if newer (the wake path's same-breath rest goes to the page, not through this gate)
+    const p = this.h.heldCut?.() ?? null;
+    const h = p && (!this.held || p.at > this.held.at) ? p : this.held;
+    if (!h) return g;
+    if (!/^(?:side|aside|unaddressed|unclear)$/.test(g.why)) return g;
+    // round 3: a statement of its own is no rest ("Tell me about the" ... "the driver is waiting downstairs" was acted on: the held request lent it
+    // its shape). Round 4: but a held line that opens a clause ("Tell me what the", "Check whether the", "Tell me if the") waits for a subject and
+    // its verb, so a rest shaped as a statement is that clause ("situation is in Velachery"), unless a person or the speaker's own thing is its
+    // subject ("my phone is not working"); and a noun whose verb is in its relative clause ("Show me the" ... "wards where water is stagnant") is
+    // no statement. Both were gated as asides and never answered
+    if (isStatement(text) && !(OPENS_CLAUSE.test(plain(h.text)) && !OWN_SUBJECT.test(plain(text))) && !NOUN_RELATIVE.test(plain(text))) return g;
+    const joined = joinCut(h, text, Date.now());
+    if (joined === text.trim()) return g;
+    const j = this.gateOne(joined);
+    if (!j.act) return g;
+    this.held = null;
+    return j;
+  }
+  private gateOne(text: string): Addressed {
     const r = this.h.rules(text);
-    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged) || null;
+    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
     // talking over Jarvis counts as engaged: it was speaking a moment ago
     const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler
@@ -826,7 +890,7 @@ export class Conductor {
     }
     const gate = this.gateFor(t);
     if (!gate.act) {
-      this.h.onIgnored(t);
+      this.ignored(t, gate);
       this.dispatch({ type: "text", text: "", gen });
       this.backOn(interrupted);
       return;
