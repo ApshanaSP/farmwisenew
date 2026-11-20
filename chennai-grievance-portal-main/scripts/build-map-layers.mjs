@@ -332,8 +332,13 @@ out center tags;`,
 
 /** A point layer of the Collector's from a list of Overpass filters; `kind` names each feature's kind from its tags. */
 function pointLayer(id, name_en, name_ta, filters, kind, extra = {}) {
-  return { id, name_en, name_ta, kind: "point", ...extra, query: () => `(\n${sel(filters)}\n);\nout center tags;`, build: (j) => points(j, kind, (t) => ({ operator: t.operator || t.brand || undefined })) };
+  const { keep, ...rest } = extra;
+  // `keep`: a check on the tags Overpass cannot make (its regex has no word boundary: "ration" also matched "Corporation")
+  return { id, name_en, name_ta, kind: "point", ...rest, query: () => `(\n${sel(filters)}\n);\nout center tags;`,
+    build: (j) => points(keep ? { ...j, elements: j.elements.filter((e) => keep(e.tags || {})) } : j, kind, (t) => ({ operator: t.operator || t.brand || undefined })) };
 }
+/** A ration shop by its name, whole words only: "Ration Shop No. 12", "PDS", "நியாய விலைக் கடை"; never "Corporation" or "Generation" */
+const RATION_NAME = /\bration\b|\bfair price\b|\bpds\b|public distribution|civil supplies|நியாய\s*விலை|ரேஷன்/i;
 function collectorLayers() {
   const RATION = "ration|fair price|\\bPDS\\b|public distribution|civil supplies|நியாய விலை|ரேஷன்";
   return [
@@ -360,7 +365,7 @@ function collectorLayers() {
       (t) => (t.shop === "alcohol" ? "wine_shop" : t.amenity === "pub" ? "pub" : "bar"),
       { partial: { what: "wine shops and bars", owner: "TASMAC or the Excise desk (AC Excise)" } }),
     pointLayer("ration_shops", "Ration shops (by name)", "நியாய விலைக் கடைகள் (பெயரால்)", [`["name"~"${RATION}",i]`, `["name:ta"~"${RATION}",i]`], () => "ration_shop",
-      { partial: { what: "ration shops", owner: "Civil Supplies (TNPDS)" } })
+      { partial: { what: "ration shops", owner: "Civil Supplies (TNPDS)" }, keep: (t) => RATION_NAME.test(t.name || "") || RATION_NAME.test(t["name:ta"] || "") })
   ];
 }
 

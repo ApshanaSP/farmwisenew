@@ -93,7 +93,8 @@ export function placeRows(rows: Record<string, string>[], cols: ReturnType<typeo
         : inBox(lon, lat) ? { ...base, lat: lon, lon: lat, how: "exact", why: null, ward: wardAt(lon, lat, wards), note: "latitude and longitude were the other way round" }
           : { ...base, lat: null, lon: null, how: "none", why: "its latitude and longitude are outside Chennai", ward: null };
     } else {
-      const text = [cols.place ? r[cols.place] : "", cols.name ? r[cols.name] : ""].filter(Boolean).join(", ");
+      // the address or locality only: a row's own name ("Relief Centre C") is no place
+      const text = cols.place ? r[cols.place] : "";
       const hit = text ? find(text) : null;
       const wn = num(cols.ward ? r[cols.ward] : null);
       const wd = wn != null ? wards.find((w) => w.ward === Math.round(wn)) : undefined;

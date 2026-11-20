@@ -176,7 +176,7 @@ export function packHtml(p: Pack): string {
     ? `<ol>${s.rows.map((r) => `<li><b>${esc(r.label)}</b><span>${esc(r.text)}</span></li>`).join("")}</ol>` : `<p class="note">None.</p>`}</section>`;
   const first = p.sections.find((s) => s.rows.length && s.rows.some((r) => r.lat || r.lon));
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(p.title)} · District IQ</title><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>body{font:14px/1.45 system-ui,Segoe UI,sans-serif;color:#0F172A;margin:24px auto;max-width:1040px;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px}
+<style>:root{color-scheme:light}html{background:#fff}body{font:14px/1.45 system-ui,Segoe UI,sans-serif;color:#0F172A;background:#fff;margin:24px auto;max-width:1040px;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px}
 .sub{color:#475569;margin:2px 0 14px}.grid{display:grid;grid-template-columns:minmax(0,1fr) 540px;gap:20px}@media (max-width:900px){.grid{grid-template-columns:1fr}svg{max-width:100%;height:auto}}
 .nums{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.nums div{border:1px solid #CBD5E1;border-radius:8px;padding:8px 10px;min-width:140px}.nums b{display:block;font-size:20px}
 ol{margin:0;padding-left:22px}li{margin:3px 0}li span{color:#334155;margin-left:8px}.note{color:#64748B;font-size:12px;margin:2px 0 6px}.lead p{margin:4px 0}

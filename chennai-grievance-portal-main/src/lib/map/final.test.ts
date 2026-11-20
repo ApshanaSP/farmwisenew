@@ -140,7 +140,12 @@ describe("the rules read the new question shapes", () => {
     ["most improved zones for garbage", "take:incidents change rank:zone:fall"],
     ["banks", "take:banks"],
     ["courts", "take:gov_offices[court]"],
-    ["மதுக்கடைகள்", "take:liquor[wine_shop]"]
+    ["மதுக்கடைகள்", "take:liquor[wine_shop]"],
+    // found in the live run (TEST_LOG_FINAL): each now read by the rules
+    ["ATM illadha wards 2 km kulla", "take:atms far:ward:2000"],
+    ["schools near hospitals", "take:schools take:hospitals[hospital,health_centre] within:500"],
+    ["liquor shops and bars within 200 m of schools or temples", "take:liquor[wine_shop,bar,pub] take:worship[hindu] take:schools within:200"],
+    ["பள்ளிகளுக்கு 100 மீட்டருக்குள் உள்ள மதுக்கடைகள்", "take:liquor[wine_shop] take:schools within:100"]
   ];
   for (const [q, want] of cases) it(q, () => expect(ops(plan(q))).toBe(want));
   it("a mosque (பள்ளிவாசல்) is not also a school (பள்ளி)", () => expect(ops(plan("பள்ளிவாசல்கள்"))).toBe("take:worship[muslim]"));

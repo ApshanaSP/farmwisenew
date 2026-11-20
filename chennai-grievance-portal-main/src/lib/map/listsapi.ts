@@ -36,9 +36,17 @@ export async function draftFromFile(buf: Buffer, file: string, name: string, own
   if (!t.rows.length) throw new Error("The file has a header but no rows.");
   const { world: w, resolver } = await world();
   const resolve = makeResolver(resolver);
+  // a place the map knows, named whole in the address ("Velachery", "T. Nagar"): the resolver alone is lenient ("Nowhere Nagar" read as
+  // T. Nagar, "Relief Centre" as Chennai Central), so its hit must also appear in the text as a phrase
+  const flat = (s: string) => ` ${s.toLowerCase().replace(/[.,'’()\-_/]/g, " ").replace(/\s+/g, " ").trim()} `;
+  // the localities and neighbourhoods the map knows, longest name first ("Velachery Main Road" is in Velachery)
+  const named = resolver.entries.filter((e) => e.lat != null && (e.kind === "locality" || e.kind === "osm_place") && e.name_en.length >= 4)
+    .map((e) => ({ e, k: flat(e.name_en) })).sort((a, b) => b.k.length - a.k.length);
   const find = (text: string) => {
-    const hit = resolve(text, "in").find((f) => f.pick.entry.lat != null && ["locality", "osm_place", "facility"].includes(f.pick.entry.kind));
-    return hit ? { lat: hit.pick.entry.lat!, lon: hit.pick.entry.lon!, name: hit.pick.entry.name_en } : null;
+    const t = flat(text);
+    const hit = resolve(text, "in").find((f) => f.pick.entry.lat != null && ["locality", "osm_place", "facility"].includes(f.pick.entry.kind) && t.includes(flat(f.pick.entry.name_en)))?.pick.entry
+      ?? named.find((x) => t.includes(x.k))?.e;
+    return hit ? { lat: hit.lat!, lon: hit.lon!, name: hit.name_en } : null;
   };
   const cols = columnsOf(t.columns);
   const rows = placeRows(t.rows, cols, w.wards, find);

@@ -81,7 +81,8 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const ta = isTa(lang);
   const cats = f?.category?.length ? f.category.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase())).join(", ") : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
   const st = f?.status === "open" ? (ta ? "திறந்த " : "open ") : f?.status === "closed" ? (ta ? "முடிந்த " : "closed ") : "";
-  const sev = f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "";
+  // past their deadline is part of what is counted, so the headline says it ("314 open past-deadline incidents ...")
+  const sev = (f?.overdue ? (ta ? "காலக்கெடு தாண்டிய " : "past-deadline ") : "") + (f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "");
   const noun = (f?.news ? (ta ? "செய்திகளில் வந்த " : "") : "") + (f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents") + (f?.news && !ta ? " in the news" : "");
   return ta ? `${st}${sev}${cats ? cats + " " : ""}${noun}` : `${st}${sev}${cats ? cats + " " : ""}${noun}`.replace(/\s+/g, " ").trim();
 }
@@ -121,7 +122,13 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
 
   // a rule check: "wine shops within 100 m of a school or a place of worship"
   if (show.type === "points" && show.near && last.op === "within") {
-    const lw = LAYER_WORD[show.layer];
+    const t1 = plan.steps.find((x) => x.as === last.of) as Extract<Step, { op: "take" }> | undefined;
+    const kinds = t1?.where?.kinds ?? null;
+    // the kinds asked for, by name ("wine shops", "bars and pubs"); every kind of the layer, the layer's own name
+    const kws = kinds?.map((k) => KIND_WORD[k]).filter(Boolean) ?? [];
+    const kw = kws.length && kws.length === kinds!.length && !(show.layer === "liquor" && kws.length === 3)
+      ? { en: kws.map((x) => x.en).join(" and "), one: kws.map((x) => x.one).join(" or "), ta: kws.map((x) => x.ta).join(", ") } : undefined;
+    const lw = kw ? { ...LAYER_WORD[show.layer], en: kw.en, one: kw.one, ta: kw.ta, ta_one: kw.ta } : LAYER_WORD[show.layer];
     const total = r.steps.find((x) => x.as === last.of)?.count ?? show.items.length;
     count = fact("count", show.items.length, lw.en);
     fact("total", total, `${lw.en} on the map`);
@@ -136,8 +143,11 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     const c0 = show.items[0];
     meaning = c0 && closest ? (ta ? `மிக அருகில்: ${c0.name_ta ?? c0.name ?? lw.ta_one}, ${closest.name_ta ?? closest.name ?? ""} இலிருந்து ${fmtDistance(closest.m, "ta")}.`
       : `The closest: ${c0.name ?? `a ${lw.one}`}, ${fmtDistance(closest.m)} from ${closest.name ?? `a ${LAYER_WORD[closest.layer].one}`}.`) : null;
-    meaning = `${meaning ?? ""} ${ta ? "இந்தத் தூரம் நீங்கள் வைத்தது; சட்டப்படியான தூரத்தை கலால் பிரிவிடம் உறுதிசெய்யவும்." : "You set this distance; confirm the legal distance with the Excise desk."}`.trim();
-    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts: [], miss: null, facts, lang };
+    // licensed premises: the distance is the officer's, the legal one the Excise desk's; any other pair of places: a plain distance
+    meaning = `${meaning ?? ""} ${show.layer === "liquor"
+      ? (ta ? "இந்தத் தூரம் நீங்கள் வைத்தது; சட்டப்படியான தூரத்தை கலால் பிரிவிடம் உறுதிசெய்யவும்." : "You set this distance; confirm the legal distance with the Excise desk.")
+      : (ta ? "நேர்கோட்டுத் தூரம்." : "Straight-line distance between the map points.")}`.trim();
+    return { count, headline: an(headline.replace(/\s+/g, " ").trim(), lang), meaning: an(withPartial(meaning, plan, w, lang), lang), depts: [], miss: null, facts, lang };
   }
   // "schools in Valasaravakkam": the places themselves, counted and named
   if (show.type === "points") {
@@ -155,7 +165,7 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     if (count) meaning = ta ? `${gov ? `${n(gov)} அரசு. ` : ""}${named.length ? `எ.கா. ${named.join(", ")}.` : ""}`.trim() || null
       : `${gov && show.layer !== "police" && show.layer !== "fire_stations" ? `${n(gov)} ${gov === 1 ? "is" : "are"} government. ` : ""}${named.length ? `${count > named.length ? "Including" : count === 1 ? "It is" : "They are"} ${named.join(", ")}.` : ""}`.trim() || null;
     if (!count && last.op === "inside") meaning = ta ? "பகுதியை மாற்றிக் கேளுங்கள்." : "Try a nearby area or a wider radius.";
-    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts: [], miss: null, facts, lang };
+    return { count, headline: an(headline.replace(/\s+/g, " ").trim(), lang), meaning: an(withPartial(meaning, plan, w, lang), lang), depts: [], miss: null, facts, lang };
   }
 
   switch (last.op) {
@@ -321,13 +331,13 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       const top = moved[0];
       if (top) { fact("top_now", top.now, "now"); fact("top_before", top.before, "before"); fact("top_delta", Math.abs(top.delta), "difference"); if (top.pct != null) fact("top_pct", Math.abs(top.pct), "per cent"); }
       const subjNoPer = subject(plan, w, lang);
-      const nowW = inPeriodWords(show.now), beforeW = inPeriodWords(show.before);
-      headline = !rows.length ? (ta ? `${subjNoPer}: இரு காலங்களிலும் எதுவும் இல்லை.` : `No ${subjNoPer} ${nowW} or ${beforeW}.`)
+      const nowW = inPeriodWords(show.now), beforeW = periodWords(show.before, "en");
+      headline = !rows.length ? (ta ? `${subjNoPer}: இரு காலங்களிலும் எதுவும் இல்லை.` : `No ${subjNoPer} ${nowW} or ${inPeriodWords(show.before)}.`)
         : !top ? (ta ? `எந்த ${unit} இலும் ${show.order === "rise" ? "அதிகரிப்பு" : "குறைவு"} இல்லை (${periodWords(show.now, "ta")}).` : `No ${show.by} went ${show.order === "rise" ? "up" : "down"}: ${subjNoPer} ${nowW} against ${beforeW}.`)
           : ta ? `${n(moved.length)} ${unit} ${show.order === "rise" ? "அதிகரித்தன" : "குறைந்தன"}; முதலில் ${top.label_ta}: ${n(top.before)} இலிருந்து ${n(top.now)} · ${ready}.`
             : `${n(moved.length)} ${moved.length === 1 ? show.by : unit} ${show.order === "rise" ? "got worse" : "improved"}: ${subjNoPer} ${nowW} against ${beforeW}. ${top.label} ${show.order === "rise" ? "rose" : "fell"} most, from ${n(top.before)} to ${n(top.now)} · ${ready}.`;
       if (moved.length > 1) meaning = ta ? `அடுத்து ${moved.slice(1, 3).map((x) => `${x.label_ta} (${n(x.before)} → ${n(x.now)})`).join(", ")}.`
-        : `Next: ${moved.slice(1, 3).map((x) => `${x.label} (${n(x.before)} to ${n(x.now)})`).join(", ")}.`;
+        : `Next: ${moved.slice(1, 3).map((x) => `${x.label}, ${n(x.before)} to ${n(x.now)}`).join("; ")}.`;
       if (show.unassigned) meaning = `${meaning ?? ""} ${ta ? `${n(show.unassigned)} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned)} have no ${show.by} on record.`}`.trim();
       break;
     }
@@ -355,9 +365,13 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     }
   }
   if (r.leftOut && !["farthest"].includes(last.op)) facts.push({ id: "unplaced", value: r.leftOut, label: "no exact place" });
-  return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts, miss, facts, lang };
+  return { count, headline: an(headline.replace(/\s+/g, " ").trim(), lang), meaning: an(withPartial(meaning, plan, w, lang), lang), depts, miss, facts, lang };
 }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** "a ATM", "a place of worship" is fine, "a incident" is not: "an" before a vowel sound, in English only */
+function an<T extends string | null>(t: T, lang: Lang): T {
+  return (t && lang !== "ta" ? t.replace(/\ba (?=(?:ATM|[aeioAEIO])\w)/g, "an ") : t) as T;
+}
 
 /**
  * A layer OpenStreetMap holds only in part (wine shops, ration shops, banks...): the answer says how many it lists and who has the full
@@ -372,7 +386,7 @@ export function partialNote(plan: Plan, w: World, lang: Lang): string | null {
     seen.add(st.layer);
     const m = w.meta[st.layer];
     if (!m?.partial) continue;
-    out.push(ta ? `${m.name_ta}: OpenStreetMap இல் ${n(m.count)} மட்டும், முழுப் பட்டியல் அல்ல (${m.partial.owner} இடம் முழுப் பட்டியல்).`
+    out.push(ta ? `${m.name_ta}: OpenStreetMap இல் ${n(m.count)} மட்டும், முழுப் பட்டியல் அல்ல; முழுப் பட்டியல் துறையிடம் உள்ளது.`
       : `${m.name_en}: OpenStreetMap, ${n(m.count)} ${m.partial.what}, not the full list; ${m.partial.owner} holds the full one.`);
   }
   return out.length ? out.join(" ") : null;

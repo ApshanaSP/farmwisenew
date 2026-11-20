@@ -108,7 +108,7 @@ const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்�
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
 const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b/i;
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
-const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
+const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
 /** a gap measured per neighbourhood, not per ward: "places", "localities", "streets", "பகுதிகள்" */
 const GAP_PLACES = /\b(places|localities|locality|neighbourhoods?|neighborhoods?|streets|colonies|pakudhi|pagudhi)\b|பகுதிகள்|இடங்கள்|தெருக்கள்/i;
 /**
@@ -444,6 +444,9 @@ export function unreadWords(rest: string[], classified: string[]): string[] {
 }
 
 const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** The words a shape the rules read already stand for ("got worse", "more than 2 km from", "past-deadline", "neighbourhoods"): never unread. */
+const SHAPE_WORDS = [RANK, FARTHEST, GAP_PLACES, OVERDUE, /past[- ]deadline/i, /அதிகரித்\S*|குறைந்த\S*/].map((re) => new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`));
+const shapeWordsOut = (t: string) => SHAPE_WORDS.reduce((x, re) => x.replace(re, " "), t);
 /** Is a facility the thing measured from ("near schools", "within 300 m of hospitals", "பள்ளி அருகே") rather than the thing asked for? */
 function facilityIsNear(text: string, facWords: string[]): boolean {
   if (!facWords.length) return false;
@@ -555,7 +558,7 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const twoAreas = places.filter((x) => !isLine(x.pick.entry) && placeArea(x, null)).length >= 2;
   const cmpWords = isComparison(text), cmpTime = cmpWords && !twoAreas;
   return {
-    unread: unreadWords(period ? tokens(periodWordsOutMap(rest)) : rtoks, classified),
+    unread: unreadWords(tokens(shapeWordsOut(period ? periodWordsOutMap(rest) : rest)), classified),
     lang, toks, facilities, cats, family, citizen, news, severity, status, period, dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
     facNear: facilityIsNear(free, facWords), nearLayers,
     shape: {
@@ -639,7 +642,8 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
     ruleNear.slice(0, 4).forEach((g, i) => steps.push({ op: "take", as: `n${i + 1}`, layer: g.layer, filter: null, where: g.where }));
     if (p.meters == null) defaults.push("distance");
-    steps.push({ op: "within", as: "rule", of: "f1", near: ruleNear.slice(0, 4).map((_, i) => `n${i + 1}`), meters: clampM(p.meters ?? 100) });
+    // licensed premises: 100 m unless said (the officer's setting in the panel); any other place near a place: 500 m, as incidents near one
+    steps.push({ op: "within", as: "rule", of: "f1", near: ruleNear.slice(0, 4).map((_, i) => `n${i + 1}`), meters: clampM(p.meters ?? (f.layer === "liquor" ? 100 : 500)) });
     if (!areas.length) return done("rule");
     steps.push({ op: "inside", as: "in", of: "rule", area: placeArea(areas[0], null)! });
     return done("in");

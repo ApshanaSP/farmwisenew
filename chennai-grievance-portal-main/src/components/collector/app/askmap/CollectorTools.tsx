@@ -233,7 +233,7 @@ function printTable(title: string, sub: string, head: string[], rows: (string | 
   const w = window.open("", "_blank", "noopener=no");
   if (!w) return;
   const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:13px system-ui;margin:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #CBD5E1;padding:4px 6px;text-align:left}th{background:#F1F5F9}</style>`
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(title)}</title><style>:root{color-scheme:light}body{font:13px system-ui;margin:24px;background:#fff;color:#0F172A}table{border-collapse:collapse;width:100%}th,td{border:1px solid #CBD5E1;padding:4px 6px;text-align:left}th{background:#F1F5F9}</style>`
     + `<h1 style="font-size:18px">${esc(title)}</h1><p>${esc(sub)}</p><table><tr>${head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`);
   w.document.close(); w.focus(); w.print();
 }

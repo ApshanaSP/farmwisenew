@@ -475,4 +475,4 @@
 .dic .amt-tbl td.up{color:#E0364A;font-weight:700}
 .dic .amt-tbl td.down{color:#16A34A;font-weight:700}
 .dic .amt-partial{display:flex;gap:6px;margin:6px 0 0;font-size:12px;color:var(--text-2)}
-@media (max-width:767px){.dic .amt-row button{height:32px}.dic .amt-card{max-height:40vh}.dic .amt-tbl{font-size:11.5px}}
+@media (max-width:767px){.dic .amt-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-right:56px}.dic .amt-row button{height:32px;flex:none}.dic .amt-card{max-height:40vh}.dic .amt-tbl{font-size:11.5px}}
