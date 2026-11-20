@@ -8,6 +8,8 @@ import { CAT_COL, type Row } from "./lib";
 import type { MapAsk } from "./askmap/useMapAsk";
 import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
+import { LAYER_COL, LAYER_WORD } from "@/lib/map/words";
+import type { LayerId } from "@/lib/map/types";
 import { hardenLeaflet } from "./askmap/leafletSafe";
 import { setConsoleMap } from "./thunai/mapbridge";
 import type { RainLayer } from "./rehearsal/rainLayer";
@@ -591,7 +593,7 @@ export default function SatMap(props: Props) {
       }
       for (const f of o.features) {
         if (f.lat != null && f.lon != null) s.L.circleMarker([f.lat, f.lon], { renderer: rend, radius: 4, color: "#fff", weight: 1, fillColor: OVERLAY_COL[o.id] ?? "#94A3B8", fillOpacity: 0.95 })
-          .bindTooltip(`<b>${esc(f.name ?? "")}</b>${esc(o.id.replace(/_/g, " "))} · OpenStreetMap`, { className: "dtip" }).addTo(s.overlay);
+          .bindTooltip(`<b>${esc(f.name ?? LAYER_WORD[o.id as LayerId]?.one ?? "")}</b>${esc(LAYER_WORD[o.id as LayerId]?.one ?? o.id.replace(/_/g, " "))} · ${o.id === "my_list" ? "your list" : o.id === "police" ? "district store" : "OpenStreetMap"}`, { className: "dtip" }).addTo(s.overlay);
         else if (f.lines) s.L.polyline(f.lines, { renderer: rend, color: "#38BDF8", weight: 2, opacity: 0.8 }).bindTooltip(esc(f.name ?? ""), { className: "dtip", sticky: true }).addTo(s.overlay);
         else if (f.polys) for (const p of f.polys) s.L.polygon(p, { renderer: rend, color: "#60A5FA", weight: 1, fillOpacity: 0.25 }).bindTooltip(esc(f.name ?? ""), { className: "dtip", sticky: true }).addTo(s.overlay);
       }
@@ -826,7 +828,7 @@ export default function SatMap(props: Props) {
   );
 }
 
-const OVERLAY_COL: Record<string, string> = { schools: "#F59E0B", colleges: "#A855F7", hospitals: "#EF4444", fire_stations: "#F97316", police: "#3B82F6", rail_metro: "#14B8A6", lakes_store: "#60A5FA", gauges: "#22C55E" };
+const OVERLAY_COL = LAYER_COL as Record<string, string>;
 
 /** The panel's real box as camera padding (the bottom sheet at phone width), so a shot never frames under it. */
 function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number] } {

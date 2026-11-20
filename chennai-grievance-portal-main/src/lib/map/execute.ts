@@ -607,6 +607,8 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
       case "farthest": {
         const from = need(s.from);
         if (from.type !== "points") throw new PlanError(`"farthest" measures from facilities.`);
+        // nothing to measure from (an empty list, a kind the layer does not have): said plainly, never a distance to nothing
+        if (!from.items.length) throw new PlanError(`There are no ${LAYER_WORD[from.layer].en} on the map to measure from.`);
         const g = idx.get(from)!;
         const lw = LAYER_WORD[from.layer];
         const scoreOf = (pts: LatLon[]) => {

@@ -35,7 +35,7 @@ beforeAll(async () => {
   const { ops } = await import("@/lib/collector/db");
   // the oracle's own copy of every incident, with the Collector's decisions and the department routing laid on top
   rows = await run(`SELECT incident_id, category_code, family, lead_dept, ward_no, zone_no, taluk_code, lat, lon, loc_precision_m, is_open, severity_level, sla_breached,
-    DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, citizen_complaints, outlet_count, place_text FROM incidents WHERE lat IS NOT NULL`);
+    DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, DATE_FORMAT(sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, citizen_complaints, outlet_count, place_text FROM incidents WHERE lat IS NOT NULL`);
   const dec = await run(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => []);
   const last = new Map<string, string>(dec.map((d: any) => [String(d.incident_id), String(d.decision)]));
   const routed = new Set((await run(`SELECT incident_id FROM ${ops("dept_assignments")}`).catch(() => [])).map((r: any) => String(r.incident_id)));
@@ -59,7 +59,8 @@ function oFilter(r: Record<string, any>, f: Filter | null, now: string): boolean
   if (f.status === "open" && !(r.eff_open === 1 && !r.routed)) return false;
   if (f.status === "closed" && r.eff_open !== 0) return false;
   if (f.dept && !f.dept.includes(r.lead_dept)) return false;
-  if (f.overdue && Number(r.sla_breached) !== 1) return false;
+  // past its deadline is one rule on the console (RC-34, metrics.ts pastDueSql): the store's flag, or the due time gone by the console's now
+  if (f.overdue && Number(r.sla_breached) !== 1 && !(r.sla_due && r.sla_due < now)) return false;
   if (f.citizen && !(Number(r.citizen_complaints) > 0)) return false;
   if (f.news === true && !(Number(r.outlet_count) > 0)) return false;
   if (f.period?.kind === "last_days") {

@@ -450,7 +450,9 @@ function facilityIsNear(text: string, facWords: string[]): boolean {
   const fw = facWords.map(reEsc).join("|");
   const before = new RegExp(`(\\bnear(by)?|\\baround|\\bclose to|\\bnext to|\\bbeside|\\bsurrounding|\\bwithin\\s+[\\d.]+\\s*(m|km|kms|metres?|meters?)?\\s+(of|from)|\\bwithin\\s+(a|one|half a)\\s+km\\s+(of|from)|\\bwithin)\\s+(the\\s+|a\\s+|an\\s+|any\\s+|all\\s+)?(government\\s+|govt\\s+)?(${fw})`, "i");
   const after = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(அருகே|அருகில்|அருகிலுள்ள|அருகாமையில்|பக்கத்தில்|பக்கம்|சுற்றி|pakkathula|pakkathil|pakkam|kitta|kitte|arugil|arugey|aruge|arukil)`, "i");
-  return before.test(text) || after.test(text);
+  // Tamil puts the distance after the place: "பள்ளிகளுக்கு 100 மீட்டருக்குள்" (within 100 m of schools)
+  const afterM = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(இலிருந்து\\s*)?[\\d.]+\\s*(மீட்டர்|மீ|கி\\.?\\s*மீ)`, "i");
+  return before.test(text) || after.test(text) || afterM.test(text);
 }
 
 /** Removes the words a phrase covers, so "lakes" in "incidents near lakes" is a facility, never the flood topic. */
@@ -500,7 +502,13 @@ export function parse(text: string, env: RouteEnv): Parsed {
     if (!firstHit(look, f.words)) continue;
     const said = f.words.filter((w) => hasPhrase(look, w));
     // "fire station" is a facility, "fire" alone is not; "police" alone is a department
-    if (!facilities.some((x) => x.layer === f.layer)) facilities.push(f);
+    const had = facilities.findIndex((x) => x.layer === f.layer);
+    if (had < 0) facilities.push(f);
+    // two of a Collector layer's kinds in one question ("wine shops and bars"): both kinds, or the whole layer
+    else if (f.own && facilities[had].own) {
+      const a = facilities[had].where?.kinds, b = f.where?.kinds;
+      facilities[had] = { ...facilities[had], where: a && b ? { government: null, kinds: [...new Set([...a, ...b])] } : null };
+    }
     facWords.push(...said);
     if (facilityIsNear(free, said) && !nearLayers.includes(f.layer)) nearLayers.push(f.layer);
     // a Collector layer's words are read once: "பள்ளிவாசல்" (a mosque) is not also "பள்ளி" (a school)
@@ -512,6 +520,15 @@ export function parse(text: string, env: RouteEnv): Parsed {
     if (!f.own && !firstHit(ftoksLeft, f.words)) facilities.splice(i, 1);
   }
   for (let i = nearLayers.length - 1; i >= 0; i--) if (!facilities.some((f) => f.layer === nearLayers[i])) nearLayers.splice(i, 1);
+  // "within 200 m of schools or temples": a place joined to one measured from is measured from too
+  if (nearLayers.length) {
+    const nearW = FACILITIES.filter((f) => nearLayers.includes(f.layer)).flatMap((f) => f.words.filter((x) => hasPhrase(ftoks, x))).map(reEsc).join("|");
+    for (const f of facilities) {
+      if (nearLayers.includes(f.layer)) continue;
+      const own = FACILITIES.filter((x) => x.layer === f.layer).flatMap((x) => x.words.filter((y) => hasPhrase(ftoks, y))).map(reEsc).join("|");
+      if (own && nearW && new RegExp(`(${nearW})[\\u0B80-\\u0BFF]*\\s*(,|\\bor\\b|\\band\\b|/|அல்லது|மற்றும்)\\s*(the\\s+|a\\s+|an\\s+|any\\s+)?(${own})`, "i").test(free)) nearLayers.push(f.layer);
+    }
+  }
   const news = any(tokens(free), NEWS) ? true : null;
   // news words are a source, never a category ("news" is not read as a topic)
   const rest = strip(free, [...facWords, ...(news ? NEWS.filter((w) => hasPhrase(tokens(free), w)) : [])]);

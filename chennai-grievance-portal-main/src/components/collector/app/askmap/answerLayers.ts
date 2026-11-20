@@ -151,6 +151,26 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
       icon: L.divIcon({ className: "", html: `<div class="agroup" style="--s:${size}px">${g.n.toLocaleString("en-IN")}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
       .on("click", () => o.onGroup(g.ids, ta ? g.label_ta : g.label)).bindTooltip(`<b>${esc(ta ? g.label_ta : g.label)}</b>${g.n.toLocaleString("en-IN")}`, { className: "dtip" }).addTo(a.marks);
   }
+  // a ranked change (the league table): a bubble per area with its rise (red) or fall (green); a click shows its cases now
+  for (const x of (r.extra.rank?.rows ?? []).slice(0, 60)) {
+    if ((!x.lat && !x.lon) || x.delta === 0) continue;
+    const size = Math.round(22 + Math.min(30, Math.sqrt(Math.abs(x.delta)) * 6));
+    L.marker([x.lat, x.lon], { pane: "askMarks", title: `${x.label}: ${x.before} to ${x.now}`,
+      icon: L.divIcon({ className: "", html: `<div class="agroup arank ${x.delta > 0 ? "up" : "down"}" style="--s:${size}px">${x.delta > 0 ? "+" : "−"}${Math.abs(x.delta).toLocaleString("en-IN")}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
+      .on("click", () => o.onGroup(x.ids, ta ? x.label_ta : x.label))
+      .bindTooltip(`<b>${esc(ta ? x.label_ta : x.label)}</b>${x.before.toLocaleString("en-IN")} → ${x.now.toLocaleString("en-IN")}${x.pct != null ? ` (${x.pct > 0 ? "+" : ""}${x.pct} %)` : ""}`, { className: "dtip" }).addTo(a.marks);
+  }
+  // a rule check: a line from each place to the one it is too close to, with the distance
+  for (const x of (r.extra.pairs?.items ?? []).slice(0, 300)) {
+    L.polyline([[x.lat, x.lon], [x.near.lat, x.near.lon]], { pane: "askAreas", color: "#E0364A", weight: 2.2, dashArray: "4 4", interactive: false }).addTo(a.areas);
+    L.circleMarker([x.lat, x.lon], { pane: "askMarks", radius: 7, color: "#fff", weight: 2, fillColor: "#E0364A", fillOpacity: 1 })
+      .bindTooltip(`<b>${esc((ta ? x.name_ta ?? x.name : x.name) ?? LAYER_WORD[x.layer].one)}</b>${fmtDistance(x.near.m, ta ? "ta" : "en")} ${ta ? "தூரத்தில்" : "from"} ${esc((ta ? x.near.name_ta ?? x.near.name : x.near.name) ?? LAYER_WORD[x.near.layer].one)}`, { className: "dtip" }).addTo(a.marks);
+  }
+  // a gap list per neighbourhood: each one beyond the distance, with how far it is
+  if (r.extra.gap?.by === "place") for (const x of (r.extra.areas ?? []).slice(0, 50)) {
+    L.circleMarker([x.worst.lat, x.worst.lon], { pane: "askMarks", radius: 6, color: "#fff", weight: 2, fillColor: "#E0364A", fillOpacity: 0.95 })
+      .bindTooltip(`<b>${esc(ta ? x.label_ta : x.label)}</b>${fmtDistance(x.p90, ta ? "ta" : "en")} ${ta ? "அருகிலுள்ளதிலிருந்து" : `to the nearest${x.worst.to?.name ? `: ${esc(x.worst.to.name)}` : ""}`}`, { className: "dtip" }).addTo(a.marks);
+  }
   // hotspots: a circle per cluster sized by its reports
   (r.extra.clusters ?? []).slice(0, 40).forEach((c, i) => {
     const size = Math.round(26 + Math.min(40, Math.sqrt(c.n) * 5));

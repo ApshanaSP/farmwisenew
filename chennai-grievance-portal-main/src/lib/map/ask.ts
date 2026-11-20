@@ -22,7 +22,7 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, freshPlan, mapLang, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, mapLang, parse, rulesRoute, type RouteEnv } from "./route";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
@@ -218,7 +218,9 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   // ---- the city now: live traffic, the rain, the streets that flood, power and trains in heavy rain. The same answer the
   // chatbot and Jarvis give (lib/city/now.ts), and the console opens the view that shows it (the Traffic view or a Rain tab)
   if (input.text && !input.plan) {
-    const topic = cityTopic(input.text);
+    let topic = cityTopic(input.text);
+    // "accidents near metro stations": incidents near the stations, the map's own question, not the trains' running (the baseline golden's one miss)
+    if (topic === "metro") { const q = parse(input.text, env); if ((q.cats || q.family) && q.facNear) topic = null; }
     if (topic) {
       const zone = input.context.zone ?? null;
       const c = await cityNow(topic, { lockDept: lock, zone: topic === "traffic" ? zone : null }).catch(() => null);
@@ -455,7 +457,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (show.type === "hotspots") { out.extra.clusters = show.clusters.slice(0, 60).map((c) => ({ id: c.id, n: c.n, lat: c.lat, lon: c.lon, ids: c.ids, place: c.place })); out.extra.hotWards = show.hotWards; }
   if (show.type === "compare") out.extra.compare = { a: { label: show.a.label, label_ta: show.a.label_ta, n: show.a.n, ids: show.a.ids }, b: { label: show.b.label, label_ta: show.b.label_ta, n: show.b.n, ids: show.b.ids } };
   if (show.type === "change") out.extra.change = { now: show.now.hits.map((h) => h.inc.id), before: show.before.hits.map((h) => h.inc.id), nowLabel: show.now.period.kind, beforeLabel: show.before.period.kind };
-  if (show.type === "areas") out.extra.areas = show.areas.slice(0, 50).map((a) => ({ key: a.key, label: a.label, label_ta: a.label_ta, p90: Math.round(a.p90), worst: { lat: a.worst.lat, lon: a.worst.lon, m: Math.round(a.worst.m), to: a.worst.to ? { name: a.worst.to.name, lat: a.worst.to.lat, lon: a.worst.to.lon } : null } }));
+  if (show.type === "areas") out.extra.areas = show.areas.slice(0, 500).map((a) => ({ key: a.key, label: a.label, label_ta: a.label_ta, p90: Math.round(a.p90), worst: { lat: a.worst.lat, lon: a.worst.lon, m: Math.round(a.worst.m), to: a.worst.to ? { name: a.worst.to.name, lat: a.worst.to.lat, lon: a.worst.to.lon } : null } }));
   if (show.type === "areas") out.extra.gap = { by: show.by, from: show.from, beyond: show.beyond, total: show.total };
   if (show.type === "ranked") {
     const pw = (p: typeof show.now) => ({ en: periodWords(p, "en"), ta: periodWords(p, "ta") });

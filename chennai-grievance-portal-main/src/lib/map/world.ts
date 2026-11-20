@@ -15,6 +15,7 @@ import { isPinnable } from "@/lib/collector/mapplace";
 import { EFFECT_KEYS, effectiveSql, effectiveStatus, officerStepsOn } from "@/lib/collector/effective";
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
+import { myListPoints } from "./uploads";
 import type { Entry, ResolverData } from "./resolve";
 import { CAT_TA } from "./words";
 import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
@@ -402,5 +403,6 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
     const e = effectiveStatus(i.open ? 1 : 0, i.status, d ?? null, step);
     return { ...i, open: e.open === 1, status: e.status, routed: r, breached: late };
   });
-  return { world: { ...base.world, now, incidents }, resolver: base.resolver };
+  // the officers' approved lists (uploads.ts), laid on at every question: an approval shows at once
+  return { world: { ...base.world, points: { ...base.world.points, my_list: myListPoints() }, now, incidents }, resolver: base.resolver };
 }

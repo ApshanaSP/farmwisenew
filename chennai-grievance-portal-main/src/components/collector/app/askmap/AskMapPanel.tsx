@@ -21,6 +21,7 @@ import { Grip, useDragPanel } from "./dragPanel";
 import { istDate } from "@/lib/ist-dates";
 import { cueAct } from "./actions";
 import { onMapCmd } from "./bridge";
+import { GapList, LeagueTable, RulePairs, ToolsBar } from "./CollectorTools";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
 let cueSeen = 0;
@@ -213,6 +214,9 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                       ))}
                     </div>}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
+                    <LeagueTable r={r} ask={ask} lang={lang} />
+                    <GapList r={r} lang={lang} />
+                    <RulePairs r={r} lang={lang} />
                     <Acts r={r} w={w} actions={actions} />
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
@@ -238,6 +242,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
           <div className="amp-tray-b">{trayQs(actions.suggestions, r, ta).map((q) => <button key={q} onClick={() => submit(q)} disabled={ask.busy}><I n="arrowUR" />{q}</button>)}</div>
         </div>
       )}
+      <ToolsBar ask={ask} lang={lang} />
       <div className="amp-ask">
         <button className={`amp-bulb${tray ? " on" : ""}`} onClick={() => setTray((v) => !v)} title={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-label={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-expanded={tray}><I n="bulb" /></button>
         <input ref={input} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder={ask.turns.length ? (ta ? "தொடர் கேள்வி அல்லது புதிய கேள்வி…" : "Ask a follow-up or a new question…") : w.placeholder} aria-label={w.title} maxLength={400} />
@@ -443,7 +448,7 @@ function Extras({ r, w, ask, tour, setTour, lang }:{ r: AskResponse; w: Words; a
       <div className="amp-tour" role="group" aria-label={w.tour}>
         <button onClick={() => { setTour(0); ask.replay(0); }}>{w.backTo}</button>
         {r.camera.tour.slice(0, 3).map((t, i) => (
-          <button key={t.id} className={tour === i + 1 ? "on" : ""} onClick={() => { setTour(i + 1); ask.replay(i + 1); ask.setSpot({ ids: r.extra.clusters?.[i]?.ids ?? [], label: lang === "ta" ? t.caption_ta : t.caption_en }); }}>
+          <button key={t.id} className={tour === i + 1 ? "on" : ""} onClick={() => { setTour(i + 1); ask.replay(i + 1); ask.setSpot({ ids: r.extra.clusters?.[i]?.ids ?? r.extra.rank?.rows.find((x) => x.key === t.id)?.ids ?? [], label: lang === "ta" ? t.caption_ta : t.caption_en }); }}>
             {lang === "ta" ? t.caption_ta : t.caption_en}
           </button>
         ))}
@@ -559,7 +564,7 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
 /** "Schools in Valasaravakkam": the places, by name (each is a marker on the map). */
 function Places({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
   const pts = r.context.points;
-  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas) return null;
+  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas || r.extra.pairs) return null;
   const lw = LAYER_WORD[pts[0].layer];
   return (
     <div>

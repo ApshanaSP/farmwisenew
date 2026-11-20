@@ -411,6 +411,8 @@ export interface ClaudeJsonArgs<T> {
   prompt: string;
   /** photos sent before the prompt (Manu Desk: a petition's pages), base64 */
   images?: { mediaType: "image/jpeg" | "image/png"; data: string }[];
+  /** a PDF sent before the prompt, base64 (Ask the Map's "load your own list") */
+  pdf?: string;
   /** this call's own model, instead of the role's */
   model?: string;
   /** what the caller wants for its answer; thinking also counts against max_tokens, so the request asks for more */
@@ -458,7 +460,7 @@ type Body = Anthropic.Beta.MessageCreateParamsNonStreaming;
  * recent turns, what was said, the time) is in the user message after it, so it never moves the prefix. Thinking and effort are
  * fixed per model and route, so a warm-up writes the very prefix a spoken turn reads.
  */
-function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: number; images?: ClaudeJsonArgs<unknown>["images"]; effort?: Effort; think?: boolean }, model: string, wire: Wire, mode: "format" | "json" | "bare", prompt: string, maxTokens?: number): Body {
+function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: number; images?: ClaudeJsonArgs<unknown>["images"]; pdf?: string; effort?: Effort; think?: boolean }, model: string, wire: Wire, mode: "format" | "json" | "bare", prompt: string, maxTokens?: number): Body {
   // v5 A6 (b): a Jarvis call on Haiku 5.5 answers with thinking disabled, at JARVIS_HAIKU_EFFORT
   const haiku = !a.role && NO_THINK.test(model);
   const effort: Effort = a.effort ?? (a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as Effort) : haiku ? haikuEffort() : "low");
@@ -473,8 +475,9 @@ function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: n
     // thinking shares this budget with the answer; a console write-up gets more room than a spoken turn; Haiku with thinking off needs no more than the plan
     max_tokens: maxTokens ?? (a.role ? Math.max(4000, (a.maxOutputTokens ?? 1500) * 3) : Math.max(haiku ? HAIKU_MAX_TOKENS : 2000, a.maxOutputTokens ?? 0)),
     system: [{ type: "text", text: a.system + how, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: a.images?.length
-      ? [...a.images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: prompt }]
+    messages: [{ role: "user", content: a.images?.length || a.pdf
+      ? [...(a.pdf ? [{ type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: a.pdf } }] : []),
+        ...(a.images ?? []).map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: prompt }]
       : prompt }],
     output_config: { effort, ...(useFormat ? { format: { type: "json_schema" as const, schema: wire.strict! } } : {}) },
     ...(off ?? thinkingFor(model, !a.role, effort)),
