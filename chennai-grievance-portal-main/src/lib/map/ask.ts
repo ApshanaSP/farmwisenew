@@ -22,7 +22,10 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, freshPlan, mapLang, parse, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, mapLang, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
+import { makeSpeller, type Fix } from "./spell";
+import { categoryWords } from "@/lib/collector/nlp";
+import { isTanglishWord } from "@/lib/assistant/lang";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
@@ -124,6 +127,8 @@ export interface AskResponse {
   asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number; partial?: { what: string; owner: string } | null }[] };
   ai_used: boolean;
   ms: number;
+  /** words read as other words ("adayar" as Adyar): said on the answer so the officer can see it */
+  spelled: Fix[];
 }
 
 const ROW_CAP = 200;
@@ -141,6 +146,38 @@ function resolverFor(data: ResolverData) {
   if (g && g.data === data) return g.fn;
   const fn = makeResolver(data);
   global.__askMapResolver = { data, fn };
+  return fn;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __askMapSpeller: { data: ResolverData; fn: ReturnType<typeof makeSpeller> } | undefined;
+  // eslint-disable-next-line no-var
+  var __askMapEnglish: Set<string> | undefined;
+}
+/** Real English words ("slowest", "review"): never corrected, however close to a map word (the word-list package, 274,000 words). */
+function englishWords(): Set<string> {
+  if (!global.__askMapEnglish) {
+    try { global.__askMapEnglish = new Set(fs.readFileSync(path.join(process.cwd(), "node_modules", "word-list", "words.txt"), "utf8").split(/\r?\n/)); }
+    catch { global.__askMapEnglish = new Set(); }
+  }
+  return global.__askMapEnglish;
+}
+/** The speller for this world's places: the map's words, the console's category words, and place names (spell.ts). */
+export function spellerFor(data: ResolverData) {
+  const g = global.__askMapSpeller;
+  if (g && g.data === data) return g.fn;
+  const en = englishWords();
+  const streetWords = new Set([...data.streets.keys()].flatMap((k) => k.split(" ")));
+  const placeKinds = new Set(["locality", "zone", "taluk", "osm_place", "road", "waterway", "facility"]);
+  const places = data.entries.filter((e) => placeKinds.has(e.kind)).map((e) => e.name_en);
+  const catWords = categoryWords().flatMap((c) => c.toLowerCase().split(/[^a-z]+/)).filter((x) => x.length >= 4);
+  const fn = makeSpeller({
+    words: mapVocabulary(), extra: catWords, places, areas: data.entries.filter((e) => e.kind === "zone" || e.kind === "taluk").map((e) => e.name_en),
+    isKnown: (x) => en.has(x) || isTanglishWord(x), soft: (x) => streetWords.has(x),
+    tamil: [...mapVocabularyTa(), ...data.entries.filter((e) => placeKinds.has(e.kind) && e.kind !== "facility" && e.kind !== "road").map((e) => e.name_ta ?? "").filter((t) => /^[஀-௿]+$/.test(t))]
+  });
+  global.__askMapSpeller = { data, fn };
   return fn;
 }
 
@@ -189,7 +226,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
     camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], city: null, insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
-    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0
+    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: []
   };
 }
 
@@ -199,10 +236,13 @@ export const EXAMPLES_EN = [
 ];
 export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", "அடையாறு அருகே திறந்த புகார்கள்", "மண்டலம் 13 இல் இந்த வாரம் வெள்ளம்", "வார்டு வாரியாக குப்பை புகார்கள்"];
 
-export async function askMap(input: AskInput): Promise<AskResponse> {
+export async function askMap(asked: AskInput): Promise<AskResponse> {
   const t0 = Date.now();
   const { world: w, resolver: data } = await world();
   const resolve = resolverFor(data);
+  // a hurried officer's slips, read as a person would ("hospitls near adayar"); a chip's plan or a follow-up's edit words are read as typed
+  const sp = asked.text && !asked.plan && process.env.MAP_SPELL_OFF !== "1" ? spellerFor(data)(asked.text) : null;
+  const input: AskInput = sp ? { ...asked, text: sp.text } : asked;
   const lang: Lang = input.plan?.language ?? (input.text ? mapLang(input.text, resolve(input.text, null)) : input.prev?.language ?? "en");
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
@@ -210,7 +250,13 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
-  const done = (r: AskResponse) => { r.ms = Date.now() - t0; logQuestion(input, r); return r; };
+  const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
+  // two equally close readings of a word: ask, never guess
+  if (sp?.ask) {
+    out.say = { en: `Did you mean ${sp.ask.options.map((o) => o.label).join(" or ")}?`, ta: `${sp.ask.options.map((o) => o.label).join(" அல்லது ")} என்று சொன்னீர்களா?`,
+      chips: sp.ask.options.map((o) => o.text) };
+    return done(out);
+  }
   const fe = { w, env, ctx, lock, role: input.user.role };
   // live traffic, read where it is already fresh (TomTom every five minutes): for "On the ground now" beside an answer
   const liveTraffic = Promise.race([trafficNow({ lockDept: lock }).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 2500))]) as Promise<LiveTraffic | null>;

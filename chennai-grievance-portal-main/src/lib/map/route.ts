@@ -108,7 +108,7 @@ const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்�
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
 const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b/i;
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
-const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
+const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|\b(atms?|banks?|hospitals?|schools?|pharmac(y|ies)|toilets?|parks?|shops?|kadai|stations?)\s+(illa|illai|illaye)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
 /** a gap measured per neighbourhood, not per ward: "places", "localities", "streets", "பகுதிகள்" */
 const GAP_PLACES = /\b(places|localities|locality|neighbourhoods?|neighborhoods?|streets|colonies|pakudhi|pagudhi)\b|பகுதிகள்|இடங்கள்|தெருக்கள்/i;
 /**
@@ -472,6 +472,8 @@ function verbOf(text: string, toks: string[]): Verb {
   if (/\b(along|alongside|on)\s+(the\s+)?(?!map\b)[A-Za-z]/i.test(text) || any(toks, ["சாலையில்", "வழியாக", "road la", "salai la", "roadla", "salaila"])) return "along";
   if (any(toks, NEAR) || distanceOf(text) != null) return "near";
   if (/\b(in|inside|at)\s+(the\s+)?[A-Za-z0-9]/i.test(text) || /[஀-௿](இல்|யில்|ில்)\b/.test(text)) return "in";
+  // Tanglish "Velachery la", "zone 9 le": in
+  if (/[A-Za-z0-9]\s+(la|le)\b/i.test(text)) return "in";
   return null;
 }
 
@@ -981,4 +983,23 @@ export function rulesRoute(text: string, prev: Plan | null, env: RouteEnv): Rout
   const built = buildPlan(p);
   if (!built) return null;
   return { kind: "plan", plan: built.plan, defaults: built.defaults, places: p.places, ai: false, edited: null, unread: p.unread };
+}
+
+/** Shape and time words the rules read, for the speller (spell.ts): "nearst" is nearest, "hotspts" hotspots. */
+const SHAPE_VOCAB = `nearest closest farthest furthest compare comparison versus hotspots hotspot clusters cluster clustering worse worsened improved increased
+decreased neighbourhoods neighbourhood neighborhoods neighborhood localities wards zones taluks ward zone taluk within metres meters kilometres kilometers
+week weeks month months today yesterday overdue deadline incidents incident severe summary happening brief league table ranking gaps without government
+schools hospitals complaints complaint flooding where which how many show what list count
+nadakkudhu nadakuthu aagudhu illadha illatha illaadha illaatha illa illai kulla vaariyaga adhigam athigam jaasthi jasthi pona munnadi indha intha vaaram maasam`;
+
+/** Every Latin word the rules read (layers, categories, statuses, near and along, shapes, Tanglish): the speller's targets. */
+export function mapVocabulary(): string[] {
+  const all = [...FACILITIES.flatMap((f) => f.words), ...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...NEWS, ...SEVERE, ...SEVERE_HIGH, ...OPEN, ...CLOSED, ...ANY_STATUS,
+    ...NEAR, ...ALONG, SHAPE_VOCAB];
+  return [...new Set(all.flatMap((p) => p.toLowerCase().split(/[^a-z]+/)).filter((w) => w.length >= 3))];
+}
+/** The Tamil words the rules read for layers and categories (the speller's Tamil targets; each a stem the rules match with any ending). */
+export function mapVocabularyTa(): string[] {
+  const all = [...FACILITIES.flatMap((f) => f.words), ...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...SEVERE, ...OPEN, ...CLOSED, ...NEAR];
+  return [...new Set(all.flatMap((p) => p.split(/\s+/)).filter((w) => /^[஀-௿]+$/.test(w)))];
 }

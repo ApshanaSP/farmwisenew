@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import { applyChip, type PlanChip } from "@/lib/map/chips";
 import { fmtDistance } from "@/lib/map/geom";
+import { fixesLine } from "@/lib/map/spell";
 import { LAYER_WORD } from "@/lib/map/words";
 import { I, type IconName } from "../icons";
 import { useLang } from "@/lib/i18n/lang";
@@ -183,6 +184,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
             {!t.pending && !t.error && !t.note && t !== cur && <Folded t={t} lang={lang} onOpen={() => ask.restore(t.id)} busy={ask.busy} />}
             {t === cur && r && (
               <>
+                {r.spelled?.length > 0 && <p className="amp-read" role="note"><I n="info" />{fixesLine(r.spelled, ta)}</p>}
                 {r.kind === "say" && r.say && (
                   <div className="amp-say" role="status">
                     {ta ? r.say.ta : r.say.en}
