@@ -316,3 +316,14 @@
 .brand-swap > .brand-on-dark { display: none; }
 [data-theme="dark"] .brand-swap > .brand-on-light { display: none; }
 [data-theme="dark"] .brand-swap > .brand-on-dark { display: block; }
+
+/* ---- Cursors, site-wide (lib/activity/cursor.ts marks React click targets with data-clk). An arrow over page text, the hand on
+   everything that is clicked, and the text cursor (and a blinking caret) only where something can be typed. :where() keeps these
+   at zero weight, so a component's own cursor (the map's grab, a disabled not-allowed) still wins. */
+html { cursor: default; caret-color: transparent; }
+:where(input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="range"], [type="color"], [type="image"]), textarea, [contenteditable]:not([contenteditable="false"])) { cursor: text; caret-color: auto; }
+:where(input[readonly], textarea[readonly]) { caret-color: transparent; }
+:where(a[href], button, summary, select, label[for], label:has(> input[type="checkbox"], > input[type="radio"]), [role="button"], [role="tab"], [role="link"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="option"], [role="switch"], [role="checkbox"], [role="radio"], [role="treeitem"], [role="slider"], input[type="checkbox"], input[type="radio"], input[type="button"], input[type="submit"], input[type="reset"], input[type="file"], input[type="color"], input[type="image"], input[type="range"], [data-clk], .leaflet-interactive, .leaflet-marker-icon) { cursor: pointer; }
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled="true"]) { cursor: not-allowed; }
+/* a double click on a button or tab never selects its words */
+:where(button, summary, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"]) { -webkit-user-select: none; user-select: none; }

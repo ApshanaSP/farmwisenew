@@ -605,6 +605,8 @@ export class Conductor {
   /** The name was heard: the next sentences are engaged. */
   private engaged = 0;
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
+  /** The name opened Jarvis from closed (the console's wake listener): the next sentence is the call's own request, as after kws */
+  called() { this.engage(); }
   private fromCaptions(text: string) {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
     // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())

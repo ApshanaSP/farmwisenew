@@ -81,7 +81,7 @@ export interface DeptNav { code: string; name: string; head?: string | null; ope
 type ModalState =
   | { kind: "list"; title: string; preset: ListPreset }
   | { kind: "zones" | "depts" | "export" | "news" | "workspace" | "customize"; title: string }
-  | { kind: "sources"; title: string; tab?: "sources" | "add" | "audit" }
+  | { kind: "sources"; title: string; tab?: "sources" | "add" | "audit"; url?: string }
   | { kind: "contact"; title: string; dept: Row; contacts: Row[] }
   | { kind: "text"; title: string; md: string }
   | { kind: "item"; title: string; item: Row }
@@ -155,7 +155,9 @@ export interface Console {
   /** an item from a source the Collector added: its text, category, place and source link */
   openItem: (item: Row) => void;
   openAdded: () => void;
-  openSources: (tab?: "sources" | "add" | "audit") => void;
+  openSources: (tab?: "sources" | "add" | "audit", url?: string) => void;
+  /** something in the store changed (a link added or removed): the dashboard reloads when the open window closes */
+  markChanged?: () => void;
   /** developing stories: reports about the same event, followed over time */
   openStories: (focus?: string | null) => void;
   openMarkets: () => void;
@@ -683,7 +685,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     openContact: (d, contacts) => setModal({ kind: "contact", title: `${d.name} · official contacts`, dept: d, contacts }),
     openItem: (item) => { setInc(null); setModal({ kind: "item", title: `From an added source · ${item.source}`, item }); },
     openAdded: () => setModal({ kind: "added", title: `From added sources · ${scopeName}` }),
-    openSources: (tab) => setModal({ kind: "sources", title: "Data sources", tab }),
+    openSources: (tab, url) => setModal({ kind: "sources", title: "Data sources", tab, url }),
+    markChanged: () => { dirty.current = true; },
     openStories: (focus = null) => setModal({ kind: "stories", title: `Developing stories · ${scopeName}`, focus }),
     openMarkets: () => setModal({ kind: "markets", title: "Mandi prices at Chennai markets" }),
     openPattern: (p) => setModal({ kind: "pattern", pattern: p,
@@ -985,7 +988,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
                 : modal.kind === "depts" ? <DeptsBody c={c} />
-                  : modal.kind === "sources" ? <SourcesBody c={c} initial={modal.tab} />
+                  : modal.kind === "sources" ? <SourcesBody c={c} initial={modal.tab} url={modal.url} />
                     : modal.kind === "export" ? <ExportBody c={c} />
                       : modal.kind === "news" ? <NewsAllBody d={ov} c={c} />
                         : modal.kind === "workspace" ? <WorkspaceBody c={c} />

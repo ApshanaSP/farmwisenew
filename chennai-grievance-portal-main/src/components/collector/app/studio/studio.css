@@ -259,7 +259,7 @@
 .dic .ds-ws-ic.k-sample{background:var(--aur-soft);color:var(--violet)}
 .dic .ds-ws-ic.k-board{background:var(--high-soft);color:var(--high);box-shadow:none}
 .dic .ds-ws-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.dic .ds-ws-t h2{font:700 15px/1.25 var(--dic-display),sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;border-radius:5px}
+.dic .ds-ws-t h2{font:700 15px/1.25 var(--dic-display),sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-radius:5px}
 .dic .ds-ws-t h2:hover{text-decoration:underline dotted var(--text-4);text-underline-offset:4px}
 .dic .ds-ws-t input{font:700 15px var(--dic-display),sans-serif;background:var(--surface-2);border:1px solid var(--accent-line);border-radius:7px;padding:2px 7px;outline:none;box-shadow:var(--ring)}
 .dic .ds-meta{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;min-width:0}

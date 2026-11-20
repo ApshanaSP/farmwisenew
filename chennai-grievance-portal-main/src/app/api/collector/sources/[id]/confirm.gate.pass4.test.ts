@@ -7,7 +7,8 @@ vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email
 vi.mock("@/lib/collector/sources", () => ({
   runSource: async () => ({ ok: true }),
   updateSource: async (...a: unknown[]) => void h.calls.push(["update", ...a]),
-  removeSource: async (...a: unknown[]) => void h.calls.push(["remove", ...a])
+  removeSource: async (...a: unknown[]) => void h.calls.push(["remove", ...a]),
+  sourceName: async () => null
 }));
 import { DELETE, PATCH } from "./route";
 

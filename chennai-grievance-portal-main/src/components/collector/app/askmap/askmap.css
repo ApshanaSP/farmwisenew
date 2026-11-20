@@ -53,7 +53,7 @@
 
 /* ---- the Ask pill on the small map */
 .dic .ampill{position:absolute;left:10px;top:10px;z-index:520;display:flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 10px;border-radius:999px;
-  background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text-2);font:600 12.5px var(--font-ui);box-shadow:0 0 0 1px var(--line-3),0 8px 20px -10px rgba(0,0,0,.6);cursor:text;max-width:calc(100% - 64px)}
+  background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text-2);font:600 12.5px var(--font-ui);box-shadow:0 0 0 1px var(--line-3),0 8px 20px -10px rgba(0,0,0,.6);cursor:pointer;max-width:calc(100% - 64px)}
 .dic .ampill:hover,.dic .ampill:focus-visible{color:var(--text);box-shadow:0 0 0 2px var(--accent),0 8px 20px -10px rgba(0,0,0,.6);outline:none}
 .dic .ampill svg{width:15px;height:15px;color:var(--accent)}
 .dic .ampill .ans{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}

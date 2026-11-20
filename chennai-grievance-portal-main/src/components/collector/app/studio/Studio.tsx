@@ -192,7 +192,8 @@ export default function Studio({ c }: { c: Console }) {
     else if (a.act === "file") fileIn.current?.click();
     else if (a.act === "vault") { setLink(o.url ?? ""); setConnecting(true); }
     else if (a.act === "link") { setLink(a.href ?? ""); back(); }
-    else if (a.act === "news") { c.toast("Add it under News sources on the Overview page: news is followed there, not charted.", "ok"); c.setPage("overview"); }
+    // a news feed is followed, not charted: it goes to the Collector's own links with the address filled in, one click from added
+    else if (a.act === "news") { setRun(null); back(); c.openSources("add", o.url ?? undefined); }
     else { if (o.pendingId) discard(o.pendingId); else { setRun(null); back(); } }
   };
 
@@ -218,7 +219,14 @@ export default function Studio({ c }: { c: Console }) {
           <input ref={fileIn} type="file" accept={ACCEPT} hidden onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ""; }} />
           <form className="ds-linkf" onSubmit={(e) => { e.preventDefault(); addLink(); }}>
             <I n="ext" />
-            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: page, file, feed, API" aria-label="Link to a data source" disabled={busy} />
+            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: it is read at once" aria-label="Link to a data source" disabled={busy}
+              onPaste={(e) => {
+                // a whole link pasted into the empty box is read straight away (sign-in and schedule: the sliders button)
+                const t = e.clipboardData.getData("text").trim();
+                if (busy || link.trim() || !/^https?:\/\/\S+\.\S+$/i.test(t)) return;
+                e.preventDefault();
+                addLink({ url: t, name: null, auth: null, every: null });
+              }} />
             <button type="button" className="alt" disabled={busy} onClick={() => setConnecting(true)} aria-label="Sign-in and refresh options" title="Sign-in and refresh options"><I n="sliders" /></button>
             <button disabled={busy || link.trim().length < 10} aria-label="Read the link"><I n="right" /></button>
           </form>

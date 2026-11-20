@@ -8,7 +8,8 @@ vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email
 vi.mock("@/lib/collector/sources", () => ({
   runSource: async (...a: unknown[]) => (h.calls.push(["run", ...a]), { ok: true }),
   updateSource: async (id: number, ...a: unknown[]) => { h.calls.push(["update", id, ...a]); if (id === 404) throw new Error("Source not found."); },
-  removeSource: async (...a: unknown[]) => void h.calls.push(["remove", ...a])
+  removeSource: async (...a: unknown[]) => void h.calls.push(["remove", ...a]),
+  sourceName: async () => null
 }));
 
 import { DELETE, PATCH, POST } from "./route";

@@ -13,7 +13,7 @@ import { answerText, describeFilter, type Names } from "@/lib/studio/engine";
 import { renderPanel } from "@/lib/studio/chartlint";
 import { drill } from "@/lib/studio/drill";
 import { computeInsights } from "@/lib/studio/insights";
-import { LINK_VERSION, crossLink } from "@/lib/studio/link";
+import { LINK_VERSION, crossLink, warmIncidents } from "@/lib/studio/link";
 import { UserError, parseFileAsync, type Table } from "@/lib/studio/parse";
 import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
@@ -505,6 +505,8 @@ interface RunCtx {
 
 async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   let { table } = ctx;
+  // the Linker's six months of incidents are read while the AI reads the columns, not after it
+  warmIncidents();
   const refs = await loadRefs();
   const names = namesOf(refs);
   const steps = ctx.steps;

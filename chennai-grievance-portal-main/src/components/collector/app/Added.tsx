@@ -83,7 +83,7 @@ export function ItemBody({ item: i, c }: { item: Row; c: Console }) {
         {url ? <a className="btn pri" href={url} target="_blank" rel="noopener noreferrer"><I n="ext" />Open the source link</a>
           : <span className="dim">This item has no link.</span>}
         {i.lat != null && <button className="btn plain" onClick={() => c.locate({ id: `item-${i.item_id}`, lat: i.lat, lon: i.lon })}><I n="pin" />Show on the map</button>}
-        <button className="btn plain" onClick={() => c.openSources("sources")}><I n="sensor" />Source settings</button>
+        <button className="btn plain" onClick={() => c.openSources("add")}><I n="sensor" />Pause or remove this source</button>
       </div>
       {url && <div className="itm-url" title={url}>{url}</div>}
     </div>

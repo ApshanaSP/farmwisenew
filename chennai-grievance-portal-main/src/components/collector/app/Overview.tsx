@@ -433,8 +433,8 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
           ? d.allNews
             ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
             : d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
-          : d.added.items.length ? d.added.items.slice(0, 10).map((i: Row) => <AddedRow key={i.item_id} i={i} now={d.now} c={c} />)
-            : <Empty>Nothing from added sources {`in the ${when}`}.</Empty>}
+          : d.added.items.length ? <><button className="add-manage" onClick={() => c.openSources("add")} title="Add a link, or pause or remove one you added"><I n="sliders" />Add or remove links</button>{d.added.items.slice(0, 10).map((i: Row) => <AddedRow key={i.item_id} i={i} now={d.now} c={c} />)}</>
+            : <Empty>Nothing from added sources {`in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a link</button></Empty>}
       </div>
     </>
   );

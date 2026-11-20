@@ -1,0 +1,74 @@
+/* Then and now (swipe) and Measure and plot: GeoTools.tsx */
+.dic .map-tools button.on{background:var(--accent);color:#fff}
+.dic .map-tools button:disabled{opacity:.45}
+
+/* ---- the swipe: a handle across the map, a tag on each side, the years along the bottom */
+.dic .gt-swipe{position:absolute;inset:0;z-index:480;pointer-events:none}
+.dic .gt-line{position:absolute;top:0;bottom:0;left:var(--x);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 0 18px rgba(0,0,0,.45)}
+.dic .gt-knob{position:absolute;top:50%;left:var(--x);width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;display:flex;align-items:center;justify-content:center;gap:0;
+  background:#fff;color:#14213D;border:0;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.35);pointer-events:auto;cursor:ew-resize;touch-action:none;transition:transform .15s}
+.dic .gt-knob:hover,.dic .gt-knob:focus-visible{transform:scale(1.08);outline:none;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px var(--accent)}
+.dic .gt-knob .ic{width:15px;height:15px;margin:0 -2px}
+.dic .gt-tag{position:absolute;top:52px;max-width:min(42%,320px);padding:7px 11px;border-radius:10px;background:rgba(10,16,28,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;
+  display:flex;flex-direction:column;gap:1px;pointer-events:auto;animation:gtIn .35s ease-out both}
+.dic .gt-tag.l{left:12px}
+.dic .gt-tag.r{right:58px;text-align:right}
+.dic .gt-tag b{font:800 16px/1.1 var(--font-ui)}
+.dic .gt-tag small{font:500 11.5px/1.3 var(--font-ui);opacity:.85}
+.dic .gt-years{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:5px;border-radius:999px;max-width:calc(100% - 24px);overflow-x:auto;
+  background:rgba(10,16,28,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 26px -10px rgba(0,0,0,.7);pointer-events:auto;animation:gtUp .35s ease-out both}
+.dic .gt-years button{min-width:34px;height:28px;padding:0 8px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.78);font:700 12px var(--font-ui);transition:background .15s,color .15s}
+.dic .gt-years button:hover{background:rgba(255,255,255,.12);color:#fff}
+.dic .gt-years button.on{background:#fff;color:#14213D}
+.dic .gt-yl{display:inline-flex;align-items:center;gap:5px;padding:0 8px 0 6px;color:#fff;font:700 12px var(--font-ui)}
+.dic .gt-yl .ic{width:14px;height:14px}
+.dic .gt-x{display:inline-grid;place-items:center}
+.dic .gt-years .gt-x{min-width:28px;padding:0;margin-left:2px}
+.dic .gt-x .ic{width:14px;height:14px}
+.dic .gt-src{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;
+  font:500 10.5px var(--font-ui);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);opacity:.85}
+
+/* ---- the plotter: corners are clicked on the map (its own shapes let the click through), the card says what the plot holds */
+.dic .plotting,.dic .plotting .leaflet-container{cursor:crosshair!important}
+.dic .plotting .leaflet-interactive,.dic .plotting .leaflet-marker-icon{pointer-events:none!important}
+.dic .gt-plotcard{position:absolute;left:12px;bottom:34px;z-index:490;width:min(330px,calc(100% - 70px));padding:12px 13px;border-radius:14px;color:var(--text);
+  background:var(--elev-glass,rgba(255,255,255,.94));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 0 1px var(--line-3,rgba(0,0,0,.08)),0 16px 34px -14px rgba(0,0,0,.6);animation:gtUp .3s ease-out both}
+.dic .gt-plotcard header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dic .gt-plotcard header>.ic{width:17px;height:17px;color:#D9A400}
+.dic .gt-plotcard header b{font:750 14px var(--font-ui);flex:1}
+.dic .gt-plotcard .gt-x{width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:var(--text-2)}
+.dic .gt-plotcard .gt-x:hover{background:var(--surface-3,rgba(0,0,0,.06));color:var(--text)}
+.dic .gt-help{margin:0 0 8px;font-size:12.5px;line-height:1.4;color:var(--text-2)}
+.dic .gt-nums{display:flex;gap:10px;margin-bottom:8px}
+.dic .gt-nums span{flex:1;display:flex;flex-direction:column;padding:7px 9px;border-radius:10px;background:var(--surface-2,rgba(127,127,127,.08))}
+.dic .gt-nums small{font:600 10.5px var(--font-ui);text-transform:uppercase;letter-spacing:.04em;color:var(--text-3,var(--text-2))}
+.dic .gt-nums b{font:800 17px/1.2 var(--font-num,var(--font-ui));font-variant-numeric:tabular-nums}
+.dic .gt-nums.big b{font-size:20px}
+.dic .gt-nums em{font:600 12px var(--font-ui);font-style:normal;color:var(--text-2)}
+.dic .gt-line2{margin:0 0 6px;font-size:12.5px;line-height:1.4;color:var(--text-2)}
+.dic .gt-line2 b{color:var(--text)}
+.dic .gt-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:2px;max-height:150px;overflow:auto}
+.dic .gt-list button{width:100%;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 6px;border:0;border-radius:8px;background:transparent;color:var(--text);text-align:left;font:550 12.5px var(--font-ui)}
+.dic .gt-list button:hover{background:var(--accent-soft)}
+.dic .gt-list i{width:8px;height:8px;border-radius:50%;background:#94A3B8}
+.dic .gt-list i.open{background:#F2B33D}
+.dic .gt-list i.sev{background:#F0414F;box-shadow:0 0 0 3px rgba(240,65,79,.2)}
+.dic .gt-list span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .gt-list small{color:var(--text-2);font-size:11px}
+.dic .gt-acts{display:flex;flex-wrap:wrap;gap:6px}
+.dic .gt-acts button{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--line-2,rgba(127,127,127,.3));background:var(--surface,transparent);color:var(--text);font:650 12px var(--font-ui)}
+.dic .gt-acts button:hover{border-color:var(--accent);color:var(--accent)}
+.dic .gt-acts button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.dic .gt-acts button.pri:hover{filter:brightness(1.08);color:#fff}
+.dic .gt-acts .ic{width:14px;height:14px}
+.dic .gt-note{position:absolute;right:12px;top:10px;padding:3px 8px;border-radius:7px;background:var(--accent);color:#fff;font:650 11px var(--font-ui)}
+.dic path.gt-plot{animation:gtDash 1.2s linear infinite;stroke-dasharray:10 6}
+
+@keyframes gtIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes gtUp{from{opacity:0;transform:translate(var(--tx,0),8px)}to{opacity:1;transform:translate(var(--tx,0),0)}}
+.dic .gt-years{--tx:-50%}
+@keyframes gtDash{to{stroke-dashoffset:-32}}
+@media (prefers-reduced-motion:reduce){.dic .gt-tag,.dic .gt-years,.dic .gt-plotcard{animation:none!important}.dic path.gt-plot{animation:none!important}}
+@media (max-width:640px){.dic .gt-tag{max-width:44%}.dic .gt-tag small{display:none}.dic .gt-plotcard{left:8px;right:8px;width:auto;bottom:28px}}
+/* comparing photos: the zone shading fades so the ground shows through (outlines and pins stay) */
+.dic .swiping path.wpoly{fill-opacity:.05!important}

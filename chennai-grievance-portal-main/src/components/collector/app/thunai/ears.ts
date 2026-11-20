@@ -194,7 +194,11 @@ export class Ears {
     if (!AC) throw new Error("unsupported");
     const my = ++this.gen;
     const test = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1" ? window.__jarvisTestStream : undefined;
+    // the closed wake listener heard the name and kept its microphone open (parkWake): it is taken over, so nothing the Collector says
+    // after the name is lost while a new microphone, the detector and the worklet start (the old gap was 2 to 5 seconds)
+    const parked = test ? null : takeParked();
     if (test) { this.stream = await test(); this.echoMode = "test"; }
+    else if (parked) { this.stream = parked.stream; this.echoMode = echoApplied(this.stream.getAudioTracks()[0]?.getSettings?.()); }
     else {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");
       const md = navigator.mediaDevices;
@@ -237,8 +241,12 @@ export class Ears {
     this.src = src;
     const node = new AudioWorkletNode(ctx, "jarvis-ears", { numberOfInputs: 1, numberOfOutputs: 0 });
     this.node = node;
+    // what the parked listener heard since the wake goes through the detectors first (same rate only), then the live frames follow on
+    let base = 0;
+    const pre = parked?.finish();
+    if (pre && pre.rate === this.rate) for (const f of pre.frames) { base += f.length; this.frame(f, base); }
     src.connect(node);
-    node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => this.frame(ev.data.frame, ev.data.total);
+    node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => this.frame(ev.data.frame, ev.data.total + base);
     if (this.hooks.onWakeWord && kwsMode() !== "off") {
       this.k16 = new To16k(this.rate);
       const k = new Kws({
@@ -422,7 +430,10 @@ export class WakeEars {
       const node = new AudioWorkletNode(ctx, "jarvis-ears", { numberOfInputs: 1, numberOfOutputs: 0 });
       this.node = node;
       ctx.createMediaStreamSource(this.stream).connect(node);
+      this.rate = rate;
       node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => {
+        // parked: the name was heard and Jarvis is opening; the audio is kept for the ears that take this microphone over (15 s at most)
+        if (this.tail) { this.tail.push(ev.data.frame); if (this.tail.length > 750) this.tail.shift(); return; }
         const off = performance.now() - (ev.data.total / rate) * 1000;
         this.off = this.off == null ? off : Math.min(off, this.off + 0.02);
         k.feed(k16.push(ev.data.frame));
@@ -443,7 +454,63 @@ export class WakeEars {
     void this.ctx?.close().catch(() => undefined);
     this.ctx = null; this.stream = null; this.node = null; this.kws = null; this.off = null;
   }
-  stop() { this.gen++; this.release(); }
+  stop() { this.gen++; this.tail = null; this.release(); }
+
+  private tail: Float32Array[] | null = null;
+  private rate = 48000;
+  /**
+   * The name was heard and Jarvis opens: the wake word stops, the microphone stays open and what it hears from now is kept, so the
+   * ears (Ears.start) take this microphone over with no gap. False when there is no live microphone to hand over.
+   */
+  park(): boolean {
+    if (!this.stream?.getTracks().some((t) => t.readyState === "live") || !this.node) return false;
+    this.kws?.stop(); this.kws = null;
+    this.tail = [];
+    return true;
+  }
+  /** Hand the parked microphone over: the stream (left running), and the frames heard since park(). Once only. */
+  handOver(): { stream: MediaStream; finish: () => { frames: Float32Array[]; rate: number } } | null {
+    if (!this.tail || !this.stream) return null;
+    const stream = this.stream;
+    let done: { frames: Float32Array[]; rate: number } | null = null;
+    return {
+      stream,
+      // the moment the new ears connect: the frames so far, and this listener's own audio graph closed (never the tracks)
+      finish: () => {
+        if (done) return done;
+        done = { frames: this.tail ?? [], rate: this.rate };
+        this.tail = null;
+        this.stream = null;
+        this.gen++;
+        this.release();
+        return done;
+      }
+    };
+  }
+}
+
+/**
+ * The closed wake listener parked when the name opened Jarvis (Thunai's wake effect): Ears.start takes it over. A parking nobody takes
+ * within 8 seconds (the ears failed to start, Jarvis was closed again) stops its microphone.
+ */
+let parkedWake: { w: WakeEars; at: number; t: ReturnType<typeof setTimeout> } | null = null;
+export function parkWake(w: WakeEars): boolean {
+  if (!w.park()) { w.stop(); return false; }
+  if (parkedWake) { clearTimeout(parkedWake.t); parkedWake.w.stop(); }
+  const p = { w, at: Date.now(), t: setTimeout(() => { if (parkedWake === p) { parkedWake = null; w.stop(); } }, 8000) };
+  parkedWake = p;
+  return true;
+}
+function takeParked(): { stream: MediaStream; finish: () => { frames: Float32Array[]; rate: number } } | null {
+  const p = parkedWake;
+  parkedWake = null;
+  if (!p) return null;
+  clearTimeout(p.t);
+  const h = p.w.handOver();
+  if (!h || !h.stream.getTracks().some((t) => t.readyState === "live")) { p.w.stop(); return null; }
+  // if the ears fail before they finish the hand-over, the old listener's graph still closes in a moment
+  setTimeout(() => h.finish(), 8000);
+  return h;
 }
 
 /** Averaging decimation to 16 kHz (speech needs nothing above 8 kHz). */

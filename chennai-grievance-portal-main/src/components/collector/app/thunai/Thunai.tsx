@@ -45,7 +45,7 @@ import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typ
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
-import { WakeEars } from "./ears";
+import { loadSilero, parkWake, WakeEars } from "./ears";
 import { wakeWait } from "./kws";
 import { flag } from "@/lib/thunai/flags";
 import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
@@ -2725,10 +2725,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const woke = (rest: string) => {
       if (dead) return;
       stop?.(); stop = null;
-      local?.stop(); local = null;
+      // the microphone stays open and is handed to Jarvis's ears (ears.ts parkWake): what is said right after the name is heard
+      if (local) parkWake(local);
+      local = null;
       dead = true;
       setModeRef.current("on", "wake");
       engagedNow();
+      conductor.current?.called();
       // the spoken reply only for the name alone; with a question in the same breath the answer is the reply
       if (!rest) sayWake(listenLangRef.current); else earcon("open");
       // the question said in the same breath ("Hi Jarvis, show the severe cases")
@@ -2749,6 +2752,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const begin = () => {
       if (dead || !allowed || document.hidden) return;
       void loadWakeReplies();
+      // the speech detector is loaded while Jarvis is closed, so opening on the name does not wait for it
+      void loadSilero();
       if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); named(w); }); local = w; void w.start().then((ok) => { if (!ok && local === w) local = null; }); }
       if (stop) return;
       stop = startWake({

@@ -26,9 +26,14 @@ declare global {
 }
 
 /** Every incident, slim (zone, ward, category, open, in the news, past deadline, day), cached for ten minutes. */
-async function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
+let reading: Promise<{ list: Inc[]; from: string; to: string }> | null = null;
+function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   const c = global.__studioInc;
-  if (c && Date.now() - c.at < 10 * 60_000) return c;
+  if (c && Date.now() - c.at < 10 * 60_000) return Promise.resolve(c);
+  // a read already under way (warmIncidents) is shared, never started twice
+  return (reading ??= readIncidents().finally(() => { reading = null; }));
+}
+async function readIncidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   const [rows] = await intelPool.query<RowDataPacket[]>(
     `SELECT zone_no, ward_no, category_code, family, ${OPEN} AS is_open, outlet_count, sla_breached, DATE_FORMAT(sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, first_reported_at FROM incidents i WHERE first_reported_at IS NOT NULL`
   );
@@ -41,6 +46,14 @@ async function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   const out = { at: Date.now(), list, from: days[0] ?? "2026-01-01", to: days[days.length - 1] ?? "2026-01-01" };
   global.__studioInc = out;
   return out;
+}
+
+/**
+ * Start reading the incidents now (the pipeline calls it as a dataset starts, so the store is read while the AI reads the columns,
+ * not after: the Linker step then finds it cached). One read at a time; a failure is the Linker's to report.
+ */
+export function warmIncidents(): void {
+  void incidents().catch(() => null);
 }
 
 /** zones that must hold some of the data before a zone-by-zone link is read */

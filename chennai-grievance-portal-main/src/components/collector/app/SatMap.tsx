@@ -12,6 +12,7 @@ import { hardenLeaflet } from "./askmap/leafletSafe";
 import { setConsoleMap } from "./thunai/mapbridge";
 import type { RainLayer } from "./rehearsal/rainLayer";
 import "./askmap/askmap.css";
+import GeoTools, { geoBusy } from "./geotools/GeoTools";
 
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
 
@@ -175,6 +176,8 @@ export default function SatMap(props: Props) {
           .on("click", () => {
             // Rain & flooding: the streets and reports answer clicks; a ward does not filter the console
             if (cb.current.rain) return;
+            // the land plotter is placing corners: a click is a corner, not a zone
+            if (geoBusy.on) return;
             // grown for Ask the Map, a ward click asks "What is happening here?"
             if (cb.current.grown && cb.current.ask && !cb.current.drawCircle) { cb.current.ask.draw({ ward: w.ward }); return; }
             if (cb.current.mode === "taluks") { if (w.taluk) cb.current.onTaluk(w.taluk); }
@@ -815,6 +818,8 @@ export default function SatMap(props: Props) {
         <button onClick={toggleFull} className={full ? "on" : ""} title={full ? "Leave full screen (Esc)" : "Full screen: the map with its pins and key"} aria-label={full ? "Leave full screen" : "Full screen"} aria-pressed={full}>
           <I n={full ? "shrink" : "expand"} />
         </button>
+        <GeoTools get={() => (st.current ? { L: st.current.L, map: st.current.map } : null)} host={() => el.current} ready={ready} geo={geo} pins={pins}
+          onPin={(id) => { exitMapFullscreen(); props.onPin(id); }} ask={props.ask} blocked={!!props.rain || !!props.drawCircle} />
         {props.extraTools}
       </div>
     </>

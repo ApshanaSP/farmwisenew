@@ -162,6 +162,12 @@ export async function updateSource(id: number, patch: { enabled?: boolean; refre
   });
 }
 
+/** a source's name, for the "Confirm it's you" box ("Remove The Hindu - Chennai (RSS)", not "Remove data source 21"); null when unknown */
+export async function sourceName(id: number): Promise<string | null> {
+  const [s] = await q(`SELECT name FROM ${ops("sources")} WHERE source_id = ?`, [id]).catch(() => []);
+  return s?.name ? String(s.name).slice(0, 120) : null;
+}
+
 export async function removeSource(id: number, actor: string) {
   const [s] = await q(`SELECT name, kind, created_by FROM ${ops("sources")} WHERE source_id = ?`, [id]);
   if (!s) throw new Error("Source not found.");
@@ -174,17 +180,36 @@ export async function removeSource(id: number, actor: string) {
 
 // ------------------------------------------------------------------ run --
 
-async function detectKind(url: string): Promise<"rss" | "html" | "json"> {
+/** what a response is, from its type and its first bytes: a feed, JSON or a web page (null: cannot tell) */
+export function kindOfBody(contentType: string, body: string): "rss" | "html" | "json" | null {
+  const head = body.slice(0, 600).replace(/^﻿/, "").trimStart();
+  if (/json/i.test(contentType) || head.startsWith("{") || head.startsWith("[")) return "json";
+  if (/^<\?xml[^>]*>\s*(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i.test(head) || /^<(rss|feed)\b/i.test(head) || /(rss|atom)\+xml/i.test(contentType)) return "rss";
+  if (/xml/i.test(contentType) && /<(rss|feed|channel|item|entry)\b/i.test(body.slice(0, 4000))) return "rss";
+  if (/html/i.test(contentType) || /^<!doctype html|^<html/i.test(head)) return "html";
+  return null;
+}
+/** a feed or JSON address by its shape alone, for when it cannot be reached to look (a slow first request) */
+export function kindOfUrl(url: string): "rss" | "json" | null {
   try {
-    const r = await safeFetch(url, { headers: { "User-Agent": UA }, timeout: 20000, maxBytes: 1_000_000 });
-    const ct = r.res.headers.get("content-type") ?? "";
-    if (/json/.test(ct)) return "json";
-    if (/xml|rss|atom/.test(ct)) return "rss";
-    const head = r.buf.subarray(0, 4000).toString("utf8").slice(0, 600).trimStart();
-    if (head.startsWith("{") || head.startsWith("[")) return "json";
-    if (/^<\?xml|<rss|<feed/i.test(head)) return "rss";
-  } catch { /* fall through: treat as a web page */ }
-  return "html";
+    const u = new URL(url);
+    const p = u.pathname.toLowerCase();
+    if (/\.json$/.test(p)) return "json";
+    if (/\.(rss|atom|xml)$/.test(p) || /\/(feed|feeds|rss|feeder|rssfeeds?|atom)(\/|$)/.test(p) || /(^|[?&])(feed|format)=(rss|atom)/i.test(u.search) || /getxmlfeed=true/i.test(u.search)) return "rss";
+  } catch { /* not a link */ }
+  return null;
+}
+
+async function detectKind(url: string): Promise<"rss" | "html" | "json"> {
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await safeFetch(url, { headers: { "User-Agent": UA, Accept: "application/rss+xml, application/atom+xml, application/xml, application/json, text/html;q=0.8, */*;q=0.5" }, timeout: 20000, maxBytes: 1_000_000 });
+      const k = kindOfBody(r.res.headers.get("content-type") ?? "", r.buf.subarray(0, 8000).toString("utf8"));
+      if (k) return k;
+      break;
+    } catch { /* once more, then by the address's shape */ }
+  }
+  return kindOfUrl(url) ?? "html";
 }
 
 const running = new Set<number>();
@@ -327,6 +352,13 @@ async function fetchAndIngest(s: Row) {
     if (await looksLikeLogin(res.r, res.text)) return { ok: false, login: "failed", error: "The site still asks for a login.", http: res.r.status, seen: 0, items_new: 0, attempts };
   }
   if (res.r.status >= 400) return { ok: false, http: res.r.status, error: `HTTP ${res.r.status}`, login: sess.login, seen: 0, items_new: 0, attempts };
+  // a source taken for a web page that turns out to be a feed (the type check could not reach it when it was added) is read, and kept,
+  // as the feed it is
+  const real = kindOfBody(res.r.headers.get("content-type") ?? "", res.text);
+  if (s.kind === "html" && !s.mapping && real && real !== "html") {
+    s = { ...s, kind: real };
+    await exec(`UPDATE ${ops("sources")} SET kind = ? WHERE source_id = ?`, [real, s.source_id]).catch(() => undefined);
+  }
   const items = await itemsFrom(s, res.text);
   const n = await ingest(s.source_id, items);
   return { ok: true, http: res.r.status, seen: items.length, items_new: n, login: sess.login, attempts, error: items.length ? null : "No items found on the page." };

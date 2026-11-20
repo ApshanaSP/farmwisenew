@@ -1731,3 +1731,28 @@
 .dic .map-back:hover{filter:brightness(1.08)}
 .dic .map-back:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .dic .map-back svg{width:14px;height:14px}
+
+/* ---- Data sources, "Your links": add a link, and pause, run or remove the ones added (Sources.tsx MyLinks) */
+.dic .ch .more + .more{margin-left:2px}
+.dic .mylinks{display:flex;flex-direction:column;gap:14px}
+.dic .ml-add{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--surface-2,rgba(127,127,127,.06));border:1px solid var(--line,rgba(127,127,127,.18))}
+.dic .ml-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dic .ml-row input{flex:1 1 320px;min-width:0;height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--line-2,rgba(127,127,127,.28));background:var(--surface,#fff);color:var(--text);font:500 14px var(--font-ui)}
+.dic .ml-row select,.dic .ml-name{height:38px;padding:0 10px;border-radius:9px;border:1px solid var(--line-2,rgba(127,127,127,.28));background:var(--surface,#fff);color:var(--text);font:500 13px var(--font-ui)}
+.dic .ml-name{max-width:420px}
+.dic .ml-row input:focus,.dic .ml-name:focus,.dic .ml-row select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.dic .ml-add .chk{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--text-2)}
+.dic .ml-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dic .ml-list li{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;border-radius:11px;border:1px solid var(--line,rgba(127,127,127,.18));background:var(--surface,transparent);transition:opacity .2s}
+.dic .ml-list li.off{opacity:.6}
+.dic .ml-ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.dic .ml-ic .ic{width:17px;height:17px}
+.dic .ml-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dic .ml-t b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .ml-t small{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .ml-acts{display:inline-flex;gap:6px}
+.dic .ml-del:hover:not(:disabled){color:var(--sev);background:color-mix(in srgb,var(--sev) 10%,transparent)}
+@media (max-width:760px){.dic .ml-list li{grid-template-columns:34px minmax(0,1fr)}.dic .ml-list li .st,.dic .ml-acts{grid-column:2}}
+.dic .add-manage{display:flex;align-items:center;gap:6px;width:100%;margin:0 0 4px;padding:6px 9px;border-radius:9px;border:1px dashed var(--line-2,rgba(127,127,127,.35));background:transparent;color:var(--accent-2);font:650 12px var(--font-ui);flex:none}
+.dic .add-manage:hover{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.dic .add-manage .ic{width:14px;height:14px}

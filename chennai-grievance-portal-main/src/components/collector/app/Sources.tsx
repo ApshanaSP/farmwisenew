@@ -5,24 +5,129 @@ import { I } from "./icons";
 import { Empty, fmtShort, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 
-type Tab = "sources" | "add" | "audit";
+type Tab = "sources" | "add" | "audit" | "mine";
 const KIND: Record<string, string> = { pipeline: "Pipeline feed", agmarknet: "Public API", rss: "RSS / Atom feed", html: "Web page", json: "JSON API" };
 const STATUS: Record<string, [string, string]> = {
   ok: ["Healthy", "st-resolved"], test: ["Test data", "st-review"], partial: ["Partial", "st-review"], stale: ["Stale", "st-progress"], failing: ["Failing", "st-progress"], login_failed: ["Login failed", "st-progress"], new: ["Not run yet", "st-review"]
 };
 
-// Adding a source is being built separately (a teammate is integrating it), so the console has no "Add a source" tab.
-export function SourcesBody({ c, initial = "sources" }: { c: Console; initial?: Tab }) {
-  const [tab, setTab] = useState<Tab>(initial === "add" ? "sources" : initial);
+/**
+ * Data sources: "Your links" (the feeds and pages the Collector added: add one by pasting its link, pause it, run it, remove it; what it
+ * brings shows under Latest news, Added), every connected source, and the audit log.
+ */
+export function SourcesBody({ c, initial = "sources", url }: { c: Console; initial?: Tab; url?: string }) {
+  const [tab, setTab] = useState<Tab>(initial === "add" ? "mine" : initial);
   return (
     <>
       <div className="tabs2">
-        {([["sources", "Connected sources"], ["audit", "Audit log"]] as const).map(([k, l]) => (
+        {([["mine", "Your links"], ["sources", "All sources"], ["audit", "Audit log"]] as const).map(([k, l]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
-      {tab === "sources" ? <SourceList c={c} /> : <AuditLog />}
+      {tab === "mine" ? <MyLinks c={c} initialUrl={url} /> : tab === "sources" ? <SourceList c={c} /> : <AuditLog />}
     </>
+  );
+}
+
+const ADDED_KINDS = ["rss", "html", "json"];
+const EVERY: [number, string][] = [[10, "Every 10 minutes"], [30, "Every 30 minutes"], [60, "Every hour"], [360, "Every 6 hours"], [1440, "Once a day"]];
+const SKIP_PART = /^(index|default|feed|rss|feeder|rssfeed|api|v\d+)(\.\w+)?$/i;
+/** a name for a pasted link, from its address ("https://www.dtnext.in/news/chennai" -> "dtnext.in · chennai") */
+export function linkName(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    const part = u.pathname.split("/").filter((x) => x && !SKIP_PART.test(x)).pop();
+    const tail = part ? decodeURIComponent(part).replace(/\.(html?|php|aspx?|cms|xml|rss|json)$/i, "").replace(/[-_]+/g, " ").slice(0, 40).trim() : "";
+    return tail && !/^\d+$/.test(tail) ? `${host} · ${tail}` : host;
+  } catch { return url.slice(0, 60); }
+}
+const LINK = /^https?:\/\/[^\s/]+\.[^\s]+$/i;
+
+/**
+ * The Collector's own links: paste a link to add it (its type is worked out, it is read at once and then on its schedule), and every
+ * added one with how much it brought, Run, Pause / Resume and Remove. Removing takes its items out of Latest news and the map at once;
+ * pausing stops the reading and keeps what it brought. Pausing and removing ask "Confirm it's you" (the server's rule).
+ */
+function MyLinks({ c, initialUrl = "" }: { c: Console; initialUrl?: string }) {
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [url, setUrl] = useState(initialUrl);
+  const [name, setName] = useState("");
+  const [every, setEvery] = useState(60);
+  const [ok, setOk] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const load = () => call("/api/collector/sources").then((j) => setRows((j.sources as Row[]).filter((s) => ADDED_KINDS.includes(s.kind))))
+    .catch((e) => { setRows([]); c.toast(e.message, "alert"); });
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const link = url.trim();
+  const valid = LINK.test(link);
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valid || !ok) return;
+    setBusy("add");
+    try {
+      const r = await call("/api/collector/sources", "POST", { name: (name.trim() || linkName(link)).slice(0, 128), url: link, kind: "auto", refreshMinutes: every, authorized: true });
+      c.toast(r.run?.ok ? `Added (${KIND[r.kind] ?? r.kind}): ${r.run.items_new} items read. They show under Latest news, Added.`
+        : `Added, but the first reading failed: ${r.run?.error ?? "no reason given"}. It tries again on its schedule.`, r.run?.ok ? "ok" : "alert");
+      setUrl(""); setName(""); setOk(false);
+      c.markChanged?.();
+      await load();
+    } catch (err) { c.toast((err as Error).message, "alert"); } finally { setBusy(null); }
+  };
+  const act = async (s: Row, what: "run" | "pause" | "resume" | "remove") => {
+    setBusy(`${what}:${s.id}`);
+    try {
+      if (what === "remove") { await call(`/api/collector/sources/${s.id}`, "DELETE"); c.toast(`Removed ${s.name}: its items are gone from Latest news and the map.`); }
+      else if (what === "run") { const r = await call(`/api/collector/sources/${s.id}`, "POST"); c.toast(r.ok ? `${s.name}: ${r.items_new} new of ${r.seen} read.` : `${s.name}: ${r.error}`, r.ok ? "ok" : "alert"); }
+      else { await call(`/api/collector/sources/${s.id}`, "PATCH", { enabled: what === "resume" }); c.toast(what === "pause" ? `Paused ${s.name}: it is not read until you resume it.` : `Resumed ${s.name}.`); }
+      c.markChanged?.();
+      await load();
+    } catch (err) {
+      const m = (err as Error).message;
+      // the Confirm box was cancelled: nothing was done, and nothing needs saying
+      if (!/not confirmed/i.test(m)) c.toast(m, "alert");
+    } finally { setBusy(null); }
+  };
+  return (
+    <div className="mylinks">
+      <form className="ml-add" onSubmit={add}>
+        <div className="ml-row">
+          <input type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste a link: a news feed, a page of headlines, or a JSON API" aria-label="Link to add" autoFocus />
+          <select value={every} onChange={(e) => setEvery(Number(e.target.value))} aria-label="How often to read it">{EVERY.map(([m, l]) => <option key={m} value={m}>{l}</option>)}</select>
+          <button className="btn" disabled={!valid || !ok || busy === "add"}>{busy === "add" ? <><I n="refresh" className="spin" />Reading…</> : <><I n="plus" />Add</>}</button>
+        </div>
+        {valid && <input className="ml-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={`Name: ${linkName(link)}`} aria-label="Name (optional)" maxLength={128} />}
+        <label className="chk"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />This site is public and may be read automatically (no login, paywall or CAPTCHA is bypassed).</label>
+        <small className="dim">For a one-off table or file, use <b>Add data</b> in the Data Studio instead.</small>
+      </form>
+      {!rows ? <div className="empty">Loading your links…</div> : !rows.length ? (
+        <div className="empty">No links added yet. Paste one above: what it brings shows under <b>Latest news, Added</b> and on the map.</div>
+      ) : (
+        <ul className="ml-list">
+          {rows.map((s) => {
+            const [st, cls] = STATUS[s.status] ?? [s.status, "st-review"];
+            const spin = busy === `run:${s.id}`;
+            const often = EVERY.find(([m]) => m === Number(s.refresh_minutes))?.[1] ?? `Every ${s.refresh_minutes} minutes`;
+            return (
+              <li key={s.id} className={s.enabled ? "" : "off"}>
+                <span className={`ml-ic k-${s.kind}`}><I n={s.kind === "rss" ? "news" : s.kind === "json" ? "table" : "ext"} /></span>
+                <div className="ml-t">
+                  <b>{s.name}</b>
+                  <small>{/^https?:/.test(s.url) ? <a href={s.url} target="_blank" rel="noreferrer" className="lnk">{String(s.url).replace(/^https?:\/\//, "").slice(0, 56)}</a> : s.url}</small>
+                  <small className="dim">{KIND[s.kind] ?? s.kind} · {Number(s.rows ?? 0).toLocaleString("en-IN")} items · {s.newest ? `newest ${fmtShort(s.newest)}` : "nothing dated yet"} · {s.enabled ? often.toLowerCase() : "paused"}</small>
+                </div>
+                <span className={`st ${s.enabled ? cls : "st-review"}`}>{s.enabled ? st : "Paused"}</span>
+                <span className="ml-acts">
+                  <button className="btn sm plain" disabled={!!busy || !s.enabled} onClick={() => act(s, "run")} title="Read it now"><I n="refresh" className={spin ? "spin" : ""} />Run</button>
+                  <button className="btn sm plain" disabled={!!busy} onClick={() => act(s, s.enabled ? "pause" : "resume")}>{s.enabled ? "Pause" : "Resume"}</button>
+                  <button className="btn sm plain ml-del" disabled={!!busy} onClick={() => act(s, "remove")} title="Remove this link and its items"><I n="x" />Remove</button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -131,50 +236,6 @@ function ItemTable({ rows }: { rows: Row[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function AddSource({ c, done }: { c: Console; done: () => void }) {
-  const [f, setF] = useState({ name: "", url: "", kind: "auto", auth: "none", loginUrl: "", userField: "username", passField: "password", username: "", secret: "", refreshMinutes: 1440, authorized: false });
-  const [busy, setBusy] = useState(false);
-  const set = (k: string, v: unknown) => setF((x) => ({ ...x, [k]: v }));
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const r = await call("/api/collector/sources", "POST", { ...f, refreshMinutes: Number(f.refreshMinutes), authorized: f.authorized || undefined });
-      c.toast(r.run?.ok ? `Connected as ${KIND[r.kind]}: ${r.run.items_new} items read and classified.` : `Saved, but the first run failed: ${r.run?.error}`, r.run?.ok ? "ok" : "alert");
-      done();
-    } catch (err: any) { c.toast(err.message, "alert"); } finally { setBusy(false); }
-  };
-  return (
-    <form className="addf" onSubmit={submit}>
-      <p className="sub" style={{ color: "var(--accent-2)" }}><I n="scan" /> For a one-off table or file, paste the link into <b>Add data</b> on the <b>Data Studio</b> page instead: it works out the type, maps the fields and shows a preview before anything is saved.</p>
-      <p className="sub">Paste the link of a feed, web page or API. District IQ reads it on a schedule, finds incidents (category and place) and adds them to the store. Credentials are stored encrypted and used only for this site&apos;s own login.</p>
-      <label>Name<input required value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. GCC press releases" /></label>
-      <label>Link<input required type="url" value={f.url} onChange={(e) => set("url", e.target.value)} placeholder="https://…" /></label>
-      <div className="row3">
-        <label>Type<select value={f.kind} onChange={(e) => set("kind", e.target.value)}><option value="auto">Detect automatically</option><option value="rss">RSS / Atom feed</option><option value="html">Web page (headlines)</option><option value="json">JSON API</option></select></label>
-        <label>Sign-in<select value={f.auth} onChange={(e) => set("auth", e.target.value)}><option value="none">Public, no login</option><option value="form">Login form (username + password)</option><option value="basic">HTTP basic</option><option value="token">API token</option></select></label>
-        <label>Refresh every<select value={f.refreshMinutes} onChange={(e) => set("refreshMinutes", e.target.value)}>{[10, 15, 30, 60, 180, 360, 1440].map((m) => <option key={m} value={m}>{m < 60 ? `${m} minutes` : m === 60 ? "hour" : m === 1440 ? "day" : `${m / 60} hours`}</option>)}</select></label>
-      </div>
-      {f.auth === "form" && (
-        <div className="row3">
-          <label>Login page URL<input type="url" value={f.loginUrl} onChange={(e) => set("loginUrl", e.target.value)} placeholder="https://…/login" /></label>
-          <label>Username field<input value={f.userField} onChange={(e) => set("userField", e.target.value)} /></label>
-          <label>Password field<input value={f.passField} onChange={(e) => set("passField", e.target.value)} /></label>
-        </div>
-      )}
-      {f.auth !== "none" && (
-        <div className="row3">
-          {f.auth !== "token" && <label>Username<input value={f.username} onChange={(e) => set("username", e.target.value)} autoComplete="off" /></label>}
-          <label>{f.auth === "token" ? "API token" : "Password"}<input type="password" value={f.secret} onChange={(e) => set("secret", e.target.value)} autoComplete="new-password" /></label>
-        </div>
-      )}
-      <label className="chk"><input type="checkbox" checked={f.authorized} onChange={(e) => set("authorized", e.target.checked)} />
-        I am authorized to use this source, and it permits automated reading (no CAPTCHA, paywall or robots restriction is bypassed).</label>
-      <button className="btn" disabled={busy || !f.authorized}>{busy ? <><I n="refresh" className="spin" />Connecting…</> : <><I n="plus" />Connect and read now</>}</button>
-    </form>
   );
 }
 

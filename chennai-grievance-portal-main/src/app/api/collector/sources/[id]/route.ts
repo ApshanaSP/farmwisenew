@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
-import { removeSource, runSource, updateSource } from "@/lib/collector/sources";
+import { removeSource, runSource, sourceName, updateSource } from "@/lib/collector/sources";
 import { parseStoreId } from "@/lib/store-id";
 import { requireConfirm } from "@/lib/security/stepup";
 
@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   // approving a source does (QA4 gate, redteam-final-12); turning one back on needs no confirmation
   if (parsed.data.enabled === false || parsed.data.refreshMinutes !== undefined) {
     const what = parsed.data.enabled === false ? "Pause" : "Change how often";
-    const c = await requireConfirm(req, s, "change_source", `${what} data source ${id}`, { id, ...parsed.data });
+    const c = await requireConfirm(req, s, "change_source", `${what} ${(await sourceName(id)) ?? `data source ${id}`}`, { id, ...parsed.data });
     if (!c.ok) return c.res;
   }
   try {
@@ -60,7 +60,7 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
   if (s instanceof NextResponse) return s;
   const id = sourceId(params.id);
   if (id == null) return invalid();
-  const c = await requireConfirm(req, s, "change_source", `Remove data source ${id}`, { id, remove: true });
+  const c = await requireConfirm(req, s, "change_source", `Remove ${(await sourceName(id)) ?? `data source ${id}`} and its items`, { id, remove: true });
   if (!c.ok) return c.res;
   try {
     await removeSource(id, s.email);
