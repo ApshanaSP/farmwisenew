@@ -4,15 +4,50 @@
  * writes SQL, picks a feature to show or moves the map. A plan it returns is checked like any other (checkPlan); a
  * failed check is retried once with the problems, then becomes chips. A rewording whose numbers are not in the facts
  * is dropped and the template stands.
+ *
+ * Ask the Map final (20 Nov 2026): the calls go out as the "map" feature (lib/ai/gateway.ts featureProviders): Claude Haiku 5.5 first, with the
+ * flat plan as structured outputs (every field required, a sentinel for none) and the long fixed part of the prompt (layers, kinds, categories,
+ * departments, zones, examples) as the cached system block; then Nova Lite, Groq and Gemini, whatever AI_FORCE_PROVIDER says for the rest of the
+ * console. The question, the places it names and the rules' hint are the only per-call text.
  */
-import { generateJson } from "@/lib/ai/gateway";
+import { generateJson, type CallInfo } from "@/lib/ai/gateway";
 import { extractNumbers } from "@/lib/assistant/verify";
 import { z } from "zod";
 import { checkPlan, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
-import { LAYER_IDS } from "./types";
+import { LAYER_IDS, type LayerId } from "./types";
 import type { Fact } from "./answer";
 import type { Lang } from "./words";
+
+type W = Record<string, unknown>;
+const take = (as: string, layer: string, x: W = {}): W => ({ op: "take", as, layer, ...x });
+/** Examples in the compact form the prompt shows (fields not shown are none); toWire'd plans for the older ones. */
+const NEW_EXAMPLES: [string, W][] = [
+  ["wine shops within 100 m of a school or a temple", { understood: true, language: "en", show: "rule", steps: [
+    take("f1", "liquor", { kinds: ["wine_shop"] }), take("n1", "schools"), take("n2", "worship", { kinds: ["hindu"] }),
+    { op: "within", as: "rule", of: "f1", near: ["n1", "n2"], meters: 100 }] }],
+  ["places more than 2 km from a ration shop", { understood: true, language: "en", show: "far", steps: [
+    take("f1", "ration_shops"), { op: "farthest", as: "far", areas: "place", from: "f1", beyond_m: 2000 }] }],
+  ["wards with no bank within 2 km", { understood: true, language: "en", show: "far", steps: [
+    take("f1", "banks"), { op: "farthest", as: "far", areas: "ward", from: "f1", beyond_m: 2000 }] }],
+  ["which 10 wards got worse for flooding this month", { understood: true, language: "en", show: "rank", steps: [
+    take("a", "incidents", { family: ["FLOOD"], status: "any", period_days: 30, period_offset: 0 }),
+    { op: "change", as: "chg", of: "a", period_days: 30, period_offset: 0, before_days: 30, before_offset: 1 },
+    { op: "rank", as: "rank", of: "chg", by: "ward", order: "rise" }] }],
+  ["ATMs in Zone 13", { understood: true, language: "en", show: "in", steps: [take("f1", "atms"), { op: "inside", as: "in", of: "f1", area_kind: "zone", area_id: 13 }] }],
+  ["சந்தைகள் அருகே குப்பை புகார்கள்", { understood: true, language: "ta", show: "near", steps: [
+    take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", citizen: true, period_days: 7, period_offset: 0 }), take("f1", "markets"),
+    { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }] }],
+  ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
+    take("a", "incidents", { family: ["CRIME"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "liquor", { kinds: ["bar", "pub"] }),
+    { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "inside", as: "in", of: "near", area_kind: "zone", area_id: 13 }] }]
+];
+/** A wire step written with only its fields that have a value: the prompt's examples, a tenth of the full form's length. */
+export function compactWire(x: unknown): unknown {
+  if (Array.isArray(x)) return x.map(compactWire);
+  if (!x || typeof x !== "object") return x;
+  return Object.fromEntries(Object.entries(x as W).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, compactWire(v)]));
+}
 
 const EXAMPLES: [string, unknown][] = [
   ["garbage complaints within 200 m of hospitals", { steps: [
@@ -37,23 +72,53 @@ const EXAMPLES: [string, unknown][] = [
     { op: "farthest", as: "far", areas: "ward", from: "f1", beyond_m: 3000 }], show: "far", language: "en" }]
 ];
 
-function system(cats: string[], depts: string[]): string {
+/** What each layer holds and the kinds a take may keep (where.kinds): the model's whole map, fixed per process. */
+const LAYER_HELP: Partial<Record<LayerId, string>> = {
+  incidents: "the district's grievances and incidents (the only layer with categories, periods, status and departments)",
+  schools: "schools", colleges: "colleges and universities", hospitals: "hospitals and clinics; kinds hospital, health_centre, clinic; government true for government ones",
+  fire_stations: "fire stations", police: "police stations (district store)", water_bodies: "lakes and ponds (polygons)", waterways: "rivers, canals, drains (lines; along needs a line id)",
+  roads: "roads (lines; along needs a line id)", rail_metro: "rail and metro stations; kinds metro, rail", osm_places: "named neighbourhoods (points)",
+  lakes_store: "PWD lakes (district store)", gauges: "rain, river and air gauges", pwd_assets: "PWD water works", hotspots: "never take: use the hotspot op",
+  banks: "bank branches (partial list)", atms: "ATMs (partial list)", worship: "places of worship; kinds hindu (temples), muslim (mosques), christian (churches), jain, sikh, buddhist, other",
+  parks: "parks and playgrounds; kinds park, playground", water_tanks: "overhead water tanks", toilets: "public toilets", bus_stations: "bus stations and stands",
+  gov_offices: "government offices, courts and town halls; kinds government_office, court, town_hall", pharmacies: "pharmacies and medical shops", fuel: "petrol bunks and fuel stations",
+  markets: "markets", cemeteries: "cemeteries and crematoriums; kinds cemetery, crematorium", liquor: "TASMAC wine shops, bars and pubs (partial list); kinds wine_shop, bar, pub",
+  ration_shops: "ration (fair price, PDS) shops, found by name (partial list)", my_list: "the officer's own uploaded and approved list"
+};
+
+/**
+ * The fixed part of every plan call, the prompt-cache prefix: byte-stable for a world (the categories, departments and zones come from it, in its
+ * own order), so every question after the first reads it from the cache.
+ */
+function system(cats: string[], depts: string[], zones?: { zone: number; name: string; lat: number; lon: number }[], catLabels?: Map<string, string>): string {
   return [
-    "You turn a District Collector's question about a map of Chennai into a JSON plan. You never answer the question and never invent numbers.",
-    "Steps run in order over named collections. Ops: take (a layer with a filter), within (incidents within N metres of facilities), inside (incidents or facilities in an area),",
-    "along (a road or waterway id), nearest, farthest, count_by, hotspot, compare (two areas), change (two periods).",
-    `Layers: ${LAYER_IDS.join(", ")}. Incident categories: ${cats.join(", ")}. Families: FLOOD, CRIME, DRAINAGE, ROADS_TRAFFIC, HEALTH, WASTE_SANITATION.`,
+    "You turn a District Collector's question about a map of Chennai into a JSON plan. You never answer the question and never invent numbers: the server runs the plan and counts.",
+    "Steps run in order over named collections (`as`); each later step reads earlier ones by name. Ops:",
+    "- take: a layer (incidents with a filter; a facility layer with government and kinds, or nothing).",
+    "- within: keep the `of` collection within `meters` of any of the `near` collections. `of` is incidents, or facilities for a rule check (wine shops within 100 m of schools).",
+    "- inside: keep incidents or facilities in an area. along: incidents within `meters` of a road or waterway line id given in the prompt.",
+    "- nearest: the k nearest facilities (`to`) from each incident (`from` a collection) or from a place (`from` place:<ref>).",
+    "- farthest: rank areas by distance from the nearest facility (`from`); areas ward (90 % of its ground), zone, or place (each neighbourhood's point); beyond_m keeps only those farther than that.",
+    "- count_by: incidents by ward, zone, taluk or hex500. hotspot: clusters of incidents. compare: two areas (area_* and b_*).",
+    "- change: the same incidents in two windows. rank: a change counted by ward, zone or taluk and ranked by the rise (order rise) or the fall (order fall): \"which wards got worse\", \"most improved zones\", \"league table\".",
+    "LAYERS:",
+    ...LAYER_IDS.map((l) => `- ${l}: ${LAYER_HELP[l] ?? l}`),
+    `Incident categories: ${cats.map((c) => (catLabels?.get(c) ? `${c} (${catLabels.get(c)})` : c)).join(", ")}.`,
+    "Families: FLOOD, CRIME, DRAINAGE, ROADS_TRAFFIC, HEALTH, WASTE_SANITATION, PUBLIC_SAFETY, STRUCTURES_LAND, ELECTRICAL, PUBLIC_ORDER, WORKS, ENVIRONMENT, GREEN, ADMIN, OTHER.",
     `Departments: ${depts.join(", ")}.`,
-    "Defaults: status open; period last 7 days (offset 0) unless the question names a period. Distances 10 to 5000 metres. Areas: ward 1-200, zone 1-15, taluk codes TLK-XXX,",
+    ...(zones?.length ? [`ZONES: ${zones.map((z) => `${z.zone} ${z.name} (${z.lat > 13.12 ? "north" : z.lat < 13.02 ? "south" : "central"})`).join("; ")}. Wards are numbered 1 to 200.`] : []),
+    "Defaults: status open; period last 7 days (offset 0) unless the question names a period. Distances 10 to 5000 metres (a gap's beyond_m up to 20000). Areas: ward 1-200, zone 1-15, taluk codes TLK-XXX,",
     "point refs are given to you as place refs in the prompt; use only those. A road or waterway is used only by a line id given in the prompt.",
+    "A rule check (licensed premises near schools or places of worship) uses the distance the question says; if it says none, 100. Never state a legal distance.",
     "language is en, ta (Tamil script) or tanglish (Tamil in Latin letters), as the question is written.",
     "understood is false when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); then steps may be a single take of incidents.",
-    "Examples:",
-    "Each step is one flat object with every field; fields a step does not use are null. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
-    "Calendar periods (period_calendar, period_days null): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
-    "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar null.",
+    "Each step is one flat object with every field; a field a step does not use is none. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
+    "Calendar periods (period_calendar, period_days none): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
+    "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar none.",
     "A change compares two equal windows counted back from now: period_days with period_offset 0, before_days the same, before_offset 1; never a calendar period so far (today, this week) against a whole one.",
-    ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(toWire(p as Plan))}`)
+    "Examples (each step shows only its fields with a value; every other field is none):",
+    ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(compactWire(toWire(p as Plan)))}`),
+    ...NEW_EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(p)}`)
   ].join("\n");
 }
 
@@ -67,24 +132,48 @@ const CONCEPTS = [
   "in the news, newspapers, press, media reports, headlines -> news true (incidents a news outlet reported; status any unless the question says open)",
   "by the sea, coast, beach, seashore -> the coastal zones (use count_by zone or inside one zone): 1 Thiruvottiyur, 4 Tondiarpet, 5 Royapuram, 9 Teynampet, 13 Adyar, 15 Sholinganallur",
   "north / central / south of the city -> zones by direction (see ZONES); a question about one direction may use count_by zone",
-  "worst, most urgent -> severity Severe (or Severe and High); pending too long, overdue -> overdue true"
+  "worst, most urgent -> severity Severe (or Severe and High); pending too long, overdue -> overdue true",
+  "TASMAC, liquor shop, wine shop -> layer liquor kinds wine_shop; bar, pub -> liquor kinds bar, pub; temple, mosque, church -> worship with that kind",
+  "PDS, fair price shop, ration kadai -> ration_shops; cash machine -> atms; bank branch -> banks; petrol bunk -> fuel; medical shop, chemist -> pharmacies",
+  "courts, collectorate, taluk office -> gov_offices (kinds court for courts); burial ground, mayanam -> cemeteries; overhead tank -> water_tanks",
+  "got worse, rose most, worsened, league table, ranking of wards -> change then rank (order rise); improved, fell most -> rank order fall",
+  "far from, more than N km from, no X within N km, underserved -> farthest (areas place for places, localities, streets; ward otherwise)"
 ];
+
+/** The system block, built once per world's categories, departments and zones (byte-stable: the cache reads it on every later question). */
+let sysCache: { key: string; text: string } | null = null;
+function systemFor(ctx: { cats: string[]; depts: string[]; zones?: { zone: number; name: string; lat: number; lon: number }[]; catLabels?: Map<string, string> }): string {
+  const key = JSON.stringify([ctx.cats, ctx.depts, ctx.zones ?? [], [...(ctx.catLabels ?? new Map()).entries()]]);
+  if (sysCache?.key !== key) sysCache = { key, text: system(ctx.cats, ctx.depts, ctx.zones, ctx.catLabels) };
+  return sysCache.text;
+}
+/** The system block as a plan call sends it (for the cache tests and the eval's token count). */
+export const mapSystemPrompt = systemFor;
+/** The last plan call's provider, model, tokens and time (the eval runner reads it; the app does not). */
+let lastInfo: CallInfo | null = null;
+/** The last plan call's info, cleared as it is read. */
+export function takeMapCallInfo(): CallInfo | null { const x = lastInfo; lastInfo = null; return x; }
 
 /** A plan from the AI for `text` (or `prev` edited by `text`), checked; null when it cannot be made valid. */
 export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: string[]; depts: string[]; places: { ref: string; kind: string; name: string }[]; user: string; lang: Lang; signal?: AbortSignal;
   /** the rules' plan for the parts they could read, and the words they could not */
   hint?: Plan | null; unread?: string[];
-  zones?: { zone: number; name: string; lat: number; lon: number }[] }):
+  zones?: { zone: number; name: string; lat: number; lon: number }[];
+  /** the categories' labels, for the cached prompt */
+  catLabels?: Map<string, string> }):
   Promise<{ plan: Plan } | { problems: string[] }> {
   const places = ctx.places.length ? `Places named (use these refs): ${ctx.places.map((p) => `${p.name} = ${p.kind} ${p.ref}`).join("; ")}` : "No place was recognised.";
-  const zones = ctx.zones?.length ? `ZONES: ${ctx.zones.map((z) => `${z.zone} ${z.name} (${z.lat > 13.12 ? "north" : z.lat < 13.02 ? "south" : "central"})`).join("; ")}` : "";
+  // the zones are in the cached system block now; the prompt carries only what this question adds
+  const zones = "";
   const hint = ctx.hint ? `\nTHE RULES READ IT AS: ${JSON.stringify(toWire(ctx.hint))}\nWORDS THE RULES COULD NOT USE: ${(ctx.unread ?? []).join(", ")}. Keep what the rules got right and use these words too.` : "";
   let prompt = prev
     ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic).`
     : `QUESTION: ${text}\n${places}\n${zones}${hint}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: system(ctx.cats, ctx.depts), prompt, temperature: 0, maxOutputTokens: 900, user: ctx.user, abortSignal: ctx.signal, chat: true });
+    const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: ctx.signal,
+      chat: true, feature: "map", timeoutMs: 12_000 });
+    lastInfo = r.info;
     // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
     if (r.object.understood === false) return { problems: ["not a map question"] };
     const c = checkPlan(fromWire(r.object));
@@ -103,7 +192,7 @@ const Reworded = z.object({ sentence: z.string().max(400) });
 export async function aiReword(template: string, facts: Fact[], lang: Lang, user: string, signal?: AbortSignal): Promise<string | null> {
   const allowed = new Set([...facts.map((f) => f.value), ...extractNumbers(template).map((x) => x.value)]);
   const r = await generateJson({
-    role: "fast", name: "map-word", schema: Reworded, temperature: 0.2, maxOutputTokens: 220, user, abortSignal: signal, chat: true,
+    role: "fast", name: "map-word", schema: Reworded, temperature: 0.2, maxOutputTokens: 220, user, abortSignal: signal, chat: true, feature: "map",
     system: "Reword the sentence for a District Collector in plain words, at most two sentences, in the language given. Keep every number exactly; add no number, cause or claim.",
     prompt: `LANGUAGE: ${lang === "ta" ? "Tamil (script)" : lang === "tanglish" ? "Tanglish (Tamil in Latin letters)" : "English"}\nSENTENCE: ${template}\nFACTS: ${facts.map((f) => `${f.label} = ${f.value}`).join("; ")}`
   });

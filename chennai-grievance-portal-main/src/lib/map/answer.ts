@@ -8,7 +8,7 @@ import { fmtDistance, haversineM } from "./geom";
 import { areaLabel, filterWords, runMapPlan, type Ctx, type Hit, type Near, type RunResult } from "./execute";
 import type { Plan, Step } from "./plan";
 import type { World } from "./types";
-import { CAT_TA, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
+import { CAT_TA, KIND_WORD, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
 import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
 
 export const LAYER_READY = { en: "map layer ready", ta: "வரைபட அடுக்கு தயார்", tanglish: "map layer ready" } as const;
@@ -119,9 +119,31 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     return s ? `${s.charAt(0).toUpperCase()}${s.slice(1)}.` : null;
   };
 
+  // a rule check: "wine shops within 100 m of a school or a place of worship"
+  if (show.type === "points" && show.near && last.op === "within") {
+    const lw = LAYER_WORD[show.layer];
+    const total = r.steps.find((x) => x.as === last.of)?.count ?? show.items.length;
+    count = fact("count", show.items.length, lw.en);
+    fact("total", total, `${lw.en} on the map`);
+    fact("meters", last.meters, "metres");
+    const what = last.near.map((nm) => plan.steps.find((x) => x.as === nm)).filter((x): x is Extract<Step, { op: "take" }> => x?.op === "take").map((x) => LAYER_WORD[x.layer]);
+    const d = fmtDistance(last.meters, ta ? "ta" : "en");
+    const closest = show.items[0] ? show.near[show.items[0].id] : null;
+    if (closest) fact("closest", Math.round(closest.m), "metres");
+    headline = ta ? `${n(total)} ${lw.ta} இல் ${n(count)}, ${what.map((x) => x.ta_one).join(" / ")} இலிருந்து ${d} க்குள் · ${ready}.`
+      : !count ? `None of the ${n(total)} ${lw.en} on the map is within ${d} of a ${what.map((x) => x.one).join(" or ")}.`
+        : `${n(count)} of ${n(total)} ${lw.en} ${count === 1 ? "is" : "are"} within ${d} of a ${what.map((x) => x.one).join(" or ")} · ${ready}.`;
+    const c0 = show.items[0];
+    meaning = c0 && closest ? (ta ? `மிக அருகில்: ${c0.name_ta ?? c0.name ?? lw.ta_one}, ${closest.name_ta ?? closest.name ?? ""} இலிருந்து ${fmtDistance(closest.m, "ta")}.`
+      : `The closest: ${c0.name ?? `a ${lw.one}`}, ${fmtDistance(closest.m)} from ${closest.name ?? `a ${LAYER_WORD[closest.layer].one}`}.`) : null;
+    meaning = `${meaning ?? ""} ${ta ? "இந்தத் தூரம் நீங்கள் வைத்தது; சட்டப்படியான தூரத்தை கலால் பிரிவிடம் உறுதிசெய்யவும்." : "You set this distance; confirm the legal distance with the Excise desk."}`.trim();
+    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts: [], miss: null, facts, lang };
+  }
   // "schools in Valasaravakkam": the places themselves, counted and named
   if (show.type === "points") {
-    const lw = LAYER_WORD[show.layer];
+    const t0 = plan.steps.find((x) => x.op === "take" && x.layer === show.layer) as Extract<Step, { op: "take" }> | undefined;
+    const kinds = t0?.where?.kinds?.length === 1 ? KIND_WORD[t0.where.kinds[0]] : undefined;
+    const lw = kinds ? { ...LAYER_WORD[show.layer], en: kinds.en, one: kinds.one, ta: kinds.ta, ta_one: kinds.ta } : LAYER_WORD[show.layer];
     count = fact("count", show.items.length, lw.en);
     const area = last.op === "inside" ? areaLabel(last.area, w, ctx) : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
     const inWord = last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
@@ -133,7 +155,7 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     if (count) meaning = ta ? `${gov ? `${n(gov)} அரசு. ` : ""}${named.length ? `எ.கா. ${named.join(", ")}.` : ""}`.trim() || null
       : `${gov && show.layer !== "police" && show.layer !== "fire_stations" ? `${n(gov)} ${gov === 1 ? "is" : "are"} government. ` : ""}${named.length ? `${count > named.length ? "Including" : count === 1 ? "It is" : "They are"} ${named.join(", ")}.` : ""}`.trim() || null;
     if (!count && last.op === "inside") meaning = ta ? "பகுதியை மாற்றிக் கேளுங்கள்." : "Try a nearby area or a wider radius.";
-    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning, depts: [], miss: null, facts, lang };
+    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts: [], miss: null, facts, lang };
   }
 
   switch (last.op) {
@@ -212,7 +234,17 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       count = show.areas.length;
       const top = show.areas[0];
       fact("count", count, "areas");
-      if (show.beyond != null) {
+      if (show.by === "place") {
+        fact("total", show.total, "neighbourhoods");
+        if (show.beyond != null) fact("beyond", show.beyond, "metres");
+        if (top) fact("p90", Math.round(top.p90), "metres");
+        headline = show.beyond != null
+          ? (!count ? (ta ? `எல்லா ${n(show.total)} பகுதிகளும் ${lw.ta_one} இலிருந்து ${fmtDistance(show.beyond, "ta")} க்குள்.` : `All ${n(show.total)} neighbourhoods are within ${fmtDistance(show.beyond)} of a ${lw.one}.`)
+            : ta ? `${n(show.total)} பகுதிகளில் ${n(count)}, ${lw.ta_one} இலிருந்து ${fmtDistance(show.beyond, "ta")} க்கு மேல் · ${ready}.`
+              : `${n(count)} of ${n(show.total)} neighbourhoods are more than ${fmtDistance(show.beyond)} from a ${lw.one} · ${ready}.`)
+          : top ? (ta ? `${top.label_ta} ${lw.ta_one} இலிருந்து மிகத் தொலைவில்: ${fmtDistance(top.p90, "ta")} · ${ready}.` : `${top.label} is the farthest from a ${lw.one}: ${fmtDistance(top.p90)} · ${ready}.`) : "";
+        if (top && count > 1) meaning = ta ? `அடுத்து ${show.areas.slice(1, 3).map((a) => `${a.label_ta} (${fmtDistance(a.p90, "ta")})`).join(", ")}.` : `Next: ${show.areas.slice(1, 3).map((a) => `${a.label} (${fmtDistance(a.p90)})`).join(", ")}.`;
+      } else if (show.beyond != null) {
         headline = !count
           ? (ta ? `எல்லாப் பகுதிகளும் ${lw.ta_one} இலிருந்து ${fmtDistance(show.beyond, "ta")} க்குள் உள்ளன.` : `Every ${show.by} is within ${fmtDistance(show.beyond)} of a ${lw.one} for 90 % of its ground.`)
           : ta ? `${n(count)} ${show.by === "ward" ? "வார்டுகளில்" : "மண்டலங்களில்"} ${fmtDistance(show.beyond, "ta")} க்குள் ${lw.ta_one} இல்லை · ${ready}.`
@@ -222,9 +254,10 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
         headline = ta ? `${top.label_ta} ${lw.ta_one} இலிருந்து மிகத் தொலைவில்: அதன் 90% நிலம் ${fmtDistance(top.p90, "ta")} க்குள் · ${ready}.`
           : `${top.label} is the farthest from a ${lw.one}: 90 % of it is within ${fmtDistance(top.p90)} · ${ready}.`;
       }
-      if (top && show.best) meaning = ta ? `மாவட்டத்தின் சிறந்த பகுதி ${show.best.label_ta}: ${fmtDistance(show.best.p90, "ta")}.` : `The district's best ${show.by} is ${show.best.label}: ${fmtDistance(show.best.p90)}.`;
+      if (top && show.best && show.by !== "place") meaning = ta ? `மாவட்டத்தின் சிறந்த பகுதி ${show.best.label_ta}: ${fmtDistance(show.best.p90, "ta")}.` : `The district's best ${show.by} is ${show.best.label}: ${fmtDistance(show.best.p90)}.`;
       // OpenStreetMap is not an official register: say how many it lists, once, where it matters
-      if (w.meta[show.from]?.source === "OpenStreetMap") {
+      // a layer OpenStreetMap holds only in part says so at the end instead (withPartial)
+      if (!w.meta[show.from]?.partial && w.meta[show.from]?.source === "OpenStreetMap") {
         const inside = (w.points as Record<string, { in_district: boolean }[]>)[show.from]?.filter((p) => p.in_district).length ?? 0;
         meaning = `${meaning ?? ""} ${ta ? `OpenStreetMap மாவட்டத்தில் ${inside} ${lw.ta} மட்டுமே காட்டுகிறது; விடுபட்டவை இருக்கலாம்.` : `OpenStreetMap lists ${inside} ${lw.en} in the district; any it misses would bring these distances down.`}`.trim();
       }
@@ -278,6 +311,26 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
           : `${show.a.n > show.b.n ? show.a.label : show.b.label} has ${n(Math.abs(show.a.n - show.b.n))} more.`;
       break;
     }
+    case "rank": {
+      if (show.type !== "ranked") break;
+      const rows = show.rows;
+      const unit = ta ? { ward: "வார்டுகள்", zone: "மண்டலங்கள்", taluk: "வட்டங்கள்" }[show.by] : `${show.by}s`;
+      const moved = rows.filter((x) => (show.order === "rise" ? x.delta > 0 : x.delta < 0));
+      count = fact("count", moved.length, show.order === "rise" ? "areas that went up" : "areas that went down");
+      fact("areas", rows.length, "areas with any");
+      const top = moved[0];
+      if (top) { fact("top_now", top.now, "now"); fact("top_before", top.before, "before"); fact("top_delta", Math.abs(top.delta), "difference"); if (top.pct != null) fact("top_pct", Math.abs(top.pct), "per cent"); }
+      const subjNoPer = subject(plan, w, lang);
+      const nowW = inPeriodWords(show.now), beforeW = inPeriodWords(show.before);
+      headline = !rows.length ? (ta ? `${subjNoPer}: இரு காலங்களிலும் எதுவும் இல்லை.` : `No ${subjNoPer} ${nowW} or ${beforeW}.`)
+        : !top ? (ta ? `எந்த ${unit} இலும் ${show.order === "rise" ? "அதிகரிப்பு" : "குறைவு"} இல்லை (${periodWords(show.now, "ta")}).` : `No ${show.by} went ${show.order === "rise" ? "up" : "down"}: ${subjNoPer} ${nowW} against ${beforeW}.`)
+          : ta ? `${n(moved.length)} ${unit} ${show.order === "rise" ? "அதிகரித்தன" : "குறைந்தன"}; முதலில் ${top.label_ta}: ${n(top.before)} இலிருந்து ${n(top.now)} · ${ready}.`
+            : `${n(moved.length)} ${moved.length === 1 ? show.by : unit} ${show.order === "rise" ? "got worse" : "improved"}: ${subjNoPer} ${nowW} against ${beforeW}. ${top.label} ${show.order === "rise" ? "rose" : "fell"} most, from ${n(top.before)} to ${n(top.now)} · ${ready}.`;
+      if (moved.length > 1) meaning = ta ? `அடுத்து ${moved.slice(1, 3).map((x) => `${x.label_ta} (${n(x.before)} → ${n(x.now)})`).join(", ")}.`
+        : `Next: ${moved.slice(1, 3).map((x) => `${x.label} (${n(x.before)} to ${n(x.now)})`).join(", ")}.`;
+      if (show.unassigned) meaning = `${meaning ?? ""} ${ta ? `${n(show.unassigned)} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned)} have no ${show.by} on record.`}`.trim();
+      break;
+    }
     case "change": {
       if (show.type !== "change") break;
       const a = show.now.hits.length, b = show.before.hits.length;
@@ -302,8 +355,31 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     }
   }
   if (r.leftOut && !["farthest"].includes(last.op)) facts.push({ id: "unplaced", value: r.leftOut, label: "no exact place" });
-  return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning, depts, miss, facts, lang };
+  return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning: withPartial(meaning, plan, w, lang), depts, miss, facts, lang };
 }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * A layer OpenStreetMap holds only in part (wine shops, ration shops, banks...): the answer says how many it lists and who has the full
+ * list, so a Collector never reads a gap that is really missing data ("OpenStreetMap, 31 shops, not the full list").
+ */
+export function partialNote(plan: Plan, w: World, lang: Lang): string | null {
+  const ta = isTa(lang);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const st of plan.steps) {
+    if (st.op !== "take" || seen.has(st.layer)) continue;
+    seen.add(st.layer);
+    const m = w.meta[st.layer];
+    if (!m?.partial) continue;
+    out.push(ta ? `${m.name_ta}: OpenStreetMap இல் ${n(m.count)} மட்டும், முழுப் பட்டியல் அல்ல (${m.partial.owner} இடம் முழுப் பட்டியல்).`
+      : `${m.name_en}: OpenStreetMap, ${n(m.count)} ${m.partial.what}, not the full list; ${m.partial.owner} holds the full one.`);
+  }
+  return out.length ? out.join(" ") : null;
+}
+function withPartial(meaning: string | null, plan: Plan, w: World, lang: Lang): string | null {
+  const p = partialNote(plan, w, lang);
+  return p ? `${meaning ? `${meaning} ` : ""}${p}` : meaning;
+}
 export { filterWords };
 export type { Near };

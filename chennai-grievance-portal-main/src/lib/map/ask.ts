@@ -91,6 +91,14 @@ export interface AskResponse {
     change?: { now: string[]; before: string[]; nowLabel: string; beforeLabel: string };
     areas?: { key: string; label: string; label_ta: string; p90: number; worst: { lat: number; lon: number; m: number; to: { name: string | null; lat: number; lon: number } | null } }[];
     nearest?: { origin: Place | null; pairs: { id: string | null; to: { id: string; name: string | null; m: number; lat: number; lon: number }[] }[] };
+    /** a gap answer's measure: "ward" (90 % of its ground), "zone", or "place" (a neighbourhood's own point); `total` areas measured */
+    gap?: { by: "ward" | "zone" | "place"; from: LayerId; beyond: number | null; total: number };
+    /** a ranked change, the league table: every area with any report in either window, the biggest rise (or fall) first */
+    rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; nowLabel: { en: string; ta: string }; beforeLabel: { en: string; ta: string };
+      rows: { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }[] };
+    /** a rule check: each place kept and the place it is too close to */
+    pairs?: { meters: number; items: { id: string; layer: LayerId; name: string | null; name_ta: string | null; kind: string; lat: number; lon: number;
+      near: { id: string; layer: LayerId; name: string | null; name_ta: string | null; m: number; lat: number; lon: number } }[] };
   };
   camera: CameraInput;
   shots: Shot[];
@@ -113,12 +121,15 @@ export interface AskResponse {
   followups: string[];
   ui: "open_trace" | "send" | "clear" | "export" | "visits" | null;
   uiDept: string | null;
-  asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number }[] };
+  asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number; partial?: { what: string; owner: string } | null }[] };
   ai_used: boolean;
   ms: number;
 }
 
 const ROW_CAP = 200;
+/** the categories' labels for the AI's cached prompt, built once per world */
+const labelCache = new WeakMap<object, Map<string, string>>();
+const catLabels = (w: World) => { let m = labelCache.get(w.cats); if (!m) { m = new Map([...w.cats.entries()].map(([k, v]) => [k, v.label])); labelCache.set(w.cats, m); } return m; };
 const FEATURE_CAP = 5000;
 
 declare global {
@@ -269,11 +280,11 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       plan = r.plan; defaults = r.defaults; places = r.places; edited = r.edited;
       // words the rules could not use ("kids", "by the sea", "north of the city"): the AI reads the whole question, with
       // the rules' plan as a hint; if it cannot, the rules' answer stands and the trace names the words left unused
-      if (r.unread?.length && aiStatus().available) {
+      if (r.unread?.length && aiStatus("map").available) {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-          hint: r.plan, unread: r.unread, zones: w.zones }).catch(() => null);
+          hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
         if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
@@ -281,7 +292,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       // the AI fills the same plan; without it, the kinds of questions the rules answer
       try {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
-        const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones });
+        const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
         aiUsed = true;
         if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev);
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
@@ -433,7 +444,11 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   });
   out.context.places = r.context.places;
   const within = plan.steps.find((s) => s.op === "within");
-  if (within?.op === "within") out.context.rings = out.context.points.map((p) => ({ id: p.id, lat: p.lat, lon: p.lon, r: within.meters }));
+  if (within?.op === "within") {
+    // a rule check rings the schools and places of worship (the rule's centres), not the shops it found
+    const centres = r.show.type === "points" && r.show.near ? new Set(Object.values(r.show.near).map((x) => x.id)) : null;
+    out.context.rings = out.context.points.filter((p) => !centres || centres.has(p.id)).map((p) => ({ id: p.id, lat: p.lat, lon: p.lon, r: within.meters }));
+  }
 
   const show = r.show;
   if (show.type === "groups") out.extra.groups = show.groups;
@@ -441,6 +456,17 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (show.type === "compare") out.extra.compare = { a: { label: show.a.label, label_ta: show.a.label_ta, n: show.a.n, ids: show.a.ids }, b: { label: show.b.label, label_ta: show.b.label_ta, n: show.b.n, ids: show.b.ids } };
   if (show.type === "change") out.extra.change = { now: show.now.hits.map((h) => h.inc.id), before: show.before.hits.map((h) => h.inc.id), nowLabel: show.now.period.kind, beforeLabel: show.before.period.kind };
   if (show.type === "areas") out.extra.areas = show.areas.slice(0, 50).map((a) => ({ key: a.key, label: a.label, label_ta: a.label_ta, p90: Math.round(a.p90), worst: { lat: a.worst.lat, lon: a.worst.lon, m: Math.round(a.worst.m), to: a.worst.to ? { name: a.worst.to.name, lat: a.worst.to.lat, lon: a.worst.to.lon } : null } }));
+  if (show.type === "areas") out.extra.gap = { by: show.by, from: show.from, beyond: show.beyond, total: show.total };
+  if (show.type === "ranked") {
+    const pw = (p: typeof show.now) => ({ en: periodWords(p, "en"), ta: periodWords(p, "ta") });
+    out.extra.rank = { by: show.by, order: show.order, nowLabel: pw(show.now), beforeLabel: pw(show.before), rows: show.rows.slice(0, 200) };
+    out.before = show.beforeHits.filter((h) => h.inc.pinnable).slice(0, FEATURE_CAP).map(feat);
+  }
+  if (show.type === "points" && show.near) {
+    const near = show.near;
+    out.extra.pairs = { meters: show.meters ?? 0, items: show.items.slice(0, 400).map((p) => ({ id: p.id, layer: p.layer, name: p.name, name_ta: p.name_ta, kind: p.kind, lat: p.lat, lon: p.lon,
+      near: { id: near[p.id].id, layer: near[p.id].layer, name: near[p.id].name, name_ta: near[p.id].name_ta, m: Math.round(near[p.id].m), lat: near[p.id].lat, lon: near[p.id].lon } })) };
+  }
   if (show.type === "nearest") out.extra.nearest = { origin: show.origin, pairs: show.pairs.slice(0, 500).map((p) => ({ id: p.hit?.inc.id ?? null, to: p.to.map((x) => ({ id: x.id, name: x.name, m: Math.round(x.m), lat: x.lat, lon: x.lon })) })) };
 
   // the camera's input: the plan's shape and the answer's geometry
@@ -451,6 +477,13 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (!hits.length && answer.miss) { cam.shape = "empty"; cam.focus = { id: answer.miss.id, lat: answer.miss.lat, lon: answer.miss.lon, label: answer.meaning ?? "", label_ta: answer.meaning ?? "" }; }
   else if (last.op === "compare") cam.shape = "compare";
   else if (last.op === "change") cam.shape = areas.length ? "change" : "district";
+  else if (last.op === "rank" && show.type === "ranked") {
+    // the top five risers, one after another
+    cam.shape = "hotspot";
+    cam.tour = show.rows.filter((x) => (show.order === "rise" ? x.delta > 0 : x.delta < 0) && (x.lat || x.lon)).slice(0, 5).map((x, i) => ({ id: x.key, lat: x.lat, lon: x.lon,
+      caption_en: `${i + 1}. ${x.label}: ${x.before} to ${x.now}`, caption_ta: `${i + 1}. ${x.label_ta}: ${x.before} → ${x.now}` }));
+    if (!cam.tour.length) cam.shape = "district";
+  }
   else if (last.op === "hotspot" && show.type === "hotspots") {
     cam.shape = "hotspot";
     cam.tour = show.clusters.slice(0, 5).map((c, i) => ({ id: c.id, lat: c.lat, lon: c.lon,
@@ -462,6 +495,8 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     cam.focus = { id: a.key, lat: a.worst.lat, lon: a.worst.lon, label: a.label, label_ta: a.label_ta, to: a.worst.to ? { lat: a.worst.to.lat, lon: a.worst.to.lon, label: a.worst.to.name ?? "" } : undefined };
     const wd = w.wards.find((x) => String(x.ward) === a.key);
     if (wd && show.by === "ward") cam.areas = [{ id: `ward:${wd.ward}`, box: wd.bbox, label: a.label, label_ta: a.label_ta }];
+    // the neighbourhoods beyond the distance, all in view
+    if (show.by === "place") cam.points = show.areas.slice(0, 200).map((x) => ({ lat: x.lat, lon: x.lon }));
   } else if (last.op === "nearest" && show.type === "nearest" && show.origin) {
     cam.shape = "nearest";
     cam.focus = { id: show.origin.ref, lat: show.origin.lat, lon: show.origin.lon, label: show.origin.name, label_ta: show.origin.name_ta ?? show.origin.name };
@@ -482,7 +517,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   const incidentsSeen = ctx.lockDept ? w.incidents.filter((i) => i.dept === ctx.lockDept).length : w.incidents.length;
   out.asOf = {
     now: w.now, data: w.dataAsOf,
-    layers: [...used].map((id) => w.meta[id] ? { id, en: w.meta[id].name_en, ta: w.meta[id].name_ta, source: w.meta[id].source, as_of: w.meta[id].as_of, count: w.meta[id].count }
+    layers: [...used].map((id) => w.meta[id] ? { id, en: w.meta[id].name_en, ta: w.meta[id].name_ta, source: w.meta[id].source, as_of: w.meta[id].as_of, count: w.meta[id].count, partial: w.meta[id].partial ?? null }
       : { id, en: "Incidents", ta: "சம்பவங்கள்", source: "District store", as_of: w.dataAsOf || w.now, count: incidentsSeen })
   };
   void data;

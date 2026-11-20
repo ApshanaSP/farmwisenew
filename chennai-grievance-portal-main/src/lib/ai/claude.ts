@@ -160,7 +160,7 @@ function optionals(v: unknown): number {
  * How a nullable field was written for the wire, so the reply can be read back: `blank` (a string, "" for none) or `omit`
  * (a number, a boolean, an object or a list, left out for none); `sub` for what is inside.
  */
-interface Undo { props?: Record<string, { blank?: true; omit?: true; sub?: Undo }>; items?: Undo; any?: (Undo | null)[] }
+interface Undo { props?: Record<string, { blank?: true; omit?: true; neg?: true; bool?: true; empty?: true; sub?: Undo }>; items?: Undo; any?: (Undo | null)[] }
 
 /** The non-null side of a nullable field (`type: [T, "null"]`, or anyOf of one schema and null), else null. */
 function nonNull(s: Json): Json | null {
@@ -227,6 +227,66 @@ function unNull(s: Json): { wire: Json; undo: Undo | null } {
   return { wire: out, undo: undo.props && Object.keys(undo.props).length || undo.items || undo.any ? undo : null };
 }
 
+/**
+ * Ask the Map final (opt-in per call, `sentinels`): the same schema with every field required and no unions, for a flat form such as the map's
+ * plan (40 nullable fields a step: over both limits, so it went as plain JSON). A nullable string or string enum is "" for none (as unNull), a
+ * nullable number is -1 for none (the caller's numbers are never negative), a nullable boolean is the string "true", "false" or "" for none,
+ * a nullable list is [] for none. A nullable object stays optional. The Undo puts the nulls back before zod reads the reply.
+ */
+function sentinel(s: Json): { wire: Json; undo: Undo | null } {
+  if (s.$ref) return { wire: s, undo: null };
+  const out: Json = { ...s };
+  const undo: Undo = {};
+  if (s.properties && typeof s.properties === "object") {
+    const req = new Set(Array.isArray(s.required) ? (s.required as string[]) : []);
+    const props: Json = {};
+    undo.props = {};
+    for (const [k, v] of Object.entries(s.properties as Record<string, Json>)) {
+      const n = nonNull(v);
+      if (n && n.type === "string") {
+        props[k] = hint({ ...n, ...(Array.isArray(n.enum) ? { enum: [...(n.enum as unknown[]), ""] } : {}) }, "\"\" when none");
+        undo.props[k] = { blank: true };
+        req.add(k);
+        continue;
+      }
+      if (n && (n.type === "number" || n.type === "integer")) { props[k] = hint(n, "-1 when none"); undo.props[k] = { neg: true }; req.add(k); continue; }
+      if (n && n.type === "boolean") {
+        props[k] = hint({ type: "string", enum: ["true", "false", ""], ...(n.description ? { description: n.description } : {}) }, "\"\" when none");
+        undo.props[k] = { bool: true }; req.add(k); continue;
+      }
+      if (n && n.type === "array") {
+        const inner = sentinel(n);
+        props[k] = hint(inner.wire, "[] when none");
+        undo.props[k] = { empty: true, ...(inner.undo ? { sub: inner.undo } : {}) }; req.add(k); continue;
+      }
+      if (n && typeof n.type === "string") {
+        const inner = sentinel(n);
+        props[k] = hint(inner.wire, "left out when none");
+        req.delete(k);
+        undo.props[k] = { omit: true, ...(inner.undo ? { sub: inner.undo } : {}) };
+        continue;
+      }
+      const inner = sentinel(v);
+      props[k] = inner.wire;
+      if (inner.undo) undo.props[k] = { sub: inner.undo };
+    }
+    out.properties = props;
+    out.required = Object.keys(props).filter((k) => req.has(k));
+  }
+  if (s.items && typeof s.items === "object" && !Array.isArray(s.items)) {
+    const inner = sentinel(s.items as Json);
+    out.items = inner.wire;
+    if (inner.undo) undo.items = inner.undo;
+  }
+  if (Array.isArray(s.anyOf)) {
+    const parts = (s.anyOf as Json[]).map(sentinel);
+    out.anyOf = parts.map((p) => p.wire);
+    if (parts.some((p) => p.undo)) undo.any = parts.map((p) => p.undo);
+  }
+  if (s.$defs && typeof s.$defs === "object") out.$defs = Object.fromEntries(Object.entries(s.$defs as Record<string, Json>).map(([k, v]) => [k, sentinel(v).wire]));
+  return { wire: out, undo: undo.props && Object.keys(undo.props).length || undo.items || undo.any ? undo : null };
+}
+
 /** Put the nulls back: "" where a string was blank, null where a field was left out. Changes `v` in place. */
 function restore(v: unknown, u: Undo | null | undefined): void {
   if (!u || v == null || typeof v !== "object") return;
@@ -237,6 +297,9 @@ function restore(v: unknown, u: Undo | null | undefined): void {
   for (const [k, p] of Object.entries(u.props ?? {})) {
     if (p.blank && o[k] === "") o[k] = null;
     else if (p.omit && o[k] === undefined) o[k] = null;
+    else if (p.neg && typeof o[k] === "number" && (o[k] as number) < 0) o[k] = null;
+    else if (p.bool && typeof o[k] === "string") o[k] = o[k] === "true" ? true : o[k] === "false" ? false : null;
+    else if (p.empty && Array.isArray(o[k]) && !(o[k] as unknown[]).length) o[k] = null;
     else if (p.sub) restore(o[k], p.sub);
   }
 }
@@ -263,28 +326,37 @@ function shape(v: unknown): string {
  */
 interface Wire { strict: Json | null; shape: string; undo: Undo | null; unions: number; optionals: number; rewritten: boolean }
 const schemas = new WeakMap<object, Wire>();
-function outputSchema(schema: z.ZodTypeAny): Wire {
-  let s = schemas.get(schema);
+const sentinelSchemas = new WeakMap<object, Wire>();
+function outputSchema(schema: z.ZodTypeAny, sentinels = false): Wire {
+  const cache = sentinels ? sentinelSchemas : schemas;
+  let s = cache.get(schema);
   if (!s) {
     const plain = { ...(zodSchema(schema).jsonSchema as Json) };
     delete plain.$schema;
     let closed: Json | null = openMap(plain) ? null : strict(plain), undo: Undo | null = null, rewritten = false;
     const over = (x: Json) => unions(x) > MAX_UNIONS || optionals(x) > MAX_OPTIONAL;
     if (closed && over(closed)) {
-      const r = unNull(closed);
+      // Ask the Map's flat plan: every field required, a sentinel for none (sentinel); every other caller as before (unNull)
+      const r = sentinels ? sentinel(closed) : unNull(closed);
       closed = r.wire; undo = r.undo; rewritten = true;
     }
     if (closed && over(closed)) closed = null;
     s = { strict: closed, shape: shape(plain), undo, unions: closed ? unions(closed) : unions(plain), optionals: closed ? optionals(closed) : optionals(plain), rewritten };
-    schemas.set(schema, s);
+    cache.set(schema, s);
   }
   return s;
 }
 
 /** What a schema goes out as (for tests and the build report): the path, its unions and optional parameters on the wire. */
-export function claudeWire(schema: z.ZodTypeAny): { path: "format" | "json"; unions: number; optionals: number; rewritten: boolean; schema: Json | null } {
-  const s = outputSchema(schema);
+export function claudeWire(schema: z.ZodTypeAny, sentinels = false): { path: "format" | "json"; unions: number; optionals: number; rewritten: boolean; schema: Json | null } {
+  const s = outputSchema(schema, sentinels);
   return { path: s.strict && !tooHard.has(schema) ? "format" : "json", unions: s.unions, optionals: s.optionals, rewritten: s.rewritten, schema: s.strict };
+}
+/** A reply as the wire sends it, read back to the step's schema (the nulls put back), for the tests. */
+export function claudeReadBack(schema: z.ZodTypeAny, raw: unknown, sentinels = false): unknown {
+  const v = structuredClone(raw);
+  restore(v, outputSchema(schema, sentinels).undo);
+  return v;
 }
 /** Schemas the API refused after all: asked for as plain JSON from then on. */
 const tooHard = new WeakSet<object>();
@@ -345,6 +417,12 @@ export interface ClaudeJsonArgs<T> {
   maxOutputTokens?: number;
   timeoutMs?: number;
   abortSignal?: AbortSignal;
+  /** a console step's own effort, instead of its role's (Ask the Map's plan: low) */
+  effort?: Effort;
+  /** false: answer without thinking first (Haiku 5.5 `disabled`, Sonnet 5.5 `between_tools`, at effort high or below; Opus 5.5 always thinks) */
+  think?: boolean;
+  /** a flat schema over the limits goes out with a sentinel for none instead of as plain JSON (sentinel()); Ask the Map's plan */
+  sentinels?: boolean;
 }
 export interface ClaudeJsonResult<T> {
   object: T; model: string; inputTokens: number; outputTokens: number; ms: number;
@@ -380,10 +458,14 @@ type Body = Anthropic.Beta.MessageCreateParamsNonStreaming;
  * recent turns, what was said, the time) is in the user message after it, so it never moves the prefix. Thinking and effort are
  * fixed per model and route, so a warm-up writes the very prefix a spoken turn reads.
  */
-function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: number; images?: ClaudeJsonArgs<unknown>["images"] }, model: string, wire: Wire, mode: "format" | "json" | "bare", prompt: string, maxTokens?: number): Body {
+function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: number; images?: ClaudeJsonArgs<unknown>["images"]; effort?: Effort; think?: boolean }, model: string, wire: Wire, mode: "format" | "json" | "bare", prompt: string, maxTokens?: number): Body {
   // v5 A6 (b): a Jarvis call on Haiku 5.5 answers with thinking disabled, at JARVIS_HAIKU_EFFORT
   const haiku = !a.role && NO_THINK.test(model);
-  const effort: Effort = a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as Effort) : haiku ? haikuEffort() : "low";
+  const effort: Effort = a.effort ?? (a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as Effort) : haiku ? haikuEffort() : "low");
+  // a console step that asks to answer without thinking (Ask the Map's plan): the model's own way to turn it off, where it has one
+  const off = a.role && a.think === false && ["low", "medium", "high"].includes(effort)
+    ? NO_THINK.test(model) ? { thinking: { type: "disabled" as const } } : BETWEEN_TOOLS.test(model) ? { thinking: { type: "between_tools" as const } } : {}
+    : null;
   const useFormat = mode === "format" && wire.strict != null;
   const how = mode !== "json" ? "" : `\n\nReply with only one JSON object, no prose and no code fences, every field present (null or [] where unused), in this shape:\n${wire.shape}`;
   return {
@@ -395,7 +477,7 @@ function requestBody(a: { system: string; role?: ClaudeRole; maxOutputTokens?: n
       ? [...a.images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: prompt }]
       : prompt }],
     output_config: { effort, ...(useFormat ? { format: { type: "json_schema" as const, schema: wire.strict! } } : {}) },
-    ...thinkingFor(model, !a.role, effort),
+    ...(off ?? thinkingFor(model, !a.role, effort)),
     // a request Claude's safeguards decline runs again on the model Anthropic chooses for it, inside this call (a between_tools
     // request falls back with thinking disabled where the fallback model has no between_tools: SDK 1.4 BetaFallback docs)
     ...(FALLBACKS.test(model) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {})
@@ -499,7 +581,7 @@ async function claudeAsk<T>(a: ClaudeJsonArgs<T>, model: string, usage: { input:
   const plan = compactFor(a.schema, a.role);
   const sent: z.ZodTypeAny = plan?.schema ?? a.schema;
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const sch = outputSchema(sent);
+    const sch = outputSchema(sent, !!a.sentinels);
     const useFormat = sch.strict != null && !tooHard.has(sent);
     const prompt = attempt === 0 ? a.prompt : `${a.prompt}\n\nYour previous reply did not match the schema (${lastIssue}). Reply again with one complete, valid JSON object.`;
     let res: Anthropic.Beta.BetaMessage;

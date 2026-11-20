@@ -11,7 +11,9 @@
  * - `take` has `where.kinds` (hospital, clinic, health centre...), so "hospitals" can leave out private clinics;
  * - `within.near` is a list, so "add hospitals" widens "near schools" to "near schools or hospitals";
  * - `nearest.from` may be `place:<ref>` (a resolved place), for "5 nearest police stations to Marina";
- * - `farthest.beyond_m`, for "areas with no fire station within 3 km".
+ * - `farthest.beyond_m`, for "areas with no fire station within 3 km"; `farthest.areas` "place" measures each neighbourhood;
+ * - `within.of` may be facilities too, for the rule checks ("wine shops within 100 m of a school");
+ * - `rank` ranks a change by area, for "which wards got worse" and the league table.
  */
 import { z } from "zod";
 import { LAYER_IDS, SEVS } from "./types";
@@ -65,11 +67,14 @@ export const StepSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("inside"), as: name, of: name, area: AreaRefSchema }),
   z.object({ op: z.literal("along"), as: name, of: name, line: z.string(), meters: z.number() }),
   z.object({ op: z.literal("nearest"), as: name, from: z.string(), to: name, k: z.number().int() }),
-  z.object({ op: z.literal("farthest"), as: name, areas: z.enum(["ward", "zone"]), from: name, beyond_m: z.number().nullable() }),
+  // `place`: each OpenStreetMap neighbourhood (a point) rather than a ward's ground: "neighbourhoods more than 2 km from a ration shop"
+  z.object({ op: z.literal("farthest"), as: name, areas: z.enum(["ward", "zone", "place"]), from: name, beyond_m: z.number().nullable() }),
   z.object({ op: z.literal("count_by"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "hex500"]) }),
   z.object({ op: z.literal("hotspot"), as: name, of: name }),
   z.object({ op: z.literal("compare"), as: name, of: name, a: AreaRefSchema, b: AreaRefSchema }),
-  z.object({ op: z.literal("change"), as: name, of: name, now: PeriodSchema, before: PeriodSchema })
+  z.object({ op: z.literal("change"), as: name, of: name, now: PeriodSchema, before: PeriodSchema }),
+  /** a change step's two windows counted by area and ranked by the rise (or the fall): "which 10 wards got worse this month", the league table */
+  z.object({ op: z.literal("rank"), as: name, of: name, by: z.enum(["ward", "zone", "taluk"]), order: z.enum(["rise", "fall"]) })
 ]);
 export type Step = z.infer<typeof StepSchema>;
 
@@ -127,6 +132,7 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
       problems.push(`a radius is outside ${LIMITS.minM}–${LIMITS.maxM} m`);
     if (s.op === "farthest" && s.beyond_m != null && (s.beyond_m < LIMITS.minM || s.beyond_m > 20_000)) problems.push(`${s.beyond_m} m is outside ${LIMITS.minM}–20,000 m`);
     if (s.op === "nearest" && (s.k < 1 || s.k > LIMITS.k)) problems.push(`k = ${s.k} is outside 1–${LIMITS.k}`);
+    if (s.op === "rank" && plan.steps.find((x) => x.as === s.of)?.op !== "change") problems.push(`step "${s.as}" ranks "${s.of}", which is not a change step`);
     if (s.op === "take" && s.filter?.period) periods.push(s.filter.period);
     if (s.op === "change") periods.push(s.now, s.before);
   }

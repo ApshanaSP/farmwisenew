@@ -10,7 +10,7 @@ import { LAYER_IDS, SEVS } from "./types";
 
 const AreaW = { kind: z.enum(["ward", "zone", "taluk", "point"]).nullable(), id: z.number().nullable(), code: z.string().nullable(), ref: z.string().nullable(), radius_m: z.number().nullable() };
 export const WireStep = z.object({
-  op: z.enum(["take", "within", "inside", "along", "nearest", "farthest", "count_by", "hotspot", "compare", "change"]),
+  op: z.enum(["take", "within", "inside", "along", "nearest", "farthest", "count_by", "hotspot", "compare", "change", "rank"]),
   as: z.string(),
   layer: z.enum(LAYER_IDS).nullable(),
   category: z.array(z.string()).nullable(), family: z.array(z.string()).nullable(), severity: z.array(z.enum(SEVS as [string, ...string[]])).nullable(),
@@ -21,11 +21,13 @@ export const WireStep = z.object({
     .describe("a calendar day (from midnight), week (Monday to Sunday), month or quarter, with period_offset (0 = the current one up to now, 1 = the one before) and period_days null; null = period_days counts back from now"),
   government: z.boolean().nullable(), kinds: z.array(z.string()).nullable(),
   of: z.string().nullable(), near: z.array(z.string()).nullable(), meters: z.number().nullable(), line: z.string().nullable(),
-  from: z.string().nullable(), to: z.string().nullable(), k: z.number().nullable(), areas: z.enum(["ward", "zone"]).nullable(), beyond_m: z.number().nullable(),
+  from: z.string().nullable(), to: z.string().nullable(), k: z.number().nullable(), areas: z.enum(["ward", "zone", "place"]).nullable(), beyond_m: z.number().nullable(),
   by: z.enum(["ward", "zone", "taluk", "hex500"]).nullable(),
   area_kind: AreaW.kind, area_id: AreaW.id, area_code: AreaW.code, area_ref: AreaW.ref, area_radius_m: AreaW.radius_m,
   b_kind: AreaW.kind, b_id: AreaW.id, b_code: AreaW.code, b_ref: AreaW.ref, b_radius_m: AreaW.radius_m,
-  before_days: z.number().nullable(), before_offset: z.number().nullable()
+  before_days: z.number().nullable(), before_offset: z.number().nullable(),
+  /** rank: the biggest rise first, or the biggest fall */
+  order: z.enum(["rise", "fall"]).nullable()
 });
 export type WireStep = z.infer<typeof WireStep>;
 export const WirePlan = z.object({
@@ -39,7 +41,7 @@ const EMPTY: Omit<WireStep, "op" | "as"> = {
   layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null, period_calendar: null,
   government: null, kinds: null, of: null, near: null, meters: null, line: null, from: null, to: null, k: null, areas: null, beyond_m: null, by: null,
   area_kind: null, area_id: null, area_code: null, area_ref: null, area_radius_m: null, b_kind: null, b_id: null, b_code: null, b_ref: null, b_radius_m: null,
-  before_days: null, before_offset: null
+  before_days: null, before_offset: null, order: null
 };
 
 const areaOut = (a: AreaRef, p: "area" | "b") => a.kind === "ward" || a.kind === "zone" ? { [`${p}_kind`]: a.kind, [`${p}_id`]: a.id }
@@ -79,6 +81,7 @@ export function toWire(plan: Plan): WirePlan {
         case "compare": return { ...base, of: s.of, ...areaOut(s.a, "area"), ...areaOut(s.b, "b") } as WireStep;
         case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null,
           before_offset: s.before.kind === "last_days" || isCalendar(s.before) ? s.before.offset : null };
+        case "rank": return { ...base, of: s.of, by: s.by, order: s.order };
       }
     })
   };
@@ -107,6 +110,7 @@ export function fromWire(w: WirePlan): Plan {
       case "change": return { op: "change", as: s.as, of: s.of ?? "", now: period ?? { kind: "last_days", days: 7, offset: 0 },
         before: cal ? ({ kind: cal.kind, offset: Math.round(s.before_offset ?? cal.offset + 1) } as CalendarPeriod)
           : { kind: "last_days", days: Math.round(s.before_days ?? s.period_days ?? 7), offset: Math.round(s.before_offset ?? 1) } };
+      case "rank": return { op: "rank", as: s.as, of: s.of ?? "", by: s.by === "zone" || s.by === "taluk" ? s.by : "ward", order: s.order === "fall" ? "fall" : "rise" };
     }
   });
   // a model sometimes names the first step as the answer: the answer is the last step unless that one only takes a layer

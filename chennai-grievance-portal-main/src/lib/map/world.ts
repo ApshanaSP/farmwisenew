@@ -17,7 +17,7 @@ import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
 import type { Entry, ResolverData } from "./resolve";
 import { CAT_TA } from "./words";
-import type { CondPlace, Hotspot, Inc, LayerMeta, LineFeat, LineLayer, NewsDoc, PointFeat, PointLayer, PolyFeat, Sev, WardGeo, Work, World } from "./types";
+import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
 
 type Row = Record<string, any>;
 async function q(sql: string, params: unknown[] = []): Promise<Row[]> {
@@ -38,7 +38,7 @@ declare global {
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 7;
+const WORLD_VERSION = 8;
 
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
@@ -118,7 +118,7 @@ async function loadBase(key: string): Promise<Base> {
     police_station: "police", lake: "lakes_store", river_gauge: "gauges", weather_station: "gauges", air_quality_station: "gauges",
     canal: "pwd_assets", drain: "pwd_assets", river_stretch: "pwd_assets", bund: "pwd_assets", sluice: "pwd_assets", bridge: "pwd_assets", gate_site: "pwd_assets"
   };
-  const points = { schools: [], colleges: [], hospitals: [], fire_stations: [], police: [], rail_metro: [], osm_places: [], lakes_store: [], gauges: [], pwd_assets: [] } as Record<PointLayer, PointFeat[]>;
+  const points = Object.fromEntries(POINT_LAYERS.map((l) => [l, [] as PointFeat[]])) as Record<PointLayer, PointFeat[]>;
   for (const f of facRows) {
     const layer = STORE_KIND[String(f.type)];
     if (!layer) continue;
@@ -126,7 +126,7 @@ async function loadBase(key: string): Promise<Base> {
       in_district: Number(f.in_district) === 1, ward: null });
   }
   // ---- OpenStreetMap points
-  for (const layer of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places"] as const) {
+  for (const layer of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", ...COLLECTOR_LAYERS] as const) {
     for (const f of readLayer(layer)) {
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties;
@@ -154,10 +154,11 @@ async function loadBase(key: string): Promise<Base> {
   meta.lakes_store = store("lakes_store", "PWD lakes", "பொதுப்பணித்துறை ஏரிகள்", points.lakes_store.length);
   meta.gauges = store("gauges", "Gauges and stations", "அளவீட்டு நிலையங்கள்", points.gauges.length);
   meta.pwd_assets = store("pwd_assets", "PWD water works (points)", "பொதுப்பணி நீர்க் கட்டமைப்புகள்", points.pwd_assets.length);
-  for (const id of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", "roads", "waterways", "water_bodies"]) {
+  for (const id of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", "roads", "waterways", "water_bodies", ...COLLECTOR_LAYERS]) {
     const m = om[id];
     if (m) meta[id] = { id: id as LayerMeta["id"], name_en: m.name_en, name_ta: m.name_ta, kind: m.kind, source: "OpenStreetMap", licence: m.licence, attribution: m.attribution,
-      as_of: m.as_of, count: id === "roads" ? lines.roads.length : id === "waterways" ? lines.waterways.length : m.count };
+      as_of: m.as_of, count: id === "roads" ? lines.roads.length : id === "waterways" ? lines.waterways.length : m.count,
+      partial: m.partial && typeof m.partial.what === "string" ? { what: String(m.partial.what), owner: String(m.partial.owner ?? "") } : null };
   }
 
   const cats = new Map(categories().map((c) => [c.code, { label: c.label, label_ta: CAT_TA[c.code] ?? null, family: c.family, lead: c.lead }]));

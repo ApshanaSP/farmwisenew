@@ -24,18 +24,22 @@ export interface Group { key: string; label: string; label_ta: string; n: number
 export interface Cluster { id: string; n: number; lat: number; lon: number; ids: string[]; wards: number[]; place: string | null; open: number }
 export interface AreaScore { key: string; label: string; label_ta: string; p90: number; worst: { lat: number; lon: number; m: number; to: Near | null }; lat: number; lon: number }
 export interface AreaCount { ref: AreaRef; label: string; label_ta: string; n: number; ids: string[] }
+/** One area of a ranked change: its count in each window, the difference, the change in per cent (null under RANK_MIN_BASE before) */
+export interface RankRow { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }
 
 export type Coll =
   | { type: "incidents"; hits: Hit[] }
-  | { type: "points"; layer: LayerId; items: PointFeat[] }
+  // `near`: for a rule check (facilities within N m of other facilities), each kept place's nearest one of those
+  | { type: "points"; layer: LayerId; items: PointFeat[]; near?: Record<string, Near>; meters?: number }
   | { type: "lines"; layer: LayerId; items: LineFeat[] }
   | { type: "polys"; layer: LayerId; items: PolyFeat[] }
   | { type: "nearest"; origin: Place | null; layer: LayerId; pairs: { hit: Hit | null; to: Near[] }[]; hits: Hit[] }
-  | { type: "areas"; by: "ward" | "zone"; from: LayerId; areas: AreaScore[]; best: AreaScore | null; beyond: number | null }
+  | { type: "areas"; by: "ward" | "zone" | "place"; from: LayerId; areas: AreaScore[]; best: AreaScore | null; beyond: number | null; total: number }
   | { type: "groups"; by: "ward" | "zone" | "taluk" | "hex500"; groups: Group[]; hits: Hit[]; unassigned: string[] }
   | { type: "hotspots"; method: "stored" | "dbscan"; clusters: Cluster[]; hotWards: { ward: number; z: number; n: number }[]; hits: Hit[] }
   | { type: "compare"; a: AreaCount; b: AreaCount; hits: Hit[] }
-  | { type: "change"; now: { period: Period; hits: Hit[] }; before: { period: Period; hits: Hit[] }; hits: Hit[] };
+  | { type: "change"; now: { period: Period; hits: Hit[] }; before: { period: Period; hits: Hit[] }; hits: Hit[] }
+  | { type: "ranked"; by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; rows: RankRow[]; now: Period; before: Period; hits: Hit[]; beforeHits: Hit[]; unassigned: number };
 
 export interface StepOut { as: string; op: Step["op"]; count: number; note_en: string; note_ta: string; layer: LayerId | null; ids: string[] }
 export interface RunResult {
@@ -221,12 +225,12 @@ function pointLayer(w: World, layer: LayerId): PointFeat[] | null {
 }
 
 /** Nearest facility to p among point, polygon and line collections, within `max` metres (Infinity = any). */
-function nearestIn(p: LatLon, sets: Coll[], idx: Map<Coll, GridIndex<PointFeat>>, max: number): Near | null {
+function nearestIn(p: LatLon, sets: Coll[], idx: Map<Coll, GridIndex<PointFeat>>, max: number, self: string | null = null): Near | null {
   let best: Near | null = null;
   for (const s of sets) {
     if (s.type === "points") {
       const g = idx.get(s)!;
-      const r = Number.isFinite(max) ? g.within(p, max)[0] : g.nearest(p, 1)[0];
+      const r = (Number.isFinite(max) ? g.within(p, max) : g.nearest(p, 2)).find((x) => x.item.id !== self);
       if (r && (!best || r.m < best.m)) best = { id: r.item.id, name: r.item.name, name_ta: r.item.name_ta, layer: s.layer, m: r.m, lat: r.item.lat, lon: r.item.lon };
     } else if (s.type === "polys") {
       for (const f of s.items) {
@@ -256,7 +260,8 @@ const countOf = (c: Coll): number =>
     : c.type === "areas" ? (c.beyond != null ? c.areas.length : c.areas.length)
       : c.type === "groups" ? c.groups.length
         : c.type === "hotspots" ? c.clusters.length
-          : c.hits.length;
+          : c.type === "ranked" ? c.rows.length
+            : c.hits.length;
 const idsOf = (c: Coll): string[] =>
   c.type === "points" || c.type === "lines" || c.type === "polys" ? c.items.map((x) => x.id)
     : c.type === "areas" ? c.areas.map((a) => a.key)
@@ -337,6 +342,39 @@ function wardGrid(rings: Pair[][], stepM: number, centroid: LatLon): LatLon[] {
   for (let la = s + dLat / 2; la < n; la += dLat) for (let lo = wst + dLon / 2; lo < e; lo += dLon) if (pointInPolygon({ lat: la, lon: lo }, rings)) out.push({ lat: la, lon: lo });
   return out.length ? out : [centroid];
 }
+/** Each ward's 200 m grid, built once per world (the farthest step built all 200 on every question). */
+const gridCache = new WeakMap<object, Map<number, LatLon[]>>();
+function gridsOf(w: World): Map<number, LatLon[]> {
+  let g = gridCache.get(w.wards);
+  if (!g) { g = new Map(w.wards.map((wd) => [wd.ward, wardGrid(wd.rings, 200, wd)])); gridCache.set(w.wards, g); }
+  return g;
+}
+
+/** The fewest reports before for which a rank row gives a per cent change (as the console's MIN_PCT_BASE). */
+export const RANK_MIN_BASE = 5;
+/**
+ * Both windows of a change counted by recorded ward, zone or taluk, ranked by the rise (or the fall), then by the larger count now, then by key.
+ * Areas with nothing in either window are left out. Pure.
+ */
+export function rankRows(now: Hit[], before: Hit[], by: "ward" | "zone" | "taluk", order: "rise" | "fall", w: World): { rows: RankRow[]; unassigned: number } {
+  const keyOf = (i: Inc) => (by === "ward" ? (i.ward != null ? String(i.ward) : null) : by === "zone" ? (i.zone != null ? String(i.zone) : null) : i.taluk);
+  const m = new Map<string, { now: string[]; before: number }>();
+  let unassigned = 0;
+  for (const h of now) { const k = keyOf(h.inc); if (k == null) { unassigned++; continue; } (m.get(k) ?? m.set(k, { now: [], before: 0 }).get(k)!).now.push(h.inc.id); }
+  for (const h of before) { const k = keyOf(h.inc); if (k == null) continue; (m.get(k) ?? m.set(k, { now: [], before: 0 }).get(k)!).before++; }
+  const rows: RankRow[] = [...m.entries()].map(([key, v]) => {
+    let label = key, label_ta = key, lat = 0, lon = 0;
+    if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); label = `Ward ${key}`; label_ta = `வார்டு ${key}`; lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
+    else if (by === "zone") { const z = w.zones.find((x) => String(x.zone) === key); label = z ? `${z.name} (Zone ${key})` : `Zone ${key}`; label_ta = z ? `${z.name} (மண்டலம் ${key})` : `மண்டலம் ${key}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0; }
+    else { const t = w.taluks.find((x) => x.code === key); label = `${t?.name ?? key} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? key} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0; }
+    const a = v.now.length, b = v.before;
+    return { key, label, label_ta, lat, lon, now: a, before: b, delta: a - b, pct: b >= RANK_MIN_BASE ? Math.round(((a - b) / b) * 100) : null, ids: v.now };
+  });
+  const sign = order === "rise" ? -1 : 1;
+  rows.sort((x, y) => sign * (x.delta - y.delta) || y.now - x.now || x.key.localeCompare(y.key, "en", { numeric: true }));
+  return { rows, unassigned };
+}
+
 function pct(sorted: number[], q: number): number {
   if (!sorted.length) return NaN;
   const i = Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1));
@@ -409,9 +447,30 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         break;
       }
       case "within": {
-        const src = incHits(s.of);
         const sets = s.near.map(need);
         for (const c of sets) if (c.type !== "points" && c.type !== "polys" && c.type !== "lines") throw new PlanError(`"within" needs facilities, roads or water to measure from.`);
+        const of = need(s.of);
+        // a rule check: places (wine shops) within N m of other places (schools, places of worship). A place never counts as its own neighbour.
+        if (of.type === "points") {
+          const near: Record<string, Near> = {};
+          const items: PointFeat[] = [];
+          for (const p of of.items) {
+            const nb = nearestIn(p, sets, idx, s.meters, p.id);
+            if (nb) { near[p.id] = nb; items.push(p); }
+          }
+          items.sort((a, b) => near[a.id].m - near[b.id].m || a.id.localeCompare(b.id));
+          out = { type: "points", layer: of.layer, items, near, meters: s.meters };
+          idx.set(out, new GridIndex(items));
+          const used = new Set(Object.values(near).map((x) => x.id));
+          for (const c of sets) if (c.type === "points") context.points.push(...c.items.filter((p) => used.has(p.id)));
+          context.points.push(...items);
+          const what = sets.map((c) => LAYER_WORD[layerOf(c)!]);
+          const lw = LAYER_WORD[of.layer];
+          n = note(`Kept the ${lw.en} within ${fmtDistance(s.meters)} of any ${what.map((x) => x.one).join(" or ")} (${items.length} of ${of.items.length}; ${used.size} ${used.size === 1 ? "place is" : "places are"} that close to one). Straight-line distance between the map points.`,
+            `ஏதேனும் ${what.map((x) => x.ta_one).join(" அல்லது ")} இலிருந்து ${fmtDistance(s.meters, "ta")} க்குள் உள்ள ${lw.ta} (${of.items.length} இல் ${items.length}). நேர்கோட்டுத் தூரம்.`);
+          break;
+        }
+        const src = incHits(s.of);
         const placed = src.filter((h) => h.inc.pinnable);
         leftOut += src.length - placed.length;
         const hits: Hit[] = [];
@@ -556,9 +615,12 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           const worst = ds.reduce((b, x) => (x.r!.m > b.r!.m ? x : b), ds[0]);
           return { p90: pct(sorted, 0.9), worst: { lat: worst.p.lat, lon: worst.p.lon, m: worst.r!.m, to: { id: worst.r!.item.id, name: worst.r!.item.name, name_ta: worst.r!.item.name_ta, layer: from.layer, m: worst.r!.m, lat: worst.r!.item.lat, lon: worst.r!.item.lon } } };
         };
-        const grids = new Map(w.wards.map((wd) => [wd.ward, wardGrid(wd.rings, 200, wd)]));
         let areas: AreaScore[];
-        if (s.areas === "ward") {
+        const grids = s.areas === "place" ? new Map<number, LatLon[]>() : gridsOf(w);
+        if (s.areas === "place") {
+          // each neighbourhood OpenStreetMap names inside the district, measured from its own point
+          areas = w.points.osm_places.filter((p) => p.in_district && p.name).map((p) => ({ key: p.id, label: p.name!, label_ta: p.name_ta ?? p.name!, lat: p.lat, lon: p.lon, ...scoreOf([p]) }));
+        } else if (s.areas === "ward") {
           areas = w.wards.map((wd) => ({ key: String(wd.ward), label: `Ward ${wd.ward}`, label_ta: `வார்டு ${wd.ward}`, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
         } else {
           areas = w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${z.name} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
@@ -567,9 +629,16 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         areas.sort((a, b) => b.p90 - a.p90 || a.key.localeCompare(b.key, "en", { numeric: true }));
         const best = [...areas].sort((a, b) => a.p90 - b.p90)[0] ?? null;
         const kept = s.beyond_m != null ? areas.filter((a) => a.p90 > s.beyond_m!) : areas;
-        out = { type: "areas", by: s.areas, from: from.layer, areas: kept, best, beyond: s.beyond_m };
+        out = { type: "areas", by: s.areas, from: from.layer, areas: kept, best, beyond: s.beyond_m, total: areas.length };
         const top = kept[0];
         context.points.push(...from.items.filter((p) => kept.slice(0, 5).some((a) => a.worst.to?.id === p.id)));
+        if (s.areas === "place") {
+          n = top
+            ? note(`Measured each of ${areas.length} neighbourhoods (OpenStreetMap's point for it) against the nearest ${lw.one}. ${top.label}: ${fmtDistance(top.p90)}.${s.beyond_m != null ? ` ${kept.length} are more than ${fmtDistance(s.beyond_m)} away.` : ""} Straight-line distance.`,
+              `${areas.length} பகுதிகள் ஒவ்வொன்றும் அருகிலுள்ள ${lw.ta_one} உடன் அளக்கப்பட்டது. ${top.label_ta}: ${fmtDistance(top.p90, "ta")}.${s.beyond_m != null ? ` ${kept.length} பகுதிகள் ${fmtDistance(s.beyond_m, "ta")} க்கு மேல்.` : ""}`)
+            : note(`Every one of ${areas.length} neighbourhoods is within ${fmtDistance(s.beyond_m ?? 0)} of a ${lw.one}.`, `எல்லாப் பகுதிகளும் ${fmtDistance(s.beyond_m ?? 0, "ta")} க்குள் உள்ளன.`);
+          break;
+        }
         n = top
           ? note(`Measured every ${s.areas}'s ground on a 200 m grid against the nearest ${lw.one}; a ${s.areas}'s distance is how far 90 % of its ground is within. ${top.label}: 90 % within ${fmtDistance(top.p90)}; the district's best ${s.areas} is ${fmtDistance(best!.p90)}.${s.beyond_m != null ? ` ${kept.length} ${s.areas}s are beyond ${fmtDistance(s.beyond_m)}.` : ""}`,
             `ஒவ்வொரு ${s.areas === "ward" ? "வார்டின்" : "மண்டலத்தின்"} நிலமும் 200 மீ கட்டத்தில் அருகிலுள்ள ${lw.ta_one} உடன் அளக்கப்பட்டது. ${top.label_ta}: 90% நிலம் ${fmtDistance(top.p90, "ta")} க்குள்.`)
@@ -671,6 +740,18 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         out = { type: "change", now: { period: s.now, hits: now }, before: { period: s.before, hits: before }, hits: now };
         n = note(`Counted the same ${inPeriodWords(s.now)} (${now.length}) and ${inPeriodWords(s.before)} (${before.length}).`,
           `${periodWords(s.now, "ta")} (${now.length}), ${periodWords(s.before, "ta")} (${before.length}).`);
+        break;
+      }
+      case "rank": {
+        const c = need(s.of);
+        if (c.type !== "change") throw new PlanError(`"rank" ranks a change between two periods.`);
+        const { rows, unassigned } = rankRows(c.now.hits, c.before.hits, s.by, s.order, w);
+        out = { type: "ranked", by: s.by, order: s.order, rows, now: c.now.period, before: c.before.period, hits: c.now.hits, beforeHits: c.before.hits, unassigned };
+        const unit = { ward: ["ward", "wards", "வார்டுகள்"], zone: ["zone", "zones", "மண்டலங்கள்"], taluk: ["taluk", "taluks", "வட்டங்கள்"] }[s.by];
+        const top = rows[0];
+        const moved = rows.filter((x) => (s.order === "rise" ? x.delta > 0 : x.delta < 0)).length;
+        n = note(`Counted both windows by recorded ${unit[0]} and ranked the ${unit[1]} by the ${s.order} (${moved} of ${rows.length} went ${s.order === "rise" ? "up" : "down"})${top ? `; first ${top.label}: ${top.before} to ${top.now}` : ""}.${unassigned ? ` ${unassigned} have no ${unit[0]} on record.` : ""}`,
+          `இரு காலங்களும் ${unit[2]} வாரியாக எண்ணப்பட்டு ${s.order === "rise" ? "அதிகரிப்பு" : "குறைவு"} படி வரிசைப்படுத்தப்பட்டன${top ? `; முதலில் ${top.label_ta}: ${top.before} இலிருந்து ${top.now}` : ""}.`);
         break;
       }
     }
