@@ -22,7 +22,14 @@
 | Typecheck, lint, build | — | clean, no errors, build passes |
 | Live questions (TEST_LOG_FINAL.md) | — | every checked count equals the independent count after the fixes |
 
-**AI comparison (Claude Haiku 5.5 against the current providers): not measured.** The Anthropic key in the portal's `.env` is refused (401) and the Bedrock keys have expired. With the free providers on 45 dev questions: Gemini answered 11 (10 correct, 8–14 s each), the rest were "busy"; Groq ran out of its per-minute allowance (old code and new code runs were still in progress at the end). Estimated Haiku cost per plan from the token sizes: about US$0.0004 to 0.0006 (2,700 cached tokens at US$0.01 a million, about 1,000 output tokens at US$0.50 a million); not measured. To measure: put a working key in `.env`, then `set AI_MAP_PROVIDER=anthropic&& npx vitest run --config vitest.live.config.ts src/lib/map/mapai.live.ts`.
+**AI plan step on the 45 dev questions (`eval/map-final/dev.json`, scored by `mapai.live.ts`, 15 s between questions):**
+
+| Code and provider | Correct | Notes |
+|---|---|---|
+| Old code (`de01e264`), Groq (today's live answerer: Bedrock's keys have expired) | **6 of 45** | it has no Collector layers, no rank, no gap per neighbourhood, so most of these questions cannot be planned |
+| New code, Groq | **21 of 45** | Groq answered 29; the other 16 were "busy" (its free per-minute limit). Its misses: a parent family instead of the exact category (2), rank read as count by ward (1), a Tanglish question tagged Tamil (1), a rule check read as a list (1). Median 2.9 s, p90 10.1 s |
+| New code, Gemini (free) | 10 of the 11 it answered | 34 were "busy"; 8–14 s each |
+| New code, Claude Haiku 5.5 | **not measured** | the Anthropic key in this worktree's `.env` is refused (401) | Estimated Haiku cost per plan from the token sizes: about US$0.0004 to 0.0006 (2,700 cached tokens at US$0.01 a million, about 1,000 output tokens at US$0.50 a million); not measured. To measure: put a working key in `.env`, then `set AI_MAP_PROVIDER=anthropic&& npx vitest run --config vitest.live.config.ts src/lib/map/mapai.live.ts`.
 
 US$ spent on Claude in this work: 0 (every call was refused before billing).
 
