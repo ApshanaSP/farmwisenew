@@ -1764,7 +1764,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!lastMiss.current) misses.current = 0;
     lastMiss.current = false;
     // a greeting or the name alone ("Hi Jarvis", "vanakkam", "Jarvis, are you there?"): answered at once, no model
-    if (!original && !askOnce && !pendingB && isGreeting(said)) { greetRef.current(/[஀-௿]/.test(said) || /(vanakkam|vannakam|epdi|eppadi)/i.test(said) ? "ta" : listenLangRef.current === "ta" ? "ta" : "en"); return; }
+    if (!original && !askOnce && !pendingB && isGreeting(said)) { greetRef.current(/[஀-௿]/.test(said) || /\b(vanakkam|vannakam|epdi|eppadi)\b/i.test(said) ? "ta" : listenLangRef.current === "ta" ? "ta" : "en"); return; }
     // an answer to the one question
     if (askOnce && !original) {
       const t = said.toLowerCase();
