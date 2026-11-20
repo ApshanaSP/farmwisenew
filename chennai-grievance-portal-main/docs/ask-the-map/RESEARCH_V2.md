@@ -1,0 +1,69 @@
+# Ask the Map v2: research
+
+21 November 2026. What similar products and government projects do, what a District Collector would use, and what this build takes. Each source was read through a web search on 21 Nov 2026; where a search result was the only evidence, it says so. Vendors' own pages describe their products; nothing here was tested by us unless it says so.
+
+## 1. Products that answer map questions in plain language
+
+| Product | What it does (as the source says) | What we take |
+|---|---|---|
+| **Esri ArcGIS AI assistants** ([What's new, Oct 2025](https://www.esri.com/arcgis-blog/products/arcgis-online/geoai/whats-new-in-ai-assistants-october-2025), [ArcNews](https://www.esri.com/about/newsroom/arcnews/ai-assistants-in-arcgis-provide-practical-help-and-give-useful-results), [Enterprise 12.2](https://www.esri.com/arcgis-blog/products/arcgis-enterprise/geoai/ai-features-now-available-in-arcgis-enterprise-12-2)) | Assistants in Map Viewer, Experience Builder, Hub and the Instant Apps "Data Explorer" (natural-language GIS); most are beta or preview. An Experience Builder app lets people ask questions of a configured app; a Hub assistant answers from the site's public data. | The pattern we already follow: the AI works inside a fixed app with fixed data and tools, not free GIS. From Esri's Dashboards and time slider: **time as a control on the map** (feature 1) and **a printable view of the current answer** (feature 4). |
+| **Google Earth AI, Geospatial Reasoning** ([Google blog](https://blog.google/technology/research/new-updates-and-more-access-to-google-earth-ai/), [Google Research](https://research.google/blog/putting-earth-ai-to-work-geospatial-agents-for-our-planets-biggest-challenges/)) | Gemini-based agents that chain Earth AI models (weather, population, imagery) to answer multi-step questions; trusted-tester access. The research blog reports its agent scoring 0.82 against 0.50 for plain Gemini on Google's own Q&A benchmark (Google's figure, not checked). | The lesson matches ours: a model that plans and calls fixed tools beats a model that answers directly. We keep "AI plans, the server counts". Gemini in Google Maps: I found only consumer search features (Oct 2024); nothing a district office could use. |
+| **Felt AI** ([AI assistant help](https://help.felt.com/felt-ai/ai-assistant), [conversational SQL](https://felt.com/blog/unlocking-sql-at-scale-felt-ai-adds-conversational-querying), [prompting tips](https://help.felt.com/felt-ai/prompting-tips)) | Plain-language requests become SQL the user can inspect; results become a map layer; queries are read-only; maps are shared by link. | **Show what was understood** before trusting it (we show the plan as chips and now also the spelling we corrected); **share by link** (feature 4). We do not let a model write SQL. |
+| **CARTO AI Agents** ([docs](https://docs.carto.com/carto-user-manual/ai-agents), [Agentic GIS](https://carto.com/blog/agentic-gis-bringing-ai-driven-spatial-analysis-to-everyone)) | GIS staff set guardrails, data and validation rules; business users ask; the agent runs catchment and spatial-join steps. Public preview. | The same split: the Collector asks, the typed plan is the guardrail, `checkPlan` the validation. |
+| **Kepler.gl** ([time playback](https://docs.kepler.gl/docs/user-guides/h-playback)) | A time filter with a playback bar at the bottom of the map; the bar is a histogram of points by time. Limit: one timestamp field. | **Feature 1, "Play the period"**: a bar of daily counts under the answer, a play button, the map shows the pins day by day. Our incidents have one time (first reported), the same limit; the counts come from the server. |
+| **Microsoft Planetary Computer (Pro)** ([samples](https://learn.microsoft.com/mt-mt/azure/planetary-computer/data-visualization-samples)) | Satellite and climate catalogues with visualisation configs. | Nothing for now; Apshana's Then-and-now imagery already covers the Collector's imagery need. Could not confirm district-scale features. |
+| **Mapbox / MapLibre** | WebGL vector maps. | See section 4 (stay on Leaflet). |
+
+## 2. Government projects a Collector already knows
+
+| Project | What it does (as the source says) | What we take |
+|---|---|---|
+| **PM Gati Shakti, District Master Plan** ([Collector handbook, Meghalaya Planning](https://megplanning.gov.in/Circulars/Handbook%20for%20District%20Collector,PM%20Gati%20Shakti%20NMP%20for%20Area%20Development%20Planning.pdf), [NeGD case study](https://negd.gov.in/wp-content/uploads/2025/11/Ready-to-publish-PM-Gati-Shakti-NMP-Case-Study-Final-Draft-01-10-2025-1.pdf), [PIB](https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/oct/doc20241012415101.pdf)) | A district portal (trial launched 15 Oct 2024 in 27 aspirational districts, per parliament answers quoted in search results) for infrastructure gap analysis, "measure proximity" and "Go/No-Go areas" across 585+ layers from 43 ministries. | **Feature 3, "Draw an area and ask"**: the officer draws their own area (a site, a proposed shop location, a flood pocket) and asks about it, as Gati Shakti marks an area and checks what is in and near it. Gap analysis we built in the final version. |
+| **NITI Aayog, Aspirational Districts (Champions of Change)** | Ranks districts by monthly improvement on indicators (described in the previous research; not re-read today). | **Feature 2, "Ward scorecard"**: one card per ward with its numbers, its rank among the 200 wards, and the change on the month before. |
+| **Andhra Pradesh RTGS, CORE dashboard** ([Wikipedia](https://en.wikipedia.org/wiki/Real_Time_Governance_Society), [NCeG presentation](https://www.nceg.gov.in/assets/pdf/Plenary-5-CORE-Dashboard-Presentation_Secretary%20Presentation_V5.pdf)) | A real-time executive dashboard aggregating departments' data; GIS with satellite, weather, CCTV and IoT for disaster monitoring (secondary sources; I found no public technical documentation of its GIS layers). | Department-wise views and "who holds most" already exist (the glance tiles). The scorecard shows the department holding most cases in the ward. |
+| **TNGIS (Tamil Nadu GIS, TNeGA)** ([TNeGA](https://tnega.tn.gov.in/tn-gis), [portal](https://tngis.tn.gov.in/)) | About 200 to 350 layers collated from state departments (sources differ by year); each department owns its data; government staff register through their department's nodal GIS officer; commercial use needs TNeGA's approval. | The owner should ask TNeGA for the departments' layers (ration shops, TASMAC outlets, PHCs) instead of OpenStreetMap's partial ones. Added to the owner decisions. |
+| **Mudhalvarin Mugavari (CM Helpline, 1100)** ([DT Next](https://www.dtnext.in/news/tamilnadu/new-dept-mudhalvarin-mugavari-formed), [AI tracking](https://www.dtnext.in/amp/story/news/tamilnadu/tamil-nadu-ai-to-help-track-status-of-cm-helpline-complaints)) | Merges the CM's special cell, the helpline and IIPGCMS; citizens track petitions on "My Dashboard"; the state planned an AI chatbot and voicebot (timing not confirmed). | Petitions are what the officer asks about; the scorecard's "past deadline" and "from citizens" counts mirror what the CM's cell reviews. |
+| **Bhuvan (NRSC) and NIC Bharat Maps** ([NRSC thematic](https://www.nrsc.gov.in/EOP_ThematicMaps_overview), [Bharat Maps](https://informaticsweb.nic.in/sites/default/files/Bharat%20Maps%2C%20A%20Multi-layer%20GIS%20Platform.pdf)) | Thematic layers as OGC services (Bhuvan says its data is for thematic presentation, not legal use); Bharat Maps is a multi-scale base map with WMS/WFS and a viewer that joins a CSV to district polygons. | "Your lists" already joins an officer's table to places. Bhuvan's flood layers could be added as a WMS overlay later (outside access needed). |
+| **NYC 311 maps** ([service request maps](https://www.nyc.gov/site/311reporting/311-reports/service-request-maps.page), [Council 311 data](https://council.nyc.gov/data/311-services)) | A default map of last month's requests by community district, a detailed map filtered by month, agency and type; the Council's district pages show top request types per district. | The **ward scorecard** (top types, by department) and the **month as the unit of time** in the playback. |
+| **Singapore OneMap** ([SLA](https://sla.gov.sg/geoworks/sla-products/onemap), [APIs](https://www.developer.tech.gov.sg/products/categories/data-and-apis/onemap-apis/overview)) | The national authoritative map with free geocoding, reverse geocoding and routing (registration needed). | The lesson for Chennai: an authoritative address and place index matters more than any AI. Our resolver's place list (GCC areas, OSM places, streets) is the stand-in; loose spellings are now read (section 3). |
+| **UK** | I could not confirm a UK national "ask the map" product in today's searches; data.police.uk's street-level crime map (monthly, by neighbourhood) is the known pattern, not re-read today. | Monthly comparisons, already in the league table. |
+
+## 3. Understanding people like a human would
+
+What the products above say about loose input: Esri and Felt both publish "prompting tips", i.e. they expect users to rephrase; a Collector typing on a phone will not. The console's Ask District IQ already corrects spelling toward its own vocabulary (`lib/assistant/spell.ts`); Ask the Map did not use it and only corrected single place words of 5+ letters.
+
+This build adds a map speller (`lib/map/spell.ts`):
+
+- Corrects only toward the map's own words: layer and category words (English and Tanglish), the shape words (nearest, farthest, compare, hotspots, got worse), and place names (localities, zones, taluks, neighbourhoods, roads).
+- Two measures: edit distance (a swapped pair counts once) and a sound key for Tamil names written in English (zh/l, th/t, dh/d, sh/s, ee/i, oo/u, doubled letters, c/k, y/i), so "velacheri", "adayar", "mylapur", "tasmak", "nungambakam" all reach their names.
+- Guards: words of three letters or fewer are never changed; four-letter words only by one dropped letter; real English words are left alone; Tanglish words are left alone; a different first letter costs the whole allowance.
+- When one reading is clearly best, the answer says so ("Read 'adayar' as Adyar"); when two are equally close, it asks "Did you mean …?" with one chip per reading instead of guessing.
+- Questions the rules still cannot read go to the AI with the corrected text.
+
+## 4. Leaflet or MapLibre?
+
+**Decision: stay on Leaflet.**
+
+| | Leaflet (today) | MapLibre GL JS + OpenFreeMap / Protomaps |
+|---|---|---|
+| Cost and keys | Free; Esri imagery and OSM raster tiles | Free; [OpenFreeMap](https://openfreemap.org/quick_start/) has no keys, no registration and no request limits, but is offered as-is and may change ([Nuxt guide](https://scripts.nuxt.com/scripts/maplibre/guides/styles-and-providers)) |
+| What it would gain us | — | Smooth zoom, vector labels in Tamil, 3D buildings and terrain, WebGL for 100,000+ points |
+| What it would cost | — | Rewriting `SatMap.tsx` (916 lines), `answerLayers.ts` (386), the legend, the drawing tools, Apshana's map tools and Then-and-now swipe (final, not to be reworked), and every test that drives them |
+| Do we need it now? | Answers draw at most 5,000 pins (pixel-grid clusters); the satellite base map is raster either way | Not for any feature in this build |
+
+Moving would risk every existing map feature for gains the Collector would not see in a review. If vector tiles are wanted later, the low-risk path is a MapLibre base layer inside Leaflet (OpenFreeMap documents a MapLibre-GL-Leaflet binding), keeping every Leaflet layer as it is.
+
+## 5. The four features chosen, and why
+
+Ranked by what a Collector would use in the weekly review:
+
+1. **Play the period (time slider).** "Did it start after the rain on Tuesday?" is the first follow-up to any count. Kepler.gl's playback, ArcGIS's time slider and NYC 311's month filter all put time on the map. Ours: a bar of daily counts under the answer (the server's counts), Play/Pause, drag to a day; the map shows only that day's pins (or every day up to it).
+2. **Ward scorecard.** The Collector reviews by ward and zone; Aspirational Districts ranks by indicator and change; NYC Council pages show each district's top issues. Ours: ask "ward 178 scorecard" or press Scorecard on a ward's brief: open, past deadline, severe, from citizens, the last 30 days against the 30 before, the top issues, the departments, the rank among the 200 wards, and the nearest services. All numbers from the server; printable.
+3. **Draw an area and ask.** Gati Shakti's proximity and Go/No-Go checks start from an area someone marks. The console had a circle; officers asked for their own shapes (encroachment pockets, a market street). Ours: draw a polygon (click the corners), then ask anything about it ("open complaints in the area I drew", "banks inside it"); the plan gets a `shape` area the server checks point by point.
+4. **Share and print the answer.** Felt and ArcGIS share maps by link; the Collector forwards answers to department heads and prints for meetings. Ours: "Copy link" gives a console link that reopens the same question (the plan, not the data: whoever opens it sees today's numbers and only what their role allows), and "Print brief" makes one page with the headline, the map of the answer (SVG), the numbers and the top rows.
+
+Weighed and left: side-by-side compare (the existing "compare A and B" answer and Then-and-now cover most of it); isochrones (needs a road network router; the free public OSRM/Valhalla servers are not for production use, and straight lines are already said as such).
+
+## Sources
+
+All links in the tables above, read through web searches on 21 Nov 2026. Search summaries were used only for what their linked page says; claims I could not confirm are marked as such.
