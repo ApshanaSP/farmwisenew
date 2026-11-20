@@ -71,7 +71,7 @@ function SourceList({ c }: { c: Console }) {
   const ok = rows.filter((r) => r.status === "ok").length;
   return (
     <>
-      <p className="sub">{ok} of {real} live sources healthy{generated ? `; ${generated} generated ${generated === 1 ? "feed is" : "feeds are"} test data and not counted` : ""}. Added sources refresh on their own interval (daily by default); real feeds from the district intelligence pipeline are refreshed hourly; generated ones are not collected at all.
+      <p className="sub">{ok} of {real} live sources healthy{generated ? `; ${generated} generated ${generated === 1 ? "feed is" : "feeds are"} test data and not counted` : ""}. Added sources refresh on their own interval (daily by default; the live news feeds every 10 minutes); real feeds from the district intelligence pipeline are refreshed hourly; generated ones are not collected at all.
         Every run is logged, and failures show the reason.</p>
       <div className="tbl-wrap">
         <table>
@@ -86,7 +86,8 @@ function SourceList({ c }: { c: Console }) {
                     <small className="dim" style={{ display: "block", fontWeight: 400 }}>{/^https?:/.test(s.url) ? <a href={s.url} target="_blank" rel="noreferrer" className="lnk" style={{ fontWeight: 500 }}>{s.url.replace(/^https?:\/\//, "").slice(0, 48)}</a> : s.url}</small>
                     {s.auth !== "none" && <small className="dim" style={{ display: "block" }}><I n="shield" /> Signs in as {s.username} ({s.auth}){s.session_expires_at ? ` · session until ${fmtShort(s.session_expires_at)}` : ""}</small>}
                   </td>
-                  <td className="dim">{KIND[s.kind] ?? s.kind}{s.mapped && <small style={{ display: "block", color: "var(--accent-2)" }} title="Set up by the onboarding agent: runs with its saved field mapping, no AI calls"><I n="flow" /> Agent mapping</small>}</td>
+                  <td className="dim">{KIND[s.kind] ?? s.kind}{["rss", "html", "json"].includes(s.kind) && Number(s.refresh_minutes) > 0 && Number(s.refresh_minutes) < 60 &&
+                    <small style={{ display: "block", color: "var(--accent-2)" }} title="Read on its own every few minutes, between the hourly builds"><I n="refresh" /> Live · every {Number(s.refresh_minutes)} min</small>}{s.mapped &&<small style={{ display: "block", color: "var(--accent-2)" }} title="Set up by the onboarding agent: runs with its saved field mapping, no AI calls"><I n="flow" /> Agent mapping</small>}</td>
                   <td><span className={`st ${cls}`}>{st}</span>{s.last_error && s.status !== "ok" && <small className="dim" title={s.error_detail ?? undefined} style={{ display: "block", whiteSpace: "normal", maxWidth: 220 }}>{s.last_error}</small>}</td>
                   <td className="dim">{s.newest ? fmtShort(s.newest) : "—"}</td>
                   <td className="num">{Number(s.rows ?? 0).toLocaleString("en-IN")}</td>
@@ -155,7 +156,7 @@ function AddSource({ c, done }: { c: Console; done: () => void }) {
       <div className="row3">
         <label>Type<select value={f.kind} onChange={(e) => set("kind", e.target.value)}><option value="auto">Detect automatically</option><option value="rss">RSS / Atom feed</option><option value="html">Web page (headlines)</option><option value="json">JSON API</option></select></label>
         <label>Sign-in<select value={f.auth} onChange={(e) => set("auth", e.target.value)}><option value="none">Public, no login</option><option value="form">Login form (username + password)</option><option value="basic">HTTP basic</option><option value="token">API token</option></select></label>
-        <label>Refresh every<select value={f.refreshMinutes} onChange={(e) => set("refreshMinutes", e.target.value)}>{[15, 30, 60, 180, 360, 1440].map((m) => <option key={m} value={m}>{m < 60 ? `${m} minutes` : m === 60 ? "hour" : m === 1440 ? "day" : `${m / 60} hours`}</option>)}</select></label>
+        <label>Refresh every<select value={f.refreshMinutes} onChange={(e) => set("refreshMinutes", e.target.value)}>{[10, 15, 30, 60, 180, 360, 1440].map((m) => <option key={m} value={m}>{m < 60 ? `${m} minutes` : m === 60 ? "hour" : m === 1440 ? "day" : `${m / 60} hours`}</option>)}</select></label>
       </div>
       {f.auth === "form" && (
         <div className="row3">

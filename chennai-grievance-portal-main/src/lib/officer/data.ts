@@ -31,6 +31,7 @@ import { pastDueSql } from "@/lib/reference/metrics";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 import { followupDept } from "@/lib/collector/followupdept";
+import { liveMeta } from "@/lib/live/state";
 
 type Row = Record<string, any>;
 
@@ -393,7 +394,8 @@ export async function officerPulse(dept: DeptProfile) {
     collectorFeedback(dept.code, { period: "quarterly", zone: null, taluk: null }, 1)
   ]);
   const updated = await refreshInfo(meta.exported_at ?? null, []);
-  return { now, exportedAt: meta.exported_at ?? null, newCount: Number(c?.new ?? 0), lastDecision: fb[0]?.at ?? null, updatedAt: updated.at };
+  // live: the live lane's version (lib/live/state.ts); the officer console follows its IMD part (imdV)
+  return { now, exportedAt: meta.exported_at ?? null, newCount: Number(c?.new ?? 0), lastDecision: fb[0]?.at ?? null, updatedAt: updated.at, live: liveMeta() };
 }
 
 /** Current IST wall-clock time, "YYYY-MM-DD HH:MM:SS" (decisions carry real times, not the pipeline's as-of). */

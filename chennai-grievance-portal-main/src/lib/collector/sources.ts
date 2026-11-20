@@ -143,7 +143,7 @@ export async function addSource(s: NewSource, actor: string) {
       `INSERT INTO ${ops("sources")} (name, url, kind, auth, login_url, user_field, pass_field, username, secret_enc, refresh_minutes, created_by, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
       [s.name.slice(0, 128), s.url, kind, s.auth ?? "none", s.loginUrl || null, s.userField || null, s.passField || null,
-        s.username || null, s.secret ? encryptSecret(s.secret) : null, Math.max(15, Math.min(1440, s.refreshMinutes ?? 60)), actor]
+        s.username || null, s.secret ? encryptSecret(s.secret) : null, Math.max(10, Math.min(1440, s.refreshMinutes ?? 60)), actor]
     );
     await auditIn(conn, actor, "source:add", "sources", res.insertId, null, { name: s.name, url: s.url, kind, auth: s.auth ?? "none" });
     return res;
@@ -157,7 +157,7 @@ export async function updateSource(id: number, patch: { enabled?: boolean; refre
   if (!before) throw new Error("Source not found.");
   await inTransaction(async (conn) => {
     if (patch.enabled !== undefined) await conn.query(`UPDATE ${ops("sources")} SET enabled = ? WHERE source_id = ?`, [patch.enabled ? 1 : 0, id]);
-    if (patch.refreshMinutes) await conn.query(`UPDATE ${ops("sources")} SET refresh_minutes = ? WHERE source_id = ?`, [Math.max(15, Math.min(1440, patch.refreshMinutes)), id]);
+    if (patch.refreshMinutes) await conn.query(`UPDATE ${ops("sources")} SET refresh_minutes = ? WHERE source_id = ?`, [Math.max(10, Math.min(1440, patch.refreshMinutes)), id]);
     await auditIn(conn, actor, "source:update", "sources", id, before, patch);
   });
 }
@@ -227,6 +227,9 @@ export function runDueSources() {
   if (Date.now() - lastSweep < 60_000) return;
   lastSweep = Date.now();
   (async () => {
+    // the live lane's news feeds (lib/live/news.ts: every 10 minutes) are set up once, before the first sweep
+    const liveNews = await import("@/lib/live/news");
+    await liveNews.ensureLiveNews();
     const due = await q(
       `SELECT source_id FROM ${ops("sources")} WHERE enabled = 1 AND kind IN ('rss', 'html', 'json', 'agmarknet')
        AND (last_run_at IS NULL
@@ -234,7 +237,11 @@ export function runDueSources() {
          OR (refresh_minutes >= 1440 AND NOW() >= TIMESTAMP(CURDATE(), '06:00:00') AND last_run_at < TIMESTAMP(CURDATE(), '06:00:00'))
          OR (refresh_minutes < 1440 AND last_run_at < NOW() - INTERVAL refresh_minutes MINUTE))`
     );
+    if (!due.length) return;
+    const before = await liveNews.newsMark();
     for (const d of due) await runSource(d.source_id, "scheduler").catch(() => {});
+    // what the sweep added reaches the open consoles at their next 20-second check
+    await liveNews.newsAfterSweep(before).catch(() => {});
   })().catch((e) => console.warn("source sweep skipped:", e.message));
 }
 

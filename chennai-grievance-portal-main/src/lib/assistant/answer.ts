@@ -76,7 +76,7 @@ export interface ChartSpec {
 // --------------------------------------------------------- console actions --
 
 export const CONSOLE_ACTIONS = ["filter_zone", "filter_dept", "filter_taluk", "filter_cat", "set_period", "open_incident", "open_story",
-  "open_briefing", "save_briefing", "show_on_map"] as const;
+  "open_briefing", "save_briefing", "show_on_map", "show_city"] as const;
 export type ConsoleActionName = (typeof CONSOLE_ACTIONS)[number];
 export interface ConsoleAction {
   action: ConsoleActionName;
@@ -89,6 +89,8 @@ export interface ConsoleAction {
   id?: string | null;
   /** show_on_map from a map answer: Ask the Map's plan, run again on the console's map */
   plan?: unknown;
+  /** show_city: the Overview map's live Traffic view, or a Rain tab (flood, power, metro) */
+  view?: "traffic" | "flood" | "power" | "metro" | "rain" | null;
 }
 
 // ------------------------------------------------------------------- cards --

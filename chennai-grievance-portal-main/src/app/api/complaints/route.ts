@@ -22,7 +22,9 @@ import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 const COMPLAINT_BODY_LIMIT = 32 * 1024;
 
 /** The same citizen's identical complaint (title, details, ward) filed in the last two minutes, if any. */
-async function sameComplaintJustFiled(userId: number, title: string, description: string, ward: number) {
+// no ward in the match: the server may correct the submitted ward from the map pin, so a retry of the same filing
+// would carry a different ward than the stored one
+async function sameComplaintJustFiled(userId: number, title: string, description: string) {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT c.id, c.complaint_code, d.name AS department_name, COALESCE(cs.label, ct.name) AS type_name, cc.name AS category_name
        FROM complaints c
@@ -30,9 +32,9 @@ async function sameComplaintJustFiled(userId: number, title: string, description
        LEFT JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id
        LEFT JOIN complaint_categories cc ON cc.id = cs.category_id
        LEFT JOIN complaint_types ct ON ct.id = c.complaint_type_id
-      WHERE c.user_id = ? AND c.title = ? AND c.description = ? AND c.ward_number = ? AND c.created_at >= NOW() - INTERVAL 2 MINUTE
+      WHERE c.user_id = ? AND c.title = ? AND c.description = ? AND c.created_at >= NOW() - INTERVAL 2 MINUTE
       ORDER BY c.id DESC LIMIT 1`,
-    [userId, title, description, ward]
+    [userId, title, description]
   );
   return rows[0] ?? null;
 }
@@ -48,6 +50,10 @@ export async function POST(req: NextRequest) {
         { error: "Please sign in to file a complaint." },
         { status: 401 }
       );
+    }
+    // complaints are filed by citizens; a staff session (officer, Collector) would file one under a staff account
+    if (session.role !== "citizen") {
+      return NextResponse.json({ error: "Complaints are filed from a citizen account." }, { status: 403 });
     }
 
     // each try counts, per account and per address, before the body is read or the store touched (hunt2-sec-12: no limit at all, and every
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest) {
     // one filing at a time per citizen: a double click (or a retry after a slow network) registered the same complaint
     // twice; the second request now waits for the first, finds it and gets the same complaint number back
     release = await oneAtATime(`complaint:${session.userId}`);
-    const same = await sameComplaintJustFiled(session.userId, data.title, data.description, data.wardNumber);
+    const same = await sameComplaintJustFiled(session.userId, data.title, data.description);
     if (same) {
       giveBackComplaintTry(session.userId, req.headers); // the same complaint sent twice files nothing new
       return NextResponse.json({

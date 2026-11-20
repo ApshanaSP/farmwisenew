@@ -185,6 +185,10 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
         // a map answer runs its plan again on the Overview's map, at the same view
         if (a.plan && c.askOnMap) { c.askOnMap({ plan: a.plan as Plan }); break; }
         if (a.zone) c.setZone(a.zone); c.setPage("overview"); break;
+      case "show_city":
+        // live traffic, or a Rain tab, on the Overview's map
+        if (c.openCity) c.openCity(a.view === "traffic" ? { kind: "traffic" } : { kind: "rain", lens: a.view === "power" || a.view === "metro" ? a.view : "flood" });
+        break;
     }
     if (!keepOpen) onClose();
   }, [c, onClose]);

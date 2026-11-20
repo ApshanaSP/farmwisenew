@@ -20,6 +20,8 @@ export interface AssistantHost {
   geo: MapGeo | null;
   /** runs a map answer's plan on the console's own map (Ask the Map); absent where the host has no such map */
   askOnMap?: (q: { plan: import("@/lib/map/plan").Plan }) => void;
+  /** opens the live Traffic view or a Rain tab on the console's map; absent where the host has no such map */
+  openCity?: (v: { kind: "traffic" } | { kind: "rain"; lens: "flood" | "power" | "metro" }) => void;
   setZone(z: number | null): void;
   setDept(code: string | null): void;
   setTaluk(t: string | null): void;

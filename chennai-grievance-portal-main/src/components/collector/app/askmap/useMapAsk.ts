@@ -3,7 +3,8 @@
 /**
  * Ask the Map's state on a console: the question, the plan (the conversation's state, kept per tab), the answer, the
  * camera's cue and what the panel is pointing at. One instance per console (the Collector's shell, the officer's
- * Board); the map and the panel both read it, so the answer survives "Back to overview" and a page change.
+ * Board); the map and the panel both read it. "Back to overview" sets the answer aside (the map shows the whole
+ * overview again) and keeps the chat; opening Ask the Map again brings the answer back.
  *
  * The conversation is a chat: a question joins it the moment it is asked (a pending turn), and keeps its place when
  * the answer fails or the question opens Rain & flooding instead. It is kept per tab (sessionStorage, without the
@@ -125,7 +126,11 @@ const UI_NOTE: Record<string, [string, string]> = {
 };
 
 export function useMapAsk(context: () => MapAskContext): MapAsk {
-  const [grown, setGrown] = useState(false);
+  const [grown, setGrownState] = useState(false);
+  /** the grown state as of the last call (a ref, so an answer arriving after "Back to overview" knows it is not shown) */
+  const grownRef = useRef(false);
+  /** the answer set aside by "Back to overview": the overview map is shown in full, and the answer comes back when Ask the Map opens again */
+  const parked = useRef<AskResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resp, setResp] = useState<AskResponse | null>(null);
@@ -157,7 +162,32 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
   const seq = useRef(turns.reduce((m, t) => Math.max(m, t.id), 0));
   const planRef = useRef(plan);
   planRef.current = plan;
+  const respRef = useRef(resp);
+  respRef.current = resp;
   const ctl = useRef<AbortController | null>(null);
+
+  /**
+   * "Back to overview" (and Esc, and opening Rain) sets the answer aside: its marks leave the map and the map returns to
+   * the whole district (SatMap flies back when the answer goes). The chat is kept; opening Ask the Map again shows the
+   * same answer where it was.
+   */
+  const setGrown = useCallback((v: boolean) => {
+    if (v === grownRef.current) return;
+    grownRef.current = v;
+    setGrownState(v);
+    if (!v) {
+      parked.current = respRef.current ?? parked.current;
+      setResp(null); setSpot(null); setFocus(null); setRoute(null);
+      return;
+    }
+    const p = parked.current;
+    parked.current = null;
+    if (p && !respRef.current) {
+      setResp(p);
+      setTookOver(false);
+      setCue({ seq: ++seq.current, index: 0, move: true });
+    }
+  }, []);
 
   /**
    * Asks the server. The question joins the chat at once (`into`: a turn already in it, asked again in its place);
@@ -200,7 +230,11 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         setUiCue({ seq: ++seq.current, ui: a.ui, dept: a.uiDept });
         return a;
       }
-      setResp(a);
+      // the city now (live traffic, rain, flood streets, power, trains): the answer is said here, and the console opens the
+      // view that shows it on the map (the Traffic view or a Rain tab); a console without it keeps the answer in the chat
+      if (a.city) window.dispatchEvent(new CustomEvent("diq:open-city", { detail: a.city.view }));
+      // asked while the map is back on the overview: kept for when Ask the Map opens again, not drawn now
+      if (grownRef.current) setResp(a); else parked.current = a;
       set({ pending: false, resp: a, plan: a.plan, error: null, note: null });
       setSpot(null);
       setFocus(null);
@@ -223,6 +257,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
 
   const clearAll = useCallback(() => {
     ctl.current?.abort();
+    parked.current = null;
     setResp(null); setPlan(null); setTurnsState([]); setSpot(null); setFocus(null); setHover(null); setError(null); setTraceOpen(false); setShowBefore(false); setRoute(null);
     save(PLAN_KEY, null);
     save(TURNS_KEY, []);

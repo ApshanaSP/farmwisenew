@@ -51,12 +51,20 @@ async function anySession(request: NextRequest): Promise<JwtPayload | null> {
   return null;
 }
 
+/**
+ * An address on the host the browser asked for. request.nextUrl names 127.0.0.1 "localhost", so a redirect built
+ * from it moved a user of http://127.0.0.1:3000 to another site (see skipMiddlewareUrlNormalize in next.config.js).
+ */
+export function sameHost(request: NextRequest, path: string): string {
+  const host = request.headers.get("host") ?? "";
+  if (!/^[A-Za-z0-9.\-]+(:\d{1,5})?$|^\[[0-9A-Fa-f:.]+\](:\d{1,5})?$/.test(host)) return new URL(path, request.nextUrl).toString();
+  const fwd = request.headers.get("x-forwarded-proto")?.split(",")[0].trim();
+  const proto = fwd === "https" || fwd === "http" ? fwd : request.nextUrl.protocol.replace(":", "");
+  return `${proto}://${host}${path}`;
+}
+
 function toLogin(request: NextRequest, pathname: string) {
-  const url = request.nextUrl.clone();
-  url.pathname = "/login";
-  url.search = "";
-  url.searchParams.set("redirect", pathname);
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(sameHost(request, `/login?redirect=${encodeURIComponent(pathname)}`));
 }
 
 /**
@@ -107,10 +115,7 @@ export async function middleware(request: NextRequest) {
   } else if (PUBLIC_ONLY_PREFIXES.some((p) => pathname.startsWith(p))) {
     // registering / resetting a password is a citizen flow; a signed-in citizen goes home
     if (await portalSession(request, "citizen")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/citizen";
-      url.search = "";
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(sameHost(request, "/citizen"));
     }
   }
   // /login is always reachable, so another role can sign in alongside existing sessions.

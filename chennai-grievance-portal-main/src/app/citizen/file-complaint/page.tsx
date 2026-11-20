@@ -138,6 +138,7 @@ export default function FileComplaintPage() {
 
   // Step 2: location (verified GCC Area -> Locality -> Street)
   const [zones, setZones] = useState<ZoneOption[]>([]);
+  const [zonesLoading, setZonesLoading] = useState(true);
 
 
   const [zoneId, setZoneId] = useState("");
@@ -205,6 +206,11 @@ export default function FileComplaintPage() {
   useEffect(() => {
     async function init() {
       const meRes = await fetch("/api/auth/me");
+      // signed out (or the session was revoked elsewhere): sign in first, not after four steps of typing
+      if (meRes.status === 401) {
+        window.location.href = "/login?redirect=/citizen/file-complaint";
+        return;
+      }
       if (meRes.ok) {
         const meData = await meRes.json();
         setMe(meData.user);
@@ -241,12 +247,14 @@ export default function FileComplaintPage() {
       }
       setCheckedSession(true);
     }
-    init();
+    // a network failure still opens the form (nothing is prefilled); the skeleton must not stay forever
+    init().catch(() => setCheckedSession(true));
 
     fetch("/api/locations/zones")
       .then((r) => r.json())
       .then((d) => setZones(d.zones || []))
-      .catch(() => setZones([]));
+      .catch(() => setZones([]))
+      .finally(() => setZonesLoading(false));
 
     fetch("/api/complaint-taxonomy")
       .then((r) => r.json())
@@ -848,7 +856,7 @@ export default function FileComplaintPage() {
                     <label className="form-label" htmlFor="zone">Zone<span className="text-red-600">*</span></label>
                     <Combobox id="zone" required noun="zone"
                       options={zones.map((z) => ({ value: String(z.id), label: `Zone ${z.zone_number} — ${z.zone_name}` }))}
-                      value={zoneId} onChange={setZoneId} loading={zones.length === 0} />
+                      value={zoneId} onChange={setZoneId} loading={zonesLoading} />
                     {autofilled.has("zone") && (
                       <p className="mt-1.5 inline-flex items-start gap-1.5 text-xs text-emerald-700"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />Set from the map pin.</p>
                     )}

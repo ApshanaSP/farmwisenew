@@ -77,6 +77,7 @@ import type { StudioContext } from "../studio/Dataset";
 import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import { confirmLine } from "@/lib/thunai/say";
+import { greetLine, isGreeting } from "@/lib/thunai/greet";
 import { stageShownText } from "@/lib/thunai/shown";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
@@ -515,6 +516,23 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (!ok) setPhase(ph);
     } else setPhase(ph);
   }, [outMode, rate, voiceName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** "Hi Jarvis", "Jarvis": a greeting said at once, no model, in the Collector's language; then it listens for the request */
+  const greetN = useRef(0);
+  const lastGreet = useRef(0);
+  const greet = useCallback((lang: Lang) => {
+    // the full greeting the first time in ten minutes, a short "yes?" after that
+    if (Date.now() - lastGreet.current > 10 * 60_000) greetN.current = 0;
+    lastGreet.current = Date.now();
+    const l: Lang = lang === "ta" ? "ta" : "en";
+    const text = greetLine(l, new Date(), greetN.current++);
+    setBrain({ by: "instant", model: null, ms: 0 }); // eslint-disable-line @typescript-eslint/no-use-before-define
+    hud.set({ answer: text, doing: "" });
+    out(text, l, "ready", NO_FIGURES);
+    engagedNow(); // eslint-disable-line @typescript-eslint/no-use-before-define
+  }, [out]); // eslint-disable-line react-hooks/exhaustive-deps
+  const greetRef = useRef(greet);
+  greetRef.current = greet;
 
   /** the same words in the other language, shown under the reply (fetched after it, so the answer is never slower) */
   /** the other language written with the answer (a screen's own Tamil and English), used instead of a translation */
@@ -1226,6 +1244,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const d = document as Document & { startViewTransition?: (cb: () => void) => unknown };
     if (d.startViewTransition && !reduced() && stageRef.current) d.startViewTransition(() => apply()); else apply();
     stageRef.current = withDrafts;
+    // the city now: the Overview's map opens the view that shows it (live traffic, or a Rain tab) behind the screen
+    if (doc.recipe === "city") {
+      const q = String((doc.slots as { q?: unknown }).q ?? "all");
+      window.dispatchEvent(new CustomEvent("diq:open-city", { detail: q === "traffic" || q === "all" ? { kind: "traffic" } : { kind: "rain", lens: q === "power" || q === "metro" ? q : "flood" } }));
+    }
     return withDrafts;
   };
 
@@ -1740,6 +1763,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // misunderstandings count only in a row (PERSONA.md rule 8): after a turn that went through, the count starts again
     if (!lastMiss.current) misses.current = 0;
     lastMiss.current = false;
+    // a greeting or the name alone ("Hi Jarvis", "vanakkam", "Jarvis, are you there?"): answered at once, no model
+    if (!original && !askOnce && !pendingB && isGreeting(said)) { greetRef.current(/[஀-௿]/.test(said) || /\b(vanakkam|vannakam|epdi|eppadi)\b/i.test(said) ? "ta" : listenLangRef.current === "ta" ? "ta" : "en"); return; }
     // an answer to the one question
     if (askOnce && !original) {
       const t = said.toLowerCase();
@@ -2613,6 +2638,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     else if (a.action === "open_story") c.openStories();
     else if (a.action === "open_briefing") c.setPage("briefing");
     else if (a.action === "show_on_map") { if (a.plan && c.askOnMap) c.askOnMap({ plan: a.plan as never }); else { if (a.zone) c.setZone(a.zone); c.setPage("overview"); } }
+    else if (a.action === "show_city" && c.openCity) c.openCity(a.view === "traffic" ? { kind: "traffic" } : { kind: "rain", lens: a.view === "power" || a.view === "metro" ? a.view : "flood" });
   };
 
   // --------------------------------------------------------------- Jarvis mode --

@@ -9,10 +9,11 @@ import { referenceWorld } from "./world";
 
 const world = { ...WORLD, ...referenceWorld() };
 const h = (s: string) => crypto.createHash("sha256").update(s).digest("hex").slice(0, 16);
-// v4's system prompt and schema per bundle, hashed at START (f830efbd) before any v5 change to round.ts
+// v4's system prompt and schema per bundle, hashed at START (f830efbd) before any v5 change to round.ts; the screens, stage, data and wide schemas again on
+// 19 Nov 2026, when the "city" recipe (lib/city: live traffic, rain, flood streets, power, trains) joined RECIPES
 const V4: Record<string, [string, string]> = {
-  screens: ["3cbe6b15f8477dd1", "0683ebcfeefe3dac"], console: ["3a3ccf5e6053428a", "c550cd73ef9785f3"], stage: ["aa88ea1e48e54905", "57d5592c3d25733c"],
-  data: ["31a86d10b65e31df", "d0e2222db4f577b4"], memory: ["f24163327f5f6aa9", "0db44591525e7b2b"], wide: ["9d3efac15c674dd9", "02bad9b0e031d49a"]
+  screens: ["3cbe6b15f8477dd1", "a56f52d181582c3c"], console: ["3a3ccf5e6053428a", "c550cd73ef9785f3"], stage: ["aa88ea1e48e54905", "91b1fde14562df8f"],
+  data: ["31a86d10b65e31df", "ae799d4b9c0544ae"], memory: ["f24163327f5f6aa9", "0db44591525e7b2b"], wide: ["9d3efac15c674dd9", "eb492cb560b102f3"]
 };
 const BUNDLES = ["screens", "console", "stage", "data", "memory", "wide"] as const;
 const LOOKUP_TEXT = "A fact no screen or step shows";

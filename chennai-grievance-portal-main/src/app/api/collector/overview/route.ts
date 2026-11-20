@@ -3,6 +3,7 @@ import { collectorSession, failed } from "@/lib/collector/guard";
 import { jsonWithEtag } from "@/lib/etag";
 import { asOf, exportMeta, overview, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 import { refuseBadFilter } from "@/lib/collector/filters";
+import { liveMeta } from "@/lib/live/state";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest) {
     // (Source and Data Studio refreshes run on the server's own schedule, lib/scheduler.ts, not from reads.)
     if (p.get("meta")) {
       const [now, meta] = await Promise.all([asOf(), exportMeta()]);
-      return NextResponse.json({ now, exportedAt: meta.exported_at ?? null });
+      // live: the live lane's version (lib/live/state.ts), which moves when a live IMD warning or news report arrives
+      return NextResponse.json({ now, exportedAt: meta.exported_at ?? null, live: liveMeta() });
     }
     return jsonWithEtag(req, await overview(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
       { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }), { "Cache-Control": "private, no-cache" });

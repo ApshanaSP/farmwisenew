@@ -32,9 +32,10 @@ export interface RainLayer {
   /** metro and suburban lines, in their own colours; with a level they are Metro's places (0 grey: not hit in the
    *  chosen rain, 1–3 thicker the worse), and clicking one picks it */
   rails?: { id: string; color: string; path: [number, number][]; tip: string; level?: 0 | 1 | 2 | 3 }[];
-  /** live traffic-flow tiles (URL template), and live incidents */
+  /** live traffic-flow tiles (URL template), and live incidents: drawn moving in the direction of travel (slower the worse
+   *  the jam), coloured by level; a clickable one picks "point" with its id */
   tiles?: string | null;
-  live?: { id: string; path: [number, number][]; tip: string; flooding: boolean }[];
+  live?: { id: string; path: [number, number][]; tip: string; flooding: boolean; level?: "very" | "congested" | "slow" | "flood" | "accident" | "closed" | "works"; pick?: boolean; faint?: boolean }[];
   /** what is chosen: drawn on top */
   sel: { kind: RainPickKind; id: string } | null;
   /** the camera: each new seq frames these points (null: the whole district) */

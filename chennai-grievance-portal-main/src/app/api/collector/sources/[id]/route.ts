@@ -12,7 +12,7 @@ const sourceId = parseStoreId;
 const invalid = () => NextResponse.json({ error: "Invalid source id." }, { status: 400 });
 const PatchSchema = z.object({
   enabled: z.boolean().optional(),
-  refreshMinutes: z.number().int().min(15).max(1440).optional()
+  refreshMinutes: z.number().int().min(10).max(1440).optional()
 }).refine((b) => b.enabled !== undefined || b.refreshMinutes !== undefined, { message: "Say what to change." });
 
 /** POST: run the source now. PATCH: pause/resume or change the refresh interval. DELETE: remove an added source. */

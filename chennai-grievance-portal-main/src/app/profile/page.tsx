@@ -51,6 +51,7 @@ export default function ProfilePage() {
   const [completeness, setCompleteness] = useState(0);
   const [zones, setZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,12 +103,27 @@ export default function ProfilePage() {
     loadProfile();
     fetch("/api/locations/zones")
       .then((r) => r.json())
-      .then((d) => setZones(d.zones || []));
+      .then((d) => setZones(d.zones || []))
+      .catch(() => setZones([]));
   }, []);
 
   async function loadProfile() {
     setLoading(true);
-    const res = await fetch("/api/profile");
+    setLoadError(null);
+    // a failed load must end the skeleton and say so: a blank form saved on top of it would look like a lost profile
+    let res: Response;
+    try {
+      res = await fetch("/api/profile");
+    } catch {
+      setLoadError("Your profile could not be loaded. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    if (res.status === 401) {
+      window.location.href = "/login?redirect=/profile";
+      return;
+    }
+    if (!res.ok) setLoadError("Your profile could not be loaded. Please try again.");
     if (res.ok) {
       const data = await res.json();
       setUser(data.user);
@@ -290,6 +306,19 @@ export default function ProfilePage() {
         <main className="mx-auto grid grid-cols-[minmax(0,1fr)] w-full max-w-[1100px] flex-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <div className="card flex flex-col items-center gap-3"><Skeleton w={96} h={96} r={48} /><Skeleton h={16} w={140} /><Skeleton h={12} w={100} /></div>
           <div className="card space-y-4"><Skeleton h={30} w="70%" /><Skeleton h={14} /><Skeleton h={14} w="80%" /><Skeleton h={14} w="60%" /></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen flex-col diq-bg">
+        <Header userName={user?.email} />
+        <main className="mx-auto w-full max-w-[600px] flex-1 px-4 py-16 sm:px-6">
+          <div role="alert" className="alert-error mb-4"><AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /><span>{loadError}</span></div>
+          <button type="button" className="btn-primary" onClick={() => loadProfile()}>Try again</button>
         </main>
         <Footer />
       </div>

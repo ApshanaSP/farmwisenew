@@ -201,6 +201,10 @@ export interface Console {
   rainView?: { open: RainStart | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null>; api: RainApi };
   /** open Rain & flooding on the Overview's map (the map's Rain button) */
   openRain?: () => void;
+  /** Live traffic on the Overview's map (traffic/TrafficView.tsx): open (a new seq opens it afresh, on a spot when given), or closed */
+  trafficView?: { open: { seq: number; spot: string | null } | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null> };
+  /** open the live Traffic view, or a Rain tab, on the Overview's map (its buttons, the chatbot, Jarvis, Ask the Map) */
+  openCity?: (v: { kind: "traffic"; spot?: string | null } | { kind: "rain"; lens: "flood" | "power" | "metro" | "traffic" }) => void;
   /** the rain warning now, for the map's Rain button: its level and one line */
   rainAlert?: { level: string; line: string | null; likely: number } | null;
   /** Ask the Map on the Overview's map: its state, and the actions an answer can lead to */
@@ -212,6 +216,9 @@ export interface Console {
 
 async function api(path: string, body?: unknown) {
   const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
+  // an ended session (left open overnight, signed out in another tab) goes to sign-in, as the officer console does,
+  // instead of every action saying "Not authenticated"
+  if (r.status === 401 && !window.location.pathname.startsWith("/dev/")) { window.location.href = "/login?redirect=/collector"; throw new Error("Your session has ended. Sign in again."); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || "Request failed.");
   return j;
@@ -249,6 +256,9 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [ov, setOv] = useState<OverviewData>(initial);
   // the loaded part, with the query it answers: a page never shows another page's part while its own loads
   const [insState, setIns] = useState<{ key: string; d: Insights } | null>(null);
+  /** the page's data could not be loaded (key it was asked with): a message and Try again, not a skeleton forever */
+  const [insFailed, setInsFailed] = useState<string | null>(null);
+  const [insRetry, setInsRetry] = useState(0);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
@@ -323,9 +333,28 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   /** the rain warning now (none, watch, rehearse, act) and its one line, for the map's Rain button */
   const [rainAlert, setRainAlert] = useState<{ level: string; line: string | null; likely: number } | null>(null);
   const openRain = useCallback((o: RehearsalOpen) => {
+    setTraffic(null);
     setRain((x) => ({ rain: o.replay ?? (o.stop === "check" || o.stop === "rain" || o.stop === "learn" ? "latest" : null), seq: (x?.seq ?? 0) + 1, lens: o.lens }));
     setPageState("overview");
   }, []);
+  // Live traffic, on the Overview's map: its own view (not inside Rain), opened by its button, the chatbot, Jarvis or Ask the Map
+  const [traffic, setTraffic] = useState<{ seq: number; spot: string | null } | null>(null);
+  const trafficEsc = useRef<(() => boolean) | null>(null);
+  const openTraffic = useCallback((spot: string | null = null) => {
+    setRain(null);
+    setTraffic((x) => ({ seq: (x?.seq ?? 0) + 1, spot }));
+    setPageState("overview");
+  }, []);
+  const openCity = useCallback((v: { kind: "traffic"; spot?: string | null } | { kind: "rain"; lens: "flood" | "power" | "metro" | "traffic" }) => {
+    if (v.kind === "traffic") openTraffic(v.spot ?? null);
+    else openRain({ replay: null, manual: false, lens: v.lens === "flood" ? undefined : v.lens });
+  }, [openRain, openTraffic]);
+  // Ask the Map's answer about traffic, rain, power or trains opens its view (lib/city/now.ts: the answer names it)
+  useEffect(() => {
+    const f = (e: Event) => { const d = (e as CustomEvent).detail; if (d?.kind) openCity(d); };
+    window.addEventListener("diq:open-city", f);
+    return () => window.removeEventListener("diq:open-city", f);
+  }, [openCity]);
   // the dev preview opens on it with ?rain=1 (and on a rain with &replay=rain-YYYY-MM-DD)
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -420,9 +449,10 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     let live = true;
     const hit = insCache.current.get(insQs);
     if (hit) setIns({ key: insQs, d: hit.d });
-    getIns(insQs).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => live && !hit && toast(e.message, "alert"));
+    setInsFailed(null);
+    getIns(insQs).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => { if (live && !hit) { toast(e.message, "alert"); setInsFailed(insQs); } });
     return () => { live = false; };
-  }, [insQs, reloadKey, needIns, toast, getIns]);
+  }, [insQs, reloadKey, needIns, toast, getIns, insRetry]);
   useEffect(() => {
     // the other pages, one after another, a few seconds after the console has drawn (never competing with page 1)
     const t = setTimeout(async () => {
@@ -467,23 +497,38 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     return () => clearTimeout(t);
   }, [anim, ov]);
 
-  // New data from the pipeline: check every minute, refresh when nothing is open.
+  // New data from the pipeline, and live updates (lib/live: the IMD warning and news read every 10 minutes): checked
+  // every 20 seconds, refreshed when nothing is open.
   const busy = () => !!(inc || modal || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)));
-  useEffect(() => {
-    const t = setInterval(async () => {
+  const lastLive = useRef<number | null>(null);
+  // made once and reading this render's state through a ref: a timer re-made on every render was pushed back by each
+  // re-render, so while the Collector worked in the console the check could keep slipping
+  const pollTick = useRef<() => Promise<void>>(async () => {});
+  pollTick.current = async () => {
       try {
         const m = await api("/api/collector/overview?meta=1");
+        const live = typeof m.live?.v === "number" ? m.live.v as number : null;
+        // the first answer only sets where the console stands: what was live before it opened is already on screen
+        const liveNew = live != null && lastLive.current != null && live !== lastLive.current;
+        if (live != null) lastLive.current = live;
         if (m.exportedAt && m.exportedAt !== lastExport.current) {
           lastExport.current = m.exportedAt;
           setBellRead(false);
           toast(`New data from the pipeline (as of ${fmtTime(m.now)}).`, "alert", busy() ? { label: "Refresh", run: () => setReloadKey((k) => k + 1) } : undefined);
           if (busy()) dirty.current = true;
           else setReloadKey((k) => k + 1);
+        } else if (liveNew) {
+          toast(`Live update: ${m.live.note || "new data"}.`, m.live.alert ? "alert" : "ok", busy() ? { label: "Refresh", run: () => setReloadKey((k) => k + 1) } : undefined);
+          if (busy()) dirty.current = true;
+          else setReloadKey((k) => k + 1);
         }
-      } catch { /* offline: try again next minute */ }
-    }, 60_000);
+      } catch { /* offline: try again at the next check */ }
+  };
+  useEffect(() => {
+    void pollTick.current(); // learn the live version at once, so the first change after opening is shown
+    const t = setInterval(() => { void pollTick.current(); }, 20_000);
     return () => clearInterval(t);
-  });
+  }, []);
 
   // --------------------------------------------------------- navigation --
   const closeAll = useCallback(() => {
@@ -674,6 +719,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     showText: (title, md) => setModal({ kind: "text", title, md }),
     rainView: { open: rain, close: () => setRain(null), esc: rainEsc, api: dev ? DEV_RAIN_API : LIVE_RAIN_API },
     openRain: () => openRain({ replay: null, manual: false }),
+    trafficView: { open: traffic, close: () => setTraffic(null), esc: trafficEsc },
+    openCity,
     rainAlert,
     mapAsk,
     askOnMap: (q) => {
@@ -704,6 +751,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         if (palette) setPalette(false);
         // Rain & flooding goes back one level (a card, a zone, a rain), then closes
         else if (!ask && !inc && !modal && rain && page === "overview") { if (!rainEsc.current?.()) setRain(null); }
+        // the Traffic view the same way: a spot's card, then the view
+        else if (!ask && !inc && !modal && traffic && page === "overview") { if (!trafficEsc.current?.()) setTraffic(null); }
         // the grown map shrinks back last, with its answer still drawn
         else if (!ask && !inc && !modal && mapAsk.grown && page === "overview") mapAsk.setGrown(false);
         else if (ask) setAsk(false);
@@ -722,10 +771,10 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inc, modal, ask, palette, closeAll, page, pages, mapAsk.grown, rain]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inc, modal, ask, palette, closeAll, page, pages, mapAsk.grown, rain, traffic]); // eslint-disable-line react-hooks/exhaustive-deps
   // the grown map shows one thing: Rain & flooding or Ask the Map, whichever was opened last
-  useEffect(() => { if (rain && mapAsk.grown) mapAsk.setGrown(false); }, [rain]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (mapAsk.grown) setRain(null); }, [mapAsk.grown]);
+  useEffect(() => { if ((rain || traffic) && mapAsk.grown) mapAsk.setGrown(false); }, [rain, traffic]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (mapAsk.grown) { setRain(null); setTraffic(null); } }, [mapAsk.grown]);
 
   const bellN = bellRead ? 0 : ov.bell.length;
   // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live; a feed made by a
@@ -767,6 +816,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     { g: "Actions", ic: "mic", l: "Jarvis", s: "Talk to it, in English or Tamil. Or say \"Hi Jarvis\"", run: () => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } })) },
     { g: "Actions", ic: "cloud", l: "Rain & flooding (மழை வெள்ளம்)", s: "Where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one",
       run: () => openRain({ replay: null, manual: false }) },
+    { g: "Actions", ic: "flow", l: "Live traffic (நேரடி போக்குவரத்து)", s: "Jams, closed and flooded roads now, the spots that keep coming back, and who to send them to",
+      run: () => openTraffic(null) },
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
       run: () => { setPage("overview"); mapAsk.setGrown(true); } },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
@@ -801,7 +852,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain || traffic) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <ConfirmHost />
@@ -846,7 +897,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
-                <button className="pop-i" data-jarvis-never onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); try { localStorage.removeItem("thunai-pins"); localStorage.removeItem("jarvis-log"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
+                <button className="pop-i" data-jarvis-never onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); try { localStorage.removeItem("thunai-pins"); localStorage.removeItem("jarvis-log"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
                   <I n="user" /><span><b>Sign out</b></span>
                 </button>
               </div>
@@ -913,6 +964,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           </section>
           <PageSwap k={page} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
             {page === "overview" ? <Page1 d={ov} c={c} />
+              : needIns && !ins && insFailed === insQs ? (
+                <section className="p3"><article className="card" role="alert" style={{ gridColumn: "1 / -1" }}>
+                  <p>This page&apos;s figures could not be loaded.</p>
+                  <button type="button" className="btn" style={{ marginTop: 10 }} onClick={() => setInsRetry((n) => n + 1)}>Try again</button>
+                </article></section>
+              )
               : page === "briefing" ? (archived || !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
                 : page === "trends" ? <TrendsPage ins={ins} c={c} />
                   : page === "studio" ? <Studio c={c} />

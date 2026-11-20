@@ -30,7 +30,8 @@ export function AlertBar({ now, compact }: { now: string; compact?: boolean }) {
     let live = true;
     const load = () => fetch("/api/collector/alerts").then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j?.lane) setD(j); }).catch(() => undefined);
     load();
-    const t = setInterval(load, 5 * 60_000);
+    // every minute: the IMD warning is read live every 10 minutes (lib/live/imd.ts) and SACHET every 15
+    const t = setInterval(load, 60_000);
     return () => { live = false; clearInterval(t); };
   }, [now]);
   if (!d) return null;

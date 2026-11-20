@@ -3,6 +3,9 @@
    light and dark both work. */
 
 .dic .rv{--rv:#0369A1;--rv-soft:#E0F2FE;--rv-line:#BAE6FD}
+/* the panel is as tall as the map (top and bottom 12 px, or dragPanel's standard height once moved): analysis.css's own
+   ".rv" (another card) capped it at 560 px / 70vh, so the Rain panel came up short and its lists were cut off */
+.dic .amp.rv{height:auto;gap:0;min-height:0}
 .dic[data-theme="dark"] .rv,.dic[data-theme="dark"] .rv-leg{--rv:#7DD3FC;--rv-soft:#0C2A3D;--rv-line:#0369A1}
 
 /* head and the warning line */
@@ -145,15 +148,24 @@
 .dic .rv-btn:hover{border-color:var(--rv)}
 .dic .rv-btn svg{width:14px;height:14px}
 
-/* the map's key, bottom left of the free map (beside the panel), clear of the console's Ask button and the scale bar */
-.dic .rv-leg{position:absolute;left:calc(12px + clamp(380px,34%,460px) + 12px);bottom:14px;z-index:560;padding:8px 11px;border-radius:12px;background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+/* the map's key: the map's bottom-right corner, away from the panel (bottom-left when the panel was moved to the right),
+   above the attribution line; it never covers the panel or its cards, and folds to its title */
+.dic .rv-leg{position:absolute;right:12px;left:auto;bottom:22px;z-index:555;max-width:min(250px,calc(100% - 24px));max-height:calc(100% - 120px);overflow:auto;scrollbar-width:thin;
+  padding:7px 10px 8px;border-radius:12px;background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   box-shadow:0 0 0 1px var(--line-3),0 10px 24px -12px rgba(0,0,0,.4);font-size:11.5px;color:var(--text-2)}
-/* the panel moved or minimised: the key goes to the map's left edge */
-.dic .amp.moved ~ .rv-leg,.dic .amp.min ~ .rv-leg{left:12px}
-.dic .rv-leg b{display:flex;align-items:center;gap:5px;margin-bottom:5px;font:700 11.5px var(--font-ui);color:var(--text)}
-.dic .rv-leg b svg{width:12px;height:12px;color:#0369A1}
+.dic .rv-leg.at-left{right:auto;left:12px;bottom:40px}
+.dic .rv-leg.wide{max-width:min(330px,calc(100% - 24px))}
+.dic .rv-leg.shut{padding:4px 8px}
+.dic .rv-leg-t{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:5px;width:100%;margin-bottom:5px;cursor:pointer;font:700 11.5px var(--font-ui);color:var(--text)}
+.dic .rv-leg.shut .rv-leg-t{margin:0}
+.dic .rv-leg-t svg{width:12px;height:12px;color:#0369A1;flex:none}
+.dic .rv-leg-t svg:last-child{margin-left:auto;color:var(--text-3)}
+.dic .rv-leg-t:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .dic .rv-leg ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-.dic .rv-leg li{display:flex;align-items:center;gap:8px}
+/* Metro's many lines: two columns, so the key stays short */
+.dic .rv-leg.wide ul{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+.dic .rv-leg li{display:flex;align-items:center;gap:8px;min-width:0}
+.dic .rv-leg li > span{min-width:0;line-height:1.25}
 .dic .rv-leg li i{flex:none;display:inline-block;width:20px;border-radius:4px}
 .dic .rv-leg li i.l-3,.dic .rv-leg li i.l-2,.dic .rv-leg li i.l-1,.dic .rv-leg li i.l-0{border-radius:50%;margin:0 calc((20px - var(--d)) / 2);width:var(--d);height:var(--d)}
 .dic .rv-leg .l-3{--d:16px;background:rgba(30,64,175,.8);box-shadow:0 0 0 1px #fff}
@@ -270,3 +282,18 @@
 .dic .rv-tag.k-generated{background:var(--surface-3);color:var(--text-2)}
 .dic .rv-leg .g{display:inline-grid;place-items:center;width:16px;height:16px;margin:0 2px;border-radius:5px;font:800 9px var(--font-num);color:#fff}
 .dic .rv-leg .ln{height:4px;border-radius:2px}
+
+/* the map's hover cards for roads, wards, lines and stations (ImpactView tip): a few short lines, wrapping */
+.dic .leaflet-tooltip.dtip .tl{display:block;white-space:normal;min-width:190px;max-width:290px;margin-top:2px;font-size:12px;line-height:1.4}
+.dic .leaflet-tooltip.dtip .tl.dim{color:var(--text-3)}
+.dic .leaflet-tooltip.dtip .tl b.in{display:inline;font:inherit;font-weight:700;margin:0}
+
+/* the Traffic tab's way to live traffic (its own view on the map) */
+.dic .rv-livelink{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;cursor:pointer;background:var(--surface);box-shadow:0 0 0 1px var(--line-2)}
+.dic .rv-livelink:hover{box-shadow:0 0 0 1px #C2410C,0 6px 16px -10px rgba(0,0,0,.35)}
+.dic .rv-livelink:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.dic .rv-livelink .dot{flex:none;width:9px;height:9px;border-radius:50%;background:#DC2626;box-shadow:0 0 0 4px rgba(220,38,38,.15)}
+.dic .rv-livelink > span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.dic .rv-livelink b{font:700 13px var(--font-ui);color:var(--text)}
+.dic .rv-livelink small{font-size:11.5px;color:var(--text-3)}
+.dic .rv-livelink > svg{width:14px;height:14px;color:var(--text-3)}

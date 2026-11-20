@@ -90,5 +90,6 @@ export const OFFICER = {
   maxPhotoBytes: 5 * 1024 * 1024,
   /** longest side of an uploaded photo after resizing in the browser */
   photoMaxPx: 1280,
-  pollMs: 60_000
+  /** how often the open console asks for new grievances, decisions, a new build and live updates (lib/live) */
+  pollMs: 20_000
 } as const;

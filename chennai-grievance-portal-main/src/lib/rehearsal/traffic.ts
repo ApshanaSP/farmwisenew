@@ -1,15 +1,16 @@
 /**
- * Live traffic for Rain → Traffic, from TomTom (developer.tomtom.com; a free key gives 50,000 map tiles and 2,500 other
- * calls a day). Set TOMTOM_API_KEY in the portal's .env and the tab shows:
+ * Live traffic, from TomTom (developer.tomtom.com; a free key gives 50,000 map tiles and 2,500 other calls a day). TomTom
+ * has no cameras on Chennai's roads: its speeds come from the GPS of phones, car navigation and fleet devices moving on each
+ * road (anonymous "probe" data), compared with that road's usual free-flow speed. Set TOMTOM_API_KEY in the portal's .env:
  *   flow       the roads coloured by how slow they are against their free-flow speed, as map tiles; fetched here and
  *              cached for two minutes, so the key never reaches the browser and a busy map stays inside the free tier
- *   incidents  jams, closed roads, flooding and works over the district, read every ten minutes (144 calls a day)
- * Only tiles over the district are served (this is not an open proxy). Without a key, the tab says so and shows the
- * district's own record of traffic in rains.
+ *   incidents  jams, closed roads, flooding, accidents and works over the district, read every five minutes (288 calls a day)
+ * Only tiles over the district are served (this is not an open proxy). Without a key, the Traffic view says so. The
+ * Traffic view, its actions and the answers about traffic are built on this in lib/city/traffic.ts.
  */
 const DISTRICT = { s: 12.82, n: 13.27, w: 80.10, e: 80.36 };
 const TILE_TTL_MS = 2 * 60_000;
-const INC_TTL_MS = 10 * 60_000;
+const INC_TTL_MS = 5 * 60_000;
 const DAILY_TILE_CAP = 45_000;
 
 export const trafficKey = () => (process.env.TOMTOM_API_KEY || "").trim() || null;
@@ -33,6 +34,12 @@ export function tileInDistrict(z: number, x: number, y: number): boolean {
   return b.e >= DISTRICT.w && b.w <= DISTRICT.e && b.n >= DISTRICT.s && b.s <= DISTRICT.n;
 }
 
+const inflight = new Map<string, Promise<ArrayBuffer | null>>();
+let running = 0;
+const waiting: (() => void)[] = [];
+const slot = () => (running < 4 ? (running++, Promise.resolve()) : new Promise<void>((r) => waiting.push(() => { running++; r(); })));
+const release = () => { running--; waiting.shift()?.(); };
+
 /** one flow tile (PNG), or null when there is no key, the tile is outside the district, or the day's allowance is used */
 export async function flowTile(z: number, x: number, y: number): Promise<ArrayBuffer | null> {
   const key = trafficKey();
@@ -44,16 +51,34 @@ export async function flowTile(z: number, x: number, y: number): Promise<ArrayBu
   const today = new Date().toISOString().slice(0, 10);
   if (s.day !== today) { s.day = today; s.count = 0; }
   if (s.count >= DAILY_TILE_CAP) return hit?.buf ?? null;
-  s.count++;
-  const r = await fetch(`https://api.tomtom.com/traffic/map/4/tile/flow/relative0/${z}/${x}/${y}.png?key=${encodeURIComponent(key)}&tileSize=256`, { signal: AbortSignal.timeout(8000) }).catch(() => null);
-  if (!r?.ok) return hit?.buf ?? null;
-  const buf = await r.arrayBuffer();
+  // the same tile asked twice at once (two map views) is fetched once
+  const busy = inflight.get(k);
+  if (busy) return busy;
+  const p = (async () => {
+    // a map asks for 20 or more tiles at once: TomTom's free tier refuses bursts, so at most four go out together
+    await slot();
+    try {
+      s.count++;
+      const r = await fetch(`https://api.tomtom.com/traffic/map/4/tile/flow/relative0/${z}/${x}/${y}.png?key=${encodeURIComponent(key)}&tileSize=256`, { signal: AbortSignal.timeout(8000) }).catch(() => null);
+      if (!r?.ok) return hit?.buf ?? null;
+      return await r.arrayBuffer();
+    } finally { release(); }
+  })();
+  inflight.set(k, p);
+  const buf = await p.finally(() => inflight.delete(k));
+  if (!buf || buf === hit?.buf) return buf;
   s.tiles.set(k, { at: Date.now(), buf });
   if (s.tiles.size > 3000) for (const [kk, v] of s.tiles) if (Date.now() - v.at > TILE_TTL_MS) s.tiles.delete(kk);
   return buf;
 }
 
-export interface LiveIncident { id: string; kind: string; label: string; delayMin: number | null; from: string | null; to: string | null; road: string | null; path: [number, number][]; lat: number; lon: number; flooding: boolean }
+export interface LiveIncident { id: string; kind: string; label: string; delayMin: number | null; from: string | null; to: string | null; road: string | null; path: [number, number][]; lat: number; lon: number; flooding: boolean
+  /** TomTom's size of the delay: 0 unknown, 1 minor, 2 moderate, 3 major, 4 not a delay (a closed road) */
+  magnitude: number;
+  /** metres of road it covers */
+  lengthM: number | null;
+  /** the delay in seconds (null: not given) */
+  delayS: number | null }
 
 /** TomTom's icon categories, in plain words */
 const KIND: Record<number, string> = { 0: "Unknown", 1: "Accident", 2: "Fog", 3: "Dangerous conditions", 4: "Rain", 5: "Ice", 6: "Jam", 7: "Lane closed", 8: "Road closed", 9: "Road works", 10: "Wind", 11: "Flooding", 14: "Broken-down vehicle" };
@@ -64,7 +89,7 @@ export async function liveIncidents(): Promise<{ enabled: boolean; at: string | 
   if (!key) return { enabled: false, at: null, incidents: [], why: "Live traffic needs a free TomTom key: set TOMTOM_API_KEY in the portal's .env and restart." };
   const s = state();
   if (s.inc && Date.now() - s.inc.at < INC_TTL_MS) return { enabled: true, at: new Date(s.inc.at).toISOString(), incidents: s.inc.v, why: null };
-  const fields = "{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description},from,to,delay,roadNumbers}}}";
+  const fields = "{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description},from,to,delay,length,roadNumbers}}}";
   const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?key=${encodeURIComponent(key)}&bbox=${DISTRICT.w},${DISTRICT.s},${DISTRICT.e},${DISTRICT.n}&fields=${encodeURIComponent(fields)}&language=en-GB&timeValidityFilter=present`;
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(10_000) });
@@ -77,7 +102,9 @@ export async function liveIncidents(): Promise<{ enabled: boolean; at: string | 
       const mid = path[Math.floor(path.length / 2)] ?? [0, 0];
       const kind = KIND[Number(p.iconCategory)] ?? "Traffic";
       return { id: String(p.id ?? k), kind, label: p.events?.[0]?.description ?? kind, delayMin: p.delay != null ? Math.round(Number(p.delay) / 60) : null, from: p.from ?? null, to: p.to ?? null,
-        road: Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : null, path, lat: mid[0], lon: mid[1], flooding: Number(p.iconCategory) === 11 };
+        road: Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : null, path, lat: mid[0], lon: mid[1], flooding: Number(p.iconCategory) === 11,
+        magnitude: Number.isFinite(Number(p.magnitudeOfDelay)) ? Number(p.magnitudeOfDelay) : 0, lengthM: p.length != null && Number.isFinite(Number(p.length)) ? Math.round(Number(p.length)) : null,
+        delayS: p.delay != null && Number.isFinite(Number(p.delay)) ? Math.round(Number(p.delay)) : null };
     }).filter((x) => x.path.length);
     s.inc = { at: Date.now(), v };
     return { enabled: true, at: new Date().toISOString(), incidents: v, why: null };

@@ -34,7 +34,9 @@ const sqlite = () =>
 
 const API_URL = (process.env.AWS_API_URL || "https://i6q6oi20lb.execute-api.ap-south-1.amazonaws.com").replace(/\/$/, "");
 const CACHE_DIR = path.join(process.cwd(), "data", "aws-cache");
-const CHECK_MS = 5 * 60_000;
+// how often this server asks AWS whether the hourly build has a newer copy (one small request; was 5 min, now 1 min so a
+// finished build reaches the console a few minutes sooner)
+const CHECK_MS = 60_000;
 
 type Kind = "text" | "int" | "bool" | "float" | "date" | "datetime";
 export interface TableInfo { sha: string; rows: number; bytes: number; key: string; url: string }
@@ -719,6 +721,22 @@ async function current(): Promise<State> {
       .finally(() => { g.checking = false; });
   }
   return g.state;
+}
+
+/**
+ * Runs a step on the build being served now, under the write lock, so it never lands inside another connection's open
+ * transaction (lib/live: a live reading laid over the build between hourly builds). Changes only the in-memory build.
+ * Returns null, and runs nothing, while no build is loaded yet; a build loaded later gets the step from its onBuild hook.
+ */
+export async function withCurrentBuild<T>(fn: (db: DB, buildId: string) => T): Promise<T | null> {
+  if (!g.state) return null;
+  const release = await g.lock.acquire();
+  try {
+    const s = g.state;
+    return s ? fn(s.db, s.buildId) : null;
+  } finally {
+    release();
+  }
 }
 
 /** Which build the store holds (for health pages). */

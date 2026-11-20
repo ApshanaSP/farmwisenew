@@ -72,7 +72,7 @@ export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as Block
 
 // v4 (lane A2, registered at integration): what changed with its drivers, explain one case or one part of a change, a place's situation
 export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete",
-  "changed", "explain", "situation"] as const;
+  "changed", "explain", "situation", "city"] as const;
 export type Recipe = (typeof RECIPES)[number];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),

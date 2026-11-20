@@ -18,6 +18,7 @@ import { asksForbiddenOrder } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
+import { cityTopic } from "@/lib/city/topic";
 import { metricNamedIn } from "./metrics";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
@@ -382,6 +383,10 @@ const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).t
  * colleague) is never acted on without the name (lane D2's rule). `noBail` readers get them too.
  */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean } = {}): Quick | null {
+  // the city now (live traffic, the rain, flood streets, power and trains in heavy rain): one shared answer (lib/city/now.ts),
+  // read before anything else so "traffic in Adyar" is never taken for traffic complaints
+  const ct = cityTopic(text);
+  if (ct) return { recipe: "city", slots: { q: ct, zones: ct === "traffic" ? zonesIn(norm(text), w).slice(0, 1) : [] } };
   const spec = readPeriod(text);
   // a time no lane can answer ("two weeks ago", "next week") is never answered with the current window (RC-06)
   // (also for the readings that skip the bail-outs, noBail: the rules read after a planner miss and a follow-up's frame; review break A1)

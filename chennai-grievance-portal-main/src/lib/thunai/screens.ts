@@ -307,7 +307,7 @@ const analysis = (run: (c: RecipeCtx) => Promise<RecipePart>) => async (c: Ctx):
 };
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
-  cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, answer: async () => {
+  cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, city, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
   },
   changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c))
@@ -1120,6 +1120,57 @@ async function readings(c: Ctx): Promise<Part> {
     .map((x, i) => ({ n: i + 1, id: String(x.place_id ?? x.place), lat: Number(x.lat), lon: Number(x.lon), label: clip(x.place, 120), sev: null, value: round(Number(x.value), 1), hot: String(x.place) === top.name }));
   if (pts.length >= 2) blocks.push({ kind: "MapView", id: "map", title: L(c, "Stations", "நிலையங்கள்"), rule: null, shade: null, points: pts, outline: [] });
   return { title: titles, takeaway, say, blocks };
+}
+
+// ------------------------------------------------------------------ the city now --
+
+const CITY_TILES: Record<string, string[]> = {
+  traffic: ["traffic.very", "traffic.congested", "traffic.flooded", "traffic.accidents", "traffic.closed", "traffic.clusters"],
+  flood: ["flood.likely", "flood.possible", "flood.chokes", "flood.jobs", "flood.rains"],
+  rain: ["rain.level", "rain.today.top", "rain.raining", "flood.likely", "power.wards", "metro.late"],
+  power: ["power.wards", "power.often", "power.avgHours", "power.lastRain"],
+  metro: ["metro.late", "metro.lines", "metro.avgMin"],
+  all: ["traffic.very", "traffic.congested", "traffic.clusters", "rain.level", "flood.likely", "power.wards"]
+};
+const CITY_TITLE: Record<string, { en: string; ta: string }> = {
+  traffic: { en: "Live traffic now", ta: "நேரடி போக்குவரத்து" }, flood: { en: "Streets that flood", ta: "வெள்ளம் தேங்கும் தெருக்கள்" },
+  rain: { en: "Rain now", ta: "மழை நிலவரம்" }, power: { en: "Power in heavy rain", ta: "கனமழையில் மின்சாரம்" }, metro: { en: "Trains in heavy rain", ta: "கனமழையில் ரயில்கள்" },
+  all: { en: "The city now", ta: "நகர நிலவரம்" }
+};
+
+/**
+ * "How is the traffic now?", "which streets flood?", "power cuts in heavy rain", "metro delays", "the city now": the shared
+ * answer (lib/city/now.ts, through Ask District IQ's city_now tool), the same words the chatbot and Ask the Map say. Its
+ * counts as tiles, its sentences as the brief (every figure Jarvis says is on the screen), the places as a list.
+ */
+async function city(c: Ctx): Promise<Part> {
+  const topics = ["traffic", "flood", "rain", "power", "metro", "all"];
+  const topic = topics.includes(String(c.slots.q)) ? String(c.slots.q) : "all";
+  const zone = topic === "traffic" && c.slots.zones.length === 1 ? c.slots.zones[0] : null;
+  const r = await call(c, "city_now", { topic, zone });
+  const d = r.data as { headline: { en: string; ta: string }; say: { en: string; ta: string }; rows: { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null }[] };
+  const fact = (id: string) => r.facts.find((f) => f.id === `city.${id}`);
+  const tiles = (CITY_TILES[topic] ?? CITY_TILES.all).map(fact).filter((f): f is NonNullable<typeof f> => !!f).slice(0, 6);
+  const sentences = (t: string) => t.split(/(?<=[.!?])\s+(?=[A-Z(஀-௿])/).map((x) => x.trim()).filter(Boolean);
+  const en = sentences(d.say.en), ta = sentences(d.say.ta);
+  const blocks: BlockT[] = [];
+  if (tiles.length) blocks.push({ kind: "Kpis", id: "city", title: CITY_TITLE[topic]?.en ?? d.headline.en, items: tiles.map((f) => ({ key: f.id.replace(/^city\./, "").slice(0, 40), label: clip(f.label, 80),
+    value: f.value, unit: f.unit ? clip(f.unit, 20) : null, prev: null, delta: null, tone: /very|flooded|accidents|clusters|chokes|often/.test(f.id) && f.value > 0 ? "bad" as const : "neutral" as const, spark: [] })) });
+  // the whole answer in words (an Answer block: shown, not read out point by point); every figure Jarvis says is in it
+  blocks.push({ kind: "Answer", id: "say", title: CITY_TITLE[topic]?.en ?? d.headline.en, text: clip(d.say.en, 900),
+    // the figures not already on the tiles above (each place's delay, reports, rains), so nothing shows twice
+    facts: r.facts.filter((f) => !tiles.includes(f)).slice(0, 8).map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ? clip(f.unit, 20) : null })) });
+  const pts = d.rows.filter((x) => x.lat != null && x.lon != null).slice(0, 12)
+    .map((x, i) => ({ n: i + 1, id: `city-${i}`, lat: Number(x.lat), lon: Number(x.lon), label: clip(`${x.part}: ${x.place}`, 160), sev: null, value: x.value, hot: i < 3 }));
+  if (pts.length >= 2) blocks.push({ kind: "MapView", id: "map", title: "Where", rule: null, shade: null, points: pts, outline: [] });
+  // the places with a figure (minutes of delay, rains hit, % full), worst first; a place with no figure is on the map and in the brief
+  const ranked = d.rows.filter((x) => x.value != null).slice(0, 12);
+  if (ranked.length) blocks.push({ kind: "Ranking", id: "places", title: topic === "traffic" ? "Needs action now (minutes of delay)" : "The places", unit: ranked[0].unit ? clip(ranked[0].unit, 30) : null,
+    method: "Worst first, from the shared city data", order: "top",
+    items: ranked.map((x, k) => ({ key: `r${k}`, label: clip(x.place, 120), value: Number(x.value), rank: k + 1, sub: clip(`${x.part} · ${x.detail}`, 160), zone: null, lat: x.lat, lon: x.lon, action: "none" as const })) });
+  // said aloud: the first two sentences (each figure is in the answer above)
+  const say = bi(en.slice(0, 2).join(" ") || d.headline.en, (ta.length ? ta.slice(0, 2).join(" ") : d.headline.ta));
+  return { title: CITY_TITLE[topic]?.en ?? d.headline.en, takeaway: en[1] && en[2] ? bi(en[2], ta[2] ?? ta[1] ?? "") : null, say, blocks: blocks.slice(0, 6), next: [] };
 }
 
 // ------------------------------------------------------------------ ranking --

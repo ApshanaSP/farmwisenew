@@ -1134,6 +1134,25 @@ export const TOOLS = [
   }),
 
   tool({
+    name: "city_now",
+    description: "The city on the ground now, from lib/city: live traffic (TomTom: very congested and congested stretches, closed and flooded roads, accidents, delays in minutes, the zones with most jams, trouble spots where the district's own traffic reports keep coming back, and which body answers for each), the rain warning and live rain gauges, the streets that flood in heavy rain, the wards that lose power in heavy rain and for how long, and the metro and suburban lines that run late in heavy rain. topic: traffic | flood | rain | power | metro | all. Not for counting complaints or incidents.",
+    args: z.object({ topic: z.enum(["traffic", "flood", "rain", "power", "metro", "all"]).default("all"), zone: z.number().int().min(1).max(15).nullable().default(null) }),
+    async run({ topic, zone }) {
+      const { cityNow } = await import("@/lib/city/now");
+      const c = await cityNow(topic, { zone });
+      const now = await asOf().catch(() => asOfNow());
+      return {
+        scope: null, asOf: now, data: { topic, headline: c.headline, say: c.say, rows: c.rows, view: c.view, missing: c.missing },
+        facts: c.facts.map((x) => fact(`city.${x.id}`, x.label, x.value, x.unit)),
+        sources: c.sources.map((s) => fn("city.now", s)), incidentIds: (c.traffic?.clusters ?? []).flatMap((x) => x.reports.map((r) => r.id)).slice(0, 40), testData: false,
+        caveats: [...(c.missing.length ? [`${c.missing.join(" and ")} could not be read just now.`] : []),
+          ...(topic === "traffic" || topic === "all" ? ["Live traffic is TomTom's: road speeds from the GPS of phones, car navigation and fleet devices, not cameras."] : [])],
+        untrusted: ["place", "detail"]
+      };
+    }
+  }),
+
+  tool({
     name: "mandi_prices",
     description: "Vegetable and grocery prices at Chennai's markets reporting to AGMARKNET (Uzhavar Sandhai farmer markets: Anna Nagar, K.K. Nagar, Nanganallur, Ambattur and suburban ones): each market's latest modal price with its previous report, and the average across markets, plus the weekly regional trend. Koyambedu does not report to AGMARKNET.",
     args: z.object({ commodity: z.string().trim().min(2).max(40).nullable().default(null), market: z.string().trim().min(2).max(60).nullable().default(null) }),

@@ -17,9 +17,14 @@ const NEGATED = /\b(?:never|cannot|can't|can not|won't|will not|don't|do not|not
 const NOT_A_PERSON = String.raw`(?!(?:The|This|That|Metrowater|Municipality|Ministry|Government|Govt|Revenue|Electricity|Sanitation|Sewerage|Highways|Transport|Panchayat|Council|Committee|Association|Society|Hospital|School|College|Chennai|Greater|Metro|Tamil|Police|Corporation|Collector|Commissioner|Officer|Engineer|Department|Dept|Ward|Zone|Public|Municipal|District|State|Central|National|Health|Water|Fire|Traffic|Rescue|GCC|GCP|CMWSSB|TNEB|PWD|Citizen|Citizens|Resident|Residents|Caller|Complainant|Team|Staff|Control|Helpline|Office|Board|Authority)\b)`;
 const CAP = String.raw`[A-Z][\p{L}.'-]+`;
 const TITLE = String.raw`(?:(?:Mr|Mrs|Ms|Miss|Smt|Shri|Thiru|Tmt|Dr)\.?\s+)?`;
-const FILED_BY = new RegExp(String.raw`\b(?i:filed|reported|raised|lodged|submitted|written|complained|made|sent|called|registered|given|posted)\s+(?i:by)\s+${TITLE}${NOT_A_PERSON}${CAP}(?:\s+${CAP})?`, "u");
-const NAME_OF_ADDRESS = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}\s+${CAP}\s+(?i:of|from|at|living\s+(?:at|in)|residing\s+(?:at|in))\s+(?:(?i:No|Door|D)\.?\s*\d+[A-Za-z]?,?\s+)?${CAP}\s+(?:Street|St|Road|Rd|Nagar|Colony|Lane|Avenue|Main|Cross|Salai|Veedhi)\b`, "u");
-const ADDRESS_LINE = new RegExp(String.raw`\b(?i:door|d\.?|house|flat|plot)\s*(?i:no)\.?\s*\d+|\b(?i:flat|plot)\s+\d+[A-Za-z]?\b|\b\d+[A-Za-z]?,?\s+[A-Z][a-z]+\s+(?:Street|St\.?|Road|Rd\.?|Lane|Avenue|Cross)\b`);
+/**
+ * A case-blind group inside a case-sensitive pattern: the same as `(?i:...)`, which Node 22 (package.json's engine) does not parse; it
+ * threw "Invalid group" when this file loaded, so Jarvis failed to start on Node 22. Each ASCII letter becomes [xX]; escapes stay as they are.
+ */
+const ci = (alts: string) => `(?:${alts.replace(/(\\.)|([A-Za-z])/g, (_m, esc: string | undefined, ch: string) => esc ?? `[${ch.toLowerCase()}${ch.toUpperCase()}]`)})`;
+const FILED_BY = new RegExp(String.raw`\b${ci("filed|reported|raised|lodged|submitted|written|complained|made|sent|called|registered|given|posted")}\s+${ci("by")}\s+${TITLE}${NOT_A_PERSON}${CAP}(?:\s+${CAP})?`, "u");
+const NAME_OF_ADDRESS = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}\s+${CAP}\s+${ci(String.raw`of|from|at|living\s+(?:at|in)|residing\s+(?:at|in)`)}\s+(?:${ci("No|Door|D")}\.?\s*\d+[A-Za-z]?,?\s+)?${CAP}\s+(?:Street|St|Road|Rd|Nagar|Colony|Lane|Avenue|Main|Cross|Salai|Veedhi)\b`, "u");
+const ADDRESS_LINE = new RegExp(String.raw`\b${ci(String.raw`door|d\.?|house|flat|plot`)}\s*${ci("no")}\.?\s*\d+|\b${ci("flat|plot")}\s+\d+[A-Za-z]?\b|\b\d+[A-Za-z]?,?\s+[A-Z][a-z]+\s+(?:Street|St\.?|Road|Rd\.?|Lane|Avenue|Cross)\b`);
 const NAMED = new RegExp(String.raw`\b(?:named|name\s+is|name's|called)\s+${TITLE}${NOT_A_PERSON}${CAP}\s+${CAP}`, "u");
 /** Tanglish: "Ramesh Kumar dhaan complaint kuduthaar", "pugar kuduthavar Ramesh" */
 const TANGLISH_FILER = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}(?:\s+${CAP})?\s+(?:dhaan|thaan|dhan|than)\s+(?:complaint|pugar|call|phone|mail)`, "u");

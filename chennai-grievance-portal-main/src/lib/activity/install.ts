@@ -26,6 +26,12 @@ const MIN_SHOWN_MS = 450;
  * shown at once, since it must stop other clicks.
  */
 export const SHOW_AFTER_MS = 1000;
+/**
+ * Only reading something (a list, a record, a page tab filling in) waits longer before it says so: the screen being read into
+ * shows its own loading, and a notice for every read was the "please wait" people saw again and again (owner, 17 Nov 2026).
+ * Anything that changes a record, and signing out, keep the one-second notice.
+ */
+export const READ_SHOW_AFTER_MS = 3500;
 const SLOW_MS = 7000;
 const DONE_MS = 2800;
 const FAILED_MS = 4500;
@@ -34,6 +40,8 @@ const NAV_GIVE_UP_MS = 90_000;
 
 interface Item {
   id: number; text: string; full: boolean; at: number; el: HTMLElement | null; hold: boolean; nav: boolean;
+  /** how long it runs before it is shown */
+  wait: number;
   /** requests still running under this one notice */
   running: number;
   /** said what is being opened: the requests behind it do not reword it */
@@ -101,7 +109,7 @@ export function installActivity(): void {
 
   function draw(): void {
     const now = Date.now();
-    const shown = open.filter((i) => i.full || now - i.at >= SHOW_AFTER_MS);
+    const shown = open.filter((i) => i.full || now - i.at >= i.wait);
     const top = shown[shown.length - 1];
     if (top) {
       pill.dataset.state = "busy"; line.dataset.on = "1"; root.dataset.diqWorking = "1";
@@ -132,13 +140,13 @@ export function installActivity(): void {
     else { el.removeAttribute("data-diq-busy"); el.removeAttribute("aria-busy"); }
   }
 
-  function begin(text: string, opts: { el?: HTMLElement | null; full?: boolean; hold?: boolean; nav?: boolean; worded?: boolean } = {}): number {
-    const item: Item = { id: ++seq, text, full: !!opts.full, at: Date.now(), el: opts.el ?? null, hold: !!opts.hold, nav: !!opts.nav, running: 0, worded: !!opts.worded, done: null, failed: false };
+  function begin(text: string, opts: { el?: HTMLElement | null; full?: boolean; hold?: boolean; nav?: boolean; worded?: boolean; wait?: number } = {}): number {
+    const item: Item = { id: ++seq, text, full: !!opts.full, at: Date.now(), el: opts.el ?? null, hold: !!opts.hold, nav: !!opts.nav, wait: opts.wait ?? SHOW_AFTER_MS, running: 0, worded: !!opts.worded, done: null, failed: false };
     open.push(item);
     mark(item.el, true);
     flash = null;
     draw();
-    if (!item.full) setTimeout(() => { if (open.includes(item)) draw(); }, SHOW_AFTER_MS + 10); // still running: now it is shown
+    if (!item.full) setTimeout(() => { if (open.includes(item)) draw(); }, item.wait + 10); // still running: now it is shown
     return item.id;
   }
 
@@ -185,6 +193,7 @@ export function installActivity(): void {
   const loads = new Set<AbortController>();
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     let notice: Notice | null = null;
+    let reading = false;
     let nativeFetch = pageFetch;
     const g = claimGesture();
     try {
@@ -192,6 +201,7 @@ export function installActivity(): void {
       const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
       if (url.origin === location.origin && url.pathname.startsWith("/api/")) {
         if (g) notice = noticeFor(method, url.pathname, init?.body);
+        reading = method === "GET";
         if (url.pathname === "/api/auth/logout") { loads.forEach((c) => c.abort()); loads.clear(); }
         else if ((method === "GET" || isBackground(method, url.pathname)) && typeof AbortSignal.any === "function") {
           const c = new AbortController();
@@ -214,7 +224,7 @@ export function installActivity(): void {
     if (!item) {
       // the request takes over from whatever the click put up in the same instant
       if (g.early != null) { remove(g.early); g.early = null; }
-      item = byId(begin(doingText(n.doing), { el: g.el, full: n.full, hold: n.hold }))!;
+      item = byId(begin(doingText(n.doing), { el: g.el, full: n.full, hold: n.hold, wait: reading ? READ_SHOW_AFTER_MS : SHOW_AFTER_MS }))!;
       g.group = item.id;
     } else if (n.primary && !item.worded) { item.text = doingText(n.doing); item.worded = true; draw(); }
     const it = item;
@@ -273,7 +283,7 @@ export function installActivity(): void {
     if (SIGN_OUT.test(label)) return begin(doingText(SIGNING_OUT.doing), { hold: true });
     if (!label) return null;
     if (pageLink(el)) return begin(openingText(linkName((el as HTMLAnchorElement).pathname, label)), { nav: true });
-    if (isPageTab(el)) return begin(openingText(label), { worded: true });
+    if (isPageTab(el)) return begin(openingText(label), { worded: true, wait: READ_SHOW_AFTER_MS });
     return null;
   }
 

@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     if (!form) return NextResponse.json({ error: "Choose at least one photo of the petition." }, { status: 400 });
     const files = form.getAll("pages").filter((f): f is File => typeof f !== "string");
     if (!files.length) return NextResponse.json({ error: "Choose at least one photo of the petition." }, { status: 400 });
+    // the header check above is skipped when a request sends no length (chunked): count the files themselves too
+    if (files.reduce((n, f) => n + f.size, 0) > MANU_LIMITS.maxRequestBytes) return NextResponse.json({ error: "Those files are too large to send at once." }, { status: 413 });
     const pages = await savePages(await Promise.all(files.map(async (f) => Buffer.from(await f.arrayBuffer()))));
     const id = await createPetition({ pages, uploadedBy: s.session.userId, uploadedEmail: s.session.email });
     return NextResponse.json({ id });

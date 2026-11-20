@@ -335,7 +335,7 @@ export default function SatMap(props: Props) {
         icon: s.L.divIcon({ className: "", html, iconSize: [0, 0], iconAnchor: [0, 0] }),
         zIndexOffset: p.sev === "Severe" ? 500 : 0, title: `${p.sev}: ${p.title ?? "Incident"}, ${p.status}`
       })
-        .on("click", () => cb.current.onPin(p.id))
+        .on("click", () => { exitMapFullscreen(); cb.current.onPin(p.id); })
         .bindTooltip(`<b>${esc(p.title ?? "Incident")}</b>${esc(p.sev)} · ${esc(p.status)}`, { className: "dtip", direction: "top", offset: [0, -8] })
         .addTo(s.pins);
     }
@@ -357,7 +357,7 @@ export default function SatMap(props: Props) {
         icon: s.L.divIcon({ className: "", html: `<div class="madd${i.is_incident ? "" : " gen"}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
         zIndexOffset: 300, title: `${i.title}, from ${i.source}`
       })
-        .on("click", () => cb.current.onItem(i))
+        .on("click", () => { exitMapFullscreen(); cb.current.onItem(i); })
         .bindTooltip(`<b>${esc(i.title)}</b>${esc(i.source)} · ${esc(i.place ?? i.zone_name ?? "")}<br><span style="opacity:.7">From an added source · click to open</span>`,
           { className: "dtip", direction: "top", offset: [0, -8] })
         .addTo(s.added);
@@ -404,7 +404,7 @@ export default function SatMap(props: Props) {
         icon: s.L.divIcon({ className: "", html: `<div class="mst" style="background:${sty.color};color:#0B1020">${sty.letter}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
         title: `${sty.title}: ${x.name}, ${x.label}`
       })
-        .on("click", () => cb.current.onStation(x))
+        .on("click", () => { exitMapFullscreen(); cb.current.onStation(x); })
         .bindTooltip(`<b>${esc(x.name)}</b>${sty.title} · ${esc(x.label)}`, { className: "dtip", direction: "top", offset: [0, -10] })
         .addTo(s.stations);
     }
@@ -468,7 +468,7 @@ export default function SatMap(props: Props) {
         const a = cb.current.ask;
         if (!a) return;
         // the first click flies to the case and rings it; a second click opens its reports
-        if (a.focus === id) (cb.current.onAskOpen ?? cb.current.onPin)(id);
+        if (a.focus === id) { exitMapFullscreen(); (cb.current.onAskOpen ?? cb.current.onPin)(id); }
         else a.setFocus(id);
       }
     });
@@ -546,13 +546,25 @@ export default function SatMap(props: Props) {
     return () => { s.map.off("click", click); };
   }, [ready, ask?.route]); // eslint-disable-line react-hooks/exhaustive-deps
   // grown: the metric scale bar; the base map; layers switched on from the Layers menu
+  const wasGrown = useRef(false);
   useEffect(() => {
     const s = st.current;
     if (!s) return;
     if (props.grown && !s.scale) s.scale = s.L.control.scale({ imperial: false, position: "bottomleft" }).addTo(s.map);
     if (!props.grown && s.scale) { s.scale.remove(); s.scale = null; }
-    setTimeout(() => s.map.invalidateSize(), 360);
-  }, [ready, props.grown]);
+    const shrank = wasGrown.current && !props.grown;
+    wasGrown.current = !!props.grown;
+    setTimeout(() => {
+      if (st.current !== s) return;
+      s.map.invalidateSize();
+      // back to the overview: once the card is its own size again, the whole district (or the chosen zone or taluk) in view
+      const p = cb.current;
+      if (shrank && !p.ask?.resp && !p.rain && !p.focus) {
+        const b = p.mode === "taluks" && p.taluk ? s.talukBounds.get(p.taluk) : p.zone ? s.zoneBounds.get(p.zone) : undefined;
+        s.map.flyToBounds(b ?? s.district, { padding: b ? [24, 24] : [8, 8], duration: reduced ? 0 : 0.5, animate: !reduced });
+      }
+    }, 360);
+  }, [ready, props.grown]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const s = st.current;
     if (!s) return;
@@ -611,6 +623,14 @@ export default function SatMap(props: Props) {
     const SEL: Record<string, string> = { flood: "#1D4ED8", traffic: "#9A3412", power: "#854D0E", metro: "#4C1D95" };
     const W = [1.4, 2.2, 3.2, 4.4], C = PAL[theme] ?? PAL.flood, O = [0.5, 0.85, 0.95, 1];
     const pick = (kind: "street" | "report" | "point" | "area" | "line", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
+    // a road or a rail line is only a few pixels wide: an invisible, wider band over it takes the hover and the click, so its
+    // name and what happened there come up as soon as the pointer is near it (owner, 17 Nov 2026: Traffic and Power roads could not be hovered)
+    const hitLine = (path: [number, number][][] | [number, number][], tip: string, onClick?: (e: Leaflet.LeafletMouseEvent) => void) => {
+      const h = L.polyline(path, { pane: "rainLines", renderer: s.rainLines, color: "#000", opacity: 0, weight: 16, lineCap: "round", lineJoin: "round" })
+        .bindTooltip(tip, { sticky: true, className: "dtip" });
+      if (onClick) h.on("click", onClick);
+      h.addTo(s.rain);
+    };
     // live traffic first, under everything else
     if (r.tiles) L.tileLayer(r.tiles, { pane: "rainTiles", opacity: 0.85, maxZoom: 18, attribution: "Traffic © TomTom" }).addTo(s.rain);
     for (const a of r.areas ?? []) {
@@ -627,13 +647,23 @@ export default function SatMap(props: Props) {
       const wt = (lv == null ? 3 : on ? 7 : [2, 3.5, 5, 6.5][lv]) * zf;
       const col = lv === 0 && !on ? "#94A3B8" : x.color;
       L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: wt + (on ? 5 : 2.5), opacity: lv === 0 && !on ? 0.5 : 0.9, interactive: false }).addTo(s.rain);
-      const ln = L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: col, weight: wt, opacity: lv === 0 && !on ? 0.55 : 0.95, lineCap: "round", lineJoin: "round" })
-        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
-      if (lv != null) ln.on("click", pick("line", x.id));
+      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: col, weight: wt, opacity: lv === 0 && !on ? 0.55 : 0.95, lineCap: "round", lineJoin: "round", interactive: false }).addTo(s.rain);
+      hitLine(x.path, x.tip, lv != null ? pick("line", x.id) : undefined);
     }
-    for (const x of r.live ?? []) {
-      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: x.flooding ? "#0EA5E9" : "#DB2777", weight: 4 * zf, opacity: 0.9, dashArray: "6 5" })
-        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
+    // live traffic (the Traffic view): each jam drawn as traffic moving along the road in its direction of travel, slower
+    // the worse it is (traffic.css .tf-*), on a white casing; closures stand still, struck through; the chosen one glows
+    const LIVE_C: Record<string, string> = { very: "#B91C1C", congested: "#EA580C", slow: "#CA8A04", flood: "#0284C7", accident: "#7C3AED", closed: "#334155", works: "#A16207" };
+    const liveOrder = ["closed", "works", "slow", "congested", "very", "accident", "flood"];
+    const live = [...(r.live ?? [])].sort((a, b) => liveOrder.indexOf(a.level ?? "slow") - liveOrder.indexOf(b.level ?? "slow"));
+    for (const x of live) {
+      const lv = x.level ?? (x.flooding ? "flood" : "congested");
+      const on = r.sel?.kind === "point" && r.sel.id === `s:${x.id}`;
+      const wt = (lv === "very" || lv === "flood" || lv === "accident" ? 5 : lv === "congested" ? 4.2 : lv === "closed" ? 3.2 : 3.4) * zf * (on ? 1.5 : 1) * (x.faint ? 0.75 : 1);
+      if (on) L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: LIVE_C[lv], weight: wt + 14, opacity: 0.28, lineCap: "round", interactive: false }).addTo(s.rain);
+      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: wt + 3, opacity: x.faint ? 0.5 : 0.9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(s.rain);
+      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: LIVE_C[lv], weight: wt, opacity: x.faint ? 0.55 : 1, lineCap: "round", lineJoin: "round", interactive: false,
+        className: lv === "closed" ? "tf-closed" : `tf-anim tf-${lv}` }).addTo(s.rain);
+      hitLine(x.path, x.tip, x.pick ? pick("point", `s:${x.id}`) : undefined);
     }
     const selStreet = r.sel?.kind === "street" ? r.streets.find((x) => x.key === r.sel!.id) : null;
     const spots = zoom < 13.5;
@@ -643,20 +673,23 @@ export default function SatMap(props: Props) {
       if (spots) {
         // the faint streets of a rain view wait for a closer zoom
         if (lvl === 0) continue;
-        L.circleMarker(x.at, { pane: "rainLines", renderer: s.rainLines, radius: R[lvl] * (0.85 + (zoom - 11) * 0.12), stroke: lvl >= 2, color: "#fff", weight: 1, fillColor: C[lvl], fillOpacity: SO[lvl] })
+        const rad = R[lvl] * (0.85 + (zoom - 11) * 0.12);
+        L.circleMarker(x.at, { pane: "rainLines", renderer: s.rainLines, radius: rad, stroke: lvl >= 2, color: "#fff", weight: 1, fillColor: C[lvl], fillOpacity: SO[lvl], interactive: false }).addTo(s.rain);
+        // the spot's hover area is at least 9 px round, whatever its drawn size
+        L.circleMarker(x.at, { pane: "rainLines", renderer: s.rainLines, radius: Math.max(9, rad + 4), stroke: false, fillColor: "#000", fillOpacity: 0 })
           .bindTooltip(x.tip, { className: "dtip", direction: "top" }).on("click", pick("street", x.key)).addTo(s.rain);
         continue;
       }
       if (lvl >= 2) L.polyline(x.lines, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: W[lvl] * zf + 3, opacity: 0.85, lineCap: "round", interactive: false }).addTo(s.rain);
-      L.polyline(x.lines, { pane: "rainLines", renderer: s.rainLines, color: C[lvl], weight: W[lvl] * zf, opacity: O[lvl], lineCap: "round" })
-        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).on("click", pick("street", x.key)).addTo(s.rain);
+      L.polyline(x.lines, { pane: "rainLines", renderer: s.rainLines, color: C[lvl], weight: W[lvl] * zf, opacity: O[lvl], lineCap: "round", interactive: false }).addTo(s.rain);
+      hitLine(x.lines, x.tip, pick("street", x.key));
     }
     if (selStreet) {
       const w = Math.max(6, W[3] * zf * 1.3);
       L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: C[1], weight: w + 14, opacity: 0.35, lineCap: "round", interactive: false }).addTo(s.rain);
       L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: w + 5, opacity: 1, lineCap: "round", interactive: false }).addTo(s.rain);
-      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: SEL[theme], weight: w, opacity: 1, lineCap: "round" })
-        .bindTooltip(selStreet.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: SEL[theme], weight: w, opacity: 1, lineCap: "round", interactive: false }).addTo(s.rain);
+      hitLine(selStreet.lines, selStreet.tip);
     }
     for (const x of r.context ?? []) {
       L.marker([x.lat, x.lon], { pane: "rainDots", icon: L.divIcon({ className: "", html: `<span class="rvp ctx t-${theme}">${esc(x.glyph)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }), keyboard: false })
@@ -725,6 +758,46 @@ export default function SatMap(props: Props) {
     const b = mode === "taluks" && taluk ? s.talukBounds.get(taluk) : zone ? s.zoneBounds.get(zone) : undefined;
     s.map.flyToBounds(b ?? s.district, { padding: [8, 8], duration: 0.5 });
   };
+  // full screen: the whole map card (the map, its pins, the key under it, the panels on it) fills the screen
+  // (a browser that refuses the Fullscreen API, as an embedded one can, gets the card filling the window instead: .map-full)
+  const [full, setFull] = useState(false);
+  const cardOf = () => el.current?.closest<HTMLElement>(".a-map") ?? el.current?.closest<HTMLElement>(".card") ?? el.current?.parentElement ?? null;
+  useEffect(() => {
+    const on = () => {
+      const f = document.fullscreenElement;
+      setFull((!!f && !!el.current && f.contains(el.current)) || !!cardOf()?.classList.contains("map-full"));
+      // the map at its new size, framed on the whole district (or the chosen zone or taluk) unless an answer, Rain or an incident holds the camera
+      setTimeout(() => {
+        const s = st.current;
+        if (!s) return;
+        s.map.invalidateSize();
+        const p = cb.current;
+        if (p.ask?.resp || p.rain || p.focus) return;
+        const b = p.mode === "taluks" && p.taluk ? s.talukBounds.get(p.taluk) : p.zone ? s.zoneBounds.get(p.zone) : undefined;
+        s.map.fitBounds(b ?? s.district, { padding: b ? [24, 24] : [8, 8], animate: false });
+      }, 120);
+    };
+    document.addEventListener("fullscreenchange", on);
+    document.addEventListener(MAP_FULL_EVENT, on);
+    return () => { document.removeEventListener("fullscreenchange", on); document.removeEventListener(MAP_FULL_EVENT, on); };
+  }, []);
+  // the window-filling fallback leaves on Esc too, as true full screen does
+  useEffect(() => {
+    if (!full || document.fullscreenElement) return;
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") exitMapFullscreen(); };
+    window.addEventListener("keydown", key, true);
+    return () => window.removeEventListener("keydown", key, true);
+  }, [full]);
+  const toggleFull = () => {
+    if (full) { exitMapFullscreen(); return; }
+    const card = cardOf();
+    if (!card) return;
+    const fill = () => { card.classList.add("map-full"); document.dispatchEvent(new Event(MAP_FULL_EVENT)); };
+    if (!card.requestFullscreen) { fill(); return; }
+    // refused, or (in some embedded browsers) never answered: fill the window instead
+    card.requestFullscreen().catch(fill);
+    setTimeout(() => { if (!document.fullscreenElement && !card.classList.contains("map-full")) fill(); }, 700);
+  };
   const m = () => st.current?.map;
   return (
     <>
@@ -738,7 +811,10 @@ export default function SatMap(props: Props) {
       <div className="map-tools">
         <button onClick={() => m()?.zoomIn()} title="Zoom in" aria-label="Zoom in">+</button>
         <button onClick={() => m()?.zoomOut()} title="Zoom out" aria-label="Zoom out">−</button>
-        <button onClick={fitView} title={props.grown ? "Whole district" : "Fit the view"} aria-label={props.grown ? "Whole district" : "Fit the view"}><I n="expand" /></button>
+        <button onClick={fitView} title={zone || taluk ? "Show the whole area again" : "Show the whole district again"} aria-label="Fit the view"><I n="target" /></button>
+        <button onClick={toggleFull} className={full ? "on" : ""} title={full ? "Leave full screen (Esc)" : "Full screen: the map with its pins and key"} aria-label={full ? "Leave full screen" : "Full screen"} aria-pressed={full}>
+          <I n={full ? "shrink" : "expand"} />
+        </button>
         {props.extraTools}
       </div>
     </>
@@ -750,12 +826,12 @@ const OVERLAY_COL: Record<string, string> = { schools: "#F59E0B", colleges: "#A8
 /** The panel's real box as camera padding (the bottom sheet at phone width), so a shot never frames under it. */
 function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number] } {
   const panel = box.parentElement?.querySelector<HTMLElement>(".amp");
-  const legend = box.parentElement?.querySelector<HTMLElement>(".amleg");
+  const legend = box.parentElement?.querySelector<HTMLElement>(".amleg, .rv-leg:not(.at-left):not(.shut)");
   if (!panel || panel.offsetParent === null) return { tl: [24, 24], br: [56, 24] };
   const sheet = panel.classList.contains("sheet");
   if (sheet) return { tl: [16, 16], br: [16, box.offsetHeight - panel.offsetTop + 16] };
   // the legend sits in the bottom-right corner only: a little room for it, not its whole height across the map
-  const rightRoom = 56 + (legend ? 40 : 0);
+  const rightRoom = 56 + (legend ? Math.min(120, Math.round(legend.offsetWidth / 2)) : 0);
   // minimised to its header: room under the header only
   if (panel.classList.contains("min")) return { tl: [24, panel.offsetTop + panel.offsetHeight + 16], br: [rightRoom, 32] };
   // moved to the right half of the map (dragPanel.tsx): keep the fitted things clear of it on that side
@@ -818,6 +894,15 @@ function play(s: State, shot: Shot, box: HTMLElement, tookOver: () => boolean) {
     s.follow = requestAnimationFrame(step);
   }
 }
+
+/** Leaves the map's full screen: an incident, a station or an item opens in a drawer outside the map card, which full screen would hide. */
+export function exitMapFullscreen() {
+  if (typeof document === "undefined") return;
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => undefined);
+  const filled = document.querySelectorAll(".map-full");
+  if (filled.length) { filled.forEach((e) => e.classList.remove("map-full")); document.dispatchEvent(new Event(MAP_FULL_EVENT)); }
+}
+const MAP_FULL_EVENT = "diq:mapfull";
 
 export function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);

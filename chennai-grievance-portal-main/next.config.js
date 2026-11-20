@@ -35,6 +35,10 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // middleware redirects keep the address the browser used: without this, Next rewrote 127.0.0.1 (what start-fast.bat
+  // opens) to "localhost" in every redirect to sign-in, a different site to the browser (other cookies; may not resolve).
+  // App Router has no /_next/data URLs, which is all else this switch changes.
+  skipMiddlewareUrlNormalize: true,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

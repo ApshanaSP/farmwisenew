@@ -56,7 +56,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
 
   async function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     router.push("/login");
     router.refresh();
   }

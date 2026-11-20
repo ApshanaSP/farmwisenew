@@ -11,7 +11,9 @@ import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
 import { aiPlan, aiReword } from "./ai";
 import type { Insight } from "./insights";
-import { conditionsNear, familiesOf, spreadOf, type Condition } from "./conditions";
+import { conditionsNear, familiesOf, spreadOf, trafficCondition, type Condition, type LiveTraffic } from "./conditions";
+import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
+import { trafficNow } from "@/lib/city/traffic";
 import { compose, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
@@ -102,6 +104,9 @@ export interface AskResponse {
   news: { pins: NewsPin[]; unplaced: number; articles: number } | null;
   /** a change answer's earlier window, for the Before · Now toggle */
   before: Feat[];
+  /** a question about the city now (live traffic, the rain, flood streets, power, trains): the shared answer (lib/city/now.ts)
+   *  and the view of the map that shows it (the console opens it) */
+  city: { topic: CityTopic; view: { kind: "traffic" } | { kind: "rain"; lens: "flood" | "traffic" | "power" | "metro" }; headline: { en: string; ta: string }; rows: CityRow[] } | null;
   brief: Brief | null;
   say: { en: string; ta: string; chips: string[] } | null;
   /** what to ask next, made from this answer's facts and each checked to get an answer (followups.ts) */
@@ -172,7 +177,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
   return {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
-    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
+    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], city: null, insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
     asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0
   };
 }
@@ -196,6 +201,25 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; logQuestion(input, r); return r; };
   const fe = { w, env, ctx, lock, role: input.user.role };
+  // live traffic, read where it is already fresh (TomTom every five minutes): for "On the ground now" beside an answer
+  const liveTraffic = Promise.race([trafficNow({ lockDept: lock }).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 2500))]) as Promise<LiveTraffic | null>;
+
+  // ---- the city now: live traffic, the rain, the streets that flood, power and trains in heavy rain. The same answer the
+  // chatbot and Jarvis give (lib/city/now.ts), and the console opens the view that shows it (the Traffic view or a Rain tab)
+  if (input.text && !input.plan) {
+    const topic = cityTopic(input.text);
+    if (topic) {
+      const zone = input.context.zone ?? null;
+      const c = await cityNow(topic, { lockDept: lock, zone: topic === "traffic" ? zone : null }).catch(() => null);
+      if (c) {
+        out.kind = "say";
+        out.city = { topic, view: c.view, headline: c.headline, rows: c.rows.slice(0, 12) };
+        const chips = topic === "traffic" ? ["Where do jams keep coming back?", "Which streets flood in heavy rain?"] : ["Live traffic now", "Which wards lose power in heavy rain?"];
+        out.say = { en: c.say.en, ta: c.say.ta, chips: lang === "ta" ? [] : chips };
+        return done(out);
+      }
+    }
+  }
 
   // ---- a drawn circle, a clicked ward or "what else is near this incident?": the area brief or a plan with no text
   if (!input.plan && !input.text) {
@@ -323,7 +347,10 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     const pts = r.hits.filter((h) => h.inc.pinnable).map((h) => ({ lat: h.inc.lat, lon: h.inc.lon }));
     const place = r.context.places[0];
     const spread = place && !pts.length ? { center: place, box: { s: place.lat - 0.01, n: place.lat + 0.01, w: place.lon - 0.01, e: place.lon + 0.01 }, wide: false } : spreadOf(pts, w.district);
-    res.conditions = conditionsNear(w, { fams: familiesOf(f?.category, f?.family, w), ...spread });
+    const fams = familiesOf(f?.category, f?.family, w);
+    res.conditions = conditionsNear(w, { fams, ...spread });
+    const tc = trafficCondition(await liveTraffic, { fams, box: spread.box, wide: spread.wide });
+    if (tc) res.conditions = [tc, ...res.conditions].slice(0, 4);
   }
   res.followups = followUps(res, r, fe);
   const store = answerCache();

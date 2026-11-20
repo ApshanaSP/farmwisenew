@@ -281,7 +281,7 @@ export default function ManuDesk() {
   const pickRef = useRef<HTMLInputElement>(null), camRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
-    try { setItems((await call<{ items: DeskItem[] }>("/api/manu/petitions")).items); } catch (e) { setErr((e as Error).message); }
+    try { setItems((await call<{ items: DeskItem[] }>("/api/manu/petitions")).items); setErr(null); } catch (e) { setErr((e as Error).message); }
   }, []);
   useEffect(() => { void load(); }, [load]);
 

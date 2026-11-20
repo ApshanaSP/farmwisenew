@@ -64,6 +64,17 @@ describe("the requests the site makes by itself", () => {
   });
 });
 
+describe("screens that show their own progress (17 Nov 2026: no second 'please wait' on top)", () => {
+  it.each([
+    ["POST", "/api/map/ask"], ["POST", "/api/map/insight"], ["GET", "/api/map/layers/schools"], ["GET", "/api/rehearsal/rains"],
+    ["GET", "/api/rehearsal/impacts"], ["GET", "/api/rehearsal/traffic/live"], ["POST", "/api/collector/assistant/chat"]
+  ])("%s %s is not announced", (m, p) => expect(noticeFor(m, p)).toBeNull());
+  it("drafting emails in the Send dialog is quiet, sending them is announced", () => {
+    expect(noticeFor("POST", "/api/map/send", JSON.stringify({ action: "draft" }))).toBeNull();
+    expect(noticeFor("POST", "/api/map/send", JSON.stringify({ action: "send" }))?.done).toBe("The work has been forwarded to the departments.");
+  });
+});
+
 describe("Tamil", () => {
   it("has every notice", () => expect(allNoticeTexts().filter((t) => !NOTICE_TA[t])).toEqual([]));
   it("is complete for the generic ones", () => {
