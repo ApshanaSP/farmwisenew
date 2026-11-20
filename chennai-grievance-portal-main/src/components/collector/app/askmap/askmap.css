@@ -486,7 +486,7 @@
 @media (min-width:768px){
   .dic.map-grown .map-wrap.ws > .amp.dock{left:0;top:0;bottom:0;width:var(--ws-chat,430px);max-width:none;height:auto!important;border-radius:var(--r) 0 0 var(--r);
     background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:inset -1px 0 0 var(--line-3);animation:none}
-  .dic.map-grown .map-wrap.ws > div[aria-label^="Satellite map"]{left:calc(var(--ws-chat,430px) + 7px)!important}
+  .dic.map-grown .map-wrap.ws > div[aria-label^="Satellite map"]{left:calc(var(--ws-chat,430px) + 7px)!important;width:auto!important}
   .dic.map-grown .map-wrap.ws .map-back{left:calc((100% + var(--ws-chat,430px)) / 2)}
   .dic.map-grown .map-wrap.ws .amsheet{left:calc(var(--ws-chat,430px) + 20px)}
   .dic.map-grown .map-wrap.ws .gt-plotcard,.dic.map-grown .map-wrap.ws .gt-tag.l{left:calc(var(--ws-chat,430px) + 20px)}
@@ -497,7 +497,7 @@
   .dic .ws-split:hover span,.dic .ws-split.on span,.dic .ws-split:focus-visible span{background:var(--accent);height:72px}
   .dic .ws-split:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .dic.map-grown .map-wrap.ws-nochat > .amp.dock{display:none}
-  .dic.map-grown .map-wrap.ws-nochat > div[aria-label^="Satellite map"]{left:0!important}
+  .dic.map-grown .map-wrap.ws-nochat > div[aria-label^="Satellite map"]{left:0!important;width:auto!important}
   .dic.map-grown .map-wrap.ws-nomap > div[aria-label^="Satellite map"],.dic.map-grown .map-wrap.ws-nomap .map-tools,.dic.map-grown .map-wrap.ws-nomap .amleg,
   .dic.map-grown .map-wrap.ws-nomap .leaflet-control-scale{visibility:hidden}
   .dic.map-grown .map-wrap.ws-nomap > .amp.dock{border-radius:var(--r);box-shadow:none}
