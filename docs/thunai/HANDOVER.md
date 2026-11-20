@@ -1,5 +1,40 @@
 # Jarvis mode: handover
 
+## v10, your "version 9" (19-20 Nov 2026)
+
+Branch `claude/jarvis-v10-49ea0b`, from v9's `0a4b0245` (also GitHub `main`); final code `65917112`. The brief: `docs/jarvis/JARVIS_V10.md`; the numbers: `eval/RESULTS.md` (v10); the log: `docs/thunai/BUILD_LOG.md`. **Not merged, no PR: you decide.**
+
+### Your decisions (first)
+
+1. **Sarvam: keep `JARVIS_STT_SARVAM=tamil`** (on since 19 Nov 15:35). On 71 synthetic clips Sarvam's word error was 0.127 against Whisper's 0.330 (Tamil 0.238 against 0.461, Tanglish 0.208 against 0.614, English 0.052 against 0.171), the language right 94% against 86%, a call 240 ms at the median. `primary` (Sarvam for English too) looks right on these numbers, but nothing has been heard yet in your own voice: the console logged no Sarvam turn since 15:35. Use it a day in `tamil`, then try `primary`.
+2. **The day's news names as Sarvam's keyterms: leave off** (`JARVIS_SARVAM_DAY_KEYTERMS` unset). Measured, they made Sarvam worse (0.156 against 0.127) and once wrote a cyclone's name into an unrelated question. Names said by ear are matched after hearing instead, which is what fixed "Cyclone Aquan".
+3. **Buying Sarvam credit (Rs 500): not yet.** About Rs 12 of the Rs 100 signup credit is used (v9's bench Rs 3, v10's two benches Rs 8.62). At Rs 0.49 a minute of speech, an hour of talking to Jarvis is about Rs 30; a working day of ordinary use (a hundred requests of three seconds) about Rs 2.5, so the rest lasts weeks. Buy when the dashboard shows Rs 20 left.
+4. **Merge to `main`**: your call. Everything below is on the branch only.
+5. **Speaker verification** (ignore other voices): researched (`docs/jarvis/v10-research/30-side-talk.md`), not built. It needs your explicit yes and a short enrolment of your voice; only a voice embedding would be stored, locally.
+6. **Clean-up you may want** (nothing of yours was deleted):
+   - `E:\tmp_e10_head.ts`, a stray copy of a source file one of my commands wrote to the drive root; the safety check would not let me delete it there. Please delete it.
+   - Drive E: is nearly full (about 12 GB free). My finished checkouts can go once you have read this: `E:\farm\.claude\worktrees\v10-pre-review` and `E:\farm\.claude\worktrees\v10-eval-v9` (about 2.2 GB each, plus v9's 1 GB measuring build).
+7. **Rollback** to v9's understanding: set both `JARVIS_UNDERSTAND=v9` and `NEXT_PUBLIC_JARVIS_UNDERSTAND=v9` in `.env`, then `start-fast.bat rebuild`.
+
+### What improved (plain words, with the numbers)
+
+- **Understanding, on a new blind set** (103 spoken requests written by a helper who saw neither the code nor the tests, run once at the end on the same day's news): **v9 20/103, v10 48/103**; 28 right only in v10, none only in v9. Names said by ear 1 → 6 of 17, screen references 0 → 5 of 14, reading 0 → 7 of 12, Ask the Map 0 → 7 of 18, controls 4 → 6 of 12, side talk 7 → 8 of 8. English 9 → 20, Tamil 5 → 14, Tanglish 6 → 14.
+- **Your own turns** (27, replayed from your audit log, live): **24/27**. "Tell me about Cyclone Aquan." reads Cyclone Akvan's story with the rain gauges; "the fast news" is the first; "Tell me about the" waits for the rest; "Javes, Goto News." opens the news; "Alexa ..." and fillers stay silent.
+- **No regression on v9's own tests**: v8's dev set 100/105 as v9; v9's blind set 24 → 35 of 60 live.
+- **New things you can do by voice**: Ask the Map's every feature (a question, follow-ups, a circle "within two kilometres of Kasimedu", layers, shots, export, save, visit order, the analyst, send to a department as drafts, suggested questions, Rain & flooding); the narrated district tour ("take me round the district", "next", "stop"); a field visit plan; the whole dashboard's controls (586 counted; Jarvis never presses send, approve, delete or Sign out); "read" as a short brief with the console's own cases on it and one offered next step; "read it fully"; "what do we have on this?" (news to ground truth).
+- **Speed: not slower anywhere measured.** Wake 555 → 546 ms; a command to the screen 859 → 806 ms (p90 1.96 → 1.41 s); a question's tone 404 → 399 ms; a question's first word, both on the same writer model and paired by clip, +22 ms (the writer model's own variance, seconds a call, is the rest).
+
+### What is not verified
+
+- **No real microphone in a real room, and no Tamil speaker has checked the Tamil and Tanglish wording** (model-written).
+- **Ask the Map by voice, the tour, the field visit and the dashboard's controls have not been seen in a browser.** The real-path harness is the dev console, which has neither. They pass their unit tests and score on the blind set; try them yourself (DEMO, v10, steps 8-10). Shown on the real path: Cyclone Aquan's brief, the cut-off join, "read it fully", Tamil, Sign out refused.
+- Sarvam on your own voice (see decision 1).
+- Two of your turns stay wrong (lines the speech-to-text garbled past reading); see RESULTS.
+
+### Spend
+
+Claude: **US$0.61 of the US$10 ceiling** (the record from 1,154 rows / US$1.135719 to 1,710 rows / US$1.746005; US$8.25 of the ceiling left). Sarvam: about Rs 8.62 this session. Groq and Gemini: free tiers.
+
 ## v8 (18-19 Nov 2026)
 
 Branch `claude/jarvis-v8-700c5f`, from v7's `22304da4`. The brief and the plan: `docs/jarvis/JARVIS_V8.md`; the research: `docs/jarvis/v8-research/`; Sarvam: `docs/jarvis/SARVAM.md`; the numbers: `eval/RESULTS.md` (v8). **Not merged, no PR: the owner decides.**

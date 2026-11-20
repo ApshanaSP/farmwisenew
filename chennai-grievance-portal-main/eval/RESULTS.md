@@ -1,5 +1,125 @@
 # Jarvis mode: results
 
+## v10: the owner's "version 9" (19-20 Nov 2026)
+
+Branch `claude/jarvis-v10-49ea0b`, from v9's tip `0a4b0245` (also GitHub `main`). The brief: `docs/jarvis/JARVIS_V10.md`; the research: `docs/jarvis/v10-research/`; the log: `docs/thunai/BUILD_LOG.md` (v10). **Not merged, no PR: the owner decides.** Final code: `65917112`.
+
+**The news changed overnight.** The console's store rebuilt its news between the two days (the panel went from 28 stories to 13), so every comparison below is v9 and v10 run on the same day's store, each in its own checkout (v9: `0a4b0245`, the runner copied in untracked).
+
+### The blind set (written before any fix, hashed, never read)
+
+`eval/v10/blind/set.json`: 103 spoken requests a helper wrote without seeing the code or `eval/` (names by ear, screen references, intelligent reading, news, Ask the Map, dashboard controls, side talk, cut-off lines, new features; English 42, Tamil 31, Tanglish 30; 28 with speech-to-text slips). Hashed into `eval/v10/HASHES.txt` (`0f9e01e1…`) and committed (`c1d30933`) before any fix; only totals were read in this session.
+
+| | v9 (`0a4b0245`) | v10 (`65917112`) |
+|---|---|---|
+| Dry (the code lanes, no model) | 16/103 | 39/103 |
+| **Live** (Haiku leading, answers on, 20 s apart; the store of 20 Nov) | **20/103** | **48/103** |
+| Paired, live | right only in v9: **0** | right only in v10: **28** (exact McNemar p ≈ 7×10⁻⁹) |
+| The reply's language | 84/90 | 87/90 |
+| The turn's own time in the runner (p50 / p90) | 2.16 / 5.60 s | 1.76 / 4.15 s |
+
+| Kind (live) | Items | v9 | v10 |
+|---|---|---|---|
+| Names said by ear | 17 | 1 | 6 |
+| Screen references ("the fast one", "the second last") | 14 | 0 | 5 |
+| Intelligent reading (the brief, "read it fully", another language) | 12 | 0 | 7 |
+| News | 12 | 2 | 3 |
+| Ask the Map by voice | 18 | 0 | 7 |
+| Dashboard controls | 12 | 4 | 6 |
+| Side talk kept silent | 8 | 7 | 8 |
+| Cut-off lines | 5 | 5 | 5 |
+| New features (tour, field visit, news to ground truth) | 5 | 1 | 1 |
+| English / Tamil / Tanglish | 42 / 31 / 30 | 9 / 5 / 6 | 20 / 14 / 14 |
+
+A first live run of v10 (36/103) passed only v7's aide to the news events, so "read" there was v7's recital, not v10's brief, and the brief's offer was never kept: the runner was made to read as `news/route.ts` and Thunai.tsx do (`f84113c1`), and the set run once more on the final code. v9's live run is the same on both days (20/103, the same items).
+
+### Regression sets
+
+| Set | v9, the same day | v10 |
+|---|---|---|
+| v8's dev set (`eval/v8/dev`, 105), dry | 100/105 | 100/105 (none lost) |
+| v8's dev set, live | 102/105 (v9's own run on 19 Nov; v8 103/105 beside it) | **103/105** (language 92/92); the two left are the panel's positions whose stories moved (d-ref-11, d-ref-12, as in every version's dry run) |
+| v9's blind set (`eval/v8/news9`, 60; seen: regression only), dry | 23/60 | 35/60 |
+| news9, **live** | **24/60** (language 58/60) | **35/60** (language 60/60); paired 12 right only in v10, 1 only in v9 (fixed after: `65917112`) |
+| The owner's own turns (`eval/v10/replay`, 27, local, never committed), dry | — | 16/27 (11 left to the planner) |
+| The owner's own turns, **live** | — | **24/27** |
+| A fresh development set (`eval/v10/dev2`, 122; written blind to the code on 20 Nov), dry | 32/122 | 60/122 |
+
+The owner's turns left: "Open the GCC issue." over the panel (its story left the panel overnight), and two lines the speech-to-text garbled past reading ("ETHUK ENDOFICER RESPONSIBLE?", "தக்காலி பிரைச்சென்னை நிகியும்."); the planner asked back on the last. The ones v9 got wrong and v10 now gets right include "Tell me about Cyclone Aquan." (Cyclone Akvan's story with the rain gauges), "Tell me about the fast news." (the first), "Tell me about the" (held, joined to its rest), "Javes, Goto News." (Jarvis's name by ear; "goto" is "go to"), and "Alexa ..." and fillers kept silent.
+
+### Hearing: Sarvam with and without the day's keyterms
+
+`src/lib/thunai/sarvam.live.ts` with `SARVAM_BENCH_SET=v10`: 71 synthetic clips (v6's 40, v8's 11, v10's 20; Windows' and Gemini's voices, no person), each through the shipped `hearUtterance` in shadow (Whisper decides, Sarvam heard alongside) and in the owner's `tamil` mode, twice: with v9's fixed zone list as Sarvam's keyterms, and with the day's 50 news names.
+
+| | Whisper | Sarvam, v9's list | Sarvam, the day's names | `tamil` mode, v9's list |
+|---|---|---|---|---|
+| Word error, all 71 | 0.330 | **0.127** | 0.156 | 0.154 |
+| English / Tamil / Tanglish | 0.171 / 0.461 / 0.614 | 0.052 / 0.238 / 0.208 | 0.082 / 0.213 / 0.291 | 0.102 / 0.238 / 0.200 |
+| The language right | 0.859 | 0.944 | 0.944 | 0.944 |
+
+Sarvam's call: 240 ms at p50, 351 ms at p90. Paired by clip, the day's names made Sarvam worse on 9 clips and better on 1, and once wrote a storm's name into an unrelated question ("Teynampet இந்த week" as "அக்வான் இந்த week"); the one gain ("Cyclone Aquan" heard as "Akwan") the names-by-ear layer makes after hearing anyway. So the console keeps v9's list; the day's names are opt-in (`JARVIS_SARVAM_DAY_KEYTERMS=1`). Each run billed 528 s, Rs 4.31 before GST.
+
+### Latency on real providers
+
+`tests/e2e/real6.spec.ts` (real Whisper, Edge's natural voices, synthetic clips; ms from each clip's true end of speech; each cell **n · p50 · p90**). v9's bundle (`.next-v9f`, `0a4b0245`) then v10's (`.next-v10f`, `65917112`), each served on port 3012 by `scripts/jarvis6/serve-real.sh` (Claude off, Groq leading, the dry-run store). The tables: `eval/v6/latency/compare-v10cmp-v9-v10cmp-v10.md`, `compare-v10q-v9-v10q-v10.md`.
+
+| Moment | v9 | v10 |
+|---|---|---|
+| Wake, open, all -> first audible reply | 48 · 555 · 603 | 48 · 546 · 609 |
+| Wake, open, "Hey Jarvis" | 18 · 202 · 218 | 18 · 195 · 213 |
+| Wake, closed -> first audible reply (fired 4/12 on both) | 4 · 164 · 168 | 4 · 165 · 176 |
+| Command -> the screen changes | 10 · 859 · 1,956 | 10 · **806 · 1,405** |
+| Command -> first sound | 12 · 308 · 340 | 12 · 293 · 324 |
+| Question -> first sound (the tone) | 36 · 404 · 423 | 36 · 399 · 427 |
+| Question -> first word of the answer, first run | 33 · 2,431 · 4,716 | 34 · 3,950 · 5,968 |
+
+**The first run's question line is not like for like.** Groq's free day ran out during v10's run (the ledger: all three Groq text models at their 200K-token day), and the answer writer fell back to Gemini Flash-Lite for 5 of v10's 11 Tamil questions and none of v9's; even on Groq one call varied by seconds between the runs. So the question parts were run again for both, back to back on a quiet machine, both on the same writer (Gemini Flash-Lite, Groq's day spent):
+
+| Moment, the re-run | v9 | v10 |
+|---|---|---|
+| Question -> first sound | 36 · 405 · 429 | 36 · 401 · 422 |
+| Question -> the whole answer in hand | 33 · 1,149 · 3,746 | 34 · 1,112 · 4,543 |
+| Question -> first word of the answer | 33 · 4,646 · 6,561 | 34 · 4,900 · 8,218 |
+| Transcript at the page | 36 · 839 · 881 | 36 · 833 · 897 |
+
+**Paired by clip** (the median of v10 − v9, 33-34 pairs): first word **+22 ms**, the answer in hand **−13 ms**, transcript to answer **+4 ms**: the same route (the planner) and the same writer with the same token counts on every clip; single calls swing both ways by up to two seconds, which is the p90's movement. **Load:** v9's first run ran beside the live dev run, v10's on a quiet machine (a bias toward v10); the re-runs had the same conditions. None of the moments is measurably worse than v9; the command's screen change is faster (p90 −551 ms).
+
+### The owner's asks on the real path
+
+`real6.spec.ts` part `owner10` (20 synthetic clips of the owner's asks: Windows' voices, two Tamil lines by Gemini's; `tests/e2e/fixtures/v10`), played into the dev console's microphone stream on v10's measuring bundle, Claude as shipped (Haiku leading), real speech to text (Sarvam in `tamil` mode, as the owner's console), Edge's voices; the rows in `eval/v10/real/` (local). Two runs: the first found two defects, fixed test-first before the second (`a26d1df6`): "Jauvis, Go to news." searched the news for "Jauvis" (Jarvis's name now one shape, not a list); and the dev console's news route, a twin of the console's, had none of v10's additions (the brief, the weather, the meaning ranker), so its reading was v7's recital.
+
+| Ask | The second run |
+|---|---|
+| "Tell me about Cyclone Aquan." (heard "Aquin") | **the brief**: "BBC reports that Cyclone Aquan is centered 840 km from Chennai ... The storm touches the district with heavy rain warnings across Chennai. The console shows ..." |
+| "Tell me about the" ... "Puzhal jail drugs story." | **held, joined, read**: The New Indian Express's Puzhal story |
+| "Read it fully." | **the whole story**: "... in full: about two minutes. Say stop any time." |
+| "அக்வான் புயல் பத்தி சொல்லுங்க." | **in Tamil**, Dinakaran's Akvan story |
+| "Sign out." | **refused**: "That one is yours to tap." |
+| "Hide the severe pins." | first run (heard "Seavio") **hidden**; second (heard "Civia") the planner's severe list |
+| "Tell me about the fast news." | a story read (the dev console shows no news panel, so "the first" of a list was not tested here) |
+| Ask the Map, the tour, the alerts bell | **not testable here**: the dev console has no Ask the Map ("I can't do that on the map here") and no dashboard |
+| "What do we have on this?", the three side-talk lines, two map questions | **not heard**: they played while Jarvis was still reading a long answer, and nothing was transcribed (the same in both runs) |
+
+So the real path shows names by ear with the brief, the cut-off join, the full read, Tamil, and the never-pressed control. Ask the Map, the tour, the controls, side talk and news to ground truth rest on their unit tests and the evaluation sets (the blind set's Ask the Map 0 → 7 of 18, controls 4 → 6, side talk 7 → 8); they have not been seen working in a browser.
+
+### The independent reviews
+
+- **The second review of v9's diff** (carried from v9): 31 findings confirmed, each by a probe that failed on v9's code; all fixed test-first (`a7429f4d`; `review9b.v10.test.ts`, `review9m.v10.test.ts`).
+- **The review of v10, before the finals**: five read-only reviewers by area (names and the gate, news, reading, Ask the Map, controls); a finding counted only when a probe reproduced it. **44 confirmed** (13 high). Fixed in four rounds, each a failing test first, each checked by a read-only skeptic: 44, then the 32 problems the skeptics found in those fixes, then 24 more, then the last 12 high ones (`7847273f`). Among them: a complete question ending in "is" held as cut off; "ஆமாம்" (yes) silenced as hearsay; rain and flood news taken by Rain & flooding; a brief able to say "no open cases" when there were four; any sentence with "message" typed into an open draft; a privacy refusal reaching the news writer with news on screen.
+
+### The gates (`ef94846e`, then `65917112`)
+
+`tests/qa/pass7/gate-fast.sh` on a clean tree, run on `8d238c50` (three test failures and a lint error, all in tests, fixed in `f84113c1`) and again on `ef94846e`: type check, lint, the production build, the four shuffled unit runs (8,184 tests each, 0 failures), the pass 7 tests, the guards, the access matrix (3,303 requests, no 5xx, no problems), the browser drive (28 pages, none with a problem) and the Collector's Jarvis journey j1 all passed. The golden master against pass 7's recording differs as v9's gate did, plus v10's new lexicon route (5 requests). One failure, environmental: pass 4's `audit-ui_honesty-11` is an `it.fails` for a git-lfs pointer, and every checkout here holds the real 278 MB model (so v10's meaning ranker loads in the owner's console too). The final run, on the final commit: below.
+
+### Not verified
+
+- **No real microphone, no real room, no Tamil speaker**: every clip is synthetic, and the Tamil and Tanglish wording (the brief's, the controls' and map's phrasings) is model-written.
+- **Ask the Map, the narrated tour, the field visit and the dashboard's controls were never seen in a browser**: the real-path harness is the dev console, which has neither; on the console they rest on unit tests (the map lane 57, mapops 24, controls 171 + 287 page tests on a linkedom page) and the blind set.
+- **Side talk and news to ground truth on the real path**: the clips were not heard (they played over Jarvis's long read).
+- **Sarvam on the owner's own voice**: the console has logged no Sarvam turn since Tamil mode went on (19 Nov 15:35).
+- **Speaker verification**: researched only (`docs/jarvis/v10-research/30-side-talk.md`); it needs the owner's yes and an enrolment.
+- **Sarvam's streaming and "ask instead of guess"**: Sarvam's REST reply gives only `language_probability` (no word confidences; `10-sarvam-catalogue.md`), and with no real-voice data there is nothing to set a threshold from.
+
 ## v9: v8's news-matching misses (19 Nov 2026)
 
 Branch `claude/dazzling-torvalds-52b811`, built on v8's tip `7fa525fb`. On the owner's yes (19 Nov), `main` was fast-forwarded to it, which brings v5 to v9 into `main` together. The task: fix the miss classes v8's section lists under "Where v8 still misses", each with a failing test first, and measure the fixes on a fresh blind set run once against v8's own commit.

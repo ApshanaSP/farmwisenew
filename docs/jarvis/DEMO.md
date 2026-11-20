@@ -1,4 +1,23 @@
-# Jarvis: the v8 examples (first), the v7 answers, the three-minute reel (v6), then the real-room check (v5)
+# Jarvis: v10 (first), the v8 examples, the v7 answers, the three-minute reel (v6), then the real-room check (v5)
+
+## v10: what to try in Edge (do the v5 room check below first)
+
+Edge on the demo laptop, speakers on, `start-fast.bat rebuild` once on the v10 branch, then Jarvis open (Ctrl+Shift+J). "Hey Jarvis" first, unless the step says it follows straight on. Marked **(shown)** where the real-path run of 20 Nov played it (the measuring bundle, real speech to text, Claude as shipped, Edge's voices: `eval/v10/real/`), **(tests)** where only the code's own tests and the evaluation sets show it.
+
+| # | Say | What you should see and hear |
+|---|---|---|
+| 1 | "Tell me about Cyclone Aquan." | Cyclone Akvan's story (the name heard by ear), and the rain gauges and IMD's warning after it. A name only half sure is asked back in a few words: "Cyclone Akvan?" **(shown; the brief, tests)** |
+| 2 | "Jarvis, go to news." (or as Whisper writes it, "Javes", "Jauvis") | The news panel opens. **(tests; "Jauvis" fixed after the first real-path run)** |
+| 3 | With the panel open: "Tell me about the fast news." | The first story (by ear, "fast" is "first" when a list is on screen). "The second last one", "கடைசிக்கு முந்தின" also work. **(shown)** |
+| 4 | "Tell me about the" ... (a pause) ... "Puzhal jail drugs story." | Nothing is said at the cut; the two are joined and the Puzhal story read. **(shown)** |
+| 5 | After a story: "Read it fully." | The whole story. "What do we have on this?": the console's own cases near the story's place, the department, the oldest. **(shown: the full read; tests: the cases)** |
+| 6 | "அக்வான் புயல் பத்தி சொல்லுங்க." | The same storm's story, in Tamil. **(shown)** |
+| 7 | To someone else, right after Jarvis spoke: "சார், ஒரு நிமிஷம்", "See, this one has gone up.", "Hello? Haan, sollunga." | Nothing said, nothing done. **(tests; the real-path clips were not heard over Jarvis's long read)** |
+| 8 | "Ask the map where garbage complaints are clustering.", then "only the severe ones", then "within two kilometres of Kasimedu" | Ask the Map opens with the answer, then the follow-up, then the circle. "Adyar flooding map-la kaattu" in Tanglish. **(tests: the dev console has no Ask the Map)** |
+| 9 | "Take me round the district.", then "next", "go deeper here", "stop the tour" | The map flies stop by stop, one line a stop. **(tests)** |
+| 10 | "Hide the severe pins.", "Click the alerts bell.", "Sign out." | The pins hide; the bell opens; Sign out is refused ("That one is yours to tap"): Jarvis never presses send, approve, delete or Sign out. **(shown: the pins and Sign out)** |
+
+What is not yet right: news questions with no news word in loose Tamil ("…pathi enna nadandhuchu?") still often go to the planner; names said very badly by ear stay unfound; two of your own replayed turns (garbled past reading) stay wrong. The Tamil wording is model-written and not checked by a Tamil speaker.
 
 ## v8: your five examples, as you said them (do the v5 room check below first)
 
