@@ -3,18 +3,78 @@
  "b": "p7-gate",
  "compared": {
   "a": 3277,
-  "b": 3303
+  "b": 3308
  },
- "changed": 373,
- "added": 49,
+ "changed": 432,
+ "added": 54,
  "removed": 23,
  "context": {
   "next_build_id": {
    "a": "7W1366w-32VU0Pwhed8Oy",
-   "b": "F4MJOh5zzBsr9CbO0GW07"
+   "b": "efYCOLB7QHlE62dksynxo"
   }
  },
  "routes": [
+  {
+   "route": "/api/map/ask",
+   "requests": 101,
+   "roles": [
+    "collector",
+    "officerA",
+    "officerB"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.trace[*].ids[*]",
+     "count": 867
+    },
+    {
+     "path": "$.city",
+     "count": 99
+    },
+    {
+     "path": "$.rows[*]",
+     "count": 65
+    },
+    {
+     "path": "$.rows[*].id",
+     "count": 45
+    },
+    {
+     "path": "$.rows[*].title",
+     "count": 45
+    },
+    {
+     "path": "$.rows[*].first",
+     "count": 45
+    },
+    {
+     "path": "$.rows[*].place",
+     "count": 45
+    },
+    {
+     "path": "$.rows[*].reasons",
+     "count": 45
+    },
+    {
+     "path": "$.rows[*].ward",
+     "count": 43
+    },
+    {
+     "path": "$.rows[*].priority",
+     "count": 43
+    },
+    {
+     "path": "$.asOf.layers[*].count",
+     "count": 40
+    },
+    {
+     "path": "$.features[*].id",
+     "count": 34
+    }
+   ]
+  },
   {
    "route": "/api/officer/grievances",
    "requests": 75,
@@ -135,126 +195,8 @@
    ]
   },
   {
-   "route": "/api/map/ask",
-   "requests": 47,
-   "roles": [
-    "collector",
-    "officerA",
-    "officerB"
-   ],
-   "status_changes": [],
-   "top_paths": [
-    {
-     "path": "$.trace[*].ids[*]",
-     "count": 867
-    },
-    {
-     "path": "$.rows[*]",
-     "count": 65
-    },
-    {
-     "path": "$.rows[*].id",
-     "count": 45
-    },
-    {
-     "path": "$.rows[*].title",
-     "count": 45
-    },
-    {
-     "path": "$.rows[*].first",
-     "count": 45
-    },
-    {
-     "path": "$.rows[*].place",
-     "count": 45
-    },
-    {
-     "path": "$.rows[*].reasons",
-     "count": 45
-    },
-    {
-     "path": "$.rows[*].ward",
-     "count": 43
-    },
-    {
-     "path": "$.rows[*].priority",
-     "count": 43
-    },
-    {
-     "path": "$.asOf.layers[*].count",
-     "count": 40
-    },
-    {
-     "path": "$.features[*].id",
-     "count": 34
-    },
-    {
-     "path": "$.features[*].lat",
-     "count": 33
-    }
-   ]
-  },
-  {
-   "route": "/api/collector/overview",
-   "requests": 31,
-   "roles": [
-    "collector"
-   ],
-   "status_changes": [],
-   "top_paths": [
-    {
-     "path": "$.stories.threads[*].records",
-     "count": 261
-    },
-    {
-     "path": "$.stories.threads[*].placed",
-     "count": 261
-    },
-    {
-     "path": "$.map.pins[*].id",
-     "count": 120
-    },
-    {
-     "path": "$.map.pins[*].lat",
-     "count": 120
-    },
-    {
-     "path": "$.map.pins[*].lon",
-     "count": 120
-    },
-    {
-     "path": "$.map.pins[*].title",
-     "count": 119
-    },
-    {
-     "path": "$.map.pins[*].t",
-     "count": 117
-    },
-    {
-     "path": "$.deptNav[*].unverified",
-     "count": 76
-    },
-    {
-     "path": "$.bell[*].id",
-     "count": 55
-    },
-    {
-     "path": "$.bell[*].title",
-     "count": 55
-    },
-    {
-     "path": "$.bell[*].loc",
-     "count": 55
-    },
-    {
-     "path": "$.bell[*].lat",
-     "count": 55
-    }
-   ]
-  },
-  {
    "route": "/api/officer/overview",
-   "requests": 29,
+   "requests": 33,
    "roles": [
     "officerA",
     "officerB"
@@ -308,6 +250,64 @@
     {
      "path": "$.queue.action[*].updated",
      "count": 59
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/overview",
+   "requests": 32,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.stories.threads[*].records",
+     "count": 261
+    },
+    {
+     "path": "$.stories.threads[*].placed",
+     "count": 261
+    },
+    {
+     "path": "$.map.pins[*].id",
+     "count": 120
+    },
+    {
+     "path": "$.map.pins[*].lat",
+     "count": 120
+    },
+    {
+     "path": "$.map.pins[*].lon",
+     "count": 120
+    },
+    {
+     "path": "$.map.pins[*].title",
+     "count": 119
+    },
+    {
+     "path": "$.map.pins[*].t",
+     "count": 117
+    },
+    {
+     "path": "$.deptNav[*].unverified",
+     "count": 76
+    },
+    {
+     "path": "$.bell[*].id",
+     "count": 55
+    },
+    {
+     "path": "$.bell[*].title",
+     "count": 55
+    },
+    {
+     "path": "$.bell[*].loc",
+     "count": 55
+    },
+    {
+     "path": "$.bell[*].lat",
+     "count": 55
     }
    ]
   },
@@ -1073,6 +1073,13 @@
    "status": 404
   },
   {
+   "id": "eb5b33527224165a",
+   "role": "anonymous",
+   "method": "GET",
+   "url": "/api/traffic",
+   "status": 401
+  },
+  {
    "id": "dd84af5a63bd687b",
    "role": "citizenA",
    "method": "GET",
@@ -1113,6 +1120,13 @@
    "method": "GET",
    "url": "/api/dev/thunai/watch",
    "status": 404
+  },
+  {
+   "id": "f188c0ce8df5b49e",
+   "role": "citizenA",
+   "method": "GET",
+   "url": "/api/traffic",
+   "status": 401
   },
   {
    "id": "5fed7cf8021833fd",
@@ -1157,6 +1171,13 @@
    "status": 404
   },
   {
+   "id": "bc1a0d452c42c95f",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/traffic",
+   "status": 200
+  },
+  {
    "id": "0e8bf553a59146d1",
    "role": "officerB",
    "method": "GET",
@@ -1199,6 +1220,13 @@
    "status": 404
   },
   {
+   "id": "5c8bd5c03295364c",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/traffic",
+   "status": 200
+  },
+  {
    "id": "dbcbe78d041214d3",
    "role": "collector",
    "method": "GET",
@@ -1239,6 +1267,13 @@
    "method": "GET",
    "url": "/api/dev/thunai/watch",
    "status": 404
+  },
+  {
+   "id": "114d38ff2c6e423a",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/traffic",
+   "status": 200
   },
   {
    "id": "a65099adf1b8f89c",
@@ -2968,6 +3003,27 @@
      "path": "$.periodInfo.resolved",
      "a": "(absent)",
      "b": "Resolved, last 24 hours"
+    }
+   ]
+  },
+  {
+   "id": "38d8ac077d9598f4",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?meta=1",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 64,
+    "b": 139
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.live",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
     }
    ]
   },
@@ -17877,6 +17933,174 @@
    ]
   },
   {
+   "id": "acea570744e2dc46",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 125573,
+    "b": 125585
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "56b0fe227c8f23a4",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 14900,
+    "b": 14912
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "029c64275e967dd6",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 20594,
+    "b": 20606
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3ccf25a57b0a2586",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 567722,
+    "b": 567734
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "1fe636173178017d",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 567722,
+    "b": 567734
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a0a8d4fa5c53d52c",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 567722,
+    "b": 567734
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "49814d1350c8d5ff",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 567722,
+    "b": 567734
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "e44825a3b4fd654e",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 567722,
+    "b": 567734
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
    "id": "36b485b905d0afcd",
    "session": "reads",
    "role": "officerA",
@@ -17886,14 +18110,61 @@
    "fields": {},
    "bytes": {
     "a": 21629,
-    "b": 21628
+    "b": 21640
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "67939281ce229416",
+   "session": "reads",
+   "role": "officerA",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 8413,
+    "b": 8425
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5010a86c4bdc7676",
+   "session": "reads",
+   "role": "officerA",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 9318,
+    "b": 9330
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -17907,14 +18178,19 @@
    "fields": {},
    "bytes": {
     "a": 73119,
-    "b": 73118
+    "b": 73130
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -17928,14 +18204,19 @@
    "fields": {},
    "bytes": {
     "a": 73119,
-    "b": 73118
+    "b": 73130
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -17949,14 +18230,19 @@
    "fields": {},
    "bytes": {
     "a": 73119,
-    "b": 73118
+    "b": 73130
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -17970,14 +18256,19 @@
    "fields": {},
    "bytes": {
     "a": 73119,
-    "b": 73118
+    "b": 73130
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -17991,14 +18282,128 @@
    "fields": {},
    "bytes": {
     "a": 73119,
-    "b": 73118
+    "b": 73130
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "85dfce3ab0c3bb1c",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 19454,
+    "b": 19466
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6131819989edda5f",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "note": "follow-up",
+   "fields": {},
+   "bytes": {
+    "a": 17789,
+    "b": 17801
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "dcb138630f60a1e9",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "note": "follow-up",
+   "fields": {},
+   "bytes": {
+    "a": 19272,
+    "b": 19284
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d91e1460c8cfcd9f",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "note": "follow-up",
+   "fields": {},
+   "bytes": {
+    "a": 568493,
+    "b": 568505
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "1dd0f5c16d547e92",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "note": "a chip's plan",
+   "fields": {},
+   "bytes": {
+    "a": 19456,
+    "b": 19468
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -25081,6 +25486,27 @@
    ]
   },
   {
+   "id": "f8dd52f10e5e336d",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/overview?meta=1",
+   "route": "/api/officer/overview",
+   "fields": {},
+   "bytes": {
+    "a": 132,
+    "b": 207
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.live",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    }
+   ]
+  },
+  {
    "id": "441a25b61259b8f3",
    "session": "reads2",
    "role": "officerA",
@@ -31250,6 +31676,27 @@
      "path": "$.feedbackCounts",
      "a": "(absent)",
      "b": "{object with 4 keys}"
+    }
+   ]
+  },
+  {
+   "id": "6b6353f92be65fbb",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/overview?meta=1",
+   "route": "/api/officer/overview",
+   "fields": {},
+   "bytes": {
+    "a": 132,
+    "b": 207
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.live",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
     }
    ]
   },
@@ -46406,9 +46853,9 @@
    "fields": {},
    "bytes": {
     "a": 24167,
-    "b": 20811
+    "b": 20823
    },
-   "path_count": 401,
+   "path_count": 402,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.kind",
@@ -48414,6 +48861,137 @@
      "path": "$.conditions[2].en",
      "a": "No rain in the last 24 h at Chennai-Meenambakkam (6.1 km away).",
      "b": "No rain in the last 24 h at Chennai-Meenambakkam (6.2 km away)."
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f72ab168b140febd",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 63074,
+    "b": 63086
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "95cd18647e8edd89",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 12184,
+    "b": 12196
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "0cd5e9eeea2bfd0a",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 14581,
+    "b": 14593
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "17e5bfaf537f50b6",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 14140,
+    "b": 14152
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "072b9b8309cf3d65",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 568115,
+    "b": 568127
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "25db09fa044aa789",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 6867,
+    "b": 6879
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -48427,9 +49005,9 @@
    "fields": {},
    "bytes": {
     "a": 219861,
-    "b": 219847
+    "b": 219859
    },
-   "path_count": 2,
+   "path_count": 3,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -48440,6 +49018,200 @@
      "path": "$.trace[1].note_ta",
      "a": "கேள்வியில் பயன்படுத்தப்படாதவை: deaths, hours. மீதியைக் கொண்டு பதில் தரப்பட்டது.",
      "b": "கேள்வியில் பயன்படுத்தப்படாதவை: deaths. மீதியைக் கொண்டு பதில் தரப்பட்டது."
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f302533710460189",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1170,
+    "b": 1182
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "ec50628c867899f7",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 22775,
+    "b": 22787
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "96dfb0a1bd0f6ca6",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 9003,
+    "b": 9015
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "7694136f2e73be93",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1124,
+    "b": 1136
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "eb7f33643948f36b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 71368,
+    "b": 71380
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d08c18ab85c7b099",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 568114,
+    "b": 568126
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b8f06da1710b10c1",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 15175,
+    "b": 15187
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "603516c12621b940",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1663911,
+    "b": 1663923
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3a8b12ed9124d268",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1170,
+    "b": 1182
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -48453,9 +49225,9 @@
    "fields": {},
    "bytes": {
     "a": 24840,
-    "b": 21413
+    "b": 21425
    },
-   "path_count": 405,
+   "path_count": 406,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.kind",
@@ -50481,6 +51253,11 @@
      "path": "$.followups[2]",
      "a": "கடந்த 7 நாட்கள்",
      "b": "(absent)"
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -50494,9 +51271,9 @@
    "fields": {},
    "bytes": {
     "a": 63629,
-    "b": 63595
+    "b": 63607
    },
-   "path_count": 2,
+   "path_count": 3,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -50507,6 +51284,242 @@
      "path": "$.trace[1].note_ta",
      "a": "கேள்வியில் பயன்படுத்தப்படாதவை: வாரம், எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது.",
      "b": "கேள்வியில் பயன்படுத்தப்படாதவை: எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது."
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "4bbad471767c57a9",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 8675,
+    "b": 8687
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b8d5b969a28af365",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 10672,
+    "b": 10684
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "577d48983fc4bb82",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 7065,
+    "b": 7077
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "94587306b96d9d3e",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 363618,
+    "b": 363630
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6232e2e970b0ba7c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 126064,
+    "b": 126076
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "88b9e8e5efbb7fe7",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1234,
+    "b": 1246
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f7bf3bba982972c9",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 20915,
+    "b": 20927
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "4f2fa5ab5039f90b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 86654,
+    "b": 86666
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "15f6c847bf52f032",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1234,
+    "b": 1246
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d621577339e04939",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 370124,
+    "b": 370136
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5e7583dc9a05e064",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 24634,
+    "b": 24646
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -50520,9 +51533,9 @@
    "fields": {},
    "bytes": {
     "a": 63127,
-    "b": 63113
+    "b": 63125
    },
-   "path_count": 2,
+   "path_count": 3,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -50533,6 +51546,116 @@
      "path": "$.trace[1].note_ta",
      "a": "கேள்வியில் பயன்படுத்தப்படாதவை: indha, entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது.",
      "b": "கேள்வியில் பயன்படுத்தப்படாதவை: entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது."
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5d9bc8d8b074f255",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 8402,
+    "b": 8414
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "9f59a68f7b5c2c44",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 8142,
+    "b": 8154
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6256c0e0a564d954",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 369653,
+    "b": 369665
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "de5db7c5672bb27c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 363152,
+    "b": 363164
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2a4222c03432fc3b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 568134,
+    "b": 568146
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -50546,9 +51669,9 @@
    "fields": {},
    "bytes": {
     "a": 568173,
-    "b": 219906
+    "b": 219918
    },
-   "path_count": 10754,
+   "path_count": 10755,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.days",
@@ -53053,6 +54176,69 @@
    ]
   },
   {
+   "id": "69549aa32a1b1a16",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 23160,
+    "b": 23172
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6f633c24c1d346a8",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 14175,
+    "b": 14187
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "fe04ca90c5da3fba",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 568161,
+    "b": 568173
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
    "id": "dece30afa8390c28",
    "session": "ask",
    "role": "officerA",
@@ -53062,9 +54248,9 @@
    "fields": {},
    "bytes": {
     "a": 6821,
-    "b": 6768
+    "b": 6780
    },
-   "path_count": 26,
+   "path_count": 27,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.kind",
@@ -53195,6 +54381,11 @@
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53208,14 +54399,19 @@
    "fields": {},
    "bytes": {
     "a": 6654,
-    "b": 6653
+    "b": 6665
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53229,14 +54425,19 @@
    "fields": {},
    "bytes": {
     "a": 10973,
-    "b": 10972
+    "b": 10984
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53250,14 +54451,19 @@
    "fields": {},
    "bytes": {
     "a": 5900,
-    "b": 5899
+    "b": 5911
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53271,14 +54477,19 @@
    "fields": {},
    "bytes": {
     "a": 7525,
-    "b": 7524
+    "b": 7536
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53292,14 +54503,19 @@
    "fields": {},
    "bytes": {
     "a": 73512,
-    "b": 73511
+    "b": 73523
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53313,14 +54529,19 @@
    "fields": {},
    "bytes": {
     "a": 6942,
-    "b": 6941
+    "b": 6953
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53334,9 +54555,9 @@
    "fields": {},
    "bytes": {
     "a": 24074,
-    "b": 24059
+    "b": 24071
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -53352,6 +54573,32 @@
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d8adb0659df65275",
+   "session": "ask",
+   "role": "officerA",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1170,
+    "b": 1182
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53365,14 +54612,19 @@
    "fields": {},
    "bytes": {
     "a": 22747,
-    "b": 22746
+    "b": 22758
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53386,14 +54638,40 @@
    "fields": {},
    "bytes": {
     "a": 5048,
-    "b": 5047
+    "b": 5059
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d76ef9a3761c66ac",
+   "session": "ask",
+   "role": "officerA",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1124,
+    "b": 1136
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53407,14 +54685,19 @@
    "fields": {},
    "bytes": {
     "a": 71368,
-    "b": 71367
+    "b": 71379
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53428,14 +54711,19 @@
    "fields": {},
    "bytes": {
     "a": 73511,
-    "b": 73510
+    "b": 73522
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53449,14 +54737,19 @@
    "fields": {},
    "bytes": {
     "a": 7849,
-    "b": 7848
+    "b": 7860
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53470,14 +54763,40 @@
    "fields": {},
    "bytes": {
     "a": 482156,
-    "b": 482155
+    "b": 482167
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "127e64a6fc0dface",
+   "session": "ask",
+   "role": "officerA",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1170,
+    "b": 1182
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53491,9 +54810,9 @@
    "fields": {},
    "bytes": {
     "a": 7458,
-    "b": 7335
+    "b": 7347
    },
-   "path_count": 30,
+   "path_count": 31,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.kind",
@@ -53644,6 +54963,11 @@
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53657,9 +54981,9 @@
    "fields": {},
    "bytes": {
     "a": 6975,
-    "b": 6940
+    "b": 6952
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -53675,6 +54999,11 @@
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53688,14 +55017,19 @@
    "fields": {},
    "bytes": {
     "a": 8478,
-    "b": 8477
+    "b": 8489
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 3291
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53709,14 +55043,19 @@
    "fields": {},
    "bytes": {
     "a": 9140,
-    "b": 9139
+    "b": 9151
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53730,14 +55069,19 @@
    "fields": {},
    "bytes": {
     "a": 7152,
-    "b": 7151
+    "b": 7163
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53751,14 +55095,19 @@
    "fields": {},
    "bytes": {
     "a": 49032,
-    "b": 49031
+    "b": 49043
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53772,14 +55121,40 @@
    "fields": {},
    "bytes": {
     "a": 94769,
-    "b": 94768
+    "b": 94780
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "bb85cbbfabc82931",
+   "session": "ask",
+   "role": "officerB",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1234,
+    "b": 1246
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53793,14 +55168,19 @@
    "fields": {},
    "bytes": {
     "a": 20915,
-    "b": 20914
+    "b": 20926
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53814,14 +55194,40 @@
    "fields": {},
    "bytes": {
     "a": 6930,
-    "b": 6929
+    "b": 6941
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f71fff90a10afafe",
+   "session": "ask",
+   "role": "officerB",
+   "method": "POST",
+   "url": "/api/map/ask",
+   "route": "/api/map/ask",
+   "fields": {},
+   "bytes": {
+    "a": 1234,
+    "b": 1246
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53835,14 +55241,19 @@
    "fields": {},
    "bytes": {
     "a": 94937,
-    "b": 94936
+    "b": 94948
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53856,14 +55267,19 @@
    "fields": {},
    "bytes": {
     "a": 9809,
-    "b": 9808
+    "b": 9820
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53877,9 +55293,9 @@
    "fields": {},
    "bytes": {
     "a": 6730,
-    "b": 6715
+    "b": 6727
    },
-   "path_count": 3,
+   "path_count": 4,
    "paths": [
     {
      "path": "$.trace[1].note_en",
@@ -53895,6 +55311,11 @@
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53908,14 +55329,19 @@
    "fields": {},
    "bytes": {
     "a": 6803,
-    "b": 6802
+    "b": 6814
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53929,14 +55355,19 @@
    "fields": {},
    "bytes": {
     "a": 8053,
-    "b": 8052
+    "b": 8064
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53950,14 +55381,19 @@
    "fields": {},
    "bytes": {
     "a": 94463,
-    "b": 94462
+    "b": 94474
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53971,14 +55407,19 @@
    "fields": {},
    "bytes": {
     "a": 48543,
-    "b": 48542
+    "b": 48554
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -53992,14 +55433,19 @@
    "fields": {},
    "bytes": {
     "a": 95808,
-    "b": 95807
+    "b": 95819
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -54013,9 +55459,9 @@
    "fields": {},
    "bytes": {
     "a": 95847,
-    "b": 30966
+    "b": 30978
    },
-   "path_count": 885,
+   "path_count": 886,
    "paths": [
     {
      "path": "$.plan.steps[0].filter.period.days",
@@ -56529,14 +57975,19 @@
    "fields": {},
    "bytes": {
     "a": 23132,
-    "b": 23131
+    "b": 23143
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -56550,14 +58001,19 @@
    "fields": {},
    "bytes": {
     "a": 7583,
-    "b": 7582
+    "b": 7594
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -56571,14 +58027,19 @@
    "fields": {},
    "bytes": {
     "a": 95835,
-    "b": 95834
+    "b": 95846
    },
-   "path_count": 1,
+   "path_count": 2,
    "paths": [
     {
      "path": "$.asOf.layers[0].count",
      "a": 27923,
      "b": 2086
+    },
+    {
+     "path": "$.city",
+     "a": "(absent)",
+     "b": null
     }
    ]
   },
@@ -63667,12 +65128,12 @@
     {
      "path": "$.incidents[0].lat",
      "a": 13.016499019607844,
-     "b": 13.017471568627451
+     "b": 13.017346078431373
     },
     {
      "path": "$.incidents[0].lon",
      "a": 80.21072974509804,
-     "b": 80.21225131372549
+     "b": 80.21192190196078
     },
     {
      "path": "$.incidents[0].sev",
@@ -66195,12 +67656,12 @@
     {
      "path": "$.severity.rows[32].lat",
      "a": 12.99715,
-     "b": 13.017471568627451
+     "b": 13.017346078431373
     },
     {
      "path": "$.severity.rows[32].lon",
      "a": 80.197346,
-     "b": 80.21225131372549
+     "b": 80.21192190196078
     },
     {
      "path": "$.severity.rows[32].status",
@@ -67651,12 +69112,12 @@
     {
      "path": "$.map.pins[64].lat",
      "a": 13.0002073,
-     "b": 13.017471568627451
+     "b": 13.017346078431373
     },
     {
      "path": "$.map.pins[64].lon",
      "a": 80.2172367,
-     "b": 80.21225131372549
+     "b": 80.21192190196078
     },
     {
      "path": "$.map.pins[64].title",
@@ -67741,12 +69202,12 @@
     {
      "path": "$.severity.rows[27].lat",
      "a": 12.9795268,
-     "b": 13.017471568627451
+     "b": 13.017346078431373
     },
     {
      "path": "$.severity.rows[27].lon",
      "a": 80.2184424,
-     "b": 80.21225131372549
+     "b": 80.21192190196078
     },
     {
      "path": "$.severity.rows[27].status",
@@ -70041,6 +71502,27 @@
    ]
   },
   {
+   "id": "8b504339618befd5",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/overview?meta=1",
+   "route": "/api/officer/overview",
+   "fields": {},
+   "bytes": {
+    "a": 132,
+    "b": 207
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.live",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    }
+   ]
+  },
+  {
    "id": "aa11adf02a83df15",
    "session": "writes",
    "role": "officerA",
@@ -70798,6 +72280,27 @@
      "path": "$.feedbackCounts",
      "a": "(absent)",
      "b": "{object with 4 keys}"
+    }
+   ]
+  },
+  {
+   "id": "a5563a5de1508ddc",
+   "session": "writes",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/overview?meta=1",
+   "route": "/api/officer/overview",
+   "fields": {},
+   "bytes": {
+    "a": 132,
+    "b": 207
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.live",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
     }
    ]
   },

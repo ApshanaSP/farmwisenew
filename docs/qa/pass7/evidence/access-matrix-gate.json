@@ -1,17 +1,17 @@
 {
- "generated": "2026-11-20T02:27:36.308Z",
+ "generated": "2026-11-20T03:32:23.297Z",
  "port": 3106,
- "routes": 132,
- "methods": 160,
- "cells": 1281,
+ "routes": 134,
+ "methods": 162,
+ "cells": 1299,
  "summary": {
-  "pass": 1279,
+  "pass": 1297,
   "skip": 0,
   "fail": 2
  },
  "denyProof": {
-  "denyPassing": 931,
-  "guard": 908,
+  "denyPassing": 945,
+  "guard": 922,
   "unproven": 23,
   "unprovenMethods": [
    "GET /api/collector/assistant/tools",
@@ -14389,6 +14389,209 @@
    "body": "{}"
   },
   {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "anonymous",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "citizenA",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "officerA",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "allow",
+   "status": 200,
+   "verdict": "pass"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "officerB",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "allow",
+   "status": 200,
+   "verdict": "pass"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "collector",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "allow",
+   "status": 200,
+   "verdict": "pass"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "manu",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 403,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "citizenA@officer-cookie",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "citizenA@collector-cookie",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic",
+   "method": "GET",
+   "identity": "officerA@collector-cookie",
+   "rule": "staff",
+   "guard": "assistantSession (collector, or officer locked to own dept)",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "anonymous",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "citizenA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "officerA",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "officerB",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "collector",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "allow",
+   "status": 400,
+   "verdict": "pass",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "manu",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "citizenA@officer-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "citizenA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
+   "route": "/api/traffic/action",
+   "method": "POST",
+   "identity": "officerA@collector-cookie",
+   "rule": "collector",
+   "guard": "collectorSession",
+   "expected": "deny",
+   "status": 401,
+   "verdict": "pass",
+   "proof": "guard",
+   "body": "{}"
+  },
+  {
    "route": "/api/auth/logout",
    "method": "POST",
    "identity": "anonymous",
@@ -14515,7 +14718,7 @@
    "expected": "deny",
    "status": 200,
    "verdict": "fail",
-   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-20T14:27:35.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-20 07:57:35\",\"action\":\""
+   "text": "{\"email\":\"qa.manu@example.test\",\"role\":\"department_officer\",\"sessionEnds\":\"2026-11-20T15:32:22.000Z\",\"hours\":12,\"events\":[{\"at\":\"2026-11-20 09:02:22\",\"action\":\""
   },
   {
    "route": "/api/auth/security",

@@ -1,21 +1,22 @@
 # Golden-master diff: p7-gate-r3 to p7-gate
 
-Compared 3273 requests with 3303. **89 changed, 42 added, 12 removed.**
+Compared 3273 requests with 3308. **183 changed, 47 added, 12 removed.**
 
 ## What differs around the requests
 
-- next_build_id: CBdQM0A0VtrCiiuGe8KNC to F4MJOh5zzBsr9CbO0GW07
+- next_build_id: CBdQM0A0VtrCiiuGe8KNC to efYCOLB7QHlE62dksynxo
 
 ## By route
 
 | Route | Requests changed | Roles | Status changes | Most changed paths |
 |---|---|---|---|---|
+| /api/map/ask | 101 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.city (99), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45) |
 | /api/collector/thunai/agent/round | 57 | collector | none | $.timing (57), $.result.stage.lang (39), $.result.stage.titles (39), $.result.stage.notesBi (39), $.result.stage.blocks[*].title (31) |
-| /api/map/ask | 12 | collector, officerA, officerB | none | $.trace[*].ids[*] (867), $.rows[*] (65), $.rows[*].id (45), $.rows[*].title (45), $.rows[*].first (45) |
 | /api/collector/thunai/agent | 7 | collector | none | $.result.stage.lang (7), $.result.stage.titles (7), $.result.stage.notesBi (7), $.result.stage.blocks[*].items[*].sub (5), $.result.stage.say.ta (3) |
+| /api/officer/overview | 4 | officerA, officerB | none | $.live (4) |
 | /api/map/export | 4 | collector | none | $.line[*] (67), $.lines (2), $.properties.window (2) |
+| /api/collector/overview | 3 | collector | none | $.severity.rows[*].lat (2), $.severity.rows[*].lon (2), $.live (1), $.map.pins[*].lat (1), $.map.pins[*].lon (1) |
 | /api/collector/studio/[id] | 3 | collector | none | $.confirm.scope (3) |
-| /api/collector/overview | 2 | collector | none | $.severity.rows[*].lat (2), $.severity.rows[*].lon (2), $.map.pins[*].lat (1), $.map.pins[*].lon (1) |
 | /api/collector/thunai/memory | 2 | collector | 200 -> 403 | $.notes (1), $.habits (1), $.pending (1), $.prefs (1), $.reminders (1) |
 | /api/collector/audit | 1 | collector | none | $.log[*].after_value (3) |
 | /api/collector/search | 1 | collector | none | $.incidents[*].lat (1), $.incidents[*].lon (1) |
@@ -28,30 +29,35 @@ Compared 3273 requests with 3303. **89 changed, 42 added, 12 removed.**
 - anonymous GET /api/collector/thunai/watch: 401
 - anonymous GET /api/dev/thunai/brief: 404
 - anonymous GET /api/dev/thunai/watch: 404
+- anonymous GET /api/traffic: 401
 - citizenA GET /api/collector/thunai/brief: 401
 - citizenA GET /api/collector/thunai/follow: 401
 - citizenA GET /api/collector/thunai/lexicon: 401
 - citizenA GET /api/collector/thunai/watch: 401
 - citizenA GET /api/dev/thunai/brief: 404
 - citizenA GET /api/dev/thunai/watch: 404
+- citizenA GET /api/traffic: 401
 - officerA GET /api/collector/thunai/brief: 401
 - officerA GET /api/collector/thunai/follow: 401
 - officerA GET /api/collector/thunai/lexicon: 401
 - officerA GET /api/collector/thunai/watch: 401
 - officerA GET /api/dev/thunai/brief: 404
 - officerA GET /api/dev/thunai/watch: 404
+- officerA GET /api/traffic: 200
 - officerB GET /api/collector/thunai/brief: 401
 - officerB GET /api/collector/thunai/follow: 401
 - officerB GET /api/collector/thunai/lexicon: 401
 - officerB GET /api/collector/thunai/watch: 401
 - officerB GET /api/dev/thunai/brief: 404
 - officerB GET /api/dev/thunai/watch: 404
+- officerB GET /api/traffic: 200
 - collector GET /api/collector/thunai/brief: 200
 - collector GET /api/collector/thunai/follow: 200
 - collector GET /api/collector/thunai/lexicon: 200
 - collector GET /api/collector/thunai/watch: 200
 - collector GET /api/dev/thunai/brief: 404
 - collector GET /api/dev/thunai/watch: 404
+- collector GET /api/traffic: 200
 - collector POST /api/map/insight: 200
 - officerA POST /api/map/insight: 200
 - citizenA POST /api/map/insight: 401
@@ -81,6 +87,182 @@ Compared 3273 requests with 3303. **89 changed, 42 added, 12 removed.**
 - collector POST /api/collector/thunai/agent/round: 200
 
 ## Each changed request
+
+### collector GET /api/collector/overview?meta=1
+
+Session reads, id 38d8ac077d9598f4, 64 bytes to 139 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.live | (absent) | {object with 6 keys} |
+
+### collector POST /api/map/ask
+
+Session reads, id acea570744e2dc46, 125573 bytes to 125585 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 56b0fe227c8f23a4, 14900 bytes to 14912 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 029c64275e967dd6, 20594 bytes to 20606 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 3ccf25a57b0a2586, 567722 bytes to 567734 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 1fe636173178017d, 567722 bytes to 567734 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id a0a8d4fa5c53d52c, 567722 bytes to 567734 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 49814d1350c8d5ff, 567722 bytes to 567734 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id e44825a3b4fd654e, 567722 bytes to 567734 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 36b485b905d0afcd, 21628 bytes to 21640 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 67939281ce229416, 8413 bytes to 8425 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 5010a86c4bdc7676, 9318 bytes to 9330 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id aecf834c788e44d9, 73118 bytes to 73130 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id b193d322407371dd, 73118 bytes to 73130 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 15802ee9d940fabe, 73118 bytes to 73130 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 6d778cca2a5d2397, 73118 bytes to 73130 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session reads, id 73d03742afa4295d, 73118 bytes to 73130 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session reads, id 85dfce3ab0c3bb1c, 19454 bytes to 19466 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask (follow-up)
+
+Session reads, id 6131819989edda5f, 17789 bytes to 17801 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask (follow-up)
+
+Session reads, id dcb138630f60a1e9, 19272 bytes to 19284 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask (follow-up)
+
+Session reads, id d91e1460c8cfcd9f, 568493 bytes to 568505 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask (a chip's plan)
+
+Session reads, id 1dd0f5c16d547e92, 19456 bytes to 19468 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
 
 ### collector POST /api/collector/thunai/agent
 
@@ -173,9 +355,25 @@ Session reads, id 8207e2765a8903b7, 3359 bytes to 3557 bytes.
 | $.result.stage.titles | (absent) | {object with 2 keys} |
 | $.result.stage.notesBi | (absent) | [array of 0] |
 
+### officerA GET /api/officer/overview?meta=1
+
+Session reads2, id f8dd52f10e5e336d, 132 bytes to 207 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.live | (absent) | {object with 6 keys} |
+
+### officerB GET /api/officer/overview?meta=1
+
+Session reads2, id 6b6353f92be65fbb, 132 bytes to 207 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.live | (absent) | {object with 6 keys} |
+
 ### collector POST /api/map/ask
 
-Session ask, id bc19a69485d976bf, 24167 bytes to 20811 bytes.
+Session ask, id bc19a69485d976bf, 24167 bytes to 20823 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -205,20 +403,141 @@ Session ask, id bc19a69485d976bf, 24167 bytes to 20811 bytes.
 | $.trace[0].ids[10] | INC-20261106-AD9834 | INC-20261106-7CC00D |
 | $.trace[0].ids[11] | INC-20261106-F1B5D5 | INC-20261106-9CA57F |
 
-...and 376 more paths (see the JSON file).
+...and 377 more paths (see the JSON file).
 
 ### collector POST /api/map/ask
 
-Session ask, id 39b775090318e8e0, 219861 bytes to 219847 bytes.
+Session ask, id f72ab168b140febd, 63074 bytes to 63086 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 95cd18647e8edd89, 12184 bytes to 12196 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 0cd5e9eeea2bfd0a, 14581 bytes to 14593 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 17e5bfaf537f50b6, 14140 bytes to 14152 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 072b9b8309cf3d65, 568115 bytes to 568127 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 25db09fa044aa789, 6867 bytes to 6879 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 39b775090318e8e0, 219861 bytes to 219859 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: deaths, hours. The map answered the rest; rephrase to include them. | Not used from your question: deaths. The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: deaths, hours. மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: deaths. மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
 
 ### collector POST /api/map/ask
 
-Session ask, id 1e635e562e92da34, 24840 bytes to 21413 bytes.
+Session ask, id f302533710460189, 1170 bytes to 1182 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id ec50628c867899f7, 22775 bytes to 22787 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 96dfb0a1bd0f6ca6, 9003 bytes to 9015 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 7694136f2e73be93, 1124 bytes to 1136 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id eb7f33643948f36b, 71368 bytes to 71380 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id d08c18ab85c7b099, 568114 bytes to 568126 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id b8f06da1710b10c1, 15175 bytes to 15187 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 603516c12621b940, 1663911 bytes to 1663923 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 3a8b12ed9124d268, 1170 bytes to 1182 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 1e635e562e92da34, 24840 bytes to 21425 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -248,29 +567,159 @@ Session ask, id 1e635e562e92da34, 24840 bytes to 21413 bytes.
 | $.trace[0].ids[10] | INC-20261106-AD9834 | INC-20261106-7CC00D |
 | $.trace[0].ids[11] | INC-20261106-F1B5D5 | INC-20261106-9CA57F |
 
-...and 380 more paths (see the JSON file).
+...and 381 more paths (see the JSON file).
 
 ### collector POST /api/map/ask
 
-Session ask, id f0398307a4621bf6, 63629 bytes to 63595 bytes.
+Session ask, id f0398307a4621bf6, 63629 bytes to 63607 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: வாரம், எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். The map answered the rest; rephrase to include them. | Not used from your question: எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: வாரம், எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
 
 ### collector POST /api/map/ask
 
-Session ask, id d2294a1c2f5a1476, 63127 bytes to 63113 bytes.
+Session ask, id 4bbad471767c57a9, 8675 bytes to 8687 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id b8d5b969a28af365, 10672 bytes to 10684 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 577d48983fc4bb82, 7065 bytes to 7077 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 94587306b96d9d3e, 363618 bytes to 363630 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 6232e2e970b0ba7c, 126064 bytes to 126076 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 88b9e8e5efbb7fe7, 1234 bytes to 1246 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id f7bf3bba982972c9, 20915 bytes to 20927 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 4f2fa5ab5039f90b, 86654 bytes to 86666 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 15f6c847bf52f032, 1234 bytes to 1246 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id d621577339e04939, 370124 bytes to 370136 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 5e7583dc9a05e064, 24634 bytes to 24646 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id d2294a1c2f5a1476, 63127 bytes to 63125 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: indha, entha, jaasthi. The map answered the rest; rephrase to include them. | Not used from your question: entha, jaasthi. The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: indha, entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
 
 ### collector POST /api/map/ask
 
-Session ask, id 8776cda3e9c5a398, 568173 bytes to 219906 bytes.
+Session ask, id 5d9bc8d8b074f255, 8402 bytes to 8414 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 9f59a68f7b5c2c44, 8142 bytes to 8154 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 6256c0e0a564d954, 369653 bytes to 369665 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id de5db7c5672bb27c, 363152 bytes to 363164 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 2a4222c03432fc3b, 568134 bytes to 568146 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 8776cda3e9c5a398, 568173 bytes to 219918 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -300,11 +749,35 @@ Session ask, id 8776cda3e9c5a398, 568173 bytes to 219906 bytes.
 | $.answer.depts[6].name | Solid Waste Management | Public Health (GCC) |
 | $.answer.depts[6].n | 67 | 17 |
 
-...and 10729 more paths (see the JSON file).
+...and 10730 more paths (see the JSON file).
+
+### collector POST /api/map/ask
+
+Session ask, id 69549aa32a1b1a16, 23160 bytes to 23172 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id 6f633c24c1d346a8, 14175 bytes to 14187 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### collector POST /api/map/ask
+
+Session ask, id fe04ca90c5da3fba, 568161 bytes to 568173 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
 
 ### officerA POST /api/map/ask
 
-Session ask, id dece30afa8390c28, 6820 bytes to 6768 bytes.
+Session ask, id dece30afa8390c28, 6820 bytes to 6780 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -334,18 +807,141 @@ Session ask, id dece30afa8390c28, 6820 bytes to 6768 bytes.
 | $.trace[0].ids[16] | INC-20261106-2E1851 | (absent) |
 | $.trace[0].ids[17] | INC-20261106-0E2C3D | (absent) |
 
+...and 1 more paths (see the JSON file).
+
 ### officerA POST /api/map/ask
 
-Session ask, id 8d5fa1baf7ab7cca, 24073 bytes to 24059 bytes.
+Session ask, id 227f73adbf9fba80, 6653 bytes to 6665 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 7c3a7a1b8dc6c39e, 10972 bytes to 10984 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id a77299fb6c4f242d, 5899 bytes to 5911 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 0dfd5c74f3183670, 7524 bytes to 7536 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id d3f5114f8844d0b0, 73511 bytes to 73523 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 8edbef1a2b75e810, 6941 bytes to 6953 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 8d5fa1baf7ab7cca, 24073 bytes to 24071 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: deaths, hours. The map answered the rest; rephrase to include them. | Not used from your question: deaths. The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: deaths, hours. மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: deaths. மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
 
 ### officerA POST /api/map/ask
 
-Session ask, id 697554ff489e03de, 7457 bytes to 7335 bytes.
+Session ask, id d8adb0659df65275, 1170 bytes to 1182 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 654a4bcf9aa38780, 22746 bytes to 22758 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 27de3343cb6fa08b, 5047 bytes to 5059 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id d76ef9a3761c66ac, 1124 bytes to 1136 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 8bfdbae6993170e8, 71367 bytes to 71379 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id eb442c0dd81b34ed, 73510 bytes to 73522 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 8a74e8781954e541, 7848 bytes to 7860 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 1364668cb9393fd1, 482155 bytes to 482167 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 127e64a6fc0dface, 1170 bytes to 1182 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id 697554ff489e03de, 7457 bytes to 7347 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -375,29 +971,159 @@ Session ask, id 697554ff489e03de, 7457 bytes to 7335 bytes.
 | $.trace[0].ids[16] | INC-20261106-2E1851 | (absent) |
 | $.trace[0].ids[17] | INC-20261106-0E2C3D | (absent) |
 
-...and 4 more paths (see the JSON file).
+...and 5 more paths (see the JSON file).
 
 ### officerA POST /api/map/ask
 
-Session ask, id cc6505c5c1a07af9, 6974 bytes to 6940 bytes.
+Session ask, id cc6505c5c1a07af9, 6974 bytes to 6952 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: வாரம், எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். The map answered the rest; rephrase to include them. | Not used from your question: எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: வாரம், எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: எந்த, மண்டலத்தில், சம்பவங்கள், அதிகம். மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
+
+### officerA POST /api/map/ask
+
+Session ask, id b7c21800398ce876, 8477 bytes to 8489 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
 
 ### officerB POST /api/map/ask
 
-Session ask, id e7da02bc74406071, 6729 bytes to 6715 bytes.
+Session ask, id 817966050489b283, 9139 bytes to 9151 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 04f3e4389f43c0a4, 7151 bytes to 7163 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id de6b2e0bc1661177, 49031 bytes to 49043 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id e029d7fd60e29080, 94768 bytes to 94780 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id bb85cbbfabc82931, 1234 bytes to 1246 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 1d365a54ad6a8b45, 20914 bytes to 20926 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 0a20ae0a50530c55, 6929 bytes to 6941 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id f71fff90a10afafe, 1234 bytes to 1246 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 240db9d510877f4f, 94936 bytes to 94948 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id d5555f8df8a2029e, 9808 bytes to 9820 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id e7da02bc74406071, 6729 bytes to 6727 bytes.
 
 | Path | A | B |
 |---|---|---|
 | $.trace[1].note_en | Not used from your question: indha, entha, jaasthi. The map answered the rest; rephrase to include them. | Not used from your question: entha, jaasthi. The map answered the rest; rephrase to include them. |
 | $.trace[1].note_ta | கேள்வியில் பயன்படுத்தப்படாதவை: indha, entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது. | கேள்வியில் பயன்படுத்தப்படாதவை: entha, jaasthi. மீதியைக் கொண்டு பதில் தரப்பட்டது. |
+| $.city | (absent) | null |
 
 ### officerB POST /api/map/ask
 
-Session ask, id 8073f84112e61801, 95846 bytes to 30966 bytes.
+Session ask, id 214009f03090477d, 6802 bytes to 6814 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 01e0dad070526946, 8052 bytes to 8064 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id b68b7fbd50232aaf, 94462 bytes to 94474 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 3a40c4685dc3e541, 48542 bytes to 48554 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 6bd576468c267fae, 95807 bytes to 95819 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 8073f84112e61801, 95846 bytes to 30978 bytes.
 
 | Path | A | B |
 |---|---|---|
@@ -427,7 +1153,31 @@ Session ask, id 8073f84112e61801, 95846 bytes to 30966 bytes.
 | $.trace[0].ids[8] | INC-20261105-45E2DD | INC-20261106-204F2B |
 | $.trace[0].ids[9] | INC-20261103-2EAF09 | INC-20261106-B715B6 |
 
-...and 859 more paths (see the JSON file).
+...and 860 more paths (see the JSON file).
+
+### officerB POST /api/map/ask
+
+Session ask, id eabcf4cee44ad6c5, 23131 bytes to 23143 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 4220e2a25948bb47, 7582 bytes to 7594 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
+
+### officerB POST /api/map/ask
+
+Session ask, id 97422f0fcd235944, 95834 bytes to 95846 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.city | (absent) | null |
 
 ### collector POST /api/map/export (plan of sentence 1 with grant)
 
@@ -1225,8 +1975,8 @@ Session writes, id cd47878c4defdb30, 1251 bytes to 1252 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.incidents[0].lat | 13.01767549019608 | 13.017471568627451 |
-| $.incidents[0].lon | 80.21344347058823 | 80.21225131372549 |
+| $.incidents[0].lat | 13.01767549019608 | 13.017346078431373 |
+| $.incidents[0].lon | 80.21344347058823 | 80.21192190196078 |
 
 ### collector GET /api/collector/overview
 
@@ -1234,8 +1984,8 @@ Session writes, id ea0ab3f25bc17c26, 235191 bytes to 235192 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.severity.rows[32].lat | 13.01767549019608 | 13.017471568627451 |
-| $.severity.rows[32].lon | 80.21344347058823 | 80.21225131372549 |
+| $.severity.rows[32].lat | 13.01767549019608 | 13.017346078431373 |
+| $.severity.rows[32].lon | 80.21344347058823 | 80.21192190196078 |
 
 ### collector GET /api/collector/overview?period=weekly&zone=13
 
@@ -1243,10 +1993,26 @@ Session writes, id 3f54c3ecc14de285, 139122 bytes to 139124 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.map.pins[64].lat | 13.01767549019608 | 13.017471568627451 |
-| $.map.pins[64].lon | 80.21344347058823 | 80.21225131372549 |
-| $.severity.rows[27].lat | 13.01767549019608 | 13.017471568627451 |
-| $.severity.rows[27].lon | 80.21344347058823 | 80.21225131372549 |
+| $.map.pins[64].lat | 13.01767549019608 | 13.017346078431373 |
+| $.map.pins[64].lon | 80.21344347058823 | 80.21192190196078 |
+| $.severity.rows[27].lat | 13.01767549019608 | 13.017346078431373 |
+| $.severity.rows[27].lon | 80.21344347058823 | 80.21192190196078 |
+
+### officerA GET /api/officer/overview?meta=1
+
+Session writes, id 8b504339618befd5, 132 bytes to 207 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.live | (absent) | {object with 6 keys} |
+
+### officerB GET /api/officer/overview?meta=1
+
+Session writes, id a5563a5de1508ddc, 132 bytes to 207 bytes.
+
+| Path | A | B |
+|---|---|---|
+| $.live | (absent) | {object with 6 keys} |
 
 ### collector POST /api/collector/thunai/memory
 
@@ -1281,7 +2047,7 @@ Session writes, id d7a191781f17de43, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | a7FiVBr1FrKFkEuROE-owXw4xyc2lOAy |
+| $.confirm.scope | Y29Uq0XVxqYNoPGJVW_-XvaSev_xkaMg | 3Gz6TS6DoKZp6qVeyZadaZHvzAzEj8EG |
 
 ### collector GET /api/collector/studio/<dataset-1>?export=xlsx
 
@@ -1289,7 +2055,7 @@ Session writes, id be094a0c735be649, 188 bytes to 188 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | RSPMsE2Z3_UJJyN2Emy4ZZiv6ZXrZmZS |
+| $.confirm.scope | X-Vhovlw_n8lu2XVlQIqlwBcrpCI91lA | er3qK_oi0kBN5G5V_2_SlgKuW6quOOk3 |
 
 ### collector GET /api/collector/studio/<dataset-1>?f=[{"col"%3A"c0"%2C"op"%3A"neq"%2C"values"%3A["no such value"]}]&export=csv
 
@@ -1297,5 +2063,5 @@ Session writes, id a91af3219ee7b0a3, 185 bytes to 185 bytes.
 
 | Path | A | B |
 |---|---|---|
-| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | OIK95Y-EHjNwjkCDRS0M99NKVx_npzln |
+| $.confirm.scope | AeRzc1H2quqCdMD52ABXqL7MBEAPwo03 | 5ons1c2RRZU65VoelHCwTMBKbOXmtlAw |
 
