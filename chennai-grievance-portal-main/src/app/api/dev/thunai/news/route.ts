@@ -7,9 +7,23 @@ import { aideReady, answerStyle } from "@/lib/thunai/aide7";
 import { newsAide } from "@/lib/thunai/aide7/news";
 import { serverWorld } from "@/lib/thunai/world";
 import { feedLines, foundStory, type FindAsk } from "@/lib/thunai/v8/newsfind";
+import { serverHands } from "@/lib/thunai/data";
+import { weatherLines } from "@/lib/thunai/v10/weather10";
+import { semScores } from "@/lib/thunai/v10/sem10";
+import { newsBrief10 } from "@/lib/thunai/v10/brief10";
+import { understandV10 } from "@/lib/thunai/v10/flag10";
+import { tamilNames } from "@/lib/collector/nlp";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+/** v10: a locality's Tamil name from the console's gazetteer (the brief's Tamil lines say it), when it has one (as the console's route) */
+function placeTa(): ((name: string) => string | null) | undefined {
+  try {
+    const names = tamilNames();
+    return (n) => names.find((x) => x.en.some((e) => e.toLowerCase() === n.toLowerCase()))?.ta[0] ?? null;
+  } catch { return undefined; }
+}
 
 /** The dev console's twin of /api/collector/thunai/news: the same code on the local store, no sign-in. 404 in production. */
 export async function POST(req: NextRequest) {
@@ -21,6 +35,14 @@ export async function POST(req: NextRequest) {
   const aide = answerStyle() === "v7" && aideReady() ? newsAide(await serverWorld(), { user: "dev", signal: req.signal }) : undefined;
   // v8: a story by its topic and a news question (the owner's examples 1 and 2); the world is read only when one is asked; JARVIS_UNDERSTAND=v7 turns them off
   // (served whatever the server's switch says: a browser built with v8 asks for it; the switch decides what the browser asks: the review, 19 Nov)
-  const v8 = { find: async (f: FindAsk) => foundStory(f, { world: await serverWorld() }), feedLines: async (f: FindAsk, words: string[]) => feedLines(f, words, { world: await serverWorld() }) };
-  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: "dev", aide, ...v8 }));
+  // (v10, the finals: the twin had none of v10's additions, so the real-path runs on the dev console read v7's recital, not v10's brief: now the
+  // same as the console's route, the meaning ranker, a storm's weather readings and the brief with the console's own cases and its offer)
+  const v8 = { find: async (f: FindAsk) => foundStory(f, { world: await serverWorld(), sem: semScores }), feedLines: async (f: FindAsk, words: string[]) => feedLines(f, words, { world: await serverWorld() }) };
+  const hands = serverHands({ email: "dev@localhost", role: "collector", lockDept: null }, req.signal);
+  const tool = (n: string, a: Record<string, unknown>) => hands.tool(n, a);
+  const brief10 = understandV10() && answerStyle() === "v7"
+    ? newsBrief10({ world: await serverWorld(), user: "dev", signal: req.signal, tool, weather: () => weatherLines(tool), placeTa: placeTa(), ...(aideReady() ? {} : { write: { rungs: () => [] } }) })
+    : undefined;
+  const v10 = { weather: () => weatherLines(tool), brief10 };
+  return ndjson(newsEvents(parsed.data, { loadDoc: (id) => newsDoc(id) as Promise<StoredDoc | null>, incidentDoc: incidentNewsDoc, signal: req.signal, user: "dev", aide, ...v8, ...v10 }));
 }
