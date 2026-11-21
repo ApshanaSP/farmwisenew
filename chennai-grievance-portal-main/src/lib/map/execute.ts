@@ -35,11 +35,27 @@ export type Coll =
   | { type: "polys"; layer: LayerId; items: PolyFeat[] }
   | { type: "nearest"; origin: Place | null; layer: LayerId; pairs: { hit: Hit | null; to: Near[] }[]; hits: Hit[] }
   | { type: "areas"; by: "ward" | "zone" | "place"; from: LayerId; areas: AreaScore[]; best: AreaScore | null; beyond: number | null; total: number }
-  | { type: "groups"; by: "ward" | "zone" | "taluk" | "hex500" | "near"; groups: Group[]; hits: Hit[]; unassigned: string[]; layer?: LayerId }
+  | { type: "groups"; by: "ward" | "zone" | "taluk" | "hex500" | "near" | "category" | "dept"; groups: Group[]; hits: Hit[]; unassigned: string[]; layer?: LayerId }
+  /** v2: how fast cases are closed: per area, category or department, the median days from first report to closing, over the closed cases in the collection */
+  | { type: "speed"; by: "ward" | "zone" | "taluk" | "category" | "dept"; order: "fast" | "slow"; rows: SpeedRow[]; hits: Hit[]; closed: number; open: number; minClosed: number }
   | { type: "hotspots"; method: "stored" | "dbscan"; clusters: Cluster[]; hotWards: { ward: number; z: number; n: number }[]; hits: Hit[] }
   | { type: "compare"; a: AreaCount; b: AreaCount; hits: Hit[] }
   | { type: "change"; now: { period: Period; hits: Hit[] }; before: { period: Period; hits: Hit[] }; hits: Hit[] }
   | { type: "ranked"; by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; rows: RankRow[]; now: Period; before: Period; hits: Hit[]; beforeHits: Hit[]; unassigned: number };
+
+export interface SpeedRow { key: string; label: string; label_ta: string; lat: number; lon: number; closed: number; open: number; medianDays: number; ids: string[] }
+
+/** An incident's area, category or department as a group: key, labels and a point for the map (shared by count_by and speed). */
+function groupOf(h: Hit, by: "ward" | "zone" | "taluk" | "category" | "dept", w: World): { key: string; label: string; label_ta: string; lat: number; lon: number } | null {
+  const i = h.inc;
+  if (by === "ward" && i.ward != null) { const wd = w.wards.find((x) => x.ward === i.ward); return { key: String(i.ward), label: `Ward ${i.ward}`, label_ta: `வார்டு ${i.ward}`, lat: wd?.lat ?? i.lat, lon: wd?.lon ?? i.lon }; }
+  if (by === "zone" && i.zone != null) { const z = w.zones.find((x) => x.zone === i.zone); return { key: String(i.zone), label: z ? `${z.name} (Zone ${z.zone})` : `Zone ${i.zone}`, label_ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${i.zone}`, lat: z?.lat ?? 0, lon: z?.lon ?? 0 }; }
+  if (by === "taluk" && i.taluk) { const t = w.taluks.find((x) => x.code === i.taluk); return { key: i.taluk, label: `${t?.name ?? i.taluk} taluk`, label_ta: `${t?.name_ta ?? t?.name ?? i.taluk} வட்டம்`, lat: t?.lat ?? 0, lon: t?.lon ?? 0 }; }
+  if (by === "category") return { key: i.cat, label: w.cats.get(i.cat)?.label ?? i.cat, label_ta: CAT_TA[i.cat] ?? w.cats.get(i.cat)?.label ?? i.cat, lat: i.lat, lon: i.lon };
+  if (by === "dept" && i.dept) { const d = w.depts.get(i.dept); return { key: i.dept, label: d?.name ?? i.dept, label_ta: d?.name ?? i.dept, lat: i.lat, lon: i.lon }; }
+  return null;
+}
+const hoursBetween = (a: string, b: string) => (Date.parse(b.replace(" ", "T") + "Z") - Date.parse(a.replace(" ", "T") + "Z")) / 3_600_000;
 
 export interface StepOut { as: string; op: Step["op"]; count: number; note_en: string; note_ta: string; layer: LayerId | null; ids: string[] }
 export interface RunResult {
@@ -669,6 +685,9 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           } else if (s.by === "taluk" && h.inc.taluk) {
             const t = w.taluks.find((x) => x.code === h.inc.taluk);
             key = h.inc.taluk; label = `${t?.name ?? h.inc.taluk} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? h.inc.taluk} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0;
+          } else if ((s.by === "category" || s.by === "dept") && groupOf(h, s.by, w)) {
+            const gg = groupOf(h, s.by, w)!;
+            key = gg.key; label = gg.label; label_ta = gg.label_ta; lat = gg.lat; lon = gg.lon;
           } else if (s.by === "near" && h.near) {
             // v2: the place it was found near (the within step keeps the closest one)
             const lw = LAYER_WORD[h.near.layer];
@@ -687,7 +706,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };
         const nw = nearLayer ? LAYER_WORD[nearLayer] : null;
         const unit = { ward: ["ward", "wards", "வார்டுகள்"], zone: ["zone", "zones", "மண்டலங்கள்"], taluk: ["taluk", "taluks", "வட்டங்கள்"], hex500: ["500 m cell", "500 m cells", "500 மீ கட்டங்கள்"],
-          near: [nw?.one ?? "place", nw?.en ?? "places", nw?.ta ?? "இடங்கள்"] }[s.by];
+          near: [nw?.one ?? "place", nw?.en ?? "places", nw?.ta ?? "இடங்கள்"], category: ["kind", "kinds", "வகைகள்"], dept: ["department", "departments", "துறைகள்"] }[s.by];
         n = note(`Counted them by ${unit[0]}: ${list.length} ${unit[1]}${list[0] ? `; the most in ${list[0].label} (${list[0].n})` : ""}.${unassigned.length ? ` ${unassigned.length} have no ${unit[0]} on record.` : ""}`,
           `${unit[2]} வாரியாக எண்ணப்பட்டது: ${list.length}${list[0] ? `; அதிகம் ${list[0].label_ta} (${list[0].n})` : ""}.`);
         break;
@@ -756,6 +775,33 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         out = { type: "change", now: { period: s.now, hits: now }, before: { period: s.before, hits: before }, hits: now };
         n = note(`Counted the same ${inPeriodWords(s.now)} (${now.length}) and ${inPeriodWords(s.before)} (${before.length}).`,
           `${periodWords(s.now, "ta")} (${now.length}), ${periodWords(s.before, "ta")} (${before.length}).`);
+        break;
+      }
+      case "speed": {
+        // the collection as asked, closed or not; the median is over its closed cases with a closing time
+        const src = incHits(s.of);
+        const MIN = 5;
+        const rows = new Map<string, SpeedRow & { hours: number[] }>();
+        let closed = 0, open = 0;
+        for (const h of src) {
+          const g = groupOf(h, s.by, w);
+          if (!g) continue;
+          const r = rows.get(g.key) ?? rows.set(g.key, { ...g, closed: 0, open: 0, medianDays: 0, ids: [], hours: [] }).get(g.key)!;
+          r.ids.push(h.inc.id);
+          if (h.inc.open) { r.open++; open++; continue; }
+          if (!h.inc.closedAt || !h.inc.first) continue;
+          const hrs = hoursBetween(h.inc.first, h.inc.closedAt);
+          if (!(hrs >= 0)) continue;
+          r.hours.push(hrs); r.closed++; closed++;
+        }
+        const med = (xs: number[]) => { const a = [...xs].sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+        // an area with fewer than MIN closed cases is not ranked (one quick case is not a pace)
+        const list = [...rows.values()].filter((r) => r.closed >= MIN).map(({ hours, ...r }) => ({ ...r, medianDays: Math.round((med(hours) / 24) * 10) / 10 }))
+          .sort((a, b) => (s.order === "fast" ? a.medianDays - b.medianDays : b.medianDays - a.medianDays) || b.closed - a.closed || a.key.localeCompare(b.key, "en", { numeric: true }));
+        out = { type: "speed", by: s.by, order: s.order, rows: list, hits: src, closed, open, minClosed: MIN };
+        const unit = { ward: "ward", zone: "zone", taluk: "taluk", category: "kind of case", dept: "department" }[s.by];
+        n = note(`Measured the days from first report to closing for ${closed} closed cases, by ${unit} (${list.length} with at least ${MIN} closed)${list[0] ? `; ${s.order === "fast" ? "fastest" : "slowest"}: ${list[0].label}, a median ${list[0].medianDays} days` : ""}.`,
+          `${closed} முடிந்த சம்பவங்களுக்கு முதல் புகாரிலிருந்து முடிவு வரை நாட்கள் அளக்கப்பட்டன${list[0] ? `; ${s.order === "fast" ? "வேகமானது" : "மெதுவானது"}: ${list[0].label_ta}, நடுநிலை ${list[0].medianDays} நாட்கள்` : ""}.`);
         break;
       }
       case "rank": {

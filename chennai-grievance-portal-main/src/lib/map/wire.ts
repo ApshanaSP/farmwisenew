@@ -10,7 +10,7 @@ import { LAYER_IDS, SEVS } from "./types";
 
 const AreaW = { kind: z.enum(["ward", "zone", "taluk", "point"]).nullable(), id: z.number().nullable(), code: z.string().nullable(), ref: z.string().nullable(), radius_m: z.number().nullable() };
 export const WireStep = z.object({
-  op: z.enum(["take", "within", "inside", "along", "nearest", "farthest", "count_by", "hotspot", "compare", "change", "rank"]),
+  op: z.enum(["take", "within", "inside", "along", "nearest", "farthest", "count_by", "hotspot", "compare", "change", "rank", "speed"]),
   as: z.string(),
   layer: z.enum(LAYER_IDS).nullable(),
   category: z.array(z.string()).nullable(), family: z.array(z.string()).nullable(), severity: z.array(z.enum(SEVS as [string, ...string[]])).nullable(),
@@ -22,17 +22,25 @@ export const WireStep = z.object({
   government: z.boolean().nullable(), kinds: z.array(z.string()).nullable(),
   of: z.string().nullable(), near: z.array(z.string()).nullable(), meters: z.number().nullable(), line: z.string().nullable(),
   from: z.string().nullable(), to: z.string().nullable(), k: z.number().nullable(), areas: z.enum(["ward", "zone", "place"]).nullable(), beyond_m: z.number().nullable(),
-  by: z.enum(["ward", "zone", "taluk", "hex500", "near"]).nullable(),
+  by: z.enum(["ward", "zone", "taluk", "hex500", "near", "category", "dept"]).nullable(),
   area_kind: AreaW.kind, area_id: AreaW.id, area_code: AreaW.code, area_ref: AreaW.ref, area_radius_m: AreaW.radius_m,
   b_kind: AreaW.kind, b_id: AreaW.id, b_code: AreaW.code, b_ref: AreaW.ref, b_radius_m: AreaW.radius_m,
   before_days: z.number().nullable(), before_offset: z.number().nullable(),
   /** rank: the biggest rise first, or the biggest fall */
-  order: z.enum(["rise", "fall"]).nullable()
+  order: z.enum(["rise", "fall", "fast", "slow"]).nullable()
 });
 export type WireStep = z.infer<typeof WireStep>;
 export const WirePlan = z.object({
   /** false when the text is not a question about incidents, places or facilities in Chennai (gibberish, chit-chat): no plan is run */
-  understood: z.boolean().describe("false when the text is not a question about the map: never guess a plan for it"),
+  understood: z.boolean().describe("true for every question about Chennai places, problems, facilities or areas, however short or loosely typed (one word too); false only when intent is not_map"),
+  /** v2 (AI only): what kind of answer the question needs; the plan's steps serve it (brief and scorecard: the area of an inside step) */
+  /** v2: what the question names, written before the steps: the steps must use them */
+  named_categories: z.array(z.string()).describe("the category codes of the kinds of problem the question names (from WORDS PEOPLE USE, misspelt or not); [] if none"),
+  named_layers: z.array(z.enum(LAYER_IDS)).describe("the facility layers the question names (schools, liquor, atms...), not incidents; [] if none"),
+  named_zone: z.number().describe("the zone number the question names (1-15), or -1"),
+  named_ward: z.number().describe("the ward number the question names (1-200), or -1"),
+  intent: z.enum(["plan", "brief", "scorecard", "city", "not_map"]).describe("plan: a map answer; brief: what is happening in one area; scorecard: a ward's scorecard; city: the live state of the city now; not_map: not a map question"),
+  city: z.enum(["traffic", "rain", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, streets that flood, power cuts, trains running; else none"),
   steps: z.array(WireStep), show: z.string(), language: z.enum(["en", "ta", "tanglish"])
 });
 export type WirePlan = z.infer<typeof WirePlan>;
@@ -62,7 +70,7 @@ const calendarIn = (k: WireStep["period_calendar"], offset: number | null | unde
 
 export function toWire(plan: Plan): WirePlan {
   return {
-    understood: true, show: plan.show, language: plan.language,
+    understood: true, named_categories: [], named_layers: [], named_zone: -1, named_ward: -1, intent: "plan", city: "none", show: plan.show, language: plan.language,
     steps: plan.steps.map((s: Step): WireStep => {
       const base = { ...EMPTY, op: s.op, as: s.as } as WireStep;
       switch (s.op) {
@@ -82,6 +90,7 @@ export function toWire(plan: Plan): WirePlan {
         case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null,
           before_offset: s.before.kind === "last_days" || isCalendar(s.before) ? s.before.offset : null };
         case "rank": return { ...base, of: s.of, by: s.by, order: s.order };
+        case "speed": return { ...base, of: s.of, by: s.by, order: s.order };
       }
     })
   };
@@ -111,6 +120,7 @@ export function fromWire(w: WirePlan): Plan {
         before: cal ? ({ kind: cal.kind, offset: Math.round(s.before_offset ?? cal.offset + 1) } as CalendarPeriod)
           : { kind: "last_days", days: Math.round(s.before_days ?? s.period_days ?? 7), offset: Math.round(s.before_offset ?? 1) } };
       case "rank": return { op: "rank", as: s.as, of: s.of ?? "", by: s.by === "zone" || s.by === "taluk" ? s.by : "ward", order: s.order === "fall" ? "fall" : "rise" };
+      case "speed": return { op: "speed", as: s.as, of: s.of ?? "", by: s.by === "zone" || s.by === "taluk" || s.by === "category" || s.by === "dept" ? s.by : "ward", order: s.order === "slow" ? "slow" : "fast" };
     }
   });
   // a model sometimes names the first step as the answer: the answer is the last step unless that one only takes a layer

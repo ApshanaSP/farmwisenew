@@ -267,6 +267,58 @@ export function LeagueTable({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lan
   );
 }
 
+/** v2: how fast each area, kind or department closes its cases: a table (median days to close, closed, still open), a click shows its cases. */
+export function SpeedTable({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang: Lang }) {
+  const k = r.extra.speed;
+  const [all, setAll] = useState(false);
+  if (!k) return null;
+  const rows = all ? k.rows : k.rows.slice(0, 10);
+  const unitEn = { ward: "Ward", zone: "Zone", taluk: "Taluk", category: "Kind", dept: "Department" }[k.by];
+  const unitTa = { ward: "வார்டு", zone: "மண்டலம்", taluk: "வட்டம்", category: "வகை", dept: "துறை" }[k.by];
+  const head = ["#", t(lang, unitEn, unitTa), t(lang, "Median days to close", "நடுநிலை நாட்கள்"), t(lang, "Closed", "முடிந்தவை"), t(lang, "Still open", "திறந்தவை")];
+  const data = k.rows.map((x, i) => [i + 1, lang === "ta" ? x.label_ta : x.label, x.medianDays, x.closed, x.open]);
+  return (
+    <div className="amt-view">
+      <div className="amp-sec" style={{ cursor: "default" }}>{t(lang, k.order === "fast" ? "Fastest to close" : "Slowest to close", k.order === "fast" ? "வேகமாகத் தீர்ப்பவை" : "மெதுவாகத் தீர்ப்பவை")}<span className="n">{k.rows.length}</span></div>
+      <table className="amt-tbl league"><thead><tr>{head.map((h) => <th key={h} scope="col">{h}</th>)}</tr></thead>
+        <tbody>{rows.map((x, i) => (
+          <tr key={x.key} tabIndex={0} className={ask.spot?.label === x.label ? "on" : ""} onClick={() => ask.setSpot(ask.spot?.label === x.label ? null : { ids: x.ids, label: x.label })}
+            onKeyDown={(e) => { if (e.key === "Enter") ask.setSpot({ ids: x.ids, label: x.label }); }}>
+            <td>{i + 1}</td><td>{lang === "ta" ? x.label_ta : x.label}</td><td>{x.medianDays}</td><td>{x.closed.toLocaleString("en-IN")}</td><td>{x.open.toLocaleString("en-IN")}</td>
+          </tr>))}</tbody></table>
+      <p className="amt-muted">{t(lang, `Days from the first report to closing, the middle value; only where ${k.minClosed} or more were closed. A click shows that row's cases.`, `முதல் புகாரிலிருந்து முடிவு வரை நாட்கள்; ${k.minClosed}+ முடிந்தவை உள்ளவை மட்டும்.`)}</p>
+      <div className="amp-tacts">
+        {k.rows.length > 10 && <button onClick={() => setAll((v) => !v)}>{all ? t(lang, "Top 10", "முதல் 10") : t(lang, `All ${k.rows.length}`, `அனைத்தும் ${k.rows.length}`)}</button>}
+        <button onClick={() => download(`speed-${k.by}.csv`, head, data, [`District IQ · Ask the Map: how fast cases close`, `As of ${r.asOf.data || r.asOf.now}`])}><I n="download" />CSV</button>
+        <button onClick={() => printTable(t(lang, "How fast cases close", "தீர்வு வேகம்"), `${r.answer?.headline ?? ""} As of ${r.asOf.data || r.asOf.now}.`, head, data as (string | number)[][])}><I n="doc" />{t(lang, "Print", "அச்சிடு")}</button>
+      </div>
+    </div>
+  );
+}
+
+/** A count by kind or department: a ranked list (no place of its own on the map); a click shows its cases. */
+export function GroupList({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang: Lang }) {
+  const g = r.extra.groups;
+  const by = r.extra.groupsBy;
+  const [all, setAll] = useState(false);
+  if (!g?.length || (by !== "category" && by !== "dept" && by !== "near")) return null;
+  const rows = all ? g : g.slice(0, 10);
+  const total = g.reduce((a, x) => a + x.n, 0);
+  const title = by === "category" ? t(lang, "By kind", "வகை வாரியாக") : by === "dept" ? t(lang, "By department", "துறை வாரியாக") : t(lang, "By the place near", "அருகிலுள்ள இடம் வாரியாக");
+  return (
+    <div className="amt-view">
+      <div className="amp-sec" style={{ cursor: "default" }}>{title}<span className="n">{g.length}</span></div>
+      <table className="amt-tbl league"><thead><tr><th scope="col">#</th><th scope="col">{by === "category" ? t(lang, "Kind", "வகை") : by === "dept" ? t(lang, "Department", "துறை") : t(lang, "Place", "இடம்")}</th><th scope="col">{t(lang, "Cases", "சம்பவங்கள்")}</th><th scope="col">%</th></tr></thead>
+        <tbody>{rows.map((x, i) => (
+          <tr key={x.key} tabIndex={0} className={ask.spot?.label === x.label ? "on" : ""} onClick={() => ask.setSpot(ask.spot?.label === x.label ? null : { ids: x.ids, label: x.label })}
+            onKeyDown={(e) => { if (e.key === "Enter") ask.setSpot({ ids: x.ids, label: x.label }); }}>
+            <td>{i + 1}</td><td>{lang === "ta" ? x.label_ta : x.label}</td><td>{x.n.toLocaleString("en-IN")}</td><td>{total ? Math.round((x.n / total) * 100) : 0}</td>
+          </tr>))}</tbody></table>
+      {g.length > 10 && <div className="amp-tacts"><button onClick={() => setAll((v) => !v)}>{all ? t(lang, "Top 10", "முதல் 10") : t(lang, `All ${g.length}`, `அனைத்தும் ${g.length}`)}</button></div>}
+    </div>
+  );
+}
+
 /** A gap answer as a list: each area, how far, and the nearest place it was measured to. */
 export function GapList({ r, lang }: { r: AskResponse; lang: Lang }) {
   const g = r.extra.gap, areas = r.extra.areas;

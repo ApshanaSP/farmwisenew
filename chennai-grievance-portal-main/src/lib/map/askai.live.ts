@@ -65,20 +65,28 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   let user = { email: "eval-dev@map", role: "collector" as const, lockDept: null as string | null };
   const as = (set: string) => { user = { ...user, email: `eval-${set}@map` }; };
   const context = { zone: null, taluk: null, incidentId: null, drawn: null, ward: null };
-  const ask = async (text: string) => (await withBusyRetry(() => askMap({ text, plan: null, prev: null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+  // a server error is a miss (and counted), never the end of the run
+  const errors: string[] = [];
+  const ask = async (text: string) => { try { return (await withBusyRetry(() => askMap({ text, plan: null, prev: null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value; } catch (e) { errors.push(`${text}: ${(e as Error).message}`); console.log(`SERVER ERROR ${text}: ${(e as Error).message}`); return null; } };
   const ms: number[] = [];
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
-    for (const x of read(file) as Q[]) {
+    for (const x of read(file) as (Q & { kind?: "brief" | "scorecard" | "city" | "refuse" })[]) {
       const t0 = Date.now();
       const r = await ask(x.q);
       ms.push(Date.now() - t0);
       const refused = !r || (!r.plan && r.kind === "say");
-      const m = misses(r?.plan ?? null, refused ? ["not a map question"] : null, x.want);
+      // a kind of answer the question needs (an area brief, a scorecard, the live city, a refusal), or the plan it must have
+      const m = x.kind ? (
+        x.kind === "brief" ? (r?.kind === "brief" ? [] : [`not a brief (${r?.kind})`])
+        : x.kind === "scorecard" ? (r?.scorecard ? [] : [`not a scorecard (${r?.kind})`])
+        : x.kind === "city" ? (r?.city || /live .* feed is not available/.test(r?.say?.en ?? "") ? [] : [`not the live city (${r?.kind})`])
+        : (refused && !r?.city && !/live .* feed/.test(r?.say?.en ?? "") ? [] : [`answered, should be refused (${r?.answer?.headline?.slice(0, 60) ?? r?.kind})`]))
+        : misses(r?.plan ?? null, refused ? ["not a map question"] : null, x.want ?? {});
       // the count, checked independently where the answer is a facility layer in a zone: the raw layer file, each point's own ward, the ward file's zone
       const st = r?.plan?.steps ?? [];
       if (st.length === 2 && st[0].op === "take" && st[0].layer !== "incidents" && st[1].op === "inside" && st[1].area.kind === "zone" && r?.answer) {
@@ -129,7 +137,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
     }
   }
   ms.sort((a, b) => a - b);
-  const sum = { score, usd: Number((spentUsd() - usd0).toFixed(5)), median_ms: ms[Math.floor(ms.length / 2)], p90_ms: ms[Math.floor(ms.length * 0.9)], out: OUT };
+  const sum = { score, errors, usd: Number((spentUsd() - usd0).toFixed(5)), median_ms: ms[Math.floor(ms.length / 2)], p90_ms: ms[Math.floor(ms.length * 0.9)], out: OUT };
   console.log("ASKAI " + JSON.stringify(sum));
   fs.appendFileSync(OUT, "SUMMARY " + JSON.stringify(sum) + "\n");
 }, 3_600_000);

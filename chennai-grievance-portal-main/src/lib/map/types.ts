@@ -37,6 +37,8 @@ export interface Inc {
   breached: boolean;
   /** IST wall clock "YYYY-MM-DD HH:MM:SS" */
   first: string;
+  /** v2: when it was closed (IST wall clock), for "which area is resolving fast"; null while open or not recorded */
+  closedAt?: string | null;
   title: string;
   citizen: number;
   sources: number;

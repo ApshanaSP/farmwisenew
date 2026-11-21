@@ -15,6 +15,54 @@ import { extractNumbers } from "@/lib/assistant/verify";
 import { z } from "zod";
 import { checkPlan, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
+import { wordTables } from "./route";
+
+/** v2: a question of one to three words names a layer, a kind of problem or a place ("garbage" is garbage complaints, not junk text). */
+const short = (t: string) => t.trim().split(/\s+/).length <= 3;
+const SHORT_NOTE = "\nA SHORT QUESTION: it names a layer, a kind of problem (garbage means garbage complaints, not junk text; overdue means cases past deadline; today means today's cases) or a place, and is then a map question: intent plan (or brief for a place), understood true. Random letters, a single letter or a greeting are not_map.";
+
+/**
+ * v2: the plan made to use what the model named before writing it: the categories it named on the incidents' take when the take has none (or
+ * only their family), each layer it named taken, the zone or ward it named as an area when the plan has none. The model's own reading, kept.
+ */
+export function withNamed(plan: Plan, w: Pick<WirePlan, "named_categories" | "named_layers" | "named_zone" | "named_ward">, cats: string[]): Plan {
+  const named = (w.named_categories ?? []).filter((c) => cats.includes(c));
+  let steps = plan.steps.map((st) => {
+    if (st.op !== "take" || st.layer !== "incidents" || !st.filter || !named.length) return st;
+    const f = st.filter;
+    if (f.category?.some((c) => named.includes(c))) return st;
+    if (f.category?.length) return st;
+    return { ...st, filter: { ...f, category: named, family: null } };
+  });
+  let show = plan.show;
+  const isIncShow = (): boolean => { const chain = (n: string): string | null => { const x = steps.find((y) => y.as === n); return !x ? null : x.op === "take" ? x.layer : "of" in x ? chain(x.of) : null; }; return chain(show) === "incidents"; };
+  // an area it named and the plan left out: inside that area, on the answer (when the answer is incidents or a layer's places)
+  const hasArea = steps.some((x) => x.op === "inside" || x.op === "compare" || x.op === "farthest" || x.op === "rank" || x.op === "speed" || (x.op === "count_by" && x.by !== "near" && x.by !== "category" && x.by !== "dept"));
+  const area = w.named_ward >= 1 && w.named_ward <= 200 ? { kind: "ward" as const, id: Math.round(w.named_ward) } : w.named_zone >= 1 && w.named_zone <= 15 ? { kind: "zone" as const, id: Math.round(w.named_zone) } : null;
+  if (area && !hasArea) {
+    const last = steps.find((x) => x.as === show);
+    if (last && (last.op === "take" || last.op === "within" || isIncShow())) {
+      const as = steps.some((x) => x.as === "in") ? "in_named" : "in";
+      steps = [...steps, { op: "inside", as, of: show, area }];
+      show = as;
+    }
+  }
+  return { ...plan, steps, show };
+}
+
+/** An example plan with its named slots first, filled from its own steps (the order the model writes them). */
+function namedOf(p: W): W {
+  const steps = (p.steps ?? []) as W[];
+  const cats = steps.flatMap((x) => (Array.isArray(x.category) ? (x.category as string[]) : []));
+  const layers = steps.filter((x) => x.op === "take" && x.layer && x.layer !== "incidents").map((x) => x.layer as string);
+  const zone = steps.find((x) => x.area_kind === "zone")?.area_id ?? -1;
+  const ward = steps.find((x) => x.area_kind === "ward")?.area_id ?? -1;
+  const { understood, ...rest } = p;
+  return { understood: understood ?? true, named_categories: cats, named_layers: layers, named_zone: zone, named_ward: ward, ...rest };
+}
+
+/** The families a take may name (the prompt lists them; anything else is refused and asked again). */
+const FAMILIES = ["FLOOD", "CRIME", "DRAINAGE", "ROADS_TRAFFIC", "HEALTH", "WASTE_SANITATION", "PUBLIC_SAFETY", "STRUCTURES_LAND", "ELECTRICAL", "PUBLIC_ORDER", "WORKS", "ENVIRONMENT", "GREEN", "ADMIN", "OTHER"];
 import { LAYER_IDS, type LayerId } from "./types";
 import type { Fact } from "./answer";
 import type { Lang } from "./words";
@@ -45,6 +93,21 @@ const NEW_EXAMPLES: [string, W][] = [
   ["which hospitals have the most open garbage complaints around them", { understood: true, language: "en", show: "by", steps: [
     take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "hospitals"),
     { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "count_by", as: "by", of: "near", by: "near" }] }],
+  ["which zone is resolving complaints fastest", { understood: true, language: "en", show: "speed", steps: [
+    take("a", "incidents", { status: "any", period_days: 90, period_offset: 0 }), { op: "speed", as: "speed", of: "a", by: "zone", order: "fast" }] }],
+  ["what are people complaining about most this month", { understood: true, language: "en", show: "by", steps: [
+    take("a", "incidents", { status: "open", period_days: 30, period_offset: 0 }), { op: "count_by", as: "by", of: "a", by: "category" }] }],
+  ["school", { understood: true, intent: "plan", city: "none", language: "en", show: "f1", steps: [take("f1", "schools")] }],
+  ["garbage", { understood: true, intent: "plan", city: "none", language: "en", show: "a", steps: [take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", period_days: 7, period_offset: 0 })] }],
+  ["kuppai", { understood: true, intent: "plan", city: "none", language: "tanglish", show: "a", steps: [take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", period_days: 7, period_offset: 0 })] }],
+  ["zone 9", { understood: true, intent: "brief", city: "none", language: "en", show: "in", steps: [take("a", "incidents", { status: "open" }), { op: "inside", as: "in", of: "a", area_kind: "zone", area_id: 9 }] }],
+  ["where should i go first", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { status: "open", overdue: true }), { op: "count_by", as: "by", of: "a", by: "ward" }] }],
+  ["chain snatching", { understood: true, intent: "plan", city: "none", language: "en", show: "a", steps: [take("a", "incidents", { category: ["CRIME_PROPERTY"], status: "open", period_days: 7, period_offset: 0 })] }],
+  ["dog bite cases in zone 3", { understood: true, intent: "plan", city: "none", language: "en", show: "in", steps: [take("a", "incidents", { category: ["STRAY_ANIMALS"], status: "open", period_days: 7, period_offset: 0 }), { op: "inside", as: "in", of: "a", area_kind: "zone", area_id: 3 }] }],
+  ["which taluk needs my attention", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { status: "open", overdue: true }), { op: "count_by", as: "by", of: "a", by: "taluk" }] }],
+  ["accident black spots", { understood: true, intent: "plan", city: "none", language: "en", show: "hot", steps: [take("a", "incidents", { category: ["ROAD_ACCIDENT"], status: "any", period_days: 90, period_offset: 0 }), { op: "hotspot", as: "hot", of: "a" }] }],
+  ["status of ward 120", { understood: true, intent: "brief", city: "none", language: "en", show: "in", steps: [take("a", "incidents", { status: "open" }), { op: "inside", as: "in", of: "a", area_kind: "ward", area_id: 120 }] }],
+  ["is traffic bad right now", { understood: true, intent: "city", city: "traffic", language: "en", show: "a", steps: [take("a", "incidents", { status: "open" })] }],
   ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
     take("a", "incidents", { family: ["CRIME"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "liquor", { kinds: ["bar", "pub"] }),
     { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "inside", as: "in", of: "near", area_kind: "zone", area_id: 13 }] }]
@@ -109,10 +172,25 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "- nearest: the k nearest facilities (`to`) from each incident (`from` a collection) or from a place (`from` place:<ref>).",
     "- farthest: rank areas by distance from the nearest facility (`from`); areas ward (90 % of its ground), zone, or place (each neighbourhood's point); beyond_m keeps only those farther than that.",
     "- count_by: incidents by ward, zone, taluk or hex500; or by near, after a within step: each incident counted at the place it was found near (which school, hospital or market has the most complaints near it). hotspot: clusters of incidents. compare: two areas (area_* and b_*).",
+    "- count_by by category (what people complain about most, top problems, type wise) or by dept (which department holds most, department wise).",
+    "- speed: how fast cases are closed (median days from first report to closing) by ward, zone, taluk, category or dept; order fast (resolving fast, best performing, quickest) or slow (slowest, taking longest, delays). Take incidents with status any and period_days 90 unless the question names a period.",
+    "- Which area needs my attention, where should I focus or go first, worst or problem areas: open incidents past deadline (overdue true, no period), count_by ward (or zone if the question says zone).",
+    "- What is happening or what happened near a kind of place (near schools, near wine shops): open incidents within 500 m of that layer. Near one named place: inside its point.",
     "- change: the same incidents in two windows. rank: a change counted by ward, zone or taluk and ranked by the rise (order rise) or the fall (order fall): \"which wards got worse\", \"most improved zones\", \"league table\".",
     "LAYERS:",
     ...LAYER_IDS.map((l) => `- ${l}: ${LAYER_HELP[l] ?? l}`),
     `Incident categories: ${cats.map((c) => (catLabels?.get(c) ? `${c} (${catLabels.get(c)})` : c)).join(", ")}.`,
+    "WORDS PEOPLE USE (English, Tamil, Tanglish; read misspellings of them too). For each category or family:",
+    ...wordTables().cats.map((x) => `- ${x}`),
+    "For each layer (a facility the map holds):",
+    ...wordTables().layers.map((x) => `- ${x}`),
+    "First write what the question names: named_categories (each kind of problem it names, as category codes), named_layers (the facilities it names), named_zone and named_ward (-1 when none). Then write the steps, which must use them.",
+    "HOW TO READ A QUESTION, in this order: (1) the kind of problem: find its word in WORDS PEOPLE USE (misspelt or not) and put that exact category on the incidents' take (the family only for a broad word such as flooding or crime); (2) the place: an area named after in, la, il (zone, taluk, ward) is an inside step with that area, a place after near is a point; never drop a zone or ward the question names; (3) the shape: list, near, count by area, clusters, change, ranking, speed, gap; (4) the time: this week 7 days, this month 30, today calendar day.",
+    "When the question names a kind of problem, put that category (or family) on the incidents' take; a single named kind is never counted by category.",
+    "What happened or what is happening near a kind of place in Tanglish (tasmac kadai pakkathula enna aachu, school pakkathula enna nadakkudhu): the open incidents within 500 m of that layer. Piling up, keeps happening, prone: hotspot. Taking too long, slow to close: speed order slow. Today alone: the incidents reported today (period_calendar day).",
+    "Needs attention, look at first, go first, focus, urgent: overdue true on the open incidents and count_by ward (zone or taluk if said). Improved or got better: rank order fall; got worse or rose: order rise.",
+    "count_by category only when the question asks which kinds are most or for the top problems; never when it names one kind.",
+    "Has X gone up or is X getting worse (the district as a whole): change. Which areas got worse or improved: rank. Prone areas, black spots, where it keeps happening: hotspot.",
     "Families: FLOOD, CRIME, DRAINAGE, ROADS_TRAFFIC, HEALTH, WASTE_SANITATION, PUBLIC_SAFETY, STRUCTURES_LAND, ELECTRICAL, PUBLIC_ORDER, WORKS, ENVIRONMENT, GREEN, ADMIN, OTHER.",
     `Departments: ${depts.join(", ")}.`,
     ...(zones?.length ? [`ZONES: ${zones.map((z) => `${z.zone} ${z.name} (${z.lat > 13.12 ? "north" : z.lat < 13.02 ? "south" : "central"})`).join("; ")}. Wards are numbered 1 to 200.`] : []),
@@ -126,13 +204,22 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "Words for clustering (bunching up, piling up, concentrated, where most) ask for a hotspot; words for a rise by area (got worse, increased the most, jaasthi aagiruchu, adhigama aachu) ask for a change ranked by that area.",
     "language is en, ta (Tamil script) or tanglish (Tamil in Latin letters), as the question is written.",
     "understood is false only when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); a loosely worded question that names a kind of incident, a layer, a place or the officer's list is understood.",
+    "intent says what kind of answer the question needs:",
+    "- plan: a map answer from the steps (lists, counts, near, along, gaps, clusters, changes, rankings, speed). Most questions.",
+    "- brief (only when the question names no kind of problem; accidents near Guindy is a plan): what is happening in, at or near ONE area or named place (\"what is happening in Saidapet\", \"status of ward 120\", \"what happened near Marina Beach\", \"tell me about Adyar\"): the steps take incidents and one inside step with that area (a named place: its point, radius 1000 m).",
+    "- scorecard: one ward's scorecard, report card or performance (\"ward 178 scorecard\", \"how is ward 45 doing\"): the steps take incidents and one inside step with that ward.",
+    "- city: the live state of the city now, not the records: live traffic or jams now (city traffic), the rain now or today (rain), which streets or wards flood in heavy rain (flood), power cuts in rain (power), trains or metro running or late (metro). The steps may be a single take of incidents.",
+    "- not_map: not a question about Chennai's map (general knowledge, chit-chat, a forecast of the future, other cities). understood false too.",
+    "Near a KIND of place (\"what is happening near the schools\", \"near wine shops\"): intent plan, the open incidents within 500 m of that layer, not a brief.",
+    "With intent other than city, city is none.",
+    "A single word or two is a question too: a layer (\"school\", \"atm\", \"tasmac\") lists that layer; a kind of problem (\"garbage\", \"kuppai\", \"potholes\") shows those open incidents; a place (\"Adyar\", \"ward 178\") shows the open incidents in it. Never refuse them.",
     "Each step is one flat object with every field; a field a step does not use is none. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
     "Calendar periods (period_calendar, period_days none): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
     "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar none.",
     "A change compares two equal windows counted back from now: period_days with period_offset 0, before_days the same, before_offset 1; never a calendar period so far (today, this week) against a whole one.",
     "Examples (each step shows only its fields with a value; every other field is none):",
-    ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(compactWire(toWire(p as Plan)))}`),
-    ...NEW_EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(p)}`)
+    ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(namedOf(compactWire(toWire(p as Plan)) as W))}`),
+    ...NEW_EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(namedOf({ intent: "plan", city: "none", ...p }))}`)
   ].join("\n");
 }
 
@@ -177,7 +264,7 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   zones?: { zone: number; name: string; lat: number; lon: number }[];
   /** the categories' labels, for the cached prompt */
   catLabels?: Map<string, string> }):
-  Promise<{ plan: Plan } | { problems: string[] }> {
+  Promise<{ plan: Plan; intent?: "plan" | "brief" | "scorecard" } | { city: "traffic" | "rain" | "flood" | "power" | "metro"; intent: "city"; language: Lang } | { problems: string[] }> {
   const places = ctx.places.length ? `Places named (use these refs): ${ctx.places.map((p) => `${p.name} = ${p.kind} ${p.ref}`).join("; ")}` : "No place was recognised.";
   // the zones are in the cached system block now; the prompt carries only what this question adds
   const zones = "";
@@ -187,17 +274,33 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     : `\nTHE RULES READ IT AS: ${JSON.stringify(toWire(ctx.hint))}\nWORDS THE RULES COULD NOT USE: ${(ctx.unread ?? []).join(", ")}. Keep what the rules got right and use these words too.`;
   let prompt = prev
     ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic).`
-    : `QUESTION: ${text}${typed}\n${places}\n${zones}${hint}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
+    : `QUESTION: ${text}${typed}\n${places}\n${zones}${hint}${short(text) ? SHORT_NOTE : ""}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: ctx.signal,
       chat: true, feature: "map", timeoutMs: 12_000 });
     lastInfo = r.info;
+    if (process.env.MAP_AI_DEBUG === "1") console.log("MAPAI", JSON.stringify(r.object));
     // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
-    if (r.object.understood === false) return { problems: ["not a map question"] };
-    const c = checkPlan(fromWire(r.object));
-    if (c.ok) return { plan: c.plan };
-    problems = c.problems;
+    if (r.object.intent === "not_map") return { problems: ["not a map question"] };
+    // the live city (traffic, rain, flooding streets, power, trains): no plan to run, the shared live answer
+    if (r.object.intent === "city" && r.object.city && r.object.city !== "none") return { city: r.object.city, intent: "city" as const, language: r.object.language };
+    // v2: "garbage", "are there any wine shops near schools" came back not understood with no steps though the intent was a plan: asked once more
+    if (r.object.understood === false || !r.object.steps.length) {
+      if (attempt === 0) { prompt = `${prompt}\nThis IS a map question (a short or loose question about Chennai's places, problems or facilities): set understood true and return its plan.`; continue; }
+      return { problems: ["not a map question"] };
+    }
+    const c = checkPlan(withNamed(fromWire(r.object), r.object, ctx.cats));
+    // v2: only the world's own category and family codes ("VECTOR_DISEASE" is a category, not a family; "DRINKING_WATER" is no code)
+    const bad = r.object.steps.flatMap((st) => [...(st.category ?? []).filter((x) => !ctx.cats.includes(x)).map((x) => `"${x}" is not a category code`),
+      ...(st.family ?? []).filter((x) => !FAMILIES.includes(x)).map((x) => `"${x}" is not a family (families: ${FAMILIES.join(", ")})`),
+      // a place ref the prompt did not give (a made-up one cannot be found on the map)
+      ...[st.area_ref, st.b_ref, st.from?.startsWith("place:") ? st.from.slice(6) : null].filter((x): x is string => !!x && !x.startsWith("drawn:") && !ctx.places.some((pl) => pl.ref === x)).map((x) => `"${x}" is not a place ref given in the prompt`)]);
+    // a brief is for a question that names no kind of problem: when the model named one, its plan answers (its own two answers made to agree)
+    const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x)) ? "brief" : "plan");
+    if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
+    if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
+    problems = c.ok ? bad : [...c.problems, ...bad];
     prompt = `${prompt}\nYOUR LAST PLAN WAS REFUSED: ${problems.join("; ")}. Fix it.`;
   }
   return { problems };

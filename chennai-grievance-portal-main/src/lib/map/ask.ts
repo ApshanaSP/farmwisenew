@@ -100,6 +100,11 @@ export interface AskResponse {
     /** a ranked change, the league table: every area with any report in either window, the biggest rise (or fall) first */
     /** v2: the answer's incidents by the day first reported, for "Play the period" (v2.ts) */
     timeline?: Timeline;
+    /** v2: how fast cases close, by area, kind or department (median days from first report to closing) */
+    speed?: { by: "ward" | "zone" | "taluk" | "category" | "dept"; order: "fast" | "slow"; minClosed: number; open: number;
+      rows: { key: string; label: string; label_ta: string; lat: number; lon: number; closed: number; open: number; medianDays: number; ids: string[] }[] };
+    /** v2: a count by kind or department is a list (its groups have no place of their own on the map) */
+    groupsBy?: "ward" | "zone" | "taluk" | "hex500" | "near" | "category" | "dept";
     rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; nowLabel: { en: string; ta: string }; beforeLabel: { en: string; ta: string };
       rows: { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }[] };
     /** a rule check: each place kept and the place it is too close to */
@@ -265,7 +270,10 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
   const { world: w, resolver: data } = await world();
   const resolve = resolverFor(data);
   // a hurried officer's slips, read as a person would ("hospitls near adayar"); a chip's plan or a follow-up's edit words are read as typed
-  const sp = asked.text && !asked.plan && process.env.MAP_SPELL_OFF !== "1" ? spellerFor(data)(asked.text) : null;
+  // v2 (the owner, 21 Nov 2026: "AI powered, no rules"): Claude reads every typed question as typed and decides what it asks; the word rules
+  // answer only when the AI cannot be reached (no key, busy, a plan the server refuses twice). AI_MAP_MODE=hybrid or rules brings them back.
+  const aiOnly = (process.env.AI_MAP_MODE ?? "ai") === "ai" && !!asked.text && !asked.plan && aiStatus("map").available;
+  const sp = !aiOnly && asked.text && !asked.plan && process.env.MAP_SPELL_OFF !== "1" ? spellerFor(data)(asked.text) : null;
   const input: AskInput = sp ? { ...asked, text: sp.text } : asked;
   const lang: Lang = input.plan?.language ?? (input.text ? mapLang(input.text, resolve(input.text, null)) : input.prev?.language ?? "en");
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
@@ -275,24 +283,84 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
-  // v2: "ward 178 scorecard": the scorecard, with the ward's brief under it
-  const sw = input.text && !input.plan ? scorecardWard(input.text) : null;
-  if (sw != null) {
-    const sc = scorecard(sw, w, ctx, lock);
-    if (!sc) { out.say = { en: `There is no Ward ${sw}. Chennai has wards 1 to 200.`, ta: `வார்டு ${sw} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
+  /** A ward's scorecard, with its brief under it (v2). */
+  const scorecardOut = (ward: number): AskResponse => {
+    out.ai_used = aiOnly;
+    const sc = scorecard(ward, w, ctx, lock);
+    if (!sc) { out.say = { en: `There is no Ward ${ward}. Chennai has wards 1 to 200.`, ta: `வார்டு ${ward} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
     out.kind = "brief";
     out.brief = sc.brief;
     out.scorecard = sc;
-    const area: AreaRef = { kind: "ward", id: sw };
+    const area: AreaRef = { kind: "ward", id: ward };
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
     const box = areaBox(area, w, ctx);
     out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: sc.label.en, label_ta: sc.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
     out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
     return done(out);
+  };
+  /** What is happening in one area: the area brief (every department's open issues there, the worst, the change, the places in and around it). */
+  const briefOut = (area: AreaRef): AskResponse => {
+    out.ai_used = aiOnly;
+    out.kind = "brief";
+    out.brief = areaBrief(area, w, ctx, lock);
+    const p = area.kind === "point" ? ctx.place(area.ref) : null;
+    out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: p && area.kind === "point" ? { lat: p.lat, lon: p.lon, r: area.radius_m } : null }];
+    const box = areaBox(area, w, ctx);
+    if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
+    out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    return done(out);
+  };
+
+  // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
+  if (aiOnly) {
+    const typed = asked.text!;
+    // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
+    const reading = spellerFor(data)(typed).text;
+    const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
+    const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
+    if (a && "problems" in a && a.problems.includes("not a map question")) {
+      out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
+        chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
+      out.ai_used = true;
+      return done(out);
+    }
+    if (a && "city" in a) {
+      const c = await cityNow(a.city, { lockDept: lock, zone: a.city === "traffic" ? input.context.zone ?? null : null }).catch(() => null);
+      if (c) {
+        out.kind = "say";
+        out.ai_used = true;
+        out.city = { topic: a.city, view: c.view, headline: c.headline, rows: c.rows.slice(0, 12) };
+        out.say = { en: c.say.en, ta: c.say.ta, chips: a.language === "ta" ? [] : ["Where do jams keep coming back?", "Which streets flood in heavy rain?"] };
+        return done(out);
+      }
+      const what = { traffic: "live traffic", rain: "rain", flood: "flood-street", power: "power", metro: "train" }[a.city];
+      out.say = { en: `The live ${what} feed is not available just now. Try again in a few minutes, or ask about the reported cases (for example, flooding complaints this week).`,
+        ta: "நேரடித் தரவு இப்போது கிடைக்கவில்லை. சில நிமிடங்களில் மீண்டும் முயலுங்கள்.", chips: [] };
+      out.ai_used = true;
+      return done(out);
+    }
+    if (a && "plan" in a) {
+      const fitted = fitModelPlan(a.plan, typed, w.now, asked.prev, { ...modelWords(w, a.plan.language, found), aiOnly: true });
+      const ins = fitted.steps.find((s) => s.op === "inside");
+      if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
+      // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error
+      if (a.intent === "brief" && ins?.op === "inside" && (ins.area.kind !== "point" || ctx.place(ins.area.ref))) {
+        try { return briefOut(ins.area); } catch (e) { console.warn("[map] brief failed, the plan answers:", (e as Error).message); }
+      }
+      plan = fitted;
+      aiUsed = true;
+    }
+    // the AI could not answer (busy, no key, a refused plan): the rules below answer instead
   }
+
+  // v2: "ward 178 scorecard": the scorecard, with the ward's brief under it
+  const sw = !plan && input.text && !input.plan ? scorecardWard(input.text) : null;
+  if (sw != null) return scorecardOut(sw);
   // two equally close readings of a word ("ambatur": Ambattur or Ambathur?): the AI reads the whole question in context, with the places
   // of every reading, and the answer offers the readings as buttons; without the AI, ask (never guess)
-  if (sp?.ask && aiStatus("map").available) {
+  if (!plan && sp?.ask && aiStatus("map").available) {
     const tie = sp.ask;
     const seen = new Set<string>();
     const found = [input.text!, ...tie.options.map((o) => o.text)].flatMap((t) => resolve(t, null)).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }))
@@ -318,7 +386,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
 
   // ---- the city now: live traffic, the rain, the streets that flood, power and trains in heavy rain. The same answer the
   // chatbot and Jarvis give (lib/city/now.ts), and the console opens the view that shows it (the Traffic view or a Rain tab)
-  if (input.text && !input.plan) {
+  if (input.text && !input.plan && !plan) {
     let topic = cityTopic(input.text);
     // "accidents near metro stations": incidents near the stations, the map's own question, not the trains' running (the baseline golden's one miss)
     if (topic === "metro") { const q = parse(input.text, env); if ((q.cats || q.family) && q.facNear) topic = null; }
@@ -372,6 +440,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     plan = c.plan;
     edited = "chip";
   } else if (input.text && !plan) {
+    // the rules: only when the AI could not answer (or AI_MAP_MODE is hybrid or rules)
     const r = rulesRoute(input.text, input.prev, env);
     if (r?.kind === "say") { out.say = r; return done(out); }
     if (r?.kind === "ui") { out.kind = "ui"; out.ui = r.ui; out.uiDept = r.dept; out.plan = r.plan; return done(out); }
@@ -583,7 +652,8 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   }
 
   const show = r.show;
-  if (show.type === "groups") out.extra.groups = show.groups;
+  if (show.type === "groups") { out.extra.groups = show.groups; out.extra.groupsBy = show.by; }
+  if (show.type === "speed") out.extra.speed = { by: show.by, order: show.order, minClosed: show.minClosed, open: show.open, rows: show.rows.slice(0, 200) };
   if (show.type === "hotspots") { out.extra.clusters = show.clusters.slice(0, 60).map((c) => ({ id: c.id, n: c.n, lat: c.lat, lon: c.lon, ids: c.ids, place: c.place })); out.extra.hotWards = show.hotWards; }
   if (show.type === "compare") out.extra.compare = { a: { label: show.a.label, label_ta: show.a.label_ta, n: show.a.n, ids: show.a.ids }, b: { label: show.b.label, label_ta: show.b.label_ta, n: show.b.n, ids: show.b.ids } };
   if (show.type === "change") out.extra.change = { now: show.now.hits.map((h) => h.inc.id), before: show.before.hits.map((h) => h.inc.id), nowLabel: show.now.period.kind, beforeLabel: show.before.period.kind };
@@ -609,6 +679,13 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (!hits.length && answer.miss) { cam.shape = "empty"; cam.focus = { id: answer.miss.id, lat: answer.miss.lat, lon: answer.miss.lon, label: answer.meaning ?? "", label_ta: answer.meaning ?? "" }; }
   else if (last.op === "compare") cam.shape = "compare";
   else if (last.op === "change") cam.shape = areas.length ? "change" : "district";
+  else if (last.op === "speed" && show.type === "speed" && (show.by === "ward" || show.by === "zone" || show.by === "taluk")) {
+    // the five fastest (or slowest), one after another
+    cam.shape = "hotspot";
+    cam.tour = show.rows.filter((x) => x.lat || x.lon).slice(0, 5).map((x, i) => ({ id: x.key, lat: x.lat, lon: x.lon,
+      caption_en: `${i + 1}. ${x.label}: ${x.medianDays} days`, caption_ta: `${i + 1}. ${x.label_ta}: ${x.medianDays} நாட்கள்` }));
+    if (!cam.tour.length) cam.shape = "district";
+  }
   else if (last.op === "rank" && show.type === "ranked") {
     // the top five risers, one after another
     cam.shape = "hotspot";

@@ -144,12 +144,26 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
     L.circleMarker([far.worst.lat, far.worst.lon], { pane: "askMarks", radius: 6, color: "#fff", weight: 2, fillColor: "#E0364A", fillOpacity: 1 }).bindTooltip(ta ? "தொலைவான இடம்" : "The ward's far ground", { className: "dtip" }).addTo(a.marks);
   }
   // count by area: a bubble per area with its count (click: its list)
-  for (const g of r.extra.groups ?? []) {
+  for (const g of r.extra.groupsBy === "category" || r.extra.groupsBy === "dept" ? [] : r.extra.groups ?? []) {
     if (!g.lat && !g.lon) continue;
     const size = Math.round(22 + Math.min(34, Math.sqrt(g.n) * 6));
     L.marker([g.lat, g.lon], { pane: "askMarks", title: `${g.label}: ${g.n}`,
       icon: L.divIcon({ className: "", html: `<div class="agroup" style="--s:${size}px">${g.n.toLocaleString("en-IN")}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
       .on("click", () => o.onGroup(g.ids, ta ? g.label_ta : g.label)).bindTooltip(`<b>${esc(ta ? g.label_ta : g.label)}</b>${g.n.toLocaleString("en-IN")}`, { className: "dtip" }).addTo(a.marks);
+  }
+  // how fast each area closes its cases: a bubble per area with its median days (green fastest, red slowest)
+  const sp = r.extra.speed;
+  if (sp && (sp.by === "ward" || sp.by === "zone" || sp.by === "taluk")) {
+    const days = sp.rows.map((x) => x.medianDays);
+    const lo = Math.min(...days), hi = Math.max(...days);
+    for (const x of sp.rows.slice(0, 80)) {
+      if (!x.lat && !x.lon) continue;
+      const f = hi > lo ? (x.medianDays - lo) / (hi - lo) : 0.5;
+      L.marker([x.lat, x.lon], { pane: "askMarks", title: `${x.label}: ${x.medianDays} days`,
+        icon: L.divIcon({ className: "", html: `<div class="agroup arank ${f <= 0.33 ? "down" : f >= 0.67 ? "up" : ""}" style="--s:30px">${x.medianDays}d</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }) })
+        .on("click", () => o.onGroup(x.ids, ta ? x.label_ta : x.label))
+        .bindTooltip(`<b>${esc(ta ? x.label_ta : x.label)}</b>${ta ? `நடுநிலை ${x.medianDays} நாட்கள், ${x.closed} முடிந்தவை` : `median ${x.medianDays} days to close, ${x.closed} closed`}`, { className: "dtip" }).addTo(a.marks);
+    }
   }
   // a ranked change (the league table): a bubble per area with its rise (red) or fall (green); a click shows its cases now
   for (const x of (r.extra.rank?.rows ?? []).slice(0, 60)) {

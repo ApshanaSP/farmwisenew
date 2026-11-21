@@ -22,7 +22,7 @@ import { Grip, useDragPanel } from "./dragPanel";
 import { istDate } from "@/lib/ist-dates";
 import { cueAct } from "./actions";
 import { onMapCmd } from "./bridge";
-import { GapList, LeagueTable, RulePairs, ToolsBar } from "./CollectorTools";
+import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
 import { useWorkspace } from "./workspace";
 import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
 
@@ -232,6 +232,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     </div>}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
                     <LeagueTable r={r} ask={ask} lang={lang} />
+                    <SpeedTable r={r} ask={ask} lang={lang} />
+                    <GroupList r={r} ask={ask} lang={lang} />
                     <GapList r={r} lang={lang} />
                     <RulePairs r={r} lang={lang} />
                     <PlayPeriod r={r} ask={ask} lang={lang} />

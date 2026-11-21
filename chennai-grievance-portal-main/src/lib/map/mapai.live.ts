@@ -66,7 +66,7 @@ it.runIf(haveStore())("Ask the Map's AI plan on the dev questions", async () => 
       if (!got.value) throw new Error("still busy after waiting");
       const r = got.value;
       // as ask.ts does with a model's plan: the question's own time words win (fitModelPlan), so the runner checks what the console runs
-      if ("plan" in r) plan = fitModelPlan(r.plan, q, w.now, null, process.env.MAP_WORDS_OFF === "1" ? undefined : modelWords(w, lang, found)); else problems = r.problems;
+      if ("plan" in r) plan = fitModelPlan(r.plan, q, w.now, null, process.env.MAP_WORDS_OFF === "1" ? undefined : modelWords(w, lang, found)); else problems = "problems" in r ? r.problems : [`live city: ${r.city}`];
     } catch (e) { err = (e as Error).message.slice(0, 160); problems = [err]; }
     const ms = Date.now() - t0;
     const info = ai.takeMapCallInfo();

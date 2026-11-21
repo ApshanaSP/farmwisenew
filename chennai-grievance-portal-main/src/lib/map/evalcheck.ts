@@ -25,14 +25,15 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
     if (!(of?.op === "take" && of.layer === want.of_layer)) out.push(`within is not of ${want.of_layer}`);
   }
   const cats = [...(inc?.filter?.category ?? []), ...(inc?.filter?.family ?? [])];
-  for (const c of want.cats ?? []) if (!cats.includes(c)) out.push(`no category ${c} (has ${cats.join(",") || "none"})`);
+  for (const c of want.cats ?? []) if (!cats.includes(c) && !cats.some((x) => x.startsWith(`${c}_`))) out.push(`no category ${c} (has ${cats.join(",") || "none"})`);
   if (want.family_or_cat && !cats.some((c) => c === want.family_or_cat || c.startsWith(want.family_or_cat!))) out.push(`no ${want.family_or_cat}`);
   const step = <O extends Step["op"]>(op: O) => plan.steps.find((s) => s.op === op) as Extract<Step, { op: O }> | undefined;
   if (want.meters != null && (step("within")?.meters ?? step("along")?.meters) !== want.meters) out.push(`meters ${step("within")?.meters ?? "none"}, not ${want.meters}`);
   if (want.beyond != null && step("farthest")?.beyond_m !== want.beyond) out.push(`beyond ${step("farthest")?.beyond_m ?? "none"}, not ${want.beyond}`);
   if (want.areas && step("farthest")?.areas !== want.areas) out.push(`areas ${step("farthest")?.areas}, not ${want.areas}`);
-  if (want.by && ((show as { by?: string }).by ?? step("count_by")?.by ?? step("rank")?.by) !== want.by) out.push(`by ${(show as { by?: string }).by ?? "none"}, not ${want.by}`);
-  if (want.order && step("rank")?.order !== want.order) out.push(`order ${step("rank")?.order ?? "none"}, not ${want.order}`);
+  if (want.by && ((show as { by?: string }).by ?? step("count_by")?.by ?? step("rank")?.by ?? (plan.steps.find((x) => x.op === "speed") as { by?: string } | undefined)?.by) !== want.by) out.push(`by ${(show as { by?: string }).by ?? "none"}, not ${want.by}`);
+  const ord = (step("rank") as { order?: string } | undefined)?.order ?? (plan.steps.find((x) => x.op === "speed") as { order?: string } | undefined)?.order;
+  if (want.order && ord !== want.order) out.push(`order ${ord ?? "none"}, not ${want.order}`);
   if (want.area) {
     const ins = plan.steps.filter((s): s is Extract<Step, { op: "inside" }> => s.op === "inside");
     if (!ins.some((s) => `${s.area.kind}:${s.area.kind === "zone" || s.area.kind === "ward" ? s.area.id : ""}` === want.area)) out.push(`not inside ${want.area}`);

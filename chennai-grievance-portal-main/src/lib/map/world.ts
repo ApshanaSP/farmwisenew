@@ -65,7 +65,7 @@ async function loadBase(key: string): Promise<Base> {
     q(`SELECT i.incident_id AS id, i.category_code AS cat, i.family, i.lead_dept AS dept, i.ward_no AS ward, i.zone_no AS zone, i.taluk_code AS taluk,
               i.lat, i.lon, i.loc_precision_m AS prec, i.place_text AS place, i.status_std AS status, i.is_open AS open, i.severity_level AS sev,
               i.priority_score AS priority, i.priority_reasons AS reasons, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.sla_breached AS breached,
-              DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, ${TITLE} AS title, i.citizen_complaints AS citizen, i.source_count AS sources,
+              DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at, ${TITLE} AS title, i.citizen_complaints AS citizen, i.source_count AS sources,
               i.hotspot_id AS hotspot, i.vulnerable AS tags, i.outlet_count AS outlets
        FROM incidents i WHERE i.lat IS NOT NULL AND i.lon IS NOT NULL`),
     q(`SELECT ward_no, zone_no, zone_name, taluk_code, centroid_lat, centroid_lon, adjacent_wards, gi_star_z_30d FROM ref_wards ORDER BY ward_no`),
@@ -90,7 +90,7 @@ async function loadBase(key: string): Promise<Base> {
     lat: Number(r.lat), lon: Number(r.lon), prec: r.prec == null || r.prec === "" ? null : Number(r.prec), pinnable: isPinnable(r.lat, r.prec),
     place: r.place ?? null, status: String(r.status ?? ""), open: Number(r.open) === 1, sev: (SEV_OK.has(r.sev) ? r.sev : "Low") as Sev,
     priority: Number(r.priority) || 0, reasons: r.reasons ?? null, slaDue: r.sla_due ?? null, breached: Number(r.breached) === 1,
-    first: String(r.first ?? ""), title: String(r.title ?? "Incident"), citizen: Number(r.citizen) || 0, sources: Number(r.sources) || 0, hotspot: r.hotspot ?? null,
+    first: String(r.first ?? ""), closedAt: r.closed_at ? String(r.closed_at) : null, title: String(r.title ?? "Incident"), citizen: Number(r.citizen) || 0, sources: Number(r.sources) || 0, hotspot: r.hotspot ?? null,
     tags: r.tags ? String(r.tags) : null, outlets: Number(r.outlets) || 0
   }));
   const news: NewsDoc[] = newsRows.map((d) => ({
