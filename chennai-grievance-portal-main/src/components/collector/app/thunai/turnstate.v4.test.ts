@@ -36,10 +36,10 @@ describe("memory turns: recipe, slots and a one-line result (defect 5)", () => {
     expect(screenResult(doc(), new Set(["12"]))).toBe("Severe cases in Adyar this week (12 cases)");
     expect(screenResult(doc({ recipe: "answer", title: "About flood deaths 300" } as never), new Set(["12"]))).toBe("answer screen (12 cases)");
   });
-  it("four turns are kept, the newest last", () => {
+  it("six turns are kept, the newest last (v11; four before)", () => {
     let list = [] as ReturnType<typeof memTurn>[];
-    for (let i = 1; i <= 6; i++) list = keepTurns(list, memTurn(`s${i}`, "d"));
-    expect(list.map((t) => t.heard)).toEqual(["s3", "s4", "s5", "s6"]);
+    for (let i = 1; i <= 8; i++) list = keepTurns(list, memTurn(`s${i}`, "d"));
+    expect(list.map((t) => t.heard)).toEqual(["s3", "s4", "s5", "s6", "s7", "s8"]);
   });
 });
 

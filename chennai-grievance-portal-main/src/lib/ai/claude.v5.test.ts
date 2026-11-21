@@ -110,7 +110,8 @@ describe("A6 (b): the request a Jarvis call sends to Haiku 5.5", () => {
 
   it("no Sonnet by default: Jarvis's model is Haiku 5.5, the console's is Opus 5.5", () => {
     expect(claudeModel()).toBe(HAIKU);
-    expect(claudeModel("fast")).toBe("claude-opus-5-5");
+    // v12 (21 Nov): the console's fast steps are Haiku by default (they fell back to Opus and spent most of the $5 ceiling); the write-ups stay Opus
+    expect(claudeModel("fast")).toBe(HAIKU);
     expect(claudeModel("reasoning")).toBe("claude-opus-5-5");
   });
 

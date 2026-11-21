@@ -226,6 +226,10 @@ export function ackFor(text: string, lang: Lang): string {
   if (/news|headline|செய்தி|seithi/.test(t)) return pick("Getting the news.", "செய்திகளைப் பெறுகிறேன்.");
   if (/severe|critical|serious|கடுமை|urgent/.test(t)) return pick("Checking the severe cases.", "கடுமையான சம்பவங்களைப் பார்க்கிறேன்.");
   if (/compare|versus|\bvs\b|ஒப்பிடு/.test(t)) return pick("Putting them side by side.", "ஒப்பிட்டுப் பார்க்கிறேன்.");
+  // v14 (21 Nov review of v13, scenarios 5): power or trains in the rain is Rain's power or trains record, not the gauges ("What about power if
+  // it rains tonight?" showed "Reading the gauges.")
+  if (/rain|மழை|mazhai/.test(t) && /\b(?:power|electricity|outages?|blackouts?|karent)\b|மின்சார|மின் ?வெட்டு|மின் ?தடை|கரண்ட்|\bcurrent (?:\w+ )?(?:pogum|poidum|cut|illa|pochu)/.test(t)) return pick("Checking power in heavy rain.", "கனமழையில் மின்சாரத்தைப் பார்க்கிறேன்.");
+  if (/rain|மழை|mazhai/.test(t) && /\b(?:metro(?! ?water)|trains?|railways?|mrts)\b|ரயில்|மெட்ரோ(?! குடிநீர்)/.test(t)) return pick("Checking the trains in heavy rain.", "கனமழையில் ரயில்களைப் பார்க்கிறேன்.");
   if (/rain|reservoir|lake|full|மழை|ஏரி|நீர்|air|aqi|காற்று/.test(t)) return pick("Reading the gauges.", "அளவீடுகளைப் பார்க்கிறேன்.");
   if (/department|dept|slowest|performance|துறை/.test(t)) return pick("Checking department performance.", "துறைகளின் செயல்பாட்டைப் பார்க்கிறேன்.");
   if (/school|hospital|near|within|km|metre|அருகில்/.test(t)) return pick("Asking the map.", "வரைபடத்தில் தேடுகிறேன்.");

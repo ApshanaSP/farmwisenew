@@ -131,7 +131,11 @@ describe("one round of thinking", () => {
       const a = m.asked[0];
       expect(a, text).toBeTruthy();
       // the schema adds its fields: the screens bundle is the largest, about 400 tokens of schema
-      expect(Math.ceil((a.system.length + a.prompt.length) / 3.5), text).toBeLessThan(2300);
+      // (v13, 21 Nov review findings 0 10 and 1 5: 2300 -> 2400. The wide bundle, which every Tamil sentence gets, gained the city entry and two
+      // Tamil city lines, about 80 tokens: the Tamil line here measured 2341. The hard cap is still CALL_TOKENS, 2500, which firstPrompt
+      // enforces and round.v4's and integration.v4's full-context tests check; the bound was raised the same way, 2100 -> 2300, when Tamil
+      // first went to the wide bundle)
+      expect(Math.ceil((a.system.length + a.prompt.length) / 3.5), text).toBeLessThan(2400);
     }
   });
   it("rounds: the plan looks first, the facts stay on the server, later rounds send only the delta", async () => {

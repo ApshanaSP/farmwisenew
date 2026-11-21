@@ -113,7 +113,10 @@ export async function readFeed(outlet: Outlet, feedUrl: string, o: WebDeps = {})
     deadlineAt: t0 + Math.min(caps.feedMs, CAPS.feedMs) });
   const entries = got.status === "ok" ? parseFeed(got.body, outlet.id) : [];
   const v = { status: got.status, entries };
-  caches.feeds.set(key, v, entries.reduce((n, e) => n + (e.title.length + e.snippet.length + e.url.length) * 2 + 64, 64), now(), got.status === "ok" ? undefined : 60_000);
+  // v12 (21 Nov, stale-and-double RC7): a read the turn stopped ("aborted": a barge-in, a newer sentence) says nothing about the feed and is
+  // not kept, as robotsOk keeps no aborted robots read: the next question (usually the same one, again) reads the feed afresh instead of
+  // being told no feed could be read. A slow feed's own timeout is still kept for a minute, so the next question does not wait on it again
+  if (got.status !== "aborted") caches.feeds.set(key, v, entries.reduce((n, e) => n + (e.title.length + e.snippet.length + e.url.length) * 2 + 64, 64), now(), got.status === "ok" ? undefined : 60_000);
   return { ...v, cached: false, ms: Math.round(performance.now() - t0) };
 }
 

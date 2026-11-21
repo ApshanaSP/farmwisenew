@@ -18,7 +18,7 @@ import { asksForbiddenOrder } from "./privacy";
 import { keyOf, needsDates, periodWordsOut, readPeriod, type PeriodSpec } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
-import { cityTopic } from "@/lib/city/topic";
+import { cityAsk, type CityLastIn } from "@/lib/city/intent";
 import { metricNamedIn } from "./metrics";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
@@ -123,9 +123,23 @@ export function placesIn(t: string, w: World): string[] {
   return [...new Set(out)].slice(0, 4);
 }
 
+/**
+ * v12 (21 Nov): the broad words of a category. "roads" made "Where are the flooded roads?" the Roads & potholes list (06:42, twice) and the
+ * planner's hint for "the most congested road"; "traffic" made "show me live traffic in map" a traffic-complaints filter (06:33); "water" sent
+ * eval items d029, d040 and u134 to Drinking-water lists. Such a word never wins over a more specific category word in the sentence (wherever
+ * it stands: "flooded" beats "roads"), never makes a category of a sentence that asks to see the city on the ground (lib/city/intent.ts
+ * cityAsk), and, `strict` (the fast lane's lists and the planner's hint), counts only beside a word for the records (complaints, cases,
+ * issues, potholes, reports).
+ */
+const WEAK_CAT = new Set(["road", "roads", "traffic", "water"]);
+const DATA_NOUN = / (?:complaints?|cases?|issues?|problems?|potholes?|reports?|grievances?|incidents?|petitions?|tickets?|pugar\w*) |புகார்|சம்பவ|பிரச்சனை|பிரச்சினை/;
 /** the topic named first in the sentence ("fire accident" is a fire, not a road accident); a longer name wins a tie */
-export function catIn(t: string): string | null {
-  let best: { code: string; at: number; len: number; word: string } | null = null;
+export function catIn(t: string, o: { strict?: boolean } = {}): string | null {
+  type Hit = { code: string; at: number; len: number; word: string };
+  let best: Hit | null = null;
+  let weak: Hit | null = null;
+  let off: boolean | null = null;
+  const weakOff = () => (off ??= (!!o.strict && !DATA_NOUN.test(t)) || !!cityAsk(t));
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
       const w = raw.toLowerCase();
@@ -135,9 +149,15 @@ export function catIn(t: string): string | null {
       const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? 0 : 1);
       // a broad word loses to a specific one in the same sentence: "lakes la water level" is the lakes, not the water supply (RC-05)
       if (w === "water" && / (lake|lakes|reservoir|reservoirs|dam|storage|rain) |ஏரி|நீர்த்தேக்க/.test(t)) continue;
+      if (WEAK_CAT.has(w)) {
+        if (weakOff()) continue;
+        if (!weak || at < weak.at || (at === weak.at && w.length > weak.len)) weak = { code, at, len: w.length, word: w };
+        continue;
+      }
       if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length, word: w };
     }
   }
+  best ??= weak;
   // a one-word name that another category's label says more of in this sentence is that other category (catlabels.ts)
   return best ? (best.word.includes(" ") ? best.code : betterCategory(best.code, best.word, saidStems(t.split(/\s+/).filter(Boolean)), CATEGORY_LABELS)) : null;
 }
@@ -205,6 +225,10 @@ const MARKET = / (market|vegetable|vegetables|koyambedu) |காய்கறி|
 const VEG = / (tomato|tomatoes|onion|onions|potato|potatoes|brinjal|carrot|beans|cabbage|chilli|chili|ginger|garlic|banana|lemon|drumstick|okra|ladies finger|cauliflower|beetroot|coconut|rice|thakkali|vengayam) |(தக்காளி|வெங்காயம்|உருளை|கத்தரி|கேரட்|பீன்ஸ்|மிளகாய்|இஞ்சி|பூண்டு|வாழை|எலுமிச்சை|முருங்கை|வெண்டை|தேங்காய்)/;
 const AIR = ["air quality", "aqi", "air pollution", "pollution", "காற்று", "காற்றின் தரம்", "மாசு", "kaatru"];
 const RAIN = ["rain", "rainfall", "raining", "மழை", "mazhai", "malai"];
+/** v14 (routing 2): the Tamil words of a where-is-it-worst city question: where, which, road, place, ward, street, most, is, goes, zoom, show, rain, the city's own words */
+const CITY_TA = /^(?:எந்த|எங்க|எங்கே|எங்கெல்லாம்|சாலை|ரோட்|ரோடு|இடம்|இடத்|வார்டு|தெரு|பகுதி|அதிக|ரொம்ப|மோசம|இருக்கு|இருக்க|போகும்|போயிடும்|ஜூம்|பண்ணு|காட்டு|கனமழை|மழை|போக்குவரத்து|நெரிசல|டிராபிக்|டிராஃபிக்|கரண்ட்|மின்)/;
+/** v14 (routing 6): power or trains said with the rain: Rain's heavy-rain record, never the gauges (English "current" is no power: "the current rainfall") */
+const POWER_OR_TRAIN = / (?:power|electricity|karent|outages?|blackouts?|metro|trains?|railways?|mrts|cmrl) |மின்சார|மின் ?வெட்டு|மின் ?தடை|கரண்ட்|ரயில்|மெட்ரோ/;
 const LAKE = ["reservoir", "reservoirs", "lake", "lakes", "dam", "water storage", "storage", "ஏரி", "ஏரிகள்", "நீர்த்தேக்க", "தண்ணீர் இருப்பு", "நீர் மட்டம்", "நீர்மட்டம்", "eri", "டேம்", "லேக்"];
 /** the district's reservoirs by name, with the spelling that goes in the readings slot */
 const RESERVOIRS: [string, RegExp][] = [["Chembarambakkam", / chembarambakkam |செம்பரம்பாக்க/], ["Puzhal", / puzhal |புழல்/], ["Poondi", / poondi |பூண்டி/], ["Cholavaram", / cholavaram |சோழவரம்/], ["Veeranam", / veeranam |வீராண/]];
@@ -235,6 +259,8 @@ const DISTRICT = ["chennai", "madras", "district", "zone", "zones", "ward", "war
   "flooding", "waterlogging", "drain", "price", "prices", "market", "vegetable", "air", "aqi", "pollution", "lake", "lakes", "reservoir", "water", "power", "electricity",
   "garbage", "waste", "road", "roads", "police", "crime", "accident", "fire", "hospital", "school", "dengue", "fever", "health", "cyclone", "weather", "temperature",
   "severe", "deadline", "overdue", "brief", "briefing", "trend", "trends", "map", "report", "alert", "gcc", "cmwssb", "tneb", "imd", "pwd", "mandi", "jarvis",
+  // v12 (21 Nov): the city on the ground, now that a broad word like "traffic" makes no category of it (catIn): still the district's
+  "traffic", "jam", "jams", "congested", "congestion", "flooded",
   "சென்னை", "மாவட்ட", "மண்டல", "வார்டு", "புகார்", "சம்பவ", "செய்தி", "மழை", "வெள்ள", "விலை", "சந்தை", "காற்று", "ஏரி", "தண்ணீர்", "மின்", "குப்பை", "சாலை",
   "காவல்", "விபத்து", "மருத்துவ", "பள்ளி", "துறை", "அதிகாரி", "ஆட்சியர்", "வானிலை", "புயல்"];
 
@@ -382,17 +408,51 @@ const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).t
  * address gate's "are the rules sure?" does not, so side talk that holds these words ("what changed since yesterday in Adyar", said to a
  * colleague) is never acted on without the name (lane D2's rule). `noBail` readers get them too.
  */
-export function quickScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean } = {}): Quick | null {
+export function quickScreen(text: string, w: World, o: { noBail?: boolean; analysis?: boolean; lastCity?: CityLastIn } = {}): Quick | null {
   // the city now (live traffic, the rain, flood streets, power and trains in heavy rain): one shared answer (lib/city/now.ts),
-  // read before anything else so "traffic in Adyar" is never taken for traffic complaints
-  const ct = cityTopic(text);
-  if (ct) return { recipe: "city", slots: { q: ct, zones: ct === "traffic" ? zonesIn(norm(text), w).slice(0, 1) : [] } };
+  // read before the period and the cases so "traffic in Adyar" is never taken for traffic complaints (v12: after the bail-outs, cityQuick)
+  const city = cityQuick(text, w, o);
+  if (city) return city;
   const spec = readPeriod(text);
   // a time no lane can answer ("two weeks ago", "next week") is never answered with the current window (RC-06)
   // (also for the readings that skip the bail-outs, noBail: the rules read after a planner miss and a follow-up's frame; review break A1)
   if (spec.kind === "unheld") return null;
   const q = readScreen(text, w, o, spec);
   return q ? withSpan(q, spec) : q;
+}
+
+/**
+ * v12 (21 Nov): the city screen by the shared reading (lib/city/intent.ts cityAsk), with its focus (the most congested road, the trouble
+ * spot that keeps coming back) and its past rain ("the flooded streets in the last rain"), so the screen and the map open on that spot or
+ * that rain, never the generic overview (06:39-06:42). Never a category list: a flood or traffic sentence is not Roads & potholes.
+ * It comes after the bail-outs that make any screen the planner's (another place's body, a note to keep or an order to change a record,
+ * what changed and the other intents, a follow-up's words, two requests at once, a sentence mostly unread), and never for a sentence that
+ * asks for the news, a brief, a dashboard, a trend, a comparison or what stands out (on the held-out run all 8 of the old city hits
+ * disagreed with gold, each one of those: report RC3). `lastCity`: the part of the city the last answer showed ("show me in the map").
+ */
+export function cityQuick(text: string, w: World, o: { noBail?: boolean; lastCity?: CityLastIn } = {}): Quick | null {
+  const ca = cityAsk(text, { last: o.lastCity ?? null });
+  if (!ca) return null;
+  const t = norm(text);
+  if (foreignIn(text, w)) return null;
+  // v13 (21 Nov review, finding 0 2): the flood streets are the district's, read by no zone: a sentence that names a zone or a locality
+  // ("the flooded streets in Adyar") is that place's flooding, the cases' lanes (the place was dropped)
+  if (ca.topic === "flood" && (zonesIn(t, w).length > 0 || placesIn(t, w).length > 0)) return null;
+  // (v14, routing 2: போக்குவரத்து, "traffic", is no trend: TREND's போக்கு read it as one, so "எந்த சாலையில் அதிக போக்குவரத்து நெரிசல்?" left the lane)
+  if (has(t, NEWS) || has(t, DASHBOARD) || has(t, BRIEF_SHAPE) || has(t, INSIGHT) || has(t.replace(/போக்குவரத்து/g, " "), TREND) || isComparing(t)) return null;
+  if (intentMarker(text)?.intent === "changed" || CHANGED_LOOSE.test(t)) return null;
+  if (!o.noBail) {
+    if (KEEPING.test(text) || CHANGE_RECORD.test(text) || leavesFastLane(text)) return null;
+    if (has(t, ["same", "also", "only", "instead", "draft", "send", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"]) || MULTI.test(t) || MISSION.test(t)) return null;
+    // a sentence mostly of words nothing here reads is not surely the city's ("what's the traffic police strength in the new wing")
+    // (v14, 21 Nov review of v13, routing 2: the Tamil words of asking where the city is worst count as read, CITY_TA, so "எந்த சாலையில்
+    // அதிக போக்குவரத்து நெரிசல்?" is the city screen as its English is, not a planner call)
+    const all = t.trim().split(" ").filter(Boolean);
+    const left = all.filter((x) => !explained(x, w) && !CITY_TA.test(x)).length;
+    if (left >= 4 && left / all.length > 0.5) return null;
+  }
+  const zones = ca.topic === "traffic" ? zonesIn(t, w).slice(0, 1) : [];
+  return { recipe: "city", slots: { q: ca.topic, zones, focus: ca.focus, rain: ca.rain } };
 }
 
 /** Is it asked as a count ("how many", "evlo", எத்தனை)? A count is answered for the period asked, never widened to another (P6-022). */
@@ -458,7 +518,9 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   if (!o.noBail) { const nos = zoneNosIn(text); if (nos.some((n) => n < 1 || n > 15) || (nos.length > 1 && !isComparing(t))) return null; }
   // the period the sentence names, by the shared reader: a console window, or the window that stands for a span until withSpan dates it
   // (the severity is read without the time phrase: "குறைந்ததா", "did it fall", in a comparison is not the level "low")
-  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  // (v12: a broad word, "roads", "traffic", "water", is a category here only beside a word for the records: catIn strict; a noBail reader,
+  // the frame's or the rules' after a planner miss, still gets its best reading)
+  const zones = zonesIn(t, w), cat = catIn(t, { strict: !o.noBail }), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
@@ -504,7 +566,8 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   // a comparison the rules cannot fill (two departments, a period against another) is the planner's, never a plain list
   if (isComparing(t)) return null;
-  if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
+  // (v14, 21 Nov review of v13, routing 6: a rain with power or trains in it is never the rain gauges: "which trains get delayed in rain")
+  if (has(t, RAIN) && !has(t, CASES) && !cat && !POWER_OR_TRAIN.test(t)) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)

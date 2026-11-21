@@ -36,5 +36,12 @@ export const isBackchannel = (text: string): boolean => { const w = words(text);
 /** How many of the words are not backchannels. */
 export const contentWords = (text: string): number => words(text).filter((w) => !back(w)).length;
 
-/** Do these live words claim the turn? At least `min` words that are not backchannels. */
-export const bargesIn = (text: string, min: number = TUNING.bargeWords): boolean => contentWords(text) >= min;
+/**
+ * v13 (21 Nov, review 1-0): thanks and praise said over Jarvis's voice ("thank you", "okay thank you Jarvis", "great") are no bid for the
+ * turn either: the live words' count leaves them out. (Not backchannels: isBackchannel is unchanged, and the conductor still reads a thanks
+ * as a sentence that replaces nothing, conductor.ts noRequest)
+ */
+const POLITE = new Set(["thank", "thanks", "you", "please", "great", "nandri", "நன்றி"].map((w) => w.normalize("NFC")));
+
+/** Do these live words claim the turn? At least `min` words that are neither backchannels nor thanks (v13). */
+export const bargesIn = (text: string, min: number = TUNING.bargeWords): boolean => words(text).filter((w) => !back(w) && !POLITE.has(w)).length >= min;

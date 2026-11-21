@@ -130,11 +130,24 @@ export class QuietMeter {
   quietMs(now: number): number { return this.lastVoiced == null ? Infinity : Math.max(0, now - this.lastVoiced); }
 }
 /** how long after the name a pause still means "the name alone", ms; and how long the recogniser may take to bring a sentence */
-export const WAKE_NAME_ALONE_MS = 400;
+// v12 (21 Nov): 400 -> 600. The wake reply now waits for 400 ms of quiet (conductor.ts wakeQuietMs, was 90), so with 400 here the name said
+// alone opened on quiet only when the wake word fired at least a tick after the speech ended; otherwise it waited for the recogniser (about
+// 1 s) or the 4 s limit
+export const WAKE_NAME_ALONE_MS = 600;
 export const WAKE_SENTENCE_WAIT_MS = 4000;
-/** open now (and reply), or wait for the recogniser's sentence */
-export function wakeWait(o: { sinceKws: number; quietMs: number; recogniser: boolean; quietNeeded: number }): "open" | "wait" {
-  if (!o.recogniser) return "open";
+/**
+ * The wake reply waits for this much quiet after the name (ms); NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600 (the history is at conductor.ts,
+ * which re-exports both). v14: defined here so the closed listener (wake.ts) waits for the same quiet without importing the conductor.
+ */
+export const WAKE_QUIET_DEFAULT_MS = 400;
+export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS", process.env.NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS)): number => { const n = Number(v); return v != null && v.trim() !== "" && Number.isFinite(n) && n >= 60 ? Math.min(600, n) : WAKE_QUIET_DEFAULT_MS; };
+/**
+ * open now (and reply), or wait for the recogniser's sentence. v14 (review scenarios 2): "listen", no recogniser runs to bring the sentence, so
+ * Jarvis opens now (the microphone is handed over and nothing said after the name is lost) but the reply waits for the quiet on Jarvis's own
+ * ears (conductor.ts replyWhenQuiet); it opened with the reply at once, over a request said straight on
+ */
+export function wakeWait(o: { sinceKws: number; quietMs: number; recogniser: boolean; quietNeeded: number }): "open" | "wait" | "listen" {
+  if (!o.recogniser) return o.quietMs >= o.quietNeeded ? "open" : "listen";
   if (o.sinceKws <= WAKE_NAME_ALONE_MS && o.quietMs >= o.quietNeeded) return "open";
   if (o.sinceKws >= WAKE_SENTENCE_WAIT_MS) return "open";
   return "wait";

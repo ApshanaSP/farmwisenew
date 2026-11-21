@@ -5,6 +5,7 @@
  * spoken line in English and Tamil from templates. No figure here comes from a model.
  */
 import type { ToolResult } from "@/lib/assistant/types";
+import type { CityFocusPart, CityRainOf } from "@/lib/city/now";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
 /** A Tamil count and its word: one takes the singular ("1 கடுமையானது"), any other number the plural ("2 கடுமையானவை"). A line said "1 கடுமையானவை"
  * whatever the count (pass4-open-13, the PB-224 class). */
@@ -75,6 +76,10 @@ export interface Slots {
   /** the time the request named, when it is not one of the console's four windows: today since midnight, last month, right now, or a window against
    * the one before (lib/period/read.ts); the screen counts that span itself (QA pass 7) */
   span?: PeriodSpec;
+  /** v12 (21 Nov), city: the most congested stretch ("worst-jam") or the trouble spot that keeps coming back ("repeat") */
+  focus?: "worst-jam" | "repeat" | null;
+  /** v12 (21 Nov), city: a past heavy rain, "latest" or "rain-YYYY-MM-DD" (the streets that flooded in it) */
+  rain?: string | null;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -1147,8 +1152,15 @@ async function city(c: Ctx): Promise<Part> {
   const topics = ["traffic", "flood", "rain", "power", "metro", "all"];
   const topic = topics.includes(String(c.slots.q)) ? String(c.slots.q) : "all";
   const zone = topic === "traffic" && c.slots.zones.length === 1 ? c.slots.zones[0] : null;
-  const r = await call(c, "city_now", { topic, zone });
-  const d = r.data as { headline: { en: string; ta: string }; say: { en: string; ta: string }; rows: { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null }[] };
+  // v12 (21 Nov): the spot or the rain asked for goes with the read (only when asked, so the plain read is shared with the snapshot's and the
+  // speculative ones by the tool cache)
+  const focus = topic === "traffic" && (c.slots.focus === "worst-jam" || c.slots.focus === "repeat") ? c.slots.focus : null;
+  const rain = topic === "flood" && typeof c.slots.rain === "string" && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(c.slots.rain) ? c.slots.rain : null;
+  const r = await call(c, "city_now", { topic, zone, ...(focus ? { focus } : {}), ...(rain ? { rain } : {}) });
+  const d = r.data as { headline: { en: string; ta: string }; say: { en: string; ta: string }; rows: { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null }[];
+    focus?: CityFocusPart | null; rainOf?: CityRainOf | null };
+  if (focus) return cityFocus(c, r, d, focus);
+  if (rain) return cityRain(c, r, d);
   const fact = (id: string) => r.facts.find((f) => f.id === `city.${id}`);
   const tiles = (CITY_TILES[topic] ?? CITY_TILES.all).map(fact).filter((f): f is NonNullable<typeof f> => !!f).slice(0, 6);
   const sentences = (t: string) => t.split(/(?<=[.!?])\s+(?=[A-Z(஀-௿])/).map((x) => x.trim()).filter(Boolean);
@@ -1171,6 +1183,63 @@ async function city(c: Ctx): Promise<Part> {
   // said aloud: the first two sentences (each figure is in the answer above)
   const say = bi(en.slice(0, 2).join(" ") || d.headline.en, (ta.length ? ta.slice(0, 2).join(" ") : d.headline.ta));
   return { title: CITY_TITLE[topic]?.en ?? d.headline.en, takeaway: en[1] && en[2] ? bi(en[2], ta[2] ?? ta[1] ?? "") : null, say, blocks: blocks.slice(0, 6), next: [] };
+}
+
+type CityKpi = Extract<BlockT, { kind: "Kpis" }>["items"][number];
+const cityKpi = (f: { id: string; label: string; value: number; unit?: string | null }, bad = false): CityKpi => ({ key: f.id.replace(/^city\./, "").slice(0, 40), label: clip(f.label, 80),
+  value: f.value, unit: f.unit ? clip(f.unit, 20) : null, prev: null, delta: null, tone: bad && f.value > 0 ? "bad" : "neutral", spark: [] });
+
+/**
+ * v12 (21 Nov): "the most congested road", "zoom to the worst jam", "the repeating traffic": one spot, not the district overview. Its delay,
+ * length, reports and open ones as tiles, the line code wrote for it said (lib/city/pick.ts spotLine / clusterLine: every figure is on the
+ * tiles and in the answer), and one map point whose id is the spot's (the console opens the Traffic view on it: Thunai.tsx putStage).
+ */
+function cityFocus(c: Ctx, r: ToolResult, d: { say: { en: string; ta: string }; focus?: CityFocusPart | null }, focus: "worst-jam" | "repeat"): Part {
+  const f = d.focus ?? null;
+  const head = focus === "repeat" ? bi("Keeps coming back", "மீண்டும் மீண்டும் சிக்கல்") : bi("Most congested now", "அதிக நெரிசல்");
+  if (!f) {
+    // nothing jammed now, or no live traffic: the shared data's own sentence (city_now put it first), on its own
+    const one = bi(d.say.en.split(/(?<=[.!?])\s+/)[0] ?? d.say.en, d.say.ta.split(/(?<=[.!?])\s+/)[0] ?? d.say.ta);
+    return { title: head, takeaway: null, say: one, blocks: [{ kind: "Answer", id: "say", title: head.en, text: clip(one.en, 900), facts: [] }], next: [] };
+  }
+  const fact = (id: string) => r.facts.find((x) => x.id === `city.traffic.focus.${id}`);
+  const tiles = [fact("delay"), fact("length"), fact("reports"), fact("open")].filter((x): x is NonNullable<typeof x> => !!x)
+    .map((x) => cityKpi(x, /delay|open/.test(x.id)));
+  const title = bi(`${head.en}: ${clip(f.name, 140)}`, `${head.ta}: ${clip(f.name, 140)}`);
+  const blocks: BlockT[] = [];
+  if (tiles.length) blocks.push({ kind: "Kpis", id: "spot-kpis", title: head.en, items: tiles });
+  blocks.push({ kind: "Answer", id: "say", title: f.owner.name ? `Who answers for it: ${clip(f.owner.name, 100)}` : head.en, text: clip(f.line.en, 900), facts: [] });
+  // one point: the spot itself, its id the TomTom spot's (or the trouble spot's), so the console flies to it and opens its card
+  blocks.push({ kind: "MapView", id: "spot", title: "Where", rule: null, shade: null, outline: [],
+    points: [{ n: 1, id: clip(f.id, 120), lat: f.lat, lon: f.lon, label: clip(f.name, 160), sev: null, value: f.delayMin ?? null, hot: true }] });
+  return { title, takeaway: null, say: bi(f.line.en, f.line.ta), blocks, next: [] };
+}
+
+/**
+ * v12 (21 Nov): "the flooded streets in the last rain", "roads that flooded in the last range": one past heavy rain (the last with reports,
+ * as Rain & flooding opens it, or the day asked), the streets its flooding reports stood on, and the line code wrote for it ("In the last
+ * heavy rain (21 October), 14 streets flooded: A, B, C."). The console opens Rain & flooding on that rain (Thunai.tsx putStage).
+ */
+function cityRain(c: Ctx, r: ToolResult, d: { say: { en: string; ta: string }; rainOf?: CityRainOf | null }): Part {
+  const ro = d.rainOf ?? null;
+  if (!ro) {
+    const one = bi(d.say.en.split(/(?<=[.!?])\s+/)[0] ?? d.say.en, d.say.ta.split(/(?<=[.!?])\s+/)[0] ?? d.say.ta);
+    return { title: bi("Streets that flooded", "வெள்ளம் வந்த தெருக்கள்"), takeaway: null, say: one, blocks: [{ kind: "Answer", id: "say", title: "Streets that flooded", text: clip(one.en, 900), facts: [] }], next: [] };
+  }
+  const fact = (id: string) => r.facts.find((x) => x.id === `city.flood.rain.${id}`);
+  const tiles = [fact("streets"), fact("reports")].filter((x): x is NonNullable<typeof x> => !!x).map((x) => cityKpi(x, true));
+  const title = ro.latest ? bi("Streets that flooded in the last heavy rain", "கடந்த கனமழையில் வெள்ளம் வந்த தெருக்கள்") : bi("Streets that flooded in that heavy rain", "அந்தக் கனமழையில் வெள்ளம் வந்த தெருக்கள்");
+  const blocks: BlockT[] = [];
+  if (tiles.length) blocks.push({ kind: "Kpis", id: "rain-kpis", title: title.en, items: tiles });
+  blocks.push({ kind: "Answer", id: "say", title: title.en, text: clip(ro.line.en, 900), facts: [] });
+  const streets = ro.streets.slice(0, 12);
+  if (streets.length) {
+    blocks.push({ kind: "Ranking", id: "streets", title: "Flooding reports on each street in that rain", unit: "reports", method: "Most reports first, from the flood memory (lib/rehearsal)", order: "top",
+      items: streets.map((s, k) => ({ key: `s${k}`, label: clip(c.ta ? s.label_ta : s.label, 120), value: s.n, rank: k + 1, sub: s.ward ? `Ward ${s.ward}` : null, zone: null, lat: s.lat, lon: s.lon, action: "none" as const })) });
+    blocks.push({ kind: "MapView", id: "map", title: "Where", rule: null, shade: null, outline: [],
+      points: streets.map((s, i) => ({ n: i + 1, id: clip(`street-${s.key}`, 120), lat: s.lat, lon: s.lon, label: clip(s.label, 160), sev: null, value: s.n, hot: i < 3 })) });
+  }
+  return { title, takeaway: null, say: bi(ro.line.en, ro.line.ta), blocks: blocks.slice(0, 6), next: [] };
 }
 
 // ------------------------------------------------------------------ ranking --

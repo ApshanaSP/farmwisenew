@@ -24,6 +24,7 @@ import zlib from "zlib";
 import type { DatabaseSync as DB } from "node:sqlite";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { isBackground } from "@/lib/util/background";
 import { decryptRow, installPii, registerPii } from "@/lib/pii";
 import { legacyDecrypt } from "@/lib/crypto";
 
@@ -78,11 +79,52 @@ declare global {
     reloading?: boolean; reference?: { id: string; gz: Buffer };
     /** the durable store alone, read until the first build is in (sign-in need not wait for the build) */ early?: { db: DB; file: string } | null;
     hooks?: Map<string, BuildHook>;
+    /** v12: told once a newer hourly build has been swapped in (onBuildSwap: Jarvis's keep-warm) */ swapListeners?: Set<(buildId: string) => void>;
+    /** v12: the queue of statements waiting for their turn on the thread (awsPool.query's yield). v13: background work's only */ turn?: Promise<void>;
+    /** v13: a request's own statements, queued ahead of the background's, and how many are waiting */ turnFg?: Promise<void>; fgWaiting?: number;
   } | undefined;
 }
 const g = (global.__awsStore ??= {
   state: null, loading: null, checking: false, durable: null, durableLoading: null, lock: new Lock(), flushing: Promise.resolve()
 });
+
+/**
+ * v12 (21 Nov): lets waiting requests in before the next piece of a long job (a table, a build step). node:sqlite runs each statement on
+ * the server's one thread, so back-to-back work held every request: 3.9 s stalls of a plain sign-in check were measured while the durable
+ * store reloaded (the report, first-question-latency RC4).
+ */
+const yieldThread = () => new Promise<void>((r) => setImmediate(r));
+/**
+ * v12: a statement read through the pool waits its turn: one event-loop turn after the statement queued before it. Promise.all of 17
+ * insights queries used to run as one block of about 3.5 s (all their immediates fire in one check phase); in this queue each runs in a
+ * loop turn of its own, so a speech-to-text or round request that needs no query is served between them, and one that does waits one
+ * query at a time, not a whole batch. Total work is unchanged.
+ */
+function queryTurn(): Promise<void> {
+  // v13 (review finding 0-0): two lines, not one. A request's own statement (a sign-in check, a round's read) queues only behind other
+  // requests' statements; background work (inBackground: the keep-warm, a stale-while-revalidate refresh) waits while any of those are
+  // queued. One line made /api/jarvis/hear's session check wait for all 17 of a warm-up's insights queries (1.6 s in the reviewer's run).
+  if (!isBackground()) {
+    g.fgWaiting = (g.fgWaiting ?? 0) + 1;
+    const mine = (g.turnFg ?? Promise.resolve()).then(yieldThread);
+    g.turnFg = mine;
+    return mine.finally(() => { g.fgWaiting = Math.max(0, (g.fgWaiting ?? 1) - 1); });
+  }
+  const mine = (g.turn ?? Promise.resolve()).then(async () => {
+    do await yieldThread(); while ((g.fgWaiting ?? 0) > 0);
+  });
+  g.turn = mine;
+  return mine;
+}
+/** tests only: how many of a request's own statements are queued, and the turn itself */
+export const fgQueued = (): number => g.fgWaiting ?? 0;
+export const queryTurnForTest = queryTurn;
+
+/** v12: told after each newer hourly build is swapped in (with its id). Returns the way to stop listening. */
+export function onBuildSwap(fn: (buildId: string) => void): () => void {
+  (g.swapListeners ??= new Set()).add(fn);
+  return () => { g.swapListeners?.delete(fn); };
+}
 /**
  * A step that adjusts each build once it is loaded on this server, before (or, for the build already loaded when the
  * step is registered, while) it is used: real reservoir figures, readable headlines, places found in the text
@@ -97,6 +139,8 @@ async function runHooks(s: State): Promise<void> {
   for (const [name, hook] of g.hooks ?? []) {
     if (s.hooksDone?.has(name)) continue;
     (s.hooksDone ??= new Set()).add(name);
+    // v12: waiting requests are served between two build steps (each can take seconds on the hourly build)
+    await yieldThread();
     const t0 = Date.now();
     try {
       await hook(s.db);
@@ -436,6 +480,8 @@ function ensureSiteTables(d: Durable): void {
 async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
   const inserts = new Map<string, ReturnType<DB["prepare"]>>();
   for (const [t, s] of Object.entries(doc.schema)) {
+    // v12: waiting requests are served between two tables too (a reload fills a file nothing reads yet: pausing here is safe)
+    await yieldThread();
     for (const ddl of s.ddl) db.exec(ddl);
     // columns the website added after the table was migrated (sources.mapping): the saved DDL does not list them, the rows do
     const have = new Set((db.prepare(`SELECT name FROM pragma_table_info(${lit(t)})`).all() as { name: string }[]).map((c) => c.name.toLowerCase()));
@@ -547,6 +593,7 @@ async function fetchDurable(file: string): Promise<Loaded> {
   const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
   const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
   for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
+  await yieldThread();
   // personal columns are locked on every save from now on; rows AWS still holds unlocked are locked here, and their changes
   // go back to AWS with the next send, so DynamoDB and the S3 copies hold ciphertext too (lib/pii.ts)
   const locked = installPii(conn, legacyDecrypt);
@@ -609,6 +656,8 @@ function sweep(keep: string): void {
 /** A copy that does not save: loads the durable store again, into a new file, and swaps it in with its own changes. */
 async function reloadDurable(): Promise<void> {
   const fresh = await fetchDurable(path.join(CACHE_DIR, `durable-${Date.now()}.sqlite`));
+  // v12: requests that queued while the new file was filled are served before the swap (overlay and attach run in one go)
+  await yieldThread();
   const release = await g.lock.acquire(); // no transaction is open while the files are swapped
   const old = g.durable;
   let kept = 0;
@@ -616,12 +665,15 @@ async function reloadDurable(): Promise<void> {
     if (old) kept = overlay(old, fresh);
     if (g.state) attach(g.state, fresh.file);
     g.durable = fresh;
+    // v13 (review finding 0-11): other PCs' complaints and decisions just came in, so every read kept by the data epoch starts again
+    bumpDataEpoch();
   } catch (e) {
     fresh.conn.close();
     throw e;
   } finally {
     release();
   }
+  await yieldThread();
   try { old?.conn.close(); } catch { /* already closed */ }
   sweep(fresh.file);
   console.log(`[aws-store] complaints and accounts reloaded from AWS: ${fresh.rows} rows${kept ? `, ${kept} local changes kept` : ""}`);
@@ -714,7 +766,11 @@ async function current(): Promise<State> {
         } finally {
           release();
         }
+        // v12 (21 Nov): every cache that holds a read of the store starts again on the new build (the insights and Jarvis's tool reads are
+        // now kept by the data's version and this epoch, no longer by a 30 s clock: the critic's review of the cache-key fix)
+        bumpDataEpoch();
         console.log(`[aws-store] build ${fresh.buildId} loaded (was ${old?.buildId})`);
+        for (const fn of g.swapListeners ?? []) try { fn(fresh.buildId); } catch (e) { console.warn(`[aws-store] a build-swap listener failed: ${(e as Error).message}`); }
         setTimeout(() => { try { old?.db.close(); } catch { /* already closed */ } }, 60_000);
       })
       .catch((e) => console.warn(`[aws-store] refresh check failed, keeping build ${g.state?.buildId}: ${e.message}`))
@@ -768,7 +824,9 @@ function run(db: DB, sql: string | { sql: string; values?: unknown[] }, params?:
     const r = st.run(...(flat as any[]));
     if (/^\s*(CREATE|DROP|ALTER)\s/i.test(expanded)) catalog(db);
     // a write to what the figures are laid over (the Collector's decisions, an officer's steps) empties the caches that hold a read (RC-35): whoever writes, here
-    if (/\b(collector_decisions|officer_steps)\b/i.test(expanded)) bumpDataEpoch();
+    // v12 (21 Nov): and a write to the cases themselves (a citizen's or the desk's complaint, a live incident): the insights and Jarvis's reads
+    // are kept by the data's version now, not a 30 s clock, so a case filed through this server must not wait for a bucket to turn (hunt2-desk-09)
+    if (/\b(collector_decisions|officer_steps|incidents|incident_members|complaints)\b/i.test(expanded)) bumpDataEpoch();
     return [{ affectedRows: Number(r.changes), insertId: Number(r.lastInsertRowid), changedRows: Number(r.changes) }, undefined];
   } catch (e: any) {
     const err = new Error(`${e.message}\n  in SQLite: ${sqlite.slice(0, 600)}`) as Error & { code?: string; sqlMessage?: string };
@@ -876,6 +934,10 @@ export function awsPool(): any {
   const pool = connection(db);
   const query = async (sql: any, params?: unknown[]) => {
     const text: string = typeof sql === "string" ? sql : sql.sql;
+    // v12 (21 Nov): each statement through the pool waits its turn (queryTurn), so requests are served between two queries instead of after a
+    // whole batch: short questions and speech to text stalled 1-4 s behind the insights' 17 queries (the report, first-question-latency RC4).
+    // Only the pool: a connection from getConnection keeps its statements in order under the write lock, as before.
+    await queryTurn();
     if (!g.state && READ.test(text)) {
       void current().catch(() => undefined); // the build keeps loading meanwhile
       const e = await early().catch(() => null);

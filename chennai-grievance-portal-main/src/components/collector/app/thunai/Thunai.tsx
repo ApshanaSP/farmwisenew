@@ -49,14 +49,14 @@ import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadW
 import { loadSilero, parkWake, WakeEars } from "./ears";
 import { wakeWait } from "./kws";
 import { flag } from "@/lib/thunai/flags";
-import { Conductor, type HeardLine, wakeQuietMs } from "./conductor";
+import { asksAgain, Conductor, type HeardLine, noRequest, startsNoTurn, wakeQuietMs } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { answersV7, budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
 import { ackDelay, ackDue, ackToSay, newsOpener, stillLine, asksFirst, consoleDigest, HearingCaptions, heardOf, keepTurns, LONG_TURN_MS, longTurn, memTurn, resultLine, rulesConf, screenLabel, screenResult, withDigest, type HeardInfo, type MemTurn, type Observation, type ProgressRow } from "./turnstate";
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
-import { districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
+import { cityQuick, districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
 import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
@@ -64,7 +64,9 @@ import { joinCut, v10Front } from "@/lib/thunai/v10/browser10";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
 import type { Entity10 } from "@/lib/thunai/v10/lexicon10";
 import { groundScreen, offerAct, offerOf as newsOfferOf, offerSaid, type Offer10 } from "@/lib/thunai/v10/offer10";
-import { consoleMapDeps, mapRisk, mapSnap10, runMapCmd } from "./mapops";
+import { cityAfterMap, consoleMapDeps, mapRisk, mapSnap10, runMapCmd, whenMapReady } from "./mapops";
+import { cityBridgeArgs, cityOpenOf, cityViewMove, inPlaceCommand, keepsLastCity, screenSubject, VIEW_CLOSED } from "./cityopen";
+import { mapCmd } from "../askmap/bridge";
 import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
@@ -78,6 +80,8 @@ import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
 import { confirmLine } from "@/lib/thunai/say";
 import { greetLine, isGreeting } from "@/lib/thunai/greet";
+import { smallTalk, smallTalkLine } from "@/lib/thunai/v11/smalltalk";
+import { cityAsk, lastCitySlotsOf, type CityLast } from "@/lib/city/intent";
 import { stageShownText } from "@/lib/thunai/shown";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
@@ -149,6 +153,26 @@ interface Streamed { gen: number; lang: Lang; screen: StageDocT | null; said: st
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
+/**
+ * v12 (21 Nov, stale-and-double RC6 with the critic's correction): each agent round gets its own deadline, the round budget plus this
+ * (2 s), on its own AbortController chained to the turn's. At the deadline the round is let go as "the agent gave none" (the rules answer
+ * if they can, else SLOW_LINE is said), and the turn's own controller is never aborted, so the fallbacks after it still run. The 44 s and
+ * 25 s planner calls of 06:39 and 06:40 hung with no answer and no word until the Collector spoke again.
+ */
+const ROUND_GRACE_MS = 2000;
+const CLIENT_TIMEOUT = "client-timeout";
+/** v12 (21 Nov, stale-and-double RC11): a next step on offer is taken by a spoken yes this long after the answer that offered it ended */
+const OFFER_MS = 15_000;
+const SLOW_LINE: Record<Lang, string> = { en: "That took too long, so I stopped. Please ask me again.", ta: "அதற்கு அதிக நேரம் ஆனது, நிறுத்திவிட்டேன். மீண்டும் கேளுங்கள்." };
+/** v13 (21 Nov, review 1-14): said after the part of an answer that streamed before the round's deadline (handle(): never SLOW_LINE over it) */
+const SO_FAR_LINE: Record<Lang, string> = { en: "That's what I have so far.", ta: "இப்போதைக்கு கிடைத்தது இவ்வளவுதான்." };
+/**
+ * v12 (21 Nov, stale-and-double RC5 and the critic's order 4): the voice's map turn (v10's map lane) waits this long for the map, then says
+ * MAP_SLOW and ends; the map's answer still draws when it comes (unless a newer sentence stopped it first). The 06:38:33 map turn took 34 s
+ * with no word; Ask the Map's own planner now stops at 8 s on the server too (lib/map/ai.ts PLAN_MS)
+ */
+const MAP_LANE_MS = 8000;
+const MAP_SLOW: Record<Lang, string> = { en: "The map is still working on that. Its answer will show on the map.", ta: "வரைபடம் இன்னும் அதைப் பார்க்கிறது. பதில் வரைபடத்தில் தெரியும்." };
 /** A line the model wrote beside a plan is said only if it holds no figure: the figures come from code. */
 const noFigure = (t?: string | null) => (t && !figuresIn(t).length ? t : undefined);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -322,6 +346,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const ackText = useRef("");
   /** v8: the acknowledgement said last (never the same one twice running) */
   const lastAckSaid = useRef<string | null>(null);
+  /** v11: which small-talk line comes next, so a second "thanks" is not word for word the first */
+  const smallN = useRef(0);
   /** v8: the story found by its topic last, and the other one offered with it ("the other one") */
   const lastFound = useRef<LastFound | null>(null);
   /** v10: the day's names (storms and names in the news, lexicon10.ts), from the server; a line cut off before its point, kept a few seconds for
@@ -391,10 +417,24 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [pins, setPins] = useState<PinnedScreen[]>([]);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [saveAsk, setSaveAsk] = useState<string | null>(null);
+  /**
+   * v13 (21 Nov review, finding 1 6): a city screen (live traffic, the flooded streets, power and trains in rain) shows in place: its view opens
+   * on the Overview's map and its line is said, with the answer in the HUD's corner card; the full-screen Stage is not mounted over the map
+   * (it was opaque, so the map view behind it was never seen: the owner had to ask "show me in the map"). The card's Details tap opens the
+   * Stage on that screen: `stageFull` is the id of the city screen opened so; `fullWanted` a Details tap whose screen is being built again
+   */
+  const [stageFull, setStageFull] = useState<string | null>(null);
+  const fullWanted = useRef<{ q: string; at: number } | null>(null);
+  const stageInPlace = !!stage && stage.recipe === "city" && stageFull !== stage.id;
   /** one voice for each language, always the same one (mouth.ts locks it): no choosing per answer */
   const voiceName: string | null = null;
   const stageRef = useRef<StageDocT | null>(null);
   stageRef.current = stage;
+  // v14 (21 Nov review 13, routing 1): stageInPlace as a turn in flight reads it (through refs), so an in-place screen's close, back, full
+  // screen and table act on its view and its card, never on a Stage that is not mounted
+  const stageFullRef = useRef(stageFull);
+  stageFullRef.current = stageFull;
+  const inPlaceNow = (): boolean => { const s = stageRef.current; return !!s && s.recipe === "city" && stageFullRef.current !== s.id; };
   const stageFocus = useRef<number | null>(null);
   const narration = useRef<{ key: string; text: string; lead: string }[]>([]);
   const narrIndex = useRef(0);
@@ -409,7 +449,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** the last four turns, so "same for Adyar" and "open that" make sense to the brain: what was heard and done, the screen's recipe
    * and slots, and a one-line result (turnstate.ts memTurn: no citizen's words, no figure a model wrote); all four go to the round */
   const turns = useRef<MemTurn[]>([]);
-  const remember = (heardText: string, did: string, o: { doc?: StageDocT | null; result?: string | null } = {}) => { turns.current = keepTurns(turns.current, memTurn(heardText, did, o)); };
+  const remember = (heardText: string, did: string, o: { doc?: StageDocT | null; result?: string | null } = {}) => { turns.current = keepTurns(turns.current, memTurn(heardText, did, o)); cityTurnEnds(heardText, did, o.doc ?? null); }; // eslint-disable-line @typescript-eslint/no-use-before-define
+  /**
+   * v12 (21 Nov, map-traffic-flood-routing RC2): the part of the city the last answer showed (a city screen's q, or the map lane's city op),
+   * so "Okay, now tell me, show me in the map." said after "Show me live traffic." maps live traffic, never an Ask the Map question made of
+   * its filler words (06:38:33, 34 s). Any other screen puts it away; without it the open screen and the remembered turns say it (lastCityOf)
+   */
+  // v13 (21 Nov review, finding 1 7): its slots, not only its topic: the focus, the rain and the spot, so "show me in the map" reopens that spot
+  const lastCityRef = useRef<CityLast | null>(null);
+  const lastCityNow = (): CityLast | null => lastCityRef.current ?? lastCitySlotsOf(stageRef.current, turns.current);
   /** the last thing said, with the figures it was allowed to say: "repeat" says it again through the same gate, never ungated */
   const lastSpoken = useRef<{ text: string; lang: Lang; allowed?: Set<string> } | null>(null);
   const lastFilter = useRef<ScreenState["lastFilter"]>(null);
@@ -558,6 +606,29 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const snap = String(hostRef.current.ov?.now ?? "").slice(0, 40) || null;
     post("/api/collector/thunai/audit", { decision: { kind: d.kind, query: d.query.slice(0, 400), lang: d.lang, snapshot: snap, tools: [], model: d.kind === "answer" ? "rules" : null,
       lane: d.lane ?? null, ms: d.ms != null && Number.isFinite(d.ms) ? Math.max(0, Math.min(600_000, Math.round(d.ms))) : null, how: d.how ?? null, count: d.count ?? null } }).catch(() => undefined);
+  };
+  /**
+   * v12 (21 Nov, the critic's "silent drops": 40 engaged clips, about 11 turns, and no reason logged): a line let go (the gate, a line
+   * that replaced nothing over a question in flight, a line that waits for its rest) goes to the server's telemetry, words-free: why, the
+   * language, the confidence and whether it was engaged (POST /api/jarvis/ignored). The dev test console posts nothing
+   */
+  const noteDropped = (d: { why: string; lang: Lang; conf: number; engaged: boolean; called?: boolean }) => {
+    const agent = hostRef.current.agentUrl;
+    if (agent && agent !== "/api/collector/thunai/agent") return;
+    try {
+      fetch("/api/jarvis/ignored", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ why: d.why.slice(0, 40), lang: d.lang, conf: Number.isFinite(d.conf) ? Math.round(d.conf * 100) / 100 : null, engaged: d.engaged, called: !!d.called }) }).catch(() => undefined);
+    } catch { /* telemetry never reaches a turn */ }
+  };
+  /**
+   * v12: a line said to Jarvis that it could not make out (the gate's "unclear", v10's lone unclear word) gets a soft cue instead of total
+   * silence: a short line on the bar, and the earcon when the name was said. Nothing is spoken over the room, and side talk stays silent
+   */
+  const unclearCue = (lang: Lang, called: boolean) => {
+    const t = lang === "ta" ? "சரியாகக் கேட்கவில்லை. மீண்டும் சொல்லுங்கள்?" : "I didn't catch that. Say it again?";
+    hud.set({ notice: t });
+    setTimeout(() => { if (hud.get().notice === t) hud.set({ notice: null }); }, 3000);
+    if (called) earcon("need");
   };
 
   useEffect(() => {
@@ -888,6 +959,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** the steps that move around the dashboard: while they run, nothing of Jarvis's covers it (a reading is an answer, not a move) */
   const NAVIGATES = new Set(["page", "period", "view", "clearFilters", "mapMode", "layer", "panel", "item", "zoom", "map", "workspace", "theme", "close"]);
   const VIEW_CHANGING = new Set(["page", "period", "view", "mapMode", "layer", "panel", "item", "draft", "zoom", "map", "close", "mission", "read", "workspace"]);
+  /** v12 (understanding RC13): the steps the console applies on its next render, which the next step of the plan waits for (run() below) */
+  const SETTLES = new Set(["page", "panel", "view", "period", "layer", "mapMode", "close", "clearFilters"]);
   const run = async (steps: Step[], lang: Lang, heardText: string, by: "rules" | "ai", note?: string, quiet = false) => {
     if (!steps.length) { setPhase("ready"); return; }
     const changes = steps.some((s) => VIEW_CHANGING.has(s.a) && !(s.a === "workspace" && s.op === "save"));
@@ -911,8 +984,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     justOpened.current = null;
     const said: string[] = [];
     const t0 = performance.now();
+    let ran = 0;
     for (let i = 0; i < steps.length; i++) {
       if ((abortMission.current || !alive()) && steps[i].a !== "stop") break;
+      // v12 (21 Nov, understanding RC13): a map or zoom step after an earlier step of the plan (the Overview just opened) waits for the map
+      // to be drawn, at most 1.5 s, and only while this is still the turn
+      if (i > 0 && (steps[i].a === "map" || steps[i].a === "zoom")) { await whenMapReady(1500, turnCtl.current?.signal); if (!alive()) break; }
+      ran++;
       setChips((cs) => cs.map((c) => (c.id === ids[i] ? { ...c, state: "running" } : c)));
       try {
         // v6: the pointer glides to the control WHILE the step runs (its target is read as the glide starts), so the screen changes at
@@ -922,6 +1000,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         else if (glideFirst()) { await glide(steps[i]); s = await runStep(steps[i], lang, heardText); }
         else { const g = glide(steps[i]); s = await runStep(steps[i], lang, heardText); await g; }
         if (s) said.push(s);
+        // v12 (understanding RC13): steps run as an ordered series. A page, panel, filter, period, layer, map mode or close is a setter the
+        // console applies on its next render (and may load for): the next step waits for the console to settle (host.settled, at most 4 s),
+        // in quiet mode too (a plan's own steps beside its screen). Only between steps: a one-step command is not made slower
+        if (i < steps.length - 1 && SETTLES.has(steps[i].a)) await hostRef.current.settled?.();
         setChips((cs) => cs.map((c) => (c.id === ids[i] ? { ...c, state: "done" } : c)));
       } catch (e) {
         console.error("thunai step failed", steps[i], e);
@@ -930,6 +1012,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     const ms = Math.round(performance.now() - t0);
     setChips((cs) => cs.map((c, i) => (i === cs.length - 1 ? { ...c, label: `${c.label} (${(ms / 1000).toFixed(1)} s)` } : c)));
+    // v12 (RC8): a plan cut short (a newer sentence, a barge-in, Esc) is recorded as cancelled, with how far it got, and is neither
+    // remembered as done nor recorded as an answer: its turn used to go to the planner's turns with every step described as done
+    // (a plan that turns Jarvis off ends its own turn: that is done, not cut short)
+    const turnsOff = steps.some((s) => s.a === "off" || (s.a === "handsfree" && !s.on));
+    if (!alive() && !turnsOff) { audit(heardText, steps, `cancelled after ${ran} of ${steps.length} steps (by ${by})`); return; }
     if (!steps.some((s) => s.a === "whatDid" || s.a === "repeat" || s.a === "undo")) lastSteps.current = steps;
     audit(heardText, steps, `done by ${by}${note ? `; ${note}` : ""}`);
     // the decision record of an answer the browser gave on its own (the planner's are recorded by the round route); not for Ctrl+Z
@@ -993,7 +1080,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const think = async (said: string, st: ScreenState): Promise<{ plan: Checked; model: string | null; ms: number } | null> => {
     try {
       const j = await post(hostRef.current.planUrl ?? "/api/collector/thunai/plan", {
-        text: said, turns: turns.current.slice(-4),
+        text: said, turns: turns.current.slice(-6),
         state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat, taluk: st.taluk, sev: st.sev, mapMode: st.mapMode,
           panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers }
       });
@@ -1039,7 +1126,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
   // a pinned screen's chip on the Overview: it opens built fresh from the data
   useEffect(() => {
-    const f = (e: Event) => { const p = (e as CustomEvent<PinnedScreen>).detail; openQuiet(); void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title); }; // eslint-disable-line @typescript-eslint/no-use-before-define
+    const f = (e: Event) => {
+      const p = (e as CustomEvent<Partial<PinnedScreen> & Pick<PinnedScreen, "recipe" | "slots" | "title"> & { full?: boolean }>).detail;
+      openQuiet();
+      // v13 (21 Nov review, finding 1 6): the corner card's Details on a city screen opens the Stage on it, full screen (the same screen when it
+      // is still the open one; else built again and opened full: fullWanted, read in putStage)
+      if (p.recipe === "city" && p.full) {
+        const cur = stageRef.current;
+        if (cur?.recipe === "city" && cur.id === p.id) { setStageFull(cur.id); return; }
+        fullWanted.current = { q: String(p.slots?.q ?? "all"), at: Date.now() };
+      }
+      void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title); // eslint-disable-line @typescript-eslint/no-use-before-define
+    };
     window.addEventListener("jarvis:open-pin", f);
     return () => window.removeEventListener("jarvis:open-pin", f);
   }); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1060,7 +1158,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setStageBusy(null);
     sx.screen = putStage(doc, sx.lang, null); // eslint-disable-line @typescript-eslint/no-use-before-define
     pendingScreen.current = { title: doc.title, recipe: doc.recipe, slots: doc.slots };
+    // v12 (RC4): this screen is the turn's until its answer is in (showStage confirms it); a newer turn closes it if it never is
+    unfinishedScreen.current = gen;
   };
+  /** v12 (RC4): the turn whose streamed screen is up and whose answer never came (null: the screen on show, if any, was finished) */
+  const unfinishedScreen = useRef<number | null>(null);
   /**
    * A sentence arrived: with the screen up, the first is spoken at once and the rest queue (each chunk through the number gate,
    * with the screen's speakable figures). Words with no screen wait for the round's whole answer, which says them as before. On the
@@ -1098,7 +1200,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const stepId = `think-${turnId}`;
     // the turn this call answers: a newer sentence, a barge-in or Esc moves the generation on, and nothing of this one shows or speaks after
     const gen = turnGen.current;
-    const live = () => gen === turnGen.current && !signal?.aborted;
+    const turnLive = () => gen === turnGen.current && !signal?.aborted;
+    // v12 (RC6): a round past its deadline (the budget plus ROUND_GRACE_MS) is let go: nothing it sends after shows, speaks or runs
+    let timedOut = false;
+    const live = () => turnLive() && !timedOut;
+    /** v12: the round ran out of time and the turn is still this one: "the agent gave none", marked so the page says so (SLOW_LINE) */
+    const timeoutOut = (): AgentResult | null => (timedOut && turnLive()
+      ? { kind: "none", lang: direct?.lang ?? heard?.lang ?? listenLangRef.current, reply: null, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: Math.round(performance.now() - t0), note: CLIENT_TIMEOUT }
+      : null);
     // the trace (v5): the turn this round answers, taken now as its generation is (null: a turn with no trace of its own)
     const trace = traceAnswering() ?? null;
     if (!direct) {
@@ -1118,53 +1227,66 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const doc = stageRef.current;
         // after a round's console steps the console has moved: the next round sees it as it is now
         const s = round === 0 ? st : buildState();
-        const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, signal, body: JSON.stringify({
-          turnId, round, text: said.slice(0, 300), turns: turns.current.slice(-4), lastText: lastRequest.current && lastRequest.current.text !== said ? lastRequest.current.text.slice(0, 300) : null,
-          state: { page: s.page, period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk, sev: s.sev, mapMode: s.mapMode,
-            panel: s.panel, incident: s.incident, listLength: s.list.length, lastPlace: s.lastPlace, numbers: !!s.numbers },
-          // the open Stage with a short label per id (register.ts labelsOf: place, kind, zone; never a title), so "that Velachery one" resolves
-          stage: doc ? withLabels(stageContext(doc, stageFocus.current), doc) : null,
-          stageDigest: doc ? stageDigest(stageModel(), stageFocus.current) : null, // eslint-disable-line @typescript-eslint/no-use-before-define
-          // where the answer on screen came from, every value code's (D2: "how do you know?" reads it)
-          provenance: doc ? provenanceOf(doc, { by: stageBrainRef.current?.model ? "ai" : "rules", model: stageBrainRef.current?.model ?? null }) : null,
-          observations, direct: direct ?? null,
-          // v4: the round as events (an older server ignores this and answers in JSON), and how the sentence was heard
-          stream: !direct, heard
-        }) });
-        // console steps the plan runs before it looks again, in order, as they arrive; how they went goes back with the next round
-        const ran: Observation[] = [];
-        let stepRun: Promise<void> = Promise.resolve();
-        const runSteps = (list: Step[]) => {
-          stepRun = stepRun.then(async () => {
-            for (const x of list) {
-              if (!live()) return;
-              try { await runStep(x, listenLangRef.current, said); await hostRef.current.settled?.(); ran.push({ step: x.a, ok: true }); }
-              catch (e) { ran.push({ step: x.a, ok: false, error: String((e as Error).message).slice(0, 150) }); }
-            }
-          });
-        };
-        const r = await readRound(res, { turnId, live, trace, hooks: direct ? {} : {
-          // the work timeline: only what really ran, with the time it took
-          step: (x) => timeline(`${turnId}-${x.id}`, x.label, x.state, x.ms),
-          steps: runSteps,
-          heard: (h) => { budget = budgetOf(h.budgetMs); const sx = streamOf(gen); if (sx) sx.lang = h.lang; },
-          screen: (d) => streamScreen(gen, d),
-          sentence: (t, l, f) => streamSay(gen, t, l, f)
-        } });
-        const j = r.out;
-        if (!direct && !r.timeline) for (const [i, x] of (j.trace ?? []).entries()) hud.step({ id: `${turnId}-${round}-${i}`, label: x.label, state: x.ok ? "done" : "failed", ms: x.ms });
-        hud.strip({ tokens: j.tokens ?? null });
-        // steps that came as an event already ran (or are running): never twice
-        if (!r.stepsSent) runSteps(j.steps ?? []);
-        await stepRun;
-        if (!live()) return null;
-        // the model sees what its steps did: each step's outcome, the last with the digest of the screen now showing
-        observations = withDigest(ran, ran.length ? digestNow() : null);
-        if (j.done) { finishStep("done"); if (j.result?.model) hud.strip({ provider: j.result.model.replace(/#\d+$/, "") }); return j.result ?? null; }
+        // v12 (RC6, with the critic's correction): this round's own controller, chained to the turn's, with its own deadline (the budget,
+        // which the round's heard event may raise, plus ROUND_GRACE_MS, from the turn's start). Its timeout never aborts the turn's controller
+        const rc = new AbortController();
+        const fromTurn = () => rc.abort();
+        if (signal?.aborted) rc.abort(); else signal?.addEventListener("abort", fromTurn, { once: true });
+        let timer: ReturnType<typeof setTimeout> | null = null, expired: () => void = () => undefined;
+        const dead = new Promise<void>((r) => { expired = r; });
+        const arm = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => { timedOut = true; rc.abort(); expired(); }, Math.max(0, t0 + budget + ROUND_GRACE_MS - performance.now())); };
+        arm();
+        try {
+          const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, signal: rc.signal, body: JSON.stringify({
+            turnId, round, text: said.slice(0, 300), turns: turns.current.slice(-6), lastText: lastRequest.current && lastRequest.current.text !== said ? lastRequest.current.text.slice(0, 300) : null,
+            state: { page: s.page, period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk, sev: s.sev, mapMode: s.mapMode,
+              panel: s.panel, incident: s.incident, listLength: s.list.length, lastPlace: s.lastPlace, numbers: !!s.numbers },
+            // the open Stage with a short label per id (register.ts labelsOf: place, kind, zone; never a title), so "that Velachery one" resolves
+            stage: doc ? withLabels(stageContext(doc, stageFocus.current), doc) : null,
+            stageDigest: doc ? stageDigest(stageModel(), stageFocus.current) : null, // eslint-disable-line @typescript-eslint/no-use-before-define
+            // where the answer on screen came from, every value code's (D2: "how do you know?" reads it)
+            provenance: doc ? provenanceOf(doc, { by: stageBrainRef.current?.model ? "ai" : "rules", model: stageBrainRef.current?.model ?? null }) : null,
+            observations, direct: direct ?? null,
+            // v4: the round as events (an older server ignores this and answers in JSON), and how the sentence was heard
+            stream: !direct, heard
+          }) });
+          // console steps the plan runs before it looks again, in order, as they arrive; how they went goes back with the next round
+          const ran: Observation[] = [];
+          let stepRun: Promise<void> = Promise.resolve();
+          const runSteps = (list: Step[]) => {
+            stepRun = stepRun.then(async () => {
+              for (const x of list) {
+                if (!live()) return;
+                try { await runStep(x, listenLangRef.current, said); await hostRef.current.settled?.(); ran.push({ step: x.a, ok: true }); }
+                catch (e) { ran.push({ step: x.a, ok: false, error: String((e as Error).message).slice(0, 150) }); }
+              }
+            });
+          };
+          const r = await readRound(res, { turnId, live, trace, hooks: direct ? {} : {
+            // the work timeline: only what really ran, with the time it took
+            step: (x) => timeline(`${turnId}-${x.id}`, x.label, x.state, x.ms),
+            steps: runSteps,
+            // (v12: a longer budget the server gives moves this round's deadline with it)
+            heard: (h) => { budget = budgetOf(h.budgetMs); arm(); const sx = streamOf(gen); if (sx) sx.lang = h.lang; },
+            screen: (d) => streamScreen(gen, d),
+            sentence: (t, l, f) => streamSay(gen, t, l, f)
+          } });
+          const j = r.out;
+          if (!direct && !r.timeline) for (const [i, x] of (j.trace ?? []).entries()) hud.step({ id: `${turnId}-${round}-${i}`, label: x.label, state: x.ok ? "done" : "failed", ms: x.ms });
+          hud.strip({ tokens: j.tokens ?? null });
+          // steps that came as an event already ran (or are running): never twice
+          if (!r.stepsSent) runSteps(j.steps ?? []);
+          // (v12: a console step that never settles does not outlive the round's deadline either)
+          await Promise.race([stepRun, dead]);
+          if (!live()) return timeoutOut();
+          // the model sees what its steps did: each step's outcome, the last with the digest of the screen now showing
+          observations = withDigest(ran, ran.length ? digestNow() : null);
+          if (j.done) { finishStep("done"); if (j.result?.model) hud.strip({ provider: j.result.model.replace(/#\d+$/, "") }); return j.result ?? null; }
+        } finally { if (timer) clearTimeout(timer); signal?.removeEventListener("abort", fromTurn); }
       }
       finishStep("failed");
       return null;
-    } catch { finishStep("failed"); return null; } finally { if (!direct) setStreaming(false); }
+    } catch { finishStep("failed"); return timeoutOut(); } finally { if (!direct) setStreaming(false); }
   };
 
   const stopNarration = () => { stopVoice(); hud.caption(null); setNarrating(false); setReading(null); };
@@ -1232,6 +1354,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** Put a screen up: the HUD's panel, the Stage, the back stack. Its words are said by showStage (or, streamed, as they come). */
   const putStage = (doc: StageDocT, lang: Lang, brainInfo: BrainInfo, opts: { push?: boolean; drafts?: boolean } = {}): StageDocT => {
     stopNarration();
+    // v12 (RC4): a screen put up replaces any unfinished one (a streamed screen marks itself unfinished again just after: streamScreen)
+    unfinishedScreen.current = null;
     markAnswer(); // eslint-disable-line @typescript-eslint/no-use-before-define
     toHud(doc, lang);
     ensureGeo();
@@ -1245,10 +1369,27 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (d.startViewTransition && !reduced() && stageRef.current) d.startViewTransition(() => apply()); else apply();
     stageRef.current = withDrafts;
     // the city now: the Overview's map opens the view that shows it (live traffic, or a Rain tab) behind the screen
-    if (doc.recipe === "city") {
-      const q = String((doc.slots as { q?: unknown }).q ?? "all");
-      window.dispatchEvent(new CustomEvent("diq:open-city", { detail: q === "traffic" || q === "all" ? { kind: "traffic" } : { kind: "rain", lens: q === "power" || q === "metro" ? q : "flood" } }));
+    // v12 (21 Nov, routing RC3-RC5): on the spot the screen is about (the most congested stretch, or the trouble spot that keeps coming
+    // back, on its "Keeps coming" tab), the HUD's reticle on it, and Rain & flooding on the past rain asked for (cityopen.ts). It opened on
+    // nothing in particular, so "the most congested road" showed the district, and "the last rain" every rain
+    const city = cityOpenOf(doc);
+    if (city) {
+      // v13 (finding 1 6): in place on the Overview's map (stageInPlace: no Stage over it), so the console's drawer, dialog and chatbot go
+      // out of the way as the map lane's views do; a Details tap whose screen was built again opens it full screen
+      const fw = fullWanted.current;
+      fullWanted.current = null;
+      if (fw && Date.now() - fw.at < 20_000 && fw.q === String(doc.slots.q ?? "all")) setStageFull(doc.id);
+      else { const x = hostRef.current.c; x.closeAll?.(); x.setAsk?.(false); }
+      // v14 (21 Nov review 13, scenarios 8): a view already open on the same thing is not opened again (a new seq remounted it: a fresh read, its
+      // camera reset, the card the Collector had open lost); Rain & flooding, open, moves to the tab and the rain in place (askmap/bridge.ts)
+      const x0 = hostRef.current.c;
+      const mv = cityViewMove(city.detail, { page: x0.page ?? null, traffic: x0.trafficView?.open ?? null, rain: x0.rainView?.open ?? null });
+      const moved = mv === "same" || (mv === "bridge" && city.detail.kind === "rain" && !!mapCmd("rain", cityBridgeArgs(city.detail))?.ok);
+      if (!moved) window.dispatchEvent(new CustomEvent("diq:open-city", { detail: city.detail }));
+      if (city.focus) hud.set({ focus: { ...city.focus, zone: null } });
     }
+    // (v12, routing RC2: what "show me in the map" means next; any other screen puts it away; v13, finding 1 7: with its focus, rain and spot)
+    lastCityRef.current = city ? lastCitySlotsOf(withDrafts) : null;
     return withDrafts;
   };
 
@@ -1259,6 +1400,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const showStage = (doc: StageDocT, say: string | null, lang: Lang, brainInfo: BrainInfo, opts: { push?: boolean; drafts?: boolean; heard?: string; stream?: Streamed | null } = {}) => {
     const sx = opts.stream?.screen ? opts.stream : null;
     setStreaming(false);
+    // v12 (RC4): the turn's answer is in: the screen it streamed (or this one) is finished
+    unfinishedScreen.current = null;
     // only the sentences the voice really said count as said: on the server's voice none was (streamSay), so the whole answer is said now, once
     const plan = settleStream({ screenId: sx?.screen?.id ?? null, said: sx?.speaks ? sx.said : [] }, { stage: doc, say });
     // the conversation keeps a card of this screen (a click opens it again)
@@ -1273,6 +1416,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // list of items; a tap or a plain yes builds it directly (no model). Numberless by construction (nextQuestion skips any figure)
     const nq = nextQuestion(doc);
     setOffer(nq ? { say: nq.say, step: nq.step, lang } : null);
+    offerAt.current = Date.now();
     const offerLine = (auto: boolean) => (nq && !auto && outMode === "voice" && (say ?? "").length <= 220 ? nq.say[lang] : null);
     if (sx && plan.show === "none") {
       // v7: the round's final screen is the streamed one plus what the aide said (stage.ts voice) and any reports it found: it takes its place
@@ -1308,8 +1452,36 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     void directStage(o.step.recipe, o.step.slots ?? {}, o.step.label[o.lang] || o.say[o.lang], o.lang); // eslint-disable-line @typescript-eslint/no-use-before-define
   };
 
-  const closeStage = () => { stopNarration(); setOffer(null); setStage(null); stageRef.current = null; setStageBack([]); setStageBusy(null); setSaveAsk(null); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); };
+  const closeStage = () => { stopNarration(); setOffer(null); setStage(null); stageRef.current = null; unfinishedScreen.current = null; setStageBack([]); setStageBusy(null); setSaveAsk(null); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); };
+  /**
+   * v14 (21 Nov review 13, scenarios 0, routing 8): the last city answer belongs to the last answer (cityopen.ts keepsLastCity). A later answer
+   * of any other kind (words, the news, an Ask the Map answer, a Rain op, console steps) puts it away, and an in-place city screen with it: its
+   * corner card went with the new turn, and left hidden it was sent to the round as the open Stage and read by the lanes ("show them on the
+   * map" after a words answer about power reopened Live traffic). Quietly: the voice of this turn's answer is never cut here (remember() can
+   * come after it has started speaking)
+   */
+  const cityTurnEnds = (heardText: string, did: string, doc: StageDocT | null) => {
+    if (keepsLastCity(heardText, did, doc, (s) => !!smallTalk(s))) return;
+    lastCityRef.current = null;
+    if (inPlaceNow()) { stageRef.current = null; unfinishedScreen.current = null; setStage(null); setStageBack([]); }
+  };
+  /**
+   * v12 (RC4): a new turn begins (handle(), directStage()): a screen an older turn streamed but never finished is closed, so no lane reads
+   * it and no round sends it as the open Stage (stage, stageDigest, provenance): a follow-up was resolved against a screen the Collector
+   * never got words for. A finished screen stays, as before
+   */
+  const dropUnfinishedScreen = () => {
+    const g = unfinishedScreen.current;
+    unfinishedScreen.current = null;
+    if (g != null && g !== turnGen.current && stageRef.current) closeStage();
+  };
+  /** v12 (RC11): when the next step on offer was made; it is taken by a spoken yes only for OFFER_MS after the answer that made it ended */
+  const offerAt = useRef(0);
+  const voiceEndAt = useRef(0);
+  const offerLive = () => !!offerRef.current && (speaking() || Date.now() - Math.max(offerAt.current, voiceEndAt.current) <= OFFER_MS);
 
+  /** v13 (review 1-12): the directStage turn whose busy label is up (its generation), so one left behind clears only its own */
+  const stageBusyGen = useRef(0);
   /** A screen from a Stage control or a local command: built by code from the data, no model. */
   const directStage = async (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string, lang: Lang = listenLang, opts: { drafts?: boolean } = {}) => {
     // it replaces what is in flight, and anything newer replaces it: a cancelled screen never appears
@@ -1317,11 +1489,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     turnCtl.current?.abort();
     const ctl = new AbortController();
     turnCtl.current = ctl;
+    // v12 (RC4): an older turn's unfinished screen is neither kept on the back stack nor sent as this screen's context
+    pendingScreen.current = null;
+    dropUnfinishedScreen();
     setStageBusy(label);
+    stageBusyGen.current = gen;
     stopNarration();
     const t0 = performance.now();
     const r = await callAgent(label, buildState(), { recipe, slots, lang }, ctl.signal);
-    if (gen !== turnGen.current) return;
+    // v13 (21 Nov, review 1-12): a newer turn took over: this screen's busy label goes with it, unless a newer one is up (a words-only answer
+    // never clears it, so handle()'s inFlight stayed true and later thanks and greetings were dropped, the Stage stuck on its busy line)
+    if (gen !== turnGen.current) { if (stageBusyGen.current === gen) setStageBusy((b) => (b === label ? null : b)); return; }
     setStageBusy(null);
     if (!r?.stage) { earcon("blocked"); setReply(lang === "ta" ? "அந்தத் திரையை உருவாக்க முடியவில்லை." : "I could not build that screen."); return; }
     // an answer on Jarvis's screen leaves the dashboard as the Collector set it: its filters are not changed behind the
@@ -1395,6 +1573,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (!d || !alive()) return;
       if (!st.shown) {
         st.shown = true;
+        // (v12, RC4: this news screen takes the place of any unfinished streamed one)
+        unfinishedScreen.current = null;
         setStageBusy(null);
         if (stageRef.current) { const cur = stageRef.current; setStageBack((b) => [...b, cur].slice(-8)); }
         setStageViews({}); setStageFilter(null); setStageBrain({ model: null, ms: Math.round(performance.now() - t0), rounds: 0, calls: 0 }); stageFocus.current = null;
@@ -1551,6 +1731,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const stageModel = (): StageModel => ({ doc: stageRef.current, back: stageBackRef.current, views: stageViewsRef.current, filter: stageFilterRef.current, narr: narrIndex.current });
   /** Commit a model to the screen and to the refs at once; the digest of what is now true comes back. */
   const commit = (m: StageModel): string | null => {
+    // (v12, RC4: another screen than the unfinished one, back or closed, is no longer that turn's)
+    if (m.doc !== stageRef.current) unfinishedScreen.current = null;
     stageRef.current = m.doc; stageBackRef.current = m.back; stageViewsRef.current = m.views as Record<string, BlockView>; stageFilterRef.current = m.filter; narrIndex.current = m.narr;
     setStage(m.doc); setStageBack(m.back); setStageViews(m.views as Record<string, BlockView>); setStageFilter(m.filter);
     return stageDigest(m, stageFocus.current);
@@ -1695,11 +1877,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    */
   const handle = async (text: string, conf = 0.95, original?: string, opts: { gate?: Addressed | null; source?: "whisper" | "captions" | "typed"; lang?: Lang } = {}) => {
     // v10: the rest of a line cut off a moment ago ("Tell me about the" ... "fast news") is joined to it (browser10.ts joinCut)
+    // v12 (RC9): only to a spoken line: a typed question is whole as typed, and an old fragment is never glued in front of it
     const cutBefore = cutRef.current;
     cutRef.current = null;
-    let said = original || !understandV10() ? text.trim() : joinCut(cutBefore, text, Date.now());
+    const spokenLine = opts.source === "whisper" || opts.source === "captions";
+    let said = original || !understandV10() || !spokenLine ? text.trim() : joinCut(cutBefore, text, Date.now());
     if (!said) return;
+    // v12 (RC2): typed or tapped, nothing said before this is joined to what is said next (conductor.ts forgetTurn)
+    if (!spokenLine) conductor.current?.forgetTurn();
     // the trace (v5): the turn this answers, for the answer's own stamps (the spoken sentence's trace; none for typed text)
+    // (v12: the turn answered before, given back when this line turns out to start no turn: the provisional check below)
+    const answering0 = traceAnswering();
     traceAnswer(traceOf.current);
     // a mission's own words while its card waits or it runs (missions.words.ts): start (or a plain yes to the card), stop, skip that,
     // instead X, or an edit of the card before Start ("without 3"). They steer the mission and start no new turn: a new turn would
@@ -1729,22 +1917,86 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       stopMission({ say: false, drop: true }); // eslint-disable-line @typescript-eslint/no-use-before-define
     }
-    // a new sentence: the question in flight is aborted, and nothing it comes back with may speak
-    const gen = ++turnGen.current;
-    const alive = () => gen === turnGen.current;
-    turnCtl.current?.abort();
-    const ctl = new AbortController();
-    turnCtl.current = ctl;
-    gateRef.current = opts.gate ?? null;
-    sourceRef.current = opts.source ?? "typed";
-    // how the sentence came, for the planner (v4, defect 6): the ears' language and confidence, or typed (sure)
-    const heardInfo = heardOf(sourceRef.current, opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLangRef.current), conf);
     // v8 (the owner's example 4): the answer's language is the language of these words, never the ears' label or the console's setting;
     // words with none ("Adyar?") take the Collector's last that had one
     const v8 = understandV8();
     // (the last language with any: from the same remembered turns the server reads, so the two never disagree: the review, 18 Nov)
     const lastLang = v8 ? [...turns.current].reverse().map((x) => wordsLang(x.heard, { isName: placeWord })).find((x) => x) ?? null : null;
     const ulang: Lang | null = v8 ? userLang8(said, lastLang) : null;
+    // v10's lanes in front of v8's (browser10.ts v10Front), read with the screen as it is now
+    const front10 = (s: string) => {
+      const st10 = buildState();
+      return v10Front(s, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
+        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(s, st10)),
+        // typed or spoken: a typed line is finished when Enter is pressed, so it never waits for its rest (v10 review 2, finding 19)
+        source: opts.source ?? "typed",
+        // v10 review 2, finding 30: with a dataset open, the control lane leaves the dataset's own sentences to the intercept below
+        studio: !!studioRef.current && hostRef.current.c.page === "studio",
+        // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
+        // (v12, routing RC2: with the Live traffic view's state and the part of the city the last answer showed, for "show me in the map")
+        // (v14, 21 Nov review 13: the console's zones and places for a city sentence's zone, routing 0; the open screen's subject for "its
+        // complaints", scenarios 4)
+        askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open, world: worldRef.current, subject: screenSubject(stageRef.current), trafficOpen: !!hostRef.current.c.trafficView?.open, lastCity: lastCityNow() }) });
+    };
+    // v12 (21 Nov, stale-and-double RC1): a spoken line while a question is still in flight is provisional. One that only waits for its
+    // rest (v10's wait lane: cut off before its point, a lone unclear word, fillers), or only acknowledges, thanks or greets, starts no
+    // turn: the question in flight is not cancelled and its answer still lands (06:37:10, 06:39:05 and 06:40:56 were never answered:
+    // the next short clip cancelled each). Anything else is a new request and replaces it below, as before. A yes a card waits for is
+    // its answer, never dropped here
+    const inFlight = spokenLine && !original && !!turnCtl.current && !turnCtl.current.signal.aborted
+      && (phaseRef.current === "thinking" || phaseRef.current === "acting" || !!stageBusyRef.current);
+    // v14 (review turns 2): the district tour asked "Shall I go on?" (map10 tourCheck): a plain yes ("Yes.", "Okay.", சரி) is its answer, as a card's is
+    const tourAsks = spokenLine && !original && !!mapSnap10(hostRef.current.c.mapAsk).tourCheck;
+    if (inFlight && !((askOnce || pendingB || confirmRef.current || offerLive() || tourAsks) && plainYes(said))) {
+      const w10 = understandV10() ? front10(said).lane : null;
+      const waits = w10?.lane === "wait" ? w10.why : null;
+      if (waits || noRequest(said)) {
+        // a line cut off before its point still waits for its rest (joinCut, the next spoken sentence); the answer's stamps stay the
+        // question in flight's
+        if (waits === "cut-off") cutRef.current = { text: said, at: Date.now() };
+        traceAnswer(answering0 ?? null);
+        via.current = "typed";
+        noteDropped({ why: waits ? `wait-${waits}` : "over-turn", lang: /[஀-௿]/.test(said) ? "ta" : "en", conf, engaged: true });
+        return;
+      }
+    }
+    // v13 (21 Nov, review 1-1): a lone backchannel ("Okay.", "Mm-hmm", சரி), an apology or a throat-clear said to Jarvis with nothing in
+    // flight starts no turn either: nothing is said, the last answer stays (an "Okay." after an answer got "Hello Collector, how can I help
+    // you?"). Said while a yes, a choice or a next step is awaited it goes on below as their answer; a thanks or praise keeps its reply
+    // (v14: and the tour's check-in, tourAsks, waits for a yes too)
+    if (spokenLine && !original && startsNoTurn(said) && !askOnce && !pendingB && !confirmRef.current && !offerLive() && !newsOffer.current && !tourAsks) {
+      // v14 (review turns 6): "Sorry?", "Pardon?", "Huh?" asked within 15 s of Jarvis's voice ending (voiceEndAt: an answer's or the ack's, never
+      // the wake reply's): the last answer was missed, so it is said again (the repeat step's own way, through the number gate it was first said
+      // with), never silence
+      const again = lastSpoken.current;
+      if (asksAgain(said) && again?.text && Date.now() - voiceEndAt.current <= 15_000) {
+        pushMsg({ who: "you", text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en", via: via.current });
+        via.current = "typed";
+        out(again.text, again.lang, "ready", again.allowed);
+        return;
+      }
+      traceAnswer(answering0 ?? null);
+      via.current = "typed";
+      noteDropped({ why: "no-turn", lang: /[஀-௿]/.test(said) ? "ta" : "en", conf, engaged: true });
+      return;
+    }
+    // a new sentence: the question in flight is aborted, and nothing it comes back with may speak
+    const gen = ++turnGen.current;
+    const alive = () => gen === turnGen.current;
+    turnCtl.current?.abort();
+    const ctl = new AbortController();
+    turnCtl.current = ctl;
+    // v12 (RC3): the voice of an older turn stops as this one starts, its narration and caption with it: its answer is never said over, or
+    // after, the new question (a wake reply for this same call plays on the earcon's own context and is not cut). This turn's ack comes after
+    stopNarration();
+    // v12 (RC4): an older turn's screen is not this one's: the reply's card never carries it, and a screen it streamed but never finished
+    // is closed before any lane reads it or a round sends it as the open Stage (stage, stageDigest, provenance)
+    pendingScreen.current = null;
+    dropUnfinishedScreen();
+    gateRef.current = opts.gate ?? null;
+    sourceRef.current = opts.source ?? "typed";
+    // how the sentence came, for the planner (v4, defect 6): the ears' language and confidence, or typed (sure)
+    const heardInfo = heardOf(sourceRef.current, opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLangRef.current), conf);
     forgetBookmark();
     if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
     // a new question replaces the last answer's card: earlier ones are in the chatbot's Jarvis tab; its progress line starts empty (an
@@ -1764,7 +2016,27 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!lastMiss.current) misses.current = 0;
     lastMiss.current = false;
     // a greeting or the name alone ("Hi Jarvis", "vanakkam", "Jarvis, are you there?"): answered at once, no model
-    if (!original && !askOnce && !pendingB && isGreeting(said)) { greetRef.current(/[஀-௿]/.test(said) || /(vanakkam|vannakam|epdi|eppadi)/i.test(said) ? "ta" : listenLangRef.current === "ta" ? "ta" : "en"); return; }
+    // (v12, 21 Nov: the word edges of the Tanglish greeting were two backspace bytes, a lost "\b", so "vanakkam" never chose Tamil; source-hygiene)
+    if (!original && !askOnce && !pendingB && isGreeting(said)) { greetRef.current(/[஀-௿]/.test(said) || /\b(vanakkam|vannakam|epdi|eppadi)\b/i.test(said) ? "ta" : listenLangRef.current === "ta" ? "ta" : "en"); return; }
+    // v11: small talk ("how are you", "thanks", "who are you", "what can you do") answered at once, no model (v11/smalltalk.ts; it took 4 s)
+    // (only to Jarvis: typed, said with the name, or within 20 s of its last turn; room talk later in the 40 s engaged window is not answered:
+    // the review of 20 Nov)
+    const g11 = opts.gate ?? null;
+    const toJarvis = sourceRef.current === "typed" || !g11 || g11.tier === 1 || (lastTurnAt.current != null && Date.now() - lastTurnAt.current < 20_000);
+    const small = !original && !askOnce && !pendingB && toJarvis ? smallTalk(said) : null;
+    if (small) {
+      // a new turn: what the last answer offered is put away, as any other request does
+      newsOffer.current = null; confirmRef.current = null;
+      if (offerRef.current) setOffer(null);
+      const lg: Lang = /[஀-௿]/.test(said) || /\b(epdi|eppadi|nandri|semma|yaaru|mudiyum)\b/i.test(said) ? "ta" : ulang ?? (listenLangRef.current === "ta" ? "ta" : "en");
+      setBrainNow({ by: "instant", model: null, ms: 0 }); // eslint-disable-line @typescript-eslint/no-use-before-define
+      earcon("done");
+      const line11 = smallTalkLine(small, lg, smallN.current++);
+      remember(said, "answered in words", { result: line11 }); // eslint-disable-line @typescript-eslint/no-use-before-define
+      out(line11, lg, "ready", NO_FIGURES); // eslint-disable-line @typescript-eslint/no-use-before-define
+      decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: 0 });
+      return;
+    }
     // an answer to the one question
     if (askOnce && !original) {
       const t = said.toLowerCase();
@@ -1797,8 +2069,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
     }
     // the next step offered after a screen (Level A): a plain yes, or "show me", builds it; anything else puts the offer away
+    // v12 (RC11): only while the offer is fresh (15 s from the end of the answer that made it: offerLive) and only from a line said to Jarvis
+    // (tier 1 or 2) or typed: an "Okay." to someone in the room no longer builds the earlier topic's next screen
     if (offerRef.current && !original) {
-      if (plainYes(said)) { takeOffer(); return; }
+      const toMe = !gateRef.current || gateRef.current.tier === 1 || gateRef.current.tier === 2;
+      if (offerLive() && toMe && plainYes(said)) { takeOffer(); return; }
       setOffer(null);
     }
     // from tier 3 (no name, not engaged) only level A runs; the rest waits for the name
@@ -1838,20 +2113,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // ("Tell me about Cyclone Aquan") is the news about the thing the store names (with the weather readings for a storm), or is asked back in a
     // few words when only half sure; a position said by ear ("the fast news") is read as the position when a list is on screen
     if (!original && understandV10()) {
-      const st10 = buildState();
-      const f10 = v10Front(said, { stage: stageRef.current, news: newsOnScreen(stageRef.current, st10), state: st10, world: worldRef.current, listenLang, heardLang: opts.lang ?? null,
-        lastLang, lastFound: lastFound.current, lex: lexRef.current, v7: answersV7(), visible: visibleControls(candidates10(said, st10)),
-        // typed or spoken: a typed line is finished when Enter is pressed, so it never waits for its rest (v10 review 2, finding 19)
-        source: sourceRef.current,
-        // v10 review 2, finding 30: with a dataset open, the control lane leaves the dataset's own sentences to the intercept below
-        studio: !!studioRef.current && hostRef.current.c.page === "studio",
-        // v10: Ask the Map's state (open, its answer, shots, chips, suggestions, Rain, a tour) for the map's lane (map10.ts, mapops.ts)
-        askMap: mapSnap10(hostRef.current.c.mapAsk, { rainOpen: !!hostRef.current.c.rainView?.open }) });
+      const f10 = front10(said);
       if (f10.lane?.lane === "wait") {
         // nothing said: the rest of the sentence is joined to it when it comes (joinCut), and Jarvis keeps listening
         cutRef.current = { text: said, at: Date.now() };
         setBrainNow({ by: "instant", model: null, ms: 0 });
         setPhase("listening");
+        // v12 (the critic's silent drops): counted, words-free; a lone word Jarvis could not make out gets a soft cue, never silence (a line
+        // cut off before its point waits for its rest, and fillers stay silent)
+        const g12 = opts.gate ?? null;
+        noteDropped({ why: `wait-${f10.lane.why}`, lang: f10.lane.lang, conf, engaged: true, called: g12?.why === "called" || g12?.why === "named" });
+        if (f10.lane.why === "one-word") unclearCue(f10.lane.lang, g12?.why === "called" || g12?.why === "named");
         return;
       }
       if (f10.lane?.lane === "confirm") {
@@ -1881,20 +2153,58 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const t0 = performance.now();
         // saving and exporting keep something (B), the drafts are C: from a sentence with no name, only level A runs
         if (needsName(mapRisk(f10.lane.cmd), lg)) return;
-        setBrainNow({ by: "instant", model: null, ms: 0 }); remember(said, `Ask the Map: ${f10.lane.cmd.op}`, { doc: null });
+        setBrainNow({ by: "instant", model: null, ms: 0 });
+        const cmd10 = f10.lane.cmd, op = cmd10.op;
+        // v12 (RC5, the part in this file): the map's turn is a turn in flight like any other, so the bar shows it working (and, past 10 s,
+        // says it is still working) and a "thank you" said meanwhile does not cancel it (the provisional check above)
+        setPhase("thinking");
+        hud.set({ doing: lg === "ta" ? "வரைபடத்தில் பார்க்கிறேன்" : "Working on the map" });
+        // v12 (understanding RC13): a city view or a camera move on the Overview's map waits for that map to be drawn when the Overview is up
+        // already (mapops.ts waits again after it opens the Overview itself, so nothing waits here for a map that is not coming)
+        if ((op === "city" || op === "zoom") && hostRef.current.c.page === "overview") await whenMapReady(1500, ctl.signal);
+        if (!alive()) return;
         let askedYes = false;
-        const line = await runMapCmd(f10.lane.cmd, consoleMapDeps(() => hostRef.current, {
-          lang: lg, clearStage: () => { if (stageRef.current) closeStage(); },
-          show: (p) => hud.panel({ ...p, recipe: "askmap", at: Date.now() }),
-          point: (p) => hud.set({ focus: p ? { label: p.label, lat: p.lat, lon: p.lon, zone: null } : null }),
+        // v12 (RC5): the map works on the turn's own signal (a newer sentence stops its question, useMapAsk) and nothing it does after this
+        // turn has ended shows: its card, the reticle, a save's question
+        const mapRun = runMapCmd(cmd10, consoleMapDeps(() => hostRef.current, {
+          lang: lg, signal: ctl.signal, clearStage: () => { if (alive() && stageRef.current) closeStage(); },
+          show: (p) => { if (alive()) hud.panel({ ...p, recipe: "askmap", at: Date.now() }); },
+          point: (p) => { if (alive()) hud.set({ focus: p ? { label: p.label, lat: p.lat, lon: p.lon, zone: null } : null }); },
           // a save keeps something: the Collector's spoken yes or tap first (level B), what it did said after
           askYes: (q, act) => {
+            if (!alive()) return;
             askedYes = true;
             setPendingB({ text: lg === "ta" ? q.ta : q.en, steps: [], heard: said, lang: lg, act: () => void act().then((l) => { if (l) { earcon("done"); out(lg === "ta" ? l.ta : l.en, lg, "ready", l.allowed); } }) });
             earcon("need"); out(lg === "ta" ? q.ta : q.en, lg, "asking");
           }
         }));
+        // v12 (21 Nov, stale-and-double RC5 and the critic): the map's turn gets MAP_LANE_MS. Past it Jarvis says so in one short line, the
+        // turn is over, and the map finishes quietly: its answer draws on the map and its line shows, never said (06:38:33 waited 34 s in silence)
+        const got = await Promise.race([mapRun.then((l) => ({ l })), sleep(MAP_LANE_MS).then(() => null)]);
         if (!alive()) return;
+        if (!got) {
+          remember(said, `Ask the Map: ${op} (still working)`, { doc: null });
+          hud.set({ doing: "" });
+          audit(said, [], `Ask the Map: ${op}, still working after ${MAP_LANE_MS / 1000} s`);
+          earcon("need");
+          out(MAP_SLOW[lg], lg, "ready", NO_FIGURES);
+          void mapRun.then((l) => {
+            if (!alive()) return;
+            // v14 (21 Nov review 13, routing 8, scenarios 7): every op writes it (mapops.ts cityAfterMap): a city op what it opened, a camera move the one before
+            lastCityRef.current = cityAfterMap(cmd10, l, lastCityRef.current);
+            if (l) { setReply(lg === "ta" ? l.ta : l.en); showAlt(lg === "ta" ? l.ta : l.en, lg); }
+          }).catch(() => undefined);
+          return;
+        }
+        const line = got.l;
+        // v12 (the critic, with RC8): the turn is remembered only once the map has done it and it is still this turn (it was remembered
+        // before the map ran, so a cut or failed map turn went into the planner's turns as done)
+        remember(said, `Ask the Map: ${op}`, { doc: null });
+        // v12 (routing RC2): the city view the map lane opened is what "show me in the map" means next (v13, finding 1 7: with its slots)
+        // v14 (21 Nov review 13, routing 8, scenarios 0 and 7): every map op writes it (mapops.ts cityAfterMap): a city op the jam it picked, with
+        // its place; a Rain op its tab; a camera move keeps the one before; an Ask the Map answer or a close puts it away
+        lastCityRef.current = cityAfterMap(cmd10, line, lastCityRef.current);
+        hud.set({ doing: "" });
         if (line) { earcon("done"); out(lg === "ta" ? line.ta : line.en, lg, "ready", line.allowed); } else if (!askedYes) setPhase("ready");
         decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
         return;
@@ -1985,7 +2295,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (na) {
         const lg: Lang = ulang ?? opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
         const t0 = performance.now();
-        await newsTurn(na, said, lg, alive, ctl.signal);
+        // v12 (RC8): a news turn cut off records no decision (as the v8 and v10 news lanes above already did)
+        if (await newsTurn(na, said, lg, alive, ctl.signal) === "aborted") return;
         decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
         return;
       }
@@ -1993,6 +2304,33 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the open Stage: its own commands ("next", "only the Adyar ones", "open 3", "pin this") need no model
     if (stageRef.current && !original) {
       const lc = localStageCommand(said);
+      // v14 (21 Nov review 13, routing 1): an in-place city screen has no Stage mounted, so its close, back, full screen and table act on its
+      // view and its corner card (they dropped the hidden screen, or fullscreened nothing, and nothing anyone could see happened); "details",
+      // "full screen" and "expand it" open the Stage on it, as the card's Details tap does (cityopen.ts inPlaceCommand)
+      const ipDoc = stageRef.current;
+      const ip = inPlaceNow() ? inPlaceCommand(said, lc) : null;
+      if (ip && ipDoc) {
+        const lg: Lang = ulang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
+        const view = cityOpenOf(ipDoc)?.detail.kind ?? "traffic", x = hostRef.current.c;
+        const v = view === "traffic" ? x.trafficView : x.rainView;
+        setBrainNow({ by: "instant", model: null, ms: 0 });
+        if (ip === "details" || ip === "view") {
+          remember(said, "on the Stage: full", { doc: ipDoc });
+          stageFullRef.current = ipDoc.id; setStageFull(ipDoc.id);
+          if (ip === "view" && lc) await applyLocal(lc, lg); else { earcon("done"); setPhase("ready"); }
+          return;
+        }
+        // back: the view goes back one level (its card, its zone, its rain) when it has one, else the screen before this one; else it closes
+        if (ip === "back" && v?.esc.current?.()) { remember(said, "on the Stage: back", { doc: ipDoc }); earcon("done"); setPhase("ready"); return; }
+        if (ip === "back" && stageBackRef.current.length) { await applyLocal({ op: "back" }, lg); remember(said, "on the Stage: back", { doc: stageRef.current }); return; }
+        v?.close();
+        remember(said, `closed ${view === "traffic" ? "Live traffic" : "Rain and flooding"}`, { doc: null });
+        closeStage();
+        hud.set({ answer: "", panels: [], focus: null });
+        earcon("done");
+        out(VIEW_CLOSED[view][lg], lg, "ready", NO_FIGURES);
+        return;
+      }
       if (lc) {
         const lg: Lang = ulang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
         if (needsName(lc.op === "pin" ? "B" : lc.op === "draft" ? "C" : "A", lg)) return;
@@ -2057,7 +2395,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // a plain move the rules are sure of ("go to trends", "open the map") is done at once, with no model
     // and so is a command to move around the dashboard ("go to trends and show only Adyar", "switch to weekly", "open the news")
-    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && (isPlainMove(rules.steps) || isNavCommand(said, rules.steps))) {
+    // (v11: not a sentence about the city on the ground read as a category filter: "See live traffic" was set as a traffic-complaints filter here,
+    // 20 Nov; the agent's city screen and THE DISTRICT NOW answer it. A page, period or map move stays instant)
+    // (v12, routing RC6: read by the shared city reading, lib/city/intent.ts cityAsk, which also knows "the flooded roads", "the last rain"
+    // and "the most congested"; the same reading sends the rules' fallback below to the city screen)
+    const ca = cityAsk(said, { last: lastCityNow() });
+    const cityAsFilter = !!ca && rules.kind === "do" && rules.steps.some((x) => x.a === "view" && !!x.view.cat);
+    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && (isPlainMove(rules.steps) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
       traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);
@@ -2081,7 +2425,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     ackText.current = doingLine;
     setReply(doingLine);
     hud.set({ doing: doingLine });
-    if (stageRef.current) setStageBusy(doingLine);
+    // (v14: with this turn's generation, as directStage's label carries its own: review turns 7)
+    if (stageRef.current) { setStageBusy(doingLine); stageBusyGen.current = gen; }
     jvMark("ack");
     if (utterEnd.current) hud.strip({ ackMs: Math.round(performance.now() - utterEnd.current) });
     // said aloud only when it is honest (turnstate.ts ackDue): a spoken sentence whose answer has not started, on screen or in the
@@ -2095,8 +2440,24 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }, ackIn);
     const stopBeat = outMode !== "quiet" && modeRef.current !== "on" ? heartbeat() : () => undefined;
     const ag = await callAgent(said, st, undefined, ctl.signal, heardInfo).finally(() => { stopBeat(); });
-    if (!alive()) return;
+    // v14 (review turns 7): a newer turn took over: this turn's busy label goes with it, unless a newer one is up (a words-only turn, a map lane or
+    // putStage never clears it, so inFlight stayed true and "Thank you Jarvis", "Hi Jarvis" and "Okay" were dropped as over-turn afterwards)
+    if (!alive()) { if (stageBusyGen.current === gen) setStageBusy((b) => (b === doingLine ? null : b)); return; }
     setStageBusy(null);
+    // v11: the model's answer from THE DISTRICT NOW failed the number gate: the analyst (Ask District IQ's engine) answers, before any rules
+    // fallback could set a console filter instead (the review of 20 Nov)
+    if (ag?.kind === "none" && ag.note === "answer-gate") { setBrainNow({ by: "rules", model: null, ms: 0 }); audit(said, [], "to the analyst (answer gate)"); await askAnalyst(said, rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+    // v13 (21 Nov, review 1-14): the round's deadline came after its stream had put a screen up (and maybe said some of its sentences): Jarvis
+    // finishes with what came (the streamed screen, its sentences, or the screen's own words when none came) and says that is all it has so
+    // far. Never SLOW_LINE over a half-shown answer, and the city screen is not rebuilt behind it (directStage)
+    const part = ag?.note === CLIENT_TIMEOUT ? streamOf(gen) : null;
+    if (part?.screen) {
+      const lines = part.said.length ? part.said : part.screen.say?.[part.lang] ? [part.screen.say[part.lang]] : [];
+      setBrainNow({ by: "ai", model: null, ms: ag?.ms ?? 0 });
+      audit(said, [], "the agent took too long (client deadline): the streamed part kept");
+      showStage(part.screen, [...lines, SO_FAR_LINE[part.lang]].join(" "), part.lang, { model: null, ms: ag?.ms ?? 0, rounds: 0, calls: 0 }, { heard: heardAs, stream: part });
+      return;
+    }
     if (ag && ag.kind !== "none") {
       setBrainNow({ by: "ai", model: ag.model, ms: ag.ms });
       const lang = ag.lang;
@@ -2116,6 +2477,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const own = ag.steps.filter((s) => s.a !== "view" && s.a !== "period" && s.a !== "layer" && !(s.a === "page" && s.page === "environment"));
         if (own.length) await run(own, lang, heardAs, "ai", undefined, true);
         if (!alive()) return;
+        // v12 (understanding RC13): "open the map, show live traffic and zoom to the worst jam" is [page overview] and the city screen: the
+        // screen's view opens on the Overview's map once that map is drawn (at most 1.5 s), not in the same instant as the page step
+        if (ag.stage.recipe === "city" && own.length) { await whenMapReady(1500, ctl.signal); if (!alive()) return; }
         // a screen that streamed is up already, and some of its words said: only what is left is shown or said
         showStage(ag.stage, ag.say, lang, { model: ag.model, ms: ag.ms, rounds: ag.rounds, calls: ag.calls.length }, { heard: heardAs, stream: streamOf(gen) });
         return;
@@ -2150,9 +2514,25 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // the brain was unreachable or found nothing real: the built-in rules answer, and the dock says so
     setBrainNow({ by: "rules", model: null, ms: 0 });
+    // v12 (21 Nov, routing RC6): a sentence about the city on the ground ("show me live traffic in map", "where are the flooded roads?")
+    // that the agent gave nothing for (Claude off, a Groq rung hung, the round's deadline) is the city screen, built by code from the shared
+    // city data (the direct lane: no model, no aide): never the complaints filter the rules read in it, nor the analyst. (The answer gate's
+    // turn above still goes to the analyst first)
+    // v13 (21 Nov review, finding 0 9): read as the server's fast lane reads it (quick.ts cityQuick, with its bail-outs: a trend, a comparison,
+    // the news, a brief, what stands out, "only", "same"), so "the power outage trend this month" and "compare traffic in Adyar and Teynampet"
+    // go to the analyst below, never the heavy-rain power screen or the district's live traffic
+    const cq = ca ? cityQuick(said, worldRef.current, { lastCity: lastCityNow() }) : null;
+    if (ca && cq && (rules.kind === "unknown" || cityAsFilter)) {
+      audit(said, [], `the city screen (${ca.topic}${ca.focus ? `, ${ca.focus}` : ""}${ca.rain ? `, ${ca.rain}` : ""}) without the agent`);
+      await directStage("city", cq.slots, ackFor(said, rules.lang) || (rules.lang === "ta" ? "நகர நிலவரம்" : "The city now"), rules.lang);
+      return;
+    }
     if (rules.kind === "unknown") {
       // no model can answer right now: said plainly, inside the 8 s, with what still works
       if (ag?.note === "no-model") { earcon("blocked"); audit(said, [], "no model answered"); out(NO_MODEL_LINE[rules.lang], rules.lang, "ready"); return; }
+      // v12 (RC6): the agent's round ran past its budget and 2 s (callAgent's own deadline): a short honest line, never silence (the
+      // analyst is not asked: it would be a second long wait on the same busy providers)
+      if (ag?.note === CLIENT_TIMEOUT) { earcon("blocked"); audit(said, [], "the agent took too long (client deadline)"); remember(said, "took too long: nothing was answered"); out(SLOW_LINE[rules.lang], rules.lang, "ready", NO_FIGURES); return; }
       // the checker left nothing of the plan: what Jarvis can do, not silence
       if (ag && ag.kind === "none") { earcon("need"); audit(said, [], "cannot do"); if (missed()) offerKeys(rules.lang); else out(cannotLine(rules.lang), rules.lang, "ready"); return; }
       // not a console command: a question about the district, answered by the analyst (Ask District IQ's engine)
@@ -2646,10 +3026,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const captionRibbon = useRef(false);
   /** Abort the question in flight: nothing it comes back with may speak or change the screen. The frame stays. */
   const cancelTurn = () => {
-    setReply(""); // the "Counting it" line the turn put up goes with it (audit-client_browser-8)
+    // the "Counting it" line the turn put up goes with it (audit-client_browser-8). v13 (21 Nov, review 1-10): only a turn still working's
+    // line (thinking, acting, or the acknowledgement's): a finished answer's reply stays on the bar, and "continue" still says it
+    const working = phaseRef.current === "thinking" || phaseRef.current === "acting";
+    setReply((r) => (working || r === ackText.current ? "" : r));
     turnGen.current++;
     turnCtl.current?.abort();
     turnCtl.current = null;
+    // v12 (RC3): the cancelled turn's voice goes with it, a voice asked for and not yet heard too (what was being said stays kept for
+    // "continue": mouth.ts stopVoice keeps its bookmark). A wake reply plays on the earcon's own context and is not cut
+    stopSpeaking();
     abortMission.current = true;
     setStageBusy(null);
     setNarrating(false); setReading(null); setStreaming(false);
@@ -2676,11 +3062,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the trace (v5): handle() decides rules or planner before it first waits; anything else it decided by then is "other"
     traceOf.current = h.trace ?? null;
     const mine = ++spokenSeq.current;
-    const handled = handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source, lang: h.lang });
+    // (v12, RC2: no sentence comes back as a re-ask any more, `again` and its `original` are gone: every spoken line runs every lane)
+    const handled = handleRef.current(h.text, Number.isFinite(h.conf) ? h.conf : 0.95, undefined, { gate: h.gate, source: h.source, lang: h.lang });
     traceDecided("other");
     // its handling over, nothing said later (an interjection, a tap) is this turn's answer (traceAnswerDone keeps a newer turn's claim);
-    // a question cancelled by side talk and asked again carries the same trace, so only the latest spoken sentence's ending counts
-    void handled.finally(() => { if (mine === spokenSeq.current && h.trace != null) traceAnswerDone(h.trace); if (conductor.current?.generation === h.gen) conductor.current.answered(); });
+    // only the latest spoken sentence's ending counts. v12 (RC10): the turn machine is let go by this sentence's own number, not by the
+    // machine's generation (a backchannel over the acknowledgement moved it on, and a finished turn was left "thinking")
+    void handled.finally(() => { if (mine === spokenSeq.current && h.trace != null) traceAnswerDone(h.trace); conductor.current?.answered(h.id); });
   };
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;
@@ -2716,7 +3104,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (SPEC) { jvMark("ignored"); (window as unknown as { __jvIgnored?: string[] }).__jvIgnored = [...((window as unknown as { __jvIgnored?: string[] }).__jvIgnored ?? []), t].slice(-10); }
       },
       onState: (s) => {
-        setTurnState(s); hud.set({ turn: s });
+        setTurnState(s); hud.set({ turn: s, ...(s !== "off" ? { wakeOpening: false } : {}) });
         // back to listening with no request taken: what the captions caught is not left on the screen
         if (s === "listening" && captionRibbon.current) { captionRibbon.current = false; hud.set({ ribbon: "" }); setInterim(""); }
         // a barge-in over a mission that ended in a hold word ("stop", "wait": they never reach handle()) stops it, and says so;
@@ -2728,6 +3116,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onHearing: (a) => { setActivity(a); if (a !== "idle") lastHeardAt.current = Date.now(); },
       onBudget: (b) => hud.strip({ ambient: b.ambient, budgetLow: b.low }),
       onFail: (why) => {
+        hud.set({ wakeOpening: false });
         if (why === "gesture") { hud.set({ needsResume: true }); return; }
         // no microphone: Jarvis stays open with it off and says why, so a question can still be typed
         if (why === "blocked") setMicBlocked(true);
@@ -2742,7 +3131,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onNameOnly: (o) => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); if (!o?.replied) sayWake(l); engagedNow(); },
       // v6: "Hey Jarvis" on the device: the HUD answers in the next frame, the voice once the Collector pauses (conductor.ts wakeWord)
       onWakeWord: () => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); jvMark("wakeWord"); engagedNow(); },
-      onWakeReply: () => sayWake(listenLangRef.current),
+      // v12: the request followed the name after a short pause: the earcon alone, never "Yes?" over its start (conductor.ts wakeReplyTick)
+      onWakeReply: (o) => { if (o?.tone) { earcon("open"); warmFor(listenLangRef.current); } else sayWake(listenLangRef.current); },
+      // v12 (the critic's silent drops): every line let go is counted, words-free; an engaged line the gate could not make out gets a soft
+      // cue (side talk, a line said to someone else and a line over a question in flight stay silent)
+      // v13 (21 Nov, review 1-9): and never while a question is in flight or Jarvis talks (`busy`, or the page still thinking): a cough read
+      // as an unclear word there showed "I didn't catch that", and the Collector repeated a question that was still being answered
+      onDropped: (d) => { noteDropped(d); if (d.why === "unclear" && d.engaged && !d.busy && phaseRef.current !== "thinking" && phaseRef.current !== "acting") unclearCue(d.lang, d.called); },
       rules: (t) => {
         const w = worldRef.current;
         const q = quickScreen(t, w);
@@ -2754,8 +3149,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // transcribed in time is said calmly to be missed
       vocab: () => vocabOf(stageRef.current),
       // (v10: a name asked back, "Cyclone Akvan?", waits for its yes too)
-      wantsYes: () => !!pendingBRef.current || !!confirmRef.current,
-      offerPending: () => !!offerRef.current,
+      // (v14, review turns 2: and the district tour's "Shall I go on?", so a yes said over its voice is its answer, not a backchannel)
+      wantsYes: () => !!pendingBRef.current || !!confirmRef.current || !!mapSnap10(hostRef.current.c.mapAsk).tourCheck,
+      // (v12, RC11: only while the offer is fresh, 15 s after the answer that made it)
+      offerPending: () => offerLive(),
       // v10: the line this page holds for its rest (the wake path's same-breath rest goes straight to handle()): the conductor gates the rest with it
       heldCut: () => cutRef.current,
       onMissed: () => notHeardRef.current(),
@@ -2786,6 +3183,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             }
           }
         }
+        // v12 (RC11): a next step on offer counts its 15 s from the end of the voice that offered it
+        if (e === "end") voiceEndAt.current = Date.now();
         engagedNow();
       },
       mark: (name, t) => {
@@ -2807,9 +3206,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
 
   /**
-   * Mode on warms the voice for the language and the planner's prompt cache (v4), once: fire and forget, an error or an older
-   * server with no /warm changes nothing. Not again within a minute (a mute and unmute is not a new session). The dev test
-   * console has its own agent, so the real planner is not warmed from it.
+   * Mode on warms the voice for the language (v4), once: fire and forget. Not again within a minute (a mute and unmute is not a new
+   * session). v12 (21 Nov, first-question-latency): the planner's prompt cache is no longer warmed from here. The browser's POST to
+   * /api/jarvis/warm at the opening moment timed out behind the opening's burst of work every time it was logged (7 of 7, 13 to 49 s); the
+   * server's keep-warm (lib/thunai/keepwarm.ts) warms it between its other steps, and the world route marks Jarvis as in use for it.
    */
   const warmedAt = useRef(0);
   const warmUp = (lang: Lang) => {
@@ -2818,8 +3218,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     try { warmVoice(lang); } catch { /* no voice to warm */ }
     // v6: the wake replies are the page's own files, fetched and decoded once (mouth.ts loadWakeReplies): never a speech request
     void loadWakeReplies();
-    const agent = hostRef.current.agentUrl;
-    if (!agent || agent === "/api/collector/thunai/agent") fetch("/api/jarvis/warm", { method: "POST" }).catch(() => undefined);
   };
 
   /** Turn Jarvis mode on, off, or mute it. Off and muted stop the microphone's tracks: nothing listens. */
@@ -2934,18 +3332,20 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     let stop: (() => void) | null = null, allowed = false, dead = false;
     // v6: the on-device wake word listens beside the browser's recogniser ("Hey Jarvis"; NEXT_PUBLIC_JARVIS_KWS=all, the default)
     let local: WakeEars | null = null;
-    const woke = (rest: string) => {
+    const woke = (rest: string, later = false) => {
       if (dead) return;
       stop?.(); stop = null;
       // the microphone stays open and is handed to Jarvis's ears (ears.ts parkWake): what is said right after the name is heard
-      if (local) parkWake(local);
+      // (v11: the status says "Go ahead" while the parked microphone is handed over: hudstore.ts statusOf)
+      if (local && parkWake(local)) hud.set({ wakeOpening: true });
       local = null;
       dead = true;
       setModeRef.current("on", "wake");
       engagedNow();
       conductor.current?.called();
       // the spoken reply only for the name alone; with a question in the same breath the answer is the reply
-      if (!rest) sayWake(listenLangRef.current); else earcon("open");
+      // (v14, review scenarios 2: `later`, the device's wake with no recogniser running: the reply waits for the quiet on Jarvis's own ears)
+      if (!rest) { if (!later || !conductor.current?.replyWhenQuiet()) sayWake(listenLangRef.current); } else earcon("open");
       // the question said in the same breath ("Hi Jarvis, show the severe cases")
       // (said, not typed: the browser's own speech service heard it, so a cut-off rest waits as any spoken line does: v10 review 2, round 2)
       if (rest) { via.current = "voice"; setTimeout(() => void handleRef.current(rest, 0.95, undefined, { source: "captions" }), 60); }
@@ -2953,11 +3353,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v6 (the independent check, 17 Nov): the name heard on the device. A pause after it opens Jarvis with the reply at once; a sentence
     // said straight on ("Hey Jarvis, show the severe cases") is left to the browser's recogniser, which brings its words whole (rest, as in
     // v5), so Jarvis does not open over it and lose them; with no recogniser running, or none by the limit, it opens with the reply
+    // (v14: with no recogniser running it opens at once and the reply waits for the quiet, wakeWait "listen")
     const named = (w: WakeEars) => {
       const t0 = performance.now();
       const tick = () => {
         if (dead) return;
-        if (wakeWait({ sinceKws: performance.now() - t0, quietMs: w.quietMs, recogniser: !!stop, quietNeeded: wakeQuietMs() }) === "open") { woke(""); return; }
+        const next = wakeWait({ sinceKws: performance.now() - t0, quietMs: w.quietMs, recogniser: !!stop, quietNeeded: wakeQuietMs() });
+        if (next !== "wait") { woke("", next === "listen"); return; }
         setTimeout(tick, 30);
       };
       tick();
@@ -3325,7 +3727,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       ))}
 
       {mode !== "off" && (
-        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
+        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage && !stageInPlace} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
           onStop={interrupt} onMute={() => setMode(mode === "muted" ? "on" : "muted")} onClose={() => setMode("off")}>{waiting}</Hud>
       )}
 
@@ -3368,7 +3770,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </aside>
       )}
 
-      {on && stage && (
+      {/* v13 (finding 1 6): a city screen stays in place on the map, its answer in the HUD's corner card, until its Details tap */}
+      {on && stage && !stageInPlace && (
         <Stage doc={stage} lang={listenLang} theme={host.theme ?? "light"} busy={stageBusy} reading={reading} narrating={narrating} views={stageViews} pins={pins} geo={geo ?? host.c.geo}
           tray={tray.map((d) => ({ incidentId: d.incidentId, title: d.title, to: d.to, sandbox: d.sandbox }))} brain={stageBrain} filtered={stageFilter} saveAsk={pendingB ? saveAsk : null}
           caption={{ heard: interim || heard, reply: phase === "listening" ? "" : reply, alt: phase === "listening" ? "" : alt, interim: !!interim, streaming,

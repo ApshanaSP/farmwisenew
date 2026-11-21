@@ -30,7 +30,17 @@ export interface GapDeps {
   feeds?: () => Promise<GapHit[]>;
   web?: WebDeps;
   now?: () => number;
+  /**
+   * v12 (21 Nov): the turn's signal. A turn the Collector has cancelled starts no look-up (the 06:42 flooded-roads turn, cancelled at about
+   * 06:42:13, still fetched 7 outlets' robots and feeds from 06:42:13.4: the report, stale-and-double RC7) and findGap ends with an AbortError.
+   * The feed reads already out are stopped with it too: web/related.ts readFeed no longer keeps an "aborted" read (it kept every failed read
+   * 60 s, which would have left the next question with no feed to read), so the next question reads them afresh.
+   */
+  signal?: AbortSignal;
 }
+
+/** v12: the turn was cancelled: stop here, as an abort (the aide passes it on; nothing is said for it) */
+const stopIf = (s?: AbortSignal) => { if (s?.aborted) throw new DOMException("the turn was cancelled", "AbortError"); };
 
 const STOP = new Set(["the", "a", "an", "is", "are", "was", "were", "be", "to", "of", "in", "on", "at", "for", "and", "or", "about", "what", "who", "when", "where", "why", "how", "will",
   "would", "should", "could", "can", "do", "does", "did", "any", "there", "this", "that", "these", "those", "today", "tomorrow", "yesterday", "visit", "visiting", "know", "tell", "me",
@@ -131,14 +141,19 @@ export async function findGap(gap: string, question: string, d: GapDeps = {}): P
   const words = gapWords(gap, question, d.world);
   const phrase = gapPhrase(gap, question);
   if (!words.length) return { status: "no-words", words, hits: [], ms: 0, phrase };
+  stopIf(d.signal);
   const now = (d.now ?? Date.now)();
   // (an undated feed item is not known to be recent: only the dashboard's own undated reports count)
   const fresh = (h: GapHit) => (h.at == null ? h.from === "dashboard" : now - h.at < 4 * 86_400_000);
   const pick = (hs: GapHit[]) => hs.filter((h) => fresh(h) && !injectionLike(h.title) && matches(h.title, words, question)).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 3);
   const own = d.dashboardNews ? pick(await d.dashboardNews(words).catch(() => [])) : [];
   if (own.length) return { status: "ok", words, hits: own, ms: Date.now() - t0, phrase };
+  // v12: no outlet is asked for a cancelled turn
+  stopIf(d.signal);
   let read = true;
-  const web = pick(await (d.feeds ?? defaultFeeds(d.web))().catch(() => { read = false; return [] as GapHit[]; }));
+  // (v12: the feed reads go with the turn's signal, so a cancel stops the ones already out)
+  const web = pick(await (d.feeds ?? defaultFeeds(d.signal ? { ...d.web, signal: d.signal } : d.web))().catch(() => { read = false; return [] as GapHit[]; }));
+  stopIf(d.signal);
   return { status: web.length ? "ok" : read ? "nothing" : "unavailable", words, hits: web, ms: Date.now() - t0, phrase };
 }
 

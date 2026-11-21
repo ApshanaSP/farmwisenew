@@ -74,7 +74,10 @@ export async function handleAgent(b: AgentBodyT, world: World, rawHands: Hands, 
     }
     if (r.kind === "do" && r.stage) return { ...r, note: "quick" };
   }
-  return served(await runThunaiAgent({ text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage: (b.stage ?? null) as StageContext | null }, {
+  // (v11: THE DISTRICT NOW goes to the console's round path only, where its figures are {n:id} placeholders filled by code: this older path
+  // takes the model's own digits, and against a few hundred snapshot figures a wrong one would usually pass: the review, 20 Nov)
+  const snapIn = null;
+  return served(await runThunaiAgent({ text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage: (b.stage ?? null) as StageContext | null, snap: snapIn }, {
     world, hands,
     llm: async (system, prompt, round, timeoutMs) => {
       // Jarvis must not wait on one slow free tier: when the main provider has not answered in 3.5 s, a second provider

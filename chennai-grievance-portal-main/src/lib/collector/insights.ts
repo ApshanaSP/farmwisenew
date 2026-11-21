@@ -16,6 +16,7 @@ import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
 import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metrics";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { dataKey, keptRead, type Kept } from "@/lib/collector/datakey";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -119,23 +120,26 @@ const CAT_NOUN: Record<string, [string, string]> = {
 };
 
 /**
- * Insights kept for INSIGHTS_KEEP_MS per scope: the 17 queries took about 3.5 s on every view (15 Nov 2026), so the Overview, the
- * Briefing, Trends and Jarvis each paid it again for the same answer. The key holds the console's "now" (asOf, itself kept 30 s), and a
- * decision or an officer step empties the cache at once (syncEpoch), so this is never staler than asOf already is. A caller gets
- * its own copy: one that edits the result cannot change what the next one reads.
+ * Insights kept per scope: the 17 queries took about 3.5 s on every view (15 Nov 2026), so the Overview, the Briefing, Trends and Jarvis
+ * each paid it again for the same answer. A caller gets its own copy: one that edits the result cannot change what the next one reads.
+ *
+ * v12 (21 Nov): kept by the data's version and epoch and a one-minute bucket (datakey.ts keptRead), no longer by the console's "now"
+ * (asOf), which moved every 30 s, so a copy never outlived a pause in the conversation and Jarvis's warm-up never helped (the report,
+ * first-question-latency RC2). While a minute's copy is worked out, the last minute or two's settled copy of the same data answers at
+ * once. A decision, an officer step, a case filed or a new build moves the epoch (epoch.ts, store.ts) and empties the cache at once
+ * (syncEpoch). The figures keep the time they were worked out for (`now` in the result), so a screen shows its own as-of.
  */
-const INSIGHTS_KEEP_MS = 30_000;
-const insightsCache = new Map<string, { at: number; p: Promise<Awaited<ReturnType<typeof insightsFresh>>> }>();
-export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {
+declare global {
+  // eslint-disable-next-line no-var
+  var __diqInsights: Map<string, Kept<Awaited<ReturnType<typeof insightsFresh>>>> | undefined;
+}
+// on globalThis: Jarvis's keep-warm (started at server start) and the routes load their own copies of this module
+const insightsCache = (globalThis.__diqInsights ??= new Map());
+/** `o.fresh`: wait for this minute's copy, never an earlier one (the keep-warm, whose next step must not start while this is worked out) */
+export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null, o: { fresh?: boolean } = {}) {
   syncEpoch(insightsCache);
-  const key = JSON.stringify([period, zone, dept, focus.cat ?? null, focus.taluk ?? null, part, await asOf()]);
-  const hit = insightsCache.get(key);
-  if (hit && Date.now() - hit.at < INSIGHTS_KEEP_MS) return structuredClone(await hit.p);
-  const p = insightsFresh(period, zone, dept, focus, part);
-  insightsCache.set(key, { at: Date.now(), p });
-  p.catch(() => { if (insightsCache.get(key)?.p === p) insightsCache.delete(key); }); // a failure is not kept
-  if (insightsCache.size > 60) for (const [k, v] of insightsCache) if (Date.now() - v.at >= INSIGHTS_KEEP_MS || insightsCache.size > 60) insightsCache.delete(k);
-  return structuredClone(await p);
+  const base = JSON.stringify([period, zone, dept, focus.cat ?? null, focus.taluk ?? null, part, await dataKey()]);
+  return structuredClone(await keptRead(insightsCache, base, () => insightsFresh(period, zone, dept, focus, part), { max: 60, fresh: o.fresh }));
 }
 
 async function insightsFresh(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {

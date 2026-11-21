@@ -22,6 +22,7 @@ import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, c
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 import { groqFetch } from "@/lib/thunai/keepalive";
+import { deadline } from "@/lib/util/deadline";
 
 export type Role = "fast" | "reasoning";
 export type ProviderName = "gemini" | "bedrock" | "groq" | "openai" | "anthropic";
@@ -516,7 +517,10 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     const t0 = Date.now();
     // every call has a deadline: an overloaded model used to hold a question for minutes (a 193 s composer call)
     const limit = Math.max(1500, Math.min(callTimeout(c), (state.until ?? Infinity) - Date.now()));
-    const deadline = AbortSignal.timeout(limit);
+    // v12 (21 Nov): a strongly held timer with the caller's signal forwarded (util/deadline.ts), stopped in the finally below. The composite
+    // AbortSignal.any([c.abortSignal, AbortSignal.timeout(limit)]) lost its timer to the garbage collector on Node 22.14: a Groq planner
+    // call with a 6 s limit ran 44 s on 21 Nov
+    const dl = deadline(limit, c.abortSignal);
     const plainKey = `${key}:${c.name.replace(/\d+$/, "")}`;
     const plain = schemaInPrompt.has(plainKey);
     try {
@@ -526,7 +530,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         const r = await generateText({
           model: lm, system: `${c.system}\n\nOUTPUT: reply with ONE JSON object only (no prose, no code fence) that matches this JSON Schema exactly; every property present, null or [] where unused:\n${schemaText(c.schema)}`,
           prompt: c.prompt, temperature: c.temperature, maxOutputTokens: Math.min(c.maxOutputTokens ?? 1200, p.maxOut?.(id) ?? Infinity),
-          maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
+          maxRetries: 0, abortSignal: dl.signal,
           providerOptions: { ...opts, google: { ...(opts.google ?? {}), structuredOutputs: false, responseMimeType: "application/json" } } as never
         });
         const parsed = (c.lenient ?? c.schema).safeParse(jsonIn(r.text));
@@ -548,7 +552,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       }
       const r = await generateText({
         model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: Math.min(c.maxOutputTokens ?? 1200, p.maxOut?.(id) ?? Infinity),
-        maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
+        maxRetries: 0, abortSignal: dl.signal,
         output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
       // Groq's prompt cache (gpt-oss): cached input tokens do not count toward its limits; logged per call (v5 A2 b)
@@ -568,7 +572,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       state.lastError = e;
       // too slow: this model rests (longer each time in a row) and the next one answers
       const errHeaders = APICallError.isInstance(e) ? rateHeaders(e.responseHeaders) : undefined;
-      if (deadline.aborted) {
+      if (dl.timedOut) {
         emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "timeout", ms: Date.now() - t0, lane: c.lane });
         console.warn(`[assistant] ${c.name} ${p.name}/${id} took over ${(limit / 1000).toFixed(1)} s; next model`);
         cooling.set(key, Date.now() + restFor(key));
@@ -649,6 +653,9 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       // (with a pool, the next model is a better bet than the same one again)
       if (!status && attempt === 0 && !p.pool) continue;
       return { longBusy: false };
+    } finally {
+      // v12: this attempt's timer and its listener on the caller's signal end with the attempt (a retry gets its own)
+      dl.done();
     }
   }
   return { longBusy: false };

@@ -126,7 +126,9 @@ function Core({ v, anchor, glow }: { v: VisualState; anchor: RefObject<HTMLSpanE
 /** The latest answer, in one small card in the corner: the question, the words, the key figures, the screen to open again. */
 function AnswerCorner({ asked, answer, p, lang, pill, setPill }: { asked: string; answer: string; p: HudPanel | null; lang: "en" | "ta"; pill: boolean; setPill: (v: boolean) => void }) {
   const ta = lang === "ta";
-  const open = () => { if (p?.slots) window.dispatchEvent(new CustomEvent("jarvis:open-pin", { detail: { recipe: p.recipe, slots: p.slots, title: p.title } })); };
+  // v13 (21 Nov review, finding 1 6): a city screen shows in place on the map, this card its answer; Details opens its Stage, that same screen
+  const city = p?.recipe === "city";
+  const open = () => { if (p?.slots) window.dispatchEvent(new CustomEvent("jarvis:open-pin", { detail: { id: p.id, recipe: p.recipe, slots: p.slots, title: p.title, ...(city ? { full: true } : {}) } })); };
   if (pill) {
     const label = p?.title || asked || answer;
     return (
@@ -155,7 +157,7 @@ function AnswerCorner({ asked, answer, p, lang, pill, setPill }: { asked: string
       )}
       {/* a source the Collector would recognise; the data's own table names (change_drivers) are not */}
       {p?.source && !/^[a-z0-9_]+$/.test(p.source) && <footer>{ta ? "ஆதாரம்" : "Source"}: {p.source}</footer>}
-      {p?.slots && <div className="hud-ans-acts"><button onClick={open}><I n="expand" />{ta ? "முழுத் திரையில் பார்" : "Open full screen"}</button></div>}
+      {p?.slots && <div className="hud-ans-acts"><button onClick={open}><I n="expand" />{city ? (ta ? "விவரங்கள்" : "Details") : (ta ? "முழுத் திரையில் பார்" : "Open full screen")}</button></div>}
     </article>
   );
 }

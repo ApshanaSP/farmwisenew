@@ -262,9 +262,9 @@ describe("the engaged lane after a cut answer lasts ENGAGED_MS from the cut, not
     await flush();
     return { ...b, clock, starts };
   }
-  it("30 s after the cut, with the bookmark still kept, room speech goes on the capped ambient lane, unengaged", async () => {
+  it("well past ENGAGED_MS after the cut (v11: 40 s), with the bookmark still kept, room speech goes on the capped ambient lane, unengaged", async () => {
     const { c, e, clock, starts } = await cutAnswer();
-    clock.t += 30_000;
+    clock.t += ENGAGED_MS + 10_000;
     expect(c.inWindow()).toBe(false);
     say(e, 9000, 900);
     expect(posts.length).toBe(2);

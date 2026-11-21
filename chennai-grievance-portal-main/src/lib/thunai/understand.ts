@@ -23,6 +23,7 @@ import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normal
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbiddenOrder, NEVER_REPLY } from "./privacy";
 import { intentMarker, statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
+import { cityAsk } from "@/lib/city/intent";
 import { needsDates, readPeriod } from "@/lib/period/read";
 import { heldPeriod, windowIn } from "@/lib/windowspan";
 
@@ -59,6 +60,8 @@ function findAll(tokens: string[], phrase: string): Hit[] {
 }
 
 interface Mention<T> { value: T; start: number; end: number; score: number }
+/** v12 (21 Nov): a category's broad words, which lose to any more specific one (quick.ts WEAK_CAT) */
+const WEAK_CAT_WORDS = new Set(["road", "roads", "traffic", "water"]);
 
 /** All mentions of a dictionary in the tokens, longest phrase first; a span already taken is not reused. */
 function mentions<T>(tokens: string[], dict: [string, T][], taken: boolean[]): Mention<T>[] {
@@ -421,6 +424,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // these rules only move the console), so the Collector is asked which window to show, never moved to the nearest one (QA pass 7: "last month" was set as Monthly)
   const spanSaid = readPeriod(heard);
   const otherTime = !oneDayBack && (unheldWindowIn(s, heard.toLowerCase()) || spanSaid.kind === "unheld" || (needsDates(spanSaid) && !["day", "now", "compare"].includes(spanSaid.kind)));
+  // v12 (21 Nov): a sentence that asks to SEE the city on the ground (lib/city/intent.ts cityAsk: live traffic, the most congested road, the
+  // streets that flooded in the last rain) is no filter: "Okay, show me live traffic in map." was a traffic-complaints filter, "the most
+  // congested road" Roads & potholes and "Where are the flooded roads?" the same (06:33-06:42). It is handed on: the map lane (map10) has
+  // the ones that name the map, the server's fast lane opens the city screen for the rest, and a failed agent never falls back to a filter
+  if (cityAsk(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];
@@ -481,7 +489,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const overlaps = (a: Mention<string>, c: Mention<string>) => a.start < c.end && c.start < a.end;
   const len = (m: Mention<string>) => m.end - m.start;
   const deptMs = deptAll.filter((d) => !catAll.some((c) => overlaps(d, c) && len(c) > len(d)));
-  const catMs = refineByLabel(catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c))), tk, world);
+  const catMs0 = refineByLabel(catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c))), tk, world);
+  // v12 (21 Nov): a broad word (road, roads, traffic, water) never wins over a more specific category word in the same sentence, wherever it
+  // stands: "flooded road complaints" is the flooding, not Roads & potholes (quick.ts catIn reads it the same way)
+  const weakCat = (m: Mention<string>) => m.end - m.start === 1 && WEAK_CAT_WORDS.has(tk[m.start]);
+  const catMs = catMs0.some((m) => !weakCat(m)) ? catMs0.filter((m) => !weakCat(m)) : catMs0;
   const clash = deptMs.find((d) => catMs.some((c) => c.start === d.start && c.end === d.end));
   if (clash) {
     const c = catMs.find((x) => x.start === clash.start)!;

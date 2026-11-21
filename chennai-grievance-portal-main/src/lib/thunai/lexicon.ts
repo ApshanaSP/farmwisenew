@@ -72,7 +72,9 @@ export const DEPT_TA: Record<string, string> = {
 /** category code -> spoken names */
 export const CAT_ALIASES: Record<string, string[]> = {
   FLOOD_WATERLOGGING: [" வெள்ள ", " வெள்ளப் ", "flooding", "flood", "floods", "waterlogging", "water logging", "waterlogged", "water stagnation", "stagnation",
-    "inundation", "rain water", "மழைநீர் தேக்கம்", "நீர்த்தேக்கம்", "தண்ணீர் தேக்கம்", "வெள்ளம்", "mazhai thanni", "thanni thekkam", "vellam"],
+    "inundation", "rain water", "மழைநீர் தேக்கம்", "நீர்த்தேக்கம்", "தண்ணீர் தேக்கம்", "வெள்ளம்", "mazhai thanni", "thanni thekkam", "vellam",
+    // v12 (21 Nov): "flooded road complaints" is this category, never Roads & potholes by "road" (06:42 "Where are the flooded roads?")
+    "flooded", "flooded roads", "flooded road", "flooded streets", "flooded street", "water standing", "standing water", "water stood"],
   DRAINAGE_SEWAGE: ["drainage", "sewage", "sewer", "sewage overflow", "கழிவுநீர்", "சாக்கடை", "saakkadai"],
   ROAD_DAMAGE: ["road", "roads", "pothole", "potholes", "road damage", "footpath", "சாலை", "பள்ளம்", "road damage complaints"],
   ROAD_ACCIDENT: ["accident", "accidents", "road accident", "road accidents", "விபத்து"],

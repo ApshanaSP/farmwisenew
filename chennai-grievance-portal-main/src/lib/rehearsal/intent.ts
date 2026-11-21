@@ -10,7 +10,14 @@ export interface RehearsalAsk {
   focus: "streets" | "help" | "schools" | "drains" | null;
   /** Rain's other tabs: "where does traffic jam when it rains", "areas that lose power in rain", "metro stations at risk in rain" */
   lens?: "traffic" | "power" | "metro";
+  /**
+   * v14 (21 Nov review of v13, scenarios 6): the lens was asked as a question ("where", "which", எங்க, a question mark): it wants the
+   * answer said, not only the tab opened ("மழை வந்தா கரண்ட் எங்க போகும்?" with Rain open got "The Power tab." and lost its answer card)
+   */
+  asks?: true;
 }
+/** v14 (scenarios 6): the words of a question, English, Tamil and Tanglish */
+const ASKS = /\?|\b(?:where|which|what|how|when|will|would|does|do|did|is|are|whats)\b|எங்க|எங்கே|எந்த|என்ன|எப்படி|எவ்வளவு|\b(?:enga|engae|endha|entha|enna|epdi|eppadi)\b/i;
 
 const MONTHS: Record<string, string> = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
 const WILL_FLOOD = /\b(will|would|could|going to|may|might)\b.{0,30}\b(flood|go under|waterlog)|\b(flood|waterlog)\w*\b.{0,25}\b(tomorrow|tonight|next rain|heavy rain|this rain|if it rains|monsoon)\b|\brain rehearsal\b|\brehears/i;
@@ -22,7 +29,8 @@ const REPLAY = /\breplay\b|\bmeendum\b|மீண்டும் காட்ட�
 /** a rain word: "flood" alone is not one (flooding near a station is an ordinary map question) */
 const RAIN_WORD = /\b(rain|rains|raining|rainy|monsoon|downpour|cyclone|heavy showers?)\b|மழை|\bmazhai\b/i;
 const TRAFFIC_WORD = /\b(traffic|jams?|jammed|congest\w*|snarl\w*|gridlock|subways?|underpass\w*|diversions?)\b|போக்குவரத்து|நெரிசல்|சுரங்கப்பாதை/i;
-const POWER_WORD = /\b(power|electricity|current|outages?|blackouts?|power ?cuts?|streetlights?|transformers?)\b|மின்|\bkarent\b/i;
+// v13 (21 Nov review, finding 1 4): "கரண்ட்", the speech-to-text's Tamil-script "current", is a power word too (the Tanglish one was)
+const POWER_WORD = /\b(power|electricity|current|outages?|blackouts?|power ?cuts?|streetlights?|transformers?)\b|மின்|கரண்ட்|\bkarent\b/i;
 const METRO_WORD = /\b(metro|trains?|stations?|mrts|suburban|railway|cmrl)\b|மெட்ரோ|ரயில்/i;
 /** "where do power cuts happen most often", "which areas lose power": power, rain or not */
 const POWER_OFTEN = /\b(power ?cuts?|outages?|lose power|loses power|without power|power goes)\b.{0,30}\b(often|most|where|which|areas?|wards?)\b|\b(where|which)\b.{0,30}\b(power ?cuts?|lose power|outages?)\b|மின் ?தடை/i;
@@ -42,9 +50,11 @@ export function rehearsalIntent(text: string): RehearsalAsk | null {
   const t = text.trim();
   if (!t) return null;
   const rainy = RAIN_WORD.test(t);
-  if (rainy && TRAFFIC_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "traffic" };
-  if ((rainy && POWER_WORD.test(t)) || POWER_OFTEN.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "power" };
-  if (rainy && METRO_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "metro" };
+  // (v14, scenarios 6: a lens asked as a question says so, asks)
+  const asks = ASKS.test(t) ? { asks: true as const } : {};
+  if (rainy && TRAFFIC_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "traffic", ...asks };
+  if ((rainy && POWER_WORD.test(t)) || POWER_OFTEN.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "power", ...asks };
+  if (rainy && METRO_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "metro", ...asks };
   if (REPLAY.test(t) && (/\brain\b|மழை/i.test(t) || dayIn(t))) {
     const d = dayIn(t);
     return { replay: d ? `rain-${d}` : null, manual: false, stop: "warn", focus: null };

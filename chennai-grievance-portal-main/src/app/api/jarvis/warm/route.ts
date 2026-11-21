@@ -14,6 +14,7 @@ import type { z } from "zod";
 import { claudeConfigured, claudeWarm } from "@/lib/ai/claude";
 import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { keepWarmOn, markActive, promptWarmedAt } from "@/lib/thunai/keepwarm";
 import * as round from "@/lib/thunai/round";
 import type { World } from "@/lib/thunai/types";
 import { serverWorld } from "@/lib/thunai/world";
@@ -36,7 +37,15 @@ export async function POST() {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   if (!checkRateLimit(`jarvis-warm:${s.email}`, 6, 60).allowed) return NextResponse.json({ warmed: false, why: "rate-limited" }, { status: 429 });
+  // v12 (21 Nov): Jarvis's mode is on, so it counts as in use for the keep-warm
+  markActive("jarvis");
   if (!claudeConfigured()) return NextResponse.json({ warmed: false, why: "no-key" });
+  // v12: with the keep-warm running, the prompt cache is its job (after its other steps, never at the opening moment, when the 7 warms
+  // logged so far all timed out behind the opening's burst of work: the report, first-question-latency RC6). This call then warms nothing.
+  if (keepWarmOn()) {
+    const at = promptWarmedAt();
+    return NextResponse.json({ warmed: false, why: "keep-warm", ...(at ? { lastS: Math.round((Date.now() - at) / 1000) } : {}) });
+  }
   const who = String(s.userId), now = Date.now(), at = last().get(who) ?? 0;
   if (now - at < WARM_EVERY_MS) return NextResponse.json({ warmed: false, why: "recent", nextInS: Math.ceil((at + WARM_EVERY_MS - now) / 1000) });
   const p = round as unknown as Planner;

@@ -39,11 +39,55 @@ interface Base {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __rehearsalBase: { key: string; p: Promise<Base> } | undefined;
+  var __rehearsalBase: { key: string; p: Promise<Base>; /** v14: when it settled (0 while it is built) */ at?: number } | undefined;
   // eslint-disable-next-line no-var
-  var __rehearsalMoments: Map<string, { at: number; mem: Memory; reach: ReachResult }> | undefined;
+  var __rehearsalMoments: Map<string, Moment> | undefined;
   // eslint-disable-next-line no-var
   var __rehearsalPast: { key: string; v: { asOf: string; rains: PastRain[] } } | undefined;
+  // eslint-disable-next-line no-var
+  var __rehearsalDefer: (() => boolean) | undefined;
+  // eslint-disable-next-line no-var
+  var __rehearsalDue: boolean | undefined;
+  // eslint-disable-next-line no-var
+  var __rehearsalForce: number | undefined;
+}
+
+/** memory and reach for one moment; `asOf` and `live` say which (v14: so the last hour's can stand in for this hour's) */
+interface Moment { at: number; mem: Memory; reach: ReachResult; asOf: string; tHelp: number; live: boolean }
+
+/**
+ * v14 (21 Nov, review finding 0-6 / scenarios 3): the hour's rebuild (a new build's base, then this hour's flood memory and reach) is
+ * one synchronous computation of 7-17 s on this PC, and it held the server's one thread for whoever asked first: the first city question
+ * of an hour took 7.8 s, and every other request waited behind it. While someone is on the console (Jarvis's keep-warm says so through
+ * deferRainRebuild), the last settled base and the last hour's memory answer instead, at most STALE_MS old, and the rebuild is marked
+ * due; the keep-warm does it at a quiet moment (refreshRain). With no one on the console, or nothing to stand in, it is built at once,
+ * as before. A replay (a past rain) is never stood in for: its moment is fixed.
+ */
+export const STALE_MS = 3 * 3_600_000;
+export function deferRainRebuild(fn: (() => boolean) | null): void { global.__rehearsalDefer = fn ?? undefined; }
+/** Is a rebuild waiting for a quiet moment? */
+export const rainRebuildDue = (): boolean => !!global.__rehearsalDue;
+const deferNow = (): boolean => !(global.__rehearsalForce ?? 0) && !!global.__rehearsalDefer?.();
+/**
+ * The rebuild marked due, now (the keep-warm calls it at a quiet moment): the new base and this hour's memory, then the past rains.
+ * False when nothing was due.
+ */
+export async function refreshRain(): Promise<boolean> {
+  if (!global.__rehearsalDue) return false;
+  global.__rehearsalDue = false;
+  global.__rehearsalForce = (global.__rehearsalForce ?? 0) + 1;
+  try {
+    // the heavy parts only (no live rain fetch): the base, this hour's memory and reach, the past rains' record, the past rains
+    const b = await base();
+    const memAt = (await consoleNow()).slice(0, 13) + ":00:00";
+    moment(b, memAt, T_HELP_MIN, true);
+    b.backtest ??= Promise.resolve().then(() => backtestAll(b.g, b.ix, b.src.incidents, b.events, {}, 200));
+    await b.backtest;
+    await pastRains();
+    return true;
+  } finally {
+    global.__rehearsalForce = Math.max(0, (global.__rehearsalForce ?? 1) - 1);
+  }
 }
 
 /** The service cannot answer now (503). */
@@ -61,6 +105,8 @@ async function base(): Promise<Base> {
   const key = `${src.key}|${g.hash}|${g.elev.length}|${w.dataAsOf}|${ENGINE_VERSION}`;
   const cur = global.__rehearsalBase;
   if (cur && cur.key === key) return cur.p;
+  // v14: a newer build while someone is on the console: the settled base answers until the keep-warm's quiet moment (refreshRain)
+  if (cur?.at && Date.now() - cur.at < STALE_MS && deferNow()) { global.__rehearsalDue = true; return cur.p; }
   const p = (async (): Promise<Base> => {
     const ix = indexGraph(g);
     const events = rainEvents(src.rainDays);
@@ -91,21 +137,30 @@ async function base(): Promise<Base> {
     };
     return { key, g, ix, src, w, events, facilities, nw: nodeWards(g), wardPoint, backtest: null, placeOf };
   })();
-  global.__rehearsalBase = { key, p };
+  const entry: NonNullable<typeof global.__rehearsalBase> = { key, p };
+  global.__rehearsalBase = entry;
   global.__rehearsalMoments = new Map();
-  p.catch(() => { if (global.__rehearsalBase?.p === p) global.__rehearsalBase = undefined; });
+  p.then(() => { entry.at = Date.now(); }, () => { if (global.__rehearsalBase?.p === p) global.__rehearsalBase = undefined; });
   return p;
 }
 
-/** memory and reach for one moment, cached (the six most recent moments) */
-function moment(b: Base, asOf: string, tHelp: number): { at: number; mem: Memory; reach: ReachResult } {
+/**
+ * memory and reach for one moment, cached (the six most recent moments). `live`: the console's own hour (not a replay), which the last
+ * hour's may stand in for while someone is on the console (v14, STALE_MS).
+ */
+function moment(b: Base, asOf: string, tHelp: number, live = false): Moment {
   const k = `${asOf}|${tHelp}`;
-  const cache = (global.__rehearsalMoments ??= new Map<string, { at: number; mem: Memory; reach: ReachResult }>());
+  const cache = (global.__rehearsalMoments ??= new Map<string, Moment>());
   const hit = cache.get(k);
   if (hit) return hit;
+  if (live && deferNow()) {
+    let prev: Moment | null = null;
+    for (const m of cache.values()) if (m.live && m.tHelp === tHelp && m.asOf < asOf && Date.now() - m.at < STALE_MS && (!prev || m.asOf > prev.asOf)) prev = m;
+    if (prev) { global.__rehearsalDue = true; return prev; }
+  }
   const mem = buildMemory(b.g, b.ix, b.src.incidents, b.events, { asOf });
   const reach = computeReach(b.g, b.ix, b.facilities, rehearsalFactor(mem), tHelp);
-  const v = { at: Date.now(), mem, reach };
+  const v: Moment = { at: Date.now(), mem, reach, asOf, tHelp, live };
   cache.set(k, v);
   if (cache.size > 6) cache.delete([...cache.entries()].sort((a, c) => a[1].at - c[1].at)[0][0]);
   return v;
@@ -148,7 +203,7 @@ export async function rehearsalState(o: StateOpts = {}): Promise<RehearsalState>
   // the memory and the reach of help change with the data, which is collected hourly: one computation per hour
   // (the countdown, the trigger and the tasks still use the minute)
   const memAt = ev ? asOf : asOf.slice(0, 13) + ":00:00";
-  const { mem, reach } = moment(b, memAt, tHelp);
+  const { mem, reach } = moment(b, memAt, tHelp, live);
 
   // ---- choke points, works, dry schools, water
   const chokes = findChokes(g, ix, mem, b.src.incidents, live);
@@ -301,9 +356,11 @@ export async function pastRains(): Promise<{ asOf: string; rains: PastRain[] }> 
   const b = await base();
   const now = await consoleNow();
   const memAt = now.slice(0, 13) + ":00:00";
-  const k = `${b.key}|${memAt}`;
+  // v14: kept by the memory actually used (the last hour's may stand in), so the rebuilt one is read once it is in
+  const mom = moment(b, memAt, T_HELP_MIN, true);
+  const { mem } = mom;
+  const k = `${b.key}|${mom.asOf}|${mom.at}`;
   if (global.__rehearsalPast?.key === k) return global.__rehearsalPast.v;
-  const { mem } = moment(b, memAt, T_HELP_MIN);
   const streetOf = new Map<number, string>();
   for (const s of mem.streets) for (const e of s.edges) streetOf.set(e, s.key);
   const r5 = (x: number) => Math.round(x * 1e5) / 1e5;
@@ -314,7 +371,7 @@ export async function pastRains(): Promise<{ asOf: string; rains: PastRain[] }> 
       return { id: r.id, lat: r5(r.lat), lon: r5(r.lon), title: r.title, place: r.place, first: r.first, ward: r.ward, open: r.open, street: hit ? streetOf.get(hit.e)! : null };
     })
   }));
-  const v = { asOf: memAt, rains };
+  const v = { asOf: mom.asOf, rains };
   global.__rehearsalPast = { key: k, v };
   return v;
 }
@@ -328,9 +385,11 @@ export async function impactInputs(): Promise<{ key: string; g: RoadGraph; ix: G
   const b = await base();
   const now = await consoleNow();
   const memAt = now.slice(0, 13) + ":00:00";
-  const { mem } = moment(b, memAt, T_HELP_MIN);
+  const mom = moment(b, memAt, T_HELP_MIN, true);
+  const { mem } = mom;
   const isMainSt = (st: Memory["streets"][number]) => st.edges.some((e) => b.g.cls[e] <= MAIN_CLASS_MAX);
-  return { key: `${b.key}|${memAt}`, g: b.g, ix: b.ix, events: b.events, w: b.w, incidents: b.src.incidents, now,
+  // v14: keyed by the memory used (the last hour's may stand in), so Rain's tabs are built again once the rebuilt one is in
+  return { key: `${b.key}|${mom.asOf}|${mom.at}`, g: b.g, ix: b.ix, events: b.events, w: b.w, incidents: b.src.incidents, now,
     streets: mem.streets.map((st) => ({ ...st, main: isMainSt(st), label: streetLabel(st) })) };
 }
 
@@ -353,7 +412,7 @@ export async function facilityReach(id: string, o: StateOpts): Promise<{ kept: L
   const now = await consoleNow();
   const asOf = ev ? replayAsOf(ev) : now.slice(0, 13) + ":00:00";
   const tHelp = o.tHelp && [5, 10, 15].includes(o.tHelp) ? o.tHelp : T_HELP_MIN;
-  const { mem, reach } = moment(b, asOf, tHelp);
+  const { mem, reach } = moment(b, asOf, tHelp, !ev);
   const r = reach.facilities.find((x) => x.id === id);
   if (!r) return null;
   const { facilityReachEdges } = await import("./reach");
@@ -373,7 +432,7 @@ export async function routeBetween(a: { lat: number; lon: number }, z: { lat: nu
     const ev = replayOf(b, o.replay);
     const now = await consoleNow();
     const asOf = ev ? replayAsOf(ev) : now.slice(0, 13) + ":00:00";
-    factor = rehearsalFactor(moment(b, asOf, T_HELP_MIN).mem);
+    factor = rehearsalFactor(moment(b, asOf, T_HELP_MIN, !ev).mem);
   }
   const r = route(b.g, u, v, { factor });
   if (!r) return { reachable: false as const };

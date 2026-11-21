@@ -134,6 +134,8 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
     const s = live.current;
     const tab = a.tab === "flooding" ? "flood" : a.tab === "traffic" || a.tab === "power" || a.tab === "metro" ? a.tab : null;
     if (tab) setLens(tab);
+    // v14 (21 Nov review 13, scenarios 8): back to every rain ("all"), so Jarvis's "streets that flood" moves the open view in place, not remounting it
+    if (a.rain === "all") { setPick(null); setAllReports(false); setView({ kind: "all", zone: null }); return { ok: true, state: { lens: tab ?? s.lens, rain: null } }; }
     if (typeof a.rain === "string") {
       const id = a.rain === "latest" ? s.rains.find((r) => r.reports.length > 0)?.id : a.rain;
       if (!id || !s.rains.some((r) => r.id === id)) return { ok: false, why: "no-such-rain", state: { rains: s.rains.slice(0, 6).map((r) => r.start.slice(0, 10)) } };

@@ -7,6 +7,7 @@
  */
 import { generateJson } from "@/lib/ai/gateway";
 import { extractNumbers } from "@/lib/assistant/verify";
+import { deadline } from "@/lib/util/deadline";
 import { z } from "zod";
 import { checkPlan, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
@@ -70,6 +71,9 @@ const CONCEPTS = [
   "worst, most urgent -> severity Severe (or Severe and High); pending too long, overdue -> overdue true"
 ];
 
+/** v12 (21 Nov): how long aiPlan may take, both tries together (a spoken map question cannot wait the SDK's 25 s), ms */
+export const PLAN_MS = 8000;
+
 /** A plan from the AI for `text` (or `prev` edited by `text`), checked; null when it cannot be made valid. */
 export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: string[]; depts: string[]; places: { ref: string; kind: string; name: string }[]; user: string; lang: Lang; signal?: AbortSignal;
   /** the rules' plan for the parts they could read, and the words they could not */
@@ -83,14 +87,26 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic).`
     : `QUESTION: ${text}\n${places}\n${zones}${hint}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: system(ctx.cats, ctx.depts), prompt, temperature: 0, maxOutputTokens: 900, user: ctx.user, abortSignal: ctx.signal, chat: true });
-    // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
-    if (r.object.understood === false) return { problems: ["not a map question"] };
-    const c = checkPlan(fromWire(r.object));
-    if (c.ok) return { plan: c.plan };
-    problems = c.problems;
-    prompt = `${prompt}\nYOUR LAST PLAN WAS REFUSED: ${problems.join("; ")}. Fix it.`;
+  // v12 (21 Nov): the whole plan (both tries) has PLAN_MS, on a strongly held timer with the request's signal forwarded (util/deadline.ts;
+  // AbortSignal.any with AbortSignal.timeout loses its timer on Node 22.14). A console step on Claude waited the SDK's 25 s: Jarvis's
+  // "Okay, now tell me, show me in the map." held the map lane 25.2 s at 06:38:33 and then answered without AI anyway
+  const dl = deadline(PLAN_MS, ctx.signal);
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: system(ctx.cats, ctx.depts), prompt, temperature: 0, maxOutputTokens: 900, user: ctx.user, abortSignal: dl.signal, chat: true });
+      // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
+      if (r.object.understood === false) return { problems: ["not a map question"] };
+      const c = checkPlan(fromWire(r.object));
+      if (c.ok) return { plan: c.plan };
+      problems = c.problems;
+      prompt = `${prompt}\nYOUR LAST PLAN WAS REFUSED: ${problems.join("; ")}. Fix it.`;
+    }
+  } catch (e) {
+    // the deadline, not the Collector: said as such, so the caller's "without AI" answer stands and the log says why
+    if (dl.timedOut && !ctx.signal?.aborted) throw new Error(`no plan in ${PLAN_MS / 1000} s`);
+    throw e;
+  } finally {
+    dl.done();
   }
   return { problems };
 }

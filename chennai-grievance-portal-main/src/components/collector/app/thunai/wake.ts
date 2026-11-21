@@ -5,7 +5,10 @@
  * is handed over as it is, so the Collector does not have to wait for the beep. The browser ends a long listen by
  * itself now and then: it is started again at once while the wake word is on. Only one recogniser can listen at a
  * time, so Jarvis pauses this one while it listens for a command or speaks.
+ *
+ * v14 (21 Nov): the name alone wakes on the final result or after the wake's quiet (400 ms) with no newer words, never on the first interim.
  */
+import { wakeQuietMs } from "./kws";
 
 type Rec = {
   lang: string; interimResults: boolean; continuous: boolean; maxAlternatives: number;
@@ -90,6 +93,10 @@ export function startWake(o: WakeOpts): () => void {
   if (!R) { o.onFail?.("unsupported"); return () => undefined; }
   current?.();
   let stopped = false, rec: Rec | null = null, fails = 0, woke = false, waitT: ReturnType<typeof setTimeout> | null = null;
+  // v14 (21 Nov, review scenarios 2, the owner's "it replies while I am still saying Jarvis"): the name alone in an interim result waits for
+  // the same quiet as the device's wake (kws.ts wakeQuietMs, 400 ms) with no newer words, or for the final result; `aloneAt`, its result's index
+  let aloneT: ReturnType<typeof setTimeout> | null = null, aloneAt = -1;
+  const unAlone = () => { if (aloneT) { clearTimeout(aloneT); aloneT = null; } aloneAt = -1; };
   const go = () => {
     if (stopped) return;
     woke = false;
@@ -103,14 +110,24 @@ export function startWake(o: WakeOpts): () => void {
     r.maxAlternatives = 3;
     r.onresult = (e) => {
       if (woke) return;
+      // v14: a newer reading of the result that held the name alone no longer holds the name: it was not the name after all
+      const was = aloneT && e.resultIndex <= aloneAt ? e.results[aloneAt] : null;
+      if (was && !Array.from({ length: Math.min(was.length, 3) }, (_, k) => was[k].transcript).some((x) => wakeIn(x) != null)) unAlone();
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         for (let k = 0; k < Math.min(res.length, 3); k++) {
           const rest = wakeIn(res[k].transcript);
           if (rest == null) continue;
-          // the name alone: wake now. With words after it: wait for the sentence to end (the final result), so the
-          // whole command is handed over, but not longer than 1.6 s
-          if (!rest) { woke = true; fire(""); return; }
+          // the name alone: wake once the recogniser has heard its end (the final result), or after the wake's quiet with no newer words
+          // (v14: it woke on the first interim "hi Jarvis", so "Yes, Collector?" began while the name was still being said). With words after
+          // it: wait for the sentence to end (the final result), so the whole command is handed over, but not longer than 1.6 s
+          if (!rest) {
+            if (res.isFinal) { woke = true; fire(""); return; }
+            if (!aloneT) { aloneAt = i; aloneT = setTimeout(() => { aloneT = null; if (!woke && !stopped) { woke = true; fire(""); } }, wakeQuietMs()); }
+            return;
+          }
+          // words after the name: the name was not said alone
+          unAlone();
           if (res.isFinal) { woke = true; fire(rest); return; }
           if (waitT) clearTimeout(waitT);
           waitT = setTimeout(() => { if (!woke) { woke = true; fire(rest); } }, 1600);
@@ -125,6 +142,8 @@ export function startWake(o: WakeOpts): () => void {
     r.onend = () => {
       rec = null;
       if (stopped || woke) return;
+      // v14: the recogniser ended while the name alone waited for its quiet: the name had ended, so it wakes now (never lost to the restart)
+      if (aloneT) { woke = true; fire(""); return; }
       // a network hiccup: back off a little; otherwise straight back to listening
       setTimeout(go, fails > 3 ? 4000 : 150);
     };
@@ -132,12 +151,13 @@ export function startWake(o: WakeOpts): () => void {
   };
   const fire = (rest: string) => {
     if (waitT) { clearTimeout(waitT); waitT = null; }
+    unAlone();
     try { rec?.abort(); } catch { /* already ended */ }
     rec = null;
     o.onWake(rest);
   };
   go();
-  const stop = () => { stopped = true; if (waitT) clearTimeout(waitT); try { rec?.abort(); } catch { /* ended */ } rec = null; if (current === stop) current = null; };
+  const stop = () => { stopped = true; if (waitT) clearTimeout(waitT); unAlone(); try { rec?.abort(); } catch { /* ended */ } rec = null; if (current === stop) current = null; };
   current = stop;
   return stop;
 }

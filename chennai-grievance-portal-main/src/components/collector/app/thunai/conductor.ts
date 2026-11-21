@@ -40,17 +40,46 @@
  *    when woken or engaged (inWindow, the engaged lane: rule 3), heard fresh or after a barge-in (over the ducked voice its words
  *    decide the duck after its end, as before), 250 ms to TUNING.earlySttMaxMs (10 s) of speech so far, with Whisper reachable.
  *    The trace still opens at the last voiced sample; its "uploadSent" is the request the words came from.
+ *
+ * v12 (21 Nov, the 06:30-06:45 report, stale-and-double RC1, RC2, RC9, RC10 and the critic's corrections):
+ *  - Speech while a question is in flight cancels nothing (turn.ts `provisional`). Its line is dropped here when it is no request (a
+ *    backchannel, a filler, a thanks, a greeting; the gate already drops side talk, Jarvis's own voice and the name alone), and the
+ *    question goes on; a request is handed on and replaces it. A clip that begins as a continuation of the question in flight (a
+ *    conjunction, a preposition or an article, within CONTINUE_MS) is joined to it: one request said in two breaths is answered whole.
+ *  - The old re-ask is gone (backOn sent a cancelled question again as a new turn, out of context, minutes later on a cough): nothing
+ *    cancelled is ever asked again. A cut voice still goes on after a false interruption (continueAnswer), as before.
+ *  - answered(id) belongs to the sentence handed on, not to the machine's generation (a backchannel over the acknowledgement bumped the
+ *    generation, the answered was skipped, and Jarvis stayed "thinking" over a finished turn).
+ *  - A transcript for an older sentence has no side effects (no wake reply, no held cut, no "I didn't catch that"); only the name alone
+ *    still opens the call window. A /hear failure is said only for the sentence now being read.
+ *  - Every line let go goes to the page as a words-free event (onDropped: why, language, confidence, engaged) for its telemetry and cue.
+ *  - The wake reply waits for 400 ms of quiet after the name (was 90: "Yes?" played over the start of the request); when the request
+ *    follows after a shorter pause, only the earcon says the name was heard.
+ *
+ * v13 (21 Nov, the adversarial review of v12): an apology, a call for attention or a throat-clear alone ("Sorry.", "Excuse me.", "Huh?",
+ * "Ahem.") replaces nothing either (noRequest, onlyNoise); a fresh question after "and", "the" or "a" is never glued onto the one in flight
+ * (FRESH_AFTER); a line said as it cut an answer's voice that began under it brings that answer back when it is no request; a dropped line
+ * says whether a question was in flight (`busy`), so the page gives no "I didn't catch that" over it; and a request begun over the wake
+ * reply stops that reply.
+ *
+ * v14 (21 Nov, the adversarial review of v13): a lone "Okay." or "Sorry." never stops an answer's voice that plays or is on its way; a tail that
+ * points back at the question in flight ("and how many are there?") is joined to it again (freshTail); "Sorry?" asked as a question is
+ * asksAgain (the page repeats the last answer); and the closed listener's device wake can leave the reply to the quiet here (replyWhenQuiet).
  */
 import { addressed, ENGAGED_MS, isStatement, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
+import { isBackchannel, words } from "@/lib/thunai/backchannel";
+import { isGreeting } from "@/lib/thunai/greet";
+import { smallTalk } from "@/lib/thunai/v11/smalltalk";
 import { eouFor, tails, type EouWhy } from "@/lib/thunai/eou";
 import { confOf, joinHeard, type HearReply } from "@/lib/thunai/heard";
 import { turn, turnStart, type TurnEvent, type TurnModel, type TurnState } from "@/lib/thunai/turn";
 import { TUNING } from "@/lib/thunai/vad";
 import { Ears, type EarsError, type EchoMode } from "./ears";
-import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, setMouthHooks, speaking, stopVoice, unduckVoice, type VoicePath } from "./mouth";
+import { canContinue, continueAnswer, duckVoice, EARCON_GUARD_MS, nowSaying, setMouthHooks, speaking, stopVoice, stopWakeReply, unduckVoice, type VoicePath } from "./mouth";
 import { flag } from "@/lib/thunai/flags";
 import { stamp, stampServer, traces, traceStart, type ServerTiming, type TurnTrace } from "./trace";
 import { canWake, startWake } from "./wake";
+import { WAKE_QUIET_DEFAULT_MS, wakeQuietMs } from "./kws";
 import { understandV10 } from "@/lib/thunai/v10/flag10";
 import { cutOff, joinCut } from "@/lib/thunai/v10/browser10";
 
@@ -71,14 +100,86 @@ const earlyStt = () => flag("NEXT_PUBLIC_JARVIS_EARLY_STT", process.env.NEXT_PUB
 /** the browser's recogniser gives no usable confidence in continuous mode: its lines are marked unsure */
 const CAPTIONS_CONF = 0.5;
 /**
- * v6: after the on-device wake word fires, the spoken reply waits for this much quiet (ms); NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600,
- * default 90. Measured 17 Nov (eval/v6/latency/v6a-hey*-wake.json, v6a-wakecmd-q*): "Hey Jarvis" -> the reply p50 200 / p90 216 ms at
+ * v6: after the on-device wake word fires, the spoken reply waits for this much quiet (ms); NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS, 60 to 600.
+ * Measured 17 Nov (eval/v6/latency/v6a-hey*-wake.json, v6a-wakecmd-q*): "Hey Jarvis" -> the reply p50 200 / p90 216 ms at
  * 90, p50 263 / p90 285 at 150 (n 12 each); but "Hey Jarvis, show the severe cases" said in one breath got the reply in its comma pause
- * at BOTH settings (4/4 each; the command was still heard right and acted on, 8/8). Response time wins (the brief), so 90; a longer
- * wait trades the wake's speed for fewer talk-overs. Past WAKE_REPLY_GIVE_UP_MS of speech the request itself is the reply.
+ * at BOTH settings (4/4 each; the command was still heard right and acted on, 8/8). Past WAKE_REPLY_GIVE_UP_MS of speech the request
+ * itself is the reply.
+ * v12 (21 Nov, the critic of the 06:30 report: "if I say Jarvis, and within that it's replying"): default 400, was 90. The natural pause
+ * after "Jarvis," is longer than 90 ms, so "Yes?" played over the start of the request and the Collector then talked over Jarvis's voice.
+ * A request that follows the name after a shorter pause gets only the earcon (wakeReplyTick); the closed listener's wakeWait reads the same.
  */
-export const wakeQuietMs = (v: string | undefined = flag("NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS", process.env.NEXT_PUBLIC_JARVIS_WAKE_QUIET_MS)): number => { const n = Number(v); return v != null && v.trim() !== "" && Number.isFinite(n) && n >= 60 ? Math.min(600, n) : 90; };
+// (v14: WAKE_QUIET_DEFAULT_MS and wakeQuietMs live in kws.ts now, so the closed listener, wake.ts, reads the same quiet; re-exported here)
+export { WAKE_QUIET_DEFAULT_MS, wakeQuietMs };
 export const WAKE_REPLY_GIVE_UP_MS = 1500;
+/** v12: a pause after the name at least this long, then speech again before the wake's quiet: the request is under way (an earcon only) */
+export const WAKE_PAUSE_MS = 120;
+/** v12 (the critic of RC1): a clip said while a question is in flight, begun this soon after that question was handed on, may be its rest */
+export const CONTINUE_MS = 2500;
+/** v12: a clip that starts as a continuation: a conjunction, a preposition or an article ("in Adyar", "and the drains", "the ones near the lake") */
+const CONTINUES = /^(?:and|or|but|plus|in|on|at|for|of|with|from|to|near|around|by|under|along|within|the|a|an|matrum|maththum|apram|appuram|aprm|மற்றும்|அப்புறம்)(?=[\s,.!?…]|$)/iu;
+/**
+ * v13 (21 Nov, review 1-13): after its connective, a request or a question of its own ("And where are the flooded roads?", "and show the drains",
+ * "A different question: ..."): a fresh one, never glued onto the question in flight (only a phrase's tail is: "in Adyar", "and the drains")
+ */
+const FRESH_AFTER = /^(?:and|or|but|plus|the|a|an|matrum|maththum|apram|appuram|aprm|மற்றும்|அப்புறம்)[\s,]+(?:(?:also|then|now|so|please|tell me|can you|could you)[\s,]+)*(?:what|whats|where|wheres|which|who|whose|when|how|why|is|are|was|were|do|does|did|can|could|will|would|should|show|open|tell|go|give|list|find|read|zoom|close|compare|draft|explain|different|another|new|என்ன|எந்த|எங்கே|எங்க|யார்|எப்போ|எப்படி|காட்டு|திற|சொல்)(?=[\s,.!?…'’]|$)/iu;
+/**
+ * v14 (21 Nov, review turns 5): a tail that points back at the question in flight is its rest, even shaped as a question ("and how many are
+ * there?", "and is it worse there?", "and how many?"): split off, it replaced that question and lost its subject. "new" is fresh only as "a new
+ * question" ("the new ones in Adyar" is a refinement), and "a different question: ..." or "another thing" stay fresh whatever follows
+ */
+const POINTS_BACK = /(?:^|[\s,])(?:there|here|it|its|they|them|their|those|these|that|ones|அங்கே|அங்கு|அங்க|அது|அதில்|அதுல|அவை|இங்கே)(?=[\s,.!?…'’]|$)/iu;
+const BARE_ASK = /^(?:and|or|but|plus|matrum|maththum|apram|appuram|aprm|மற்றும்|அப்புறம்)[\s,]+(?:how (?:many|much)|where|when|why|which|what|who|எத்தனை|எங்கே|எங்க|ஏன்|எப்போ)[\s,.!?…]*$/iu;
+const FRESH_MARK = /^(?:and|or|but|plus|the|a|an|matrum|maththum|apram|appuram|aprm|மற்றும்|அப்புறம்)[\s,]+(?:(?:also|then|now|so|please)[\s,]+)*(?:(?:a|an|the)\s+)?(?:different|another|new (?:question|topic|thing|request))(?=[\s,.!?…:'’]|$)/iu;
+/** v14: the tail is a fresh request of its own (FRESH_AFTER), unless it points back at the question in flight (POINTS_BACK, BARE_ASK) */
+export function freshTail(t: string): boolean {
+  const s = t.trim();
+  if (FRESH_MARK.test(s)) return true;
+  if (!FRESH_AFTER.test(s)) return false;
+  // "new" alone ("and the new ones in Adyar") no longer makes it fresh; a question or a command after the connective still does
+  if (/^\S+[\s,]+(?:(?:also|then|now|so|please|tell me|can you|could you)[\s,]+)*new(?=[\s,.!?…'’]|$)/iu.test(s)) return false;
+  return !POINTS_BACK.test(s) && !BARE_ASK.test(s);
+}
+/**
+ * v12 (RC1): words that only acknowledge, thank or greet. Said over a question in flight or over Jarvis's voice they replace nothing:
+ * "okay", "thank you", "good job", "Jarvis, are you there?" while it works were cancels of the question before v12. `greeting: false`: over
+ * Jarvis's voice a greeting ("Hi Jarvis") is a call, as the name alone is there (turn.ts holds the voice for it), so it is not dropped
+ */
+export function noRequest(t: string, o: { greeting?: boolean } = {}): boolean {
+  if (isBackchannel(t) || (o.greeting !== false && isGreeting(t))) return true;
+  // v13 (review 1-2): an apology, a call for attention or a throat-clear alone ("Sorry.", "Excuse me.", "Huh?", "Ahem.") replaces nothing
+  if (onlyNoise(t)) return true;
+  const s = smallTalk(t);
+  return s === "thanks" || s === "praise";
+}
+/**
+ * v13 (21 Nov, review 1-1): a spoken line that starts no turn even with nothing in flight: a lone backchannel ("Okay.", "Mm-hmm", சரி) or
+ * an apology or a throat-clear alone. Never a greeting, a thanks or praise: those keep their instant reply (Thunai.tsx handle())
+ */
+export const startsNoTurn = (t: string): boolean => (isBackchannel(t) || onlyNoise(t)) && !smallTalk(t);
+/**
+ * v14 (21 Nov, review turns 6): "Sorry?", "Pardon?", "Huh?", "Excuse me?", "மன்னிக்கவும்?": an apology or a call for attention asked as a
+ * question, which after an answer means "say that again" (Thunai.tsx handle() repeats the last answer). A throat-clear or "oops" never asks
+ */
+export const asksAgain = (t: string): boolean => {
+  const s = t.trim();
+  return /\?[\s"'’”]*$/u.test(s) && onlyNoise(s) && !/^\[|^\(|^\*/.test(s) && !words(s).some((w) => w === "ahem" || w === "ahm" || w === "oops" || w === "whoops");
+};
+/** v13: the words that make a line an apology, a call for attention or a throat-clear (at least one of them is in it) */
+const SORRY_WORDS = new Set(["sorry", "excuse", "pardon", "huh", "eh", "ahem", "ahm", "oops", "whoops", "mannikkavum", "manniyungal", "மன்னிக்கவும்", "மன்னிச்சுக்கோங்க", "மன்னிச்சிடுங்க", "மன்னிக்கணும்", "சாரி"].map((w) => w.normalize("NFC")));
+/** v13: the words that may go with them and hold no request ("I'm so sorry", "excuse me", "beg your pardon", "my bad", "sorry Jarvis") */
+const SORRY_WITH = new Set(["i", "im", "am", "so", "very", "really", "me", "my", "bad", "beg", "your", "about", "that", "jarvis", "sir", "madam", "சார்"].map((w) => w.normalize("NFC")));
+/**
+ * v13 (21 Nov, review 1-2): a short line of nothing but an apology, a call for attention or a throat-clear, with backchannels around it
+ * ("Sorry.", "Excuse me.", "Huh?", "Ahem.", "Oh sorry", "மன்னிக்கவும்"), or a sound the transcriber put in brackets ("(coughs)"). Said
+ * while a question is in flight it is the room, not a new request: before v13 each of these replaced the question and went to the planner
+ */
+export function onlyNoise(t: string): boolean {
+  const s = t.trim();
+  if (/^[\[(*][^\])*]{1,30}[\])*][.!?]*$/u.test(s)) return true;
+  const w = words(s);
+  return w.length > 0 && w.length <= 6 && w.some((x) => SORRY_WORDS.has(x)) && w.every((x) => SORRY_WORDS.has(x) || SORRY_WITH.has(x) || isBackchannel(x));
+}
 /** v6: a name-only sentence that arrives this soon after an on-device wake is the same call (it was answered already) */
 export const WAKE_SAME_CALL_MS = 5000;
 /** v8: how long after the name the first sentence still counts as the call's own request (the gate's `called`) */
@@ -108,10 +209,20 @@ export interface HeardLine {
    */
   conf: number;
   gen: number;
-  /** a question cancelled for speech that turned out not to be for Jarvis, asked again with its own gate */
-  again?: boolean;
+  /**
+   * v12 (RC10): this sentence's own number, given as it is handed on: answered(id) lets the turn machine go only for the sentence it is
+   * handling. (v12, RC2: `again`, a cancelled question asked once more, is gone: nothing cancelled is ever asked again)
+   */
+  id?: number;
   /** the number of this sentence's own trace (trace.ts): the console stamps "gateDone" and the lane on it, and on no other */
   trace?: number;
+}
+
+/** v12 (the critic's silent drops): a line let go, words-free: why (the gate's code, "over-turn", "self-heard"), its language and confidence */
+export interface Dropped {
+  why: string; lang: "en" | "ta"; conf: number; engaged: boolean; called: boolean;
+  /** v13 (review 1-9): said while a question was in flight (provisional, handling) or over Jarvis's voice: no "didn't catch that" cue for it */
+  busy?: boolean;
 }
 
 export interface ConductorHooks {
@@ -145,8 +256,13 @@ export interface ConductorHooks {
    * Jarvis was speaking. The HUD reacts now; the reply comes with onWakeReply
    */
   onWakeWord?: (o: { at: number; overVoice: boolean }) => void;
-  /** v6: the Collector paused after the wake word: say the wake reply now */
-  onWakeReply?: () => void;
+  /**
+   * v6: the Collector paused after the wake word: say the wake reply now. v12: `tone`, the request followed the name after a short pause:
+   * only the earcon, never a spoken "Yes?" over its start
+   */
+  onWakeReply?: (o?: { tone?: boolean }) => void;
+  /** v12: a line let go (the gate, a line that replaces nothing over a question in flight, Jarvis's own voice), words-free: for telemetry and a cue */
+  onDropped?: (d: Dropped) => void;
   /** does the rules layer resolve this sentence with confidence and slots, and does it name something of the district? */
   rules: (text: string) => { sure: boolean; districtNoun: boolean };
   /** when Jarvis last finished a turn */
@@ -281,9 +397,13 @@ export class Conductor {
     setMouthHooks({
       onStart: (p, ack) => { this.h.onVoice?.("start", p, ack); this.dispatch({ type: "ttsStart", ack }); },
       onEnd: (ack) => { this.h.onVoice?.("end"); this.dispatch({ type: "ttsEnd", ack }); },
+      // v12 (RC3): a voice asked for, not yet heard: a new request handed on before it starts stops it (turn.ts voiceWanted)
+      onRequest: (ack) => this.dispatch({ type: "ttsWant", ack }),
       // the end-of-speech earcon plays only once the ears know it is Jarvis's own sound
       onEarcon: (ms, tone) => this.earcon(ms, tone),
-      onDuck: (d) => this.h.mark?.(`duck:${d.path}:${d.how}`, performance.now())
+      onDuck: (d) => this.h.mark?.(`duck:${d.path}:${d.how}`, performance.now()),
+      // v13 (review 1-11): the wake reply ("Yes, Collector?") is sounding for `ms`: the request begun over it stops it (onVad start)
+      onWakeSound: (ms) => { this.wakeSoundUntil = performance.now() + ms; }
     });
   }
 
@@ -310,6 +430,12 @@ export class Conductor {
           // Jarvis's own earcon is not the Collector's voice; Silero's onset after it is (earconDrops)
           if (earconDrops("vadStart", { guard: this.earconOn(), tone: performance.now() < this.toneUntil, state: this.m.state, detector: this.ears?.kind ?? null })) return;
           this.spokeAt = Date.now();
+          // v12: when this clip began, for the continuation join (continued())
+          this.onsetAt = this.spokeAt;
+          // v13 (21 Nov, review 1-11): the Collector began the request while the wake reply still sounds ("Hi Jarvis", a pause, the question):
+          // the reply stops at once (a 15 ms fade), never said over the question's start. (Silero's onset only: the energy gate's is taken as the
+          // reply's own sound while it plays, earconDrops)
+          if (performance.now() < this.wakeSoundUntil) { this.wakeSoundUntil = 0; stopWakeReply(); this.h.mark?.("wakeReplyStopped", performance.now()); }
           // a new sentence: its own early request and its own count (E2)
           this.earlyAbort(); this.tries = 0;
           // each part of a sentence is captured from its own start: a part still at Whisper is joined, never posted again
@@ -319,6 +445,8 @@ export class Conductor {
           this.spokeAt = Date.now();
           // the trace's zero is the last voiced sample (the ears give it; older ears only the decision), its "eou" the decision
           this.endMark = { voiced: voicedEnd ?? wall, eou: wall };
+          // v12: the wake reply's quiet after a sentence that ended runs from its last voiced sample (wakeReplyTick)
+          this.voicedAt = voicedEnd ?? wall;
           this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short, strong: ev.strong });
           // E2: an early request the end did not take as the sentence's transcription (transcribe adopts it at once) goes no further
           this.earlyAbort();
@@ -395,8 +523,9 @@ export class Conductor {
     if (this.budgetT) { clearTimeout(this.budgetT); this.budgetT = null; }
     if (this.pruneT) { clearInterval(this.pruneT); this.pruneT = null; }
     this.budgetLow = false;
-    this.cancelled = null;
     this.current = null;
+    this.handedAt = 0;
+    this.replyDue = null;
     this.h.onBudget?.({ low: false, ambient: this.ambient.length });
     this.h.onLevel?.(0);
   }
@@ -408,10 +537,15 @@ export class Conductor {
     this.speechEnded();
     // what the stand-in recogniser still holds was said before the stop: it is not acted on
     this.abortFallback();
-    this.cancelled = null;
+    this.handedAt = 0;
     if (this.holdT) { clearTimeout(this.holdT); this.holdT = null; }
     this.ears?.extend(0);
   }
+  /**
+   * v12 (RC2): a typed or tapped question took over from what was said: nothing said before it is joined to what is said next (the
+   * continuation join, a held cut-off line). The sentence being handled keeps its number, so its own answered() still lets the machine go
+   */
+  forgetTurn() { this.handedAt = 0; this.held = null; }
   /**
    * An earcon is playing: it must not count as speech. For `ms` the energy gate's onset and any onset over the voice are taken as
    * the earcon's; for `toneMs` (the tone with the output's latency) the energy gate's onset is, wherever it comes (earconDrops).
@@ -422,8 +556,15 @@ export class Conductor {
     this.toneUntil = Math.max(this.toneUntil, now + Math.min(ms, toneMs));
   }
   private earconOn() { return performance.now() < this.earconUntil; }
-  /** The answer had nothing to say. */
-  answered() { this.dispatch({ type: "answered" }); }
+  /**
+   * The sentence's handling is over (the answer had nothing to say, or has begun). v12 (RC10): `id`, the HeardLine's own number: an older
+   * sentence finishing late lets nothing go while a newer one is handled; the machine's generation no longer decides (a backchannel over
+   * the acknowledgement moved it on, and the finished turn was never let go)
+   */
+  answered(id?: number) {
+    if (id != null && this.current && this.current.id !== id) return;
+    this.dispatch({ type: "answered" });
+  }
 
   /**
    * The browser captions' live words for the speech being heard (the console runs the recogniser between onSpeechStart and
@@ -470,7 +611,7 @@ export class Conductor {
   }
 
   dispatch(e: TurnEvent) {
-    const before = this.m.state, wasHandling = this.m.handling;
+    const before = this.m.state;
     const r = turn(this.m, e);
     this.m = r.m;
     for (const a of r.act) {
@@ -480,9 +621,9 @@ export class Conductor {
         case "unduckVoice": unduckVoice(); this.sayingAtOnset = null; break;
         case "cancelVoice": stopVoice(); this.cutAt = Date.now(); this.h.mark?.("cancelled", performance.now()); break;
         case "cancelTurn":
+          // (v12, RC2: the cancelled sentence is no longer kept to be asked again later)
           this.inflight?.abort(); this.inflight = null; this.h.cancelTurn();
           if (this.live?.ctl.signal.aborted) this.live = null;
-          if (wasHandling && this.current) this.cancelled = this.current;
           break;
         case "capture": this.carryLive(); this.ears?.capture(this.speechStart || null); break;
         case "dropCapture": this.ears?.drop(); this.h.onHearing?.("idle"); this.sayingAtOnset = null; this.uncarry(); this.earlyAbort(); break;
@@ -499,20 +640,33 @@ export class Conductor {
         case "handle": {
           const p = this.pending;
           this.pending = null;
-          if (p) { this.current = { ...p, text: a.text }; this.h.onSentence({ ...p, text: a.text, gen: a.gen }); }
+          if (p) {
+            // v12 (RC10): the sentence's own number, for answered(id); and when it was handed on, for the continuation join
+            const id = ++this.lineSeq;
+            this.current = { ...p, text: a.text, id };
+            this.handedAt = Date.now();
+            this.h.onSentence({ ...p, text: a.text, gen: a.gen, id });
+          }
           break;
         }
       }
     }
     if (this.m.state !== before) this.h.onState(this.m.state);
-    // a noise cancelled the question and was then too short to be a sentence: no transcript will come, so it is asked again here
-    if (e.type === "vadEnd" && this.m.state === "listening" && this.cancelled) this.backOn(false);
+    // (v12, RC2: a noise that was too short to be a sentence no longer brings back a cancelled question: nothing is cancelled for a noise)
   }
-  private pending: Omit<HeardLine, "text" | "gen"> | null = null;
-  /** the sentence handed on last, with its gate and source */
+  private pending: Omit<HeardLine, "text" | "gen" | "id"> | null = null;
+  /** the sentence handed on last, with its gate, its source and its number */
   private current: Omit<HeardLine, "gen"> | null = null;
-  /** that sentence, when speech cancelled it in flight: it comes back only if the speech proves not to be for Jarvis */
-  private cancelled: Omit<HeardLine, "gen"> | null = null;
+  /** v12: the sentences handed on, counted (HeardLine.id); when the last one was handed on (Date.now()), and when the clip now heard began */
+  private lineSeq = 0;
+  private handedAt = 0;
+  private onsetAt = 0;
+  /** v12: the last voiced sample of the last sentence that ended (performance.now()): the wake reply's quiet runs from it */
+  private voicedAt = 0;
+  /** v12: the Collector paused after the name (WAKE_PAUSE_MS) while the wake reply was due */
+  private wakePaused = false;
+  /** v13 (review 1-11): until when the wake reply's clip sounds (performance.now(); mouth.ts onWakeSound); 0 when none */
+  private wakeSoundUntil = 0;
   private pruneT: ReturnType<typeof setInterval> | null = null;
 
   /** Speech began while the sentence before it is still at Whisper: that reading is kept for this one (it is never posted again). */
@@ -606,13 +760,38 @@ export class Conductor {
     if (this.m.state === "paused") this.dispatch({ type: "words", text: "hey jarvis" });
     this.h.onWakeWord?.({ at, overVoice: over });
     this.replyDue = over ? null : performance.now();
+    this.wakePaused = false;
   }
-  /** v6: every frame while a wake reply is due: the Collector paused (or the sentence ended), or went on talking */
+  /**
+   * v6: every frame while a wake reply is due: the Collector paused (or the sentence ended), or went on talking.
+   * v12 (the critic of the 06:30 report): the quiet after the name must last wakeQuietMs (400 ms), measured from the last voiced sample
+   * when the detector has already ended the sentence (it ends a short one after 180 ms, which used to count as the pause at once). Speech
+   * that comes back after a pause shorter than that is the request under way: the earcon alone says the name was heard, never "Yes?" over it.
+   */
   private wakeReplyTick() {
     const e = this.ears, t0 = this.replyDue;
     if (!e || t0 == null) { this.replyDue = null; return; }
-    if (!e.inSpeech || e.quietMs >= wakeQuietMs()) { this.replyDue = null; this.h.mark?.("wakeReply", performance.now()); this.h.onWakeReply?.(); return; }
-    if (performance.now() - t0 > WAKE_REPLY_GIVE_UP_MS) this.replyDue = null;
+    // v14 (replyWhenQuiet): the ears are still taking the parked audio over (its frames all come at one moment): the quiet is read from the
+    // first live frame on, and the give-up runs from there
+    if (this.starting) return;
+    const from = t0 < 0 ? (this.replyDue = performance.now()) : t0;
+    const now = performance.now();
+    const quiet = e.inSpeech ? e.quietMs : now - this.voicedAt;
+    if (quiet >= wakeQuietMs()) { this.replyDue = null; this.h.mark?.("wakeReply", now); this.h.onWakeReply?.(); return; }
+    if (e.inSpeech && e.quietMs === 0 && this.wakePaused) { this.replyDue = null; this.h.mark?.("wakeTone", now); this.h.onWakeReply?.({ tone: true }); return; }
+    if (quiet >= WAKE_PAUSE_MS) this.wakePaused = true;
+    if (now - from > WAKE_REPLY_GIVE_UP_MS) this.replyDue = null;
+  }
+  /**
+   * v14 (21 Nov, review scenarios 2): the closed listener opened Jarvis on the device's wake word with no recogniser to bring the sentence
+   * (kws.ts wakeWait "listen"): the wake reply waits for the same quiet after the name as an open wake (wakeReplyTick), measured on these ears
+   * from the hand-over, so it never plays over a request said straight on. False when there are no ears to measure it (the page replies at once)
+   */
+  replyWhenQuiet(): boolean {
+    if (!this.ears) return false;
+    // -1: armed, and timed from the first live frame (wakeReplyTick); the quiet runs from now, the name's end, until speech is heard
+    this.replyDue = -1; this.voicedAt = performance.now(); this.wakePaused = false;
+    return true;
   }
   /** v6: the on-device wake word is listening */
   get wakeWordLive(): boolean { return !!this.ears?.wakeWordLive; }
@@ -632,7 +811,10 @@ export class Conductor {
     this.lastLang = lang;
     // the same gate as Whisper's words: side talk goes no further than this browser
     const gate = this.gateFor(text);
-    if (!gate.act) { this.ignored(text, gate); return; }
+    if (!gate.act) { this.ignored(text, gate, { lang, conf: CAPTIONS_CONF }); return; }
+    // v12 (RC1): over a question in flight or Jarvis's voice, a line that only acknowledges or thanks replaces nothing (as in accept())
+    const g = { greeting: !this.m.overVoice };
+    if ((this.m.provisional || this.m.overVoice) && !this.answerAwaited() && (noRequest(gate.text, g) || noRequest(text, g))) { this.dropped("over-turn", lang, CAPTIONS_CONF); return; }
     this.pending = { lang, source: "captions", gate, conf: CAPTIONS_CONF };
     if (this.m.state === "listening") this.m = { ...this.m, awaiting: true, state: "thinking" };
     this.dispatch({ type: "text", text: gate.text, gen: this.m.gen });
@@ -643,12 +825,18 @@ export class Conductor {
    * point that was said to Jarvis (just called, or in the conversation) is held for its rest: the window stays open, and the page joins the next
    * sentence to it. Said to no one in particular, it is let go as before.
    */
-  private ignored(text: string, gate: Addressed) {
+  private ignored(text: string, gate: Addressed, info: { lang: "en" | "ta"; conf: number } = { lang: this.lastLang ?? "en", conf: 0 }) {
     if (gate.why === "cut-off" && understandV10()) {
       const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
-      if (last > 0 && Date.now() - last <= ENGAGED_MS) { this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held"); return; }
+      if (last > 0 && Date.now() - last <= ENGAGED_MS) {
+        this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held");
+        this.dropped("cut-off-held", info.lang, info.conf);
+        return;
+      }
     }
     this.h.onIgnored(text, gate.why);
+    // v12: every line let go is counted, words-free (why, language, confidence): "I asked and got no answer" can be looked into
+    this.dropped(gate.why, info.lang, info.conf);
   }
   /** v10: the line held last for its rest, and when (ignored()); the page joins the same rest to it (Thunai.tsx cutRef, joinCut) */
   private held: { text: string; at: number } | null = null;
@@ -691,9 +879,30 @@ export class Conductor {
     const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler
     const awaitingAnswer = !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.());
-    // v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request
-    const called = this.engaged > 0 && this.engaged > (this.h.lastTurnAt() ?? 0) && Date.now() - this.engaged < CALL_MS;
-    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer, called });
+    return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer, called: this.calledNow() });
+  }
+  /** v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request */
+  private calledNow(): boolean { return this.engaged > 0 && this.engaged > (this.h.lastTurnAt() ?? 0) && Date.now() - this.engaged < CALL_MS; }
+  /** v8: a yes, a card or a question back is waiting: a plain "okay" is its answer, not a filler */
+  private answerAwaited(): boolean { return !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.()); }
+  /**
+   * v12 (the critic of RC1): a clip begun soon after the question still in flight was handed on, starting as its continuation ("in Adyar",
+   * "and the drains", "the ones near the lake"), is that question's rest: the two are gated and handed on as one request, which replaces the
+   * half in flight. Only then: a remark of its own ("it's not answering") or a fresh request is never glued onto the question.
+   */
+  private continued(t: string): Addressed | null {
+    const prev = this.current;
+    // (v13, review 1-13: a fresh question after the connective is its own: FRESH_AFTER; v14, review turns 5: unless it points back: freshTail)
+    if (!this.m.provisional || !prev?.text || !this.handedAt || !CONTINUES.test(t) || freshTail(t)) return null;
+    if (this.onsetAt < this.handedAt || this.onsetAt - this.handedAt > CONTINUE_MS) return null;
+    const j = this.gateOne(`${prev.text.replace(/[\s.!?…]+$/u, "")} ${t}`);
+    return j.act ? j : null;
+  }
+  /** v12 (the critic's silent drops): a line let go, as a words-free event for the page (telemetry, and a soft cue when engaged) */
+  private dropped(why: string, lang: "en" | "ta", conf: number) {
+    // v13 (review 1-9): `busy`, said while a question was in flight or over Jarvis's voice: the page gives no "I didn't catch that" for it
+    const busy = !!this.m.provisional || this.m.handling || this.m.overVoice;
+    this.h.onDropped?.({ why, lang, conf: Number.isFinite(conf) ? conf : 0, engaged: this.inWindow() || this.onsetInWindow, called: this.calledNow(), busy });
   }
 
   private async transcribe(gen: number) {
@@ -763,8 +972,9 @@ export class Conductor {
     if (own === "abort") return;
     if (!j) {
       // too slow, or unreadable (a 502, a 401): not heard, and Jarvis listens again. The console says so calmly for an engaged
-      // sentence only: side talk that was not transcribed is nobody's business
-      if ((own === "timeout" || own === "error") && rec.lane === "engaged") this.h.onMissed?.(own);
+      // sentence only: side talk that was not transcribed is nobody's business. v12 (RC9): and only for the sentence now being read: an
+      // older one's "I didn't catch that" cut in over the newer answer
+      if ((own === "timeout" || own === "error") && rec.lane === "engaged" && gen === this.m.gen) this.h.onMissed?.(own);
       // Whisper is not reachable (the network, or no transcriber): from the next engaged speech the browser's recogniser hears it,
       // in the site's language, only while it is said (speechBegan); typed text always works
       if (own === "outage") { this.whisperOut = true; this.h.onReach?.(false); }
@@ -872,47 +1082,76 @@ export class Conductor {
   }
 
   private accept(text: string, lang: "en" | "ta", gen: number, source: "whisper" | "captions", conf: number, trace?: number) {
-    const saying = this.sayingAtOnset ?? nowSaying();
-    const interrupted = !!this.sayingAtOnset;
-    this.sayingAtOnset = null;
     const t = text.trim();
+    // v12 (RC9): the words of an older sentence (a newer one began, or a stop or a close came) have no side effects: no wake reply, no line
+    // held for its rest, no pending sentence overwritten (the turn machine drops them by their generation anyway). Only the name alone
+    // still opens the call window, or the request after it would be gated away as unaddressed (the critic of RC9)
+    if (gen !== this.m.gen) {
+      if (t && namedIn(t) === "") this.engage();
+      return;
+    }
+    const saying = this.sayingAtOnset ?? nowSaying();
+    // v13 (review 1-10): the speech cut an answer's voice that began under it (turn.ts `cut`; nothing was being said at its onset): an
+    // interruption too, so a line that replaces nothing brings the answer back from its chunk, as after a barge-in
+    const cut = !!this.m.cut;
+    const interrupted = !!this.sayingAtOnset || cut;
+    this.sayingAtOnset = null;
     // Jarvis's own voice, heard back: not a sentence
-    if (t && selfHeard(t, saying)) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
+    if (t && selfHeard(t, saying)) { this.dropped("self-heard", lang, conf); this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
     if (!t) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
     this.lastLang = lang;
+    // v12 (RC1): said while a question is in flight (turn.ts `provisional`) or over Jarvis's voice: the words decide. A continuation of the
+    // question in flight is joined to it (continued()); a line that only acknowledges, thanks or greets replaces nothing
+    // v13 (review 1-10): or said as it cut Jarvis's voice (`cut`): a thanks there ("Thank you Jarvis" as the answer began) is no new turn
+    // either. A backchannel still goes to the turn machine, which says the answer again from its chunk (turn.ts resumeAnswer)
+    const over = !!this.m.provisional || this.m.overVoice || (cut && !isBackchannel(t));
     // "Jarvis" and a pause: the end of utterance is short, so the name often arrives alone. It is not a request (said over the
-    // voice, it stops the voice and listens: turn.ts)
+    // voice, it stops the voice and listens: turn.ts; said while a question is in flight, it cancels nothing: v12)
     if (namedIn(t) === "") {
+      // v13 (review 1-0, 1-10): a thanks or an "okay" around the name ("Thank you Jarvis.", "okay thank you Jarvis": the gate's name alone)
+      // said over a question in flight or Jarvis's voice is no call: no "Yes?" for it, nothing stops, and an answer it cut comes back
+      if (over && !this.answerAwaited() && noRequest(t, { greeting: false })) {
+        this.dropped("over-turn", lang, conf);
+        this.dispatch({ type: "text", text: "", gen });
+        this.backOn(interrupted);
+        return;
+      }
       this.engage();
       this.h.onNameOnly?.({ replied: Date.now() - this.kwsAt < WAKE_SAME_CALL_MS });
       this.dispatch({ type: "nameOnly", gen });
       return;
     }
-    const gate = this.gateFor(t);
+    const gate = this.continued(t) ?? this.gateFor(t);
     if (!gate.act) {
-      this.ignored(t, gate);
+      this.ignored(t, gate, { lang, conf });
+      this.dispatch({ type: "text", text: "", gen });
+      this.backOn(interrupted);
+      return;
+    }
+    // (the line as said, too: "Jarvis, are you there?" is a greeting with its name, "are you there?" without; over or cutting the voice a
+    // greeting is a call)
+    const g = { greeting: !this.m.overVoice && !cut };
+    // v14 (review turns 0): an answer's voice plays, or was asked for and has not started: a lone "Okay." or "Sorry." handed on would only stop it
+    // (turn.ts `older`) and handle() says nothing for it (startsNoTurn), so the answer was never heard. Dropped here, the voice left alone
+    const voiceOn = speaking() || this.m.voice || !!this.m.voiceWanted;
+    if ((over || voiceOn) && !this.answerAwaited() && (over ? noRequest(gate.text, g) || noRequest(t, g) : startsNoTurn(gate.text) || startsNoTurn(t))) {
+      this.dropped("over-turn", lang, conf);
       this.dispatch({ type: "text", text: "", gen });
       this.backOn(interrupted);
       return;
     }
     this.pending = { lang, source, gate, conf, ...(trace != null ? { trace } : {}) };
-    this.forgetCancelled();
     this.dispatch({ type: "text", text: gate.text, gen, yesWanted: this.h.wantsYes?.() ?? false });
   }
 
-  /** The speech that cut Jarvis off was not for it: the answer goes on from its chunk, a cancelled question is asked again. */
+  /**
+   * The speech that cut Jarvis off was not for it: the answer goes on from its chunk. v12 (RC2): a question cancelled earlier is never
+   * asked again here (it came back out of context, its lanes skipped, on any later noise; with speech while thinking no longer a cancel,
+   * nothing is cancelled for a sentence that turns out not to be for Jarvis)
+   */
   private backOn(interrupted: boolean) {
-    if (interrupted && continueAnswer()) { this.m = { ...this.m, state: "speaking" }; this.h.onState("speaking"); return; }
-    const r = this.cancelled;
-    this.cancelled = null;
-    if (!r) return;
-    this.current = r;
-    this.m = { ...this.m, state: "thinking", handling: true };
-    this.h.onState("thinking");
-    this.h.onSentence({ ...r, gen: this.m.gen, again: true });
+    if (interrupted && continueAnswer()) { this.m = { ...this.m, state: "speaking" }; this.h.onState("speaking"); }
   }
-  /** Tell the turn machine a new sentence was taken: nothing cancelled earlier comes back after it. */
-  private forgetCancelled() { this.cancelled = null; }
 
   /**
    * Whisper out: the browser's recogniser, in the site's language, for this one engaged speech (speechBegan to speechEnded, as

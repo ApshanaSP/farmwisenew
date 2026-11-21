@@ -129,8 +129,10 @@ describe("closed, the name heard on the device: reply at once after a pause, or 
     expect(q.quietMs(t)).toBeLessThan(160);
   });
   it("wakeWait: a pause soon after the name opens with the reply; speech going on waits for the recogniser's sentence, up to its limit", () => {
-    // no recogniser running (it failed, or never started): open now, as before
-    expect(wakeWait({ sinceKws: 0, quietMs: 0, recogniser: false, quietNeeded: 90 })).toBe("open");
+    // no recogniser running (it failed, or never started): open now, as before. v14 (21 Nov, review scenarios 2): open now still, but with no
+    // quiet yet the reply waits for it on Jarvis's ears ("listen"); it opened with the reply at once, over a request said straight on
+    expect(wakeWait({ sinceKws: 0, quietMs: 0, recogniser: false, quietNeeded: 90 })).toBe("listen");
+    expect(wakeWait({ sinceKws: 100, quietMs: 95, recogniser: false, quietNeeded: 90 })).toBe("open");
     // the Collector stopped after the name
     expect(wakeWait({ sinceKws: 120, quietMs: 95, recogniser: true, quietNeeded: 90 })).toBe("open");
     // still talking 120 ms on: keep waiting
@@ -139,5 +141,13 @@ describe("closed, the name heard on the device: reply at once after a pause, or 
     expect(wakeWait({ sinceKws: 1500, quietMs: 300, recogniser: true, quietNeeded: 90 })).toBe("wait");
     // the recogniser never answered: open, with the reply, at the limit
     expect(wakeWait({ sinceKws: 4000, quietMs: 300, recogniser: true, quietNeeded: 90 })).toBe("open");
+  });
+  it("v12 (21 Nov): with the wake reply's 400 ms of quiet, the name said alone still opens on quiet when the wake word fired as the speech ended", () => {
+    // WAKE_NAME_ALONE_MS 400 -> 600: the wake word fired at the end of "Jarvis", and 450 ms of quiet followed; at 400 this waited ~1 s for the recogniser
+    expect(wakeWait({ sinceKws: 460, quietMs: 450, recogniser: true, quietNeeded: 400 })).toBe("open");
+    // not yet the 400 ms the reply now waits for: keep waiting (a request may follow the name)
+    expect(wakeWait({ sinceKws: 300, quietMs: 290, recogniser: true, quietNeeded: 400 })).toBe("wait");
+    // the name, then talk: still the recogniser's sentence
+    expect(wakeWait({ sinceKws: 1500, quietMs: 450, recogniser: true, quietNeeded: 400 })).toBe("wait");
   });
 });

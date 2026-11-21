@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 const src = fs.readFileSync(path.join(__dirname, "Thunai.tsx"), "utf8");
 const handle = src.slice(src.indexOf("const handle = async"), src.indexOf("const handleRef = useRef(handle)"));
 const confirm = handle.slice(handle.indexOf("const cf = confirmRef.current;"), handle.indexOf("// the next step offered after a screen"));
-const front = handle.slice(handle.indexOf("const f10 = v10Front(said"), handle.indexOf('if (f10.lane?.lane === "wait")'));
+// (v12, 21 Nov: v10Front is called through one helper, front10, which the provisional check of a line said while a question is in flight
+// runs too, before the turn starts and so before sourceRef is set: the helper reads the line's own source, opts.source, typed when unset)
+const front = handle.slice(handle.indexOf("const front10 = (s: string) =>"), handle.indexOf("const inFlight = "));
 
 describe("v10 review 2: a Tamil no to the confirm (finding 24)", () => {
   const m = /if \(\/(\^\(\?:no\|nope\|not that[^/]+)\/iu\.test\(said\)\)/.exec(confirm);
@@ -26,8 +28,11 @@ describe("v10 review 2: a Tamil no to the confirm (finding 24)", () => {
 
 describe("v10 review 2: the lanes know a typed line (finding 19)", () => {
   it("handle() passes the turn's source into v10Front", () => {
-    expect(front).toMatch(/source: sourceRef\.current/);
-    expect(handle.indexOf("sourceRef.current = opts.source")).toBeLessThan(handle.indexOf("const f10 = v10Front(said"));
+    expect(front).toMatch(/v10Front\(s, \{/);
+    expect(front).toMatch(/source: opts\.source \?\? "typed"/);
+    // the source the lanes read is the one the turn records (sourceRef), set from the same opts.source
+    expect(handle).toMatch(/sourceRef\.current = opts\.source \?\? "typed";/);
+    expect(handle).toContain("const f10 = front10(said);");
   });
 });
 
@@ -46,7 +51,8 @@ describe("v10 review 2, round 2: a no the speech-to-text ends with an ellipsis o
 describe("v10 review 2, round 2: the wake word's spoken rest is spoken, not typed (finding 19)", () => {
   // v10 review 2, round 2: the on-device wake path called handleRef.current(rest, 0.95) with no source, so handle() took the same-breath rest
   // ("Hey Jarvis, tell me about the") for typed text, and it skipped the cut-off and one-word waits
-  const wake = src.slice(src.indexOf("const woke = (rest: string) =>"), src.indexOf("const named = (w: WakeEars) =>"));
+  // (v14, 21 Nov, review scenarios 2: woke takes a second parameter, `later`, so the anchor is the signature's start)
+  const wake = src.slice(src.indexOf("const woke = (rest: string"), src.indexOf("const named = (w: WakeEars) =>"));
   it("the wake path hands its rest over as the browser's speech (captions)", () => {
     expect(wake).toMatch(/handleRef\.current\(rest, 0\.95, undefined, \{ source: "captions" \}\)/);
     expect(wake).not.toMatch(/handleRef\.current\(rest, 0\.95\)/);

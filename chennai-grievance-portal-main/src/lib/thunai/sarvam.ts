@@ -22,6 +22,7 @@
 import { ledger, type Lane, type Org } from "./ledger";
 import { ZONE_NAMES } from "./lexicon";
 import { telemetry } from "./telemetry";
+import { deadline } from "@/lib/util/deadline";
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 const positive = (k: string, d: number) => { const n = Number(env(k)); return env(k) && Number.isFinite(n) && n > 0 ? Math.floor(n) : d; };
@@ -151,8 +152,11 @@ export async function sarvamTranscribe(audio: Blob | ArrayBuffer, o: SarvamOpts)
   f.append("language_code", "unknown");
   if (env("JARVIS_SARVAM_KEYTERMS") !== "0") f.append("keyterms", keytermsField(o.keyterms?.length ? o.keyterms : SARVAM_KEYTERMS));
   l.record(SARVAM_ORG, SARVAM_MODEL, { audioS: billed, lane });
-  const limit = AbortSignal.timeout(o.ms ?? sarvamTimeoutMs());
-  const signal = o.signal ? AbortSignal.any([o.signal, limit]) : limit;
+  // v12 (21 Nov): a strongly held timer with the caller's signal forwarded (util/deadline.ts), over the request and the reading of its body.
+  // AbortSignal.any([o.signal, AbortSignal.timeout(ms)]) lost its timer to the garbage collector on Node 22.14, so a slow decode waited for the
+  // browser's 6 s hear timeout instead of Sarvam's own 2.5 s
+  const dl = deadline(o.ms ?? sarvamTimeoutMs(), o.signal);
+  const signal = dl.signal;
   try {
     const r = await (o.fetcher ?? fetch)(SARVAM_URL, { method: "POST", headers: { "api-subscription-key": key }, body: f, signal });
     if (!r.ok) throw await failOf(r);
@@ -170,6 +174,8 @@ export async function sarvamTranscribe(audio: Blob | ArrayBuffer, o: SarvamOpts)
     const fail = e instanceof SarvamFail ? e : new SarvamFail(whyOfError(e));
     log(false, { why: fail.why, status: fail.status });
     throw fail;
+  } finally {
+    dl.done();
   }
 }
 

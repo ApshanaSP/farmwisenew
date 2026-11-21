@@ -15,19 +15,11 @@ import { world } from "@/lib/map/world";
 import { bboxOf, distToLineM, expandBboxM, haversineM, inBbox, pointInPolygon, type Pair } from "@/lib/map/geom";
 import type { Inc, NewsDoc, World } from "@/lib/map/types";
 import { liveIncidents, type LiveIncident } from "@/lib/rehearsal/traffic";
+// v12 (21 Nov): the level words live in ./pick (browser-safe), so the console can say them too; re-exported here as before
+import { LEVEL_WORD } from "./pick";
+export { LEVEL_WORD };
 
 export type TrafficLevel = "very" | "congested" | "slow" | "flood" | "accident" | "closed" | "works";
-
-/** what each level is called, in both languages */
-export const LEVEL_WORD: Record<TrafficLevel, { en: string; ta: string }> = {
-  very: { en: "Very congested", ta: "கடும் நெரிசல்" },
-  congested: { en: "Congested", ta: "நெரிசல்" },
-  slow: { en: "Slow traffic", ta: "மெதுவான போக்குவரத்து" },
-  flood: { en: "Water on the road", ta: "சாலையில் தண்ணீர்" },
-  accident: { en: "Accident or breakdown", ta: "விபத்து / வாகனப் பழுது" },
-  closed: { en: "Road closed", ta: "சாலை மூடல்" },
-  works: { en: "Road works", ta: "சாலைப் பணி" }
-};
 
 export interface Owner { dept: string; name: string; ta: string; why: string }
 export interface RepeatReport { id: string; title: string; cat: string; catLabel: string; at: string; open: boolean; dept: string; m: number }

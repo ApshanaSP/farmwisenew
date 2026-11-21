@@ -23,6 +23,15 @@ import { BriefingBook } from "./BriefingBook";
 import { AlertBar } from "./AlertBar";
 import { RainBand, type RehearsalOpen } from "./rehearsal/RainBand";
 import { DEV_RAIN_API, LIVE_RAIN_API, type RainApi, type RainStart } from "./rehearsal/rainLayer";
+import type { TrafficStart } from "./traffic/TrafficView";
+
+/**
+ * v12 (21 Nov): what opens a city view on the Overview's map. Live traffic on a spot or a trouble spot (by id; else the one nearest lat/lon in
+ * fresher data) or on its "Keeps coming" tab; Rain & flooding on a tab and, `replay`, on a past rain ("latest": the last one with reports)
+ */
+// (v14, 21 Nov review 13 routing 5: Live traffic on one zone's filter too, `zone`)
+export type CityOpen = { kind: "traffic"; spot?: string | null; cluster?: string | null; tab?: "repeat" | null; lat?: number | null; lon?: number | null; zone?: number | null }
+  | { kind: "rain"; lens: "flood" | "power" | "metro" | "traffic"; replay?: string | null };
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
@@ -204,9 +213,10 @@ export interface Console {
   /** open Rain & flooding on the Overview's map (the map's Rain button) */
   openRain?: () => void;
   /** Live traffic on the Overview's map (traffic/TrafficView.tsx): open (a new seq opens it afresh, on a spot when given), or closed */
-  trafficView?: { open: { seq: number; spot: string | null } | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null> };
-  /** open the live Traffic view, or a Rain tab, on the Overview's map (its buttons, the chatbot, Jarvis, Ask the Map) */
-  openCity?: (v: { kind: "traffic"; spot?: string | null } | { kind: "rain"; lens: "flood" | "power" | "metro" | "traffic" }) => void;
+  trafficView?: { open: TrafficStart | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null> };
+  /** open the live Traffic view, or a Rain tab, on the Overview's map (its buttons, the chatbot, Jarvis, Ask the Map); v12: on a spot, a trouble
+   * spot or a tab, and Rain on a past rain */
+  openCity?: (v: CityOpen) => void;
   /** the rain warning now, for the map's Rain button: its level and one line */
   rainAlert?: { level: string; line: string | null; likely: number } | null;
   /** Ask the Map on the Overview's map: its state, and the actions an answer can lead to */
@@ -340,16 +350,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     setPageState("overview");
   }, []);
   // Live traffic, on the Overview's map: its own view (not inside Rain), opened by its button, the chatbot, Jarvis or Ask the Map
-  const [traffic, setTraffic] = useState<{ seq: number; spot: string | null } | null>(null);
+  const [traffic, setTraffic] = useState<TrafficStart | null>(null);
   const trafficEsc = useRef<(() => boolean) | null>(null);
-  const openTraffic = useCallback((spot: string | null = null) => {
+  // (v12: on a spot or a trouble spot, with where it was so the view finds it again in fresher data, or on the "Keeps coming" tab)
+  const openTraffic = useCallback((spot: string | null = null, o: Omit<TrafficStart, "seq" | "spot"> = {}) => {
     setRain(null);
-    setTraffic((x) => ({ seq: (x?.seq ?? 0) + 1, spot }));
+    setTraffic((x) => ({ seq: (x?.seq ?? 0) + 1, spot, cluster: o.cluster ?? null, tab: o.tab ?? null, lat: o.lat ?? null, lon: o.lon ?? null, zone: o.zone ?? null }));
     setPageState("overview");
   }, []);
-  const openCity = useCallback((v: { kind: "traffic"; spot?: string | null } | { kind: "rain"; lens: "flood" | "power" | "metro" | "traffic" }) => {
-    if (v.kind === "traffic") openTraffic(v.spot ?? null);
-    else openRain({ replay: null, manual: false, lens: v.lens === "flood" ? undefined : v.lens });
+  const openCity = useCallback((v: CityOpen) => {
+    if (v.kind === "traffic") openTraffic(v.spot ?? null, { cluster: v.cluster ?? null, tab: v.tab ?? null, lat: v.lat ?? null, lon: v.lon ?? null, zone: v.zone ?? null });
+    // v12: a past rain goes with it ("latest" opens on the last heavy rain with reports, as the rain band's "how did we do" does); it was dropped
+    else openRain({ replay: v.replay && v.replay !== "latest" ? v.replay : null, manual: false, ...(v.replay === "latest" ? { stop: "check" as const } : {}), lens: v.lens === "flood" ? undefined : v.lens });
   }, [openRain, openTraffic]);
   // Ask the Map's answer about traffic, rain, power or trains opens its view (lib/city/now.ts: the answer names it)
   useEffect(() => {

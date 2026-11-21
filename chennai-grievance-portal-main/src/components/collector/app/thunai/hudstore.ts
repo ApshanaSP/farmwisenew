@@ -25,6 +25,8 @@ export interface HudState {
   doing: string;
   /** until when it takes a sentence without its name (0: it needs "Hi Jarvis" first) */
   engagedUntil: number;
+  /** v11: "Hi Jarvis" opened Jarvis and its microphone is being handed over (the audio after the name is kept: ears.ts parkWake) */
+  wakeOpening?: boolean;
   /** the keyboard's box is open */
   typing: boolean;
   steps: WorkStep[];
@@ -123,7 +125,7 @@ export function coreOf(mode: JarvisMode, turn: TurnState, busy: boolean, offline
 export const micOpen = (s: Pick<HudState, "mode" | "turn">) => s.mode === "on" && s.turn !== "off";
 
 /** What Jarvis is doing, and what the Collector can do now, in words: nobody should have to guess whether to say its name. */
-export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing" | "engagedUntil"> & { denied?: boolean }, ta: boolean, now: number): { word: string; hint: string } {
+export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing" | "engagedUntil"> & { denied?: boolean; wakeOpening?: boolean }, ta: boolean, now: number): { word: string; hint: string } {
   const t = (en: string, tamil: string) => (ta ? tamil : en);
   if (s.mode === "muted" && s.denied) return { word: t("Microphone blocked", "மைக் தடுக்கப்பட்டுள்ளது"), hint: "" };
   if (s.mode === "muted") return { word: t("Muted", "மௌனம்"), hint: t("I can't hear you. Press Unmute to talk.", "எனக்குக் கேட்காது. பேச \"மைக்கைத் திற\" அழுத்துங்கள்.") };
@@ -137,7 +139,10 @@ export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing
     case "holding": return { word: t("Waiting", "காத்திருக்கிறேன்"), hint: t("Say \"continue\" to hear the rest.", "மீதியைக் கேட்க \"தொடர்\" என்று சொல்லுங்கள்.") };
     case "interrupted": return { word: t("Stopped", "நிறுத்தினேன்"), hint: "" };
     case "offline": return { word: t("Offline", "இணைப்பு இல்லை"), hint: t("I can't hear right now. You can still type.", "இப்போது கேட்க முடியவில்லை. தட்டச்சு செய்யலாம்.") };
-    default: return s.firstUse ? { word: t("Mic closed", "மைக் மூடியது"), hint: "" } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
+    // v11: after "Hi Jarvis" the microphone is handed over with the audio after the name kept (ears.ts parkWake): the Collector is told to talk,
+    // not to wait. Opened any other way, it is not live yet (a permission prompt may be up), and says so
+    default: return s.firstUse ? { word: t("Mic closed", "மைக் மூடியது"), hint: "" }
+      : s.wakeOpening && s.mode === "on" ? { word: t("Listening", "கேட்கிறேன்"), hint: t("Go ahead.", "சொல்லுங்கள்.") } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
   }
 }
 

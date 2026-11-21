@@ -114,7 +114,8 @@ export function memTurn(heard: string, did: string, o: { doc?: Pick<StageDocT, "
   return t;
 }
 /** the last four turns, newest last */
-export const keepTurns = (list: MemTurn[], t: MemTurn) => [...list, t].slice(-4);
+// v11: six turns (was four), so a follow-up two questions back still resolves (the reference keeps eight exchanges)
+export const keepTurns = (list: MemTurn[], t: MemTurn) => [...list, t].slice(-6);
 
 // ---------------------------------------------------------------- observations --
 export interface Observation { step: string; ok: boolean; error?: string | null; digest?: string }

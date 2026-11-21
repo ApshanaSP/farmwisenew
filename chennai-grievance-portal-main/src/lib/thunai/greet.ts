@@ -8,12 +8,17 @@ const NAME = "(?:jarvis|jarviz|jarvish|jarwis|jervis|jarves|javis|jaarvis|thunai
 const HELLO = "(?:hi|hii|hey|hello|helo|hai|ok|okay|yo|vanakkam|vannakam|namaste|good (?:morning|afternoon|evening|day)|ஹாய்|ஹலோ|ஹே|வணக்கம்|காலை வணக்கம்|மாலை வணக்கம்)";
 const SMALL = "(?:how are you|how r u|are you there|you there|are you listening|can you hear me|epdi irukeenga|eppadi irukeenga|epdi irukinga|நலமா|எப்படி இருக்கீங்க|இருக்கீங்களா)";
 const ONLY = new RegExp(`^(?:${HELLO}[\\s,.!]*)*(?:${NAME})?[\\s,.!?]*(?:${HELLO}[\\s,.!]*)?(?:${SMALL})?[\\s,.!?]*(?:${NAME})?[\\s,.!?]*$`, "i");
+/** v13 (21 Nov, review 1-1): "ok" and "okay" with nothing else: a backchannel, not a greeting ("Okay." after an answer got "Hello Collector") */
+const OK_ONLY = /^(?:(?:ok|okay)[\s,.!?]*)+$/i;
 
 /** the whole sentence is a greeting or the name alone (nothing asked) */
 export function isGreeting(text: string): boolean {
   const t = text.toLowerCase().normalize("NFC").replace(/[’']/g, "").replace(/\s+/g, " ").trim();
   if (!t || t.length > 60) return false;
-  if (!new RegExp(NAME, "i").test(t) && !new RegExp(`^${HELLO}`, "i").test(t)) return false;
+  const named = new RegExp(NAME, "i").test(t);
+  if (!named && !new RegExp(`^${HELLO}`, "i").test(t)) return false;
+  // v13: ok and okay greet only with the name ("Okay Jarvis"); alone they acknowledge
+  if (!named && OK_ONLY.test(t)) return false;
   return ONLY.test(t);
 }
 

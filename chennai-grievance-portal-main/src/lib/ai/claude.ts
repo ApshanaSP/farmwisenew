@@ -2,7 +2,7 @@
  * The Claude API (Anthropic), through the official SDK (@anthropic-ai/sdk). One key, ANTHROPIC_API_KEY in the portal's .env.
  * Two kinds of caller share it:
  *   the console's AI steps, when AI_PROVIDER names claude (gateway.ts): model AI_CLAUDE_MODEL (default Claude Opus 5.5), the fast
- *     steps may use another (AI_CLAUDE_MODEL_FAST, e.g. claude-haiku-5-5); effort low for the fast steps, AI_CLAUDE_EFFORT or medium
+ *     steps AI_CLAUDE_MODEL_FAST (default Haiku 5.5 since v12, 21 Nov: it was Opus); effort low for the fast steps, AI_CLAUDE_EFFORT or medium
  *     for the write-ups; an off-schema reply is asked for once more.
  *   Jarvis's ladder (lib/thunai/llm.ts), first when the key is set (JARVIS_PLANNER_LEAD=groq puts it after Groq), whatever AI_PROVIDER
  *     says: model JARVIS_CLAUDE_MODEL (default Haiku 5.5), one try: any failure goes straight to the next rung. On Haiku 5.5 (v5 A6):
@@ -19,7 +19,8 @@
  * remembered for 10 minutes or until .env holds another (the ladder skips Claude at once meanwhile). A Jarvis reply that stopped on
  * "refusal" or "max_tokens" is never used: the next rung answers, and the stop is logged with the model and the reason only. The long,
  * fixed instructions go in the system block with a cache point. The prompt is never logged.
- * claudeWarm writes a planner prefix into the cache on mode-on (/api/jarvis/warm).
+ * claudeWarm writes a planner prefix into the cache: v12 (21 Nov) from the server's keep-warm (lib/thunai/keepwarm.ts) while Jarvis is in use,
+ * after its other steps; /api/jarvis/warm on mode-on only when no keep-warm runs.
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { zodSchema } from "ai";
@@ -64,7 +65,10 @@ export function claudeModel(role?: ClaudeRole): string {
   // v5 A6: Haiku 5.5 leads Jarvis's planner (the owner's plan); Opus 5.5 only by explicit JARVIS_CLAUDE_MODEL, never on the voice lane by default
   if (!role) return env("JARVIS_CLAUDE_MODEL") || "claude-haiku-5-5";
   const main = env("AI_CLAUDE_MODEL") || "claude-opus-5-5";
-  return role === "fast" ? env("AI_CLAUDE_MODEL_FAST") || main : main;
+  // v12 (21 Nov): the console's fast steps (Ask the Map's plan and rewording, routing) are Haiku unless AI_CLAUDE_MODEL_FAST names another.
+  // They fell back to Opus: 106 Opus calls cost $4.47 of the $5 ceiling, and one timed-out Ask the Map plan on a filler sentence crossed it
+  // at 06:38:33, which switched Claude off for Jarvis for the rest of the morning (the critic's review, "missed" 1)
+  return role === "fast" ? env("AI_CLAUDE_MODEL_FAST") || "claude-haiku-5-5" : main;
 }
 
 /** No retries inside the SDK: the gateway and the ladder decide what comes next. */
@@ -475,7 +479,7 @@ export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonRes
  * request that was sent but never answered (aborted, timed out: it may still be billed) is counted at its worst case. The independent
  * check, 17 Nov, found both uncounted.
  */
-async function billed<R>(model: string, body: { max_tokens: number }, send: (c: Anthropic) => Promise<R>): Promise<R> {
+async function billed<R>(model: string, body: { max_tokens: number }, send: (c: Anthropic) => Promise<R>, o: { warm?: boolean } = {}): Promise<R> {
   // the client (and its ceiling check) first, then this call's margin: held before the check, its own margin closed the ceiling at
   // $4.50, and every call between $4.50 and $4.75 threw instead of going out or going to Groq. Nothing was sent, so nothing to count.
   const c = client();
@@ -483,7 +487,13 @@ async function billed<R>(model: string, body: { max_tokens: number }, send: (c: 
   try {
     return await send(c);
   } catch (e) {
-    if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError") recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
+    // v12 (21 Nov): a warm-up whose time ran out before any response arrived is not counted at a worst case. The SDK's APIConnectionTimeoutError
+    // comes only from its timer around the fetch, which stops once the response headers are in (SDK 1.4 client.js fetchWithTimeout): no
+    // byte came back. All 7 warms logged so far timed out that way while the server's thread was held at Jarvis's opening (the report,
+    // first-question-latency RC6), and each was charged against the $5 ceiling. A warm asks for at most 1 token, so its own worst case is
+    // its prompt; a planner turn, an abort, or anything else is still counted as before.
+    const warmTimedOut = o.warm && e instanceof Anthropic.APIConnectionTimeoutError;
+    if (!warmTimedOut && (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError || (e as Error)?.name === "AbortError")) recordEstimate(model, JSON.stringify(body).length, body.max_tokens);
     throw e;
   } finally {
     endClaude();
@@ -613,7 +623,7 @@ export async function claudeWarm(w: { system: string; schema?: z.ZodTypeAny; mod
     const ev = (outcome: ClaudeOutcome, r?: Anthropic.Beta.BetaMessage) => heard({ name: "warm", model, outcome, ms: Date.now() - tA, path: useFormat ? "format" : "json", compact: sent !== w.schema, warm: true }, r);
     try {
       const body = requestBody({ system: w.system }, model, sch, mode, "warm", maxTokens);
-      const res = await billed(model, body, (c) => c.beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 })).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
+      const res = await billed(model, body, (c) => c.beta.messages.create(body, { timeout: w.timeoutMs ?? 10_000 }), { warm: true }).catch((e: unknown) => { ev(outcomeOf(e)); throw e; });
       ev("ok", res);
       keyWorks("anthropic");
       recordClaude(res.model || model, res.usage);

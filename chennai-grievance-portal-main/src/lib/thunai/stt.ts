@@ -36,6 +36,7 @@ import { serverClock, type ServerTiming } from "./stagetime";
 import { telemetry } from "./telemetry";
 import { phonetic } from "./xlit";
 import { understandV8 } from "./v8/flag8";
+import { deadline } from "@/lib/util/deadline";
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 export const MODEL_TA = () => env("JARVIS_STT_MODEL_TA") || env("JARVIS_STT_MODEL") || "whisper-large-v3";
@@ -317,12 +318,19 @@ export async function decode(audio: Blob, lang: "en" | "ta", model: string, sign
     f.append("temperature", "0");
     f.append("prompt", prompt);
     f.append("language", lang);
-    const r = await fetcher("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: f, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(ms)]) : AbortSignal.timeout(ms) });
-    if (r.status === 429) { ledger().cool("groq", model, 30_000); telemetry("fallback_429", { provider: "groq", model, status: 429, fallback: "none" }); throw new SttBusy(); }
-    if (r.status === 401 || r.status === 403) { last = new Error(`refused ${r.status}`); continue; }
-    if (!r.ok) throw new Error(`whisper ${r.status}`);
-    const j = (await r.json()) as { text?: string; segments?: Seg[]; duration?: number };
-    return { lang, model, text: j.text ?? "", segments: j.segments ?? [], duration: j.duration, via: "whisper", prompt };
+    // v12 (21 Nov): a strongly held timer with the caller's signal forwarded (util/deadline.ts), over the request and its body: the composite
+    // AbortSignal.any([signal, AbortSignal.timeout(ms)]) lost its timer to the garbage collector on Node 22.14
+    const dl = deadline(ms, signal);
+    try {
+      const r = await fetcher("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: f, signal: dl.signal });
+      if (r.status === 429) { ledger().cool("groq", model, 30_000); telemetry("fallback_429", { provider: "groq", model, status: 429, fallback: "none" }); throw new SttBusy(); }
+      if (r.status === 401 || r.status === 403) { last = new Error(`refused ${r.status}`); continue; }
+      if (!r.ok) throw new Error(`whisper ${r.status}`);
+      const j = (await r.json()) as { text?: string; segments?: Seg[]; duration?: number };
+      return { lang, model, text: j.text ?? "", segments: j.segments ?? [], duration: j.duration, via: "whisper", prompt };
+    } finally {
+      dl.done();
+    }
   }
   throw last;
 }

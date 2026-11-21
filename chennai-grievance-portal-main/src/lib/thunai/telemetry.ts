@@ -13,7 +13,9 @@ import path from "path";
 /** The events other parts of Jarvis write (any other name is accepted too, under the same field rules). */
 export type TelemetryEvent =
   | "llm" | "hedge" | "warm" | "turn" | "resolve" | "bundle_miss"
-  | "stt" | "stt_decode" | "stt_budget" | "tts" | "fallback_429" | "barge_in" | "self_heard" | "gate" | "signal";
+  | "stt" | "stt_decode" | "stt_budget" | "tts" | "fallback_429" | "barge_in" | "self_heard" | "gate" | "signal"
+  // v12 (21 Nov): a heard line Jarvis let go, words-free (POST /api/jarvis/ignored: why, language, confidence, engaged)
+  | "ignored";
 
 /**
  * Every field telemetry keeps. Each is optional; none may hold a citizen's words (strings must be codes, see above).

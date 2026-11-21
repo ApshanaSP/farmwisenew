@@ -219,8 +219,11 @@ describe("finding 7: the pointer's targets are elements that exist", () => {
 
 describe("v10 review 2: the console's side of the controls' findings", () => {
   it("the console tells the control lane a dataset is open, so the dataset's own sentences reach its intercept (v10 review 2, finding 30)", () => {
-    const i = thunai.indexOf("const f10 = v10Front(said, {");
+    // (v12, 21 Nov: handle() calls v10Front through one helper, front10, for its lanes and for the provisional check of a line said while a
+    // question is in flight; the helper is where the context is built)
+    const i = thunai.indexOf("return v10Front(s, {");
     expect(i).toBeGreaterThan(0);
+    expect(thunai).toContain("const f10 = front10(said);");
     expect(thunai.slice(i, thunai.indexOf("});", i))).toMatch(/studio: !!studioRef\.current && hostRef\.current\.c\.page === "studio"/);
   });
 });

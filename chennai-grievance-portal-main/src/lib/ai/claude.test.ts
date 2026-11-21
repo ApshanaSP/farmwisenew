@@ -23,9 +23,11 @@ describe("Claude provider", () => {
   afterEach(() => { global.__claude = undefined; global.__claudeRefused = undefined; global.__keyProblems?.clear(); delete process.env.ANTHROPIC_API_KEY; });
 
   it("reads the JSON from the text block after a thinking block, with structured outputs and the refusal fallback", async () => {
+    // v12 (21 Nov): a fast step is Haiku by default now (no refusal fallback there); Opus is named here to keep checking Opus's request
+    process.env.AI_CLAUDE_MODEL_FAST = "claude-opus-5-5";
     const create = fake(async () => ({ model: "claude-opus-5-5", stop_reason: "end_turn", usage,
       content: [{ type: "thinking", thinking: "", signature: "x" }, { type: "text", text: '{"answer":"yes","n":3}' }] }));
-    const r = await claudeJson(call);
+    const r = await claudeJson(call).finally(() => { delete process.env.AI_CLAUDE_MODEL_FAST; });
     expect(r.object).toEqual({ answer: "yes", n: 3 });
     const body = create.mock.calls[0][0] as Record<string, any>;
     expect(body.model).toBe("claude-opus-5-5");
@@ -57,6 +59,21 @@ describe("Claude provider", () => {
     const body = create.mock.calls[0][0] as Record<string, any>;
     expect(body.output_config.format).toBeUndefined();
     expect(body.system[0].text).toContain("Reply with only one JSON object");
+  });
+
+  it("v12: a console fast step is Haiku 5.5 when AI_CLAUDE_MODEL_FAST is unset, never Opus; AI_CLAUDE_MODEL still sets the write-ups", async () => {
+    delete process.env.AI_CLAUDE_MODEL_FAST;
+    expect(claudeModel("fast")).toBe("claude-haiku-5-5");
+    expect(claudeModel("reasoning")).toBe("claude-opus-5-5");
+    process.env.AI_CLAUDE_MODEL = "claude-sonnet-5-5";
+    expect(claudeModel("fast")).toBe("claude-haiku-5-5");
+    expect(claudeModel("reasoning")).toBe("claude-sonnet-5-5");
+    process.env.AI_CLAUDE_MODEL_FAST = "claude-sonnet-5-5";
+    expect(claudeModel("fast")).toBe("claude-sonnet-5-5");
+    delete process.env.AI_CLAUDE_MODEL_FAST;
+    const create = fake(async () => ({ model: "claude-haiku-5-5", stop_reason: "end_turn", usage, content: [{ type: "text", text: '{"answer":"a","n":1}' }] }));
+    await claudeJson(call);
+    expect((create.mock.calls[0][0] as Record<string, unknown>).model).toBe("claude-haiku-5-5");
   });
 
   it("sends no fallback to Haiku 5.5, which has none", async () => {
