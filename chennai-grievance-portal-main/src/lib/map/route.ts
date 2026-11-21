@@ -78,8 +78,13 @@ const ALONG = ["along", "on", "alongside", "stretch of", "சாலையில�
 const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["FLOOD_WATERLOGGING"], words: ["waterlogging", "waterlogged", "water logging", "water-logging", "water stagnation", "stagnant water", "standing water", "inundation", "inundated",
     "மழைநீர் தேக்கம்", "மழைநீர் தேங்", "நீர் தேக்கம்", "தண்ணீர் தேங்", "நீர் தேங்", "water stagnation-a", "thanni thengi", "thanni nikkudhu", "thanni nikuthu", "water nikkudhu"] },
+  // v2: before flooding: "flood relief" is the relief needs, not the floods
+  { cats: ["FLOOD_RELIEF"], words: ["flood relief", "relief needs", "relief camp", "relief camps", "relief material", "நிவாரண"] },
   { family: ["FLOOD"], words: ["flooding", "flood", "floods", "flooded", "வெள்ளம்", "வெள்ளப்", "vellam"] },
   { cats: ["SOLID_WASTE"], words: ["garbage", "waste", "trash", "rubbish", "dumping", "குப்பை", "குப்பைகள்", "kuppai"] },
+  // v2: before streetlights and crime: dark stretches are a safety category of their own; crimes against women theirs
+  { cats: ["DARK_SPOT_SAFETY"], words: ["dark spot", "dark spots", "dark stretch", "dark stretches", "poorly lit", "இருண்ட"] },
+  { cats: ["CRIMES_AGAINST_WOMEN"], words: ["crimes against women", "crime against women", "women safety", "eve teasing", "harassment of women", "பெண்களுக்கு எதிரான"] },
   { cats: ["STREETLIGHT_ELECTRICAL"], words: ["streetlight", "streetlights", "street light", "street lights", "live wire", "electrical hazard", "தெருவிளக்கு", "மின் விளக்கு", "street light-u"] },
   { cats: ["ROAD_DAMAGE"], words: ["pothole", "potholes", "road damage", "damaged road", "damaged roads", "பள்ளம்", "சாலை சேதம்", "kuzhi"] },
   // before road accidents: a "fire accident" (தீ விபத்து) is a fire
@@ -346,6 +351,38 @@ export interface ModelWords {
   places?: { ref: string; kind: string }[];
 }
 
+/**
+ * v2: the places in a model's plan held to the rules' reading of the question's verb. Where the rules read "in X" (or "X la", "X zone") as a zone,
+ * taluk or ward and the model took the point of the same name (Anna Nagar the neighbourhood for Anna Nagar zone), the area; where the model left
+ * out a place the rules found ("அடையார் அருகே மருத்துவமனைகள்" with no place), the rules' area on the model's answer. Pure.
+ */
+export function keepAreas(ai: Plan, rules: Plan | null, found: Found[]): Plan {
+  if (!rules) return ai;
+  const keyOf = (a: AreaRef): string => (a.kind === "point" ? a.ref : a.kind === "taluk" ? `taluk:${a.code}` : a.kind === "drawn" ? "drawn" : `${a.kind}:${a.id}`);
+  const group = (k: string) => found.find((f) => [f.pick, ...f.alternatives].some((m) => m.entry.ref === k));
+  const ruleAreas = rules.steps.flatMap((s) => (s.op === "inside" ? [s.area] : s.op === "compare" ? [s.a, s.b] : [])).filter((a) => a.kind !== "drawn");
+  const fix = (a: AreaRef): AreaRef => {
+    if (a.kind !== "point") return a;
+    const g = group(a.ref);
+    const r = g && ruleAreas.find((x) => x.kind !== "point" && group(keyOf(x)) === g);
+    return r ?? a;
+  };
+  let steps = ai.steps.map((s) => (s.op === "inside" ? { ...s, area: fix(s.area) } : s.op === "compare" ? { ...s, a: fix(s.a), b: fix(s.b) } : s));
+  let show = ai.show;
+  const hasPlace = steps.some((s) => s.op === "inside" || s.op === "compare" || s.op === "along" || (s.op === "nearest" && s.from.startsWith("place:")));
+  const rIn = rules.steps.find((s) => s.op === "inside");
+  if (!hasPlace && rIn && rIn.op === "inside") {
+    const root = (pl: Plan, name: string): string | null => { const st = pl.steps.find((x) => x.as === name); return !st ? null : st.op === "take" ? st.layer : "of" in st ? root(pl, st.of) : null; };
+    const showStep = steps.find((s) => s.as === show);
+    if (showStep && root(rules, rIn.of) === root({ ...ai, steps }, show) && showStep.op !== "count_by" && showStep.op !== "hotspot" && showStep.op !== "rank" && showStep.op !== "farthest") {
+      const as = steps.some((s) => s.as === "in") ? "in_place" : "in";
+      steps = [...steps, { op: "inside", as, of: show, area: rIn.area }];
+      show = as;
+    }
+  }
+  return { ...ai, steps, show };
+}
+
 /** v2: the shape of a model's plan set by the question's words: where a nearest search starts, which way a league table runs, a hotspot after its area. */
 function fitShape(p: Plan, text: string, words: ModelWords): Plan {
   let steps = p.steps;
@@ -358,6 +395,18 @@ function fitShape(p: Plan, text: string, words: ModelWords): Plan {
     const fall = RANK_FALL.test(text) && !/\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?)\b/i.test(text);
     const rise = /\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?|went up)\b/i.test(text) && !RANK_FALL.test(text);
     if (fall || rise) steps = steps.map((s) => (s.op === "rank" ? { ...s, order: fall ? "fall" as const : "rise" as const } : s));
+  }
+  // "ward vaariyaga kosu pugar", "garbage ward wise": a count by that area when the model left it out (and no league table or cluster was asked)
+  const by = countByOf(text);
+  const showStep = steps.find((s) => s.as === show);
+  if (by && !steps.some((s) => s.op === "count_by" || s.op === "rank" || s.op === "hotspot" || s.op === "compare" || s.op === "farthest") && showStep && showStep.op !== "nearest") {
+    const isInc = (name: string): boolean => { const st = steps.find((s) => s.as === name); return !!st && (st.op === "take" ? st.layer === "incidents" : "of" in st && isInc(st.of)); };
+    if (isInc(show)) { steps = [...steps, { op: "count_by", as: "by", of: show, by }]; show = "by"; }
+  }
+  // "where are dengue cases clustering", "theft hotspots": clusters, never a plain count by area
+  if (HOTSPOT.test(text) && !steps.some((s) => s.op === "hotspot")) {
+    const cbs = steps.find((s) => s.op === "count_by");
+    if (cbs && cbs.op === "count_by" && !countByOf(text)) { const hot = { op: "hotspot" as const, as: cbs.as, of: cbs.of }; steps = steps.map((s) => (s === cbs ? hot : s)); }
   }
   // a hotspot then an area ("dengue clustering in the north"): the area first, then the clusters in it
   const h = steps.find((s) => s.op === "hotspot");
@@ -392,10 +441,9 @@ export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev
     const fams = f.family ?? [];
     if (said.cats) {
       if (said.cats.every((c) => cats.includes(c))) return cats.length === (f.category ?? []).length ? s : { ...s, filter: { ...f, category: cats.length ? cats : null } };
-      const holds = new Set(said.cats.map((c) => words.familyOf(c)));
-      // nothing usable, only the family that holds the exact category, or a choice no word of the question names: the exact category
-      if ((!cats.length && (!fams.length || fams.every((x) => holds.has(x)))) || !grounded(cats, fams)) return { ...s, filter: { ...f, category: said.cats, family: null } };
-      return s;
+      // the exact category, plus any other category a different word of the question names ("sewage and garbage"); families and unnamed guesses go
+      const named = (c: string) => CAT_WORDS.some((e) => e !== said && any(toks, e.words) && (e.cats ?? []).includes(c));
+      return { ...s, filter: { ...f, category: [...new Set([...said.cats, ...cats.filter(named)])], family: null } };
     }
     if (said.family && ((!cats.length && !fams.length) || !grounded(cats, fams))) return { ...s, filter: { ...f, category: null, family: said.family } };
     return s;
@@ -643,7 +691,7 @@ export function parse(text: string, env: RouteEnv): Parsed {
     facNear: facilityIsNear(free, facWords), nearLayers,
     shape: {
       rank: RANK.test(text) && RANK_UNIT.test(text) ? { by: /\bzones?\b|மண்டல/i.test(text) ? "zone" : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" : "ward", order: RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" : "rise" } : null,
-      countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
+      countBy: countByOf(text), hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       // a comparison the reader reads ("up or down", "today vs yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District
       // IQ; with two areas named ("Adyar vs Velachery, higher or lower?", "Adyar or Velachery, which is higher?") it is an area comparison
       compare: !CHANGE.test(text) && !cmpTime && (COMPARE.test(text) || (cmpWords && twoAreas)), change: CHANGE.test(text) || cmpTime,
@@ -1062,6 +1110,11 @@ export function rulesRoute(text: string, prev: Plan | null, env: RouteEnv): Rout
   if (!built) return null;
   return { kind: "plan", plan: built.plan, defaults: built.defaults, places: p.places, ai: false, edited: null, unread: p.unread };
 }
+
+/** "ward vaariyaga", "zone vaari": a count by area in Tanglish, besides COUNT_BY's words (edits.ts, shared with Jarvis, is unchanged). */
+const COUNT_BY_TG: [RegExp, "ward" | "zone" | "taluk"][] = [
+  [/\bwards?[- ]?(vaariyaga|vaariya|vaari|vaariyaa)\b/i, "ward"], [/\bzones?[- ]?(vaariyaga|vaariya|vaari|vaariyaa)\b/i, "zone"], [/\btaluks?[- ]?(vaariyaga|vaariya|vaari)\b/i, "taluk"]];
+export const countByOf = (text: string): "ward" | "zone" | "taluk" | null => (COUNT_BY.find(([re]) => re.test(text)) ?? COUNT_BY_TG.find(([re]) => re.test(text)))?.[1] ?? null;
 
 /** Shape and time words the rules read, for the speller (spell.ts): "nearst" is nearest, "hotspts" hotspots. */
 const SHAPE_VOCAB = `nearest closest farthest furthest compare comparison versus hotspots hotspot clusters cluster clustering worse worsened improved increased

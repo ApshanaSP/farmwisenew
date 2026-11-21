@@ -22,7 +22,7 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, freshPlan, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, keepAreas, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
 import { scorecard, scorecardWard, timelineOf, type Scorecard, type Timeline } from "./v2";
 import { categoryWords } from "@/lib/collector/nlp";
@@ -30,7 +30,7 @@ import { isTanglishWord } from "@/lib/assistant/lang";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
-import { LAYER_WORD, periodWords, type Lang } from "./words";
+import { LAYER_WORD, periodWords, zoneTa, type Lang } from "./words";
 import { syncEpoch } from "@/lib/collector/epoch";
 
 export interface AskInput {
@@ -188,6 +188,20 @@ export function spellerFor(data: ResolverData) {
   return fn;
 }
 
+/**
+ * The places a question names, for the AI: each name's best reading and its other readings as areas or points ("Anna Nagar" is Zone 8 and a
+ * neighbourhood; "Velachery" a taluk and a locality), so the model can take the area when the question says "in" and the point when it says "near".
+ */
+export function placesForAi(found: Found[], cap = 10): { ref: string; kind: string; name: string }[] {
+  const out: { ref: string; kind: string; name: string }[] = [];
+  for (const f of found) for (const m of [f.pick, ...f.alternatives]) {
+    const e = m.entry;
+    if (m !== f.pick && !["zone", "taluk", "ward", "locality", "osm_place", "road", "waterway"].includes(e.kind)) continue;
+    if (!out.some((x) => x.ref === e.ref)) out.push({ ref: e.ref, kind: e.kind, name: e.name_en });
+  }
+  return out.slice(0, cap);
+}
+
 /** The question's own words that win over a model's plan (route.ts fitModelPlan): the server's language, the world's categories. */
 export const modelWords = (w: World, lang: Lang, places: { ref: string; kind: string }[] = []): ModelWords => ({ lang, familyOf: (c) => w.cats.get(c)?.family ?? null, places });
 
@@ -302,6 +316,12 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     let topic = cityTopic(input.text);
     // "accidents near metro stations": incidents near the stations, the map's own question, not the trains' running (the baseline golden's one miss)
     if (topic === "metro") { const q = parse(input.text, env); if ((q.cats || q.family) && q.facNear) topic = null; }
+    // v2: "metro stations", "railway stations in zone 5", "traffic jams near metro stations": the stations as a map layer, not the trains'
+    // or the roads' live state, unless the question asks about now (running, late, delays, closed, live). The shared reader (Jarvis) is unchanged.
+    if ((topic === "metro" || topic === "traffic") && !/\b(now|right now|live|running|late|delay(s|ed)?|status|closed|suspended|working|moving|stuck)\b/i.test(input.text)) {
+      const q = parse(input.text, env);
+      if (q.facilities.some((f) => f.layer === "rail_metro" || f.layer === "bus_stations")) topic = null;
+    }
     if (topic) {
       const zone = input.context.zone ?? null;
       const c = await cityNow(topic, { lockDept: lock, zone: topic === "traffic" ? zone : null }).catch(() => null);
@@ -362,10 +382,15 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     // v2 (owner, 21 Nov 2026): the AI reads every typed question first; the rules' plan goes with it as a suggestion only, and answers when
     // the AI cannot (no key, busy, a refused plan). The rules' guards above (no such ward, no forecast, out of scope) and the commands stay.
     if (process.env.AI_MAP_FIRST !== "0" && aiStatus("map").available) {
-      const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+      const found = placesForAi(resolve(input.text, null));
       const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
         hint: r?.kind === "plan" ? r.plan : null, unread: r?.kind === "plan" ? r.unread : [], suggest: true, typed: asked.text, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
-      if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found)); aiUsed = true; if (r?.kind === "plan") places = r.places; }
+      if (a && "plan" in a) {
+        plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
+        // the rules' reading of "in X" as an area, and a place the model left out (keepAreas)
+        if (r?.kind === "plan") { plan = keepAreas(plan, r.plan, r.places); places = r.places; }
+        aiUsed = true;
+      }
       else if (a && "problems" in a && a.problems.includes("not a map question") && r?.kind !== "plan") {
         out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) };
         out.ai_used = true;
@@ -378,7 +403,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
       // words the rules could not use ("kids", "by the sea", "north of the city"): the AI reads the whole question, with
       // the rules' plan as a hint; if it cannot, the rules' answer stands and the trace names the words left unused
       if (r.unread?.length && aiStatus("map").available) {
-        const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+        const found = placesForAi(resolve(input.text, null));
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
           hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
@@ -388,7 +413,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     } else {
       // the AI fills the same plan; without it, the kinds of questions the rules answer
       try {
-        const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+        const found = placesForAi(resolve(input.text, null));
         const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
         aiUsed = true;
         if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
@@ -645,7 +670,7 @@ export function glanceOf(r: RunResult, w: World): Glance | null {
     overdue: tile(r.hits.filter((h) => h.inc.open && h.inc.breached)),
     severe: tile(r.hits.filter((h) => h.inc.sev === "Severe")),
     // only when one zone or department stands out: "where" for a single-zone answer says nothing new
-    where: z && byZone.size > 1 ? { ...tile(z[1]), en: `${zn} (Zone ${z[0]})`, ta: `${zn} (மண்டலம் ${z[0]})` } : null,
+    where: z && byZone.size > 1 ? { ...tile(z[1]), en: `${zn} (Zone ${z[0]})`, ta: `${zoneTa(Number(z[0]), zn ?? "")} (மண்டலம் ${z[0]})` } : null,
     who: d && byDept.size > 1 ? { ...tile(d[1]), code: d[0], name: w.depts.get(d[0])?.name ?? d[0] } : null
   };
 }

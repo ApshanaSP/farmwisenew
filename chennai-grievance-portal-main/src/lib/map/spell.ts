@@ -61,6 +61,10 @@ export function tamilKey(w: string): string {
 }
 
 const isTamil = (w: string) => /^[஀-௿]+$/.test(w);
+/** Tamil words a map question is made of (areas, near, time, asking): never corrected toward a place, whatever their spelling is close to. */
+const TA_COMMON = ["மண்டல", "வார்டு", "வட்ட", "பகுதி", "மாவட்ட", "அருகே", "அருகில்", "அருகாமை", "பக்கத்", "சுற்றி", "உள்ள", "இல்லாத", "எத்தனை", "எந்த", "எங்கே", "என்ன",
+  "இந்த", "அந்த", "இன்று", "நேற்று", "வாரம்", "வாரத்", "மாதம்", "மாதத்", "கடந்த", "புகார்", "சம்பவ", "திறந்த", "கடுமையான", "அதிக", "குறைந்த", "தொலைவ", "மீட்டர்", "கி.மீ",
+  "காட்டு", "சொல்", "வரைபட", "மேல்", "க்குள்", "வாரியாக", "அனைத்து", "எல்லா", "மற்றும்", "அல்லது", "காலக்கெடு"];
 const plain = (s: string) => s.toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 /** Shorthand people type on a phone, read as the word ("nr" near, "arnd" around, "hosp" hospital). */
 const SHORT: Record<string, string> = { nr: "near", arnd: "around", abt: "about", hosp: "hospital", hosps: "hospitals", govt: "government", dept: "department",
@@ -129,6 +133,8 @@ export function makeSpeller(src: SpellWords) {
   /** A Tamil word whose start sounds like a place or layer word (by tamilKey), or is one letter off a long one: that start corrected, its ending kept. */
   function fixTamil(w: string): string | null {
     for (const { t } of tamil) if (w.startsWith(t)) return null;
+    // the question's own words ("மண்டலம்" zone, "அருகே" near, "இந்த" this) are never a misspelt place
+    for (const c of TA_COMMON) if (w.startsWith(c)) return null;
     const hits: { t: string; k: string; cut: number }[] = [];
     for (const { t, k } of tamil) {
       let cut = -1;

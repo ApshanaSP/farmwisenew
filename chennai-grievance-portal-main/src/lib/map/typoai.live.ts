@@ -35,7 +35,7 @@ it.runIf(haveStore())("the AI plan step on the typo questions, as typed and afte
   const ai = await import("./ai");
   const { makeResolver } = await import("./resolve");
   const { mapLang, fitModelPlan, freshPlan, rulesRoute } = await import("./route");
-  const { spellerFor, modelWords } = await import("./ask");
+  const { spellerFor, modelWords, placesForAi } = await import("./ask");
   const { costOf } = await import("@/lib/ai/claudebudget");
   const { world: w, resolver } = await world();
   const resolve = makeResolver(resolver);
@@ -62,7 +62,7 @@ it.runIf(haveStore())("the AI plan step on the typo questions, as typed and afte
     ...JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", "map-v2", "typos-holdout.json"), "utf8")).questions.map((q: TQ) => ({ ...q, set: "holdout" }))];
   const plan = async (text: string): Promise<{ p: Plan | null; ms: number; usd: number }> => {
     const lang = mapLang(text, resolve(text, null));
-    const places = resolve(text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+    const places = placesForAi(resolve(text, null));
     const t0 = Date.now();
     let p: Plan | null = null;
     try {

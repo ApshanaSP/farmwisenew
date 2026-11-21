@@ -7,6 +7,13 @@ import type { Period } from "./plan";
 import type { LayerId, Sev } from "./types";
 
 export type Lang = "en" | "ta" | "tanglish";
+
+/** The 15 GCC zones' names in Tamil (the zone file has English names only): a Tamil answer never prints an English zone name. */
+export const ZONE_TA: Record<number, string> = {
+  1: "திருவொற்றியூர்", 2: "மணலி", 3: "மாதவரம்", 4: "தண்டையார்பேட்டை", 5: "ராயபுரம்", 6: "திரு.வி.க. நகர்", 7: "அம்பத்தூர்", 8: "அண்ணா நகர்",
+  9: "தேனாம்பேட்டை", 10: "கோடம்பாக்கம்", 11: "வளசரவாக்கம்", 12: "ஆலந்தூர்", 13: "அடையாறு", 14: "பெருங்குடி", 15: "சோழிங்கநல்லூர்"
+};
+export const zoneTa = (zone: number, en: string): string => ZONE_TA[zone] ?? en;
 export const isTa = (l: Lang) => l === "ta";
 
 /** Tamil names for the 35 categories (the reference file has English labels only). */

@@ -39,7 +39,7 @@ it.runIf(haveStore())("Ask the Map's AI plan on the dev questions", async () => 
   const { aiPlan } = await import("./ai");
   const ai = await import("./ai");
   const { makeResolver } = await import("./resolve");
-  const { spellerFor, modelWords } = await import("./ask");
+  const { spellerFor, modelWords, placesForAi } = await import("./ask");
   const MAP_SPELL = process.env.MAP_SPELL_OFF !== "1";
   const { mapLang, fitModelPlan } = await import("./route");
   const { costOf } = await import("@/lib/ai/claudebudget");
@@ -55,7 +55,7 @@ it.runIf(haveStore())("Ask the Map's AI plan on the dev questions", async () => 
     if (rows.length && Number(process.env.MAP_EVAL_GAP_MS)) await new Promise((r) => setTimeout(r, Number(process.env.MAP_EVAL_GAP_MS)));
     // as the console does (ask.ts): the speller reads the question first, and the AI gets the question as read
     const q = MAP_SPELL ? spellerFor(resolver)(x.q).text : x.q;
-    const found = resolve(q, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+    const found = placesForAi(resolve(q, null));
     const t0 = Date.now();
     let plan: Plan | null = null, problems: string[] | null = null, err = "", busy = false;
     try {

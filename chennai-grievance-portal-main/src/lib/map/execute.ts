@@ -12,7 +12,7 @@ import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, havers
 import { checkSpec, spanOf } from "@/lib/period/read";
 import { isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
-import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang } from "./words";
+import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang, zoneTa } from "./words";
 import { fmtDistance } from "./geom";
 
 // ------------------------------------------------------------- results --
@@ -173,7 +173,7 @@ export function areaLabel(a: AreaRef, w: World, ctx: Ctx): { en: string; ta: str
   if (a.kind === "ward") return { en: `Ward ${a.id}`, ta: `வார்டு ${a.id}` };
   if (a.kind === "zone") {
     const z = w.zones.find((x) => x.zone === a.id);
-    return { en: z ? `${z.name} (Zone ${a.id})` : `Zone ${a.id}`, ta: z ? `${z.name} (மண்டலம் ${a.id})` : `மண்டலம் ${a.id}` };
+    return { en: z ? `${z.name} (Zone ${a.id})` : `Zone ${a.id}`, ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${a.id})` : `மண்டலம் ${a.id}` };
   }
   if (a.kind === "taluk") {
     const t = w.taluks.find((x) => x.code === a.code);
@@ -365,7 +365,7 @@ export function rankRows(now: Hit[], before: Hit[], by: "ward" | "zone" | "taluk
   const rows: RankRow[] = [...m.entries()].map(([key, v]) => {
     let label = key, label_ta = key, lat = 0, lon = 0;
     if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); label = `Ward ${key}`; label_ta = `வார்டு ${key}`; lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
-    else if (by === "zone") { const z = w.zones.find((x) => String(x.zone) === key); label = z ? `${z.name} (Zone ${key})` : `Zone ${key}`; label_ta = z ? `${z.name} (மண்டலம் ${key})` : `மண்டலம் ${key}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0; }
+    else if (by === "zone") { const z = w.zones.find((x) => String(x.zone) === key); label = z ? `${z.name} (Zone ${key})` : `Zone ${key}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${key})` : `மண்டலம் ${key}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0; }
     else { const t = w.taluks.find((x) => x.code === key); label = `${t?.name ?? key} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? key} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0; }
     const a = v.now.length, b = v.before;
     return { key, label, label_ta, lat, lon, now: a, before: b, delta: a - b, pct: b >= RANK_MIN_BASE ? Math.round(((a - b) / b) * 100) : null, ids: v.now };
@@ -625,7 +625,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         } else if (s.areas === "ward") {
           areas = w.wards.map((wd) => ({ key: String(wd.ward), label: `Ward ${wd.ward}`, label_ta: `வார்டு ${wd.ward}`, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
         } else {
-          areas = w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${z.name} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
+          areas = w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
             ...scoreOf(w.wards.filter((wd) => wd.zone === z.zone).flatMap((wd) => grids.get(wd.ward)!)) }));
         }
         areas.sort((a, b) => b.p90 - a.p90 || a.key.localeCompare(b.key, "en", { numeric: true }));
@@ -658,7 +658,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
             key = String(h.inc.ward); label = `Ward ${h.inc.ward}`; label_ta = `வார்டு ${h.inc.ward}`; lat = wd?.lat ?? h.inc.lat; lon = wd?.lon ?? h.inc.lon;
           } else if (s.by === "zone" && h.inc.zone != null) {
             const z = w.zones.find((x) => x.zone === h.inc.zone);
-            key = String(h.inc.zone); label = z ? `${z.name} (Zone ${z.zone})` : `Zone ${h.inc.zone}`; label_ta = z ? `${z.name} (மண்டலம் ${z.zone})` : `மண்டலம் ${h.inc.zone}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0;
+            key = String(h.inc.zone); label = z ? `${z.name} (Zone ${z.zone})` : `Zone ${h.inc.zone}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${h.inc.zone}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0;
           } else if (s.by === "taluk" && h.inc.taluk) {
             const t = w.taluks.find((x) => x.code === h.inc.taluk);
             key = h.inc.taluk; label = `${t?.name ?? h.inc.taluk} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? h.inc.taluk} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0;

@@ -84,3 +84,11 @@ describe("Ask the Map's speller", () => {
     expect(soundKey("kovil")).not.toBe(soundKey("koil"));
   });
 });
+
+describe("Tamil words of the question itself", () => {
+  it("never reads மண்டலம் (zone) or அருகே (near) as a place spelt like them", () => {
+    const s = makeSpeller({ words: [], places: [], isKnown: () => false, tamil: ["தண்டலம்", "அருணே"] });
+    expect(s("மண்டலம் 13 இல் வெள்ளம்").text).toBe("மண்டலம் 13 இல் வெள்ளம்");
+    expect(s("பள்ளி அருகே").fixes).toEqual([]);
+  });
+});

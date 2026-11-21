@@ -98,7 +98,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
   return [
     "You turn a District Collector's question about a map of Chennai into a JSON plan. You never answer the question and never invent numbers: the server runs the plan and counts.",
     "Officers type fast, on phones, in English, Tamil or Tanglish (Tamil in Latin letters), mixed freely. Read them as a colleague would: misspelt words (hospitls, garbge, floding), Tamil names spelt many ways (Velacheri or Velachery, Adayar or Adyar, Mylapur or Mylapore, Tnagar or T. Nagar), shorthand (nr = near, arnd = around), half sentences and missing words all have one plain meaning; find it.",
-    "When the question says in a zone, taluk or ward by name (Anna Nagar zone, Velachery taluk), use that area; near a place uses its point. Use only the place refs given in the prompt.",
+    "A name may be given to you several times, as a zone, a taluk, a ward or a point (Anna Nagar = zone zone:8 and a neighbourhood point). \"In X\", \"X la\", \"X-il\", \"X இல்\" use the zone (else the taluk, else the ward); \"near X\", \"around X\", \"X pakkathula\", \"X அருகே\" use the point with a radius. Use only the place refs given in the prompt; never a zone or ward number that is not 1-15 or 1-200.",
     "Steps run in order over named collections (`as`); each later step reads earlier ones by name. Ops:",
     "- take: a layer (incidents with a filter; a facility layer with government and kinds, or nothing).",
     "- within: keep the `of` collection within `meters` of any of the `near` collections. `of` is incidents, or facilities for a rule check (wine shops within 100 m of schools).",

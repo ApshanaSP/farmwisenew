@@ -130,6 +130,10 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
     if ((s.op === "within" || s.op === "along") && (s.meters < LIMITS.minM || s.meters > LIMITS.maxM)) problems.push(`${s.meters} m is outside ${LIMITS.minM}–${LIMITS.maxM} m`);
     if ((s.op === "inside" || s.op === "compare") && [s.op === "inside" ? s.area : s.a, s.op === "compare" ? s.b : null].some((a) => a?.kind === "point" && (a.radius_m < LIMITS.minM || a.radius_m > LIMITS.maxM)))
       problems.push(`a radius is outside ${LIMITS.minM}–${LIMITS.maxM} m`);
+    // v2: a model wrote "zone 0" for a taluk's name; areas are wards 1–200 and zones 1–15 (a compare's -1 stands for "the zone with most", filled by the server)
+    for (const a of s.op === "inside" ? [s.area] : s.op === "compare" ? [s.a, s.b] : [])
+      if ((a.kind === "zone" && !(a.id >= 1 && a.id <= 15) && !(s.op === "compare" && a.id === -1)) || (a.kind === "ward" && !(a.id >= 1 && a.id <= 200)))
+        problems.push(`there is no ${a.kind} ${a.id}: wards are 1–200, zones 1–15`);
     if (s.op === "farthest" && s.beyond_m != null && (s.beyond_m < LIMITS.minM || s.beyond_m > 20_000)) problems.push(`${s.beyond_m} m is outside ${LIMITS.minM}–20,000 m`);
     if (s.op === "nearest" && (s.k < 1 || s.k > LIMITS.k)) problems.push(`k = ${s.k} is outside 1–${LIMITS.k}`);
     if (s.op === "rank" && plan.steps.find((x) => x.as === s.of)?.op !== "change") problems.push(`step "${s.as}" ranks "${s.of}", which is not a change step`);

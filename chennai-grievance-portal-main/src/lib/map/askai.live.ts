@@ -59,21 +59,39 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const { resolver, world: w } = await world();
   const resolve = makeResolver(resolver);
   const usd0 = spentUsd();
-  const user = { email: "eval@map", role: "collector" as const, lockDept: null };
+  const wardZone = new Map<number, number>(JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "boundaries", "gcc-wards.geojson"), "utf8")).features
+    .map((f: { properties: { ward_no: number; zone_number: number } }) => [Number(f.properties.ward_no), Number(f.properties.zone_number)]));
+  // one test officer per set: the console allows each officer a daily AI allowance (gateway.ts DAILY_TOKENS), and one officer asking 330 questions ran out
+  let user = { email: "eval-dev@map", role: "collector" as const, lockDept: null as string | null };
+  const as = (set: string) => { user = { ...user, email: `eval-${set}@map` }; };
   const context = { zone: null, taluk: null, incidentId: null, drawn: null, ward: null };
-  const ask = async (text: string) => (await withBusyRetry(() => askMap({ text, plan: null, prev: null, context, user, reword: false }))).value;
+  const ask = async (text: string) => (await withBusyRetry(() => askMap({ text, plan: null, prev: null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
   const ms: number[] = [];
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
   for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"]] as const) {
     if (!SETS.includes(set)) continue;
+    as(set);
     for (const x of read(file) as Q[]) {
       const t0 = Date.now();
       const r = await ask(x.q);
       ms.push(Date.now() - t0);
       const refused = !r || (!r.plan && r.kind === "say");
       const m = misses(r?.plan ?? null, refused ? ["not a map question"] : null, x.want);
+      // the count, checked independently where the answer is a facility layer in a zone: the raw layer file, each point's own ward, the ward file's zone
+      const st = r?.plan?.steps ?? [];
+      if (st.length === 2 && st[0].op === "take" && st[0].layer !== "incidents" && st[1].op === "inside" && st[1].area.kind === "zone" && r?.answer) {
+        const kinds = st[0].where?.kinds ?? null, gov = st[0].where?.government ?? null, zone = st[1].area.id;
+        const fp = path.join(process.cwd(), "data", "layers", `${st[0].layer === "police" ? "police_osm" : st[0].layer}.geojson`);
+        if (fs.existsSync(fp) && gov == null && st[0].layer !== "police") {
+          const n = JSON.parse(fs.readFileSync(fp, "utf8")).features.filter((f: { properties: { kind?: string; ward?: number } }) =>
+            (!kinds || kinds.includes(f.properties.kind ?? "")) && f.properties.ward != null && wardZone.get(Number(f.properties.ward)) === zone).length;
+          const same = n === r.answer.count;
+          fs.appendFileSync(OUT, JSON.stringify({ set, id: x.id, oracle: n, map: r.answer.count, same }) + "\n");
+          console.log(`COUNT ${same ? "SAME" : "DIFF"} ${x.id} map ${r.answer.count} independent ${n}`);
+        }
+      }
       add(set, !m.length, !!r?.ai_used);
       fs.appendFileSync(OUT, JSON.stringify({ set, id: x.id, q: x.q, ok: !m.length, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), miss: m, plan: r?.plan ?? null }) + "\n");
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
@@ -82,6 +100,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   if (SETS.includes("typos")) {
     const pairs = [...read("eval/map-v2/typos.json").map((q: object) => ({ ...q, set: "typos" })), ...read("eval/map-v2/typos-holdout.json").map((q: object) => ({ ...q, set: "typos-holdout" }))] as { id: string; q: string; same_as: string; set: string }[];
     for (const x of pairs) {
+      as(x.set);
       const want = rulesRoute(x.same_as, null, { resolve, dept: () => null, lang: mapLang(x.same_as, resolve(x.same_as, null)), now: w.now });
       const t0 = Date.now();
       const r = await ask(x.q);
