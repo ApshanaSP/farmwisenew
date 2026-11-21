@@ -23,7 +23,7 @@ const webOn = () => (process.env.JARVIS_AIDE_WEB ?? "").trim() !== "0";
 const firstMs = () => { const n = Number(process.env.JARVIS_AIDE_FIRST_MS); return Number.isFinite(n) && n >= 800 && n <= 15_000 ? n : 3500; };
 
 /** The screens that answer a question: the aide always says their point (a news list, a brief, a case, a comparison, a why). */
-const ASKED = new Set(["case", "situation", "explain", "why", "changed", "compare", "news", "brief", "advise", "insight", "performance", "ranking", "trend", "answer"]);
+const ASKED = new Set(["focus", "case", "situation", "explain", "why", "changed", "compare", "news", "brief", "advise", "insight", "performance", "ranking", "trend", "answer"]);
 /** A sentence shaped as a question or a request to be told: the aide answers it whatever screen it built. */
 const QUESTION = /\?|^\s*(?:what|why|how|which|who|when|where|is|are|was|were|does|did|do|can|should|tell|explain|summari[sz]e|brief|describe|compare|give me (?:a|the) (?:summary|picture|update|status)|status|update)\b|\b(?:tell me|what about|what's|whats|how is|how are|why is|why are|any update|the status|the issue|the problem|the situation)\b|என்ன|ஏன்|எப்படி|எங்கே|யார்|எவ்வளவு|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|விளக்கு|\b(?:enna|yen|epdi|evlo|sollu|sollunga|pathi)\b/iu;
 

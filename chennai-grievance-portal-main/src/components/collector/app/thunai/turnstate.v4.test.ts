@@ -4,7 +4,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { StageDocT } from "@/lib/thunai/stage";
 import type { ScreenState } from "@/lib/thunai/types";
-import { ackDelay, ackDue, asksFirst, compactSlots, consoleDigest, HearingCaptions, heardOf, keepTurns, longTurn, memTurn, OBS_DIGEST_MAX, resultLine, screenResult, withDigest } from "./turnstate";
+import { ackDelay, ackDue, asksFirst, CAPTIONS_KEEP_MS, compactSlots, consoleDigest, HearingCaptions, heardOf, keepTurns, longTurn, memTurn, OBS_DIGEST_MAX, resultLine, screenResult, withDigest } from "./turnstate";
 
 const doc = (o: Partial<StageDocT> = {}) => ({ recipe: "cases", title: "Severe cases in Adyar this week", slots: { zones: [13], period: "weekly", sev: "Severe", q: "flood deaths 300 in Adyar", n: 15, empty: [], none: null }, blocks: [{ kind: "CaseList", id: "c", total: 12, rows: [] }], ...o }) as unknown as StageDocT;
 
@@ -77,20 +77,40 @@ describe("the ears' confidence and language reach the planner (defect 6)", () =>
 
 describe("captions only while an addressed sentence is heard (defect 10)", () => {
   const rec = () => ({ start: vi.fn(), stop: vi.fn(), setLang: vi.fn() });
-  it("nothing runs until speech starts; side talk never starts it; it stops at the end of speech", () => {
+  it("nothing runs until speech starts; side talk never starts it; v15: it stays ready CAPTIONS_KEEP_MS after the end of speech, then stops", () => {
+    vi.useFakeTimers();
+    try {
+      const made: (ReturnType<typeof rec> & { mark: ReturnType<typeof vi.fn> })[] = [];
+      const c = new HearingCaptions(() => { const r = { ...rec(), mark: vi.fn() }; made.push(r); return r; });
+      expect(c.running).toBe(false);
+      c.speechStart({ on: true, engaged: false, awaitingYes: false });
+      expect(made.length).toBe(0);
+      c.speechStart({ on: true, engaged: true, awaitingYes: false });
+      expect(made.length).toBe(1);
+      expect(made[0].start).toHaveBeenCalledTimes(1);
+      c.speechEnd();
+      expect(made[0].stop).not.toHaveBeenCalled();
+      // the next sentence finds it running: no new recogniser, the sentence's start is marked
+      c.speechStart({ on: true, engaged: true, awaitingYes: false });
+      expect(made.length).toBe(1);
+      expect(made[0].mark).toHaveBeenCalledTimes(1);
+      c.speechEnd();
+      vi.advanceTimersByTime(CAPTIONS_KEEP_MS + 10);
+      expect(made[0].stop).toHaveBeenCalledTimes(1);
+      expect(c.running).toBe(false);
+    } finally { vi.useRealTimers(); }
+  });
+  it("v15: warm makes it ready before the sentence (the wake, the end of an answer); a closed mode never does", () => {
     const made: ReturnType<typeof rec>[] = [];
     const c = new HearingCaptions(() => { const r = rec(); made.push(r); return r; });
-    expect(c.running).toBe(false);
-    c.speechStart({ on: true, engaged: false, awaitingYes: false });
+    c.warm({ on: false });
     expect(made.length).toBe(0);
-    c.speechStart({ on: true, engaged: true, awaitingYes: false });
+    c.warm({ on: true });
     expect(made.length).toBe(1);
-    expect(made[0].start).toHaveBeenCalledTimes(1);
-    c.speechStart({ on: true, engaged: true, awaitingYes: false });
+    c.warm({ on: true });
     expect(made.length).toBe(1);
-    c.speechEnd();
+    c.stop();
     expect(made[0].stop).toHaveBeenCalledTimes(1);
-    expect(c.running).toBe(false);
   });
   it("a spoken yes being awaited starts it; a closed mode never does; no recogniser, nothing", () => {
     const c = new HearingCaptions(rec);

@@ -236,11 +236,11 @@ describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
     expect(first).not.toBe(jarvis);
     expect(process.env.THUNAI_DIR).toBe(first);
     for (let i = 0; i < 200; i++) ledger().record("anthropic", HAIKU, { tokens: 4500, lane: "eval" });
-    expect(ledger().room("anthropic", HAIKU).left.tpd).toBe(1_500_000 - 900_000);
+    expect(ledger().room("anthropic", HAIKU).left.tpd).toBe(8_000_000 - 900_000);
     const step4 = ownLedger("step4");
     expect(step4).not.toBe(first);
     const r = ledger().room("anthropic", HAIKU);
-    expect(r.left).toMatchObject({ rpd: 500, tpd: 1_500_000 });
+    expect(r.left).toMatchObject({ rpd: 2000, tpd: 8_000_000 });
     expect(ledgerCheck(r, 60, 4500).ok).toBe(true);
     vi.stubEnv("THUNAI_DIR", jarvis);
     resetLedger();

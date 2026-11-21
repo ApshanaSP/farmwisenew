@@ -161,6 +161,8 @@ const NO_FIGURES = new Set<string>();
  */
 const ROUND_GRACE_MS = 2000;
 const CLIENT_TIMEOUT = "client-timeout";
+/** v15: a sentence that asks something about the district (a question word, or a district noun with a question shape), in English, Tamil or Tanglish */
+const ASKS_DISTRICT = /\?|\b(?:what|which|where|why|how|who|when|tell me|show me|give me|list|count|any)\b|என்ன|எந்த|எங்க|எங்கே|ஏன்|எப்படி|எவ்வளவு|எத்தனை|யார்|சொல்லு|காட்டு|\b(?:enna|endha|entha|enga|yen|epdi|evlo|ethana|sollu|kaattu|kaatu)\b/iu;
 /** v12 (21 Nov, stale-and-double RC11): a next step on offer is taken by a spoken yes this long after the answer that offered it ended */
 const OFFER_MS = 15_000;
 const SLOW_LINE: Record<Lang, string> = { en: "That took too long, so I stopped. Please ask me again.", ta: "அதற்கு அதிக நேரம் ஆனது, நிறுத்திவிட்டேன். மீண்டும் கேளுங்கள்." };
@@ -2533,6 +2535,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // v12 (RC6): the agent's round ran past its budget and 2 s (callAgent's own deadline): a short honest line, never silence (the
       // analyst is not asked: it would be a second long wait on the same busy providers)
       if (ag?.note === CLIENT_TIMEOUT) { earcon("blocked"); audit(said, [], "the agent took too long (client deadline)"); remember(said, "took too long: nothing was answered"); out(SLOW_LINE[rules.lang], rules.lang, "ready", NO_FIGURES); return; }
+      // v15 (22 Nov): a question about the district whose plan the checker refused goes to the analyst (Ask District IQ's engine reads the
+      // data itself), never "I can't do that": the owner's "எந்த area-ல நிறைய cases வந்துட்டே இருக்கு?" got that twice at 23:15-23:16
+      if (ag && ag.kind === "none" && (ag.note === "checker" || ag.note === "model") && ASKS_DISTRICT.test(said)) { audit(said, [], `to the analyst (the plan: ${ag.note})`); await askAnalyst(said, rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
       // the checker left nothing of the plan: what Jarvis can do, not silence
       if (ag && ag.kind === "none") { earcon("need"); audit(said, [], "cannot do"); if (missed()) offerKeys(rules.lang); else out(cannotLine(rules.lang), rules.lang, "ready"); return; }
       // not a console command: a question about the district, answered by the analyst (Ask District IQ's engine)
@@ -3128,9 +3133,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       },
       onEndSession: () => { setMode("off"); },
       onHold: () => { setNarrating(false); setReading(null); },
-      onNameOnly: (o) => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); if (!o?.replied) sayWake(l); engagedNow(); },
+      onNameOnly: (o) => { const l = listenLangRef.current; captionRibbon.current = false; captions.current?.warm({ on: modeRef.current === "on" }); hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); if (!o?.replied) sayWake(l); engagedNow(); },
       // v6: "Hey Jarvis" on the device: the HUD answers in the next frame, the voice once the Collector pauses (conductor.ts wakeWord)
-      onWakeWord: () => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); jvMark("wakeWord"); engagedNow(); },
+      onWakeWord: () => { const l = listenLangRef.current; captionRibbon.current = false; captions.current?.warm({ on: modeRef.current === "on" }); hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); jvMark("wakeWord"); engagedNow(); },
       // v12: the request followed the name after a short pause: the earcon alone, never "Yes?" over its start (conductor.ts wakeReplyTick)
       onWakeReply: (o) => { if (o?.tone) { earcon("open"); warmFor(listenLangRef.current); } else sayWake(listenLangRef.current); },
       // v12 (the critic's silent drops): every line let go is counted, words-free; an engaged line the gate could not make out gets a soft
@@ -3163,8 +3168,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         speechEngaged.current = o.engaged;
         // v6: a sentence to Jarvis has begun: its answer's voice is warmed while it is said
         if (o.engaged) warmFor(listenLangRef.current);
+        // v15 (22 Nov, the owner: "it shouldn't show the older question I already spoke"): a sentence to Jarvis has begun: the bar drops the
+        // last question at once and shows this one's words as they come (the captions, warm since the wake or the last answer)
+        if (o.engaged || pendingBRef.current) { captionRibbon.current = true; hud.set({ ribbon: "…" }); setInterim(""); }
         // Whisper is out and the conductor's own recogniser hears this speech: the live captions stand aside (one recogniser at a time)
-        if (o.fallback) return;
+        if (o.fallback) { captions.current?.stop(); return; }
         captions.current?.speechStart({ on: modeRef.current === "on", engaged: o.engaged, awaitingYes: !!pendingBRef.current });
       },
       onSpeechEnd: () => { captions.current?.speechEnd(); },
@@ -3186,6 +3194,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         // v12 (RC11): a next step on offer counts its 15 s from the end of the voice that offered it
         if (e === "end") voiceEndAt.current = Date.now();
         engagedNow();
+        // v15: the answer was said: the captions are ready for the next sentence (inside the window only: the maker asks it)
+        if (e === "end") captions.current?.warm({ on: modeRef.current === "on" });
       },
       mark: (name, t) => {
         if (name === "vadEnd") {

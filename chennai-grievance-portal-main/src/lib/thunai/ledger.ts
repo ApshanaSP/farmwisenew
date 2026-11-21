@@ -19,8 +19,14 @@ export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hed
 
 export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number; ash?: number; asd?: number; minAudioS?: number }
 
-/** Claude is paid by the token: this is Jarvis's own ceiling on a day, not Anthropic's limit. On Opus 5.5 it comes to about US$8 at the very most */
-const CLAUDE_DAY: Limits = { rpm: 50, rpd: 500, tpm: 50_000, tpd: 1_500_000 };
+/**
+ * Claude is paid by the token: this is Jarvis's own ceiling, not Anthropic's limit (a real 429 cools the model: claude.ts COOL_BUSY_MS).
+ * v15 (22 Nov, the owner's session of 21 Nov, 23:11-23:19): the minute's 50,000 tokens let three planner turns through (each about 17,400
+ * tokens, half of them the cached prompt) and the fourth went to Groq or Gemini without THE DISTRICT NOW: "cannot do", "Nothing in the
+ * dashboard mentions improving", the qwen answer at 23:17:32. After eight or nine questions Jarvis seemed to stop understanding. The
+ * owner's spend ceiling (claudebudget.ts, JARVIS_CLAUDE_BUDGET_USD) is the guard on money; these only stop a runaway loop.
+ */
+const CLAUDE_DAY: Limits = { rpm: 50, rpd: 2000, tpm: 400_000, tpd: 8_000_000 };
 /**
  * v7: that day cap was set against Opus's prices; on Haiku 5.5 it stops Claude at under US$0.10 of spend. JARVIS_CLAUDE_DAY_TOKENS and
  * JARVIS_CLAUDE_DAY_REQUESTS raise it for a run (unset: the cap above). The owner's spend ceiling (claudebudget.ts) holds every call whatever.

@@ -194,6 +194,8 @@ export async function warmInsights(periods: readonly ("daily" | "weekly" | "mont
 }
 
 const fact = (id: string, label: string, value: unknown, unit?: string): Fact => ({ id, label, value: Number(value ?? 0), ...(unit ? { unit } : {}) });
+/** v15: focus_trends' four reads, kept per data version (dataKey: the build and a 5-minute bucket), filters and window */
+const focusCache = new Map<string, ReturnType<typeof import("@/lib/assistant/incidents").focusRows>>();
 const fn = (name: string, detail?: string): SourceRef => ({ kind: "function", name, ...(detail ? { detail } : {}) });
 const tbl = (name: string, detail?: string): SourceRef => ({ kind: "table", name, ...(detail ? { detail } : {}) });
 const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
@@ -1029,6 +1031,39 @@ export const TOOLS = [
         scope, asOf: now, data: { area, locality, byStreet: !!locality, ...d }, facts,
         sources: [tbl("incidents", "place_text, ward_no, lat/lon"), tbl("ref_wards", "ward centroids")],
         incidentIds: d.points.slice(0, 30).map((p) => p.id), testData: d.total.syn > 0, caveats, untrusted: ["title", "place", "key"]
+      };
+    }
+  }),
+
+  tool({
+    name: "focus_trends",
+    description: "Where to concentrate and how each GCC zone is trending, from the past: every zone's reports in the last N days (7, 28 or 84; default 28) against the N days before, whether the move is beyond ordinary ups and downs (Poisson 2-sigma), the last 12 weeks week by week, the open backlog past its deadline, severe and repeat reports, the kind behind each move, a 'where to concentrate' score with its reasons, the zones improving and getting worse, and the places where one kind of problem keeps coming back. For 'which areas should I concentrate on', 'which areas are improving / getting worse', 'where do problems keep recurring'.",
+    args: z.object({ scope: ScopeSchema.default({}), days: z.union([z.literal(7), z.literal(28), z.literal(84)]).default(28) }),
+    async run({ scope, days }) {
+      const now = await asOf();
+      const { focusRows } = await import("@/lib/assistant/incidents");
+      const { analyseFocus } = await import("@/lib/thunai/v15/focus");
+      const key = `${await dataKey()}|${scope.cat ?? ""}|${scope.dept ?? ""}|${scope.taluk ?? ""}|${days}`;
+      let rows = focusCache.get(key);
+      if (!rows) {
+        rows = focusRows({ cats: scope.cat ? [scope.cat] : null, dept: scope.dept, taluk: scope.taluk }, now, days, 84);
+        focusCache.set(key, rows);
+        rows.catch(() => focusCache.delete(key));
+        if (focusCache.size > 24) focusCache.delete(focusCache.keys().next().value as string);
+      }
+      const r = await rows;
+      const a = analyseFocus(r, now, days as 7 | 28 | 84, { zones: [] });
+      const facts: Fact[] = [];
+      for (const [k, x] of a.attention.slice(0, 5).entries()) facts.push(fact(`focus.attention.${k + 1}`, `Where to concentrate, rank ${k + 1}: ${x.name.en} (${x.reasons.map((y) => y.en).join("; ")})`, x.score));
+      for (const x of a.zones) facts.push(fact(`focus.zone.${x.zone}.now`, `Reports in ${x.name.en}, the last ${days} days`, x.now), fact(`focus.zone.${x.zone}.prev`, `Reports in ${x.name.en}, the ${days} days before`, x.prev),
+        fact(`focus.zone.${x.zone}.overdue`, `Open past their deadline in ${x.name.en}`, x.overdue));
+      for (const x of a.worse.slice(0, 3)) facts.push(fact(`focus.worse.${x.zone}`, `${x.name.en} is GETTING WORSE beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
+      for (const x of a.better.slice(0, 3)) facts.push(fact(`focus.better.${x.zone}`, `${x.name.en} is IMPROVING beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
+      return {
+        scope, asOf: now, data: { days, weekLabels: a.weekLabels, district: a.district, zones: a.zones, attention: a.attention.map((x) => x.zone), worse: a.worse.map((x) => x.zone), better: a.better.map((x) => x.zone), spots: a.spots,
+          method: "Reports in the window against the window of the same length before it; a move counts as getting worse or improving only beyond 2 standard deviations of the difference of two Poisson counts, by 3 or more reports and 10% or more. Where to concentrate: overdue backlog 30%, severe 20%, volume 15%, rise 20%, repeat reports 15%, each against the highest zone." },
+        facts, sources: [fn("incidents.focusRows"), tbl("incidents")], incidentIds: [], testData: false,
+        caveats: ["A rise in reports is not proof that things are worse on the ground: more reporting, or a rain spell, raises counts too."]
       };
     }
   }),

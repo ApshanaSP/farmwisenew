@@ -141,6 +141,10 @@ export const PAGE_WORDS: [string, PageKey][] = [
   ["trends", "trends"], ["trend", "trends"], ["போக்கு", "trends"], ["ட்ரெண்ட்ஸ்", "trends"], ["டிரெண்ட்ஸ்", "trends"], ["டிரெண்ட்", "trends"], ["ட்ரெண்ட்", "trends"],
   ["ஓவர்வியூ", "overview"], ["டாஷ்போர்டு", "overview"], ["டாஷ்போர்ட்", "overview"], ["பிரீஃபிங்", "briefing"], ["ப்ரீஃபிங்", "briefing"], ["ப்ரீபிங்", "briefing"],
   ["என்விரான்மென்ட்", "environment"], ["ஸ்டுடியோ", "studio"],
+  // v15 (22 Nov): the page names as the ears wrote them ("Superview page-க்கு போ" on 20 Nov was the overview, sent to the planner: 2.1 s)
+  ["over view", "overview"], ["superview", "overview"], ["super view", "overview"], ["ஓவர் வியூ", "overview"], ["ஓவர்வியு", "overview"], ["ஓவர் வியு", "overview"],
+  ["டிரென்ட்ஸ்", "trends"], ["ட்ரென்ட்ஸ்", "trends"], ["ட்ரென்ட்", "trends"], ["டிரென்ட்", "trends"], ["பிரீபிங்", "briefing"], ["ப்ரீபிங்க்", "briefing"],
+  ["என்விரோன்மென்ட்", "environment"], ["என்வயர்மென்ட்", "environment"], ["என்விரான்மெண்ட்", "environment"], ["டேட்டா ஸ்டுடியோ", "studio"],
   ["environment", "environment"], ["environment and markets", "environment"], ["weather", "environment"], ["சுற்றுச்சூழல்", "environment"],
   ["வானிலை", "environment"], ["data studio", "studio"], ["studio", "studio"], ["datasets", "studio"], ["தரவு", "studio"]
 ];

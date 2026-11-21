@@ -27,6 +27,7 @@ import { keepExtras, type AideExtras } from "./aide7/extras";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
+import { focusRecipe } from "./recipes/focus";
 import { explainRecipe } from "./recipes/explain";
 import { situationRecipe } from "./recipes/situation";
 import type { RecipeCtx, RecipePart } from "./recipes/common";
@@ -315,7 +316,9 @@ const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, city, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
   },
-  changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c))
+  changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c)),
+  // v15 (22 Nov): where to concentrate, improving, getting worse, repeating (recipes/focus.ts)
+  focus: analysis((c) => focusRecipe(c))
 };
 
 /**

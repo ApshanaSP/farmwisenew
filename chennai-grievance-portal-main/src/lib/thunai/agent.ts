@@ -41,7 +41,9 @@ export const AGENT_TOOLS = ["overview_kpis", "zones", "zone_profile", "departmen
   // reachable since the reach audit (reach.ts); search and incident_story write an embedding index and run a model, map_geo and category_summary are not for answering
   "incidents", "incident_detail", "briefing", "source_health", "resolve_place", "search_records",
   // v11: the city on the ground (live traffic, rain, flood streets, power and trains in heavy rain), as the chatbot already had
-  "city_now"] as const;
+  "city_now",
+  // v15 (22 Nov): where to concentrate, improving, getting worse, repeating, from the past (recipes/focus.ts)
+  "focus_trends"] as const;
 const CITY_TOPICS_V11 = ["traffic", "flood", "rain", "power", "metro", "all"] as const;
 /** v11: the note on an answer the planner wrote from THE DISTRICT NOW (checked here; the aide leaves it as it is) */
 export const V11_NOTE = "v11:district-now";

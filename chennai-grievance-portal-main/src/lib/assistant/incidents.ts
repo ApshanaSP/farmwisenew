@@ -317,6 +317,46 @@ export async function countByZone(f: IncidentFilters, now: string) {
     prev: before.get(num(r.zone)) ?? 0 }));
 }
 
+/**
+ * v15 (22 Nov, the owner: "which areas should I concentrate on, which are improving, which keep getting worse or keep coming back"): the
+ * history a focus answer rests on, zone by zone, in four reads over the filters' kind, department and taluk (never their period: the
+ * windows here are the answer's own).
+ *   days     each zone's reports per day (IST), with severe and repeat ones, over the last `lookbackDays`
+ *   kinds    each zone's reports per kind in the last `windowDays` and the `windowDays` before them
+ *   backlog  each zone's open incidents now, and those past their deadline (all time: an old open case is still open)
+ *   repeats  the places with 3 or more reports of one kind in the last `windowDays`
+ * A repeat report is one with 2 or more similar incidents at its place in 90 days (the pipeline's recurrence_90d).
+ */
+export async function focusRows(f: Pick<IncidentFilters, "cats" | "dept" | "taluk">, now: string, windowDays: number, lookbackDays: number) {
+  const base: IncidentFilters = { period: "weekly", cats: f.cats ?? null, dept: f.dept ?? null, taluk: f.taluk ?? null };
+  const look = where({ ...base, hours: lookbackDays * 24 }, now);
+  const pair = where({ ...base, hours: windowDays * 48 }, now);
+  const win = where({ ...base, hours: windowDays * 24 }, now);
+  const cut = new Date(Date.parse(`${now.replace(" ", "T")}+05:30`) - windowDays * 86_400_000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const filt: string[] = ["i.zone_no IS NOT NULL"], fp: unknown[] = [];
+  if (base.cats?.length) (filt.push("i.category_code IN (?)"), fp.push(base.cats));
+  if (base.dept) (filt.push("i.lead_dept = ?"), fp.push(base.dept));
+  if (base.taluk) (filt.push("i.taluk_code = ?"), fp.push(base.taluk));
+  const [days, kinds, backlog, repeats] = await Promise.all([
+    q(`SELECT i.zone_no AS zone, i.zone_name AS name, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS d, COUNT(*) AS n,
+              SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.recurrence_90d, 0) >= 2) AS rep
+       FROM incidents i WHERE ${look.sql} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d')`, look.params),
+    q(`SELECT i.zone_no AS zone, i.category_code AS cat, i.category_label AS label, SUM(i.first_reported_at >= ?) AS now_n, SUM(i.first_reported_at < ?) AS prev_n
+       FROM incidents i WHERE ${pair.sql} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.category_code, i.category_label`, [cut, cut, ...pair.params]),
+    q(`SELECT i.zone_no AS zone, SUM(${OPEN} = 1) AS open, SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(${OPEN} = 1 AND i.severity_level = 'Severe') AS severe_open
+       FROM incidents i WHERE ${filt.join(" AND ")} GROUP BY i.zone_no`, fp),
+    q(`SELECT i.zone_no AS zone, i.zone_name AS name, i.place_text AS place, i.category_code AS cat, i.category_label AS label, COUNT(*) AS n, SUM(${OPEN} = 1) AS open
+       FROM incidents i WHERE ${win.sql} AND i.zone_no IS NOT NULL AND i.place_text IS NOT NULL AND i.place_text <> ''
+       GROUP BY i.zone_no, i.zone_name, i.place_text, i.category_code, i.category_label HAVING COUNT(*) >= 3 ORDER BY n DESC LIMIT 15`, win.params)
+  ]);
+  return {
+    days: days.map((r) => ({ zone: num(r.zone), name: String(r.name ?? ""), d: String(r.d ?? ""), n: num(r.n), severe: num(r.severe), rep: num(r.rep) })),
+    kinds: kinds.map((r) => ({ zone: num(r.zone), cat: String(r.cat ?? ""), label: String(r.label ?? r.cat ?? ""), now: num(r.now_n), prev: num(r.prev_n) })),
+    backlog: backlog.map((r) => ({ zone: num(r.zone), open: num(r.open), overdue: num(r.overdue), severeOpen: num(r.severe_open) })),
+    repeats: repeats.map((r) => ({ zone: num(r.zone), name: String(r.name ?? ""), place: String(r.place ?? ""), cat: String(r.cat ?? ""), label: String(r.label ?? ""), n: num(r.n), open: num(r.open) }))
+  };
+}
+
 /** Kinds of incident ranked by how many, against the period before. */
 export async function categoryRanking(f: IncidentFilters, now: string, n: number) {
   const w = where(f, now), p = where(f, now, undefined, 1);

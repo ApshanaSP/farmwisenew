@@ -1,7 +1,7 @@
 import { districtSnapshot } from "@/lib/thunai/v11/snapshot";
 import { NextRequest, NextResponse } from "next/server";
 import { claudeConfigured } from "@/lib/ai/claude";
-import { markActive } from "@/lib/thunai/keepwarm";
+import { busy, markActive } from "@/lib/thunai/keepwarm";
 import { exportMeta } from "@/lib/collector/intel";
 import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -48,9 +48,12 @@ export async function POST(req: NextRequest) {
   const snapshot = () => (claudeConfigured() ? districtSnapshot() : Promise.resolve(null));
   const run = async (emit?: (e: TurnEvent) => void) => record(await planRound(parsed.data, await serverWorld(), serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal), `collector:${s.userId}`,
     { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit, snapshot }));
-  if (parsed.data.stream) return roundStream(run, { turnId: parsed.data.turnId, round: parsed.data.round }, req.signal);
+  // v15: the keep-warm's heavy steps wait while a round is answered (keepwarm.ts busy)
+  const done = busy();
+  const runBusy = (emit?: (e: TurnEvent) => void) => run(emit).finally(done);
+  if (parsed.data.stream) return roundStream(runBusy, { turnId: parsed.data.turnId, round: parsed.data.round }, req.signal);
   try {
-    return NextResponse.json(await run());
+    return NextResponse.json(await runBusy());
   } catch (e) {
     if (req.signal.aborted) return new NextResponse(null, { status: 499 });
     console.error("thunai round failed", e);

@@ -56,6 +56,9 @@ export const SNAP_CALLS: SnapCall[] = [
   { label: "Air quality, by station", name: "environment", args: { metric: "aqi" }, facts: 15, rows: 0 },
   { label: "Developing stories (news joined to incidents)", name: "developing_stories", args: { scope: { period: "weekly" } }, facts: 7, rows: 0, keep: /^(?:stories\.count|story\..+\.reports)$/ },
   { label: "Unusual rises this week", name: "unusual_rises", args: { scope: { period: "weekly" } }, facts: 6, rows: 3 },
+  // v15 (22 Nov): the past, zone by zone: where to concentrate first (its score of 100 and reasons), the zones getting worse and improving
+  // beyond ordinary ups and downs (their change in %), over the last 4 weeks against the 4 before (focus_trends, recipes/focus.ts)
+  { label: "The last 4 weeks against the 4 before: where to concentrate (rank, score of 100), getting worse and improving (change in %)", name: "focus_trends", args: { days: 28 }, facts: 11, rows: 0, keep: /^focus\.(?:attention\.\d|worse\.|better\.)/ },
   // each commodity's average across the markets (where it is cheapest, or its last report: the mandi_prices tool)
   { label: "Market prices, average across Chennai's markets (Uzhavar Sandhai, AGMARKNET)", name: "mandi_prices", args: {}, facts: 20, rows: 0, keep: /\.avg_kg$/ }
 ];

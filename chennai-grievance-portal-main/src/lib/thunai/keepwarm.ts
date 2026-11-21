@@ -81,6 +81,7 @@ function later(ms: number, fn: () => void): void {
  * time stamp. Called by the Jarvis routes (world, the round, warm); any Collector route may call it with "collector".
  */
 export function markActive(who: Who = "collector", at: number = Date.now()): void {
+  if (who === "jarvis") preconnect(at);
   const s = seen();
   // v14 (review finding scenarios 3): the console opened again after a quiet spell: a pass a second later warms what the first question
   // reads (live traffic, the insights, the snapshot, the prompt cache) while the Collector is still looking at the screen
@@ -91,6 +92,61 @@ export function markActive(who: Who = "collector", at: number = Date.now()): voi
   const k = K();
   if (resumed && k.started) later(RESUME_MS, () => { void runPass("tick", k.opts); });
 }
+/**
+ * v15 (22 Nov): a question (its speech-to-text or its round) is being answered now. Each heavy step of a pass waits until none is, and a
+ * little after (BUSY_AFTER_MS): the insights, the snapshot and the rain parts hold the one thread 1-2.5 s at a time (measured on the owner's
+ * data, v15/stall15.live.ts), and on 21 Nov a speech-to-text call that takes 0.5 s timed out at 8.4 s and two questions had no server event
+ * for 17-18 s while a pass ran. `busy()` returns the way to say it is done; a done that never comes ends after BUSY_MAX_MS.
+ */
+export const BUSY_AFTER_MS = 1500;
+export const BUSY_MAX_MS = 30_000;
+declare global {
+  // eslint-disable-next-line no-var
+  var __jarvisBusy: { n: Map<number, number>; seq: number; lastEnd: number } | undefined;
+}
+const busyState = () => (globalThis.__jarvisBusy ??= { n: new Map(), seq: 0, lastEnd: 0 });
+export function busy(): () => void {
+  const b = busyState(), id = ++b.seq;
+  b.n.set(id, Date.now());
+  let done = false;
+  return () => { if (done) return; done = true; b.n.delete(id); b.lastEnd = Date.now(); };
+}
+/** Is a question being answered now (or was one, BUSY_AFTER_MS ago)? Stale marks (BUSY_MAX_MS) are dropped. */
+export function questionBusy(now: number = Date.now()): boolean {
+  const b = busyState();
+  for (const [id, at] of b.n) if (now - at > BUSY_MAX_MS) b.n.delete(id);
+  return b.n.size > 0 || now - b.lastEnd < BUSY_AFTER_MS;
+}
+/** Waits (at most `maxMs`) until no question is being answered. */
+export async function untilQuiet(maxMs = 20_000, step = 150): Promise<void> {
+  const t0 = Date.now();
+  while (questionBusy() && Date.now() - t0 < maxMs) await new Promise<void>((r) => unref(setTimeout(r, step)));
+}
+
+/**
+ * v15 (22 Nov, first question): the connections the first sentence needs, opened while Jarvis opens (a HEAD with no key and no data; the
+ * global fetch pool keeps them for the calls that follow). The owner's first transcription of 21 Nov took 1.1 s, the next ones 0.45 s.
+ * At most once in 45 s; never in tests.
+ */
+const PRECONNECT = ["https://api.sarvam.ai", "https://api.anthropic.com", "https://api.groq.com"];
+export const PRECONNECT_EVERY_MS = 45_000;
+declare global {
+  // eslint-disable-next-line no-var
+  var __jarvisPreAt: number | undefined;
+}
+export function preconnect(now: number = Date.now()): boolean {
+  if (process.env.VITEST || process.env.NODE_ENV === "test" || (process.env.JARVIS_PRECONNECT ?? "").trim() === "0") return false;
+  if (now - (globalThis.__jarvisPreAt ?? 0) < PRECONNECT_EVERY_MS) return false;
+  globalThis.__jarvisPreAt = now;
+  void import("@/lib/util/deadline").then(({ deadline }) => {
+    for (const u of PRECONNECT) {
+      const dl = deadline(4000);
+      void fetch(u, { method: "HEAD", signal: dl.signal, cache: "no-store" }).then((r) => r.body?.cancel()).catch(() => undefined).finally(() => dl.done());
+    }
+  }).catch(() => undefined);
+  return true;
+}
+
 /** Was `who` active within `ms`? */
 export function activeWithin(who: Who = "collector", ms: number = ACTIVE_MS, now: number = Date.now()): boolean {
   return now - seen()[who] < ms;
@@ -188,6 +244,8 @@ export async function runPass(why: WarmWhy, o: { steps?: StepRunners; claude?: (
     const quiet = active && !activeWithin("jarvis", QUIET_MS, t0) && t0 - (seen().since ?? 0) >= SETTLE_MS;
     plan = planPass(why, { active, jarvis: activeWithin("jarvis", ACTIVE_MS, t0), claude, promptDue: t0 - k.promptAt >= PROMPT_EVERY_MS, quiet });
     for (const step of plan) {
+      // v15: a question being answered goes first; the pass's own steps wait for it (tests pass their own steps and do not wait)
+      if (!o.steps) await untilQuiet();
       const ts = now();
       try { await asBackground(o.steps?.[step] ?? STEPS[step]); } catch (e) { console.warn(`[jarvis warm] ${step} failed: ${(e as Error)?.message?.slice(0, 160)}`); }
       times[step] = now() - ts;

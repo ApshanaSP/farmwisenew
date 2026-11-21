@@ -55,6 +55,7 @@ import { parseLine } from "./aide7/ground";
 import { openRung, type OpenRung } from "./aide7/stream";
 import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
+import { focusAsk } from "./v15/focus";
 import { understandV8 } from "./v8/flag8";
 import { placeWord, replyLang8, wordsLang } from "./v8/lang8";
 import { deepModel, deepTurn, escalate } from "./v8/deep8";
@@ -949,6 +950,18 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     if (frame.kind === "stageOp") {
       if (frame.op === "explain") { const ex = await explainItem({ n: frame.n, id: frame.id }, `frame:${frame.why}`); if (ex) return ex; }
       return out({ ...none(lang, t0, `frame:${frame.why}`), kind: "do", stageOp: { op: frame.op, n: frame.n, text: frame.text, id: frame.id ?? null } }, "frame");
+    }
+
+    // 2a. v15 (22 Nov), before the body, the unclear slot and the intent flows ("which areas keep getting worse lately" is not a question
+    // about which window): where to concentrate, which areas are improving, getting worse, or keep coming back (v15/focus.ts focusAsk): the
+    // focus screen, read from the past by code, with no model (the owner's 23:15-23:18 questions, in Tamil and Tanglish, got "I can't do
+    // that" from the planner's checker, a timeout, or "Nothing in the dashboard mentions improving" from a fallback model)
+    const fa = focusAsk(b.text, world);
+    if (fa) {
+      const cat = catIn(b.text, { strict: true });
+      const r = await screenFrom("focus", { period: fa.days === 7 ? "weekly" : fa.days === 84 ? "quarterly" : "monthly", ...(cat ? { cat } : {}), fresh: true },
+        lang === "ta" ? "கடந்த வாரங்களை ஆய்வு செய்கிறேன்" : "Analysing the past weeks");
+      if (r.kind === "do" && r.stage) return out({ ...r, note: `focus:${fa.lenses.join("+")}` }, "quick");
     }
 
     // 2b. who it is about: a report, brief or status on a body ("chennai city police report", "GCP status", "corporation update")

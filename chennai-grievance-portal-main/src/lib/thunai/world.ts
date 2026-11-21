@@ -42,13 +42,27 @@ export function referenceWorld(): Pick<World, "cats" | "taluks" | "places"> {
 }
 
 let worldCache: { at: number; w: World } | null = null;
-/** the departments change only with a new collection: read once a minute, not on every round of every question */
+let worldLoading: Promise<World> | null = null;
+const readWorld = (): Promise<World> => (worldLoading ??= (async () => {
+  try {
+    const [depts, bodies] = await Promise.all([deptList().catch(() => null), bodyList().catch(() => null)]);
+    const w = { ...buildWorld(depts ?? []), ...(bodies?.length ? { bodies: bodies.map((b) => ({ code: b.code, name: b.name })) } : {}) };
+    if (depts?.length) worldCache = { at: Date.now(), w };
+    return w;
+  } finally { worldLoading = null; }
+})());
+/**
+ * the departments change only with a new collection: read once a minute, not on every round of every question.
+ * v15 (22 Nov): stale while it is read again. A question that came after the minute waited for the department and body lists behind
+ * whatever held the store's queue (the owner's 23:16:02 and 23:17:55 questions had no server event for 17-18 s); the last world answers it
+ * now and the next is read in the background. Only the very first read (no world yet) is waited for.
+ */
 export async function serverWorld(): Promise<World> {
-  if (worldCache && Date.now() - worldCache.at < 60_000) return worldCache.w;
-  const [depts, bodies] = await Promise.all([deptList().catch(() => null), bodyList().catch(() => null)]);
-  const w = { ...buildWorld(depts ?? []), ...(bodies?.length ? { bodies: bodies.map((b) => ({ code: b.code, name: b.name })) } : {}) };
-  if (depts?.length) worldCache = { at: Date.now(), w };
-  return w;
+  if (worldCache) {
+    if (Date.now() - worldCache.at >= 60_000) void readWorld().catch(() => undefined);
+    return worldCache.w;
+  }
+  return readWorld();
 }
 function buildWorld(depts: { code: string; name: string }[]): World {
   return {

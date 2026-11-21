@@ -398,3 +398,28 @@ A separate session, from the branch tip, in worktree `interesting-babbage-37ab60
 The owner added an Anthropic key after the final run. Jarvis asks `claude-opus-5-5` first and falls back to Groq with no key or on any failure, proved live. The API refused the planner's schemas for structured outputs, so those use plain JSON with a short shape line. Not scored on the frozen set.
 
 Scored afterwards on the frozen set: 49/60 with Claude first, Tamil 25/30, in a clean run. The first attempt lost its network connection and saved nothing, so the harness now saves after every sentence.
+
+## v15: focus and trends, the stuck session, live words (22 Nov 2026)
+
+The owner's session of 21 Nov (23:11-23:19, `data/thunai/audit.jsonl` and `telemetry.ndjson`) had about 20 questions. After eight or nine, Jarvis answered "I can't do that", timed out, or gave thin answers. The causes, and the fixes:
+
+- **Claude's minute cap in the ledger** (`lib/thunai/ledger.ts`). Jarvis's own ceiling was 50,000 tokens a minute. A planner turn is about 17,400 tokens, half of it cached, so the fourth question in a minute went to Groq or Gemini without THE DISTRICT NOW. The 23:17:32 answer came from qwen, and "Which areas are improving?" got "Nothing in the dashboard mentions improving" from flash-lite. The cap is now 400K a minute and 8M a day. The owner's spend ceiling (`claudebudget.ts`) still guards money, and a real 429 still cools the model.
+- **No lane read "improving", "getting worse", "concentrate" or "keeps coming back"**, in any language. The planner's checker refused its own plans ("cannot do" twice). Fixed by the new **focus** screen:
+  - `v15/focus.ts` holds `focusAsk` (English, Tamil script, Tanglish, Tamil-script English) and the analysis.
+  - `recipes/focus.ts` builds the screen; `assistant/incidents.ts focusRows` and the `focus_trends` tool read the data.
+  - The answer compares each zone's last 4 weeks (or 1 or 12) with the window before. A move counts as better or worse only beyond 2 standard deviations of two Poisson counts, 3 reports and 10%.
+  - It also gives 12 weeks week by week, a where-to-concentrate score (overdue 30%, severe 20%, volume 15%, rise 20%, repeats 15%, each with its reasons), the kind behind each move, and the places that keep coming back.
+  - Routed in `round.ts` (2a) before every other lane, with no model; the aide writes the sentence. In a live run on the dry-run store all six owner questions reached it, in 1.7-2.9 s each.
+  - It is also in the planner's tools and in THE DISTRICT NOW.
+- **A question with no server event for 17-18 s** (23:16:02, 23:17:55), while a Sarvam call that takes 0.5 s "timed out" at 8.4 s: the one Node thread was held.
+  - Measured with `v15/stall15.live.ts`: a cold `serverWorld` takes 29 s (stalls up to 2.2 s), the insights 5.6-7.5 s (stalls up to 1.3 s), and the rain state 7.3 s.
+  - `serverWorld` is now stale-while-revalidate.
+  - The keep-warm's steps wait while a sentence is heard or a round is answered (`keepwarm.ts busy`, used by the hear and round routes).
+  - The planner's "checker" or "model" none goes to the analyst for a district question, never "I can't do that".
+- **Live words in the bar.** The browser's recogniser started only at speech onset, so it missed the first 0.3-1 s and the bar kept the last question meanwhile. It is now ready from the wake and from the end of each answer (`HearingCaptions.warm`), stays 25 s after a sentence, marks each new sentence (`Captions.mark`, `sentenceText`), and the bar drops the last question at onset.
+- **Small fixes:**
+  - Page names as the ears wrote them ("Superview", "over view", Tamil spellings).
+  - "Get me today's notes" is now the day's brief, at once.
+  - "எப்படி பேசுற?" (how do you speak) is small talk.
+  - The first turn's connections are opened when Jarvis opens (`keepwarm.ts preconnect`).
+- Tests: `v15/*.v15.test.ts`, plus the re-pinned schema hashes in `round.v5.test.ts`. Not tested here: the real microphone. The live words need Chrome's speech service.

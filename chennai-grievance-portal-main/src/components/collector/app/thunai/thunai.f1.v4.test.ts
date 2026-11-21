@@ -127,6 +127,7 @@ describe("Proactive 1-3 and the one unprompted budget", () => {
 
 describe("Voice 5: one recogniser at a time", () => {
   it("while Whisper is out the conductor's recogniser hears the speech, and the live captions stand aside", () => {
-    expect(between(src, "onSpeechStart: (o:", "onSpeechEnd:")).toMatch(/if \(o\.fallback\) return;/);
+    // (v15: the live captions, kept ready since the wake, are stopped there: one recogniser at a time)
+    expect(between(src, "onSpeechStart: (o:", "onSpeechEnd:")).toMatch(/if \(o\.fallback\) \{ captions\.current\?\.stop\(\); return; \}/);
   });
 });

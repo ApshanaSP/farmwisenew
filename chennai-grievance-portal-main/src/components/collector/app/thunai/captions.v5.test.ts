@@ -84,3 +84,26 @@ describe("Thunai.tsx makes the captions only inside the conductor's window", () 
     expect(between("const engagedNow = ", "\n")).toContain("ENGAGED_MS");
   });
 });
+
+describe("v15: one sentence's words out of a continuous recogniser", () => {
+  const res = (...xs: [string, boolean][]) => xs.map(([t, f]) => ({ isFinal: f, 0: { transcript: t } }));
+  it("only the results since the mark, all of them, never the last question", async () => {
+    const { sentenceText } = await import("./captions");
+    const r = res(["show me the trends page", true], ["which areas", true], [" are improving", false]);
+    expect(sentenceText(r, 1, "")).toBe("which areas are improving");
+    // the result still being heard at the mark (Jarvis's own voice, say): its words before the mark are cut
+    expect(sentenceText(res(["that took long which areas", false]), 0, "that took long")).toBe("which areas");
+    expect(sentenceText(r, 3, "")).toBe("");
+  });
+  it("mark() starts a new sentence: earlier results never show again", () => {
+    const seen: string[] = [];
+    const c = new Captions("en-IN", (t) => seen.push(t), () => true);
+    c.start();
+    const r = Rec.made[0] as unknown as { onresult: (e: { resultIndex: number; results: unknown }) => void };
+    r.onresult({ resultIndex: 0, results: res(["go to the trends page", true]) });
+    c.mark();
+    r.onresult({ resultIndex: 1, results: res(["go to the trends page", true], ["which areas", false]) });
+    expect(seen).toEqual(["go to the trends page", "which areas"]);
+    c.stop();
+  });
+});

@@ -3,7 +3,7 @@
  * 4.8 s through the planner. The reference assistants answer these on the spot; Jarvis now does too, in the language it was asked in,
  * and points back at what it can do. Nothing here holds a figure. Pure (browser and server).
  */
-export type SmallTalk = "howAreYou" | "thanks" | "whoAreYou" | "whatCanYouDo" | "praise";
+export type SmallTalk = "howAreYou" | "thanks" | "whoAreYou" | "whatCanYouDo" | "praise" | "howYouSpeak";
 export type SmallLang = "en" | "ta";
 
 const norm = (s: string) => s.toLowerCase().normalize("NFC").replace(/[’']/g, "").replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
@@ -12,10 +12,12 @@ const NAME = /\b(?:jarvis|jarviz|jervis|javis|jarves|thunai)\b|ஜார்வ�
 const LEAD = /^(?:hi|hey|hello|ok|okay|so|and|vanakkam|ஹாய்|ஹலோ|வணக்கம்)\s+/u;
 
 const SHAPES: [SmallTalk, RegExp][] = [
-  ["howAreYou", /^(?:how are you(?: doing| today)?|how r u|how do you do|how are things with you|are you (?:ok|okay|fine|well)|epdi irukeenga|eppadi irukeenga|epdi irukinga|epdi iruka|eppadi irukka|எப்படி இருக்கீங்க|எப்படி இருக்கீர்கள்|எப்படி இருக்க நீ|நீ எப்படி இருக்க|எப்படி இருக்கே|நலமா|நல்லா இருக்கீங்களா|சௌக்கியமா)$/u],
+  ["howAreYou", /^(?:how are you(?: doing| today)?|how r u|how do you do|how are things with you|are you (?:ok|okay|fine|well)|epdi irukeenga|eppadi irukeenga|epdi irukinga|epdi iruka|eppadi irukka|எப்படி இருக்கீங்க|எப்படி இருக்கீர்கள்|எப்படி இருக்க நீ|நீ எப்படி இருக்க|எப்படி இருக்கே|எப்படி இருக்க|எப்படி இருக்கீங்களா|எப்படி போகுது|நலமா|நல்லா இருக்கியா|நல்லா இருக்கீங்களா|சௌக்கியமா)$/u],
   ["thanks", /^(?:thanks?(?: you)?(?: so much| a lot| very much)?|thank u|thx|ok thanks|okay thanks|great thanks|nandri|romba nandri|நன்றி|ரொம்ப நன்றி|மிக்க நன்றி)$/u],
   ["praise", /^(?:good job|well done|nice|super|excellent|awesome|great|great job|perfect|brilliant|semma|சூப்பர்|அருமை|நல்லது|பிரமாதம்|செம்ம)$/u],
   ["whoAreYou", /^(?:who are you|what are you|what is your name|whats your name|introduce yourself|நீ யார்|நீங்க யாரு|நீங்கள் யார்|உன் பெயர் என்ன|உங்க பேர் என்ன|nee yaaru|neenga yaaru)$/u],
+  // v15 (22 Nov): "எப்படி பேசுற?" (how do you speak?) at 23:17:55 went to the planner and timed out
+  ["howYouSpeak", /^(?:how do you (?:speak|talk)|how are you (?:speaking|talking)|which languages? (?:do )?you (?:speak|know|understand)|what languages? (?:do )?you (?:speak|know|understand)|do you (?:speak|understand|know) tamil|can you (?:speak|understand|talk in) tamil|எப்படி பேசுற|எப்படி பேசுறே|எப்படி பேசுறீங்க|எப்படிப் பேசுகிறாய்|எப்படி பேசுகிறீர்கள்|தமிழ் தெரியுமா|தமிழ் பேசுவியா|தமிழ்ல பேசுவியா|epdi pesura|eppadi pesura|epdi pesureenga|tamil theriyuma|tamil pesuviya)$/u],
   ["whatCanYouDo", /^(?:what can you do|what (?:all )?can you do for me|what do you do|how can you help(?: me)?|what are your (?:features|capabilities)|என்ன செய்ய முடியும்|உன்னால் என்ன செய்ய முடியும்|உங்களால என்ன பண்ண முடியும்|enna panna mudiyum|enna ellam panna mudiyum)$/u]
 ];
 
@@ -44,6 +46,10 @@ const LINES: Record<SmallTalk, Record<SmallLang, string[]>> = {
   whoAreYou: {
     en: ["I'm Jarvis, your AI co-pilot for Chennai district. I read every complaint, the rain, live traffic, power, the news and the markets, and I can run this whole dashboard by voice."],
     ta: ["நான் ஜார்விஸ், சென்னை மாவட்டத்துக்கான உங்கள் AI உதவியாளர். புகார்கள், மழை, நேரடிப் போக்குவரத்து, மின்சாரம், செய்திகள், சந்தை விலைகள் எல்லாம் படிக்கிறேன்; இந்த டாஷ்போர்டை குரலிலேயே இயக்குவேன்."]
+  },
+  howYouSpeak: {
+    en: ["I speak English and Tamil, Collector, and I follow Tanglish too. Ask me in whichever you like and I will answer in the same."],
+    ta: ["நான் தமிழிலும் ஆங்கிலத்திலும் பேசுவேன் கலெக்டர்; தமிழ் கலந்த ஆங்கிலமும் புரியும். நீங்கள் எந்த மொழியில் கேட்டாலும் அதிலேயே பதில் சொல்வேன்."]
   },
   whatCanYouDo: {
     en: ["Ask me anything about the district: which zone needs you today, how the traffic or the rain is now, why complaints rose somewhere, or say show, compare or map and I'll put it on screen."],

@@ -19,9 +19,13 @@ const h = (s: string) => crypto.createHash("sha256").update(s).digest("hex").sli
 // and again on 21 Nov 2026 (v14, the review of v13, routing 7): the wide system prompt only, its CITY_WIDE line cut to the recipe and its q
 // values and the two Tamil city lines taken out (193 characters: ordinary wide prompts with the live lists fell to SHRINK's last row); its
 // schema and every other bundle are unchanged (wide was dedbcd59767b9ad9)
+// and again on 22 Nov 2026 (v15): the recipe list gained "focus" (where to concentrate, improving, getting worse, repeating), so the screens
+// schema's recipe enum changed, and the planner may call focus_trends (the data prompt's tool list): every schema with the recipe enum and
+// the data prompt changed (screens 355ed987fad5ecfc, console d0f369394d1048a0, stage d2971630576f21a9, data a7d340f79deb22e4 6aa3ffb3f069bceb,
+// memory 66cc9d15538469d4, wide 2397c0edb401b19a)
 const V4: Record<string, [string, string]> = {
-  screens: ["7e0e03294f56a2a2", "355ed987fad5ecfc"], console: ["3a3ccf5e6053428a", "d0f369394d1048a0"], stage: ["aa88ea1e48e54905", "d2971630576f21a9"],
-  data: ["a7d340f79deb22e4", "6aa3ffb3f069bceb"], memory: ["f24163327f5f6aa9", "66cc9d15538469d4"], wide: ["3254755c082a9d6c", "2397c0edb401b19a"]
+  screens: ["7e0e03294f56a2a2", "1d924780b5a181bd"], console: ["3a3ccf5e6053428a", "df56939f1f40b93a"], stage: ["aa88ea1e48e54905", "6066c2489e0cbd1e"],
+  data: ["17f1a2f05c59df7c", "ef4b718c9f76fbf2"], memory: ["f24163327f5f6aa9", "aa8ab14786548c61"], wide: ["3254755c082a9d6c", "737edddcc8afb2cf"]
 };
 const BUNDLES = ["screens", "console", "stage", "data", "memory", "wide"] as const;
 const LOOKUP_TEXT = "A fact no screen or step shows";
