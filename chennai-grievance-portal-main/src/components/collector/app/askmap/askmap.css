@@ -529,3 +529,6 @@
 .dic .amp-share{margin-top:-2px}
 .dic .amp-share a,.dic .amp-score a.pri{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
 @media (prefers-reduced-motion:reduce){.dic .amp-bars button{transition:none}}
+.dic .amp-unclear{flex-wrap:wrap}
+.dic .amp-unclear .amp-sug{display:inline-flex;gap:6px;flex-wrap:wrap}
+.dic .amp-unclear .amp-sug button{padding:2px 9px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-3);font:600 11.5px var(--font-ui);color:var(--text)}

@@ -194,6 +194,12 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
             {t === cur && r && (
               <>
                 {r.spelled?.length > 0 && <p className="amp-read" role="note"><I n="info" />{fixesLine(r.spelled, ta)}</p>}
+                {r.unclear && r.kind === "answer" && (
+                  <div className="amp-read amp-unclear" role="note">
+                    <I n="info" /><span>{ta ? `'${r.unclear.word}' தெளிவில்லை; AI கேள்வியிலிருந்து படித்தது. வேறு பொருளா?` : `'${r.unclear.word}' was unclear; the AI read it from the question. Did you mean another?`}</span>
+                    <span className="amp-sug">{r.unclear.options.map((o) => <button key={o.label} onClick={() => submit(o.text)} disabled={ask.busy}>{o.label}</button>)}</span>
+                  </div>
+                )}
                 {r.kind === "say" && r.say && (
                   <div className="amp-say" role="status">
                     {ta ? r.say.ta : r.say.en}
