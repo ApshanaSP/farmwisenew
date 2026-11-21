@@ -153,3 +153,40 @@ All runs Claude Haiku 5.5 through `askai.live.ts` (the console's path). Question
 Unit tests after the fixes: 576 (from 557), golden 36/36 (a regression test for the crash below).
 
 One crash found by the big set: "banks in zone 13 more than 2 km from an ATM" planned a gap measured from the banks of Zone 13, and the executor had no spatial index for a collection made by an area step (a server error in the console). Fixed: the index is made on first use (`execute.ts indexOf`); the answer now is "176 wards have no bank within 2 km for much of their ground". Every fix has a unit test (`modelwords.test.ts`, `modelshape.test.ts`, `spell.test.ts`).
+
+## 7. AI only (21 Nov 2026, evening: the owner's instruction)
+
+The owner asked for Ask the Map to be "AI powered, no rules". Since this change Claude Haiku 5.5 reads every typed question **as typed** and decides what kind of answer it needs: a map answer (a plan the server runs), an area brief, a ward scorecard, the live city now (traffic, rain, flood streets, power, trains), or "not a map question". The word rules no longer decide anything; they answer only when Claude cannot be reached (no key, the service busy, a plan the server refuses twice), so the console never goes blank. `AI_MAP_MODE=hybrid` or `rules` in `.env` brings the earlier behaviour back.
+
+What Claude is given: the question as typed, the place references the question names (looked up in the gazetteer, typed and as spelt right, so it can cite them), the world's categories, families, layers and zones, and the words officers use for each (English, Tamil, Tanglish) as knowledge. Before writing the plan it writes what the question names (kinds of problem, facilities, places, zone, ward); the server makes the plan use what Claude itself named, and checks every code and place reference against the world's own, asking once more if one is wrong. The server still runs every plan and counts every number.
+
+New answers built for the owner's questions:
+- **which school (hospital, market, bus stand) has the most complaints near it**: each case counted at the place it is near;
+- **which area needs my attention**: open cases past their deadline, by ward (or zone);
+- **which area (department, kind of case) is resolving fast or slow**: the median days from first report to closing, from the store's closing time, over the last 90 days;
+- **what are people complaining about most / which department holds most**: counts by kind and by department;
+- **what is happening near X**: answers now say what the cases are mostly about (for example "Mostly garbage (20), flooding (12), streetlights (8)").
+
+**Scored through the console's own path, Claude only** (`askai.live.ts`; one test officer per set):
+
+| Question set | First AI-only run | Final |
+|---|---|---|
+| Dev (45) | 43 | **45** |
+| Held out (15, never tuned) | 13 | **15** |
+| Big (170) | 158 | **163** |
+| Fresh (80, never tuned) | 75 | **77** |
+| Human-style (155: one word, "what is happening near …", attention, speed, Tanglish, Tamil) | 103 (first ever run) | **148** |
+| Follow-up conversations (32 turns) | 25 | **31** |
+| Typo questions read as Claude reads their correct form (72 + 24) | — | **58 / 72, 22 / 24** |
+| Server errors | 1 | **0** |
+
+Time: median 3.0 s a question, p90 3.9 s. Cost: US$0.40 for the final run of 613 questions (about US$0.0006 a question). Spend record: US$4.25 of the US$5 ceiling.
+
+**Speed of the screen.** The slowness the owner saw was the development server, which compiles each page on first use (20–30 s). In a production build (`next build`, `next start`) the console loads in about 0.6 s with the map tiles, Ask the Map's workspace opens in 0.12 s, and an answer takes about 3–4 s (Claude's reading). A speed answer draws only its first 15 areas, so the map is not buried.
+
+Known limits of AI only:
+- Claude sometimes reads one word differently in two runs (a zone or its taluk, flooding or waterlogging), so a typo and its correct form can get slightly different plans (58 of 72 the same).
+- Every answer now waits for Claude (about 3 s, not 0.1 s); without the AI the rules answer as before.
+- Each officer has a daily AI allowance (`ASSISTANT_DAILY_TOKENS`, about 300 questions).
+
+Per-question results of every run: the scratch logs `all-ai-1.jsonl`, `all-ai-2.jsonl`, `human-1..7.jsonl` (one JSON line per question: the question, right or not, what was missing, the plan).
