@@ -224,12 +224,19 @@ function pointLayer(w: World, layer: LayerId): PointFeat[] | null {
   return (w.points as Record<string, PointFeat[]>)[layer] ?? null;
 }
 
+/** A points collection's grid index, made on first use (an area step's or a list's collection has none until a later step measures from it). */
+function indexOf(idx: Map<Coll, GridIndex<PointFeat>>, c: Extract<Coll, { type: "points" }>): GridIndex<PointFeat> {
+  let g = idx.get(c);
+  if (!g) { g = new GridIndex(c.items); idx.set(c, g); }
+  return g;
+}
+
 /** Nearest facility to p among point, polygon and line collections, within `max` metres (Infinity = any). */
 function nearestIn(p: LatLon, sets: Coll[], idx: Map<Coll, GridIndex<PointFeat>>, max: number, self: string | null = null): Near | null {
   let best: Near | null = null;
   for (const s of sets) {
     if (s.type === "points") {
-      const g = idx.get(s)!;
+      const g = indexOf(idx, s);
       const r = (Number.isFinite(max) ? g.within(p, max) : g.nearest(p, 2)).find((x) => x.item.id !== self);
       if (r && (!best || r.m < best.m)) best = { id: r.item.id, name: r.item.name, name_ta: r.item.name_ta, layer: s.layer, m: r.m, lat: r.item.lat, lon: r.item.lon };
     } else if (s.type === "polys") {
@@ -568,7 +575,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         const to = need(s.to);
         if (to.type !== "points" && to.type !== "polys") throw new PlanError(`"nearest" measures to facilities or lakes.`);
         const lw = LAYER_WORD[to.layer];
-        const g = to.type === "points" ? idx.get(to)! : null;
+        const g = to.type === "points" ? indexOf(idx, to) : null;
         const k = (p: LatLon): Near[] => g
           ? g.nearest(p, s.k).map((r) => ({ id: r.item.id, name: r.item.name, name_ta: r.item.name_ta, layer: to.layer, m: r.m, lat: r.item.lat, lon: r.item.lon }))
           : (to as Extract<Coll, { type: "polys" }>).items.map((f) => ({ f, m: pointInPolygon(p, f.polys) ? 0 : Math.min(...f.polys.map((poly) => distToLineM(p, poly[0]).m)) }))
@@ -609,7 +616,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         if (from.type !== "points") throw new PlanError(`"farthest" measures from facilities.`);
         // nothing to measure from (an empty list, a kind the layer does not have): said plainly, never a distance to nothing
         if (!from.items.length) throw new PlanError(`There are no ${LAYER_WORD[from.layer].en} on the map to measure from.`);
-        const g = idx.get(from)!;
+        const g = indexOf(idx, from);
         const lw = LAYER_WORD[from.layer];
         const scoreOf = (pts: LatLon[]) => {
           const ds = pts.map((p) => ({ p, r: g.nearest(p, 1)[0] })).filter((x) => x.r);

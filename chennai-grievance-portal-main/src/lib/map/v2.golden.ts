@@ -88,4 +88,17 @@ describe.skipIf(!haveStore())("Ask the Map v2 on the frozen store", () => {
     expect(html).toContain(`of ${res.total.toLocaleString("en-IN")}`);
     expect(html).not.toMatch(/mobile|phone_number|@example/i);
   });
+
+  it("a gap or a nearest search measured from places filtered by an area does not crash (banks in zone 13 more than 2 km from …)", async () => {
+    const steps = [
+      { op: "take", as: "f1", layer: "banks", filter: null, where: null },
+      { op: "inside", as: "in", of: "f1", area: { kind: "zone", id: 13 } },
+      { op: "farthest", as: "far", areas: "ward", from: "in", beyond_m: 2000 }];
+    const r = await askMap({ text: null, plan: { language: "en", show: "far", steps } as never, prev: null, context: CTX, user: COLLECTOR, reword: false });
+    expect(r.kind).toBe("answer");
+    const near = await askMap({ text: null, plan: { language: "en", show: "near", steps: [steps[0], steps[1], { op: "take", as: "f2", layer: "atms", filter: null, where: null },
+      { op: "nearest", as: "near", from: "f2", to: "in", k: 1 }] } as never, prev: null, context: CTX, user: COLLECTOR, reword: false });
+    // a nearest search from facilities to facilities is refused in words, never a crash
+    expect(["answer", "say"]).toContain(near.kind);
+  });
 });
