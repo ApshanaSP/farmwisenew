@@ -265,7 +265,24 @@ export const EXAMPLES_EN = [
 ];
 export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", "அடையாறு அருகே திறந்த புகார்கள்", "மண்டலம் 13 இல் இந்த வாரம் வெள்ளம்", "வார்டு வாரியாக குப்பை புகார்கள்"];
 
+/**
+ * v2: one question, never a failed request: an unexpected error inside the answer (a plan shape the answer words do not expect) is logged and
+ * said plainly, so the officer can rephrase; an abort is passed on.
+ */
 export async function askMap(asked: AskInput): Promise<AskResponse> {
+  try { return await askMapInner(asked); }
+  catch (e) {
+    if (asked.signal?.aborted) throw e;
+    console.error("[map] the answer failed:", (e as Error).stack ?? e);
+    const { world: w } = await world();
+    const out = emptyResponse(asked.prev?.language ?? "en", w);
+    out.say = { en: "I could not work that question out just now. Please rephrase it, or ask it in parts (for example, the place first, then the kind of problem).",
+      ta: "அந்தக் கேள்விக்கு இப்போது பதில் காண முடியவில்லை. வேறு விதமாகக் கேளுங்கள்.", chips: [] };
+    return out;
+  }
+}
+
+async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const t0 = Date.now();
   const { world: w, resolver: data } = await world();
   const resolve = resolverFor(data);
@@ -342,7 +359,9 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
       return done(out);
     }
     if (a && "plan" in a) {
-      const fitted = fitModelPlan(a.plan, typed, w.now, asked.prev, { ...modelWords(w, a.plan.language, found), aiOnly: true });
+      // a question in Tamil script is answered in Tamil (the script is plain to see; the model sometimes said Tanglish)
+      const language = /[\u0B80-\u0BFF]/.test(typed) ? "ta" as const : a.plan.language;
+      const fitted = fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true });
       const ins = fitted.steps.find((s) => s.op === "inside");
       if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
       // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error
@@ -617,7 +636,9 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   const feat = (h: (typeof hits)[number], k: number): Feat => ({ id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat,
     pinnable: h.inc.pinnable, prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 });
   // the map draws at most 5,000 places (the highest priority first); the rest are counted, by ward, and said plainly
-  const pinnedHits = hits.filter((h) => h.inc.pinnable);
+  // v2: a speed answer (how fast areas close their cases) draws only the cases of its first 15 rows: the other thousands would bury the map
+  const speedIds = r.show.type === "speed" ? new Set(r.show.rows.slice(0, 15).flatMap((x) => x.ids)) : null;
+  const pinnedHits = hits.filter((h) => h.inc.pinnable && (!speedIds || speedIds.has(h.inc.id)));
   out.features = pinnedHits.slice(0, FEATURE_CAP).map(feat);
   out.hidden = Math.max(0, pinnedHits.length - FEATURE_CAP);
   if (out.hidden && !r.show.type.startsWith("group")) {

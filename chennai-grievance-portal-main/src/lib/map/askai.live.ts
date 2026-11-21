@@ -130,9 +130,15 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       const t0 = Date.now();
       const r = await ask(x.q);
       ms.push(Date.now() - t0);
-      const ok = want?.kind === "plan" ? key(r?.plan ?? null) === key(want.plan) : want?.kind === "brief" ? r?.kind === "brief" && r.brief?.label.en === r.brief?.label.en && !!r.brief : false;
+      // AI only (the console's default): the typed question must be read as Claude reads its correct form (a typo must not change the reading);
+      // otherwise (AI_MAP_MODE=hybrid or rules) against the rules' plan for the correct form
+      const aiOnly = (process.env.AI_MAP_MODE ?? "ai") === "ai";
+      const right = aiOnly ? await ask(x.same_as) : null;
+      const sigOf = (y: Awaited<ReturnType<typeof ask>>) => (!y ? "none" : y.kind === "brief" ? `brief:${y.brief?.label.en}` : y.plan ? key(y.plan) : `say:${y.say?.en?.slice(0, 40)}`);
+      const ok = aiOnly ? sigOf(r) === sigOf(right) && (r?.kind === "answer" || r?.kind === "brief")
+        : want?.kind === "plan" ? key(r?.plan ?? null) === key(want.plan) : want?.kind === "brief" ? r?.kind === "brief" && !!r.brief : false;
       add(x.set, ok, !!r?.ai_used);
-      fs.appendFileSync(OUT, JSON.stringify({ set: x.set, id: x.id, q: x.q, ok, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), got: key(r?.plan ?? null), want: want?.kind === "plan" ? key(want.plan) : want?.kind }) + "\n");
+      fs.appendFileSync(OUT, JSON.stringify({ set: x.set, id: x.id, q: x.q, ok, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), got: sigOf(r), want: aiOnly ? sigOf(right) : want?.kind === "plan" ? key(want.plan) : want?.kind }) + "\n");
       console.log(`${ok ? "PASS" : "FAIL"} ${x.set} ${x.id} ${x.q}`);
     }
   }

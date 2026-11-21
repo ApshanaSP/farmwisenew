@@ -35,8 +35,9 @@ export const WirePlan = z.object({
   understood: z.boolean().describe("true for every question about Chennai places, problems, facilities or areas, however short or loosely typed (one word too); false only when intent is not_map"),
   /** v2 (AI only): what kind of answer the question needs; the plan's steps serve it (brief and scorecard: the area of an inside step) */
   /** v2: what the question names, written before the steps: the steps must use them */
-  named_categories: z.array(z.string()).describe("the category codes of the kinds of problem the question names (from WORDS PEOPLE USE, misspelt or not); [] if none"),
+  named_categories: z.array(z.string()).describe("the category codes (or family codes for broad words such as flooding, crime) of the kinds of problem the question names (from WORDS PEOPLE USE, misspelt or not); [] if none"),
   named_layers: z.array(z.enum(LAYER_IDS)).describe("the facility layers the question names (schools, liquor, atms...), not incidents; [] if none"),
+  named_places: z.array(z.string()).describe("the place refs (from the prompt's list) of the places the question names, as the question means them (in X: its zone or taluk ref; near X: its point ref); [] if none"),
   named_zone: z.number().describe("the zone number the question names (1-15), or -1"),
   named_ward: z.number().describe("the ward number the question names (1-200), or -1"),
   intent: z.enum(["plan", "brief", "scorecard", "city", "not_map"]).describe("plan: a map answer; brief: what is happening in one area; scorecard: a ward's scorecard; city: the live state of the city now; not_map: not a map question"),
@@ -70,7 +71,7 @@ const calendarIn = (k: WireStep["period_calendar"], offset: number | null | unde
 
 export function toWire(plan: Plan): WirePlan {
   return {
-    understood: true, named_categories: [], named_layers: [], named_zone: -1, named_ward: -1, intent: "plan", city: "none", show: plan.show, language: plan.language,
+    understood: true, named_categories: [], named_layers: [], named_places: [], named_zone: -1, named_ward: -1, intent: "plan", city: "none", show: plan.show, language: plan.language,
     steps: plan.steps.map((s: Step): WireStep => {
       const base = { ...EMPTY, op: s.op, as: s.as } as WireStep;
       switch (s.op) {

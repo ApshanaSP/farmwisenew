@@ -156,7 +156,7 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
   if (sp && (sp.by === "ward" || sp.by === "zone" || sp.by === "taluk")) {
     const days = sp.rows.map((x) => x.medianDays);
     const lo = Math.min(...days), hi = Math.max(...days);
-    for (const x of sp.rows.slice(0, 80)) {
+    for (const x of sp.rows.slice(0, 15)) {
       if (!x.lat && !x.lon) continue;
       const f = hi > lo ? (x.medianDays - lo) / (hi - lo) : 0.5;
       L.marker([x.lat, x.lon], { pane: "askMarks", title: `${x.label}: ${x.medianDays} days`,

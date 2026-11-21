@@ -13,7 +13,7 @@
 import { generateJson, type CallInfo } from "@/lib/ai/gateway";
 import { extractNumbers } from "@/lib/assistant/verify";
 import { z } from "zod";
-import { checkPlan, type Plan } from "./plan";
+import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
 import { wordTables } from "./route";
 
@@ -25,20 +25,31 @@ const SHORT_NOTE = "\nA SHORT QUESTION: it names a layer, a kind of problem (gar
  * v2: the plan made to use what the model named before writing it: the categories it named on the incidents' take when the take has none (or
  * only their family), each layer it named taken, the zone or ward it named as an area when the plan has none. The model's own reading, kept.
  */
-export function withNamed(plan: Plan, w: Pick<WirePlan, "named_categories" | "named_layers" | "named_zone" | "named_ward">, cats: string[]): Plan {
+export function withNamed(plan: Plan, w: Pick<WirePlan, "named_categories" | "named_layers" | "named_zone" | "named_ward"> & { named_places?: string[] }, cats: string[], refs: string[] = []): Plan {
+  // a broad word ("flooding", "crime") is named as its family; a precise one as its category
   const named = (w.named_categories ?? []).filter((c) => cats.includes(c));
+  const namedFam = (w.named_categories ?? []).filter((c) => FAMILIES.includes(c));
   let steps = plan.steps.map((st) => {
-    if (st.op !== "take" || st.layer !== "incidents" || !st.filter || !named.length) return st;
+    if (st.op !== "take" || st.layer !== "incidents" || !st.filter || (!named.length && !namedFam.length)) return st;
     const f = st.filter;
-    if (f.category?.some((c) => named.includes(c))) return st;
-    if (f.category?.length) return st;
-    return { ...st, filter: { ...f, category: named, family: null } };
+    if (f.category?.some((c) => named.includes(c)) || f.family?.some((c) => namedFam.includes(c))) return st;
+    if (f.category?.length || f.family?.length) return st;
+    return { ...st, filter: { ...f, category: named.length ? named : null, family: named.length ? null : namedFam } };
   });
   let show = plan.show;
   const isIncShow = (): boolean => { const chain = (n: string): string | null => { const x = steps.find((y) => y.as === n); return !x ? null : x.op === "take" ? x.layer : "of" in x ? chain(x.of) : null; }; return chain(show) === "incidents"; };
   // an area it named and the plan left out: inside that area, on the answer (when the answer is incidents or a layer's places)
   const hasArea = steps.some((x) => x.op === "inside" || x.op === "compare" || x.op === "farthest" || x.op === "rank" || x.op === "speed" || (x.op === "count_by" && x.by !== "near" && x.by !== "category" && x.by !== "dept"));
-  const area = w.named_ward >= 1 && w.named_ward <= 200 ? { kind: "ward" as const, id: Math.round(w.named_ward) } : w.named_zone >= 1 && w.named_zone <= 15 ? { kind: "zone" as const, id: Math.round(w.named_zone) } : null;
+  // a place it named from the prompt's list: its zone, ward, taluk or point (1 km), as the model read it
+  const ref = (w.named_places ?? []).find((x) => refs.includes(x));
+  const fromRef = (r: string): AreaRef | null => {
+    const m = /^(zone|ward):(\d+)$/.exec(r);
+    if (m) return { kind: m[1] as "zone" | "ward", id: Number(m[2]) } as AreaRef;
+    if (r.startsWith("taluk:")) return { kind: "taluk", code: r.slice(6) };
+    if (/^(road|gcc|waterway):/.test(r)) return null;
+    return { kind: "point", ref: r, radius_m: 1000 };
+  };
+  const area: AreaRef | null = w.named_ward >= 1 && w.named_ward <= 200 ? { kind: "ward", id: Math.round(w.named_ward) } : w.named_zone >= 1 && w.named_zone <= 15 ? { kind: "zone", id: Math.round(w.named_zone) } : ref ? fromRef(ref) : null;
   if (area && !hasArea) {
     const last = steps.find((x) => x.as === show);
     if (last && (last.op === "take" || last.op === "within" || isIncShow())) {
@@ -58,7 +69,8 @@ function namedOf(p: W): W {
   const zone = steps.find((x) => x.area_kind === "zone")?.area_id ?? -1;
   const ward = steps.find((x) => x.area_kind === "ward")?.area_id ?? -1;
   const { understood, ...rest } = p;
-  return { understood: understood ?? true, named_categories: cats, named_layers: layers, named_zone: zone, named_ward: ward, ...rest };
+  const places = steps.flatMap((x) => (typeof x.area_ref === "string" ? [x.area_ref] : typeof x.from === "string" && x.from.startsWith("place:") ? [x.from.slice(6)] : []));
+  return { understood: understood ?? true, named_categories: cats, named_layers: layers, named_places: places, named_zone: zone, named_ward: ward, ...rest };
 }
 
 /** The families a take may name (the prompt lists them; anything else is refused and asked again). */
@@ -184,7 +196,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     ...wordTables().cats.map((x) => `- ${x}`),
     "For each layer (a facility the map holds):",
     ...wordTables().layers.map((x) => `- ${x}`),
-    "First write what the question names: named_categories (each kind of problem it names, as category codes), named_layers (the facilities it names), named_zone and named_ward (-1 when none). Then write the steps, which must use them.",
+    "First write what the question names: named_categories (each kind of problem it names: a category code, or a family code for a broad word such as flooding or crime), named_layers (the facilities it names), named_places (the refs of the places it names, from the prompt's list), named_zone and named_ward (-1 when none). Then write the steps, which must use them.",
     "HOW TO READ A QUESTION, in this order: (1) the kind of problem: find its word in WORDS PEOPLE USE (misspelt or not) and put that exact category on the incidents' take (the family only for a broad word such as flooding or crime); (2) the place: an area named after in, la, il (zone, taluk, ward) is an inside step with that area, a place after near is a point; never drop a zone or ward the question names; (3) the shape: list, near, count by area, clusters, change, ranking, speed, gap; (4) the time: this week 7 days, this month 30, today calendar day.",
     "When the question names a kind of problem, put that category (or family) on the incidents' take; a single named kind is never counted by category.",
     "What happened or what is happening near a kind of place in Tanglish (tasmac kadai pakkathula enna aachu, school pakkathula enna nadakkudhu): the open incidents within 500 m of that layer. Piling up, keeps happening, prone: hotspot. Taking too long, slow to close: speed order slow. Today alone: the incidents reported today (period_calendar day).",
@@ -290,14 +302,15 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
       if (attempt === 0) { prompt = `${prompt}\nThis IS a map question (a short or loose question about Chennai's places, problems or facilities): set understood true and return its plan.`; continue; }
       return { problems: ["not a map question"] };
     }
-    const c = checkPlan(withNamed(fromWire(r.object), r.object, ctx.cats));
+    const c = checkPlan(withNamed(fromWire(r.object), r.object, ctx.cats, ctx.places.map((x) => x.ref)));
     // v2: only the world's own category and family codes ("VECTOR_DISEASE" is a category, not a family; "DRINKING_WATER" is no code)
     const bad = r.object.steps.flatMap((st) => [...(st.category ?? []).filter((x) => !ctx.cats.includes(x)).map((x) => `"${x}" is not a category code`),
       ...(st.family ?? []).filter((x) => !FAMILIES.includes(x)).map((x) => `"${x}" is not a family (families: ${FAMILIES.join(", ")})`),
       // a place ref the prompt did not give (a made-up one cannot be found on the map)
       ...[st.area_ref, st.b_ref, st.from?.startsWith("place:") ? st.from.slice(6) : null].filter((x): x is string => !!x && !x.startsWith("drawn:") && !ctx.places.some((pl) => pl.ref === x)).map((x) => `"${x}" is not a place ref given in the prompt`)]);
     // a brief is for a question that names no kind of problem: when the model named one, its plan answers (its own two answers made to agree)
-    const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x)) ? "brief" : "plan");
+    const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x) || FAMILIES.includes(x)) && !(r.object.named_layers ?? []).length
+      && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length)) ? "brief" : "plan");
     if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
     if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
     problems = c.ok ? bad : [...c.problems, ...bad];

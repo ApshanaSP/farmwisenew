@@ -101,6 +101,15 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["ENCROACHMENT"], words: ["encroachment", "encroachments", "ஆக்கிரமிப்பு"] },
   { cats: ["TRAFFIC_OBSTRUCTION"], words: ["traffic jam", "traffic snarl", "illegal parking", "traffic", "போக்குவரத்து நெரிசல்"] },
   { cats: ["BUILDING_SAFETY"], words: ["wall collapse", "building collapse", "unsafe building", "unsafe buildings", "unsafe old buildings", "unsafe old building", "old buildings", "old building", "dilapidated building", "dilapidated buildings", "சுவர் இடிந்"] },
+  // v2: the kinds with no word list before (knowledge for the prompt, and the fallback rules)
+  { cats: ["MISSING_PERSON"], words: ["missing person", "missing persons", "missing child", "missing children", "person missing", "kanavillai", "காணவில்லை", "காணாமல் போன"] },
+  { cats: ["PUBLIC_ORDER"], words: ["protest", "protests", "dharna", "agitation", "rally", "road roko", "public nuisance", "போராட்டம்"] },
+  { cats: ["DRUGS_LIQUOR"], words: ["ganja", "drugs", "drug peddling", "illicit liquor", "hooch", "arrack", "கஞ்சா", "கள்ளச்சாராயம்"] },
+  { cats: ["FOOD_SAFETY"], words: ["food safety", "food poisoning", "adulteration", "adulterated food", "unhygienic food"] },
+  { cats: ["AIR_POLLUTION"], words: ["air pollution", "smoke", "dust pollution", "garbage burning", "burning waste", "காற்று மாசு"] },
+  { cats: ["HEALTH_SERVICES"], words: ["no doctor", "ambulance delay", "phc not working", "hospital service"] },
+  { cats: ["SUICIDE_SELF_HARM"], words: ["suicide", "suicides", "self harm", "தற்கொலை"] },
+  { cats: ["CRIME_VIOLENT"], words: ["murder", "murders", "assault", "stabbing", "கொலை"] },
   { family: ["CRIME"], words: ["crime", "crimes", "குற்றம்", "குற்றங்கள்", "kuttram"] }
 ];
 const COMPLAINT = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்", "புகார்கள்", "pugar", "pugaar", "complaintu"];
