@@ -22,7 +22,7 @@ export const WireStep = z.object({
   government: z.boolean().nullable(), kinds: z.array(z.string()).nullable(),
   of: z.string().nullable(), near: z.array(z.string()).nullable(), meters: z.number().nullable(), line: z.string().nullable(),
   from: z.string().nullable(), to: z.string().nullable(), k: z.number().nullable(), areas: z.enum(["ward", "zone", "place"]).nullable(), beyond_m: z.number().nullable(),
-  by: z.enum(["ward", "zone", "taluk", "hex500"]).nullable(),
+  by: z.enum(["ward", "zone", "taluk", "hex500", "near"]).nullable(),
   area_kind: AreaW.kind, area_id: AreaW.id, area_code: AreaW.code, area_ref: AreaW.ref, area_radius_m: AreaW.radius_m,
   b_kind: AreaW.kind, b_id: AreaW.id, b_code: AreaW.code, b_ref: AreaW.ref, b_radius_m: AreaW.radius_m,
   before_days: z.number().nullable(), before_offset: z.number().nullable(),

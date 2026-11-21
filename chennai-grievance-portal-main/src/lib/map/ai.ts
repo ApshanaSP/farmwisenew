@@ -42,6 +42,9 @@ const NEW_EXAMPLES: [string, W][] = [
     take("a", "incidents", { category: ["ROAD_ACCIDENT"], status: "any", period_days: 7, period_offset: 0 }),
     { op: "change", as: "chg", of: "a", period_days: 7, period_offset: 0, before_days: 7, before_offset: 1 },
     { op: "rank", as: "rank", of: "chg", by: "zone", order: "rise" }] }],
+  ["which hospitals have the most open garbage complaints around them", { understood: true, language: "en", show: "by", steps: [
+    take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "hospitals"),
+    { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "count_by", as: "by", of: "near", by: "near" }] }],
   ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
     take("a", "incidents", { family: ["CRIME"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "liquor", { kinds: ["bar", "pub"] }),
     { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "inside", as: "in", of: "near", area_kind: "zone", area_id: 13 }] }]
@@ -105,7 +108,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "- inside: keep incidents or facilities in an area. along: incidents within `meters` of a road or waterway line id given in the prompt.",
     "- nearest: the k nearest facilities (`to`) from each incident (`from` a collection) or from a place (`from` place:<ref>).",
     "- farthest: rank areas by distance from the nearest facility (`from`); areas ward (90 % of its ground), zone, or place (each neighbourhood's point); beyond_m keeps only those farther than that.",
-    "- count_by: incidents by ward, zone, taluk or hex500. hotspot: clusters of incidents. compare: two areas (area_* and b_*).",
+    "- count_by: incidents by ward, zone, taluk or hex500; or by near, after a within step: each incident counted at the place it was found near (which school, hospital or market has the most complaints near it). hotspot: clusters of incidents. compare: two areas (area_* and b_*).",
     "- change: the same incidents in two windows. rank: a change counted by ward, zone or taluk and ranked by the rise (order rise) or the fall (order fall): \"which wards got worse\", \"most improved zones\", \"league table\".",
     "LAYERS:",
     ...LAYER_IDS.map((l) => `- ${l}: ${LAYER_HELP[l] ?? l}`),

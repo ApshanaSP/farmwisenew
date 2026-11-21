@@ -3,6 +3,8 @@
  * against counts written here from the raw incident rows (plain loops; no code shared with the executor or the brief).
  */
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import fs from "fs";
+import path from "path";
 import { haveStore, holder, loadFrozen } from "@/lib/assistant/__tests__/golden/harness";
 
 vi.mock("@/lib/db", async (orig) => ({ ...(await orig<object>()), default: (await import("@/lib/assistant/__tests__/golden/harness")).forward }));
@@ -100,5 +102,31 @@ describe.skipIf(!haveStore())("Ask the Map v2 on the frozen store", () => {
       { op: "nearest", as: "near", from: "f2", to: "in", k: 1 }] } as never, prev: null, context: CTX, user: COLLECTOR, reword: false });
     // a nearest search from facilities to facilities is refused in words, never a crash
     expect(["answer", "say"]).toContain(near.kind);
+  });
+
+  it("which school has the most open complaints near it: each complaint under its nearest school within 500 m, by brute force", async () => {
+    const r = await ask("near which school there is higher complaint open");
+    expect(r.kind).toBe("answer");
+    const by = r.plan!.steps.find((s) => s.op === "count_by");
+    expect(by && by.op === "count_by" && by.by).toBe("near");
+    const g = r.extra.groups ?? [];
+    expect(g.length).toBeGreaterThan(0);
+    const schools = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "layers", "schools.geojson"), "utf8")).features
+      .map((f: any) => ({ id: f.properties.id, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] }));
+    const R = 6371008.8, rad = Math.PI / 180;
+    const hav = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => { const h = Math.sin((b.lat - a.lat) * rad / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin((b.lon - a.lon) * rad / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+    const { world } = await import("./world");
+    const { world: w } = await world();
+    const inc = new Map(w.incidents.map((i) => [i.id, i]));
+    const want = new Map<string, number>();
+    for (const grp of g) for (const id of grp.ids) {
+      const i = inc.get(id)!;
+      let best = { id: "", m: Infinity };
+      for (const sc of schools) { const m = hav(i, sc); if (m < best.m) best = { id: sc.id, m }; }
+      expect(best.m).toBeLessThanOrEqual(500.5);
+      want.set(best.id, (want.get(best.id) ?? 0) + 1);
+    }
+    for (const grp of g) expect(grp.n, grp.label).toBe(want.get(grp.key));
+    expect(r.answer!.headline).toContain("the most near");
   });
 });

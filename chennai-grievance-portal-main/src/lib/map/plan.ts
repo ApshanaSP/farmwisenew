@@ -69,7 +69,7 @@ export const StepSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("nearest"), as: name, from: z.string(), to: name, k: z.number().int() }),
   // `place`: each OpenStreetMap neighbourhood (a point) rather than a ward's ground: "neighbourhoods more than 2 km from a ration shop"
   z.object({ op: z.literal("farthest"), as: name, areas: z.enum(["ward", "zone", "place"]), from: name, beyond_m: z.number().nullable() }),
-  z.object({ op: z.literal("count_by"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "hex500"]) }),
+  z.object({ op: z.literal("count_by"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "hex500", "near"]) }),
   z.object({ op: z.literal("hotspot"), as: name, of: name }),
   z.object({ op: z.literal("compare"), as: name, of: name, a: AreaRefSchema, b: AreaRefSchema }),
   z.object({ op: z.literal("change"), as: name, of: name, now: PeriodSchema, before: PeriodSchema }),
@@ -136,6 +136,8 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
         problems.push(`there is no ${a.kind} ${a.id}: wards are 1–200, zones 1–15`);
     if (s.op === "farthest" && s.beyond_m != null && (s.beyond_m < LIMITS.minM || s.beyond_m > 20_000)) problems.push(`${s.beyond_m} m is outside ${LIMITS.minM}–20,000 m`);
     if (s.op === "nearest" && (s.k < 1 || s.k > LIMITS.k)) problems.push(`k = ${s.k} is outside 1–${LIMITS.k}`);
+    // v2: "which school has the most complaints near it": a count by the place each one is near needs the within step that found it
+    if (s.op === "count_by" && s.by === "near" && plan.steps.find((x) => x.as === s.of)?.op !== "within") problems.push(`step "${s.as}" counts by the place near, but "${s.of}" is not a within step`);
     if (s.op === "rank" && plan.steps.find((x) => x.as === s.of)?.op !== "change") problems.push(`step "${s.as}" ranks "${s.of}", which is not a change step`);
     if (s.op === "take" && s.filter?.period) periods.push(s.filter.period);
     if (s.op === "change") periods.push(s.now, s.before);

@@ -35,7 +35,7 @@ export type Coll =
   | { type: "polys"; layer: LayerId; items: PolyFeat[] }
   | { type: "nearest"; origin: Place | null; layer: LayerId; pairs: { hit: Hit | null; to: Near[] }[]; hits: Hit[] }
   | { type: "areas"; by: "ward" | "zone" | "place"; from: LayerId; areas: AreaScore[]; best: AreaScore | null; beyond: number | null; total: number }
-  | { type: "groups"; by: "ward" | "zone" | "taluk" | "hex500"; groups: Group[]; hits: Hit[]; unassigned: string[] }
+  | { type: "groups"; by: "ward" | "zone" | "taluk" | "hex500" | "near"; groups: Group[]; hits: Hit[]; unassigned: string[]; layer?: LayerId }
   | { type: "hotspots"; method: "stored" | "dbscan"; clusters: Cluster[]; hotWards: { ward: number; z: number; n: number }[]; hits: Hit[] }
   | { type: "compare"; a: AreaCount; b: AreaCount; hits: Hit[] }
   | { type: "change"; now: { period: Period; hits: Hit[] }; before: { period: Period; hits: Hit[] }; hits: Hit[] }
@@ -669,6 +669,10 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           } else if (s.by === "taluk" && h.inc.taluk) {
             const t = w.taluks.find((x) => x.code === h.inc.taluk);
             key = h.inc.taluk; label = `${t?.name ?? h.inc.taluk} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? h.inc.taluk} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0;
+          } else if (s.by === "near" && h.near) {
+            // v2: the place it was found near (the within step keeps the closest one)
+            const lw = LAYER_WORD[h.near.layer];
+            key = h.near.id; label = h.near.name ?? lw.one; label_ta = h.near.name_ta ?? h.near.name ?? lw.ta_one; lat = h.near.lat; lon = h.near.lon;
           } else if (s.by === "hex500" && h.inc.pinnable) {
             const x = hex500(h.inc);
             key = x.key; label = `500 m cell ${x.key}`; label_ta = `500 மீ கட்டம் ${x.key}`; lat = x.lat; lon = x.lon;
@@ -679,8 +683,11 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           g.ids.push(h.inc.id);
         }
         const list = [...groups.values()].sort((a, b) => b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
-        out = { type: "groups", by: s.by, groups: list, hits: src, unassigned };
-        const unit = { ward: ["ward", "wards", "வார்டுகள்"], zone: ["zone", "zones", "மண்டலங்கள்"], taluk: ["taluk", "taluks", "வட்டங்கள்"], hex500: ["500 m cell", "500 m cells", "500 மீ கட்டங்கள்"] }[s.by];
+        const nearLayer = src.find((h) => h.near)?.near?.layer;
+        out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };
+        const nw = nearLayer ? LAYER_WORD[nearLayer] : null;
+        const unit = { ward: ["ward", "wards", "வார்டுகள்"], zone: ["zone", "zones", "மண்டலங்கள்"], taluk: ["taluk", "taluks", "வட்டங்கள்"], hex500: ["500 m cell", "500 m cells", "500 மீ கட்டங்கள்"],
+          near: [nw?.one ?? "place", nw?.en ?? "places", nw?.ta ?? "இடங்கள்"] }[s.by];
         n = note(`Counted them by ${unit[0]}: ${list.length} ${unit[1]}${list[0] ? `; the most in ${list[0].label} (${list[0].n})` : ""}.${unassigned.length ? ` ${unassigned.length} have no ${unit[0]} on record.` : ""}`,
           `${unit[2]} வாரியாக எண்ணப்பட்டது: ${list.length}${list[0] ? `; அதிகம் ${list[0].label_ta} (${list[0].n})` : ""}.`);
         break;

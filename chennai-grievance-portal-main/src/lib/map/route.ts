@@ -114,6 +114,12 @@ const OPEN = ["open", "pending", "unresolved", "not resolved", "active", "ongoin
 const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்கப்பட்ட", "முடிந்த", "முடிக்கப்பட்ட"];
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
 const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\b(\s+\S+){0,3}?\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b(?!\s+(aagiruchu|aagiduchu|aayiduchu|aachu|aanadhu|aagirukku))/i;
+/** v2: "which school has the most complaints near it", "near which school are there more open complaints", "hospitals with the most garbage around them":
+ *  the incidents counted at the place each is near, not the nearest place to each (the owner's question, 21 Nov 2026) */
+const BY_NEAR_PLACES = "schools?|hospitals?|colleges?|markets?|bus (?:stands?|stations?)|metro stations?|railway stations?|stations?|parks?|temples?|churche?s?|mosques?|banks?|atms?|ration shops?|toilets?|police stations?|fire stations?|lakes?|wine shops?|tasmac(?: shops?)?|bars?|petrol bunks?|pharmac(?:y|ies)";
+export const BY_NEAR = new RegExp(`\\b(?:which|what|top \\d+|top)\\s+(?:\\w+\\s+){0,2}?(?:${BY_NEAR_PLACES})\\b[^?]*\\b(?:most|highest|higher|more|maximum|max|worst|biggest)\\b`
+  + `|\\b(?:${BY_NEAR_PLACES})\\s+(?:with|having|that have|that has)\\s+(?:the\\s+)?(?:most|highest|more|maximum)\\b`
+  + `|\\b(?:top|rank)\\s+(?:\\d+\\s+)?(?:${BY_NEAR_PLACES})\\s+by\\b`, "i");
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
 const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|\b(atms?|banks?|hospitals?|schools?|pharmac(y|ies)|toilets?|parks?|shops?|kadai|stations?)\s+(illa|illai|illaye)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
 /** a gap measured per neighbourhood, not per ward: "places", "localities", "streets", "பகுதிகள்" */
@@ -408,6 +414,20 @@ function fitShape(p: Plan, text: string, words: ModelWords): Plan {
     steps = [...steps, { op: "within", as: "near", of: show, near: idle.map((x) => x.as), meters: distanceOf(text) ?? 500 }];
     show = "near";
   }
+  // "near which school are there more open complaints": the incidents counted at the place each is near, never the nearest place to each
+  if (BY_NEAR.test(text) && !countByOf(text) && !steps.some((x) => x.op === "count_by" || x.op === "rank" || x.op === "hotspot" || x.op === "farthest")) {
+    const nst = steps.find((x) => x.op === "nearest");
+    const win = steps.find((x) => x.op === "within");
+    const isIncColl = (name: string): boolean => { const st = steps.find((x) => x.as === name); return !!st && (st.op === "take" ? st.layer === "incidents" : "of" in st && isIncColl(st.of)); };
+    if (nst && nst.op === "nearest" && !nst.from.startsWith("place:") && isIncColl(nst.from)) {
+      const near = { op: "within" as const, as: "near_by", of: nst.from, near: [nst.to], meters: distanceOf(text) ?? 500 };
+      steps = [...steps.filter((x) => x !== nst), near, { op: "count_by", as: "by", of: "near_by", by: "near" }];
+      show = "by";
+    } else if (win && win.op === "within" && isIncColl(win.of) && show === win.as) {
+      steps = [...steps, { op: "count_by", as: "by", of: win.as, by: "near" }];
+      show = "by";
+    }
+  }
   // "ward vaariyaga kosu pugar", "garbage ward wise": a count by that area when the model left it out (and no league table or cluster was asked)
   const by = countByOf(text);
   const showStep = steps.find((s) => s.as === show);
@@ -462,13 +482,14 @@ export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev
   });
   // "which wards got worse", "endha ward-la jaasthi aagiruchu": a ranked change, never a plain count by area
   const cb = steps.find((s) => s.op === "count_by") as Extract<Step, { op: "count_by" }> | undefined;
-  if (cb && cb.by !== "hex500" && RANK.test(text) && !steps.some((s) => s.op === "change" || s.op === "rank")) {
+  if (cb && cb.by !== "hex500" && cb.by !== "near" && RANK.test(text) && !steps.some((s) => s.op === "change" || s.op === "rank")) {
+    const by = cb.by;
     const t = steps.find((s) => s.as === cb.of);
     if (t?.op === "take" && t.layer === "incidents" && t.filter) {
       const { now: per, before } = changeWindows(isPeriod(t.filter.period ?? null) ? t.filter.period! : null, REFERENCE.test(text));
       const order = RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" as const : "rise" as const;
       steps = [...steps.filter((s) => s !== cb).map((s) => (s === t ? { ...t, filter: { ...t.filter!, status: "any" as const, period: per } } : s)),
-        { op: "change", as: "chg", of: t.as, now: per, before }, { op: "rank", as: "rank", of: "chg", by: cb.by, order }];
+        { op: "change", as: "chg", of: t.as, now: per, before }, { op: "rank", as: "rank", of: "chg", by, order }];
       return { ...p, language: words.lang, steps, show: "rank" };
     }
   }
@@ -553,7 +574,7 @@ interface Parsed {
   /** a follow-up keeps the last answer's place when it names none ("and thefts?", "hospitals there") */
   keep?: { area: AreaRef | null; line: { ref: string; meters: number } | null };
   /** changeRef: the period said is the one compared against ("up from last month"), not the window asked about */
-  shape: { countBy: "ward" | "zone" | "taluk" | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; changeRef?: boolean; brief: boolean;
+  shape: { countBy: "ward" | "zone" | "taluk" | "near" | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; changeRef?: boolean; brief: boolean;
     /** a ranked change by area (the league table) */
     rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall" } | null };
   /** the facilities a question measures from ("near schools"), by layer: a rule check is the others within N m of these */
@@ -703,7 +724,7 @@ export function parse(text: string, env: RouteEnv): Parsed {
     facNear: facilityIsNear(free, facWords), nearLayers,
     shape: {
       rank: RANK.test(text) && RANK_UNIT.test(text) ? { by: /\bzones?\b|மண்டல/i.test(text) ? "zone" : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" : "ward", order: RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" : "rise" } : null,
-      countBy: countByOf(text), hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
+      countBy: countByOf(text) ?? (BY_NEAR.test(text) && facilities.length ? "near" : null), hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       // a comparison the reader reads ("up or down", "today vs yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District
       // IQ; with two areas named ("Adyar vs Velachery, higher or lower?", "Adyar or Velachery, which is higher?") it is an area comparison
       compare: !CHANGE.test(text) && !cmpTime && (COMPARE.test(text) || (cmpWords && twoAreas)), change: CHANGE.test(text) || cmpTime,

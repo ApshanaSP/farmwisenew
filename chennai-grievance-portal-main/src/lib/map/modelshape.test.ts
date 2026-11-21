@@ -75,3 +75,12 @@ describe("v2 round 5", () => {
     expect(keepAreas(ai, rules, [roya]).steps[1]).toMatchObject({ area: { kind: "point", ref: "osm:n2" } });
   });
 });
+
+describe("which place has the most complaints near it", () => {
+  it("reads the question in its usual forms", async () => {
+    const { BY_NEAR } = await import("./route");
+    for (const q of ["near which school there is higher complaint open", "which school has the most open complaints", "which hospitals have the most garbage complaints around them",
+      "top 5 markets by complaints", "schools with the most complaints", "what bus stand has more thefts near it"]) expect(BY_NEAR.test(q), q).toBe(true);
+    for (const q of ["schools near Adyar", "nearest school to Guindy", "which ward has the most complaints", "complaints near schools"]) expect(BY_NEAR.test(q), q).toBe(false);
+  });
+});
