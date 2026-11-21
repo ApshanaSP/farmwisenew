@@ -70,7 +70,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
     for (const x of read(file) as Q[]) {
@@ -95,6 +95,23 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       add(set, !m.length, !!r?.ai_used);
       fs.appendFileSync(OUT, JSON.stringify({ set, id: x.id, q: x.q, ok: !m.length, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), miss: m, plan: r?.plan ?? null }) + "\n");
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
+    }
+  }
+  if (SETS.includes("followups")) {
+    as("followups");
+    const convs = JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", "map-v2", "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want: Q["want"] }[] }[];
+    for (const c of convs) {
+      let prev: Plan | null = null;
+      for (const [k, t] of c.turns.entries()) {
+        const t0 = Date.now();
+        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+        ms.push(Date.now() - t0);
+        const m = misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want);
+        add("followups", !m.length, !!r?.ai_used);
+        fs.appendFileSync(OUT, JSON.stringify({ set: "followups", id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, plan: r?.plan ?? null }) + "\n");
+        console.log(`${m.length ? "FAIL" : "PASS"} followups ${c.id}.${k + 1} ${t.q} ${m.join("; ")}`);
+        if (r?.plan) prev = r.plan;
+      }
     }
   }
   if (SETS.includes("typos")) {

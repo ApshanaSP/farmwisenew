@@ -92,10 +92,14 @@ export function makeSpeller(src: SpellWords) {
     for (const [k, t] of label) if (k !== ak && t !== k && tier.get(k) === 1 && k[0] === ak[0] && (soundKey(k) === soundKey(ak) || editDistance(k, ak, 1) === 1)) areaOf.set(k, ak);
   }
   // words that start or end a place name of two or more words ("salai" in Anna Salai): may stand in a name though they are map words
-  const nameWords = new Set(src.places.filter((n) => /\s/.test(n.trim())).flatMap((n) => n.toLowerCase().split(/[^a-z]+/)).filter((x) => x.length >= 4));
+  // (only names written as words: "Anna Nagar(Zone 7)", an office's label, is no name to read a slip as; area words never stand in a name)
+  const plainName = (n: string) => /^[A-Za-z][A-Za-z .'-]*$/.test(n.trim());
+  const AREA_WORDS = new Set(["zone", "zones", "ward", "wards", "taluk", "taluks", "district", "near", "within"]);
+  const nameWords = new Set(src.places.filter((n) => /\s/.test(n.trim()) && plainName(n)).flatMap((n) => n.toLowerCase().split(/[^a-z]+/)).filter((x) => x.length >= 4 && !AREA_WORDS.has(x)));
   // place names of two or more words as one run of letters ("tnagar", "annanagar")
   const joined = new Map<string, string>();
   for (const name of src.places) {
+    if (!plainName(name)) continue;
     const j = name.toLowerCase().replace(/[^a-z]/g, "");
     if (j.length >= 6 && /[^A-Za-z]/.test(name.trim()) && !joined.has(j)) joined.set(j, name);
   }

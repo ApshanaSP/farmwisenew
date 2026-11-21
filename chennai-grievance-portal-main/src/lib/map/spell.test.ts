@@ -92,3 +92,10 @@ describe("Tamil words of the question itself", () => {
     expect(s("பள்ளி அருகே").fixes).toEqual([]);
   });
 });
+
+describe("names that are labels, not names", () => {
+  it("never reads 'anna nager zone' as an office called 'Anna Nagar(Zone 7)'", () => {
+    const s = makeSpeller({ words: ["zone", "banks"], places: ["Anna Nagar", "Anna Nagar(Zone 7)"], isKnown: (w) => w === "anna" || w === "in" });
+    expect(s("banks in anna nager zone").text).toBe("banks in Anna Nagar zone");
+  });
+});

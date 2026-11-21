@@ -49,3 +49,13 @@ describe("the shape of a model's plan, from the question's words", () => {
     expect(back.show).toBe("in");
   });
 });
+
+describe("a layer the model took and never used", () => {
+  it("means the incidents near it", () => {
+    const out = fitModelPlan({ language: "tanglish", show: "a", steps: [inc(["FIRE_EXPLOSION"], null), { op: "take", as: "f1", layer: "fuel", filter: null, where: null }] },
+      "petrol bunk pakkathula theeppidi", null, null, { ...words, lang: "tanglish" });
+    expect(out.steps.map((s) => s.op)).toEqual(["take", "take", "within"]);
+    expect(out.steps[2]).toMatchObject({ of: "a", near: ["f1"], meters: 500 });
+    expect(out.show).toBe("near");
+  });
+});

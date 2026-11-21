@@ -1,0 +1,52 @@
+{
+  "about": "Ask the Map v2 (21 Nov 2026): conversations, the way an officer narrows an answer. Each turn's `want` (evalcheck.ts format) is checked on the plan after that turn, asked with the previous answer's plan as the console sends it. Scored by askai.live.ts (ASKAI_SETS=followups). Written before any run.",
+  "conversations": [
+    { "id": "c01", "turns": [
+      { "q": "flooding near schools", "want": { "show": "within", "layers": ["incidents", "schools"], "cats": ["FLOOD"] } },
+      { "q": "only severe", "want": { "layers": ["incidents", "schools"], "cats": ["FLOOD"], "severity": "Severe" } },
+      { "q": "make it 300 m", "want": { "layers": ["incidents", "schools"], "cats": ["FLOOD"], "severity": "Severe", "meters": 300 } } ] },
+    { "id": "c02", "turns": [
+      { "q": "garbage complaints in zone 9", "want": { "show": "inside", "layers": ["incidents"], "cats": ["SOLID_WASTE"], "area": "zone:9" } },
+      { "q": "what about zone 13", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"], "area": "zone:13" } },
+      { "q": "this month", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"], "area": "zone:13", "period_days": 30 } } ] },
+    { "id": "c03", "turns": [
+      { "q": "thefts near ATMs", "want": { "show": "within", "layers": ["incidents", "atms"], "cats": ["CRIME_PROPERTY"] } },
+      { "q": "add banks too", "want": { "layers": ["incidents", "atms", "banks"], "cats": ["CRIME_PROPERTY"] } } ] },
+    { "id": "c04", "turns": [
+      { "q": "road accidents this week", "want": { "layers": ["incidents"], "cats": ["ROAD_ACCIDENT"], "period_days": 7 } },
+      { "q": "by zone", "want": { "show": "count_by", "layers": ["incidents"], "cats": ["ROAD_ACCIDENT"], "by": "zone" } } ] },
+    { "id": "c05", "turns": [
+      { "q": "hospitals near Adyar", "want": { "show": "inside", "layers": ["hospitals"] } },
+      { "q": "only government ones", "want": { "layers": ["hospitals"] } } ] },
+    { "id": "c06", "turns": [
+      { "q": "kuppai pugar zone 5 la", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"], "area": "zone:5" } },
+      { "q": "severe mattum", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"], "area": "zone:5", "severity": "Severe" } } ] },
+    { "id": "c07", "turns": [
+      { "q": "mosquito complaints by ward", "want": { "show": "count_by", "layers": ["incidents"], "cats": ["VECTOR_DISEASE"], "by": "ward" } },
+      { "q": "past deadline only", "want": { "layers": ["incidents"], "cats": ["VECTOR_DISEASE"], "overdue": true } } ] },
+    { "id": "c08", "turns": [
+      { "q": "wine shops near schools", "want": { "show": "within", "of_layer": "liquor", "layers": ["liquor", "schools"] } },
+      { "q": "within 50 m", "want": { "of_layer": "liquor", "layers": ["liquor", "schools"], "meters": 50 } } ] },
+    { "id": "c09", "turns": [
+      { "q": "sewage complaints in zone 6", "want": { "layers": ["incidents"], "cats": ["DRAINAGE_SEWAGE"], "area": "zone:6" } },
+      { "q": "near schools", "want": { "layers": ["incidents", "schools"], "cats": ["DRAINAGE_SEWAGE"] } } ] },
+    { "id": "c10", "turns": [
+      { "q": "which wards got worse for garbage this month", "want": { "show": "rank", "layers": ["incidents"], "cats": ["SOLID_WASTE"], "by": "ward", "order": "rise" } },
+      { "q": "by zone instead", "want": { "show": "rank", "layers": ["incidents"], "cats": ["SOLID_WASTE"], "by": "zone" } } ] },
+    { "id": "c11", "turns": [
+      { "q": "flooding in Velachery", "want": { "layers": ["incidents"], "cats": ["FLOOD"] } },
+      { "q": "compare with Adyar", "want": { "show": "compare", "layers": ["incidents"], "cats": ["FLOOD"] } } ] },
+    { "id": "c12", "turns": [
+      { "q": "streetlight complaints this week", "want": { "layers": ["incidents"], "cats": ["STREETLIGHT_ELECTRICAL"], "period_days": 7 } },
+      { "q": "where are they clustering", "want": { "show": "hotspot", "layers": ["incidents"], "cats": ["STREETLIGHT_ELECTRICAL"] } } ] },
+    { "id": "c13", "turns": [
+      { "q": "banks in zone 13", "want": { "show": "inside", "layers": ["banks"], "area": "zone:13" } },
+      { "q": "and ATMs", "want": { "layers": ["atms"], "area": "zone:13" } } ] },
+    { "id": "c14", "turns": [
+      { "q": "பள்ளிகள் அருகே குப்பை", "want": { "layers": ["incidents", "schools"], "cats": ["SOLID_WASTE"] } },
+      { "q": "கடுமையானவை மட்டும்", "want": { "layers": ["incidents", "schools"], "cats": ["SOLID_WASTE"], "severity": "Severe" } } ] },
+    { "id": "c15", "turns": [
+      { "q": "open complaints near T. Nagar", "want": { "layers": ["incidents"] } },
+      { "q": "only garbage and drainage", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"] } } ] }
+  ]
+}

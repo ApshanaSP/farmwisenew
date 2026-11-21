@@ -88,7 +88,9 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["STREETLIGHT_ELECTRICAL"], words: ["streetlight", "streetlights", "street light", "street lights", "live wire", "electrical hazard", "தெருவிளக்கு", "மின் விளக்கு", "street light-u"] },
   { cats: ["ROAD_DAMAGE"], words: ["pothole", "potholes", "road damage", "damaged road", "damaged roads", "பள்ளம்", "சாலை சேதம்", "kuzhi"] },
   // before road accidents: a "fire accident" (தீ விபத்து) is a fire
-  { cats: ["FIRE_EXPLOSION"], words: ["fire accident", "fire accidents", "fires", "blaze", "explosion", "தீ விபத்து", "தீ விபத்துகள்"] },
+  { cats: ["FIRE_EXPLOSION"], words: ["fire accident", "fire accidents", "fires", "blaze", "explosion", "தீ விபத்து", "தீ விபத்துகள்", "theeppidi", "thee vibathu", "theepidi"] },
+  // v2: complaints about public toilets themselves (the toilets layer is where they are; these are what is wrong with them)
+  { cats: ["SANITATION_TOILETS"], words: ["toilet complaints", "toilet complaint", "public toilet complaints", "dirty toilets", "dirty toilet", "toilets not cleaned", "கழிப்பறை புகார்"] },
   { cats: ["ROAD_ACCIDENT"], words: ["accident", "accidents", "crash", "crashes", "collision", "road accident", "road accidents", "விபத்து", "விபத்துகள்", "vibathu", "vibaththu"] },
   { cats: ["CRIME_PROPERTY"], words: ["theft", "thefts", "robbery", "robberies", "snatching", "chain snatching", "burglary", "திருட்டு", "கொள்ளை", "thiruttu"] },
   { cats: ["DRAINAGE_SEWAGE"], words: ["sewage", "drainage", "drain overflow", "overflowing drain", "manhole", "கழிவுநீர்", "சாக்கடை", "kazhivuneer", "saakadai"] },
@@ -395,6 +397,14 @@ function fitShape(p: Plan, text: string, words: ModelWords): Plan {
     const fall = RANK_FALL.test(text) && !/\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?)\b/i.test(text);
     const rise = /\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?|went up)\b/i.test(text) && !RANK_FALL.test(text);
     if (fall || rise) steps = steps.map((s) => (s.op === "rank" ? { ...s, order: fall ? "fall" as const : "rise" as const } : s));
+  }
+  // a facility layer taken and never used ("petrol bunk pakkathula theeppidi": fires, fuel stations, no step between them): the incidents near it
+  const readNames = new Set(steps.flatMap((x) => ("of" in x ? [x.of] : []).concat(x.op === "within" ? x.near : [], x.op === "nearest" ? [x.to, x.from] : [], x.op === "farthest" ? [x.from] : [])));
+  const idle = steps.filter((x) => x.op === "take" && x.layer !== "incidents" && !readNames.has(x.as) && x.as !== show);
+  const shown = steps.find((x) => x.as === show);
+  if (idle.length && shown?.op === "take" && shown.layer === "incidents") {
+    steps = [...steps, { op: "within", as: "near", of: show, near: idle.map((x) => x.as), meters: distanceOf(text) ?? 500 }];
+    show = "near";
   }
   // "ward vaariyaga kosu pugar", "garbage ward wise": a count by that area when the model left it out (and no league table or cluster was asked)
   const by = countByOf(text);
