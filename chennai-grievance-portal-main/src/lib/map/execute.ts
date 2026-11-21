@@ -20,7 +20,23 @@ import { fmtDistance } from "./geom";
 export interface Near { id: string; name: string | null; name_ta: string | null; layer: LayerId; m: number; lat: number; lon: number }
 export interface Hit { inc: Inc; near: Near | null }
 export interface Place { ref: string; name: string; name_ta: string | null; lat: number; lon: number; kind: string }
-export interface Group { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[] }
+/** v3: the nearest named neighbourhood (OpenStreetMap place) within 2 km of a point, cached per world */
+const localities = new WeakMap<World, Map<string, { en: string; ta: string } | null>>();
+export function localityOf(w: World, lat: number, lon: number): { en: string; ta: string } | null {
+  let m = localities.get(w);
+  if (!m) localities.set(w, (m = new Map()));
+  const k = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+  if (m.has(k)) return m.get(k)!;
+  let best: { en: string; ta: string } | null = null, bd = 2000;
+  for (const p of w.points.osm_places) {
+    if (!p.name) continue;
+    const d = haversineM({ lat, lon }, { lat: p.lat, lon: p.lon });
+    if (d < bd) { bd = d; best = { en: p.name, ta: p.name_ta ?? p.name }; }
+  }
+  m.set(k, best);
+  return best;
+}
+export interface Group { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[]; /** v3: people living there, and cases per 10,000 of them */ pop?: number; per10k?: number }
 export interface Cluster { id: string; n: number; lat: number; lon: number; ids: string[]; wards: number[]; place: string | null; open: number }
 export interface AreaScore { key: string; label: string; label_ta: string; p90: number; worst: { lat: number; lon: number; m: number; to: Near | null }; lat: number; lon: number }
 export interface AreaCount { ref: AreaRef; label: string; label_ta: string; n: number; ids: string[] }
@@ -691,7 +707,10 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           } else if (s.by === "near" && h.near) {
             // v2: the place it was found near (the within step keeps the closest one)
             const lw = LAYER_WORD[h.near.layer];
-            key = h.near.id; label = h.near.name ?? lw.one; label_ta = h.near.name_ta ?? h.near.name ?? lw.ta_one; lat = h.near.lat; lon = h.near.lon;
+            // v3: a place with no name on OpenStreetMap is called by the neighbourhood it is in ("School in Perambur")
+            const where = h.near.name ? null : localityOf(w, h.near.lat, h.near.lon);
+            key = h.near.id; label = h.near.name ?? (where ? `${lw.one.charAt(0).toUpperCase()}${lw.one.slice(1)} in ${where.en}` : lw.one);
+            label_ta = h.near.name_ta ?? h.near.name ?? (where ? `${where.ta} ${lw.ta_one}` : lw.ta_one); lat = h.near.lat; lon = h.near.lon;
           } else if (s.by === "hex500" && h.inc.pinnable) {
             const x = hex500(h.inc);
             key = x.key; label = `500 m cell ${x.key}`; label_ta = `500 மீ கட்டம் ${x.key}`; lat = x.lat; lon = x.lon;
@@ -701,7 +720,18 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           g.n++;
           g.ids.push(h.inc.id);
         }
-        const list = [...groups.values()].sort((a, b) => b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
+        // v3: the people living in each area, and its cases for every 10,000 of them
+        if (s.by === "ward" || s.by === "zone" || s.by === "taluk") for (const g of groups.values()) {
+          const pop = w.wards.filter((x) => (s.by === "ward" ? String(x.ward) : s.by === "zone" ? String(x.zone) : x.taluk) === g.key).reduce((t, x) => t + (x.pop ?? 0), 0);
+          if (pop > 0) { g.pop = pop; g.per10k = Math.round((g.n / pop) * 1e5) / 10; }
+        }
+        const per = s.by !== "near" && s.by !== "category" && s.by !== "dept" && s.by !== "hex500" && s.per === "people";
+        // a small area tops any rate on one or two cases: the ranking uses each rate steadied toward the district's own
+        // (empirical Bayes, as if each area had 5 more cases at the district rate); the panel shows the plain rate and count
+        const popAll = [...groups.values()].reduce((t, g) => t + (g.pop ?? 0), 0), nAll = [...groups.values()].reduce((t, g) => t + (g.pop ? g.n : 0), 0);
+        const r0 = popAll ? nAll / popAll : 0, M = 5;
+        const rate = (g: Group) => (g.pop && r0 ? (g.n + M) / (g.pop + M / r0) : -1);
+        const list = [...groups.values()].sort((a, b) => (per ? rate(b) - rate(a) : 0) || b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
         const nearLayer = src.find((h) => h.near)?.near?.layer;
         out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };
         const nw = nearLayer ? LAYER_WORD[nearLayer] : null;

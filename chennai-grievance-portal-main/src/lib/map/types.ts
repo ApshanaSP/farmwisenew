@@ -109,6 +109,8 @@ export interface WardGeo {
   adj: number[];
   /** the pipeline's Gi* z-score over all incidents of the last 30 days */
   gi30: number | null;
+  /** v3: people living in the ward (Kontur Population 2023, 400 m hexagons shared by overlap; data/layers/population.json) */
+  pop: number | null;
 }
 
 /**

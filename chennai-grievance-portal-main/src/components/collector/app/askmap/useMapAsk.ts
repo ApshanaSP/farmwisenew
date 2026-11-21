@@ -42,8 +42,8 @@ export interface MapAsk {
   tookOver: boolean;
   setTookOver: (v: boolean) => void;
   /** incident ids the panel points at on the map (a trace step, a brief count, a cluster) */
-  spot: { ids: string[]; label: string } | null;
-  setSpot: (s: { ids: string[]; label: string } | null) => void;
+  spot: { ids: string[]; label: string; /** v3: the day-by-day player keeps the camera still */ still?: boolean } | null;
+  setSpot: (s: MapAsk["spot"]) => void;
   /** the row under the mouse: not React state (a hover would re-render the whole console); the map listens instead */
   hover: string | null;
   setHover: (id: string | null) => void;

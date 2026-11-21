@@ -88,7 +88,7 @@ export interface AskResponse {
     rings: { id: string; lat: number; lon: number; r: number }[];
   };
   extra: {
-    groups?: { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[] }[];
+    groups?: { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[]; pop?: number; per10k?: number }[];
     clusters?: { id: string; n: number; lat: number; lon: number; ids: string[]; place: string | null }[];
     hotWards?: { ward: number; z: number; n: number }[];
     compare?: { a: { label: string; label_ta: string; n: number; ids: string[] }; b: { label: string; label_ta: string; n: number; ids: string[] } };

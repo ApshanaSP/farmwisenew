@@ -39,7 +39,7 @@ declare global {
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 8;
+const WORLD_VERSION = 9;
 
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
@@ -102,13 +102,17 @@ async function loadBase(key: string): Promise<Base> {
   const conds = condsOf(sigRows, workRows);
 
   const wardInfo = new Map(wardRows.map((w) => [Number(w.ward_no), w]));
+  // v3: people per ward (scripts/build-population.py); none when the file was never built
+  let popOf: Record<string, { pop: number }> = {};
+  try { popOf = JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), "population.json"), "utf8")).wards ?? {}; } catch { /* no population file */ }
   const wards: WardGeo[] = geo.wards.map((g) => {
     const w = wardInfo.get(g.ward);
     const pts = g.rings.flat().map(([lat, lon]) => ({ lat, lon }));
     return {
       ward: g.ward, zone: g.zone, zoneName: String(w?.zone_name ?? ""), taluk: g.taluk, rings: g.rings as Pair[][], bbox: bboxOf(pts)!,
       lat: Number(w?.centroid_lat ?? pts[0]?.lat), lon: Number(w?.centroid_lon ?? pts[0]?.lon),
-      adj: String(w?.adjacent_wards ?? "").split("|").filter(Boolean).map(Number), gi30: w?.gi_star_z_30d == null ? null : Number(w.gi_star_z_30d)
+      adj: String(w?.adjacent_wards ?? "").split("|").filter(Boolean).map(Number), gi30: w?.gi_star_z_30d == null ? null : Number(w.gi_star_z_30d),
+      pop: popOf[String(g.ward)]?.pop ?? null
     };
   });
   const district = wards.reduce<Bbox>((b, w) => ({ s: Math.min(b.s, w.bbox.s), w: Math.min(b.w, w.bbox.w), n: Math.max(b.n, w.bbox.n), e: Math.max(b.e, w.bbox.e) }),

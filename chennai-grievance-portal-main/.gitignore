@@ -51,3 +51,6 @@ exports/
 
 # Ask the Map: officers' uploaded place lists (lib/map/uploads.ts), never committed
 data/map-lists/
+
+# downloaded source files (Kontur population): rebuilt by scripts/build-population.py
+data/sources/

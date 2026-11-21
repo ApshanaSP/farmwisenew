@@ -25,6 +25,8 @@ import { onMapCmd } from "./bridge";
 import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
 import { useWorkspace } from "./workspace";
 import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
+import { TopBars } from "./TopBars";
+import { rankedOf } from "./answerLayers";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
 let cueSeen = 0;
@@ -166,6 +168,30 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   useEffect(() => { const b = body.current; if (b && !r) b.scrollTop = b.scrollHeight; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ta = lang === "ta";
+  // the question, part by part: each part can be changed or removed
+  const chipsView = (r: AskResponse) => (
+    <div className="amp-chips" role="group" aria-label="The question, part by part">
+                      {r.chips.map((c) => (
+                        <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
+                          <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
+                            onClick={() => c.options.length && setMenu(menu === c.id ? null : c.id)} aria-haspopup={c.options.length ? "menu" : undefined} aria-expanded={menu === c.id}
+                            title={c.isDefault ? `${ta ? c.ta : c.en} (${w.default}: not in the question)` : ta ? c.ta : c.en}>
+                            <span>{ta ? c.ta : c.en}</span>{c.isDefault && <em>{w.default}</em>}{c.options.length > 0 && <I n="chevd" />}
+                          </button>
+                          {c.removable && <span className="rm" role="button" tabIndex={0} aria-label={`${w.remove} ${c.en}`} onClick={() => chip(c, null)} onKeyDown={(e) => e.key === "Enter" && chip(c, null)}><I n="x" /></span>}
+                          {menu === c.id && (
+                            <div className="amp-menu" role="menu">
+                              {c.options.map((o) => (
+                                <button key={o.key} role="menuitemradio" aria-checked={o.on} className={o.on ? "on" : ""} onClick={() => (c.part === "place" ? altChip(c, o.key) : chip(c, o.key))}>
+                                  {o.on && <I n="check" />}{ta ? o.ta : o.en}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+  );
   return (
     <>
     <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}${docked ? " dock" : ""}`} style={drag.style} data-h={sheet} aria-label={w.title}>
@@ -206,46 +232,51 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     {r.say.chips.length > 0 && <div className="amp-sug" style={{ marginTop: 8 }}>{r.say.chips.map((c) => <button key={c} onClick={() => submit(c)}>{c}</button>)}</div>}
                   </div>
                 )}
-                {r.kind === "answer" && r.answer && (
+                {r.kind === "answer" && r.answer && (rankedOf(r) ? (
+                  // v3: a ranked answer leads with the picture: the answer, its top five, what to ask next and the actions;
+                  // the filters, tables, every case and the trace wait under "More detail"
+                  <>
+                    <Answer r={r} w={w} lang={lang} ask={ask} />
+                    <TopBars r={r} ask={ask} lang={lang} />
+                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
+                    <PlayPeriod r={r} ask={ask} lang={lang} />
+                    <details className="amp-more">
+                      <summary><I n="sliders" />{ta ? "மேலும் விவரம்: வடிகட்டிகள், அட்டவணை, ஒவ்வொரு வழக்கும்" : `More detail: filters, the full table, every case (${r.total.toLocaleString("en-IN")})`}</summary>
+                      <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+                      {filtersOpen && chipsView(r)}
+                      <Conditions r={r} lang={lang} max={4} />
+                      <LeagueTable r={r} ask={ask} lang={lang} />
+                      <SpeedTable r={r} ask={ask} lang={lang} />
+                      <GroupList r={r} ask={ask} lang={lang} />
+                      <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
+                      <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
+                      <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
+                      <Places r={r} lang={lang} />
+                    </details>
+                  </>
+                ) : (
                   <>
                     <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
-                    {filtersOpen && <div className="amp-chips" role="group" aria-label="The question, part by part">
-                      {r.chips.map((c) => (
-                        <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
-                          <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
-                            onClick={() => c.options.length && setMenu(menu === c.id ? null : c.id)} aria-haspopup={c.options.length ? "menu" : undefined} aria-expanded={menu === c.id}
-                            title={c.isDefault ? `${ta ? c.ta : c.en} (${w.default}: not in the question)` : ta ? c.ta : c.en}>
-                            <span>{ta ? c.ta : c.en}</span>{c.isDefault && <em>{w.default}</em>}{c.options.length > 0 && <I n="chevd" />}
-                          </button>
-                          {c.removable && <span className="rm" role="button" tabIndex={0} aria-label={`${w.remove} ${c.en}`} onClick={() => chip(c, null)} onKeyDown={(e) => e.key === "Enter" && chip(c, null)}><I n="x" /></span>}
-                          {menu === c.id && (
-                            <div className="amp-menu" role="menu">
-                              {c.options.map((o) => (
-                                <button key={o.key} role="menuitemradio" aria-checked={o.on} className={o.on ? "on" : ""} onClick={() => (c.part === "place" ? altChip(c, o.key) : chip(c, o.key))}>
-                                  {o.on && <I n="check" />}{ta ? o.ta : o.en}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </span>
-                      ))}
-                    </div>}
+                    {filtersOpen && chipsView(r)}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
                     <LeagueTable r={r} ask={ask} lang={lang} />
                     <SpeedTable r={r} ask={ask} lang={lang} />
                     <GroupList r={r} ask={ask} lang={lang} />
+                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <GapList r={r} lang={lang} />
                     <RulePairs r={r} lang={lang} />
                     <PlayPeriod r={r} ask={ask} lang={lang} />
-                    <Acts r={r} w={w} actions={actions} />
-                    <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
-                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
-                    <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
                     <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
-                    <Places r={r} lang={lang} />
+                    <details className="amp-more">
+                      <summary><I n="info" />{ta ? "இது எப்படிக் கணக்கிடப்பட்டது" : "How this was worked out, and the places named"}</summary>
+                      <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
+                      <Places r={r} lang={lang} />
+                    </details>
                   </>
-                )}
+                ))}
                 {r.kind === "brief" && r.brief && (
                   <>
                     <ScorecardCard r={r} lang={lang} />
@@ -447,7 +478,7 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
           })}
         </div>
       )}
-      <Conditions r={r} lang={lang} max={2} />
+      {!rankedOf(r) && <Conditions r={r} lang={lang} max={2} />}
       <div className="amp-asof" title={layers.map((l) => `${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("\n") || undefined}>
         {w.asOf} {fmtWhen(r.asOf.data || r.asOf.now)}
         {r.unplaced.length > 0 && ` · ${w.unplaced(r.unplaced.length)}`}

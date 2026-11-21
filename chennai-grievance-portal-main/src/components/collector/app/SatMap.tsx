@@ -6,7 +6,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { I } from "./icons";
 import { CAT_COL, type Row } from "./lib";
 import type { MapAsk } from "./askmap/useMapAsk";
-import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
+import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, rankedBounds, rankedOf, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
 import { LAYER_COL, LAYER_WORD } from "@/lib/map/words";
 import type { LayerId } from "@/lib/map/types";
@@ -505,10 +505,33 @@ export default function SatMap(props: Props) {
     if (resp.kind !== "answer" && resp.kind !== "brief") return;
     const pad = panelPad(el.current!);
     const c = s.map.getCenter();
+    // v3: a ranked count near places goes to its top ten, clear of the panel
+    const rk = rankedOf(resp);
+    const rb = rk?.near ? rankedBounds(s.L, rk) : null;
+    if (rb && ask.cue.index === 0) {
+      s.prog = true;
+      s.map.flyToBounds(rb.pad(0.08), { paddingTopLeft: s.L.point(pad.tl[0] + 24, pad.tl[1] + 60), paddingBottomRight: s.L.point(pad.br[0] + 60, pad.br[1] + 60), maxZoom: 15, duration: reduced ? 0 : 1.1, animate: !reduced, easeLinearity: 0.2 });
+      return;
+    }
     const shots = cameraFor(resp.camera, { width: el.current!.offsetWidth, height: el.current!.offsetHeight, padTopLeft: pad.tl, padBottomRight: pad.br, reducedMotion: reduced, from: { lat: c.lat, lon: c.lng } });
     const shot = shots[Math.min(ask.cue.index, shots.length - 1)];
     if (shot) play(s, shot, el.current!, () => cb.current.ask?.tookOver ?? false);
   }, [ask?.cue.seq, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  // v3: a place chosen in a ranked answer (a bar, a badge, an area): the map flies to its cases, clear of the panel;
+  // "show all" again flies back to the top ten
+  const spotSeq = useRef(0);
+  useEffect(() => {
+    const s = st.current;
+    if (!s || !resp || resp.kind !== "answer" || !rankedOf(resp)) return;
+    if ((spotSeq.current++ === 0 && !ask?.spot) || ask?.spot?.still) return; // the answer's own camera draws first; the player keeps still
+    const ids = ask?.spot ? new Set(ask.spot.ids) : null;
+    const pts = ids ? resp.features.filter((f) => f.pinnable && ids.has(f.id)).map((f) => [f.lat, f.lon] as [number, number]) : rankedOf(resp)!.rows.slice(0, 10).map((x) => [x.lat, x.lon] as [number, number]);
+    if (!pts.length) return;
+    const pad = panelPad(el.current!);
+    s.prog = true;
+    s.map.flyToBounds(s.L.latLngBounds(pts).pad(0.15), { paddingTopLeft: s.L.point(pad.tl[0] + 24, pad.tl[1] + 50), paddingBottomRight: s.L.point(pad.br[0] + 50, pad.br[1] + 50), maxZoom: 16, duration: reduced ? 0 : 0.9, animate: !reduced });
+  }, [ask?.spot]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { spotSeq.current = 0; }, [resp]);
   // the heat view: where the answer is dense, as one coloured layer (the pins fade under it)
   const heatLayer = useRef<Leaflet.Layer | null>(null);
   useEffect(() => {
@@ -516,12 +539,14 @@ export default function SatMap(props: Props) {
     if (!s) return;
     heatLayer.current?.remove();
     heatLayer.current = null;
-    const on = !!props.heat && !!resp && resp.kind === "answer" && resp.features.length > 0;
+    // v3: a count near places shows where its cases lie as a soft heat under the top ten (until one is chosen)
+    const auto = !!resp && !!rankedOf(resp)?.near && !ask?.spot;
+    const on = (!!props.heat || auto) && !!resp && resp.kind === "answer" && resp.features.length > 0;
     el.current?.classList.toggle("ask-heat", on);
     if (!on) return;
     const w = { Severe: 1.6, High: 1.25, Medium: 1, Low: 0.8 } as Record<string, number>;
-    heatLayer.current = drawHeat(s.L, s.map, resp!.features.map((f) => ({ lat: f.lat, lon: f.lon, w: w[f.sev] ?? 1 }))).addTo(s.map);
-  }, [ready, resp, props.heat]); // eslint-disable-line react-hooks/exhaustive-deps
+    heatLayer.current = drawHeat(s.L, s.map, resp!.features.map((f) => ({ lat: f.lat, lon: f.lon, w: w[f.sev] ?? 1 })), props.heat ? 1 : 0.45).addTo(s.map);
+  }, [ready, resp, props.heat, ask?.spot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // the officer's visit order: numbered stops and straight legs; a click on the map starts the route there
   useEffect(() => {
@@ -808,7 +833,14 @@ export default function SatMap(props: Props) {
   return (
     <>
       <div ref={el} style={{ position: "absolute", inset: 0 }} aria-label="Satellite map of Chennai district. Click a zone or taluk to filter, a pin to open the incident." />
-      {!geo && <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--text-3)" }}>Loading the map…</div>}
+      {/* v3: while the wards load, a moving picture instead of a line of text */}
+      {!geo && (
+        <div className="mapload" role="status" aria-label="Loading the map">
+          <div className="mapload-grid" />
+          <div className="mapload-radar"><i /><b /></div>
+          <p><span>Drawing Chennai's 200 wards</span><em>satellite tiles, wards and today's cases</em></p>
+        </div>
+      )}
       {canGoBack && focus && (
         <button type="button" className="map-back" onClick={goBack} title="Return the map to where it was before this incident">
           <I n="chevl" />Back to previous view

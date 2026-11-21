@@ -5,7 +5,8 @@
 import type { Plan, Step } from "./plan";
 
 export interface Want { show?: string; layers?: string[]; of_layer?: string; cats?: string[]; family_or_cat?: string; meters?: number; beyond?: number; by?: string; order?: string;
-  areas?: string; area?: string; kinds?: string[]; period_days?: number; language?: string; severity?: string; overdue?: boolean; from_place?: boolean; understood?: boolean }
+  areas?: string; area?: string; kinds?: string[]; period_days?: number; language?: string; severity?: string; overdue?: boolean; from_place?: boolean; understood?: boolean;
+  /** v3: ranked per 10,000 people; the status filter (open, closed, any) */ per?: boolean; status?: string }
 export interface Q { id: string; q: string; want: Want }
 
 
@@ -44,6 +45,8 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
   if (want.severity && !inc?.filter?.severity?.includes(want.severity)) out.push(`no severity ${want.severity}`);
   if (want.overdue && inc?.filter?.overdue !== true) out.push("not overdue");
   if (want.from_place && !step("nearest")?.from.startsWith("place:")) out.push("nearest is not from the place");
+  if (want.per != null && (step("count_by")?.per === "people") !== want.per) out.push(want.per ? "not per people" : "per people, not asked");
+  if (want.status && (inc?.filter?.status ?? "open") !== want.status) out.push(`status ${inc?.filter?.status ?? "default"}, not ${want.status}`);
   return out;
 }
 
