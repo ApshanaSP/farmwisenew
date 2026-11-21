@@ -6,7 +6,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { I } from "./icons";
 import { CAT_COL, type Row } from "./lib";
 import type { MapAsk } from "./askmap/useMapAsk";
-import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, rankedBounds, rankedOf, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
+import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, declutterRanks, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, rankedBounds, rankedOf, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
 import { LAYER_COL, LAYER_WORD } from "@/lib/map/words";
 import type { LayerId } from "@/lib/map/types";
@@ -454,9 +454,14 @@ export default function SatMap(props: Props) {
       geo, lang: resp.lang, showBefore: !!ask?.showBefore, drop: false, reduced, onPin: () => undefined,
       onGroup: (ids, label) => cb.current.ask?.setSpot({ ids, label })
     });
+    // v3: the top ten's names kept apart, now and after every zoom or move (the badges rise in over about a second)
+    const tidy = () => { if (el.current) declutterRanks(el.current); };
+    const timers = [60, 1200].map((ms) => setTimeout(tidy, ms));
+    s.map.on("zoomend moveend", tidy);
     // OpenStreetMap layers carry their licence on the map
     const osm = resp.asOf.layers.some((l) => l.source === "OpenStreetMap");
     s.map.attributionControl[osm ? "addAttribution" : "removeAttribution"]("© OpenStreetMap contributors (ODbL)");
+    return () => { timers.forEach(clearTimeout); s.map.off("zoomend moveend", tidy); };
   }, [ready, resp, geo]); // eslint-disable-line react-hooks/exhaustive-deps
   // the pins: on each answer (dropping in by priority), and again when the zoom changes the clustering
   useEffect(() => {

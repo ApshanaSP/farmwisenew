@@ -311,8 +311,8 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
         fact("per10k", g[0].per10k, "cases per 10,000 people in the top area");
         headline = ta ? `${n(count)} ${subj}${per}; மக்கள்தொகைக்கு அதிகம் ${g[0].label_ta}: 10,000 பேருக்கு ${rate(g[0])} (${n(g[0].n)} வழக்குகள், ${n(g[0].pop ?? 0)} பேர்) · ${ready}.`
           : `${n(count)} ${subj}${per}; the most for its people: ${g[0].label}, ${rate(g[0])} per 10,000 people (${n(g[0].n)} ${g[0].n === 1 ? "case" : "cases"}, ${n(g[0].pop ?? 0)} people) · ${ready}.`;
-        meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${rate(x)})`).join(", ")}. மக்கள்தொகை: Kontur 2023.`
-          : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${rate(x)})`).join(", ")}. Ranked with small counts steadied, so one or two cases cannot top it. People: Kontur Population 2023, by ward.`;
+        meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${rate(x)}, ${n(x.n)})`).join(", ")}. மக்கள்தொகை: Kontur 2023.`
+          : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${rate(x)}, ${n(x.n)} ${x.n === 1 ? "case" : "cases"})`).join(", ")}. Ranked with small counts steadied, so a ward with one or two cases does not top it. People: Kontur Population 2023, by ward.`;
       }
       if (show.unassigned.length && g.length) meaning = `${meaning ?? ""} ${ta ? `${show.unassigned.length} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned.length)} have no ${show.by} on record.`}`.trim();
       break;

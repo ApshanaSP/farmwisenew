@@ -204,7 +204,7 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
 
 /** One place in a ranked answer: its rank, name, the figure it is ranked by, and its cases (a click shows them). */
 export interface RankRow { key: string; label: string; n: number; fig: string; sub: string; lat: number; lon: number; ids: string[]; tone: "hi" | "lo" | "" }
-export interface Ranked { by: string; what: string; rows: RankRow[]; near: boolean; areas: boolean; layer: LayerId | null; radius: number | null }
+export interface Ranked { by: string; what: string; rows: RankRow[]; near: boolean; areas: boolean; layer: LayerId | null; radius: number | null; /** v3: a rain forecast (blue shades) */ rain?: boolean }
 
 const TOP = 10;
 const fmtN = (n: number) => n.toLocaleString("en-IN");
@@ -216,6 +216,14 @@ const fmtN = (n: number) => n.toLocaleString("en-IN");
 export function rankedOf(r: AskResponse): Ranked | null {
   if (r.kind !== "answer") return null;
   const ta = r.lang === "ta";
+  // v3: the rain to come by zone (forecast mm), with each zone's open flooding and drain cases
+  const fc = r.extra.forecast;
+  if (fc && fc.rows.length > 1) {
+    const rows = fc.rows.map((x): RankRow => ({ key: x.key, label: ta ? x.label_ta : x.label, n: x.mm, fig: `${x.mm.toLocaleString("en-IN", { maximumFractionDigits: 1 })} mm`,
+      sub: ta ? `அதிகபட்சம் மணிக்கு ${x.maxHr} மிமீ · ${x.open} திறந்த வெள்ள/வடிகால் புகார்கள்` : `up to ${x.maxHr} mm an hour · ${x.open} open flooding or drain ${x.open === 1 ? "case" : "cases"}`,
+      lat: x.lat, lon: x.lon, ids: x.ids, tone: "" }));
+    return { by: "zone", what: ta ? "மிமீ மழை" : "mm of rain", rows, near: false, areas: true, layer: null, radius: null, rain: true };
+  }
   const by = r.extra.groupsBy;
   const groups = r.extra.groups ?? [];
   if (by && by !== "category" && by !== "dept" && by !== "hex500" && groups.length > 1) {
@@ -257,6 +265,7 @@ export function rankedOf(r: AskResponse): Ranked | null {
 /** the shade of an area by its place in the ranking (5 steps, amber to deep red; green to amber for "fast") */
 const SHADES = ["#FDE68A", "#FBBF24", "#F97316", "#DC2626", "#991B1B"];
 const SHADES_GOOD = ["#065F46", "#059669", "#34D399", "#FCD34D", "#F97316"];
+const SHADES_RAIN = ["#DBEAFE", "#93C5FD", "#3B82F6", "#1D4ED8", "#1E3A8A"];
 
 function wardsOf(geo: MapGeo, by: string, key: string) {
   if (by === "ward") return geo.wards.filter((w) => w.ward === Number(key));
@@ -279,7 +288,7 @@ function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawO
   const step = (n: number) => (max > min ? Math.min(4, Math.floor(((n - min) / (max - min)) * 5)) : 2);
   if (k.areas) {
     rows.forEach((x, i) => {
-      const fill = speed ? SHADES_GOOD[step(x.n)] : x.tone === "lo" ? "#10B981" : SHADES[step(x.n)];
+      const fill = k.rain ? SHADES_RAIN[step(x.n)] : speed ? SHADES_GOOD[step(x.n)] : x.tone === "lo" ? "#10B981" : SHADES[step(x.n)];
       for (const wd of wardsOf(o.geo, k.by, x.key)) for (const ring of wd.rings) {
         const poly = L.polygon(ring, { pane: "askAreas", color: "#0B1020", weight: 0.6, opacity: 0.55, fillColor: fill, fillOpacity: 0.62, className: o.reduced ? "achoro" : "achoro in" })
           .on("click", () => o.onGroup(x.ids, x.label))
@@ -302,18 +311,40 @@ function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawO
         className: o.reduced ? "aring" : "aring grow" }).addTo(a.areas);
     }
     const s = Math.round(30 + 18 * (max > 0 ? Math.sqrt(x.n / max) : 0));
-    const html = `<div class="ar3${i === 0 ? " first" : ""}${o.reduced ? "" : " in"} t-${x.tone || "x"}" style="--s:${s}px;--d:${i * 90}ms">`
-      + `<span class="ar3-n">${i + 1}</span><span class="ar3-l"><b>${esc(x.label)}</b><em>${esc(x.fig)}${speed || x.fig.startsWith("+") || x.fig.startsWith("−") ? "" : ` ${k.what}`}</em></span></div>`;
+    const html = `<div data-rank="${i}" class="ar3${k.rain ? " rain" : ""}${i === 0 ? " first" : ""}${o.reduced ? "" : " in"} t-${x.tone || "x"}" style="--s:${s}px;--d:${i * 90}ms">`
+      + `<span class="ar3-n">${i + 1}</span><span class="ar3-l"><b>${esc(x.label)}</b><em>${esc(x.fig)}${speed || k.rain || x.fig.startsWith("+") || x.fig.startsWith("−") ? "" : ` ${k.what}`}</em></span></div>`;
     L.marker([x.lat, x.lon], { pane: "askMarks", zIndexOffset: 1000 - i, title: `${i + 1}. ${x.label}: ${x.sub}`, keyboard: true,
       icon: L.divIcon({ className: "", html, iconSize: [s, s], iconAnchor: [s / 2, s / 2] }) })
       .on("click", () => o.onGroup(x.ids, x.label)).addTo(a.marks);
   });
   // the key: what the shade and the badges mean
   const title = ta ? `முதல் ${Math.min(TOP, rows.length)}: எண்ணிக்கையின்படி` : speed ? `Top ${Math.min(TOP, rows.length)} by days to close` : `Top ${Math.min(TOP, rows.length)} of ${fmtN(rows.length)}, by ${k.what}`;
-  const ramp = (speed ? SHADES_GOOD : SHADES).map((c) => `<i style="background:${c}"></i>`).join("");
-  const lo = speed ? (ta ? "வேகம்" : "fast") : ta ? "குறைவு" : "fewer", hi = speed ? (ta ? "மெதுவு" : "slow") : ta ? "அதிகம்" : "more";
+  const ramp = (k.rain ? SHADES_RAIN : speed ? SHADES_GOOD : SHADES).map((c) => `<i style="background:${c}"></i>`).join("");
+  const lo = k.rain ? (ta ? "குறைவு" : "dry") : speed ? (ta ? "வேகம்" : "fast") : ta ? "குறைவு" : "fewer", hi = k.rain ? (ta ? "அதிகம்" : "wet") : speed ? (ta ? "மெதுவு" : "slow") : ta ? "அதிகம்" : "more";
   const Legend = L.Control.extend({ onAdd: () => { const d = L.DomUtil.create("div", "ar3-key"); d.innerHTML = `<b>${esc(title)}</b>${k.areas ? `<div class="ramp"><span>${lo}</span>${ramp}<span>${hi}</span></div>` : ""}<small>${ta ? "ஒன்றைத் தட்டினால் அதன் வழக்குகள்" : "Click a number to see its cases"}</small>`; L.DomEvent.disableClickPropagation(d); return d; } });
   a.legend = new (Legend as unknown as new (o: Leaflet.ControlOptions) => Leaflet.Control)({ position: "bottomleft" }).addTo(map);
+}
+
+/**
+ * v3: keeps the top ten's names readable: in rank order, a label that would cover an earlier one moves to the badge's
+ * left side, and one that still collides shows only its number (its name is on hover and in the panel). Run after each
+ * zoom or move; it only toggles classes.
+ */
+export function declutterRanks(root: HTMLElement) {
+  const els = [...root.querySelectorAll<HTMLElement>(".ar3")].sort((a, b) => Number(a.dataset.rank) - Number(b.dataset.rank));
+  const taken: DOMRect[] = [];
+  const hit = (r: DOMRect) => taken.some((t) => r.left < t.right + 2 && r.right > t.left - 2 && r.top < t.bottom + 2 && r.bottom > t.top - 2);
+  for (const el of els) {
+    el.classList.remove("flip", "bare");
+    const lab = el.querySelector<HTMLElement>(".ar3-l");
+    const badge = el.querySelector<HTMLElement>(".ar3-n");
+    if (!lab || !badge) continue;
+    taken.push(badge.getBoundingClientRect());
+    let r = lab.getBoundingClientRect();
+    if (hit(r)) { el.classList.add("flip"); r = lab.getBoundingClientRect(); }
+    if (hit(r)) { el.classList.remove("flip"); el.classList.add("bare"); continue; }
+    taken.push(r);
+  }
 }
 
 /** where the camera should go for a ranked answer: the top ten (or the district when they span it) */

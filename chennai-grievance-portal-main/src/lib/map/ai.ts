@@ -39,7 +39,7 @@ export function withNamed(plan: Plan, w: Pick<WirePlan, "named_categories" | "na
   let show = plan.show;
   const isIncShow = (): boolean => { const chain = (n: string): string | null => { const x = steps.find((y) => y.as === n); return !x ? null : x.op === "take" ? x.layer : "of" in x ? chain(x.of) : null; }; return chain(show) === "incidents"; };
   // an area it named and the plan left out: inside that area, on the answer (when the answer is incidents or a layer's places)
-  const hasArea = steps.some((x) => x.op === "inside" || x.op === "compare" || x.op === "farthest" || x.op === "rank" || x.op === "speed" || (x.op === "count_by" && x.by !== "near" && x.by !== "category" && x.by !== "dept"));
+  const hasArea = steps.some((x) => x.op === "along" || x.op === "inside" || x.op === "compare" || x.op === "farthest" || x.op === "rank" || x.op === "speed" || (x.op === "count_by" && x.by !== "near" && x.by !== "category" && x.by !== "dept"));
   // a place it named from the prompt's list: its zone, ward, taluk or point (1 km), as the model read it
   const ref = (w.named_places ?? []).find((x) => refs.includes(x));
   const fromRef = (r: string): AreaRef | null => {
@@ -120,6 +120,10 @@ const NEW_EXAMPLES: [string, W][] = [
   ["which taluk needs my attention", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { status: "open", overdue: true }), { op: "count_by", as: "by", of: "a", by: "taluk" }] }],
   ["accident black spots", { understood: true, intent: "plan", city: "none", language: "en", show: "hot", steps: [take("a", "incidents", { category: ["ROAD_ACCIDENT"], status: "any", period_days: 90, period_offset: 0 }), { op: "hotspot", as: "hot", of: "a" }] }],
   ["status of ward 120", { understood: true, intent: "brief", city: "none", language: "en", show: "in", steps: [take("a", "incidents", { status: "open" }), { op: "inside", as: "in", of: "a", area_kind: "ward", area_id: 120 }] }],
+  ["mazhai thanni road la thengi irukku", { understood: true, intent: "plan", city: "none", language: "tanglish", show: "a", steps: [take("a", "incidents", { category: ["FLOOD_WATERLOGGING"], status: "open", period_days: 7, period_offset: 0 })] }],
+  ["eve teasing cases taluk wise", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { category: ["CRIMES_AGAINST_WOMEN"], status: "open", period_days: 30, period_offset: 0 }), { op: "count_by", as: "by", of: "a", by: "taluk" }] }],
+  ["restaurant food adulteration", { understood: true, intent: "plan", city: "none", language: "en", show: "a", steps: [take("a", "incidents", { category: ["FOOD_SAFETY"], status: "open", period_days: 30, period_offset: 0 })] }],
+  ["will it rain tomorrow", { understood: true, intent: "city", city: "forecast", language: "en", show: "a", steps: [take("a", "incidents", { status: "open" })] }],
   ["is traffic bad right now", { understood: true, intent: "city", city: "traffic", language: "en", show: "a", steps: [take("a", "incidents", { status: "open" })] }],
   ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
     take("a", "incidents", { family: ["CRIME"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "liquor", { kinds: ["bar", "pub"] }),
@@ -187,6 +191,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "- count_by: incidents by ward, zone, taluk or hex500; or by near, after a within step: each incident counted at the place it was found near (which school, hospital or market has the most complaints near it). hotspot: clusters of incidents. compare: two areas (area_* and b_*).",
     "- count_by by category (what people complain about most, top problems, type wise) or by dept (which department holds most, department wise).",
     "- speed: how fast cases are closed (median days from first report to closing) by ward, zone, taluk, category or dept; order fast (resolving fast, best performing, quickest) or slow (slowest, taking longest, delays). Take incidents with status any and period_days 90 unless the question names a period.",
+    "- Which school, hospital, college, market, bus stand, temple or wine shop (or its area, surroundings, around it) has the most problems or cases: a within step to that facility layer and count_by near (never by ward); the kind of problem, if named, on the incidents.",
     "- Per person, per head, per capita, per 1000 people, for its population, relative to people living there: count_by ward, zone or taluk with per_people true (the map ranks by cases for every 10,000 people).",
     "- Which area needs my attention, where should I focus or go first, worst or problem areas: open incidents past deadline (overdue true, no period), count_by ward (or zone if the question says zone).",
     "- What is happening or what happened near a kind of place (near schools, near wine shops): open incidents within 500 m of that layer. Near one named place: inside its point.",
@@ -211,7 +216,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "Defaults: status open; period last 7 days (offset 0) unless the question names a period. Distances 10 to 5000 metres (a gap's beyond_m up to 20000). Areas: ward 1-200, zone 1-15, taluk codes TLK-XXX,",
     "point refs are given to you as place refs in the prompt; use only those. A road or waterway is used only by a line id given in the prompt.",
     "A rule check (licensed premises near schools or places of worship) uses the distance the question says; if it says none, 100. Never state a legal distance.",
-    "Tanglish words: aaspathri hospital, kuppai garbage, vibathu accident, thiruttu theft, thanni water, nikkudhu stagnating, kosu mosquito, theeppidi fire, kadai shop, kovil temple, pugar complaint, pakkathula near, kitta near, illa or illadha without, evlo how many, enga where, jaasthi more, la in.",
+    "Tanglish words: aaspathri hospital, kuppai garbage, vibathu accident, thiruttu theft, thanni water, nikkudhu stagnating, kosu mosquito, theeppidi fire, kadai shop, kovil temple, pugar complaint, pakkathula near, kitta near, illa or illadha without, evlo how many, enga where, jaasthi more, la in, naai or nai dog (stray animals), naai thollai dog nuisance, maadu cow (stray animals), thengi or thengi nikkudhu stagnating (thanni thengi = waterlogging, flooding), mazhai rain, pallam pothole (road damage), vilakku light (streetlight), saakadai sewage, enna problem what is wrong (the open incidents there or near it), tasmac or wine shop (liquor layer: incidents near it, not the shops themselves, when the question asks what is happening or what problem).",
     "Facilities near a place (\"pharmacies near Saidapet\", \"banks around Egmore\") list those within its radius (inside a point); nearest only when the question says nearest or closest.",
     "Categories: use the most exact category whose label matches the question's words (sewage: DRAINAGE_SEWAGE, chain snatching: CRIME_PROPERTY, road accidents: ROAD_ACCIDENT, mosquitoes and dengue: VECTOR_DISEASE); a family only when the question names a broad kind (\"flooding\", \"crime\", \"roads\"). Never a code that is not listed.",
     "A question that measures licensed premises (wine shops, liquor shops, TASMAC, bars) from schools, colleges or places of worship is a rule check: take the premises, take the places, within of the premises near the places.",
@@ -220,9 +225,9 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "understood is false only when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); a loosely worded question that names a kind of incident, a layer, a place or the officer's list is understood.",
     "intent says what kind of answer the question needs:",
     "- plan: a map answer from the steps (lists, counts, near, along, gaps, clusters, changes, rankings, speed). Most questions.",
-    "- brief (only when the question names no kind of problem; accidents near Guindy is a plan): what is happening in, at or near ONE area or named place (\"what is happening in Saidapet\", \"status of ward 120\", \"what happened near Marina Beach\", \"tell me about Adyar\"): the steps take incidents and one inside step with that area (a named place: its point, radius 1000 m).",
+    "- brief (only when the question names no kind of problem and asks for no list: accidents near Guindy, traffic problems in T Nagar, all complaints in ward 120 including closed, closed cases in zone 5 are plans): what is happening in, at or near ONE area or named place (\"what is happening in Saidapet\", \"status of ward 120\", \"what happened near Marina Beach\", \"tell me about Adyar\"): the steps take incidents and one inside step with that area (a named place: its point, radius 1000 m).",
     "- scorecard: one ward's scorecard, report card or performance (\"ward 178 scorecard\", \"how is ward 45 doing\"): the steps take incidents and one inside step with that ward.",
-    "- city: the live state of the city now, not the records: live traffic or jams now (city traffic), the rain now or today (rain), which streets or wards flood in heavy rain (flood), power cuts in rain (power), trains or metro running or late (metro). The steps may be a single take of incidents.",
+    "- city: the live state of the city now, not the records: live traffic or jams now (city traffic), the rain now or today (rain), the rain to come: will it rain, tomorrow, the next hours, where will it rain most, rain forecast (forecast), which streets or wards flood in heavy rain (flood), power cuts in rain (power), trains or metro running or late (metro). The steps may be a single take of incidents.",
     "- not_map: not a question about Chennai's map (general knowledge, chit-chat, a forecast of the future, other cities). understood false too.",
     "Near a KIND of place (\"what is happening near the schools\", \"near wine shops\"): intent plan, the open incidents within 500 m of that layer, not a brief.",
     "With intent other than city, city is none.",
@@ -278,7 +283,7 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   zones?: { zone: number; name: string; lat: number; lon: number }[];
   /** the categories' labels, for the cached prompt */
   catLabels?: Map<string, string> }):
-  Promise<{ plan: Plan; intent?: "plan" | "brief" | "scorecard" } | { city: "traffic" | "rain" | "flood" | "power" | "metro"; intent: "city"; language: Lang } | { problems: string[] }> {
+  Promise<{ plan: Plan; intent?: "plan" | "brief" | "scorecard" } | { city: "traffic" | "rain" | "forecast" | "flood" | "power" | "metro"; intent: "city"; language: Lang } | { problems: string[] }> {
   const places = ctx.places.length ? `Places named (use these refs): ${ctx.places.map((p) => `${p.name} = ${p.kind} ${p.ref}`).join("; ")}` : "No place was recognised.";
   // the zones are in the cached system block now; the prompt carries only what this question adds
   const zones = "";
@@ -287,7 +292,7 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     ? `\nA SIMPLE WORD-MATCHER SUGGESTS: ${JSON.stringify(toWire(ctx.hint))}. It can be wrong or miss words${ctx.unread?.length ? ` (it could not use: ${ctx.unread.join(", ")})` : ""}: read the question yourself and keep only what fits it.`
     : `\nTHE RULES READ IT AS: ${JSON.stringify(toWire(ctx.hint))}\nWORDS THE RULES COULD NOT USE: ${(ctx.unread ?? []).join(", ")}. Keep what the rules got right and use these words too.`;
   let prompt = prev
-    ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic).`
+    ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic). Use the previous answer's places ONLY when the follow-up points at one of them in words (there, that place, that school, that ward, the first, the second, number 2); a follow-up that only changes the kind of problem, the time, the status or the distance (only garbage, last week, include closed, 300 m) keeps the plan's places exactly as they are and adds no place. A follow-up that points (there, that place, that school, that ward, the first, the second, number 2) means the place listed as the previous answer's number N (number 1 when no number is said): use its ref (an inside step for a ward or zone ref, a 1000 m point for a facility ref), and keep the kind of problem. Keep the current plan's shape and grouping (count_by by, speed by, nearest from the same place, within the same facilities) unless the follow-up asks for another: after complaints by department, "which is slowest" is speed by dept; after nearest hospital from Guindy, "police station?" is nearest police from Guindy; after a count near schools, "same for hospitals" is the same count near hospitals; after cases near schools, "which school is the worst" or "which one has the most" is count_by near; "temples also", "and hospitals too" ADD that layer to the within step's near list (keep the ones there).`
     : `QUESTION: ${text}${typed}\n${places}\n${zones}${hint}${short(text) ? SHORT_NOTE : ""}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -312,7 +317,8 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
       ...[st.area_ref, st.b_ref, st.from?.startsWith("place:") ? st.from.slice(6) : null].filter((x): x is string => !!x && !x.startsWith("drawn:") && !ctx.places.some((pl) => pl.ref === x)).map((x) => `"${x}" is not a place ref given in the prompt`)]);
     // a brief is for a question that names no kind of problem: when the model named one, its plan answers (its own two answers made to agree)
     const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x) || FAMILIES.includes(x)) && !(r.object.named_layers ?? []).length
-      && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length)) ? "brief" : "plan");
+      && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length || (st.status && st.status !== "open") || st.overdue || st.severity?.length))
+      ? "brief" : "plan");
     if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
     if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
     problems = c.ok ? bad : [...c.problems, ...bad];

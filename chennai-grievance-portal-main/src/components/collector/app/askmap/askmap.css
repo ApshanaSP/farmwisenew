@@ -638,3 +638,11 @@
 .dic .daystage.playing .ds-date b::after{content:"";display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:#F43F5E;vertical-align:middle;animation:ar3pulse 1.2s ease-out infinite}
 .dic .amp-speed{min-width:30px;height:28px;border-radius:8px;border:0;background:var(--surface-3);color:var(--text-2);font:700 11px var(--font-num,system-ui);cursor:pointer}
 @media (prefers-reduced-motion:reduce){.dic .daystage,.dic .daystage .ds-date{animation:none}}
+.dic .ar3.rain .ar3-n{background:linear-gradient(150deg,#60A5FA,#1D4ED8)}
+.dic .ar3.rain.first .ar3-n{background:linear-gradient(150deg,#38BDF8,#1E3A8A)}
+.dic .ar3.rain.first::before{border-color:rgba(56,189,248,.85)}
+.dic .ar3.rain .ar3-l em{color:#93C5FD}
+/* v3: label collisions: flipped to the left of the badge, or the number alone */
+.dic .ar3.flip .ar3-l{left:auto;right:calc(100% - 6px);border-radius:10px 0 0 10px;padding:4px 12px 4px 10px;text-align:right;align-items:flex-end}
+.dic .ar3.bare .ar3-l{display:none}
+.dic .ar3.bare:hover .ar3-l{display:flex;z-index:6}

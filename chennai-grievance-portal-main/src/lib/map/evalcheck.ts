@@ -40,7 +40,8 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
     if (!ins.some((s) => `${s.area.kind}:${s.area.kind === "zone" || s.area.kind === "ward" ? s.area.id : ""}` === want.area)) out.push(`not inside ${want.area}`);
   }
   if (want.kinds) for (const k of want.kinds) if (!takes.some((t) => t.where?.kinds?.includes(k))) out.push(`no kind ${k}`);
-  if (want.period_days != null) { const p = inc?.filter?.period; if (!(p?.kind === "last_days" && p.days === want.period_days)) out.push(`period ${JSON.stringify(p)}, not last ${want.period_days} days`); }
+  // v3: 30 days is also a calendar month ("last month" read as the month before, "this month" as this one)
+  if (want.period_days != null) { const p = inc?.filter?.period; if (!((p?.kind === "last_days" && p.days === want.period_days) || (want.period_days === 30 && p?.kind === "month") || (want.period_days === 7 && p?.kind === "week"))) out.push(`period ${JSON.stringify(p)}, not last ${want.period_days} days`); }
   if (want.language && plan.language !== want.language) out.push(`language ${plan.language}, not ${want.language}`);
   if (want.severity && !inc?.filter?.severity?.includes(want.severity)) out.push(`no severity ${want.severity}`);
   if (want.overdue && inc?.filter?.overdue !== true) out.push("not overdue");

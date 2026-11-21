@@ -356,6 +356,8 @@ const GROUPS: { ic: IconName; en: string; ta: string; why: [string, string]; qs:
     qs: ["severe cases this week", "where are garbage complaints clustering", "streetlight complaints by ward"] },
   { ic: "social", en: "People and places", ta: "மக்களும் இடங்களும்", why: ["What is near schools, and which wards are far from help.", "பள்ளிகள் அருகே என்ன, உதவியிலிருந்து தொலைவான வார்டுகள்."],
     qs: ["road accidents within 1 km of schools", "what is happening in Teynampet", "which ward is farthest from a fire station"] },
+  { ic: "chart", en: "New: rates and the rain to come", ta: "புதியது: விகிதம், வரும் மழை", why: ["Ranked for the people living there; the forecast beside open flooding.", "மக்கள்தொகைக்கு ஏற்ப வரிசை; வெள்ளப் புகார்களுடன் மழை முன்னறிவிப்பு."],
+    qs: ["which ward has the most garbage complaints for its population", "will it rain tomorrow, where should we clear drains", "which school has the most complaints near it"] },
   { ic: "globe", en: "In Tamil", ta: "தமிழில்", why: ["Ask the way you speak.", "நீங்கள் பேசுவது போலவே கேளுங்கள்."],
     qs: ["அடையாறு அருகே திறந்த புகார்கள்", "மருத்துவமனைகள் அருகே குப்பை புகார்கள்"] }
 ];
@@ -363,15 +365,10 @@ const GROUPS: { ic: IconName; en: string; ta: string; why: [string, string]; qs:
 function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; onPick: (q: string) => void }) {
   const [ui] = useLang();
   const ta = ui === "ta";
-  const steps: [IconName, string, string][] = [["search", "Ask in one sentence", "ஒரே வரியில் கேளுங்கள்"], ["map", "See exactly where", "எங்கே என்று பாருங்கள்"],
-    ["send", "Send, export or plan visits", "அனுப்பு, பதிவிறக்கு, வருகை"]];
   const live = suggestions.filter((q) => !GROUPS.some((g) => g.qs.includes(q))).slice(0, 4);
   return (
     <div className="amp-empty amp-guide" data-no-i18n>
       <p className="amg-hi"><I n="chat" /><span>{ta ? "வணக்கம்! எந்த இடம், தூரம், சாலை அல்லது பகுதி பற்றியும் கேளுங்கள். தொடங்க இவற்றில் ஒன்றைத் தட்டுங்கள்:" : "Hello! Ask me about any place, distance, road or area, in English or Tamil. Tap one of these to start:"}</span></p>
-      <ol className="amg-steps" aria-label={ta ? "எப்படி" : "How it works"}>
-        {steps.map(([ic, en, t], i) => <li key={en}><span className="n">{i + 1}</span><I n={ic} /><b>{ta ? t : en}</b></li>)}
-      </ol>
       {live.length > 0 && (
         <section className="amg-g live">
           <h4><I n="bolt" />{ta ? "இன்றைய தரவிலிருந்து" : "From today's data"}</h4>

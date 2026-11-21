@@ -56,6 +56,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const { makeResolver } = await import("./resolve");
   const { mapLang, rulesRoute } = await import("./route");
   const { spentUsd } = await import("@/lib/ai/claudebudget");
+  const { prevTopOf } = await import("./prevtop");
   const { resolver, world: w } = await world();
   const resolve = makeResolver(resolver);
   const usd0 = spentUsd();
@@ -72,7 +73,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
     for (const x of read(file) as (Q & { kind?: "brief" | "scorecard" | "city" | "refuse" })[]) {
@@ -105,16 +106,27 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
     }
   }
-  for (const fset of ["followups", "followups3"].filter((x) => SETS.includes(x))) {
+  for (const fset of ["followups", "followups3", "followups3h"].filter((x) => SETS.includes(x))) {
     as(fset);
-    const convs = JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", fset === "followups3" ? "map-v3" : "map-v2", "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want: Q["want"] }[] }[];
+    const convs = JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
     for (const c of convs) {
       let prev: Plan | null = null;
+      let last: Awaited<ReturnType<typeof askMap>> | null = null;
       for (const [k, t] of c.turns.entries()) {
         const t0 = Date.now();
-        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+        // v3: the follow-up carries the last answer's first places, as the console sends them
+        const top = prevTopOf(last);
+        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+        last = r;
         ms.push(Date.now() - t0);
-        const m = misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want);
+        // a turn may want an area brief, or the place the last answer ranked number N ("what is happening there")
+        const thereRef = t.there ? top[t.there - 1]?.ref : null;
+        const inPlace = (p: Plan | null | undefined) => !!p?.steps.some((s) => s.op === "inside" && (s.area.kind === "point" ? s.area.ref === thereRef : `${s.area.kind}:${s.area.kind === "taluk" ? s.area.code : s.area.id}` === thereRef));
+        const m = [
+          ...(t.kind === "brief" ? (r?.kind === "brief" ? [] : [`not a brief (${r?.kind})`]) : []),
+          ...(t.there ? (!thereRef ? ["the last answer had no place to point at"] : inPlace(r?.plan) || (r?.kind === "brief" && JSON.stringify(r.brief?.area ?? {}).includes(String(thereRef.split(":")[1]))) ? [] : [`not at the last answer's number ${t.there} (${thereRef})`]) : []),
+          ...(t.want ? misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want) : [])
+        ];
         add(fset, !m.length, !!r?.ai_used);
         fs.appendFileSync(OUT, JSON.stringify({ set: fset, head: r?.answer?.headline ?? r?.say?.en ?? null, id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, plan: r?.plan ?? null }) + "\n");
         console.log(`${m.length ? "FAIL" : "PASS"} ${fset} ${c.id}.${k + 1} ${t.q} ${m.join("; ")}`);

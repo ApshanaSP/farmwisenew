@@ -1,83 +1,801 @@
 {
-  "about": "v3 (22 Nov 2026): conversations the way an officer follows up: short turns that lean on the last answer ('what about hospitals', 'only last month', 'which one is worst', 'there', 'per person'). Each turn's want is what the plan must have after that turn. Written before any v3 tuning.",
-  "conversations": [
-    { "id": "f01", "turns": [
-      { "q": "which school has the most complaints near it", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "schools"] } },
-      { "q": "what about hospitals", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"] } },
-      { "q": "only garbage", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"], "cats": ["SOLID_WASTE"] } },
-      { "q": "last 7 days", "want": { "layers": ["incidents", "hospitals"], "cats": ["SOLID_WASTE"], "period_days": 7 } } ] },
-    { "id": "f02", "turns": [
-      { "q": "garbage complaints by ward", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"] } },
-      { "q": "per person", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"], "per": true } },
-      { "q": "by zone instead", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } } ] },
-    { "id": "f03", "turns": [
-      { "q": "flooding in velachery", "want": { "cats": ["FLOOD"] } },
-      { "q": "only severe", "want": { "cats": ["FLOOD"], "severity": "Severe" } },
-      { "q": "include closed", "want": { "cats": ["FLOOD"], "severity": "Severe", "status": "any" } } ] },
-    { "id": "f04", "turns": [
-      { "q": "which zone needs my attention", "want": { "show": "count_by", "by": "zone", "overdue": true } },
-      { "q": "and by ward?", "want": { "show": "count_by", "by": "ward", "overdue": true } },
-      { "q": "only garbage ones", "want": { "show": "count_by", "by": "ward", "overdue": true, "cats": ["SOLID_WASTE"] } } ] },
-    { "id": "f05", "turns": [
-      { "q": "road accidents near schools", "want": { "show": "within", "layers": ["incidents", "schools"], "cats": ["ROAD_ACCIDENT"] } },
-      { "q": "make it 200 m", "want": { "layers": ["incidents", "schools"], "cats": ["ROAD_ACCIDENT"], "meters": 200 } },
-      { "q": "which school is the worst", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "schools"], "cats": ["ROAD_ACCIDENT"] } } ] },
-    { "id": "f06", "turns": [
-      { "q": "which zone is fastest in resolving complaints", "want": { "show": "speed", "by": "zone", "order": "fast" } },
-      { "q": "slowest?", "want": { "show": "speed", "by": "zone", "order": "slow" } },
-      { "q": "for road damage", "want": { "show": "speed", "order": "slow", "cats": ["ROAD_DAMAGE"] } } ] },
-    { "id": "f07", "turns": [
-      { "q": "stray dog complaints", "want": { "cats": ["STRAY_ANIMALS"] } },
-      { "q": "where are they clustering", "want": { "show": "hotspot", "cats": ["STRAY_ANIMALS"] } },
-      { "q": "this month", "want": { "cats": ["STRAY_ANIMALS"], "period_days": 30 } } ] },
-    { "id": "f08", "turns": [
-      { "q": "garbage in zone 9", "want": { "cats": ["SOLID_WASTE"], "area": "zone:9" } },
-      { "q": "what about zone 10", "want": { "cats": ["SOLID_WASTE"], "area": "zone:10" } },
-      { "q": "compare both", "want": { "show": "compare", "cats": ["SOLID_WASTE"] } } ] },
-    { "id": "f09", "turns": [
-      { "q": "wine shops near schools", "want": { "layers": ["liquor", "schools"] } },
-      { "q": "within 100 m", "want": { "layers": ["liquor", "schools"], "meters": 100 } },
-      { "q": "temples also", "want": { "layers": ["liquor", "schools", "worship"], "meters": 100 } } ] },
-    { "id": "f10", "turns": [
-      { "q": "streetlight complaints", "want": { "cats": ["STREETLIGHT_ELECTRICAL"] } },
-      { "q": "by ward", "want": { "show": "count_by", "by": "ward", "cats": ["STREETLIGHT_ELECTRICAL"] } },
-      { "q": "past deadline only", "want": { "show": "count_by", "by": "ward", "cats": ["STREETLIGHT_ELECTRICAL"], "overdue": true } } ] },
-    { "id": "f11", "turns": [
-      { "q": "what is happening near adyar", "want": { "layers": ["incidents"] } },
-      { "q": "only flooding", "want": { "cats": ["FLOOD"] } },
-      { "q": "last month", "want": { "cats": ["FLOOD"], "period_days": 30 } } ] },
-    { "id": "f12", "turns": [
-      { "q": "complaints by department", "want": { "show": "count_by", "by": "dept" } },
-      { "q": "which is slowest", "want": { "show": "speed", "by": "dept", "order": "slow" } } ] },
-    { "id": "f13", "turns": [
-      { "q": "kuppai complaints", "want": { "cats": ["SOLID_WASTE"] } },
-      { "q": "zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } },
-      { "q": "population ku compare panni", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"], "per": true } } ] },
-    { "id": "f14", "turns": [
-      { "q": "drainage complaints near hospitals", "want": { "layers": ["incidents", "hospitals"], "cats": ["DRAINAGE_SEWAGE"] } },
-      { "q": "which hospital has most", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"], "cats": ["DRAINAGE_SEWAGE"] } },
-      { "q": "same for schools", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "schools"], "cats": ["DRAINAGE_SEWAGE"] } } ] },
-    { "id": "f15", "turns": [
-      { "q": "garbage this week", "want": { "cats": ["SOLID_WASTE"], "period_days": 7 } },
-      { "q": "compared to last week", "want": { "show": "change", "cats": ["SOLID_WASTE"] } },
-      { "q": "which wards rose the most", "want": { "show": "rank", "order": "rise", "by": "ward", "cats": ["SOLID_WASTE"] } } ] },
-    { "id": "f16", "turns": [
-      { "q": "nearest hospital from guindy", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"] } },
-      { "q": "police station?", "want": { "show": "nearest", "from_place": true } } ] },
-    { "id": "f17", "turns": [
-      { "q": "severe cases", "want": { "severity": "Severe" } },
-      { "q": "in zone 13", "want": { "severity": "Severe", "area": "zone:13" } },
-      { "q": "group them by ward", "want": { "show": "count_by", "by": "ward", "severity": "Severe" } } ] },
-    { "id": "f18", "turns": [
-      { "q": "crime near colleges", "want": { "layers": ["incidents", "colleges"], "cats": ["CRIME"] } },
-      { "q": "which college worst", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "colleges"], "cats": ["CRIME"] } },
-      { "q": "only violent", "want": { "show": "count_by", "by": "near", "cats": ["CRIME_VIOLENT"] } } ] },
-    { "id": "f19", "turns": [
-      { "q": "water supply complaints zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["WATER_SUPPLY"] } },
-      { "q": "show closed too", "want": { "show": "count_by", "by": "zone", "cats": ["WATER_SUPPLY"], "status": "any" } },
-      { "q": "how fast are they closing", "want": { "show": "speed", "cats": ["WATER_SUPPLY"] } } ] },
-    { "id": "f20", "turns": [
-      { "q": "பள்ளிகள் அருகே குப்பை", "want": { "layers": ["incidents", "schools"], "cats": ["SOLID_WASTE"] } },
-      { "q": "எந்த பள்ளி அதிகம்", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "schools"], "cats": ["SOLID_WASTE"] } } ] }
-  ]
+ "about": "v3 (22 Nov 2026): conversations the way an officer follows up: short turns that lean on the last answer ('what about hospitals', 'only last month', 'which one is worst', 'there', 'per person'). Each turn's want is what the plan must have after that turn. Written before any v3 tuning. 22 Nov, after the first run: f11's first turn wants an area brief (the v2 design for 'what is happening near X'); f21-f26 added: follow-ups that point at the last answer's places ('there', 'the second one') and the forecast.",
+ "conversations": [
+  {
+   "id": "f01",
+   "turns": [
+    {
+     "q": "which school has the most complaints near it",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "schools"
+      ]
+     }
+    },
+    {
+     "q": "what about hospitals",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "hospitals"
+      ]
+     }
+    },
+    {
+     "q": "only garbage",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "hospitals"
+      ],
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "last 7 days",
+     "want": {
+      "layers": [
+       "incidents",
+       "hospitals"
+      ],
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "period_days": 7
+     }
+    }
+   ]
+  },
+  {
+   "id": "f02",
+   "turns": [
+    {
+     "q": "garbage complaints by ward",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "per person",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "per": true
+     }
+    },
+    {
+     "q": "by zone instead",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f03",
+   "turns": [
+    {
+     "q": "flooding in velachery",
+     "want": {
+      "cats": [
+       "FLOOD"
+      ]
+     }
+    },
+    {
+     "q": "only severe",
+     "want": {
+      "cats": [
+       "FLOOD"
+      ],
+      "severity": "Severe"
+     }
+    },
+    {
+     "q": "include closed",
+     "want": {
+      "cats": [
+       "FLOOD"
+      ],
+      "severity": "Severe",
+      "status": "any"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f04",
+   "turns": [
+    {
+     "q": "which zone needs my attention",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "overdue": true
+     }
+    },
+    {
+     "q": "and by ward?",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "overdue": true
+     }
+    },
+    {
+     "q": "only garbage ones",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "overdue": true,
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f05",
+   "turns": [
+    {
+     "q": "road accidents near schools",
+     "want": {
+      "show": "within",
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "ROAD_ACCIDENT"
+      ]
+     }
+    },
+    {
+     "q": "make it 200 m",
+     "want": {
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "ROAD_ACCIDENT"
+      ],
+      "meters": 200
+     }
+    },
+    {
+     "q": "which school is the worst",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "ROAD_ACCIDENT"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f06",
+   "turns": [
+    {
+     "q": "which zone is fastest in resolving complaints",
+     "want": {
+      "show": "speed",
+      "by": "zone",
+      "order": "fast"
+     }
+    },
+    {
+     "q": "slowest?",
+     "want": {
+      "show": "speed",
+      "by": "zone",
+      "order": "slow"
+     }
+    },
+    {
+     "q": "for road damage",
+     "want": {
+      "show": "speed",
+      "order": "slow",
+      "cats": [
+       "ROAD_DAMAGE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f07",
+   "turns": [
+    {
+     "q": "stray dog complaints",
+     "want": {
+      "cats": [
+       "STRAY_ANIMALS"
+      ]
+     }
+    },
+    {
+     "q": "where are they clustering",
+     "want": {
+      "show": "hotspot",
+      "cats": [
+       "STRAY_ANIMALS"
+      ]
+     }
+    },
+    {
+     "q": "this month",
+     "want": {
+      "cats": [
+       "STRAY_ANIMALS"
+      ],
+      "period_days": 30
+     }
+    }
+   ]
+  },
+  {
+   "id": "f08",
+   "turns": [
+    {
+     "q": "garbage in zone 9",
+     "want": {
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "area": "zone:9"
+     }
+    },
+    {
+     "q": "what about zone 10",
+     "want": {
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "area": "zone:10"
+     }
+    },
+    {
+     "q": "compare both",
+     "want": {
+      "show": "compare",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f09",
+   "turns": [
+    {
+     "q": "wine shops near schools",
+     "want": {
+      "layers": [
+       "liquor",
+       "schools"
+      ]
+     }
+    },
+    {
+     "q": "within 100 m",
+     "want": {
+      "layers": [
+       "liquor",
+       "schools"
+      ],
+      "meters": 100
+     }
+    },
+    {
+     "q": "temples also",
+     "want": {
+      "layers": [
+       "liquor",
+       "schools",
+       "worship"
+      ],
+      "meters": 100
+     }
+    }
+   ]
+  },
+  {
+   "id": "f10",
+   "turns": [
+    {
+     "q": "streetlight complaints",
+     "want": {
+      "cats": [
+       "STREETLIGHT_ELECTRICAL"
+      ]
+     }
+    },
+    {
+     "q": "by ward",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "cats": [
+       "STREETLIGHT_ELECTRICAL"
+      ]
+     }
+    },
+    {
+     "q": "past deadline only",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "cats": [
+       "STREETLIGHT_ELECTRICAL"
+      ],
+      "overdue": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "f11",
+   "turns": [
+    {
+     "q": "what is happening near adyar",
+     "kind": "brief"
+    },
+    {
+     "q": "only flooding",
+     "want": {
+      "cats": [
+       "FLOOD"
+      ]
+     }
+    },
+    {
+     "q": "last month",
+     "want": {
+      "cats": [
+       "FLOOD"
+      ],
+      "period_days": 30
+     }
+    }
+   ]
+  },
+  {
+   "id": "f12",
+   "turns": [
+    {
+     "q": "complaints by department",
+     "want": {
+      "show": "count_by",
+      "by": "dept"
+     }
+    },
+    {
+     "q": "which is slowest",
+     "want": {
+      "show": "speed",
+      "by": "dept",
+      "order": "slow"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f13",
+   "turns": [
+    {
+     "q": "kuppai complaints",
+     "want": {
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "zone wise",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "population ku compare panni",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "per": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "f14",
+   "turns": [
+    {
+     "q": "drainage complaints near hospitals",
+     "want": {
+      "layers": [
+       "incidents",
+       "hospitals"
+      ],
+      "cats": [
+       "DRAINAGE_SEWAGE"
+      ]
+     }
+    },
+    {
+     "q": "which hospital has most",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "hospitals"
+      ],
+      "cats": [
+       "DRAINAGE_SEWAGE"
+      ]
+     }
+    },
+    {
+     "q": "same for schools",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "DRAINAGE_SEWAGE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f15",
+   "turns": [
+    {
+     "q": "garbage this week",
+     "want": {
+      "cats": [
+       "SOLID_WASTE"
+      ],
+      "period_days": 7
+     }
+    },
+    {
+     "q": "compared to last week",
+     "want": {
+      "show": "change",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "which wards rose the most",
+     "want": {
+      "show": "rank",
+      "order": "rise",
+      "by": "ward",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f16",
+   "turns": [
+    {
+     "q": "nearest hospital from guindy",
+     "want": {
+      "show": "nearest",
+      "from_place": true,
+      "layers": [
+       "hospitals"
+      ]
+     }
+    },
+    {
+     "q": "police station?",
+     "want": {
+      "show": "nearest",
+      "from_place": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "f17",
+   "turns": [
+    {
+     "q": "severe cases",
+     "want": {
+      "severity": "Severe"
+     }
+    },
+    {
+     "q": "in zone 13",
+     "want": {
+      "severity": "Severe",
+      "area": "zone:13"
+     }
+    },
+    {
+     "q": "group them by ward",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "severity": "Severe"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f18",
+   "turns": [
+    {
+     "q": "crime near colleges",
+     "want": {
+      "layers": [
+       "incidents",
+       "colleges"
+      ],
+      "cats": [
+       "CRIME"
+      ]
+     }
+    },
+    {
+     "q": "which college worst",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "colleges"
+      ],
+      "cats": [
+       "CRIME"
+      ]
+     }
+    },
+    {
+     "q": "only violent",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "cats": [
+       "CRIME_VIOLENT"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f19",
+   "turns": [
+    {
+     "q": "water supply complaints zone wise",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "cats": [
+       "WATER_SUPPLY"
+      ]
+     }
+    },
+    {
+     "q": "show closed too",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "cats": [
+       "WATER_SUPPLY"
+      ],
+      "status": "any"
+     }
+    },
+    {
+     "q": "how fast are they closing",
+     "want": {
+      "show": "speed",
+      "cats": [
+       "WATER_SUPPLY"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f20",
+   "turns": [
+    {
+     "q": "பள்ளிகள் அருகே குப்பை",
+     "want": {
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "எந்த பள்ளி அதிகம்",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "schools"
+      ],
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f21",
+   "turns": [
+    {
+     "q": "which ward has the most garbage complaints",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    },
+    {
+     "q": "what is happening there",
+     "there": 1
+    }
+   ]
+  },
+  {
+   "id": "f22",
+   "turns": [
+    {
+     "q": "which school has the most complaints near it",
+     "want": {
+      "show": "count_by",
+      "by": "near",
+      "layers": [
+       "incidents",
+       "schools"
+      ]
+     }
+    },
+    {
+     "q": "what kind of problems are there",
+     "there": 1
+    }
+   ]
+  },
+  {
+   "id": "f23",
+   "turns": [
+    {
+     "q": "which zone needs my attention",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "overdue": true
+     }
+    },
+    {
+     "q": "show me the second one",
+     "there": 2
+    }
+   ]
+  },
+  {
+   "id": "f24",
+   "turns": [
+    {
+     "q": "which zone is slowest to close complaints",
+     "want": {
+      "show": "speed",
+      "by": "zone",
+      "order": "slow"
+     }
+    },
+    {
+     "q": "garbage complaints there",
+     "there": 1,
+     "want": {
+      "cats": [
+       "SOLID_WASTE"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f25",
+   "turns": [
+    {
+     "q": "will it rain tomorrow",
+     "kind_any": true
+    },
+    {
+     "q": "open flooding near hospitals",
+     "want": {
+      "layers": [
+       "incidents",
+       "hospitals"
+      ],
+      "cats": [
+       "FLOOD"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "f26",
+   "turns": [
+    {
+     "q": "complaints per capita by ward",
+     "want": {
+      "show": "count_by",
+      "by": "ward",
+      "per": true
+     }
+    },
+    {
+     "q": "what about by zone",
+     "want": {
+      "show": "count_by",
+      "by": "zone",
+      "per": true
+     }
+    }
+   ]
+  }
+ ]
 }

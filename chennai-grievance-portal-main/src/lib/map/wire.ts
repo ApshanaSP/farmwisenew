@@ -43,7 +43,7 @@ export const WirePlan = z.object({
   named_zone: z.number().describe("the zone number the question names (1-15), or -1"),
   named_ward: z.number().describe("the ward number the question names (1-200), or -1"),
   intent: z.enum(["plan", "brief", "scorecard", "city", "not_map"]).describe("plan: a map answer; brief: what is happening in one area; scorecard: a ward's scorecard; city: the live state of the city now; not_map: not a map question"),
-  city: z.enum(["traffic", "rain", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, streets that flood, power cuts, trains running; else none"),
+  city: z.enum(["traffic", "rain", "forecast", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, the rain forecast (will it rain, tomorrow, next hours, where will it rain most), streets that flood, power cuts, trains running; else none"),
   steps: z.array(WireStep), show: z.string(), language: z.enum(["en", "ta", "tanglish"])
 });
 export type WirePlan = z.infer<typeof WirePlan>;

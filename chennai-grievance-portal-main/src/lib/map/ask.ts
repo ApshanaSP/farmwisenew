@@ -13,6 +13,7 @@ import { aiPlan, aiReword } from "./ai";
 import type { Insight } from "./insights";
 import { conditionsNear, familiesOf, spreadOf, trafficCondition, type Condition, type LiveTraffic } from "./conditions";
 import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
+import { peakWords, rainForecast } from "./forecast";
 import { trafficNow } from "@/lib/city/traffic";
 import { compose, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
@@ -20,7 +21,7 @@ import { cameraFor, type CameraInput, type Shot } from "./camera";
 import { planChips, type PlanChip } from "./chips";
 import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
-import { checkPlan, type AreaRef, type Plan } from "./plan";
+import { OPEN_FILTER, checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { fitModelPlan, freshPlan, keepAreas, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
@@ -39,6 +40,8 @@ export interface AskInput {
   plan: Plan | null;
   /** the conversation's current plan, for follow-ups */
   prev: Plan | null;
+  /** v3: the places the last answer ranked first (ward:12, zone:5, osm:n123), for "there", "the worst one", "number 2" */
+  prevTop?: { ref: string; name: string }[] | null;
   context: { zone: number | null; taluk: string | null; incidentId: string | null; drawn: { lat: number; lon: number; r: number } | null; ward: number | null };
   user: { email: string; role: "collector" | "department_officer"; lockDept: string | null };
   /** reword the meaning sentence with AI (off in tests and for chip edits) */
@@ -89,6 +92,8 @@ export interface AskResponse {
   };
   extra: {
     groups?: { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[]; pop?: number; per10k?: number }[];
+    /** v3: the rain forecast by zone (Open-Meteo), beside each zone's open flooding and drain cases */
+    forecast?: { hours: number; source: string; at: string; rows: { key: string; label: string; label_ta: string; lat: number; lon: number; mm: number; maxHr: number; peakAt: string | null; open: number; ids: string[] }[] };
     clusters?: { id: string; n: number; lat: number; lon: number; ids: string[]; place: string | null }[];
     hotWards?: { ward: number; z: number; n: number }[];
     compare?: { a: { label: string; label_ta: string; n: number; ids: string[] }; b: { label: string; label_ta: string; n: number; ids: string[] } };
@@ -269,6 +274,45 @@ export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழை�
  * v2: one question, never a failed request: an unexpected error inside the answer (a plan shape the answer words do not expect) is logged and
  * said plainly, so the officer can rephrase; an abort is passed on.
  */
+/**
+ * v3: "will it rain tomorrow": the forecast's millimetres over each zone in the next 24 hours, beside its open flooding and
+ * drain cases (the map's own count), ranked by the rain to come. The forecast is Open-Meteo's; nothing here forecasts.
+ */
+async function withForecast(res: AskResponse, r: RunResult, w: World, lang: "en" | "ta" | "tanglish") {
+  const f = await rainForecast(w.zones.map((z) => ({ zone: z.zone, lat: z.lat, lon: z.lon })), 24);
+  const ta = lang === "ta";
+  const n = (x: number) => x.toLocaleString("en-IN", { maximumFractionDigits: 1 });
+  if (!f || !res.answer) {
+    if (res.answer) res.answer.meaning = `${ta ? "மழை முன்னறிவிப்பு இப்போது கிடைக்கவில்லை; திறந்த வெள்ள, வடிகால் புகார்கள் மண்டல வாரியாக." : "The rain forecast cannot be read just now; here are the open flooding and drain cases by zone."} ${res.answer.meaning ?? ""}`.trim();
+    return;
+  }
+  const groups = r.show.type === "groups" ? r.show.groups : [];
+  const rows = w.zones.map((z) => {
+    const fr = f.rows.find((x) => x.zone === z.zone);
+    const g = groups.find((x) => x.key === String(z.zone));
+    return { key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
+      mm: fr?.mm ?? 0, maxHr: fr?.maxHr ?? 0, peakAt: fr?.peakAt ?? null, open: g?.n ?? 0, ids: g?.ids ?? [] };
+  }).sort((a, b) => b.mm - a.mm || b.open - a.open);
+  res.extra.forecast = { hours: f.hours, source: f.source, at: f.at, rows };
+  const top = rows[0];
+  const wet = rows.filter((x) => x.mm >= 1);
+  if (!wet.length) {
+    res.answer.headline = ta ? `அடுத்த 24 மணி நேரத்தில் எந்த மண்டலத்திலும் குறிப்பிடத்தக்க மழை முன்னறிவிப்பு இல்லை (அதிகம் ${top.label_ta}: ${n(top.mm)} மிமீ).`
+      : top.mm > 0 ? `Little rain forecast in the next 24 hours: the most over ${top.label}, ${n(top.mm)} mm.` : "No rain forecast over any zone in the next 24 hours.";
+    res.answer.meaning = ta ? `திறந்த வெள்ள, வடிகால் புகார்கள்: ${n(groups.reduce((t, g) => t + g.n, 0))}.` : `Open flooding and drain cases now: ${n(groups.reduce((t, g) => t + g.n, 0))}, by zone on the map.`;
+  } else {
+    const peak = peakWords(top.peakAt, ta);
+    res.answer.headline = ta ? `அடுத்த 24 மணி நேர மழை (முன்னறிவிப்பு): அதிகம் ${top.label_ta}, ${n(top.mm)} மிமீ${peak ? `, உச்சம் ${peak}` : ""}; அங்கே ${n(top.open)} திறந்த வெள்ள/வடிகால் புகார்கள்.`
+      : `Rain in the next 24 hours (forecast): the most over ${top.label}, ${n(top.mm)} mm${top.maxHr ? ` (up to ${n(top.maxHr)} mm in an hour${peak ? `, around ${peak}` : ""})` : ""}; ${n(top.open)} open flooding or drain ${top.open === 1 ? "case" : "cases"} there.`;
+    const first = rows.filter((x) => x.mm >= 1 && x.open > 0).slice(0, 3);
+    res.answer.meaning = first.length ? (ta ? `முதலில் வடிகால் சுத்தம்: ${first.map((x) => `${x.label_ta} (${n(x.mm)} மிமீ, ${n(x.open)})`).join(", ")}.`
+      : `Clear drains first where rain meets open cases: ${first.map((x) => `${x.label} (${n(x.mm)} mm, ${n(x.open)} open)`).join(", ")}. Forecast: Open-Meteo.`)
+      : (ta ? "மழை வரும் மண்டலங்களில் திறந்த புகார்கள் இல்லை." : "No open flooding or drain cases in the zones where rain is coming. Forecast: Open-Meteo.");
+  }
+  res.answer.facts.push({ id: "forecast_mm", label: "mm of rain forecast in the wettest zone", value: top.mm });
+  res.followups = ta ? ["எந்த தெருக்கள் கனமழையில் வெள்ளம்?", "மழை இப்போது"] : ["Which streets flood in heavy rain?", "Is it raining now?", "Open flooding cases near hospitals"];
+}
+
 export async function askMap(asked: AskInput): Promise<AskResponse> {
   try { return await askMapInner(asked); }
   catch (e) {
@@ -297,6 +341,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
   const names = await refNames().catch(() => null);
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
+  let forecastAsk = false;
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
@@ -335,6 +380,8 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
     const reading = spellerFor(data)(typed).text;
     const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
+    // v3: the last answer's first places, so a follow-up can point at them ("what is happening there", "the second one")
+    for (const [i, p] of (asked.prev ? input.prevTop ?? [] : []).entries()) if (ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) found.push({ ref: p.ref, kind: `the previous answer's number ${i + 1}`, name: p.name });
     const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
       zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
     if (a && "problems" in a && a.problems.includes("not a map question")) {
@@ -343,7 +390,12 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       out.ai_used = true;
       return done(out);
     }
-    if (a && "city" in a) {
+    // v3: the rain to come: the open flooding and drain cases by zone, and the forecast over each zone (added at the end)
+    if (a && "city" in a && a.city === "forecast") {
+      plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER, family: ["FLOOD", "DRAINAGE"] }, where: null }, { op: "count_by", as: "by", of: "a", by: "zone" }], show: "by", language: a.language };
+      forecastAsk = true; aiUsed = true;
+    }
+    else if (a && "city" in a && a.city !== "forecast") {
       const c = await cityNow(a.city, { lockDept: lock, zone: a.city === "traffic" ? input.context.zone ?? null : null }).catch(() => null);
       if (c) {
         out.kind = "say";
@@ -584,8 +636,9 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   // v2: Play the period: the answer's incidents day by day (the server's counts; the panel only shows them)
   const tl = r.hits.length ? timelineOf(r.hits, w.now) : null;
   if (tl) res.extra.timeline = tl;
+  if (forecastAsk) await withForecast(res, r, w, lang);
   const store = answerCache();
-  store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
+  if (!forecastAsk) store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);
   return done(res);
 }

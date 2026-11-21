@@ -85,3 +85,17 @@ describe("Ask the Map v3: places without a name", () => {
     expect(localityOf(w, 13.2, 80.4)).toBeNull();
   });
 });
+
+describe("Ask the Map v3: the last answer's places, for 'there'", () => {
+  const base = { kind: "answer", extra: {} } as unknown as import("./ask").AskResponse;
+  it("names a ranked count's first three areas, a count near places by the place, and nothing for a list", async () => {
+    const { prevTopOf } = await import("./prevtop");
+    const g = (key: string, label: string) => ({ key, label, label_ta: label, n: 1, lat: 13, lon: 80.2, ids: [] });
+    expect(prevTopOf({ ...base, extra: { groupsBy: "ward", groups: [g("120", "Ward 120"), g("9", "Ward 9"), g("3", "Ward 3"), g("4", "Ward 4")] } } as never))
+      .toEqual([{ ref: "ward:120", name: "Ward 120" }, { ref: "ward:9", name: "Ward 9" }, { ref: "ward:3", name: "Ward 3" }]);
+    expect(prevTopOf({ ...base, extra: { groupsBy: "near", groups: [g("osm:n5", "Test School"), g("odd-key", "x")] } } as never)).toEqual([{ ref: "osm:n5", name: "Test School" }]);
+    expect(prevTopOf({ ...base, extra: { groupsBy: "category", groups: [g("SOLID_WASTE", "garbage")] } } as never)).toEqual([]);
+    expect(prevTopOf({ ...base, kind: "brief" } as never)).toEqual([]);
+    expect(prevTopOf(null)).toEqual([]);
+  });
+});
