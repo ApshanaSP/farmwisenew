@@ -39,7 +39,9 @@ day-by-day view, and more human-style and follow-up testing. v2 (main, 5dd50b30)
 - **Perplexity / ChatGPT answers**: a short answer with the key figure first, follow-up suggestions under it. Kept
   from v2, now with "there" and "the second one" understood.
 - **Rates, not raw counts** (standard epidemiology practice): a ward with more people has more complaints. v3 ranks
-  "per 10,000 people", with small counts steadied (empirical Bayes) so a ward with one case cannot top the list.
+  "per 10,000 people". A rate on one or two cases is not reliable, so areas with at least 3 cases (or 1 in 200 of the
+  answer's cases) are ranked first by their plain rate and the rest follow. (An empirical-Bayes "steadied" rate was
+  tried first; it ranked well but the numbers shown did not run in order, which confused the reader.)
 
 ## Sources
 

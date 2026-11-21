@@ -34,7 +34,7 @@ describe("Ask the Map v3: people", () => {
     }
   });
 
-  it("ranks per person with small counts steadied, and by count otherwise", () => {
+  it("ranks per person by the plain rate, areas with too few cases last, and by count otherwise", () => {
     const w = withPeople();
     const byCount = runMapPlan(plan([take, { op: "count_by", as: "by", of: "a", by: "ward" }]), w, ctx);
     const per = runMapPlan(plan([take, { op: "count_by", as: "by", of: "a", by: "ward", per: "people" }]), w, ctx);
@@ -42,11 +42,11 @@ describe("Ask the Map v3: people", () => {
     // by count: largest n first
     const ns = byCount.show.groups.map((g) => g.n);
     expect(ns).toEqual([...ns].sort((a, b) => b - a));
-    // per person: the steadied rate (n + 5) / (pop + 5 / r0) falls down the list
+    // per person: areas with at least 3 cases first, each part by its plain rate
     const all = per.show.groups;
-    const r0 = all.reduce((t, g) => t + g.n, 0) / all.reduce((t, g) => t + (g.pop ?? 0), 0);
-    const steady = all.map((g) => (g.n + 5) / (g.pop! + 5 / r0));
-    expect(steady).toEqual([...steady].sort((a, b) => b - a));
+    const MIN = Math.max(3, Math.round(all.reduce((t, g) => t + g.n, 0) / 200));
+    const key = all.map((g) => [g.n >= MIN ? 1 : 0, g.per10k!] as const);
+    expect(key).toEqual([...key].sort((a, b) => b[0] - a[0] || b[1] - a[1]));
     // the same groups and counts either way: only the order changes
     expect(all.map((g) => `${g.key}:${g.n}`).sort()).toEqual(byCount.show.groups.map((g) => `${g.key}:${g.n}`).sort());
   });

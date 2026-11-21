@@ -332,19 +332,21 @@ function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawO
  */
 export function declutterRanks(root: HTMLElement) {
   const els = [...root.querySelectorAll<HTMLElement>(".ar3")].sort((a, b) => Number(a.dataset.rank) - Number(b.dataset.rank));
-  const taken: DOMRect[] = [];
-  const hit = (r: DOMRect) => taken.some((t) => r.left < t.right + 2 && r.right > t.left - 2 && r.top < t.bottom + 2 && r.bottom > t.top - 2);
-  for (const el of els) {
-    el.classList.remove("flip", "bare");
+  for (const el of els) el.classList.remove("flip", "bare");
+  // every badge, then each label in rank order against the other badges and the labels already placed (not its own
+  // badge, which its label touches by design)
+  const badges = els.map((el) => el.querySelector<HTMLElement>(".ar3-n")?.getBoundingClientRect() ?? null);
+  const labels: DOMRect[] = [];
+  const over = (r: DOMRect, t: DOMRect) => r.left < t.right - 1 && r.right > t.left + 1 && r.top < t.bottom - 1 && r.bottom > t.top + 1;
+  els.forEach((el, i) => {
     const lab = el.querySelector<HTMLElement>(".ar3-l");
-    const badge = el.querySelector<HTMLElement>(".ar3-n");
-    if (!lab || !badge) continue;
-    taken.push(badge.getBoundingClientRect());
+    if (!lab) return;
+    const hit = (r: DOMRect) => labels.some((t) => over(r, t)) || badges.some((t, j) => j !== i && t && over(r, t));
     let r = lab.getBoundingClientRect();
     if (hit(r)) { el.classList.add("flip"); r = lab.getBoundingClientRect(); }
-    if (hit(r)) { el.classList.remove("flip"); el.classList.add("bare"); continue; }
-    taken.push(r);
-  }
+    if (hit(r)) { el.classList.remove("flip"); el.classList.add("bare"); return; }
+    labels.push(r);
+  });
 }
 
 /** where the camera should go for a ranked answer: the top ten (or the district when they span it) */

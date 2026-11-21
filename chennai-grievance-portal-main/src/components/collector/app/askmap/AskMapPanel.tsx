@@ -209,7 +209,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         {ask.turns.map((t) => (
           <section key={t.id} className={`amp-turn${t === cur ? " cur" : ""}`} ref={(el) => { if (el) turnEl.current.set(t.id, el); else turnEl.current.delete(t.id); }}>
             <div className="amp-q"><span>{t.q}</span></div>
-            {t.pending && <div className="amp-wait" role="status"><span className="amp-ai-dots"><i /><i /><i /></span>{ta ? "பதிலைக் கணக்கிடுகிறது…" : "Working it out…"}</div>}
+            {t.pending && <Thinking ta={ta} />}
             {!t.pending && t.error && (
               <div className="amp-err" role="alert">{t.error}
                 <button className="amp-retry" onClick={() => ask.retry(t.id)} disabled={ask.busy}><I n="refresh" />{ta ? "மீண்டும் முயல்" : "Try again"}</button>
@@ -308,6 +308,27 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
     </aside>
     {ws.split}
     </>
+  );
+}
+
+/**
+ * v3: while the answer is made (about 3 s: the AI reads the question, the server counts, the map draws), the steps go by
+ * in order and a card shimmers where the answer will be. The steps follow the clock, not the server: they say what
+ * happens, not how far it has got.
+ */
+const THINK: [string, string][] = [["Reading your question", "கேள்வியைப் படிக்கிறது"], ["Finding the places and the kind of problem", "இடங்களையும் பிரச்சனையையும் கண்டறிகிறது"],
+  ["Counting on the map", "வரைபடத்தில் எண்ணுகிறது"], ["Drawing the answer", "பதிலை வரைகிறது"]];
+function Thinking({ ta }: { ta: boolean }) {
+  const [k, setK] = useState(0);
+  useEffect(() => {
+    const ids = [900, 1900, 2900].map((ms, i) => setTimeout(() => setK(i + 1), ms));
+    return () => ids.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="amp-think" role="status" aria-live="polite" aria-label={ta ? THINK[k][1] : THINK[k][0]}>
+      <ol>{THINK.map(([en, tam], i) => <li key={en} className={i < k ? "done" : i === k ? "now" : ""}><i />{ta ? tam : en}</li>)}</ol>
+      <div className="amp-think-card" aria-hidden><b /><span /><span /><span className="short" /></div>
+    </div>
   );
 }
 

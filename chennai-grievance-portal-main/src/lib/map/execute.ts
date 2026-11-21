@@ -726,11 +726,11 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           if (pop > 0) { g.pop = pop; g.per10k = Math.round((g.n / pop) * 1e5) / 10; }
         }
         const per = s.by !== "near" && s.by !== "category" && s.by !== "dept" && s.by !== "hex500" && s.per === "people";
-        // a small area tops any rate on one or two cases: the ranking uses each rate steadied toward the district's own
-        // (empirical Bayes, as if each area had 5 more cases at the district rate); the panel shows the plain rate and count
-        const popAll = [...groups.values()].reduce((t, g) => t + (g.pop ?? 0), 0), nAll = [...groups.values()].reduce((t, g) => t + (g.pop ? g.n : 0), 0);
-        const r0 = popAll ? nAll / popAll : 0, M = 5;
-        const rate = (g: Group) => (g.pop && r0 ? (g.n + M) / (g.pop + M / r0) : -1);
+        // a rate on one or two cases is not reliable: areas with at least MIN cases are ranked by their plain rate; the
+        // rest follow, also by rate (the answer says so). MIN grows with the answer (3, or 1 in 200 of its cases).
+        const nAll = [...groups.values()].reduce((t, g) => t + g.n, 0);
+        const MIN = Math.max(3, Math.round(nAll / 200));
+        const rate = (g: Group) => (g.pop && g.per10k != null ? (g.n >= MIN ? 1e6 : 0) + g.per10k : -1);
         const list = [...groups.values()].sort((a, b) => (per ? rate(b) - rate(a) : 0) || b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
         const nearLayer = src.find((h) => h.near)?.near?.layer;
         out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };

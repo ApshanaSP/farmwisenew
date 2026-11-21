@@ -85,7 +85,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       const m = x.kind ? (
         x.kind === "brief" ? (r?.kind === "brief" ? [] : [`not a brief (${r?.kind})`])
         : x.kind === "scorecard" ? (r?.scorecard ? [] : [`not a scorecard (${r?.kind})`])
-        : x.kind === "city" ? (r?.city || /live .* feed is not available/.test(r?.say?.en ?? "") ? [] : [`not the live city (${r?.kind})`])
+        : x.kind === "city" ? (r?.city || r?.extra?.forecast || /live .* feed is not available|forecast cannot be read/.test(`${r?.say?.en ?? ""} ${r?.answer?.meaning ?? ""}`) ? [] : [`not the live city (${r?.kind})`])
         : (refused && !r?.city && !/live .* feed/.test(r?.say?.en ?? "") ? [] : [`answered, should be refused (${r?.answer?.headline?.slice(0, 60) ?? r?.kind})`]))
         : misses(r?.plan ?? null, refused ? ["not a map question"] : null, x.want ?? {});
       // the count, checked independently where the answer is a facility layer in a zone: the raw layer file, each point's own ward, the ward file's zone

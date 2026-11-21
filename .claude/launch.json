@@ -349,6 +349,28 @@
         "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
         "AWS_STORE_RELOAD_MINUTES": "100000"
       }
+    },
+    {
+      "name": "askmap-v3-prod-3016",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3016"
+      ],
+      "port": 3016,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NEXT_DIST_DIR": ".next-prod-v3c",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000"
+      }
     }
   ]
 }
