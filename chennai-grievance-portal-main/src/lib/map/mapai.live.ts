@@ -39,7 +39,7 @@ it.runIf(haveStore())("Ask the Map's AI plan on the dev questions", async () => 
   const { aiPlan } = await import("./ai");
   const ai = await import("./ai");
   const { makeResolver } = await import("./resolve");
-  const { spellerFor } = await import("./ask");
+  const { spellerFor, modelWords } = await import("./ask");
   const MAP_SPELL = process.env.MAP_SPELL_OFF !== "1";
   const { mapLang, fitModelPlan } = await import("./route");
   const { costOf } = await import("@/lib/ai/claudebudget");
@@ -59,9 +59,10 @@ it.runIf(haveStore())("Ask the Map's AI plan on the dev questions", async () => 
     const t0 = Date.now();
     let plan: Plan | null = null, problems: string[] | null = null, err = "";
     try {
-      const r = await aiPlan(q, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: "eval@map", lang: mapLang(q, resolve(q, null)), zones: w.zones, catLabels });
+      const lang = mapLang(q, resolve(q, null));
+      const r = await aiPlan(q, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: "eval@map", lang, zones: w.zones, catLabels });
       // as ask.ts does with a model's plan: the question's own time words win (fitModelPlan), so the runner checks what the console runs
-      if ("plan" in r) plan = fitModelPlan(r.plan, q, w.now); else problems = r.problems;
+      if ("plan" in r) plan = fitModelPlan(r.plan, q, w.now, null, process.env.MAP_WORDS_OFF === "1" ? undefined : modelWords(w, lang)); else problems = r.problems;
     } catch (e) { err = (e as Error).message.slice(0, 160); problems = [err]; }
     const ms = Date.now() - t0;
     const info = ai.takeMapCallInfo();

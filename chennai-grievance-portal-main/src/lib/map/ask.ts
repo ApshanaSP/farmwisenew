@@ -22,7 +22,7 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, freshPlan, mapLang, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
 import { scorecard, scorecardWard, timelineOf, type Scorecard, type Timeline } from "./v2";
 import { categoryWords } from "@/lib/collector/nlp";
@@ -185,6 +185,9 @@ export function spellerFor(data: ResolverData) {
   global.__askMapSpeller = { data, fn };
   return fn;
 }
+
+/** The question's own words that win over a model's plan (route.ts fitModelPlan): the server's language, the world's categories. */
+export const modelWords = (w: World, lang: Lang): ModelWords => ({ lang, familyOf: (c) => w.cats.get(c)?.family ?? null });
 
 /** Looks up a plan's place reference: "loc:Adyar", "osm:n123", "fac:POL-01", "inc:<id>", "ll:13.04,80.25", "drawn:13.04,80.25,500". */
 /** `lockDept`: a department officer's department. An incident of another department is no place for that officer (QA pass 6, P6-012). */
@@ -353,7 +356,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
           hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
-        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now); aiUsed = true; defaults = []; }
+        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, null, modelWords(w, lang)); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
     } else {
@@ -362,7 +365,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
         const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
         aiUsed = true;
-        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev);
+        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang));
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);

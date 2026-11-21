@@ -337,7 +337,41 @@ export function changeWindows(said: Period | null, reference = false): { now: Pe
  * is open now with no window, "all time" has no window, and a change compares the two equal windows changeWindows gives, as the rules' plans do.
  * A follow-up that names no time keeps the last answer's window when the model's flat form cannot carry it (a date range).
  */
-export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev?: Plan | null): Plan {
+export interface ModelWords {
+  /** the question's language as the server reads it (mapLang): the model's guess never decides it */
+  lang: Lang;
+  /** a category code's family, or null for a code the world does not have */
+  familyOf: (code: string) => string | null;
+}
+
+/**
+ * A model's plan with the question's own words laid on top (v2): its time words (fitTime), its language as the server reads
+ * it, and an exact category the rules' word list reads ("sewage", "drinking water", "road accidents", "flooding") where the
+ * model gave none, a code the world does not have, or only a broader family holding it.
+ */
+export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev?: Plan | null, words?: ModelWords): Plan {
+  const p = fitTime(plan, text, now, prev);
+  if (!words) return p;
+  const toks = tokens(text);
+  const said = CAT_WORDS.find((c) => any(toks, c.words)) ?? null;
+  const steps = p.steps.map((s) => {
+    if (s.op !== "take" || s.layer !== "incidents" || !s.filter || !said) return s;
+    const f = s.filter;
+    const cats = (f.category ?? []).filter((c) => words.familyOf(c) != null);
+    if (said.cats) {
+      if (said.cats.every((c) => cats.includes(c))) return cats.length === (f.category ?? []).length ? s : { ...s, filter: { ...f, category: cats.length ? cats : null } };
+      const fams = new Set(said.cats.map((c) => words.familyOf(c)));
+      // nothing usable, or only the family that holds the exact category: the exact category
+      if (!cats.length && (!f.family?.length || f.family.every((x) => fams.has(x)))) return { ...s, filter: { ...f, category: said.cats, family: null } };
+      return s;
+    }
+    if (said.family && !cats.length && !f.family?.length) return { ...s, filter: { ...f, category: null, family: said.family } };
+    return s;
+  });
+  return { ...p, language: words.lang, steps };
+}
+
+function fitTime(plan: Plan, text: string, now?: string | null, prev?: Plan | null): Plan {
   const said = periodOf(text, now);
   const incTake = (s: Step): s is Extract<Step, { op: "take" }> => s.op === "take" && s.layer === "incidents" && !!s.filter;
   const chg = plan.steps.find((s) => s.op === "change") as Extract<Step, { op: "change" }> | undefined;

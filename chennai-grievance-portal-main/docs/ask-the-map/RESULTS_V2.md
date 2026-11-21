@@ -24,13 +24,28 @@
 
 **AI plan step on the 45 dev questions** (`eval/map-final/dev.json`, `mapai.live.ts`, now with the speller first, as the console runs it):
 
-**Not measured in this run.** Three tries with Groq (the only provider with a working key):
-- full set, 15 s apart, dev server running: Groq answered 1 call, then every model was "busy or rate-limited" and the gateway rested Groq for the rest of the run (44 of 45 got no plan in about 11 ms);
-- full set with the console's background AI off (`AI_PROVIDER=none`): no Groq call was made at all (stopped after 20);
-- 10 questions, dev server stopped: the frozen store's own background steps (studio brief and profiler) used Groq's and Gemini's free allowance while loading, and the run timed out with no answers.
-Groq's key itself works (a direct call returned 200 at 01:04 IST). The earlier numbers stand as the last measured: old code 6/45, final 21/45 (Groq, 20 Nov). The speller does not change what the AI is given except that typos are corrected first, and every question in the typo sets is now read by the rules with no AI.
+Measured on 21 Nov 2026 (about 12:20–13:10 IST) with Claude Haiku 5.5 (`AI_MAP_PROVIDER=anthropic`, low effort, no thinking, structured outputs, the cached prompt), after the owner supplied a working key.
 
-US$ spent on Claude in this work: **0**. The `ANTHROPIC_API_KEY` in this worktree's `.env` is refused (401); the owner was asked for a working key at the start and none arrived. The spend ceiling (`JARVIS_CLAUDE_BUDGET_FILE`, US$5) was pointed at the shared record as asked.
+| Code and provider | Correct | Time | US$ |
+|---|---|---|---|
+| Old code (`de01e264`), Groq (20 Nov) | 6 of 45 | — | 0 |
+| Final code, Groq (20 Nov; 16 lost to Groq's per-minute limit) | 21 of 45 | median 2.9 s | 0 |
+| **v2 code, Claude Haiku 5.5** | **33 of 45** (all 45 answered by Claude) | median 3.2 s, p90 3.9 s | 0.0227 (US$0.0005 a question) |
+| **v2 code + the question's own words on top, Claude Haiku 5.5** | **40 of 45** | median 3.2 s, p90 3.9 s | 0.0215 |
+
+The second Claude run adds one change, made after reading the first run's 12 misses: the server's reading of the question wins over the model on two things, as it already did for time words (`route.ts fitModelPlan`): the language (the model called two Tamil-script questions "Tanglish"), and an exact category the rules' word list reads ("sewage", "drinking water", "road accidents", "flooding") where the model gave none, a code that does not exist (`DRINKING_WATER`) or only the broader family. That fixed 7. It was measured on the same 45 questions it was read from, so treat 40 as tuned; the typo questions below are a second check. Still missed: "dengue cases bunching up" and "garbage near the places on my list" (the model refused them as not map questions), the Tanglish rank question (read as a count by ward), "children's play areas" (no parks layer taken), and "mosquito complaints around public toilets" (flooding chosen in the second run; right in the first: the model varies a little between runs).
+
+**The typo questions through Claude** (`src/lib/map/typoai.live.ts`: each typed question planned by Claude as typed and after the speller, compared with the rules' plan for the correct form; 2 pairs that are area briefs skipped):
+
+| | As typed | After the speller | Rules + speller, no AI |
+|---|---|---|---|
+| 70 tuned: layers, category, places and kind of answer all right | 44 | **52** | 70 (72 of 72 with the briefs) |
+| 70 tuned: the whole plan the same | 20 | 18 | 70 |
+| 24 held out: layers, category, places and kind all right | 13 | 14 | 23 |
+
+So Claude alone misreads many slips, the speller helps it (44 to 52), and the rules with the speller read them all; in the console these questions never reach the AI. Most of Claude's remaining differences are another kind of the same place (Velachery the locality, not the taluk; Anna Nagar the neighbourhood, not Zone 8). The whole-plan match is low because the model chooses details differently (a 2 km radius, "nearest" instead of "within", all statuses), not because it misread the words. Cost of both typo runs: US$0.07 each.
+
+US$ spent on Claude in this work: **US$0.203** (the shared ledger went from US$1.746 to US$1.949 of the US$5 ceiling): the two dev-set runs, the two typo-set runs and three one-call key checks. Groq tries on the night (no answers): see TEST_LOG_V2.md section 5.
 
 ## Known limits
 
@@ -40,11 +55,11 @@ US$ spent on Claude in this work: **0**. The `ANTHROPIC_API_KEY` in this worktre
 - The scorecard ranks wards by open issues only (1 = the most). Ward boundaries are DataMeet's, not GCC's (unchanged).
 - A shared link carries the typed question; an answer changed by chips is printed from its plan but cannot be shared as a link.
 - Leaflet stays (RESEARCH_V2.md section 4). "Draw an area and ask" with free shapes was weighed and not built in this run (the circle tool remains).
-- The AI eval could not be run tonight: no Claude key, and Groq's free allowance was used up by the console's own background steps. Run it with a Claude key, or with Groq on a quiet machine.
+- Claude Haiku 5.5 reads 40 of the 45 dev questions; the 40 is after a fix read from the same questions. It refuses a few loose questions as "not a map question", and alone it misreads many typos (the speller and the rules cover those). Groq's free allowance runs out under the console's own background steps.
 
 ## Owner decisions
 
-1. Paste a working `ANTHROPIC_API_KEY` into `E:\farm\.claude\worktrees\askmap-v2-e4d529\chennai-grievance-portal-main\.env`, then run `set AI_MAP_PROVIDER=anthropic&& npx vitest run --config vitest.live.config.ts src/lib/map/mapai.live.ts`.
+1. Keep `AI_MAP_PROVIDER` on its default (Claude Haiku 5.5 first): 40 of 45 against Groq's 21, about US$0.0005 a question.
 2. Ask TNeGA (TNGIS) for the departments' layers (ration shops, TASMAC outlets, PHCs) to replace OpenStreetMap's partial ones.
 3. Merge this branch (and the final version under it) to `main`, or not.
 4. Whether the shared link should also carry chip-changed answers (it would put a plan in the address).

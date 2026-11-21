@@ -85,4 +85,16 @@ Asked in the console (dev server, 21 Nov 2026 about 00:20–01:00 IST) through `
 
 ## 5. The AI plan step
 
-See RESULTS_V2.md. The Claude key in the worktree's `.env` is refused (401); the owner was asked for one at the start of the session and none arrived.
+**Groq, the night of 21 Nov (no usable numbers).** Three tries: the full set with the dev server running (Groq answered 1 call, then every model was "busy or rate-limited" and the gateway rested Groq: 44 of 45 failed in about 11 ms); with the console's background AI off (no Groq call made; stopped after 20); 10 questions with the dev server stopped (the frozen store's background steps used Groq's and Gemini's free allowance while loading; timed out). Groq's key itself worked (a direct call, 200).
+
+**Claude Haiku 5.5, 21 Nov 12:20–13:10 IST**, after the owner supplied a working key (a one-call check first: 17 tokens in, 5 out):
+
+| Run | Result | US$ |
+|---|---|---|
+| `mapai.live.ts`, dev set (45), v2 code | 33 of 45; median 3.2 s; 332,684 cached tokens read | 0.0227 |
+| the same after `fitModelPlan` takes the server's language and the question's exact category words | 40 of 45 | 0.0215 |
+| `typoai.live.ts`, 70 tuned typo pairs (2 briefs skipped) | key fields: 44 as typed, 52 after the speller; whole plan: 20 and 18 | 0.0713 |
+| the same, 24 held out | key fields: 13 and 14; whole plan: 4 and 3 | (in the line above) |
+| the typo run again after adding the key-field score | 44 / 52 tuned, 13 / 14 held out (the numbers above) | 0.0729 |
+
+The first run's 12 misses: a family instead of the exact category (DRAINAGE for drainage, ROADS_TRAFFIC for road accidents, STRUCTURES_LAND for encroachment), a category left out (sewage), a code that does not exist (DRINKING_WATER for drinking water), two Tamil-script questions tagged Tanglish, "nearest pharmacy to Marina Beach" not measured from the place, "dengue cases bunching up" refused, the Tanglish rank question read as a count, "severe flooding … in Zone 13" without the flood family, and "children's play areas" without parks. The words fix (`route.ts fitModelPlan`, `modelwords.test.ts`) took 7 of these. Ledger: US$1.746 before, US$1.949 after.
