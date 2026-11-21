@@ -59,3 +59,19 @@ describe("a layer the model took and never used", () => {
     expect(out.show).toBe("near");
   });
 });
+
+describe("v2 round 5", () => {
+  it("reads Tanglish 'where … most' as clusters, and 'most … went up' as a league table", () => {
+    const cb = (): Plan => ({ language: "tanglish", show: "by", steps: [inc(["ROAD_ACCIDENT"], null), { op: "count_by", as: "by", of: "a", by: "zone" }] });
+    expect(fitModelPlan(cb(), "enga ellam vibathu jaasthi nadakkudhu", null, null, { ...words, lang: "tanglish" }).steps.map((s) => s.op)).toEqual(["take", "hotspot"]);
+    expect(fitModelPlan(cb(), "indha vaaram endha zone-la vibathu jaasthi aachu", "2026-11-20 23:00:00", null, { ...words, lang: "tanglish" }).steps.map((s) => s.op)).toEqual(["take", "change", "rank"]);
+  });
+
+  it("holds 'near X' as the point against the zone of the same name", () => {
+    const roya = group(m("osm:n2", "osm_place", "Royapuram"), m("zone:5", "zone", "Royapuram"));
+    const fire = { op: "take" as const, as: "f1", layer: "fire_stations" as const, filter: null, where: null };
+    const rules: Plan = { language: "en", show: "in", steps: [fire, { op: "inside", as: "in", of: "f1", area: { kind: "point", ref: "osm:n2", radius_m: 1000 } }] };
+    const ai: Plan = { language: "en", show: "in", steps: [fire, { op: "inside", as: "in", of: "f1", area: { kind: "zone", id: 5 } }] };
+    expect(keepAreas(ai, rules, [roya]).steps[1]).toMatchObject({ area: { kind: "point", ref: "osm:n2" } });
+  });
+});

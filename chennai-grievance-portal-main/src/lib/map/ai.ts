@@ -82,7 +82,7 @@ const LAYER_HELP: Partial<Record<LayerId, string>> = {
   schools: "schools", colleges: "colleges and universities", hospitals: "hospitals and clinics; kinds hospital, health_centre, clinic; government true for government ones",
   fire_stations: "fire stations", police: "police stations (district store)", water_bodies: "lakes and ponds (polygons)", waterways: "rivers, canals, drains (lines; along needs a line id)",
   roads: "roads (lines; along needs a line id)", rail_metro: "rail and metro stations; kinds metro, rail", osm_places: "named neighbourhoods (points)",
-  lakes_store: "PWD lakes (district store)", gauges: "rain, river and air gauges", pwd_assets: "PWD water works", hotspots: "never take: use the hotspot op",
+  lakes_store: "PWD lakes with their levels (district store): only when the question says PWD, reservoir or lake levels; lakes and ponds in general are water_bodies", gauges: "rain, river and air gauges", pwd_assets: "PWD water works", hotspots: "never take: use the hotspot op",
   banks: "bank branches (partial list)", atms: "ATMs (partial list)", worship: "places of worship; kinds hindu (temples), muslim (mosques), christian (churches), jain, sikh, buddhist, other",
   parks: "parks and playgrounds (children's play areas are playgrounds); kinds park, playground", water_tanks: "overhead water tanks", toilets: "public toilets", bus_stations: "bus stations and stands",
   gov_offices: "government offices, courts and town halls; kinds government_office, court, town_hall", pharmacies: "pharmacies and medical shops", fuel: "petrol bunks and fuel stations",

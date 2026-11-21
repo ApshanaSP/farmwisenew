@@ -100,7 +100,7 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["TREES_PARKS"], words: ["tree fall", "fallen tree", "trees fell", "tree fell", "uprooted", "மரம் விழுந்", "மரம் சாய்ந்"] },
   { cats: ["ENCROACHMENT"], words: ["encroachment", "encroachments", "ஆக்கிரமிப்பு"] },
   { cats: ["TRAFFIC_OBSTRUCTION"], words: ["traffic jam", "traffic snarl", "illegal parking", "traffic", "போக்குவரத்து நெரிசல்"] },
-  { cats: ["BUILDING_SAFETY"], words: ["wall collapse", "building collapse", "unsafe building", "unsafe buildings", "சுவர் இடிந்"] },
+  { cats: ["BUILDING_SAFETY"], words: ["wall collapse", "building collapse", "unsafe building", "unsafe buildings", "unsafe old buildings", "unsafe old building", "old buildings", "old building", "dilapidated building", "dilapidated buildings", "சுவர் இடிந்"] },
   { family: ["CRIME"], words: ["crime", "crimes", "குற்றம்", "குற்றங்கள்", "kuttram"] }
 ];
 const COMPLAINT = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்", "புகார்கள்", "pugar", "pugaar", "complaintu"];
@@ -113,7 +113,7 @@ const SEVERE_HIGH = ["severe or high", "high or severe", "severe and high", "hig
 const OPEN = ["open", "pending", "unresolved", "not resolved", "active", "ongoing", "திறந்த", "நிலுவை", "நிலுவையில்", "தீர்க்கப்படாத", "pending-a"];
 const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்கப்பட்ட", "முடிந்த", "முடிக்கப்பட்ட"];
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
-const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b/i;
+const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\b(\s+\S+){0,3}?\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b(?!\s+(aagiruchu|aagiduchu|aayiduchu|aachu|aanadhu|aagirukku))/i;
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
 const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|\b(atms?|banks?|hospitals?|schools?|pharmac(y|ies)|toilets?|parks?|shops?|kadai|stations?)\s+(illa|illai|illaye)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
 /** a gap measured per neighbourhood, not per ward: "places", "localities", "streets", "பகுதிகள்" */
@@ -363,10 +363,12 @@ export function keepAreas(ai: Plan, rules: Plan | null, found: Found[]): Plan {
   const keyOf = (a: AreaRef): string => (a.kind === "point" ? a.ref : a.kind === "taluk" ? `taluk:${a.code}` : a.kind === "drawn" ? "drawn" : `${a.kind}:${a.id}`);
   const group = (k: string) => found.find((f) => [f.pick, ...f.alternatives].some((m) => m.entry.ref === k));
   const ruleAreas = rules.steps.flatMap((s) => (s.op === "inside" ? [s.area] : s.op === "compare" ? [s.a, s.b] : [])).filter((a) => a.kind !== "drawn");
+  // "in X" read as an area holds against the point of the same name; "near X" read as a point holds against the area of the same name
   const fix = (a: AreaRef): AreaRef => {
-    if (a.kind !== "point") return a;
-    const g = group(a.ref);
-    const r = g && ruleAreas.find((x) => x.kind !== "point" && group(keyOf(x)) === g);
+    if (a.kind === "drawn") return a;
+    const g = group(keyOf(a));
+    if (!g) return a;
+    const r = ruleAreas.find((x) => group(keyOf(x)) === g && (x.kind === "point") !== (a.kind === "point"));
     return r ?? a;
   };
   let steps = ai.steps.map((s) => (s.op === "inside" ? { ...s, area: fix(s.area) } : s.op === "compare" ? { ...s, a: fix(s.a), b: fix(s.b) } : s));
@@ -414,7 +416,7 @@ function fitShape(p: Plan, text: string, words: ModelWords): Plan {
     if (isInc(show)) { steps = [...steps, { op: "count_by", as: "by", of: show, by }]; show = "by"; }
   }
   // "where are dengue cases clustering", "theft hotspots": clusters, never a plain count by area
-  if (HOTSPOT.test(text) && !steps.some((s) => s.op === "hotspot")) {
+  if (HOTSPOT.test(text) && !RANK.test(text) && !steps.some((s) => s.op === "hotspot")) {
     const cbs = steps.find((s) => s.op === "count_by");
     if (cbs && cbs.op === "count_by" && !countByOf(text)) { const hot = { op: "hotspot" as const, as: cbs.as, of: cbs.of }; steps = steps.map((s) => (s === cbs ? hot : s)); }
   }

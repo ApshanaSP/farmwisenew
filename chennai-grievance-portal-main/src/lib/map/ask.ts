@@ -299,7 +299,13 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
       .filter((f) => !seen.has(f.ref) && seen.add(f.ref)).slice(0, 8);
     const a = await aiPlan(input.text!, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
       unread: [tie.word], zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
-    if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text!, w.now, input.prev, modelWords(w, lang, found)); aiUsed = true; out.unclear = tie; }
+    if (a && "plan" in a) {
+      plan = fitModelPlan(a.plan, input.text!, w.now, input.prev, modelWords(w, lang, found));
+      // the first reading's rules plan holds the place kinds and puts back a place the model left out ("severe flooding in ambatur")
+      const r0 = rulesRoute(tie.options[0].text, input.prev, env);
+      if (r0?.kind === "plan") plan = keepAreas(plan, r0.plan, r0.places);
+      aiUsed = true; out.unclear = tie;
+    }
   }
   if (sp?.ask && !plan) {
     out.say = { en: `Did you mean ${sp.ask.options.map((o) => o.label).join(" or ")}?`, ta: `${sp.ask.options.map((o) => o.label).join(" அல்லது ")} என்று சொன்னீர்களா?`,
@@ -320,7 +326,8 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     // or the roads' live state, unless the question asks about now (running, late, delays, closed, live). The shared reader (Jarvis) is unchanged.
     if ((topic === "metro" || topic === "traffic") && !/\b(now|right now|live|running|late|delay(s|ed)?|status|closed|suspended|working|moving|stuck)\b/i.test(input.text)) {
       const q = parse(input.text, env);
-      if (q.facilities.some((f) => f.layer === "rail_metro" || f.layer === "bus_stations")) topic = null;
+      // any map layer named ("near schools", "metro stations") makes it a map question
+      if (q.facilities.length) topic = null;
     }
     if (topic) {
       const zone = input.context.zone ?? null;
