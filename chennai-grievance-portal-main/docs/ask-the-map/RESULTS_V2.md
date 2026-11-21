@@ -45,7 +45,32 @@ The second Claude run adds one change, made after reading the first run's 12 mis
 
 So Claude alone misreads many slips, the speller helps it (44 to 52), and the rules with the speller read them all; in the console these questions never reach the AI. Most of Claude's remaining differences are another kind of the same place (Velachery the locality, not the taluk; Anna Nagar the neighbourhood, not Zone 8). The whole-plan match is low because the model chooses details differently (a 2 km radius, "nearest" instead of "within", all statuses), not because it misread the words. Cost of both typo runs: US$0.07 each.
 
-US$ spent on Claude in this work: **US$0.203** (the shared ledger went from US$1.746 to US$1.949 of the US$5 ceiling): the two dev-set runs, the two typo-set runs and three one-call key checks. Groq tries on the night (no answers): see TEST_LOG_V2.md section 5.
+US$ spent on Claude in this work: **about US$1.04** (the spend record went from US$1.949 to US$2.984 of the US$5 ceiling): the AI-step evals in the morning (US$0.20), then the AI-first runs (7 full or partial runs, about 330 questions each at most, US$0.0005 a question).
+
+## Claude reads first (21 Nov 2026, afternoon)
+
+At the owner's request, Claude Haiku 5.5 now reads every typed question; the word rules are only a hint and a fallback. The speller's reading, the words as typed and the rules' plan go to Claude as a suggestion it may overrule (`ask.ts`, `ai.ts`). The rules answer only when Claude cannot (no key, busy, a plan the server refuses), and their safety checks stay in front: no Ward 250, no forecast, out-of-scope questions, the console's commands. The server still runs every plan and counts; the number gate is unchanged. Only Claude was used for these runs (the owner's instruction); Groq's 6/45 and 21/45 are history.
+
+The prompt now tells Claude how officers type (slips, Tamil names spelt many ways, shorthand, Tanglish with a short glossary), and every reading of a place name is offered (Anna Nagar the zone and the neighbourhood). After Claude, the question's own words still settle a few things (`route.ts fitModelPlan`, `keepAreas`): the language, the exact category a word names, "in X" as the area and "near X" as the point, the direction of a league table, a count by area or clusters when asked, a layer taken and never used, a place left out.
+
+**Scored through the console's own path** (`askai.live.ts`: `askMap` end to end, live, frozen store; a busy provider is waited for, never scored as a miss):
+
+| Question set | First run | Final |
+|---|---|---|
+| Dev set (`eval/map-final/dev.json`, 45) | 45/45 (AI step alone this morning: 33) | **45/45** |
+| Held out (`ai-holdout.json`, 15, never tuned) | 15/15 | **15/15** |
+| Big set (`big.json`, 170) | 162/170 | **169/170** (b160 lists the nearest shops, not all within 1 km) |
+| Fresh set (`fresh.json`, 80, written after the big-set fixes, never tuned) | **77/80** | 80/80 |
+| Follow-up conversations (`followups.json`, 32 turns) | 32/32 | **32/32** |
+| Typo pairs (72) | 61/72 | **72/72** |
+| Typo pairs held out (24) | 20/24 | **22/24** (Ambattur read as the taluk, not the zone; an extra health filter) |
+| Facility counts against an independent count of the raw files | — | **25 of 25 the same** |
+
+Earlier, for history: Groq on the old code 6/45, on the final version 21/45 (20 Nov).
+
+Time: median about 2.8 s a question, p90 about 3.7 s (the rules alone answered in about 0.1 s). Cost: about US$0.0005 a question. Spend record: US$1.949 carried over, US$2.98 now, of the US$5 ceiling. The shared record in the Jarvis v10 worktree was deleted during the day; a new one is in this worktree's gitignored `data/aws-cache/claude-budget-v2.sqlite`, started at the old total.
+
+Note for the owner: each officer has a daily AI allowance (`ASSISTANT_DAILY_TOKENS`, default 600,000 uncached tokens, about 300 questions). With Claude reading every question, a very heavy user can reach it; the rules then answer, as before.
 
 ## Known limits
 
@@ -55,11 +80,12 @@ US$ spent on Claude in this work: **US$0.203** (the shared ledger went from US$1
 - The scorecard ranks wards by open issues only (1 = the most). Ward boundaries are DataMeet's, not GCC's (unchanged).
 - A shared link carries the typed question; an answer changed by chips is printed from its plan but cannot be shared as a link.
 - Leaflet stays (RESEARCH_V2.md section 4). "Draw an area and ask" with free shapes was weighed and not built in this run (the circle tool remains).
-- Claude Haiku 5.5 reads 40 of the 45 dev questions; the 40 is after a fix read from the same questions. It refuses a few loose questions as "not a map question", and alone it misreads many typos (the speller and the rules cover those). Groq's free allowance runs out under the console's own background steps.
+- Claude reads every question first: answers take about 3 s, not 0.1 s; without the AI (no key, busy, the daily allowance used) the rules answer as before. Earlier note: Claude Haiku 5.5 read 40 of the 45 dev questions as the AI step alone; the 40 is after a fix read from the same questions. It refuses a few loose questions as "not a map question", and alone it misreads many typos (the speller and the rules cover those). Groq's free allowance runs out under the console's own background steps.
 
 ## Owner decisions
 
-1. Keep `AI_MAP_PROVIDER` on its default (Claude Haiku 5.5 first): 40 of 45 against Groq's 21, about US$0.0005 a question.
+1. Keep Claude reading first (the default; `AI_MAP_FIRST=0` in `.env` puts the rules first again, about 0.1 s an answer instead of about 3 s) and `AI_MAP_PROVIDER` on Claude Haiku 5.5: 45/45 dev, 80/80 fresh, about US$0.0005 a question.
+5. Raise `ASSISTANT_DAILY_TOKENS` if officers will ask more than about 300 map questions a day each.
 2. Ask TNeGA (TNGIS) for the departments' layers (ration shops, TASMAC outlets, PHCs) to replace OpenStreetMap's partial ones.
 3. Merge this branch (and the final version under it) to `main`, or not.
 4. Whether the shared link should also carry chip-changed answers (it would put a plan in the address).
