@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import { applyChip, type PlanChip } from "@/lib/map/chips";
 import { fmtDistance } from "@/lib/map/geom";
+import { fixesLine } from "@/lib/map/spell";
 import { LAYER_WORD } from "@/lib/map/words";
 import { I, type IconName } from "../icons";
 import { useLang } from "@/lib/i18n/lang";
@@ -21,6 +22,9 @@ import { Grip, useDragPanel } from "./dragPanel";
 import { istDate } from "@/lib/ist-dates";
 import { cueAct } from "./actions";
 import { onMapCmd } from "./bridge";
+import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
+import { useWorkspace } from "./workspace";
+import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
 let cueSeen = 0;
@@ -61,6 +65,8 @@ export interface PanelActions {
   onSend?: (r: AskResponse, dept: string | null) => void;
   onExport?: (r: AskResponse) => void;
   onSave?: (r: AskResponse) => void;
+  /** v2: a short note to the officer (Copy link) */
+  toast?: (msg: string, kind?: "ok" | "alert") => void;
   onVisits?: (r: AskResponse) => void;
   suggestions: string[];
 }
@@ -77,6 +83,9 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   const [sheet, setSheet] = useState<"peek" | "half" | "full">("half");
   const phone = typeof window !== "undefined" && window.innerWidth < 768;
   const drag = useDragPanel("ask", phone);
+  // v2: on a computer, docked, the chat and the map share the screen side by side (workspace.tsx)
+  const docked = !phone && !drag.cls.includes("moved");
+  const ws = useWorkspace(drag.ref, docked, (r?.lang === "ta" || (!r && ui === "ta")), () => { if (ask.resp) ask.replay(0); });
   const [traceOn, setTraceOn] = useState<string | null>(null);
   const [tour, setTour] = useState(-1);
   // the plan's parts fold into one line; opened, each part is a chip that can be changed
@@ -158,12 +167,14 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
 
   const ta = lang === "ta";
   return (
-    <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}`} style={drag.style} data-h={sheet} aria-label={w.title}>
+    <>
+    <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}${docked ? " dock" : ""}`} style={drag.style} data-h={sheet} aria-label={w.title}>
       <button className="amp-grab" aria-label="Resize the panel" onClick={() => setSheet((s) => (s === "peek" ? "half" : s === "half" ? "full" : "peek"))} />
       <div className={`amp-h ${drag.handle.className}`} onPointerDown={drag.handle.onPointerDown} onDoubleClick={drag.handle.onDoubleClick}>
         <Grip off={phone} />
         <h3><I n="map" />{w.title}</h3>
         {drag.tools}
+        {ws.tools}
         {ask.turns.length > 0 && <button className="amp-x" onClick={() => { ask.clear(); setTray(false); input.current?.focus(); }} title={ta ? "புதிய உரையாடல்: கேள்விகளையும் வரைபடத்தையும் அழி" : "Start a new chat: clears the questions and the map"}><I n="plus" />{ta ? "புதியது" : "New chat"}</button>}
         <button className="amp-x" onClick={actions.onBack} title={`${w.back} (Esc)`}><I n="chevl" />{w.back}</button>
       </div>
@@ -182,6 +193,13 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
             {!t.pending && !t.error && !t.note && t !== cur && <Folded t={t} lang={lang} onOpen={() => ask.restore(t.id)} busy={ask.busy} />}
             {t === cur && r && (
               <>
+                {r.spelled?.length > 0 && <p className="amp-read" role="note"><I n="info" />{fixesLine(r.spelled, ta)}</p>}
+                {r.unclear && r.kind === "answer" && (
+                  <div className="amp-read amp-unclear" role="note">
+                    <I n="info" /><span>{ta ? `'${r.unclear.word}' தெளிவில்லை; AI கேள்வியிலிருந்து படித்தது. வேறு பொருளா?` : `'${r.unclear.word}' was unclear; the AI read it from the question. Did you mean another?`}</span>
+                    <span className="amp-sug">{r.unclear.options.map((o) => <button key={o.label} onClick={() => submit(o.text)} disabled={ask.busy}>{o.label}</button>)}</span>
+                  </div>
+                )}
                 {r.kind === "say" && r.say && (
                   <div className="amp-say" role="status">
                     {ta ? r.say.ta : r.say.en}
@@ -213,7 +231,14 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                       ))}
                     </div>}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
+                    <LeagueTable r={r} ask={ask} lang={lang} />
+                    <SpeedTable r={r} ask={ask} lang={lang} />
+                    <GroupList r={r} ask={ask} lang={lang} />
+                    <GapList r={r} lang={lang} />
+                    <RulePairs r={r} lang={lang} />
+                    <PlayPeriod r={r} ask={ask} lang={lang} />
                     <Acts r={r} w={w} actions={actions} />
+                    <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
                     <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
@@ -223,7 +248,11 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                 )}
                 {r.kind === "brief" && r.brief && (
                   <>
+                    <ScorecardCard r={r} lang={lang} />
                     <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />
+                    {!r.scorecard && r.brief.area.kind === "ward" && (
+                      <div className="amp-tacts"><button onClick={() => submit(lang === "ta" ? `வார்டு ${(r.brief!.area as { id: number }).id} மதிப்பெண் அட்டை` : `ward ${(r.brief!.area as { id: number }).id} scorecard`)} disabled={ask.busy}><I n="chart" />{lang === "ta" ? "மதிப்பெண் அட்டை" : "Ward scorecard"}</button></div>
+                    )}
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                   </>
                 )}
@@ -238,6 +267,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
           <div className="amp-tray-b">{trayQs(actions.suggestions, r, ta).map((q) => <button key={q} onClick={() => submit(q)} disabled={ask.busy}><I n="arrowUR" />{q}</button>)}</div>
         </div>
       )}
+      <ToolsBar ask={ask} lang={lang} />
       <div className="amp-ask">
         <button className={`amp-bulb${tray ? " on" : ""}`} onClick={() => setTray((v) => !v)} title={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-label={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-expanded={tray}><I n="bulb" /></button>
         <input ref={input} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder={ask.turns.length ? (ta ? "தொடர் கேள்வி அல்லது புதிய கேள்வி…" : "Ask a follow-up or a new question…") : w.placeholder} aria-label={w.title} maxLength={400} />
@@ -245,6 +275,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         <button className="go" onClick={() => submit()} title={w.ask} aria-label={w.ask} disabled={ask.busy || !text.trim()}><I n="send" /></button>
       </div>
     </aside>
+    {ws.split}
+    </>
   );
 }
 
@@ -443,7 +475,7 @@ function Extras({ r, w, ask, tour, setTour, lang }:{ r: AskResponse; w: Words; a
       <div className="amp-tour" role="group" aria-label={w.tour}>
         <button onClick={() => { setTour(0); ask.replay(0); }}>{w.backTo}</button>
         {r.camera.tour.slice(0, 3).map((t, i) => (
-          <button key={t.id} className={tour === i + 1 ? "on" : ""} onClick={() => { setTour(i + 1); ask.replay(i + 1); ask.setSpot({ ids: r.extra.clusters?.[i]?.ids ?? [], label: lang === "ta" ? t.caption_ta : t.caption_en }); }}>
+          <button key={t.id} className={tour === i + 1 ? "on" : ""} onClick={() => { setTour(i + 1); ask.replay(i + 1); ask.setSpot({ ids: r.extra.clusters?.[i]?.ids ?? r.extra.rank?.rows.find((x) => x.key === t.id)?.ids ?? [], label: lang === "ta" ? t.caption_ta : t.caption_en }); }}>
             {lang === "ta" ? t.caption_ta : t.caption_en}
           </button>
         ))}
@@ -559,7 +591,7 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
 /** "Schools in Valasaravakkam": the places, by name (each is a marker on the map). */
 function Places({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
   const pts = r.context.points;
-  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas) return null;
+  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas || r.extra.pairs) return null;
   const lw = LAYER_WORD[pts[0].layer];
   return (
     <div>

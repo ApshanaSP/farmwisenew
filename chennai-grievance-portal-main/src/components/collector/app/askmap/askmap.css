@@ -425,3 +425,110 @@
 @media (prefers-reduced-motion:reduce){.dic .amp-turn,.dic .amp-tray{animation:none}.dic .amp.chat .amp-b{scroll-behavior:auto}}
 /* the hotspot tour's captions are long ("1. 33 reports near Apparao Garden 3rd Lane ..."): one per line, wrapping */
 .dic .amp-tour button{height:auto;min-height:26px;padding:4px 10px;line-height:1.3;text-align:left;border-radius:12px}
+
+/* ---- Ask the Map final: the Collector's tools, the league table, the gap list, the rule check */
+.dic .agroup.arank.up{background:rgba(224,54,74,.92)}
+.dic .agroup.arank.down{background:rgba(22,163,74,.92)}
+.dic .amlayer-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;flex:none}
+.dic .amt{margin:0 12px 6px;display:flex;flex-direction:column;gap:6px}
+.dic .amt-row{display:flex;flex-wrap:wrap;gap:5px}
+.dic .amt-row button{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line-3);background:var(--surface);color:var(--text-2);font:600 12px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.dic .amt-row button svg{width:14px;height:14px}
+.dic .amt-row button.on,.dic .amt-row button:hover,.dic .amt-row button:focus-visible{color:var(--text);border-color:var(--accent);outline:none}
+.dic .amt-card{padding:10px 11px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow:auto;font-size:12.5px}
+.dic .amt-card p{margin:0;color:var(--text-2)}
+.dic .amt-card label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--text-2)}
+.dic .amt-card select,.dic .amt-card input[type=number],.dic .amt-card input[type=text]{height:28px;border-radius:8px;border:1px solid var(--line-3);background:var(--surface-2);color:var(--text);font:500 12.5px var(--font-ui);padding:0 7px;min-width:0}
+.dic .amt-card input[type=number]{width:78px}
+.dic .amt-card input[type=text]{flex:1;min-width:160px}
+.dic .amt-card fieldset{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 12px}
+.dic .amt-card legend{color:var(--text-2);padding:0;margin-bottom:2px}
+.dic .amt-card .chk{gap:4px}
+.dic .amt-card button{height:30px;padding:0 12px;border-radius:9px;border:1px solid var(--line-3);background:var(--surface-2);color:var(--text);font:600 12px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:6px;align-self:flex-start}
+.dic .amt-card button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.dic .amt-card button:disabled{opacity:.55;cursor:default}
+.dic .amt-card button svg{width:14px;height:14px}
+.dic .amt-warn{display:flex;gap:6px;align-items:flex-start;padding:6px 8px;border-radius:8px;background:var(--surface-2);color:var(--text-2);font-size:12px}
+.dic .amt-warn svg{width:14px;height:14px;flex:none;margin-top:2px;color:var(--accent)}
+.dic .amt-muted{color:var(--text-3);font-size:12px;margin:4px 0}
+.dic .amt-packs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .amt-packs a{display:grid;grid-template-columns:18px 1fr 14px;gap:2px 8px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface-2);color:var(--text);text-decoration:none;box-shadow:0 0 0 1px var(--line)}
+.dic .amt-packs a:hover,.dic .amt-packs a:focus-visible{box-shadow:0 0 0 2px var(--accent);outline:none}
+.dic .amt-packs small{grid-column:2;color:var(--text-3)}
+.dic .amt-packs svg{width:15px;height:15px}
+.dic .amt-up{display:flex;flex-direction:column;gap:6px}
+.dic .amt-lists{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dic .amt-lists>li{padding:8px;border-radius:10px;box-shadow:0 0 0 1px var(--line)}
+.dic .amt-lh{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.dic .amt-lh small{width:100%;color:var(--text-3)}
+.dic .amt-st{font:700 10.5px var(--font-ui);padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--text-2)}
+.dic .amt-st.approved{background:rgba(22,163,74,.18);color:#16A34A}
+.dic .amt-la{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.dic .amt-view{display:flex;flex-direction:column;gap:6px}
+.dic .amt-tbl{width:100%;border-collapse:collapse;font:12px/1.35 var(--font-ui);color:var(--text)}
+.dic .amt-tbl th{text-align:left;font-weight:700;color:var(--text-2);padding:4px 6px;border-bottom:1px solid var(--line-3);position:sticky;top:0;background:var(--surface)}
+.dic .amt-tbl td{padding:4px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.dic .amt-tbl tr.none td{color:var(--critical)}
+.dic .amt-tbl tr.approximate td:nth-child(3){color:var(--text-2)}
+.dic .amt-tbl.league tbody tr{cursor:pointer;outline:none}
+.dic .amt-tbl.league tbody tr:hover,.dic .amt-tbl.league tbody tr:focus-visible,.dic .amt-tbl.league tbody tr.on{background:var(--surface-2)}
+.dic .amt-tbl td.up{color:#E0364A;font-weight:700}
+.dic .amt-tbl td.down{color:#16A34A;font-weight:700}
+.dic .amt-partial{display:flex;gap:6px;margin:6px 0 0;font-size:12px;color:var(--text-2)}
+@media (max-width:767px){.dic .amt-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-right:56px}.dic .amt-row button{height:32px;flex:none}.dic .amt-card{max-height:40vh}.dic .amt-tbl{font-size:11.5px}}
+
+/* v2: what the speller read ("Read 'adayar' as Adyar.") under the question */
+.dic .amp-read{display:flex;gap:6px;align-items:center;margin:0 0 6px;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-2);font:500 12px/1.35 var(--font-ui);width:fit-content;max-width:100%}
+.dic .amp-read svg{flex:none;width:13px;height:13px;color:var(--accent)}
+
+/* ---- v2: the workspace. On a computer the docked chat takes the left of the grown map, full height, and the map the
+   rest; the line between them resizes; either side folds away (workspace.tsx). A panel dragged off its dock floats as before. */
+@media (min-width:768px){
+  .dic.map-grown .map-wrap.ws > .amp.dock{left:0;top:0;bottom:0;width:var(--ws-chat,430px);max-width:none;height:auto!important;border-radius:var(--r) 0 0 var(--r);
+    background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:inset -1px 0 0 var(--line-3);animation:none}
+  .dic.map-grown .map-wrap.ws > div[aria-label^="Satellite map"]{left:calc(var(--ws-chat,430px) + 7px)!important;width:auto!important}
+  .dic.map-grown .map-wrap.ws .map-back{left:calc((100% + var(--ws-chat,430px)) / 2)}
+  .dic.map-grown .map-wrap.ws .amsheet{left:calc(var(--ws-chat,430px) + 20px)}
+  .dic.map-grown .map-wrap.ws .gt-plotcard,.dic.map-grown .map-wrap.ws .gt-tag.l{left:calc(var(--ws-chat,430px) + 20px)}
+  .dic.map-grown .map-wrap.ws .leaflet-control-scale{margin-left:calc(var(--ws-chat,430px) + 18px)}
+  .dic .ws-split{position:absolute;top:0;bottom:0;left:var(--ws-chat,430px);width:7px;z-index:566;cursor:col-resize;touch-action:none;display:grid;place-items:center;
+    background:var(--surface-2);box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+  .dic .ws-split span{width:3px;height:44px;border-radius:3px;background:var(--text-4);transition:background .15s,height .15s}
+  .dic .ws-split:hover span,.dic .ws-split.on span,.dic .ws-split:focus-visible span{background:var(--accent);height:72px}
+  .dic .ws-split:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .dic.map-grown .map-wrap.ws-nochat > .amp.dock{display:none}
+  .dic.map-grown .map-wrap.ws-nochat > div[aria-label^="Satellite map"]{left:0!important;width:auto!important}
+  .dic.map-grown .map-wrap.ws-nomap > div[aria-label^="Satellite map"],.dic.map-grown .map-wrap.ws-nomap .map-tools,.dic.map-grown .map-wrap.ws-nomap .amleg,
+  .dic.map-grown .map-wrap.ws-nomap .leaflet-control-scale{visibility:hidden}
+  .dic.map-grown .map-wrap.ws-nomap > .amp.dock{border-radius:var(--r);box-shadow:none}
+  .dic.map-grown .map-wrap.ws-nomap > .amp.dock .amp-b{max-width:860px;width:100%;margin:0 auto}
+  .dic .ws-tab{position:absolute;left:12px;top:12px;z-index:566;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px 0 11px;border-radius:999px;
+    background:var(--accent);color:#fff;font:600 13px var(--font-ui);box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
+  .dic .ws-tab svg{width:16px;height:16px}
+  .dic .ws-tab:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+  .dic .ws-tools{display:inline-flex;gap:2px}
+}
+@media (max-width:767px){.dic .ws-split,.dic .ws-tab,.dic .ws-tools{display:none}}
+
+/* ---- v2: Play the period, the ward scorecard, Copy link and Print brief (V2Tools.tsx) */
+.dic .amp-play{margin:8px 0;padding:9px 11px 8px;border-radius:12px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line)}
+.dic .amp-play-h{display:flex;align-items:center;gap:8px}
+.dic .amp-play-h h5{display:flex;align-items:center;gap:6px;margin:0;font:700 12px var(--font-ui);color:var(--text);flex:1}
+.dic .amp-play-h h5 svg{width:14px;height:14px;color:var(--accent)}
+.dic .amp-play-h .amp-ib{min-width:30px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
+.dic .amp-play-h .amp-ib:last-child{background:var(--surface-3);color:var(--text-2)}
+.dic .amp-play-mode{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--font-ui);color:var(--text-2);cursor:pointer}
+.dic .amp-bars{display:flex;align-items:flex-end;gap:2px;height:46px;margin:8px 0 4px}
+.dic .amp-bars button{flex:1;min-width:2px;padding:0;border:0;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--accent) 30%,transparent);cursor:pointer}
+.dic .amp-bars button.on{background:var(--accent)}
+.dic .amp-bars button.cur{background:var(--warn,#D97706)}
+.dic .amp-play input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
+.dic .amp-play-f{display:flex;justify-content:space-between;gap:8px;margin:2px 0 0;font:500 11px var(--font-ui);color:var(--text-3)}
+.dic .amp-play-f b{color:var(--text);font-weight:600;text-align:center}
+.dic .amp-score .amp-tiles .amp-tile{cursor:default}
+.dic .amp-share{margin-top:-2px}
+.dic .amp-share a,.dic .amp-score a.pri{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+@media (prefers-reduced-motion:reduce){.dic .amp-bars button{transition:none}}
+.dic .amp-unclear{flex-wrap:wrap}
+.dic .amp-unclear .amp-sug{display:inline-flex;gap:6px;flex-wrap:wrap}
+.dic .amp-unclear .amp-sug button{padding:2px 9px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-3);font:600 11.5px var(--font-ui);color:var(--text)}

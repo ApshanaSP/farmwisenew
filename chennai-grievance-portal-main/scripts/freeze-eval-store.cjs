@@ -51,6 +51,10 @@ async function main() {
   const dst = path.join(OUT, "durable.sqlite");
   for (const ext of ["", "-wal"]) if (fs.existsSync(path.join(CACHE, live.f + ext))) fs.copyFileSync(path.join(CACHE, live.f + ext), dst + ext);
   const copy = new DatabaseSync(dst);
+  // the durable tables' triggers call these; the frozen copy clears personal fields anyway, so they pass values through
+  copy.function("pii_enc", { varargs: true }, (_k, v) => v);
+  copy.function("pii_otp", { varargs: true }, (v) => v);
+  copy.function("pii_rewrap", { varargs: true }, (v) => v);
   copy.exec("PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode = DELETE");
   const have = new Set(copy.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((x) => x.name));
   for (const t of PERSONAL) if (have.has(t)) copy.exec(`DELETE FROM "${t}"`);

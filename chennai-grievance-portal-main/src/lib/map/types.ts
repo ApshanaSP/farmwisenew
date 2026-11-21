@@ -37,6 +37,8 @@ export interface Inc {
   breached: boolean;
   /** IST wall clock "YYYY-MM-DD HH:MM:SS" */
   first: string;
+  /** v2: when it was closed (IST wall clock), for "which area is resolving fast"; null while open or not recorded */
+  closedAt?: string | null;
   title: string;
   citizen: number;
   sources: number;
@@ -178,17 +180,32 @@ export interface LayerMeta {
   attribution: string;
   as_of: string | null;
   count: number;
+  /**
+   * OpenStreetMap is known to hold only some of this layer's places (wine shops, ration shops, banks...): the map says so on the layer and
+   * under any answer that uses it ("OpenStreetMap, 31 shops, not the full list"), and who holds the full list.
+   */
+  partial?: { what: string; owner: string } | null;
 }
+
+/**
+ * The Collector's own layers (Ask the Map final, 20 Nov 2026), from OpenStreetMap (data/layers, scripts/build-map-layers.mjs): banks and
+ * ATMs for the quarterly bank meeting, places of worship and wine shops for the distance rules, ration shops for food access, and the
+ * civic places a Collector sends people to. `my_list` is the officer's own approved upload (lib/map/uploads.ts).
+ */
+export const COLLECTOR_LAYERS = [
+  "banks", "atms", "worship", "parks", "water_tanks", "toilets", "bus_stations", "gov_offices", "pharmacies", "fuel", "markets", "cemeteries", "liquor", "ration_shops"
+] as const;
+export type CollectorLayer = (typeof COLLECTOR_LAYERS)[number];
 
 export const LAYER_IDS = [
   "incidents", "schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "roads", "rail_metro", "osm_places",
-  "lakes_store", "gauges", "pwd_assets", "hotspots"
+  "lakes_store", "gauges", "pwd_assets", "hotspots", ...COLLECTOR_LAYERS, "my_list"
 ] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
-export type PointLayer = "schools" | "colleges" | "hospitals" | "fire_stations" | "police" | "rail_metro" | "osm_places" | "lakes_store" | "gauges" | "pwd_assets";
+export type PointLayer = "schools" | "colleges" | "hospitals" | "fire_stations" | "police" | "rail_metro" | "osm_places" | "lakes_store" | "gauges" | "pwd_assets" | CollectorLayer | "my_list";
 export type LineLayer = "roads" | "waterways";
 export type PolyLayer = "water_bodies";
-export const POINT_LAYERS: PointLayer[] = ["schools", "colleges", "hospitals", "fire_stations", "police", "rail_metro", "osm_places", "lakes_store", "gauges", "pwd_assets"];
+export const POINT_LAYERS: PointLayer[] = ["schools", "colleges", "hospitals", "fire_stations", "police", "rail_metro", "osm_places", "lakes_store", "gauges", "pwd_assets", ...COLLECTOR_LAYERS, "my_list"];
 export const LINE_LAYERS: LineLayer[] = ["roads", "waterways"];
 
 export interface World {

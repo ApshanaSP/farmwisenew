@@ -378,6 +378,21 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const mapCtx = useRef<{ zone: number | null; taluk: string | null }>({ zone: null, taluk: null });
   mapCtx.current = { zone, taluk };
   const mapAsk = useMapAsk(useCallback(() => mapCtx.current, []));
+  // Ask the Map v2: a shared link (/collector?ask=<question>) opens the map on that question, asked again as this officer
+  // (today's numbers, only what this role may see); the question is taken out of the address so a reload does not ask twice
+  const sharedAsk = useRef(false);
+  useEffect(() => {
+    if (sharedAsk.current) return;
+    sharedAsk.current = true;
+    const u = new URL(window.location.href);
+    const q = (u.searchParams.get("ask") ?? "").trim().slice(0, 400);
+    if (!q) return;
+    u.searchParams.delete("ask");
+    window.history.replaceState(null, "", u.pathname + (u.search ? u.search : "") + u.hash);
+    setPage("overview");
+    mapAsk.setGrown(true);
+    mapAsk.ask(q);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   /** direction of travel between pages (1 = next), so the new page slides in from that side */
   const [pageDir, setPageDir] = useState(1);
   /** the shell assembles once after sign-in: top bar, rail, then cards */

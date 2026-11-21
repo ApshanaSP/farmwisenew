@@ -7,6 +7,13 @@ import type { Period } from "./plan";
 import type { LayerId, Sev } from "./types";
 
 export type Lang = "en" | "ta" | "tanglish";
+
+/** The 15 GCC zones' names in Tamil (the zone file has English names only): a Tamil answer never prints an English zone name. */
+export const ZONE_TA: Record<number, string> = {
+  1: "திருவொற்றியூர்", 2: "மணலி", 3: "மாதவரம்", 4: "தண்டையார்பேட்டை", 5: "ராயபுரம்", 6: "திரு.வி.க. நகர்", 7: "அம்பத்தூர்", 8: "அண்ணா நகர்",
+  9: "தேனாம்பேட்டை", 10: "கோடம்பாக்கம்", 11: "வளசரவாக்கம்", 12: "ஆலந்தூர்", 13: "அடையாறு", 14: "பெருங்குடி", 15: "சோழிங்கநல்லூர்"
+};
+export const zoneTa = (zone: number, en: string): string => ZONE_TA[zone] ?? en;
 export const isTa = (l: Lang) => l === "ta";
 
 /** Tamil names for the 35 categories (the reference file has English labels only). */
@@ -55,7 +62,39 @@ export const LAYER_WORD: Record<LayerId, { en: string; one: string; ta: string; 
   lakes_store: { en: "PWD lakes", one: "PWD lake", ta: "பொதுப்பணித்துறை ஏரிகள்", ta_one: "ஏரி", letter: "L", shape: "drop" },
   gauges: { en: "gauges and stations", one: "gauge", ta: "அளவீட்டு நிலையங்கள்", ta_one: "அளவீட்டு நிலையம்", letter: "G", shape: "circle" },
   pwd_assets: { en: "PWD water works", one: "PWD water work", ta: "பொதுப்பணி நீர்க் கட்டமைப்புகள்", ta_one: "நீர்க் கட்டமைப்பு", letter: "W", shape: "circle" },
-  hotspots: { en: "hotspots", one: "hotspot", ta: "அதிக இடங்கள்", ta_one: "அதிக இடம்", letter: "", shape: "circle" }
+  hotspots: { en: "hotspots", one: "hotspot", ta: "அதிக இடங்கள்", ta_one: "அதிக இடம்", letter: "", shape: "circle" },
+  // the Collector's own layers (OpenStreetMap; lib/map/types.ts COLLECTOR_LAYERS)
+  banks: { en: "banks", one: "bank", ta: "வங்கிகள்", ta_one: "வங்கி", letter: "B", shape: "square" },
+  atms: { en: "ATMs", one: "ATM", ta: "ஏடிஎம்கள்", ta_one: "ஏடிஎம்", letter: "A", shape: "square" },
+  worship: { en: "places of worship", one: "place of worship", ta: "வழிபாட்டுத் தலங்கள்", ta_one: "வழிபாட்டுத் தலம்", letter: "R", shape: "circle" },
+  parks: { en: "parks and playgrounds", one: "park", ta: "பூங்காக்கள்", ta_one: "பூங்கா", letter: "G", shape: "circle" },
+  water_tanks: { en: "water tanks", one: "water tank", ta: "நீர்த்தொட்டிகள்", ta_one: "நீர்த்தொட்டி", letter: "T", shape: "drop" },
+  toilets: { en: "public toilets", one: "public toilet", ta: "பொதுக் கழிப்பறைகள்", ta_one: "பொதுக் கழிப்பறை", letter: "WC", shape: "square" },
+  bus_stations: { en: "bus stations", one: "bus station", ta: "பேருந்து நிலையங்கள்", ta_one: "பேருந்து நிலையம்", letter: "Bu", shape: "circle" },
+  gov_offices: { en: "government offices", one: "government office", ta: "அரசு அலுவலகங்கள்", ta_one: "அரசு அலுவலகம்", letter: "O", shape: "shield" },
+  pharmacies: { en: "pharmacies", one: "pharmacy", ta: "மருந்தகங்கள்", ta_one: "மருந்தகம்", letter: "Rx", shape: "cross" },
+  fuel: { en: "fuel stations", one: "fuel station", ta: "எரிபொருள் நிலையங்கள்", ta_one: "எரிபொருள் நிலையம்", letter: "Fu", shape: "diamond" },
+  markets: { en: "markets", one: "market", ta: "சந்தைகள்", ta_one: "சந்தை", letter: "Mk", shape: "square" },
+  cemeteries: { en: "cemeteries and crematoriums", one: "cemetery or crematorium", ta: "இடுகாடுகள், மயானங்கள்", ta_one: "இடுகாடு / மயானம்", letter: "+", shape: "circle" },
+  liquor: { en: "wine shops and bars", one: "wine shop or bar", ta: "மதுக்கடைகள்", ta_one: "மதுக்கடை", letter: "L", shape: "diamond" },
+  ration_shops: { en: "ration shops", one: "ration shop", ta: "நியாய விலைக் கடைகள்", ta_one: "நியாய விலைக் கடை", letter: "PD", shape: "square" },
+  my_list: { en: "places on your list", one: "place on your list", ta: "உங்கள் பட்டியலிலுள்ள இடங்கள்", ta_one: "உங்கள் பட்டியலிலுள்ள இடம்", letter: "★", shape: "circle" }
+};
+
+/** Each layer's colour on the map (the Layers menu's dots, the legend, an overlay's points): one table for all three. */
+export const LAYER_COL: Partial<Record<LayerId, string>> = {
+  schools: "#F59E0B", colleges: "#A855F7", hospitals: "#EF4444", fire_stations: "#F97316", police: "#3B82F6", rail_metro: "#14B8A6", lakes_store: "#60A5FA", gauges: "#22C55E",
+  banks: "#0EA5E9", atms: "#38BDF8", worship: "#8B5CF6", parks: "#22C55E", water_tanks: "#06B6D4", toilets: "#94A3B8", bus_stations: "#F472B6", gov_offices: "#6366F1",
+  pharmacies: "#F43F5E", fuel: "#EAB308", markets: "#FB923C", cemeteries: "#64748B", liquor: "#DC2626", ration_shops: "#84CC16", my_list: "#FACC15"
+};
+
+/** What a layer's kinds are called ("courts", "playgrounds", "crematoriums"): the answer names the kind when a question asks for one. */
+export const KIND_WORD: Record<string, { en: string; one: string; ta: string }> = {
+  court: { en: "courts", one: "court", ta: "நீதிமன்றங்கள்" }, town_hall: { en: "town halls", one: "town hall", ta: "நகர மன்றங்கள்" },
+  government_office: { en: "government offices", one: "government office", ta: "அரசு அலுவலகங்கள்" }, playground: { en: "playgrounds", one: "playground", ta: "விளையாட்டுத் திடல்கள்" },
+  park: { en: "parks", one: "park", ta: "பூங்காக்கள்" }, crematorium: { en: "crematoriums", one: "crematorium", ta: "மயானங்கள்" }, cemetery: { en: "cemeteries", one: "cemetery", ta: "இடுகாடுகள்" },
+  wine_shop: { en: "wine shops", one: "wine shop", ta: "மதுக்கடைகள்" }, bar: { en: "bars", one: "bar", ta: "மதுக்கூடங்கள்" }, pub: { en: "pubs", one: "pub", ta: "மதுக்கூடங்கள்" },
+  hindu: { en: "temples", one: "temple", ta: "கோயில்கள்" }, muslim: { en: "mosques", one: "mosque", ta: "பள்ளிவாசல்கள்" }, christian: { en: "churches", one: "church", ta: "தேவாலயங்கள்" }
 };
 
 /** "last 30 days", "the 7 days before", "October 2026" (EN / TA). */

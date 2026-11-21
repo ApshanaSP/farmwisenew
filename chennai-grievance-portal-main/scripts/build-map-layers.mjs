@@ -325,6 +325,51 @@ ${sel(['["power"="substation"]'])}
 out center tags;`,
     build: (j) => points(j, (t) => t.substation || "substation", (t) => ({ voltage: t.voltage || undefined, operator: t.operator || undefined }))
   },
+  // ---- the Collector's own layers (Ask the Map final, 20 Nov 2026). `partial`: OpenStreetMap is known to hold only some of them,
+  // so the map says so on the layer ("OpenStreetMap, 31 shops, not the full list") and a gap is never read as a missing service.
+  ...collectorLayers()
+];
+
+/** A point layer of the Collector's from a list of Overpass filters; `kind` names each feature's kind from its tags. */
+function pointLayer(id, name_en, name_ta, filters, kind, extra = {}) {
+  const { keep, ...rest } = extra;
+  // `keep`: a check on the tags Overpass cannot make (its regex has no word boundary: "ration" also matched "Corporation")
+  return { id, name_en, name_ta, kind: "point", ...rest, query: () => `(\n${sel(filters)}\n);\nout center tags;`,
+    build: (j) => points(keep ? { ...j, elements: j.elements.filter((e) => keep(e.tags || {})) } : j, kind, (t) => ({ operator: t.operator || t.brand || undefined })) };
+}
+/** A ration shop by its name, whole words only: "Ration Shop No. 12", "PDS", "நியாய விலைக் கடை"; never "Corporation" or "Generation" */
+const RATION_NAME = /\bration\b|\bfair price\b|\bpds\b|public distribution|civil supplies|நியாய\s*விலை|ரேஷன்/i;
+function collectorLayers() {
+  const RATION = "ration|fair price|\\bPDS\\b|public distribution|civil supplies|நியாய விலை|ரேஷன்";
+  return [
+    pointLayer("banks", "Banks", "வங்கிகள்", ['["amenity"="bank"]'], () => "bank",
+      { partial: { what: "bank branches", owner: "the Lead District Manager (Lead Bank Scheme)" } }),
+    pointLayer("atms", "ATMs", "ஏடிஎம்கள்", ['["amenity"="atm"]'], () => "atm", { partial: { what: "ATMs", owner: "the Lead District Manager" } }),
+    pointLayer("worship", "Places of worship", "வழிபாட்டுத் தலங்கள்", ['["amenity"="place_of_worship"]'],
+      (t) => (["hindu", "muslim", "christian", "jain", "sikh", "buddhist"].includes(t.religion) ? t.religion : "other")),
+    pointLayer("parks", "Parks and playgrounds", "பூங்காக்கள், விளையாட்டுத் திடல்கள்", ['["leisure"="park"]', '["leisure"="playground"]'], (t) => (t.leisure === "playground" ? "playground" : "park")),
+    pointLayer("water_tanks", "Water tanks", "நீர்த்தேக்கத் தொட்டிகள்", ['["man_made"="water_tower"]'], () => "water_tower",
+      { partial: { what: "water tanks", owner: "Chennai Metro Water" } }),
+    pointLayer("toilets", "Public toilets", "பொதுக் கழிப்பறைகள்", ['["amenity"="toilets"]'], () => "toilets",
+      { partial: { what: "public toilets", owner: "the Greater Chennai Corporation" } }),
+    pointLayer("bus_stations", "Bus stations", "பேருந்து நிலையங்கள்", ['["amenity"="bus_station"]'], () => "bus_station"),
+    pointLayer("gov_offices", "Government offices, courts and town halls", "அரசு அலுவலகங்கள், நீதிமன்றங்கள்",
+      ['["office"="government"]', '["amenity"="courthouse"]', '["amenity"="townhall"]'],
+      (t) => (t.amenity === "courthouse" ? "court" : t.amenity === "townhall" ? "town_hall" : "government_office")),
+    pointLayer("pharmacies", "Pharmacies", "மருந்தகங்கள்", ['["amenity"="pharmacy"]'], () => "pharmacy"),
+    pointLayer("fuel", "Fuel stations", "எரிபொருள் நிலையங்கள்", ['["amenity"="fuel"]'], () => "fuel"),
+    pointLayer("markets", "Markets", "சந்தைகள்", ['["amenity"="marketplace"]'], () => "market"),
+    pointLayer("cemeteries", "Cemeteries and crematoriums", "இடுகாடுகள், மயானங்கள்", ['["landuse"="cemetery"]', '["amenity"="grave_yard"]', '["amenity"="crematorium"]'],
+      (t) => (t.amenity === "crematorium" ? "crematorium" : "cemetery")),
+    pointLayer("liquor", "Wine shops and bars", "மதுக்கடைகள், மதுக்கூடங்கள்", ['["shop"="alcohol"]', '["amenity"="bar"]', '["amenity"="pub"]'],
+      (t) => (t.shop === "alcohol" ? "wine_shop" : t.amenity === "pub" ? "pub" : "bar"),
+      { partial: { what: "wine shops and bars", owner: "TASMAC or the Excise desk (AC Excise)" } }),
+    pointLayer("ration_shops", "Ration shops (by name)", "நியாய விலைக் கடைகள் (பெயரால்)", [`["name"~"${RATION}",i]`, `["name:ta"~"${RATION}",i]`], () => "ration_shop",
+      { partial: { what: "ration shops", owner: "Civil Supplies (TNPDS)" }, keep: (t) => RATION_NAME.test(t.name || "") || RATION_NAME.test(t["name:ta"] || "") })
+  ];
+}
+
+const LINE_LAYERS_B = [
   {
     id: "roads", name_en: "Roads", name_ta: "சாலைகள்", kind: "line",
     query: () => `(\n  way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"](${BBOX});\n  way["highway"~"^(residential|unclassified|living_street)$"]["name"](${BBOX});\n);\nout geom tags;`,
@@ -344,6 +389,7 @@ out center tags;`,
     build: (j) => polygons(j, 0.5)
   }
 ];
+LAYERS.push(...LINE_LAYERS_B);
 
 async function main() {
   const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1].split(",") : null;
@@ -353,6 +399,7 @@ async function main() {
   meta.source = "OpenStreetMap via the Overpass API";
   meta.licence = "ODbL 1.0: © OpenStreetMap contributors";
   meta.bbox = BBOX;
+  console.log(`box ${BBOX}`);
   let first = true;
   for (const L of LAYERS) {
     if (only && !only.includes(L.id)) continue;
@@ -368,7 +415,8 @@ async function main() {
       id: L.id, name_en: L.name_en, name_ta: L.name_ta, kind: L.kind, source: "OpenStreetMap", licence: "ODbL 1.0",
       attribution: "© OpenStreetMap contributors", as_of: new Date().toISOString(), osm_base: json.osm3s?.timestamp_osm_base ?? null,
       count: feats.length, in_district: inside, elements: json.elements.length,
-      merged_duplicates: built.merged ?? 0, dropped_unnamed: built.unnamed ?? 0, dropped_small: built.small ?? 0, query: q
+      merged_duplicates: built.merged ?? 0, dropped_unnamed: built.unnamed ?? 0, dropped_small: built.small ?? 0,
+      ...(L.partial ? { partial: L.partial } : {}), query: q
     };
     fs.writeFileSync(metaFile, JSON.stringify(meta, null, 1));
     console.log(`${L.id}: ${feats.length} features (${inside} in the district) from ${json.elements.length} elements, ${((Date.now() - t0) / 1000).toFixed(1)} s`);

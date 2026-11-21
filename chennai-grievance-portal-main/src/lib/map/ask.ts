@@ -22,11 +22,15 @@ import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, t
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
-import { fitModelPlan, freshPlan, mapLang, rulesRoute, type RouteEnv } from "./route";
+import { fitModelPlan, freshPlan, keepAreas, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
+import { makeSpeller, type Fix } from "./spell";
+import { scorecard, scorecardWard, timelineOf, type Scorecard, type Timeline } from "./v2";
+import { categoryWords } from "@/lib/collector/nlp";
+import { isTanglishWord } from "@/lib/assistant/lang";
 import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
-import { LAYER_WORD, periodWords, type Lang } from "./words";
+import { LAYER_WORD, periodWords, zoneTa, type Lang } from "./words";
 import { syncEpoch } from "@/lib/collector/epoch";
 
 export interface AskInput {
@@ -91,6 +95,21 @@ export interface AskResponse {
     change?: { now: string[]; before: string[]; nowLabel: string; beforeLabel: string };
     areas?: { key: string; label: string; label_ta: string; p90: number; worst: { lat: number; lon: number; m: number; to: { name: string | null; lat: number; lon: number } | null } }[];
     nearest?: { origin: Place | null; pairs: { id: string | null; to: { id: string; name: string | null; m: number; lat: number; lon: number }[] }[] };
+    /** a gap answer's measure: "ward" (90 % of its ground), "zone", or "place" (a neighbourhood's own point); `total` areas measured */
+    gap?: { by: "ward" | "zone" | "place"; from: LayerId; beyond: number | null; total: number };
+    /** a ranked change, the league table: every area with any report in either window, the biggest rise (or fall) first */
+    /** v2: the answer's incidents by the day first reported, for "Play the period" (v2.ts) */
+    timeline?: Timeline;
+    /** v2: how fast cases close, by area, kind or department (median days from first report to closing) */
+    speed?: { by: "ward" | "zone" | "taluk" | "category" | "dept"; order: "fast" | "slow"; minClosed: number; open: number;
+      rows: { key: string; label: string; label_ta: string; lat: number; lon: number; closed: number; open: number; medianDays: number; ids: string[] }[] };
+    /** v2: a count by kind or department is a list (its groups have no place of their own on the map) */
+    groupsBy?: "ward" | "zone" | "taluk" | "hex500" | "near" | "category" | "dept";
+    rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; nowLabel: { en: string; ta: string }; beforeLabel: { en: string; ta: string };
+      rows: { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }[] };
+    /** a rule check: each place kept and the place it is too close to */
+    pairs?: { meters: number; items: { id: string; layer: LayerId; name: string | null; name_ta: string | null; kind: string; lat: number; lon: number;
+      near: { id: string; layer: LayerId; name: string | null; name_ta: string | null; m: number; lat: number; lon: number } }[] };
   };
   camera: CameraInput;
   shots: Shot[];
@@ -113,12 +132,21 @@ export interface AskResponse {
   followups: string[];
   ui: "open_trace" | "send" | "clear" | "export" | "visits" | null;
   uiDept: string | null;
-  asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number }[] };
+  asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number; partial?: { what: string; owner: string } | null }[] };
   ai_used: boolean;
   ms: number;
+  /** words read as other words ("adayar" as Adyar): said on the answer so the officer can see it */
+  spelled: Fix[];
+  /** v2: a word with two equally close readings that the AI read in context; the other readings, one tap away */
+  unclear: { word: string; options: { label: string; text: string }[] } | null;
+  /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
+  scorecard: Scorecard | null;
 }
 
 const ROW_CAP = 200;
+/** the categories' labels for the AI's cached prompt, built once per world */
+const labelCache = new WeakMap<object, Map<string, string>>();
+const catLabels = (w: World) => { let m = labelCache.get(w.cats); if (!m) { m = new Map([...w.cats.entries()].map(([k, v]) => [k, v.label])); labelCache.set(w.cats, m); } return m; };
 const FEATURE_CAP = 5000;
 
 declare global {
@@ -132,6 +160,55 @@ function resolverFor(data: ResolverData) {
   global.__askMapResolver = { data, fn };
   return fn;
 }
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __askMapSpeller: { data: ResolverData; fn: ReturnType<typeof makeSpeller> } | undefined;
+  // eslint-disable-next-line no-var
+  var __askMapEnglish: Set<string> | undefined;
+}
+/** Real English words ("slowest", "review"): never corrected, however close to a map word (the word-list package, 274,000 words). */
+function englishWords(): Set<string> {
+  if (!global.__askMapEnglish) {
+    try { global.__askMapEnglish = new Set(fs.readFileSync(path.join(process.cwd(), "node_modules", "word-list", "words.txt"), "utf8").split(/\r?\n/)); }
+    catch { global.__askMapEnglish = new Set(); }
+  }
+  return global.__askMapEnglish;
+}
+/** The speller for this world's places: the map's words, the console's category words, and place names (spell.ts). */
+export function spellerFor(data: ResolverData) {
+  const g = global.__askMapSpeller;
+  if (g && g.data === data) return g.fn;
+  const en = englishWords();
+  const streetWords = new Set([...data.streets.keys()].flatMap((k) => k.split(" ")));
+  const placeKinds = new Set(["locality", "zone", "taluk", "osm_place", "road", "waterway", "facility"]);
+  const places = data.entries.filter((e) => placeKinds.has(e.kind)).map((e) => e.name_en);
+  const catWords = categoryWords().flatMap((c) => c.toLowerCase().split(/[^a-z]+/)).filter((x) => x.length >= 4);
+  const fn = makeSpeller({
+    words: mapVocabulary(), extra: catWords, places, areas: data.entries.filter((e) => e.kind === "zone" || e.kind === "taluk").map((e) => e.name_en),
+    isKnown: (x) => en.has(x) || isTanglishWord(x), soft: (x) => streetWords.has(x),
+    tamil: [...mapVocabularyTa(), ...data.entries.filter((e) => placeKinds.has(e.kind) && e.kind !== "facility" && e.kind !== "road").map((e) => e.name_ta ?? "").filter((t) => /^[஀-௿]+$/.test(t))]
+  });
+  global.__askMapSpeller = { data, fn };
+  return fn;
+}
+
+/**
+ * The places a question names, for the AI: each name's best reading and its other readings as areas or points ("Anna Nagar" is Zone 8 and a
+ * neighbourhood; "Velachery" a taluk and a locality), so the model can take the area when the question says "in" and the point when it says "near".
+ */
+export function placesForAi(found: Found[], cap = 10): { ref: string; kind: string; name: string }[] {
+  const out: { ref: string; kind: string; name: string }[] = [];
+  for (const f of found) for (const m of [f.pick, ...f.alternatives]) {
+    const e = m.entry;
+    if (m !== f.pick && !["zone", "taluk", "ward", "locality", "osm_place", "road", "waterway"].includes(e.kind)) continue;
+    if (!out.some((x) => x.ref === e.ref)) out.push({ ref: e.ref, kind: e.kind, name: e.name_en });
+  }
+  return out.slice(0, cap);
+}
+
+/** The question's own words that win over a model's plan (route.ts fitModelPlan): the server's language, the world's categories. */
+export const modelWords = (w: World, lang: Lang, places: { ref: string; kind: string }[] = []): ModelWords => ({ lang, familyOf: (c) => w.cats.get(c)?.family ?? null, places });
 
 /** Looks up a plan's place reference: "loc:Adyar", "osm:n123", "fac:POL-01", "inc:<id>", "ll:13.04,80.25", "drawn:13.04,80.25,500". */
 /** `lockDept`: a department officer's department. An incident of another department is no place for that officer (QA pass 6, P6-012). */
@@ -178,7 +255,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
     camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], city: null, insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
-    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0
+    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: [], scorecard: null, unclear: null
   };
 }
 
@@ -188,10 +265,33 @@ export const EXAMPLES_EN = [
 ];
 export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", "அடையாறு அருகே திறந்த புகார்கள்", "மண்டலம் 13 இல் இந்த வாரம் வெள்ளம்", "வார்டு வாரியாக குப்பை புகார்கள்"];
 
-export async function askMap(input: AskInput): Promise<AskResponse> {
+/**
+ * v2: one question, never a failed request: an unexpected error inside the answer (a plan shape the answer words do not expect) is logged and
+ * said plainly, so the officer can rephrase; an abort is passed on.
+ */
+export async function askMap(asked: AskInput): Promise<AskResponse> {
+  try { return await askMapInner(asked); }
+  catch (e) {
+    if (asked.signal?.aborted) throw e;
+    console.error("[map] the answer failed:", (e as Error).stack ?? e);
+    const { world: w } = await world();
+    const out = emptyResponse(asked.prev?.language ?? "en", w);
+    out.say = { en: "I could not work that question out just now. Please rephrase it, or ask it in parts (for example, the place first, then the kind of problem).",
+      ta: "அந்தக் கேள்விக்கு இப்போது பதில் காண முடியவில்லை. வேறு விதமாகக் கேளுங்கள்.", chips: [] };
+    return out;
+  }
+}
+
+async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const t0 = Date.now();
   const { world: w, resolver: data } = await world();
   const resolve = resolverFor(data);
+  // a hurried officer's slips, read as a person would ("hospitls near adayar"); a chip's plan or a follow-up's edit words are read as typed
+  // v2 (the owner, 21 Nov 2026: "AI powered, no rules"): Claude reads every typed question as typed and decides what it asks; the word rules
+  // answer only when the AI cannot be reached (no key, busy, a plan the server refuses twice). AI_MAP_MODE=hybrid or rules brings them back.
+  const aiOnly = (process.env.AI_MAP_MODE ?? "ai") === "ai" && !!asked.text && !asked.plan && aiStatus("map").available;
+  const sp = !aiOnly && asked.text && !asked.plan && process.env.MAP_SPELL_OFF !== "1" ? spellerFor(data)(asked.text) : null;
+  const input: AskInput = sp ? { ...asked, text: sp.text } : asked;
   const lang: Lang = input.plan?.language ?? (input.text ? mapLang(input.text, resolve(input.text, null)) : input.prev?.language ?? "en");
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
@@ -199,15 +299,123 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
-  const done = (r: AskResponse) => { r.ms = Date.now() - t0; logQuestion(input, r); return r; };
+  const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
+  /** A ward's scorecard, with its brief under it (v2). */
+  const scorecardOut = (ward: number): AskResponse => {
+    out.ai_used = aiOnly;
+    const sc = scorecard(ward, w, ctx, lock);
+    if (!sc) { out.say = { en: `There is no Ward ${ward}. Chennai has wards 1 to 200.`, ta: `வார்டு ${ward} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
+    out.kind = "brief";
+    out.brief = sc.brief;
+    out.scorecard = sc;
+    const area: AreaRef = { kind: "ward", id: ward };
+    out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
+    const box = areaBox(area, w, ctx);
+    out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: sc.label.en, label_ta: sc.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    return done(out);
+  };
+  /** What is happening in one area: the area brief (every department's open issues there, the worst, the change, the places in and around it). */
+  const briefOut = (area: AreaRef): AskResponse => {
+    out.ai_used = aiOnly;
+    out.kind = "brief";
+    out.brief = areaBrief(area, w, ctx, lock);
+    const p = area.kind === "point" ? ctx.place(area.ref) : null;
+    out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: p && area.kind === "point" ? { lat: p.lat, lon: p.lon, r: area.radius_m } : null }];
+    const box = areaBox(area, w, ctx);
+    if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
+    out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    return done(out);
+  };
+
+  // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
+  if (aiOnly) {
+    const typed = asked.text!;
+    // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
+    const reading = spellerFor(data)(typed).text;
+    const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
+    const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
+    if (a && "problems" in a && a.problems.includes("not a map question")) {
+      out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
+        chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
+      out.ai_used = true;
+      return done(out);
+    }
+    if (a && "city" in a) {
+      const c = await cityNow(a.city, { lockDept: lock, zone: a.city === "traffic" ? input.context.zone ?? null : null }).catch(() => null);
+      if (c) {
+        out.kind = "say";
+        out.ai_used = true;
+        out.city = { topic: a.city, view: c.view, headline: c.headline, rows: c.rows.slice(0, 12) };
+        out.say = { en: c.say.en, ta: c.say.ta, chips: a.language === "ta" ? [] : ["Where do jams keep coming back?", "Which streets flood in heavy rain?"] };
+        return done(out);
+      }
+      const what = { traffic: "live traffic", rain: "rain", flood: "flood-street", power: "power", metro: "train" }[a.city];
+      out.say = { en: `The live ${what} feed is not available just now. Try again in a few minutes, or ask about the reported cases (for example, flooding complaints this week).`,
+        ta: "நேரடித் தரவு இப்போது கிடைக்கவில்லை. சில நிமிடங்களில் மீண்டும் முயலுங்கள்.", chips: [] };
+      out.ai_used = true;
+      return done(out);
+    }
+    if (a && "plan" in a) {
+      // a question in Tamil script is answered in Tamil (the script is plain to see; the model sometimes said Tanglish)
+      const language = /[\u0B80-\u0BFF]/.test(typed) ? "ta" as const : a.plan.language;
+      const fitted = fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true });
+      const ins = fitted.steps.find((s) => s.op === "inside");
+      if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
+      // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error
+      if (a.intent === "brief" && ins?.op === "inside" && (ins.area.kind !== "point" || ctx.place(ins.area.ref))) {
+        try { return briefOut(ins.area); } catch (e) { console.warn("[map] brief failed, the plan answers:", (e as Error).message); }
+      }
+      plan = fitted;
+      aiUsed = true;
+    }
+    // the AI could not answer (busy, no key, a refused plan): the rules below answer instead
+  }
+
+  // v2: "ward 178 scorecard": the scorecard, with the ward's brief under it
+  const sw = !plan && input.text && !input.plan ? scorecardWard(input.text) : null;
+  if (sw != null) return scorecardOut(sw);
+  // two equally close readings of a word ("ambatur": Ambattur or Ambathur?): the AI reads the whole question in context, with the places
+  // of every reading, and the answer offers the readings as buttons; without the AI, ask (never guess)
+  if (!plan && sp?.ask && aiStatus("map").available) {
+    const tie = sp.ask;
+    const seen = new Set<string>();
+    const found = [input.text!, ...tie.options.map((o) => o.text)].flatMap((t) => resolve(t, null)).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }))
+      .filter((f) => !seen.has(f.ref) && seen.add(f.ref)).slice(0, 8);
+    const a = await aiPlan(input.text!, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      unread: [tie.word], zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+    if (a && "plan" in a) {
+      plan = fitModelPlan(a.plan, input.text!, w.now, input.prev, modelWords(w, lang, found));
+      // the first reading's rules plan holds the place kinds and puts back a place the model left out ("severe flooding in ambatur")
+      const r0 = rulesRoute(tie.options[0].text, input.prev, env);
+      if (r0?.kind === "plan") plan = keepAreas(plan, r0.plan, r0.places);
+      aiUsed = true; out.unclear = tie;
+    }
+  }
+  if (sp?.ask && !plan) {
+    out.say = { en: `Did you mean ${sp.ask.options.map((o) => o.label).join(" or ")}?`, ta: `${sp.ask.options.map((o) => o.label).join(" அல்லது ")} என்று சொன்னீர்களா?`,
+      chips: sp.ask.options.map((o) => o.text) };
+    return done(out);
+  }
   const fe = { w, env, ctx, lock, role: input.user.role };
   // live traffic, read where it is already fresh (TomTom every five minutes): for "On the ground now" beside an answer
   const liveTraffic = Promise.race([trafficNow({ lockDept: lock }).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 2500))]) as Promise<LiveTraffic | null>;
 
   // ---- the city now: live traffic, the rain, the streets that flood, power and trains in heavy rain. The same answer the
   // chatbot and Jarvis give (lib/city/now.ts), and the console opens the view that shows it (the Traffic view or a Rain tab)
-  if (input.text && !input.plan) {
-    const topic = cityTopic(input.text);
+  if (input.text && !input.plan && !plan) {
+    let topic = cityTopic(input.text);
+    // "accidents near metro stations": incidents near the stations, the map's own question, not the trains' running (the baseline golden's one miss)
+    if (topic === "metro") { const q = parse(input.text, env); if ((q.cats || q.family) && q.facNear) topic = null; }
+    // v2: "metro stations", "railway stations in zone 5", "traffic jams near metro stations": the stations as a map layer, not the trains'
+    // or the roads' live state, unless the question asks about now (running, late, delays, closed, live). The shared reader (Jarvis) is unchanged.
+    if ((topic === "metro" || topic === "traffic") && !/\b(now|right now|live|running|late|delay(s|ed)?|status|closed|suspended|working|moving|stuck)\b/i.test(input.text)) {
+      const q = parse(input.text, env);
+      // any map layer named ("near schools", "metro stations") makes it a map question
+      if (q.facilities.length) topic = null;
+    }
     if (topic) {
       const zone = input.context.zone ?? null;
       const c = await cityNow(topic, { lockDept: lock, zone: topic === "traffic" ? zone : null }).catch(() => null);
@@ -251,6 +459,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     plan = c.plan;
     edited = "chip";
   } else if (input.text && !plan) {
+    // the rules: only when the AI could not answer (or AI_MAP_MODE is hybrid or rules)
     const r = rulesRoute(input.text, input.prev, env);
     if (r?.kind === "say") { out.say = r; return done(out); }
     if (r?.kind === "ui") { out.kind = "ui"; out.ui = r.ui; out.uiDept = r.dept; out.plan = r.plan; return done(out); }
@@ -265,25 +474,44 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       out.followups = followUps(out, null, fe);
       return done(out);
     }
-    if (r?.kind === "plan") {
+    // v2 (owner, 21 Nov 2026): the AI reads every typed question first; the rules' plan goes with it as a suggestion only, and answers when
+    // the AI cannot (no key, busy, a refused plan). The rules' guards above (no such ward, no forecast, out of scope) and the commands stay.
+    if (process.env.AI_MAP_FIRST !== "0" && aiStatus("map").available) {
+      const found = placesForAi(resolve(input.text, null));
+      const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+        hint: r?.kind === "plan" ? r.plan : null, unread: r?.kind === "plan" ? r.unread : [], suggest: true, typed: asked.text, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+      if (a && "plan" in a) {
+        plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
+        // the rules' reading of "in X" as an area, and a place the model left out (keepAreas)
+        if (r?.kind === "plan") { plan = keepAreas(plan, r.plan, r.places); places = r.places; }
+        aiUsed = true;
+      }
+      else if (a && "problems" in a && a.problems.includes("not a map question") && r?.kind !== "plan") {
+        out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) };
+        out.ai_used = true;
+        return done(out);
+      }
+    }
+    if (plan) { /* the AI read it */ }
+    else if (r?.kind === "plan") {
       plan = r.plan; defaults = r.defaults; places = r.places; edited = r.edited;
       // words the rules could not use ("kids", "by the sea", "north of the city"): the AI reads the whole question, with
       // the rules' plan as a hint; if it cannot, the rules' answer stands and the trace names the words left unused
-      if (r.unread?.length && aiStatus().available) {
-        const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+      if (r.unread?.length && aiStatus("map").available) {
+        const found = placesForAi(resolve(input.text, null));
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-          hint: r.plan, unread: r.unread, zones: w.zones }).catch(() => null);
-        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now); aiUsed = true; defaults = []; }
+          hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, null, modelWords(w, lang, found)); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
     } else {
       // the AI fills the same plan; without it, the kinds of questions the rules answer
       try {
-        const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
-        const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones });
+        const found = placesForAi(resolve(input.text, null));
+        const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
         aiUsed = true;
-        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev);
+        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);
@@ -353,6 +581,9 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     if (tc) res.conditions = [tc, ...res.conditions].slice(0, 4);
   }
   res.followups = followUps(res, r, fe);
+  // v2: Play the period: the answer's incidents day by day (the server's counts; the panel only shows them)
+  const tl = r.hits.length ? timelineOf(r.hits, w.now) : null;
+  if (tl) res.extra.timeline = tl;
   const store = answerCache();
   store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);
@@ -405,7 +636,9 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   const feat = (h: (typeof hits)[number], k: number): Feat => ({ id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat,
     pinnable: h.inc.pinnable, prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 });
   // the map draws at most 5,000 places (the highest priority first); the rest are counted, by ward, and said plainly
-  const pinnedHits = hits.filter((h) => h.inc.pinnable);
+  // v2: a speed answer (how fast areas close their cases) draws only the cases of its first 15 rows: the other thousands would bury the map
+  const speedIds = r.show.type === "speed" ? new Set(r.show.rows.slice(0, 15).flatMap((x) => x.ids)) : null;
+  const pinnedHits = hits.filter((h) => h.inc.pinnable && (!speedIds || speedIds.has(h.inc.id)));
   out.features = pinnedHits.slice(0, FEATURE_CAP).map(feat);
   out.hidden = Math.max(0, pinnedHits.length - FEATURE_CAP);
   if (out.hidden && !r.show.type.startsWith("group")) {
@@ -433,14 +666,30 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   });
   out.context.places = r.context.places;
   const within = plan.steps.find((s) => s.op === "within");
-  if (within?.op === "within") out.context.rings = out.context.points.map((p) => ({ id: p.id, lat: p.lat, lon: p.lon, r: within.meters }));
+  if (within?.op === "within") {
+    // a rule check rings the schools and places of worship (the rule's centres), not the shops it found
+    const centres = r.show.type === "points" && r.show.near ? new Set(Object.values(r.show.near).map((x) => x.id)) : null;
+    out.context.rings = out.context.points.filter((p) => !centres || centres.has(p.id)).map((p) => ({ id: p.id, lat: p.lat, lon: p.lon, r: within.meters }));
+  }
 
   const show = r.show;
-  if (show.type === "groups") out.extra.groups = show.groups;
+  if (show.type === "groups") { out.extra.groups = show.groups; out.extra.groupsBy = show.by; }
+  if (show.type === "speed") out.extra.speed = { by: show.by, order: show.order, minClosed: show.minClosed, open: show.open, rows: show.rows.slice(0, 200) };
   if (show.type === "hotspots") { out.extra.clusters = show.clusters.slice(0, 60).map((c) => ({ id: c.id, n: c.n, lat: c.lat, lon: c.lon, ids: c.ids, place: c.place })); out.extra.hotWards = show.hotWards; }
   if (show.type === "compare") out.extra.compare = { a: { label: show.a.label, label_ta: show.a.label_ta, n: show.a.n, ids: show.a.ids }, b: { label: show.b.label, label_ta: show.b.label_ta, n: show.b.n, ids: show.b.ids } };
   if (show.type === "change") out.extra.change = { now: show.now.hits.map((h) => h.inc.id), before: show.before.hits.map((h) => h.inc.id), nowLabel: show.now.period.kind, beforeLabel: show.before.period.kind };
-  if (show.type === "areas") out.extra.areas = show.areas.slice(0, 50).map((a) => ({ key: a.key, label: a.label, label_ta: a.label_ta, p90: Math.round(a.p90), worst: { lat: a.worst.lat, lon: a.worst.lon, m: Math.round(a.worst.m), to: a.worst.to ? { name: a.worst.to.name, lat: a.worst.to.lat, lon: a.worst.to.lon } : null } }));
+  if (show.type === "areas") out.extra.areas = show.areas.slice(0, 500).map((a) => ({ key: a.key, label: a.label, label_ta: a.label_ta, p90: Math.round(a.p90), worst: { lat: a.worst.lat, lon: a.worst.lon, m: Math.round(a.worst.m), to: a.worst.to ? { name: a.worst.to.name, lat: a.worst.to.lat, lon: a.worst.to.lon } : null } }));
+  if (show.type === "areas") out.extra.gap = { by: show.by, from: show.from, beyond: show.beyond, total: show.total };
+  if (show.type === "ranked") {
+    const pw = (p: typeof show.now) => ({ en: periodWords(p, "en"), ta: periodWords(p, "ta") });
+    out.extra.rank = { by: show.by, order: show.order, nowLabel: pw(show.now), beforeLabel: pw(show.before), rows: show.rows.slice(0, 200) };
+    out.before = show.beforeHits.filter((h) => h.inc.pinnable).slice(0, FEATURE_CAP).map(feat);
+  }
+  if (show.type === "points" && show.near) {
+    const near = show.near;
+    out.extra.pairs = { meters: show.meters ?? 0, items: show.items.slice(0, 400).map((p) => ({ id: p.id, layer: p.layer, name: p.name, name_ta: p.name_ta, kind: p.kind, lat: p.lat, lon: p.lon,
+      near: { id: near[p.id].id, layer: near[p.id].layer, name: near[p.id].name, name_ta: near[p.id].name_ta, m: Math.round(near[p.id].m), lat: near[p.id].lat, lon: near[p.id].lon } })) };
+  }
   if (show.type === "nearest") out.extra.nearest = { origin: show.origin, pairs: show.pairs.slice(0, 500).map((p) => ({ id: p.hit?.inc.id ?? null, to: p.to.map((x) => ({ id: x.id, name: x.name, m: Math.round(x.m), lat: x.lat, lon: x.lon })) })) };
 
   // the camera's input: the plan's shape and the answer's geometry
@@ -451,6 +700,20 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (!hits.length && answer.miss) { cam.shape = "empty"; cam.focus = { id: answer.miss.id, lat: answer.miss.lat, lon: answer.miss.lon, label: answer.meaning ?? "", label_ta: answer.meaning ?? "" }; }
   else if (last.op === "compare") cam.shape = "compare";
   else if (last.op === "change") cam.shape = areas.length ? "change" : "district";
+  else if (last.op === "speed" && show.type === "speed" && (show.by === "ward" || show.by === "zone" || show.by === "taluk")) {
+    // the five fastest (or slowest), one after another
+    cam.shape = "hotspot";
+    cam.tour = show.rows.filter((x) => x.lat || x.lon).slice(0, 5).map((x, i) => ({ id: x.key, lat: x.lat, lon: x.lon,
+      caption_en: `${i + 1}. ${x.label}: ${x.medianDays} days`, caption_ta: `${i + 1}. ${x.label_ta}: ${x.medianDays} நாட்கள்` }));
+    if (!cam.tour.length) cam.shape = "district";
+  }
+  else if (last.op === "rank" && show.type === "ranked") {
+    // the top five risers, one after another
+    cam.shape = "hotspot";
+    cam.tour = show.rows.filter((x) => (show.order === "rise" ? x.delta > 0 : x.delta < 0) && (x.lat || x.lon)).slice(0, 5).map((x, i) => ({ id: x.key, lat: x.lat, lon: x.lon,
+      caption_en: `${i + 1}. ${x.label}: ${x.before} to ${x.now}`, caption_ta: `${i + 1}. ${x.label_ta}: ${x.before} → ${x.now}` }));
+    if (!cam.tour.length) cam.shape = "district";
+  }
   else if (last.op === "hotspot" && show.type === "hotspots") {
     cam.shape = "hotspot";
     cam.tour = show.clusters.slice(0, 5).map((c, i) => ({ id: c.id, lat: c.lat, lon: c.lon,
@@ -462,6 +725,8 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     cam.focus = { id: a.key, lat: a.worst.lat, lon: a.worst.lon, label: a.label, label_ta: a.label_ta, to: a.worst.to ? { lat: a.worst.to.lat, lon: a.worst.to.lon, label: a.worst.to.name ?? "" } : undefined };
     const wd = w.wards.find((x) => String(x.ward) === a.key);
     if (wd && show.by === "ward") cam.areas = [{ id: `ward:${wd.ward}`, box: wd.bbox, label: a.label, label_ta: a.label_ta }];
+    // the neighbourhoods beyond the distance, all in view
+    if (show.by === "place") cam.points = show.areas.slice(0, 200).map((x) => ({ lat: x.lat, lon: x.lon }));
   } else if (last.op === "nearest" && show.type === "nearest" && show.origin) {
     cam.shape = "nearest";
     cam.focus = { id: show.origin.ref, lat: show.origin.lat, lon: show.origin.lon, label: show.origin.name, label_ta: show.origin.name_ta ?? show.origin.name };
@@ -482,7 +747,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   const incidentsSeen = ctx.lockDept ? w.incidents.filter((i) => i.dept === ctx.lockDept).length : w.incidents.length;
   out.asOf = {
     now: w.now, data: w.dataAsOf,
-    layers: [...used].map((id) => w.meta[id] ? { id, en: w.meta[id].name_en, ta: w.meta[id].name_ta, source: w.meta[id].source, as_of: w.meta[id].as_of, count: w.meta[id].count }
+    layers: [...used].map((id) => w.meta[id] ? { id, en: w.meta[id].name_en, ta: w.meta[id].name_ta, source: w.meta[id].source, as_of: w.meta[id].as_of, count: w.meta[id].count, partial: w.meta[id].partial ?? null }
       : { id, en: "Incidents", ta: "சம்பவங்கள்", source: "District store", as_of: w.dataAsOf || w.now, count: incidentsSeen })
   };
   void data;
@@ -510,7 +775,7 @@ export function glanceOf(r: RunResult, w: World): Glance | null {
     overdue: tile(r.hits.filter((h) => h.inc.open && h.inc.breached)),
     severe: tile(r.hits.filter((h) => h.inc.sev === "Severe")),
     // only when one zone or department stands out: "where" for a single-zone answer says nothing new
-    where: z && byZone.size > 1 ? { ...tile(z[1]), en: `${zn} (Zone ${z[0]})`, ta: `${zn} (மண்டலம் ${z[0]})` } : null,
+    where: z && byZone.size > 1 ? { ...tile(z[1]), en: `${zn} (Zone ${z[0]})`, ta: `${zoneTa(Number(z[0]), zn ?? "")} (மண்டலம் ${z[0]})` } : null,
     who: d && byDept.size > 1 ? { ...tile(d[1]), code: d[0], name: w.depts.get(d[0])?.name ?? d[0] } : null
   };
 }

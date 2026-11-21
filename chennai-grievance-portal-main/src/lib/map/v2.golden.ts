@@ -1,0 +1,132 @@
+/**
+ * Ask the Map v2 on the frozen store (npm run eval:golden): the ward scorecard, Play the period and the printable brief, each checked
+ * against counts written here from the raw incident rows (plain loops; no code shared with the executor or the brief).
+ */
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import fs from "fs";
+import path from "path";
+import { haveStore, holder, loadFrozen } from "@/lib/assistant/__tests__/golden/harness";
+
+vi.mock("@/lib/db", async (orig) => ({ ...(await orig<object>()), default: (await import("@/lib/assistant/__tests__/golden/harness")).forward }));
+vi.mock("@/lib/collector/db", async (orig) => ({ ...(await orig<object>()), default: (await import("@/lib/assistant/__tests__/golden/harness")).forward }));
+vi.mock("@/lib/ai/gateway", async (orig) => {
+  const m = await orig<typeof import("@/lib/ai/gateway")>();
+  return { ...m, aiStatus: () => ({ available: false, problem: null, providers: [], stt: "" }), generateJson: async () => { throw new m.AiUnavailableError(); } };
+});
+
+const COLLECTOR = { email: "golden@test", role: "collector" as const, lockDept: null };
+const CTX = { zone: null, taluk: null, incidentId: null, drawn: null, ward: null };
+let askMap: typeof import("./ask").askMap;
+let rows: Record<string, any>[] = [];
+const run = (sql: string) => holder.pool.query(sql).then(([r]: [Record<string, any>[]]) => r);
+
+beforeAll(async () => {
+  if (!haveStore()) return;
+  const f = await loadFrozen();
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(f.frozenAt);
+  askMap = (await import("./ask")).askMap;
+  const { ops } = await import("@/lib/collector/db");
+  rows = await run(`SELECT incident_id, ward_no, is_open, DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS first FROM incidents`);
+  const dec = await run(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => []);
+  const last = new Map<string, string>(dec.map((d: any) => [String(d.incident_id), String(d.decision)]));
+  for (const r of rows) { const d = last.get(String(r.incident_id)); r.eff_open = d === "resolve" || d === "reject" ? 0 : d === "reopen" ? 1 : Number(r.is_open); }
+}, 300_000);
+
+const ask = (text: string) => askMap({ text, plan: null, prev: null, context: CTX, user: COLLECTOR, reword: false });
+
+describe.skipIf(!haveStore())("Ask the Map v2 on the frozen store", () => {
+  it("ward scorecard: open issues and the rank among wards equal a count from the raw rows", async () => {
+    // the world keeps only incidents it can use; count over the same ids the map holds, then by ward from the raw rows
+    const { world } = await import("./world");
+    const { world: w } = await world();
+    const held = new Set(w.incidents.map((i) => i.id));
+    const openBy = new Map<number, number>();
+    for (const wd of w.wards) openBy.set(wd.ward, 0);
+    for (const r of rows) if (held.has(String(r.incident_id)) && r.ward_no != null && r.eff_open) openBy.set(Number(r.ward_no), (openBy.get(Number(r.ward_no)) ?? 0) + 1);
+    for (const ward of [178, 9, 120]) {
+      const res = await ask(`ward ${ward} scorecard`);
+      expect(res.kind).toBe("brief");
+      const sc = res.scorecard!;
+      expect(sc.ward).toBe(ward);
+      expect(sc.open).toBe(openBy.get(ward));
+      expect(sc.open).toBe(res.brief!.open.n);
+      const more = [...openBy.values()].filter((n) => n > openBy.get(ward)!).length;
+      expect(sc.rank).toEqual({ k: more + 1, of: openBy.size });
+      expect(sc.overdue).toBeLessThanOrEqual(sc.open);
+    }
+    // in Tamil, and a ward that does not exist
+    expect((await ask("வார்டு 178 மதிப்பெண் அட்டை")).scorecard?.ward).toBe(178);
+    const no = await ask("ward 250 scorecard");
+    expect(no.kind).toBe("say");
+    expect(no.say?.en).toContain("There is no Ward 250");
+  });
+
+  it("Play the period: every day of the window, and the days add up to the answer with the same ids", async () => {
+    const res = await ask("garbage complaints this month");
+    expect(res.kind).toBe("answer");
+    const tl = res.extra.timeline!;
+    expect(tl).toBeTruthy();
+    expect(tl.days.reduce((a, d) => a + d.n, 0)).toBe(res.answer!.count);
+    expect(tl.total).toBe(res.answer!.count);
+    const all = tl.days.flatMap((d) => d.ids).sort();
+    expect(new Set(all).size).toBe(all.length);
+    // each id is on the day its raw row was first reported
+    const firstOf = new Map(rows.map((r) => [String(r.incident_id), String(r.first).slice(0, 10)]));
+    for (const d of tl.days) for (const id of d.ids) expect(firstOf.get(id)).toBe(d.day);
+    // consecutive days, none missing
+    for (let k = 1; k < tl.days.length; k++) expect(Date.parse(tl.days[k].day) - Date.parse(tl.days[k - 1].day)).toBe(86_400_000);
+  });
+
+  it("the printable brief carries the answer's own headline and count, and no personal details", async () => {
+    const { briefHtml } = await import("./v2");
+    const { world } = await import("./world");
+    const { world: w } = await world();
+    const res = await ask("open complaints near Adyar");
+    const html = briefHtml(w, { question: "open complaints near Adyar", headline: res.answer!.headline, meaning: res.answer!.meaning, facts: [], tiles: [],
+      rows: res.rows.map((x) => ({ title: x.title, cat: x.catLabel, status: x.status, sev: x.sev, place: x.place ?? "", first: x.first, dept: x.deptName })),
+      total: res.total, pts: res.features.map((f) => ({ lat: f.lat, lon: f.lon })), asOf: res.asOf.data, sources: [] });
+    expect(html).toContain(res.answer!.headline.replace(/&/g, "&amp;").slice(0, 30));
+    expect(html).toContain(`of ${res.total.toLocaleString("en-IN")}`);
+    expect(html).not.toMatch(/mobile|phone_number|@example/i);
+  });
+
+  it("a gap or a nearest search measured from places filtered by an area does not crash (banks in zone 13 more than 2 km from …)", async () => {
+    const steps = [
+      { op: "take", as: "f1", layer: "banks", filter: null, where: null },
+      { op: "inside", as: "in", of: "f1", area: { kind: "zone", id: 13 } },
+      { op: "farthest", as: "far", areas: "ward", from: "in", beyond_m: 2000 }];
+    const r = await askMap({ text: null, plan: { language: "en", show: "far", steps } as never, prev: null, context: CTX, user: COLLECTOR, reword: false });
+    expect(r.kind).toBe("answer");
+    const near = await askMap({ text: null, plan: { language: "en", show: "near", steps: [steps[0], steps[1], { op: "take", as: "f2", layer: "atms", filter: null, where: null },
+      { op: "nearest", as: "near", from: "f2", to: "in", k: 1 }] } as never, prev: null, context: CTX, user: COLLECTOR, reword: false });
+    // a nearest search from facilities to facilities is refused in words, never a crash
+    expect(["answer", "say"]).toContain(near.kind);
+  });
+
+  it("which school has the most open complaints near it: each complaint under its nearest school within 500 m, by brute force", async () => {
+    const r = await ask("near which school there is higher complaint open");
+    expect(r.kind).toBe("answer");
+    const by = r.plan!.steps.find((s) => s.op === "count_by");
+    expect(by && by.op === "count_by" && by.by).toBe("near");
+    const g = r.extra.groups ?? [];
+    expect(g.length).toBeGreaterThan(0);
+    const schools = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "layers", "schools.geojson"), "utf8")).features
+      .map((f: any) => ({ id: f.properties.id, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] }));
+    const R = 6371008.8, rad = Math.PI / 180;
+    const hav = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => { const h = Math.sin((b.lat - a.lat) * rad / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin((b.lon - a.lon) * rad / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+    const { world } = await import("./world");
+    const { world: w } = await world();
+    const inc = new Map(w.incidents.map((i) => [i.id, i]));
+    const want = new Map<string, number>();
+    for (const grp of g) for (const id of grp.ids) {
+      const i = inc.get(id)!;
+      let best = { id: "", m: Infinity };
+      for (const sc of schools) { const m = hav(i, sc); if (m < best.m) best = { id: sc.id, m }; }
+      expect(best.m).toBeLessThanOrEqual(500.5);
+      want.set(best.id, (want.get(best.id) ?? 0) + 1);
+    }
+    for (const grp of g) expect(grp.n, grp.label).toBe(want.get(grp.key));
+    expect(r.answer!.headline).toContain("the most near");
+  });
+});

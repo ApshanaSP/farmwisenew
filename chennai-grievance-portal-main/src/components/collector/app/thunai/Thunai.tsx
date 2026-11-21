@@ -169,7 +169,7 @@ const SO_FAR_LINE: Record<Lang, string> = { en: "That's what I have so far.", ta
 /**
  * v12 (21 Nov, stale-and-double RC5 and the critic's order 4): the voice's map turn (v10's map lane) waits this long for the map, then says
  * MAP_SLOW and ends; the map's answer still draws when it comes (unless a newer sentence stopped it first). The 06:38:33 map turn took 34 s
- * with no word; Ask the Map's own planner now stops at 8 s on the server too (lib/map/ai.ts PLAN_MS)
+ * with no word; Ask the Map's own planner now stops at 12 s on the server too (lib/map/ai.ts PLAN_MS)
  */
 const MAP_LANE_MS = 8000;
 const MAP_SLOW: Record<Lang, string> = { en: "The map is still working on that. Its answer will show on the map.", ta: "வரைபடம் இன்னும் அதைப் பார்க்கிறது. பதில் வரைபடத்தில் தெரியும்." };

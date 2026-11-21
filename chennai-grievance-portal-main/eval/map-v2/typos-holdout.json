@@ -1,0 +1,29 @@
+{
+  "about": "Held out (21 Nov 2026): written after the speller was tuned on typos.json and scored once, never tuned against. Same format and scorer (typos.golden.ts).",
+  "questions": [
+    { "id": "h01", "q": "hosptals in zone 12", "same_as": "hospitals in zone 12" },
+    { "id": "h02", "q": "garbage complnts near kilpauk", "same_as": "garbage complaints near Kilpauk" },
+    { "id": "h03", "q": "accidents near chetpett", "same_as": "accidents near Chetpet" },
+    { "id": "h04", "q": "theft near pallikarnai", "same_as": "theft near Pallikaranai" },
+    { "id": "h05", "q": "waterlogging in sholinganalur", "same_as": "waterlogging in Sholinganallur" },
+    { "id": "h06", "q": "banks in perungudy", "same_as": "banks in Perungudi" },
+    { "id": "h07", "q": "colleges near gindy", "same_as": "colleges near Guindy" },
+    { "id": "h08", "q": "fire statoins near royapuram", "same_as": "fire stations near Royapuram" },
+    { "id": "h09", "q": "mosques near triplicane", "same_as": "mosques near Triplicane" },
+    { "id": "h10", "q": "ATMs neer besant nagar", "same_as": "ATMs near Besant Nagar" },
+    { "id": "h11", "q": "open complaints in madavaram", "same_as": "open complaints in Madhavaram" },
+    { "id": "h12", "q": "severe flooding in ambatur", "same_as": "severe flooding in Ambattur" },
+    { "id": "h13", "q": "playgrounds in zone 11", "same_as": "playgrounds in zone 11" },
+    { "id": "h14", "q": "markets nr tondiarpet", "same_as": "markets near Tondiarpet" },
+    { "id": "h15", "q": "kuppai pugar kodambakkam la", "same_as": "kuppai pugar Kodambakkam la" },
+    { "id": "h16", "q": "aaspathri ashok nager pakkathula", "same_as": "aaspathri Ashok Nagar pakkathula" },
+    { "id": "h17", "q": "porur la vibathu", "same_as": "Porur la vibathu" },
+    { "id": "h18", "q": "thiruttu vadapalani kitta", "same_as": "thiruttu Vadapalani kitta" },
+    { "id": "h19", "q": "எழும்பூர் அருகே பள்ளிகள்", "same_as": "எழும்பூர் அருகே பள்ளிகள்" },
+    { "id": "h20", "q": "தேனாம்பேட்டை குப்பை", "same_as": "தேனாம்பேட்டை குப்பை" },
+    { "id": "h21", "q": "pharmacies near alandur", "same_as": "pharmacies near Alandur" },
+    { "id": "h22", "q": "wine shopps near temples", "same_as": "wine shops near temples" },
+    { "id": "h23", "q": "mosquito complaints by zon", "same_as": "mosquito complaints by zone" },
+    { "id": "h24", "q": "which ward is fartest from a hospital", "same_as": "which ward is farthest from a hospital" }
+  ]
+}

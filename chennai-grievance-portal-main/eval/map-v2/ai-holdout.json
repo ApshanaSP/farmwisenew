@@ -1,0 +1,20 @@
+{
+  "about": "Ask the Map v2 (21 Nov 2026): held-out questions for the AI plan step, written after the fixes from the dev-set misses and before any run on them; never tuned against. Same `want` format and scorer as eval/map-final/dev.json (src/lib/map/evalcheck.ts misses, mapai.live.ts with MAP_EVAL_FILE).",
+  "questions": [
+    { "id": "a01", "q": "bars that sit within 75 metres of a college", "want": { "show": "within", "of_layer": "liquor", "layers": ["liquor", "colleges"], "meters": 75 } },
+    { "id": "a02", "q": "manhole and sewage trouble around bus stands", "want": { "show": "within", "layers": ["incidents", "bus_stations"], "cats": ["DRAINAGE_SEWAGE"] } },
+    { "id": "a03", "q": "where is the garbage piling up the most", "want": { "show": "hotspot", "layers": ["incidents"], "cats": ["SOLID_WASTE"] } },
+    { "id": "a04", "q": "mosquito trouble near overhead tanks this month", "want": { "show": "within", "layers": ["incidents", "water_tanks"], "cats": ["VECTOR_DISEASE"], "period_days": 30 } },
+    { "id": "a05", "q": "which zones had the biggest jump in thefts compared to last month", "want": { "show": "rank", "layers": ["incidents"], "cats": ["CRIME_PROPERTY"], "by": "zone", "order": "rise" } },
+    { "id": "a06", "q": "neighbourhoods more than 1.5 km from any pharmacy", "want": { "show": "farthest", "layers": ["pharmacies"], "areas": "place", "beyond": 1500 } },
+    { "id": "a07", "q": "drinking water complaints in Zone 6 this week", "want": { "show": "inside", "layers": ["incidents"], "cats": ["WATER_SUPPLY"], "area": "zone:6", "period_days": 7 } },
+    { "id": "a08", "q": "road accidents close to petrol bunks", "want": { "show": "within", "layers": ["incidents", "fuel"], "cats": ["ROAD_ACCIDENT"] } },
+    { "id": "a09", "q": "kovil pakkathula tasmac kadai evlo irukku", "want": { "show": "within", "of_layer": "liquor", "layers": ["liquor", "worship"], "language": "tanglish" } },
+    { "id": "a10", "q": "இந்த வாரம் எந்த மண்டலங்களில் விபத்துகள் அதிகரித்தன", "want": { "show": "rank", "layers": ["incidents"], "cats": ["ROAD_ACCIDENT"], "by": "zone", "order": "rise", "language": "ta" } },
+    { "id": "a11", "q": "stray dog complaints near parks", "want": { "show": "within", "layers": ["incidents", "parks"], "cats": ["STRAY_ANIMALS"] } },
+    { "id": "a12", "q": "dengue spots clustering in the north", "want": { "show": "hotspot", "layers": ["incidents"], "cats": ["VECTOR_DISEASE"] } },
+    { "id": "a13", "q": "open complaints within 300 m of my uploaded list", "want": { "show": "within", "layers": ["incidents", "my_list"], "meters": 300 } },
+    { "id": "a14", "q": "zone wise streetlight complaints this month", "want": { "show": "count_by", "layers": ["incidents"], "cats": ["STREETLIGHT_ELECTRICAL"], "by": "zone", "period_days": 30 } },
+    { "id": "a15", "q": "hello how are you", "want": { "understood": false } }
+  ]
+}

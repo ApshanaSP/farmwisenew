@@ -1,5 +1,5 @@
 /**
- * v12 (21 Nov): Ask the Map's AI plan has a hard 8 s deadline (PLAN_MS) on a strongly held timer. At 06:38:33 a filler sentence held the
+ * v12 (21 Nov): Ask the Map's AI plan has a hard deadline (PLAN_MS, 12 s since askmap-v2) on a strongly held timer. At 06:38:33 a filler sentence held the
  * map lane 25.2 s waiting on a Claude console step (the SDK's 25 s), then answered without AI anyway. The model is a test double that
  * answers only when its signal says stop.
  */
@@ -21,9 +21,9 @@ const ctx = (signal?: AbortSignal) => ({ cats: ["FLOOD_WATERLOGGING"], depts: ["
 afterEach(() => { vi.useRealTimers(); seen.length = 0; });
 
 describe("v12: aiPlan's deadline", () => {
-  it("gives up after PLAN_MS (8 s) with its own error, never the SDK's 25 s", async () => {
+  it("gives up after PLAN_MS (12 s) with its own error, never the SDK's 25 s", async () => {
     vi.useFakeTimers();
-    expect(PLAN_MS).toBe(8000);
+    expect(PLAN_MS).toBe(12_000);
     let err: unknown = null, settled = false;
     const p = aiPlan("okay now tell me show me", null, ctx()).then(() => { settled = true; }, (e) => { err = e; settled = true; });
     await vi.advanceTimersByTimeAsync(PLAN_MS - 100);
@@ -31,7 +31,7 @@ describe("v12: aiPlan's deadline", () => {
     await vi.advanceTimersByTimeAsync(200);
     await p;
     expect(settled).toBe(true);
-    expect(String((err as Error)?.message)).toMatch(/no plan in 8 s/);
+    expect(String((err as Error)?.message)).toMatch(/no plan in 12 s/);
     expect(seen[0].signal?.aborted).toBe(true);
   });
 

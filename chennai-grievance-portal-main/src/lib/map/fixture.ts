@@ -7,7 +7,7 @@
 import { enRe, taRe } from "@/lib/collector/nlp";
 import { bboxOf, type Pair } from "./geom";
 import type { Entry, ResolverData } from "./resolve";
-import type { Inc, LineFeat, PointFeat, PolyFeat, Sev, WardGeo, World } from "./types";
+import { POINT_LAYERS, type Inc, type LineFeat, type PointFeat, type PolyFeat, type Sev, type WardGeo, type World } from "./types";
 
 export const NOW = "2026-10-27 20:00:00";
 const sq = (s: number, w: number, n: number, e: number): Pair[] => [[s, w], [s, e], [n, e], [n, w], [s, w]];
@@ -72,6 +72,12 @@ const pt = (id: string, layer: PointFeat["layer"], name: string, lat: number, lo
 export const SCHOOLS = [pt("osm:n1", "schools", "Govt School Northpet", 13.005, 80.205, "school", { government: true }), pt("osm:n2", "schools", "St. Test School", 13.015, 80.215, "school")];
 export const HOSPITALS = [pt("osm:n3", "hospitals", "Test General Hospital", 13.0021, 80.2181, "hospital", { government: true }), pt("osm:n4", "hospitals", "Corner Clinic", 13.0124, 80.2021, "clinic")];
 export const FIRE = [pt("osm:n5", "fire_stations", "Southpet Fire Station", 13.0192, 80.2189, "fire_station")];
+// the Collector's layers (Ask the Map final): two wine shops (Shop One 56 m from school S1 and 108 m from the temple; Shop Two over 500 m
+// from both), a temple, a bank, and two neighbourhoods for the gap step
+export const LIQUOR = [pt("osm:n11", "liquor", "Shop One", 13.0055, 80.2052, "wine_shop", { ward: 1 }), pt("osm:n12", "liquor", "Shop Two", 13.0105, 80.2150, "wine_shop", { ward: 3 })];
+export const WORSHIP = [pt("osm:n13", "worship", "Test Temple", 13.0055, 80.2062, "hindu", { ward: 1 })];
+export const BANKS = [pt("osm:n14", "banks", "Test Bank", 13.0020, 80.2020, "bank", { ward: 1 })];
+export const NEIGHBOURHOODS = [pt("osm:n15", "osm_places", "Nearville", 13.0030, 80.2030, "suburb", { ward: 1 }), pt("osm:n16", "osm_places", "Farville", 13.0180, 80.2180, "suburb", { ward: 3 })];
 const line = (id: string, layer: LineFeat["layer"], name: string, path: Pair[], kind: string, alt: string[] = [], name_ta: string | null = null): LineFeat =>
   ({ id, layer, name, name_ta, alt, kind, ref: null, lines: [path], bbox: bboxOf(path.map(([lat, lon]) => ({ lat, lon })))!, length_m: 2224, wards: [1, 2, 3], in_district: true });
 export const ROAD = line("road:test-salai", "roads", "Test Salai", [[13.0, 80.21], [13.02, 80.21]], "primary", ["Old Test Road"], "டெஸ்ட் சாலை");
@@ -84,7 +90,8 @@ export function fixtureWorld(): World {
   const empty: PointFeat[] = [];
   return {
     now: NOW, dataAsOf: NOW, incidents: INCIDENTS,
-    points: { schools: SCHOOLS, colleges: empty, hospitals: HOSPITALS, fire_stations: FIRE, police: empty, rail_metro: empty, osm_places: empty, lakes_store: empty, gauges: empty, pwd_assets: empty },
+    points: { ...Object.fromEntries(POINT_LAYERS.map((l) => [l, empty])) as World["points"],
+      schools: SCHOOLS, hospitals: HOSPITALS, fire_stations: FIRE, liquor: LIQUOR, worship: WORSHIP, banks: BANKS, osm_places: NEIGHBOURHOODS },
     lines: { roads: [ROAD], waterways: [CANAL] }, water: [LAKE], wards: WARDS,
     zones: [{ zone: 1, name: "Northpet", lat: 13.005, lon: 80.21 }, { zone: 2, name: "Southpet", lat: 13.015, lon: 80.21 }],
     taluks: [{ code: "TLK-AAA", name: "Aaa", name_ta: "ஆஆ", lat: 13.005, lon: 80.21 }, { code: "TLK-BBB", name: "Bbb", name_ta: null, lat: 13.015, lon: 80.21 }],

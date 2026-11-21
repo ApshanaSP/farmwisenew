@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import { onMapCmd } from "./bridge";
-import { LAYER_WORD } from "@/lib/map/words";
+import { LAYER_COL, LAYER_WORD } from "@/lib/map/words";
 import type { LayerId } from "@/lib/map/types";
 import { I } from "../icons";
 import { CAT_COL } from "../lib";
@@ -18,6 +18,14 @@ const TOGGLE: { id: LayerId; en: string }[] = [
   { id: "schools", en: "Schools" }, { id: "colleges", en: "Colleges" }, { id: "hospitals", en: "Hospitals" }, { id: "fire_stations", en: "Fire stations" },
   { id: "police", en: "Police stations" }, { id: "rail_metro", en: "Rail and metro" }, { id: "water_bodies", en: "Lakes and ponds" }, { id: "waterways", en: "Rivers and canals" }
 ];
+/** the Collector's own layers (OpenStreetMap; `partial`: OSM lists only some of them, said on the map) */
+const COLLECTOR: { id: LayerId; en: string; partial?: true }[] = [
+  { id: "banks", en: "Banks", partial: true }, { id: "atms", en: "ATMs", partial: true }, { id: "ration_shops", en: "Ration shops (by name)", partial: true },
+  { id: "liquor", en: "Wine shops and bars", partial: true }, { id: "worship", en: "Places of worship" }, { id: "parks", en: "Parks and playgrounds" },
+  { id: "water_tanks", en: "Water tanks", partial: true }, { id: "toilets", en: "Public toilets", partial: true }, { id: "bus_stations", en: "Bus stations" },
+  { id: "gov_offices", en: "Government offices and courts" }, { id: "pharmacies", en: "Pharmacies" }, { id: "fuel", en: "Fuel stations" }, { id: "markets", en: "Markets" },
+  { id: "cemeteries", en: "Cemeteries and crematoriums" }, { id: "my_list", en: "Your approved lists" }
+];
 /** live feeds with a place: the latest reading at each, drawn as a value on the map */
 const LIVE = [
   { id: "live_rain", k: "rain", en: "Rain, last 24 h", src: "IMD" }, { id: "live_lakes", k: "lakes", en: "Lake levels", src: "PWD" },
@@ -25,8 +33,8 @@ const LIVE = [
   { id: "live_air", k: "air", en: "Air quality", src: "CPCB" }
 ];
 /** every layer the menu can switch (what voice may ask for) */
-const LAYER_IDS = new Set<string>([...TOGGLE.map((t) => t.id as string), ...LIVE.map((t) => t.id), "news"]);
-export type Overlay = { id: string; kind: string; unplaced?: number; days?: number;
+const LAYER_IDS = new Set<string>([...TOGGLE.map((t) => t.id as string), ...COLLECTOR.map((t) => t.id as string), ...LIVE.map((t) => t.id), "news"]);
+export type Overlay = { id: string; kind: string; unplaced?: number; days?: number; meta?: { count: number; partial?: { what: string; owner: string } | null; source?: string } | null;
   features: { id: string; name: string | null; lat?: number; lon?: number; lines?: [number, number][][]; polys?: [number, number][][][]; url?: string | null; sub?: string | null; value?: string | null; kind?: string | null }[] };
 
 export function useMapChrome(ask: MapAsk | null) {
@@ -47,7 +55,7 @@ export function useMapChrome(ask: MapAsk | null) {
     const features = (r.features as Record<string, unknown>[]).map((f) => ({ id: String(f.id), name: (f.name as string) ?? null, lat: f.lat as number | undefined, lon: f.lon as number | undefined,
       lines: f.lines as [number, number][][] | undefined, polys: f.polys as [number, number][][][] | undefined, url: (f.url as string) ?? null, sub: (f.sub as string) ?? null,
       value: (f.value as string) ?? null, kind: (f.kind as string) ?? null }));
-    setOn((o) => ({ ...o, [id]: { id, kind: r.kind, features, unplaced: r.unplaced, days: r.days } }));
+    setOn((o) => ({ ...o, [id]: { id, kind: r.kind, features, unplaced: r.unplaced, days: r.days, meta: r.meta ?? null } }));
   };
   const overlays = Object.values(on);
   // v10: Jarvis's voice reaches the layers, the heat view and the base map (bridge.ts "diq:map-cmd"); the answer says what is on now
@@ -95,6 +103,11 @@ export function useMapChrome(ask: MapAsk | null) {
       <h6>Reports</h6>
       <label><input type="checkbox" checked={!!on.news || loading.has("news")} onChange={() => toggle("news")} />News reports, 30 days
         <small style={{ marginLeft: "auto", color: "var(--text-3)" }}>news</small></label>
+      <h6>The Collector&apos;s layers</h6>
+      {COLLECTOR.map((t) => (
+        <label key={t.id}><input type="checkbox" checked={!!on[t.id] || loading.has(t.id)} onChange={() => toggle(t.id)} /><i className="amlayer-dot" style={{ background: LAYER_COL[t.id] ?? "#94A3B8" }} />{t.en}
+          <small style={{ marginLeft: "auto", color: "var(--text-3)" }} title={t.partial ? "OpenStreetMap lists only some of these: not the full list" : undefined}>{t.id === "my_list" ? "yours" : t.partial ? "OSM, part" : "OSM"}</small></label>
+      ))}
       <h6>Facilities and water</h6>
       {TOGGLE.map((t) => (
         <label key={t.id}><input type="checkbox" checked={!!on[t.id] || loading.has(t.id)} onChange={() => toggle(t.id)} />{t.en}
@@ -137,7 +150,12 @@ export function Legend({ r, overlays }: { r: AskResponse | null; overlays: Overl
             {!!o.unplaced && <small className="amleg-sub">{ta ? `+${o.unplaced} இடம் குறிப்பிடாதவை (குறிக்கவில்லை)` : `+${o.unplaced.toLocaleString("en-IN")} name no locality (not pinned)`}</small>}</li>
         ) : o.id.startsWith("live_") ? (
           <li key={o.id}><i className={`amlive k-${LIVE.find((l) => l.id === o.id)?.k}`} />{LIVE.find((l) => l.id === o.id)?.en}<b>{o.features.length}</b></li>
-        ) : <li key={o.id}><i style={{ background: "#94A3B8" }} />{o.id.replace(/_/g, " ")}<b>{o.features.length}</b></li>)}
+        ) : <li key={o.id}><i style={{ background: LAYER_COL[o.id as LayerId] ?? "#94A3B8" }} />{cap(ta ? LAYER_WORD[o.id as LayerId]?.ta ?? o.id : LAYER_WORD[o.id as LayerId]?.en ?? o.id.replace(/_/g, " "))}<b>{o.features.length}</b>
+          {o.meta?.partial && <small className="amleg-sub">{ta ? "OpenStreetMap: முழுப் பட்டியல் அல்ல" : `OpenStreetMap, ${o.features.length.toLocaleString("en-IN")} ${o.meta.partial.what}, not the full list`}</small>}</li>)}
+        {(r?.asOf.layers ?? []).filter((l) => l.partial && !overlays.some((o) => o.id === l.id)).map((l) => (
+          <li key={`p-${l.id}`}><i style={{ background: LAYER_COL[l.id as LayerId] ?? "#94A3B8" }} />{ta ? l.ta : l.en}<small className="amleg-sub">{ta ? `OpenStreetMap இல் ${l.count} மட்டும்: முழுப் பட்டியல் அல்ல` : `OpenStreetMap, ${l.count.toLocaleString("en-IN")} ${l.partial!.what}, not the full list`}</small></li>
+        ))}
+        {r?.extra.rank && <li><i style={{ background: "#E0364A", borderRadius: "50%" }} />{ta ? "அதிகரிப்பு" : "Went up"}<i style={{ background: "#16A34A", borderRadius: "50%", marginLeft: 8 }} />{ta ? "குறைவு" : "Went down"}</li>}
         {r?.news && r.news.pins.length > 0 && !overlays.some((o) => o.id === "news") && (
           <li><i className="glyph news">N</i>{ta ? "இந்தச் சம்பவங்களின் செய்திகள்" : "News about these incidents"}<b>{r.news.pins.length}</b></li>
         )}

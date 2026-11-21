@@ -304,6 +304,51 @@
         "AI_PROVIDER": "none",
         "AI_FALLBACK_PROVIDER": "none"
       }
+    },
+    {
+      "name": "askmap-v2-3014",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3014"
+      ],
+      "port": 3014,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-askmap-v2",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000"
+      }
+    },
+    {
+      "name": "askmap-v2-prod-3015",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3015"
+      ],
+      "port": 3015,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NEXT_DIST_DIR": ".next-prod-v2b",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000"
+      }
     }
   ]
 }

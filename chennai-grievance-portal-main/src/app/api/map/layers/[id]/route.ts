@@ -2,14 +2,14 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { assistantSession } from "@/lib/assistant/access";
 import { shiftWall } from "@/lib/map/execute";
-import { NEWS_PIN_LEVEL, type CondPlace, type NewsDoc, type World } from "@/lib/map/types";
+import { COLLECTOR_LAYERS, NEWS_PIN_LEVEL, type CondPlace, type NewsDoc, type World } from "@/lib/map/types";
 import { world } from "@/lib/map/world";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** The layers the map's Layers menu can switch on (roads stay on the server: only an answer's own road is sent). */
-const TOGGLEABLE = new Set(["schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "rail_metro", "lakes_store", "gauges"]);
+const TOGGLEABLE = new Set<string>(["schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "rail_metro", "lakes_store", "gauges", ...COLLECTOR_LAYERS, "my_list"]);
 
 const NEWS_DAYS = 30;
 /**

@@ -89,8 +89,8 @@ export function planChips(plan: Plan, names: ChipNames, defaults: string[] = [])
     }
     if (s.op === "nearest") out.push({ id: `k:${s.as}`, part: "k", en: s.k === 1 ? "Nearest one" : `${s.k} nearest`, ta: s.k === 1 ? "அருகிலுள்ள ஒன்று" : `அருகிலுள்ள ${s.k}`,
       isDefault: defaults.includes("k"), removable: false, options: [1, 3, 5, 10].map((k) => ({ key: String(k), en: k === 1 ? "Nearest one" : `${k} nearest`, ta: `${k}`, on: s.k === k })) });
-    if (s.op === "count_by") out.push({ id: `g:${s.as}`, part: "group", en: `By ${s.by === "hex500" ? "500 m cell" : s.by}`, ta: `${s.by === "ward" ? "வார்டு" : s.by === "zone" ? "மண்டல" : s.by === "taluk" ? "வட்ட" : "500 மீ"} வாரியாக`,
-      isDefault: false, removable: true, options: (["ward", "zone", "taluk", "hex500"] as const).map((b) => ({ key: b, en: b === "hex500" ? "500 m cells" : `By ${b}`, ta: b, on: s.by === b })) });
+    if (s.op === "count_by") out.push({ id: `g:${s.as}`, part: "group", en: s.by === "near" ? "By the place near" : `By ${s.by === "hex500" ? "500 m cell" : s.by}`, ta: s.by === "near" ? "அருகிலுள்ள இடம் வாரியாக" : `${s.by === "ward" ? "வார்டு" : s.by === "zone" ? "மண்டல" : s.by === "taluk" ? "வட்ட" : "500 மீ"} வாரியாக`,
+      isDefault: false, removable: true, options: ([...(s.by === "near" ? ["near"] as const : []), "ward", "zone", "taluk", "hex500"] as const).map((b) => ({ key: b, en: b === "near" ? "By the place near" : b === "hex500" ? "500 m cells" : `By ${b}`, ta: b, on: s.by === b })) });
     if (s.op === "compare") {
       const a = names.area(s.a), b = names.area(s.b);
       out.push({ id: `c:${s.as}`, part: "place", en: `${a.en} vs ${b.en}`, ta: `${a.ta} / ${b.ta}`, isDefault: false, removable: true, options: [] });
@@ -151,7 +151,7 @@ export function applyChip(plan: Plan, chipId: string, option: string | null): Pl
     case "g": {
       if (step?.op !== "count_by") return null;
       if (option === null) { p.steps = p.steps.filter((s) => s !== step); p.show = step.of; return p; }
-      if (option === "ward" || option === "zone" || option === "taluk" || option === "hex500") { step.by = option; return p; }
+      if (option === "ward" || option === "zone" || option === "taluk" || option === "hex500" || option === "near") { step.by = option; return p; }
       return null;
     }
     case "c": {

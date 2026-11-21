@@ -22,9 +22,42 @@ export { distanceOf };
 
 // --------------------------------------------------------------- words --
 
-type Facility = { layer: LayerId; where: { government: boolean | null; kinds: string[] | null } | null; words: string[] };
-/** Facility types a question can be "near", longest phrases first within each. */
+/** `own`: a Collector layer's entry (Ask the Map final); its words are taken out of the question once matched, so "பள்ளிவாசல்" (mosque) is never "பள்ளி" (school) too */
+type Facility = { layer: LayerId; where: { government: boolean | null; kinds: string[] | null } | null; words: string[]; own?: boolean };
+/**
+ * The Collector's own layers' words (OpenStreetMap layers, lib/map/types.ts COLLECTOR_LAYERS). Kept narrow on purpose: "park" alone would read
+ * "illegal parking", "toilets" alone the sanitation complaints, "liquor" alone illicit liquor; those stay the topics they were.
+ */
+const COLLECTOR_FACILITIES: Facility[] = (<Facility[]>[
+  { layer: "worship", where: { government: null, kinds: ["muslim"] }, words: ["mosque", "mosques", "masjid", "dargah", "பள்ளிவாசல்", "மசூதி"] },
+  { layer: "worship", where: { government: null, kinds: ["christian"] }, words: ["church", "churches", "தேவாலய", "சர்ச்"] },
+  { layer: "worship", where: { government: null, kinds: ["hindu"] }, words: ["temple", "temples", "கோயில்", "கோவில்", "kovil", "koil"] },
+  { layer: "worship", where: null, words: ["place of worship", "places of worship", "religious place", "religious places", "worship", "வழிபாட்டுத் தல", "வழிபாட்டு தல"] },
+  { layer: "liquor", where: { government: null, kinds: ["wine_shop"] }, words: ["wine shop", "wine shops", "tasmac", "tasmac shop", "tasmac shops", "liquor shop", "liquor shops", "liquor outlet", "liquor outlets", "மதுக்கடை", "டாஸ்மாக்"] },
+  { layer: "liquor", where: { government: null, kinds: ["bar", "pub"] }, words: ["bar", "bars", "pub", "pubs", "மதுக்கூட", "மது பார்"] },
+  { layer: "liquor", where: null, words: ["licensed premises", "liquor licence", "licensed liquor"] },
+  { layer: "ration_shops", where: null, words: ["ration shop", "ration shops", "ration", "fair price shop", "fair price shops", "pds shop", "pds shops", "pds", "நியாய விலைக் கடை", "நியாய விலை கடை", "நியாயவிலைக் கடை", "ரேஷன்", "ration kadai"] },
+  { layer: "atms", where: null, words: ["atm", "atms", "cash machine", "cash machines", "ஏடிஎம்"] },
+  { layer: "banks", where: null, words: ["bank", "banks", "bank branch", "bank branches", "வங்கி"] },
+  { layer: "gov_offices", where: { government: null, kinds: ["court"] }, words: ["court", "courts", "courthouse", "court complex", "நீதிமன்ற"] },
+  { layer: "gov_offices", where: { government: null, kinds: ["town_hall"] }, words: ["town hall", "town halls", "நகர மன்ற"] },
+  { layer: "gov_offices", where: null, words: ["government office", "government offices", "govt office", "govt offices", "taluk office", "taluk offices", "அரசு அலுவலக"] },
+  { layer: "pharmacies", where: null, words: ["pharmacy", "pharmacies", "medical shop", "medical shops", "chemist", "chemists", "drug store", "மருந்தக", "மருந்துக் கடை"] },
+  { layer: "fuel", where: null, words: ["petrol bunk", "petrol bunks", "petrol pump", "petrol pumps", "petrol station", "petrol stations", "fuel station", "fuel stations", "gas station", "பெட்ரோல் பங்க்", "எரிபொருள் நிலைய"] },
+  { layer: "markets", where: null, words: ["market", "markets", "marketplace", "vegetable market", "சந்தை", "மார்க்கெட்"] },
+  { layer: "cemeteries", where: { government: null, kinds: ["crematorium"] }, words: ["crematorium", "crematoriums", "crematoria", "electric crematorium", "மின் மயான"] },
+  { layer: "cemeteries", where: null, words: ["cemetery", "cemeteries", "burial ground", "burial grounds", "graveyard", "graveyards", "இடுகாடு", "மயான", "சுடுகாடு"] },
+  { layer: "parks", where: { government: null, kinds: ["playground"] }, words: ["playground", "playgrounds", "play ground", "play area", "play areas", "விளையாட்டுத் திடல்", "விளையாட்டு மைதான"] },
+  { layer: "parks", where: null, words: ["parks", "public park", "public parks", "பூங்கா"] },
+  { layer: "water_tanks", where: null, words: ["water tank", "water tanks", "overhead tank", "overhead tanks", "water tower", "water towers", "நீர்த்தேக்கத் தொட்டி", "தண்ணீர் தொட்டி", "நீர்த் தொட்டி"] },
+  { layer: "toilets", where: null, words: ["public toilet", "public toilets", "toilet block", "toilet blocks", "comfort station", "comfort stations", "பொதுக் கழிப்பறை", "பொது கழிப்பறை"] },
+  { layer: "bus_stations", where: null, words: ["bus station", "bus stations", "bus stand", "bus stands", "bus terminus", "bus depot", "bus depots", "பேருந்து நிலைய"] },
+  { layer: "my_list", where: null, words: ["my list", "your list", "uploaded list", "my uploaded list", "my places", "என் பட்டியல்"] }
+]).map((f): Facility => ({ ...(f as Facility), own: true }));
+
+/** Facility types a question can be "near", longest phrases first within each. The Collector's layers come first: their words are taken out once read. */
 export const FACILITIES: Facility[] = [
+  ...COLLECTOR_FACILITIES,
   { layer: "hospitals", where: { government: true, kinds: null }, words: ["government hospital", "government hospitals", "govt hospital", "govt hospitals", "gh", "phc", "uphc", "health centre", "health centres", "health center", "அரசு மருத்துவமனை", "அரசு மருத்துவமனைகள்", "ஆரம்ப சுகாதார நிலைய", "govt aaspathri"] },
   { layer: "hospitals", where: { government: null, kinds: ["clinic"] }, words: ["clinic", "clinics", "கிளினிக்"] },
   { layer: "hospitals", where: { government: null, kinds: ["hospital", "health_centre"] }, words: ["hospital", "hospitals", "மருத்துவமனை", "மருத்துவமனைகள்", "மருத்துவமனைகளுக்கு", "aaspathri", "aspathri", "aspatri", "hospitalu", "hospital kitta"] },
@@ -45,22 +78,38 @@ const ALONG = ["along", "on", "alongside", "stretch of", "சாலையில�
 const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["FLOOD_WATERLOGGING"], words: ["waterlogging", "waterlogged", "water logging", "water-logging", "water stagnation", "stagnant water", "standing water", "inundation", "inundated",
     "மழைநீர் தேக்கம்", "மழைநீர் தேங்", "நீர் தேக்கம்", "தண்ணீர் தேங்", "நீர் தேங்", "water stagnation-a", "thanni thengi", "thanni nikkudhu", "thanni nikuthu", "water nikkudhu"] },
+  // v2: before flooding: "flood relief" is the relief needs, not the floods
+  { cats: ["FLOOD_RELIEF"], words: ["flood relief", "relief needs", "relief camp", "relief camps", "relief material", "நிவாரண"] },
   { family: ["FLOOD"], words: ["flooding", "flood", "floods", "flooded", "வெள்ளம்", "வெள்ளப்", "vellam"] },
   { cats: ["SOLID_WASTE"], words: ["garbage", "waste", "trash", "rubbish", "dumping", "குப்பை", "குப்பைகள்", "kuppai"] },
-  { cats: ["STREETLIGHT_ELECTRICAL"], words: ["streetlight", "streetlights", "street light", "street lights", "live wire", "electrical hazard", "தெருவிளக்கு", "மின் விளக்கு", "street light-u"] },
+  // v2: before streetlights and crime: dark stretches are a safety category of their own; crimes against women theirs
+  { cats: ["DARK_SPOT_SAFETY"], words: ["dark spot", "dark spots", "dark stretch", "dark stretches", "poorly lit", "இருண்ட"] },
+  { cats: ["CRIMES_AGAINST_WOMEN"], words: ["crimes against women", "crime against women", "women safety", "eve teasing", "harassment of women", "பெண்களுக்கு எதிரான"] },
+  { cats: ["STREETLIGHT_ELECTRICAL"], words: ["power cut", "power cuts", "no power", "current illa", "current cut", "electricity", "electric", "live wire", "streetlight", "streetlights", "street light", "street lights", "live wire", "electrical hazard", "தெருவிளக்கு", "மின் விளக்கு", "street light-u"] },
   { cats: ["ROAD_DAMAGE"], words: ["pothole", "potholes", "road damage", "damaged road", "damaged roads", "பள்ளம்", "சாலை சேதம்", "kuzhi"] },
   // before road accidents: a "fire accident" (தீ விபத்து) is a fire
-  { cats: ["FIRE_EXPLOSION"], words: ["fire accident", "fire accidents", "fires", "blaze", "explosion", "தீ விபத்து", "தீ விபத்துகள்"] },
+  { cats: ["FIRE_EXPLOSION"], words: ["fire accident", "fire accidents", "fires", "blaze", "explosion", "தீ விபத்து", "தீ விபத்துகள்", "theeppidi", "thee vibathu", "theepidi"] },
+  // v2: complaints about public toilets themselves (the toilets layer is where they are; these are what is wrong with them)
+  { cats: ["SANITATION_TOILETS"], words: ["toilet complaints", "toilet complaint", "public toilet complaints", "dirty toilets", "dirty toilet", "toilets not cleaned", "கழிப்பறை புகார்"] },
   { cats: ["ROAD_ACCIDENT"], words: ["accident", "accidents", "crash", "crashes", "collision", "road accident", "road accidents", "விபத்து", "விபத்துகள்", "vibathu", "vibaththu"] },
   { cats: ["CRIME_PROPERTY"], words: ["theft", "thefts", "robbery", "robberies", "snatching", "chain snatching", "burglary", "திருட்டு", "கொள்ளை", "thiruttu"] },
   { cats: ["DRAINAGE_SEWAGE"], words: ["sewage", "drainage", "drain overflow", "overflowing drain", "manhole", "கழிவுநீர்", "சாக்கடை", "kazhivuneer", "saakadai"] },
-  { cats: ["WATER_SUPPLY"], words: ["drinking water", "water supply", "no water", "water shortage", "குடிநீர்", "kudineer"] },
+  { cats: ["WATER_SUPPLY"], words: ["drinking water", "water supply", "no water", "water shortage", "water problem", "water problems", "water not coming", "thanni varala", "thanni prachanai", "metro water", "குடிநீர்", "kudineer"] },
   { cats: ["VECTOR_DISEASE"], words: ["dengue", "mosquito", "mosquitoes", "malaria", "fever", "டெங்கு", "கொசு", "kosu"] },
   { cats: ["STRAY_ANIMALS"], words: ["stray dog", "stray dogs", "dog bite", "dog bites", "stray cattle", "தெருநாய்", "நாய் கடி"] },
   { cats: ["TREES_PARKS"], words: ["tree fall", "fallen tree", "trees fell", "tree fell", "uprooted", "மரம் விழுந்", "மரம் சாய்ந்"] },
   { cats: ["ENCROACHMENT"], words: ["encroachment", "encroachments", "ஆக்கிரமிப்பு"] },
   { cats: ["TRAFFIC_OBSTRUCTION"], words: ["traffic jam", "traffic snarl", "illegal parking", "traffic", "போக்குவரத்து நெரிசல்"] },
-  { cats: ["BUILDING_SAFETY"], words: ["wall collapse", "building collapse", "unsafe building", "unsafe buildings", "சுவர் இடிந்"] },
+  { cats: ["BUILDING_SAFETY"], words: ["wall collapse", "building collapse", "unsafe building", "unsafe buildings", "unsafe old buildings", "unsafe old building", "old buildings", "old building", "dilapidated building", "dilapidated buildings", "சுவர் இடிந்"] },
+  // v2: the kinds with no word list before (knowledge for the prompt, and the fallback rules)
+  { cats: ["MISSING_PERSON"], words: ["missing person", "missing persons", "missing child", "missing children", "person missing", "kanavillai", "காணவில்லை", "காணாமல் போன"] },
+  { cats: ["PUBLIC_ORDER"], words: ["protest", "protests", "dharna", "agitation", "rally", "road roko", "public nuisance", "போராட்டம்"] },
+  { cats: ["DRUGS_LIQUOR"], words: ["ganja", "drugs", "drug peddling", "illicit liquor", "hooch", "arrack", "கஞ்சா", "கள்ளச்சாராயம்"] },
+  { cats: ["FOOD_SAFETY"], words: ["food safety", "food poisoning", "adulteration", "adulterated food", "unhygienic food"] },
+  { cats: ["AIR_POLLUTION"], words: ["air pollution", "smoke", "dust pollution", "garbage burning", "burning waste", "காற்று மாசு"] },
+  { cats: ["HEALTH_SERVICES"], words: ["no doctor", "ambulance delay", "phc not working", "hospital service"] },
+  { cats: ["SUICIDE_SELF_HARM"], words: ["suicide", "suicides", "self harm", "தற்கொலை"] },
+  { cats: ["CRIME_VIOLENT"], words: ["murder", "murders", "assault", "stabbing", "கொலை"] },
   { family: ["CRIME"], words: ["crime", "crimes", "குற்றம்", "குற்றங்கள்", "kuttram"] }
 ];
 const COMPLAINT = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்", "புகார்கள்", "pugar", "pugaar", "complaintu"];
@@ -73,9 +122,24 @@ const SEVERE_HIGH = ["severe or high", "high or severe", "severe and high", "hig
 const OPEN = ["open", "pending", "unresolved", "not resolved", "active", "ongoing", "திறந்த", "நிலுவை", "நிலுவையில்", "தீர்க்கப்படாத", "pending-a"];
 const CLOSED = ["closed", "resolved", "completed", "fixed", "தீர்க்கப்பட்ட", "முடிந்த", "முடிக்கப்பட்ட"];
 const ANY_STATUS = ["all status", "any status", "including closed", "open or closed", "open and closed", "all cases", "all incidents", "every incident", "அனைத்து", "எல்லா"];
-const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b/i;
+const HOTSPOT = /\b(hot ?spots?|clusters?|clustering|clustered|concentrat\w+|bunch\w*)\b|கொத்து|அதிகம் குவிந்த|hotspot|\benga\b(\s+\S+){0,3}?\s+(adhigam|adhigama|athigam|athigama|jaasthi|jasthi)\b(?!\s+(aagiruchu|aagiduchu|aayiduchu|aachu|aanadhu|aagirukku))/i;
+/** v2: "which school has the most complaints near it", "near which school are there more open complaints", "hospitals with the most garbage around them":
+ *  the incidents counted at the place each is near, not the nearest place to each (the owner's question, 21 Nov 2026) */
+const BY_NEAR_PLACES = "schools?|hospitals?|colleges?|markets?|bus (?:stands?|stations?)|metro stations?|railway stations?|stations?|parks?|temples?|churche?s?|mosques?|banks?|atms?|ration shops?|toilets?|police stations?|fire stations?|lakes?|wine shops?|tasmac(?: shops?)?|bars?|petrol bunks?|pharmac(?:y|ies)";
+export const BY_NEAR = new RegExp(`\\b(?:which|what|top \\d+|top)\\s+(?:\\w+\\s+){0,2}?(?:${BY_NEAR_PLACES})\\b[^?]*\\b(?:most|highest|higher|more|maximum|max|worst|biggest)\\b`
+  + `|\\b(?:${BY_NEAR_PLACES})\\s+(?:with|having|that have|that has)\\s+(?:the\\s+)?(?:most|highest|more|maximum)\\b`
+  + `|\\b(?:top|rank)\\s+(?:\\d+\\s+)?(?:${BY_NEAR_PLACES})\\s+by\\b`, "i");
 const NEAREST = /\b(nearest|closest)\b|அருகிலுள்ள\s*\S*\s*(எது|எவை|எங்கே)|மிக அருகில்|kitta irukura|pakkathula irukura/i;
-const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத/i;
+const FARTHEST = /\b(farthest|furthest|far from|most remote|least served|underserved|gaps?|no\s+\w+(\s+\w+)?\s+within|without (a|any)\s+\w+(\s+\w+)?\s+within)\b|தொலைவில்|வசதி இல்லாத|\b(illadha|illatha|illaadha|illaatha)\b|\b(atms?|banks?|hospitals?|schools?|pharmac(y|ies)|toilets?|parks?|shops?|kadai|stations?)\s+(illa|illai|illaye)\b|இல்லாத\s*(வார்டு|பகுதி)|\b(more|further|farther) than\s+[\d.]+\s*(km|kms|kilometres?|kilometers?|m|metres?|meters?)\s+(away\s+)?from\b|[\d.]+\s*(கி\.?\s*மீ|மீட்டர்)\s*(க்கு|-க்கு)?\s*(மேல்|அப்பால்)/i;
+/** a gap measured per neighbourhood, not per ward: "places", "localities", "streets", "பகுதிகள்" */
+const GAP_PLACES = /\b(places|localities|locality|neighbourhoods?|neighborhoods?|streets|colonies|pakudhi|pagudhi)\b|பகுதிகள்|இடங்கள்|தெருக்கள்/i;
+/**
+ * A ranked change, the league table: "which 10 wards got worse this month", "zones where flooding rose most", "most improved wards". Needs an area
+ * word (or "league table"), so "has flooding gone up?" stays a plain change.
+ */
+const RANK = /\b(got|getting|became|become|gone|grown)\s+worse\b|\bworsen(ed|ing)?\b|\b(rose|risen|rise|rising|increased?|grew|jumped|went up|go(ne)? up)\s+(the\s+)?most\b|\bbiggest\s+(rise|increase|jump|fall|drop|decrease)s?\b|\bleague table\b|\brank(ed|ing)?\b[^.?]*\b(change|rise|increase|fall|drop)\b|\b(improved|got better|fell|dropped|decreased|went down|go(ne)? down)\s+(the\s+)?most\b|\bmost improved\b|\b(jaasthi|jasthi|adhigam|athigam|adhigama|athigama|increase)\s+(aagiruchu|aagiduchu|aayiduchu|aachu|aanadhu|aagirukku)\b|மோசமடைந்த|அதிகம்\s*அதிகரித்த|மிகவும்\s*அதிகரித்த|அதிகரிப்பு\s*வரிசை/i;
+const RANK_FALL = /\b(improved|better|fell|fall|dropped|drop|decreased|decrease|went down|go(ne)? down)\b|குறைந்த/i;
+const RANK_UNIT = /\b(wards?|zones?|taluks?|areas?|league table)\b|வார்டு|மண்டல|வட்ட/i;
 const COMPARE = /\b(compare|comparison|vs\.?|versus)\b|ஒப்பிடு|ஒப்பீடு|compare pannu/i;
 const CHANGE = /\b(this|current|indha|intha)\s+(week|month|vaaram|maasam)\s+(vs\.?|versus|and|against|compared (to|with))\s+(the\s+)?(last|previous|pona|munnadi)\s+(week|month|vaaram|maasam)\b|\b(than|from|vs\.?|versus|compared (to|with))\s+(the\s+)?(last|previous)\s+(week|month)\b|\b(go(ne)?|went|going)\s+(down|up)\b|\b(increased|decreased|increasing|decreasing|dropped)\b|கடந்த\s+(வாரத்தை|மாதத்தை)\s+விட|குறைந்த(தா|ுள்ளதா)|அதிகரித்த(தா|ுள்ளதா)/i;
 const BRIEF = /\b(what is happening|what's happening|whats happening|what is going on|what's going on|summary|summarise|summarize|brief me|situation|area brief|overview of)\b|என்ன நடக்கிறது|நிலைமை|சுருக்கம்|enna nadakkudhu|enna nadakuthu|enna aagudhu/i;
@@ -295,7 +359,186 @@ export function changeWindows(said: Period | null, reference = false): { now: Pe
  * is open now with no window, "all time" has no window, and a change compares the two equal windows changeWindows gives, as the rules' plans do.
  * A follow-up that names no time keeps the last answer's window when the model's flat form cannot carry it (a date range).
  */
-export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev?: Plan | null): Plan {
+export interface ModelWords {
+  /** the question's language as the server reads it (mapLang): the model's guess never decides it */
+  lang: Lang;
+  /** a category code's family, or null for a code the world does not have */
+  familyOf: (code: string) => string | null;
+  /** the places the resolver found in the question (the ones the model was given) */
+  places?: { ref: string; kind: string }[];
+  /** v2 (the owner: AI only): the model's reading stands; no word of the question overrides it, only the plan's structure is checked */
+  aiOnly?: boolean;
+}
+
+/**
+ * v2: the places in a model's plan held to the rules' reading of the question's verb. Where the rules read "in X" (or "X la", "X zone") as a zone,
+ * taluk or ward and the model took the point of the same name (Anna Nagar the neighbourhood for Anna Nagar zone), the area; where the model left
+ * out a place the rules found ("அடையார் அருகே மருத்துவமனைகள்" with no place), the rules' area on the model's answer. Pure.
+ */
+export function keepAreas(ai: Plan, rules: Plan | null, found: Found[]): Plan {
+  if (!rules) return ai;
+  const keyOf = (a: AreaRef): string => (a.kind === "point" ? a.ref : a.kind === "taluk" ? `taluk:${a.code}` : a.kind === "drawn" ? "drawn" : `${a.kind}:${a.id}`);
+  const group = (k: string) => found.find((f) => [f.pick, ...f.alternatives].some((m) => m.entry.ref === k));
+  const ruleAreas = rules.steps.flatMap((s) => (s.op === "inside" ? [s.area] : s.op === "compare" ? [s.a, s.b] : [])).filter((a) => a.kind !== "drawn");
+  // "in X" read as an area holds against the point of the same name; "near X" read as a point holds against the area of the same name
+  const fix = (a: AreaRef): AreaRef => {
+    if (a.kind === "drawn") return a;
+    const g = group(keyOf(a));
+    if (!g) return a;
+    const r = ruleAreas.find((x) => group(keyOf(x)) === g && (x.kind === "point") !== (a.kind === "point"));
+    return r ?? a;
+  };
+  let steps = ai.steps.map((s) => (s.op === "inside" ? { ...s, area: fix(s.area) } : s.op === "compare" ? { ...s, a: fix(s.a), b: fix(s.b) } : s));
+  let show = ai.show;
+  const hasPlace = steps.some((s) => s.op === "inside" || s.op === "compare" || s.op === "along" || (s.op === "nearest" && s.from.startsWith("place:")));
+  const rIn = rules.steps.find((s) => s.op === "inside");
+  if (!hasPlace && rIn && rIn.op === "inside") {
+    const root = (pl: Plan, name: string): string | null => { const st = pl.steps.find((x) => x.as === name); return !st ? null : st.op === "take" ? st.layer : "of" in st ? root(pl, st.of) : null; };
+    const showStep = steps.find((s) => s.as === show);
+    if (showStep && root(rules, rIn.of) === root({ ...ai, steps }, show) && showStep.op !== "count_by" && showStep.op !== "hotspot" && showStep.op !== "rank" && showStep.op !== "farthest") {
+      const as = steps.some((s) => s.as === "in") ? "in_place" : "in";
+      steps = [...steps, { op: "inside", as, of: show, area: rIn.area }];
+      show = as;
+    }
+  }
+  return { ...ai, steps, show };
+}
+
+/** v2: the shape of a model's plan set by the question's words: where a nearest search starts, which way a league table runs, a hotspot after its area. */
+function fitShape(p: Plan, text: string, words: ModelWords): Plan {
+  let steps = p.steps;
+  let show = p.show;
+  // "nearest pharmacy to Marina Beach": a nearest step that starts nowhere starts at the one place the question names
+  const points = (words.places ?? []).filter((x) => x.kind === "locality" || x.kind === "osm_place" || x.kind === "facility");
+  steps = steps.map((s) => (s.op === "nearest" && !s.from.startsWith("place:") && !steps.some((x) => x.as === s.from) && points.length === 1 ? { ...s, from: `place:${points[0].ref}` } : s));
+  // "rank wards by the drop in …", "most improved zones": a fall; "got worse", "rose the most": a rise
+  if (RANK.test(text) || RANK_FALL.test(text)) {
+    const fall = RANK_FALL.test(text) && !/\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?)\b/i.test(text);
+    const rise = /\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?|went up)\b/i.test(text) && !RANK_FALL.test(text);
+    if (fall || rise) steps = steps.map((s) => (s.op === "rank" ? { ...s, order: fall ? "fall" as const : "rise" as const } : s));
+  }
+  // a facility layer taken and never used ("petrol bunk pakkathula theeppidi": fires, fuel stations, no step between them): the incidents near it
+  const readNames = new Set(steps.flatMap((x) => ("of" in x ? [x.of] : []).concat(x.op === "within" ? x.near : [], x.op === "nearest" ? [x.to, x.from] : [], x.op === "farthest" ? [x.from] : [])));
+  const idle = steps.filter((x) => x.op === "take" && x.layer !== "incidents" && !readNames.has(x.as) && x.as !== show);
+  const shown = steps.find((x) => x.as === show);
+  if (idle.length && shown?.op === "take" && shown.layer === "incidents") {
+    steps = [...steps, { op: "within", as: "near", of: show, near: idle.map((x) => x.as), meters: distanceOf(text) ?? 500 }];
+    show = "near";
+  }
+  // "near which school are there more open complaints": the incidents counted at the place each is near, never the nearest place to each
+  if (BY_NEAR.test(text) && !countByOf(text) && !steps.some((x) => x.op === "count_by" || x.op === "rank" || x.op === "hotspot" || x.op === "farthest")) {
+    const nst = steps.find((x) => x.op === "nearest");
+    const win = steps.find((x) => x.op === "within");
+    const isIncColl = (name: string): boolean => { const st = steps.find((x) => x.as === name); return !!st && (st.op === "take" ? st.layer === "incidents" : "of" in st && isIncColl(st.of)); };
+    if (nst && nst.op === "nearest" && !nst.from.startsWith("place:") && isIncColl(nst.from)) {
+      const near = { op: "within" as const, as: "near_by", of: nst.from, near: [nst.to], meters: distanceOf(text) ?? 500 };
+      steps = [...steps.filter((x) => x !== nst), near, { op: "count_by", as: "by", of: "near_by", by: "near" }];
+      show = "by";
+    } else if (win && win.op === "within" && isIncColl(win.of) && show === win.as) {
+      steps = [...steps, { op: "count_by", as: "by", of: win.as, by: "near" }];
+      show = "by";
+    }
+  }
+  // v2: how fast cases close ("which area is resolving fast", "slowest department"): the speed step, never a plain count
+  const fast = SPEED_FAST.test(text), slow = SPEED_SLOW.test(text);
+  if ((fast || slow) && !steps.some((x) => x.op === "speed" || x.op === "rank" || x.op === "change")) {
+    const inc0 = steps.find((x) => x.op === "take" && x.layer === "incidents");
+    if (inc0 && inc0.op === "take" && inc0.filter) {
+      const sb = /\b(department|dept)s?\b|துறை/i.test(text) ? "dept" as const : /\bzones?\b|மண்டல/i.test(text) ? "zone" as const : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" as const
+        : /\b(kind|type|category|categories|problems?|issues?)\b/i.test(text) ? "category" as const : "ward" as const;
+      const order = slow && !/\b(fastest|quickest|best)\b/i.test(text) ? "slow" as const : "fast" as const;
+      const of = steps.filter((x) => x.op !== "count_by" && x.op !== "hotspot").at(-1)!.as;
+      steps = [...steps.filter((x) => x.op !== "count_by" && x.op !== "hotspot").map((x) => (x === inc0 ? { ...inc0, filter: { ...inc0.filter!, status: "any" as const, period: inc0.filter!.period ?? { kind: "last_days" as const, days: 90, offset: 0 } } } : x)),
+        { op: "speed", as: "speed", of, by: sb, order }];
+      show = "speed";
+    }
+  }
+  // v2: "which area needs my attention": open cases past deadline, by area
+  if (ATTENTION.test(text) && !fast && !slow && !steps.some((x) => x.op === "rank" || x.op === "speed" || x.op === "hotspot" || x.op === "farthest")) {
+    const inc0 = steps.find((x) => x.op === "take" && x.layer === "incidents");
+    if (inc0 && inc0.op === "take" && inc0.filter && (inc0.filter.overdue !== true || !steps.some((x) => x.op === "count_by"))) {
+      const ab = /\bzones?\b|மண்டல/i.test(text) ? "zone" as const : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" as const : "ward" as const;
+      steps = steps.map((x) => (x === inc0 ? { ...inc0, filter: { ...inc0.filter!, status: "open" as const, overdue: true, period: inc0.filter!.period && countByOf(text) ? inc0.filter!.period : null } } : x));
+      if (!steps.some((x) => x.op === "count_by")) { const of = steps.at(-1)!.as; steps = [...steps, { op: "count_by", as: "by", of, by: ab }]; show = "by"; }
+    }
+  }
+  // v2: "what are people complaining about most", "which department holds most": the count by kind or department the question asks for
+  const kindBy = BY_DEPT.test(text) ? "dept" as const : BY_KIND.test(text) ? "category" as const : null;
+  if (kindBy && !fast && !slow && !steps.some((x) => x.op === "count_by" || x.op === "rank" || x.op === "speed" || x.op === "hotspot" || x.op === "compare" || x.op === "farthest" || x.op === "nearest")) {
+    const isInc = (name: string): boolean => { const st = steps.find((x) => x.as === name); return !!st && (st.op === "take" ? st.layer === "incidents" : "of" in st && isInc(st.of)); };
+    if (isInc(show)) { steps = [...steps, { op: "count_by", as: "by", of: show, by: kindBy }]; show = "by"; }
+  }
+  // "ward vaariyaga kosu pugar", "garbage ward wise": a count by that area when the model left it out (and no league table or cluster was asked)
+  const by = countByOf(text);
+  const showStep = steps.find((s) => s.as === show);
+  if (by && !steps.some((s) => s.op === "count_by" || s.op === "rank" || s.op === "hotspot" || s.op === "compare" || s.op === "farthest") && showStep && showStep.op !== "nearest") {
+    const isInc = (name: string): boolean => { const st = steps.find((s) => s.as === name); return !!st && (st.op === "take" ? st.layer === "incidents" : "of" in st && isInc(st.of)); };
+    if (isInc(show)) { steps = [...steps, { op: "count_by", as: "by", of: show, by }]; show = "by"; }
+  }
+  // "where are dengue cases clustering", "theft hotspots": clusters, never a plain count by area
+  if (HOTSPOT.test(text) && !RANK.test(text) && !steps.some((s) => s.op === "hotspot")) {
+    const cbs = steps.find((s) => s.op === "count_by");
+    if (cbs && cbs.op === "count_by" && !countByOf(text)) { const hot = { op: "hotspot" as const, as: cbs.as, of: cbs.of }; steps = steps.map((s) => (s === cbs ? hot : s)); }
+  }
+  // a hotspot then an area ("dengue clustering in the north"): the area first, then the clusters in it
+  const h = steps.find((s) => s.op === "hotspot");
+  const after = h && steps.find((s) => s.op === "inside" && s.of === h.as);
+  if (h && after && after.op === "inside" && !steps.some((s) => s !== after && "of" in s && s.of === after.as)) {
+    const area = { ...after, of: h.of };
+    const hot = { ...h, of: area.as };
+    steps = [...steps.filter((s) => s !== h && s !== after), area, hot];
+    if (show === after.as) show = hot.as;
+  }
+  return steps === p.steps && show === p.show ? p : { ...p, steps, show };
+}
+
+/**
+ * A model's plan with the question's own words laid on top (v2): its time words (fitTime), its language as the server reads
+ * it, and an exact category the rules' word list reads ("sewage", "drinking water", "road accidents", "flooding") where the
+ * model gave none, a code the world does not have, or only a broader family holding it.
+ */
+export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev?: Plan | null, words?: ModelWords): Plan {
+  const p0 = fitTime(plan, text, now, prev);
+  if (!words) return p0;
+  // AI only: the structure is checked (a nearest search that starts nowhere, a layer taken and not used, a hotspot before its area), never the words
+  const p = fitShape(p0, words.aiOnly ? "" : text, words);
+  if (words.aiOnly) return p;
+  const toks = tokens(text);
+  const said = CAT_WORDS.find((c) => any(toks, c.words)) ?? null;
+  // a category or family the model chose is grounded when a word in the question names it (or its family)
+  const grounded = (cats: string[], fams: string[]) => CAT_WORDS.some((c) => any(toks, c.words)
+    && ((c.cats ?? []).some((x) => cats.includes(x) || fams.includes(words.familyOf(x) ?? "")) || (c.family ?? []).some((x) => fams.includes(x) || cats.some((y) => words.familyOf(y) === x))));
+  let steps = p.steps.map((s) => {
+    if (s.op !== "take" || s.layer !== "incidents" || !s.filter || !said) return s;
+    const f = s.filter;
+    const cats = (f.category ?? []).filter((c) => words.familyOf(c) != null);
+    const fams = f.family ?? [];
+    if (said.cats) {
+      if (said.cats.every((c) => cats.includes(c))) return cats.length === (f.category ?? []).length ? s : { ...s, filter: { ...f, category: cats.length ? cats : null } };
+      // the exact category, plus any other category a different word of the question names ("sewage and garbage"); families and unnamed guesses go
+      const named = (c: string) => CAT_WORDS.some((e) => e !== said && any(toks, e.words) && (e.cats ?? []).includes(c));
+      return { ...s, filter: { ...f, category: [...new Set([...said.cats, ...cats.filter(named)])], family: null } };
+    }
+    if (said.family && ((!cats.length && !fams.length) || !grounded(cats, fams))) return { ...s, filter: { ...f, category: null, family: said.family } };
+    return s;
+  });
+  // "which wards got worse", "endha ward-la jaasthi aagiruchu": a ranked change, never a plain count by area
+  const cb = steps.find((s) => s.op === "count_by") as Extract<Step, { op: "count_by" }> | undefined;
+  if (cb && (cb.by === "ward" || cb.by === "zone" || cb.by === "taluk") && RANK.test(text) && !steps.some((s) => s.op === "change" || s.op === "rank")) {
+    const by = cb.by;
+    const t = steps.find((s) => s.as === cb.of);
+    if (t?.op === "take" && t.layer === "incidents" && t.filter) {
+      const { now: per, before } = changeWindows(isPeriod(t.filter.period ?? null) ? t.filter.period! : null, REFERENCE.test(text));
+      const order = RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" as const : "rise" as const;
+      steps = [...steps.filter((s) => s !== cb).map((s) => (s === t ? { ...t, filter: { ...t.filter!, status: "any" as const, period: per } } : s)),
+        { op: "change", as: "chg", of: t.as, now: per, before }, { op: "rank", as: "rank", of: "chg", by, order }];
+      return { ...p, language: words.lang, steps, show: "rank" };
+    }
+  }
+  return { ...p, language: words.lang, steps };
+}
+
+function fitTime(plan: Plan, text: string, now?: string | null, prev?: Plan | null): Plan {
   const said = periodOf(text, now);
   const incTake = (s: Step): s is Extract<Step, { op: "take" }> => s.op === "take" && s.layer === "incidents" && !!s.filter;
   const chg = plan.steps.find((s) => s.op === "change") as Extract<Step, { op: "change" }> | undefined;
@@ -373,7 +616,11 @@ interface Parsed {
   /** a follow-up keeps the last answer's place when it names none ("and thefts?", "hospitals there") */
   keep?: { area: AreaRef | null; line: { ref: string; meters: number } | null };
   /** changeRef: the period said is the one compared against ("up from last month"), not the window asked about */
-  shape: { countBy: "ward" | "zone" | "taluk" | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; changeRef?: boolean; brief: boolean };
+  shape: { countBy: "ward" | "zone" | "taluk" | "near" | "category" | "dept" | null; speed?: { by: "ward" | "zone" | "taluk" | "category" | "dept"; order: "fast" | "slow" } | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; changeRef?: boolean; brief: boolean;
+    /** a ranked change by area (the league table) */
+    rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall" } | null };
+  /** the facilities a question measures from ("near schools"), by layer: a rule check is the others within N m of these */
+  nearLayers?: LayerId[];
 }
 
 /** Words that only ask, point or join ("show me the", "எத்தனை", "evlo"): never a reason to call the AI. */
@@ -397,14 +644,30 @@ export function unreadWords(rest: string[], classified: string[]): string[] {
     && !/^(by|per|ward|zone|taluk|hotspot|cluster|compare|vs|versus|nearest|closest|farthest|furthest|summary|happening|clustering|wise|vaariyaga|வாரியாக)/i.test(t)))];
 }
 
+/** v2 (the owner's questions, 21 Nov 2026). "Which area needs my attention", "where should I focus", "worst wards", "problem areas": the open cases past deadline, by area. */
+export const ATTENTION = /\b(need\w*\s+(my\s+|urgent\s+|immediate\s+)?attention|attention\s+(now|first|needed)|should\s+i\s+(focus|go|look|visit)\b|go\s+first|focus\s+(on\s+)?first|priority\s+(areas?|wards?|zones?)|problem\s+(areas?|wards?|zones?)|trouble\s+spots?|worst\s+(wards?|zones?|areas?|places?|taluks?|parts?)|most\s+urgent|urgent\s+areas?|critical\s+areas?|red\s+zones?)\b|கவனம்\s*தேவை/i;
+/** "Which area is resolving fast", "best performing zone", "where are complaints closed quickest": the median days to close, fastest first. */
+export const SPEED_FAST = /\b(resolv\w*|clos\w*|fix\w*|solv\w*|clear\w*|handl\w*|attend\w*)\s+(\w+\s+){0,3}?(fast\w*|quick\w*|speed\w*|soon\w*|early)\b|\b(fastest|quickest|best\s+perform\w*|most\s+efficient|performing\s+(well|best))\b|வேகமாக\s*(தீர்|முடி)/i;
+/** "Which department is slowest", "where do complaints take longest", "worst performing ward": the median days to close, slowest first. */
+export const SPEED_SLOW = /\b(slow\w*|take\w*\s+(the\s+)?longest|taking\s+(too\s+)?long|longest\s+to\s+(close|resolve|fix)|delay(ed|s|ing)?\s+(in\s+)?(resolv\w*|clos\w*|fix\w*|action)|worst\s+perform\w*|lagging|poor\s+perform\w*)\b|மெதுவாக/i;
+/** "What are people complaining about most", "top problems", "type wise": the cases by kind. */
+export const BY_KIND = /\b(complain\w*\s+about|top\s+(\d+\s+)?(problems|issues|complaints|categories)|main\s+(problems|issues|complaints)|biggest\s+(problems|issues)|common\s+(problems|issues|complaints)|kind[- ]?wise|type[- ]?wise|category[- ]?wise|by\s+(type|kind|category)|what\s+(kinds?|types?)\s+of|which\s+(kinds?|types?)\s+of|most\s+common)\b|வகை\s*வாரி/i;
+/** "Which department has most pending", "department wise": the cases by department. */
+export const BY_DEPT = /\b(which|what)\s+(department|dept)s?\b|\b(department|dept)[- ]?wise\b|\b(by|per|each|across)\s+(department|dept)s?\b|துறை\s*வாரி/i;
+
 const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** The words a shape the rules read already stand for ("got worse", "more than 2 km from", "past-deadline", "neighbourhoods"): never unread. */
+const SHAPE_WORDS = [RANK, FARTHEST, GAP_PLACES, OVERDUE, /past[- ]deadline/i, /அதிகரித்\S*|குறைந்த\S*/].map((re) => new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`));
+const shapeWordsOut = (t: string) => SHAPE_WORDS.reduce((x, re) => x.replace(re, " "), t);
 /** Is a facility the thing measured from ("near schools", "within 300 m of hospitals", "பள்ளி அருகே") rather than the thing asked for? */
 function facilityIsNear(text: string, facWords: string[]): boolean {
   if (!facWords.length) return false;
   const fw = facWords.map(reEsc).join("|");
   const before = new RegExp(`(\\bnear(by)?|\\baround|\\bclose to|\\bnext to|\\bbeside|\\bsurrounding|\\bwithin\\s+[\\d.]+\\s*(m|km|kms|metres?|meters?)?\\s+(of|from)|\\bwithin\\s+(a|one|half a)\\s+km\\s+(of|from)|\\bwithin)\\s+(the\\s+|a\\s+|an\\s+|any\\s+|all\\s+)?(government\\s+|govt\\s+)?(${fw})`, "i");
   const after = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(அருகே|அருகில்|அருகிலுள்ள|அருகாமையில்|பக்கத்தில்|பக்கம்|சுற்றி|pakkathula|pakkathil|pakkam|kitta|kitte|arugil|arugey|aruge|arukil)`, "i");
-  return before.test(text) || after.test(text);
+  // Tamil puts the distance after the place: "பள்ளிகளுக்கு 100 மீட்டருக்குள்" (within 100 m of schools)
+  const afterM = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(இலிருந்து\\s*)?[\\d.]+\\s*(மீட்டர்|மீ|கி\\.?\\s*மீ)`, "i");
+  return before.test(text) || after.test(text) || afterM.test(text);
 }
 
 /** Removes the words a phrase covers, so "lakes" in "incidents near lakes" is a facility, never the flood topic. */
@@ -421,6 +684,8 @@ function verbOf(text: string, toks: string[]): Verb {
   if (/\b(along|alongside|on)\s+(the\s+)?(?!map\b)[A-Za-z]/i.test(text) || any(toks, ["சாலையில்", "வழியாக", "road la", "salai la", "roadla", "salaila"])) return "along";
   if (any(toks, NEAR) || distanceOf(text) != null) return "near";
   if (/\b(in|inside|at)\s+(the\s+)?[A-Za-z0-9]/i.test(text) || /[஀-௿](இல்|யில்|ில்)\b/.test(text)) return "in";
+  // Tanglish "Velachery la", "zone 9 le": in
+  if (/[A-Za-z0-9]\s+(la|le)\b/i.test(text)) return "in";
   return null;
 }
 
@@ -447,11 +712,39 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const ftoks = tokens(free);
   const facilities: Facility[] = [];
   const facWords: string[] = [];
+  let ftoksLeft = ftoks;
+  const nearLayers: LayerId[] = [];
   for (const f of FACILITIES) {
-    if (!firstHit(ftoks, f.words)) continue;
+    const look = f.own ? ftoksLeft : ftoks;
+    if (!firstHit(look, f.words)) continue;
+    const said = f.words.filter((w) => hasPhrase(look, w));
     // "fire station" is a facility, "fire" alone is not; "police" alone is a department
-    if (!facilities.some((x) => x.layer === f.layer)) facilities.push(f);
-    facWords.push(...f.words.filter((w) => hasPhrase(ftoks, w)));
+    const had = facilities.findIndex((x) => x.layer === f.layer);
+    if (had < 0) facilities.push(f);
+    // two of a Collector layer's kinds in one question ("wine shops and bars"): both kinds, or the whole layer
+    else if (f.own && facilities[had].own) {
+      const a = facilities[had].where?.kinds, b = f.where?.kinds;
+      facilities[had] = { ...facilities[had], where: a && b ? { government: null, kinds: [...new Set([...a, ...b])] } : null };
+    }
+    facWords.push(...said);
+    if (facilityIsNear(free, said) && !nearLayers.includes(f.layer)) nearLayers.push(f.layer);
+    // a Collector layer's words are read once: "பள்ளிவாசல்" (a mosque) is not also "பள்ளி" (a school)
+    if (f.own) ftoksLeft = tokens(strip(ftoksLeft.join(" "), said));
+  }
+  // the older layers read from what the Collector layers left (only those words are taken out)
+  if (ftoksLeft.length !== ftoks.length) for (let i = facilities.length - 1; i >= 0; i--) {
+    const f = facilities[i];
+    if (!f.own && !firstHit(ftoksLeft, f.words)) facilities.splice(i, 1);
+  }
+  for (let i = nearLayers.length - 1; i >= 0; i--) if (!facilities.some((f) => f.layer === nearLayers[i])) nearLayers.splice(i, 1);
+  // "within 200 m of schools or temples": a place joined to one measured from is measured from too
+  if (nearLayers.length) {
+    const nearW = FACILITIES.filter((f) => nearLayers.includes(f.layer)).flatMap((f) => f.words.filter((x) => hasPhrase(ftoks, x))).map(reEsc).join("|");
+    for (const f of facilities) {
+      if (nearLayers.includes(f.layer)) continue;
+      const own = FACILITIES.filter((x) => x.layer === f.layer).flatMap((x) => x.words.filter((y) => hasPhrase(ftoks, y))).map(reEsc).join("|");
+      if (own && nearW && new RegExp(`(${nearW})[\\u0B80-\\u0BFF]*\\s*(,|\\bor\\b|\\band\\b|/|அல்லது|மற்றும்)\\s*(the\\s+|a\\s+|an\\s+|any\\s+)?(${own})`, "i").test(free)) nearLayers.push(f.layer);
+    }
   }
   const news = any(tokens(free), NEWS) ? true : null;
   // news words are a source, never a category ("news" is not read as a topic)
@@ -471,7 +764,9 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const citizen = any(rtoks, COMPLAINT) ? true : null;
   const severity = any(rtoks, SEVERE_HIGH) ? ["Severe", "High"] : any(rtoks, SEVERE) ? ["Severe"] : null;
   const status = any(rtoks, ANY_STATUS) ? "any" : any(rtoks, CLOSED) ? "closed" : any(rtoks, OPEN) ? "open" : null;
-  const overdue = OVERDUE.test(rest) || /காலக்கெடு\s*(தாண்டி|கடந்த)|past[- ]deadline/i.test(rest) ? true : null;
+  // v2: "which area needs my attention": the open cases past their deadline (the speed and kind questions are read below)
+  const attention = ATTENTION.test(text) && !SPEED_FAST.test(text) && !SPEED_SLOW.test(text);
+  const overdue = attention || OVERDUE.test(rest) || /காலக்கெடு\s*(தாண்டி|கடந்த)|past[- ]deadline/i.test(rest) ? true : null;
   const classified = classify(rest)?.terms ?? [];
   // a period the map read is read: "hours" in "in the last 24 hours" and "since yesterday" sent a question the rules had read whole to the AI
   // (fixall3-map-today). A time the map has no window for ("in September") keeps its words unread, so the AI may still read them.
@@ -479,11 +774,19 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const twoAreas = places.filter((x) => !isLine(x.pick.entry) && placeArea(x, null)).length >= 2;
   const cmpWords = isComparison(text), cmpTime = cmpWords && !twoAreas;
   return {
-    unread: unreadWords(period ? tokens(periodWordsOutMap(rest)) : rtoks, classified),
+    unread: unreadWords(tokens(shapeWordsOut(period ? periodWordsOutMap(rest) : rest)), classified),
     lang, toks, facilities, cats, family, citizen, news, severity, status, period, dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
-    facNear: facilityIsNear(free, facWords),
+    facNear: facilityIsNear(free, facWords), nearLayers,
     shape: {
-      countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
+      rank: RANK.test(text) && RANK_UNIT.test(text) ? { by: /\bzones?\b|மண்டல/i.test(text) ? "zone" : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" : "ward", order: RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" : "rise" } : null,
+      countBy: countByOf(text) ?? (BY_NEAR.test(text) && facilities.length ? "near" : null)
+        ?? (attention ? (/\bzones?\b|மண்டல/i.test(text) ? "zone" : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" : "ward") : null)
+        ?? (BY_DEPT.test(text) && !SPEED_FAST.test(text) && !SPEED_SLOW.test(text) ? "dept" : null)
+        ?? (BY_KIND.test(text) && !SPEED_FAST.test(text) && !SPEED_SLOW.test(text) ? "category" : null),
+      speed: SPEED_FAST.test(text) || SPEED_SLOW.test(text) ? {
+        by: /\b(department|dept)s?\b|துறை/i.test(text) ? "dept" : /\bzones?\b|மண்டல/i.test(text) ? "zone" : /\btaluks?\b|வட்ட/i.test(text) ? "taluk" : /\b(kind|type|category|categories|problems?|issues?)\b/i.test(text) ? "category" : "ward",
+        order: SPEED_SLOW.test(text) && !/\b(fastest|quickest|best)\b/i.test(text) ? "slow" : "fast" } : null,
+      hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       // a comparison the reader reads ("up or down", "today vs yesterday", "pona maasatha vida") is a change too, as in Jarvis and Ask District
       // IQ; with two areas named ("Adyar vs Velachery, higher or lower?", "Adyar or Velachery, which is higher?") it is an area comparison
       compare: !CHANGE.test(text) && !cmpTime && (COMPARE.test(text) || (cmpWords && twoAreas)), change: CHANGE.test(text) || cmpTime,
@@ -544,12 +847,29 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     steps.push({ op: "nearest", as: "n", from: areas[0] ? "b" : "a", to: "f1", k: Math.min(k, 3) });
     return done("n");
   }
-  // farthest: "which ward is farthest from a hospital", "areas with no fire station within 3 km"
+  // farthest: "which ward is farthest from a hospital", "areas with no fire station within 3 km"; a gap list per neighbourhood: "places more
+  // than 2 km from a ration shop"
   if (p.shape.farthest && p.facilities.length && !subject) {
     const f = p.facilities[0];
+    const words = p.toks.join(" ");
     steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
-    steps.push({ op: "farthest", as: "far", areas: /\bzones?\b|மண்டல/i.test(p.toks.join(" ")) ? "zone" : "ward", from: "f1", beyond_m: p.meters });
+    steps.push({ op: "farthest", as: "far", areas: /\bzones?\b|மண்டல/i.test(words) ? "zone" : /\bwards?\b|வார்டு/i.test(words) ? "ward" : GAP_PLACES.test(words) ? "place" : "ward", from: "f1", beyond_m: p.meters });
     return done("far");
+  }
+  // a rule check: places within N m of other places ("wine shops within 100 m of schools or temples"). The distance is the question's, or the
+  // default the chip shows; the legal distance is the Excise desk's to confirm (the answer says so)
+  const ruleOf = p.facilities.filter((f) => !p.nearLayers?.includes(f.layer) && f.layer !== "water_bodies" && f.layer !== "waterways");
+  const ruleNear = p.facilities.filter((f) => p.nearLayers?.includes(f.layer) && !ruleOf.some((x) => x.layer === f.layer));
+  if (!subject && ruleOf.length === 1 && ruleNear.length && !lines.length && !p.shape.countBy && !p.shape.hotspot && !p.shape.compare && !p.shape.change && !p.shape.nearest) {
+    const f = ruleOf[0];
+    steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
+    ruleNear.slice(0, 4).forEach((g, i) => steps.push({ op: "take", as: `n${i + 1}`, layer: g.layer, filter: null, where: g.where }));
+    if (p.meters == null) defaults.push("distance");
+    // licensed premises: 100 m unless said (the officer's setting in the panel); any other place near a place: 500 m, as incidents near one
+    steps.push({ op: "within", as: "rule", of: "f1", near: ruleNear.slice(0, 4).map((_, i) => `n${i + 1}`), meters: clampM(p.meters ?? (f.layer === "liquor" ? 100 : 500)) });
+    if (!areas.length) return done("rule");
+    steps.push({ op: "inside", as: "in", of: "rule", area: placeArea(areas[0], null)! });
+    return done("in");
   }
 
   // the places themselves: "schools in Valasaravakkam", "police stations near Adyar", "hospitals" (never incidents near them)
@@ -566,7 +886,9 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
 
   const hot = p.shape.hotspot;
   // hotspots look at all reports of the last 90 days by default, as the pipeline's clusters do
-  take(hot ? { status: "any", period: { kind: "last_days", days: 90, offset: 0 } } : p.shape.change ? { status: "any" } : undefined);
+  // v2: how fast cases close: every status, reported in the last 90 days unless said; what needs attention: every open case past deadline, whenever reported
+  take(hot ? { status: "any", period: { kind: "last_days", days: 90, offset: 0 } } : p.shape.speed ? { status: "any", period: { kind: "last_days", days: 90, offset: 0 } }
+    : p.shape.change || p.shape.rank ? { status: "any" } : p.overdue && p.shape.countBy && ATTENTION.test(p.toks.join(" ")) ? { period: null } : undefined);
   let cur = "a";
   const next = (s: Step) => { steps.push(s); cur = s.as; };
 
@@ -594,6 +916,15 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
   else if (p.keep?.area) next({ op: "inside", as: "in", of: cur, area: p.keep.area });
   if (p.shape.compare && areas.length === 1 && !lines.length) return null; // "compare X" with one place: a follow-up only
   if (hot) next({ op: "hotspot", as: "hot", of: cur });
+  else if (p.shape.rank) {
+    // the league table: the change's two windows (this week against the week before, unless the question names a time), counted by area
+    const { now: per, before } = changeWindows(isPeriod(p.period) ? p.period : null, p.shape.changeRef);
+    const t = steps[0] as Extract<Step, { op: "take" }>;
+    t.filter = { ...t.filter!, period: per };
+    next({ op: "change", as: "chg", of: cur, now: per, before });
+    next({ op: "rank", as: "rank", of: "chg", by: p.shape.rank.by, order: p.shape.rank.order });
+  }
+  else if (p.shape.speed) next({ op: "speed", as: "speed", of: cur, by: p.shape.speed.by, order: p.shape.speed.order });
   else if (p.shape.countBy) next({ op: "count_by", as: "by", of: cur, by: p.shape.countBy });
   else if (p.shape.change) {
     const { now: per, before } = changeWindows(isPeriod(p.period) ? p.period : null, p.shape.changeRef);
@@ -602,7 +933,7 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     next({ op: "change", as: "chg", of: cur, now: per, before });
   }
   // nothing to ask about: no category, place, facility or shape
-  if (!subject && !p.facilities.length && !lines.length && !areas.length && !p.keep?.area && !p.keep?.line && !hot && !p.shape.countBy) return null;
+  if (!subject && !p.facilities.length && !lines.length && !areas.length && !p.keep?.area && !p.keep?.line && !hot && !p.shape.countBy && !p.shape.speed) return null;
   return done(cur);
 }
 const clampM = (m: number) => Math.max(LIMITS.minM, Math.min(LIMITS.maxM, m));
@@ -876,4 +1207,38 @@ export function rulesRoute(text: string, prev: Plan | null, env: RouteEnv): Rout
   const built = buildPlan(p);
   if (!built) return null;
   return { kind: "plan", plan: built.plan, defaults: built.defaults, places: p.places, ai: false, edited: null, unread: p.unread };
+}
+
+/** "ward vaariyaga", "zone vaari": a count by area in Tanglish, besides COUNT_BY's words (edits.ts, shared with Jarvis, is unchanged). */
+const COUNT_BY_TG: [RegExp, "ward" | "zone" | "taluk"][] = [
+  [/\bwards?[- ]?(vaariyaga|vaariya|vaari|vaariyaa)\b/i, "ward"], [/\bzones?[- ]?(vaariyaga|vaariya|vaari|vaariyaa)\b/i, "zone"], [/\btaluks?[- ]?(vaariyaga|vaariya|vaari)\b/i, "taluk"]];
+export const countByOf = (text: string): "ward" | "zone" | "taluk" | null => (COUNT_BY.find(([re]) => re.test(text)) ?? COUNT_BY_TG.find(([re]) => re.test(text)))?.[1] ?? null;
+
+/** Shape and time words the rules read, for the speller (spell.ts): "nearst" is nearest, "hotspts" hotspots. */
+const SHAPE_VOCAB = `nearest closest farthest furthest compare comparison versus hotspots hotspot clusters cluster clustering worse worsened improved increased
+decreased neighbourhoods neighbourhood neighborhoods neighborhood localities wards zones taluks ward zone taluk within metres meters kilometres kilometers
+week weeks month months today yesterday overdue deadline incidents incident severe summary happening brief league table ranking gaps without government
+schools hospitals complaints complaint flooding where which how many show what list count
+nadakkudhu nadakuthu aagudhu illadha illatha illaadha illaatha illa illai kulla vaariyaga adhigam athigam jaasthi jasthi pona munnadi indha intha vaaram maasam`;
+
+/** Every Latin word the rules read (layers, categories, statuses, near and along, shapes, Tanglish): the speller's targets. */
+export function mapVocabulary(): string[] {
+  const all = [...FACILITIES.flatMap((f) => f.words), ...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...NEWS, ...SEVERE, ...SEVERE_HIGH, ...OPEN, ...CLOSED, ...ANY_STATUS,
+    ...NEAR, ...ALONG, SHAPE_VOCAB];
+  return [...new Set(all.flatMap((p) => p.toLowerCase().split(/[^a-z]+/)).filter((w) => w.length >= 3))];
+}
+/** The Tamil words the rules read for layers and categories (the speller's Tamil targets; each a stem the rules match with any ending). */
+export function mapVocabularyTa(): string[] {
+  const all = [...FACILITIES.flatMap((f) => f.words), ...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...SEVERE, ...OPEN, ...CLOSED, ...NEAR];
+  return [...new Set(all.flatMap((p) => p.split(/\s+/)).filter((w) => /^[஀-௿]+$/.test(w)))];
+}
+
+/**
+ * v2 (AI only): the words officers use for each category and each layer, as knowledge for the model's prompt (ai.ts). The model reads the
+ * question and decides; these only tell it what "kuppai", "tasmac" or "பள்ளி" mean here. Built from the same lists the rules used.
+ */
+export function wordTables(): { cats: string[]; layers: string[] } {
+  const cats = CAT_WORDS.map((c) => `${[...(c.cats ?? []), ...(c.family ?? []).map((f) => `family ${f}`)].join(" / ")}: ${c.words.slice(0, 9).join(", ")}`);
+  const layers = FACILITIES.filter((f) => f.layer !== "my_list").map((f) => `${f.layer}${f.where?.kinds ? ` (kinds ${f.where.kinds.join(", ")})` : f.where?.government ? " (government)" : ""}: ${f.words.slice(0, 8).join(", ")}`);
+  return { cats, layers };
 }

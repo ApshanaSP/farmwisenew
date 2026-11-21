@@ -8,6 +8,8 @@ import { CAT_COL, type Row } from "./lib";
 import type { MapAsk } from "./askmap/useMapAsk";
 import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
+import { LAYER_COL, LAYER_WORD } from "@/lib/map/words";
+import type { LayerId } from "@/lib/map/types";
 import { hardenLeaflet } from "./askmap/leafletSafe";
 import { setConsoleMap } from "./thunai/mapbridge";
 import type { RainLayer } from "./rehearsal/rainLayer";
@@ -562,7 +564,8 @@ export default function SatMap(props: Props) {
       s.map.invalidateSize();
       // back to the overview: once the card is its own size again, the whole district (or the chosen zone or taluk) in view
       const p = cb.current;
-      if (shrank && !p.ask?.resp && !p.rain && !p.focus) {
+      // grown into Ask the Map's workspace (v2: the map takes the right of the screen beside the chat): the same, in its new pane
+      if ((shrank || (props.grown && p.ask)) && !p.ask?.resp && !p.rain && !p.focus) {
         const b = p.mode === "taluks" && p.taluk ? s.talukBounds.get(p.taluk) : p.zone ? s.zoneBounds.get(p.zone) : undefined;
         s.map.flyToBounds(b ?? s.district, { padding: b ? [24, 24] : [8, 8], duration: reduced ? 0 : 0.5, animate: !reduced });
       }
@@ -591,7 +594,7 @@ export default function SatMap(props: Props) {
       }
       for (const f of o.features) {
         if (f.lat != null && f.lon != null) s.L.circleMarker([f.lat, f.lon], { renderer: rend, radius: 4, color: "#fff", weight: 1, fillColor: OVERLAY_COL[o.id] ?? "#94A3B8", fillOpacity: 0.95 })
-          .bindTooltip(`<b>${esc(f.name ?? "")}</b>${esc(o.id.replace(/_/g, " "))} · OpenStreetMap`, { className: "dtip" }).addTo(s.overlay);
+          .bindTooltip(`<b>${esc(f.name ?? LAYER_WORD[o.id as LayerId]?.one ?? "")}</b>${esc(LAYER_WORD[o.id as LayerId]?.one ?? o.id.replace(/_/g, " "))} · ${o.id === "my_list" ? "your list" : o.id === "police" ? "district store" : "OpenStreetMap"}`, { className: "dtip" }).addTo(s.overlay);
         else if (f.lines) s.L.polyline(f.lines, { renderer: rend, color: "#38BDF8", weight: 2, opacity: 0.8 }).bindTooltip(esc(f.name ?? ""), { className: "dtip", sticky: true }).addTo(s.overlay);
         else if (f.polys) for (const p of f.polys) s.L.polygon(p, { renderer: rend, color: "#60A5FA", weight: 1, fillOpacity: 0.25 }).bindTooltip(esc(f.name ?? ""), { className: "dtip", sticky: true }).addTo(s.overlay);
       }
@@ -826,7 +829,7 @@ export default function SatMap(props: Props) {
   );
 }
 
-const OVERLAY_COL: Record<string, string> = { schools: "#F59E0B", colleges: "#A855F7", hospitals: "#EF4444", fire_stations: "#F97316", police: "#3B82F6", rail_metro: "#14B8A6", lakes_store: "#60A5FA", gauges: "#22C55E" };
+const OVERLAY_COL = LAYER_COL as Record<string, string>;
 
 /** The panel's real box as camera padding (the bottom sheet at phone width), so a shot never frames under it. */
 function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number] } {
@@ -837,6 +840,8 @@ function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number
   if (sheet) return { tl: [16, 16], br: [16, box.offsetHeight - panel.offsetTop + 16] };
   // the legend sits in the bottom-right corner only: a little room for it, not its whole height across the map
   const rightRoom = 56 + (legend ? Math.min(120, Math.round(legend.offsetWidth / 2)) : 0);
+  // docked in Ask the Map's workspace (v2): the chat is beside the map, not over it
+  if (panel.classList.contains("dock") && box.parentElement?.classList.contains("ws")) return { tl: [24, 24], br: [rightRoom, 32] };
   // minimised to its header: room under the header only
   if (panel.classList.contains("min")) return { tl: [24, panel.offsetTop + panel.offsetHeight + 16], br: [rightRoom, 32] };
   // moved to the right half of the map (dragPanel.tsx): keep the fitted things clear of it on that side

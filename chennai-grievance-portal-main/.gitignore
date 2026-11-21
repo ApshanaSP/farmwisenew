@@ -48,3 +48,6 @@ reports/
 
 # Complaint exports carry names, mobile numbers and addresses: made locally by scripts/export-complaints.js, never committed
 exports/
+
+# Ask the Map: officers' uploaded place lists (lib/map/uploads.ts), never committed
+data/map-lists/

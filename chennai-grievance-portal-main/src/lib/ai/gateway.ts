@@ -124,7 +124,10 @@ function anthropic(): Provider | null {
       // Claude thinks before it answers: a console step's short deadline (5 s, set for the free models) gets at least 10 s here;
       // a Jarvis turn keeps its own, and its model and effort (no role)
       // v8: a Jarvis rung names its Claude model (the deep model on a hard turn, deep8.ts); a console step keeps its role's
-      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
+      // Ask the Map final: a feature's own Claude model and settings (featureClaude), whatever AI_CLAUDE_MODEL says for the other steps
+      const fc = !jarvis && c.feature ? featureClaude(c.feature) : null;
+      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}),
+        ...(fc ? { model: fc.model, effort: fc.effort, think: fc.think, sentinels: true } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
         timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
         // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
         const b = billedOf(e);
@@ -191,6 +194,27 @@ function openai(): Provider | null {
   };
 }
 
+/**
+ * Ask the Map final: a feature with its own providers and its own Claude model, independent of AI_FORCE_PROVIDER and AI_CHAT_PROVIDER (which
+ * keep every other feature, Jarvis's ladder included, where it was). `map` is Ask the Map's plan and answer wording:
+ *   AI_MAP_PROVIDER      the order (default anthropic,bedrock,groq,gemini: Claude first while its key and the owner's spend ceiling allow, then
+ *                        Nova Lite, then the free models); "default" puts the map back on the console's order
+ *   AI_MAP_CLAUDE_MODEL  default claude-haiku-5-5 (the owner's choice, 20 Nov 2026)
+ *   AI_MAP_CLAUDE_EFFORT low (default) | medium | high
+ *   AI_MAP_CLAUDE_THINK  1 lets the model think before it answers (default: it answers at once; the server computes every number anyway)
+ */
+export type Feature = "map";
+export function featureProviders(f: Feature): string[] | null {
+  const v = env("AI_MAP_PROVIDER");
+  if (v.toLowerCase() === "default") return null;
+  return names("AI_MAP_PROVIDER", "anthropic,bedrock,groq,gemini");
+}
+export function featureClaude(f: Feature): { model: string; effort: "low" | "medium" | "high"; think: boolean } {
+  void f;
+  const e = env("AI_MAP_CLAUDE_EFFORT").toLowerCase();
+  return { model: env("AI_MAP_CLAUDE_MODEL") || "claude-haiku-5-5", effort: e === "medium" || e === "high" ? e : "low", think: env("AI_MAP_CLAUDE_THINK") === "1" };
+}
+
 /** A provider setting may name several, in order: AI_PROVIDER=bedrock,gemini. */
 const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean).map((x) => (x === "claude" ? "anthropic" : x));
 const makers = (): Record<string, () => Provider | null> => ({ gemini, bedrock, groq, openai, anthropic });
@@ -204,11 +228,12 @@ const makers = (): Record<string, () => Provider | null> => ({ gemini, bedrock, 
  * AI_CHAT_PROVIDER (e.g. groq, or groq,bedrock) is the whole list for Ask District IQ's own calls (`chat`): only those, in
  * that order; when they are all busy the question is answered from the data by rules.
  */
-function providers(prefer?: ProviderName, chat = false): Provider[] {
+function providers(prefer?: ProviderName, chat = false, feature?: Feature): Provider[] {
   const make = makers();
   const chosen = [...names("AI_FORCE_PROVIDER", ""), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
-  const order = chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
-    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer && chosen.includes(prefer) ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
+  const own = feature ? featureProviders(feature) : null;
+  const order = own ?? (chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
+    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer && chosen.includes(prefer) ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")]);
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -218,8 +243,8 @@ function providers(prefer?: ProviderName, chat = false): Provider[] {
 }
 
 /** What the assistant can use right now (for the dialog's status line and the sources panel). */
-export function aiStatus() {
-  const list = providers(undefined, true);
+export function aiStatus(feature?: Feature) {
+  const list = providers(undefined, true, feature);
   return {
     available: list.length > 0,
     /** why the model is not being used ("AWS keys expired"), when that is known */
@@ -282,6 +307,8 @@ export interface JsonCall<T> {
   lane?: Lane;
   /** this provider and these models only, whatever AI_FORCE_PROVIDER says (Jarvis's own ladder walks its rungs itself) */
   only?: { provider: ProviderName; models: string[] };
+  /** a feature with its own provider order and Claude model (featureProviders): Ask the Map's "map" */
+  feature?: Feature;
 }
 
 export interface CallInfo {
@@ -362,12 +389,12 @@ const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: numb
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
   // `only` walks Jarvis's own ladder, whatever AI_PROVIDER names
   const named = c.only ? makers()[c.only.provider]?.() : null;
-  const all = c.only ? (named ? [named] : []) : providers(c.prefer, c.chat);
+  const all = c.only ? (named ? [named] : []) : providers(c.prefer, c.chat, c.feature);
   // the main provider is the first configured one named in AI_PROVIDER
   const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
   // background work stays off the main provider while another one is configured (not when a provider is forced), to keep
   // a free tier's small per-minute allowance for the questions; a paid main provider (Claude) has none to keep
-  const forced = names("AI_FORCE_PROVIDER", "").length > 0;
+  const forced = names("AI_FORCE_PROVIDER", "").length > 0 || !!(c.feature && featureProviders(c.feature));
   const spare = main !== "anthropic";
   const list = c.background && spare && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
   if (!list.length) throw new AiUnavailableError();

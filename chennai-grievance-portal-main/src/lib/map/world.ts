@@ -15,9 +15,10 @@ import { isPinnable } from "@/lib/collector/mapplace";
 import { EFFECT_KEYS, effectiveSql, effectiveStatus, officerStepsOn } from "@/lib/collector/effective";
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
+import { myListPoints } from "./uploads";
 import type { Entry, ResolverData } from "./resolve";
 import { CAT_TA } from "./words";
-import type { CondPlace, Hotspot, Inc, LayerMeta, LineFeat, LineLayer, NewsDoc, PointFeat, PointLayer, PolyFeat, Sev, WardGeo, Work, World } from "./types";
+import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
 
 type Row = Record<string, any>;
 async function q(sql: string, params: unknown[] = []): Promise<Row[]> {
@@ -38,7 +39,7 @@ declare global {
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 7;
+const WORLD_VERSION = 8;
 
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
@@ -64,7 +65,7 @@ async function loadBase(key: string): Promise<Base> {
     q(`SELECT i.incident_id AS id, i.category_code AS cat, i.family, i.lead_dept AS dept, i.ward_no AS ward, i.zone_no AS zone, i.taluk_code AS taluk,
               i.lat, i.lon, i.loc_precision_m AS prec, i.place_text AS place, i.status_std AS status, i.is_open AS open, i.severity_level AS sev,
               i.priority_score AS priority, i.priority_reasons AS reasons, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.sla_breached AS breached,
-              DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, ${TITLE} AS title, i.citizen_complaints AS citizen, i.source_count AS sources,
+              DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at, ${TITLE} AS title, i.citizen_complaints AS citizen, i.source_count AS sources,
               i.hotspot_id AS hotspot, i.vulnerable AS tags, i.outlet_count AS outlets
        FROM incidents i WHERE i.lat IS NOT NULL AND i.lon IS NOT NULL`),
     q(`SELECT ward_no, zone_no, zone_name, taluk_code, centroid_lat, centroid_lon, adjacent_wards, gi_star_z_30d FROM ref_wards ORDER BY ward_no`),
@@ -89,7 +90,7 @@ async function loadBase(key: string): Promise<Base> {
     lat: Number(r.lat), lon: Number(r.lon), prec: r.prec == null || r.prec === "" ? null : Number(r.prec), pinnable: isPinnable(r.lat, r.prec),
     place: r.place ?? null, status: String(r.status ?? ""), open: Number(r.open) === 1, sev: (SEV_OK.has(r.sev) ? r.sev : "Low") as Sev,
     priority: Number(r.priority) || 0, reasons: r.reasons ?? null, slaDue: r.sla_due ?? null, breached: Number(r.breached) === 1,
-    first: String(r.first ?? ""), title: String(r.title ?? "Incident"), citizen: Number(r.citizen) || 0, sources: Number(r.sources) || 0, hotspot: r.hotspot ?? null,
+    first: String(r.first ?? ""), closedAt: r.closed_at ? String(r.closed_at) : null, title: String(r.title ?? "Incident"), citizen: Number(r.citizen) || 0, sources: Number(r.sources) || 0, hotspot: r.hotspot ?? null,
     tags: r.tags ? String(r.tags) : null, outlets: Number(r.outlets) || 0
   }));
   const news: NewsDoc[] = newsRows.map((d) => ({
@@ -118,7 +119,7 @@ async function loadBase(key: string): Promise<Base> {
     police_station: "police", lake: "lakes_store", river_gauge: "gauges", weather_station: "gauges", air_quality_station: "gauges",
     canal: "pwd_assets", drain: "pwd_assets", river_stretch: "pwd_assets", bund: "pwd_assets", sluice: "pwd_assets", bridge: "pwd_assets", gate_site: "pwd_assets"
   };
-  const points = { schools: [], colleges: [], hospitals: [], fire_stations: [], police: [], rail_metro: [], osm_places: [], lakes_store: [], gauges: [], pwd_assets: [] } as Record<PointLayer, PointFeat[]>;
+  const points = Object.fromEntries(POINT_LAYERS.map((l) => [l, [] as PointFeat[]])) as Record<PointLayer, PointFeat[]>;
   for (const f of facRows) {
     const layer = STORE_KIND[String(f.type)];
     if (!layer) continue;
@@ -126,7 +127,7 @@ async function loadBase(key: string): Promise<Base> {
       in_district: Number(f.in_district) === 1, ward: null });
   }
   // ---- OpenStreetMap points
-  for (const layer of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places"] as const) {
+  for (const layer of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", ...COLLECTOR_LAYERS] as const) {
     for (const f of readLayer(layer)) {
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties;
@@ -154,10 +155,11 @@ async function loadBase(key: string): Promise<Base> {
   meta.lakes_store = store("lakes_store", "PWD lakes", "பொதுப்பணித்துறை ஏரிகள்", points.lakes_store.length);
   meta.gauges = store("gauges", "Gauges and stations", "அளவீட்டு நிலையங்கள்", points.gauges.length);
   meta.pwd_assets = store("pwd_assets", "PWD water works (points)", "பொதுப்பணி நீர்க் கட்டமைப்புகள்", points.pwd_assets.length);
-  for (const id of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", "roads", "waterways", "water_bodies"]) {
+  for (const id of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", "roads", "waterways", "water_bodies", ...COLLECTOR_LAYERS]) {
     const m = om[id];
     if (m) meta[id] = { id: id as LayerMeta["id"], name_en: m.name_en, name_ta: m.name_ta, kind: m.kind, source: "OpenStreetMap", licence: m.licence, attribution: m.attribution,
-      as_of: m.as_of, count: id === "roads" ? lines.roads.length : id === "waterways" ? lines.waterways.length : m.count };
+      as_of: m.as_of, count: id === "roads" ? lines.roads.length : id === "waterways" ? lines.waterways.length : m.count,
+      partial: m.partial && typeof m.partial.what === "string" ? { what: String(m.partial.what), owner: String(m.partial.owner ?? "") } : null };
   }
 
   const cats = new Map(categories().map((c) => [c.code, { label: c.label, label_ta: CAT_TA[c.code] ?? null, family: c.family, lead: c.lead }]));
@@ -401,5 +403,6 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
     const e = effectiveStatus(i.open ? 1 : 0, i.status, d ?? null, step);
     return { ...i, open: e.open === 1, status: e.status, routed: r, breached: late };
   });
-  return { world: { ...base.world, now, incidents }, resolver: base.resolver };
+  // the officers' approved lists (uploads.ts), laid on at every question: an approval shows at once
+  return { world: { ...base.world, points: { ...base.world.points, my_list: myListPoints() }, now, incidents }, resolver: base.resolver };
 }
