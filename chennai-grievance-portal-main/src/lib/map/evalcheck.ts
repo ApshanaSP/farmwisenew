@@ -45,3 +45,22 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
   if (want.from_place && !step("nearest")?.from.startsWith("place:")) out.push("nearest is not from the place");
   return out;
 }
+
+/**
+ * An eval call retried while its provider says it is busy (a per-minute limit, an overloaded model), after the wait it asks for: the score
+ * then measures understanding, not quota. A question still busy after `tries` is reported as unanswered, never as a misreading.
+ */
+export async function withBusyRetry<T>(call: () => Promise<T>, tries = 6, maxWaitS = 60): Promise<{ value: T | null; busy: boolean; waits: number }> {
+  let waits = 0;
+  for (let k = 0; k < tries; k++) {
+    try { return { value: await call(), busy: false, waits }; }
+    catch (e) {
+      const m = /busy|rate.?limit|overloaded|429|529/i.test((e as Error)?.message ?? "");
+      if (!m) throw e;
+      const after = Number((e as { retryAfter?: number }).retryAfter) || 10;
+      waits++;
+      await new Promise((r) => setTimeout(r, Math.min(maxWaitS, Math.max(2, after)) * 1000));
+    }
+  }
+  return { value: null, busy: true, waits };
+}

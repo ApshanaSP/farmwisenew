@@ -38,6 +38,10 @@ const NEW_EXAMPLES: [string, W][] = [
   ["சந்தைகள் அருகே குப்பை புகார்கள்", { understood: true, language: "ta", show: "near", steps: [
     take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", citizen: true, period_days: 7, period_offset: 0 }), take("f1", "markets"),
     { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }] }],
+  ["indha vaaram endha zone-la vibathu adhigama aachu", { understood: true, language: "tanglish", show: "rank", steps: [
+    take("a", "incidents", { category: ["ROAD_ACCIDENT"], status: "any", period_days: 7, period_offset: 0 }),
+    { op: "change", as: "chg", of: "a", period_days: 7, period_offset: 0, before_days: 7, before_offset: 1 },
+    { op: "rank", as: "rank", of: "chg", by: "zone", order: "rise" }] }],
   ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
     take("a", "incidents", { family: ["CRIME"], status: "open", period_days: 7, period_offset: 0 }), take("f1", "liquor", { kinds: ["bar", "pub"] }),
     { op: "within", as: "near", of: "a", near: ["f1"], meters: 500 }, { op: "inside", as: "in", of: "near", area_kind: "zone", area_id: 13 }] }]
@@ -80,10 +84,10 @@ const LAYER_HELP: Partial<Record<LayerId, string>> = {
   roads: "roads (lines; along needs a line id)", rail_metro: "rail and metro stations; kinds metro, rail", osm_places: "named neighbourhoods (points)",
   lakes_store: "PWD lakes (district store)", gauges: "rain, river and air gauges", pwd_assets: "PWD water works", hotspots: "never take: use the hotspot op",
   banks: "bank branches (partial list)", atms: "ATMs (partial list)", worship: "places of worship; kinds hindu (temples), muslim (mosques), christian (churches), jain, sikh, buddhist, other",
-  parks: "parks and playgrounds; kinds park, playground", water_tanks: "overhead water tanks", toilets: "public toilets", bus_stations: "bus stations and stands",
+  parks: "parks and playgrounds (children's play areas are playgrounds); kinds park, playground", water_tanks: "overhead water tanks", toilets: "public toilets", bus_stations: "bus stations and stands",
   gov_offices: "government offices, courts and town halls; kinds government_office, court, town_hall", pharmacies: "pharmacies and medical shops", fuel: "petrol bunks and fuel stations",
   markets: "markets", cemeteries: "cemeteries and crematoriums; kinds cemetery, crematorium", liquor: "TASMAC wine shops, bars and pubs (partial list); kinds wine_shop, bar, pub",
-  ration_shops: "ration (fair price, PDS) shops, found by name (partial list)", my_list: "the officer's own uploaded and approved list"
+  ration_shops: "ration (fair price, PDS) shops, found by name (partial list)", my_list: "the officer's own uploaded and approved list (\"my list\", \"the places on my list\", \"my places\"): take it like any facility layer"
 };
 
 /**
@@ -93,6 +97,8 @@ const LAYER_HELP: Partial<Record<LayerId, string>> = {
 function system(cats: string[], depts: string[], zones?: { zone: number; name: string; lat: number; lon: number }[], catLabels?: Map<string, string>): string {
   return [
     "You turn a District Collector's question about a map of Chennai into a JSON plan. You never answer the question and never invent numbers: the server runs the plan and counts.",
+    "Officers type fast, on phones, in English, Tamil or Tanglish (Tamil in Latin letters), mixed freely. Read them as a colleague would: misspelt words (hospitls, garbge, floding), Tamil names spelt many ways (Velacheri or Velachery, Adayar or Adyar, Mylapur or Mylapore, Tnagar or T. Nagar), shorthand (nr = near, arnd = around), half sentences and missing words all have one plain meaning; find it.",
+    "When the question says in a zone, taluk or ward by name (Anna Nagar zone, Velachery taluk), use that area; near a place uses its point. Use only the place refs given in the prompt.",
     "Steps run in order over named collections (`as`); each later step reads earlier ones by name. Ops:",
     "- take: a layer (incidents with a filter; a facility layer with government and kinds, or nothing).",
     "- within: keep the `of` collection within `meters` of any of the `near` collections. `of` is incidents, or facilities for a rule check (wine shops within 100 m of schools).",
@@ -110,8 +116,11 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "Defaults: status open; period last 7 days (offset 0) unless the question names a period. Distances 10 to 5000 metres (a gap's beyond_m up to 20000). Areas: ward 1-200, zone 1-15, taluk codes TLK-XXX,",
     "point refs are given to you as place refs in the prompt; use only those. A road or waterway is used only by a line id given in the prompt.",
     "A rule check (licensed premises near schools or places of worship) uses the distance the question says; if it says none, 100. Never state a legal distance.",
+    "Categories: use the most exact category whose label matches the question's words (sewage: DRAINAGE_SEWAGE, chain snatching: CRIME_PROPERTY, road accidents: ROAD_ACCIDENT, mosquitoes and dengue: VECTOR_DISEASE); a family only when the question names a broad kind (\"flooding\", \"crime\", \"roads\"). Never a code that is not listed.",
+    "A question that measures licensed premises (wine shops, liquor shops, TASMAC, bars) from schools, colleges or places of worship is a rule check: take the premises, take the places, within of the premises near the places.",
+    "Words for clustering (bunching up, piling up, concentrated, where most) ask for a hotspot; words for a rise by area (got worse, increased the most, jaasthi aagiruchu, adhigama aachu) ask for a change ranked by that area.",
     "language is en, ta (Tamil script) or tanglish (Tamil in Latin letters), as the question is written.",
-    "understood is false when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); then steps may be a single take of incidents.",
+    "understood is false only when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); a loosely worded question that names a kind of incident, a layer, a place or the officer's list is understood.",
     "Each step is one flat object with every field; a field a step does not use is none. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
     "Calendar periods (period_calendar, period_days none): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
     "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar none.",
@@ -158,6 +167,8 @@ export function takeMapCallInfo(): CallInfo | null { const x = lastInfo; lastInf
 export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: string[]; depts: string[]; places: { ref: string; kind: string; name: string }[]; user: string; lang: Lang; signal?: AbortSignal;
   /** the rules' plan for the parts they could read, and the words they could not */
   hint?: Plan | null; unread?: string[];
+  /** v2 (AI first): the question exactly as the officer typed it, when the speller changed words; with suggest, the hint is only a suggestion */
+  typed?: string | null; suggest?: boolean;
   zones?: { zone: number; name: string; lat: number; lon: number }[];
   /** the categories' labels, for the cached prompt */
   catLabels?: Map<string, string> }):
@@ -165,10 +176,13 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   const places = ctx.places.length ? `Places named (use these refs): ${ctx.places.map((p) => `${p.name} = ${p.kind} ${p.ref}`).join("; ")}` : "No place was recognised.";
   // the zones are in the cached system block now; the prompt carries only what this question adds
   const zones = "";
-  const hint = ctx.hint ? `\nTHE RULES READ IT AS: ${JSON.stringify(toWire(ctx.hint))}\nWORDS THE RULES COULD NOT USE: ${(ctx.unread ?? []).join(", ")}. Keep what the rules got right and use these words too.` : "";
+  const typed = ctx.typed && ctx.typed !== text ? `\nAS TYPED: ${ctx.typed} (the question above is the same with its spelling read; if a correction looks wrong, read the typed words yourself)` : "";
+  const hint = !ctx.hint ? "" : ctx.suggest
+    ? `\nA SIMPLE WORD-MATCHER SUGGESTS: ${JSON.stringify(toWire(ctx.hint))}. It can be wrong or miss words${ctx.unread?.length ? ` (it could not use: ${ctx.unread.join(", ")})` : ""}: read the question yourself and keep only what fits it.`
+    : `\nTHE RULES READ IT AS: ${JSON.stringify(toWire(ctx.hint))}\nWORDS THE RULES COULD NOT USE: ${(ctx.unread ?? []).join(", ")}. Keep what the rules got right and use these words too.`;
   let prompt = prev
     ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic).`
-    : `QUESTION: ${text}\n${places}\n${zones}${hint}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
+    : `QUESTION: ${text}${typed}\n${places}\n${zones}${hint}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: ctx.signal,

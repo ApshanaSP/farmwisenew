@@ -132,6 +132,8 @@ export interface AskResponse {
   ms: number;
   /** words read as other words ("adayar" as Adyar): said on the answer so the officer can see it */
   spelled: Fix[];
+  /** v2: a word with two equally close readings that the AI read in context; the other readings, one tap away */
+  unclear: { word: string; options: { label: string; text: string }[] } | null;
   /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
   scorecard: Scorecard | null;
 }
@@ -187,7 +189,7 @@ export function spellerFor(data: ResolverData) {
 }
 
 /** The question's own words that win over a model's plan (route.ts fitModelPlan): the server's language, the world's categories. */
-export const modelWords = (w: World, lang: Lang): ModelWords => ({ lang, familyOf: (c) => w.cats.get(c)?.family ?? null });
+export const modelWords = (w: World, lang: Lang, places: { ref: string; kind: string }[] = []): ModelWords => ({ lang, familyOf: (c) => w.cats.get(c)?.family ?? null, places });
 
 /** Looks up a plan's place reference: "loc:Adyar", "osm:n123", "fac:POL-01", "inc:<id>", "ll:13.04,80.25", "drawn:13.04,80.25,500". */
 /** `lockDept`: a department officer's department. An incident of another department is no place for that officer (QA pass 6, P6-012). */
@@ -234,7 +236,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
     camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], city: null, insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
-    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: [], scorecard: null
+    asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0, spelled: [], scorecard: null, unclear: null
   };
 }
 
@@ -274,8 +276,18 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
     out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
     return done(out);
   }
-  // two equally close readings of a word: ask, never guess
-  if (sp?.ask) {
+  // two equally close readings of a word ("ambatur": Ambattur or Ambathur?): the AI reads the whole question in context, with the places
+  // of every reading, and the answer offers the readings as buttons; without the AI, ask (never guess)
+  if (sp?.ask && aiStatus("map").available) {
+    const tie = sp.ask;
+    const seen = new Set<string>();
+    const found = [input.text!, ...tie.options.map((o) => o.text)].flatMap((t) => resolve(t, null)).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }))
+      .filter((f) => !seen.has(f.ref) && seen.add(f.ref)).slice(0, 8);
+    const a = await aiPlan(input.text!, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      unread: [tie.word], zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+    if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text!, w.now, input.prev, modelWords(w, lang, found)); aiUsed = true; out.unclear = tie; }
+  }
+  if (sp?.ask && !plan) {
     out.say = { en: `Did you mean ${sp.ask.options.map((o) => o.label).join(" or ")}?`, ta: `${sp.ask.options.map((o) => o.label).join(" அல்லது ")} என்று சொன்னீர்களா?`,
       chips: sp.ask.options.map((o) => o.text) };
     return done(out);
@@ -347,7 +359,21 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
       out.followups = followUps(out, null, fe);
       return done(out);
     }
-    if (r?.kind === "plan") {
+    // v2 (owner, 21 Nov 2026): the AI reads every typed question first; the rules' plan goes with it as a suggestion only, and answers when
+    // the AI cannot (no key, busy, a refused plan). The rules' guards above (no such ward, no forecast, out of scope) and the commands stay.
+    if (process.env.AI_MAP_FIRST !== "0" && aiStatus("map").available) {
+      const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
+      const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+        hint: r?.kind === "plan" ? r.plan : null, unread: r?.kind === "plan" ? r.unread : [], suggest: true, typed: asked.text, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+      if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found)); aiUsed = true; if (r?.kind === "plan") places = r.places; }
+      else if (a && "problems" in a && a.problems.includes("not a map question") && r?.kind !== "plan") {
+        out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) };
+        out.ai_used = true;
+        return done(out);
+      }
+    }
+    if (plan) { /* the AI read it */ }
+    else if (r?.kind === "plan") {
       plan = r.plan; defaults = r.defaults; places = r.places; edited = r.edited;
       // words the rules could not use ("kids", "by the sea", "north of the city"): the AI reads the whole question, with
       // the rules' plan as a hint; if it cannot, the rules' answer stands and the trace names the words left unused
@@ -356,7 +382,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
         const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
           hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
-        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, null, modelWords(w, lang)); aiUsed = true; defaults = []; }
+        if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, null, modelWords(w, lang, found)); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
     } else {
@@ -365,7 +391,7 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
         const found = resolve(input.text, null).slice(0, 6).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }));
         const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
         aiUsed = true;
-        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang));
+        if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);

@@ -11,6 +11,7 @@ import path from "path";
 import { beforeAll, expect, it, vi } from "vitest";
 import { haveStore, loadFrozen } from "@/lib/assistant/__tests__/golden/harness";
 import type { Plan } from "./plan";
+import { withBusyRetry } from "./evalcheck";
 
 vi.mock("@/lib/db", async (orig) => ({ ...(await orig<object>()), default: (await import("@/lib/assistant/__tests__/golden/harness")).forward }));
 vi.mock("@/lib/collector/db", async (orig) => ({ ...(await orig<object>()), default: (await import("@/lib/assistant/__tests__/golden/harness")).forward }));
@@ -65,8 +66,9 @@ it.runIf(haveStore())("the AI plan step on the typo questions, as typed and afte
     const t0 = Date.now();
     let p: Plan | null = null;
     try {
-      const r = await ai.aiPlan(text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places, user: "eval@map", lang, zones: w.zones, catLabels });
-      if ("plan" in r) p = fitModelPlan(r.plan, text, w.now, null, modelWords(w, lang));
+      const got = await withBusyRetry(() => ai.aiPlan(text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places, user: "eval@map", lang, zones: w.zones, catLabels }));
+      const r = got.value;
+      if (r && "plan" in r) p = fitModelPlan(r.plan, text, w.now, null, modelWords(w, lang, places));
     } catch { p = null; }
     const info = ai.takeMapCallInfo();
     const usd = info?.provider === "anthropic" ? costOf(info.model, { input_tokens: info.inputTokens - (info.cacheReadTokens ?? 0) - (info.cacheWriteTokens ?? 0), output_tokens: info.outputTokens,

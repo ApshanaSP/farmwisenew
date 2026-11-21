@@ -47,7 +47,7 @@ const COLLECTOR_FACILITIES: Facility[] = (<Facility[]>[
   { layer: "markets", where: null, words: ["market", "markets", "marketplace", "vegetable market", "சந்தை", "மார்க்கெட்"] },
   { layer: "cemeteries", where: { government: null, kinds: ["crematorium"] }, words: ["crematorium", "crematoriums", "crematoria", "electric crematorium", "மின் மயான"] },
   { layer: "cemeteries", where: null, words: ["cemetery", "cemeteries", "burial ground", "burial grounds", "graveyard", "graveyards", "இடுகாடு", "மயான", "சுடுகாடு"] },
-  { layer: "parks", where: { government: null, kinds: ["playground"] }, words: ["playground", "playgrounds", "play ground", "விளையாட்டுத் திடல்", "விளையாட்டு மைதான"] },
+  { layer: "parks", where: { government: null, kinds: ["playground"] }, words: ["playground", "playgrounds", "play ground", "play area", "play areas", "விளையாட்டுத் திடல்", "விளையாட்டு மைதான"] },
   { layer: "parks", where: null, words: ["parks", "public park", "public parks", "பூங்கா"] },
   { layer: "water_tanks", where: null, words: ["water tank", "water tanks", "overhead tank", "overhead tanks", "water tower", "water towers", "நீர்த்தேக்கத் தொட்டி", "தண்ணீர் தொட்டி", "நீர்த் தொட்டி"] },
   { layer: "toilets", where: null, words: ["public toilet", "public toilets", "toilet block", "toilet blocks", "comfort station", "comfort stations", "பொதுக் கழிப்பறை", "பொது கழிப்பறை"] },
@@ -115,7 +115,7 @@ const GAP_PLACES = /\b(places|localities|locality|neighbourhoods?|neighborhoods?
  * A ranked change, the league table: "which 10 wards got worse this month", "zones where flooding rose most", "most improved wards". Needs an area
  * word (or "league table"), so "has flooding gone up?" stays a plain change.
  */
-const RANK = /\b(got|getting|became|become|gone|grown)\s+worse\b|\bworsen(ed|ing)?\b|\b(rose|risen|rise|rising|increased?|grew|jumped|went up|go(ne)? up)\s+(the\s+)?most\b|\bbiggest\s+(rise|increase|jump|fall|drop|decrease)s?\b|\bleague table\b|\brank(ed|ing)?\b[^.?]*\b(change|rise|increase|fall|drop)\b|\b(improved|got better|fell|dropped|decreased|went down|go(ne)? down)\s+(the\s+)?most\b|\bmost improved\b|மோசமடைந்த|அதிகம்\s*அதிகரித்த|மிகவும்\s*அதிகரித்த|அதிகரிப்பு\s*வரிசை/i;
+const RANK = /\b(got|getting|became|become|gone|grown)\s+worse\b|\bworsen(ed|ing)?\b|\b(rose|risen|rise|rising|increased?|grew|jumped|went up|go(ne)? up)\s+(the\s+)?most\b|\bbiggest\s+(rise|increase|jump|fall|drop|decrease)s?\b|\bleague table\b|\brank(ed|ing)?\b[^.?]*\b(change|rise|increase|fall|drop)\b|\b(improved|got better|fell|dropped|decreased|went down|go(ne)? down)\s+(the\s+)?most\b|\bmost improved\b|\b(jaasthi|jasthi|adhigam|athigam|adhigama|athigama|increase)\s+(aagiruchu|aagiduchu|aayiduchu|aachu|aanadhu|aagirukku)\b|மோசமடைந்த|அதிகம்\s*அதிகரித்த|மிகவும்\s*அதிகரித்த|அதிகரிப்பு\s*வரிசை/i;
 const RANK_FALL = /\b(improved|better|fell|fall|dropped|drop|decreased|decrease|went down|go(ne)? down)\b|குறைந்த/i;
 const RANK_UNIT = /\b(wards?|zones?|taluks?|areas?|league table)\b|வார்டு|மண்டல|வட்ட/i;
 const COMPARE = /\b(compare|comparison|vs\.?|versus)\b|ஒப்பிடு|ஒப்பீடு|compare pannu/i;
@@ -342,6 +342,33 @@ export interface ModelWords {
   lang: Lang;
   /** a category code's family, or null for a code the world does not have */
   familyOf: (code: string) => string | null;
+  /** the places the resolver found in the question (the ones the model was given) */
+  places?: { ref: string; kind: string }[];
+}
+
+/** v2: the shape of a model's plan set by the question's words: where a nearest search starts, which way a league table runs, a hotspot after its area. */
+function fitShape(p: Plan, text: string, words: ModelWords): Plan {
+  let steps = p.steps;
+  let show = p.show;
+  // "nearest pharmacy to Marina Beach": a nearest step that starts nowhere starts at the one place the question names
+  const points = (words.places ?? []).filter((x) => x.kind === "locality" || x.kind === "osm_place" || x.kind === "facility");
+  steps = steps.map((s) => (s.op === "nearest" && !s.from.startsWith("place:") && !steps.some((x) => x.as === s.from) && points.length === 1 ? { ...s, from: `place:${points[0].ref}` } : s));
+  // "rank wards by the drop in …", "most improved zones": a fall; "got worse", "rose the most": a rise
+  if (RANK.test(text) || RANK_FALL.test(text)) {
+    const fall = RANK_FALL.test(text) && !/\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?)\b/i.test(text);
+    const rise = /\bworse\b|worsen|\b(rose|rise|rising|increased?|jump(ed)?|went up)\b/i.test(text) && !RANK_FALL.test(text);
+    if (fall || rise) steps = steps.map((s) => (s.op === "rank" ? { ...s, order: fall ? "fall" as const : "rise" as const } : s));
+  }
+  // a hotspot then an area ("dengue clustering in the north"): the area first, then the clusters in it
+  const h = steps.find((s) => s.op === "hotspot");
+  const after = h && steps.find((s) => s.op === "inside" && s.of === h.as);
+  if (h && after && after.op === "inside" && !steps.some((s) => s !== after && "of" in s && s.of === after.as)) {
+    const area = { ...after, of: h.of };
+    const hot = { ...h, of: area.as };
+    steps = [...steps.filter((s) => s !== h && s !== after), area, hot];
+    if (show === after.as) show = hot.as;
+  }
+  return steps === p.steps && show === p.show ? p : { ...p, steps, show };
 }
 
 /**
@@ -350,24 +377,41 @@ export interface ModelWords {
  * model gave none, a code the world does not have, or only a broader family holding it.
  */
 export function fitModelPlan(plan: Plan, text: string, now?: string | null, prev?: Plan | null, words?: ModelWords): Plan {
-  const p = fitTime(plan, text, now, prev);
-  if (!words) return p;
+  const p0 = fitTime(plan, text, now, prev);
+  if (!words) return p0;
+  const p = fitShape(p0, text, words);
   const toks = tokens(text);
   const said = CAT_WORDS.find((c) => any(toks, c.words)) ?? null;
-  const steps = p.steps.map((s) => {
+  // a category or family the model chose is grounded when a word in the question names it (or its family)
+  const grounded = (cats: string[], fams: string[]) => CAT_WORDS.some((c) => any(toks, c.words)
+    && ((c.cats ?? []).some((x) => cats.includes(x) || fams.includes(words.familyOf(x) ?? "")) || (c.family ?? []).some((x) => fams.includes(x) || cats.some((y) => words.familyOf(y) === x))));
+  let steps = p.steps.map((s) => {
     if (s.op !== "take" || s.layer !== "incidents" || !s.filter || !said) return s;
     const f = s.filter;
     const cats = (f.category ?? []).filter((c) => words.familyOf(c) != null);
+    const fams = f.family ?? [];
     if (said.cats) {
       if (said.cats.every((c) => cats.includes(c))) return cats.length === (f.category ?? []).length ? s : { ...s, filter: { ...f, category: cats.length ? cats : null } };
-      const fams = new Set(said.cats.map((c) => words.familyOf(c)));
-      // nothing usable, or only the family that holds the exact category: the exact category
-      if (!cats.length && (!f.family?.length || f.family.every((x) => fams.has(x)))) return { ...s, filter: { ...f, category: said.cats, family: null } };
+      const holds = new Set(said.cats.map((c) => words.familyOf(c)));
+      // nothing usable, only the family that holds the exact category, or a choice no word of the question names: the exact category
+      if ((!cats.length && (!fams.length || fams.every((x) => holds.has(x)))) || !grounded(cats, fams)) return { ...s, filter: { ...f, category: said.cats, family: null } };
       return s;
     }
-    if (said.family && !cats.length && !f.family?.length) return { ...s, filter: { ...f, category: null, family: said.family } };
+    if (said.family && ((!cats.length && !fams.length) || !grounded(cats, fams))) return { ...s, filter: { ...f, category: null, family: said.family } };
     return s;
   });
+  // "which wards got worse", "endha ward-la jaasthi aagiruchu": a ranked change, never a plain count by area
+  const cb = steps.find((s) => s.op === "count_by") as Extract<Step, { op: "count_by" }> | undefined;
+  if (cb && cb.by !== "hex500" && RANK.test(text) && !steps.some((s) => s.op === "change" || s.op === "rank")) {
+    const t = steps.find((s) => s.as === cb.of);
+    if (t?.op === "take" && t.layer === "incidents" && t.filter) {
+      const { now: per, before } = changeWindows(isPeriod(t.filter.period ?? null) ? t.filter.period! : null, REFERENCE.test(text));
+      const order = RANK_FALL.test(text) && !/\bworse\b|worsen/i.test(text) ? "fall" as const : "rise" as const;
+      steps = [...steps.filter((s) => s !== cb).map((s) => (s === t ? { ...t, filter: { ...t.filter!, status: "any" as const, period: per } } : s)),
+        { op: "change", as: "chg", of: t.as, now: per, before }, { op: "rank", as: "rank", of: "chg", by: cb.by, order }];
+      return { ...p, language: words.lang, steps, show: "rank" };
+    }
+  }
   return { ...p, language: words.lang, steps };
 }
 
