@@ -100,6 +100,34 @@ export function tierOfRows(rows: DRow[], spec: Spec): Tier {
   return structured ? "full" : "small";
 }
 
+/** A snapshot's item column (one row per lake, hospital, shop): its values are nearly all different. */
+function snapshotItem(rows: DRow[], spec: Spec) {
+  return spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && (() => {
+    const vals = rows.map((r) => r[c.key]).filter((v) => v != null).map(String);
+    return vals.length >= 3 && vals.length <= 300 && new Set(vals).size >= vals.length * 0.8;
+  })());
+}
+
+/** The measures that move (storage, cases, stock), not fixed reference values (full tank level, capacity) or last year's. */
+function movingMeasures(spec: Spec) {
+  return spec.columns.filter((c) => c.role === "measure" && !/last\s*year|previous|same\s*day/i.test(c.header) && !/capacity|full\b|\bmax\b|maximum|target|sanction/i.test(c.header));
+}
+
+/**
+ * Readings: each row is a value measured (a station's daily PM2.5, a day's riders, a reservoir's level), not an event to
+ * count. That is a dated file with a measure, no status to count, no weight column, and not a snapshot of items. Its
+ * charts and findings are about the value: a count of its rows only says how often someone wrote one down. Returns the
+ * column read (the primary measure), or null for events.
+ */
+export function readingsColumn(rows: DRow[], spec: Spec): Spec["columns"][number] | null {
+  const hasOpen = spec.openValues.length > 0 && rows.some((r) => r._o === 1);
+  if (hasOpen || quantity(spec).col || !spec.columns.some((c) => c.role === "date")) return null;
+  const measures = movingMeasures(spec);
+  if (snapshotItem(rows, spec) && measures.length) return null;
+  const prim = spec.columns.find((c) => c.key === spec.primary) ?? null;
+  return prim?.role === "measure" ? prim : measures[0] ?? null;
+}
+
 export function designDashboard(rows: DRow[], spec: Spec, window: { from: string | null; to: string | null }): Plan[] {
   const full = designFull(rows, spec, window);
   const tier = tierOfRows(rows, spec);
@@ -136,6 +164,22 @@ function designFull(rows: DRow[], spec: Spec, window: { from: string | null; to:
   const latest = panel && window.to ? [{ col: "_d", op: "latest" as const, values: [] }] : [];
   const when = panel && window.to ? ` (${years ? window.to.slice(0, 4) : fmtDay(window.to)})` : "";
 
+  const itemCol = snapshotItem(rows, spec);
+  const measures = movingMeasures(spec);
+  const snapshot = !!(itemCol && !q.col && measures.length);
+  // Readings: each row is a value measured, not an event to count (readingsColumn): the charts show that value
+  const readCol = readingsColumn(rows, spec);
+  // the readings come from several places (rain gauges, air stations): a total over them grows with how many report, so
+  // they are averaged; one series (a day's riders) keeps the column's own way of adding up
+  const placeCol = spec.columns.find((c) => c.role === "place");
+  const placesN = new Set(rows.map((r) => r._p).filter(Boolean)).size;
+  const cat = typeColumn(rows, spec);
+  const several = placesN >= 2 || (!!cat && new Set(rows.map((r) => r[cat.key]).filter((v) => v != null)).size >= 2);
+  const rm = readCol ? { agg: (readCol.agg === "avg" || readCol.unit === "%" || several ? "avg" : readCol.agg === "max" ? "max" : "sum") as Plan["agg"], col: readCol.key } : null;
+  // a name with capitals or figures (PM2.5, NO2) keeps them
+  const lc = (s: string) => (/[A-Z]{2,}|\d/.test(s) ? s : s.toLowerCase());
+  const rWord = readCol ? `${rm!.agg === "avg" ? "Average " : rm!.agg === "max" ? "Highest " : ""}${rm!.agg === "sum" ? cap(readCol.label) : lc(readCol.label)}` : "";
+
   // ---- headline cards: only numbers a Collector acts on (no "columns", "types" or "wards covered" counts)
   const span = window.from && window.to ? daysBetween(window.from, window.to) : 0;
   out.push(plan({ id: "k1", title: cap(q.col ? q.word : spec.entityPlural), chart: "kpi", ...(q.col ? measure : {}), filters: latest }));
@@ -143,46 +187,63 @@ function designFull(rows: DRow[], spec: Spec, window: { from: string | null; to:
   else if (panel) out.push(plan({ id: "k2", title: `${cap(panel.label)}s`, chart: "kpi", agg: "distinct", col: panel.key }));
   else if (date && window.to && !years && span >= 21) out.push(plan({ id: "k2", title: "Last 7 days", chart: "kpi", ...measure, filters: [{ col: "_d", op: "recent_days", values: ["7"] }] }));
   if (hasOpen && date && window.to && span >= 30) out.push(plan({ id: "k4", title: "Waiting 30+ days", chart: "kpi", filters: [...openF, { col: "_d", op: "lte", values: [addDays(window.to, -31)] }] }));
-  if (prim && prim.agg !== "avg" && prim.key !== q.col) out.push(plan({ id: "k3", title: `Total ${prim.label.toLowerCase()}${when}`, chart: "kpi", agg: "sum", col: prim.key, filters: latest }));
+  if (readCol && rm!.agg !== "sum") {
+    out.push(plan({ id: "k3", title: `Average ${lc(readCol.label)}`, chart: "kpi", agg: "avg", col: readCol.key }));
+    out.push(plan({ id: "k7", title: `Highest ${lc(readCol.label)}`, chart: "kpi", agg: "max", col: readCol.key }));
+  } else if (prim && prim.agg !== "avg" && prim.key !== q.col) out.push(plan({ id: "k3", title: `Total ${prim.label.toLowerCase()}${when}`, chart: "kpi", agg: "sum", col: prim.key, filters: latest }));
   else if (!hasOpen && date && window.to && !years && span >= 56) out.push(plan({ id: "k3", title: "Last 28 days", chart: "kpi", ...measure, filters: [{ col: "_d", op: "recent_days", values: ["28"] }] }));
 
   // ---- evidence: the map (or zones), the trend, the main type, the status; at most four
   // a map needs 5 places and a fifth of the rows placed (readiness.ts GUARD)
   const zonesSeen = new Set(rows.map((r) => r._z).filter((z) => z != null)).size;
-  const mapped = (placed / n >= GUARD.minMapPlacedShare && zonesSeen >= GUARD.minMapPlaces) || (pointed / n >= GUARD.minMapPlacedShare && pointed >= GUARD.minMapPlaces);
+  // readings from a handful of named stations read better as a ranking by name than as a map of wards
+  const fewStations = !!readCol && !!placeCol && placesN >= 2 && placesN <= 8;
+  const mapped = !fewStations && ((placed / n >= GUARD.minMapPlacedShare && zonesSeen >= GUARD.minMapPlaces) || (pointed / n >= GUARD.minMapPlacedShare && pointed >= GUARD.minMapPlaces));
   if (mapped) {
     const places = new Set(rows.map((r) => r._p).filter(Boolean)).size;
     const by = spec.columns.some((c) => c.role === "place") && places >= 6 && pointed / n >= 0.3 ? "place" : wardLevel / n >= 0.5 ? "ward" : "zone";
-    out.push(plan({ id: "map", title: (hasOpen ? `Where ${q.word} ${are}` : `Where the ${q.word} are`) + when, chart: "map", by, ...measure, filters: [...openF, ...latest], limit: 300 }));
+    out.push(plan({ id: "map", title: (readCol ? `${rWord} by place` : hasOpen ? `Where ${q.word} ${are}` : `Where the ${q.word} are`) + when, chart: "map", by, ...(rm ?? measure), filters: [...openF, ...latest], limit: 300 }));
   }
-  if (date && window.from && window.to && new Set(rows.map((r) => r._d).filter(Boolean)).size >= GUARD.minTrendPeriods)
-    out.push(plan({ id: "trend", title: `${cap(q.word)} over time`, chart: years ? "bar" : "area", by: "time", ...measure, unit, sort: "key", limit: 60 }));
+  if (date && window.from && window.to && new Set(rows.map((r) => r._d).filter(Boolean)).size >= GUARD.minTrendPeriods) {
+    // a long run of readings is read month by month, so its season shows (a year at a time hides it)
+    const rUnit = readCol && !years && span > 400 && span <= 2200 ? "month" : unit;
+    out.push(plan({ id: "trend", title: readCol ? `${rWord} over time` : `${cap(q.word)} over time`, chart: years ? "bar" : "area", by: "time", ...(rm ?? measure), unit: rUnit, sort: "key", limit: readCol ? 80 : 60 }));
+  }
+  // readings at a few named places too few for a map (four air-quality stations): the measure place by place
+  if (readCol && !mapped && placeCol && placesN >= 2 && placesN <= 30)
+    out.push(plan({ id: "byplace", title: `${rWord} by ${placeCol.label.toLowerCase()}`, chart: "hbar", by: "col", byCol: placeCol.key, ...rm!, limit: 15 }));
   // the leaders of a period table (top countries, top districts)
   if (panel) {
     const m = prim ? { agg: (prim.agg === "avg" ? "avg" : "sum") as Plan["agg"], col: prim.key } : measure;
     out.push(plan({ id: "top", title: `Top ${panel.label.toLowerCase()}s${prim ? ` by ${prim.label.toLowerCase()}` : ""}${when}`, chart: "hbar", by: "col", byCol: panel.key, ...m, filters: latest, limit: 10 }));
   }
-  // the most telling type column (work type, complaint type, disease), split by what is open when there is a status
-  const cat = typeColumn(rows, spec);
-  // a snapshot (one row per lake, hospital, shop): the measures by item, not a count of one row each
-  const itemCol = spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && (() => {
-    const vals = rows.map((r) => r[c.key]).filter((v) => v != null).map(String);
-    return vals.length >= 3 && vals.length <= 300 && new Set(vals).size >= vals.length * 0.8;
-  })());
-  // the measures that move (storage, cases, stock), not fixed reference values (full tank level, capacity) or last year's
-  const measures = spec.columns.filter((c) => c.role === "measure" && !/last\s*year|previous|same\s*day/i.test(c.header) && !/capacity|full\b|\bmax\b|maximum|target|sanction/i.test(c.header));
-  if (itemCol && !q.col && measures.length) {
+  // the most telling type column (work type, complaint type, disease; found above), split by what is open when there is a status
+  if (snapshot) {
     const firstSum = measures.find((c) => c.agg === "sum" && c.unit !== "%");
     if (prim?.agg === "avg" || prim?.unit === "%") out.splice(1, 0, plan({ id: "k5", title: `Average ${prim.label.toLowerCase()}`, chart: "kpi", agg: "avg", col: prim.key, filters: latest }));
     if (firstSum && firstSum.key !== prim?.key) out.splice(2, 0, plan({ id: "k6", title: `Total ${firstSum.label.toLowerCase()}`, chart: "kpi", agg: "sum", col: firstSum.key, filters: latest }));
     const shown = [prim, ...measures.filter((c) => c.key !== prim?.key)].filter((c): c is NonNullable<typeof c> => !!c).slice(0, 3);
     shown.forEach((m, i) => out.push(plan({ id: i ? `item${i}` : "cat", title: `${m.label} by ${itemCol.label.toLowerCase()}`, chart: "hbar", by: "col", byCol: itemCol.key,
       agg: m.agg === "avg" || m.unit === "%" ? "avg" : m.agg === "max" ? "max" : "sum", col: m.key, filters: latest, limit: 15 })));
+  } else if (cat && readCol) {
+    out.push(plan({ id: "cat", title: `${rWord} by ${cat.label.toLowerCase()}${when}`, chart: "hbar", by: "col", byCol: cat.key, ...rm!, filters: latest, limit: 10 }));
   } else if (cat) {
     const d = new Set(rows.map((r) => r[cat.key]).filter((v) => v != null)).size;
     out.push(plan({ id: "cat", title: `${hasOpen ? `${cap(q.word)} ${ow}` : cap(q.word)} by ${cat.label.toLowerCase()}${when}`, chart: d <= GUARD.maxDonutParts ? "donut" : "hbar", by: "col", byCol: cat.key, ...measure, filters: [...openF, ...latest], limit: d <= 5 ? 6 : 8 }));
   }
-  if (placed / n >= 0.2 && !mapped) out.push(plan({ id: "zone", title: `${cap(what)} by zone${when}`, chart: "hbar", by: "zone", ...measure, filters: [...openF, ...latest], limit: 8 }));
+  if (placed / n >= 0.2 && !mapped && !out.some((p) => p.id === "byplace")) out.push(plan({ id: "zone", title: `${readCol ? rWord : cap(what)} by zone${when}`, chart: "hbar", by: "zone", ...(rm ?? measure), filters: [...openF, ...latest], limit: 8 }));
+  // a wide table of readings (one column per reservoir): the next measures over time too, up to four charts in all
+  if (readCol && !cat && !placeCol) {
+    // the biggest of the other measures first (riders by card before riders by a rarely used ticket)
+    const size = (k: string) => rows.reduce((a, r) => a + (typeof r[k] === "number" ? Math.abs(r[k] as number) : 0), 0);
+    const others = measures.filter((c) => c.key !== readCol.key && c.unit === readCol.unit).map((c) => ({ c, s: size(c.key) })).sort((a, b) => b.s - a.s).map((x) => x.c);
+    for (const m of others.slice(0, 3)) {
+      if (out.filter((p) => p.chart !== "kpi").length >= 4) break;
+      const agg = (m.agg === "avg" || m.unit === "%" ? "avg" : "sum") as Plan["agg"];
+      out.push(plan({ id: `trend_${m.key}`, title: `${agg === "avg" ? "Average " : ""}${agg === "avg" ? m.label.toLowerCase() : cap(m.label)} over time`, chart: "area", by: "time", agg, col: m.key,
+        unit: !years && span > 400 && span <= 2200 ? "month" : unit, sort: "key", limit: 80 }));
+    }
+  }
   const status = spec.columns.find((c) => c.role === "status");
   if (status && out.filter((p) => p.chart !== "kpi").length < 4) {
     const d = new Set(rows.map((r) => r[status.key]).filter((v) => v != null)).size;

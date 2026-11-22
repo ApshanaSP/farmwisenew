@@ -581,7 +581,8 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   spec.weight = periodicWeight(rows, spec);
   // a period table (district x year): totals are read for the latest period
   spec.panelBy = panelColumn(rows, spec);
-  if (spec.panelBy && !spec.weight && spec.primary && !spec.openValues.length) spec.weight = spec.primary;
+  // (a level or concentration, PM2.5 at six stations, is averaged, never added up: it is no weight)
+  if (spec.panelBy && !spec.weight && spec.primary && !spec.openValues.length && spec.columns.find((c) => c.key === spec.primary)?.agg !== "avg") spec.weight = spec.primary;
   if (spec.panelBy) emit({ t: "log", text: `One row per ${spec.columns.find((c) => c.key === spec.panelBy)?.label.toLowerCase()} per period: totals are read for the latest period, not added across periods.` });
   else if (spec.weight) emit({ t: "log", text: `A periodic return: one row per place per report date, so "${spec.columns.find((c) => c.key === spec.weight)?.label}" is counted, not the rows.` });
 

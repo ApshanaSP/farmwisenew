@@ -169,6 +169,10 @@ export interface PanelData {
   why?: string;
   alt?: string;
   lint?: string[];
+  /** a finding's own words for each value ("73%", "60 d"), shown on the marks instead of a reformatted number */
+  fmts?: string[];
+  /** the mark to highlight (a finding's leader); the first when absent */
+  hi?: number;
 }
 
 export type Tone = "sev" | "high" | "info" | "low" | "violet" | "teal";

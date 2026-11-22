@@ -58,8 +58,11 @@ const ENTITY_RULES: [RegExp, string][] = [
 
 const text = (p: ColumnProfile[]) => p.map((c) => `${c.header} ${c.top.slice(0, 4).map((t) => t.v).join(" ")}`).join(" ");
 
+/** Column names of page, serial and record numbers: identifiers, never figures to add up. */
+export const ID_HEADER = /^(s\.?\s?no\.?|sl\.?\s?no\.?|sr\.?\s?no\.?|serial(\s?no\.?|\s?number)?|(pdf[\s_-]?)?page([\s_-]?(no|num|number))?|table[\s_-]?id|row[\s_-]?(id|no)|record[\s_-]?(id|no)|_?id|#)$/i;
+
 export function defaultAgg(header: string, unit: string | null): "sum" | "avg" | "max" {
-  if (unit === "%" || /(rate|average|avg|mean|level|index|\baqi\b|temperature|percent|ratio|score|occupancy|depth|height)/i.test(header)) return "avg";
+  if (unit === "%" || /(rate|average|avg|mean|level|index|\baqi\b|temperature|percent|ratio|score|occupancy|depth|height|pm\s?2\.?5|pm\s?10|\bno2\b|\bso2\b|ozone|humidity)/i.test(header)) return "avg";
   return "sum";
 }
 
@@ -72,10 +75,14 @@ export function rulesSpec(profile: ColumnProfile[], file: string, caption: strin
   const all = `${file} ${caption ?? ""} ${text(profile)}`;
   const dept = DEPT_RULES.find(([re]) => re.test(all))?.[1] ?? null;
   const entity = ENTITY_RULES.find(([re]) => re.test(`${file} ${caption ?? ""}`))?.[1] ?? ENTITY_RULES.find(([re]) => re.test(all))?.[1] ?? "record";
-  const columns: ColumnSpec[] = profile.map((p) => ({
-    key: p.key, header: p.header, label: niceCase(p.header.replace(/_+/g, " ").trim()).slice(0, 40), role: p.guess, type: p.type, unit: p.unit,
-    agg: p.guess === "measure" ? defaultAgg(p.header, p.unit) : null, conf: 0.7, why: "Read from the column's name and values."
-  }));
+  const columns: ColumnSpec[] = profile.map((p) => {
+    // a page, serial or record number is an identifier, however numeric its values look
+    const role = p.guess === "measure" && ID_HEADER.test(p.header.trim()) ? "id" : p.guess;
+    return {
+      key: p.key, header: p.header, label: niceCase(p.header.replace(/_+/g, " ").trim()).slice(0, 40), role, type: p.type, unit: p.unit,
+      agg: role === "measure" ? defaultAgg(p.header, p.unit) : null, conf: 0.7, why: "Read from the column's name and values."
+    };
+  });
   const status = columns.find((c) => c.role === "status");
   const measures = columns.filter((c) => c.role === "measure");
   const primary = measures.find((c) => c.unit?.startsWith("Rs")) ?? measures.find((c) => /(cases|count|number|total|qty|quantity|stock|patients|beds)/i.test(c.header)) ?? measures[0] ?? null;
@@ -156,11 +163,14 @@ export function mergeSpec(ai: AiSpec, profile: ColumnProfile[], rules: Spec, ref
     // "not used" only for columns the rules also find empty of meaning: a list of countries or shops is a dimension,
     // even when it is not about Chennai
     if (a.role === "ignore" && !["ignore", "id", "text"].includes(r.role)) return { ...r, conf: 0.66, why: `${r.why} (Kept: it can group the data.)` };
+    // a page number, serial number or table id the AI read as a number to add up is a record id: adding pages up means nothing
+    if (a.role === "measure" && ID_HEADER.test(p.header.trim())) return { ...r, role: r.role === "measure" ? "id" : r.role, agg: null, unit: null, conf: 0.9, why: "A page, serial or record number: not a figure to add up." };
     const agree = a.role === r.role;
     return {
       key: p.key, header: p.header, label: safe(a.label, 40) || r.label, role: a.role, type: p.type,
       unit: a.role === "measure" ? safe(a.unit, 16) || p.unit : null,
-      agg: a.role === "measure" ? (a.agg ?? defaultAgg(p.header, p.unit)) : null,
+      // a level, rate, index or concentration (PM2.5, storage level, occupancy) is never added up, whatever the AI says
+      agg: a.role === "measure" ? (defaultAgg(p.header, a.unit ?? p.unit) === "avg" ? "avg" : a.agg ?? "sum") : null,
       conf: agree ? 0.96 : 0.84, why: safe(a.why, 160) || r.why
     };
   });

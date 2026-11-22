@@ -131,8 +131,10 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
     type: "category" as const, data: p.labels, inverse: horizontal, boundaryGap: !isLine, axisTick: { show: false },
     axisLine: { show: !horizontal, lineStyle: { color: ink.axis } },
     axisLabel: { color: ink.text2, fontSize: dense ? fs - 1.5 : fs, hideOverlap: !horizontal, interval: horizontal ? 0 : "auto",
-      // a long name wraps at its words (the Chart Doctor's rule: never cut mid-word)
-      width: horizontal ? (compact ? 86 : 120) : undefined, overflow: horizontal ? "break" : undefined, lineHeight: horizontal ? fs + 3 : undefined }
+      // a long name wraps at its words when the bars have room for two lines; in a long list it stays on one line,
+      // shortened with an ellipsis (the full name is in the tooltip), so neighbouring names never run into each other
+      width: horizontal ? (compact ? 96 : 140) : undefined, overflow: horizontal ? (p.values.length > 5 ? "truncate" : "break") : undefined,
+      ellipsis: "…", lineHeight: horizontal ? fs + 3 : undefined }
   };
   const val = {
     // bars and areas start at zero (the Chart Doctor sets panel.zero)
@@ -164,18 +166,19 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
     series: [{
       type: "bar", barMaxWidth: compact ? 14 : 18, barMinHeight: 2,
       data: p.values.map((v, i) => {
-        const hot = highlight == null ? i === 0 : p.keys[i] === highlight;
+        const hot = highlight == null ? i === (p.hi != null && p.hi >= 0 ? p.hi : 0) : p.keys[i] === highlight;
         return { value: v, itemStyle: {
           color: hot ? grad(B, A, horizontal) : grad(alpha(A, ink.dark ? 0.55 : 0.6), alpha(A, ink.dark ? 0.32 : 0.35), horizontal),
           borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0], shadowColor: hot ? alpha(A, 0.5) : "transparent", shadowBlur: hot ? 12 : 0 } };
       }),
       showBackground: true, backgroundStyle: { color: alpha(ink.text3, ink.dark ? 0.06 : 0.08), borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0] },
       label: { show: horizontal ? p.values.length <= 14 : p.values.length <= (compact ? 6 : 10), position: horizontal ? "right" : "top", distance: 6, color: ink.text, fontSize: dense ? fs - 1.5 : fs, fontWeight: 600,
-        formatter: (x: { value: number }) => fl(x.value) },
+        formatter: (x: { value: number; dataIndex: number }) => p.fmts?.[x.dataIndex] ?? fl(x.value) },
       animationDuration: 800, animationDelay: (i: number) => i * 55, animationEasing: "cubicOut", cursor: "pointer",
       emphasis: { itemStyle: { color: grad(B, A, horizontal) } }
     }],
-    tooltip: { ...common.tooltip, trigger: "item", formatter: (x: { name: string; value: number }) => `${x.name}<br><b>${f(x.value)}</b>${p.total && (p.plan.agg === "count" || p.plan.agg === "sum") ? ` · ${Math.round((x.value / p.total) * 100)}% of all` : ""}` }
+    tooltip: { ...common.tooltip, trigger: "item", formatter: (x: { name: string; value: number; dataIndex: number }) => p.fmts ? `${x.name}<br><b>${p.fmts[x.dataIndex] ?? f(x.value)}</b>`
+      : `${x.name}<br><b>${f(x.value)}</b>${p.total && (p.plan.agg === "count" || p.plan.agg === "sum") ? ` · ${Math.round((x.value / p.total) * 100)}% of all` : ""}` }
   };
 }
 

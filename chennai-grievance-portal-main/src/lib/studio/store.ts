@@ -162,6 +162,8 @@ export function deleteDataset(id: string) {
   rowCache.delete(id);
   const b = getBoard();
   saveBoard(b.filter((x) => x.datasetId !== id));
+  const d = getDashboards();
+  if (d.some((x) => x.datasetId === id)) saveDashboards(d.filter((x) => x.datasetId !== id));
 }
 
 /** The sha256 of a dataset's saved original (cached by modification time), or null when it has none. */
@@ -244,6 +246,18 @@ export function saveBoard(pins: Pin[]) {
   try { if (fs.existsSync(f) && !Array.isArray(JSON.parse(fs.readFileSync(f, "utf8")))) throw new Error("not a list"); }
   catch { try { fs.copyFileSync(f, `${f}.damaged-${Date.now()}`); } catch { /* nothing to keep */ } }
   write(f, JSON.stringify(pins.slice(0, 24)));
+}
+
+/** Datasets the Collector added as a dashboard of their own ("Add to dashboard"), newest first. */
+export interface DashEntry { datasetId: string; at: string }
+export function getDashboards(): DashEntry[] {
+  try {
+    const v = JSON.parse(fs.readFileSync(path.join(DIR, "dashboards.json"), "utf8"));
+    return Array.isArray(v) ? v.filter((x) => x && typeof x.datasetId === "string" && validId(x.datasetId)) : [];
+  } catch { return []; }
+}
+export function saveDashboards(list: DashEntry[]) {
+  write(path.join(DIR, "dashboards.json"), JSON.stringify(list.slice(0, 40)));
 }
 
 /** A dataset's most pressing findings, for the Briefing ("From your datasets"): read from its saved brief, no model. */

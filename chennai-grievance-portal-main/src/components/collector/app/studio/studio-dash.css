@@ -1,0 +1,152 @@
+/* Data Studio: what was taken from a source, the compact insight cards, "Add to dashboard" and the simple dashboards.
+   Colours are the console's tokens only, so light and dark both follow the theme. */
+
+.dic .ds-rot{transform:rotate(180deg)}
+
+/* ------------------------------------------------------------------------------------- what we took from it -- */
+.dic .ds-took{flex:none;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr);grid-template-areas:"h s" "c c";gap:8px 14px;padding:10px 12px;border-radius:12px;
+  background:var(--surface-2);border:1px solid var(--line-2);animation:ds-rise .45s var(--ease) both}
+.dic .ds-took>header{grid-area:h;display:flex;align-items:center;gap:10px;min-width:0}
+.dic .ds-took-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2)}
+.dic .ds-took-ic .ic{width:17px;height:17px}
+.dic .ds-took-t{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.dic .ds-took-t small{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.dic .ds-took-t b{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-took-t b a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.dic .ds-took-t b a:hover{color:var(--accent-2);text-decoration:underline}
+.dic .ds-took-t b .ic{width:12px;height:12px;flex:none}
+.dic .ds-took-t em{font-style:normal;font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-took-s{grid-area:s;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.dic .ds-took-s>div{min-width:0;padding:5px 9px;border-radius:9px;background:var(--surface);border:1px solid var(--line-2)}
+.dic .ds-took-s dt{font-size:10.5px;color:var(--text-3);white-space:nowrap}
+.dic .ds-took-s dd{margin:0;font:800 16px/1.2 var(--dic-display),sans-serif;color:var(--text);font-variant-numeric:tabular-nums;display:flex;flex-direction:column;min-width:0}
+.dic .ds-took-s dd.txt{font-size:12.5px;font-weight:700;line-height:1.35;padding-top:2px}
+.dic .ds-took-s dd small{font:500 10.5px var(--dic-sans),sans-serif;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-took-c{grid-area:c;display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.dic .ds-took-c>span{display:inline-flex;align-items:center;gap:5px;max-width:100%;height:24px;padding:0 9px 0 7px;border-radius:999px;font-size:11.5px;color:var(--text);
+  background:var(--surface);border:1px solid var(--line-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-took-c>span .ic{width:12px;height:12px;color:var(--accent-2);flex:none}
+.dic .ds-took-c>span i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3)}
+.dic .ds-took-c>span.none{color:var(--text-3)}
+.dic .ds-took-c .ds-lnk{height:24px;padding:0 4px}
+.dic .ds-took-x{grid-column:1/-1;margin:0;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11.5px;color:var(--text-2)}
+.dic .ds-took-x span{display:inline-flex;align-items:center;gap:4px}
+.dic .ds-took-x .ic{width:12px;height:12px;color:var(--text-3)}
+.dic .ds-took-l{grid-column:1/-1;margin:0;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--high)}
+.dic .ds-took-l .ic{width:13px;height:13px}
+.dic .ds-took.compact{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);margin-top:4px;background:transparent}
+.dic:not(.fit) .ds-took,.dic:not(.fit) .ds-took.compact{grid-template-columns:1fr;grid-template-areas:"h" "s" "c"}
+.dic:not(.fit) .ds-took-s{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* -------------------------------------------------------------------------------- insight cards, compact -- */
+/* two across, so four line up as a square; an odd last card takes the whole row */
+.dic .ds-igrid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.dic .ds-igrid.odd>:last-child{grid-column:1/-1}
+.dic:not(.fit) .ds-igrid{grid-template-columns:1fr}
+.dic .ds-icard{gap:8px}
+.dic .ds-icard h4{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}
+/* the chart box keeps one height in every card, so the text below starts on the same line across a row */
+.dic .ds-ichart{min-height:92px;display:flex;flex-direction:column;justify-content:center}
+.dic .ds-ichart .ds-ibars{gap:5px}
+.dic .ds-ichart .ds-ibars li>i{height:9px}
+.dic .ds-inochart{margin:0;font-size:11.5px;color:var(--text-4);text-align:center}
+.dic .ds-icard .ds-ifact{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dic .ds-icard.open .ds-ifact{-webkit-line-clamp:unset;display:block}
+.dic .ds-ihelps{margin:0;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;color:var(--text-2)}
+.dic .ds-ihelps .ic{width:13px;height:13px;flex:none;margin-top:2px;color:var(--tc)}
+.dic .ds-ihelps b{color:var(--text);font-weight:700}
+.dic .ds-imore{display:flex;flex-direction:column;gap:8px;animation:ds-rise .3s var(--ease) both}
+.dic .ds-icard>footer{gap:10px}
+.dic .ds-icard>footer .ds-lnk:first-child{margin-left:0}
+.dic .ds-icard>footer .ds-iown{margin-left:auto}
+.dic .ds-icard>footer .ds-iown+.ds-lnk{margin-left:0}
+.dic .ds-more{flex:none;align-self:center;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 14px;border-radius:999px;font-size:12px;font-weight:650;color:var(--accent-2);
+  background:var(--surface);border:1px solid var(--accent-line)}
+.dic .ds-more:hover{background:var(--accent-soft)}
+.dic .ds-more .ic{width:14px;height:14px;transition:transform .2s}
+.dic .ds-noins{flex:none;display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--line-3)}
+.dic .ds-noins>.ic{width:18px;height:18px;flex:none;color:var(--text-3);margin-top:1px}
+.dic .ds-noins div{display:flex;flex-direction:column;gap:2px}
+.dic .ds-noins b{font-size:13.5px;color:var(--text)}
+.dic .ds-noins span{font-size:12px;line-height:1.45;color:var(--text-3)}
+
+/* the evidence: a chart left alone in the last row takes the whole row */
+.dic .ds-grid.odd>:last-child{grid-column:1/-1}
+
+/* ------------------------------------------------------------------------------------------ add to dashboard -- */
+.dic .ds-dashbtn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:700;color:#fff;background:var(--accent-3);
+  border:1px solid transparent;box-shadow:0 8px 18px -12px var(--accent);transition:filter .15s,transform .15s;margin-right:4px;white-space:nowrap}
+.dic .ds-dashbtn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.dic .ds-dashbtn .ic{width:15px;height:15px}
+.dic .ds-dashbtn.on{padding:0;gap:0;background:var(--accent-soft);color:var(--accent-2);border-color:var(--accent-line);box-shadow:none;overflow:hidden}
+.dic .ds-dashbtn.on:hover{filter:none;transform:none}
+.dic .ds-dashbtn.on button{display:inline-flex;align-items:center;gap:6px;height:100%;padding:0 10px;font:inherit;color:inherit}
+.dic .ds-dashbtn.on button+button{padding:0 8px;border-left:1px solid var(--accent-line)}
+.dic .ds-dashbtn.on button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.dic .ds-li .cnt-b{margin-left:auto}
+
+/* ------------------------------------------------------------------------------------------------ dashboards -- */
+.dic .ds-dashes{display:flex;flex-direction:column}
+.dic .ds-dtabs{flex:none;display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;border-bottom:1px solid var(--line-2)}
+.dic .ds-dtabs button{flex:none;display:inline-flex;align-items:center;gap:6px;max-width:280px;height:30px;padding:0 11px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--text-2);
+  border:1px solid var(--line-2);background:var(--surface)}
+.dic .ds-dtabs button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-dtabs button .ic{width:14px;height:14px;flex:none}
+.dic .ds-dtabs button em{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--surface-3);color:var(--text-3)}
+.dic .ds-dtabs button:hover{border-color:var(--line-3);color:var(--text)}
+.dic .ds-dtabs button.on{color:var(--accent-2);border-color:var(--accent-line);background:var(--accent-soft)}
+.dic .ds-dtabs button.on em{background:var(--accent-3);color:#fff}
+.dic .ds-dash-b{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 16px}
+.dic .ds-dash-b>.ds-board-g{padding:0;overflow:visible}
+.dic .ds-dash-load{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+
+.dic .ds-sd{display:flex;flex-direction:column;gap:12px;animation:ds-fade .35s var(--ease)}
+.dic .ds-sd-h{display:flex;align-items:flex-start;gap:12px}
+.dic .ds-sd-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.dic .ds-sd-t h2{margin:0;font:800 21px/1.25 var(--dic-display),sans-serif;letter-spacing:-.02em;color:var(--text);max-width:980px}
+.dic .ds-sd-t>small{font-size:12px;color:var(--text-3)}
+.dic .ds-sd-acts{flex:none;display:flex;align-items:center;gap:6px}
+.dic .ds-sd-sum{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.5;color:var(--text-2);max-width:1080px}
+.dic .ds-sd-k{display:grid;gap:10px}
+.dic .ds-sd-kpi{--kc:var(--accent);display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 13px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);
+  border-top:3px solid var(--kc);animation:ds-rise .45s var(--ease) both}
+.dic .ds-sd-kpi.k-sev{--kc:var(--sev)}
+.dic .ds-sd-kpi.k-high{--kc:var(--high)}
+.dic .ds-sd-kpi.k-info{--kc:var(--info)}
+.dic .ds-sd-kpi.k-low{--kc:var(--low)}
+.dic .ds-sd-kpi.k-violet{--kc:var(--violet)}
+.dic .ds-sd-kpi.k-teal{--kc:var(--teal)}
+.dic .ds-sd-kpi small{font-size:11.5px;font-weight:600;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ds-sd-kpi b{font:800 24px/1.15 var(--dic-display),sans-serif;letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
+.dic .ds-sd-kpi span{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* the charts: two across at one height; an odd last chart takes the whole row */
+.dic .ds-sd-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dic .ds-sd-g.n1>*,.dic .ds-sd-g.n3>:last-child,.dic .ds-sd-g.n5>:last-child{grid-column:1/-1}
+.dic .ds-sdc{--tc:var(--info);position:relative;display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px 14px 12px 16px;border-radius:13px;overflow:hidden;
+  background:var(--surface-2);border:1px solid var(--line-2);animation:ds-rise .5s var(--ease) both;animation-delay:calc(var(--i) * 70ms)}
+.dic .ds-sdc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tc)}
+.dic .ds-sdc.p-act{--tc:var(--sev)}
+.dic .ds-sdc.p-watch{--tc:var(--high)}
+.dic .ds-sdc.p-note{--tc:var(--low)}
+.dic .ds-sdc>header{display:flex;align-items:center;gap:6px}
+.dic .ds-sdc h4{margin:0;font:700 14.5px/1.35 var(--dic-display),sans-serif;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}
+.dic .ds-sdc-b{position:relative;height:210px;min-height:0}
+.dic .ds-sdc.is-map .ds-sdc-b{height:260px;border-radius:10px;overflow:hidden}
+.dic .ds-sdc-m{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.dic .ds-sdc-m b{font:800 44px/1 var(--dic-display),sans-serif;letter-spacing:-.03em;color:var(--tc)}
+.dic .ds-sdc-m small{font-size:12px;color:var(--text-3);max-width:80%}
+.dic .ds-sdc-i{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-2);padding:8px 10px;border-radius:9px;background:var(--surface);border:1px solid var(--line-2)}
+.dic .ds-sdc-i b{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-4);margin-bottom:1px}
+.dic .ds-sdc-h{margin:0;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;color:var(--text-2)}
+.dic .ds-sdc-h .ic{width:13px;height:13px;flex:none;margin-top:2px;color:var(--tc)}
+.dic .ds-sdc-h b{color:var(--text)}
+.dic:not(.fit) .ds-sd-g{grid-template-columns:1fr}
+.dic:not(.fit) .ds-sd-k{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+.dic:not(.fit) .ds-sd-h{flex-direction:column}
+
+@media (prefers-reduced-motion:reduce){.dic .ds-took,.dic .ds-sd,.dic .ds-sd-kpi,.dic .ds-sdc,.dic .ds-imore{animation:none}}
+
+/* the link with district incidents spans the page like the cards above and below it */
+.dic .ds-dash .ds-linkwrap .ds-linkc{max-width:none}
+.dic .ds-sdc-b>.ds-table{height:100%;overflow:auto}

@@ -5,7 +5,6 @@
  * clean, place, design, link and explain it while the page shows each step; the result is a live dashboard, and
  * questions about it go to Jarvis. Datasets and the board of pinned panels are listed on the left.
  */
-import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SampleInfo } from "@/lib/studio/samples";
@@ -19,14 +18,13 @@ import Dataset from "./Dataset";
 import Connect, { type ConnectRequest } from "./Connect";
 import { OutcomeView, Picker } from "./Outcome";
 import Connectors from "./Connectors";
+import Dashboards from "./Dashboards";
 import "./studio.css";
 import "./studio-command.css";
-
-const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
-const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });
+import "./studio-dash.css";
 
 type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" } | { k: "connectors" };
-interface ListResp { connectors?: { count: number; attention: number }; datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
+interface ListResp { connectors?: { count: number; attention: number }; datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; dashboards?: string[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
 
 const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json,.geojson,.kml,.kmz,.xml,.zip,.pdf,.docx,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp";
 const KEY = "diq-studio-sel";
@@ -111,7 +109,7 @@ export default function Studio({ c }: { c: Console }) {
     if (e.t === "done") {
       const next = pickQueue.current.shift();
       if (next) load().then(() => setTimeout(() => startPick(next.token, next.ids, "each", next.title), 900));
-      else load().then(() => setTimeout(() => setMode({ k: "dataset", id: e.id }), 1100));
+      else load().then(() => setTimeout(() => setMode({ k: "dataset", id: e.id }), 700));
     }
   }, [load]);
   const drain = useCallback(() => {
@@ -120,7 +118,9 @@ export default function Studio({ c }: { c: Console }) {
       const e = queue.current.shift();
       if (!e) { pump.current = null; return; }
       apply(e);
-      const gap = e.t === "step" ? (e.state === "run" ? 420 : 300) : e.t === "log" ? 110 : 0;
+      const base = e.t === "step" ? (e.state === "run" ? 300 : 200) : e.t === "log" ? 60 : 0;
+      // a backlog (the server already finished) is shown quickly: the agents' moments shrink as the queue grows
+      const gap = Math.round(base / (1 + queue.current.length / 6));
       pump.current = setTimeout(next, gap);
     };
     next();
@@ -182,6 +182,18 @@ export default function Studio({ c }: { c: Console }) {
       startPick(pick.token, [ids[0]], "each", `${name(ids[0])} (1 of ${ids.length})`);
     } else startPick(pick.token, ids, how, how === "combine" ? `${ids.length} datasets combined` : name(ids[0]));
   };
+  /** "Add to dashboard": the dataset becomes a simple dashboard of its own, shown at once under Dashboards */
+  const setDash = async (id: string, name: string, on: boolean) => {
+    try {
+      await api("/api/collector/studio/dashboards", { json: { id, on } });
+      if (on) {
+        try { localStorage.setItem("diq-studio-dash", id); } catch { /* not saved */ }
+        c.toast(`Added "${name}" as a dashboard.`);
+        await load();
+        setMode({ k: "board" });
+      } else { c.toast(`Removed "${name}" from the dashboards.`); await load(); }
+    } catch (e: any) { c.toast(e.message, "alert"); }
+  };
   const back = () => setMode(current ? { k: "dataset", id: current.id } : datasets[0] ? { k: "dataset", id: datasets[0].id } : { k: "home" });
   /** a button on an outcome screen */
   const onOutcome = (a: OutcomeAction, o: Outcome) => {
@@ -199,6 +211,8 @@ export default function Studio({ c }: { c: Console }) {
 
   const busy = mode.k === "run" && !!run && !run.doneAt && !run.error && !run.blocked && !run.outcome;
   const datasets = list?.datasets ?? [];
+  const dashIds = list?.dashboards ?? [];
+  const dashCount = dashIds.length;
   const current = mode.k === "dataset" ? datasets.find((d) => d.id === mode.id) : null;
 
   return (
@@ -246,8 +260,9 @@ export default function Studio({ c }: { c: Console }) {
           <header><b>Your data</b><span className="cnt-b">{datasets.length}</span></header>
           <div className="ds-lib-l">
             <button className={`ds-li board${mode.k === "board" ? " on" : ""}`} onClick={() => setMode({ k: "board" })}>
-              <span className="ds-li-ic"><I n="bookmark" /></span>
-              <span className="ds-li-b"><b>On the dashboard</b><small>{list?.board.length ? `${list.board.length} ${list.board.length === 1 ? "chart" : "charts"} added` : "Add charts from any dataset"}</small></span>
+              <span className="ds-li-ic"><I n="grid" /></span>
+              <span className="ds-li-b"><b>Dashboards</b><small>{dashCount ? `${dashCount} ${dashCount === 1 ? "dashboard" : "dashboards"}${list?.board.length ? ` · ${list.board.length} pinned` : ""}` : list?.board.length ? `${list.board.length} pinned ${list.board.length === 1 ? "chart" : "charts"}` : "Add any dataset as a dashboard"}</small></span>
+              {dashCount > 0 && <span className="cnt-b">{dashCount}</span>}
             </button>
             <button className={`ds-li board${mode.k === "connectors" ? " on" : ""}`} onClick={() => setMode({ k: "connectors" })}>
               <span className="ds-li-ic"><I n="refresh" /></span>
@@ -288,7 +303,8 @@ export default function Studio({ c }: { c: Console }) {
             onRetry={lastStart.current ?? undefined} onForce={force} onDiscard={discard} />
         </section>
       ) : mode.k === "dataset" ? (
-        <Dataset key={mode.id} id={mode.id} c={c}
+        <Dataset key={mode.id} id={mode.id} c={c} inDash={dashIds.includes(mode.id)}
+          onDash={(on) => setDash(mode.id, current?.name ?? "Dataset", on)} onOpenDash={() => { try { localStorage.setItem("diq-studio-dash", mode.id); } catch { /* not saved */ } setMode({ k: "board" }); }}
           onRemap={remap(mode.id, current?.name ?? "Dataset")} onRefresh={refresh(mode.id, current?.name ?? "Dataset")} onChoose={choose(mode.id, current?.name ?? "Dataset")}
           onDeleted={() => { load().then((r) => setMode(r?.datasets[0] ? { k: "dataset", id: r.datasets[0].id } : { k: "home" })); }}
           onPinned={() => load()}
@@ -297,46 +313,12 @@ export default function Studio({ c }: { c: Console }) {
       ) : mode.k === "connectors" ? (
         <Connectors c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : mode.k === "board" ? (
-        <Board list={list} c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
+        <Dashboards c={c} pins={list?.board ?? []} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : (
         <section className="ds-span card ds-hero-wrap"><Hero samples={list ? list.samples ?? [] : null} onSample={addSample} busy={busy} /></section>
       )}
       <AnimatePresence>{connecting && <Connect initialUrl={link} onClose={() => setConnecting(false)} onConnect={addLink} />}</AnimatePresence>
       {drag && <div className="ds-dropveil"><div><I n="download" /><b>Drop to analyse</b><small>Seven agents will read, clean, map and explain it</small></div></div>}
     </div>
-  );
-}
-
-function Board({ list, c, onOpen, onChanged }: { list: ListResp | null; c: Console; onOpen: (id: string) => void; onChanged: () => void }) {
-  const items = list?.board ?? [];
-  const unpin = async (datasetId: string, pinId: string) => {
-    try { await api(`/api/collector/studio/${datasetId}`, { json: { action: "unpin", planId: pinId } }); onChanged(); } catch (e: any) { c.toast(e.message, "alert"); }
-  };
-  return (
-    <section className="ds-span card ds-board">
-      <header className="ds-board-h">
-        <span className="ds-ws-ic k-board"><I n="bookmark" /></span>
-        <div><h2>On the dashboard</h2><small>Charts added from any dataset, shown on the Environment page and recomputed from the latest rows every time.</small></div>
-      </header>
-      {!items.length ? (
-        <div className="ds-empty big"><I n="bookmark" /><b>Nothing added yet</b>Open a dataset and press “Add to dashboard” on any chart, or ask Jarvis about the dataset and add its answer.</div>
-      ) : (
-        <div className="ds-board-g">
-          {items.map(({ pin, panel, dataset }, i) => (
-            <article key={pin.id} className={`ds-panel${panel.chart === "map" ? " is-map" : ""}`} style={{ ["--i" as string]: i }}>
-              <header>
-                <div className="ds-p-t"><h4>{panel.title}</h4><small><button className="ds-lnk" onClick={() => onOpen(dataset.id)}>{dataset.name}</button> · {panel.subtitle}</small></div>
-                <div className="ds-p-acts"><button onClick={() => unpin(dataset.id, pin.id)} title="Unpin" aria-label="Unpin"><I n="x" /></button></div>
-              </header>
-              <div className="ds-p-b">
-                {panel.kpi ? <div className="ds-board-k"><b>{panel.kpi.value.toLocaleString("en-IN")}</b><small>{panel.kpi.sub}</small></div>
-                  : panel.chart === "map" ? <StudioMap geo={c.geo} panel={panel} focusZone={null} />
-                    : panel.values.length ? <StudioChart panel={panel} height="100%" /> : <div className="ds-nodata">No values right now.</div>}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }

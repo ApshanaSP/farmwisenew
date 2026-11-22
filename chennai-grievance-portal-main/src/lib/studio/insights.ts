@@ -22,7 +22,15 @@
  * computes a number: the AI only chooses, orders and explains these.
  */
 import type { DRow } from "@/lib/studio/clean";
-import { plan as mk, quantity, yearly } from "@/lib/studio/dashboard";
+import { plan as mk, quantity, readingsColumn, yearly } from "@/lib/studio/dashboard";
+
+/**
+ * Findings that count rows over time or by place. On readings (a station's daily PM2.5, rain gauges, a day's riders)
+ * the count of rows only says how often values were written down (more stations reporting, months with 31 days), so
+ * these are left out there; the findings about the value itself stay.
+ */
+const COUNTED: ReadonlySet<InsightLabel> = new Set<InsightLabel>(["Hotspot", "Pattern", "Rising", "Falling", "Growth", "Drivers", "Unusual change",
+  "Change point", "Seasonality", "Steady share", "Concentration", "Local pattern"]);
 import { formatOf, type Names } from "@/lib/studio/engine";
 import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type InsightLabel, type LinkResult, type Plan, type Spec, type Tone } from "@/lib/studio/types";
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
@@ -81,7 +89,9 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
   const more = rows.length < 3 ? [] : computeInsights2({ rows, spec, window, names, today });
   const vals = fileValues(rows, spec);
   const span = window.from && window.to ? (window.from === window.to ? fmtDay(window.to) : `${fmtDay(window.from, false)} – ${fmtDay(window.to)}`) : null;
+  const readings = rows.length >= 3 && !!readingsColumn(rows, spec);
   const all = [...base.map((x) => ({ ...x, n: x.n ?? rows.length, method: x.method ?? "Counted over the cleaned rows" })), ...more.map((x, i) => ({ ...x, id: `i${base.length + i + 1}` }))]
+    .filter((x) => !readings || !COUNTED.has(x.label))
     .map((x) => shownSafe(x, vals))
     .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
   const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
@@ -609,7 +619,8 @@ function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkRe
   // ------------------------------------------------------------ values to check, and blind spots
   const outl = det.issues.find((i) => i.kind === "outlier");
   if (outl) add({ label: "Anomaly", tone: "info", score: 30, title: `${outl.count} ${outl.count === 1 ? "value" : "values"} far out of line`, metric: { value: n(outl.count), caption: "values to verify" },
-    text: `${n(outl.count)} ${outl.count === 1 ? "value is" : "values are"} far above the rest in ${outl.label.split(":")[0]} (largest ${outl.examples[0] ?? ""}); worth checking before relying on totals.` });
+    // a ten-digit sensor error would be masked as a phone number by the text guard: such a value is left out of the sentence
+    text: `${n(outl.count)} ${outl.count === 1 ? "value is" : "values are"} far above the rest in ${outl.label.split(":")[0]}${outl.examples[0] && (outl.examples[0].match(/\d/g) ?? []).length < 8 ? ` (largest ${outl.examples[0]})` : ""}; worth checking before relying on totals.` });
   const hasPlace = spec.columns.some((c) => ["place", "ward", "zone", "taluk", "lat"].includes(c.role));
   const placed = rows.filter((r) => r._z != null).length;
   if (hasPlace && placed < rows.length * 0.8 && rows.length - placed >= 10)

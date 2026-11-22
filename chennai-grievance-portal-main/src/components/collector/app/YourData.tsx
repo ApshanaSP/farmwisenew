@@ -69,7 +69,7 @@ export default function YourData({ c }: { c: Console }) {
           : !n ? (
             <div className="yd-empty">
               <I n="plus" /><b>Nothing added yet</b>
-              <span>Open a dataset in the Data Studio and press <em>Add to dashboard</em> on any chart: it appears here, kept up to date.</span>
+              <span>Open a dataset in the Data Studio and press <em>Pin</em> on any chart: it appears here, kept up to date.</span>
               <button className="yd-go" onClick={() => openStudio()}><I n="spark" />Open the Data Studio</button>
             </div>
           ) : (

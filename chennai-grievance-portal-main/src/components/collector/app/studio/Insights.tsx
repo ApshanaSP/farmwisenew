@@ -6,6 +6,7 @@
  * why it matters and the next step). Every card opens the rows behind it.
  */
 import { useState } from "react";
+import { HELPS } from "@/lib/studio/helps";
 import type { Brief, BriefItem, InsightLabel, Plan } from "@/lib/studio/types";
 import type { Console } from "../CollectorApp";
 import { I, type IconName } from "../icons";
@@ -55,16 +56,23 @@ export function BriefCard({ brief, stale, busy, c, onReanalyse }: { brief: Brief
 
 export function InsightGrid({ items, onOpen }: { items: BriefItem[]; onOpen: (plan: Plan, key: string | number | null) => void }) {
   return (
-    <div className="ds-igrid">
+    <div className={`ds-igrid${items.length % 2 ? " odd" : ""}`}>
       {items.map((x, i) => <InsightCard key={x.id} x={x} i={i} onOpen={onOpen} />)}
     </div>
   );
 }
 
+/**
+ * One finding: its label and priority, the headline number and title, its evidence drawn as a chart (bars, or the
+ * weekly line), the fact in one sentence and what it helps with. Why it matters, the next step and how it was found
+ * are one click away, so four cards fit side by side and line up.
+ */
 function InsightCard({ x, i, onOpen }: { x: BriefItem; i: number; onOpen: (plan: Plan, key: string | number | null) => void }) {
-  const max = Math.max(1, ...x.bars.map((b) => Math.abs(b.value)));
+  const [more, setMore] = useState(false);
+  const bars = x.bars.slice(0, 5);
+  const max = Math.max(1, ...bars.map((b) => Math.abs(b.value)));
   return (
-    <article className={`ds-icard it-${x.tone}`} style={{ ["--i" as string]: i }}>
+    <article className={`ds-icard it-${x.tone}${more ? " open" : ""}`} style={{ ["--i" as string]: i }}>
       <header>
         <span className="ds-ilabel"><I n={LABEL_IC[x.label] ?? "bulb"} />{x.label}</span>
         <span className={`ds-prio p-${x.priority}`}>{PRIO[x.priority]}</span>
@@ -73,22 +81,30 @@ function InsightCard({ x, i, onOpen }: { x: BriefItem; i: number; onOpen: (plan:
         <div className="ds-imetric"><b>{x.metric.value}</b><small>{x.metric.caption}</small></div>
         <h4>{x.headline}</h4>
       </div>
-      {x.bars.length > 0 ? (
-        <ul className="ds-ibars" aria-label="Evidence">
-          {x.bars.map((b, k) => (
-            <li key={k} className={b.hi ? "hi" : ""} title={`${b.label}: ${b.fmt}`}>
-              <span>{b.label}</span>
-              <i><em style={{ width: `${Math.max(3, (Math.abs(b.value) / max) * 100)}%`, ["--k" as string]: k }} /></i>
-              <b>{b.fmt}</b>
-            </li>
-          ))}
-        </ul>
-      ) : x.series.length > 2 ? <MiniTrend vals={x.series} /> : null}
-      <p className="ds-ifact">{x.text}</p>
-      <div className="ds-iwhy"><small>Why it matters</small><p>{x.why}</p></div>
-      {x.action && <div className="ds-iact"><I n="right" /><p>{x.action}</p></div>}
-      {x.confidence && <p className="ds-iconf" title={x.rank ? `Usefulness ${x.rank.usefulness} = impact ${x.rank.impact.toFixed(2)} × evidence ${x.rank.significance.toFixed(2)} × can act ${x.rank.actionability} × new ${x.rank.novelty} × fresh ${x.rank.freshness}` : undefined}><I n="info" />{x.confidence}</p>}
+      <div className="ds-ichart">
+        {bars.length > 0 ? (
+          <ul className="ds-ibars" aria-label="Evidence">
+            {bars.map((b, k) => (
+              <li key={k} className={b.hi ? "hi" : ""} title={`${b.label}: ${b.fmt}`}>
+                <span>{b.label}</span>
+                <i><em style={{ width: `${Math.max(3, (Math.abs(b.value) / max) * 100)}%`, ["--k" as string]: k }} /></i>
+                <b>{b.fmt}</b>
+              </li>
+            ))}
+          </ul>
+        ) : x.series.length > 2 ? <MiniTrend vals={x.series} /> : <p className="ds-inochart">One figure: no chart needed.</p>}
+      </div>
+      <p className="ds-ifact" title={x.text}>{x.text}</p>
+      <p className="ds-ihelps"><I n="target" /><b>Helps:</b> {HELPS[x.label] ?? "Shows what needs attention"}</p>
+      {more && (
+        <div className="ds-imore">
+          <div className="ds-iwhy"><small>Why it matters</small><p>{x.why}</p></div>
+          {x.action && <div className="ds-iact"><I n="right" /><p>{x.action}</p></div>}
+          {x.confidence && <p className="ds-iconf" title={x.rank ? `Usefulness ${x.rank.usefulness} = impact ${x.rank.impact.toFixed(2)} × evidence ${x.rank.significance.toFixed(2)} × can act ${x.rank.actionability} × new ${x.rank.novelty} × fresh ${x.rank.freshness}` : undefined}><I n="info" />{x.confidence}</p>}
+        </div>
+      )}
       <footer>
+        <button className="ds-lnk" onClick={() => setMore((v) => !v)} aria-expanded={more}>{more ? "Less" : "Why · next step"}<I n="chevd" className={more ? "ds-rot" : ""} /></button>
         {x.owner && <span className="ds-iown" title="A suggested owner: nothing is sent to them"><I n="user" />{x.owner}</span>}
         {x.plan && <button className="ds-lnk" onClick={() => onOpen(x.plan!, x.key)}>See the records<I n="chevr" /></button>}
       </footer>
