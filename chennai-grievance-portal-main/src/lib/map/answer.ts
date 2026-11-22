@@ -8,7 +8,7 @@ import { fmtDistance, haversineM } from "./geom";
 import { areaLabel, filterWords, runMapPlan, type Ctx, type Hit, type Near, type RunResult } from "./execute";
 import type { Plan, Step } from "./plan";
 import type { World } from "./types";
-import { CAT_TA, KIND_WORD, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
+import { CAT_TA, FAMILY_WORD, KIND_WORD, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
 import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
 
 export const LAYER_READY = { en: "map layer ready", ta: "வரைபட அடுக்கு தயார்", tanglish: "map layer ready" } as const;
@@ -79,7 +79,16 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const t = take0(plan);
   const f = t?.filter ?? null;
   const ta = isTa(lang);
-  const cats = f?.category?.length ? f.category.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase())).join(", ") : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
+  // v3: many kinds read as their family ("crime" for six crime kinds), or the first two "and 3 more kinds"; never a list of six
+  const many = (cs: string[]) => {
+    const names = cs.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase()));
+    if (cs.length <= 3) return names.join(", ");
+    const fams = new Set(cs.map((c) => w.cats.get(c)?.family ?? ""));
+    const fw = fams.size === 1 ? FAMILY_WORD[[...fams][0]] : undefined;
+    if (fw) return ta ? fw.ta : fw.en.toLowerCase().replace(" (all kinds)", "");
+    return ta ? `${names.slice(0, 2).join(", ")} மற்றும் ${cs.length - 2} வகைகள்` : `${names.slice(0, 2).join(", ")} and ${cs.length - 2} more kinds of`;
+  };
+  const cats = f?.category?.length ? many(f.category) : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
   const st = f?.status === "open" ? (ta ? "திறந்த " : "open ") : f?.status === "closed" ? (ta ? "முடிந்த " : "closed ") : "";
   // past their deadline is part of what is counted, so the headline says it ("314 open past-deadline incidents ...")
   const sev = (f?.overdue ? (ta ? "காலக்கெடு தாண்டிய " : "past-deadline ") : "") + (f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "");

@@ -95,7 +95,7 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["CRIME_PROPERTY"], words: ["theft", "thefts", "robbery", "robberies", "snatching", "chain snatching", "burglary", "திருட்டு", "கொள்ளை", "thiruttu"] },
   { cats: ["DRAINAGE_SEWAGE"], words: ["sewage", "drainage", "drain overflow", "overflowing drain", "manhole", "கழிவுநீர்", "சாக்கடை", "kazhivuneer", "saakadai"] },
   { cats: ["WATER_SUPPLY"], words: ["drinking water", "water supply", "no water", "water shortage", "water problem", "water problems", "water not coming", "thanni varala", "thanni prachanai", "metro water", "குடிநீர்", "kudineer"] },
-  { cats: ["VECTOR_DISEASE"], words: ["dengue", "mosquito", "mosquitoes", "malaria", "fever", "டெங்கு", "கொசு", "kosu"] },
+  { cats: ["VECTOR_DISEASE"], words: ["kosu thollai", "kosu", "dengue", "mosquito", "mosquitoes", "malaria", "fever", "டெங்கு", "கொசு", "kosu"] },
   { cats: ["STRAY_ANIMALS"], words: ["naai thollai", "naai kadi", "stray dog", "stray dogs", "dog bite", "dog bites", "stray cattle", "cattle on road", "cows on road", "maadu", "maadugal", "naai", "nai kadi", "தெருநாய்", "நாய் கடி"] },
   { cats: ["TREES_PARKS"], words: ["tree fall", "fallen tree", "trees fell", "tree fell", "uprooted", "மரம் விழுந்", "மரம் சாய்ந்"] },
   { cats: ["ENCROACHMENT"], words: ["encroachment", "encroachments", "ஆக்கிரமிப்பு"] },
@@ -1237,6 +1237,20 @@ export function mapVocabularyTa(): string[] {
  * v2 (AI only): the words officers use for each category and each layer, as knowledge for the model's prompt (ai.ts). The model reads the
  * question and decides; these only tell it what "kuppai", "tasmac" or "பள்ளி" mean here. Built from the same lists the rules used.
  */
+/**
+ * v3: the kinds of problem whose words appear in a question (the word tables the AI is given), for the AI's second look
+ * when its plan names no kind. It decides nothing: the AI is shown the words and decides.
+ */
+export function kindWordsIn(text: string): { word: string; codes: string[] }[] {
+  const toks = tokens(text);
+  const out: { word: string; codes: string[] }[] = [];
+  for (const c of CAT_WORDS) {
+    const w = c.words.find((p) => hasPhrase(toks, p));
+    if (w) out.push({ word: w, codes: [...(c.cats ?? []), ...(c.family ?? []).map((f) => `family ${f}`)] });
+  }
+  return out.slice(0, 3);
+}
+
 export function wordTables(): { cats: string[]; layers: string[] } {
   const cats = CAT_WORDS.map((c) => `${[...(c.cats ?? []), ...(c.family ?? []).map((f) => `family ${f}`)].join(" / ")}: ${c.words.slice(0, 18).join(", ")}`);
   const layers = FACILITIES.filter((f) => f.layer !== "my_list").map((f) => `${f.layer}${f.where?.kinds ? ` (kinds ${f.where.kinds.join(", ")})` : f.where?.government ? " (government)" : ""}: ${f.words.slice(0, 8).join(", ")}`);

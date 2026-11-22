@@ -283,12 +283,30 @@ export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழை�
 export function repairRefs(plan: Plan, prev: Plan | null, found: { ref: string; name: string }[], ctx: Ctx): Plan {
   const tail = (r: string) => r.slice(r.indexOf(":") + 1).toLowerCase().replace(/[^a-z0-9]/g, "");
   const known = [...(prev?.steps ?? []).flatMap((x) => (x.op === "inside" && x.area.kind === "point" ? [x.area.ref] : [])), ...found.map((f) => f.ref)].filter((r) => ctx.place(r));
-  return { ...plan, steps: plan.steps.map((x) => {
+  return dropUnknown({ ...plan, steps: plan.steps.map((x) => {
     if (x.op !== "inside" || x.area.kind !== "point" || ctx.place(x.area.ref)) return x;
     const t = tail(x.area.ref);
     const ref = known.find((r) => tail(r) === t) ?? found.find((f) => f.name.toLowerCase().replace(/[^a-z0-9]/g, "") === t && ctx.place(f.ref))?.ref;
     return ref && ctx.place(ref) ? { ...x, area: { ...x.area, ref } } : x;
-  }) };
+  }) }, ctx);
+}
+
+/** v3: an inside step at a place the map cannot find (the AI read "la" in "road la pallam" as a place): taken out, the rest answers */
+function dropUnknown(plan: Plan, ctx: Ctx): Plan {
+  const bad = plan.steps.filter((x) => x.op === "inside" && x.area.kind === "point" && !ctx.place(x.area.ref)) as Extract<Plan["steps"][number], { op: "inside" }>[];
+  if (!bad.length) return plan;
+  let steps = plan.steps;
+  let show = plan.show;
+  for (const b of bad) {
+    steps = steps.filter((x) => x !== b).map((x) => {
+      const y = { ...x } as Record<string, unknown>;
+      for (const k of ["of", "from", "to"]) if (y[k] === b.as) y[k] = b.of;
+      if (Array.isArray(y.near)) y.near = (y.near as string[]).map((n) => (n === b.as ? b.of : n));
+      return y as unknown as Plan["steps"][number];
+    });
+    if (show === b.as) show = b.of;
+  }
+  return { ...plan, steps, show };
 }
 
 /**

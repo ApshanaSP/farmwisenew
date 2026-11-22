@@ -124,3 +124,28 @@ describe("Ask the Map v3: places along a road", () => {
     }
   });
 });
+
+describe("Ask the Map v3: a made-up place, many kinds", () => {
+  it("drops an inside step at a place the map cannot find, keeps one it can", async () => {
+    const { repairRefs } = await import("./ask");
+    const known: Ctx = { lang: "en", place: (r) => (r === "loc:Velachery" ? { ref: r, name: "Velachery", name_ta: null, lat: 12.98, lon: 80.22, kind: "locality" } : null) };
+    const p = (ref: string) => plan([take, { op: "inside", as: "in", of: "a", area: { kind: "point", ref, radius_m: 1000 } }]);
+    const gone = repairRefs(p("osm:la"), null, [], known);
+    expect(gone.steps.map((s) => s.op)).toEqual(["take"]);
+    expect(gone.show).toBe("a");
+    expect(repairRefs(p("loc:Velachery"), null, [], known).steps.map((s) => s.op)).toEqual(["take", "inside"]);
+    // a follow-up's renamed ref comes back to the conversation's own
+    const fixed = repairRefs(p("osm:Velachery"), p("loc:Velachery"), [], known);
+    expect((fixed.steps[1] as { area: { ref: string } }).area.ref).toBe("loc:Velachery");
+  });
+  it("says six kinds of one family by the family's name", async () => {
+    const { compose } = await import("./answer");
+    const w = fixtureWorld();
+    const crime = [...w.cats.entries()].filter(([, v]) => v.family === "CRIME").map(([k]) => k);
+    if (crime.length < 4) return;
+    const pl = plan([{ ...take, filter: F({ category: crime }) } as Step]);
+    const a = compose(pl, runMapPlan(pl, w, ctx), w, ctx);
+    expect(a.headline.toLowerCase()).toContain("crime");
+    expect(a.headline).not.toContain(",");
+  });
+});

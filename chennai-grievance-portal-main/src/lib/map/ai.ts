@@ -15,7 +15,7 @@ import { extractNumbers } from "@/lib/assistant/verify";
 import { z } from "zod";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
-import { wordTables } from "./route";
+import { kindWordsIn, wordTables } from "./route";
 
 /** v2: a question of one to three words names a layer, a kind of problem or a place ("garbage" is garbage complaints, not junk text). */
 const short = (t: string) => t.trim().split(/\s+/).length <= 3;
@@ -124,6 +124,8 @@ const NEW_EXAMPLES: [string, W][] = [
   ["eve teasing cases taluk wise", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { category: ["CRIMES_AGAINST_WOMEN"], status: "open", period_days: 30, period_offset: 0 }), { op: "count_by", as: "by", of: "a", by: "taluk" }] }],
   ["restaurant food adulteration", { understood: true, intent: "plan", city: "none", language: "en", show: "a", steps: [take("a", "incidents", { category: ["FOOD_SAFETY"], status: "open", period_days: 30, period_offset: 0 })] }],
   ["engal theru la light eriyala", { understood: true, intent: "plan", city: "none", language: "tanglish", show: "a", steps: [take("a", "incidents", { category: ["STREETLIGHT_ELECTRICAL"], status: "open", period_days: 7, period_offset: 0 })] }],
+  ["ward with the fewest garbage complaints", { understood: true, intent: "plan", city: "none", language: "en", show: "by", steps: [take("a", "incidents", { category: ["SOLID_WASTE"], status: "open", period_days: 30, period_offset: 0 }), { op: "count_by", as: "by", of: "a", by: "ward", fewest_first: true }] }],
+  ["fires reported in the news", { understood: true, intent: "plan", city: "none", language: "en", show: "a", steps: [take("a", "incidents", { category: ["FIRE_EXPLOSION"], news: true, status: "any", period_days: 30, period_offset: 0 })] }],
   ["will it rain tomorrow", { understood: true, intent: "city", city: "forecast", language: "en", show: "a", steps: [take("a", "incidents", { status: "open" })] }],
   ["is traffic bad right now", { understood: true, intent: "city", city: "traffic", language: "en", show: "a", steps: [take("a", "incidents", { status: "open" })] }],
   ["crime near bars in Zone 13", { understood: true, language: "en", show: "in", steps: [
@@ -196,7 +198,6 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "- What kinds or types of complaints, what are the problems in an area (zone 7, Adyar): count_by category inside that area (a plan, not a brief).",
     "- Least, fewest, lowest, which area has the least complaints: count_by (ward, zone or taluk) with fewest_first true (never for most, highest or worst).",
     "- Police cases, police complaints, police incidents: dept POL-GCP on the incidents (every kind the police hold: accidents, traffic, crime, public order), not one crime category.",
-    "- A question that names NO kind of problem at all (how many incidents, total incidents, all complaints in zone 5): every kind, no category, family or dept, every_kind true. If it names any kind (suicide cases, dengue complaints, tree complaints, least flooded zone), that kind's category or family goes on the incidents and every_kind is false: the words cases, complaints and incidents never mean every kind by themselves.",
     "- Per person, per head, per capita, per 1000 people, for its population, relative to people living there: count_by ward, zone or taluk with per_people true (the map ranks by cases for every 10,000 people).",
     "- Which area needs my attention, where should I focus or go first, worst or problem areas: open incidents past deadline (overdue true, no period), count_by ward (or zone if the question says zone).",
     "- What is happening or what happened near a kind of place (near schools, near wine shops): open incidents within 500 m of that layer. Near one named place: inside its point.",
@@ -347,6 +348,15 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x) || FAMILIES.includes(x)) && !(r.object.named_layers ?? []).length
       && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length || (st.status && st.status !== "open") || st.overdue || st.severity?.length))
       ? "brief" : "plan");
+    // v3: a plan that names no kind of problem while the question has a word of one ("least flooded zone", "news reported
+    // accidents"): the AI looks once more at those words and decides (a plan about every kind stays as it is)
+    const kindless = c.ok && !r.object.every_kind && r.object.intent !== "brief" && c.plan.steps.some((x) => x.op === "take" && x.layer === "incidents" && !x.filter?.category?.length && !x.filter?.family?.length && !x.filter?.dept?.length);
+    const hints = kindless && attempt === 0 ? kindWordsIn(text) : [];
+    if (hints.length && !bad.length) {
+      prompt = `${prompt}
+SECOND LOOK: your plan names no kind of problem, but the question has ${hints.map((h) => `"${h.word}" (${h.codes.join(" / ")})`).join(", ")}. If the question asks about that kind, put its code on the incidents and in named_categories; if those words mean something else here, return the same plan.`;
+      continue;
+    }
     if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
     if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
     problems = c.ok ? bad : [...c.problems, ...bad];

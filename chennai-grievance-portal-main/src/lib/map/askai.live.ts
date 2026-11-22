@@ -73,7 +73,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"], ["fresh3", "eval/map-v3/fresh.json"], ["probe", process.env.ASKAI_PROBE ?? "eval/map-v3/holdout.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"], ["fresh3", "eval/map-v3/fresh.json"], ["collector3", "eval/map-v3/collector.json"], ["probe", process.env.ASKAI_PROBE ?? "eval/map-v3/holdout.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
     for (const x of read(file) as (Q & { kind?: "brief" | "scorecard" | "city" | "refuse" })[]) {
@@ -106,9 +106,9 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
     }
   }
-  for (const fset of ["followups", "followups3", "followups3h", "followups3f", "topics3", "fprobe"].filter((x) => SETS.includes(x))) {
+  for (const fset of ["followups", "followups3", "followups3h", "followups3f", "topics3", "collectorf3", "fprobe"].filter((x) => SETS.includes(x))) {
     as(fset);
-    const convs = JSON.parse(fs.readFileSync(fset === "fprobe" ? path.join(process.cwd(), process.env.ASKAI_FPROBE ?? "") : path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : fset === "followups3f" ? "followups-fresh.json" : fset === "topics3" ? "topics.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
+    const convs = JSON.parse(fs.readFileSync(fset === "fprobe" ? path.join(process.cwd(), process.env.ASKAI_FPROBE ?? "") : path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : fset === "followups3f" ? "followups-fresh.json" : fset === "topics3" ? "topics.json" : fset === "collectorf3" ? "collector-followups.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
     for (const c of convs) {
       let prev: Plan | null = null;
       let last: Awaited<ReturnType<typeof askMap>> | null = null;
