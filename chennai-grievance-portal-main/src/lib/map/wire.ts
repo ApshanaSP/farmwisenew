@@ -27,7 +27,9 @@ export const WireStep = z.object({
   b_kind: AreaW.kind, b_id: AreaW.id, b_code: AreaW.code, b_ref: AreaW.ref, b_radius_m: AreaW.radius_m,
   before_days: z.number().nullable(), before_offset: z.number().nullable(),
   /** rank: the biggest rise first, or the biggest fall */
-  order: z.enum(["rise", "fall", "fast", "slow", "fewest"]).nullable(),
+  order: z.enum(["rise", "fall", "fast", "slow"]).nullable(),
+  /** v3: count_by with the fewest first */
+  fewest_first: z.boolean().nullable().describe("count_by only: true ONLY when the question asks for the least, fewest or lowest (least complaints zone); false or null for most, highest, worst, top, which has the most"),
   /** v3: count_by ward/zone/taluk ranked by cases for every 10,000 people living there (population: Kontur, 2023) */
   per_people: z.boolean().nullable().describe("count_by ward, zone or taluk only: true when the question asks per person, per head, per capita, for its population or 'relative to how many people live there'; else null")
 });
@@ -53,7 +55,7 @@ const EMPTY: Omit<WireStep, "op" | "as"> = {
   layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null, period_calendar: null,
   government: null, kinds: null, of: null, near: null, meters: null, line: null, from: null, to: null, k: null, areas: null, beyond_m: null, by: null,
   area_kind: null, area_id: null, area_code: null, area_ref: null, area_radius_m: null, b_kind: null, b_id: null, b_code: null, b_ref: null, b_radius_m: null,
-  before_days: null, before_offset: null, order: null, per_people: null
+  before_days: null, before_offset: null, order: null, per_people: null, fewest_first: null
 };
 
 const areaOut = (a: AreaRef, p: "area" | "b") => a.kind === "ward" || a.kind === "zone" ? { [`${p}_kind`]: a.kind, [`${p}_id`]: a.id }
@@ -88,7 +90,7 @@ export function toWire(plan: Plan): WirePlan {
         case "along": return { ...base, of: s.of, line: s.line, meters: s.meters };
         case "nearest": return { ...base, from: s.from, to: s.to, k: s.k };
         case "farthest": return { ...base, areas: s.areas, from: s.from, beyond_m: s.beyond_m };
-        case "count_by": return { ...base, of: s.of, by: s.by, per_people: s.per === "people" ? true : null, order: s.fewest ? "fewest" : null };
+        case "count_by": return { ...base, of: s.of, by: s.by, per_people: s.per === "people" ? true : null, fewest_first: s.fewest ? true : null };
         case "hotspot": return { ...base, of: s.of };
         case "compare": return { ...base, of: s.of, ...areaOut(s.a, "area"), ...areaOut(s.b, "b") } as WireStep;
         case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null,
@@ -117,7 +119,7 @@ export function fromWire(w: WirePlan): Plan {
       case "along": return { op: "along", as: s.as, of: s.of ?? "", line: s.line ?? "", meters: s.meters ?? 75 };
       case "nearest": return { op: "nearest", as: s.as, from: s.from ?? "", to: s.to ?? "", k: Math.round(s.k ?? 1) };
       case "farthest": return { op: "farthest", as: s.as, areas: s.areas ?? "ward", from: s.from ?? "", beyond_m: s.beyond_m };
-      case "count_by": return { op: "count_by", as: s.as, of: s.of ?? "", by: s.by ?? "ward", ...(s.per_people && (s.by === "ward" || s.by === "zone" || s.by === "taluk") ? { per: "people" as const } : {}), ...(s.order === "fewest" ? { fewest: true } : {}) };
+      case "count_by": return { op: "count_by", as: s.as, of: s.of ?? "", by: s.by ?? "ward", ...(s.per_people && (s.by === "ward" || s.by === "zone" || s.by === "taluk") ? { per: "people" as const } : {}), ...(s.fewest_first === true ? { fewest: true } : {}) };
       case "hotspot": return { op: "hotspot", as: s.as, of: s.of ?? "" };
       case "compare": return { op: "compare", as: s.as, of: s.of ?? "", a: areaIn(s, "area") ?? { kind: "zone", id: 0 }, b: areaIn(s, "b") ?? { kind: "zone", id: 0 } };
       case "change": return { op: "change", as: s.as, of: s.of ?? "", now: period ?? { kind: "last_days", days: 7, offset: 0 },

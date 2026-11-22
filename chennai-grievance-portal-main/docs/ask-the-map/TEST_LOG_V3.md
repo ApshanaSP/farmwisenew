@@ -21,6 +21,8 @@ set), on the frozen store. The plan scorer is `evalcheck.misses`; the answer jud
 | 2, which-X-area, Tanglish words, brief vs list, follow-up shape, "there" | 87/90 | 67/70 | — | — | 0 | 0.10 |
 | 3, previous-answer places only when pointed at, category words | 89/90 | 67/70 | **35/40** (first sight) | **19/20** (first sight) | 0 | 0.14 |
 | Full regression after round 3 fixes | 88/90 | 66/70 | 38/40 | 19/20 | 0 | 0.67 (all sets) |
+| Final run (round 4 fixes: along, ref repair, fewest, cell names, points_at_previous) | 86/90 | 65/70 | 37/40 | 18/20 | 0 | 0.57 (all sets) |
+| After the final run: fewest moved to its own field (probe, 5 questions x 5) | — | — | — | — | 0 | 25/25 right |
 
 The held-out sets were first run in round 3: 35/40 and 19/20 are the honest unseen scores. After that, round 4 fixed
 general bugs they showed (the "which X area" rule listed too few facilities; a follow-up pointing at a place should drop
@@ -51,7 +53,7 @@ X" became a summary; "thanni nikkudhu" read as water supply).
 ## The answer judge
 
 Claude Haiku reads the question with the answer's headline and sentence and says whether it answers it (yes / partly /
-no) and how clear it is (1-5). Round 3 sample (80, headline only): 52 yes, 25 partly, 3 no, clarity 3.8. It found real
+no) and how clear it is (1-5). Round 3 sample (80, headline only): 52 yes, 25 partly, 3 no, clarity 3.8. Final run (80, headline and sentence): 60 yes, 16 partly, 4 no, clarity 3.8; one "no" showed the AI choosing fewest-first for "highest", fixed after (25/25 in a probe). It found real
 bugs (the internal error, the lost place, "least" answered as "most", cell numbers) that the plan scorer could not see.
 
 ## Checks
@@ -61,7 +63,7 @@ bugs (the internal error, the lost place, "least" answered as "most", cell numbe
   answer's places, fewest first, places along a road against a brute-force distance).
 - Golden (frozen store): 37/37.
 - Typecheck clean; lint 0 errors.
-- Production build OK; the v3 server is `askmap-v3-prod-3016` (`.next-prod-v3d`), v2 stays on 3015.
+- Production build OK; the v3 server is `askmap-v3-prod-3016` (`.next-prod-v3e`), v2 stays on 3015.
 - Seen in the browser on the production build: the ranked picture for "which school has the most complaints near it";
   the per-person ward shading; the rain forecast in blue; the day on the map while playing; the loading picture; a
   follow-up ("what about hospitals").

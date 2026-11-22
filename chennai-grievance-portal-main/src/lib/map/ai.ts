@@ -193,7 +193,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "- speed: how fast cases are closed (median days from first report to closing) by ward, zone, taluk, category or dept; order fast (resolving fast, best performing, quickest) or slow (slowest, taking longest, delays). Take incidents with status any and period_days 90 unless the question names a period.",
     "- Which school, hospital, college, market, bus stand, temple, wine shop, ration shop, park, ATM or any other kind of facility (or its area, surroundings, around it) has the most problems or cases: a within step to that facility layer and count_by near (never by ward); the kind of problem, if named, on the incidents.",
     "- What kinds or types of complaints, what are the problems in an area (zone 7, Adyar): count_by category inside that area (a plan, not a brief).",
-    "- Least, fewest, lowest, which area has the least complaints: count_by (ward, zone or taluk) with order fewest.",
+    "- Least, fewest, lowest, which area has the least complaints: count_by (ward, zone or taluk) with fewest_first true (never for most, highest or worst).",
     "- Per person, per head, per capita, per 1000 people, for its population, relative to people living there: count_by ward, zone or taluk with per_people true (the map ranks by cases for every 10,000 people).",
     "- Which area needs my attention, where should I focus or go first, worst or problem areas: open incidents past deadline (overdue true, no period), count_by ward (or zone if the question says zone).",
     "- What is happening or what happened near a kind of place (near schools, near wine shops): open incidents within 500 m of that layer. Near one named place: inside its point.",
