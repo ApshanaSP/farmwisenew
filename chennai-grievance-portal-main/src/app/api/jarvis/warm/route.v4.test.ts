@@ -60,4 +60,18 @@ describe("POST /api/jarvis/warm", () => {
     expect((await post()).body).toMatchObject({ warmed: false, why: "recent" });
     expect(h.warms.length).toBe(1);
   });
+
+  // v12 (21 Nov): the server's keep-warm (lib/thunai/keepwarm.ts) warms the prompt after its other steps; at mode-on this call only says
+  // Jarvis is in use (every warm made at the opening moment had timed out behind the opening's burst of work)
+  it("v12: with the keep-warm running, nothing is warmed here, and Jarvis counts as in use", async () => {
+    const { resetKeepWarm, activeWithin } = await import("@/lib/thunai/keepwarm");
+    resetKeepWarm();
+    globalThis.__jarvisKeepWarm = { started: true, running: false, again: null, promptAt: 0, timers: [], last: null };
+    try {
+      expect(activeWithin("jarvis")).toBe(false);
+      expect((await post()).body).toMatchObject({ warmed: false, why: "keep-warm" });
+      expect(h.warms).toEqual([]);
+      expect(activeWithin("jarvis")).toBe(true);
+    } finally { resetKeepWarm(); }
+  });
 });

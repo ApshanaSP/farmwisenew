@@ -71,7 +71,6 @@ describe("RC-16: no getter or setter of the runtime's time zone in the server co
     "components/collector/app/Insights.tsx": "a greeting; the clock text it reads is already Chennai wall time",
     "components/collector/app/Shell.tsx": "a greeting; reads the Chennai hour from the as-of text and falls back on the browser's",
     "components/collector/app/thunai/Thunai.tsx": "a greeting by the viewer's own hour, in the viewer's browser",
-    "components/collector/app/traffic/TrafficView.tsx": "the current year in the viewer's browser, only to leave a date's year out when it is this year",
     "lib/complaint-media.ts": "a folder name for an upload (a day in the server's zone is as good as any)",
     "lib/officer/photos.ts": "a folder name for a photo (a day in the server's zone is as good as any)",
     "lib/studio/values.ts": "reads a spreadsheet cell's own date, built by the sheet reader in local time and written back in the same zone"

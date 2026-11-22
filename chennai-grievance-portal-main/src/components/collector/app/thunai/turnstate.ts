@@ -114,7 +114,8 @@ export function memTurn(heard: string, did: string, o: { doc?: Pick<StageDocT, "
   return t;
 }
 /** the last four turns, newest last */
-export const keepTurns = (list: MemTurn[], t: MemTurn) => [...list, t].slice(-4);
+// v11: six turns (was four), so a follow-up two questions back still resolves (the reference keeps eight exchanges)
+export const keepTurns = (list: MemTurn[], t: MemTurn) => [...list, t].slice(-6);
 
 // ---------------------------------------------------------------- observations --
 export interface Observation { step: string; ok: boolean; error?: string | null; digest?: string }
@@ -212,24 +213,46 @@ export function stillLine(lang: "en" | "ta", last: string | null): string {
 }
 
 // ---------------------------------------------------------------- captions while hearing --
-export interface Recogniser { start(): unknown; stop(): void; setLang?(lang: string): void }
+export interface Recogniser { start(): unknown; stop(): void; setLang?(lang: string): void; /** v15: a new sentence starts now */ mark?(): void; /** v15: false once it gave up */ running?: boolean }
+/** v15: how long the captions stay ready after the last sentence ends (inside the conductor's window: the maker asks it) */
+export const CAPTIONS_KEEP_MS = 25_000;
 /**
- * The browser's live captions send room audio to the browser's speech service, so they run only while an addressed
- * sentence is being heard (the conductor's speech start says whether it is engaged), or while a spoken yes is awaited, and
- * stop at the end of speech. Display only: Whisper's text decides.
+ * The browser's live captions send room audio to the browser's speech service, so they run only inside the conductor's window (the maker
+ * asks inWindow: woken, engaged, or a spoken yes awaited). Display only: Whisper's (Sarvam's) text decides.
+ * v15 (22 Nov, the owner: "when I speak, it should simultaneously type in the bar, like Claude's voice mode; never the older question"):
+ * the recogniser is started ready, at the wake or as Jarvis's answer ends (`warm`), and kept for CAPTIONS_KEEP_MS after a sentence, so it is
+ * already listening when the next sentence starts; started at the onset, as before, it missed the first 0.3-1 s and the bar kept the last
+ * question meanwhile. Each addressed sentence marks its start (`mark`), so only its own words show. Side talk still starts nothing.
  */
 export class HearingCaptions {
   private rec: Recogniser | null = null;
-  constructor(private make: () => Recogniser | null) {}
+  private idle: ReturnType<typeof setTimeout> | null = null;
+  constructor(private make: () => Recogniser | null, private keepMs = CAPTIONS_KEEP_MS) {}
   get running() { return !!this.rec; }
+  /** v15: ready for the next sentence (the wake, the end of an answer): a recogniser started now if none runs, inside the window only */
+  warm(o: { on: boolean }) {
+    if (!o.on) return;
+    if (!this.rec || this.rec.running === false) {
+      const r = this.make();
+      if (!r) return;
+      this.rec = r;
+      r.start();
+    }
+    this.arm();
+  }
   speechStart(o: { on: boolean; engaged: boolean; awaitingYes: boolean }) {
-    if (this.rec || !o.on || !(o.engaged || o.awaitingYes)) return;
+    if (!o.on || !(o.engaged || o.awaitingYes)) return;
+    this.clear();
+    if (this.rec && this.rec.running !== false) { this.rec.mark?.(); return; }
     const r = this.make();
-    if (!r) return;
+    if (!r) { this.rec = null; return; }
     this.rec = r;
     r.start();
   }
-  speechEnd() { const r = this.rec; this.rec = null; r?.stop(); }
-  stop() { this.speechEnd(); }
+  /** the sentence ended: the recogniser stays ready for the next one, CAPTIONS_KEEP_MS */
+  speechEnd() { if (this.rec) this.arm(); }
+  stop() { this.clear(); const r = this.rec; this.rec = null; r?.stop(); }
   setLang(lang: string) { this.rec?.setLang?.(lang); }
+  private clear() { if (this.idle) clearTimeout(this.idle); this.idle = null; }
+  private arm() { this.clear(); this.idle = setTimeout(() => this.stop(), this.keepMs); }
 }

@@ -362,7 +362,7 @@ function AreaTabs({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang: "en" | 
   const a = area;
   const label = r.context.areas[0]?.[ta ? "ta" : "en"] ?? (a.kind === "ward" ? `Ward ${a.id}` : a.kind === "zone" ? `Zone ${a.id}` : "");
   const overview = () => {
-    if (a.kind === "ward") void ask.draw({ ward: a.id }, ta ? `${label}: முழு மேலோட்டம்` : `Full overview of ${label}`);
+    if (a.kind === "ward") void ask.draw({ ward: a.id }, undefined, ta ? `${label}: முழு மேலோட்டம்` : `Full overview of ${label}`);
     else void ask.ask(ta ? `${label} இல் என்ன நடக்கிறது` : a.kind === "point" ? `what is happening near ${label}` : `what is happening in ${label}`);
   };
   const toTopic = () => { const p = herePlan(plan, a); if (p) void ask.run(p, ta ? `${label}: ${topic}` : `${topic![0].toUpperCase()}${topic!.slice(1)} in ${label}`); };

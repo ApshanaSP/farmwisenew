@@ -140,6 +140,12 @@ export interface AgentInput {
   /** run one call (arguments built from it); throws on bad arguments */
   run: (call: AgentCall) => Promise<{ name: string; args: Record<string, unknown>; result: ToolResult }>;
   log?: (msg: string) => void;
+  /**
+   * v11: THE DISTRICT NOW (lib/thunai/v11/snapshot.ts snapshotText), the Collector's only (never a department-locked officer's): the whole
+   * district in one view, so the question is understood against it and the right tools are called. Its figures are for understanding;
+   * the answer's come from the calls, as always.
+   */
+  district?: string;
 }
 
 export interface AgentRun { name: string; args: Record<string, unknown>; result: ToolResult; ms: number }
@@ -171,7 +177,7 @@ export function callText(c: AgentCall): string {
 }
 
 /** Rows worth showing the agent from a tool's data: the first array of objects, up to `max` rows, a few fields each. */
-function preview(data: unknown, max = 5): string[] {
+export function preview(data: unknown, max = 5): string[] {
   const seen = new Set<unknown>();
   const find = (v: unknown, depth: number): Record<string, unknown>[] | null => {
     if (!v || typeof v !== "object" || seen.has(v) || depth > 3) return null;
@@ -206,6 +212,9 @@ export function agentPrompt(a: AgentInput, observations: string[], round: number
   const last = round >= MAX_ROUNDS - 1;
   return [
     `Data as of ${a.asOf}. Console: ${a.scopeLine}.`,
+    // v11: the district at a glance, first round only: understand the question against it (which zone, which road, which story is meant,
+    // what "it" or "the worst one" is) and call the tool named beside the part that answers it, so the answer is written from that call
+    round === 0 && a.district ? `THE DISTRICT NOW (headline figures, to understand the question and choose tools; the answer's figures must come from your calls):\n${a.district}` : "",
     a.summary ? `Conversation so far:\n${a.summary}` : "Conversation so far: none.",
     a.previous ? `Previous answer:\n${a.previous}` : "",
     `Resolved place in the message: ${a.place || "none"}. Window named in the words: ${a.window || "none"}. Language detected by rules: ${a.detected}.`,

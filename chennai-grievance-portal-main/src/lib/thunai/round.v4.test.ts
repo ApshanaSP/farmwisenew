@@ -193,7 +193,9 @@ describe("v4 planner", () => {
     expect(JSON.stringify(ok.turns?.[0].slots).length).toBeLessThanOrEqual(300);
     expect(() => body("x", { turns: [{ ...t, result: "r".repeat(500) }] as never })).toThrow();
     expect(() => body("x", { turns: [{ ...t, recipe: "bogus" }] as never })).toThrow();
-    expect(() => body("x", { turns: [t, t, t, t, t] as never })).toThrow();
+    // v11: six turns travel (four before)
+    expect(body("x", { turns: [t, t, t, t, t, t] as never }).turns).toHaveLength(6);
+    expect(() => body("x", { turns: [t, t, t, t, t, t, t] as never })).toThrow();
   });
 
   // ---- defect 6: speech confidence and language
@@ -318,14 +320,19 @@ describe("v4 planner", () => {
     expect(r.result?.kind).toBe("do");
     expect(r.result?.stage?.recipe).toBe("performance");
   });
-  it("plannerWarm hands lane L3 the screens bundle's exact system prompt and schema", async () => {
+  it("plannerWarm hands lane L3 the wide bundle's exact system prompt and schema", async () => {
+    // (v4's prefix: THE DISTRICT NOW off; with it on, v11.test.ts checks the v11 prefix)
+    // v12 (21 Nov): the wide bundle, not the screens one: Claude (the only rung with a prompt cache) asks round 0 with it (round.ts leadBundle)
+    vi.stubEnv("JARVIS_SNAPSHOT", "0");
     const w = R.plannerWarm(WORLD);
-    expect(w.system).toBe(R.plannerSystems(WORLD)[0]);
-    expect(w.schema).toBe(R.SCHEMAS.screens);
+    expect(w.system).toBe(R.plannerSystems(WORLD)[2]);
+    expect(w.schema).toBe(R.SCHEMAS.wide);
   });
 
   // ---- the planner's stable system prompts (for the prompt cache)
   it("plannerSystems gives the exact round-0 system prompts of the screens, data and wide bundles, with nothing per-turn in them", async () => {
+    // (v4's prefixes: THE DISTRICT NOW off; with it on, v11.test.ts checks the v11 prefix against what the planner sends)
+    vi.stubEnv("JARVIS_SNAPSHOT", "0");
     const sys = R.plannerSystems(WORLD);
     expect(sys.length).toBe(3);
     const said: [string, number][] = [["put together something useful for my morning", 0], ["how many open complaints in total", 1], ["ஏதாவது பயனுள்ளதா போடு", 2]];

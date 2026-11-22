@@ -23,13 +23,19 @@ import { allowedSet, figuresIn, gateChunk } from "@/lib/thunai/numbergate";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import type { RefNames } from "@/lib/assistant/scope";
 import { firstMove, startTour, TOUR_Q, tourStep, type TourState, type TourStop } from "@/lib/thunai/v10/tour10";
+import { clusterLine, inZone, nearOf, NO_JAM, NO_REPEAT, noJamIn, noRepeatIn, spotLine, spotNear, topRepeat, TRAFFIC_OFF, worstJam } from "@/lib/city/pick";
+import type { CityLast, CityLastIn } from "@/lib/city/intent";
+import { ZONE_NAMES } from "@/lib/thunai/lexicon";
+import { VIEW_CLOSED } from "./cityopen";
+import type { TrafficNow } from "@/lib/city/traffic";
 import { downloadAnswer, planVisits, saveView } from "../askmap/actions";
 import { mapCmd as bridgeCmd, type BridgeOp, type BridgeReply } from "../askmap/bridge";
 import { answerGist, type MapAsk } from "../askmap/useMapAsk";
 import type { Console } from "../CollectorApp";
 
 /** what Jarvis says: English and Tamil, and the figures the voice may say (the line's own, written here from the answer) */
-export interface MapLine { en: string; ta: string; allowed?: Set<string> }
+// v14 (21 Nov review 13, scenarios 7): `shown`, what a city op opened (the jam it picked, with where it is), for the next "show me in the map"
+export interface MapLine { en: string; ta: string; allowed?: Set<string>; shown?: CityLast | null }
 
 export interface MapOpsDeps {
   lang: Lang;
@@ -55,6 +61,30 @@ export interface MapOpsDeps {
   bridge?: (op: BridgeOp, args?: Record<string, unknown>) => BridgeReply | null;
   /** opens Rain & flooding on a rain or a tab ("diq:rehearsal", which the console's RainBand listens for) */
   rehearsal?: (detail: { replay: string | null; manual: boolean; stop?: "check" | null; lens?: "traffic" | "power" | "metro" }) => void;
+  /** v12 (21 Nov): the Live traffic view on the Overview's map, opened on a spot, a trouble spot or the "Keeps coming" tab (Jarvis's Stage out
+   * of the way, so the map shows); `lat`/`lon`: where the spot was, for the view to find it again in fresher data */
+  // (v14, 21 Nov review 13 routing 0 and 10: on a zone's filter; and closed by voice)
+  traffic?: { open: (o: { spot?: string | null; cluster?: string | null; tab?: "repeat" | null; lat?: number | null; lon?: number | null; zone?: number | null }) => void;
+    /** v13 (21 Nov review, finding 1 7): what the Live traffic view is open on now (null: closed), so asking for the same spot again does not remount it */
+    current?: () => { spot: string | null; cluster: string | null; tab: "repeat" | null; zone?: number | null } | null;
+    close?: () => void };
+  /** v13 (finding 1 6): Jarvis's Stage out of the way, so the map under it shows (every view that opens on the map calls it first) */
+  clearStage?: () => void;
+  /** v12: the Overview's map camera: in, out (its own + and − buttons), or to a point (the console's focus: it flies there and rings it) */
+  camera?: { zoom: (dir: "in" | "out") => boolean; flyTo: (p: { label: string; lat: number; lon: number }) => boolean };
+  /** v12: a zone or taluk the console can place itself, by its name (the map's own geography) */
+  place?: (name: string) => { lat: number; lon: number } | null;
+  /** v12: the Overview page in front, Jarvis's Stage and the console's panels out of the way, the map as it is (not grown: that closes the views) */
+  toOverview?: () => void;
+  /** v12: the past rains' record Rain & flooding reads (the dev preview has its own) */
+  rainsApi?: () => string;
+  /**
+   * v12 (21 Nov, stale-and-double RC5): the turn's own stop. Jarvis passes its turn's signal, so a newer sentence stops the map question in
+   * flight (useMapAsk) and the city reads; an operation whose turn has ended does nothing more after its next wait
+   */
+  signal?: AbortSignal;
+  /** v12 (understanding RC13): resolves once the Overview's map is drawn, or after a short wait (whenMapReady below) */
+  mapReady?: () => Promise<void>;
   fetch?: typeof fetch;
   download?: typeof downloadAnswer;
   save?: typeof saveView;
@@ -73,8 +103,12 @@ export const tourNow = (): TourState | null => (tour?.s.phase === "running" ? to
 /** for tests */
 export function resetMapOps() { tour = null; readOut = null; left = null; }
 
-/** Ask the Map's state for Jarvis's lanes (map10.ts MapCtx10 without the language), from the console's useMapAsk instance. */
-export function mapSnap10(m: Partial<MapAsk> | null | undefined, o: { rainOpen?: boolean } = {}): Omit<MapCtx10, "lang"> {
+/**
+ * Ask the Map's state for Jarvis's lanes (map10.ts MapCtx10 without the language), from the console's useMapAsk instance.
+ * v12 (21 Nov): `lastCity`, the part of the city the last answer showed (Thunai passes it: the open city screen's, else the last city turn's);
+ * without it, the Live traffic view or Rain & flooding open, else Ask the Map's own city answer, says it.
+ */
+export function mapSnap10(m: Partial<MapAsk> | null | undefined, o: { rainOpen?: boolean; trafficOpen?: boolean; lastCity?: CityLastIn; world?: MapCtx10["world"]; subject?: MapCtx10["subject"] } = {}): Omit<MapCtx10, "lang"> {
   const r = m?.resp ?? null;
   // the tour lives on the grown map: the map found shrunk (the Collector moved on without saying stop) ends it, so its "go back", "again" and
   // "show me more" are the console's again, and it does not come back when the map is grown for another question (v10 review 2, finding 14)
@@ -94,8 +128,35 @@ export function mapSnap10(m: Partial<MapAsk> | null | undefined, o: { rainOpen?:
     suggest: (readOut && readOut.resp === r ? readOut.list : null) ?? r?.followups ?? [],
     rainOpen: !!o.rainOpen,
     tour: !!t,
-    tourCheck: !!t?.check
+    tourCheck: !!t?.check,
+    // v13 (21 Nov review, finding 0 4): Thunai's explicit null means the last answer was not the city's (a list of cases after the traffic):
+    // "show them on the map" is then that answer's, never the Live traffic view still open; only a caller that passes nothing gets the fallbacks
+    lastCity: o.lastCity !== undefined ? o.lastCity : (o.trafficOpen ? "traffic" : o.rainOpen ? "flood" : r?.city?.topic ?? null),
+    // v14 (21 Nov review 13): the Live traffic view open (routing 10), the console's places (routing 0), the open screen's subject (scenarios 4)
+    ...(o.trafficOpen ? { trafficOpen: true } : {}), ...(o.world ? { world: o.world } : {}), ...(o.subject ? { subject: o.subject } : {})
   };
+}
+
+/** v13 (21 Nov review, finding 1 7): what a city op the map lane ran showed, as the last city answer (its topic, focus, rain and spot) */
+export function cityShownBy(cmd: Pick<MapCmd, "op" | "topic" | "focus" | "rain" | "spot" | "zone" | "act">): CityLast | null {
+  if (cmd.op !== "city" || !cmd.topic || cmd.act === "close") return null;
+  return { topic: cmd.topic, focus: cmd.focus ?? null, rain: cmd.rain ?? null, spot: cmd.spot?.id ?? null, lat: cmd.spot?.lat ?? null, lon: cmd.spot?.lon ?? null, ...(cmd.zone ? { zone: cmd.zone } : {}) };
+}
+
+/**
+ * v14 (21 Nov review 13, routing 8, scenarios 0 and 7): the last city answer after a map op. A city op: what it opened (the jam it picked, with
+ * where it is: the next "show me in the map" finds that jam again, not a fresher read's worst); a Rain op: its tab's part of the city; a
+ * camera move keeps the one before (`prev`: "zoom in a bit", then "show me in the map"); any other op (an Ask the Map answer, a layer, a
+ * close) replaces it with nothing, so "show them on the map" is never an older question's view.
+ */
+export function cityAfterMap(cmd: MapCmd, line: MapLine | null | undefined, prev: CityLast | null): CityLast | null {
+  if (cmd.op === "zoom") return prev;
+  if (cmd.op === "city") return cmd.act === "close" ? null : line?.shown ?? cityShownBy(cmd);
+  if (cmd.op === "rain" && cmd.act !== "close" && cmd.act !== "back") {
+    const tab = cmd.tab ?? "flooding";
+    return tab === "flooding" ? { topic: "flood", focus: null, rain: cmd.rain ?? null } : tab === "power" || tab === "metro" ? { topic: tab, focus: null, rain: null } : null;
+  }
+  return null;
 }
 
 /** How sure Jarvis must be that it was spoken to (Thunai.tsx needsName): saving and exporting keep something (B), the drafts are C. */
@@ -103,11 +164,28 @@ export function mapRisk(cmd: MapCmd): "A" | "B" | "C" {
   return cmd.op === "send" ? "C" : cmd.op === "save" || cmd.op === "export" ? "B" : "A";
 }
 
-/** The console's own pieces as the executor's (Thunai.tsx passes its host and its HUD). */
-export function consoleMapDeps(host: () => { c: Console; settled?: () => Promise<void> }, ui: Pick<MapOpsDeps, "lang" | "show" | "point" | "askYes"> & { clearStage?: () => void }): MapOpsDeps {
+/**
+ * v12 (21 Nov, understanding RC13): resolves when the Overview's map is drawn (Leaflet's container inside the map card), at once when it
+ * already is, else after `ms` at most (or when `signal` stops the turn). A step that moves the camera or opens a view on a spot waits for it,
+ * so it never acts on a map that has not mounted yet: a page step and a map step in one plan ran in the same instant.
+ */
+export function whenMapReady(ms = 1500, signal?: AbortSignal | null): Promise<void> {
+  if (typeof document === "undefined") return Promise.resolve();
+  const ready = () => !!document.querySelector(".a-map .leaflet-container");
+  if (ready()) return Promise.resolve();
+  const t0 = Date.now();
+  return new Promise<void>((res) => {
+    const tick = () => { if (ready() || signal?.aborted || Date.now() - t0 >= ms) res(); else setTimeout(tick, 50); };
+    setTimeout(tick, 50);
+  });
+}
+
+/** The console's own pieces as the executor's (Thunai.tsx passes its host and its HUD, and its turn's signal). */
+export function consoleMapDeps(host: () => { c: Console; settled?: () => Promise<void> }, ui: Pick<MapOpsDeps, "lang" | "show" | "point" | "askYes" | "signal"> & { clearStage?: () => void }): MapOpsDeps {
   const c = () => host().c;
   return {
     ...ui,
+    mapReady: () => whenMapReady(1500, ui.signal),
     askOnMap: (q) => c().askOnMap?.(q),
     // the dev harness's console has a stand-in with only setGrown: no Ask the Map to drive there
     map: () => { const m = c().mapAsk; return m && typeof m.ask === "function" ? m : null; },
@@ -115,7 +193,32 @@ export function consoleMapDeps(host: () => { c: Console; settled?: () => Promise
     settled: () => host().settled?.() ?? Promise.resolve(),
     rain: { open: () => { ui.clearStage?.(); c().openRain?.(); }, isOpen: () => !!c().rainView?.open, close: () => c().rainView?.close(), back: () => c().rainView?.esc.current?.() ?? false },
     depts: () => c().depts.map((d) => ({ code: d.code, name: d.name })),
-    rehearsal: (detail) => { ui.clearStage?.(); window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail })); }
+    rehearsal: (detail) => { ui.clearStage?.(); window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail })); },
+    // v12 (21 Nov): the Live traffic view on a spot, the map's camera, the console's own places
+    traffic: { open: (o) => { ui.clearStage?.(); const x = c(); x.closeAll?.(); x.setAsk?.(false); x.openCity?.({ kind: "traffic", spot: o.spot ?? null, cluster: o.cluster ?? null, tab: o.tab ?? null, lat: o.lat ?? null, lon: o.lon ?? null, ...(o.zone ? { zone: o.zone } : {}) }); },
+      // v13 (finding 1 7): what the view was opened on (CollectorApp's TrafficStart), read fresh (v14: with its zone; on the Overview only, where it shows)
+      current: () => { const x = c(), v = x.trafficView?.open; return v && (!x.page || x.page === "overview") ? { spot: v.spot ?? null, cluster: v.cluster ?? null, tab: v.tab ?? null, ...(v.zone ? { zone: v.zone } : {}) } : null; },
+      // v14 (routing 10): put away by voice
+      close: () => { ui.clearStage?.(); c().trafficView?.close(); } },
+    camera: {
+      // the Overview map's own + and − (SatMap's tools): the same zoom a tap gives
+      zoom: (dir) => {
+        if (typeof document === "undefined") return false;
+        const b = document.querySelector<HTMLButtonElement>(`.a-map .map-tools button[aria-label="${dir === "in" ? "Zoom in" : "Zoom out"}"]`);
+        if (!b) return false;
+        b.click();
+        return true;
+      },
+      // the console's focus: the map flies there and rings it, with its "Back to previous view"
+      flyTo: (p) => { const x = c(); if (typeof x.highlight !== "function") return false; x.highlight({ id: `place:${p.label}`, lat: p.lat, lon: p.lon }); return true; }
+    },
+    place: (name) => {
+      const g = c().geo, n = name.trim().toLowerCase();
+      const z = g?.zones.find((x) => x.name.toLowerCase() === n) ?? g?.taluks.find((x) => x.name.toLowerCase() === n);
+      return z ? { lat: z.lat, lon: z.lon } : null;
+    },
+    toOverview: () => { ui.clearStage?.(); const x = c(); x.closeAll?.(); x.setAsk?.(false); x.setPage?.("overview"); },
+    rainsApi: () => c().rainView?.api.rains ?? "/api/rehearsal/rains"
   };
 }
 
@@ -160,6 +263,8 @@ async function grow(d: MapOpsDeps): Promise<MapAsk | null> {
   return d.map?.() ?? null;
 }
 const answerOf = (d: MapOpsDeps): AskResponse | null => { const r = d.map?.()?.resp ?? null; return r && r.kind === "answer" && r.plan ? r : null; };
+/** v12 (RC5): a map question asked with the turn's stop when there is one (the dev harness and the tests pass none: asked as before) */
+const askQ = (m: MapAsk, q: string, d: MapOpsDeps) => (d.signal ? m.ask(q, { signal: d.signal }) : m.ask(q));
 const bridge = (d: MapOpsDeps, op: BridgeOp, args: Record<string, unknown> = {}) => (d.bridge ?? bridgeCmd)(op, args);
 /** the shown turn's question (not the history's last: anatomy 4.4 bug 8) */
 const questionOf = (m: MapAsk | null, r: AskResponse) => m?.turns?.find((t) => t.resp === r)?.q ?? null;
@@ -215,6 +320,9 @@ export async function runMapCmd(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | n
     d.point?.(null);
     if (cmd.op === "tour" && cmd.tour === "stop") { const mv = tourStep(was, "stop"); return L(mv.say.en, mv.say.ta); }
   }
+  // v12: the city views and the camera need no Ask the Map (they are the console's own views and the map's own buttons)
+  if (cmd.op === "city") return cityOp(cmd, d);
+  if (cmd.op === "zoom" && cmd.zoom) return zoomOp(cmd, d);
   // the dev harness and an old console (no Ask the Map to drive): v9's way, a question asked and nothing said
   if (!d.map?.()) {
     if ((cmd.op === "ask" || cmd.op === "followup" || cmd.op === "circle") && cmd.question && d.askOnMap) { d.askOnMap(cmd.question); return null; }
@@ -238,15 +346,146 @@ export async function runMapCmd(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | n
     case "suggest": return suggest(cmd, d);
     case "rain": return rain(cmd, d);
     case "tour": return tourOp(cmd, d);
+    // (a city op is run above, before the Ask the Map check; a zoom to a place may ask the map)
+    case "zoom": return zoomOp(cmd, d);
   }
   return null;
+}
+
+// ------------------------------------------------------------------ v12: the city and the camera --
+
+const MONTH_TA = ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"];
+const rainDayTa = (id: string) => { const m = /(\d{4})-(\d{2})-(\d{2})/.exec(id); return m ? `${Number(m[3])} ${MONTH_TA[Number(m[2]) - 1]} ${m[1]}` : id; };
+
+/**
+ * v12 (21 Nov): the city on the ground, opened on the map. Live traffic: the view on the most congested stretch (lib/city/pick.ts worstJam:
+ * a jam's level, then its delay, then its length; never an accident or water first) or on the trouble spot that keeps coming back, the HUD's
+ * reticle on it, and code's own line for it. The flooded streets: Rain & flooding on the rain asked for (the last heavy rain with reports, as
+ * the view opens it, or a day), said with that rain's date and its reports. Power and trains: their Rain tabs.
+ */
+async function cityOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
+  const topic = cmd.topic ?? "all";
+  if (topic === "flood" || topic === "rain") return cmd.rain ? cityRain(cmd.rain, d) : rain({ op: "rain", act: "open", tab: "flooding" }, d);
+  if (topic === "power" || topic === "metro") return rain({ op: "rain", act: "open", tab: topic }, d);
+  // v14 (21 Nov review 13, routing 10): "hide the live traffic": the view put away, and said so
+  if (cmd.act === "close") {
+    const was = !!d.traffic?.current?.();
+    d.traffic?.close?.();
+    return was ? L(VIEW_CLOSED.traffic.en, VIEW_CLOSED.traffic.ta) : L("Live traffic isn't open.", "நேரடி போக்குவரத்து திறந்திருக்கவில்லை.");
+  }
+  return cityTraffic(cmd, d);
+}
+
+async function cityTraffic(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
+  const focus = cmd.focus ?? null;
+  // v14 (21 Nov review 13, routing 0): the zone asked about: its own jams and trouble spots, the view on its filter (Adyar's question named
+  // Teynampet's jam: worstJam read the whole district)
+  const zone = cmd.zone ?? null;
+  const shown = (s: Partial<CityLast> = {}): CityLast => ({ topic: "traffic", focus, rain: null, spot: null, lat: null, lon: null, ...(zone ? { zone } : {}), ...s });
+  const said = (en: string, ta: string, s: Partial<CityLast> = {}): MapLine => ({ ...L(en, ta), shown: shown(s) });
+  let t: TrafficNow | null = null;
+  try {
+    const res = await (d.fetch ?? fetch)("/api/traffic", { cache: "no-store", signal: d.signal });
+    const j = res.ok ? await res.json() : null;
+    t = j && Array.isArray(j.spots) ? (j as TrafficNow) : null;
+  } catch { t = null; }
+  // v12: a newer sentence came while live traffic was read: nothing opens, nothing is said for this one
+  if (d.signal?.aborted) return null;
+  // v13 (21 Nov review, finding 1 7): the view already open on what is asked (the same spot, the same trouble spot, or the plain view) is not
+  // opened afresh (a new seq remounted it, losing its spot and tab): Jarvis's Stage goes out of the way and the spot's line is said again
+  const open = (o: Parameters<NonNullable<MapOpsDeps["traffic"]>["open"]>[0]) => {
+    const cur = d.traffic?.current?.() ?? null;
+    const same = !!cur && (cur.spot ?? null) === (o.spot ?? null) && (cur.cluster ?? null) === (o.cluster ?? null) && (cur.tab ?? null) === (o.tab ?? null)
+      && (cur.zone ?? null) === (zone ?? null);
+    if (same) d.clearStage?.(); else d.traffic?.open({ ...o, ...(zone ? { zone } : {}) });
+  };
+  // the reticle goes on the spot once the map under it is drawn (the view opens the Overview; its map may still be mounting)
+  const pointAt = async (p: { label: string; lat: number; lon: number }) => { await d.mapReady?.(); if (!d.signal?.aborted) d.point?.(p); };
+  if (!t || !t.enabled) {
+    // the view says itself why it has nothing (TomTom's key, or the read failed); Jarvis says so too
+    open({ tab: focus === "repeat" ? "repeat" : null });
+    return t ? said(TRAFFIC_OFF.en, TRAFFIC_OFF.ta) : said("Live traffic is open on the map, but its data could not be read just now.", "நேரடி போக்குவரத்து வரைபடத்தில் திறந்தது; ஆனால் அதன் தரவை இப்போது படிக்க முடியவில்லை.");
+  }
+  // (v14, routing 0: the zone's name as the data or the console writes it)
+  const zn = zone != null ? t.zones?.find((z) => z.zone === zone)?.name ?? ZONE_NAMES[zone - 1] ?? `Zone ${zone}` : null;
+  const tz = inZone(t, zone);
+  // v13 (finding 1 7): the spot the last answer was on ("show me in the map" after it), found again in this read; else the pick as before
+  const was = cmd.spot ?? null;
+  if (focus === "repeat") {
+    const c = (was ? nearOf(tz.clusters ?? [], was.id, was) : null) ?? topRepeat(tz);
+    open({ cluster: c?.id ?? null, tab: "repeat", lat: c?.lat ?? null, lon: c?.lon ?? null });
+    if (!c) { const n = zn ? noRepeatIn(zn) : NO_REPEAT; return said(n.en, n.ta); }
+    await pointAt({ label: c.name, lat: c.lat, lon: c.lon });
+    if (d.signal?.aborted) return null;
+    return said(clusterLine(c, "en"), clusterLine(c, "ta"), { spot: c.id, lat: c.lat, lon: c.lon });
+  }
+  if (focus === "worst-jam") {
+    const s = (was ? spotNear(tz, was.id, was) : null) ?? worstJam(tz);
+    open({ spot: s?.id ?? null, lat: s?.lat ?? null, lon: s?.lon ?? null });
+    if (!s) { const n = zn ? noJamIn(zn) : NO_JAM; return said(n.en, n.ta); }
+    await pointAt({ label: s.name, lat: s.lat, lon: s.lon });
+    if (d.signal?.aborted) return null;
+    // (v14, scenarios 7: the jam picked is what the next "show me in the map" finds again)
+    return said(spotLine(s, "en"), spotLine(s, "ta"), { spot: s.id, lat: s.lat, lon: s.lon });
+  }
+  open({});
+  if (zn) {
+    // v14 (routing 0 and 5): one zone's live traffic, counted from its own stretches
+    const very = tz.spots.filter((s) => s.level === "very").length, cong = tz.spots.filter((s) => s.level === "congested").length;
+    const wet = tz.spots.filter((s) => s.level === "flood").length;
+    return said(`Live traffic in ${zn} is on the map: ${very} very congested, ${cong} congested${wet ? `, ${wet} with water on the road` : ""}. Say zoom to the worst jam.`,
+      `${zn} நேரடி போக்குவரத்து வரைபடத்தில்: ${very} இடங்களில் கடும் நெரிசல், ${cong} இடங்களில் நெரிசல்${wet ? `, ${wet} சாலைகளில் தண்ணீர்` : ""}.`);
+  }
+  const c = t.counts;
+  return said(`Live traffic is on the map: ${c.very} very congested, ${c.congested} congested${c.flooded ? `, ${c.flooded} with water on the road` : ""}${c.clusters ? `; ${c.clusters} trouble ${c.clusters === 1 ? "spot keeps" : "spots keep"} coming back` : ""}. Say zoom to the worst jam.`,
+    `நேரடி போக்குவரத்து வரைபடத்தில்: ${c.very} இடங்களில் கடும் நெரிசல், ${c.congested} இடங்களில் நெரிசல்${c.flooded ? `, ${c.flooded} சாலைகளில் தண்ணீர்` : ""}.`);
+}
+
+/** Rain & flooding on one past rain (the existing rain() path), said with that rain's date and its flooding reports from the record the view reads */
+async function cityRain(want: string, d: MapOpsDeps): Promise<MapLine | null> {
+  const opened = await rain({ op: "rain", act: "open", tab: "flooding", rain: want }, d);
+  if (opened && /no heavy rain on that day/.test(opened.en)) return opened;
+  try {
+    const res = await (d.fetch ?? fetch)(d.rainsApi?.() ?? "/api/rehearsal/rains", { cache: "no-store", signal: d.signal });
+    const j = res.ok ? await res.json() : null;
+    if (d.signal?.aborted) return null;
+    const rains = (Array.isArray(j?.rains) ? j.rains : []) as { id: string; start: string; reports?: { street?: string | null }[] }[];
+    const newest = [...rains].filter((r) => typeof r?.start === "string").sort((a, b) => b.start.localeCompare(a.start));
+    const r = want === "latest" ? newest.find((x) => (x.reports?.length ?? 0) > 0) : newest.find((x) => x.id === want);
+    if (!r) return opened;
+    const n = r.reports?.length ?? 0;
+    const streets = new Set((r.reports ?? []).map((x) => x.street).filter(Boolean)).size;
+    const day = rainDay(r.start.slice(0, 10)), dayTa = rainDayTa(r.start.slice(0, 10));
+    return L(`${want === "latest" ? "The last heavy rain" : "The heavy rain"}, ${day}, is on the map: ${n} flooding ${n === 1 ? "report" : "reports"}${streets ? ` on ${streets} ${streets === 1 ? "street" : "streets"}` : ""}.`,
+      `${want === "latest" ? "கடந்த கனமழை" : "அந்தக் கனமழை"}, ${dayTa}, வரைபடத்தில்: ${n} வெள்ளப் புகார்கள்${streets ? `, ${streets} தெருக்களில்` : ""}.`);
+  } catch { return d.signal?.aborted ? null : opened; }
+}
+
+/** v12: the map's camera: in or out (its own buttons), or to a zone or taluk the console places; anything else is asked of the map */
+async function zoomOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
+  d.toOverview?.();
+  await d.settled?.().catch(() => undefined);
+  // v12 (understanding RC13): the camera moves once the map is drawn (the Overview may only just have opened); a newer sentence ends it here
+  await d.mapReady?.();
+  if (d.signal?.aborted) return null;
+  if (cmd.zoom) {
+    if (!d.camera?.zoom(cmd.zoom)) return NO_MAP();
+    return cmd.zoom === "in" ? L("Zoomed in.", "பெரிதாக்கினேன்.") : L("Zoomed out.", "சிறிதாக்கினேன்.");
+  }
+  const name = cmd.place ?? "";
+  if (!name) return null;
+  const p = d.place?.(name) ?? null;
+  if (p && d.camera?.flyTo({ label: name, ...p })) return L(`${name} on the map.`, `${name} வரைபடத்தில்.`);
+  return ask(`what is happening in ${name}`, d);
 }
 
 async function ask(q: string | null, d: MapOpsDeps, lead: MapLine | null = null): Promise<MapLine | null> {
   const m = await grow(d);
   if (!m) return NO_MAP();
   if (!q) return L("Ask the Map is open. What would you like to know?", "வரைபடம் திறந்துள்ளது. என்ன தெரிய வேண்டும்?");
-  const r = await m.ask(q);
+  // v12 (RC5): asked with the turn's stop; a question a newer sentence stopped says nothing
+  const r = await askQ(m, q, d);
+  if (d.signal?.aborted) return null;
   return answered(r, d, lead);
 }
 
@@ -283,7 +522,8 @@ async function chip(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
   const o = c.options.find((x) => x.key === option);
   const label = option == null ? `Remove: ${c.en}` : o?.en ?? (cmd.scale ? km(Number(option)) : option);
   const lead = cmd.scale ? L(`Within ${km(Number(option))} now.`, `இப்போது ${km(Number(option), true)} க்குள்.`) : option == null ? L(`Removed ${c.en.replace(/^of /, "")}.`, `${c.ta} நீக்கப்பட்டது.`) : null;
-  const r2 = await m.run(p, label);
+  const r2 = await (d.signal ? m.run(p, label, { signal: d.signal }) : m.run(p, label));
+  if (d.signal?.aborted) return null;
   return answered(r2, d, lead);
 }
 
@@ -371,7 +611,8 @@ async function save(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
 async function visit(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
   const m = await grow(d);
   if (!m) return NO_MAP();
-  const r = cmd.question ? await m.ask(cmd.question) : answerOf(d);
+  const r = cmd.question ? await askQ(m, cmd.question, d) : answerOf(d);
+  if (d.signal?.aborted) return null;
   if (!r) return cmd.question ? answered(null, d) ?? NO_ANSWER() : NO_ANSWER();
   if (r.kind !== "answer") return answered(r, d);
   const live = d.map?.() ?? m;
@@ -391,10 +632,11 @@ async function insight(d: MapOpsDeps): Promise<MapLine | null> {
   if (!r.total) return L("Nothing to analyse: this answer is empty.", "ஆய்வு செய்ய எதுவும் இல்லை: பதில் காலியாக உள்ளது.");
   let j: { summary?: string; actions?: { text: string; dept: string | null }[]; watch?: string | null; none?: boolean; reason?: string; error?: string } | null = null;
   try {
-    const res = await (d.fetch ?? fetch)("/api/map/insight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: r.plan }) });
+    const res = await (d.fetch ?? fetch)("/api/map/insight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: r.plan }), signal: d.signal });
     j = await res.json().catch(() => null);
+    if (d.signal?.aborted) return null;
     if (!res.ok) return L(`The analyst couldn't look: ${j?.error ?? "the server said no"}.`, "ஆய்வாளரால் இப்போது பார்க்க முடியவில்லை.");
-  } catch { return L("The analyst couldn't be reached.", "ஆய்வாளரை அணுக முடியவில்லை."); }
+  } catch { return d.signal?.aborted ? null : L("The analyst couldn't be reached.", "ஆய்வாளரை அணுக முடியவில்லை."); }
   if (!j || j.none) return j?.reason === "ai" ? L("The AI analyst isn't answering right now.", "AI ஆய்வாளர் இப்போது பதில் தரவில்லை.") : L("Nothing stands out beyond the answer itself.", "பதிலைத் தாண்டி தனித்து எதுவும் இல்லை.");
   // its own words, kept only where every number is the answer's (the server checked them against its facts; this checks them again here)
   const allowed = answerFigures(r);
@@ -443,10 +685,11 @@ async function suggest(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
   let list = m.resp?.followups?.length ? m.resp.followups : [];
   if (!list.length) {
     try {
-      const res = await (d.fetch ?? fetch)("/api/map/suggest");
+      const res = await (d.fetch ?? fetch)("/api/map/suggest", { signal: d.signal });
       const j = res.ok ? await res.json() : null;
       list = Array.isArray(j?.items) ? j.items : [];
     } catch { list = []; }
+    if (d.signal?.aborted) return null;
   }
   if (!list.length) return L("Ask about any place, distance, road or area, for example: garbage near schools.", "எந்த இடம், தூரம், சாலை அல்லது பகுதி பற்றியும் கேளுங்கள்.");
   const four = list.slice(0, 4);
@@ -464,6 +707,9 @@ async function rain(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
   const tab = cmd.tab ?? null;
   const [tEn, tTa] = TAB_NAME[tab ?? "flooding"];
   if (r.isOpen?.()) {
+    // v13 (21 Nov review, finding 1 6): Rain & flooding already open moves to its tab or rain with Jarvis's Stage out of the way, as every
+    // other open does (it said "The flooding tab." with the Stage still over the map)
+    d.clearStage?.();
     const rep = bridge(d, "rain", { ...(tab ? { tab } : {}), ...(cmd.rain ? { rain: cmd.rain } : {}) });
     if (rep && !rep.ok && rep.why === "no-such-rain") {
       const days = ((rep.state?.rains as string[] | undefined) ?? []).slice(0, 3).map((x) => rainDay(`rain-${x}`)).join(", ");
@@ -514,7 +760,9 @@ async function tourOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
     const source = cmd.source ?? "hotspots";
     let got: { r: AskResponse; q: string; window: { en: string; ta: string } } | null = null;
     for (const t of TOUR_Q[source]) {
-      const r = await m.ask(t.q);
+      const r = await askQ(m, t.q, d);
+      // v12 (RC5): a newer sentence ends the tour before it starts
+      if (d.signal?.aborted) return null;
       if (r?.kind === "answer" && (r.extra?.clusters?.length ?? 0) >= 1) got = { r, q: t.q, window: t.window };
       if ((r?.extra?.clusters?.length ?? 0) >= 2) break;
     }
@@ -544,7 +792,8 @@ async function tourOp(cmd: MapCmd, d: MapOpsDeps): Promise<MapLine | null> {
     const m = await grow(d);
     if (!m) return NO_MAP();
     // Ask the Map scoped to the stop: what is happening within 500 m of it (the circle's area brief)
-    const r = await m.draw({ lat: st.lat, lon: st.lon, r: 500 });
+    const r = await (d.signal ? m.draw({ lat: st.lat, lon: st.lon, r: 500 }, { signal: d.signal }) : m.draw({ lat: st.lat, lon: st.lon, r: 500 }));
+    if (d.signal?.aborted) return null;
     const line = r?.kind === "brief" && r.brief ? briefLine(r, { en: `${cap(st.place.en)}, within 500 m`, ta: `${st.place.ta}, 500 மீ க்குள்` }) : answered(r, d);
     const more = L("Say next to go on with the tour.", "சுற்றுலாவைத் தொடர அடுத்து என்று சொல்லுங்கள்.");
     return line ? L(`${line.en} ${more.en}`, `${line.ta} ${more.ta}`) : more;

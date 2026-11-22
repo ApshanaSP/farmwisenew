@@ -13,6 +13,8 @@ import { buildRegister, entitiesNamed, entityAt, howKnow, pickList, type RegEnti
 import { RECIPES, type Recipe } from "./stage";
 import type { World } from "./types";
 import { keyOf, needsDates, readPeriod } from "@/lib/period/read";
+// v14: a follow-up after a city screen that names a part of the city itself is the city lanes' (cityFollow)
+import { cityAsk } from "@/lib/city/intent";
 
 export interface FrameInput {
   text: string;
@@ -34,7 +36,8 @@ export type Frame =
   /** an operation on the open Stage; `id` is the item the register resolved ("the second one", "that Velachery one"), when it knows it */
   | { kind: "stageOp"; op: "open" | "view" | "sort" | "filter" | "read" | "explain"; n: number | null; text: string | null; why: string; id?: string | null }
   /** a line built by code, said as it is: "how do you know?" (the screen's provenance), or a question back when the words name several items */
-  | { kind: "reply"; text: { en: string; ta: string }; why: "howknow" | "pick-several" }
+  // (v14: "city-zone", a zone asked of a part of the city kept for the whole district: power and trains in heavy rain)
+  | { kind: "reply"; text: { en: string; ta: string }; why: "howknow" | "pick-several" | "city-zone" }
   | { kind: "none" };
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
@@ -180,6 +183,10 @@ export function resolveFrame(i: FrameInput): Frame {
   const POINTS_BACK = /^ (and|in|for|at|on|what about|how about|also|now|then|only|just|same|no|not|instead|ok|okay) /;
   const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && POINTS_BACK.test(t) && !isNewRequest(t)) || (words.length <= 3 && !isNewRequest(t));
   const slots = { ...last.slots };
+  // v14 (21 Nov review of v13: routing 4 and 11, scenarios 1): a city screen reads no severity, period or span, and only live traffic reads a
+  // zone, so a follow-up that re-scoped it rebuilt the same screen with the same line ("only severe", "this week instead", "what about
+  // Adyar?" or "In Adyar zone" after the flood streets or power in heavy rain), and "why?" gave the week's reasons for every complaint
+  if (last.recipe === "city") return cityFollow(i, t, raw, slots, hasNewPlace, ellipsis, short);
 
   // "why?", "why so many?", "ஏன் இந்த தாமதம்?": the reason for what is on screen (a why naming a new place is a new question)
   if (WHY.test(t) && !catIn(t)) {
@@ -239,3 +246,58 @@ export function resolveFrame(i: FrameInput): Frame {
 }
 
 const withTopic = (t: string, slots: Record<string, unknown>) => { const c = catIn(t); return c ? { cat: c } : { cat: slots.cat ?? null }; };
+
+/** v14: the complaints each part of the city has a record of (power and trains in heavy rain have none: theirs is the rains' record) */
+const CITY_CAT: Record<string, string> = { traffic: "TRAFFIC_OBSTRUCTION", flood: "FLOOD_WATERLOGGING" };
+/** v14: said when a zone is asked of a part of the city kept for the whole district, never the district's screen again under the zone's name */
+const CITY_NO_ZONE: Record<string, { en: string; ta: string }> = {
+  power: { en: "Power in heavy rain is kept for the whole district, not zone by zone: the map's Power tab shows each ward that lost power.",
+    ta: "கனமழையில் மின்சாரப் பதிவு மாவட்டம் முழுவதற்கும் மட்டுமே, மண்டல வாரியாக இல்லை: வரைபடத்தின் மின்சாரம் பகுதி மின்சாரம் போன ஒவ்வொரு வார்டையும் காட்டும்." },
+  metro: { en: "Trains in heavy rain are kept line by line, not zone by zone: the map's Metro tab shows each line that ran late.",
+    ta: "கனமழையில் ரயில் பதிவு வழித்தட வாரியாக மட்டுமே, மண்டல வாரியாக இல்லை: வரைபடத்தின் மெட்ரோ பகுதி தாமதமான ஒவ்வொரு வழித்தடத்தையும் காட்டும்." }
+};
+
+/**
+ * v14 (21 Nov review of v13: routing 4 and 11, scenarios 1): a follow-up said after a city screen (live traffic, the flood streets, the rain,
+ * power or trains in heavy rain). A zone ("what about Adyar?", "In Adyar zone"): live traffic in that zone, the zone's flooding complaints
+ * (v13's rule for "the flooded streets in Adyar"), its rain gauge, its whole picture, or for power and trains a line that says they are kept
+ * for the whole district. A severity or a period ("only severe", "this week instead"): that part's complaints with it, where it has a kind
+ * of complaint. "why?", a comparison, and a follow-up that names a part of the city itself ("and the traffic in Adyar?") are the planner's
+ * or the city lanes' (none). Never a city screen with a slot its data does not read.
+ */
+function cityFollow(i: FrameInput, t: string, raw: string, slots: Record<string, unknown>, place: number[], ellipsis: boolean, short: boolean): Frame {
+  const q = String(slots.q ?? "all");
+  const cat = CITY_CAT[q] ?? null;
+  const zones = Array.isArray(slots.zones) ? (slots.zones as number[]).slice(0, 1) : [];
+  const cases = (extra: Record<string, unknown>, why: string): Frame => ({ kind: "screen", recipe: "cases", slots: { cat, zones, period: "weekly", sort: "priority", n: 15, fresh: true, ...extra }, why });
+  if (WHY.test(t) || COMPARE_LAST.test(t) || COMPARE.test(t)) return { kind: "none" };
+  // "as a table": the open screen's own view, as on any screen
+  if (i.stage && short && VIEW.test(t) && !place.length && !catIn(t)) {
+    const v = /table|டேபிள்|அட்டவணை/.test(t) ? "table" : /map|வரைபடம்/.test(t) ? "map" : "chart";
+    return { kind: "stageOp", op: "view", n: null, text: v, why: "view" };
+  }
+  if (cityAsk(raw)) return { kind: "none" };
+  if (PERIOD_ONLY.test(t)) {
+    const period = periodIn(t) ?? (DAILY.test(t) ? "daily" : WEEKLY.test(t) ? "weekly" : MONTHLY.test(t) ? "monthly" : QUARTER.test(t) ? "quarterly" : null);
+    return period && cat ? cases({ period }, "city-period") : { kind: "none" };
+  }
+  if (!ellipsis) return { kind: "none" };
+  const span = !periodIn(t) ? spanSlots(raw, "cases") : null;
+  if (place.length) {
+    if (span === "none") return { kind: "none" };
+    const z = place.slice(0, 1), named = catIn(t);
+    if (named) return { kind: "screen", recipe: "cases", slots: { cat: named, zones: z, period: "weekly", sort: "priority", n: 15, fresh: true, ...(span ?? {}) }, why: "city-place" };
+    // (live traffic reads a zone, its worst jam and its trouble spot too: lib/city/now.ts, routing 0; so "what about Adyar?" after the most
+    // congested road is Adyar's most congested road)
+    if (q === "traffic") return { kind: "screen", recipe: "city", slots: { q: "traffic", zones: z, focus: slots.focus === "worst-jam" || slots.focus === "repeat" ? slots.focus : null, rain: null, fresh: true }, why: "new-place" };
+    if (q === "flood") return cases({ zones: z, ...(span ?? {}) }, "city-place");
+    if (q === "rain") return { kind: "screen", recipe: "readings", slots: { metric: "rain", zones: z }, why: "city-place" };
+    if (q === "all") return { kind: "screen", recipe: "situation", slots: { zones: z, period: "daily", fresh: true }, why: "city-place" };
+    const line = CITY_NO_ZONE[q];
+    return line ? { kind: "reply", text: line, why: "city-zone" } : { kind: "none" };
+  }
+  const sev = sevIn(t);
+  if (sev) return cat && span !== "none" ? cases({ sev, ...(periodIn(t) ? { period: periodIn(t) } : {}), ...(span ?? {}) }, "city-severity") : { kind: "none" };
+  const period = short && !catIn(t) ? periodIn(t) : null;
+  return period && cat ? cases({ period }, "city-period") : { kind: "none" };
+}

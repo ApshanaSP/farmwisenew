@@ -19,6 +19,12 @@ import type { Route } from "./actions";
 import { rehearsalIntent } from "@/lib/rehearsal/intent";
 
 export interface MapAskContext { zone: number | null; taluk: string | null }
+/**
+ * v12 (21 Nov, stale-and-double RC5): how a question is asked. `signal`: the asker's own stop, chained to the request's controller. Jarvis
+ * passes its turn's, so a newer sentence stops a map question still in flight; its late answer never draws. The 06:38:33 map question ran
+ * 34 s, and nothing but another map question could stop it.
+ */
+export interface AskOpts { signal?: AbortSignal | null }
 
 export interface MapAsk {
   /** the map card fills the page */
@@ -57,9 +63,11 @@ export interface MapAsk {
   /** the trace panel is open ("why these?") */
   traceOpen: boolean;
   setTraceOpen: (v: boolean) => void;
-  ask: (text: string) => Promise<AskResponse | null>;
-  run: (plan: Plan, label?: string) => Promise<AskResponse | null>;
-  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }, label?: string) => Promise<AskResponse | null>;
+  /** v12 (21 Nov): `o.signal`, the asker's own stop (Jarvis's turn): a newer turn stops the question, as a newer map question already does */
+  ask: (text: string, o?: AskOpts) => Promise<AskResponse | null>;
+  run: (plan: Plan, label?: string, o?: AskOpts) => Promise<AskResponse | null>;
+  /** v3: `label`, the question as the chat shows it ("Full overview of Perambur (Ward 44)") */
+  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }, o?: AskOpts, label?: string) => Promise<AskResponse | null>;
   clear: () => void;
   /** a UI follow-up ("send these to SWD", "export"): the panel acts on it */
   uiCue: { seq: number; ui: AskResponse["ui"]; dept: string | null } | null;
@@ -201,10 +209,14 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
    * Asks the server. The question joins the chat at once (`into`: a turn already in it, asked again in its place);
    * the answer, a note or the reason it failed fills that turn when it comes.
    */
-  const post = useCallback(async (body: Record<string, unknown>, label: string, into?: number): Promise<AskResponse | null> => {
+  const post = useCallback(async (body: Record<string, unknown>, label: string, into?: number, o: AskOpts = {}): Promise<AskResponse | null> => {
     ctl.current?.abort();
     const ac = new AbortController();
     ctl.current = ac;
+    // v12 (21 Nov): the asker's stop (Jarvis's turn) stops this request too; an answer that arrives after it is not drawn (the check below)
+    const outer = o.signal ?? null;
+    const stop = () => ac.abort();
+    if (outer?.aborted) ac.abort(); else outer?.addEventListener("abort", stop, { once: true });
     setBusy(true);
     setError(null);
     const id = into ?? ++seq.current;
@@ -260,6 +272,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
       else { set({ pending: false, error: "The map could not be reached. Please try again." }); setError("The map could not be reached. Please try again."); }
       return null;
     } finally {
+      outer?.removeEventListener("abort", stop);
       if (ctl.current === ac) setBusy(false);
     }
   }, [context, setTurns]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -291,7 +304,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
     cue, tookOver, setTookOver, spot, setSpot, hover: hoverRef.current, setHover, onHover, focus, setFocus,
     showBefore, setShowBefore, traceOpen, setTraceOpen, uiCue, route, setRoute,
     replay: (index = 0) => { setTookOver(false); setCue({ seq: ++seq.current, index, move: true }); },
-    ask: async (text: string) => {
+    ask: async (text: string, o?: AskOpts) => {
       const t = text.trim();
       if (!t) return null;
       setHistory((h) => { const n = [...h.filter((x) => x !== t), t].slice(-30); save(HISTORY_KEY, n); return n; });
@@ -304,11 +317,11 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         return null;
       }
       return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null, earlier: planRef.current ? earlierAreasOf(turnsRef.current.map((x) => x.plan ?? x.resp?.plan)) : null,
-        history: planRef.current ? historyOf(turnsRef.current) : null }, t);
+        history: planRef.current ? historyOf(turnsRef.current) : null }, t, undefined, o);
     },
-    run: (p: Plan, label?: string) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question"),
-    draw: (d, label) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
-      label ?? ("lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?")),
+    run: (p: Plan, label?: string, o?: AskOpts) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question", undefined, o),
+    draw: (d, o?: AskOpts, label?: string) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
+      label ?? ("lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?"), undefined, o),
     clear: clearAll
   };
 }

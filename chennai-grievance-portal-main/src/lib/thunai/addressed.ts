@@ -151,7 +151,10 @@ export function unclearWord(text: string, districtNoun: boolean): boolean {
   return tamil ? !QUESTION_TA.test(text) && !IMPERATIVE_TA.test(text.replace(/[.!?,]+\s*$/, "").trim()) : !isEnglishWord(w) && !QUESTION_TG.test(t) && !IMPERATIVE_TG.test(t.trim());
 }
 
-export const ENGAGED_MS = 20_000;
+/** v11: 40 s (was 20): after an answer the Collector reads the card, then asks the next thing without the name (adewaskar/jarvis keeps a follow-up window open after every answer) */
+export const ENGAGED_MS = 40_000;
+/** how long a card's awaited answer (a yes to a level-B card, a reply to a question) is taken without the name: 20 s, as before v11 */
+export const ANSWER_MS = 20_000;
 
 /**
  * v4's command tier, cut in v5 (C1) in the engaged window and out of it. JARVIS_GATE_COMMAND_TIER=1 on the server or in a harness;
@@ -319,7 +322,8 @@ export function addressed(i: GateInput): Addressed {
     // Open Panyunga.", the real run o8b, 18 Nov); only the hard silences above hold
     if (i.called) return { tier: 1, act: true, text, maxLevel: "C", why: "called" };
     // Jarvis waits for an answer and has just spoken: this is the answer ("Yes, tell them.": the review, 19 Nov), not side talk
-    if (i.awaitingAnswer && i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS) return { tier: 2, act: true, text, maxLevel: "C", why: "answer" };
+    // (v11: within ANSWER_MS, 20 s as before: the engaged window grew to 40 s, a yes awaited by a card did not)
+    if (i.awaitingAnswer && i.lastTurnAt != null && i.now - i.lastTurnAt <= ANSWER_MS) return { tier: 2, act: true, text, maxLevel: "C", why: "answer" };
   }
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   // v8: a leading backchannel ("Haan, show me the severe cases", "Seri, open the news") does not hide the request's shape (the review, 18 Nov)

@@ -100,7 +100,7 @@ export const PlanBody = z.object({
     lastPlace: z.string().max(80).nullable().optional(),
     numbers: z.boolean().optional()
   }),
-  turns: z.array(TurnBody).max(4).optional()
+  turns: z.array(TurnBody).max(6).optional()
 });
 
 export function screenOf(state: z.infer<typeof PlanBody>["state"]): ScreenState {

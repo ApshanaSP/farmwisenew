@@ -15,7 +15,9 @@ const hook = handle.slice(handle.indexOf("const nOffer = newsOffer.current;"), h
 describe("v10 reading: Thunai.tsx", () => {
   it("one pending offer, taken from the ref as each sentence comes (forgotten on any other turn), before v10's and v8's lanes", () => {
     expect(hook).toMatch(/const nOffer = newsOffer\.current;\s*newsOffer\.current = null;/);
-    expect(handle.indexOf("const nOffer = newsOffer.current;")).toBeLessThan(handle.indexOf("v10Front(said"));
+    // (v12, 21 Nov: v10's lanes run through one helper, front10; the provisional check before a turn starts reads only its wait lane)
+    expect(handle.indexOf("const f10 = front10(said);")).toBeGreaterThan(-1);
+    expect(handle.indexOf("const nOffer = newsOffer.current;")).toBeLessThan(handle.indexOf("const f10 = front10(said);"));
     // (v10 review 2, round 2: with the console's world, so a locality named elsewhere, in any script, is told from the story's own)
     expect(hook).toMatch(/offerAct\(said, nOffer, Date\.now\(\), worldRef\.current\)/);
   });

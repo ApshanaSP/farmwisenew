@@ -12,6 +12,7 @@
  */
 import { generateJson, type CallInfo } from "@/lib/ai/gateway";
 import { extractNumbers } from "@/lib/assistant/verify";
+import { deadline } from "@/lib/util/deadline";
 import { z } from "zod";
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { WirePlan, fromWire, toWire } from "./wire";
@@ -266,6 +267,8 @@ const CONCEPTS = [
   "far from, more than N km from, no X within N km, underserved -> farthest (areas place for places, localities, streets; ward otherwise)"
 ];
 
+/** v12 (21 Nov): how long aiPlan may take, both tries together (a spoken map question cannot wait the SDK's 25 s), ms; 12 s since the AI-first read of every typed question (askmap-v2) needs its retry room */
+export const PLAN_MS = 12_000;
 /** The system block, built once per world's categories, departments and zones (byte-stable: the cache reads it on every later question). */
 let sysCache: { key: string; text: string } | null = null;
 function systemFor(ctx: { cats: string[]; depts: string[]; zones?: { zone: number; name: string; lat: number; lon: number }[]; catLabels?: Map<string, string> }): string {
@@ -303,71 +306,83 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     ? `CURRENT PLAN: ${JSON.stringify(toWire(prev))}\nFOLLOW-UP: ${text}${ctx.meant ? `\nTHE FOLLOW-UP MEANS (read from the conversation): ${ctx.meant}\nThis reading decides: when it names a kind of problem, a place, a time or a grouping, the plan has exactly that one (the old kind, place or time goes when the reading names another).` : ""}\n${places}\n${zones}\nReturn the current plan edited by the follow-up (never a fresh plan unless the follow-up starts a new topic). Use the previous answer's places ONLY when the follow-up points at one of them in words (there, that place, that school, that ward, the first, the second, number 2); a follow-up that only changes the kind of problem, the time, the status or the distance (only garbage, last week, include closed, 300 m) keeps the plan's places exactly as they are and adds no place. A follow-up that points (there, that place, that school, that ward, the first, the second, number 2) means the place listed as the previous answer's number N (number 1 when no number is said): use its ref (an inside step for a ward or zone ref, a 1000 m point for a facility ref), and keep the kind of problem. FOLLOW-UPS THAT ADD A STEP (keep every field you do not change exactly: from, near, meters, areas): "vs last week", "compared to last week", "is it going up" adds a change step of the incidents (now and the window before) and shows it; "which wards rose the most" after that adds a rank step by ward, order rise; "where are they piling up", "clustering", "bunching" adds a hotspot step of the incidents and shows it (write the step, never only its name in show); "compare both", "compare them" after two places were asked is a compare step with area = the earlier place and b = the later one; "and fire station", "police station?" after a nearest search keeps the same from place and takes that facility as to. A NEW TOPIC: a follow-up that asks about all incidents, total, overall, every complaint, or names a different kind of problem (garbage, then police cases or flooding) replaces the kind of problem (every_kind true for all of them); it keeps the place only if it names it or says there, and the time only if it says nothing new about time. A follow-up that points at a place asks about that place: the incidents inside it, with the kind of problem it names (what kinds or types: count_by category inside it); it drops the ranking (count_by ward or near, speed, rank) unless it asks for a new one. Keep the current plan's shape and grouping (count_by by, speed by, nearest from the same place, within the same facilities) unless the follow-up asks for another: after complaints by department, "which is slowest" is speed by dept; after nearest hospital from Guindy, "police station?" is nearest police from Guindy; after a count near schools, "same for hospitals" is the same count near hospitals; after cases near schools, "which school is the worst" or "which one has the most" is count_by near; "temples also", "and hospitals too" ADD that layer to the within step's near list (keep the ones there).`
     : `QUESTION: ${text}${typed}${ctx.meant ? `\nREAD WITH THE CONVERSATION BEFORE IT: ${ctx.meant} (plan the question as this reading says; it is the same question with what the conversation makes plain)` : ""}\n${places}\n${zones}${hint}${short(text) ? SHORT_NOTE : ""}\nCONCEPTS: ${CONCEPTS.join(" | ")}\nReturn the plan.`;
   let problems: string[] = [];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: ctx.signal,
-      chat: true, feature: "map", timeoutMs: 12_000 });
-    lastInfo = r.info;
-    if (process.env.MAP_AI_DEBUG === "1") console.log("MAPAI", JSON.stringify(r.object));
-    // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
-    if (r.object.intent === "not_map") return { problems: ["not a map question"] };
-    // the live city (traffic, rain, flooding streets, power, trains): no plan to run, the shared live answer
-    if (r.object.intent === "city" && r.object.city && r.object.city !== "none") return { city: r.object.city, intent: "city" as const, language: r.object.language };
-    // v2: "garbage", "are there any wine shops near schools" came back not understood with no steps though the intent was a plan: asked once more
-    if (r.object.understood === false || !r.object.steps.length) {
-      if (attempt === 0) { prompt = `${prompt}\nThis IS a map question (a short or loose question about Chennai's places, problems or facilities): set understood true and return its plan.`; continue; }
-      return { problems: ["not a map question"] };
+  // v12 (21 Nov): the whole plan (both tries) has PLAN_MS, on a strongly held timer with the request's signal forwarded (util/deadline.ts;
+  // AbortSignal.any with AbortSignal.timeout loses its timer on Node 22.14). A console step on Claude waited the SDK's 25 s: Jarvis's
+  // "Okay, now tell me, show me in the map." held the map lane 25.2 s at 06:38:33 and then answered without AI anyway
+  const dl = deadline(PLAN_MS, ctx.signal);
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: dl.signal,
+        chat: true, feature: "map", timeoutMs: 12_000 });
+      lastInfo = r.info;
+      if (process.env.MAP_AI_DEBUG === "1") console.log("MAPAI", JSON.stringify(r.object));
+      // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
+      if (r.object.intent === "not_map") return { problems: ["not a map question"] };
+      // the live city (traffic, rain, flooding streets, power, trains): no plan to run, the shared live answer
+      if (r.object.intent === "city" && r.object.city && r.object.city !== "none") return { city: r.object.city, intent: "city" as const, language: r.object.language };
+      // v2: "garbage", "are there any wine shops near schools" came back not understood with no steps though the intent was a plan: asked once more
+      if (r.object.understood === false || !r.object.steps.length) {
+        if (attempt === 0) { prompt = `${prompt}\nThis IS a map question (a short or loose question about Chennai's places, problems or facilities): set understood true and return its plan.`; continue; }
+        return { problems: ["not a map question"] };
+      }
+      // v3: the last answer's places only when the model says the follow-up points at one ("there", "the second one");
+      // otherwise a step it pinned to one of them is taken out again ("last 7 days" is not "at the top hospital")
+      const prevRefs = new Set(ctx.places.filter((x) => x.kind.startsWith("the previous answer")).map((x) => x.ref));
+      const keepRef = (ref: string) => r.object.points_at_previous || !prevRefs.has(ref) || (prev?.steps ?? []).some((x) => x.op === "inside" && JSON.stringify(x.area).includes(ref));
+      // v3: "all incidents", "total", "overall" after a garbage answer: every kind, the old kind of problem dropped (the AI says so)
+      const raw0 = fromWire(r.object);
+      // only the kind carried over from the last answer goes; a kind THIS question names stays ("suicide cases" is not every kind)
+      const pf = (prev?.steps.find((x) => x.op === "take" && x.layer === "incidents") as Extract<Plan["steps"][number], { op: "take" }> | undefined)?.filter;
+      const old = new Set([...(pf?.category ?? []), ...(pf?.family ?? []), ...(pf?.dept ?? [])]);
+      const drop = (xs: string[] | null | undefined) => { const k = (xs ?? []).filter((c) => !old.has(c)); return k.length ? k : null; };
+      const raw = r.object.every_kind && old.size ? { ...raw0, steps: raw0.steps.map((x) => (x.op === "take" && x.layer === "incidents" && x.filter ? { ...x, filter: { ...x.filter, category: drop(x.filter.category), family: drop(x.filter.family), dept: drop(x.filter.dept) } } : x)) } : raw0;
+      // a distance step written backwards (the facilities kept near the incidents, then counted by the place near): turned round
+      for (const x of raw.steps) if (x.op === "within") {
+        const ofT = raw.steps.find((y) => y.as === x.of), nearT = x.near.map((n) => raw.steps.find((y) => y.as === n));
+        if (ofT?.op === "take" && ofT.layer !== "incidents" && nearT.length === 1 && nearT[0]?.op === "take" && nearT[0].layer === "incidents") { const o = x.of; x.of = nearT[0].as; x.near = [o]; }
+      }
+      // a nearest search the follow-up left without its starting place: the conversation's own ("and fire station" after "nearest hospital to Tambaram")
+      const prevFrom = (prev?.steps.find((x) => x.op === "nearest") as { from?: string } | undefined)?.from;
+      for (const x of raw.steps) if (x.op === "nearest" && x.from.startsWith("place:")) {
+        // "place:facility osm:n123" (a kind word left in): the ref alone; one the prompt never gave: the conversation's own start
+        const ref = x.from.slice(6).trim().split(/\s+/).pop() ?? "";
+        x.from = ctx.places.some((pl) => pl.ref === ref) && !(prevFrom && ctx.places.find((pl) => pl.ref === ref)?.kind.startsWith("the previous answer") && !r.object.points_at_previous) ? `place:${ref}` : prevFrom ?? `place:${ref}`;
+      }
+      if (prevFrom) for (const x of raw.steps) if (x.op === "nearest" && !x.from) x.from = prevFrom;
+      const wired = { ...raw, steps: raw.steps.filter((x) => x.op !== "inside" || keepRef(x.area.kind === "point" ? x.area.ref : `${x.area.kind}:${x.area.kind === "taluk" ? (x.area as { code: string }).code : (x.area as { id: number }).id}`)) };
+      if (wired.steps.length !== raw.steps.length && !wired.steps.some((x) => x.as === wired.show)) wired.show = wired.steps[wired.steps.length - 1].as;
+      // every kind: the kinds it named (often the last answer's) are not put back on the plan
+      const named = { ...r.object, named_places: (r.object.named_places ?? []).filter(keepRef), ...(r.object.every_kind && old.size ? { named_categories: (r.object.named_categories ?? []).filter((c) => !old.has(c)) } : {}) };
+      const c = checkPlan(withNamed(wired, named, ctx.cats, ctx.places.map((x) => x.ref)));
+      // v2: only the world's own category and family codes ("VECTOR_DISEASE" is a category, not a family; "DRINKING_WATER" is no code)
+      const bad = r.object.steps.flatMap((st) => [...(st.category ?? []).filter((x) => !ctx.cats.includes(x)).map((x) => `"${x}" is not a category code`),
+        ...(st.family ?? []).filter((x) => !FAMILIES.includes(x)).map((x) => `"${x}" is not a family (families: ${FAMILIES.join(", ")})`),
+        // a place ref the prompt did not give (a made-up one cannot be found on the map)
+        ...[st.area_ref, st.b_ref, st.from?.startsWith("place:") ? st.from.slice(6) : null].filter((x): x is string => !!x && !x.startsWith("drawn:") && !ctx.places.some((pl) => pl.ref === x)).map((x) => `"${x}" is not a place ref given in the prompt`)]);
+      // a brief is for a question that names no kind of problem: when the model named one, its plan answers (its own two answers made to agree)
+      const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x) || FAMILIES.includes(x)) && !(r.object.named_layers ?? []).length
+        && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length || (st.status && st.status !== "open") || st.overdue || st.severity?.length))
+        ? "brief" : "plan");
+      // v3: a plan that names no kind of problem while the question has a word of one ("least flooded zone", "news reported
+      // accidents"): the AI looks once more at those words and decides (a plan about every kind stays as it is)
+      const kindless = c.ok && !r.object.every_kind && r.object.intent !== "brief" && c.plan.steps.some((x) => x.op === "take" && x.layer === "incidents" && !x.filter?.category?.length && !x.filter?.family?.length && !x.filter?.dept?.length);
+      const hints = kindless && attempt === 0 ? kindWordsIn(text) : [];
+      if (hints.length && !bad.length) {
+        prompt = `${prompt}
+  SECOND LOOK: your plan names no kind of problem, but the question has ${hints.map((h) => `"${h.word}" (${h.codes.join(" / ")})`).join(", ")}. If the question asks about that kind, put its code on the incidents and in named_categories; if those words mean something else here, return the same plan.`;
+        continue;
+      }
+      if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
+      if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
+      problems = c.ok ? bad : [...c.problems, ...bad];
+      prompt = `${prompt}\nYOUR LAST PLAN WAS REFUSED: ${problems.join("; ")}. Fix it.`;
     }
-    // v3: the last answer's places only when the model says the follow-up points at one ("there", "the second one");
-    // otherwise a step it pinned to one of them is taken out again ("last 7 days" is not "at the top hospital")
-    const prevRefs = new Set(ctx.places.filter((x) => x.kind.startsWith("the previous answer")).map((x) => x.ref));
-    const keepRef = (ref: string) => r.object.points_at_previous || !prevRefs.has(ref) || (prev?.steps ?? []).some((x) => x.op === "inside" && JSON.stringify(x.area).includes(ref));
-    // v3: "all incidents", "total", "overall" after a garbage answer: every kind, the old kind of problem dropped (the AI says so)
-    const raw0 = fromWire(r.object);
-    // only the kind carried over from the last answer goes; a kind THIS question names stays ("suicide cases" is not every kind)
-    const pf = (prev?.steps.find((x) => x.op === "take" && x.layer === "incidents") as Extract<Plan["steps"][number], { op: "take" }> | undefined)?.filter;
-    const old = new Set([...(pf?.category ?? []), ...(pf?.family ?? []), ...(pf?.dept ?? [])]);
-    const drop = (xs: string[] | null | undefined) => { const k = (xs ?? []).filter((c) => !old.has(c)); return k.length ? k : null; };
-    const raw = r.object.every_kind && old.size ? { ...raw0, steps: raw0.steps.map((x) => (x.op === "take" && x.layer === "incidents" && x.filter ? { ...x, filter: { ...x.filter, category: drop(x.filter.category), family: drop(x.filter.family), dept: drop(x.filter.dept) } } : x)) } : raw0;
-    // a distance step written backwards (the facilities kept near the incidents, then counted by the place near): turned round
-    for (const x of raw.steps) if (x.op === "within") {
-      const ofT = raw.steps.find((y) => y.as === x.of), nearT = x.near.map((n) => raw.steps.find((y) => y.as === n));
-      if (ofT?.op === "take" && ofT.layer !== "incidents" && nearT.length === 1 && nearT[0]?.op === "take" && nearT[0].layer === "incidents") { const o = x.of; x.of = nearT[0].as; x.near = [o]; }
-    }
-    // a nearest search the follow-up left without its starting place: the conversation's own ("and fire station" after "nearest hospital to Tambaram")
-    const prevFrom = (prev?.steps.find((x) => x.op === "nearest") as { from?: string } | undefined)?.from;
-    for (const x of raw.steps) if (x.op === "nearest" && x.from.startsWith("place:")) {
-      // "place:facility osm:n123" (a kind word left in): the ref alone; one the prompt never gave: the conversation's own start
-      const ref = x.from.slice(6).trim().split(/\s+/).pop() ?? "";
-      x.from = ctx.places.some((pl) => pl.ref === ref) && !(prevFrom && ctx.places.find((pl) => pl.ref === ref)?.kind.startsWith("the previous answer") && !r.object.points_at_previous) ? `place:${ref}` : prevFrom ?? `place:${ref}`;
-    }
-    if (prevFrom) for (const x of raw.steps) if (x.op === "nearest" && !x.from) x.from = prevFrom;
-    const wired = { ...raw, steps: raw.steps.filter((x) => x.op !== "inside" || keepRef(x.area.kind === "point" ? x.area.ref : `${x.area.kind}:${x.area.kind === "taluk" ? (x.area as { code: string }).code : (x.area as { id: number }).id}`)) };
-    if (wired.steps.length !== raw.steps.length && !wired.steps.some((x) => x.as === wired.show)) wired.show = wired.steps[wired.steps.length - 1].as;
-    // every kind: the kinds it named (often the last answer's) are not put back on the plan
-    const named = { ...r.object, named_places: (r.object.named_places ?? []).filter(keepRef), ...(r.object.every_kind && old.size ? { named_categories: (r.object.named_categories ?? []).filter((c) => !old.has(c)) } : {}) };
-    const c = checkPlan(withNamed(wired, named, ctx.cats, ctx.places.map((x) => x.ref)));
-    // v2: only the world's own category and family codes ("VECTOR_DISEASE" is a category, not a family; "DRINKING_WATER" is no code)
-    const bad = r.object.steps.flatMap((st) => [...(st.category ?? []).filter((x) => !ctx.cats.includes(x)).map((x) => `"${x}" is not a category code`),
-      ...(st.family ?? []).filter((x) => !FAMILIES.includes(x)).map((x) => `"${x}" is not a family (families: ${FAMILIES.join(", ")})`),
-      // a place ref the prompt did not give (a made-up one cannot be found on the map)
-      ...[st.area_ref, st.b_ref, st.from?.startsWith("place:") ? st.from.slice(6) : null].filter((x): x is string => !!x && !x.startsWith("drawn:") && !ctx.places.some((pl) => pl.ref === x)).map((x) => `"${x}" is not a place ref given in the prompt`)]);
-    // a brief is for a question that names no kind of problem: when the model named one, its plan answers (its own two answers made to agree)
-    const intentOf = (): "plan" | "brief" | "scorecard" => (r.object.intent === "scorecard" ? "scorecard" : r.object.intent === "brief" && !(r.object.named_categories ?? []).some((x) => ctx.cats.includes(x) || FAMILIES.includes(x)) && !(r.object.named_layers ?? []).length
-      && !r.object.steps.some((st) => st.layer === "incidents" && ((st.category ?? []).length || (st.family ?? []).length || (st.status && st.status !== "open") || st.overdue || st.severity?.length))
-      ? "brief" : "plan");
-    // v3: a plan that names no kind of problem while the question has a word of one ("least flooded zone", "news reported
-    // accidents"): the AI looks once more at those words and decides (a plan about every kind stays as it is)
-    const kindless = c.ok && !r.object.every_kind && r.object.intent !== "brief" && c.plan.steps.some((x) => x.op === "take" && x.layer === "incidents" && !x.filter?.category?.length && !x.filter?.family?.length && !x.filter?.dept?.length);
-    const hints = kindless && attempt === 0 ? kindWordsIn(text) : [];
-    if (hints.length && !bad.length) {
-      prompt = `${prompt}
-SECOND LOOK: your plan names no kind of problem, but the question has ${hints.map((h) => `"${h.word}" (${h.codes.join(" / ")})`).join(", ")}. If the question asks about that kind, put its code on the incidents and in named_categories; if those words mean something else here, return the same plan.`;
-      continue;
-    }
-    if (c.ok && !bad.length) return { plan: c.plan, intent: intentOf() };
-    if (c.ok && bad.length && attempt === 1) return { plan: c.plan, intent: intentOf() };
-    problems = c.ok ? bad : [...c.problems, ...bad];
-    prompt = `${prompt}\nYOUR LAST PLAN WAS REFUSED: ${problems.join("; ")}. Fix it.`;
+  } catch (e) {
+    // the deadline, not the Collector: said as such, so the caller's "without AI" answer stands and the log says why
+    if (dl.timedOut && !ctx.signal?.aborted) throw new Error(`no plan in ${PLAN_MS / 1000} s`);
+    throw e;
+  } finally {
+    dl.done();
   }
   return { problems };
 }

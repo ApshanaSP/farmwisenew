@@ -26,10 +26,25 @@ import { AREA_WORDS } from "../areas";
 import { isEnglishWord } from "../english";
 import { earSim } from "./phon10";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
+import { cityAsk, cityLastOf, refersToMap, viewPutAway, type CityFocus, type CityLastIn } from "@/lib/city/intent";
+import type { CityTopic } from "@/lib/city/topic";
+import { zonesIn } from "../quick";
+import type { World } from "../types";
 
-export type MapOp = "ask" | "followup" | "chip" | "circle" | "layer" | "shot" | "export" | "save" | "visit" | "insight" | "send" | "suggest" | "rain" | "tour";
+/** v12 (21 Nov): "city" opens the Live traffic view (on the most congested stretch, or the trouble spots) or Rain & flooding (on a past rain);
+ * "zoom" moves the map's camera (in, out, or to a zone; a place the console cannot place is asked of the map) */
+export type MapOp = "ask" | "followup" | "chip" | "circle" | "layer" | "shot" | "export" | "save" | "visit" | "insight" | "send" | "suggest" | "rain" | "tour" | "city" | "zoom";
 export interface MapCmd {
   op: MapOp;
+  /** v12, city: the part of the city (lib/city/intent.ts cityAsk) and its focus; `rain` below is its past rain */
+  topic?: CityTopic | null;
+  focus?: CityFocus | null;
+  /** v13 (finding 1 7), city: the spot the last city answer was on ("show me in the map" after it), so the view opens or stays on it */
+  spot?: { id: string; lat: number; lon: number } | null;
+  /** v14 (21 Nov review 13, routing 0), city: the zone asked about ("the worst jam in Adyar"): its own jams only, the view on its filter */
+  zone?: number | null;
+  /** v12, zoom: in or out (null: to `place`) */
+  zoom?: "in" | "out" | null;
   /** the question for ask / followup / a suggested question asked / a circle's question / a visit's cases ("open flooding") */
   question?: string | null;
   /** a place (circle, visit, a tour's "go deeper here") */
@@ -54,7 +69,7 @@ export interface MapCmd {
   /** Rain & flooding: a tab or a past rain ("latest" for the last one) */
   tab?: "flooding" | "traffic" | "power" | "metro" | null;
   rain?: string | null;
-  /** Rain & flooding: open it (the default), go back one level, close it */
+  /** Rain & flooding: open it (the default), go back one level, close it (v14, city: "close" puts the Live traffic view away) */
   act?: "open" | "back" | "close" | null;
   /** a tour's step: start, next, back, stop, deeper, repeat */
   tour?: "start" | "next" | "back" | "stop" | "deeper" | "repeat" | null;
@@ -99,6 +114,15 @@ export interface MapCtx10 {
   tour?: boolean;
   /** the tour asked "shall I go on?" (after its third stop): a plain yes goes on, a no ends it */
   tourCheck?: boolean;
+  /** v12 (21 Nov): the part of the city the last answer showed (live traffic, flood streets...), so "show me in the map" said after it maps it
+   * (v13, finding 1 7: or that answer's slots, its focus, rain and spot) */
+  lastCity?: CityLastIn;
+  /** v14 (21 Nov review 13, routing 10): the Live traffic view open */
+  trafficOpen?: boolean;
+  /** v14 (routing 0): the console's zones and places, so a city sentence's zone (or a locality's) is read as the server's fast lane reads it */
+  world?: Pick<World, "zones" | "places"> | null;
+  /** v14 (scenarios 4): what the open screen is about (its zone, its kind of complaint), for "show its complaints on the map" */
+  subject?: { place: string | null; what: string | null } | null;
   lang: Lang;
 }
 
@@ -500,6 +524,9 @@ function rainCmd(t: string, c: MapCtx10): MapCmd | null {
     const day = dayIn(en.replace(/\s+/g, " "));
     const last = /\b(?:last|latest|previous|recent) (?:heavy )?rains?\b|\bpona mazhai\b|கடந்த மழை|போன மழை/u.test(t);
     if ((day || last) && (OPEN_VERB.test(t) || /\breplay\b|\bthirumba\b|மீண்டும்/u.test(t) || c.rainOpen)) {
+      // v14 (21 Nov review 13, routing 4): a flood sentence that names a place ("the flooded streets in Velachery in the last rain") is
+      // that place's flooding, not the whole district's rain: the place was dropped
+      if (FLOOD_SAID.test(t) && askPlace(t).place) return null;
       return { op: "rain", act: "open", rain: day ? `rain-${day}` : "latest" };
     }
   }
@@ -519,6 +546,9 @@ function rainCmd(t: string, c: MapCtx10): MapCmd | null {
   // a rain question with Rain's other tabs, while the map or Rain is open ("where does traffic jam when it rains")
   if (c.open || c.rainOpen) {
     const r = rehearsalIntent(t);
+    // v14 (21 Nov review 13, scenarios 6): power or the trains in the rain asked as a question ("மழை வந்தா கரண்ட் எங்க போகும்?") is answered:
+    // the server's city screen says the answer and moves Rain to its tab in place; here it only got "The Power tab."
+    if (r?.lens && r.asks && (r.lens === "power" || r.lens === "metro") && !refersToMap(t)) return null;
     if (r?.lens) return { op: "rain", act: "open", tab: r.lens };
   }
   return null;
@@ -965,15 +995,25 @@ const asked = (q: string): MapCmd => {
   return { op: "ask", question: p.question, ...(p.place ? { place: p.place } : {}) };
 };
 
+/** v12: the words of talking at the front of an ask, said in any order and any number ("okay now tell me show me", "show me", "just") */
+const DISCOURSE = /^(?:(?:ok|okay|now|so|then|alright|and|just|please|well|hmm|tell me|show me|show|kaattu|kattu|about|for|me)(?:\s+|$))+/;
+
 /** "this case", "that incident", "it", "these", "this one": a thing on the screen, not a question */
 const REF_ONLY =/^(?:this|that|these|those|it|them)(?: (?:case|cases|incident|incidents|complaint|complaints|ticket|tickets|one|ones|issue|issues))?$|^(?:idhu|idha|adhu|adha|இதை|அதை|இது|அது)$/u;
+/** v14 (scenarios 4): a possessive or a demonstrative with the records ("its complaints", "put their cases", "that zones complaints", apostrophes gone) */
+const REF_RECORDS = /^(?:(?:put|show|display|plot|mark|bring|open)\s+)?(?:its|their|that zones?|this zones?|that areas?|this areas?|that places?|this places?|the same)\s+(complaints?|cases?|incidents?|issues?|tickets?|grievances?|petitions?|reports?)$/u;
 
 function askCmd(t: string, c: MapCtx10): MapCmd | null {
   if (OPEN_ASK.test(t)) return { op: "ask", question: null };
   const m = ASK_MAP.exec(t);
   if (m) {
-    const q = (m[1] ?? m[2] ?? "").replace(/^(?:show|kaattu|kattu|about|for)\s+/, "").replace(/\s+(?:kaattu|kattu|show)$/, "").trim();
-    if (!q) return { op: "ask", question: null };
+    // v12 (21 Nov): the words of talking, not of asking, come off the front ("okay", "now", "tell me", "show me", "me"): "Show me live traffic
+    // in the map." asked the map "me live traffic", and "Okay, now tell me, show me in the map." asked it "okay now tell me show me", which
+    // took 34 s and nothing (06:38). Nothing with content left: not the map's question (the planner has the turns; with a city answer last
+    // the city op above has it already); only "show me on the map" said alone opens Ask the Map, as before
+    const raw = (m[1] ?? m[2] ?? "").trim();
+    const q = raw.replace(DISCOURSE, "").replace(/\s+(?:kaattu|kattu|show)$/, "").trim();
+    if (!q) return raw ? null : { op: "ask", question: null };
     if (NOT_MINE.test(q)) return null;
     // (a zone or a place alone, "map la Manali zone kaattu", is the console's own map view, the rules' zone on the map page: news9's
     // n9-command-7, the merged dry run of 19 Nov)
@@ -981,6 +1021,14 @@ function askCmd(t: string, c: MapCtx10): MapCmd | null {
     // (a reference alone, "show this case on the map", "show it on the map", is not a question the map can read: the planner has the case in
     // focus, as in v9: v10 review 2, finding 15)
     if (REF_ONLY.test(q)) return null;
+    // v14 (21 Nov review 13, scenarios 4): "its complaints", "their cases", "that zone's complaints": the open screen's subject, asked with its
+    // zone or kind ("complaints in Adyar"); with none known it is not the map's question either (it asked the map "its complaints" and closed
+    // the screen whose subject "its" was): the Stage's own map op or the planner, which have the screen, take it
+    const rr = REF_RECORDS.exec(q);
+    if (rr) {
+      const s = c.subject ?? null;
+      return s && (s.place || s.what) ? asked(withDigits([s.what, rr[1], s.place ? `in ${s.place}` : ""].filter(Boolean).join(" "))) : null;
+    }
     return asked(withDigits(q));
   }
   // the map open: a place question is the map's ("where are garbage complaints clustering", "what is happening in Teynampet")
@@ -989,7 +1037,90 @@ function askCmd(t: string, c: MapCtx10): MapCmd | null {
   return null;
 }
 
+// ------------------------------------------------------------------ the camera --
+
+const ZOOM_LEAD = String.raw`^(?:(?:now|ok|okay|please|just|and|then|can you|could you|konjam)\s+)*`;
+/** "zoom out", "zoom out a bit", "zoom the map out", "zoom out pannu" */
+const ZOOM_OUT = new RegExp(`${ZOOM_LEAD}zoom(?: the map)? out(?:\\s+(?:the map|on the map|a bit|a little|a little bit|more|further|again|please|pannu|konjam))*$`);
+/** "zoom in a bit", "zoom in more", "zoom the map in" ("zoom in" alone stays the console's: understand.ts zooms to the open incident or the last place) */
+const ZOOM_IN = new RegExp(`${ZOOM_LEAD}(?:zoom the map in|zoom(?: the map)? in(?:\\s+(?:the map|on the map|a bit|a little|a little bit|more|further|again|closer|please|pannu|konjam))+)$`);
+/** "zoom into Ashok Nagar Second Avenue", "zoom to Adyar", "fly to Velachery", "move the map to Guindy" */
+const ZOOM_TO = new RegExp(`${ZOOM_LEAD}(?:zoom(?: the map)?(?: in| out)?|fly(?: the map)?|pan the map|move the map|take the map|centre the map|center the map|focus the map)\\s+(?:to|into|in to|onto|on|towards|over)\\s+(?:the\\s+)?(.+)$`);
+/** what is left after the place: "so that I can see the roads", "please", "on the map" */
+const ZOOM_TAIL = /\s+(?:so that|so i can|so we can|to see|and show|please|on the map|in the map|map la)\b.*$/;
+/** no place: the roads, the streets, closer ("Zoom into the roads so that I can see the roads.": the owner, 20 Nov) */
+const ZOOM_GENERIC = /^(?:the\s+)?(?:roads?|streets?|map|area|areas|city|ground|street level|road level|closer|details?)$/;
+/** a thing on the screen or the last place: the console's own zoom (understand.ts) */
+// v14 (21 Nov review 13, routing 9): "that road", "that spot", "that jam" too: Ask the Map was asked "what is happening around that road"
+const ZOOM_DEIXIS = /^(?:it|this|that|there|here|them|this one|that one|this place|that place|the incident|this incident|(?:that|this|the) (?:road|spot|jam|stretch|junction|street))$/;
+/**
+ * v14 (routing 9): a camera move to the thing just shown ("zoom there", "zoom to it", "zoom into that road", "take me there", "fly there"):
+ * after a city answer on a spot, that spot again (deicticCity); otherwise the console's own zoom, as before
+ */
+const DEICTIC_ZOOM = new RegExp(`${ZOOM_LEAD}(?:zoom(?: the map)?(?: in)?|fly(?: the map)?|pan the map|move the map|centre the map|center the map|focus(?: the map)?|take me|go)\\s+(?:(?:to|into|in to|onto|on|towards|over)\\s+)?(?:it|there|here|that|this|that one|this one|that place|this place|(?:that|this|the) (?:road|spot|jam|stretch|junction|street|area))(?:\\s+(?:please|now|on the map|in the map|map la))?$`);
+function deicticCity(t: string, c: MapCtx10): MapCmd | null {
+  if (!DEICTIC_ZOOM.test(t)) return null;
+  const last = cityLastOf(c.lastCity);
+  if (!last || (last.topic !== "traffic" && last.topic !== "all")) return null;
+  if (last.spot && Number.isFinite(last.lat) && Number.isFinite(last.lon)) {
+    return { op: "city", topic: "traffic", focus: last.focus ?? "worst-jam", rain: null, spot: { id: last.spot, lat: last.lat as number, lon: last.lon as number }, ...(last.zone ? { zone: last.zone } : {}) };
+  }
+  // (a zone's live traffic with no spot: the camera to that zone)
+  return last.zone && ZONE_NAMES[last.zone - 1] ? { op: "zoom", place: ZONE_NAMES[last.zone - 1] } : null;
+}
+
+/**
+ * v12 (21 Nov, the critic's "missed": the owner on 20 Nov, "Zoom into Nerkundram Pathai Ashok Nagar Second Avenue Road.", "Zoom into the
+ * roads."): the map's camera by voice. In or out; to a zone, which the console places itself; any other place or road is asked of the map
+ * ("what is happening around <it>": Ask the Map resolves roads and localities and flies there). A thing on the screen is the console's.
+ */
+function zoomCmd(t: string): MapCmd | null {
+  if (ZOOM_OUT.test(t)) return { op: "zoom", zoom: "out" };
+  if (ZOOM_IN.test(t)) return { op: "zoom", zoom: "in" };
+  const m = ZOOM_TO.exec(t);
+  if (!m) return null;
+  const rest = m[1].replace(ZOOM_TAIL, "").trim();
+  if (!rest || ZOOM_DEIXIS.test(rest)) return null;
+  if (ZOOM_GENERIC.test(rest)) return { op: "zoom", zoom: "in" };
+  const zone = zoneSpelled(rest.replace(/\s+(?:zone|area|side)$/, ""));
+  if (zone) return { op: "zoom", place: zone };
+  return asked(withDigits(`what is happening around ${rest}`));
+}
+
 // ------------------------------------------------------------------ the whole grammar --
+
+/** v13 (finding 0 8): a distance or a nearness to a kind of place ("traffic jams near schools", "within 1 km of the hospital"): Ask the Map's */
+const NEAR_CLAUSE = /\b(?:near|nearby|nearest|around|within|close to|next to|beside|along|km|kms|metres?|meters?)\b|பக்கத்துல|அருகில்|அருகே|\bpakkathula\b/;
+/** v13 (finding 0 8): the reports people sent ("flooded road reports", "traffic issues"): the incidents on the map, Ask the Map's */
+const REPORT_NOUN = /\b(?:reports?|reported|issues?|problems?|complaints?|cases?|incidents?)\b/;
+/** v13 (finding 0 8): power and trains on the map are Rain & flooding's heavy-rain tabs: only with a rain said ("power cuts on the map" is not) */
+const RAIN_SAID = /\b(?:rain|rains|raining|rainy|monsoon|downpour|cyclone|storm|mazhai)\b|மழை/;
+/** v14: a flood or waterlogging word (21 Nov review 13, routing 4: a place named with it is that place's flooding) */
+const FLOOD_SAID = /\b(?:flood\w*|waterlog\w*|water[- ]?logged|inundat\w*|submerg\w*|under water)\b|வெள்ள|தண்ணி|தண்ணீர்/u;
+/**
+ * v13 (21 Nov review, finding 0 8): the city op takes a sentence only when it is the city view's: no nearness to a kind of place, no
+ * reports, a rain said for power and trains, and no place named for the flood streets (the district's, read by no place: "the flooded streets
+ * in Adyar on the map" is Adyar's flooding, Ask the Map's). "Show me power cuts on the map" opened the heavy-rain power tab, "traffic jams near
+ * schools on the map" lost its schools, and "flooded road reports on the map" got the past rain's streets
+ */
+function cityOnMap(t: string, topic: CityTopic, rain: string | null): boolean {
+  if (NEAR_CLAUSE.test(t) || REPORT_NOUN.test(t)) return false;
+  // (v14, 21 Nov review 13 scenarios 0: "show it on the map" after the power-in-rain answer names no rain, and is that answer's: it fell to the
+  // hidden in-place screen's own map op, which showed nothing)
+  if ((topic === "power" || topic === "metro") && !RAIN_SAID.test(t) && !refersToMap(t)) return false;
+  // (v14, routing 4: with a past rain too, "the flooded streets in Velachery in the last rain" kept no Velachery)
+  if (topic === "flood" && askPlace(t).place) return false;
+  return true;
+}
+
+/** v14 (21 Nov review 13, routing 0): a jam or the worst said; a camera move alone says neither ("zoom to Adyar" is Adyar's live traffic) */
+const JAM_SAID = /\b(?:most|worst|heaviest|biggest|longest|jams?|jammed|congest\w*|gridlock\w*|bottlenecks?|snarl\w*)\b|நெரிசல்/u;
+const NO_WORLD: Pick<World, "zones" | "places"> = { zones: [], places: [] };
+/** v14 (routing 0): the one zone a traffic sentence names (a zone by any spelling or its number, or a locality the console places in one) */
+function zoneOfCity(t: string, c: MapCtx10): number | null {
+  const zs = zonesIn(` ${t} `, (c.world ?? NO_WORLD) as World);
+  return zs.length === 1 ? zs[0] : null;
+}
 
 /** The map operation a sentence asks for, or null. */
 export function mapCommand10(text: string, c: MapCtx10): MapCmd | null {
@@ -999,6 +1130,11 @@ export function mapCommand10(text: string, c: MapCtx10): MapCmd | null {
   const tour = tourCmd(t, c);
   if (tour) return tour;
   if (CASE.test(t)) return null;
+  // v14 (21 Nov review 13, routing 10): "hide the live traffic", "turn off the traffic view" put the Live traffic view away (no lane closed it:
+  // the rules set a traffic-complaints filter instead); "hide rain and flooding" with Rain open closes Rain (Rain's own tabs stay rainCmd's)
+  const away = viewPutAway(t);
+  if (away === "traffic" && !(c.rainOpen && /\btabs?\b/.test(t))) return { op: "city", topic: "traffic", act: "close" };
+  if (away === "rain" && c.rainOpen && !c.tour) return { op: "rain", act: "close" };
   const rain = rainCmd(t, c);
   if (rain) return rain;
   // a news request is never the map's, but "only the ones in the news" edits the answer, and "the news layer" is a layer
@@ -1008,6 +1144,27 @@ export function mapCommand10(text: string, c: MapCtx10): MapCmd | null {
     const l = layerCmd(t, c);
     return l?.layer === "news" ? l : null;
   }
+  // v12 (21 Nov): the city on the ground on the map (lib/city/intent.ts cityAsk): "show me live traffic in map", "zoom in the map to the
+  // most congested area", "the roads that flooded in the last range" open the Live traffic view on the jam or Rain & flooding on that rain,
+  // never an Ask the Map question; only when the map or a past rain is said (the rest is the server's city screen). After the tour, a case,
+  // Rain's own words and the news, so those keep their grammar; cityAsk reads nothing for a tour, a visit plan, a layer or the news
+  // v14 (21 Nov review 13, routing 9): "zoom there", "take me there", "zoom to that road" after a city answer on a spot: that spot again
+  const dz = deicticCity(t, c);
+  if (dz) return dz;
+  const ca = cityAsk(t, { last: c.lastCity ?? null });
+  if (ca && (ca.map || ca.rain) && cityOnMap(t, ca.topic, ca.rain)) {
+    // v13 (21 Nov review, finding 1 7): "show me in the map" after a city answer is that answer's spot, so the view opens (or stays) on it
+    const refers = refersToMap(t);
+    const last = refers ? cityLastOf(c.lastCity) : null;
+    const spot = last?.spot && Number.isFinite(last.lat) && Number.isFinite(last.lon) ? { id: last.spot, lat: last.lat as number, lon: last.lon as number } : null;
+    // v14 (21 Nov review 13, routing 0 and 5): the zone said ("the worst jam in Adyar"), or the last answer's ("show me in the map" after
+    // Adyar's live traffic); a camera move to a zone with no jam or worst said is that zone's live traffic, not the district's worst jam
+    const zone = ca.topic === "traffic" ? (refers ? last?.zone ?? null : zoneOfCity(t, c)) : null;
+    const focus = zone != null && !refers && ca.focus === "worst-jam" && !JAM_SAID.test(t) ? null : ca.focus;
+    return { op: "city", topic: ca.topic, focus, rain: ca.rain, ...(spot ? { spot } : {}), ...(zone != null ? { zone } : {}) };
+  }
+  const zoom = zoomCmd(t);
+  if (zoom) return zoom;
   return visitCmd(t, c) ?? sendCmd(t, c) ?? exportCmd(t, c) ?? saveCmd(t, c) ?? insightCmd(t, c) ?? suggestCmd(t, c) ?? shotCmd(t, c) ?? layerCmd(t, c) ?? chipCmd(t, c)
     ?? (NOT_MINE.test(t) ? null : circleCmd(t, c) ?? followCmd(t, c) ?? askCmd(t, c));
 }

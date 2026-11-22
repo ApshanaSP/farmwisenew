@@ -196,7 +196,7 @@ function pairRatios(text: string): number[] {
 
 /** the console's windows as said (screens.ts PERIOD_EN), and the screens that count over one */
 const WINDOW: Record<string, string[]> = { daily: ["the last 24 hours", "today"], weekly: ["this week", "the last 7 days"], monthly: ["this month", "the last 30 days"], quarterly: ["this quarter"] };
-const COUNTS = new Set(["situation", "why", "changed", "compare", "ranking", "performance", "cases", "news", "brief", "trend", "dashboard", "readings", "insight", "advise"]);
+const COUNTS = new Set(["focus", "situation", "why", "changed", "compare", "ranking", "performance", "cases", "news", "brief", "trend", "dashboard", "readings", "insight", "advise"]);
 /** The screen's scope: the district names in its title and its scope's zone, and the window it counts over (a case has none of its own) */
 export function scopeOf(doc: Pick<StageDocT, "title" | "recipe" | "scope">, gaz: Gazetteer): { names: string[]; times: string[] } {
   const names = new Set<string>(namesIn(doc.title ?? "", gaz).filter((h) => h.kind !== "outlet").map((h) => h.form));

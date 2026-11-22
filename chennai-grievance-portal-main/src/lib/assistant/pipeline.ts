@@ -1445,8 +1445,14 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     let narrowed = false;
     const typedClean = i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars);
     let outcome: AgentOutcome;
+    // v11: THE DISTRICT NOW's short digest for the Collector's chat (never a department-locked officer's: it holds every department): the
+    // briefing's headline figures and the city now, no records (the review of 20 Nov: the whole picture cost about 8k tokens a message on
+    // the chat's model, and its records could reach a clarifying question unchecked); 0.5 s at most when cold
+    const district = i.lockDept || process.env.JARVIS_SNAPSHOT === "0" || process.env.VITEST ? ""
+      : await import("@/lib/thunai/v11/snapshot").then((m) => m.districtSnapshot(500).then((s) => m.snapshotDigest(s))).catch(() => "");
     try {
       outcome = await runAgent({
+        district,
         message, typed: typedClean !== message ? typedClean : undefined, asOf: now, scopeLine: describeScope(consoleScope, names, "en"),
         summary: summaryOf(turns), previous: contextForRouter(ctx), place, detected: detected.lang, system,
         window: cw ? `${cw.label} (period ${cw.period}${cw.offset ? ", the window before the latest" : ""})` : "",

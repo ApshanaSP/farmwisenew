@@ -72,7 +72,9 @@ export const DEPT_TA: Record<string, string> = {
 /** category code -> spoken names */
 export const CAT_ALIASES: Record<string, string[]> = {
   FLOOD_WATERLOGGING: [" வெள்ள ", " வெள்ளப் ", "flooding", "flood", "floods", "waterlogging", "water logging", "waterlogged", "water stagnation", "stagnation",
-    "inundation", "rain water", "மழைநீர் தேக்கம்", "நீர்த்தேக்கம்", "தண்ணீர் தேக்கம்", "வெள்ளம்", "mazhai thanni", "thanni thekkam", "vellam"],
+    "inundation", "rain water", "மழைநீர் தேக்கம்", "நீர்த்தேக்கம்", "தண்ணீர் தேக்கம்", "வெள்ளம்", "mazhai thanni", "thanni thekkam", "vellam",
+    // v12 (21 Nov): "flooded road complaints" is this category, never Roads & potholes by "road" (06:42 "Where are the flooded roads?")
+    "flooded", "flooded roads", "flooded road", "flooded streets", "flooded street", "water standing", "standing water", "water stood"],
   DRAINAGE_SEWAGE: ["drainage", "sewage", "sewer", "sewage overflow", "கழிவுநீர்", "சாக்கடை", "saakkadai"],
   ROAD_DAMAGE: ["road", "roads", "pothole", "potholes", "road damage", "footpath", "சாலை", "பள்ளம்", "road damage complaints"],
   ROAD_ACCIDENT: ["accident", "accidents", "road accident", "road accidents", "விபத்து"],
@@ -139,6 +141,10 @@ export const PAGE_WORDS: [string, PageKey][] = [
   ["trends", "trends"], ["trend", "trends"], ["போக்கு", "trends"], ["ட்ரெண்ட்ஸ்", "trends"], ["டிரெண்ட்ஸ்", "trends"], ["டிரெண்ட்", "trends"], ["ட்ரெண்ட்", "trends"],
   ["ஓவர்வியூ", "overview"], ["டாஷ்போர்டு", "overview"], ["டாஷ்போர்ட்", "overview"], ["பிரீஃபிங்", "briefing"], ["ப்ரீஃபிங்", "briefing"], ["ப்ரீபிங்", "briefing"],
   ["என்விரான்மென்ட்", "environment"], ["ஸ்டுடியோ", "studio"],
+  // v15 (22 Nov): the page names as the ears wrote them ("Superview page-க்கு போ" on 20 Nov was the overview, sent to the planner: 2.1 s)
+  ["over view", "overview"], ["superview", "overview"], ["super view", "overview"], ["ஓவர் வியூ", "overview"], ["ஓவர்வியு", "overview"], ["ஓவர் வியு", "overview"],
+  ["டிரென்ட்ஸ்", "trends"], ["ட்ரென்ட்ஸ்", "trends"], ["ட்ரென்ட்", "trends"], ["டிரென்ட்", "trends"], ["பிரீபிங்", "briefing"], ["ப்ரீபிங்க்", "briefing"],
+  ["என்விரோன்மென்ட்", "environment"], ["என்வயர்மென்ட்", "environment"], ["என்விரான்மெண்ட்", "environment"], ["டேட்டா ஸ்டுடியோ", "studio"],
   ["environment", "environment"], ["environment and markets", "environment"], ["weather", "environment"], ["சுற்றுச்சூழல்", "environment"],
   ["வானிலை", "environment"], ["data studio", "studio"], ["studio", "studio"], ["datasets", "studio"], ["தரவு", "studio"]
 ];

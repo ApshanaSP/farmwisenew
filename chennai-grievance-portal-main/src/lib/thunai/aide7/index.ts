@@ -23,7 +23,7 @@ const webOn = () => (process.env.JARVIS_AIDE_WEB ?? "").trim() !== "0";
 const firstMs = () => { const n = Number(process.env.JARVIS_AIDE_FIRST_MS); return Number.isFinite(n) && n >= 800 && n <= 15_000 ? n : 3500; };
 
 /** The screens that answer a question: the aide always says their point (a news list, a brief, a case, a comparison, a why). */
-const ASKED = new Set(["case", "situation", "explain", "why", "changed", "compare", "news", "brief", "advise", "insight", "performance", "ranking", "trend", "answer"]);
+const ASKED = new Set(["focus", "case", "situation", "explain", "why", "changed", "compare", "news", "brief", "advise", "insight", "performance", "ranking", "trend", "answer"]);
 /** A sentence shaped as a question or a request to be told: the aide answers it whatever screen it built. */
 const QUESTION = /\?|^\s*(?:what|why|how|which|who|when|where|is|are|was|were|does|did|do|can|should|tell|explain|summari[sz]e|brief|describe|compare|give me (?:a|the) (?:summary|picture|update|status)|status|update)\b|\b(?:tell me|what about|what's|whats|how is|how are|why is|why are|any update|the status|the issue|the problem|the situation)\b|என்ன|ஏன்|எப்படி|எங்கே|யார்|எவ்வளவு|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|விளக்கு|\b(?:enna|yen|epdi|evlo|sollu|sollunga|pathi)\b/iu;
 
@@ -41,6 +41,14 @@ export function aideWanted(r: AgentResult | null | undefined, question: string, 
   if (!forced && (process.env.JARVIS_AIDE ?? "").trim() === "0") return false;
   if (!forced && !aideReady()) return false;
   if (lane === "direct" || lane === "refuse") return false;
+  // v11: the planner's answer from THE DISTRICT NOW is already the data speaking, checked sentence by sentence (agent.ts keepChecked)
+  if (r.note === "v11:district-now") return false;
+  // v12 (21 Nov, routing RC5 and RC7): the city screen on one spot or one past rain says code's own line for it (lib/city/pick.ts spotLine and
+  // clusterLine, lib/city/now.ts's rain line), every figure the spot's or the rain's own; the aide would rewrite it from the district's facts
+  // (3.5 s on the 06:40 "repeating traffic" turn)
+  // v13 (21 Nov review, finding 1 8): every city screen, the plain one too: its say is code's own line from the shared city data (lib/city/now.ts),
+  // and the aide's writer and gap search made "Where are the flooded roads?" slow (up to 8 s with the outlet feeds, past the client deadline)
+  if (r.stage.recipe === "city") return false;
   return ASKED.has(r.stage.recipe) || QUESTION.test(question);
 }
 
@@ -71,8 +79,21 @@ export interface AideCtx {
 }
 export interface AideOut { result: AgentResult; written: Written; sheet: Sheet7; gap: (GapFound & { said: string[]; /** the reports as the checker held the gap's sentences to them */ facts?: Fact7[] }) | null }
 
+/** v11: the gap's phrase is the whole question again (five words or more, nearly all of the question's), not a part of it */
+export function echoesQuestion(phrase: string, question: string): boolean {
+  const words = (s: string) => s.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w && w !== "whether" && w !== "that");
+  const p = words(phrase), q = words(question);
+  // only a gap about the dashboard's own data: a news gap ("who won the by-election in Kolathur", "CM Vijay visiting Adyar") keeps its honest
+  // "nothing found"; the phrase is the question's own words (a whole clause of it), not a part the writer named
+  if (p.length < 4 || !q.length || !/\b(?:departments?|dept|zones?|complaints?|cases?|incidents?|prices?|deadline|overdue|backlog|slowest|fastest|rain\w*|lakes?|reservoirs?|traffic|aqi|air|power|metro)\b/i.test(phrase)) return false;
+  return p.filter((w) => q.includes(w)).length / p.length >= 0.8;
+}
+
 /** The fallback said when the model gives nothing checked: the recipe's own line (v6's), without an announcement of a reading. */
 const fallbackOf = (doc: StageDocT, lang: Lang) => fallbackLines(doc.say?.[lang] || doc.say?.en || "").join(" ");
+
+/** v12 (21 Nov): the turn was cancelled (a barge-in, Esc): stop as an abort, which withAide passes on and nothing is said for */
+const stopIf = (s?: AbortSignal) => { if (s?.aborted) throw new DOMException("the turn was cancelled", "AbortError"); };
 
 export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: AideCtx): Promise<AideOut> {
   const now = ctx.now ?? Date.now;
@@ -109,7 +130,11 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
     if (fb.length) written.by = "fallback";
   }
   if (written.gap) {
-    const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now, world: ctx.world }).catch(() => null) : null;
+    // v12 (21 Nov): the turn's signal goes to the look-up, and a cancelled turn stops here as an abort (withAide in round.ts passes it on), so
+    // nothing more is fetched or written for an answer the Collector will never see, and no "nothing found" line is said for it (RC7)
+    stopIf(ctx.signal);
+    const found = webOn() && now() < until - 2500 ? await findGap(written.gap, ctx.question, { dashboardNews: ctx.dashboardNews, feeds: ctx.feeds, now, world: ctx.world, signal: ctx.signal }).catch(() => null) : null;
+    stopIf(ctx.signal);
     const extra: string[] = [];
     if (found?.status === "ok" && found.hits.length) {
       // one more checked answer, about the gap only, from what the reports say
@@ -126,13 +151,20 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
     } else {
       // what was searched decides what is claimed: the dashboard and the latest news, the dashboard alone (no look-up), or the feeds unreadable
       const searched = found?.status === "nothing" ? "news" : found?.status === "unavailable" ? "unavailable" : "dashboard";
-      const line = nothingLine(found?.phrase ?? gapPhrase(written.gap, ctx.question), lang, searched);
-      emit(line);
-      extra.push(line);
+      const phrase = found?.phrase ?? gapPhrase(written.gap, ctx.question);
+      // v11: after an answer, a line that only repeats the Collector's whole question back ("Nothing in the dashboard or the latest news mentions
+      // Which department has the most cases past the deadline.", the 20 Nov probe) says nothing: the answer already said what the data shows
+      if (!(said.length && echoesQuestion(phrase, ctx.question))) {
+        const line = nothingLine(phrase, lang, searched);
+        emit(line);
+        extra.push(line);
+      }
     }
     said.push(...extra);
     gap = found ? { ...found, said: extra, facts: gapFacts7 } : { status: "nothing", words: [], hits: [], ms: 0, phrase: gapPhrase(written.gap, ctx.question), said: extra };
   }
+  // v12: an answer finished after the turn was cancelled is not handed back as given (the round would send RUN_FINISHED and the route record it)
+  stopIf(ctx.signal);
   const say = said.join(" ").trim() || fallbackOf(doc, lang);
   const figures = [...new Set(figuresIn(say).map((f) => f.value).filter(Number.isFinite))].slice(0, 60);
   const stage: StageDocT = { ...doc, say: { ...doc.say, [lang]: say }, voice: { by: written.by === "fallback" && !gap ? "fallback" : "aide7", model: written.model, figures },

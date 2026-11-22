@@ -3,6 +3,8 @@
  * first request (a sign-in on a fresh start used to wait 90 seconds for it). The build steps (derive.ts) are registered
  * first, so the first build is adjusted before it is served.
  */
+import fs from "fs";
+import path from "path";
 import { warmUp } from "@/lib/aws/store";
 import { assertSecrets } from "@/lib/secrets";
 import { startJobs } from "@/lib/scheduler";
@@ -43,6 +45,64 @@ if (process.env.NEXT_PHASE !== "phase-production-build") {
   setTimeout(() => {
     import("@/lib/dataset/append").then((m) => m.warmDatasetKeys()).catch((e) => console.warn("[dataset] warm-up skipped:", (e as Error).message));
   }, 4500);
+}
+
+// v12 (21 Nov): Jarvis, ready before the first question (the report, first-question-latency RC1 and RC7). About 20 s after the start and once
+// the store is in: Jarvis's server modules and the meaning model are loaded (production loaded each on its first use), then the keep-warm
+// starts (lib/thunai/keepwarm.ts): the hourly city parts, and while the console is in use the insights, live traffic, THE DISTRICT NOW and
+// the planner's prompt cache, one step at a time. DIQ_WARM=0 leaves all of it off (the start-up tests), JARVIS_KEEPWARM=0 the keep-warm only.
+if (process.env.NEXT_PHASE !== "phase-production-build" && process.env.DIQ_WARM !== "0") {
+  setTimeout(() => {
+    ready()
+      .then(() => preloadJarvis())
+      .then(() => import("@/lib/thunai/keepwarm"))
+      .then((m) => m.startKeepWarm())
+      .catch((e) => console.warn("[jarvis warm] the keep-warm could not start:", (e as Error).message));
+  }, 20_000);
+}
+
+/** the port this server listens on (the dev warm-up below and the preload use it to open their own routes) */
+const ownPort = () => process.env.PORT || /(?:-p|--port)[ =](\d+)/.exec(process.argv.join(" "))?.[1] || "3000";
+
+/** Jarvis's routes, opened once with no session in production (each answers 401 and does nothing) so their bundles are loaded */
+const JARVIS_ROUTES: ["GET" | "POST", string][] = [
+  ["POST", "/api/jarvis/hear"], ["GET", "/api/collector/thunai/world"], ["POST", "/api/collector/thunai/agent/round"], ["POST", "/api/jarvis/say"]
+];
+
+/**
+ * v12 (21 Nov): loads what the first spoken question needs, one piece after another: Jarvis's server modules (round, agent, quick, the
+ * browser lanes), in production its route bundles (measured cold: /api/jarvis/hear 533 ms, /thunai/world 251 ms, /thunai/agent/round
+ * 208 ms; the start-up code and the routes are bundled apart, so a route's own copy is loaded by opening it), and the multilingual-e5 meaning
+ * model on its worker thread when it is already on disk (never downloaded here): the first news question that needed it waited its
+ * 1.5 s and went on without it. A failure only means the first question loads it.
+ */
+async function preloadJarvis(): Promise<void> {
+  const t0 = Date.now();
+  const breathe = () => new Promise<void>((r) => setImmediate(r));
+  const loads: [string, () => Promise<unknown>][] = [
+    ["round", () => import("@/lib/thunai/round")], ["agent", () => import("@/lib/thunai/agent")],
+    ["quick", () => import("@/lib/thunai/quick")], ["browser10", () => import("@/lib/thunai/v10/browser10")]
+  ];
+  for (const [name, load] of loads) {
+    try { await load(); } catch (e) { console.warn(`[warm] Jarvis's ${name} module could not be loaded ahead:`, (e as Error).message); }
+    await breathe();
+  }
+  if (process.env.NODE_ENV === "production") {
+    for (const [method, route] of JARVIS_ROUTES) {
+      try { await fetch(`http://127.0.0.1:${ownPort()}${route}`, { method, headers: { "Content-Type": "application/json" }, body: method === "POST" ? "{}" : undefined }); }
+      catch { /* not listening yet: loaded on first use instead */ }
+      await breathe();
+    }
+  }
+  let model = "not on disk";
+  try {
+    const emb = await import("@/lib/assistant/embed");
+    if (fs.existsSync(emb.modelFile(path.join(process.cwd(), ".cache", "models")))) {
+      await emb.embed(["query: warm"]);
+      model = "ready";
+    }
+  } catch (e) { model = `not loaded (${(e as Error).message?.slice(0, 80)})`; }
+  console.info(`[warm] Jarvis's modules are loaded; the meaning model is ${model} (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
 }
 
 /**

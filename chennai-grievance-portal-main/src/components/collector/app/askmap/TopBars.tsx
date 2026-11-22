@@ -95,7 +95,7 @@ function PlaceCard({ r, ask, lang, row, rank, by, radius, onClose }: { r: AskRes
   const here = area ? herePlan(r.plan, area) : null;
   const topic = r.topic ? (ta ? r.topic.ta : r.topic.en) : ta ? "அனைத்துப் புகார்களும்" : "all complaints";
   const overview = () => {
-    if (area?.kind === "ward") void ask.draw({ ward: area.id }, ta ? `${row.label}: முழு மேலோட்டம்` : `Full overview of ${row.label}`);
+    if (area?.kind === "ward") void ask.draw({ ward: area.id }, undefined, ta ? `${row.label}: முழு மேலோட்டம்` : `Full overview of ${row.label}`);
     else void ask.ask(ta ? `${row.label} இல் என்ன நடக்கிறது` : by === "near" ? `what is happening near ${row.label}` : `what is happening in ${row.label}`);
   };
   return (

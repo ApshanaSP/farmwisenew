@@ -71,16 +71,20 @@ describe("two-stage barge-in", () => {
     expect(acts[acts.length - 1].some((x) => x.a === "transcribe")).toBe(true);
     expect(m.gen).toBeGreaterThan(1);
   });
-  it("speech while Jarvis thinks is captured; the question is cancelled only once held long enough", () => {
+  // v12 (21 Nov, stale-and-double RC1): this pinned the old rule, a cancel once speech while thinking was held 200 ms. Speech while Jarvis
+  // thinks is now provisional: it is captured and read, and the question in flight goes on until its words decide (turn.v12.test.ts)
+  it("speech while Jarvis thinks is captured; the question is not cancelled for it, however long it is held", () => {
     const base = play([...SENT, { type: "text", text: "rain" }, { type: "vadStart", at: 1500 }]);
     expect(base.m.state).toBe("hearing");
     expect(base.acts[base.acts.length - 1]).toEqual([{ a: "capture" }]);
     const noise = turn(base.m, { type: "vadEnd", at: 1800, ms: 100, short: true });
     expect(noise.m.state).toBe("thinking");
     expect(noise.act).toEqual([{ a: "dropCapture" }]);
-    const held = turn(base.m, { type: "tick", at: 1720, heldMs: 220 });
-    expect(held.act).toEqual([{ a: "cancelTurn" }]);
-    expect(held.m.gen).toBeGreaterThan(base.m.gen);
+    for (const heldMs of [220, 900, 3000]) {
+      const held = turn(base.m, { type: "tick", at: 1500 + heldMs, heldMs });
+      expect(held.act).toEqual([]);
+      expect(held.m.gen).toBe(base.m.gen);
+    }
   });
   it("Esc stops everything at once and the answer can be continued", () => {
     const { m, acts } = play([...SPEAKING, { type: "stop" }]);
@@ -109,7 +113,9 @@ describe("late transcripts and old answers", () => {
     const { m } = play([...SENT, { type: "ttsStart" }]);
     expect(m.state).toBe("speaking");
     const r = turn(m, { type: "text", text: "show me the severe cases" });
-    expect(r.act).toEqual([{ a: "handle", text: "show me the severe cases", gen: 1 }]);
+    // v12 (RC3): the voice that began while these words were at the transcriber is an older turn's (this sentence's own acknowledgement
+    // is asked for only once it is handed on): it is cut as the request is handed on, never left playing over the new question
+    expect(r.act).toEqual([{ a: "cancelVoice" }, { a: "handle", text: "show me the severe cases", gen: 1 }]);
     expect(r.m.state).toBe("thinking");
     // and a second, stray transcript later is not taken
     expect(turn(r.m, { type: "text", text: "again" }).act).toEqual([]);
@@ -188,12 +194,17 @@ describe("holding", () => {
 
 describe("what the independent review found", () => {
   const ASKED: TurnEvent[] = [...SENT, { type: "text", text: "show adyar" }];
-  it("the acknowledgement ending does not leave the question uncancellable", () => {
+  // v12 (RC1): the question is replaced by the words of the speech, not by its length: held 220 ms cancels nothing now; the sentence is
+  // read (provisional) and a request in it is handed on, which replaces the question in the page's handle()
+  it("the acknowledgement ending does not leave the question unreplaceable", () => {
     const { m } = play([...ASKED, { type: "ttsStart", ack: true }, { type: "ttsEnd", ack: true }]);
     expect(m.state).toBe("thinking");
-    const r = play([{ type: "vadStart", at: 5000 }, { type: "tick", at: 5220, heldMs: 220 }], m);
-    expect(r.acts[1]).toContainEqual({ a: "cancelTurn" });
-    expect(r.m.gen).toBe(m.gen + 1);
+    const r = play([{ type: "vadStart", at: 5000 }, { type: "tick", at: 5220, heldMs: 220 }, { type: "vadEnd", at: 6000, ms: 700, short: false }], m);
+    expect(r.acts.flat()).not.toContainEqual({ a: "cancelTurn" });
+    expect(r.acts[2]).toEqual([{ a: "transcribe", gen: m.gen + 1 }]);
+    expect(r.m.provisional).toBe(true);
+    expect(r.m.handling).toBe(true);
+    expect(turn(r.m, { type: "text", text: "show velachery", gen: r.m.gen }).act).toEqual([{ a: "handle", text: "show velachery", gen: r.m.gen }]);
   });
   it("an acknowledgement outliving a turn that finished silently still ends in listening", () => {
     const { m } = play([...ASKED, { type: "ttsStart", ack: true }, { type: "answered" }, { type: "ttsEnd", ack: true }]);
@@ -219,10 +230,17 @@ describe("what the independent review found", () => {
     const { m } = play([...SENT, { type: "vadStart", at: 2000 }, { type: "text", text: "", gen: 1 }, { type: "vadEnd", at: 2400, ms: 120, short: true }]);
     expect(m.state).toBe("listening");
   });
+  // v12 (RC1): the answer that begins under a person is ducked at once and cut once their speech is held TUNING.bargeMs (800 ms, was 220 here)
+  // v13 (21 Nov, review 1-10): cut without cancelling the turn, which has already answered (it was [cancelVoice, cancelTurn]: the answer left
+  // the bar); the cut is kept for "continue", and the speech's words decide (turn.v13.test.ts)
   it("an answer that begins during a cough goes on, and one that begins under a person is cut", () => {
     const base = play([...ASKED, { type: "vadStart", at: 2000 }, { type: "ttsStart" }]);
-    expect(turn(base.m, { type: "vadEnd", at: 2400, ms: 120, short: true }).m.state).toBe("speaking");
-    expect(turn(base.m, { type: "tick", at: 2300, heldMs: 220 }).act).toEqual([{ a: "cancelVoice" }, { a: "cancelTurn" }]);
+    expect(base.acts[base.acts.length - 1]).toEqual([{ a: "duckVoice" }]);
+    const cough = turn(base.m, { type: "vadEnd", at: 2400, ms: 120, short: true });
+    expect(cough.m.state).toBe("speaking");
+    expect(cough.act).toEqual([{ a: "dropCapture" }, { a: "unduckVoice" }]);
+    expect(turn(base.m, { type: "tick", at: 2300, heldMs: 220 }).act).toEqual([]);
+    expect(turn(base.m, { type: "tick", at: 2820, heldMs: 820 }).act).toEqual([{ a: "cancelVoice" }]);
   });
   it("an empty transcript or a stray continue while ducked brings the voice back up", () => {
     const paused = play([...SPEAKING, { type: "ttsEnd" }, { type: "vadStart", at: 1 }, { type: "vadEnd", at: 900, ms: 700, short: false }, { type: "ttsStart", ack: true }, { type: "quickOnset", at: 950 }]);

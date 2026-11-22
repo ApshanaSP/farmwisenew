@@ -29,7 +29,7 @@ describe("v6: a live holdout run's room", () => {
   it("waitForRoom: an item waits until the lead's minute window has room for it, on the ledger's own clock", async () => {
     let now = 1_000_000;
     const l = new Ledger(new MemoryStore(), () => now);
-    l.record("anthropic", "claude-haiku-5-5", { tokens: 45_000 });
+    l.record("anthropic", "claude-haiku-5-5", { tokens: 395_000 }); // (v15: the minute is 400K tokens now, ledger.ts)
     const sleep = async (ms: number) => { now += ms; };
     const waited = await waitForRoom(l, { who: "anthropic", model: "claude-haiku-5-5" }, 30_000, { sleep, stepMs: 2000, maxMs: 120_000 });
     expect(waited).toBeGreaterThanOrEqual(60_000);
@@ -42,14 +42,14 @@ describe("v6: a live holdout run's room", () => {
     let now = 5_000_000;
     const l = new Ledger(new MemoryStore(), () => now);
     const sleep = async (ms: number) => { now += ms; };
-    l.record("anthropic", "claude-haiku-5-5", { tokens: 49_000 });
+    l.record("anthropic", "claude-haiku-5-5", { tokens: 399_000 });
     expect(await waitForRoom(l, { who: "anthropic", model: "claude-haiku-5-5" }, 30_000, { sleep, stepMs: 2000, maxMs: 10_000 })).toBe(-1);
     for (const m of GROQ_PLANNERS.slice(1)) l.record("groq", m, { tokens: 8_000 });
     expect(await waitForRoom(l, { who: "groq", model: "" }, 5_000, { sleep })).toBe(0);
   });
   it("Claude's requests left count too, at about 3K tokens a request", () => {
     const l = new Ledger(new MemoryStore());
-    l.record("anthropic", "claude-haiku-5-5", { tokens: 1000, requests: 490 });
+    l.record("anthropic", "claude-haiku-5-5", { tokens: 1000, requests: 1990 }); // (v15: 2,000 requests a day, ledger.ts)
     expect(runRoom(l, { leads: true, model: "claude-haiku-5-5" })).toEqual({ who: "anthropic", left: 10 * 3000 });
   });
 });

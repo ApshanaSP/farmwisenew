@@ -18,6 +18,7 @@ import { serverClock } from "@/lib/thunai/stagetime";
 import { sarvamKeyed, sarvamMode } from "@/lib/thunai/sarvam";
 import { serverWorld } from "@/lib/thunai/world";
 import { dayKeytermsNow } from "@/lib/thunai/v10/lexserver";
+import { busy } from "@/lib/thunai/keepwarm";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
   const site = req.nextUrl.searchParams.get("lang") === "ta" ? "ta" : "en";
   const q = req.nextUrl.searchParams.get("lane") as Lane | null;
   const lane: Lane = q && LANES.includes(q) ? q : "engaged";
+  // v15: the keep-warm's heavy steps wait while a sentence to Jarvis is heard (keepwarm.ts busy); room talk does not hold them
+  const done = lane === "ambient" ? () => undefined : busy();
   try {
     // v10: Sarvam hears with the day's names (the storms and names in the news, then the Stage's names and the zones), never waiting on the store
     // v10: the day's news names as Sarvam's keyterms only when asked for (JARVIS_SARVAM_DAY_KEYTERMS=1). Measured on 19 Nov (71 synthetic clips,
@@ -48,5 +51,5 @@ export async function POST(req: NextRequest) {
     if (req.signal.aborted) return NextResponse.json({ error: "aborted" }, { status: 499 });
     console.warn("[jarvis] hear failed:", (e as Error).message);
     return NextResponse.json({ error: "stt-failed" }, { status: 502 });
-  }
+  } finally { done(); }
 }

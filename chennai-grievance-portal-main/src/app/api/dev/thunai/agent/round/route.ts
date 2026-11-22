@@ -1,3 +1,5 @@
+import { districtSnapshot } from "@/lib/thunai/v11/snapshot";
+import { claudeConfigured } from "@/lib/ai/claude";
 import { localOnly } from "@/lib/thunai/devguard";
 import { NextRequest, NextResponse } from "next/server";
 import { exportMeta } from "@/lib/collector/intel";
@@ -17,8 +19,11 @@ export async function POST(req: NextRequest) {
   if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const parsed = RoundBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ done: true, result: { kind: "none" }, why: parsed.error.issues[0]?.message ?? "bad request" }, { status: 400 });
+  // v12 (21 Nov, first-question RC3): THE DISTRICT NOW is read only when Claude can lead, as on the Collector's route (round.ts also reads it
+  // only when Claude leads; this keeps the dev console and the probes from reading it for nothing)
+  const snapshot = () => (claudeConfigured() ? districtSnapshot() : Promise.resolve(null));
   const run = async (emit?: (e: TurnEvent) => void) => planRound(parsed.data, await serverWorld(), serverHands({ email: "dev:thunai", role: "collector", lockDept: null }, req.signal), "dev:thunai", { notes: [], habits: {} }, req.signal,
-    { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit });
+    { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit, snapshot });
   if (parsed.data.stream) return roundStream(run, { turnId: parsed.data.turnId, round: parsed.data.round }, req.signal);
   try {
     return NextResponse.json(await run());

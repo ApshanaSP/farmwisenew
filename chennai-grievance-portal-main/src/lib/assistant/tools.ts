@@ -36,6 +36,7 @@ import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
 import { MIN_PCT_BASE, isPastDeadline } from "@/lib/reference/metrics";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { dataKey, keptRead, type Kept } from "@/lib/collector/datakey";
 import { zoneNoIn } from "@/lib/zone-no";
 
 type Row = Record<string, any>;
@@ -143,49 +144,58 @@ export class ToolError extends Error {}
 
 // ------------------------------------------------------------------ helpers --
 
-const memo = new Map<string, { at: number; p: Promise<unknown> }>();
-/** One shared result per key for a minute: a question often needs several tools over the same overview. */
-function once<T>(key: string, run: () => Promise<T>, ttl = 60_000): Promise<T> {
-  syncEpoch(memo); // a decision empties it (RC-35)
-  const now = Date.now();
-  for (const [k, v] of memo) if (now - v.at > ttl) memo.delete(k);
-  const hit = memo.get(key);
-  if (hit) return hit.p as Promise<T>;
-  const p = run();
-  memo.set(key, { at: now, p });
-  p.catch(() => memo.delete(key));
-  return p;
-}
+// (v12: the shared one-minute memo of the overview and the insights is `kept` below: a question often needs several tools over the same overview)
 const scopeKey = (s: AssistantScope) => `${s.period}|${s.zone ?? ""}|${s.dept ?? ""}|${s.cat ?? ""}|${s.taluk ?? ""}`;
 
-/** The console's overview for the scope, without the news-routing write (the console does that). */
-async function ov(s: AssistantScope): Promise<Overview> {
-  const now = await asOf();
-  return once(`ov|${now}|${scopeKey(s)}`, () => overview(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }));
+/**
+ * v12 (21 Nov): the overview and the insights behind the tools, kept by the data's version and epoch and a one-minute bucket (datakey.ts
+ * keptRead), not the console's "now": that moved every 30 s, so the 10-minute keep was never reached and Jarvis's warm-up was a miss for the
+ * first question (the report, first-question-latency RC2). While a minute's copy is worked out, the last minute or two's answers at once (the
+ * same data: a decision, a case filed or a new build moves the epoch and empties it). On globalThis: the keep-warm, started with the server,
+ * loads its own copy of this module. `fresh`: wait for this minute's copy (the keep-warm, so its steps run one after another).
+ */
+declare global {
+  // eslint-disable-next-line no-var
+  var __diqToolReads: Map<string, Kept<unknown>> | undefined;
 }
-/** The console's briefing, trends and patterns for the scope. */
-async function ins(s: AssistantScope): Promise<Insights> {
-  const now = await asOf();
-  // the key holds the data's own as-of time, so a newer collection is never answered from an older copy: kept 10 minutes
-  // (the whole-district overview for a quarter took about 4 s to work out, and a spoken answer waited for it each time)
-  return once(`ins|${now}|${scopeKey(s)}`, () => insights(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }), 600_000);
+const reads = (globalThis.__diqToolReads ??= new Map<string, Kept<unknown>>());
+function kept<T>(key: string, run: () => Promise<T>, fresh: boolean): Promise<T> {
+  syncEpoch(reads); // a decision empties it (RC-35)
+  return keptRead(reads as Map<string, Kept<T>>, key, run, { max: 120, fresh });
 }
 
-let warmedAt = 0;
+/** The console's overview for the scope, without the news-routing write (the console does that). */
+async function ov(s: AssistantScope, fresh = false): Promise<Overview> {
+  return kept(`ov|${await dataKey()}|${scopeKey(s)}`, () => overview(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }), fresh);
+}
+/** The console's briefing, trends and patterns for the scope. */
+async function ins(s: AssistantScope, fresh = false): Promise<Insights> {
+  // (the whole-district overview for a quarter took about 4 s to work out, and a spoken answer waited for it each time)
+  // v12: this minute's insights inside (fresh), so a copy kept here for a minute was worked out in that minute: the earlier minute's answer
+  // while it is worked out comes from this cache, never an earlier copy stored again as this minute's
+  return kept(`ins|${await dataKey()}|${scopeKey(s)}`, () => insights(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }, null, { fresh: true }), fresh);
+}
+
 /**
- * Works out the whole-district overview for each period ahead of the first question (Jarvis calls it when it opens), so a
- * screen built on it ("how is storm water keeping up this quarter") answers in a second, not five. Once in 5 minutes at most;
- * a failure only means the first question computes it itself.
+ * Works out the whole-district insights and overview for `periods` ahead of the first question, so a screen built on them ("how is storm
+ * water keeping up this week") answers in a second, not five. v12 (21 Nov): called by Jarvis's keep-warm (lib/thunai/keepwarm.ts), no
+ * longer when Jarvis opens (that burst held the thread while the Collector spoke); daily and weekly by default (the periods Jarvis uses
+ * most), one read after another with the thread let go between them. A failure only means the first question computes it itself.
  */
-export async function warmInsights(): Promise<void> {
-  if (Date.now() - warmedAt < 300_000) return;
-  warmedAt = Date.now();
-  for (const period of ["daily", "weekly", "monthly", "quarterly"] as const) {
-    try { await ins(ScopeSchema.parse({ period })); } catch { /* the question will compute it */ }
+export async function warmInsights(periods: readonly ("daily" | "weekly" | "monthly" | "quarterly")[] = ["daily", "weekly"]): Promise<void> {
+  const breathe = () => new Promise<void>((r) => setImmediate(r));
+  for (const period of periods) {
+    const s = ScopeSchema.parse({ period });
+    try { await ins(s, true); } catch { /* the question will compute it */ }
+    await breathe();
+    try { await ov(s, true); } catch { /* the question will compute it */ }
+    await breathe();
   }
 }
 
 const fact = (id: string, label: string, value: unknown, unit?: string): Fact => ({ id, label, value: Number(value ?? 0), ...(unit ? { unit } : {}) });
+/** v15: focus_trends' four reads, kept per data version (dataKey: the build and a 5-minute bucket), filters and window */
+const focusCache = new Map<string, ReturnType<typeof import("@/lib/assistant/incidents").focusRows>>();
 const fn = (name: string, detail?: string): SourceRef => ({ kind: "function", name, ...(detail ? { detail } : {}) });
 const tbl = (name: string, detail?: string): SourceRef => ({ kind: "table", name, ...(detail ? { detail } : {}) });
 const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
@@ -1026,6 +1036,39 @@ export const TOOLS = [
   }),
 
   tool({
+    name: "focus_trends",
+    description: "Where to concentrate and how each GCC zone is trending, from the past: every zone's reports in the last N days (7, 28 or 84; default 28) against the N days before, whether the move is beyond ordinary ups and downs (Poisson 2-sigma), the last 12 weeks week by week, the open backlog past its deadline, severe and repeat reports, the kind behind each move, a 'where to concentrate' score with its reasons, the zones improving and getting worse, and the places where one kind of problem keeps coming back. For 'which areas should I concentrate on', 'which areas are improving / getting worse', 'where do problems keep recurring'.",
+    args: z.object({ scope: ScopeSchema.default({}), days: z.union([z.literal(7), z.literal(28), z.literal(84)]).default(28) }),
+    async run({ scope, days }) {
+      const now = await asOf();
+      const { focusRows } = await import("@/lib/assistant/incidents");
+      const { analyseFocus } = await import("@/lib/thunai/v15/focus");
+      const key = `${await dataKey()}|${scope.cat ?? ""}|${scope.dept ?? ""}|${scope.taluk ?? ""}|${days}`;
+      let rows = focusCache.get(key);
+      if (!rows) {
+        rows = focusRows({ cats: scope.cat ? [scope.cat] : null, dept: scope.dept, taluk: scope.taluk }, now, days, 84);
+        focusCache.set(key, rows);
+        rows.catch(() => focusCache.delete(key));
+        if (focusCache.size > 24) focusCache.delete(focusCache.keys().next().value as string);
+      }
+      const r = await rows;
+      const a = analyseFocus(r, now, days as 7 | 28 | 84, { zones: [] });
+      const facts: Fact[] = [];
+      for (const [k, x] of a.attention.slice(0, 5).entries()) facts.push(fact(`focus.attention.${k + 1}`, `Where to concentrate, rank ${k + 1}: ${x.name.en} (${x.reasons.map((y) => y.en).join("; ")})`, x.score));
+      for (const x of a.zones) facts.push(fact(`focus.zone.${x.zone}.now`, `Reports in ${x.name.en}, the last ${days} days`, x.now), fact(`focus.zone.${x.zone}.prev`, `Reports in ${x.name.en}, the ${days} days before`, x.prev),
+        fact(`focus.zone.${x.zone}.overdue`, `Open past their deadline in ${x.name.en}`, x.overdue));
+      for (const x of a.worse.slice(0, 3)) facts.push(fact(`focus.worse.${x.zone}`, `${x.name.en} is GETTING WORSE beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
+      for (const x of a.better.slice(0, 3)) facts.push(fact(`focus.better.${x.zone}`, `${x.name.en} is IMPROVING beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
+      return {
+        scope, asOf: now, data: { days, weekLabels: a.weekLabels, district: a.district, zones: a.zones, attention: a.attention.map((x) => x.zone), worse: a.worse.map((x) => x.zone), better: a.better.map((x) => x.zone), spots: a.spots,
+          method: "Reports in the window against the window of the same length before it; a move counts as getting worse or improving only beyond 2 standard deviations of the difference of two Poisson counts, by 3 or more reports and 10% or more. Where to concentrate: overdue backlog 30%, severe 20%, volume 15%, rise 20%, repeat reports 15%, each against the highest zone." },
+        facts, sources: [fn("incidents.focusRows"), tbl("incidents")], incidentIds: [], testData: false,
+        caveats: ["A rise in reports is not proof that things are worse on the ground: more reporting, or a rain spell, raises counts too."]
+      };
+    }
+  }),
+
+  tool({
     name: "unusual_rises",
     description: "Unusual rises in the last 21 days: a day (spike) or a run of days (slow rise) where a zone and category had far more reports than its usual level (28-day baseline with weekday and rain factors; kept only after a false-discovery check across all checks), as the Briefing page's 'Unusual rises'. Descriptive only, no forecast.",
     args: scopeOnly,
@@ -1135,19 +1178,23 @@ export const TOOLS = [
 
   tool({
     name: "city_now",
-    description: "The city on the ground now, from lib/city: live traffic (TomTom: very congested and congested stretches, closed and flooded roads, accidents, delays in minutes, the zones with most jams, trouble spots where the district's own traffic reports keep coming back, and which body answers for each), the rain warning and live rain gauges, the streets that flood in heavy rain, the wards that lose power in heavy rain and for how long, and the metro and suburban lines that run late in heavy rain. topic: traffic | flood | rain | power | metro | all. Not for counting complaints or incidents.",
-    args: z.object({ topic: z.enum(["traffic", "flood", "rain", "power", "metro", "all"]).default("all"), zone: z.number().int().min(1).max(15).nullable().default(null) }),
-    async run({ topic, zone }) {
+    description: "The city on the ground now, from lib/city: live traffic (TomTom: very congested and congested stretches, closed and flooded roads, accidents, delays in minutes, the zones with most jams, trouble spots where the district's own traffic reports keep coming back, and which body answers for each), the rain warning and live rain gauges, the streets that flood in heavy rain, the wards that lose power in heavy rain and for how long, and the metro and suburban lines that run late in heavy rain. topic: traffic | flood | rain | power | metro | all. focus (traffic): worst-jam (the most congested stretch now) | repeat (the trouble spot that keeps coming back). rain (flood): latest (the last heavy rain) | rain-YYYY-MM-DD: the streets that flooded in that rain. Not for counting complaints or incidents.",
+    // v12 (21 Nov): focus and rain, so "the most congested road", "the repeating traffic" and "the flooded streets in the last rain" are
+    // answered about that spot or that rain, never the city overview (06:39-06:42)
+    args: z.object({ topic: z.enum(["traffic", "flood", "rain", "power", "metro", "all"]).default("all"), zone: z.number().int().min(1).max(15).nullable().default(null),
+      focus: z.enum(["worst-jam", "repeat"]).nullable().default(null), rain: z.string().regex(/^(?:latest|rain-\d{4}-\d{2}-\d{2})$/).nullable().default(null) }),
+    async run({ topic, zone, focus, rain }) {
       const { cityNow } = await import("@/lib/city/now");
-      const c = await cityNow(topic, { zone });
+      const c = await cityNow(topic, { zone, focus, rain });
       const now = await asOf().catch(() => asOfNow());
       return {
-        scope: null, asOf: now, data: { topic, headline: c.headline, say: c.say, rows: c.rows, view: c.view, missing: c.missing },
+        scope: null, asOf: now, data: { topic, headline: c.headline, say: c.say, rows: c.rows, view: c.view, missing: c.missing, focus: c.focus, rainOf: c.rainOf },
         facts: c.facts.map((x) => fact(`city.${x.id}`, x.label, x.value, x.unit)),
         sources: c.sources.map((s) => fn("city.now", s)), incidentIds: (c.traffic?.clusters ?? []).flatMap((x) => x.reports.map((r) => r.id)).slice(0, 40), testData: false,
         caveats: [...(c.missing.length ? [`${c.missing.join(" and ")} could not be read just now.`] : []),
           ...(topic === "traffic" || topic === "all" ? ["Live traffic is TomTom's: road speeds from the GPS of phones, car navigation and fleet devices, not cameras."] : [])],
-        untrusted: ["place", "detail"]
+        // (v12: the focused spot's name and a rain's street labels are outside text too)
+        untrusted: ["place", "detail", "name", "label", "label_ta"]
       };
     }
   }),

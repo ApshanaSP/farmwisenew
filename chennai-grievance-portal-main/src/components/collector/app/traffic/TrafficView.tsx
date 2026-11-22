@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { I, type IconName } from "../icons";
 import type { TrafficCluster, TrafficLevel, TrafficNow, TrafficSpot } from "@/lib/city/traffic";
+import { nearOf } from "@/lib/city/pick";
 import type { RainLayer } from "../rehearsal/rainLayer";
 import { Grip, useDragPanel } from "../askmap/dragPanel";
 import "../rehearsal/rehearsal.css";
@@ -39,13 +40,30 @@ const n0 = (n: number) => n.toLocaleString("en-IN");
 const plural = (n: number, one: string, many = `${one}s`) => `${n0(n)} ${n === 1 ? one : many}`;
 const hm = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) : "—");
 const len = (m: number | null) => (m == null ? null : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
-const day = (s: string) => { const [y, mo, d] = s.slice(0, 10).split("-"); return `${Number(d)} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(mo) - 1]}${y !== String(new Date().getFullYear()) ? ` ${y}` : ""}`; };
+// v12 (21 Nov): this year as Chennai counts it (UTC plus 5:30), not the runtime's zone (RC-16, ist-dates.pass4)
+const day = (s: string) => { const [y, mo, d] = s.slice(0, 10).split("-"); return `${Number(d)} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(mo) - 1]}${y !== String(new Date(Date.now() + 330 * 60_000).getUTCFullYear()) ? ` ${y}` : ""}`; };
 
 type Tab = "act" | "repeat" | "zones" | "all";
 type Pick = { kind: "spot" | "cluster"; id: string } | null;
 
+/**
+ * How the view opens (a new seq opens it afresh). v12 (21 Nov): on a spot (Jarvis's "zoom to the most congested road") or a trouble spot (its
+ * "the repeating traffic"), fitted to it with its card open; `lat`/`lon` is where it was, so when TomTom has given the stretch a new id by the
+ * time the view reads, the nearest one is opened instead (within 1.5 km); `tab` "repeat" opens on "Keeps coming".
+ */
+// v14 (21 Nov review 13, routing 5): `zone`: the zone Jarvis's answer was about ("live traffic in Adyar"), opened on that zone's own filter
+export interface TrafficStart { seq: number; spot: string | null; cluster?: string | null; tab?: "repeat" | null; lat?: number | null; lon?: number | null; zone?: number | null }
+
+/** v12: the start's spot or trouble spot in the data read: the same id, else the nearest of its kind within 1.5 km (lib/city/pick.ts), else none */
+function startPick(start: TrafficStart, d: { spots: TrafficSpot[]; clusters: TrafficCluster[] }): Pick {
+  const at = start.lat != null && start.lon != null ? { lat: start.lat, lon: start.lon } : null;
+  if (start.cluster) { const c = nearOf(d.clusters, start.cluster, at); return c ? { kind: "cluster", id: c.id } : null; }
+  if (start.spot) { const s = nearOf(d.spots, start.spot, at); return s ? { kind: "spot", id: s.id } : null; }
+  return null;
+}
+
 export default function TrafficView({ start, onClose, onLayer, onOpenIncident, toast, escRef, canSend }: {
-  start: { seq: number; spot: string | null };
+  start: TrafficStart;
   onClose: () => void;
   onLayer: (l: RainLayer | null) => void;
   onOpenIncident: (id: string) => void;
@@ -57,9 +75,11 @@ export default function TrafficView({ start, onClose, onLayer, onOpenIncident, t
   const [d, setD] = useState<TrafficNow | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<Tab>("act");
-  const [pick, setPick] = useState<Pick>(start.spot ? { kind: "spot", id: start.spot } : null);
-  const [zone, setZone] = useState<number | null>(null);
+  // (v12: on the "Keeps coming" tab, or on the spot or trouble spot Jarvis named: startPick)
+  const [tab, setTab] = useState<Tab>(start.tab === "repeat" || start.cluster ? "repeat" : "act");
+  const [pick, setPick] = useState<Pick>(start.cluster ? { kind: "cluster", id: start.cluster } : start.spot ? { kind: "spot", id: start.spot } : null);
+  // (v14, routing 5: on the zone asked about, as a tap on "By zone" does; Escape or "All zones" takes it off)
+  const [zone, setZone] = useState<number | null>(start.zone ?? null);
   const [flow, setFlow] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -79,6 +99,14 @@ export default function TrafficView({ start, onClose, onLayer, onOpenIncident, t
 
   const spotBy = useMemo(() => new Map((d?.spots ?? []).map((s) => [s.id, s])), [d]);
   const clusterBy = useMemo(() => new Map((d?.clusters ?? []).map((c) => [c.id, c])), [d]);
+  // v12 (21 Nov): the first read settles the spot asked for: the same id, else the nearest one where it was (TomTom renames a stretch it reads
+  // again), else none (the list shows)
+  const settledStart = useRef(false);
+  useEffect(() => {
+    if (!d || settledStart.current) return;
+    settledStart.current = true;
+    if (start.spot || start.cluster) setPick(startPick(start, d));
+  }, [d]); // eslint-disable-line react-hooks/exhaustive-deps
   const inZone = useCallback((s: { zone: number | null }) => zone == null || s.zone === zone, [zone]);
 
   // Escape: the card, then the zone; then the console closes the view
@@ -145,7 +173,7 @@ export default function TrafficView({ start, onClose, onLayer, onOpenIncident, t
         {head}
         <div className="rv-wait">
           {err ? <><I n="alert" /><b>{err}</b><button className="rv-btn" onClick={() => load()}>Try again</button></>
-            : <><span className="rv-spin" /><b>Reading live traffic…</b><small>TomTom's jams, closures and flooded roads over Chennai</small></>}
+            : <><span className="rv-spin" /><b>Reading live traffic…</b><small>TomTom&apos;s jams, closures and flooded roads over Chennai</small></>}
         </div>
       </aside>
     );

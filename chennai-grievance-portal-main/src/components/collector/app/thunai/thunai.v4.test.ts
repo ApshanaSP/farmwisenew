@@ -36,7 +36,8 @@ describe("observations carry the screen's digest (defect 4)", () => {
 describe("memory turns (defect 5)", () => {
   it("a turn keeps the recipe, the slots and a one-line result, and all four go to the round", () => {
     expect(between("const remember = ", "\n")).toContain("memTurn(");
-    expect(src).toMatch(/turns:\s*turns\.current\.slice\(-4\)/);
+    // (v11: six turns, four before)
+    expect(src).toMatch(/turns:\s*turns\.current\.slice\(-6\)/);
   });
 });
 
@@ -75,8 +76,11 @@ describe("captions only while hearing (defect 10)", () => {
     const b = src.indexOf("}, [mode]);", a) + "}, [mode]);".length;
     expect(a).toBeGreaterThan(-1);
     // (v10 review 2, round 2: the pin moves once more, for one change only: the same-breath rest is handed over as spoken, { source: "captions" },
-    // so a cut-off rest waits as any spoken line does; it was taken for typed text; merge 2026-11-20: and the owner's wake mic hand-over, parkWake)
-    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("fd51e7ded2cf99c18258e2da0965410916d7711d063e40710a35060944797d57");
+    // so a cut-off rest waits as any spoken line does; it was taken for typed text; merge 2026-11-20: and the owner's wake mic hand-over, parkWake;
+    // v11, 20 Nov: the status says "Go ahead" while the parked microphone is handed over, hud wakeOpening;
+    // v14, 21 Nov, review scenarios 2: with no recogniser running, the device's wake opens at once and its reply waits for the quiet on Jarvis's
+    // ears, wakeWait "listen" and conductor replyWhenQuiet; the recogniser's own name-alone wait is in wake.ts)
+    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("cc391ada9bd6da08713d5312ad5d6743b2267510b4928a303b7e560b52762d1d");
     const block = src.slice(a, b);
     expect(block).toContain("handleRef.current(rest, 0.95, undefined, { source: \"captions\" })");
     // still: only while closed, after the first-use notice, with the microphone already allowed, never while the tab is hidden; the browser's
@@ -103,9 +107,11 @@ describe("the honest ack, the warm-up, the two speeds", () => {
     expect(src).toContain("ackDue(");
     expect(src).toContain("speakAck(");
   });
-  it("mode-on warms the voice and the planner, once", () => {
+  // v12 (21 Nov, first-question-latency): mode-on warms the voice only; the planner's prompt cache is the server keep-warm's job
+  // (lib/thunai/keepwarm.ts): the browser's POST to /api/jarvis/warm at the opening moment timed out behind the opening's work every time
+  it("mode-on warms the voice, once; the planner is warmed by the server, not by a POST from here", () => {
     expect(src).toContain("warmVoice(");
-    expect(src).toContain("/api/jarvis/warm");
+    expect(src).not.toMatch(/fetch\(\s*["'`]\/api\/jarvis\/warm/);
   });
   it("a turn past 10 s shows its steps and a Stop", () => {
     expect(src).toContain("longTurn(");

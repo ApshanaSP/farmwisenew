@@ -4,12 +4,16 @@ import { jsonWithEtag } from "@/lib/etag";
 import { asOf, exportMeta, overview, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 import { refuseBadFilter } from "@/lib/collector/filters";
 import { liveMeta } from "@/lib/live/state";
+import { markActive } from "@/lib/thunai/keepwarm";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
+  // v12 (21 Nov): the Collector's console is open (it polls ?meta=1 every 20 s): Jarvis's keep-warm keeps the first question's reads warm
+  // meanwhile, before Jarvis is even opened (lib/thunai/keepwarm.ts; one time stamp, nothing loaded here)
+  markActive("collector");
   const p = req.nextUrl.searchParams;
   const bad = refuseBadFilter(p);
   if (bad) return bad;

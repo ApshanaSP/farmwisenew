@@ -17,6 +17,7 @@ import { ledger, type Lane, type Ledger, type Org } from "./ledger";
 import { telemetry } from "./telemetry";
 import { deepModel } from "./v8/deep8";
 import { understandV8 } from "./v8/flag8";
+import { deadline } from "@/lib/util/deadline";
 
 export const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 export const LITE_MODEL = "gemini-3.5-flash-lite";
@@ -152,11 +153,18 @@ function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop:
   let cap = rung.provider === "anthropic" ? (raceable ? left : Math.max(6000, left - RESCUE_MS)) : 6000;
   // v8: the deep model gets at most JARVIS_DEEP_MS (8 s) before the next rung answers instead
   if (c.deep && rung.provider === "anthropic" && rung.model === deepModel()) cap = Math.min(cap, deepMs());
-  return g<T>({
-    role: "fast", name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, temperature: 0, maxOutputTokens: c.maxOutputTokens, user: c.user,
-    lane: c.lane, timeoutMs: Math.max(800, Math.min(cap, left)), abortSignal: AbortSignal.any([stop, AbortSignal.timeout(Math.max(1, left))]),
-    only: { provider: rung.provider, models: rung.model ? [rung.model] : [] }
-  });
+  // v12 (21 Nov): the turn's deadline is a strongly held timer (util/deadline.ts). AbortSignal.any([stop, AbortSignal.timeout(left)]) lost its
+  // timer to the garbage collector on Node 22.14, so a hung Groq call ran 25-44 s, past the 6 s cap and the turn's deadline
+  const dl = deadline(Math.max(1, left), stop);
+  let p: Promise<JsonResult<T>>;
+  try {
+    p = g<T>({
+      role: "fast", name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, temperature: 0, maxOutputTokens: c.maxOutputTokens, user: c.user,
+      lane: c.lane, timeoutMs: Math.max(800, Math.min(cap, left)), abortSignal: dl.signal,
+      only: { provider: rung.provider, models: rung.model ? [rung.model] : [] }
+    });
+  } catch (e) { dl.done(); throw e; }
+  return p.finally(() => dl.done());
 }
 
 type Who = "main" | "hedge";

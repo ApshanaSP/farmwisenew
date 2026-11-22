@@ -38,8 +38,12 @@ export const TUNING = {
   maxUtteranceMs: 14_000,
   /** shorter than this at the end event is a cough, not a sentence, ms */
   minSpeechMs: 250,
-  /** speech held this long while Jarvis thinks (no voice yet) cancels the question in flight, ms */
-  bargeMs: 200,
+  /**
+   * speech held this long under an answer's voice that began while the Collector was talking cuts that voice, ms. v12 (21 Nov, the report's
+   * stale-and-double RC1): 800, was 200, and speech while Jarvis thinks with nothing playing no longer cancels the question at all (turn.ts):
+   * 200 ms of "okay" or of the second half of the same request cancelled questions that were then never answered, or answered twice
+   */
+  bargeMs: 800,
   /** speech over Jarvis's voice ducks it; held this long it stops the voice and the turn, ms (shorter speech is read first: "mm-hmm" is not a barge-in) */
   bargeHoldMs: 600,
   /** ...or as soon as the captions' live words hold this many words that are not backchannels ("mm-hmm", "okay", சரி, "seri") */

@@ -10,6 +10,7 @@ import { asksForbiddenOrder, asksPrivate } from "./privacy";
 
 export { asksForbiddenOrder };
 import { districtNounIn, namesZone, quickScreen } from "./quick";
+import { cityAsk } from "@/lib/city/intent";
 import type { World } from "./types";
 
 export type Lane = "district" | "general" | "refuse";
@@ -48,6 +49,10 @@ export function bundleByRules(text: string, stageOpen: boolean): Bundle {
   // spoken Tamil and Tanglish do not sort by these words (பக்கம் is a page and a side): one call that holds screens and console steps
   // costs less than the wrong bundle and a second call
   if (detectLang(text) === "ta") return "wide";
+  // v12 (21 Nov): a console verb with the city on the ground ("Go to the show me the roads which flooded in the last rain", "take me to the
+  // worst jam", "go to the map, show live traffic"): the console bundle has steps only, so the city screen could not be planned (06:41);
+  // the wide bundle holds both
+  if (CONSOLE.test(text) && cityAsk(text)) return "wide";
   if (CONSOLE.test(text)) return "console";
   if (DATA.test(text)) return "data";
   return "screens";

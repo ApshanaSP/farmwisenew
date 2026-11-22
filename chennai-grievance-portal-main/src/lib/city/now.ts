@@ -16,12 +16,30 @@ import { pastRains, rehearsalState } from "@/lib/rehearsal/engine";
 import { impacts, type ImpactData } from "@/lib/rehearsal/impacts";
 import type { RehearsalState } from "@/lib/rehearsal/types";
 import { LEVEL_WORD, trafficNow, trafficSay, type TrafficNow } from "./traffic";
+import { clusterLine, inZone, lengthTile, NO_JAM, NO_REPEAT, noJamIn, noRepeatIn, spotLine, topRepeat, worstJam } from "./pick";
+import type { CityFocus } from "./intent";
+import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 
 import type { CityTopic } from "./topic";
 export { cityTopic, CITY_TOPICS, type CityTopic } from "./topic";
 
 export interface CityFact { id: string; label: string; value: number; unit?: string }
-export interface CityRow { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null }
+/** `spot`: v12, the TomTom spot's id of a traffic row (the Traffic view opens on it) */
+export interface CityRow { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null; spot?: string | null }
+/** v12 (21 Nov): the one place a focused question asked about: the most congested stretch, or the trouble spot that keeps coming back */
+export interface CityFocusPart {
+  kind: "spot" | "cluster"; focus: CityFocus; id: string; name: string; lat: number; lon: number; level: string; zoneName: string | null;
+  owner: { dept: string; name: string; ta: string; why: string }; why: string;
+  delayMin: number | null; lengthM: number | null; reports: number; open: number;
+  /** what Jarvis says about it, written by code from its own fields (lib/city/pick.ts) */
+  line: { en: string; ta: string };
+}
+/** v12 (21 Nov): one past heavy rain (the last one with reports, or the day asked): the streets its flooding reports stood on */
+export interface CityRainOf {
+  id: string; start: string; latest: boolean; reports: number;
+  streets: { key: string; label: string; label_ta: string; ward: number; lat: number; lon: number; n: number }[];
+  line: { en: string; ta: string };
+}
 export interface CityNow {
   topic: CityTopic;
   asOf: string;
@@ -30,9 +48,13 @@ export interface CityNow {
   headline: { en: string; ta: string };
   facts: CityFact[];
   rows: CityRow[];
-  /** which view of the map shows it: the Traffic view, or a Rain tab */
-  view: { kind: "traffic" } | { kind: "rain"; lens: "flood" | "traffic" | "power" | "metro" };
+  /** which view of the map shows it: the Traffic view (v12: on a spot, or on a trouble spot's tab), or a Rain tab (v12: on a past rain) */
+  view: { kind: "traffic"; spot?: string | null; cluster?: string | null; tab?: "repeat" | null } | { kind: "rain"; lens: "flood" | "traffic" | "power" | "metro"; replay?: string | null };
   traffic: TrafficNow | null;
+  /** v12: the place a focused question asked about (null when none was asked, or nothing is jammed) */
+  focus: CityFocusPart | null;
+  /** v12: the past rain asked about (null when none was asked, or the record has none) */
+  rainOf: CityRainOf | null;
   /** parts that could not be read just now */
   missing: string[];
   sources: string[];
@@ -43,13 +65,41 @@ export interface CityNow {
 const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T | null> => Promise.race([p.catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), ms))]);
 const n0 = (n: number) => n.toLocaleString("en-IN");
 const plural = (n: number, one: string, many = `${one}s`) => `${n0(n)} ${n === 1 ? one : many}`;
+/** v14: a street with no name of its own ("A lane off X", "A lane in ward N") */
+const UNNAMED = /^A lane (?:off|in) /;
+/**
+ * v14 (21 Nov live check): the line as it is heard. The record's street names come in capitals ("BALAMURUGAN ST", read letter by letter
+ * by the voice), and its places joined by " · " ("Ward 127 · Koyambedu"). A run of two or more capital words, one of five letters or more,
+ * is a name in title case; a lone short one (IMD, TANGEDCO, PWD) and one with digits (SH49A) stay as they are.
+ */
+export function spoken(s: string): string {
+  return s.replace(/ · /g, ", ").replace(/\b[A-Z]{2,}(?:[ .'-]+[A-Z]{2,})+\b/g, (run) =>
+    run.split(/([ .'-]+)/).some((w) => w.length >= 5 && /^[A-Z]+$/.test(w))
+      ? run.replace(/[A-Z]+/g, (w) => w[0] + w.slice(1).toLowerCase())
+      : run);
+}
 const LEVEL_EN: Record<string, string> = { none: "no heavy-rain warning", watch: "a rain watch", rehearse: "heavy rain likely", act: "heavy rain soon" };
 const LEVEL_TA: Record<string, string> = { none: "கனமழை எச்சரிக்கை இல்லை", watch: "மழைக் கண்காணிப்பு", rehearse: "கனமழை வாய்ப்பு", act: "விரைவில் கனமழை" };
 
 declare global {
   // eslint-disable-next-line no-var
   var __diqCityNow: Map<string, { at: number; v: CityNow }> | undefined;
+  // eslint-disable-next-line no-var
+  var __diqCityRun: Map<string, Promise<CityNow>> | undefined;
 }
+/** an answer this young is served as it is; up to STALE_MS it is served at once and read again behind it (v12) */
+const FRESH_MS = 90_000;
+const STALE_MS = 300_000;
+const MONTH_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_TA = ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"];
+/** a rain's start as said: "21 October" (with the year when it is not this year's) */
+const dayOf = (iso: string, ta = false): string => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso.slice(0, 10);
+  // v12 (21 Nov): this year as Chennai counts it (UTC plus 5:30), not the server's zone (RC-16, ist-dates.pass4)
+  const year = m[1] !== String(new Date(Date.now() + 330 * 60_000).getUTCFullYear()) ? ` ${m[1]}` : "";
+  return `${Number(m[3])} ${(ta ? MONTH_TA : MONTH_EN)[Number(m[2]) - 1]}${year}`;
+};
 
 /** Warm the slow parts (the flood memory, the rain tabs) so the first question does not wait on them. */
 export function warmCity(): void {
@@ -57,11 +107,45 @@ export function warmCity(): void {
   for (const l of ["traffic", "power", "metro"] as const) void withTimeout(impacts(l), 120_000);
 }
 
-export async function cityNow(topic: CityTopic, o: { lockDept?: string | null; zone?: number | null } = {}): Promise<CityNow> {
-  const key = `${topic}|${o.lockDept ?? ""}|${o.zone ?? ""}`;
+export interface CityOpts {
+  lockDept?: string | null; zone?: number | null;
+  /** v12: the most congested stretch ("worst-jam") or the trouble spot that keeps coming back ("repeat"), traffic only */
+  focus?: CityFocus | null;
+  /** v12: a past rain, flood only: "latest" (the last heavy rain with reports, as Rain & flooding opens it) or "rain-YYYY-MM-DD" */
+  rain?: string | null;
+}
+
+/**
+ * The city now, for a topic. v12 (21 Nov): served stale-while-revalidate: an answer under 90 s old as it is; one under 5 minutes at once,
+ * read again behind it; older, or none, read now (one read at a time per key). The first live-traffic answer of the morning waited 7.8 s
+ * on a cold read inline (06:37:44 "Show me live traffic.").
+ */
+export async function cityNow(topic: CityTopic, o: CityOpts = {}): Promise<CityNow> {
+  const focus = topic === "traffic" ? o.focus ?? null : null;
+  const rain = topic === "flood" && o.rain && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(o.rain) ? o.rain : null;
+  const key = `${topic}|${o.lockDept ?? ""}|${o.zone ?? ""}|${focus ?? ""}|${rain ?? ""}`;
   const cache = (global.__diqCityNow ??= new Map());
+  const runs = (global.__diqCityRun ??= new Map());
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < 90_000) return hit.v;
+  const age = hit ? Date.now() - hit.at : Infinity;
+  if (hit && age < FRESH_MS) return hit.v;
+  const run = (): Promise<CityNow> => {
+    let p = runs.get(key);
+    if (!p) {
+      p = buildCity(topic, { ...o, focus, rain }).then((v) => {
+        cache.set(key, { at: Date.now(), v });
+        if (cache.size > 40) cache.delete(cache.keys().next().value!);
+        return v;
+      }).finally(() => runs.delete(key));
+      runs.set(key, p);
+    }
+    return p;
+  };
+  if (hit && age < STALE_MS) { void run().catch(() => undefined); return hit.v; }
+  return run();
+}
+
+async function buildCity(topic: CityTopic, o: CityOpts): Promise<CityNow> {
   const want = (x: CityTopic) => topic === x || topic === "all" || (topic === "rain" && x !== "traffic");
   const missing: string[] = [];
   const [traffic, state, past, power, metro, rainJams] = await Promise.all([
@@ -96,8 +180,9 @@ export async function cityNow(topic: CityTopic, o: { lockDept?: string | null; z
       f("traffic.closed", "Roads closed now", c.closed); f("traffic.flooded", "Roads with water on them now", c.flooded);
       f("traffic.accidents", "Accidents or breakdowns now", c.accidents); f("traffic.action", "Spots that need action now", c.action);
       f("traffic.clusters", "Trouble spots that keep coming back (30 days)", c.clusters);
-      traffic.spots.filter((x) => x.action).slice(0, 12).forEach((x, k) => {
-        rows.push({ part: LEVEL_WORD[x.level].en, place: x.name, detail: `${x.zoneName ?? "Chennai"} · ${x.owner.name}${x.repeat.n >= 2 ? ` · ${x.repeat.n} reports in 30 days` : ""}`, value: x.delayMin, unit: x.delayMin != null ? "min delay" : null, lat: x.lat, lon: x.lon });
+      // v14 (21 Nov review 13, routing 0 and 5): a zone's question lists that zone's stretches (the map and the ranking were the district's)
+      inZone(traffic, o.zone ?? null).spots.filter((x) => x.action).slice(0, 12).forEach((x, k) => {
+        rows.push({ part: LEVEL_WORD[x.level].en, place: x.name, detail: `${x.zoneName ?? "Chennai"} · ${x.owner.name}${x.repeat.n >= 2 ? ` · ${x.repeat.n} reports in 30 days` : ""}`, value: x.delayMin, unit: x.delayMin != null ? "min delay" : null, lat: x.lat, lon: x.lon, spot: x.id });
         if (x.delayMin != null) f(`traffic.spot.${k}.delay`, `Delay at ${x.name}`, x.delayMin, "min");
         if (x.repeat.n) f(`traffic.spot.${k}.reports`, `Reports near ${x.name} in 30 days`, x.repeat.n);
       });
@@ -132,17 +217,92 @@ export async function cityNow(topic: CityTopic, o: { lockDept?: string | null; z
   if (power && want("power")) impactPart("power", power, f, rows, en, ta, sources);
   if (metro && want("metro")) impactPart("metro", metro, f, rows, en, ta, sources);
 
+  // ---- v12 (21 Nov): the one place a focused question asked about, said first and alone ("the most congested road", "the repeating traffic")
+  let focus: CityFocusPart | null = null;
+  if (o.focus && traffic?.enabled) {
+    // v14 (routing 0): the zone's own worst jam or trouble spot ("the worst jam in Adyar" named Teynampet's)
+    focus = focusPart(o.focus, inZone(traffic, o.zone ?? null));
+    if (focus) {
+      f("traffic.focus.reports", `Reports near ${focus.name} in 30 days`, focus.reports);
+      f("traffic.focus.open", `Still open near ${focus.name}`, focus.open);
+      if (focus.delayMin != null) f("traffic.focus.delay", `Delay at ${focus.name}`, focus.delayMin, "min");
+      const lt = lengthTile(focus.lengthM);
+      if (lt) f("traffic.focus.length", `Length of the jam at ${focus.name}`, lt.value, lt.unit);
+      rows.splice(0, rows.length, ...rows.filter((r) => r.spot === focus!.id), ...rows.filter((r) => r.spot !== focus!.id));
+    }
+    const zn = o.zone != null ? traffic.zones.find((z) => z.zone === o.zone)?.name ?? ZONE_NAMES[o.zone - 1] ?? null : null;
+    const line = focus?.line ?? (o.focus === "repeat" ? (zn ? noRepeatIn(zn) : NO_REPEAT) : (zn ? noJamIn(zn) : NO_JAM));
+    en.splice(0, en.length, line.en); ta.splice(0, ta.length, line.ta);
+  }
+  // ---- v12 (21 Nov): one past heavy rain ("the flooded streets in the last rain"): the streets its flooding reports stood on, said first
+  let rainOf: CityRainOf | null = null;
+  if (o.rain && state && want("flood")) {
+    rainOf = past ? rainPartOf(o.rain, past.rains, state) : null;
+    if (rainOf) {
+      f("flood.rain.streets", `Streets with flooding reports in the rain of ${dayOf(rainOf.start)}`, rainOf.streets.length);
+      f("flood.rain.reports", `Flooding reports in the rain of ${dayOf(rainOf.start)}`, rainOf.reports);
+      rainOf.streets.slice(0, 5).forEach((s, k) => f(`flood.rain.street.${k}`, `Flooding reports on ${s.label} in that rain`, s.n));
+      rows.unshift(...rainOf.streets.slice(0, 8).map((s) => ({ part: "Flooded in that rain", place: s.label, detail: `Ward ${s.ward} · ${plural(s.n, "flooding report")}`, value: s.n, unit: "reports", lat: s.lat, lon: s.lon })));
+      en.unshift(rainOf.line.en); ta.unshift(rainOf.line.ta);
+    } else {
+      const none = o.rain === "latest" ? { en: "No heavy rain in the record has flooding reports yet.", ta: "பதிவில் உள்ள கனமழைகளில் இன்னும் வெள்ளப் புகார் இல்லை." }
+        : { en: `There is no heavy rain on ${dayOf(o.rain.replace(/^rain-/, ""))} in the record.`, ta: "அந்த நாளில் கனமழை பதிவில் இல்லை." };
+      en.unshift(none.en); ta.unshift(none.ta);
+    }
+  }
+
   if (missing.length) { en.push(`(${missing.join(" and ")} could not be read just now.)`); ta.push("(சில தகவல்கள் இப்போது கிடைக்கவில்லை.)"); }
-  const view: CityNow["view"] = topic === "traffic" || topic === "all" ? { kind: "traffic" } : topic === "rain" ? { kind: "rain", lens: "flood" } : { kind: "rain", lens: topic as "flood" | "power" | "metro" };
+  const view: CityNow["view"] = topic === "traffic" || topic === "all"
+    ? { kind: "traffic", ...(focus?.kind === "spot" ? { spot: focus.id } : focus?.kind === "cluster" ? { cluster: focus.id, tab: "repeat" as const } : o.focus === "repeat" ? { tab: "repeat" as const } : {}) }
+    : topic === "rain" ? { kind: "rain", lens: "flood" } : { kind: "rain", lens: topic as "flood" | "power" | "metro", ...(topic === "flood" && o.rain ? { replay: rainOf?.id ?? o.rain } : {}) };
   const HEAD: Record<CityTopic, { en: string; ta: string }> = {
     traffic: { en: "Live traffic now", ta: "நேரடி போக்குவரத்து" }, flood: { en: "Streets that flood", ta: "வெள்ளம் தேங்கும் தெருக்கள்" },
     rain: { en: "Rain: warning, streets, power and trains", ta: "மழை நிலவரம்" }, power: { en: "Power in heavy rain", ta: "கனமழையில் மின்சாரம்" },
     metro: { en: "Trains in heavy rain", ta: "கனமழையில் ரயில்கள்" }, all: { en: "The city now: traffic, rain, flooding, power, trains", ta: "நகர நிலவரம்" }
   };
-  const v: CityNow = { topic, asOf: traffic?.at ?? state?.asOf ?? new Date().toISOString(), say: { en: en.join(" "), ta: ta.join(" ") }, headline: HEAD[topic], facts, rows, view, traffic, missing, sources };
-  cache.set(key, { at: Date.now(), v });
-  if (cache.size > 40) cache.delete(cache.keys().next().value!);
-  return v;
+  // (v12: kept by cityNow, stale-while-revalidate)
+  return { topic, asOf: traffic?.at ?? state?.asOf ?? new Date().toISOString(), say: { en: spoken(en.join(" ")), ta: spoken(ta.join(" ")) }, headline: HEAD[topic], facts, rows, view, traffic, focus, rainOf, missing, sources };
+}
+
+/** v12: the most congested stretch (lib/city/pick.ts worstJam) or the trouble spot that keeps coming back, with its line; null when none */
+function focusPart(want: CityFocus, t: TrafficNow): CityFocusPart | null {
+  if (want === "repeat") {
+    const c = topRepeat(t);
+    if (!c) return null;
+    return { kind: "cluster", focus: want, id: c.id, name: c.name, lat: c.lat, lon: c.lon, level: c.level, zoneName: c.zoneName, owner: c.owner, why: c.why,
+      delayMin: c.delayMin, lengthM: null, reports: c.reports.length, open: c.open, line: { en: clusterLine(c, "en"), ta: clusterLine(c, "ta") } };
+  }
+  const s = worstJam(t);
+  if (!s) return null;
+  return { kind: "spot", focus: want, id: s.id, name: s.name, lat: s.lat, lon: s.lon, level: s.level, zoneName: s.zoneName, owner: s.owner, why: s.why,
+    delayMin: s.delayMin, lengthM: s.lengthM, reports: s.repeat.n, open: s.repeat.open, line: { en: spotLine(s, "en"), ta: spotLine(s, "ta") } };
+}
+
+/**
+ * v12: one past heavy rain, in the order Rain & flooding opens them (newest first; "latest" is the newest with flooding reports), and the
+ * flood streets its reports stood on, most reports first, with the line said for it: "In the last heavy rain (21 October), 14 streets
+ * flooded: A, B, C." Null when the record has no such rain.
+ */
+function rainPartOf(want: string, rains: { id: string; start: string; reports: { street: string | null }[] }[], state: RehearsalState): CityRainOf | null {
+  const newest = [...rains].sort((a, b) => b.start.localeCompare(a.start));
+  const r = want === "latest" ? newest.find((x) => x.reports.length > 0) : newest.find((x) => x.id === want);
+  if (!r) return null;
+  const byKey = new Map(state.streets.map((s) => [s.key, s]));
+  const n = new Map<string, number>();
+  for (const x of r.reports) if (x.street && byKey.has(x.street)) n.set(x.street, (n.get(x.street) ?? 0) + 1);
+  const streets = [...n.entries()].map(([key, c]) => ({ s: byKey.get(key)!, c })).sort((a, b) => b.c - a.c || b.s.rains - a.s.rains || a.s.key.localeCompare(b.s.key))
+    .map(({ s, c }) => ({ key: s.key, label: s.label, label_ta: s.label_ta || s.label, ward: s.ward, lat: s.lat, lon: s.lon, n: c }));
+  const latest = want === "latest";
+  const when = latest ? `In the last heavy rain (${dayOf(r.start)})` : `In the heavy rain of ${dayOf(r.start)}`;
+  const whenTa = latest ? `கடந்த கனமழையில் (${dayOf(r.start, true)})` : `${dayOf(r.start, true)} கனமழையில்`;
+  // v14 (21 Nov live check): the streets said are named ones first; "A lane off Chennai - Ennore Road, A lane off Alamelumangapuram" was
+  // what the Collector heard. The rows keep every street, most reports first
+  const top = [...streets.filter((s) => !UNNAMED.test(s.label)), ...streets.filter((s) => UNNAMED.test(s.label))].slice(0, 3);
+  const line = streets.length
+    ? { en: `${when}, ${plural(streets.length, "street")} flooded: ${top.map((s) => s.label).join(", ")}${streets.length > 3 ? " and more" : ""}.`,
+      ta: `${whenTa} ${streets.length} தெருக்களில் வெள்ளம்: ${top.map((s) => s.label_ta).join(", ")}${streets.length > 3 ? " மற்றும் பல" : ""}.` }
+    : { en: `${when}, ${plural(r.reports.length, "flooding report")} came in, none of them on a known flood street.`, ta: `${whenTa} ${r.reports.length} வெள்ளப் புகார்கள் வந்தன; அவை அறியப்பட்ட வெள்ளத் தெருக்களில் இல்லை.` };
+  return { id: r.id, start: r.start, latest, reports: r.reports.length, streets, line };
 }
 
 function rainPart(state: RehearsalState, f: (id: string, label: string, value: number, unit?: string) => number, rows: CityRow[], en: string[], ta: string[], topic: CityTopic) {
@@ -155,8 +315,11 @@ function rainPart(state: RehearsalState, f: (id: string, label: string, value: n
   const raining = stations.filter((x) => (x.hourMm ?? 0) > 0).length;
   f("rain.raining", "Rain gauges with rain in the last hour", raining);
   const why = t.reasons[0]?.en ?? null;
-  en.push(`Rain now: ${LEVEL_EN[t.level] ?? t.level}${why && t.level !== "none" ? ` (${why})` : ""}${t.hoursLeft != null && t.hoursLeft > 0 ? `, rain in about ${t.hoursLeft} h` : ""}.${wet ? ` The wettest gauge today is ${wet.name} with ${Math.round((wet.todayMm ?? 0) * 10) / 10} mm${raining ? `; ${plural(raining, "gauge")} had rain in the last hour` : ""}.` : ""}`);
-  ta.push(`மழை நிலவரம்: ${LEVEL_TA[t.level] ?? t.level}.${wet ? ` இன்று அதிக மழை ${wet.name}: ${Math.round((wet.todayMm ?? 0) * 10) / 10} மி.மீ.` : ""}`);
+  // v14 (21 Nov live check): a dry day is said as one ("The wettest gauge today is Karapakkam with 0 mm" was heard)
+  const wetMm = wet ? Math.round((wet.todayMm ?? 0) * 10) / 10 : 0;
+  const dry = !!wet && wetMm <= 0 && !raining;
+  en.push(`Rain now: ${LEVEL_EN[t.level] ?? t.level}${why && t.level !== "none" ? ` (${why})` : ""}${t.hoursLeft != null && t.hoursLeft > 0 ? `, rain in about ${t.hoursLeft} h` : ""}.${dry ? " No gauge has recorded rain today." : wet ? ` The wettest gauge today is ${wet.name} with ${wetMm} mm${raining ? `; ${plural(raining, "gauge")} had rain in the last hour` : ""}.` : ""}`);
+  ta.push(`மழை நிலவரம்: ${LEVEL_TA[t.level] ?? t.level}.${dry ? " இன்று எந்த மழைமானியிலும் மழை பதிவாகவில்லை." : wet ? ` இன்று அதிக மழை ${wet.name}: ${wetMm} மி.மீ.` : ""}`);
   if (topic === "rain") {
     if (t.hoursLeft != null && t.hoursLeft > 0) f("rain.hoursLeft", "Hours until heavy rain", t.hoursLeft, "h");
     const lakes = state.lakes.filter((l) => l.pct >= 85).sort((a, b) => b.pct - a.pct).slice(0, 3);

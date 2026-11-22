@@ -12,22 +12,22 @@ describe("v7: the Claude day cap, raised by flag only", () => {
     if (prev.t == null) delete process.env.JARVIS_CLAUDE_DAY_TOKENS; else process.env.JARVIS_CLAUDE_DAY_TOKENS = prev.t;
     if (prev.r == null) delete process.env.JARVIS_CLAUDE_DAY_REQUESTS; else process.env.JARVIS_CLAUDE_DAY_REQUESTS = prev.r;
   });
-  // 1.6M tokens over the day, the last an hour ago (no minute's cap in the way)
-  const spentDay = () => { let t = 1_000_000_000; const l = new Ledger(new MemoryStore(), () => t); for (let i = 0; i < 4; i++) { l.record("anthropic", "claude-haiku-5-5", { tokens: 400_000 }); t += 3_600_000; } return l; };
-  it("the default holds: 1.6M tokens in a day leave no room", () => {
+  // 8.4M tokens over the day, the last an hour ago (no minute's cap in the way; v15: the default day is 8M)
+  const spentDay = () => { let t = 1_000_000_000; const l = new Ledger(new MemoryStore(), () => t); for (let i = 0; i < 4; i++) { l.record("anthropic", "claude-haiku-5-5", { tokens: 2_100_000 }); t += 3_600_000; } return l; };
+  it("the default holds: 8.4M tokens in a day leave no room", () => {
     delete process.env.JARVIS_CLAUDE_DAY_TOKENS;
     expect(spentDay().room("anthropic", "claude-haiku-5-5", { tokens: 3000 }).ok).toBe(false);
   });
   it("JARVIS_CLAUDE_DAY_TOKENS raises it, for Claude only", () => {
-    process.env.JARVIS_CLAUDE_DAY_TOKENS = "6000000";
+    process.env.JARVIS_CLAUDE_DAY_TOKENS = "9000000";
     process.env.JARVIS_CLAUDE_DAY_REQUESTS = "2000";
     const l = spentDay();
     expect(l.room("anthropic", "claude-haiku-5-5", { tokens: 3000 }).ok).toBe(true);
-    expect(l.limit("anthropic", "claude-haiku-5-5")).toMatchObject({ tpd: 6_000_000, rpd: 2000 });
+    expect(l.limit("anthropic", "claude-haiku-5-5")).toMatchObject({ tpd: 9_000_000, rpd: 2000 });
     expect(l.limit("groq", "qwen/qwen3.8-27b").tpd).toBe(200_000);
   });
   it("nonsense is ignored", () => {
     process.env.JARVIS_CLAUDE_DAY_TOKENS = "lots";
-    expect(spentDay().limit("anthropic", "claude-haiku-5-5").tpd).toBe(1_500_000);
+    expect(spentDay().limit("anthropic", "claude-haiku-5-5").tpd).toBe(8_000_000);
   });
 });

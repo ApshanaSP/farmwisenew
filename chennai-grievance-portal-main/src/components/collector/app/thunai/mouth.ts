@@ -50,12 +50,20 @@ export interface DuckInfo { path: VoicePath; how: "gain" | "cut" | "kept"; ms: n
 export interface MouthHooks {
   onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void;
   /**
+   * v12 (21 Nov, stale-and-double RC3): a speech was asked for (speakLines, speakAck, continueAnswer). Its sound can be seconds away (the
+   * server's voice is fetched first), and onStart comes only then: until it starts or ends, the turn machine counts it as a voice on its way
+   * (turn.ts voiceWanted), so a new request handed on stops it instead of letting the old answer start over the new question
+   */
+  onRequest?: (ack: boolean) => void;
+  /**
    * an earcon is about to sound: the ears must take it as Jarvis's own sound for `ms`, the tone itself (with the output's latency)
    * lasting `toneMs` (Conductor.earcon)
    */
   onEarcon?: (ms: number, toneMs?: number) => void;
   /** a duck took effect, or could not: for the HUD strip and the barge-in telemetry */
   onDuck?: (d: DuckInfo) => void;
+  /** v13 (21 Nov, review 1-11): the wake reply's clip started and sounds for `ms`: speech begun over it stops it (stopWakeReply) */
+  onWakeSound?: (ms: number) => void;
 }
 
 let hooks: MouthHooks = {};
@@ -301,8 +309,13 @@ async function fetchAudio(text: string, l: "ta" | "en", c: AudioContext, feed: (
   const have = audioCache.get(key);
   if (have) { feed(have); return have; }
   if (!serverUp()) return null;
+  // v13 (21 Nov, review 0-13): a controller this call holds, and its own timer, instead of AbortSignal.timeout: the page's fetch wrapper
+  // (lib/activity/install.ts) puts the signal under AbortSignal.any, where a timeout signal held only by the composite may be collected
+  // and never fire (Node 22 does; Chromium is unverified), so a stalled voice stream would never time out. Cleared when the request ends
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 30_000);
   try {
-    const r = await fetch(SAY, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: l, voice: jarvisVoice, stream: true }), signal: AbortSignal.timeout(30_000) });
+    const r = await fetch(SAY, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: l, voice: jarvisVoice, stream: true }), signal: ctl.signal });
     // the server has no voice set up (503 no-tts): asking again only logs another failed request, so it is not asked again until the page is reloaded (QA4 gate, FB-10)
     if (r.status === 503 && (await r.clone().json().catch(() => null))?.error === "no-tts") { serverDownUntil = Number.MAX_SAFE_INTEGER; return null; }
     if (!r.ok) throw new Error(String(r.status));
@@ -335,7 +348,7 @@ async function fetchAudio(text: string, l: "ta" | "en", c: AudioContext, feed: (
   } catch {
     if (++fails >= 2) { serverDownUntil = Date.now() + 60_000; fails = 0; }
     return null;
-  }
+  } finally { clearTimeout(timer); }
 }
 
 /** The PCM rung for a whole answer: "played", "failed" (nothing was heard: the next rung takes all of it) or "cut". */
@@ -485,6 +498,8 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
   speakingNow = true;
   paused = false;
   cur = { raw: list, pieces: [], lang, o, at: 0, ack: false, gated: false, path: null, groups: null };
+  // v12 (RC3): asked for now, heard later: the turn machine knows a voice is on its way
+  hooks.onRequest?.(false);
   void run(cur, my);
   return true;
 }
@@ -513,6 +528,7 @@ export function speakAck(text: string, lang: string): boolean {
   speakingNow = true;
   paused = false;
   cur = { raw: [], pieces: [piece], lang, o: {}, at: 0, ack: true, gated: true, path: nat ? "browser" : "pcm", groups: null };
+  hooks.onRequest?.(true);
   void run(cur, my);
   return true;
 }
@@ -673,6 +689,7 @@ export function continueAnswer(): boolean {
   const my = ++token;
   speakingNow = true;
   cur = { ...s };
+  hooks.onRequest?.(false);
   void run(cur, my);
   return true;
 }
@@ -754,6 +771,27 @@ export function prewarmVoice(langs: string[]): boolean {
   if (speakingNow || !ls.length) return false;
   return browser.prewarm(ls.map((l) => (l === "ta" ? "ta-IN" : "en-IN")));
 }
+/** v13 (review 1-11): the wake reply now sounding (its source, its gain, its context), or null */
+let wakeNow: { s: AudioBufferSourceNode; g: GainNode; c: AudioContext } | null = null;
+/**
+ * v13 (21 Nov, review 1-11): stop the wake reply now (a 15 ms fade on its own gain, then its source stops), when the Collector begins the
+ * request over it: at 400 ms of quiet a "Yes, Collector?" of about a second still sounded over a question begun after a short pause, and
+ * nothing could stop it (stopVoice never touches the earcons' context). True when a reply was sounding.
+ */
+export function stopWakeReply(): boolean {
+  const w = wakeNow;
+  wakeNow = null;
+  if (!w) return false;
+  try {
+    const now = w.c.currentTime;
+    w.g.gain.cancelScheduledValues(now);
+    w.g.gain.setTargetAtTime(0, now, 0.004);
+    w.s.stop(now + 0.015);
+  } catch { /* it had ended */ }
+  // the HUD's core no longer reads the reply's level
+  wakeUntil = 0;
+  return true;
+}
 /** Play one wake reply now (see above). The `at` it returns is when its first sample is scheduled (performance.now()). */
 export function wakeReply(lang: string): { ms: number; at: number } | null {
   if (wakeReplyMode() !== "clip") return null;
@@ -776,9 +814,14 @@ export function wakeReply(lang: string): { ms: number; at: number } | null {
     an.fftSize = 512;
     s.buffer = b; s.connect(g).connect(an).connect(c.destination);
     const t = c.currentTime + 0.005;
+    stopWakeReply();
     s.start(t);
     wakeAnalyser = an;
     wakeUntil = performance.now() + 5 + ms;
+    // v13 (review 1-11): kept so that a request begun over it can stop it; the ears are told how long it sounds
+    wakeNow = { s, g, c };
+    s.onended = () => { if (wakeNow?.s === s) wakeNow = null; };
+    hooks.onWakeSound?.(ms + 5);
     return { ms, at: performance.now() + 5 };
   } catch { return null; }
 }
