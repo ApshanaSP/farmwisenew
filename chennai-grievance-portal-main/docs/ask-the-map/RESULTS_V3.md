@@ -73,3 +73,40 @@ one (the AI picking fewest-first for "highest") was fixed after the final run an
   not real Chennai.
 - **Blocked downloads.** OpenCity's flood maps and the official school list (with enrolment) would make the answers
   richer, but its site blocks automated downloads. Download them by hand and v3 can use them (see RESEARCH_V3.md).
+
+
+## Update: the "keep testing" rounds (22 Nov, day)
+
+The owner asked for more human-style testing, Collector-style questions, follow-ups, and two fixes: a new topic kept the
+old kind of problem, and "incidents" seemed to count only flooding. Both are fixed (see TEST_LOG_V3.md).
+
+Final runs (Claude Haiku 5.5 alone, 0 server errors):
+
+| Set | v2 final | v3 now |
+|---|---|---|
+| Dev (45) | 45 | **45** |
+| Held out (15) | 15 | 14 |
+| Big (170) | 163 | **166** |
+| Fresh (80) | 77 | 76 |
+| Human-style (155) | 148 | **148** |
+| Follow-ups (32 turns) | 31 | **31** |
+| v3 human-style (90) | — | 87 |
+| v3 held out (40, never tuned) | — | 39 |
+| **v3 fresh (60, written this round)** | — | **57** (53 at first sight) |
+| **Collector questions (60, written this round)** | — | **56** (55 at first sight) |
+| v3 follow-ups (70 turns) | — | 68 |
+| v3 held-out follow-ups (20) | — | 18 |
+| v3 fresh follow-ups (27) | — | 23 (22 at first sight) |
+| **Topic changes (24 turns, the owner's report)** | — | **23** (20 at first sight) |
+| **Collector follow-ups (35 turns)** | — | **33** (32 at first sight) |
+
+Answer judge (80 answers from the v3 sets): 59 yes, 18 partly, 3 no, clarity 3.9 of 5. Most of the "partly" are the live
+city answers (traffic now, power cut now) that the console shares with Jarvis, and one-word follow-ups the judge found
+vague.
+
+**Spend:** US$4.47 of the US$5.
+
+Still not right:
+- "There" after a speed ranking (which ward is slowest, then "open cases there") sometimes stays on the ranking.
+- A landmark that is not in the place list ("Velachery lake") can be answered for the whole district.
+- "Live traffic now" and "power cut now" use the shared city feed (the same as Jarvis): they say what the feeds hold, and the judge would like a plainer yes or no.

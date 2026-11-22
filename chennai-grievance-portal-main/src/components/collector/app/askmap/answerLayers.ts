@@ -119,7 +119,8 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
   // facilities that matter to the answer: a glyph with a letter and a shape, named in words (a ranked answer names its own)
   if (!rankedOf(r)) for (const p of r.context.points) facility(L, p.layer, p, ta).addTo(a.marks);
   // "on the ground now": the readings behind the panel's conditions, at their places
-  for (const c of rankedOf(r) ? [] : r.conditions ?? []) for (const p of c.pts) condMarker(L, { ...p, high: c.tone === "alert" || c.tone === "warn" }, "askMarks").addTo(a.marks);
+  // v3: only a reading that is an alert or a warning goes on the map ("0 mm" of rain in the middle of a crime answer is noise)
+  for (const c of rankedOf(r) ? [] : (r.conditions ?? []).filter((x) => x.tone === "alert" || x.tone === "warn")) for (const p of c.pts) condMarker(L, { ...p, high: c.tone === "alert" || c.tone === "warn" }, "askMarks").addTo(a.marks);
   // an "in the news" answer: each article at the locality it names (the others are counted in the panel)
   for (const n of r.news?.pins ?? []) newsMarker(L, { id: n.id, name: n.title, lat: n.lat, lon: n.lon, url: n.url, sub: `${n.outlet} · ${n.at.slice(0, 10)}${n.place ? ` · ${n.place}` : ""}` }, "askMarks").addTo(a.marks);
 

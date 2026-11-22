@@ -671,3 +671,11 @@
 .dic .amp-rk.t-lo .rk,.dic .amp-rk.t-lo.first .rk{background:#059669}
 .dic .amp-rk.t-lo .nm i,.dic .amp-rk.t-lo.first .nm i{background:linear-gradient(90deg,#6EE7B7,#059669)}
 @media (max-width:760px){.dic .ar3-key{display:none}.dic .ar3-l{max-width:150px}}
+/* v3: "On the ground now" folded to one line under an answer */
+.dic .amp-cond-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font:600 11.5px var(--font-ui,system-ui);color:var(--text-2);min-width:0}
+.dic .amp-cond-fold>summary::-webkit-details-marker{display:none}
+.dic .amp-cond-fold>summary em{font-style:normal;font-weight:500;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dic .amp-cond-fold>summary::after{content:"▸";margin-left:auto;transition:transform .2s}
+.dic .amp-cond-fold[open]>summary::after{transform:rotate(90deg)}
+.dic .amp-cond-fold>ul{margin-top:6px}
+.dic .amp-cond-fold>summary{white-space:nowrap}.dic .amp-cond-fold>summary em{flex:1}

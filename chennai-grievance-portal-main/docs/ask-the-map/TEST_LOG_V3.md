@@ -67,3 +67,35 @@ bugs (the internal error, the lost place, "least" answered as "most", cell numbe
 - Seen in the browser on the production build: the ranked picture for "which school has the most complaints near it";
   the per-person ward shading; the rain forecast in blue; the day on the map while playing; the loading picture; a
   follow-up ("what about hospitals").
+
+## 22 Nov, "keep testing" rounds (owner: test like humans, Collector questions, follow-ups, topic changes)
+
+New sets, each written before its first run and never tuned against:
+
+- **fresh3** (60): phone-style questions in English, Tanglish and Tamil.
+- **followups3f** (12 conversations): fresh follow-ups.
+- **topics3** (12 conversations): the owner's report. After a garbage question, "show me the total incidents" or "all incidents in zone 9" stayed on garbage, and "police cases" became thefts only.
+- **collector3** (60): what a Collector types while reading the console's tiles: severe, past deadline, resolved in 24 h, most serious zone, departments, news.
+- **collectorf3** (12 conversations): Collector follow-ups.
+
+At first sight: fresh3 53/60, followups3f 22/27, topics3 20/24, collector3 55/60, collectorf3 32/35.
+
+Found and fixed, at the cause:
+
+- **A new topic kept the old kind of problem.** The AI now says in its reply when a follow-up leaves the last answer's kind for all kinds (`every_kind`, follow-ups only). Only the carried-over kind is dropped; a kind the question names stays. When the AI says so, the kinds it named are not put back on the plan; the server's own step had been putting garbage back.
+- **"Police cases"** is the police department's cases (dept POL-GCP: accidents, traffic, crime, public order), not one crime category.
+- **"How many incidents" did count every kind**, but the sentence began "Mostly flooding…", so it read as flooding only. All-incident answers now say "Every kind is counted (28 kinds, 32 of them police cases)".
+- **Follow-ups that add a step** ("vs last week", "where are they piling up", "compare both", "and fire station") came back as plain lists. There are worked examples in the prompt now. A nearest search that lost its starting place gets the conversation's place back. The places of earlier turns are sent, for "compare both".
+- **The word tables showed the AI only 9 words per kind**, so words added later in a list (Tanglish) never reached it; it now sees 18. Tanglish: maadu, vilakku eriyala, rendavadhu (the second one), thollai (it takes the kind of the word before it: kosu thollai is mosquitoes).
+- **An early wording of `every_kind` made Haiku read "accidents" as "incidents"** (accident questions fell from 23/31 to 0/4 in a probe). Reworded as follow-ups only: 2/2 again.
+- **A plan that names no kind while the question has a kind's word** ("least flooded zone", "news reported accidents") gets an AI second look. The words are shown to the AI and it decides; one more call, only in that case. Probe: 20/20.
+- **A distance step written backwards** (colleges near crimes) showed a raw engine message; it is turned round. **A made-up place** ("road la pallam": "la" read as a place) showed "could not be found"; the step is dropped and the rest answers.
+- **Many kinds of one family** read as the family's name ("crime"), not a list of six.
+- **Screen:**
+  - "On the ground now" is one line that opens;
+  - only an alert or a warning is drawn on the map;
+  - a tile that repeats the headline's number is hidden;
+  - on a phone, the map key is hidden under the sheet and labels stay on screen;
+  - "fewest" answers are green.
+
+f22's second turn ("what kind of problems are there") read two ways; it is now "what is happening at that school".

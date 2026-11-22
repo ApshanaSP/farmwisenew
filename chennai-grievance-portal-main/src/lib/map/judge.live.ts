@@ -34,7 +34,7 @@ it.runIf(!!IN && fs.existsSync(IN))("Ask the Map answers, judged", async () => {
   const { spentUsd } = await import("@/lib/ai/claudebudget");
   const usd0 = spentUsd();
   const rows = fs.readFileSync(IN, "utf8").trim().split("\n").filter((l) => l.startsWith("{")).map((l) => JSON.parse(l) as { set: string; id: string; q?: string; head?: string | null; meaning?: string | null; ok?: boolean })
-    .filter((x) => x.q && x.head && /human3|holdout3|followups3/.test(x.set));
+    .filter((x) => x.q && x.head && /human3|holdout3|fresh3|collector|followups3|topics3/.test(x.set));
   // an even spread over the sets, in a fixed order (the same sample each run)
   const pick = rows.filter((_, i) => i % Math.max(1, Math.floor(rows.length / N)) === 0).slice(0, N);
   const tally = { yes: 0, partly: 0, no: 0, clear: 0, n: 0 };

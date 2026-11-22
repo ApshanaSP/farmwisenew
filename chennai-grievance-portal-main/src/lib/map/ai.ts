@@ -333,6 +333,11 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
     }
     // a nearest search the follow-up left without its starting place: the conversation's own ("and fire station" after "nearest hospital to Tambaram")
     const prevFrom = (prev?.steps.find((x) => x.op === "nearest") as { from?: string } | undefined)?.from;
+    for (const x of raw.steps) if (x.op === "nearest" && x.from.startsWith("place:")) {
+      // "place:facility osm:n123" (a kind word left in): the ref alone; one the prompt never gave: the conversation's own start
+      const ref = x.from.slice(6).trim().split(/\s+/).pop() ?? "";
+      x.from = ctx.places.some((pl) => pl.ref === ref) && !(prevFrom && ctx.places.find((pl) => pl.ref === ref)?.kind.startsWith("the previous answer") && !r.object.points_at_previous) ? `place:${ref}` : prevFrom ?? `place:${ref}`;
+    }
     if (prevFrom) for (const x of raw.steps) if (x.op === "nearest" && !x.from) x.from = prevFrom;
     const wired = { ...raw, steps: raw.steps.filter((x) => x.op !== "inside" || keepRef(x.area.kind === "point" ? x.area.ref : `${x.area.kind}:${x.area.kind === "taluk" ? (x.area as { code: string }).code : (x.area as { id: number }).id}`)) };
     if (wired.steps.length !== raw.steps.length && !wired.steps.some((x) => x.as === wired.show)) wired.show = wired.steps[wired.steps.length - 1].as;

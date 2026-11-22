@@ -476,7 +476,8 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
     g.open.n !== r.total ? { k: "open", n: g.open.n, ids: g.open.ids, en: "still open", ta: "திறந்தவை", tone: "" } : null,
     { k: "overdue", n: g.overdue.n, ids: g.overdue.ids, en: "past deadline", ta: "காலக்கெடு தாண்டியவை", tone: g.overdue.n ? "t-alert" : "t-good" },
     { k: "severe", n: g.severe.n, ids: g.severe.ids, en: "severe", ta: "கடுமையானவை", tone: g.severe.n ? "t-warn" : "t-good" }
-  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0) : [];
+  // v3: a tile that only repeats the headline's number ("51 severe" for "severe cases") says nothing new
+  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0 && x.n !== r.total) : [];
   return (
     <div className="amp-card">
       <div className="amp-big" aria-live="polite">
@@ -496,7 +497,7 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
           })}
         </div>
       )}
-      {!rankedOf(r) && <Conditions r={r} lang={lang} max={2} />}
+      {!rankedOf(r) && <Conditions r={r} lang={lang} max={4} fold />}
       <div className="amp-asof" title={layers.map((l) => `${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("\n") || undefined}>
         {w.asOf} {fmtWhen(r.asOf.data || r.asOf.now)}
         {r.unplaced.length > 0 && ` · ${w.unplaced(r.unplaced.length)}`}
@@ -507,8 +508,18 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
 }
 
 /** "On the ground now": the live readings that bear on the answer, each from a named place and time. */
-function Conditions({ r, lang, max = 4 }: { r: AskResponse; lang: "en" | "ta"; max?: number }) {
+function Conditions({ r, lang, max = 4, fold }: { r: AskResponse; lang: "en" | "ta"; max?: number; fold?: boolean }) {
   if (!r.conditions?.length) return null;
+  // v3: under an answer, one line that opens: an alert or a warning is said in it; the rest wait for a click
+  if (fold) {
+    const urgent = r.conditions.filter((c) => c.tone === "alert" || c.tone === "warn");
+    return (
+      <details className="amp-cond amp-cond-fold">
+        <summary><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"} · {r.conditions.length}{urgent.length ? <em>{lang === "ta" ? urgent[0].ta : urgent[0].en}</em> : null}</summary>
+        <ul>{r.conditions.slice(0, max).map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
+      </details>
+    );
+  }
   return (
     <div className="amp-cond">
       <h5><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"}</h5>
