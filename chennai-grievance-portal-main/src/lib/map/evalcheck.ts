@@ -5,7 +5,10 @@
 import type { Plan, Step } from "./plan";
 
 export interface Want { show?: string; layers?: string[]; of_layer?: string; cats?: string[]; family_or_cat?: string; meters?: number; beyond?: number; by?: string; order?: string;
-  areas?: string; area?: string; kinds?: string[]; period_days?: number; language?: string; severity?: string; overdue?: boolean; from_place?: boolean; understood?: boolean }
+  areas?: string; area?: string; kinds?: string[]; period_days?: number; language?: string; severity?: string; overdue?: boolean; from_place?: boolean; understood?: boolean;
+  /** v3: ranked per 10,000 people; the status filter (open, closed, any) */ per?: boolean; status?: string;
+  /** v3: every kind of problem (no category, family or dept on the incidents); one department */ every_kind?: boolean; dept?: string;
+  /** v3: a new question carries nothing of the last one: not these kinds, no area, not these layers */ no_cats?: string[]; no_area?: boolean; no_layers?: string[] }
 export interface Q { id: string; q: string; want: Want }
 
 
@@ -39,11 +42,19 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
     if (!ins.some((s) => `${s.area.kind}:${s.area.kind === "zone" || s.area.kind === "ward" ? s.area.id : ""}` === want.area)) out.push(`not inside ${want.area}`);
   }
   if (want.kinds) for (const k of want.kinds) if (!takes.some((t) => t.where?.kinds?.includes(k))) out.push(`no kind ${k}`);
-  if (want.period_days != null) { const p = inc?.filter?.period; if (!(p?.kind === "last_days" && p.days === want.period_days)) out.push(`period ${JSON.stringify(p)}, not last ${want.period_days} days`); }
+  // v3: 30 days is also a calendar month ("last month" read as the month before, "this month" as this one)
+  if (want.period_days != null) { const p = inc?.filter?.period; if (!((p?.kind === "last_days" && p.days === want.period_days) || (want.period_days === 30 && p?.kind === "month") || (want.period_days === 7 && p?.kind === "week"))) out.push(`period ${JSON.stringify(p)}, not last ${want.period_days} days`); }
   if (want.language && plan.language !== want.language) out.push(`language ${plan.language}, not ${want.language}`);
   if (want.severity && !inc?.filter?.severity?.includes(want.severity)) out.push(`no severity ${want.severity}`);
   if (want.overdue && inc?.filter?.overdue !== true) out.push("not overdue");
   if (want.from_place && !step("nearest")?.from.startsWith("place:")) out.push("nearest is not from the place");
+  if (want.every_kind && (cats.length || inc?.filter?.dept?.length)) out.push(`not every kind (kept ${[...cats, ...(inc?.filter?.dept ?? [])].join(",")})`);
+  if (want.dept && !inc?.filter?.dept?.includes(want.dept)) out.push(`no dept ${want.dept} (has ${inc?.filter?.dept?.join(",") ?? "none"})`);
+  if (want.per != null && (step("count_by")?.per === "people") !== want.per) out.push(want.per ? "not per people" : "per people, not asked");
+  if (want.status && (inc?.filter?.status ?? "open") !== want.status) out.push(`status ${inc?.filter?.status ?? "default"}, not ${want.status}`);
+  for (const c of want.no_cats ?? []) if (cats.some((x) => x === c || x.startsWith(`${c}_`))) out.push(`kept ${c} from before`);
+  if (want.no_area && plan.steps.some((x) => x.op === "inside" || x.op === "compare")) out.push("kept an area from before");
+  for (const l of want.no_layers ?? []) if (takes.some((t) => t.layer === l)) out.push(`kept ${l} from before`);
   return out;
 }
 

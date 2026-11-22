@@ -1,0 +1,52 @@
+{
+  "about": "v3 Collector conversations (22 Nov 2026): how a Collector follows up while reading the answer: 'ok and zone 5', 'show me those', 'why so many', 'which dept', 'only today', topic changes. Written before the first run; never tuned against.",
+  "conversations": [
+    { "id": "q01", "turns": [
+      { "q": "severe cases today", "want": { "severity": "Severe" } },
+      { "q": "which zone has most of them", "want": { "show": "count_by", "by": "zone", "severity": "Severe" } },
+      { "q": "ok show me that zone", "there": 1 } ] },
+    { "id": "q02", "turns": [
+      { "q": "overdue complaints", "want": { "overdue": true } },
+      { "q": "which dept", "want": { "show": "count_by", "by": "dept", "overdue": true } },
+      { "q": "only swm", "want": { "overdue": true, "dept": "GCC-SWM" } } ] },
+    { "id": "q03", "turns": [
+      { "q": "garbage in zone 6", "want": { "cats": ["SOLID_WASTE"], "area": "zone:6" } },
+      { "q": "ok and zone 5", "want": { "cats": ["SOLID_WASTE"], "area": "zone:5" } },
+      { "q": "now all complaints there", "want": { "every_kind": true, "area": "zone:5" } } ] },
+    { "id": "q04", "turns": [
+      { "q": "flooding near schools", "want": { "layers": ["incidents", "schools"], "cats": ["FLOOD"] } },
+      { "q": "which school", "want": { "show": "count_by", "by": "near", "cats": ["FLOOD"] } },
+      { "q": "hospitals?", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"], "cats": ["FLOOD"] } } ] },
+    { "id": "q05", "turns": [
+      { "q": "accidents this month", "want": { "cats": ["ROAD_ACCIDENT"], "period_days": 30 } },
+      { "q": "where are they happening most", "want": { "cats": ["ROAD_ACCIDENT"] } },
+      { "q": "and thefts", "want": { "cats": ["CRIME_PROPERTY"] } } ] },
+    { "id": "q06", "turns": [
+      { "q": "complaints by ward", "want": { "show": "count_by", "by": "ward" } },
+      { "q": "for population", "want": { "show": "count_by", "by": "ward", "per": true } },
+      { "q": "zone level", "want": { "show": "count_by", "by": "zone" } } ] },
+    { "id": "q07", "turns": [
+      { "q": "kuppai pugar", "want": { "cats": ["SOLID_WASTE"] } },
+      { "q": "zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } },
+      { "q": "ella problems um zone wise", "want": { "show": "count_by", "by": "zone", "every_kind": true } } ] },
+    { "id": "q08", "turns": [
+      { "q": "what happened in teynampet", "kind": "brief" },
+      { "q": "only overdue ones", "want": { "overdue": true } },
+      { "q": "which dept is holding them", "want": { "show": "count_by", "by": "dept", "overdue": true } } ] },
+    { "id": "q09", "turns": [
+      { "q": "nearest hospital to velachery", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"] } },
+      { "q": "top 3", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"] } } ] },
+    { "id": "q10", "turns": [
+      { "q": "dengue this week", "want": { "cats": ["VECTOR_DISEASE"], "period_days": 7 } },
+      { "q": "is it more than last week", "want": { "show": "change", "cats": ["VECTOR_DISEASE"] } },
+      { "q": "which ward rose most", "want": { "show": "rank", "order": "rise", "by": "ward", "cats": ["VECTOR_DISEASE"] } } ] },
+    { "id": "q11", "turns": [
+      { "q": "streetlight complaints", "want": { "cats": ["STREETLIGHT_ELECTRICAL"] } },
+      { "q": "near bus stands", "want": { "layers": ["incidents", "bus_stations"], "cats": ["STREETLIGHT_ELECTRICAL"] } },
+      { "q": "forget that, show all severe cases", "want": { "severity": "Severe", "every_kind": true } } ] },
+    { "id": "q12", "turns": [
+      { "q": "police cases this week", "want": { "dept": "POL-GCP" } },
+      { "q": "by zone", "want": { "show": "count_by", "by": "zone", "dept": "POL-GCP" } },
+      { "q": "what about garbage", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } } ] }
+  ]
+}

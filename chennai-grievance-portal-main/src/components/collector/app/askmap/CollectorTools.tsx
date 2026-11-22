@@ -6,7 +6,7 @@
  *               or download
  *   Rule check  licensed premises within N m of schools or places of worship (within of facilities); N is the officer's own setting,
  *               kept in this browser, and the panel says the legal distance is the Excise desk's to confirm
- *   Packs       the weekly review, the quarterly bank meeting, the pre-monsoon meeting: a printable page (/api/map/pack)
+ *   Packs       the weekly review (an interactive page) and the pre-monsoon meeting (a printable page), /api/map/pack
  *   Your lists  upload a CSV, Excel or PDF list, check where each row was placed, approve it (only then is it on the map), remove it
  * And the views: the league table of a ranked change, the gap list, the rule check's pairs. Every number shown is the server's.
  */
@@ -121,16 +121,15 @@ function RuleForm({ ask, lang, onDone }: { ask: MapAsk; lang: Lang; onDone: () =
   );
 }
 
-const PACKS: { kind: "weekly" | "bank" | "monsoon"; ic: IconName; en: string; ta: string; why: string }[] = [
-  { kind: "weekly", ic: "cal", en: "Weekly review", ta: "வாராந்திர ஆய்வு", why: "Open cases by ward, the wards that got worse, past deadline." },
-  { kind: "bank", ic: "chart", en: "Quarterly bank meeting", ta: "காலாண்டு வங்கிக் கூட்டம்", why: "Wards and neighbourhoods far from a bank or ATM; money points in flooded wards." },
+const PACKS: { kind: "weekly" | "monsoon"; ic: IconName; en: string; ta: string; why: string }[] = [
+  { kind: "weekly", ic: "cal", en: "Weekly review", ta: "வாராந்திர ஆய்வு", why: "An interactive page: every ward on a map, day by day, the kinds of problem, zones and departments." },
   { kind: "monsoon", ic: "cloud", en: "Pre-monsoon meeting", ta: "பருவமழைக்கு முந்தைய கூட்டம்", why: "Flooding by ward, distance to fire stations, drains, works behind plan." }
 ];
 function PackForm({ lang }: { lang: Lang }) {
   return (
     <div id="amtool-pack" className="amt-card">
-      <p>{t(lang, "One printable page: a map, the top 10 and the numbers. The figures are counted by District IQ; the opening sentences may be written by Claude from them.",
-        "ஒரு பக்கம்: வரைபடம், முதல் 10, எண்கள். எண்கள் District IQ கணக்கிட்டவை.")}</p>
+      <p>{t(lang, "Opens in a new tab, ready to present or print. The figures are counted by District IQ; the opening sentences may be written by Claude from them.",
+        "புதிய தாவலில் திறக்கும்; காட்டவோ அச்சிடவோ தயார். எண்கள் District IQ கணக்கிட்டவை.")}</p>
       <ul className="amt-packs">
         {PACKS.map((p) => (
           <li key={p.kind}><a href={`/api/map/pack?kind=${p.kind}&format=html`} target="_blank" rel="noopener"><I n={p.ic} /><b>{t(lang, p.en, p.ta)}</b><small>{p.why}</small><I n="ext" /></a></li>

@@ -39,7 +39,26 @@ declare global {
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 8;
+const WORLD_VERSION = 10;
+
+/**
+ * v3 (owner, 22 Nov 2026: "the area name should come, Anna Nagar, then the ward"): each ward's everyday name, the OpenStreetMap
+ * neighbourhood that stands for it. A suburb inside the ward, the one nearest its middle (a neighbourhood when it has no suburb); a ward with
+ * no named place inside takes the nearest one within 1.5 km of its middle; else it has no name and stays "Ward N".
+ */
+export function nameWards(wards: WardGeo[], places: PointFeat[]): void {
+  const named = places.filter((p) => p.name);
+  for (const wd of wards) {
+    const d = (p: PointFeat) => Math.hypot(p.lat - wd.lat, (p.lon - wd.lon) * Math.cos((wd.lat * Math.PI) / 180)) * 111_320;
+    const inside = named.filter((p) => p.ward === wd.ward);
+    // a suburb (the larger area people name) when the ward has one, the one nearest its middle; else its nearest neighbourhood
+    const pool = inside.some((p) => p.kind === "suburb") ? inside.filter((p) => p.kind === "suburb") : inside;
+    const pick = pool.length
+      ? pool.reduce((a, b) => (d(b) < d(a) ? b : a))
+      : named.reduce<PointFeat | null>((a, b) => (d(b) <= 1500 && (!a || d(b) < d(a)) ? b : a), null);
+    wd.name = pick ? { en: pick.name!, ta: pick.name_ta ?? pick.name! } : null;
+  }
+}
 
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
@@ -102,13 +121,17 @@ async function loadBase(key: string): Promise<Base> {
   const conds = condsOf(sigRows, workRows);
 
   const wardInfo = new Map(wardRows.map((w) => [Number(w.ward_no), w]));
+  // v3: people per ward (scripts/build-population.py); none when the file was never built
+  let popOf: Record<string, { pop: number }> = {};
+  try { popOf = JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), "population.json"), "utf8")).wards ?? {}; } catch { /* no population file */ }
   const wards: WardGeo[] = geo.wards.map((g) => {
     const w = wardInfo.get(g.ward);
     const pts = g.rings.flat().map(([lat, lon]) => ({ lat, lon }));
     return {
       ward: g.ward, zone: g.zone, zoneName: String(w?.zone_name ?? ""), taluk: g.taluk, rings: g.rings as Pair[][], bbox: bboxOf(pts)!,
       lat: Number(w?.centroid_lat ?? pts[0]?.lat), lon: Number(w?.centroid_lon ?? pts[0]?.lon),
-      adj: String(w?.adjacent_wards ?? "").split("|").filter(Boolean).map(Number), gi30: w?.gi_star_z_30d == null ? null : Number(w.gi_star_z_30d)
+      adj: String(w?.adjacent_wards ?? "").split("|").filter(Boolean).map(Number), gi30: w?.gi_star_z_30d == null ? null : Number(w.gi_star_z_30d),
+      pop: popOf[String(g.ward)]?.pop ?? null
     };
   });
   const district = wards.reduce<Bbox>((b, w) => ({ s: Math.min(b.s, w.bbox.s), w: Math.min(b.w, w.bbox.w), n: Math.max(b.n, w.bbox.n), e: Math.max(b.e, w.bbox.e) }),
@@ -135,6 +158,7 @@ async function loadBase(key: string): Promise<Base> {
         in_district: !!p.in_district, ward: p.ward ?? null });
     }
   }
+  nameWards(wards, points.osm_places);
   // ---- roads and waterways: one feature per name where the pieces lie within 1.5 km of each other
   const lines = { roads: mergeLines(readLayer("roads"), "roads"), waterways: mergeLines(readLayer("waterways"), "waterways") } as Record<LineLayer, LineFeat[]>;
   const water: PolyFeat[] = readLayer("water_bodies").map((f) => {

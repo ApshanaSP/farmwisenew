@@ -14,6 +14,7 @@ import { useCallback, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
 import { followUpMoves } from "@/lib/map/camera";
+import { earlierAreasOf, prevTopOf } from "@/lib/map/prevtop";
 import type { Route } from "./actions";
 import { rehearsalIntent } from "@/lib/rehearsal/intent";
 
@@ -48,8 +49,8 @@ export interface MapAsk {
   tookOver: boolean;
   setTookOver: (v: boolean) => void;
   /** incident ids the panel points at on the map (a trace step, a brief count, a cluster) */
-  spot: { ids: string[]; label: string } | null;
-  setSpot: (s: { ids: string[]; label: string } | null) => void;
+  spot: { ids: string[]; label: string; /** v3: the day-by-day player keeps the camera still */ still?: boolean } | null;
+  setSpot: (s: MapAsk["spot"]) => void;
   /** the row under the mouse: not React state (a hover would re-render the whole console); the map listens instead */
   hover: string | null;
   setHover: (id: string | null) => void;
@@ -65,7 +66,8 @@ export interface MapAsk {
   /** v12 (21 Nov): `o.signal`, the asker's own stop (Jarvis's turn): a newer turn stops the question, as a newer map question already does */
   ask: (text: string, o?: AskOpts) => Promise<AskResponse | null>;
   run: (plan: Plan, label?: string, o?: AskOpts) => Promise<AskResponse | null>;
-  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }, o?: AskOpts) => Promise<AskResponse | null>;
+  /** v3: `label`, the question as the chat shows it ("Full overview of Perambur (Ward 44)") */
+  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }, o?: AskOpts, label?: string) => Promise<AskResponse | null>;
   clear: () => void;
   /** a UI follow-up ("send these to SWD", "export"): the panel acts on it */
   uiCue: { seq: number; ui: AskResponse["ui"]; dept: string | null } | null;
@@ -123,6 +125,13 @@ export function answerGist(r: AskResponse, lang: "en" | "ta"): string {
   if (r.brief) return `${lang === "ta" ? "இங்கே என்ன நடக்கிறது" : "What is happening"}: ${lang === "ta" ? r.brief.label.ta : r.brief.label.en}`;
   if (r.say) return lang === "ta" ? r.say.ta : r.say.en;
   return "";
+}
+
+/** v3: the conversation for the turn reader: the last three answered questions with their answers in a few words (counts and place names) */
+export function historyOf(turns: Turn[]): { q: string; a: string }[] {
+  return turns.filter((t) => !t.pending && !t.error && (t.resp || t.gist)).slice(-3)
+    .map((t) => ({ q: t.q.slice(0, 400), a: (t.resp?.kind === "brief" && t.resp.brief ? `An overview of every kind of problem in ${t.resp.brief.label.en}: ${t.resp.brief.open.n} open`
+      : t.resp ? answerGist(t.resp, t.resp.lang === "ta" ? "ta" : "en") : t.gist ?? "").slice(0, 400) }));
 }
 
 const UI_NOTE: Record<string, [string, string]> = {
@@ -251,7 +260,8 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
       setFocus(null);
       setShowBefore(false);
       setRoute(null);
-      if (a.kind === "answer" && a.plan) { setPlan(a.plan); save(PLAN_KEY, a.plan); }
+      // an answer, and (v3) an area overview, are what the next follow-up edits
+      if ((a.kind === "answer" || a.kind === "brief") && a.plan) { setPlan(a.plan); save(PLAN_KEY, a.plan); }
       // a new question moves the camera; a small follow-up keeps the view (camera.ts followUpMoves)
       const moves = followUpMoves(a.edited ?? null, !!planRef.current && sameShape(planRef.current, a.plan));
       setTookOver(false);
@@ -306,11 +316,12 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail: rr }));
         return null;
       }
-      return post({ text: t, prev: planRef.current }, t, undefined, o);
+      return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null, earlier: planRef.current ? earlierAreasOf(turnsRef.current.map((x) => x.plan ?? x.resp?.plan)) : null,
+        history: planRef.current ? historyOf(turnsRef.current) : null }, t, undefined, o);
     },
     run: (p: Plan, label?: string, o?: AskOpts) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question", undefined, o),
-    draw: (d, o?: AskOpts) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
-      "lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?", undefined, o),
+    draw: (d, o?: AskOpts, label?: string) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
+      label ?? ("lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?"), undefined, o),
     clear: clearAll
   };
 }

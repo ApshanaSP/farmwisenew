@@ -136,11 +136,6 @@ describe.skipIf(!haveStore())("Ask the Map final on the frozen store", () => {
     const { buildPack } = await import("./packs");
     const { world: w, resolver } = await world();
     const ctx = { place: placeLookup(w, resolver, null), lang: "en" as const, lockDept: null };
-    const bank = buildPack("bank", w, ctx, null);
-    expect(bank.numbers.find((x) => /bank branches on the map/.test(x.label))!.value).toBe(layer("banks").filter((p) => p.in_district).length);
-    const placeNo = bank.numbers.find((x) => /neighbourhoods more than 2 km from a bank/.test(x.label))!.value;
-    const places = layer("osm_places").filter((p) => p.in_district && p.name), banks = layer("banks");
-    expect(placeNo).toBe(places.filter((p) => Math.min(...banks.map((b) => haversineM(p, b))) > 2000).length);
     const weekly = buildPack("weekly", w, ctx, null);
     const now = w.now;
     expect(weekly.numbers[0].value).toBe(rows.filter((x) => x.eff_open === 1 && !x.routed && x.first > wall(now, -24 * 7) && x.first <= now).length);

@@ -8,6 +8,7 @@
  * Nothing here counts: every number is the server's.
  */
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { AskResponse } from "@/lib/map/ask";
 import { I } from "../icons";
 import type { MapAsk } from "./useMapAsk";
@@ -21,6 +22,8 @@ export function PlayPeriod({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang
   const [at, setAt] = useState<number | null>(null);
   const [upTo, setUpTo] = useState(true);
   const [playing, setPlaying] = useState(false);
+  // v3: how fast the days go by (ms a day)
+  const [speed, setSpeed] = useState(700);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const days = tl?.days ?? [];
   const max = Math.max(1, ...days.map((d) => d.n));
@@ -29,13 +32,13 @@ export function PlayPeriod({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang
   useEffect(() => {
     if (at == null || !days[at]) return;
     const ids = upTo ? days.slice(0, at + 1).flatMap((d) => d.ids) : days[at].ids;
-    ask.setSpot({ ids, label: label(at) });
+    ask.setSpot({ ids, label: label(at), still: true });
   }, [at, upTo]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!playing) { if (timer.current) clearInterval(timer.current); timer.current = null; return; }
-    timer.current = setInterval(() => setAt((k) => { const nx = k == null || k >= days.length - 1 ? 0 : k + 1; if (nx === days.length - 1) setPlaying(false); return nx; }), 700);
+    timer.current = setInterval(() => setAt((k) => { const nx = k == null || k >= days.length - 1 ? 0 : k + 1; if (nx === days.length - 1) setPlaying(false); return nx; }), speed);
     return () => { if (timer.current) clearInterval(timer.current); };
-  }, [playing, days.length]);
+  }, [playing, days.length, speed]);
   // a new answer: start again
   useEffect(() => { setAt(null); setPlaying(false); }, [r]);
   if (!tl || days.length < 2) return null;
@@ -46,9 +49,10 @@ export function PlayPeriod({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang
       <div className="amp-play-h">
         <h5><I n="clock" />{ta ? "நாள் வாரியாக" : "Day by day"}</h5>
         <button className="amp-ib" onClick={() => setPlaying((p) => !p)} aria-pressed={playing} title={playing ? (ta ? "நிறுத்து" : "Pause") : (ta ? "இயக்கு" : "Play the period")} aria-label={playing ? "Pause" : "Play the period"}>
-          {playing ? "❚❚" : "▶"}
+          {playing ? (ta ? "❚❚ நிறுத்து" : "❚❚ Pause") : (ta ? "▶ இயக்கு" : "▶ Play")}
         </button>
         <label className="amp-play-mode"><input type="checkbox" checked={upTo} onChange={(e) => setUpTo(e.target.checked)} />{ta ? "அதுவரை எல்லாம்" : "Up to the day"}</label>
+        <button className="amp-speed" onClick={() => setSpeed((v) => (v === 700 ? 350 : v === 350 ? 1400 : 700))} title={ta ? "வேகம்" : "Speed"} aria-label={ta ? "வேகம்" : "Speed"}>{speed === 350 ? "2×" : speed === 1400 ? "½×" : "1×"}</button>
         {at != null && <button className="amp-ib" onClick={stop} title={ta ? "அனைத்தையும் காட்டு" : "Show all again"} aria-label="Show all again"><I n="x" /></button>}
       </div>
       <div className="amp-bars" role="img" aria-label={ta ? `${days.length} நாட்களில் ${fmt(tl.total)}` : `${fmt(tl.total)} over ${days.length} days, by the day first reported`}>
@@ -59,12 +63,39 @@ export function PlayPeriod({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang
       </div>
       <input type="range" min={0} max={days.length - 1} value={at ?? days.length - 1} onChange={(e) => { setPlaying(false); setAt(Number(e.target.value)); }}
         aria-label={ta ? "நாள்" : "Day"} aria-valuetext={at != null ? `${label(at)}: ${fmt(shown ?? 0)}` : undefined} />
+      {at != null && <DayStage days={days} at={at} upTo={upTo} shown={shown ?? 0} total={tl.total} ta={ta} playing={playing} />}
       <p className="amp-play-f">
         <span>{dayLabel(tl.from, ta)}</span>
         <b aria-live="polite">{at != null ? `${label(at)}: ${fmt(shown ?? 0)} ${ta ? "" : "on the map"}` : (ta ? `மொத்தம் ${fmt(tl.total)}` : `${fmt(tl.total)} in all · press ▶`)}</b>
         <span>{dayLabel(tl.to, ta)}</span>
       </p>
     </section>
+  );
+}
+
+/**
+ * v3: the day on the map itself, big enough to read across a room: the date, how many cases are on the map, a strip of
+ * the days with the current one lit, and a progress line. Drawn over the map (a portal into the answer's map) while a
+ * day is chosen or the period plays.
+ */
+function DayStage({ days, at, upTo, shown, total, ta, playing }: { days: { day: string; n: number }[]; at: number; upTo: boolean; shown: number; total: number; ta: boolean; playing: boolean }) {
+  const [host, setHost] = useState<Element | null>(null);
+  useEffect(() => { setHost(document.querySelector(".ask-dim")); }, []);
+  if (!host) return null;
+  const d = new Date(`${days[at].day}T00:00:00Z`);
+  const wk = d.toLocaleDateString(ta ? "ta-IN" : "en-IN", { weekday: "long", timeZone: "UTC" });
+  const dm = d.toLocaleDateString(ta ? "ta-IN" : "en-IN", { day: "numeric", month: "long", timeZone: "UTC" });
+  const max = Math.max(1, ...days.map((x) => x.n));
+  return createPortal(
+    <div className={`daystage${playing ? " playing" : ""}`} role="status" aria-live="polite">
+      <div className="ds-date" key={days[at].day}><em>{wk}</em><b>{dm}</b></div>
+      <div className="ds-n"><b>{fmt(shown)}</b><span>{upTo ? (ta ? "இந்நாள் வரை வழக்குகள்" : "cases up to this day") : ta ? "இந்நாளில் வழக்குகள்" : "cases this day"}</span>
+        {!upTo && <i>+{fmt(days[at].n)}</i>}</div>
+      <div className="ds-strip" aria-hidden>{days.map((x, k) => <i key={x.day} className={k === at ? "cur" : (upTo ? k < at : false) ? "on" : ""} style={{ height: `${Math.max(8, (x.n / max) * 100)}%` }} />)}</div>
+      <div className="ds-prog" aria-hidden><i style={{ width: `${((at + 1) / days.length) * 100}%` }} /></div>
+      <small>{ta ? `நாள் ${at + 1} / ${days.length} · மொத்தம் ${fmt(total)}` : `Day ${at + 1} of ${days.length} · ${fmt(total)} in all`}</small>
+    </div>,
+    host
   );
 }
 

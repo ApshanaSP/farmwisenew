@@ -10,17 +10,19 @@ import { AiUnavailableError, AiBudgetError, AiBusyError, aiStatus } from "@/lib/
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
 import { aiPlan, aiReword } from "./ai";
+import { readTurn, type TurnHistory, type TurnReading } from "./turn";
 import type { Insight } from "./insights";
 import { conditionsNear, familiesOf, spreadOf, trafficCondition, type Condition, type LiveTraffic } from "./conditions";
 import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
+import { peakWords, rainForecast } from "./forecast";
 import { trafficNow } from "@/lib/city/traffic";
-import { compose, type Answer } from "./answer";
+import { compose, topicOf, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
 import { planChips, type PlanChip } from "./chips";
-import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
+import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, wardName, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
-import { checkPlan, type AreaRef, type Plan } from "./plan";
+import { OPEN_FILTER, checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { fitModelPlan, freshPlan, keepAreas, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
@@ -39,6 +41,12 @@ export interface AskInput {
   plan: Plan | null;
   /** the conversation's current plan, for follow-ups */
   prev: Plan | null;
+  /** v3: the places the last answer ranked first (ward:12, zone:5, osm:n123), for "there", "the worst one", "number 2" */
+  prevTop?: { ref: string; name: string }[] | null;
+  /** v3: the places earlier questions of the conversation asked about, newest first ("compare both") */
+  earlier?: { ref: string; name: string }[] | null;
+  /** v3: the conversation's last questions and their answers' headlines (counts and place names), for the turn reader (turn.ts) */
+  history?: TurnHistory[] | null;
   context: { zone: number | null; taluk: string | null; incidentId: string | null; drawn: { lat: number; lon: number; r: number } | null; ward: number | null };
   user: { email: string; role: "collector" | "department_officer"; lockDept: string | null };
   /** reword the meaning sentence with AI (off in tests and for chip edits) */
@@ -88,7 +96,9 @@ export interface AskResponse {
     rings: { id: string; lat: number; lon: number; r: number }[];
   };
   extra: {
-    groups?: { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[] }[];
+    groups?: { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[]; pop?: number; per10k?: number }[];
+    /** v3: the rain forecast by zone (Open-Meteo), beside each zone's open flooding and drain cases */
+    forecast?: { hours: number; source: string; at: string; rows: { key: string; label: string; label_ta: string; lat: number; lon: number; mm: number; maxHr: number; peakAt: string | null; open: number; ids: string[] }[] };
     clusters?: { id: string; n: number; lat: number; lon: number; ids: string[]; place: string | null }[];
     hotWards?: { ward: number; z: number; n: number }[];
     compare?: { a: { label: string; label_ta: string; n: number; ids: string[] }; b: { label: string; label_ta: string; n: number; ids: string[] } };
@@ -141,6 +151,10 @@ export interface AskResponse {
   unclear: { word: string; options: { label: string; text: string }[] } | null;
   /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
   scorecard: Scorecard | null;
+  /** v3: how the AI read a message that came after other questions (turn.ts): a follow-up or a new question, and what it means */
+  turn?: { relation: "follow_up" | "new_question"; standalone: string; points_to?: number } | null;
+  /** v3: the kind of problem the answer is about, in words ("open garbage complaints"), when its plan names one; the panel offers it beside an area's overview */
+  topic?: { en: string; ta: string } | null;
 }
 
 const ROW_CAP = 200;
@@ -269,6 +283,78 @@ export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழை�
  * v2: one question, never a failed request: an unexpected error inside the answer (a plan shape the answer words do not expect) is logged and
  * said plainly, so the officer can rephrase; an abort is passed on.
  */
+/**
+ * v3: a place ref the map does not know ("osm:Velachery" for "loc:Velachery", rewritten in a follow-up): the same name's ref
+ * from the conversation's current plan, else from the places the question named; one the map knows stays as it is.
+ */
+export function repairRefs(plan: Plan, prev: Plan | null, found: { ref: string; name: string }[], ctx: Ctx): Plan {
+  const tail = (r: string) => r.slice(r.indexOf(":") + 1).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const known = [...(prev?.steps ?? []).flatMap((x) => (x.op === "inside" && x.area.kind === "point" ? [x.area.ref] : [])), ...found.map((f) => f.ref)].filter((r) => ctx.place(r));
+  return dropUnknown({ ...plan, steps: plan.steps.map((x) => {
+    if (x.op !== "inside" || x.area.kind !== "point" || ctx.place(x.area.ref)) return x;
+    const t = tail(x.area.ref);
+    const ref = known.find((r) => tail(r) === t) ?? found.find((f) => f.name.toLowerCase().replace(/[^a-z0-9]/g, "") === t && ctx.place(f.ref))?.ref;
+    return ref && ctx.place(ref) ? { ...x, area: { ...x.area, ref } } : x;
+  }) }, ctx);
+}
+
+/** v3: an inside step at a place the map cannot find (the AI read "la" in "road la pallam" as a place): taken out, the rest answers */
+function dropUnknown(plan: Plan, ctx: Ctx): Plan {
+  const bad = plan.steps.filter((x) => x.op === "inside" && x.area.kind === "point" && !ctx.place(x.area.ref)) as Extract<Plan["steps"][number], { op: "inside" }>[];
+  if (!bad.length) return plan;
+  let steps = plan.steps;
+  let show = plan.show;
+  for (const b of bad) {
+    steps = steps.filter((x) => x !== b).map((x) => {
+      const y = { ...x } as Record<string, unknown>;
+      for (const k of ["of", "from", "to"]) if (y[k] === b.as) y[k] = b.of;
+      if (Array.isArray(y.near)) y.near = (y.near as string[]).map((n) => (n === b.as ? b.of : n));
+      return y as unknown as Plan["steps"][number];
+    });
+    if (show === b.as) show = b.of;
+  }
+  return { ...plan, steps, show };
+}
+
+/**
+ * v3: "will it rain tomorrow": the forecast's millimetres over each zone in the next 24 hours, beside its open flooding and
+ * drain cases (the map's own count), ranked by the rain to come. The forecast is Open-Meteo's; nothing here forecasts.
+ */
+async function withForecast(res: AskResponse, r: RunResult, w: World, lang: "en" | "ta" | "tanglish") {
+  const f = await rainForecast(w.zones.map((z) => ({ zone: z.zone, lat: z.lat, lon: z.lon })), 24);
+  const ta = lang === "ta";
+  const n = (x: number) => x.toLocaleString("en-IN", { maximumFractionDigits: 1 });
+  if (!f || !res.answer) {
+    if (res.answer) res.answer.meaning = `${ta ? "மழை முன்னறிவிப்பு இப்போது கிடைக்கவில்லை; திறந்த வெள்ள, வடிகால் புகார்கள் மண்டல வாரியாக." : "The rain forecast cannot be read just now; here are the open flooding and drain cases by zone."} ${res.answer.meaning ?? ""}`.trim();
+    return;
+  }
+  const groups = r.show.type === "groups" ? r.show.groups : [];
+  const rows = w.zones.map((z) => {
+    const fr = f.rows.find((x) => x.zone === z.zone);
+    const g = groups.find((x) => x.key === String(z.zone));
+    return { key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
+      mm: fr?.mm ?? 0, maxHr: fr?.maxHr ?? 0, peakAt: fr?.peakAt ?? null, open: g?.n ?? 0, ids: g?.ids ?? [] };
+  }).sort((a, b) => b.mm - a.mm || b.open - a.open);
+  res.extra.forecast = { hours: f.hours, source: f.source, at: f.at, rows };
+  const top = rows[0];
+  const wet = rows.filter((x) => x.mm >= 1);
+  if (!wet.length) {
+    res.answer.headline = ta ? `அடுத்த 24 மணி நேரத்தில் எந்த மண்டலத்திலும் குறிப்பிடத்தக்க மழை முன்னறிவிப்பு இல்லை (அதிகம் ${top.label_ta}: ${n(top.mm)} மிமீ).`
+      : top.mm > 0 ? `Little rain forecast in the next 24 hours: the most over ${top.label}, ${n(top.mm)} mm.` : "No rain forecast over any zone in the next 24 hours.";
+    res.answer.meaning = ta ? `திறந்த வெள்ள, வடிகால் புகார்கள்: ${n(groups.reduce((t, g) => t + g.n, 0))}.` : `Open flooding and drain cases now: ${n(groups.reduce((t, g) => t + g.n, 0))}, by zone on the map.`;
+  } else {
+    const peak = peakWords(top.peakAt, ta);
+    res.answer.headline = ta ? `அடுத்த 24 மணி நேர மழை (முன்னறிவிப்பு): அதிகம் ${top.label_ta}, ${n(top.mm)} மிமீ${peak ? `, உச்சம் ${peak}` : ""}; அங்கே ${n(top.open)} திறந்த வெள்ள/வடிகால் புகார்கள்.`
+      : `Rain in the next 24 hours (forecast): the most over ${top.label}, ${n(top.mm)} mm${top.maxHr ? ` (up to ${n(top.maxHr)} mm in an hour${peak ? `, around ${peak}` : ""})` : ""}; ${n(top.open)} open flooding or drain ${top.open === 1 ? "case" : "cases"} there.`;
+    const first = rows.filter((x) => x.mm >= 1 && x.open > 0).slice(0, 3);
+    res.answer.meaning = first.length ? (ta ? `முதலில் வடிகால் சுத்தம்: ${first.map((x) => `${x.label_ta} (${n(x.mm)} மிமீ, ${n(x.open)})`).join(", ")}.`
+      : `Clear drains first where rain meets open cases: ${first.map((x) => `${x.label} (${n(x.mm)} mm, ${n(x.open)} open)`).join(", ")}. Forecast: Open-Meteo.`)
+      : (ta ? "மழை வரும் மண்டலங்களில் திறந்த புகார்கள் இல்லை." : "No open flooding or drain cases in the zones where rain is coming. Forecast: Open-Meteo.");
+  }
+  res.answer.facts.push({ id: "forecast_mm", label: "mm of rain forecast in the wettest zone", value: top.mm });
+  res.followups = ta ? ["எந்த தெருக்கள் கனமழையில் வெள்ளம்?", "மழை இப்போது"] : ["Which streets flood in heavy rain?", "Is it raining now?", "Open flooding cases near hospitals"];
+}
+
 export async function askMap(asked: AskInput): Promise<AskResponse> {
   try { return await askMapInner(asked); }
   catch (e) {
@@ -297,6 +383,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
   const names = await refNames().catch(() => null);
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
+  let forecastAsk = false;
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
@@ -307,6 +394,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     if (!sc) { out.say = { en: `There is no Ward ${ward}. Chennai has wards 1 to 200.`, ta: `வார்டு ${ward} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
     out.kind = "brief";
     out.brief = sc.brief;
+    out.plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER }, where: null }, { op: "inside", as: "in", of: "a", area: { kind: "ward", id: ward } }], show: "in", language: lang };
     out.scorecard = sc;
     const area: AreaRef = { kind: "ward", id: ward };
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
@@ -320,6 +408,9 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     out.ai_used = aiOnly;
     out.kind = "brief";
     out.brief = areaBrief(area, w, ctx, lock);
+    // v3: the overview's own question as a plan (open cases inside the area), so a follow-up ("only severe ones", "garbage
+    // there") edits it and keeps the place
+    out.plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER }, where: null }, { op: "inside", as: "in", of: "a", area }], show: "in", language: lang };
     const p = area.kind === "point" ? ctx.place(area.ref) : null;
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: p && area.kind === "point" ? { lat: p.lat, lon: p.lon, r: area.radius_m } : null }];
     const box = areaBox(area, w, ctx);
@@ -332,18 +423,41 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
   if (aiOnly) {
     const typed = asked.text!;
+    // v3: a message after other questions: Claude first reads the conversation and says whether it is a follow-up or a new
+    // question, and writes it as one complete question (turn.ts). A new question is planned on its own: nothing of the old
+    // one (its kind of problem, its places) is carried over. No reading (no key, busy): the planner decides, as before.
+    const turn: TurnReading | null = asked.prev && input.history?.length
+      ? await readTurn(typed, input.history, input.prevTop ?? [], { user: input.user.email, signal: input.signal }) : null;
+    out.turn = turn ? { relation: turn.relation, standalone: turn.standalone, points_to: turn.points_to } : null;
+    const prev = turn?.relation === "new_question" ? null : asked.prev;
     // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
     const reading = spellerFor(data)(typed).text;
+    // the reading goes to the planner either way: for a new question it is the question itself; when the reader called a
+    // follow-up new, its complete reading still carries the meaning ("which school is the worst" = road accidents within 200 m)
+    const meant = turn?.standalone && turn.standalone.trim().toLowerCase() !== typed.trim().toLowerCase() ? turn.standalone : null;
+    // places are looked up in the officer's own words only (the reading's words found a school named "A School" in "a school")
     const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
-    const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-      zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
+    // v3: the last answer's first places, so a follow-up can point at them ("what is happening there", "the second one")
+    for (const p of prev ? input.earlier ?? [] : []) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && !found.some((f) => f.ref === p.ref)) found.push({ ref: p.ref, kind: "a place an earlier question asked about", name: ctx.place(p.ref)?.name ?? p.name });
+    // v3: when the reading says the message points at the last answer's number N, only that place is offered as the previous
+    // answer's (the AI chose it; the planner cannot then take number 1 for "the third one")
+    const pointed = prev && turn && turn.points_to >= 1 ? input.prevTop?.[Math.round(turn.points_to) - 1] ?? null : null;
+    for (const [i, p] of (prev ? input.prevTop ?? [] : []).entries()) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && (!pointed || pointed.ref === p.ref))
+      found.push({ ref: p.ref, kind: pointed ? "the place the follow-up points at (the previous answer's number " + (i + 1) + ")" : `the previous answer's number ${i + 1}`, name: p.name });
+    const a = await aiPlan(typed, prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      zones: w.zones, catLabels: catLabels(w), meant: pointed && meant ? `${meant} (it points at ${pointed.name}: use ref ${pointed.ref})` : meant }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
     if (a && "problems" in a && a.problems.includes("not a map question")) {
       out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
         chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
       out.ai_used = true;
       return done(out);
     }
-    if (a && "city" in a) {
+    // v3: the rain to come: the open flooding and drain cases by zone, and the forecast over each zone (added at the end)
+    if (a && "city" in a && a.city === "forecast") {
+      plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER, family: ["FLOOD", "DRAINAGE"] }, where: null }, { op: "count_by", as: "by", of: "a", by: "zone" }], show: "by", language: a.language };
+      forecastAsk = true; aiUsed = true;
+    }
+    else if (a && "city" in a && a.city !== "forecast") {
       const c = await cityNow(a.city, { lockDept: lock, zone: a.city === "traffic" ? input.context.zone ?? null : null }).catch(() => null);
       if (c) {
         out.kind = "say";
@@ -361,7 +475,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     if (a && "plan" in a) {
       // a question in Tamil script is answered in Tamil (the script is plain to see; the model sometimes said Tanglish)
       const language = /[\u0B80-\u0BFF]/.test(typed) ? "ta" as const : a.plan.language;
-      const fitted = fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true });
+      const fitted = repairRefs(fitModelPlan({ ...a.plan, language }, typed, w.now, prev, { ...modelWords(w, language, found), aiOnly: true }), prev, found, ctx);
       const ins = fitted.steps.find((s) => s.op === "inside");
       if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
       // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error
@@ -541,7 +655,8 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   syncEpoch(answerCache()); // a decision empties it (RC-35)
   const cached = answerCache().get(cacheKey);
   if (cached && Date.now() - cached.at < 60_000) {
-    const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used };
+    // v3: this question's own reading of the conversation, not the one cached with the answer
+    const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used, turn: out.turn ?? null };
     return done(copy);
   }
   let r: RunResult;
@@ -584,8 +699,9 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   // v2: Play the period: the answer's incidents day by day (the server's counts; the panel only shows them)
   const tl = r.hits.length ? timelineOf(r.hits, w.now) : null;
   if (tl) res.extra.timeline = tl;
+  if (forecastAsk) await withForecast(res, r, w, lang);
   const store = answerCache();
-  store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
+  if (!forecastAsk) store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);
   return done(res);
 }
@@ -603,6 +719,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   out.plan = plan;
   out.edited = edited;
   out.answer = answer;
+  out.topic = topicOf(plan, w);
   out.trace = r.steps;
   out.ai_used = aiUsed;
   const deptName = (c: string) => w.depts.get(c)?.name ?? c;
@@ -646,7 +763,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     for (const h of hits) if (h.inc.ward != null) { const g = byWard.get(h.inc.ward) ?? byWard.set(h.inc.ward, { n: 0, ids: [] }).get(h.inc.ward)!; g.n++; g.ids.push(h.inc.id); }
     out.extra.groups ??= [...byWard.entries()].map(([ward, g]) => {
       const wd = w.wards.find((x) => x.ward === ward);
-      return { key: String(ward), label: `Ward ${ward}`, label_ta: `வார்டு ${ward}`, n: g.n, lat: wd?.lat ?? 0, lon: wd?.lon ?? 0, ids: g.ids };
+      return { key: String(ward), label: wardName(w, ward).en, label_ta: wardName(w, ward).ta, n: g.n, lat: wd?.lat ?? 0, lon: wd?.lon ?? 0, ids: g.ids };
     }).sort((a, b) => b.n - a.n);
     const n = (x: number) => x.toLocaleString("en-IN");
     answer.meaning = `${answer.meaning ?? ""} ${lang === "ta" ? `வரைபடம் அதிக முன்னுரிமையுள்ள ${n(FEATURE_CAP)} இடங்களைக் காட்டுகிறது; ${n(hits.length)} அனைத்தும் வார்டு வாரியாக எண்ணப்பட்டுள்ளன.`

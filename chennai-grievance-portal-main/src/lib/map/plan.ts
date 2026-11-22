@@ -69,7 +69,11 @@ export const StepSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("nearest"), as: name, from: z.string(), to: name, k: z.number().int() }),
   // `place`: each OpenStreetMap neighbourhood (a point) rather than a ward's ground: "neighbourhoods more than 2 km from a ration shop"
   z.object({ op: z.literal("farthest"), as: name, areas: z.enum(["ward", "zone", "place"]), from: name, beyond_m: z.number().nullable() }),
-  z.object({ op: z.literal("count_by"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "hex500", "near", "category", "dept"]) }),
+  z.object({ op: z.literal("count_by"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "hex500", "near", "category", "dept"]),
+    /** v3: rank by cases for every 10,000 people (ward, zone or taluk) */
+    per: z.literal("people").optional(),
+    /** v3: the fewest first ("least complaints zone"), every area counted, none left out for having none */
+    fewest: z.boolean().optional() }),
   /** v2: how fast cases are closed, by area, category or department: the median days from first report to closing, over the cases closed in the window */
   z.object({ op: z.literal("speed"), as: name, of: name, by: z.enum(["ward", "zone", "taluk", "category", "dept"]), order: z.enum(["fast", "slow"]) }),
   z.object({ op: z.literal("hotspot"), as: name, of: name }),

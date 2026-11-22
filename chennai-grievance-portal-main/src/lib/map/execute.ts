@@ -20,7 +20,23 @@ import { fmtDistance } from "./geom";
 export interface Near { id: string; name: string | null; name_ta: string | null; layer: LayerId; m: number; lat: number; lon: number }
 export interface Hit { inc: Inc; near: Near | null }
 export interface Place { ref: string; name: string; name_ta: string | null; lat: number; lon: number; kind: string }
-export interface Group { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[] }
+/** v3: the nearest named neighbourhood (OpenStreetMap place) within 2 km of a point, cached per world */
+const localities = new WeakMap<World, Map<string, { en: string; ta: string } | null>>();
+export function localityOf(w: World, lat: number, lon: number): { en: string; ta: string } | null {
+  let m = localities.get(w);
+  if (!m) localities.set(w, (m = new Map()));
+  const k = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+  if (m.has(k)) return m.get(k)!;
+  let best: { en: string; ta: string } | null = null, bd = 2000;
+  for (const p of w.points.osm_places) {
+    if (!p.name) continue;
+    const d = haversineM({ lat, lon }, { lat: p.lat, lon: p.lon });
+    if (d < bd) { bd = d; best = { en: p.name, ta: p.name_ta ?? p.name }; }
+  }
+  m.set(k, best);
+  return best;
+}
+export interface Group { key: string; label: string; label_ta: string; n: number; lat: number; lon: number; ids: string[]; /** v3: people living there, and cases per 10,000 of them */ pop?: number; per10k?: number }
 export interface Cluster { id: string; n: number; lat: number; lon: number; ids: string[]; wards: number[]; place: string | null; open: number }
 export interface AreaScore { key: string; label: string; label_ta: string; p90: number; worst: { lat: number; lon: number; m: number; to: Near | null }; lat: number; lon: number }
 export interface AreaCount { ref: AreaRef; label: string; label_ta: string; n: number; ids: string[] }
@@ -45,10 +61,16 @@ export type Coll =
 
 export interface SpeedRow { key: string; label: string; label_ta: string; lat: number; lon: number; closed: number; open: number; medianDays: number; ids: string[] }
 
+/** v3: a ward as people say it: "Anna Nagar (Ward 102)" (the neighbourhood first, world.ts nameWards), "Ward 102" when it has no name */
+export function wardName(w: World, ward: number | string): { en: string; ta: string } {
+  const wd = w.wards.find((x) => String(x.ward) === String(ward));
+  return wd?.name ? { en: `${wd.name.en} (Ward ${ward})`, ta: `${wd.name.ta} (வார்டு ${ward})` } : { en: `Ward ${ward}`, ta: `வார்டு ${ward}` };
+}
+
 /** An incident's area, category or department as a group: key, labels and a point for the map (shared by count_by and speed). */
 function groupOf(h: Hit, by: "ward" | "zone" | "taluk" | "category" | "dept", w: World): { key: string; label: string; label_ta: string; lat: number; lon: number } | null {
   const i = h.inc;
-  if (by === "ward" && i.ward != null) { const wd = w.wards.find((x) => x.ward === i.ward); return { key: String(i.ward), label: `Ward ${i.ward}`, label_ta: `வார்டு ${i.ward}`, lat: wd?.lat ?? i.lat, lon: wd?.lon ?? i.lon }; }
+  if (by === "ward" && i.ward != null) { const wd = w.wards.find((x) => x.ward === i.ward); return { key: String(i.ward), label: wardName(w, i.ward).en, label_ta: wardName(w, i.ward).ta, lat: wd?.lat ?? i.lat, lon: wd?.lon ?? i.lon }; }
   if (by === "zone" && i.zone != null) { const z = w.zones.find((x) => x.zone === i.zone); return { key: String(i.zone), label: z ? `${z.name} (Zone ${z.zone})` : `Zone ${i.zone}`, label_ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${i.zone}`, lat: z?.lat ?? 0, lon: z?.lon ?? 0 }; }
   if (by === "taluk" && i.taluk) { const t = w.taluks.find((x) => x.code === i.taluk); return { key: i.taluk, label: `${t?.name ?? i.taluk} taluk`, label_ta: `${t?.name_ta ?? t?.name ?? i.taluk} வட்டம்`, lat: t?.lat ?? 0, lon: t?.lon ?? 0 }; }
   if (by === "category") return { key: i.cat, label: w.cats.get(i.cat)?.label ?? i.cat, label_ta: CAT_TA[i.cat] ?? w.cats.get(i.cat)?.label ?? i.cat, lat: i.lat, lon: i.lon };
@@ -186,7 +208,7 @@ export function filterWords(f: Filter | null, w: World, lang: Lang): string {
 // --------------------------------------------------------------- areas --
 
 export function areaLabel(a: AreaRef, w: World, ctx: Ctx): { en: string; ta: string } {
-  if (a.kind === "ward") return { en: `Ward ${a.id}`, ta: `வார்டு ${a.id}` };
+  if (a.kind === "ward") return wardName(w, a.id);
   if (a.kind === "zone") {
     const z = w.zones.find((x) => x.zone === a.id);
     return { en: z ? `${z.name} (Zone ${a.id})` : `Zone ${a.id}`, ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${a.id})` : `மண்டலம் ${a.id}` };
@@ -387,7 +409,7 @@ export function rankRows(now: Hit[], before: Hit[], by: "ward" | "zone" | "taluk
   for (const h of before) { const k = keyOf(h.inc); if (k == null) continue; (m.get(k) ?? m.set(k, { now: [], before: 0 }).get(k)!).before++; }
   const rows: RankRow[] = [...m.entries()].map(([key, v]) => {
     let label = key, label_ta = key, lat = 0, lon = 0;
-    if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); label = `Ward ${key}`; label_ta = `வார்டு ${key}`; lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
+    if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); ({ en: label, ta: label_ta } = wardName(w, key)); lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
     else if (by === "zone") { const z = w.zones.find((x) => String(x.zone) === key); label = z ? `${z.name} (Zone ${key})` : `Zone ${key}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${key})` : `மண்டலம் ${key}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0; }
     else { const t = w.taluks.find((x) => x.code === key); label = `${t?.name ?? key} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? key} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0; }
     const a = v.now.length, b = v.before;
@@ -554,6 +576,21 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         break;
       }
       case "along": {
+        // v3: "petrol bunks along OMR", "bus stops along Anna Salai": the places themselves within the distance of the line
+        const ofColl = need(s.of);
+        if (ofColl.type === "points") {
+          const line = [...w.lines.roads, ...w.lines.waterways].find((l) => l.id === s.line);
+          if (!line) throw new PlanError("That road or waterway is not on the map.");
+          const box = expandBboxM(line.bbox, s.meters);
+          const items = ofColl.items.filter((p) => inBbox(p, box) && distToLineM(p, line.lines).m <= s.meters);
+          out = { type: "points", layer: ofColl.layer, items };
+          context.points.push(...items);
+          context.lines.push({ feat: line, meters: s.meters });
+          const lw = LAYER_WORD[ofColl.layer];
+          n = note(`Kept the ${lw.en} within ${fmtDistance(s.meters)} of ${line.name} (${items.length.toLocaleString("en-IN")}). Straight-line distance.`,
+            `${line.name_ta ?? line.name} இலிருந்து ${fmtDistance(s.meters, "ta")} க்குள் ${lw.ta} (${items.length.toLocaleString("en-IN")}).`);
+          break;
+        }
         const src = incHits(s.of);
         const placed = src.filter((h) => h.inc.pinnable);
         let hits: Hit[];
@@ -646,7 +683,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           // each neighbourhood OpenStreetMap names inside the district, measured from its own point
           areas = w.points.osm_places.filter((p) => p.in_district && p.name).map((p) => ({ key: p.id, label: p.name!, label_ta: p.name_ta ?? p.name!, lat: p.lat, lon: p.lon, ...scoreOf([p]) }));
         } else if (s.areas === "ward") {
-          areas = w.wards.map((wd) => ({ key: String(wd.ward), label: `Ward ${wd.ward}`, label_ta: `வார்டு ${wd.ward}`, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
+          areas = w.wards.map((wd) => ({ key: String(wd.ward), label: wardName(w, wd.ward).en, label_ta: wardName(w, wd.ward).ta, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
         } else {
           areas = w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
             ...scoreOf(w.wards.filter((wd) => wd.zone === z.zone).flatMap((wd) => grids.get(wd.ward)!)) }));
@@ -678,7 +715,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           let key: string | null = null, label = "", label_ta = "", lat = 0, lon = 0;
           if (s.by === "ward" && h.inc.ward != null) {
             const wd = w.wards.find((x) => x.ward === h.inc.ward);
-            key = String(h.inc.ward); label = `Ward ${h.inc.ward}`; label_ta = `வார்டு ${h.inc.ward}`; lat = wd?.lat ?? h.inc.lat; lon = wd?.lon ?? h.inc.lon;
+            key = String(h.inc.ward); ({ en: label, ta: label_ta } = wardName(w, h.inc.ward)); lat = wd?.lat ?? h.inc.lat; lon = wd?.lon ?? h.inc.lon;
           } else if (s.by === "zone" && h.inc.zone != null) {
             const z = w.zones.find((x) => x.zone === h.inc.zone);
             key = String(h.inc.zone); label = z ? `${z.name} (Zone ${z.zone})` : `Zone ${h.inc.zone}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${h.inc.zone}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0;
@@ -691,17 +728,40 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           } else if (s.by === "near" && h.near) {
             // v2: the place it was found near (the within step keeps the closest one)
             const lw = LAYER_WORD[h.near.layer];
-            key = h.near.id; label = h.near.name ?? lw.one; label_ta = h.near.name_ta ?? h.near.name ?? lw.ta_one; lat = h.near.lat; lon = h.near.lon;
+            // v3: a place with no name on OpenStreetMap is called by the neighbourhood it is in ("School in Perambur")
+            const where = h.near.name ? null : localityOf(w, h.near.lat, h.near.lon);
+            key = h.near.id; label = h.near.name ?? (where ? `${lw.one.charAt(0).toUpperCase()}${lw.one.slice(1)} in ${where.en}` : lw.one);
+            label_ta = h.near.name_ta ?? h.near.name ?? (where ? `${where.ta} ${lw.ta_one}` : lw.ta_one); lat = h.near.lat; lon = h.near.lon;
           } else if (s.by === "hex500" && h.inc.pinnable) {
             const x = hex500(h.inc);
-            key = x.key; label = `500 m cell ${x.key}`; label_ta = `500 மீ கட்டம் ${x.key}`; lat = x.lat; lon = x.lon;
+            // v3: a cell is called by its neighbourhood ("500 m around Perambur"), never by its grid number
+            const where = localityOf(w, x.lat, x.lon);
+            key = x.key; label = where ? `500 m around ${where.en}` : `a 500 m area (${x.lat.toFixed(3)}, ${x.lon.toFixed(3)})`; label_ta = where ? `${where.ta} சுற்றி 500 மீ` : `500 மீ பகுதி`; lat = x.lat; lon = x.lon;
           }
           if (key == null) { unassigned.push(h.inc.id); continue; }
           const g = groups.get(key) ?? groups.set(key, { key, label, label_ta, n: 0, lat, lon, ids: [] }).get(key)!;
           g.n++;
           g.ids.push(h.inc.id);
         }
-        const list = [...groups.values()].sort((a, b) => b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
+        // v3: the fewest first: every ward, zone or taluk counts, an area with none too
+        if (s.fewest && (s.by === "ward" || s.by === "zone" || s.by === "taluk")) {
+          const all = s.by === "ward" ? w.wards.map((x) => ({ key: String(x.ward), label: wardName(w, x.ward).en, label_ta: wardName(w, x.ward).ta, lat: x.lat, lon: x.lon }))
+            : s.by === "zone" ? w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon }))
+            : w.taluks.map((t) => ({ key: t.code, label: `${t.name} taluk`, label_ta: `${t.name_ta ?? t.name} வட்டம்`, lat: t.lat, lon: t.lon }));
+          for (const a of all) if (!groups.has(a.key)) groups.set(a.key, { ...a, n: 0, ids: [] });
+        }
+        // v3: the people living in each area, and its cases for every 10,000 of them
+        if (s.by === "ward" || s.by === "zone" || s.by === "taluk") for (const g of groups.values()) {
+          const pop = w.wards.filter((x) => (s.by === "ward" ? String(x.ward) : s.by === "zone" ? String(x.zone) : x.taluk) === g.key).reduce((t, x) => t + (x.pop ?? 0), 0);
+          if (pop > 0) { g.pop = pop; g.per10k = Math.round((g.n / pop) * 1e5) / 10; }
+        }
+        const per = s.by !== "near" && s.by !== "category" && s.by !== "dept" && s.by !== "hex500" && s.per === "people";
+        // a rate on one or two cases is not reliable: areas with at least MIN cases are ranked by their plain rate; the
+        // rest follow, also by rate (the answer says so). MIN grows with the answer (3, or 1 in 200 of its cases).
+        const nAll = [...groups.values()].reduce((t, g) => t + g.n, 0);
+        const MIN = Math.max(3, Math.round(nAll / 200));
+        const rate = (g: Group) => (g.pop && g.per10k != null ? (g.n >= MIN ? 1e6 : 0) + g.per10k : -1);
+        const list = [...groups.values()].sort((a, b) => (per ? rate(b) - rate(a) : 0) || (s.fewest ? a.n - b.n : b.n - a.n) || a.key.localeCompare(b.key, "en", { numeric: true }));
         const nearLayer = src.find((h) => h.near)?.near?.layer;
         out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };
         const nw = nearLayer ? LAYER_WORD[nearLayer] : null;

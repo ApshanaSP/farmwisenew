@@ -8,7 +8,7 @@ import { fmtDistance, haversineM } from "./geom";
 import { areaLabel, filterWords, runMapPlan, type Ctx, type Hit, type Near, type RunResult } from "./execute";
 import type { Plan, Step } from "./plan";
 import type { World } from "./types";
-import { CAT_TA, KIND_WORD, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
+import { CAT_TA, FAMILY_WORD, KIND_WORD, LAYER_WORD, inPeriodWords, isTa, periodWords, type Lang } from "./words";
 import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
 
 export const LAYER_READY = { en: "map layer ready", ta: "வரைபட அடுக்கு தயார்", tanglish: "map layer ready" } as const;
@@ -79,13 +79,41 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const t = take0(plan);
   const f = t?.filter ?? null;
   const ta = isTa(lang);
-  const cats = f?.category?.length ? f.category.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase())).join(", ") : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
+  // v3: many kinds read as their family ("crime" for six crime kinds), or the first two "and 3 more kinds"; never a list of six
+  const many = (cs: string[]) => {
+    const names = cs.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase()));
+    if (cs.length <= 3) return names.join(", ");
+    const fams = new Set(cs.map((c) => w.cats.get(c)?.family ?? ""));
+    const fw = fams.size === 1 ? FAMILY_WORD[[...fams][0]] : undefined;
+    if (fw) return ta ? fw.ta : fw.en.toLowerCase().replace(" (all kinds)", "");
+    return ta ? `${names.slice(0, 2).join(", ")} மற்றும் ${cs.length - 2} வகைகள்` : `${names.slice(0, 2).join(", ")} and ${cs.length - 2} more kinds of`;
+  };
+  const cats = f?.category?.length ? many(f.category) : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
   const st = f?.status === "open" ? (ta ? "திறந்த " : "open ") : f?.status === "closed" ? (ta ? "முடிந்த " : "closed ") : "";
   // past their deadline is part of what is counted, so the headline says it ("314 open past-deadline incidents ...")
   const sev = (f?.overdue ? (ta ? "காலக்கெடு தாண்டிய " : "past-deadline ") : "") + (f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "");
   const noun = (f?.news ? (ta ? "செய்திகளில் வந்த " : "") : "") + (f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents") + (f?.news && !ta ? " in the news" : "");
   return ta ? `${st}${sev}${cats ? cats + " " : ""}${noun}` : `${st}${sev}${cats ? cats + " " : ""}${noun}`.replace(/\s+/g, " ").trim();
 }
+/**
+ * v3: the kind of problem an answer is about, in words, when its plan names one (a category, a family, a department, a
+ * severity or past deadline): "open garbage complaints". Null for every kind (an area's overview already counts those).
+ */
+export function topicOf(plan: Plan | null, w: World): { en: string; ta: string } | null {
+  const f = plan ? take0(plan)?.filter : null;
+  if (!f || !(f.category?.length || f.family?.length || f.dept?.length || f.severity?.length || f.overdue)) return null;
+  const words = (lang: Lang) => {
+    const s = subjectMany(plan!, w, lang);
+    // a department alone (police cases): its name says the kind
+    if (!f.category?.length && !f.family?.length && f.dept?.length === 1) {
+      const d = w.depts.get(f.dept[0])?.name ?? f.dept[0];
+      return isTa(lang) ? `${d}: ${s}` : `${s} (${d})`;
+    }
+    return s;
+  };
+  return { en: words("en"), ta: words("ta") };
+}
+
 const periodTail = (plan: Plan, lang: Lang) => {
   const p = take0(plan)?.filter?.period ?? null;
   return p ? ` (${periodWords(p, lang)})` : "";
@@ -122,8 +150,13 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     if (kinds.size > 1) {
       const top = [...kinds.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 3);
       const nameOf = (c: string) => (ta ? CAT_TA[c] ?? w.cats.get(c)?.label ?? c : (w.cats.get(c)?.label ?? c).toLowerCase());
-      parts.unshift(ta ? `வகைகள்: ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}` : tg ? `Mostly ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`
-        : `Mostly ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`);
+      // v3: a question about all incidents says so: every kind is counted, police cases among them (they are not only flooding)
+      const t0 = plan.steps.find((x) => x.op === "take" && x.layer === "incidents") as Extract<Step, { op: "take" }> | undefined;
+      const everyKind = !!t0 && !t0.filter?.category?.length && !t0.filter?.family?.length && !t0.filter?.dept?.length && kinds.size > 3;
+      const police = everyKind ? depts.find((x) => /police/i.test(x.name)) : undefined;
+      const lead = everyKind ? (ta ? `எல்லா வகைகளும் எண்ணப்பட்டன (${n(kinds.size)} வகைகள்)${police ? `, காவல்துறை வழக்குகள் ${n(police.n)}` : ""}; அதிகம்` : `Every kind is counted (${n(kinds.size)} kinds${police ? `, ${n(police.n)} of them police cases` : ""}); the most`) : null;
+      parts.unshift(ta ? `${lead ?? "வகைகள்"}: ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}` : tg ? `${lead ?? "Mostly"} ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`
+        : `${lead ? `${lead}: ` : "Mostly "}${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`);
     }
     const s = parts.filter(Boolean).join("; ");
     return s ? `${s.charAt(0).toUpperCase()}${s.slice(1)}.` : null;
@@ -164,8 +197,12 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     const kinds = t0?.where?.kinds?.length === 1 ? KIND_WORD[t0.where.kinds[0]] : undefined;
     const lw = kinds ? { ...LAYER_WORD[show.layer], en: kinds.en, one: kinds.one, ta: kinds.ta, ta_one: kinds.ta } : LAYER_WORD[show.layer];
     count = fact("count", show.items.length, lw.en);
-    const area = last.op === "inside" ? areaLabel(last.area, w, ctx) : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
-    const inWord = last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
+    // v3: places along a road or waterway ("petrol bunks along OMR")
+    const line = last.op === "along" ? [...w.lines.roads, ...w.lines.waterways].find((x) => x.id === last.line) : null;
+    const area = last.op === "inside" ? areaLabel(last.area, w, ctx)
+      : last.op === "along" ? { en: `within ${fmtDistance(last.meters)} of ${line?.name ?? last.line}`, ta: `${line?.name_ta ?? line?.name ?? last.line} இலிருந்து ${fmtDistance(last.meters, "ta")} க்குள்` }
+      : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
+    const inWord = last.op === "along" ? "" : last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
     const word = count === 1 ? lw.one : lw.en;
     headline = !count ? (ta ? `${area.ta} ${lw.ta} எதுவும் இல்லை.` : tg ? `${area.en}-la ${lw.en} edhuvum illa.` : `No ${lw.en} ${inWord}${area.en} on the map.`)
       : ta ? `${area.ta} ${n(count)} ${count === 1 ? lw.ta_one : lw.ta}.` : tg ? `${area.en}-la ${n(count)} ${word} irukku.` : `${n(count)} ${word} ${inWord}${area.en}.`;
@@ -289,7 +326,7 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       fact("groups", g.length, "areas");
       if (g[0]) fact("top", g[0].n, "in the top area");
       const nw = show.layer ? LAYER_WORD[show.layer] : null;
-      const unit = show.by === "near" ? (ta ? nw?.ta ?? "இடங்கள்" : nw?.en ?? "places") : show.by === "hex500" ? (ta ? "500 மீ கட்டங்கள்" : "500 m cells")
+      const unit = show.by === "near" ? (ta ? nw?.ta ?? "இடங்கள்" : nw?.en ?? "places") : show.by === "hex500" ? (ta ? "500 மீ பகுதிகள்" : "500 m areas")
         : show.by === "category" ? (ta ? "வகைகள்" : "kinds") : show.by === "dept" ? (ta ? "துறைகள்" : "departments")
         : ta ? { ward: "வார்டுகள்", zone: "மண்டலங்கள்", taluk: "வட்டங்கள்" }[show.by] : `${show.by}s`;
       // results, but none of them has this area on record (a district-wide report): nothing to rank, said plainly
@@ -304,7 +341,20 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
             : show.by === "category" ? `${n(count)} ${subj}${per} of ${g.length} kinds; the most: ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : show.by === "dept" ? `${n(count)} ${subj}${per} with ${g.length} departments; the most with ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the most in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;
+      // v3: the fewest first ("least complaints zone")
+      if (last.op === "count_by" && last.fewest && g.length && count >= 0) {
+        headline = ta ? `${n(count)} ${subj}${per}; குறைவு ${g[0].label_ta} (${n(g[0].n)}) · ${ready}.` : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the fewest in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;
+      }
       if (g.length > 1) meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${n(x.n)})`).join(", ")}.` : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${n(x.n)})`).join(", ")}.`;
+      // v3: ranked for the people living there (Kontur population): the rate leads, the count and the people follow
+      if (last.op === "count_by" && last.per === "people" && g[0]?.per10k != null && count) {
+        const rate = (x: (typeof g)[number]) => (x.per10k ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 1 });
+        fact("per10k", g[0].per10k, "cases per 10,000 people in the top area");
+        headline = ta ? `${n(count)} ${subj}${per}; மக்கள்தொகைக்கு அதிகம் ${g[0].label_ta}: 10,000 பேருக்கு ${rate(g[0])} (${n(g[0].n)} வழக்குகள், ${n(g[0].pop ?? 0)} பேர்) · ${ready}.`
+          : `${n(count)} ${subj}${per}; the most for its people: ${g[0].label}, ${rate(g[0])} per 10,000 people (${n(g[0].n)} ${g[0].n === 1 ? "case" : "cases"}, ${n(g[0].pop ?? 0)} people) · ${ready}.`;
+        meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${rate(x)}, ${n(x.n)})`).join(", ")}. மக்கள்தொகை: Kontur 2023.`
+          : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${rate(x)}, ${n(x.n)} ${x.n === 1 ? "case" : "cases"})`).join(", ")}. Areas with too few cases for a fair rate (under ${n(Math.max(3, Math.round(count / 200)))}) come after the rest. People: Kontur Population 2023, by ward.`;
+      }
       if (show.unassigned.length && g.length) meaning = `${meaning ?? ""} ${ta ? `${show.unassigned.length} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned.length)} have no ${show.by} on record.`}`.trim();
       break;
     }

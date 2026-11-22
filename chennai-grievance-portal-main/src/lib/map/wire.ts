@@ -27,7 +27,11 @@ export const WireStep = z.object({
   b_kind: AreaW.kind, b_id: AreaW.id, b_code: AreaW.code, b_ref: AreaW.ref, b_radius_m: AreaW.radius_m,
   before_days: z.number().nullable(), before_offset: z.number().nullable(),
   /** rank: the biggest rise first, or the biggest fall */
-  order: z.enum(["rise", "fall", "fast", "slow"]).nullable()
+  order: z.enum(["rise", "fall", "fast", "slow"]).nullable(),
+  /** v3: count_by with the fewest first */
+  fewest_first: z.boolean().nullable().describe("count_by only: true ONLY when the question asks for the least, fewest or lowest (least complaints zone); false or null for most, highest, worst, top, which has the most"),
+  /** v3: count_by ward/zone/taluk ranked by cases for every 10,000 people living there (population: Kontur, 2023) */
+  per_people: z.boolean().nullable().describe("count_by ward, zone or taluk only: true when the question asks per person, per head, per capita, for its population or 'relative to how many people live there'; else null")
 });
 export type WireStep = z.infer<typeof WireStep>;
 export const WirePlan = z.object({
@@ -40,8 +44,10 @@ export const WirePlan = z.object({
   named_places: z.array(z.string()).describe("the place refs (from the prompt's list) of the places the question names, as the question means them (in X: its zone or taluk ref; near X: its point ref); [] if none"),
   named_zone: z.number().describe("the zone number the question names (1-15), or -1"),
   named_ward: z.number().describe("the ward number the question names (1-200), or -1"),
+  every_kind: z.boolean().describe("FOLLOW-UPS ONLY. True when the follow-up leaves the current plan's kind of problem to ask about all kinds together (after garbage in zone 9: 'all incidents in zone 9', 'total complaints', 'everything there'). False on a first question, and false whenever this question names a kind of problem itself (accidents, suicide, dogs, flooding, trees, police)."),
+  points_at_previous: z.boolean().describe("true only when a follow-up points at a place of the previous answer in words (there, that place, that school, the first, the second one, number 2); false otherwise, also for follow-ups that only change the problem, time, status or distance"),
   intent: z.enum(["plan", "brief", "scorecard", "city", "not_map"]).describe("plan: a map answer; brief: what is happening in one area; scorecard: a ward's scorecard; city: the live state of the city now; not_map: not a map question"),
-  city: z.enum(["traffic", "rain", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, streets that flood, power cuts, trains running; else none"),
+  city: z.enum(["traffic", "rain", "forecast", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, the rain forecast (will it rain, tomorrow, next hours, where will it rain most), streets that flood, power cuts, trains running; else none"),
   steps: z.array(WireStep), show: z.string(), language: z.enum(["en", "ta", "tanglish"])
 });
 export type WirePlan = z.infer<typeof WirePlan>;
@@ -50,7 +56,7 @@ const EMPTY: Omit<WireStep, "op" | "as"> = {
   layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null, period_calendar: null,
   government: null, kinds: null, of: null, near: null, meters: null, line: null, from: null, to: null, k: null, areas: null, beyond_m: null, by: null,
   area_kind: null, area_id: null, area_code: null, area_ref: null, area_radius_m: null, b_kind: null, b_id: null, b_code: null, b_ref: null, b_radius_m: null,
-  before_days: null, before_offset: null, order: null
+  before_days: null, before_offset: null, order: null, per_people: null, fewest_first: null
 };
 
 const areaOut = (a: AreaRef, p: "area" | "b") => a.kind === "ward" || a.kind === "zone" ? { [`${p}_kind`]: a.kind, [`${p}_id`]: a.id }
@@ -71,7 +77,7 @@ const calendarIn = (k: WireStep["period_calendar"], offset: number | null | unde
 
 export function toWire(plan: Plan): WirePlan {
   return {
-    understood: true, named_categories: [], named_layers: [], named_places: [], named_zone: -1, named_ward: -1, intent: "plan", city: "none", show: plan.show, language: plan.language,
+    understood: true, named_categories: [], named_layers: [], named_places: [], named_zone: -1, named_ward: -1, every_kind: false, points_at_previous: false, intent: "plan", city: "none", show: plan.show, language: plan.language,
     steps: plan.steps.map((s: Step): WireStep => {
       const base = { ...EMPTY, op: s.op, as: s.as } as WireStep;
       switch (s.op) {
@@ -85,7 +91,7 @@ export function toWire(plan: Plan): WirePlan {
         case "along": return { ...base, of: s.of, line: s.line, meters: s.meters };
         case "nearest": return { ...base, from: s.from, to: s.to, k: s.k };
         case "farthest": return { ...base, areas: s.areas, from: s.from, beyond_m: s.beyond_m };
-        case "count_by": return { ...base, of: s.of, by: s.by };
+        case "count_by": return { ...base, of: s.of, by: s.by, per_people: s.per === "people" ? true : null, fewest_first: s.fewest ? true : null };
         case "hotspot": return { ...base, of: s.of };
         case "compare": return { ...base, of: s.of, ...areaOut(s.a, "area"), ...areaOut(s.b, "b") } as WireStep;
         case "change": return { ...base, of: s.of, ...periodOut(s.now), before_days: s.before.kind === "last_days" ? s.before.days : null,
@@ -114,7 +120,7 @@ export function fromWire(w: WirePlan): Plan {
       case "along": return { op: "along", as: s.as, of: s.of ?? "", line: s.line ?? "", meters: s.meters ?? 75 };
       case "nearest": return { op: "nearest", as: s.as, from: s.from ?? "", to: s.to ?? "", k: Math.round(s.k ?? 1) };
       case "farthest": return { op: "farthest", as: s.as, areas: s.areas ?? "ward", from: s.from ?? "", beyond_m: s.beyond_m };
-      case "count_by": return { op: "count_by", as: s.as, of: s.of ?? "", by: s.by ?? "ward" };
+      case "count_by": return { op: "count_by", as: s.as, of: s.of ?? "", by: s.by ?? "ward", ...(s.per_people && (s.by === "ward" || s.by === "zone" || s.by === "taluk") ? { per: "people" as const } : {}), ...(s.fewest_first === true ? { fewest: true } : {}) };
       case "hotspot": return { op: "hotspot", as: s.as, of: s.of ?? "" };
       case "compare": return { op: "compare", as: s.as, of: s.of ?? "", a: areaIn(s, "area") ?? { kind: "zone", id: 0 }, b: areaIn(s, "b") ?? { kind: "zone", id: 0 } };
       case "change": return { op: "change", as: s.as, of: s.of ?? "", now: period ?? { kind: "last_days", days: 7, offset: 0 },

@@ -1,0 +1,44 @@
+{
+  "about": "v3 fresh follow-up conversations (22 Nov 2026, 'keep testing' round), written before their first run, never tuned against.",
+  "conversations": [
+    { "id": "r01", "turns": [
+      { "q": "which market has the most garbage around it", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "markets"], "cats": ["SOLID_WASTE"] } },
+      { "q": "what is happening at the top market", "there": 1 } ] },
+    { "id": "r02", "turns": [
+      { "q": "streetlight complaints per person by zone", "want": { "show": "count_by", "by": "zone", "per": true, "cats": ["STREETLIGHT_ELECTRICAL"] } },
+      { "q": "and by ward", "want": { "show": "count_by", "by": "ward", "cats": ["STREETLIGHT_ELECTRICAL"] } } ] },
+    { "id": "r03", "turns": [
+      { "q": "which zone has the least complaints", "want": { "show": "count_by", "by": "zone" } },
+      { "q": "and the most?", "want": { "show": "count_by", "by": "zone" } } ] },
+    { "id": "r04", "turns": [
+      { "q": "flooding near hospitals", "want": { "layers": ["incidents", "hospitals"], "cats": ["FLOOD"] } },
+      { "q": "only open past deadline", "want": { "layers": ["incidents", "hospitals"], "cats": ["FLOOD"], "overdue": true } },
+      { "q": "which hospital is worst affected", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"], "cats": ["FLOOD"] } } ] },
+    { "id": "r05", "turns": [
+      { "q": "garbage in teynampet", "want": { "cats": ["SOLID_WASTE"] } },
+      { "q": "last 30 days", "want": { "cats": ["SOLID_WASTE"], "period_days": 30 } },
+      { "q": "with closed ones too", "want": { "cats": ["SOLID_WASTE"], "status": "any" } } ] },
+    { "id": "r06", "turns": [
+      { "q": "which ward has the most overdue cases", "want": { "show": "count_by", "by": "ward", "overdue": true } },
+      { "q": "show me what is pending there", "there": 1 } ] },
+    { "id": "r07", "turns": [
+      { "q": "accidents near colleges", "want": { "layers": ["incidents", "colleges"], "cats": ["ROAD_ACCIDENT"] } },
+      { "q": "schools too", "want": { "layers": ["incidents", "colleges", "schools"], "cats": ["ROAD_ACCIDENT"] } } ] },
+    { "id": "r08", "turns": [
+      { "q": "nearest hospital to tambaram", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"] } },
+      { "q": "and fire station", "want": { "show": "nearest", "from_place": true, "layers": ["fire_stations"] } } ] },
+    { "id": "r09", "turns": [
+      { "q": "naai thollai zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["STRAY_ANIMALS"] } },
+      { "q": "rendavadhu zone la enna", "there": 2 } ] },
+    { "id": "r10", "turns": [
+      { "q": "dengue complaints this week", "want": { "cats": ["VECTOR_DISEASE"], "period_days": 7 } },
+      { "q": "vs last week", "want": { "show": "change", "cats": ["VECTOR_DISEASE"] } } ] },
+    { "id": "r11", "turns": [
+      { "q": "which zone resolves road complaints slowest", "want": { "show": "speed", "by": "zone", "order": "slow", "cats": ["ROAD_DAMAGE"] } },
+      { "q": "list the open ones there", "there": 1 } ] },
+    { "id": "r12", "turns": [
+      { "q": "garbage complaints", "want": { "cats": ["SOLID_WASTE"] } },
+      { "q": "where are they piling up", "want": { "show": "hotspot", "cats": ["SOLID_WASTE"] } },
+      { "q": "only severe", "want": { "cats": ["SOLID_WASTE"], "severity": "Severe" } } ] }
+  ]
+}

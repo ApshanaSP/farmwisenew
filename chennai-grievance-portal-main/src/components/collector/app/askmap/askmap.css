@@ -515,7 +515,7 @@
 .dic .amp-play-h{display:flex;align-items:center;gap:8px}
 .dic .amp-play-h h5{display:flex;align-items:center;gap:6px;margin:0;font:700 12px var(--font-ui);color:var(--text);flex:1}
 .dic .amp-play-h h5 svg{width:14px;height:14px;color:var(--accent)}
-.dic .amp-play-h .amp-ib{min-width:30px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
+.dic .amp-play-h .amp-ib{min-width:30px;padding:0 10px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
 .dic .amp-play-h .amp-ib:last-child{background:var(--surface-3);color:var(--text-2)}
 .dic .amp-play-mode{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--font-ui);color:var(--text-2);cursor:pointer}
 .dic .amp-bars{display:flex;align-items:flex-end;gap:2px;height:46px;margin:8px 0 4px}
@@ -532,3 +532,190 @@
 .dic .amp-unclear{flex-wrap:wrap}
 .dic .amp-unclear .amp-sug{display:inline-flex;gap:6px;flex-wrap:wrap}
 .dic .amp-unclear .amp-sug button{padding:2px 9px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-3);font:600 11.5px var(--font-ui);color:var(--text)}
+
+/* v3: a ranked answer as a picture. The top ten: a numbered badge (sized by its figure) with the name and figure in a
+   pill beside it, rising in rank order; number one keeps a slow pulse. Shaded areas fade in, ward by ward. */
+.dic .ar3{position:relative;width:var(--s);height:var(--s);cursor:pointer}
+.dic .ar3-n{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;background:linear-gradient(150deg,#FB923C,#DC2626);color:#fff;font:800 13px var(--font-num,system-ui);box-shadow:0 0 0 2.5px #fff,0 6px 18px rgba(0,0,0,.45);z-index:2}
+.dic .ar3.t-lo .ar3-n{background:linear-gradient(150deg,#34D399,#047857)}
+.dic .ar3.first .ar3-n{background:linear-gradient(150deg,#F43F5E,#9F1239);font-size:15px}
+.dic .ar3.first::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(244,63,94,.85);animation:ar3pulse 2.2s ease-out infinite}
+.dic .ar3-l{position:absolute;left:calc(100% - 6px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:0;padding:4px 10px 4px 12px;border-radius:0 10px 10px 0;background:rgba(9,13,24,.88);backdrop-filter:blur(6px);color:#fff;white-space:nowrap;max-width:220px;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:1}
+.dic .ar3-l b{font:700 12px/1.25 var(--font-ui,system-ui);overflow:hidden;text-overflow:ellipsis}
+.dic .ar3-l em{font:600 11px/1.2 var(--font-num,system-ui);font-style:normal;color:#FCD34D}
+.dic .ar3.t-lo .ar3-l em{color:#6EE7B7}
+.dic .ar3:hover .ar3-l{background:rgba(30,41,59,.96)}
+.dic .ar3:hover{z-index:5}
+.dic .ar3.in{animation:ar3rise .55s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d,0ms)}
+.dic .ar3.in .ar3-l{animation:ar3label .45s ease-out both;animation-delay:calc(var(--d,0ms) + 220ms)}
+@keyframes ar3rise{from{opacity:0;transform:translateY(14px) scale(.4)}to{opacity:1;transform:none}}
+@keyframes ar3label{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes ar3pulse{0%{transform:scale(.9);opacity:.95}100%{transform:scale(1.7);opacity:0}}
+.dic .achoro{transition:fill-opacity .2s}
+.dic .achoro:hover{fill-opacity:.85;stroke:#fff;stroke-width:1.6}
+.dic .achoro.in{animation:achoro .6s ease-out both;animation-delay:var(--d,0ms)}
+@keyframes achoro{from{fill-opacity:0;stroke-opacity:0}}
+.dic .aring.grow{transform-box:fill-box;transform-origin:center;animation:aringgrow .8s ease-out both}
+@keyframes aringgrow{from{transform:scale(.2);opacity:0}}
+.dic .ar3-key{background:rgba(9,13,24,.88);backdrop-filter:blur(6px);color:#E5E7EB;border-radius:10px;padding:8px 10px;font:500 11px/1.35 var(--font-ui,system-ui);box-shadow:0 6px 18px rgba(0,0,0,.35);max-width:230px;animation:ar3label .4s ease-out both}
+.dic .ar3-key b{display:block;font-weight:700;font-size:12px;color:#fff;margin-bottom:4px}
+.dic .ar3-key .ramp{display:flex;align-items:center;gap:2px;margin:2px 0 4px}
+.dic .ar3-key .ramp i{display:block;width:22px;height:8px;border-radius:2px}
+.dic .ar3-key .ramp span{font-size:10px;opacity:.8;margin:0 4px}
+.dic .ar3-key small{opacity:.7;font-size:10.5px}
+:root[data-theme="light"] .dic .ar3-key,.dic[data-theme="light"] .ar3-key{background:rgba(255,255,255,.94);color:#334155}
+:root[data-theme="light"] .dic .ar3-key b,.dic[data-theme="light"] .ar3-key b{color:#0F172A}
+@media (prefers-reduced-motion:reduce){.dic .ar3.in,.dic .ar3.in .ar3-l,.dic .achoro.in,.dic .aring.grow,.dic .ar3.first::before{animation:none}}
+
+/* v3: the panel's ranking: five bars, the first in the accent colour, each a button that shows its cases */
+.dic .amp-rank{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px;flex:none}
+.dic .amp-rank>*,.dic .amp-actrow,.dic .amp-more{flex:none}
+.dic .amp-rk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;cursor:pointer;animation:ampbar .4s ease-out both;animation-delay:var(--d,0ms)}
+.dic .amp-rk:hover{background:var(--surface-2,rgba(148,163,184,.12))}
+.dic .amp-rk.on{background:rgba(37,99,235,.12);outline:1.5px solid rgba(37,99,235,.5)}
+.dic .amp-rk:focus-visible{outline:2px solid var(--accent,#2563EB)}
+.dic .amp-rk .rk{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:800 11px var(--font-num,system-ui);color:#fff;background:#F97316}
+.dic .amp-rk.first .rk{background:#E11D48}
+.dic .amp-rk.t-lo .rk{background:#059669}
+.dic .amp-rk .nm{display:flex;flex-direction:column;gap:3px;min-width:0}
+.dic .amp-rk .nm b{font:600 12.5px/1.25 var(--font-ui,system-ui);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .amp-rk .nm i{display:block;height:6px;border-radius:3px;width:var(--w);background:linear-gradient(90deg,#FDBA74,#F97316);transform-origin:left;animation:ampgrow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0ms) + 120ms)}
+.dic .amp-rk.first .nm i{background:linear-gradient(90deg,#FB7185,#E11D48)}
+.dic .amp-rk.t-lo .nm i{background:linear-gradient(90deg,#6EE7B7,#059669)}
+.dic .amp-rk .fg{font:800 13px var(--font-num,system-ui);color:var(--text-1);min-width:34px;text-align:right}
+.dic .amp-rank-more{all:unset;cursor:pointer;font:600 12px var(--font-ui,system-ui);color:var(--accent-2,#2563EB);padding:4px 8px}
+.dic .amp-rank-more:hover{text-decoration:underline}
+@keyframes ampbar{from{opacity:0;transform:translateX(-8px)}}
+@keyframes ampgrow{from{transform:scaleX(0)}}
+/* the actions in one quiet row */
+.dic .amp-actrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.dic .amp-actrow>*{margin:0!important}
+/* "More detail": everything else, folded */
+.dic .amp-more{margin:8px 0 4px;border-top:1px solid var(--border,rgba(148,163,184,.25));padding-top:6px}
+.dic .amp-more>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font:600 12px var(--font-ui,system-ui);color:var(--text-2);padding:6px 4px;border-radius:8px}
+.dic .amp-more>summary::-webkit-details-marker{display:none}
+.dic .amp-more>summary::after{content:"▸";margin-left:auto;transition:transform .2s}
+.dic .amp-more[open]>summary::after{transform:rotate(90deg)}
+.dic .amp-more>summary:hover{background:var(--surface-2,rgba(148,163,184,.12));color:var(--text-1)}
+.dic .amp-more[open]>*:not(summary){animation:ampbar .3s ease-out both}
+@media (prefers-reduced-motion:reduce){.dic .amp-bar,.dic .amp-rk .nm i,.dic .amp-more[open]>*{animation:none}}
+
+/* v3: the map's loading picture: a faint street grid that drifts, a radar sweep, and what is being drawn */
+.dic .mapload{position:absolute;inset:0;z-index:500;display:grid;place-items:center;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,#0F1B33 0%,#060B16 70%)}
+.dic .mapload-grid{position:absolute;inset:-40px;background-image:linear-gradient(rgba(96,165,250,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.08) 1px,transparent 1px);background-size:36px 36px;animation:maploadgrid 6s linear infinite}
+@keyframes maploadgrid{to{transform:translate(36px,36px)}}
+.dic .mapload-radar{position:relative;width:120px;height:120px;border-radius:50%;border:1.5px solid rgba(96,165,250,.35);box-shadow:inset 0 0 30px rgba(37,99,235,.25)}
+.dic .mapload-radar::before,.dic .mapload-radar::after{content:"";position:absolute;inset:22px;border-radius:50%;border:1px solid rgba(96,165,250,.22)}
+.dic .mapload-radar::after{inset:44px}
+.dic .mapload-radar i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(56,189,248,.55),rgba(56,189,248,0) 70deg,transparent 360deg);animation:maploadspin 1.6s linear infinite}
+.dic .mapload-radar b{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:#38BDF8;box-shadow:0 0 12px #38BDF8}
+@keyframes maploadspin{to{transform:rotate(360deg)}}
+.dic .mapload p{position:absolute;bottom:18%;left:0;right:0;text-align:center;margin:0;display:flex;flex-direction:column;gap:4px}
+.dic .mapload p span{font:600 14px var(--font-ui,system-ui);color:#E2E8F0;letter-spacing:.2px}
+.dic .mapload p em{font:500 11.5px var(--font-ui,system-ui);font-style:normal;color:#94A3B8}
+.dic .leaflet-tile-container .leaflet-tile{transition:opacity .45s ease-out,filter .6s ease-out}
+@media (prefers-reduced-motion:reduce){.dic .mapload-grid,.dic .mapload-radar i{animation:none}}
+
+/* v3: the day on the map (day-by-day player): big date, the count, the strip of days, progress */
+.dic .daystage{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:900;min-width:300px;max-width:min(440px,70%);padding:12px 16px 10px;border-radius:16px;
+  background:rgba(8,12,24,.86);backdrop-filter:blur(10px);color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.08);pointer-events:none;animation:dsin .35s ease-out both}
+@keyframes dsin{from{opacity:0;transform:translate(-50%,-10px)}}
+.dic .daystage .ds-date{display:flex;align-items:baseline;gap:10px;animation:dsflip .35s ease-out both}
+@keyframes dsflip{from{opacity:0;transform:translateY(8px)}}
+.dic .daystage .ds-date em{font:600 13px var(--font-ui,system-ui);font-style:normal;color:#93C5FD;text-transform:uppercase;letter-spacing:.8px}
+.dic .daystage .ds-date b{font:800 26px/1.1 var(--font-ui,system-ui);letter-spacing:-.3px}
+.dic .daystage .ds-n{display:flex;align-items:baseline;gap:8px;margin:2px 0 8px}
+.dic .daystage .ds-n b{font:800 22px var(--font-num,system-ui);color:#FCD34D}
+.dic .daystage .ds-n span{font:500 12.5px var(--font-ui,system-ui);color:#CBD5E1}
+.dic .daystage .ds-n i{font:700 12px var(--font-num,system-ui);font-style:normal;color:#86EFAC;margin-left:auto}
+.dic .daystage .ds-strip{display:flex;align-items:flex-end;gap:2px;height:34px}
+.dic .daystage .ds-strip i{flex:1;min-width:2px;border-radius:2px 2px 0 0;background:rgba(148,163,184,.35);transition:background .25s,transform .25s}
+.dic .daystage .ds-strip i.on{background:#60A5FA}
+.dic .daystage .ds-strip i.cur{background:#FCD34D;transform:scaleY(1.12);transform-origin:bottom;box-shadow:0 0 10px rgba(252,211,77,.7)}
+.dic .daystage .ds-prog{height:3px;border-radius:2px;background:rgba(148,163,184,.25);margin:6px 0 5px;overflow:hidden}
+.dic .daystage .ds-prog i{display:block;height:100%;background:linear-gradient(90deg,#60A5FA,#FCD34D);transition:width .3s linear}
+.dic .daystage small{font:500 11px var(--font-ui,system-ui);color:#94A3B8}
+.dic .daystage.playing .ds-date b::after{content:"";display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:#F43F5E;vertical-align:middle;animation:ar3pulse 1.2s ease-out infinite}
+.dic .amp-speed{min-width:30px;height:28px;border-radius:8px;border:0;background:var(--surface-3);color:var(--text-2);font:700 11px var(--font-num,system-ui);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.dic .daystage,.dic .daystage .ds-date{animation:none}}
+.dic .ar3.rain .ar3-n{background:linear-gradient(150deg,#60A5FA,#1D4ED8)}
+.dic .ar3.rain.first .ar3-n{background:linear-gradient(150deg,#38BDF8,#1E3A8A)}
+.dic .ar3.rain.first::before{border-color:rgba(56,189,248,.85)}
+.dic .ar3.rain .ar3-l em{color:#93C5FD}
+/* v3: label collisions: flipped to the left of the badge, or the number alone */
+.dic .ar3.flip .ar3-l{left:auto;right:calc(100% - 6px);border-radius:10px 0 0 10px;padding:4px 12px 4px 10px;text-align:right;align-items:flex-end}
+.dic .ar3.bare .ar3-l{display:none}
+.dic .ar3.bare:hover .ar3-l{display:flex;z-index:6}
+
+/* v3: while the answer is made: the steps, then a shimmering card where the answer will be */
+.dic .amp-think{margin:8px 0;display:flex;flex-direction:column;gap:8px;flex:none}
+.dic .amp-think ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .amp-think li{display:flex;align-items:center;gap:8px;font:500 12.5px var(--font-ui,system-ui);color:var(--text-3);opacity:.55;transition:opacity .3s,color .3s}
+.dic .amp-think li i{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;flex:none;position:relative}
+.dic .amp-think li.now{color:var(--accent,#2563EB);opacity:1}
+.dic .amp-think li.now i{border-color:currentColor;border-right-color:transparent;animation:maploadspin .8s linear infinite}
+.dic .amp-think li.done{color:var(--text-2);opacity:.9}
+.dic .amp-think li.done i{background:#10B981;border-color:#10B981}
+.dic .amp-think li.done i::after{content:"";position:absolute;left:3px;top:0;width:3px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.dic .amp-think-card{display:flex;flex-direction:column;gap:7px;padding:12px;border-radius:12px;background:var(--surface-2,rgba(148,163,184,.1));box-shadow:0 0 0 1px var(--line,rgba(148,163,184,.2))}
+.dic .amp-think-card>*{display:block;border-radius:6px;background:linear-gradient(90deg,rgba(148,163,184,.14) 25%,rgba(148,163,184,.32) 50%,rgba(148,163,184,.14) 75%);background-size:300% 100%;animation:ampshimmer 1.3s ease-in-out infinite}
+.dic .amp-think-card b{width:38%;height:26px}
+.dic .amp-think-card span{height:10px}
+.dic .amp-think-card span.short{width:60%}
+@keyframes ampshimmer{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.dic .amp-think li.now i,.dic .amp-think-card>*{animation:none}}
+.dic .amp-rk.t-rain .rk{background:#2563EB}
+.dic .amp-rk.t-rain .nm i{background:linear-gradient(90deg,#93C5FD,#1D4ED8)}
+.dic .ar3.t-lo.first .ar3-n{background:linear-gradient(150deg,#34D399,#047857)}
+.dic .ar3.t-lo.first::before{border-color:rgba(16,185,129,.85)}
+.dic .amp-rk.t-lo .rk,.dic .amp-rk.t-lo.first .rk{background:#059669}
+.dic .amp-rk.t-lo .nm i,.dic .amp-rk.t-lo.first .nm i{background:linear-gradient(90deg,#6EE7B7,#059669)}
+@media (max-width:760px){.dic .ar3-key{display:none}.dic .ar3-l{max-width:150px}}
+/* v3: "On the ground now" folded to one line under an answer */
+.dic .amp-cond-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font:600 11.5px var(--font-ui,system-ui);color:var(--text-2);min-width:0}
+.dic .amp-cond-fold>summary::-webkit-details-marker{display:none}
+.dic .amp-cond-fold>summary em{font-style:normal;font-weight:500;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dic .amp-cond-fold>summary::after{content:"▸";margin-left:auto;transition:transform .2s}
+.dic .amp-cond-fold[open]>summary::after{transform:rotate(90deg)}
+.dic .amp-cond-fold>ul{margin-top:6px}
+.dic .amp-cond-fold>summary{white-space:nowrap}.dic .amp-cond-fold>summary em{flex:1}
+
+/* v3 (owner, 22 Nov): count the same answer by ward, zone or taluk, one tap */
+.dic .amp-by{display:inline-flex;align-self:flex-start;gap:2px;padding:3px;border-radius:999px;background:var(--surface-2,rgba(148,163,184,.14));margin:0 0 4px}
+.dic .amp-by button{all:unset;cursor:pointer;font:600 11.5px var(--font-ui,system-ui);color:var(--text-2);padding:4px 11px;border-radius:999px;transition:background .18s,color .18s}
+.dic .amp-by button:hover:not(:disabled){color:var(--text-1)}
+.dic .amp-by button.on{background:var(--surface-1,#fff);color:var(--text-1);box-shadow:0 1px 3px rgba(15,23,42,.18)}
+.dic .amp-by button:disabled:not(.on){opacity:.5;cursor:default}
+.dic .amp-by button:focus-visible{outline:2px solid var(--accent,#2563EB)}
+/* the picked place: what it holds, then this kind of problem here, or the full overview */
+.dic .amp-pick{margin:6px 0 2px;padding:10px;border-radius:12px;border:1px solid rgba(37,99,235,.35);background:linear-gradient(180deg,rgba(37,99,235,.08),rgba(37,99,235,.02));animation:amppick .28s cubic-bezier(.2,.8,.2,1) both}
+.dic .amp-pick header{display:flex;align-items:center;gap:9px}
+.dic .amp-pick header .rk{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 12px var(--font-num,system-ui);color:#fff;background:#2563EB}
+.dic .amp-pick header div{display:flex;flex-direction:column;min-width:0;flex:1}
+.dic .amp-pick header b{font:700 13.5px/1.25 var(--font-ui,system-ui);color:var(--text-1)}
+.dic .amp-pick header small{font:500 11.5px/1.3 var(--font-ui,system-ui);color:var(--text-2)}
+.dic .amp-pick header .x{all:unset;cursor:pointer;color:var(--text-3,#94A3B8);padding:4px;border-radius:6px;display:grid;place-items:center}
+.dic .amp-pick header .x:hover{color:var(--text-1);background:var(--surface-2,rgba(148,163,184,.14))}
+.dic .amp-pick>p{margin:8px 0 6px;font:600 11px var(--font-ui,system-ui);letter-spacing:.04em;text-transform:uppercase;color:var(--text-3,#94A3B8)}
+.dic .amp-pick-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dic .amp-pick-acts button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:8px;align-items:flex-start;padding:8px 9px;border-radius:10px;background:var(--surface-1,rgba(255,255,255,.06));border:1px solid var(--border,rgba(148,163,184,.28));transition:transform .15s,border-color .15s,background .15s}
+.dic .amp-pick-acts button:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(37,99,235,.6)}
+.dic .amp-pick-acts button.pri{background:#2563EB;border-color:#2563EB;color:#fff}
+.dic .amp-pick-acts button.pri small{color:rgba(255,255,255,.82)}
+.dic .amp-pick-acts button:disabled{opacity:.55;cursor:default}
+.dic .amp-pick-acts button:focus-visible{outline:2px solid var(--accent,#2563EB);outline-offset:2px}
+.dic .amp-pick-acts span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dic .amp-pick-acts b{font:700 12.5px/1.25 var(--font-ui,system-ui)}
+.dic .amp-pick-acts small{font:500 11px/1.3 var(--font-ui,system-ui);color:var(--text-2)}
+.dic .amp-pick-acts svg{flex:none;width:16px;height:16px;margin-top:1px}
+@media (max-width:420px){.dic .amp-pick-acts{grid-template-columns:1fr}}
+@keyframes amppick{from{opacity:0;transform:translateY(6px) scale(.98)}}
+/* an area's overview, beside this conversation's kind of problem in it */
+.dic .amp-btabs{display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface-2,rgba(148,163,184,.14));margin:0 0 8px}
+.dic .amp-btabs button{all:unset;box-sizing:border-box;flex:1;cursor:pointer;text-align:center;font:600 12px/1.25 var(--font-ui,system-ui);color:var(--text-2);padding:7px 8px;border-radius:8px}
+.dic .amp-btabs button.on{background:var(--surface-1,#fff);color:var(--text-1);box-shadow:0 1px 3px rgba(15,23,42,.18)}
+.dic .amp-btabs button:hover:not(.on):not(:disabled){color:var(--text-1)}
+.dic .amp-btabs button:focus-visible{outline:2px solid var(--accent,#2563EB)}
+@media (prefers-reduced-motion:reduce){.dic .amp-pick{animation:none}}
+/* v3: a badge's ward or zone number, small after its name ("Perambur W44") */
+.dic .ar3-l b small{font:700 9.5px var(--font-num,system-ui);opacity:.72;margin-left:4px;letter-spacing:.02em}

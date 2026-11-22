@@ -13,7 +13,7 @@ export const NOW = "2026-10-27 20:00:00";
 const sq = (s: number, w: number, n: number, e: number): Pair[] => [[s, w], [s, e], [n, e], [n, w], [s, w]];
 const ward = (ward: number, zone: number, zoneName: string, taluk: string, ring: Pair[], adj: number[]): WardGeo => ({
   ward, zone, zoneName, taluk, rings: [ring], bbox: bboxOf(ring.map(([lat, lon]) => ({ lat, lon })))!,
-  lat: (ring[0][0] + ring[2][0]) / 2, lon: (ring[0][1] + ring[2][1]) / 2, adj, gi30: null
+  lat: (ring[0][0] + ring[2][0]) / 2, lon: (ring[0][1] + ring[2][1]) / 2, adj, gi30: null, pop: null
 });
 export const WARDS: WardGeo[] = [
   ward(1, 1, "Northpet", "TLK-AAA", sq(13.0, 80.2, 13.01, 80.21), [2, 3]),

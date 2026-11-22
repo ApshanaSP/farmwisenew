@@ -25,6 +25,9 @@ import { onMapCmd } from "./bridge";
 import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
 import { useWorkspace } from "./workspace";
 import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
+import { TopBars, herePlan } from "./TopBars";
+import type { AreaRef } from "@/lib/map/plan";
+import { rankedOf } from "./answerLayers";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
 let cueSeen = 0;
@@ -166,6 +169,30 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   useEffect(() => { const b = body.current; if (b && !r) b.scrollTop = b.scrollHeight; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ta = lang === "ta";
+  // the question, part by part: each part can be changed or removed
+  const chipsView = (r: AskResponse) => (
+    <div className="amp-chips" role="group" aria-label="The question, part by part">
+                      {r.chips.map((c) => (
+                        <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
+                          <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
+                            onClick={() => c.options.length && setMenu(menu === c.id ? null : c.id)} aria-haspopup={c.options.length ? "menu" : undefined} aria-expanded={menu === c.id}
+                            title={c.isDefault ? `${ta ? c.ta : c.en} (${w.default}: not in the question)` : ta ? c.ta : c.en}>
+                            <span>{ta ? c.ta : c.en}</span>{c.isDefault && <em>{w.default}</em>}{c.options.length > 0 && <I n="chevd" />}
+                          </button>
+                          {c.removable && <span className="rm" role="button" tabIndex={0} aria-label={`${w.remove} ${c.en}`} onClick={() => chip(c, null)} onKeyDown={(e) => e.key === "Enter" && chip(c, null)}><I n="x" /></span>}
+                          {menu === c.id && (
+                            <div className="amp-menu" role="menu">
+                              {c.options.map((o) => (
+                                <button key={o.key} role="menuitemradio" aria-checked={o.on} className={o.on ? "on" : ""} onClick={() => (c.part === "place" ? altChip(c, o.key) : chip(c, o.key))}>
+                                  {o.on && <I n="check" />}{ta ? o.ta : o.en}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+  );
   return (
     <>
     <aside ref={drag.ref} className={`amp chat${phone ? " sheet" : ""}${drag.cls}${docked ? " dock" : ""}`} style={drag.style} data-h={sheet} aria-label={w.title}>
@@ -183,7 +210,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         {ask.turns.map((t) => (
           <section key={t.id} className={`amp-turn${t === cur ? " cur" : ""}`} ref={(el) => { if (el) turnEl.current.set(t.id, el); else turnEl.current.delete(t.id); }}>
             <div className="amp-q"><span>{t.q}</span></div>
-            {t.pending && <div className="amp-wait" role="status"><span className="amp-ai-dots"><i /><i /><i /></span>{ta ? "பதிலைக் கணக்கிடுகிறது…" : "Working it out…"}</div>}
+            {t.pending && <Thinking ta={ta} follow={ask.turns.indexOf(t) > 0 && !!ask.plan} />}
             {!t.pending && t.error && (
               <div className="amp-err" role="alert">{t.error}
                 <button className="amp-retry" onClick={() => ask.retry(t.id)} disabled={ask.busy}><I n="refresh" />{ta ? "மீண்டும் முயல்" : "Try again"}</button>
@@ -206,48 +233,55 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     {r.say.chips.length > 0 && <div className="amp-sug" style={{ marginTop: 8 }}>{r.say.chips.map((c) => <button key={c} onClick={() => submit(c)}>{c}</button>)}</div>}
                   </div>
                 )}
-                {r.kind === "answer" && r.answer && (
+                {r.kind === "answer" && r.answer && (rankedOf(r) ? (
+                  // v3: a ranked answer leads with the picture: the answer, its top five, what to ask next and the actions;
+                  // the filters, tables, every case and the trace wait under "More detail"
                   <>
+                    <Answer r={r} w={w} lang={lang} ask={ask} />
+                    <TopBars r={r} ask={ask} lang={lang} />
+                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
+                    <PlayPeriod r={r} ask={ask} lang={lang} />
+                    <details className="amp-more">
+                      <summary><I n="sliders" />{ta ? "மேலும் விவரம்: வடிகட்டிகள், அட்டவணை, ஒவ்வொரு வழக்கும்" : `More detail: filters, the full table, every case (${r.total.toLocaleString("en-IN")})`}</summary>
+                      <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+                      {filtersOpen && chipsView(r)}
+                      <Conditions r={r} lang={lang} max={4} />
+                      <LeagueTable r={r} ask={ask} lang={lang} />
+                      <SpeedTable r={r} ask={ask} lang={lang} />
+                      <GroupList r={r} ask={ask} lang={lang} />
+                      <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
+                      <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
+                      <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
+                      <Places r={r} lang={lang} />
+                    </details>
+                  </>
+                ) : (
+                  <>
+                    <AreaTabs r={r} ask={ask} lang={lang} />
                     <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
-                    {filtersOpen && <div className="amp-chips" role="group" aria-label="The question, part by part">
-                      {r.chips.map((c) => (
-                        <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
-                          <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
-                            onClick={() => c.options.length && setMenu(menu === c.id ? null : c.id)} aria-haspopup={c.options.length ? "menu" : undefined} aria-expanded={menu === c.id}
-                            title={c.isDefault ? `${ta ? c.ta : c.en} (${w.default}: not in the question)` : ta ? c.ta : c.en}>
-                            <span>{ta ? c.ta : c.en}</span>{c.isDefault && <em>{w.default}</em>}{c.options.length > 0 && <I n="chevd" />}
-                          </button>
-                          {c.removable && <span className="rm" role="button" tabIndex={0} aria-label={`${w.remove} ${c.en}`} onClick={() => chip(c, null)} onKeyDown={(e) => e.key === "Enter" && chip(c, null)}><I n="x" /></span>}
-                          {menu === c.id && (
-                            <div className="amp-menu" role="menu">
-                              {c.options.map((o) => (
-                                <button key={o.key} role="menuitemradio" aria-checked={o.on} className={o.on ? "on" : ""} onClick={() => (c.part === "place" ? altChip(c, o.key) : chip(c, o.key))}>
-                                  {o.on && <I n="check" />}{ta ? o.ta : o.en}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </span>
-                      ))}
-                    </div>}
+                    {filtersOpen && chipsView(r)}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
                     <LeagueTable r={r} ask={ask} lang={lang} />
                     <SpeedTable r={r} ask={ask} lang={lang} />
                     <GroupList r={r} ask={ask} lang={lang} />
+                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <GapList r={r} lang={lang} />
                     <RulePairs r={r} lang={lang} />
                     <PlayPeriod r={r} ask={ask} lang={lang} />
-                    <Acts r={r} w={w} actions={actions} />
-                    <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
-                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
-                    <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
                     <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
-                    <Places r={r} lang={lang} />
+                    <details className="amp-more">
+                      <summary><I n="info" />{ta ? "இது எப்படிக் கணக்கிடப்பட்டது" : "How this was worked out, and the places named"}</summary>
+                      <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
+                      <Places r={r} lang={lang} />
+                    </details>
                   </>
-                )}
+                ))}
                 {r.kind === "brief" && r.brief && (
                   <>
+                    <AreaTabs r={r} ask={ask} lang={lang} />
                     <ScorecardCard r={r} lang={lang} />
                     <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />
                     {!r.scorecard && r.brief.area.kind === "ward" && (
@@ -277,6 +311,66 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
     </aside>
     {ws.split}
     </>
+  );
+}
+
+/**
+ * v3: while the answer is made (about 3 s: the AI reads the question, the server counts, the map draws), the steps go by
+ * in order and a card shimmers where the answer will be. The steps follow the clock, not the server: they say what
+ * happens, not how far it has got.
+ */
+const THINK: [string, string][] = [["Reading your question", "கேள்வியைப் படிக்கிறது"], ["Finding the places and the kind of problem", "இடங்களையும் பிரச்சனையையும் கண்டறிகிறது"],
+  ["Counting on the map", "வரைபடத்தில் எண்ணுகிறது"], ["Drawing the answer", "பதிலை வரைகிறது"]];
+function Thinking({ ta, follow }: { ta: boolean; follow?: boolean }) {
+  const [k, setK] = useState(0);
+  // v3: after other questions the AI first reads the conversation (a follow-up, or a new question?)
+  const steps: [string, string][] = follow ? [["Reading the conversation: a follow-up or a new question?", "உரையாடலைப் படிக்கிறது: தொடர் கேள்வியா, புதியதா?"], ...THINK.slice(1)] : THINK;
+  useEffect(() => {
+    const ids = [900, 1900, 2900].map((ms, i) => setTimeout(() => setK(i + 1), ms));
+    return () => ids.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="amp-think" role="status" aria-live="polite" aria-label={ta ? steps[k][1] : steps[k][0]}>
+      <ol>{steps.map(([en, tam], i) => <li key={en} className={i < k ? "done" : i === k ? "now" : ""}><i />{ta ? tam : en}</li>)}</ol>
+      <div className="amp-think-card" aria-hidden><b /><span /><span /><span className="short" /></div>
+    </div>
+  );
+}
+
+/**
+ * v3 (owner, 22 Nov 2026: "two options: the overall overview and the garbage complaints"): an area seen two ways. Over an
+ * area's overview, when the conversation is about one kind of problem: that kind in this area, one tap. Over a list of one
+ * kind of problem inside one area: the area's whole overview, one tap. The plan is built from the conversation's own plan
+ * (its kind, time and status) with no AI call; a ward's overview is the map's own ward brief.
+ */
+function AreaTabs({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang: "en" | "ta" }) {
+  const ta = lang === "ta";
+  let area: AreaRef | null = null, topic: string | null = null, plan = null as AskResponse["plan"], onTopic = false;
+  if (r.kind === "brief" && r.brief) {
+    // the kind of problem the conversation was about just before this overview (the answer one or two turns before it)
+    const at = ask.turns.findIndex((t) => t.resp === r);
+    const from = ask.turns.slice(Math.max(0, at - 2), at).reverse().find((t) => t.resp?.kind === "answer" && t.resp.topic)?.resp ?? null;
+    if (!from?.topic || !from.plan || r.brief.area.kind === "drawn") return null;
+    area = r.brief.area; topic = ta ? from.topic.ta : from.topic.en; plan = from.plan;
+  } else if (r.kind === "answer" && r.topic && r.plan) {
+    const ins = r.plan.steps.filter((s) => s.op === "inside");
+    const only = r.plan.steps.every((s) => s.op === "take" || s.op === "inside");
+    if (!only || ins.length !== 1 || ins[0].op !== "inside" || ins[0].area.kind === "drawn") return null;
+    area = ins[0].area; topic = ta ? r.topic.ta : r.topic.en; plan = r.plan; onTopic = true;
+  }
+  if (!area || !topic || !plan) return null;
+  const a = area;
+  const label = r.context.areas[0]?.[ta ? "ta" : "en"] ?? (a.kind === "ward" ? `Ward ${a.id}` : a.kind === "zone" ? `Zone ${a.id}` : "");
+  const overview = () => {
+    if (a.kind === "ward") void ask.draw({ ward: a.id }, undefined, ta ? `${label}: முழு மேலோட்டம்` : `Full overview of ${label}`);
+    else void ask.ask(ta ? `${label} இல் என்ன நடக்கிறது` : a.kind === "point" ? `what is happening near ${label}` : `what is happening in ${label}`);
+  };
+  const toTopic = () => { const p = herePlan(plan, a); if (p) void ask.run(p, ta ? `${label}: ${topic}` : `${topic![0].toUpperCase()}${topic!.slice(1)} in ${label}`); };
+  return (
+    <div className="amp-btabs" role="tablist" aria-label={ta ? "இந்தப் பகுதியை எப்படிப் பார்ப்பது" : "How to see this area"}>
+      <button role="tab" aria-selected={!onTopic} className={!onTopic ? "on" : ""} disabled={ask.busy} onClick={() => { if (onTopic) overview(); }}>{ta ? "முழு மேலோட்டம்" : "Full overview"}</button>
+      <button role="tab" aria-selected={onTopic} className={onTopic ? "on" : ""} disabled={ask.busy} onClick={() => { if (!onTopic) toTopic(); }}>{ta ? `${topic} மட்டும்` : `Only ${topic}`}</button>
+    </div>
   );
 }
 
@@ -325,6 +419,8 @@ const GROUPS: { ic: IconName; en: string; ta: string; why: [string, string]; qs:
     qs: ["severe cases this week", "where are garbage complaints clustering", "streetlight complaints by ward"] },
   { ic: "social", en: "People and places", ta: "மக்களும் இடங்களும்", why: ["What is near schools, and which wards are far from help.", "பள்ளிகள் அருகே என்ன, உதவியிலிருந்து தொலைவான வார்டுகள்."],
     qs: ["road accidents within 1 km of schools", "what is happening in Teynampet", "which ward is farthest from a fire station"] },
+  { ic: "chart", en: "New: rates and the rain to come", ta: "புதியது: விகிதம், வரும் மழை", why: ["Ranked for the people living there; the forecast beside open flooding.", "மக்கள்தொகைக்கு ஏற்ப வரிசை; வெள்ளப் புகார்களுடன் மழை முன்னறிவிப்பு."],
+    qs: ["which ward has the most garbage complaints for its population", "will it rain tomorrow, where should we clear drains", "which school has the most complaints near it"] },
   { ic: "globe", en: "In Tamil", ta: "தமிழில்", why: ["Ask the way you speak.", "நீங்கள் பேசுவது போலவே கேளுங்கள்."],
     qs: ["அடையாறு அருகே திறந்த புகார்கள்", "மருத்துவமனைகள் அருகே குப்பை புகார்கள்"] }
 ];
@@ -332,15 +428,10 @@ const GROUPS: { ic: IconName; en: string; ta: string; why: [string, string]; qs:
 function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; onPick: (q: string) => void }) {
   const [ui] = useLang();
   const ta = ui === "ta";
-  const steps: [IconName, string, string][] = [["search", "Ask in one sentence", "ஒரே வரியில் கேளுங்கள்"], ["map", "See exactly where", "எங்கே என்று பாருங்கள்"],
-    ["send", "Send, export or plan visits", "அனுப்பு, பதிவிறக்கு, வருகை"]];
   const live = suggestions.filter((q) => !GROUPS.some((g) => g.qs.includes(q))).slice(0, 4);
   return (
     <div className="amp-empty amp-guide" data-no-i18n>
       <p className="amg-hi"><I n="chat" /><span>{ta ? "வணக்கம்! எந்த இடம், தூரம், சாலை அல்லது பகுதி பற்றியும் கேளுங்கள். தொடங்க இவற்றில் ஒன்றைத் தட்டுங்கள்:" : "Hello! Ask me about any place, distance, road or area, in English or Tamil. Tap one of these to start:"}</span></p>
-      <ol className="amg-steps" aria-label={ta ? "எப்படி" : "How it works"}>
-        {steps.map(([ic, en, t], i) => <li key={en}><span className="n">{i + 1}</span><I n={ic} /><b>{ta ? t : en}</b></li>)}
-      </ol>
       {live.length > 0 && (
         <section className="amg-g live">
           <h4><I n="bolt" />{ta ? "இன்றைய தரவிலிருந்து" : "From today's data"}</h4>
@@ -427,7 +518,8 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
     g.open.n !== r.total ? { k: "open", n: g.open.n, ids: g.open.ids, en: "still open", ta: "திறந்தவை", tone: "" } : null,
     { k: "overdue", n: g.overdue.n, ids: g.overdue.ids, en: "past deadline", ta: "காலக்கெடு தாண்டியவை", tone: g.overdue.n ? "t-alert" : "t-good" },
     { k: "severe", n: g.severe.n, ids: g.severe.ids, en: "severe", ta: "கடுமையானவை", tone: g.severe.n ? "t-warn" : "t-good" }
-  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0) : [];
+  // v3: a tile that only repeats the headline's number ("51 severe" for "severe cases") says nothing new
+  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0 && x.n !== r.total) : [];
   return (
     <div className="amp-card">
       <div className="amp-big" aria-live="polite">
@@ -447,7 +539,7 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
           })}
         </div>
       )}
-      <Conditions r={r} lang={lang} max={2} />
+      {!rankedOf(r) && <Conditions r={r} lang={lang} max={4} fold />}
       <div className="amp-asof" title={layers.map((l) => `${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("\n") || undefined}>
         {w.asOf} {fmtWhen(r.asOf.data || r.asOf.now)}
         {r.unplaced.length > 0 && ` · ${w.unplaced(r.unplaced.length)}`}
@@ -458,8 +550,18 @@ function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "t
 }
 
 /** "On the ground now": the live readings that bear on the answer, each from a named place and time. */
-function Conditions({ r, lang, max = 4 }: { r: AskResponse; lang: "en" | "ta"; max?: number }) {
+function Conditions({ r, lang, max = 4, fold }: { r: AskResponse; lang: "en" | "ta"; max?: number; fold?: boolean }) {
   if (!r.conditions?.length) return null;
+  // v3: under an answer, one line that opens: an alert or a warning is said in it; the rest wait for a click
+  if (fold) {
+    const urgent = r.conditions.filter((c) => c.tone === "alert" || c.tone === "warn");
+    return (
+      <details className="amp-cond amp-cond-fold">
+        <summary><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"} · {r.conditions.length}{urgent.length ? <em>{lang === "ta" ? urgent[0].ta : urgent[0].en}</em> : null}</summary>
+        <ul>{r.conditions.slice(0, max).map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
+      </details>
+    );
+  }
   return (
     <div className="amp-cond">
       <h5><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"}</h5>

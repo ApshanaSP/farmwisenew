@@ -1,0 +1,33 @@
+{
+  "about": "v3 held-out follow-up conversations (22 Nov 2026), never tuned against.",
+  "conversations": [
+    { "id": "h01", "turns": [
+      { "q": "which hospital has the most complaints around it", "want": { "show": "count_by", "by": "near", "layers": ["incidents", "hospitals"] } },
+      { "q": "what is going on at the top one", "there": 1 },
+      { "q": "only flooding", "want": { "cats": ["FLOOD"] } } ] },
+    { "id": "h02", "turns": [
+      { "q": "complaints per person by zone", "want": { "show": "count_by", "by": "zone", "per": true } },
+      { "q": "just garbage", "want": { "show": "count_by", "by": "zone", "per": true, "cats": ["SOLID_WASTE"] } },
+      { "q": "ward level", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"] } } ] },
+    { "id": "h03", "turns": [
+      { "q": "which ward resolves complaints slowest", "want": { "show": "speed", "by": "ward", "order": "slow" } },
+      { "q": "open cases there", "there": 1 } ] },
+    { "id": "h04", "turns": [
+      { "q": "mosquito complaints near schools", "want": { "layers": ["incidents", "schools"], "cats": ["VECTOR_DISEASE"] } },
+      { "q": "within 300 m", "want": { "layers": ["incidents", "schools"], "cats": ["VECTOR_DISEASE"], "meters": 300 } },
+      { "q": "and hospitals too", "want": { "layers": ["incidents", "schools", "hospitals"], "cats": ["VECTOR_DISEASE"] } } ] },
+    { "id": "h05", "turns": [
+      { "q": "overdue complaints by ward", "want": { "show": "count_by", "by": "ward", "overdue": true } },
+      { "q": "what about the third one", "there": 3 } ] },
+    { "id": "h06", "turns": [
+      { "q": "road damage in zone 10", "want": { "cats": ["ROAD_DAMAGE"], "area": "zone:10" } },
+      { "q": "how about zone 11", "want": { "cats": ["ROAD_DAMAGE"], "area": "zone:11" } },
+      { "q": "only severe ones", "want": { "cats": ["ROAD_DAMAGE"], "area": "zone:11", "severity": "Severe" } } ] },
+    { "id": "h07", "turns": [
+      { "q": "nearest police station from velachery", "want": { "show": "nearest", "from_place": true } },
+      { "q": "hospital?", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"] } } ] },
+    { "id": "h08", "turns": [
+      { "q": "kuppai pugar zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } },
+      { "q": "makkal thogaiku eppadi", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"], "per": true } } ] }
+  ]
+}

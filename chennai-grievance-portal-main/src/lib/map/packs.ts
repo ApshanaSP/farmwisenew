@@ -1,12 +1,13 @@
 /**
  * Meeting packs (Ask the Map final): one click makes the brief for a meeting the Collector chairs, from fixed plans run on the server:
  *   weekly   the weekly review: open cases by ward, the wards that got worse, past deadline, severe
- *   bank     the quarterly bank meeting (RBI Lead Bank Scheme: DCC / DLRC): wards and neighbourhoods far from a bank or ATM, banks and ATMs in
- *            the wards with most flooding (relief payments)
  *   monsoon  the pre-monsoon meeting: flooding by ward over 90 days, wards far from a fire station, drainage by zone, PWD works behind plan
  * Every number is the executor's (or a count over the world's own records). The words: Claude Haiku 5.5 may write up to four short
  * sentences from the facts, and a sentence with any number that is not a fact is dropped (the number gate, as ai.ts aiReword); without
  * Claude the sentences are templates. The pack prints as one page: an SVG map of the wards (no tiles), the top 10 lists and the numbers.
+ * v3 (owner, 22 Nov 2026): the quarterly bank meeting is gone ("I don't understand the need"); the weekly review is an interactive page
+ * (weeklyHtml): every ward shaded on its own map, a day-by-day chart, the kinds of problem, zones and departments, each one a click
+ * away from the others. Its figures are counted on the server from the executor's own collections (weeklyData); the page only draws.
  */
 import { z } from "zod";
 import { claudeConfigured, claudeJson } from "@/lib/ai/claude";
@@ -15,15 +16,18 @@ import { PlanError, runMapPlan, type Ctx, type RunResult } from "./execute";
 import { fmtDistance } from "./geom";
 import { checkPlan, type Plan, type Step } from "./plan";
 import type { World } from "./types";
+import { weeklyData, weeklyHtml, type WeeklyData } from "./weekly";
 
-export type PackKind = "weekly" | "bank" | "monsoon";
-export const PACK_KINDS: PackKind[] = ["weekly", "bank", "monsoon"];
+export type PackKind = "weekly" | "monsoon";
+export const PACK_KINDS: PackKind[] = ["weekly", "monsoon"];
 
 export interface PackRow { key: string; label: string; value: number; text: string; lat: number; lon: number }
 export interface PackSection { id: string; title: string; note: string | null; rows: PackRow[]; plan: Plan | null; unit: "count" | "metres" | "delta" }
 export interface Pack {
   kind: PackKind; title: string; subtitle: string; asOf: string; numbers: { label: string; value: number }[];
   sections: PackSection[]; sentences: string[]; wordsBy: "claude" | "template"; notes: string[]; svg: string;
+  /** v3: the weekly review's figures for its interactive page */
+  weekly?: WeeklyData;
 }
 
 const n = (x: number) => x.toLocaleString("en-IN");
@@ -65,7 +69,7 @@ export function buildPack(kind: PackKind, w: World, ctx: Ctx, lock: string | nul
       sections.push({ id, title, note, rows, plan, unit });
       return r;
     } catch (e) {
-      // a plan that cannot run on today's data (no bank on the map, say): the section says so, the pack is still made
+      // a plan that cannot run on today's data (no fire station on the map, say): the section says so, the pack is still made
       if (!(e instanceof PlanError)) throw e;
       sections.push({ id, title, note: e.message, rows: [], plan, unit: "count" });
       return null;
@@ -74,31 +78,13 @@ export function buildPack(kind: PackKind, w: World, ctx: Ctx, lock: string | nul
   if (kind === "weekly") {
     const open = add("open_by_ward", "Open cases by ward, last 7 days", P([inc("a", {}), { op: "count_by", as: "by", of: "a", by: "ward" }], "by"));
     const hits = open?.hits ?? [];
-    numbers.push({ label: "open cases reported in the last 7 days", value: hits.length }, { label: "past their deadline", value: hits.filter((h) => h.inc.breached).length },
-      { label: "severe", value: hits.filter((h) => h.inc.sev === "Severe").length });
+    numbers.push({ label: "open cases reported in the last 7 days", value: hits.length }, { label: "of these open cases, already past their deadline", value: hits.filter((h) => h.inc.breached).length },
+      { label: "of these open cases, severe", value: hits.filter((h) => h.inc.sev === "Severe").length });
     const rk = add("worse", "Wards that got worse: this week against the week before (all statuses)", P([inc("a", { status: "any" }),
       { op: "change", as: "chg", of: "a", now: { kind: "last_days", days: 7, offset: 0 }, before: { kind: "last_days", days: 7, offset: 1 } },
       { op: "rank", as: "rank", of: "chg", by: "ward", order: "rise" }], "rank"));
     if (rk?.show.type === "ranked") numbers.push({ label: "wards with more reports than the week before", value: rk.show.rows.filter((x) => x.delta > 0).length });
     add("overdue_zone", "Past deadline, by zone", P([inc("a", { overdue: true, period: null }), { op: "count_by", as: "by", of: "a", by: "zone" }], "by"));
-  } else if (kind === "bank") {
-    const banks = w.points.banks.filter((p) => p.in_district).length, atms = w.points.atms.filter((p) => p.in_district).length;
-    numbers.push({ label: "bank branches on the map in the district", value: banks }, { label: "ATMs on the map in the district", value: atms });
-    const b = add("ward_no_bank", "Wards where much of the ground is more than 2 km from a bank branch", P([fac("f1", "banks"), { op: "farthest", as: "far", areas: "ward", from: "f1", beyond_m: 2000 }], "far"));
-    const a = add("ward_no_atm", "Wards where much of the ground is more than 2 km from an ATM", P([fac("f1", "atms"), { op: "farthest", as: "far", areas: "ward", from: "f1", beyond_m: 2000 }], "far"));
-    const pl = add("place_no_bank", "Neighbourhoods more than 2 km from a bank branch", P([fac("f1", "banks"), { op: "farthest", as: "far", areas: "place", from: "f1", beyond_m: 2000 }], "far"));
-    if (b?.show.type === "areas") numbers.push({ label: "wards more than 2 km from a bank for 10 % or more of their ground", value: b.show.areas.length });
-    if (a?.show.type === "areas") numbers.push({ label: "wards more than 2 km from an ATM for 10 % or more of their ground", value: a.show.areas.length });
-    if (pl?.show.type === "areas") numbers.push({ label: "neighbourhoods more than 2 km from a bank", value: pl.show.areas.length });
-    // relief payments after a flood: the banks and ATMs in the ten wards with most flooding over 90 days
-    const fl = run(P([inc("a", { family: ["FLOOD"], status: "any", period: { kind: "last_days", days: 90, offset: 0 } }), { op: "count_by", as: "by", of: "a", by: "ward" }], "by"), w, ctx, lock);
-    if (fl.show.type === "groups") {
-      const top = fl.show.groups.slice(0, 10);
-      const inWard = (layer: "banks" | "atms", ward: number) => w.points[layer].filter((p) => p.ward === ward).length;
-      sections.push({ id: "flood_wards_money", title: "The 10 wards with most flooding in 90 days: bank branches and ATMs inside each", note: "For relief payments after a flood.", unit: "count", plan: null,
-        rows: top.map((g) => { const bk = inWard("banks", Number(g.key)), am = inWard("atms", Number(g.key)); return { key: g.key, label: g.label, value: bk + am, text: `${n(g.n)} flood reports · ${n(bk)} banks · ${n(am)} ATMs`, lat: g.lat, lon: g.lon }; }) });
-    }
-    for (const l of ["banks", "atms"]) { const p = partial(w, l); if (p) notes.push(p); }
   } else {
     const fl = add("flood_ward", "Flooding reports by ward, last 90 days (all statuses)", P([inc("a", { family: ["FLOOD"], status: "any", period: { kind: "last_days", days: 90, offset: 0 } }), { op: "count_by", as: "by", of: "a", by: "ward" }], "by"));
     numbers.push({ label: "flooding reports in the last 90 days", value: fl?.hits.length ?? 0 });
@@ -113,10 +99,10 @@ export function buildPack(kind: PackKind, w: World, ctx: Ctx, lock: string | nul
     const lakes = (w.conds?.places ?? []).filter((p) => p.kind === "lake" && (p.m.lake_pct_full?.v ?? 0) >= 90).length;
     numbers.push({ label: "lakes 90 % full or more", value: lakes });
   }
-  const title = { weekly: "Weekly review", bank: "Quarterly bank meeting (DCC / DLRC)", monsoon: "Pre-monsoon meeting" }[kind];
-  const subtitle = { weekly: "Open cases, where they grew, and what is past its deadline.", bank: "Where people are far from a bank branch or an ATM, and the money points in the flooded wards.",
+  const title = { weekly: "Weekly review", monsoon: "Pre-monsoon meeting" }[kind];
+  const subtitle = { weekly: "Open cases, where they grew, and what is past its deadline.",
     monsoon: "Where flooding has been reported, how far help is, drains, and works behind plan." }[kind];
-  return { kind, title, subtitle, asOf: w.dataAsOf || w.now, numbers, sections, notes };
+  return { kind, title, subtitle, asOf: w.dataAsOf || w.now, numbers, sections, notes, ...(kind === "weekly" ? { weekly: weeklyData(w, ctx, lock) } : {}) };
 }
 
 /** Sentences whose every number is a fact of the pack (or a row's), else null. */
@@ -172,6 +158,7 @@ export function packSvg(w: World, rows: PackRow[], width = 520, height = 620): s
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 /** The pack as one printable page. */
 export function packHtml(p: Pack): string {
+  if (p.weekly) return weeklyHtml({ ...p, weekly: p.weekly });
   const sec = (s: PackSection) => `<section><h2>${esc(s.title)}</h2>${s.note ? `<p class="note">${esc(s.note)}</p>` : ""}${s.rows.length
     ? `<ol>${s.rows.map((r) => `<li><b>${esc(r.label)}</b><span>${esc(r.text)}</span></li>`).join("")}</ol>` : `<p class="note">None.</p>`}</section>`;
   const first = p.sections.find((s) => s.rows.length && s.rows.some((r) => r.lat || r.lon));
