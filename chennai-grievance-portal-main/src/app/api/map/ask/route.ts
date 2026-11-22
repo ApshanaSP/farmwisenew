@@ -16,6 +16,7 @@ const Body = z.object({
   prev: z.unknown().nullable().default(null),
   /** v3: the places the last answer ranked first (for "what is happening there", "the worst one") */
   earlier: z.array(z.object({ ref: z.string().max(80).regex(/^(ward|zone|taluk):[\w-]+$|^[a-z]+:[\w:. -]+$/), name: z.string().max(120) })).max(4).nullable().catch(null).default(null),
+  history: z.array(z.object({ q: z.string().max(400), a: z.string().max(400) })).max(4).nullable().catch(null).default(null),
   prevTop: z.array(z.object({ ref: z.string().max(80).regex(/^(ward|zone|taluk):[\w-]+$|^(osm|fac):[\w:.-]+$/), name: z.string().max(120) })).max(3).nullable().catch(null).default(null),
   context: z.object({
     zone: z.number().int().min(1).max(15).nullable().catch(null),
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
   const b = parsed.data;
   if (!b.text && !b.plan && !b.context.drawn && !b.context.ward && !b.context.incidentId) return NextResponse.json({ error: "Type a question first." }, { status: 400 });
   try {
-    const r = await askMap({ text: b.text, plan: (b.plan as never) ?? null, prev: (b.prev as never) ?? null, prevTop: b.prevTop, earlier: b.earlier, context: b.context, reword: b.reword && !b.plan,
+    const r = await askMap({ text: b.text, plan: (b.plan as never) ?? null, prev: (b.prev as never) ?? null, prevTop: b.prevTop, earlier: b.earlier, history: b.history, context: b.context, reword: b.reword && !b.plan,
       user: { email: s.email, role: s.role, lockDept: s.lockDept }, signal: req.signal });
     return NextResponse.json(r);
   } catch (e) {

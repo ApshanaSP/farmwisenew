@@ -283,6 +283,14 @@ function wardsOf(geo: MapGeo, by: string, key: string) {
  * A count near places (schools, hospitals, shops) rings only the top ten with the distance asked. Every marker shows
  * its cases on a click. Badges rise in rank order; number one keeps a slow pulse.
  */
+/** v3: a badge's name kept short on the map: "Perambur (Ward 44)" reads "Perambur" with a small "W44" (the full name is on hover and in the panel) */
+function shortLabel(label: string): string {
+  const m = /^(.+) \((Ward|Zone|வார்டு|மண்டலம்) (\d+)\)$/.exec(label);
+  if (!m) return esc(label);
+  const tag = m[2] === "Ward" ? `W${m[3]}` : m[2] === "Zone" ? `Z${m[3]}` : `${m[2]} ${m[3]}`;
+  return `${esc(m[1])}<small>${esc(tag)}</small>`;
+}
+
 function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawOpts) {
   const ta = o.lang === "ta";
   const speed = k.what === "days to close" || k.what === "நாட்கள்";
@@ -315,7 +323,7 @@ function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawO
     }
     const s = Math.round(30 + 18 * (max > 0 ? Math.sqrt(x.n / max) : 0));
     const html = `<div data-rank="${i}" class="ar3${k.rain ? " rain" : ""}${i === 0 ? " first" : ""}${o.reduced ? "" : " in"} t-${x.tone || "x"}" style="--s:${s}px;--d:${i * 90}ms">`
-      + `<span class="ar3-n">${i + 1}</span><span class="ar3-l"><b>${esc(x.label)}</b><em>${esc(x.fig)}${speed || k.rain || x.fig.startsWith("+") || x.fig.startsWith("−") ? "" : ` ${k.what}`}</em></span></div>`;
+      + `<span class="ar3-n">${i + 1}</span><span class="ar3-l"><b>${shortLabel(x.label)}</b><em>${esc(x.fig)}${speed || k.rain || x.fig.startsWith("+") || x.fig.startsWith("−") ? "" : ` ${k.what}`}</em></span></div>`;
     L.marker([x.lat, x.lon], { pane: "askMarks", zIndexOffset: 1000 - i, title: `${i + 1}. ${x.label}: ${x.sub}`, keyboard: true,
       icon: L.divIcon({ className: "", html, iconSize: [s, s], iconAnchor: [s / 2, s / 2] }) })
       .on("click", () => o.onGroup(x.ids, x.label)).addTo(a.marks);

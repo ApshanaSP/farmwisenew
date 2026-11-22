@@ -8,7 +8,7 @@ import path from "path";
 import * as XLSX from "xlsx";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { fixtureWorld } from "./fixture";
-import { allowedNumbers, buildPack, gateSentence, packHtml, packSvg } from "./packs";
+import { PACK_KINDS, allowedNumbers, buildPack, gateSentence, packHtml, packSvg } from "./packs";
 import { approveList, columnsOf, getList, listLists, mayChange, myListPoints, parseTable, placeRows, removeList, safeCell, saveList, UPLOAD_LIMITS } from "./uploads";
 
 const w = fixtureWorld();
@@ -87,14 +87,31 @@ describe("the store: a draft is never on the map until approved", () => {
 
 describe("meeting packs", () => {
   const ctx = { place: () => null, lang: "en" as const };
-  for (const kind of ["weekly", "bank", "monsoon"] as const) it(`${kind}: every list and number comes from the server's plans`, () => {
+  for (const kind of ["weekly", "monsoon"] as const) it(`${kind}: every list and number comes from the server's plans`, () => {
     const p = buildPack(kind, w, ctx, null);
     expect(p.sections.length).toBeGreaterThan(0);
     for (const x of p.numbers) expect(Number.isFinite(x.value)).toBe(true);
     const html = packHtml({ ...p, sentences: ["A test sentence."], wordsBy: "template", svg: packSvg(w, p.sections[0].rows) });
     expect(html).toContain("<svg");
-    expect(html).not.toMatch(/<script/);
+    // v3: the weekly review is interactive: one script of its own and the figures as JSON, which can never close the script early
+    if (kind === "weekly") {
+      expect(html.match(/<script/g)?.length).toBe(2);
+      const json = html.slice(html.indexOf('type="application/json">') + 24, html.indexOf("</script>"));
+      expect(json).not.toMatch(/</);
+      expect(JSON.parse(json).wards.length).toBe(w.wards.length);
+    } else expect(html).not.toMatch(/<script/);
   });
+  it("weekly: the figures the page draws add up (this week by ward and by zone, the kinds, the days)", () => {
+    const d = buildPack("weekly", w, ctx, null).weekly!;
+    const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+    const thisWeek = w.incidents.filter((i) => !i.routed && (Date.parse(w.now.replace(" ", "T") + "Z") - Date.parse(i.first.replace(" ", "T") + "Z")) / 86_400_000 < 7 && i.first <= w.now);
+    expect(d.kpi.reported).toBe(thisWeek.length);
+    expect(sum(d.wards.map((x) => x.n))).toBe(thisWeek.filter((i) => i.ward != null).length);
+    expect(sum(d.zones.map((x) => x.n))).toBe(thisWeek.filter((i) => i.zone != null).length);
+    for (const c of d.cats) expect(sum(Object.values(c.byWard))).toBe(thisWeek.filter((i) => i.cat === c.code && i.ward != null).length);
+    expect(d.kpi.open).toBeLessThanOrEqual(d.kpi.reported);
+  });
+  it("there is no bank meeting pack any more (owner, 22 Nov 2026)", () => expect(PACK_KINDS as string[]).not.toContain("bank"));
   it("weekly: the open count equals a plain count of open cases of the last 7 days", () => {
     const p = buildPack("weekly", w, ctx, null);
     const day = (s: string) => (Date.parse(w.now.replace(" ", "T") + "Z") - Date.parse(s.replace(" ", "T") + "Z")) / 86_400_000;

@@ -7,7 +7,8 @@ import type { Plan, Step } from "./plan";
 export interface Want { show?: string; layers?: string[]; of_layer?: string; cats?: string[]; family_or_cat?: string; meters?: number; beyond?: number; by?: string; order?: string;
   areas?: string; area?: string; kinds?: string[]; period_days?: number; language?: string; severity?: string; overdue?: boolean; from_place?: boolean; understood?: boolean;
   /** v3: ranked per 10,000 people; the status filter (open, closed, any) */ per?: boolean; status?: string;
-  /** v3: every kind of problem (no category, family or dept on the incidents); one department */ every_kind?: boolean; dept?: string }
+  /** v3: every kind of problem (no category, family or dept on the incidents); one department */ every_kind?: boolean; dept?: string;
+  /** v3: a new question carries nothing of the last one: not these kinds, no area, not these layers */ no_cats?: string[]; no_area?: boolean; no_layers?: string[] }
 export interface Q { id: string; q: string; want: Want }
 
 
@@ -51,6 +52,9 @@ export function misses(plan: Plan | null, problems: string[] | null, want: Want)
   if (want.dept && !inc?.filter?.dept?.includes(want.dept)) out.push(`no dept ${want.dept} (has ${inc?.filter?.dept?.join(",") ?? "none"})`);
   if (want.per != null && (step("count_by")?.per === "people") !== want.per) out.push(want.per ? "not per people" : "per people, not asked");
   if (want.status && (inc?.filter?.status ?? "open") !== want.status) out.push(`status ${inc?.filter?.status ?? "default"}, not ${want.status}`);
+  for (const c of want.no_cats ?? []) if (cats.some((x) => x === c || x.startsWith(`${c}_`))) out.push(`kept ${c} from before`);
+  if (want.no_area && plan.steps.some((x) => x.op === "inside" || x.op === "compare")) out.push("kept an area from before");
+  for (const l of want.no_layers ?? []) if (takes.some((t) => t.layer === l)) out.push(`kept ${l} from before`);
   return out;
 }
 

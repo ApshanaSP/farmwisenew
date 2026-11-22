@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * A meeting pack (lib/map/packs.ts): ?kind=weekly|bank|monsoon; &format=html gives the printable page, else JSON for the panel. A department
+ * A meeting pack (lib/map/packs.ts): ?kind=weekly|monsoon; &format=html gives the printable page, else JSON for the panel. A department
  * officer's pack counts only their department's cases (the department comes from the database).
  */
 export async function GET(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const gate = checkRateLimit(`mappack:${s.userId}`, 12, 600);
   if (!gate.allowed) return NextResponse.json({ error: `Too many packs in a few minutes. Try again in ${gate.retryAfterSeconds} s.` }, { status: 429 });
   const kind = req.nextUrl.searchParams.get("kind") as PackKind;
-  if (!PACK_KINDS.includes(kind)) return NextResponse.json({ error: "Choose weekly, bank or monsoon." }, { status: 400 });
+  if (!PACK_KINDS.includes(kind)) return NextResponse.json({ error: "Choose weekly or monsoon." }, { status: 400 });
   try {
     const { world: w, resolver } = await world();
     const lock = s.role === "department_officer" ? s.lockDept : null;

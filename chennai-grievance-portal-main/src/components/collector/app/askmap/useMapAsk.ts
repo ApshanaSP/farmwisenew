@@ -59,7 +59,7 @@ export interface MapAsk {
   setTraceOpen: (v: boolean) => void;
   ask: (text: string) => Promise<AskResponse | null>;
   run: (plan: Plan, label?: string) => Promise<AskResponse | null>;
-  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }) => Promise<AskResponse | null>;
+  draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }, label?: string) => Promise<AskResponse | null>;
   clear: () => void;
   /** a UI follow-up ("send these to SWD", "export"): the panel acts on it */
   uiCue: { seq: number; ui: AskResponse["ui"]; dept: string | null } | null;
@@ -117,6 +117,12 @@ export function answerGist(r: AskResponse, lang: "en" | "ta"): string {
   if (r.brief) return `${lang === "ta" ? "இங்கே என்ன நடக்கிறது" : "What is happening"}: ${lang === "ta" ? r.brief.label.ta : r.brief.label.en}`;
   if (r.say) return lang === "ta" ? r.say.ta : r.say.en;
   return "";
+}
+
+/** v3: the conversation for the turn reader: the last three answered questions with their answers in a few words (counts and place names) */
+export function historyOf(turns: Turn[]): { q: string; a: string }[] {
+  return turns.filter((t) => !t.pending && !t.error && (t.resp || t.gist)).slice(-3)
+    .map((t) => ({ q: t.q.slice(0, 400), a: (t.resp ? answerGist(t.resp, t.resp.lang === "ta" ? "ta" : "en") : t.gist ?? "").slice(0, 400) }));
 }
 
 const UI_NOTE: Record<string, [string, string]> = {
@@ -241,7 +247,8 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
       setFocus(null);
       setShowBefore(false);
       setRoute(null);
-      if (a.kind === "answer" && a.plan) { setPlan(a.plan); save(PLAN_KEY, a.plan); }
+      // an answer, and (v3) an area overview, are what the next follow-up edits
+      if ((a.kind === "answer" || a.kind === "brief") && a.plan) { setPlan(a.plan); save(PLAN_KEY, a.plan); }
       // a new question moves the camera; a small follow-up keeps the view (camera.ts followUpMoves)
       const moves = followUpMoves(a.edited ?? null, !!planRef.current && sameShape(planRef.current, a.plan));
       setTookOver(false);
@@ -295,11 +302,12 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail: rr }));
         return null;
       }
-      return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null, earlier: planRef.current ? earlierAreasOf(turnsRef.current.map((x) => x.plan ?? x.resp?.plan)) : null }, t);
+      return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null, earlier: planRef.current ? earlierAreasOf(turnsRef.current.map((x) => x.plan ?? x.resp?.plan)) : null,
+        history: planRef.current ? historyOf(turnsRef.current) : null }, t);
     },
     run: (p: Plan, label?: string) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question"),
-    draw: (d) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
-      "lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?"),
+    draw: (d, label) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
+      label ?? ("lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?")),
     clear: clearAll
   };
 }

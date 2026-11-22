@@ -95,6 +95,25 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const noun = (f?.news ? (ta ? "செய்திகளில் வந்த " : "") : "") + (f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents") + (f?.news && !ta ? " in the news" : "");
   return ta ? `${st}${sev}${cats ? cats + " " : ""}${noun}` : `${st}${sev}${cats ? cats + " " : ""}${noun}`.replace(/\s+/g, " ").trim();
 }
+/**
+ * v3: the kind of problem an answer is about, in words, when its plan names one (a category, a family, a department, a
+ * severity or past deadline): "open garbage complaints". Null for every kind (an area's overview already counts those).
+ */
+export function topicOf(plan: Plan | null, w: World): { en: string; ta: string } | null {
+  const f = plan ? take0(plan)?.filter : null;
+  if (!f || !(f.category?.length || f.family?.length || f.dept?.length || f.severity?.length || f.overdue)) return null;
+  const words = (lang: Lang) => {
+    const s = subjectMany(plan!, w, lang);
+    // a department alone (police cases): its name says the kind
+    if (!f.category?.length && !f.family?.length && f.dept?.length === 1) {
+      const d = w.depts.get(f.dept[0])?.name ?? f.dept[0];
+      return isTa(lang) ? `${d}: ${s}` : `${s} (${d})`;
+    }
+    return s;
+  };
+  return { en: words("en"), ta: words("ta") };
+}
+
 const periodTail = (plan: Plan, lang: Lang) => {
   const p = take0(plan)?.filter?.period ?? null;
   return p ? ` (${periodWords(p, lang)})` : "";

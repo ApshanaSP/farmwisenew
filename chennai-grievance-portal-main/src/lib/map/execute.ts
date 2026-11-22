@@ -61,10 +61,16 @@ export type Coll =
 
 export interface SpeedRow { key: string; label: string; label_ta: string; lat: number; lon: number; closed: number; open: number; medianDays: number; ids: string[] }
 
+/** v3: a ward as people say it: "Anna Nagar (Ward 102)" (the neighbourhood first, world.ts nameWards), "Ward 102" when it has no name */
+export function wardName(w: World, ward: number | string): { en: string; ta: string } {
+  const wd = w.wards.find((x) => String(x.ward) === String(ward));
+  return wd?.name ? { en: `${wd.name.en} (Ward ${ward})`, ta: `${wd.name.ta} (வார்டு ${ward})` } : { en: `Ward ${ward}`, ta: `வார்டு ${ward}` };
+}
+
 /** An incident's area, category or department as a group: key, labels and a point for the map (shared by count_by and speed). */
 function groupOf(h: Hit, by: "ward" | "zone" | "taluk" | "category" | "dept", w: World): { key: string; label: string; label_ta: string; lat: number; lon: number } | null {
   const i = h.inc;
-  if (by === "ward" && i.ward != null) { const wd = w.wards.find((x) => x.ward === i.ward); return { key: String(i.ward), label: `Ward ${i.ward}`, label_ta: `வார்டு ${i.ward}`, lat: wd?.lat ?? i.lat, lon: wd?.lon ?? i.lon }; }
+  if (by === "ward" && i.ward != null) { const wd = w.wards.find((x) => x.ward === i.ward); return { key: String(i.ward), label: wardName(w, i.ward).en, label_ta: wardName(w, i.ward).ta, lat: wd?.lat ?? i.lat, lon: wd?.lon ?? i.lon }; }
   if (by === "zone" && i.zone != null) { const z = w.zones.find((x) => x.zone === i.zone); return { key: String(i.zone), label: z ? `${z.name} (Zone ${z.zone})` : `Zone ${i.zone}`, label_ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${i.zone}`, lat: z?.lat ?? 0, lon: z?.lon ?? 0 }; }
   if (by === "taluk" && i.taluk) { const t = w.taluks.find((x) => x.code === i.taluk); return { key: i.taluk, label: `${t?.name ?? i.taluk} taluk`, label_ta: `${t?.name_ta ?? t?.name ?? i.taluk} வட்டம்`, lat: t?.lat ?? 0, lon: t?.lon ?? 0 }; }
   if (by === "category") return { key: i.cat, label: w.cats.get(i.cat)?.label ?? i.cat, label_ta: CAT_TA[i.cat] ?? w.cats.get(i.cat)?.label ?? i.cat, lat: i.lat, lon: i.lon };
@@ -202,7 +208,7 @@ export function filterWords(f: Filter | null, w: World, lang: Lang): string {
 // --------------------------------------------------------------- areas --
 
 export function areaLabel(a: AreaRef, w: World, ctx: Ctx): { en: string; ta: string } {
-  if (a.kind === "ward") return { en: `Ward ${a.id}`, ta: `வார்டு ${a.id}` };
+  if (a.kind === "ward") return wardName(w, a.id);
   if (a.kind === "zone") {
     const z = w.zones.find((x) => x.zone === a.id);
     return { en: z ? `${z.name} (Zone ${a.id})` : `Zone ${a.id}`, ta: z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${a.id})` : `மண்டலம் ${a.id}` };
@@ -403,7 +409,7 @@ export function rankRows(now: Hit[], before: Hit[], by: "ward" | "zone" | "taluk
   for (const h of before) { const k = keyOf(h.inc); if (k == null) continue; (m.get(k) ?? m.set(k, { now: [], before: 0 }).get(k)!).before++; }
   const rows: RankRow[] = [...m.entries()].map(([key, v]) => {
     let label = key, label_ta = key, lat = 0, lon = 0;
-    if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); label = `Ward ${key}`; label_ta = `வார்டு ${key}`; lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
+    if (by === "ward") { const wd = w.wards.find((x) => String(x.ward) === key); ({ en: label, ta: label_ta } = wardName(w, key)); lat = wd?.lat ?? 0; lon = wd?.lon ?? 0; }
     else if (by === "zone") { const z = w.zones.find((x) => String(x.zone) === key); label = z ? `${z.name} (Zone ${key})` : `Zone ${key}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${key})` : `மண்டலம் ${key}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0; }
     else { const t = w.taluks.find((x) => x.code === key); label = `${t?.name ?? key} taluk`; label_ta = `${t?.name_ta ?? t?.name ?? key} வட்டம்`; lat = t?.lat ?? 0; lon = t?.lon ?? 0; }
     const a = v.now.length, b = v.before;
@@ -677,7 +683,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           // each neighbourhood OpenStreetMap names inside the district, measured from its own point
           areas = w.points.osm_places.filter((p) => p.in_district && p.name).map((p) => ({ key: p.id, label: p.name!, label_ta: p.name_ta ?? p.name!, lat: p.lat, lon: p.lon, ...scoreOf([p]) }));
         } else if (s.areas === "ward") {
-          areas = w.wards.map((wd) => ({ key: String(wd.ward), label: `Ward ${wd.ward}`, label_ta: `வார்டு ${wd.ward}`, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
+          areas = w.wards.map((wd) => ({ key: String(wd.ward), label: wardName(w, wd.ward).en, label_ta: wardName(w, wd.ward).ta, lat: wd.lat, lon: wd.lon, ...scoreOf(grids.get(wd.ward)!) }));
         } else {
           areas = w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon,
             ...scoreOf(w.wards.filter((wd) => wd.zone === z.zone).flatMap((wd) => grids.get(wd.ward)!)) }));
@@ -709,7 +715,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           let key: string | null = null, label = "", label_ta = "", lat = 0, lon = 0;
           if (s.by === "ward" && h.inc.ward != null) {
             const wd = w.wards.find((x) => x.ward === h.inc.ward);
-            key = String(h.inc.ward); label = `Ward ${h.inc.ward}`; label_ta = `வார்டு ${h.inc.ward}`; lat = wd?.lat ?? h.inc.lat; lon = wd?.lon ?? h.inc.lon;
+            key = String(h.inc.ward); ({ en: label, ta: label_ta } = wardName(w, h.inc.ward)); lat = wd?.lat ?? h.inc.lat; lon = wd?.lon ?? h.inc.lon;
           } else if (s.by === "zone" && h.inc.zone != null) {
             const z = w.zones.find((x) => x.zone === h.inc.zone);
             key = String(h.inc.zone); label = z ? `${z.name} (Zone ${z.zone})` : `Zone ${h.inc.zone}`; label_ta = z ? `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})` : `மண்டலம் ${h.inc.zone}`; lat = z?.lat ?? 0; lon = z?.lon ?? 0;
@@ -739,7 +745,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         }
         // v3: the fewest first: every ward, zone or taluk counts, an area with none too
         if (s.fewest && (s.by === "ward" || s.by === "zone" || s.by === "taluk")) {
-          const all = s.by === "ward" ? w.wards.map((x) => ({ key: String(x.ward), label: `Ward ${x.ward}`, label_ta: `வார்டு ${x.ward}`, lat: x.lat, lon: x.lon }))
+          const all = s.by === "ward" ? w.wards.map((x) => ({ key: String(x.ward), label: wardName(w, x.ward).en, label_ta: wardName(w, x.ward).ta, lat: x.lat, lon: x.lon }))
             : s.by === "zone" ? w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon }))
             : w.taluks.map((t) => ({ key: t.code, label: `${t.name} taluk`, label_ta: `${t.name_ta ?? t.name} வட்டம்`, lat: t.lat, lon: t.lon }));
           for (const a of all) if (!groups.has(a.key)) groups.set(a.key, { ...a, n: 0, ids: [] });

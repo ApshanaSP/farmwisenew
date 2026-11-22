@@ -10,16 +10,17 @@ import { AiUnavailableError, AiBudgetError, AiBusyError, aiStatus } from "@/lib/
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
 import { aiPlan, aiReword } from "./ai";
+import { readTurn, type TurnHistory, type TurnReading } from "./turn";
 import type { Insight } from "./insights";
 import { conditionsNear, familiesOf, spreadOf, trafficCondition, type Condition, type LiveTraffic } from "./conditions";
 import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
 import { peakWords, rainForecast } from "./forecast";
 import { trafficNow } from "@/lib/city/traffic";
-import { compose, type Answer } from "./answer";
+import { compose, topicOf, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
 import { planChips, type PlanChip } from "./chips";
-import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
+import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, wardName, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
 import { OPEN_FILTER, checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
@@ -44,6 +45,8 @@ export interface AskInput {
   prevTop?: { ref: string; name: string }[] | null;
   /** v3: the places earlier questions of the conversation asked about, newest first ("compare both") */
   earlier?: { ref: string; name: string }[] | null;
+  /** v3: the conversation's last questions and their answers' headlines (counts and place names), for the turn reader (turn.ts) */
+  history?: TurnHistory[] | null;
   context: { zone: number | null; taluk: string | null; incidentId: string | null; drawn: { lat: number; lon: number; r: number } | null; ward: number | null };
   user: { email: string; role: "collector" | "department_officer"; lockDept: string | null };
   /** reword the meaning sentence with AI (off in tests and for chip edits) */
@@ -148,6 +151,10 @@ export interface AskResponse {
   unclear: { word: string; options: { label: string; text: string }[] } | null;
   /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
   scorecard: Scorecard | null;
+  /** v3: how the AI read a message that came after other questions (turn.ts): a follow-up or a new question, and what it means */
+  turn?: { relation: "follow_up" | "new_question"; standalone: string } | null;
+  /** v3: the kind of problem the answer is about, in words ("open garbage complaints"), when its plan names one; the panel offers it beside an area's overview */
+  topic?: { en: string; ta: string } | null;
 }
 
 const ROW_CAP = 200;
@@ -387,6 +394,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     if (!sc) { out.say = { en: `There is no Ward ${ward}. Chennai has wards 1 to 200.`, ta: `வார்டு ${ward} இல்லை. சென்னையில் வார்டுகள் 1 முதல் 200 வரை.`, chips: [] }; return done(out); }
     out.kind = "brief";
     out.brief = sc.brief;
+    out.plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER }, where: null }, { op: "inside", as: "in", of: "a", area: { kind: "ward", id: ward } }], show: "in", language: lang };
     out.scorecard = sc;
     const area: AreaRef = { kind: "ward", id: ward };
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
@@ -400,6 +408,9 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     out.ai_used = aiOnly;
     out.kind = "brief";
     out.brief = areaBrief(area, w, ctx, lock);
+    // v3: the overview's own question as a plan (open cases inside the area), so a follow-up ("only severe ones", "garbage
+    // there") edits it and keeps the place
+    out.plan = { steps: [{ op: "take", as: "a", layer: "incidents", filter: { ...OPEN_FILTER }, where: null }, { op: "inside", as: "in", of: "a", area }], show: "in", language: lang };
     const p = area.kind === "point" ? ctx.place(area.ref) : null;
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: p && area.kind === "point" ? { lat: p.lat, lon: p.lon, r: area.radius_m } : null }];
     const box = areaBox(area, w, ctx);
@@ -412,14 +423,29 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
   if (aiOnly) {
     const typed = asked.text!;
+    // v3: a message after other questions: Claude first reads the conversation and says whether it is a follow-up or a new
+    // question, and writes it as one complete question (turn.ts). A new question is planned on its own: nothing of the old
+    // one (its kind of problem, its places) is carried over. No reading (no key, busy): the planner decides, as before.
+    const turn: TurnReading | null = asked.prev && input.history?.length
+      ? await readTurn(typed, input.history, input.prevTop ?? [], { user: input.user.email, signal: input.signal }) : null;
+    out.turn = turn ? { relation: turn.relation, standalone: turn.standalone } : null;
+    const prev = turn?.relation === "new_question" ? null : asked.prev;
     // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
     const reading = spellerFor(data)(typed).text;
+    // the reading goes to the planner either way: for a new question it is the question itself; when the reader called a
+    // follow-up new, its complete reading still carries the meaning ("which school is the worst" = road accidents within 200 m)
+    const meant = turn?.standalone && turn.standalone.trim().toLowerCase() !== typed.trim().toLowerCase() ? turn.standalone : null;
+    // places are looked up in the officer's own words only (the reading's words found a school named "A School" in "a school")
     const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
     // v3: the last answer's first places, so a follow-up can point at them ("what is happening there", "the second one")
-    for (const p of asked.prev ? input.earlier ?? [] : []) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && !found.some((f) => f.ref === p.ref)) found.push({ ref: p.ref, kind: "a place an earlier question asked about", name: ctx.place(p.ref)?.name ?? p.name });
-    for (const [i, p] of (asked.prev ? input.prevTop ?? [] : []).entries()) if (ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) found.push({ ref: p.ref, kind: `the previous answer's number ${i + 1}`, name: p.name });
-    const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-      zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
+    for (const p of prev ? input.earlier ?? [] : []) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && !found.some((f) => f.ref === p.ref)) found.push({ ref: p.ref, kind: "a place an earlier question asked about", name: ctx.place(p.ref)?.name ?? p.name });
+    // v3: when the reading says the message points at the last answer's number N, only that place is offered as the previous
+    // answer's (the AI chose it; the planner cannot then take number 1 for "the third one")
+    const pointed = prev && turn && turn.points_to >= 1 ? input.prevTop?.[Math.round(turn.points_to) - 1] ?? null : null;
+    for (const [i, p] of (prev ? input.prevTop ?? [] : []).entries()) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && (!pointed || pointed.ref === p.ref))
+      found.push({ ref: p.ref, kind: pointed ? "the place the follow-up points at (the previous answer's number " + (i + 1) + ")" : `the previous answer's number ${i + 1}`, name: p.name });
+    const a = await aiPlan(typed, prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
+      zones: w.zones, catLabels: catLabels(w), meant: pointed && meant ? `${meant} (it points at ${pointed.name}: use ref ${pointed.ref})` : meant }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
     if (a && "problems" in a && a.problems.includes("not a map question")) {
       out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
         chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
@@ -449,7 +475,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     if (a && "plan" in a) {
       // a question in Tamil script is answered in Tamil (the script is plain to see; the model sometimes said Tanglish)
       const language = /[\u0B80-\u0BFF]/.test(typed) ? "ta" as const : a.plan.language;
-      const fitted = repairRefs(fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true }), asked.prev, found, ctx);
+      const fitted = repairRefs(fitModelPlan({ ...a.plan, language }, typed, w.now, prev, { ...modelWords(w, language, found), aiOnly: true }), prev, found, ctx);
       const ins = fitted.steps.find((s) => s.op === "inside");
       if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
       // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error
@@ -629,7 +655,8 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   syncEpoch(answerCache()); // a decision empties it (RC-35)
   const cached = answerCache().get(cacheKey);
   if (cached && Date.now() - cached.at < 60_000) {
-    const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used };
+    // v3: this question's own reading of the conversation, not the one cached with the answer
+    const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used, turn: out.turn ?? null };
     return done(copy);
   }
   let r: RunResult;
@@ -692,6 +719,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   out.plan = plan;
   out.edited = edited;
   out.answer = answer;
+  out.topic = topicOf(plan, w);
   out.trace = r.steps;
   out.ai_used = aiUsed;
   const deptName = (c: string) => w.depts.get(c)?.name ?? c;
@@ -735,7 +763,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     for (const h of hits) if (h.inc.ward != null) { const g = byWard.get(h.inc.ward) ?? byWard.set(h.inc.ward, { n: 0, ids: [] }).get(h.inc.ward)!; g.n++; g.ids.push(h.inc.id); }
     out.extra.groups ??= [...byWard.entries()].map(([ward, g]) => {
       const wd = w.wards.find((x) => x.ward === ward);
-      return { key: String(ward), label: `Ward ${ward}`, label_ta: `வார்டு ${ward}`, n: g.n, lat: wd?.lat ?? 0, lon: wd?.lon ?? 0, ids: g.ids };
+      return { key: String(ward), label: wardName(w, ward).en, label_ta: wardName(w, ward).ta, n: g.n, lat: wd?.lat ?? 0, lon: wd?.lon ?? 0, ids: g.ids };
     }).sort((a, b) => b.n - a.n);
     const n = (x: number) => x.toLocaleString("en-IN");
     answer.meaning = `${answer.meaning ?? ""} ${lang === "ta" ? `வரைபடம் அதிக முன்னுரிமையுள்ள ${n(FEATURE_CAP)} இடங்களைக் காட்டுகிறது; ${n(hits.length)} அனைத்தும் வார்டு வாரியாக எண்ணப்பட்டுள்ளன.`

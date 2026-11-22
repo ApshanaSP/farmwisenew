@@ -106,20 +106,23 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
     }
   }
-  for (const fset of ["followups", "followups3", "followups3h", "followups3f", "topics3", "collectorf3", "fprobe"].filter((x) => SETS.includes(x))) {
+  for (const fset of ["followups", "followups3", "followups3h", "followups3f", "topics3", "collectorf3", "turns3", "fprobe"].filter((x) => SETS.includes(x))) {
     as(fset);
-    const convs = JSON.parse(fs.readFileSync(fset === "fprobe" ? path.join(process.cwd(), process.env.ASKAI_FPROBE ?? "") : path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : fset === "followups3f" ? "followups-fresh.json" : fset === "topics3" ? "topics.json" : fset === "collectorf3" ? "collector-followups.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
+    const convs = JSON.parse(fs.readFileSync(fset === "fprobe" ? path.join(process.cwd(), process.env.ASKAI_FPROBE ?? "") : path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : fset === "followups3f" ? "followups-fresh.json" : fset === "topics3" ? "topics.json" : fset === "collectorf3" ? "collector-followups.json" : fset === "turns3" ? "turns.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number; rel?: "new" | "follow" }[] }[];
     for (const c of convs) {
       let prev: Plan | null = null;
       let last: Awaited<ReturnType<typeof askMap>> | null = null;
       const plans: Plan[] = [];
+      // v3: the conversation as the console sends it (useMapAsk historyOf): each question with its answer in a few words
+      const history: { q: string; a: string }[] = [];
       for (const [k, t] of c.turns.entries()) {
         const t0 = Date.now();
         // v3: the follow-up carries the last answer's first places, as the console sends them
         const top = prevTopOf(last);
-        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, earlier: prev ? earlierAreasOf(plans) : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, earlier: prev ? earlierAreasOf(plans) : null, history: prev ? history.slice(-3) : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
         last = r;
         if (r?.plan) plans.push(r.plan);
+        history.push({ q: t.q, a: (r?.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") ?? (r?.brief ? `What is happening: ${r.brief.label.en}` : r?.say?.en ?? "")).slice(0, 400) });
         ms.push(Date.now() - t0);
         // a turn may want an area brief, or the place the last answer ranked number N ("what is happening there")
         const thereRef = t.there ? top[t.there - 1]?.ref : null;
@@ -127,10 +130,12 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
         const m = [
           ...(t.kind === "brief" ? (r?.kind === "brief" ? [] : [`not a brief (${r?.kind})`]) : []),
           ...(t.there ? (!thereRef ? ["the last answer had no place to point at"] : inPlace(r?.plan) || (r?.kind === "brief" && JSON.stringify(r.brief?.area ?? {}).includes(String(thereRef.split(":")[1]))) ? [] : [`not at the last answer's number ${t.there} (${thereRef})`]) : []),
-          ...(t.want ? misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want) : [])
+          ...(t.want ? misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want) : []),
+          // v3: the turn reader's call: a follow-up, or a new question that carries nothing over
+          ...(t.rel && r?.turn && (r.turn.relation === "new_question") !== (t.rel === "new") ? [`read as ${r.turn.relation}, not ${t.rel === "new" ? "a new question" : "a follow-up"}`] : [])
         ];
         add(fset, !m.length, !!r?.ai_used);
-        fs.appendFileSync(OUT, JSON.stringify({ set: fset, head: r?.answer?.headline ?? r?.say?.en ?? null, meaning: r?.answer?.meaning ?? null, id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, plan: r?.plan ?? null }) + "\n");
+        fs.appendFileSync(OUT, JSON.stringify({ set: fset, head: r?.answer?.headline ?? r?.say?.en ?? null, meaning: r?.answer?.meaning ?? null, id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, turn: r?.turn ?? null, plan: r?.plan ?? null }) + "\n");
         console.log(`${m.length ? "FAIL" : "PASS"} ${fset} ${c.id}.${k + 1} ${t.q} ${m.join("; ")}`);
         if (r?.plan) prev = r.plan;
       }

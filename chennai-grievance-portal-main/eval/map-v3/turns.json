@@ -1,0 +1,91 @@
+{
+  "about": "v3 follow-up or new question (22 Nov 2026, the owner's report: after a garbage answer a school question still stuck to garbage). Conversations typed the way an officer types, each turn marked follow (it leans on what came before) or new (complete on its own: nothing carries over). Written before the turn reader's first run; never tuned against.",
+  "conversations": [
+    { "id": "n01", "turns": [
+      { "q": "which area has more crime reported", "want": { "show": "count_by", "family_or_cat": "CRIME" } },
+      { "q": "what is happening there", "there": 1, "rel": "follow" },
+      { "q": "only theft cases there", "want": { "cats": ["CRIME_PROPERTY"] }, "rel": "follow" } ] },
+    { "id": "n02", "turns": [
+      { "q": "where is garbage the most", "want": { "cats": ["SOLID_WASTE"] } },
+      { "q": "now which school has the most complaints near it", "want": { "show": "count_by", "by": "near", "layers": ["schools"], "every_kind": true }, "rel": "new" } ] },
+    { "id": "n03", "turns": [
+      { "q": "garbage near hospitals", "want": { "cats": ["SOLID_WASTE"], "layers": ["hospitals"] } },
+      { "q": "what about schools", "want": { "cats": ["SOLID_WASTE"], "layers": ["schools"] }, "rel": "follow" } ] },
+    { "id": "n04", "turns": [
+      { "q": "flooding in velachery", "want": { "family_or_cat": "FLOOD" } },
+      { "q": "any accidents near guindy this week", "want": { "cats": ["ROAD_ACCIDENT"], "no_cats": ["FLOOD"] }, "rel": "new" } ] },
+    { "id": "n05", "turns": [
+      { "q": "stray dog complaints zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["STRAY_ANIMALS"] } },
+      { "q": "and mosquito", "want": { "show": "count_by", "by": "zone", "cats": ["VECTOR_DISEASE"] }, "rel": "follow" } ] },
+    { "id": "n06", "turns": [
+      { "q": "pending cases dept wise", "want": { "show": "count_by", "by": "dept" } },
+      { "q": "ok where should i go first", "want": { "show": "count_by", "overdue": true }, "rel": "new" } ] },
+    { "id": "n07", "turns": [
+      { "q": "streetlight not working in anna nagar", "want": { "cats": ["STREETLIGHT_ELECTRICAL"] } },
+      { "q": "same in kodambakkam", "want": { "cats": ["STREETLIGHT_ELECTRICAL"] }, "rel": "follow" },
+      { "q": "how many total complaints in kodambakkam", "want": { "every_kind": true } } ] },
+    { "id": "n08", "turns": [
+      { "q": "road accidents this month", "want": { "cats": ["ROAD_ACCIDENT"], "period_days": 30 } },
+      { "q": "which zone", "want": { "show": "count_by", "by": "zone", "cats": ["ROAD_ACCIDENT"] }, "rel": "follow" },
+      { "q": "show me drainage problems in that zone", "there": 1, "want": { "family_or_cat": "DRAINAGE", "no_cats": ["ROAD_ACCIDENT"] }, "rel": "follow" } ] },
+    { "id": "n09", "turns": [
+      { "q": "mosquito complaints near schools", "want": { "cats": ["VECTOR_DISEASE"], "layers": ["schools"] } },
+      { "q": "which school is worst", "want": { "show": "count_by", "by": "near", "cats": ["VECTOR_DISEASE"] }, "rel": "follow" },
+      { "q": "tell me about adyar", "kind": "brief", "rel": "new" } ] },
+    { "id": "n10", "turns": [
+      { "q": "kuppai pugar ward wise", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"] } },
+      { "q": "school pakkathula enna problem", "want": { "layers": ["schools"], "every_kind": true }, "rel": "new" } ] },
+    { "id": "n11", "turns": [
+      { "q": "severe incidents today", "want": { "severity": "Severe" } },
+      { "q": "by zone", "want": { "show": "count_by", "by": "zone", "severity": "Severe" }, "rel": "follow" },
+      { "q": "which dept has most of these", "want": { "show": "count_by", "by": "dept", "severity": "Severe" }, "rel": "follow" } ] },
+    { "id": "n12", "turns": [
+      { "q": "water logging near bus stands", "want": { "cats": ["FLOOD_WATERLOGGING"], "layers": ["bus_stations"] } },
+      { "q": "nearest hospital to tambaram", "want": { "show": "nearest", "from_place": true, "layers": ["hospitals"], "no_layers": ["bus_stations"] }, "rel": "new" } ] },
+    { "id": "n13", "turns": [
+      { "q": "fire accidents this week", "want": { "cats": ["FIRE_EXPLOSION"] } },
+      { "q": "compare with last week", "want": { "show": "change", "cats": ["FIRE_EXPLOSION"] }, "rel": "follow" } ] },
+    { "id": "n14", "turns": [
+      { "q": "which ward has highest complaints per population", "want": { "show": "count_by", "by": "ward", "per": true } },
+      { "q": "only garbage", "want": { "show": "count_by", "by": "ward", "per": true, "cats": ["SOLID_WASTE"] }, "rel": "follow" },
+      { "q": "and the lowest", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"] }, "rel": "follow" } ] },
+    { "id": "n15", "turns": [
+      { "q": "potholes in zone 10", "want": { "cats": ["ROAD_DAMAGE"], "area": "zone:10" } },
+      { "q": "what about sewage overflow there", "want": { "cats": ["DRAINAGE_SEWAGE"], "area": "zone:10" }, "rel": "follow" },
+      { "q": "show all problems in that zone", "want": { "every_kind": true, "area": "zone:10" }, "rel": "follow" } ] },
+    { "id": "n16", "turns": [
+      { "q": "chain snatching cases", "want": { "cats": ["CRIME_PROPERTY"] } },
+      { "q": "near bus stops?", "want": { "cats": ["CRIME_PROPERTY"], "layers": ["bus_stations"] }, "rel": "follow" } ] },
+    { "id": "n17", "turns": [
+      { "q": "show me hospitals in t nagar", "want": { "layers": ["hospitals"] } },
+      { "q": "any garbage complaints near them", "want": { "cats": ["SOLID_WASTE"], "layers": ["hospitals"] }, "rel": "follow" } ] },
+    { "id": "n18", "turns": [
+      { "q": "dengue cases by zone", "want": { "show": "count_by", "by": "zone", "cats": ["VECTOR_DISEASE"] } },
+      { "q": "which college has the most complaints around it", "want": { "show": "count_by", "by": "near", "layers": ["colleges"], "every_kind": true }, "rel": "new" } ] },
+    { "id": "n19", "turns": [
+      { "q": "garbage in teynampet zone", "want": { "cats": ["SOLID_WASTE"], "area": "zone:9" } },
+      { "q": "and royapuram", "want": { "cats": ["SOLID_WASTE"], "area": "zone:5" }, "rel": "follow" },
+      { "q": "compare both", "want": { "show": "compare" }, "rel": "follow" } ] },
+    { "id": "n20", "turns": [
+      { "q": "accidents near colleges", "want": { "cats": ["ROAD_ACCIDENT"], "layers": ["incidents", "colleges"] } },
+      { "q": "how many flooding complaints in the city this week", "want": { "family_or_cat": "FLOOD", "no_layers": ["colleges"], "no_cats": ["ROAD_ACCIDENT"] }, "rel": "new" } ] },
+    { "id": "n21", "turns": [
+      { "q": "open complaints in ward 45", "want": { "area": "ward:45" } },
+      { "q": "only severe ones", "want": { "severity": "Severe", "area": "ward:45" }, "rel": "follow" },
+      { "q": "where are dog bites happening most", "want": { "cats": ["STRAY_ANIMALS"], "no_area": true }, "rel": "new" } ] },
+    { "id": "n22", "turns": [
+      { "q": "sewage overflow complaints", "want": { "cats": ["DRAINAGE_SEWAGE"] } },
+      { "q": "piling up where", "want": { "show": "hotspot", "cats": ["DRAINAGE_SEWAGE"] }, "rel": "follow" } ] },
+    { "id": "n23", "turns": [
+      { "q": "which zone has most garbage", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } },
+      { "q": "second one la enna nadakkudhu", "there": 2, "rel": "follow" } ] },
+    { "id": "n24", "turns": [
+      { "q": "theft cases in mylapore", "want": { "cats": ["CRIME_PROPERTY"] } },
+      { "q": "show me schools there", "want": { "layers": ["schools"] }, "rel": "follow" },
+      { "q": "which hospital has the most accidents near it", "want": { "show": "count_by", "by": "near", "layers": ["hospitals"], "cats": ["ROAD_ACCIDENT"], "no_cats": ["CRIME_PROPERTY"] }, "rel": "new" } ] },
+    { "id": "n25", "turns": [
+      { "q": "flood complaints ward wise", "want": { "show": "count_by", "by": "ward", "family_or_cat": "FLOOD" } },
+      { "q": "how about last month", "want": { "show": "count_by", "by": "ward", "family_or_cat": "FLOOD" }, "rel": "follow" },
+      { "q": "are complaints getting resolved faster in adyar or velachery", "want": { "no_cats": ["FLOOD"] }, "rel": "new" } ] }
+  ]
+}

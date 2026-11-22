@@ -99,3 +99,45 @@ Found and fixed, at the cause:
   - "fewest" answers are green.
 
 f22's second turn ("what kind of problems are there") read two ways; it is now "what is happening at that school".
+
+## 22 Nov, evening: the owner's round (follow-up or new question, area names, two views of a place, weekly review)
+
+What the owner reported, and what was done at the cause:
+
+- **"Which school has the most complaints" after a garbage answer stayed on garbage.** The planner always started a
+  follow-up by editing the last plan. Now, before any question that comes after another, Claude first reads the
+  conversation (the last three questions with their answers' headlines, and the places the last answer ranked first) and
+  decides: a follow-up, or a new question (`turn.ts`). It writes the message as one complete question, and says which ranked
+  place it points at ("the third one" is number 3). A new question is planned on its own; nothing of the old question
+  carries over. A follow-up is planned as an edit, with the complete reading beside it. No word list decides this; the AI
+  does. One more Haiku call on follow-ups only (about 1.6 s).
+- **"Which area has the most crime" showed "Ward 102".** Every ward now carries its area's name: the OpenStreetMap suburb
+  inside it, nearest its middle (a neighbourhood when it has none; the nearest name within 1.5 km when it has none inside).
+  Answers, overviews, the scorecard and the map say "Anna Nagar West (Ward 102)"; the map's badges say "Anna Nagar West W102".
+  A switch over the ranking counts the same answer **ward wise, zone wise or taluk wise**, one tap, no AI call.
+- **Clicking a ward in a garbage answer showed only the whole overview.** Picking a place (a bar, a badge, an area) now
+  opens a card with two choices: **only this answer's kind of problem there** (the garbage list and map for that ward), or
+  the **full overview** (every kind and department). The overview carries two tabs, "Full overview" and "Only open garbage
+  … incidents", and the topic list carries the same two tabs back. An overview now also keeps its place for follow-ups
+  ("only severe ones" after an overview of ward 45 stays in ward 45).
+- **The quarterly bank meeting pack is gone.**
+- **The weekly review is an interactive page:** headline figures with the change on last week, a map of all 200 wards
+  shaded by the figure picked (reported, change, past deadline, severe, or one kind of problem: click a kind), a ward card
+  on a click, day-by-day bars for 14 days, the kinds of problem, the wards that rose most, zones (sortable; a hover lights
+  them up on the map) and departments. Light and dark, prints. Every figure is counted on the server from the executor's
+  own collections; a test checks that the wards, zones and kinds add up to the week's total.
+
+Bugs found by the new tests and fixed:
+
+- **A place found in the AI's own words.** The complete reading "within 200 m of a school" was looked up for places, and
+  matched a school named "A School". Places are now looked up in the officer's words only.
+- **"What about the third one" went to number 1.** The reader named the right ward but the planner took the first ranked
+  place. The reader now says which number it points at, and only that place is offered to the planner. This also fixes
+  "garbage complaints there" after "which zone is slowest", a known limit of the last round.
+- **"hospitals?" after "which school has the most flooding near it"** became a plain list. The reader keeps the last
+  question's shape (a ranking stays a ranking).
+- **A cached answer** (the same plan within 60 s) came back without this question's reading.
+- **After an area overview, follow-ups lost the place** (an overview had no plan to edit).
+
+New set, written before its first run: **turns3** (25 conversations, 61 turns, each marked follow-up or new).
+First run: 56/61.

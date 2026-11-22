@@ -25,7 +25,8 @@ import { onMapCmd } from "./bridge";
 import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
 import { useWorkspace } from "./workspace";
 import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
-import { TopBars } from "./TopBars";
+import { TopBars, herePlan } from "./TopBars";
+import type { AreaRef } from "@/lib/map/plan";
 import { rankedOf } from "./answerLayers";
 
 /** the last "ui" cue the panel acted on, kept across its mounts (the panel unmounts when the map shrinks: actions.ts cueAct) */
@@ -209,7 +210,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         {ask.turns.map((t) => (
           <section key={t.id} className={`amp-turn${t === cur ? " cur" : ""}`} ref={(el) => { if (el) turnEl.current.set(t.id, el); else turnEl.current.delete(t.id); }}>
             <div className="amp-q"><span>{t.q}</span></div>
-            {t.pending && <Thinking ta={ta} />}
+            {t.pending && <Thinking ta={ta} follow={ask.turns.indexOf(t) > 0 && !!ask.plan} />}
             {!t.pending && t.error && (
               <div className="amp-err" role="alert">{t.error}
                 <button className="amp-retry" onClick={() => ask.retry(t.id)} disabled={ask.busy}><I n="refresh" />{ta ? "மீண்டும் முயல்" : "Try again"}</button>
@@ -257,6 +258,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                   </>
                 ) : (
                   <>
+                    <AreaTabs r={r} ask={ask} lang={lang} />
                     <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
                     {filtersOpen && chipsView(r)}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
@@ -279,6 +281,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                 ))}
                 {r.kind === "brief" && r.brief && (
                   <>
+                    <AreaTabs r={r} ask={ask} lang={lang} />
                     <ScorecardCard r={r} lang={lang} />
                     <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />
                     {!r.scorecard && r.brief.area.kind === "ward" && (
@@ -318,16 +321,55 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
  */
 const THINK: [string, string][] = [["Reading your question", "கேள்வியைப் படிக்கிறது"], ["Finding the places and the kind of problem", "இடங்களையும் பிரச்சனையையும் கண்டறிகிறது"],
   ["Counting on the map", "வரைபடத்தில் எண்ணுகிறது"], ["Drawing the answer", "பதிலை வரைகிறது"]];
-function Thinking({ ta }: { ta: boolean }) {
+function Thinking({ ta, follow }: { ta: boolean; follow?: boolean }) {
   const [k, setK] = useState(0);
+  // v3: after other questions the AI first reads the conversation (a follow-up, or a new question?)
+  const steps: [string, string][] = follow ? [["Reading the conversation: a follow-up or a new question?", "உரையாடலைப் படிக்கிறது: தொடர் கேள்வியா, புதியதா?"], ...THINK.slice(1)] : THINK;
   useEffect(() => {
     const ids = [900, 1900, 2900].map((ms, i) => setTimeout(() => setK(i + 1), ms));
     return () => ids.forEach(clearTimeout);
   }, []);
   return (
-    <div className="amp-think" role="status" aria-live="polite" aria-label={ta ? THINK[k][1] : THINK[k][0]}>
-      <ol>{THINK.map(([en, tam], i) => <li key={en} className={i < k ? "done" : i === k ? "now" : ""}><i />{ta ? tam : en}</li>)}</ol>
+    <div className="amp-think" role="status" aria-live="polite" aria-label={ta ? steps[k][1] : steps[k][0]}>
+      <ol>{steps.map(([en, tam], i) => <li key={en} className={i < k ? "done" : i === k ? "now" : ""}><i />{ta ? tam : en}</li>)}</ol>
       <div className="amp-think-card" aria-hidden><b /><span /><span /><span className="short" /></div>
+    </div>
+  );
+}
+
+/**
+ * v3 (owner, 22 Nov 2026: "two options: the overall overview and the garbage complaints"): an area seen two ways. Over an
+ * area's overview, when the conversation is about one kind of problem: that kind in this area, one tap. Over a list of one
+ * kind of problem inside one area: the area's whole overview, one tap. The plan is built from the conversation's own plan
+ * (its kind, time and status) with no AI call; a ward's overview is the map's own ward brief.
+ */
+function AreaTabs({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang: "en" | "ta" }) {
+  const ta = lang === "ta";
+  let area: AreaRef | null = null, topic: string | null = null, plan = null as AskResponse["plan"], onTopic = false;
+  if (r.kind === "brief" && r.brief) {
+    // the kind of problem the conversation was about just before this overview (the answer one or two turns before it)
+    const at = ask.turns.findIndex((t) => t.resp === r);
+    const from = ask.turns.slice(Math.max(0, at - 2), at).reverse().find((t) => t.resp?.kind === "answer" && t.resp.topic)?.resp ?? null;
+    if (!from?.topic || !from.plan || r.brief.area.kind === "drawn") return null;
+    area = r.brief.area; topic = ta ? from.topic.ta : from.topic.en; plan = from.plan;
+  } else if (r.kind === "answer" && r.topic && r.plan) {
+    const ins = r.plan.steps.filter((s) => s.op === "inside");
+    const only = r.plan.steps.every((s) => s.op === "take" || s.op === "inside");
+    if (!only || ins.length !== 1 || ins[0].op !== "inside" || ins[0].area.kind === "drawn") return null;
+    area = ins[0].area; topic = ta ? r.topic.ta : r.topic.en; plan = r.plan; onTopic = true;
+  }
+  if (!area || !topic || !plan) return null;
+  const a = area;
+  const label = r.context.areas[0]?.[ta ? "ta" : "en"] ?? (a.kind === "ward" ? `Ward ${a.id}` : a.kind === "zone" ? `Zone ${a.id}` : "");
+  const overview = () => {
+    if (a.kind === "ward") void ask.draw({ ward: a.id }, ta ? `${label}: முழு மேலோட்டம்` : `Full overview of ${label}`);
+    else void ask.ask(ta ? `${label} இல் என்ன நடக்கிறது` : a.kind === "point" ? `what is happening near ${label}` : `what is happening in ${label}`);
+  };
+  const toTopic = () => { const p = herePlan(plan, a); if (p) void ask.run(p, ta ? `${label}: ${topic}` : `${topic![0].toUpperCase()}${topic!.slice(1)} in ${label}`); };
+  return (
+    <div className="amp-btabs" role="tablist" aria-label={ta ? "இந்தப் பகுதியை எப்படிப் பார்ப்பது" : "How to see this area"}>
+      <button role="tab" aria-selected={!onTopic} className={!onTopic ? "on" : ""} disabled={ask.busy} onClick={() => { if (onTopic) overview(); }}>{ta ? "முழு மேலோட்டம்" : "Full overview"}</button>
+      <button role="tab" aria-selected={onTopic} className={onTopic ? "on" : ""} disabled={ask.busy} onClick={() => { if (!onTopic) toTopic(); }}>{ta ? `${topic} மட்டும்` : `Only ${topic}`}</button>
     </div>
   );
 }
