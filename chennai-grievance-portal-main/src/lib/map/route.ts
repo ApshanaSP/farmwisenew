@@ -96,7 +96,7 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { cats: ["DRAINAGE_SEWAGE"], words: ["sewage", "drainage", "drain overflow", "overflowing drain", "manhole", "கழிவுநீர்", "சாக்கடை", "kazhivuneer", "saakadai"] },
   { cats: ["WATER_SUPPLY"], words: ["drinking water", "water supply", "no water", "water shortage", "water problem", "water problems", "water not coming", "thanni varala", "thanni prachanai", "metro water", "குடிநீர்", "kudineer"] },
   { cats: ["VECTOR_DISEASE"], words: ["dengue", "mosquito", "mosquitoes", "malaria", "fever", "டெங்கு", "கொசு", "kosu"] },
-  { cats: ["STRAY_ANIMALS"], words: ["stray dog", "stray dogs", "dog bite", "dog bites", "stray cattle", "cattle on road", "cows on road", "maadu", "maadugal", "maattu thollai", "naai", "naai thollai", "nai kadi", "தெருநாய்", "நாய் கடி"] },
+  { cats: ["STRAY_ANIMALS"], words: ["naai thollai", "naai kadi", "stray dog", "stray dogs", "dog bite", "dog bites", "stray cattle", "cattle on road", "cows on road", "maadu", "maadugal", "naai", "nai kadi", "தெருநாய்", "நாய் கடி"] },
   { cats: ["TREES_PARKS"], words: ["tree fall", "fallen tree", "trees fell", "tree fell", "uprooted", "மரம் விழுந்", "மரம் சாய்ந்"] },
   { cats: ["ENCROACHMENT"], words: ["encroachment", "encroachments", "ஆக்கிரமிப்பு"] },
   { cats: ["TRAFFIC_OBSTRUCTION"], words: ["traffic jam", "traffic snarl", "illegal parking", "traffic", "போக்குவரத்து நெரிசல்"] },
