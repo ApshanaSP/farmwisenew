@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import type { Overview } from "@/lib/collector/intel";
 import { chartFacts, type ChartFacts } from "@/lib/thunai/explain";
 import { ZONE_NAMES, ZONE_TA_NAME } from "@/lib/thunai/lexicon";
-import { isNavCommand, isPlainMove, isReflex, type Checked } from "@/lib/thunai/plan";
+import { asksBeyondMove, isNavCommand, isPlainMove, isReflex, type Checked } from "@/lib/thunai/plan";
 import { confirmGate, planRisk, tapRisk } from "@/lib/thunai/risk";
 import { say as line } from "@/lib/thunai/say";
 import type { Lang, OutMode, PageKey, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "@/lib/thunai/types";
@@ -2403,7 +2403,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // and "the most congested"; the same reading sends the rules' fallback below to the city screen)
     const ca = cityAsk(said, { last: lastCityNow() });
     const cityAsFilter = !!ca && rules.kind === "do" && rules.steps.some((x) => x.a === "view" && !!x.view.cat);
-    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && (isPlainMove(rules.steps) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
+    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
       traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);

@@ -64,6 +64,12 @@ export interface MouthHooks {
   onDuck?: (d: DuckInfo) => void;
   /** v13 (21 Nov, review 1-11): the wake reply's clip started and sounds for `ms`: speech begun over it stops it (stopWakeReply) */
   onWakeSound?: (ms: number) => void;
+  /**
+   * v16 (22 Nov, the owner: "the voice reply is very late ... it's overlapping"): the Collector holds the floor (speaking now, or a sentence of
+   * theirs is still at the transcriber: Conductor.floorHeld). A speech does not start over it (it waits, at most FLOOR_WAIT_MS), an
+   * acknowledgement is not said at all, and during a barge-in the browser's voice, which cannot be ducked, stops at the end of its piece
+   */
+  floorHeld?: () => boolean;
 }
 
 let hooks: MouthHooks = {};
@@ -76,7 +82,9 @@ interface Piece extends Raw { voice: Aloud }
 /** a run of the answer asked for in one request, and its audio once it is in */
 interface Group { from: number; to: number; text: string; buf: AudioBuffer | null; pending: Promise<AudioBuffer | null> | null }
 /** `fin`: the last piece the browser's voice finished (-1: none yet), so a cut between two pieces says the next one, not the last again */
-interface Speech { raw: Raw[]; pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null; fin?: number }
+interface Speech { raw: Raw[]; pieces: Piece[]; lang: string; o: SpeakOpts; at: number; ack: boolean; gated: boolean; path: VoicePath | null; groups: Group[] | null; fin?: number;
+  /** v16: asked for, but waiting for the Collector to give the floor back: nothing of it sounds (speaking() and nowSaying() leave it out) */
+  waiting?: boolean }
 
 const SAY = "/api/jarvis/say";
 /** the most of an answer sent in one request (the route takes 2,400 characters): a longer narration is asked for in runs */
@@ -166,14 +174,33 @@ function fxOut(): AudioContext | null {
 
 const serverUp = () => Date.now() >= serverDownUntil;
 
-export const speaking = () => speakingNow || browser.speaking();
+/** v16: a speech is sounding (asked for and not waiting for the floor) */
+const sounding = () => speakingNow && !cur?.waiting;
+// v16 (22 Nov): a speech still waiting for the Collector's floor is not speaking (the ears' echo margin, the self-hearing guard and the
+// "over the voice" rules read this): nothing of it has sounded
+export const speaking = () => sounding() || browser.speaking();
+/** v16: the longest a speech waits for the floor, ms; past it, it is said (a floor never given back must not silence Jarvis) */
+export const FLOOR_WAIT_MS = 10_000;
+const FLOOR_POLL_MS = 60;
+/**
+ * v16 (22 Nov): wait while the Collector holds the floor (MouthHooks.floorHeld), for at most FLOOR_WAIT_MS. Resolves at once when it is free.
+ * Any newer speech or a stop moves the token on, and the wait ends with it (the caller checks the token).
+ */
+async function floorFree(s: Speech, my: number): Promise<void> {
+  if (!hooks.floorHeld?.()) return;
+  const t0 = Date.now();
+  s.waiting = true;
+  try {
+    while (my === token && hooks.floorHeld?.() && Date.now() - t0 < FLOOR_WAIT_MS) await new Promise((r) => setTimeout(r, FLOOR_POLL_MS));
+  } finally { s.waiting = false; }
+}
 export const voicePath = () => path;
 /** Tamil can always be spoken while the server voice works */
 export const hasVoice = (lang: string) => (serverUp() ? true : browser.hasVoice(lang));
 export const warmVoices = browser.warmVoices;
 export const voicesFor = browser.voicesFor;
 /** the words being said right now (the self-hearing guard), as shown */
-export const nowSaying = (): string | null => (speakingNow && cur ? (cur.gated ? cur.pieces : cur.raw).map((p) => p.text).join(" ") : null);
+export const nowSaying = (): string | null => (sounding() && cur ? (cur.gated ? cur.pieces : cur.raw).map((p) => p.text).join(" ") : null);
 /** v5 F1: chunks not said because a number sign was left in them after the words (a count only, never the text) */
 let digitRefusals = 0;
 export const digitRefused = () => digitRefusals;
@@ -450,6 +477,11 @@ async function run(s: Speech, my: number) {
   if (my !== token) return;
   if (!s.gated) { s.pieces = gate(s.raw, s.o.allowed, l); s.gated = true; }
   if (!s.path) s.path = choosePath(l);
+  // v16 (22 Nov): never begun over the Collector. An answer that lands while they speak, or while a newer sentence of theirs is at the
+  // transcriber, waits for it: a request handed on cancels it (turn.ts voiceWanted), anything else lets it start. (It began at full volume:
+  // the browser's voice cannot be ducked, so a late answer played over the next question)
+  await floorFree(s, my);
+  if (my !== token) return;
   let started = false;
   const start = (p: VoicePath) => { path = p; if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
   if (s.path === "pcm" && s.at < s.pieces.length) {
@@ -471,6 +503,10 @@ async function run(s: Speech, my: number) {
       while (paused && my === token) await new Promise((r) => setTimeout(r, 30));
       if (my !== token) return;
       if (s.at < s.pieces.length - 1) await new Promise((r) => setTimeout(r, s.ack ? 0 : 120));
+      // v16 (22 Nov): a barge-in ducked this voice, which on the browser's path keeps speaking ("kept"): the next piece waits while the
+      // Collector holds the floor, so Jarvis stops at the end of its sentence instead of reading on over them; a bid for the turn cancels it
+      // (stopVoice), a backchannel or a noise lets it go on (unduckVoice)
+      if (ducked === "kept" && s.at < s.pieces.length - 1) { await floorFree(s, my); if (my !== token) return; }
     }
   }
   if (my !== token) return;
@@ -518,6 +554,8 @@ export function speakAck(text: string, lang: string): boolean {
   const t = text.replace(/\s+/g, " ").trim();
   if (!t || figuresIn(t).length) return false;
   if (speakingNow || browser.speaking()) return false;
+  // v16 (22 Nov): never over the Collector, nor while a newer sentence of theirs is being read: an acknowledgement that waited would no longer be true
+  if (hooks.floorHeld?.()) return false;
   const l = short(lang);
   // said in words like any chunk (a code's digits: "Covid-19"); one that would still hold a number sign is not said
   const piece = voiced(t, 0, true, l);
@@ -601,7 +639,8 @@ function respeak() {
  * Never pause()/resume(); the final stop (stopVoice) is the conductor's, once the speech holds two real words or 600 ms.
  */
 export function duckVoice(): void {
-  if (!speakingNow || !cur || ducked) return;
+  // (v16: a speech waiting for the floor has nothing to duck)
+  if (!sounding() || !cur || ducked) return;
   const t0 = performance.now();
   const p = cur.path ?? path;
   if (p === "pcm" && ctx && master) {
@@ -704,7 +743,8 @@ export const forgetBookmark = () => { bookmark = null; };
  * Call it for an engaged or named sentence only, never for side talk.
  */
 export function earconEnd(): boolean {
-  if (!hooks.onEarcon || (speakingNow && !paused)) return false;
+  // (v16: a speech still waiting for the floor has not sounded: the tone still says "heard you")
+  if (!hooks.onEarcon || (sounding() && !paused)) return false;
   const c = fxOut();
   if (!c) return false;
   hooks.onEarcon(EARCON_GUARD_MS, EARCON_TONE_MS);
@@ -768,7 +808,8 @@ export const wakeReady = (lang: string) => wakeBufs[short(lang)].length > 0;
  */
 export function prewarmVoice(langs: string[]): boolean {
   const ls = [...new Set(langs.map(short))].filter((l) => natural(l));
-  if (speakingNow || !ls.length) return false;
+  // (v16: an answer waiting for the floor is warmed too: it is about to speak)
+  if (sounding() || !ls.length) return false;
   return browser.prewarm(ls.map((l) => (l === "ta" ? "ta-IN" : "en-IN")));
 }
 /** v13 (review 1-11): the wake reply now sounding (its source, its gain, its context), or null */
@@ -799,8 +840,8 @@ export function wakeReply(lang: string): { ms: number; at: number } | null {
   const list = wakeBufs[l].length ? wakeBufs[l] : wakeBufs.en;
   const c = fxOut();
   if (!c || !list.length) { void loadWakeReplies(); return null; }
-  // over Jarvis's own voice it is not said (the turn machine stops that voice first when the name cuts in)
-  if (speakingNow && !paused) return null;
+  // over Jarvis's own voice it is not said (the turn machine stops that voice first when the name cuts in); v16: a speech waiting for the floor is no voice yet
+  if (sounding() && !paused) return null;
   try {
     if (c.state === "suspended") void c.resume().catch(() => undefined);
     const i = nextVariant(list.length, wakeLast[l]);
@@ -850,7 +891,8 @@ export function warmVoice(lang: string): void {
 export function voiceLevel(now = performance.now()): number {
   // v6: the wake reply's own audio, while it plays
   if (wakeAnalyser && now < wakeUntil) return rms(wakeAnalyser);
-  if (!speakingNow || paused || ducked === "cut") return 0;
+  // (v16: nothing sounds while a speech waits for the floor)
+  if (!sounding() || paused || ducked === "cut") return 0;
   if (path === "pcm" && analyser) return rms(analyser);
   if (path === "text") return 0.15;
   // v6 (Phase 6): the browser's voice gives no audio to read, but it says when each word starts: the core pulses on the real words (a

@@ -337,7 +337,7 @@ export async function focusRows(f: Pick<IncidentFilters, "cats" | "dept" | "talu
   if (base.cats?.length) (filt.push("i.category_code IN (?)"), fp.push(base.cats));
   if (base.dept) (filt.push("i.lead_dept = ?"), fp.push(base.dept));
   if (base.taluk) (filt.push("i.taluk_code = ?"), fp.push(base.taluk));
-  const [days, kinds, backlog, repeats] = await Promise.all([
+  const [days, kinds, backlog, repeats, owners] = await Promise.all([
     q(`SELECT i.zone_no AS zone, i.zone_name AS name, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS d, COUNT(*) AS n,
               SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.recurrence_90d, 0) >= 2) AS rep
        FROM incidents i WHERE ${look.sql} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d')`, look.params),
@@ -347,13 +347,17 @@ export async function focusRows(f: Pick<IncidentFilters, "cats" | "dept" | "talu
        FROM incidents i WHERE ${filt.join(" AND ")} GROUP BY i.zone_no`, fp),
     q(`SELECT i.zone_no AS zone, i.zone_name AS name, i.place_text AS place, i.category_code AS cat, i.category_label AS label, COUNT(*) AS n, SUM(${OPEN} = 1) AS open
        FROM incidents i WHERE ${win.sql} AND i.zone_no IS NOT NULL AND i.place_text IS NOT NULL AND i.place_text <> ''
-       GROUP BY i.zone_no, i.zone_name, i.place_text, i.category_code, i.category_label HAVING COUNT(*) >= 3 ORDER BY n DESC LIMIT 15`, win.params)
+       GROUP BY i.zone_no, i.zone_name, i.place_text, i.category_code, i.category_label HAVING COUNT(*) >= 3 ORDER BY n DESC LIMIT 15`, win.params),
+    // v16 (22 Nov): who holds each zone's cases past their deadline, so the answer can say whom to call
+    q(`SELECT i.zone_no AS zone, i.lead_dept AS dept, COUNT(*) AS n FROM incidents i WHERE ${filt.join(" AND ")} AND ${OPEN} = 1 AND ${pastDueSql(now)} AND i.lead_dept IS NOT NULL
+       GROUP BY i.zone_no, i.lead_dept`, fp).catch(() => [] as Row[])
   ]);
   return {
     days: days.map((r) => ({ zone: num(r.zone), name: String(r.name ?? ""), d: String(r.d ?? ""), n: num(r.n), severe: num(r.severe), rep: num(r.rep) })),
     kinds: kinds.map((r) => ({ zone: num(r.zone), cat: String(r.cat ?? ""), label: String(r.label ?? r.cat ?? ""), now: num(r.now_n), prev: num(r.prev_n) })),
     backlog: backlog.map((r) => ({ zone: num(r.zone), open: num(r.open), overdue: num(r.overdue), severeOpen: num(r.severe_open) })),
-    repeats: repeats.map((r) => ({ zone: num(r.zone), name: String(r.name ?? ""), place: String(r.place ?? ""), cat: String(r.cat ?? ""), label: String(r.label ?? ""), n: num(r.n), open: num(r.open) }))
+    repeats: repeats.map((r) => ({ zone: num(r.zone), name: String(r.name ?? ""), place: String(r.place ?? ""), cat: String(r.cat ?? ""), label: String(r.label ?? ""), n: num(r.n), open: num(r.open) })),
+    owners: (owners as Row[]).map((r) => ({ zone: num(r.zone), dept: String(r.dept ?? ""), n: num(r.n) })).filter((r) => r.dept)
   };
 }
 

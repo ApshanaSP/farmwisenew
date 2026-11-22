@@ -49,6 +49,7 @@ vi.mock("./mouth", () => ({
 }));
 
 import { Conductor, earconDrops, hearOutage, type ConductorHooks, type HeardLine } from "./conductor";
+import { TUNING } from "@/lib/thunai/vad";
 
 interface Post { url: string; init: RequestInit; res: (r: Response) => void; rej: (e: unknown) => void }
 let posts: Post[] = [];
@@ -142,7 +143,7 @@ describe("a /hear timeout (Voice 4)", () => {
     say(e, 1000, 900);
     expect(posts.length).toBe(1);
     expect(posts[0].url).toContain("lane=ambient");
-    await vi.advanceTimersByTimeAsync(6200);
+    await vi.advanceTimersByTimeAsync(TUNING.hearTimeoutMs + 200);
     expect(missed).toEqual([]);
     expect(c.state).toBe("listening");
     c.close();
@@ -151,7 +152,7 @@ describe("a /hear timeout (Voice 4)", () => {
     vi.useFakeTimers();
     const { c, e, missed } = await boot();
     say(e, 1000);
-    await vi.advanceTimersByTimeAsync(6200);
+    await vi.advanceTimersByTimeAsync(TUNING.hearTimeoutMs + 200);
     expect(missed).toEqual(["timeout"]);
     c.close();
   });

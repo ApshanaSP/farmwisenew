@@ -54,8 +54,11 @@ function softDot(t: string, i: number): boolean {
   if (t[i] !== ".") return false;
   const before = t[i - 1] ?? "", after = t[i + 1] ?? "";
   if (/\d/.test(before) && /\d/.test(after)) return true;
-  // an initial or a title: "T. Nagar", "St. Thomas", "Dr. Rao"
-  const word = /(?:^|[\s(])([\p{L}]{1,3})$/u.exec(t.slice(Math.max(0, i - 4), i))?.[1] ?? "";
+  // v16 (22 Nov, the browser drive): a dot with a letter right after it is inside an abbreviation, never a sentence's end: "M.K.B. Nagar" was
+  // spoken as four utterances, "at M." / "K." / "B." / "Nagar, which ...", each stopped and started again
+  if (/\p{L}/u.test(before) && /\p{L}/u.test(after)) return true;
+  // an initial or a title: "T. Nagar", "St. Thomas", "Dr. Rao", and the last initial of a run ("M.K.B. Nagar")
+  const word = /(?:^|[\s(.])([\p{L}]{1,3})$/u.exec(t.slice(Math.max(0, i - 4), i))?.[1] ?? "";
   if (word && /\s/.test(after) && (/^[A-Z]$/.test(word) || /^(St|Dr|Mr|Ms|Mrs|No|Rd)$/.test(word))) return true;
   return false;
 }

@@ -25,6 +25,8 @@
  * decode's place in the race (same waits), and that Whisper decode runs only when Sarvam fails. "primary": Sarvam first, the whole
  * Whisper race only when it fails. "shadow": Whisper decides; Sarvam hears alongside and only its timing and agreement are logged.
  * Failing is an error, a timeout, a skip (sarvam.ts) or a reading with nothing usable in it.
+ * v16 (22 Nov): "primary" is hedged: Sarvam still out after SARVAM_HEDGE_MS (2 s), the Whisper race starts beside it and the first good
+ * reading wins (primaryHedged), so a slow Sarvam no longer spends the browser's whole wait before Whisper is even asked.
  */
 import { namedIn } from "./addressed";
 import { correctTranscript, gazetteerOn } from "./gazetteer";
@@ -55,6 +57,14 @@ export const GRACE_MS = 250;
 export const TRANSLATE_GRACE_MS = 700;
 /** Whisper's own confidence that clears the bar */
 export const GOOD_LOGPROB = -0.35;
+/**
+ * v16 (22 Nov, the owner: "what I'm speaking, sometimes it's not getting it"): with JARVIS_STT_SARVAM=primary, Sarvam alone for this long, ms
+ * (JARVIS_SARVAM_HEDGE_MS); still no reading, and the Whisper race starts beside it, the first good reading wins. Before v16 Whisper started
+ * only once Sarvam had failed: a Sarvam that hung (6.1 s and 8.4 s, 21-22 Nov) used up the browser's wait, and both Whisper decodes were
+ * aborted 17-228 ms after they began, the sentence lost. Sarvam answers in 0.2-2.1 s on the owner's turns (telemetry, 21-22 Nov)
+ */
+export const SARVAM_HEDGE_MS = 2000;
+export const sarvamHedgeMs = (): number => { const v = env("JARVIS_SARVAM_HEDGE_MS"), n = Number(v); return v && Number.isFinite(n) && n >= 0 ? Math.floor(n) : SARVAM_HEDGE_MS; };
 
 // ---- the prompts ----
 
@@ -402,6 +412,52 @@ async function whisperRace(rs: Racer[], expected: "en" | "ta", grace: number, gu
   for (const r of rs) letGo(r);
 }
 
+/**
+ * v16 (22 Nov): JARVIS_STT_SARVAM=primary with its hedge. Sarvam is asked; a reading (or a failure) by `hedgeMs` decides as before v16: the
+ * reading is the answer, a failure runs the whole Whisper race after it (`raced` false: the caller runs it). Past `hedgeMs` with Sarvam still
+ * out, the Whisper race starts beside it and the first good reading wins: Sarvam's (the Whisper decodes are let go) or the race's choice
+ * (Sarvam is let go). A race with nothing acceptable waits for Sarvam, whose own timeout bounds the wait.
+ */
+async function primaryHedged(o: {
+  sarvam: (signal?: AbortSignal) => Promise<SarvamHeard | null>; signal?: AbortSignal; secs: number; echo: EchoCtx; hedgeMs: number;
+  start: () => Racer[]; race: (rs: Racer[]) => Promise<void>; site: "en" | "ta"; mark: () => void;
+}): Promise<{ first: Scored | null; whisper: Racer[]; raced: boolean }> {
+  // Sarvam's own abort (to let it go when Whisper wins), the request's forwarded
+  const ctl = new AbortController();
+  const off = () => ctl.abort();
+  if (o.signal?.aborted) ctl.abort(); else o.signal?.addEventListener("abort", off, { once: true });
+  try {
+    const sp = o.sarvam(ctl.signal).then((h) => sarvamScored(h, o.secs, o.echo), () => null);
+    o.mark();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const lead = await Promise.race([sp.then((s) => ({ s })), new Promise<null>((r) => { timer = setTimeout(() => r(null), Math.max(0, o.hedgeMs)); })]);
+    if (timer) clearTimeout(timer);
+    if (lead) return { first: lead.s, whisper: [], raced: false };
+    // Sarvam is slow: the Whisper race beside it (words-free: when, and that it happened)
+    telemetry("stt_hedge", { provider: "sarvam", model: SARVAM_MODEL, after: o.hedgeMs });
+    const rs = o.start();
+    if (!rs.length) return { first: await sp, whisper: rs, raced: true };
+    o.mark();
+    const raceDone = o.race(rs);
+    // Sarvam's reading once back (undefined: still out), and whether the race is over
+    const st: { sv: Scored | null | undefined; over: boolean } = { sv: undefined, over: false };
+    await new Promise<void>((done) => {
+      const check = () => {
+        if (st.sv) { done(); return; }
+        if (st.over && (st.sv === null || choose(rs.filter((r) => r.d).map((r) => r.d!), o.site, o.echo))) done();
+      };
+      void sp.then((s) => { st.sv = s; check(); });
+      void raceDone.then(() => { st.over = true; check(); });
+    });
+    if (st.sv) { for (const r of rs) letGo(r); return { first: st.sv, whisper: rs, raced: true }; }
+    // the race's choice (or nothing at all): a Sarvam still out is let go
+    ctl.abort();
+    return { first: null, whisper: rs, raced: true };
+  } finally {
+    o.signal?.removeEventListener("abort", off);
+  }
+}
+
 const NAMED = /(?:^|[^a-z])(?:jarvis|jarviz|jarvish|jervis|javis|jaarvis)(?:[^a-z]|$)|ஜார்விஸ்|ஜார்வீஸ்|ஜாவிஸ்/i;
 /** v6: JARVIS_STT_NAME_FAST=0 turns the name-only early finish off (default on) */
 export const nameFast = () => env("JARVIS_STT_NAME_FAST") !== "0";
@@ -424,8 +480,8 @@ export interface HearOpts {
   speechMs?: number | null;
   /** v5 trace: the route's serverClock(), started when the request arrived; left out, a clock is started when hearUtterance begins */
   clock?: ReturnType<typeof serverClock>;
-  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace */
-  ms?: { whisper?: number; grace?: number; translate?: number };
+  /** test knobs, ms: one Whisper request's limit, the grace after the first good decode, the Tamil decode's longer grace; v16: Sarvam's lead before the Whisper hedge */
+  ms?: { whisper?: number; grace?: number; translate?: number; hedge?: number };
   /** v10: the day's keyterms for Sarvam (v10/lexserver.ts dayKeytermsNow); absent, sarvam.ts's fixed list */
   keyterms?: readonly string[] | null;
 }
@@ -456,13 +512,6 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
   // v8 (sarvam.ts): JARVIS_STT_SARVAM, off by default and without SARVAM_API_KEY; never on the ambient lane (room talk would spend it)
   const sv = lane === "ambient" || !sarvamKeyed() ? "off" : sarvamMode();
   const sarvam = (signal?: AbortSignal) => sarvamTranscribe(audio, { secs, lane, signal, fetcher: o.fetcher, keyterms: o.keyterms ?? null });
-  // primary: Sarvam first; the Whisper race below runs only when it fails
-  let first: Scored | null = null;
-  if (sv === "primary") {
-    const p = sarvam(o.signal);
-    clock.mark("sttSent");
-    first = sarvamScored(await p.catch(() => null), secs, echo);
-  }
   // tamil: Sarvam's decode takes the forced-Tamil Whisper decode's place (and its waits); that Whisper decode runs only when Sarvam fails
   const tamilSlot = (a: { lang: "en" | "ta"; model: string }, lane: Lane) => racer(a.lang, SARVAM_MODEL, o.signal, async (s) => {
     const d = sarvamScored(await sarvam(s).catch(() => null), secs, echo);
@@ -470,14 +519,26 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     l.record("groq", a.model, { audioS: secs, lane });
     return decode(audio, a.lang, a.model, s, o.fetcher, sttPrompt(a.lang, vocab), wMs);
   });
-  const whisper = first ? [] : wanted.filter((a) => b.models.includes(a.model)).map((a) => (sv === "tamil" && a.lang === "ta" ? tamilSlot(a, lane) : whisperOf(a, lane)));
+  const startWhisper = () => wanted.filter((a) => b.models.includes(a.model)).map((a) => (sv === "tamil" && a.lang === "ta" ? tamilSlot(a, lane) : whisperOf(a, lane)));
+  // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
+  const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
+  const guardMs = lane !== "ambient" ? guard : 0;
+
+  // primary: Sarvam first; the Whisper race runs when it fails, or (v16) beside it once it has been out SARVAM_HEDGE_MS
+  let first: Scored | null = null;
+  let whisper: Racer[] = [];
+  let raced = false;
+  if (sv === "primary") {
+    const h = await primaryHedged({ sarvam, signal: o.signal, secs, echo, hedgeMs: o.ms?.hedge ?? sarvamHedgeMs(), start: startWhisper,
+      race: (rs) => whisperRace(rs, expected, grace, guardMs, echo), site: o.site, mark: () => clock.mark("sttSent") });
+    first = h.first; whisper = h.whisper; raced = h.raced;
+  }
+  if (!first && !raced) whisper = startWhisper();
   // shadow: Whisper decides; Sarvam hears the same clip alongside (shadowLog below)
   const shadow = sv === "shadow" ? sarvam(o.signal).catch(() => null) : null;
   // each racer's request has gone out by now (decode() calls fetch before its first await)
   if (whisper.length) clock.mark("sttSent");
-  // the language waited for: the last heard line's, when the browser says it, on a turn someone waits on; else the site's
-  const expected = lane !== "ambient" && (o.lastLang === "ta" || o.lastLang === "en") ? o.lastLang : o.site;
-  await whisperRace(whisper, expected, grace, lane !== "ambient" ? guard : 0, echo);
+  if (!raced) await whisperRace(whisper, expected, grace, guardMs, echo);
   let c = first ?? choose(whisper.filter((r) => r.d).map((r) => r.d!), o.site, echo);
 
   // an ambient sentence that names Jarvis, read unsure: once more, in the other language only
@@ -505,7 +566,7 @@ export async function hearUtterance(buf: ArrayBuffer, o: HearOpts): Promise<Hear
     const model = r.d?.model ?? r.model;
     telemetry("stt_decode", { lane, provider: model === SARVAM_MODEL ? "sarvam" : "groq", model, decode: r.kind, ms: r.ms || Date.now() - r.t0, ok: !!s?.ok, why: s ? s.why ?? undefined : r.aborted ? "aborted" : r.d === null && !r.err ? "none" : whyOf(r.err), conf: s ? Math.round(s.logprob * 100) / 100 : undefined, aborted: r.aborted || undefined, sttWinner: used ?? "none" });
   }
-  telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang });
+  telemetry("stt", { lane, ms, ok: !!c, calls: whisper.length, model: c?.model ?? undefined, sttWinner: used ?? "none", lang: c?.lang, ...(raced ? { hedged: true } : {}) });
   if (!c) {
     const nothing = !got.length;
     if (nothing && whisper.some((r) => r.err instanceof SttBusy)) return heard({ lane, lang: o.site, ms, budget: "low", timing });

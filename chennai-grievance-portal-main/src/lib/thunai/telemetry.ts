@@ -93,13 +93,15 @@ export interface TelemetryFields {
   tool?: string;
   // ---- the web reader (lib/thunai/web, v6 Phase 4): a host name only, never a page's words or a URL's path
   host?: string;
+  // ---- v16: the reader's reading, as codes (v16/reader.ts)
+  ask?: string; lenses?: string; about?: string | null; one?: boolean; zones?: number;
 }
 
 type Scalar = string | number | boolean | null | undefined;
 
 const KEYS: (keyof TelemetryFields)[] = ["ms", "provider", "model", "tokens", "lane", "round", "calls", "ok", "why", "turn", "lang", "bytes", "hop", "cached", "count", "kind",
   "path", "cacheRead", "cacheWrite", "aborted", "hedged", "winner", "into", "after", "decode", "conf", "sttWinner", "chars", "status", "fallback", "barge", "selfHeard",
-  "tier", "act", "signal", "spoken", "severity", "entity", "via", "hit", "tool", "host"];
+  "tier", "act", "signal", "spoken", "severity", "entity", "via", "hit", "tool", "host", "ask", "lenses", "about", "one", "zones"];
 /** Only these keys are written: a stray `text` field cannot reach the file. */
 export const FIELDS: ReadonlySet<string> = new Set<string>(["event", ...KEYS]);
 

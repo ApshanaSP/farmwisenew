@@ -263,6 +263,13 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     if (s.focus === "worst-jam" || s.focus === "repeat") out.focus = s.focus;
     if (typeof s.rain === "string" && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(s.rain.trim())) out.rain = s.rain.trim();
   }
+  // v16 (22 Nov): the focus screen's lenses and subject, as the reader understood them (v16/reader.ts)
+  if (recipe === "focus") {
+    const lens = (Array.isArray(s.lens) ? s.lens : []).filter((x): x is NonNullable<Slots["lens"]>[number] => x === "attention" || x === "improving" || x === "worsening" || x === "repeat");
+    if (lens.length) out.lens = [...new Set(lens)].slice(0, 4);
+    if (s.about === "areas" || s.about === "places" || s.about === "kinds") out.about = s.about;
+  }
+  if (recipe === "advise" && s.one === true) out.one = true;
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
   if (recipe === "complete" && Array.isArray(s.ids)) {

@@ -49,6 +49,12 @@ export function aideWanted(r: AgentResult | null | undefined, question: string, 
   // v13 (21 Nov review, finding 1 8): every city screen, the plain one too: its say is code's own line from the shared city data (lib/city/now.ts),
   // and the aide's writer and gap search made "Where are the flooded roads?" slow (up to 8 s with the outlet feeds, past the client deadline)
   if (r.stage.recipe === "city") return false;
+  // v16 (22 Nov): the focus screen says code's own answer (recipes/focus.ts districtSay and its shapes): the writer's rewrites of 22 Nov lost
+  // the point (a roads question answered with backlog counts, "zero areas improving", a gap line for Velachery), and its 1-2 s came on top
+  if (r.stage.recipe === "focus") return false;
+  // v16 (the browser drive): "that incident alone" is the case screen with code's own brief of it (screens.ts briefIssue); the writer's rewrite
+  // came 3.5 s after the screen (first words at 5.3 s) and said less ("A crime report at Tondiarpet")
+  if (r.note === "reader:first_case:one") return false;
   return ASKED.has(r.stage.recipe) || QUESTION.test(question);
 }
 
@@ -57,6 +63,9 @@ export const gazOf = (w: World): Gazetteer => { let g = gazCache.get(w); if (!g)
 
 export interface AideCtx {
   question: string;
+  /** v16: the reader understood the question as one about the dashboard's data: no outside gap is looked for or said (the 22 Nov probe:
+   * "The dashboard has nothing on I'm going to Adyar tomorrow") */
+  noGap?: boolean;
   world: World;
   user: string;
   signal?: AbortSignal;
@@ -111,6 +120,7 @@ export async function aideAnswer(r: AgentResult & { stage: StageDocT }, ctx: Aid
   const written = await writeAnswer({ question: ctx.question, lang, sheet, note: sheet.note, last: ctx.last ?? null, fallback: fallbackOf(doc, lang) },
     { user: ctx.user, until, firstBy: Math.min(until, t0 + firstMs()), signal: ctx.signal, onSentence: emit, noFallbackOnGap: true, ...(ctx.write ?? {}), now });
   const said = [...written.sentences];
+  if (ctx.noGap) written.gap = null;
   let gap: AideOut["gap"] = null;
   let gapFacts7: Fact7[] = [];
   let links: BlockT | null = null;

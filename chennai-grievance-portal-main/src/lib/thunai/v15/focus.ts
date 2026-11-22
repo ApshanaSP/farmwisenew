@@ -16,6 +16,7 @@
  *   - the kind of report behind each zone's move, and the places where one kind came 3 or more times in the window.
  * Every figure said is on the screen (recipes/focus.ts). A rise in reports is not proof that things are worse on the ground: the caveat says so.
  */
+import { ZONES } from "../lexicon";
 import type { World } from "../types";
 
 export type Lens = "attention" | "improving" | "worsening" | "repeat";
@@ -50,7 +51,10 @@ export function focusAsk(text: string, w?: Pick<World, "zones"> | null): { lense
   const t = text.normalize("NFC");
   if (DEPT.test(t)) return null;
   const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const named = w ? w.zones.filter((z) => (z.name && new RegExp(`\\b${esc(z.name)}\\b`, "i").test(t)) || (!!z.ta && t.includes(z.ta))).length : 0;
+  // v16 (22 Nov): also the lexicon's spellings, so "அலந்தூர் and அடையார்" (the world's Tamil names are ஆலந்தூர், அடையாறு) counts as two zones
+  // named: that sentence went to the district's list at 11:55 (the reader decides first now; this is the lane's own guard when it is off)
+  const named = w ? w.zones.filter((z) => (z.name && new RegExp(`\\b${esc(z.name)}\\b`, "i").test(t)) || (!!z.ta && t.includes(z.ta))
+    || (ZONES[z.n]?.ta ?? []).some((v) => t.includes(v)) || (ZONES[z.n]?.en ?? []).some((v) => new RegExp(`\\b${esc(v)}\\b`, "i").test(t))).length : 0;
   if (named >= 1) return null;
   const at = (re: RegExp) => { const m = re.exec(t); return m ? m.index : -1; };
   const found: { lens: Lens; at: number }[] = [];
@@ -74,6 +78,8 @@ export interface FocusRows {
   kinds: { zone: number; cat: string; label: string; now: number; prev: number }[];
   backlog: { zone: number; open: number; overdue: number; severeOpen: number }[];
   repeats: { zone: number; name: string; place: string; cat: string; label: string; n: number; open: number }[];
+  /** v16: who holds each zone's cases past their deadline (department code, count) */
+  owners?: { zone: number; dept: string; n: number }[];
 }
 export interface KindMove { cat: string; label: string; now: number; prev: number; delta: number }
 export interface ZoneFocus {
@@ -86,6 +92,10 @@ export interface ZoneFocus {
   slopePct: number | null;
   severe: number; repeat: number; open: number; overdue: number; severeOpen: number;
   rise: KindMove | null; fall: KindMove | null;
+  /** v16: the zone's kinds of report with the biggest moves (up to 5, by the size of the change) and its biggest kinds now (up to 3) */
+  moves?: KindMove[]; top?: { cat: string; label: string; now: number }[];
+  /** v16: the department holding most of the zone's cases past their deadline */
+  owner?: { dept: string; n: number } | null;
   score: number;
   reasons: Bi[];
 }
@@ -101,6 +111,8 @@ export interface FocusAnalysis {
   byChange: ZoneFocus[];
   district: { now: number; prev: number; delta: number; pct: number | null; weekly: number[]; overdue: number; open: number };
   spots: FocusRows["repeats"];
+  /** v16: the kinds of report across the zones read, now against before, the biggest rise first */
+  kinds?: (KindMove & { trend: "worse" | "better" | "steady"; pct: number | null })[];
 }
 
 const DAY = 86_400_000;
@@ -135,6 +147,18 @@ const WIN: Record<7 | 28 | 84, { now: Bi; before: Bi; short: Bi }> = {
   84: { now: bi("the last 12 weeks", "கடந்த 12 வாரத்துல"), before: bi("the 12 weeks before", "அதுக்கு முந்தைய 12 வாரம்"), short: bi("12 weeks", "12 வாரம்") }
 };
 export const windowWords = (days: number) => WIN[(days === 7 || days === 84 ? days : 28) as 7 | 28 | 84];
+
+/** v16: kinds of report summed over the zones given (all when `only` is empty), with the same test of a real move as the zones', the biggest rise first. */
+export function kindsOf(kinds: FocusRows["kinds"], only: number[] = []): NonNullable<FocusAnalysis["kinds"]> {
+  const by = new Map<string, { cat: string; label: string; now: number; prev: number }>();
+  for (const k of kinds) {
+    if (only.length && !only.includes(k.zone)) continue;
+    const x = by.get(k.cat) ?? { cat: k.cat, label: k.label, now: 0, prev: 0 };
+    x.now += k.now; x.prev += k.prev; by.set(k.cat, x);
+  }
+  return [...by.values()].filter((k) => k.now + k.prev > 0).map((k) => ({ ...k, delta: k.now - k.prev, trend: trendOf(k.now, k.prev), pct: pctOf(k.now, k.prev) }))
+    .sort((a, b) => b.delta - a.delta || b.now - a.now).slice(0, 20);
+}
 
 /** The analysis, by code, from focusRows' rows. `now`: the data's time (IST "YYYY-MM-DD HH:MM:SS"). */
 export function analyseFocus(rows: FocusRows, now: string, days: 7 | 28 | 84, w: Pick<World, "zones">): FocusAnalysis {
@@ -171,7 +195,11 @@ export function analyseFocus(rows: FocusRows, now: string, days: 7 | 28 | 84, w:
     return {
       zone, name, now: nowN, prev: prevN, delta: nowN - prevN, pct: pctOf(nowN, prevN), z: Math.round(zOf(nowN, prevN) * 10) / 10, trend: trendOf(nowN, prevN),
       weekly, slopePct: slopePct(weekly.slice(-8)), severe, repeat, open: bl?.open ?? 0, overdue: bl?.overdue ?? 0, severeOpen: bl?.severeOpen ?? 0,
-      rise: rise && rise.delta > 0 ? rise : null, fall: fall && fall.delta < 0 ? fall : null, score: 0, reasons: []
+      rise: rise && rise.delta > 0 ? rise : null, fall: fall && fall.delta < 0 ? fall : null,
+      moves: [...moves].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || b.now - a.now).slice(0, 5),
+      top: kinds.filter((k) => k.now > 0).sort((a, b) => b.now - a.now).slice(0, 3).map((k) => ({ cat: k.cat, label: k.label, now: k.now })),
+      owner: (rows.owners ?? []).filter((o) => o.zone === zone && o.n > 0).sort((a, b) => b.n - a.n).map((o) => ({ dept: o.dept, n: o.n }))[0] ?? null,
+      score: 0, reasons: []
     };
   });
   // where to concentrate: each part as a share of the highest zone's, weighted
@@ -197,10 +225,12 @@ export function analyseFocus(rows: FocusRows, now: string, days: 7 | 28 | 84, w:
   const dNow = zones.reduce((a, z) => a + z.now, 0), dPrev = zones.reduce((a, z) => a + z.prev, 0);
   const weekly = new Array<number>(WEEKS).fill(0);
   for (const z of zones) z.weekly.forEach((v, i) => { weekly[i] += v; });
+  // v16: the kinds across every zone read (the district, or the zones a caller keeps: kindsOf)
+  const kinds = kindsOf(rows.kinds);
   return {
     days, weekLabels, zones, attention, worse, better, byChange,
     district: { now: dNow, prev: dPrev, delta: dNow - dPrev, pct: pctOf(dNow, dPrev), weekly, overdue: zones.reduce((a, z) => a + z.overdue, 0), open: zones.reduce((a, z) => a + z.open, 0) },
-    spots: rows.repeats.slice(0, 10)
+    spots: rows.repeats.slice(0, 10), kinds
   };
 }
 

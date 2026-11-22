@@ -48,8 +48,12 @@ export const TUNING = {
   bargeHoldMs: 600,
   /** ...or as soon as the captions' live words hold this many words that are not backchannels ("mm-hmm", "okay", சரி, "seri") */
   bargeWords: 2,
-  /** the browser gives up on /hear after this long and the sentence counts as not heard, ms */
-  hearTimeoutMs: 6000,
+  /**
+   * the browser gives up on /hear after this long and the sentence counts as not heard, ms. v16 (22 Nov): 8000, was 6000. With Sarvam primary
+   * the server's fallback is Sarvam's 2 s lead and then Whisper (stt.ts SARVAM_HEDGE_MS, 5 s a decode): at 6 s the browser cut the request while
+   * Whisper was still decoding, and the request's abort let both decodes go (11:56:31 and 23:18:12 were lost so)
+   */
+  hearTimeoutMs: 8000,
   /** an ambient sentence shorter than this is never sent to transcription, ms */
   ambientMinMs: 400,
   /**

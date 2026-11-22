@@ -117,6 +117,29 @@ export function questionBusy(now: number = Date.now()): boolean {
   for (const [id, at] of b.n) if (now - at > BUSY_MAX_MS) b.n.delete(id);
   return b.n.size > 0 || now - b.lastEnd < BUSY_AFTER_MS;
 }
+/**
+ * v16 (22 Nov): a tick's heavy step (everything but the prompt warm, which is network only) starts only after this long with no question,
+ * and is skipped for that tick when no such pause comes within TICK_QUIET_MAX_MS. 1.5 s after an answer the Collector is still listening
+ * to it, and the next sentence comes 5-15 s later: the speech-to-text of 11:56:31 and 23:18:12 came back 3.6-5.9 s late behind a step that
+ * held the one thread (the voice review, 22 Nov). The other triggers (start, hour, build) keep v15's short wait.
+ */
+export const TICK_QUIET_MS = 20_000;
+export const TICK_QUIET_MAX_MS = 60_000;
+/** No question for `ms` (and none being answered)? */
+export function quietFor(ms: number, now: number = Date.now()): boolean {
+  const b = busyState();
+  for (const [id, at] of b.n) if (now - at > BUSY_MAX_MS) b.n.delete(id);
+  return b.n.size === 0 && now - b.lastEnd >= ms;
+}
+/** Waits until no question for `ms`; false when that did not come within `maxMs`. */
+export async function untilQuietFor(ms: number, maxMs: number, step = 250): Promise<boolean> {
+  const t0 = Date.now();
+  while (!quietFor(ms)) {
+    if (Date.now() - t0 >= maxMs) return false;
+    await new Promise<void>((r) => unref(setTimeout(r, step)));
+  }
+  return true;
+}
 /** Waits (at most `maxMs`) until no question is being answered. */
 export async function untilQuiet(maxMs = 20_000, step = 150): Promise<void> {
   const t0 = Date.now();
@@ -218,6 +241,9 @@ const STEPS: Record<WarmStep, () => Promise<unknown>> = {
     const [round, world] = await Promise.all([import("@/lib/thunai/round"), import("@/lib/thunai/world")]);
     const w = await world.serverWorld();
     K().promptAt = Date.now();
+    // v16 (22 Nov): the reader's prefix first: it is every turn's first call now (v16/reader.ts), and a cold one ran past its 2.6 s
+    const reader = await import("@/lib/thunai/v16/reader");
+    if (reader.readerOn()) await claude.claudeWarm({ system: reader.readerSystem(w), schema: reader.ReadingSchema, timeoutMs: PROMPT_TIMEOUT_MS }).catch(() => null);
     return claude.claudeWarm({ ...round.plannerWarm(w), timeoutMs: PROMPT_TIMEOUT_MS });
   }
 };
@@ -245,7 +271,11 @@ export async function runPass(why: WarmWhy, o: { steps?: StepRunners; claude?: (
     plan = planPass(why, { active, jarvis: activeWithin("jarvis", ACTIVE_MS, t0), claude, promptDue: t0 - k.promptAt >= PROMPT_EVERY_MS, quiet });
     for (const step of plan) {
       // v15: a question being answered goes first; the pass's own steps wait for it (tests pass their own steps and do not wait)
-      if (!o.steps) await untilQuiet();
+      if (!o.steps) {
+        // v16: a tick's heavy step waits for a real pause in the conversation, else waits for the next tick
+        if (why === "tick" && step !== "prompt") { if (!(await untilQuietFor(TICK_QUIET_MS, TICK_QUIET_MAX_MS))) { times[step] = 0; continue; } }
+        else await untilQuiet();
+      }
       const ts = now();
       try { await asBackground(o.steps?.[step] ?? STEPS[step]); } catch (e) { console.warn(`[jarvis warm] ${step} failed: ${(e as Error)?.message?.slice(0, 160)}`); }
       times[step] = now() - ts;

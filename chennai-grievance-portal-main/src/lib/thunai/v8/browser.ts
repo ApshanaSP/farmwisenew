@@ -14,7 +14,7 @@ import { localStageCommand, type LocalCmd } from "../stagelocal";
 import { intentMarker } from "../quick";
 import { missionIntent } from "../missions.words";
 import { understand } from "../understand";
-import { isNavCommand, isPlainMove, isReflex } from "../plan";
+import { asksBeyondMove, isNavCommand, isPlainMove, isReflex } from "../plan";
 import { planRisk } from "../risk";
 import { asksPrivate } from "../privacy";
 import type { Lang, ScreenState, Step, World } from "../types";
@@ -79,7 +79,7 @@ export function browserLaneV7(said: string, c: BrowserCtx): BrowserLane {
   if (mi || im?.intent === "mission") return { lane: "mission", lang: lg };
   const rules = understand(said, c.state, c.world, { speechConf: 0.95 });
   if (rules.kind === "do" && isReflex(rules.steps, c.state)) return { lane: "rules", steps: rules.steps, lang: rules.lang, reflex: true };
-  if (rules.kind === "do" && rules.confidence >= 0.9 && planRiskA(rules.steps) && (isPlainMove(rules.steps) || isNavCommand(said, rules.steps))) return { lane: "rules", steps: rules.steps, lang: rules.lang, reflex: false };
+  if (rules.kind === "do" && rules.confidence >= 0.9 && planRiskA(rules.steps) && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps))) return { lane: "rules", steps: rules.steps, lang: rules.lang, reflex: false };
   return { lane: "server" };
 }
 

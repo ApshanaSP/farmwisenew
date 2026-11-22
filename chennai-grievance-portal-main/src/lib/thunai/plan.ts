@@ -455,6 +455,12 @@ const SHOW_VERB = /\b(show|display|see|view)\b|காட்டு|காமி|k
 const ASKS = /\b(why|how|what|which|who|when|where|compare|versus|vs|trend|rising|falling|most|least|top|worst|best|count|number of|summar|explain|analy|tell me|is there|are there|any)\b|\?|ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|ஒப்பி|கம்பே|யார்|எப்போ|enna|evlo|yen\b|eppadi|endha/i;
 /** the things the data holds (cases, complaints, incidents, severity): "show ... in ward 5" with one of these is a picture of the data, not a move */
 const DATA_NOUN = /\b(cases?|complaints?|incidents?|issues?|problems?|grievances?|severe|overdue|pending|unresolved)\b|புகார்|சம்பவ|வழக்கு/i;
+/**
+ * v16 (22 Nov, the browser drive): the sentence asks for something beyond moving the console ("go to the trends page AND tell me which
+ * areas are getting worse", "go to environment and tell me the vegetable prices"): the rules' page move alone is not its answer, so it is
+ * not done at once in the browser; the server answers it and moves the page too (round.ts outR)
+ */
+export const asksBeyondMove = (text: string): boolean => ASKS.test(text) || DATA_ASK.test(text);
 export function isNavCommand(text: string, steps: Step[]): boolean {
   if (!steps.length || !steps.every((s) => NAV_STEPS.has(s.a))) return false;
   if (ASKS.test(text)) return false;

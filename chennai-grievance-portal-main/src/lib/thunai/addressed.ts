@@ -183,8 +183,16 @@ const SIDE_STRONG = /\b(him|her|she|he|his|they|them|their|we|our|us|sir|madam|b
 /** said to someone, or about oneself: side talk unless Jarvis is already in the conversation */
 const SIDE_WEAK = /\b(your|you|i|im|ive|ill|my|me and|tomorrow|later|meeting|files?|phone|has|have you|are you|do you|will you)\b/;
 const SIDE_KEEP_EN = /^ (show me|show us|give me|give us|tell me|tell us|get me|get us|take me|bring me|pull up|remind me|let me see) /;
-const SIDE_TA = /(சாப்பாடு|சாப்பிட|மீட்டிங்|லீவு|அவரு|அவர் |அவங்க|அவன்|அவள்|நீங்க|நீ |நான் |நாம |நாங்க|என் |என்னோட|உங்க|போனேன்|பார்த்தேன்|பாத்தேன்|சொன்னார்|சொன்னாரு|சொன்னாங்க|வந்தார்|வந்தாரு|போனார்|ஆச்சா|தெரியுமா|கிரிக்கெட்|(?<!வரை)படம் பார்)/;
-const SIDE_TG = /\b(saapadu|sapadu|saptiya|saptingala|meeting|leave|avaru|avanga|avan|aval|nee|neenga|naan|naanga|naama|enoda|unga|ponen|paathen|parthen|sonnaru|sonnanga|vandharu|ponaru|aacha|theriyuma|cricket|padam)\b/;
+const SIDE_TA = /(சாப்பாடு|சாப்பிட|மீட்டிங்|லீவு|அவரு|அவர் |அவங்க|அவன்|அவள்|நாம |நாங்க|போனேன்|பார்த்தேன்|பாத்தேன்|சொன்னார்|சொன்னாரு|சொன்னாங்க|வந்தார்|வந்தாரு|போனார்|ஆச்சா|தெரியுமா|கிரிக்கெட்|(?<!வரை)படம் பார்)/;
+const SIDE_TG = /\b(saapadu|sapadu|saptiya|saptingala|meeting|leave|avaru|avanga|avan|aval|naanga|naama|ponen|paathen|parthen|sonnaru|sonnanga|vandharu|ponaru|aacha|theriyuma|cricket|padam)\b/;
+/**
+ * v16 (22 Nov, the owner's 01:43-01:44 session: Tamil questions to Jarvis while engaged were dropped as "side"): I, you, my, your in Tamil.
+ * Before v16 they were in SIDE_TA, side talk even in the conversation, so "இப்போ நான் எந்த area-ல concentrate பண்ணனும்?" (which area should I
+ * concentrate on now?) was let go; the English words (SIDE_WEAK) count only outside it. Now as in English, and stricter: in the conversation such
+ * a line is side talk unless it is asked as a question or a request (looksSide), so "நான் அப்புறம் பாக்குறேன்" (I'll look later) stays someone else's
+ */
+const SIDE_TA_WEAK = /(நீங்க|நீ |நான் |என் |என்னோட|உங்க)/;
+const SIDE_TG_WEAK = /\b(nee|neenga|naan|enoda|unga)\b/;
 /** the past and the day around today: side talk, unless Jarvis is in the conversation and it is asked as a question or a request */
 const SIDE_TENSE = /\b(yesterday|last night|did|didnt|was|were|had|netthu|nethu|nethiku|naalaiku|naliku)\b/;
 const SIDE_TENSE_TA = /(நேத்து|நேற்று|நாளைக்கு|நாளை )/;
@@ -192,11 +200,17 @@ const SIDE_TENSE_TA = /(நேத்து|நேற்று|நாளைக்
 const SIDE_TOPIC = /\b(tea|coffee|traffic)\b/;
 const SIDE_TOPIC_TA = /(டீ |காபி|டிராபிக்)/;
 const IMPERATIVE_EN = /^ (please )?(show|open|go to|go|list|display|compare|pull up|bring up|read|filter|switch|change|set|zoom|sort|give me|tell me|get me|take me|find|map|rank|build|make|create|draft|export|close|summarise|summarize|brief me|update me) /;
-const IMPERATIVE_TA = /(?:^|\s)(காட்டு|காட்டுங்க|காட்டுங்கள்|காமி|காமிங்க|திற|திறங்க|திறந்து|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|ஒப்பிடு|ஒப்பிடுங்க|ஒப்பிட்டு|பாரு|பாருங்க|போங்க|மாத்து|மாத்துங்க|மாற்று|படி|படிங்க|வாசி|போடு|போடுங்க|கொடு|கொடுங்க|தா) *$/;
-const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaattunga|kaatunga|kattunga|katunga|thira|thiranga|thirandhu|sollu|sollunga|oppidu|oppidunga|paaru|paarunga|ponga|maathu|mathu|maathunga|padi|padinga|podu|podunga|kudu|kudunga|show pannu|open pannu|compare pannu|list pannu|filter pannu|map pannu|sort pannu)\s*$/;
+// v16 (22 Nov, the owner's 01:49:18 and 01:49:31 Tamil lines, engaged, "unaddressed"): the commonest Tamil command is an English verb and பண்ணு
+// ("compare பண்ணு", "close பண்ணு"), which Sarvam's codemix writes in Tamil script; the Tanglish list had it only in Latin letters, so such a
+// request of five words or more had no request's shape in the conversation. With it: செய், போ, தேடு, விளக்கு, காண்பி and the -அவும் forms
+const IMPERATIVE_TA = /(?:^|\s)(காட்டு|காட்டுங்க|காட்டுங்கள்|காமி|காமிங்க|திற|திறங்க|திறந்து|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|ஒப்பிடு|ஒப்பிடுங்க|ஒப்பிட்டு|பாரு|பாருங்க|போங்க|மாத்து|மாத்துங்க|மாற்று|படி|படிங்க|வாசி|போடு|போடுங்க|கொடு|கொடுங்க|தா|பண்ணு|பண்ணுங்க|பண்ணுங்கள்|பண்ணுங்கோ|பண்ணவும்|செய்|செய்யுங்க|செய்யுங்கள்|செய்யவும்|போ|தேடு|தேடுங்க|விளக்கு|விளக்குங்க|காண்பி|காண்பிங்க|காட்டவும்|சொல்லவும்|திறக்கவும்) *$/;
+// (v16: and an English verb with pannu in Latin letters, whatever the verb: "close pannu", "zoom pannunga")
+const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaattunga|kaatunga|kattunga|katunga|thira|thiranga|thirandhu|sollu|sollunga|oppidu|oppidunga|paaru|paarunga|ponga|maathu|mathu|maathunga|padi|padinga|podu|podunga|kudu|kudunga|show pannu|open pannu|compare pannu|list pannu|filter pannu|map pannu|sort pannu|[a-z]{3,} (?:pannu|pannunga|pannungal|pannungo))\s*$/;
 /** the shape of a request or a follow-up: for tier 2 */
 const REQUEST_EN = /^ (and|what|whats|why|how|which|where|who|when|same|also|now|only|just|no|not|then|next|compare|show|open|go|list|read|tell|give|filter|sort|zone|in|for|at|more|less|top|worst|best|first|second|third|last|today|please|ok|okay|yes|can|could|would|is|are|was|were|do|does|did(?! you| i )|put|make|build|create|get|bring|check|look|find|pull|prepare|summarise|summarize|brief|run|add|change|set|switch|draft|export|map|rank|save|pin|remember|remind) /;
-const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத்தனை|எவ்வளவு|எது|(?:^|\s)யார்|எப்படி|எப்போ|ஆ\?|ஆ *$)/;
+// v16 (22 Nov): with "which" (எந்த: "எந்த area-ல நிறைய cases இருக்கு" was an aside when Sarvam wrote no question mark), the spoken "how much" and
+// "how many" (எவ்ளோ, எத்தன) and a yes-or-no question's ending ("அடையார்ல flood இருக்கா")
+const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத்தனை|எத்தன|எவ்வளவு|எவ்ளோ|எவ்வளோ|எது|எந்த|(?:^|\s)யார்|எப்படி|எப்போ|ஆ\?|ஆ *$|(?:இருக்கா|இருக்குதா|இருக்காங்களா|வந்திருக்கா|வந்துச்சா|நடந்துச்சா|நடந்திருக்கா|முடியுமா|உண்டா)[\s?.!]*$)/;
 // (epdi: the clipped "how" of spoken Tanglish, "idhu epdi theriyum": lane D2's how-do-you-know forms)
 const QUESTION_TG = /\b(enna|enga|yen|ethana|evvalavu|edhu|yaaru|eppadi|epdi|eppo)\b/;
 /** what the console talks about: with one of these, a sentence with a chore's shape is still work */
@@ -275,6 +289,8 @@ export const looksSide = (text: string, engaged = false, districtNoun = false): 
   const t0 = norm(text);
   const t = engaged && understandV10() && (WORK_EN.test(t0) || WORK_TA.test(text)) ? t0.replace(OUR_OWN, " ") : t0;
   if (SIDE_TA.test(text) || SIDE_TG.test(t)) return true;
+  // v16: Tamil's I, you, my, your: side talk outside the conversation; in it, only when the line is no question and no request (SIDE_TA_WEAK)
+  if ((SIDE_TA_WEAK.test(text) || SIDE_TG_WEAK.test(t)) && !(engaged && shaped(text, t))) return true;
   if (!districtNoun && (SIDE_TOPIC.test(t) || SIDE_TOPIC_TA.test(text))) return true;
   if ((SIDE_TENSE.test(t) || SIDE_TENSE_TA.test(text)) && !(engaged && shaped(text, t))) return true;
   if (SIDE_KEEP_EN.test(t)) return sideEn(t.replace(SIDE_KEEP_EN, " "), !engaged);
@@ -355,5 +371,29 @@ export function overlap(heard: string, speaking: string): number {
   if (!h.length || !s.size) return 0;
   return h.filter((w) => s.has(w)).length / h.length;
 }
-/** While speaking: a transcript that overlaps more than 60 % with what Jarvis is saying is Jarvis. */
-export const selfHeard = (heard: string, speaking: string | null) => !!speaking && overlap(heard, speaking) > 0.6;
+/** Share of the transcript's word pairs (two words side by side) that are side by side in what Jarvis is saying. */
+export function pairOverlap(heard: string, speaking: string): number {
+  const h = words(heard), s = words(speaking);
+  if (h.length < 2 || s.length < 2) return 0;
+  const pairs = new Set<string>();
+  for (let i = 0; i + 1 < s.length; i++) pairs.add(`${s[i]} ${s[i + 1]}`);
+  let n = 0;
+  for (let i = 0; i + 1 < h.length; i++) if (pairs.has(`${h[i]} ${h[i + 1]}`)) n++;
+  return n / (h.length - 1);
+}
+/** v16: a line this long (words) is Jarvis's own only when its word order is Jarvis's too (selfHeard) */
+export const SELF_ORDER_WORDS = 4;
+/**
+ * While speaking: a transcript that overlaps more than 60 % with what Jarvis is saying is Jarvis.
+ * v16 (22 Nov, the owner's 01:50:48 Tamil line, dropped as "self-heard" while engaged): Jarvis's own voice heard back comes back in Jarvis's
+ * order, so a line of SELF_ORDER_WORDS words or more is taken for it only when half its word pairs are Jarvis's pairs too, or nearly every word
+ * is Jarvis's (85 %). A question asked again over an answer that repeats its words ("which road keeps having problems" over "the road where
+ * problems keep coming back is ...") shares the words, not their order, and is the Collector's. A short line keeps the plain 60 % rule
+ */
+export function selfHeard(heard: string, speaking: string | null): boolean {
+  if (!speaking) return false;
+  const share = overlap(heard, speaking);
+  if (share <= 0.6) return false;
+  if (words(heard).length < SELF_ORDER_WORDS || share >= 0.85) return true;
+  return pairOverlap(heard, speaking) >= 0.5;
+}

@@ -1060,7 +1060,7 @@ export const TOOLS = [
       for (const x of a.worse.slice(0, 3)) facts.push(fact(`focus.worse.${x.zone}`, `${x.name.en} is GETTING WORSE beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
       for (const x of a.better.slice(0, 3)) facts.push(fact(`focus.better.${x.zone}`, `${x.name.en} is IMPROVING beyond ordinary ups and downs: ${x.prev} to ${x.now} (change in %)`, x.pct ?? 0));
       return {
-        scope, asOf: now, data: { days, weekLabels: a.weekLabels, district: a.district, zones: a.zones, attention: a.attention.map((x) => x.zone), worse: a.worse.map((x) => x.zone), better: a.better.map((x) => x.zone), spots: a.spots,
+        scope, asOf: now, data: { days, weekLabels: a.weekLabels, district: a.district, zones: a.zones, attention: a.attention.map((x) => x.zone), worse: a.worse.map((x) => x.zone), better: a.better.map((x) => x.zone), spots: a.spots, kinds: a.kinds, rawKinds: r.kinds,
           method: "Reports in the window against the window of the same length before it; a move counts as getting worse or improving only beyond 2 standard deviations of the difference of two Poisson counts, by 3 or more reports and 10% or more. Where to concentrate: overdue backlog 30%, severe 20%, volume 15%, rise 20%, repeat reports 15%, each against the highest zone." },
         facts, sources: [fn("incidents.focusRows"), tbl("incidents")], incidentIds: [], testData: false,
         caveats: ["A rise in reports is not proof that things are worse on the ground: more reporting, or a rain spell, raises counts too."]

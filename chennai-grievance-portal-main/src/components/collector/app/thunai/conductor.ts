@@ -5,7 +5,7 @@
  * self-hearing guard, the address gate, and the listening budget.
  *
  * v4 (lane L4, "ears"):
- *  - /hear gives up after TUNING.hearTimeoutMs (6 s): the sentence counts as not heard (onMissed), so "Working on it" never hangs.
+ *  - /hear gives up after TUNING.hearTimeoutMs (6 s; v16: 8 s, room for the server's Whisper hedge): the sentence counts as not heard (onMissed), so "Working on it" never hangs.
  *  - A sentence that goes on while its first part is still at Whisper is never posted again: the first part's reading is kept
  *    (not aborted) and joined to the second part's (lib/thunai/heard.ts). The browser no longer re-posts an unsure named sentence:
  *    the server reads it once more in the other language itself (stt.ts).
@@ -403,8 +403,21 @@ export class Conductor {
       onEarcon: (ms, tone) => this.earcon(ms, tone),
       onDuck: (d) => this.h.mark?.(`duck:${d.path}:${d.how}`, performance.now()),
       // v13 (review 1-11): the wake reply ("Yes, Collector?") is sounding for `ms`: the request begun over it stops it (onVad start)
-      onWakeSound: (ms) => { this.wakeSoundUntil = performance.now() + ms; }
+      onWakeSound: (ms) => { this.wakeSoundUntil = performance.now() + ms; },
+      // v16 (22 Nov): Jarvis's voice waits while the Collector holds the floor (floorHeld)
+      floorHeld: () => this.floorHeld()
     });
+  }
+
+  /**
+   * v16 (22 Nov, the owner: "the voice reply is very late ... it's overlapping"): the Collector holds the floor: speech is being heard now, or a
+   * sentence of theirs is still at the transcriber (the turn machine awaits its words). A voice asked for meanwhile waits (mouth.ts floorFree):
+   * when those words are a request it is cancelled as it is handed on (turn.ts voiceWanted), otherwise it starts. Before v16 a late answer
+   * started at full volume over the next question, or between its end and its transcript, and was cut a moment later
+   */
+  floorHeld(): boolean {
+    if (!this.ears) return false;
+    return this.speechOpen || this.m.awaiting;
   }
 
   get state(): TurnState { return this.m.state; }

@@ -217,7 +217,8 @@ function Stage(p: Props) {
               <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Jarvis</span>
             </div>
             <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.titles?.[lang] || doc.title}</h2>
-            {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[lang]}</p>}
+            {/* v16 (the browser drive): in the screen's own language, as its title and blocks are (a Tamil screen showed this line in English) */}
+            {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[doc.lang === "ta" || doc.lang === "en" ? doc.lang : lang] || doc.takeaway[lang]}</p>}
             {!!doc.next?.length && (
               <div className="st-sugg" role="group" aria-label={T(lang, "Suggested next", "அடுத்து")}>
                 <span>{T(lang, "Next", "அடுத்து")}</span>

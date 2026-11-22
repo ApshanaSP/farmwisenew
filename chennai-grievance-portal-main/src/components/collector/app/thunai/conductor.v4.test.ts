@@ -45,6 +45,7 @@ vi.mock("./mouth", () => ({
 }));
 
 import { Conductor, type ConductorHooks, type HeardLine } from "./conductor";
+import { TUNING } from "@/lib/thunai/vad";
 
 interface Post { url: string; init: RequestInit; res: (r: Response) => void }
 let posts: Post[] = [];
@@ -74,12 +75,13 @@ async function boot(o: Partial<ConductorHooks> & { missed?: string[] } = {}) {
 const say = (e: FakeEars, start: number, ms = 700) => { e.hooks.onVad({ type: "start", at: start }, 0); e.hooks.onVad({ type: "end", at: start + ms + 300, ms, short: false }, 0); };
 
 describe("the /hear request", () => {
-  it("gives up after 6 s: the sentence counts as not heard and Jarvis listens again, calmly", async () => {
+  // (v16, 22 Nov: TUNING.hearTimeoutMs is 8 s, was 6 s: room for the server's Whisper hedge behind a slow Sarvam)
+  it("gives up after TUNING.hearTimeoutMs: the sentence counts as not heard and Jarvis listens again, calmly", async () => {
     vi.useFakeTimers();
     const missed: string[] = [];
     const { c, e, sentences } = await boot({ onMissed: (w) => missed.push(w) });
     say(e, 1000);
-    await vi.advanceTimersByTimeAsync(5900);
+    await vi.advanceTimersByTimeAsync(TUNING.hearTimeoutMs - 100);
     expect(missed).toEqual([]);
     expect(c.state).toBe("thinking");
     await vi.advanceTimersByTimeAsync(200);

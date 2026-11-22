@@ -81,6 +81,12 @@ export interface Slots {
   focus?: "worst-jam" | "repeat" | null;
   /** v12 (21 Nov), city: a past heavy rain, "latest" or "rain-YYYY-MM-DD" (the streets that flooded in it) */
   rain?: string | null;
+  /** v16 (22 Nov), focus: what the reader understood was asked (attention, improving, worsening, repeat), in order */
+  lens?: ("attention" | "improving" | "worsening" | "repeat")[];
+  /** v16 (22 Nov), focus: about the zones, the streets and spots, or the kinds of problem */
+  about?: "areas" | "places" | "kinds" | null;
+  /** v16 (22 Nov), advise: only the first case, in full */
+  one?: boolean;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -402,9 +408,10 @@ async function advise(c: Ctx): Promise<Part> {
   const ta = c.ta;
   const where = s.zone ? bi(` in ${zoneName(w, s.zone)}`, ` ${zoneTa(w, s.zone) ?? zoneName(w, s.zone)} பகுதியில்`) : bi("", "");
   const [inc, late, drv] = await Promise.all([
-    incidentList(c, { status: "open", sort: "sev" }).catch(() => null),
+    // v16 (22 Nov): a severity carried from the list just shown ("which of today's severe cases first?") is kept
+    incidentList(c, { status: "open", sort: "sev", sev: c.s.sev ?? null }).catch(() => null),
     // the cases past their deadline, whole scope: the first of them is the one to ring about, not the first one on a page of open cases
-    c.h.list ? incidentList(c, { status: "overdue", sort: "sev" }).catch(() => null) : Promise.resolve(null),
+    c.h.list ? incidentList(c, { status: "overdue", sort: "sev", sev: c.s.sev ?? null }).catch(() => null) : Promise.resolve(null),
     call(c, "change_drivers", { scope: scopeArg(s) }).catch(() => null)
   ]);
   const rows = (inc?.rows ?? []).map((x) => caseRow(x, w)).slice(0, 8);
