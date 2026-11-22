@@ -204,7 +204,7 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
 
 /** One place in a ranked answer: its rank, name, the figure it is ranked by, and its cases (a click shows them). */
 export interface RankRow { key: string; label: string; n: number; fig: string; sub: string; lat: number; lon: number; ids: string[]; tone: "hi" | "lo" | "rain" | "" }
-export interface Ranked { by: string; what: string; rows: RankRow[]; near: boolean; areas: boolean; layer: LayerId | null; radius: number | null; /** v3: a rain forecast (blue shades) */ rain?: boolean }
+export interface Ranked { by: string; what: string; /** v3: how the ranking runs, said once in the key ("fewest first") */ key?: string; rows: RankRow[]; near: boolean; areas: boolean; layer: LayerId | null; radius: number | null; /** v3: a rain forecast (blue shades) */ rain?: boolean }
 
 const TOP = 10;
 const fmtN = (n: number) => n.toLocaleString("en-IN");
@@ -237,7 +237,7 @@ export function rankedOf(r: AskResponse): Ranked | null {
       const people = g.pop ? (ta ? ` · ${fmtN(g.pop)} பேர் · 10,000 பேருக்கு ${rate(g.per10k)}` : ` · ${fmtN(g.pop)} people · ${rate(g.per10k)} per 10,000`) : "";
       return { key: g.key, label: ta ? g.label_ta : g.label, n: perP ? g.per10k ?? 0 : g.n, fig: perP ? rate(g.per10k) : fmtN(g.n), sub: cases + people, lat: g.lat, lon: g.lon, ids: g.ids, tone: fewest ? "lo" : "" };
     });
-    if (fewest) return { by, what: ta ? "வழக்குகள் (குறைவு முதலில்)" : "cases, fewest first", rows, near: false, areas: by === "ward" || by === "zone" || by === "taluk", layer: null, radius: null };
+    if (fewest) return { by, what: ta ? "வழக்குகள்" : "cases", key: ta ? "குறைவு முதலில்" : "fewest first", rows, near: false, areas: by === "ward" || by === "zone" || by === "taluk", layer: null, radius: null };
     if (perP) return { by, what: ta ? "10,000 பேருக்கு" : "per 10,000 people", rows, near: false, areas: true, layer: null, radius: null };
     if (rows.length < 2) return null;
     const layer = (r.context.points.find((p) => rows.some((x) => x.lat === p.lat && x.lon === p.lon))?.layer ?? null) as LayerId | null;
@@ -320,7 +320,7 @@ function drawRanked(L: L, map: Leaflet.Map, a: AnswerLayers, k: Ranked, o: DrawO
       .on("click", () => o.onGroup(x.ids, x.label)).addTo(a.marks);
   });
   // the key: what the shade and the badges mean
-  const title = ta ? `முதல் ${Math.min(TOP, rows.length)}: எண்ணிக்கையின்படி` : speed ? `Top ${Math.min(TOP, rows.length)} by days to close` : `Top ${Math.min(TOP, rows.length)} of ${fmtN(rows.length)}, by ${k.what}`;
+  const title = ta ? `முதல் ${Math.min(TOP, rows.length)}: எண்ணிக்கையின்படி${k.key ? `, ${k.key}` : ""}` : speed ? `Top ${Math.min(TOP, rows.length)} by days to close` : `${k.key ? "First" : "Top"} ${Math.min(TOP, rows.length)} of ${fmtN(rows.length)}, by ${k.what}${k.key ? `, ${k.key}` : ""}`;
   const ramp = (k.rain ? SHADES_RAIN : speed ? SHADES_GOOD : SHADES).map((c) => `<i style="background:${c}"></i>`).join("");
   const lo = k.rain ? (ta ? "குறைவு" : "dry") : speed ? (ta ? "வேகம்" : "fast") : ta ? "குறைவு" : "fewer", hi = k.rain ? (ta ? "அதிகம்" : "wet") : speed ? (ta ? "மெதுவு" : "slow") : ta ? "அதிகம்" : "more";
   const Legend = L.Control.extend({ onAdd: () => { const d = L.DomUtil.create("div", "ar3-key"); d.innerHTML = `<b>${esc(title)}</b>${k.areas ? `<div class="ramp"><span>${lo}</span>${ramp}<span>${hi}</span></div>` : ""}<small>${ta ? "ஒன்றைத் தட்டினால் அதன் வழக்குகள்" : "Click a number to see its cases"}</small>`; L.DomEvent.disableClickPropagation(d); return d; } });
@@ -340,10 +340,12 @@ export function declutterRanks(root: HTMLElement) {
   const badges = els.map((el) => el.querySelector<HTMLElement>(".ar3-n")?.getBoundingClientRect() ?? null);
   const labels: DOMRect[] = [];
   const over = (r: DOMRect, t: DOMRect) => r.left < t.right - 1 && r.right > t.left + 1 && r.top < t.bottom - 1 && r.bottom > t.top + 1;
+  const box = root.getBoundingClientRect();
+  const out = (r: DOMRect) => r.left < box.left + 2 || r.right > box.right - 2;
   els.forEach((el, i) => {
     const lab = el.querySelector<HTMLElement>(".ar3-l");
     if (!lab) return;
-    const hit = (r: DOMRect) => labels.some((t) => over(r, t)) || badges.some((t, j) => j !== i && t && over(r, t));
+    const hit = (r: DOMRect) => out(r) || labels.some((t) => over(r, t)) || badges.some((t, j) => j !== i && t && over(r, t));
     let r = lab.getBoundingClientRect();
     if (hit(r)) { el.classList.add("flip"); r = lab.getBoundingClientRect(); }
     if (hit(r)) { el.classList.remove("flip"); el.classList.add("bare"); return; }

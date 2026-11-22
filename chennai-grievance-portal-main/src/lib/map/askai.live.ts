@@ -56,7 +56,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const { makeResolver } = await import("./resolve");
   const { mapLang, rulesRoute } = await import("./route");
   const { spentUsd } = await import("@/lib/ai/claudebudget");
-  const { prevTopOf } = await import("./prevtop");
+  const { prevTopOf, earlierAreasOf } = await import("./prevtop");
   const { resolver, world: w } = await world();
   const resolve = makeResolver(resolver);
   const usd0 = spentUsd();
@@ -73,7 +73,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"], ["probe", process.env.ASKAI_PROBE ?? "eval/map-v3/holdout.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"], ["fresh3", "eval/map-v3/fresh.json"], ["probe", process.env.ASKAI_PROBE ?? "eval/map-v3/holdout.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
     for (const x of read(file) as (Q & { kind?: "brief" | "scorecard" | "city" | "refuse" })[]) {
@@ -106,18 +106,20 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
     }
   }
-  for (const fset of ["followups", "followups3", "followups3h"].filter((x) => SETS.includes(x))) {
+  for (const fset of ["followups", "followups3", "followups3h", "followups3f", "topics3", "fprobe"].filter((x) => SETS.includes(x))) {
     as(fset);
-    const convs = JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
+    const convs = JSON.parse(fs.readFileSync(fset === "fprobe" ? path.join(process.cwd(), process.env.ASKAI_FPROBE ?? "") : path.join(process.cwd(), "eval", fset === "followups" ? "map-v2" : "map-v3", fset === "followups3h" ? "followups-holdout.json" : fset === "followups3f" ? "followups-fresh.json" : fset === "topics3" ? "topics.json" : "followups.json"), "utf8")).conversations as { id: string; turns: { q: string; want?: Q["want"]; kind?: "brief"; there?: number }[] }[];
     for (const c of convs) {
       let prev: Plan | null = null;
       let last: Awaited<ReturnType<typeof askMap>> | null = null;
+      const plans: Plan[] = [];
       for (const [k, t] of c.turns.entries()) {
         const t0 = Date.now();
         // v3: the follow-up carries the last answer's first places, as the console sends them
         const top = prevTopOf(last);
-        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
+        const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, earlier: prev ? earlierAreasOf(plans) : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
         last = r;
+        if (r?.plan) plans.push(r.plan);
         ms.push(Date.now() - t0);
         // a turn may want an area brief, or the place the last answer ranked number N ("what is happening there")
         const thereRef = t.there ? top[t.there - 1]?.ref : null;

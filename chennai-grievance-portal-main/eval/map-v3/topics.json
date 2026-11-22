@@ -1,0 +1,41 @@
+{
+  "about": "v3 topic changes (22 Nov 2026, the owner's report: after a garbage question, 'show me the total incidents' or 'all incidents in zone 9' stayed on garbage; 'police cases' became thefts only). Each conversation refines a topic, then leaves it. Written before the fix was tested.",
+  "conversations": [
+    { "id": "k01", "turns": [
+      { "q": "garbage complaints", "want": { "cats": ["SOLID_WASTE"] } },
+      { "q": "show me the total incidents reported", "want": { "every_kind": true } } ] },
+    { "id": "k02", "turns": [
+      { "q": "garbage in zone 9", "want": { "cats": ["SOLID_WASTE"], "area": "zone:9" } },
+      { "q": "only severe", "want": { "cats": ["SOLID_WASTE"], "severity": "Severe" } },
+      { "q": "all incidents in zone 9", "want": { "every_kind": true, "area": "zone:9" } } ] },
+    { "id": "k03", "turns": [
+      { "q": "flooding this week", "want": { "cats": ["FLOOD"] } },
+      { "q": "what about police cases", "want": { "dept": "POL-GCP" } } ] },
+    { "id": "k04", "turns": [
+      { "q": "garbage complaints by ward", "want": { "show": "count_by", "by": "ward", "cats": ["SOLID_WASTE"] } },
+      { "q": "how many incidents overall", "want": { "every_kind": true } } ] },
+    { "id": "k05", "turns": [
+      { "q": "stray dog complaints in adyar", "want": { "cats": ["STRAY_ANIMALS"] } },
+      { "q": "now streetlights", "want": { "cats": ["STREETLIGHT_ELECTRICAL"] } } ] },
+    { "id": "k06", "turns": [
+      { "q": "kuppai pugar zone wise", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } },
+      { "q": "ella pugar um sethu", "want": { "show": "count_by", "by": "zone", "every_kind": true } } ] },
+    { "id": "k07", "turns": [
+      { "q": "road accidents near schools", "want": { "layers": ["incidents", "schools"], "cats": ["ROAD_ACCIDENT"] } },
+      { "q": "everything near schools, not just accidents", "want": { "layers": ["incidents", "schools"], "every_kind": true } } ] },
+    { "id": "k08", "turns": [
+      { "q": "dengue cases this month", "want": { "cats": ["VECTOR_DISEASE"] } },
+      { "q": "ok and total complaints this month", "want": { "every_kind": true } } ] },
+    { "id": "k09", "turns": [
+      { "q": "police complaints by zone", "want": { "show": "count_by", "by": "zone", "dept": "POL-GCP" } },
+      { "q": "and garbage", "want": { "show": "count_by", "by": "zone", "cats": ["SOLID_WASTE"] } } ] },
+    { "id": "k10", "turns": [
+      { "q": "drainage overflow in teynampet", "want": { "cats": ["DRAINAGE_SEWAGE"] } },
+      { "q": "last month", "want": { "cats": ["DRAINAGE_SEWAGE"], "period_days": 30 } },
+      { "q": "what other problems are there in teynampet", "want": { "every_kind": true } } ] },
+    { "id": "k11", "turns": [
+      { "q": "how many incidents today", "want": { "every_kind": true } } ] },
+    { "id": "k12", "turns": [
+      { "q": "incidents by zone", "want": { "show": "count_by", "by": "zone", "every_kind": true } } ] }
+  ]
+}

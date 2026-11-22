@@ -1,5 +1,5 @@
 {
- "about": "v3 (22 Nov 2026): conversations the way an officer follows up: short turns that lean on the last answer ('what about hospitals', 'only last month', 'which one is worst', 'there', 'per person'). Each turn's want is what the plan must have after that turn. Written before any v3 tuning. 22 Nov, after the first run: f11's first turn wants an area brief (the v2 design for 'what is happening near X'); f21-f26 added: follow-ups that point at the last answer's places ('there', 'the second one') and the forecast.",
+ "about": "v3 (22 Nov 2026): conversations the way an officer follows up: short turns that lean on the last answer ('what about hospitals', 'only last month', 'which one is worst', 'there', 'per person'). Each turn's want is what the plan must have after that turn. Written before any v3 tuning. 22 Nov, after the first run: f11's first turn wants an area brief (the v2 design for 'what is happening near X'); f21-f26 added: follow-ups that point at the last answer's places ('there', 'the second one') and the forecast. 22 Nov (keep testing): f22's second turn was 'what kind of problems are there', which reads two ways (at the top school, or near the schools in general); it is now 'what is happening at that school'.",
  "conversations": [
   {
    "id": "f01",
@@ -711,7 +711,7 @@
      }
     },
     {
-     "q": "what kind of problems are there",
+     "q": "what is happening at that school",
      "there": 1
     }
    ]

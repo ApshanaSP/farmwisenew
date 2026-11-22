@@ -14,7 +14,7 @@ import { useCallback, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
 import { followUpMoves } from "@/lib/map/camera";
-import { prevTopOf } from "@/lib/map/prevtop";
+import { earlierAreasOf, prevTopOf } from "@/lib/map/prevtop";
 import type { Route } from "./actions";
 import { rehearsalIntent } from "@/lib/rehearsal/intent";
 
@@ -295,7 +295,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail: rr }));
         return null;
       }
-      return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null }, t);
+      return post({ text: t, prev: planRef.current, prevTop: planRef.current ? prevTopOf(respRef.current) : null, earlier: planRef.current ? earlierAreasOf(turnsRef.current.map((x) => x.plan ?? x.resp?.plan)) : null }, t);
     },
     run: (p: Plan, label?: string) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question"),
     draw: (d) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },

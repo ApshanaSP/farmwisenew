@@ -42,6 +42,8 @@ export interface AskInput {
   prev: Plan | null;
   /** v3: the places the last answer ranked first (ward:12, zone:5, osm:n123), for "there", "the worst one", "number 2" */
   prevTop?: { ref: string; name: string }[] | null;
+  /** v3: the places earlier questions of the conversation asked about, newest first ("compare both") */
+  earlier?: { ref: string; name: string }[] | null;
   context: { zone: number | null; taluk: string | null; incidentId: string | null; drawn: { lat: number; lon: number; r: number } | null; ward: number | null };
   user: { email: string; role: "collector" | "department_officer"; lockDept: string | null };
   /** reword the meaning sentence with AI (off in tests and for chip edits) */
@@ -396,6 +398,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     const reading = spellerFor(data)(typed).text;
     const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
     // v3: the last answer's first places, so a follow-up can point at them ("what is happening there", "the second one")
+    for (const p of asked.prev ? input.earlier ?? [] : []) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && !found.some((f) => f.ref === p.ref)) found.push({ ref: p.ref, kind: "a place an earlier question asked about", name: ctx.place(p.ref)?.name ?? p.name });
     for (const [i, p] of (asked.prev ? input.prevTop ?? [] : []).entries()) if (ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) found.push({ ref: p.ref, kind: `the previous answer's number ${i + 1}`, name: p.name });
     const a = await aiPlan(typed, asked.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
       zones: w.zones, catLabels: catLabels(w) }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });

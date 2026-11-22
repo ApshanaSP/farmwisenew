@@ -44,6 +44,7 @@ export const WirePlan = z.object({
   named_places: z.array(z.string()).describe("the place refs (from the prompt's list) of the places the question names, as the question means them (in X: its zone or taluk ref; near X: its point ref); [] if none"),
   named_zone: z.number().describe("the zone number the question names (1-15), or -1"),
   named_ward: z.number().describe("the ward number the question names (1-200), or -1"),
+  every_kind: z.boolean().describe("true when the question asks about incidents, complaints or cases of every kind: all incidents, all complaints, total, overall, everything, every problem, ella pugar, with no kind of problem named in THIS question. In a follow-up it is true even when the current plan has a kind of problem: after 'garbage in zone 9', 'all incidents in zone 9' is every_kind true (the zone stays, garbage goes); after 'dengue this month', 'total complaints this month' is true. Then the incidents take has no category, family or dept, and named_categories is []. False for refinements that keep the kind (only severe, last week, by ward)."),
   points_at_previous: z.boolean().describe("true only when a follow-up points at a place of the previous answer in words (there, that place, that school, the first, the second one, number 2); false otherwise, also for follow-ups that only change the problem, time, status or distance"),
   intent: z.enum(["plan", "brief", "scorecard", "city", "not_map"]).describe("plan: a map answer; brief: what is happening in one area; scorecard: a ward's scorecard; city: the live state of the city now; not_map: not a map question"),
   city: z.enum(["traffic", "rain", "forecast", "flood", "power", "metro", "none"]).describe("for intent city: live traffic, the rain now, the rain forecast (will it rain, tomorrow, next hours, where will it rain most), streets that flood, power cuts, trains running; else none"),
@@ -76,7 +77,7 @@ const calendarIn = (k: WireStep["period_calendar"], offset: number | null | unde
 
 export function toWire(plan: Plan): WirePlan {
   return {
-    understood: true, named_categories: [], named_layers: [], named_places: [], named_zone: -1, named_ward: -1, points_at_previous: false, intent: "plan", city: "none", show: plan.show, language: plan.language,
+    understood: true, named_categories: [], named_layers: [], named_places: [], named_zone: -1, named_ward: -1, every_kind: false, points_at_previous: false, intent: "plan", city: "none", show: plan.show, language: plan.language,
     steps: plan.steps.map((s: Step): WireStep => {
       const base = { ...EMPTY, op: s.op, as: s.as } as WireStep;
       switch (s.op) {

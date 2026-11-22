@@ -122,8 +122,13 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     if (kinds.size > 1) {
       const top = [...kinds.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 3);
       const nameOf = (c: string) => (ta ? CAT_TA[c] ?? w.cats.get(c)?.label ?? c : (w.cats.get(c)?.label ?? c).toLowerCase());
-      parts.unshift(ta ? `வகைகள்: ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}` : tg ? `Mostly ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`
-        : `Mostly ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`);
+      // v3: a question about all incidents says so: every kind is counted, police cases among them (they are not only flooding)
+      const t0 = plan.steps.find((x) => x.op === "take" && x.layer === "incidents") as Extract<Step, { op: "take" }> | undefined;
+      const everyKind = !!t0 && !t0.filter?.category?.length && !t0.filter?.family?.length && !t0.filter?.dept?.length && kinds.size > 3;
+      const police = everyKind ? depts.find((x) => /police/i.test(x.name)) : undefined;
+      const lead = everyKind ? (ta ? `எல்லா வகைகளும் எண்ணப்பட்டன (${n(kinds.size)} வகைகள்)${police ? `, காவல்துறை வழக்குகள் ${n(police.n)}` : ""}; அதிகம்` : `Every kind is counted (${n(kinds.size)} kinds${police ? `, ${n(police.n)} of them police cases` : ""}); the most`) : null;
+      parts.unshift(ta ? `${lead ?? "வகைகள்"}: ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}` : tg ? `${lead ?? "Mostly"} ${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`
+        : `${lead ? `${lead}: ` : "Mostly "}${top.map(([c, k]) => `${nameOf(c)} (${n(k)})`).join(", ")}`);
     }
     const s = parts.filter(Boolean).join("; ");
     return s ? `${s.charAt(0).toUpperCase()}${s.slice(1)}.` : null;
