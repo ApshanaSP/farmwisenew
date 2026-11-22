@@ -230,12 +230,14 @@ export function rankedOf(r: AskResponse): Ranked | null {
     const within = r.plan?.steps.find((s) => s.op === "within");
     // v3: ranked for its people (count_by per people): the rate is the figure; every area's tooltip says its people
     const perP = !!r.plan?.steps.some((s) => s.op === "count_by" && s.per === "people");
+    const fewest = !!r.plan?.steps.some((s) => s.op === "count_by" && s.fewest);
     const rate = (x: number | undefined) => (x ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 1 });
     const rows = groups.filter((g) => g.lat || g.lon).map((g): RankRow => {
       const cases = g.n === 1 ? (ta ? "1 வழக்கு" : "1 case") : ta ? `${fmtN(g.n)} வழக்குகள்` : `${fmtN(g.n)} cases`;
       const people = g.pop ? (ta ? ` · ${fmtN(g.pop)} பேர் · 10,000 பேருக்கு ${rate(g.per10k)}` : ` · ${fmtN(g.pop)} people · ${rate(g.per10k)} per 10,000`) : "";
-      return { key: g.key, label: ta ? g.label_ta : g.label, n: perP ? g.per10k ?? 0 : g.n, fig: perP ? rate(g.per10k) : fmtN(g.n), sub: cases + people, lat: g.lat, lon: g.lon, ids: g.ids, tone: "" };
+      return { key: g.key, label: ta ? g.label_ta : g.label, n: perP ? g.per10k ?? 0 : g.n, fig: perP ? rate(g.per10k) : fmtN(g.n), sub: cases + people, lat: g.lat, lon: g.lon, ids: g.ids, tone: fewest ? "lo" : "" };
     });
+    if (fewest) return { by, what: ta ? "வழக்குகள் (குறைவு முதலில்)" : "cases, fewest first", rows, near: false, areas: by === "ward" || by === "zone" || by === "taluk", layer: null, radius: null };
     if (perP) return { by, what: ta ? "10,000 பேருக்கு" : "per 10,000 people", rows, near: false, areas: true, layer: null, radius: null };
     if (rows.length < 2) return null;
     const layer = (r.context.points.find((p) => rows.some((x) => x.lat === p.lat && x.lon === p.lon))?.layer ?? null) as LayerId | null;

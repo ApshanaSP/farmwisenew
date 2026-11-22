@@ -275,6 +275,21 @@ export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழை�
  * said plainly, so the officer can rephrase; an abort is passed on.
  */
 /**
+ * v3: a place ref the map does not know ("osm:Velachery" for "loc:Velachery", rewritten in a follow-up): the same name's ref
+ * from the conversation's current plan, else from the places the question named; one the map knows stays as it is.
+ */
+export function repairRefs(plan: Plan, prev: Plan | null, found: { ref: string; name: string }[], ctx: Ctx): Plan {
+  const tail = (r: string) => r.slice(r.indexOf(":") + 1).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const known = [...(prev?.steps ?? []).flatMap((x) => (x.op === "inside" && x.area.kind === "point" ? [x.area.ref] : [])), ...found.map((f) => f.ref)].filter((r) => ctx.place(r));
+  return { ...plan, steps: plan.steps.map((x) => {
+    if (x.op !== "inside" || x.area.kind !== "point" || ctx.place(x.area.ref)) return x;
+    const t = tail(x.area.ref);
+    const ref = known.find((r) => tail(r) === t) ?? found.find((f) => f.name.toLowerCase().replace(/[^a-z0-9]/g, "") === t && ctx.place(f.ref))?.ref;
+    return ref && ctx.place(ref) ? { ...x, area: { ...x.area, ref } } : x;
+  }) };
+}
+
+/**
  * v3: "will it rain tomorrow": the forecast's millimetres over each zone in the next 24 hours, beside its open flooding and
  * drain cases (the map's own count), ranked by the rain to come. The forecast is Open-Meteo's; nothing here forecasts.
  */
@@ -413,7 +428,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     if (a && "plan" in a) {
       // a question in Tamil script is answered in Tamil (the script is plain to see; the model sometimes said Tanglish)
       const language = /[\u0B80-\u0BFF]/.test(typed) ? "ta" as const : a.plan.language;
-      const fitted = fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true });
+      const fitted = repairRefs(fitModelPlan({ ...a.plan, language }, typed, w.now, asked.prev, { ...modelWords(w, language, found), aiOnly: true }), asked.prev, found, ctx);
       const ins = fitted.steps.find((s) => s.op === "inside");
       if (a.intent === "scorecard" && ins?.op === "inside" && ins.area.kind === "ward") return scorecardOut(ins.area.id);
       // a brief whose place the map cannot find (a ref the model made up): the plan answers instead, never an error

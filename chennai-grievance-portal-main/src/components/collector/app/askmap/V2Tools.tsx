@@ -49,7 +49,7 @@ export function PlayPeriod({ r, ask, lang }: { r: AskResponse; ask: MapAsk; lang
       <div className="amp-play-h">
         <h5><I n="clock" />{ta ? "நாள் வாரியாக" : "Day by day"}</h5>
         <button className="amp-ib" onClick={() => setPlaying((p) => !p)} aria-pressed={playing} title={playing ? (ta ? "நிறுத்து" : "Pause") : (ta ? "இயக்கு" : "Play the period")} aria-label={playing ? "Pause" : "Play the period"}>
-          {playing ? "❚❚" : "▶"}
+          {playing ? (ta ? "❚❚ நிறுத்து" : "❚❚ Pause") : (ta ? "▶ இயக்கு" : "▶ Play")}
         </button>
         <label className="amp-play-mode"><input type="checkbox" checked={upTo} onChange={(e) => setUpTo(e.target.checked)} />{ta ? "அதுவரை எல்லாம்" : "Up to the day"}</label>
         <button className="amp-speed" onClick={() => setSpeed((v) => (v === 700 ? 350 : v === 350 ? 1400 : 700))} title={ta ? "வேகம்" : "Speed"} aria-label={ta ? "வேகம்" : "Speed"}>{speed === 350 ? "2×" : speed === 1400 ? "½×" : "1×"}</button>

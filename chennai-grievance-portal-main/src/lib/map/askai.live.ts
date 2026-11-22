@@ -73,7 +73,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
   const score: Record<string, { n: number; ok: number; ai: number }> = {};
   const add = (set: string, ok: boolean, ai: boolean) => { const s = (score[set] ??= { n: 0, ok: 0, ai: 0 }); s.n++; if (ok) s.ok++; if (ai) s.ai++; };
 
-  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"]] as const) {
+  for (const [set, file] of [["dev", "eval/map-final/dev.json"], ["holdout", "eval/map-v2/ai-holdout.json"], ["big", "eval/map-v2/big.json"], ["fresh", "eval/map-v2/fresh.json"], ["human", "eval/map-v2/human.json"], ["human3", "eval/map-v3/human.json"], ["holdout3", "eval/map-v3/holdout.json"], ["probe", process.env.ASKAI_PROBE ?? "eval/map-v3/holdout.json"]] as const) {
     if (!SETS.includes(set)) continue;
     as(set);
     for (const x of read(file) as (Q & { kind?: "brief" | "scorecard" | "city" | "refuse" })[]) {
@@ -102,7 +102,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
         }
       }
       add(set, !m.length, !!r?.ai_used);
-      fs.appendFileSync(OUT, JSON.stringify({ set, id: x.id, q: x.q, head: r?.answer?.headline ?? r?.say?.en ?? null, ok: !m.length, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), miss: m, plan: r?.plan ?? null }) + "\n");
+      fs.appendFileSync(OUT, JSON.stringify({ set, id: x.id, q: x.q, head: r?.answer?.headline ?? r?.say?.en ?? null, meaning: r?.answer?.meaning ?? null, ok: !m.length, ai: r?.ai_used, read: r?.spelled.map((f) => `${f.from}->${f.label}`), miss: m, plan: r?.plan ?? null }) + "\n");
       console.log(`${m.length ? "FAIL" : "PASS"} ${set} ${x.id} ${m.join("; ")}`);
     }
   }
@@ -128,7 +128,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
           ...(t.want ? misses(r?.plan ?? null, !r?.plan ? [r?.say?.en ?? "no answer"] : null, t.want) : [])
         ];
         add(fset, !m.length, !!r?.ai_used);
-        fs.appendFileSync(OUT, JSON.stringify({ set: fset, head: r?.answer?.headline ?? r?.say?.en ?? null, id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, plan: r?.plan ?? null }) + "\n");
+        fs.appendFileSync(OUT, JSON.stringify({ set: fset, head: r?.answer?.headline ?? r?.say?.en ?? null, meaning: r?.answer?.meaning ?? null, id: `${c.id}.${k + 1}`, q: t.q, ok: !m.length, ai: r?.ai_used, miss: m, plan: r?.plan ?? null }) + "\n");
         console.log(`${m.length ? "FAIL" : "PASS"} ${fset} ${c.id}.${k + 1} ${t.q} ${m.join("; ")}`);
         if (r?.plan) prev = r.plan;
       }

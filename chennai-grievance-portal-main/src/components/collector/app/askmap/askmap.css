@@ -515,7 +515,7 @@
 .dic .amp-play-h{display:flex;align-items:center;gap:8px}
 .dic .amp-play-h h5{display:flex;align-items:center;gap:6px;margin:0;font:700 12px var(--font-ui);color:var(--text);flex:1}
 .dic .amp-play-h h5 svg{width:14px;height:14px;color:var(--accent)}
-.dic .amp-play-h .amp-ib{min-width:30px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
+.dic .amp-play-h .amp-ib{min-width:30px;padding:0 10px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px var(--font-ui)}
 .dic .amp-play-h .amp-ib:last-child{background:var(--surface-3);color:var(--text-2)}
 .dic .amp-play-mode{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--font-ui);color:var(--text-2);cursor:pointer}
 .dic .amp-bars{display:flex;align-items:flex-end;gap:2px;height:46px;margin:8px 0 4px}

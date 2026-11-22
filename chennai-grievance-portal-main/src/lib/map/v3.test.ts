@@ -99,3 +99,14 @@ describe("Ask the Map v3: the last answer's places, for 'there'", () => {
     expect(prevTopOf(null)).toEqual([]);
   });
 });
+
+describe("Ask the Map v3: fewest first", () => {
+  it("counts every ward, a ward with none first, then by count up", () => {
+    const w = withPeople();
+    const r = runMapPlan(plan([take, { op: "count_by", as: "by", of: "a", by: "ward", fewest: true }]), w, ctx);
+    if (r.show.type !== "groups") throw new Error("not groups");
+    expect(r.show.groups.map((g) => g.key).sort()).toEqual(w.wards.map((x) => String(x.ward)).sort());
+    const ns = r.show.groups.map((g) => g.n);
+    expect(ns).toEqual([...ns].sort((a, b) => a - b));
+  });
+});

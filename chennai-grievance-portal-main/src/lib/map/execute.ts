@@ -570,6 +570,21 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         break;
       }
       case "along": {
+        // v3: "petrol bunks along OMR", "bus stops along Anna Salai": the places themselves within the distance of the line
+        const ofColl = need(s.of);
+        if (ofColl.type === "points") {
+          const line = [...w.lines.roads, ...w.lines.waterways].find((l) => l.id === s.line);
+          if (!line) throw new PlanError("That road or waterway is not on the map.");
+          const box = expandBboxM(line.bbox, s.meters);
+          const items = ofColl.items.filter((p) => inBbox(p, box) && distToLineM(p, line.lines).m <= s.meters);
+          out = { type: "points", layer: ofColl.layer, items };
+          context.points.push(...items);
+          context.lines.push({ feat: line, meters: s.meters });
+          const lw = LAYER_WORD[ofColl.layer];
+          n = note(`Kept the ${lw.en} within ${fmtDistance(s.meters)} of ${line.name} (${items.length.toLocaleString("en-IN")}). Straight-line distance.`,
+            `${line.name_ta ?? line.name} இலிருந்து ${fmtDistance(s.meters, "ta")} க்குள் ${lw.ta} (${items.length.toLocaleString("en-IN")}).`);
+          break;
+        }
         const src = incHits(s.of);
         const placed = src.filter((h) => h.inc.pinnable);
         let hits: Hit[];
@@ -713,12 +728,21 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
             label_ta = h.near.name_ta ?? h.near.name ?? (where ? `${where.ta} ${lw.ta_one}` : lw.ta_one); lat = h.near.lat; lon = h.near.lon;
           } else if (s.by === "hex500" && h.inc.pinnable) {
             const x = hex500(h.inc);
-            key = x.key; label = `500 m cell ${x.key}`; label_ta = `500 மீ கட்டம் ${x.key}`; lat = x.lat; lon = x.lon;
+            // v3: a cell is called by its neighbourhood ("500 m around Perambur"), never by its grid number
+            const where = localityOf(w, x.lat, x.lon);
+            key = x.key; label = where ? `500 m around ${where.en}` : `a 500 m area (${x.lat.toFixed(3)}, ${x.lon.toFixed(3)})`; label_ta = where ? `${where.ta} சுற்றி 500 மீ` : `500 மீ பகுதி`; lat = x.lat; lon = x.lon;
           }
           if (key == null) { unassigned.push(h.inc.id); continue; }
           const g = groups.get(key) ?? groups.set(key, { key, label, label_ta, n: 0, lat, lon, ids: [] }).get(key)!;
           g.n++;
           g.ids.push(h.inc.id);
+        }
+        // v3: the fewest first: every ward, zone or taluk counts, an area with none too
+        if (s.fewest && (s.by === "ward" || s.by === "zone" || s.by === "taluk")) {
+          const all = s.by === "ward" ? w.wards.map((x) => ({ key: String(x.ward), label: `Ward ${x.ward}`, label_ta: `வார்டு ${x.ward}`, lat: x.lat, lon: x.lon }))
+            : s.by === "zone" ? w.zones.map((z) => ({ key: String(z.zone), label: `${z.name} (Zone ${z.zone})`, label_ta: `${zoneTa(z.zone, z.name)} (மண்டலம் ${z.zone})`, lat: z.lat, lon: z.lon }))
+            : w.taluks.map((t) => ({ key: t.code, label: `${t.name} taluk`, label_ta: `${t.name_ta ?? t.name} வட்டம்`, lat: t.lat, lon: t.lon }));
+          for (const a of all) if (!groups.has(a.key)) groups.set(a.key, { ...a, n: 0, ids: [] });
         }
         // v3: the people living in each area, and its cases for every 10,000 of them
         if (s.by === "ward" || s.by === "zone" || s.by === "taluk") for (const g of groups.values()) {
@@ -731,7 +755,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         const nAll = [...groups.values()].reduce((t, g) => t + g.n, 0);
         const MIN = Math.max(3, Math.round(nAll / 200));
         const rate = (g: Group) => (g.pop && g.per10k != null ? (g.n >= MIN ? 1e6 : 0) + g.per10k : -1);
-        const list = [...groups.values()].sort((a, b) => (per ? rate(b) - rate(a) : 0) || b.n - a.n || a.key.localeCompare(b.key, "en", { numeric: true }));
+        const list = [...groups.values()].sort((a, b) => (per ? rate(b) - rate(a) : 0) || (s.fewest ? a.n - b.n : b.n - a.n) || a.key.localeCompare(b.key, "en", { numeric: true }));
         const nearLayer = src.find((h) => h.near)?.near?.layer;
         out = { type: "groups", by: s.by, groups: list, hits: src, unassigned, layer: nearLayer };
         const nw = nearLayer ? LAYER_WORD[nearLayer] : null;

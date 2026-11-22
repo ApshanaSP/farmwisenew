@@ -289,7 +289,7 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       fact("groups", g.length, "areas");
       if (g[0]) fact("top", g[0].n, "in the top area");
       const nw = show.layer ? LAYER_WORD[show.layer] : null;
-      const unit = show.by === "near" ? (ta ? nw?.ta ?? "இடங்கள்" : nw?.en ?? "places") : show.by === "hex500" ? (ta ? "500 மீ கட்டங்கள்" : "500 m cells")
+      const unit = show.by === "near" ? (ta ? nw?.ta ?? "இடங்கள்" : nw?.en ?? "places") : show.by === "hex500" ? (ta ? "500 மீ பகுதிகள்" : "500 m areas")
         : show.by === "category" ? (ta ? "வகைகள்" : "kinds") : show.by === "dept" ? (ta ? "துறைகள்" : "departments")
         : ta ? { ward: "வார்டுகள்", zone: "மண்டலங்கள்", taluk: "வட்டங்கள்" }[show.by] : `${show.by}s`;
       // results, but none of them has this area on record (a district-wide report): nothing to rank, said plainly
@@ -304,6 +304,10 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
             : show.by === "category" ? `${n(count)} ${subj}${per} of ${g.length} kinds; the most: ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : show.by === "dept" ? `${n(count)} ${subj}${per} with ${g.length} departments; the most with ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the most in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;
+      // v3: the fewest first ("least complaints zone")
+      if (last.op === "count_by" && last.fewest && g.length && count >= 0) {
+        headline = ta ? `${n(count)} ${subj}${per}; குறைவு ${g[0].label_ta} (${n(g[0].n)}) · ${ready}.` : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the fewest in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;
+      }
       if (g.length > 1) meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${n(x.n)})`).join(", ")}.` : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${n(x.n)})`).join(", ")}.`;
       // v3: ranked for the people living there (Kontur population): the rate leads, the count and the people follow
       if (last.op === "count_by" && last.per === "people" && g[0]?.per10k != null && count) {
