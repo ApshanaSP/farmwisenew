@@ -141,3 +141,18 @@ Bugs found by the new tests and fixed:
 
 New set, written before its first run: **turns3** (25 conversations, 61 turns, each marked follow-up or new).
 First run: 56/61.
+
+Later in the round:
+
+- **An overview set no plan**, so "only severe ones" after it lost the place; it also let a kind from before the overview
+  come back. Overviews now carry their plan (open cases in the area), and the reader is told an overview covers every kind.
+- **The planner gets the reader's complete reading for new questions too**, so a follow-up the reader wrongly called new
+  ("which school is the worst" after "make it 200 m") still keeps its meaning.
+- **The reader runs on Claude Sonnet 5.5** (the owner asked for "a very high powerful model"); the planner stays on Haiku.
+  On Haiku the reader missed 7 hard turns; on Sonnet the 8 hardest conversations (20 turns) all passed. About 2 s and
+  US$0.0015 a follow-up.
+
+Final full run (reader on Haiku, before the Sonnet switch): turns3 58/61, topics3 24/24, collectorf3 33/35,
+followups3 68/70, followups3h 20/20, followups3f 26/27. The remaining misses: two one-off misreadings of a first question
+("dengue this week" read as flooding; on replay 6/6 right), one data case (no severe cases today, so nothing to point at),
+and the reader's calls since moved to Sonnet. Unit tests 1,584 (map, AI, console) pass; map golden 37/37.

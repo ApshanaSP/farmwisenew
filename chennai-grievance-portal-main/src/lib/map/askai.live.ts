@@ -122,7 +122,7 @@ it.runIf(haveStore())("Ask the Map, AI first, as the console asks", async () => 
         const r = (await withBusyRetry(() => askMap({ text: t.q, plan: null, prev, prevTop: prev ? top : null, earlier: prev ? earlierAreasOf(plans) : null, history: prev ? history.slice(-3) : null, context, user: { email: user.email, role: user.role, lockDept: null }, reword: false }))).value;
         last = r;
         if (r?.plan) plans.push(r.plan);
-        history.push({ q: t.q, a: (r?.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") ?? (r?.brief ? `What is happening: ${r.brief.label.en}` : r?.say?.en ?? "")).slice(0, 400) });
+        history.push({ q: t.q, a: (r?.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") ?? (r?.brief ? `An overview of every kind of problem in ${r.brief.label.en}: ${r.brief.open.n} open` : r?.say?.en ?? "")).slice(0, 400) });
         ms.push(Date.now() - t0);
         // a turn may want an area brief, or the place the last answer ranked number N ("what is happening there")
         const thereRef = t.there ? top[t.there - 1]?.ref : null;

@@ -152,7 +152,7 @@ export interface AskResponse {
   /** v2: the ward scorecard ("ward 178 scorecard"): the brief's counts, the rank among wards, the change (v2.ts) */
   scorecard: Scorecard | null;
   /** v3: how the AI read a message that came after other questions (turn.ts): a follow-up or a new question, and what it means */
-  turn?: { relation: "follow_up" | "new_question"; standalone: string } | null;
+  turn?: { relation: "follow_up" | "new_question"; standalone: string; points_to?: number } | null;
   /** v3: the kind of problem the answer is about, in words ("open garbage complaints"), when its plan names one; the panel offers it beside an area's overview */
   topic?: { en: string; ta: string } | null;
 }
@@ -428,7 +428,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     // one (its kind of problem, its places) is carried over. No reading (no key, busy): the planner decides, as before.
     const turn: TurnReading | null = asked.prev && input.history?.length
       ? await readTurn(typed, input.history, input.prevTop ?? [], { user: input.user.email, signal: input.signal }) : null;
-    out.turn = turn ? { relation: turn.relation, standalone: turn.standalone } : null;
+    out.turn = turn ? { relation: turn.relation, standalone: turn.standalone, points_to: turn.points_to } : null;
     const prev = turn?.relation === "new_question" ? null : asked.prev;
     // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
     const reading = spellerFor(data)(typed).text;

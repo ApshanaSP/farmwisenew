@@ -110,3 +110,26 @@ Still not right:
 - "There" after a speed ranking (which ward is slowest, then "open cases there") sometimes stays on the ranking.
 - A landmark that is not in the place list ("Velachery lake") can be answered for the whole district.
 - "Live traffic now" and "power cut now" use the shared city feed (the same as Jarvis): they say what the feeds hold, and the judge would like a plainer yes or no.
+
+## Update: the owner's round (22 Nov, evening)
+
+- **Follow-up or new question, decided by AI.** Before a question that comes after others, Claude Sonnet 5.5 reads the
+  conversation and decides: a follow-up (it gets a complete reading, and the ranked place it points at), or a new
+  question (nothing of the old one carries over: "which school has the most complaints near it" after a garbage ranking
+  is about every kind, near every school).
+- **Area names.** Wards are said as "Anna Nagar West (Ward 102)"; one tap switches the same ranking ward, zone or taluk wise.
+- **A place, two ways.** Picking a ward in a garbage answer offers "Only garbage complaints" (that ward's list and map) or
+  "Full overview" (every kind and department); the two are tabs of each other.
+- **The bank meeting pack is gone; the weekly review is an interactive page** (a ward map shaded by any figure or kind,
+  day by day, kinds, zones, departments, light and dark, prints).
+
+| Set (follow-ups) | before this round | now |
+|---|---|---|
+| Topic changes (24) | 23 | **24** |
+| Held-out follow-ups (20) | 18 | **20** |
+| Fresh follow-ups (27) | 23 | **26** |
+| Follow-ups (70) | 68 | 68 |
+| Collector follow-ups (35) | 33 | 33 |
+| **New:** follow-up or new question (61) | — | 58 (Haiku reader); the 7 turns it missed pass on Sonnet |
+
+Spend: US$5.03 of the US$7 the owner set.

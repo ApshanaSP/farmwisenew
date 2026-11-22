@@ -7,7 +7,7 @@
  *   new_question  it is complete on its own and asks about its own subject ("which school has the most complaints near it"
  *                 after a garbage ranking): nothing of the old question is carried over.
  * It also writes the message as one complete question (the "standalone" reading), which the planner reads with the old plan.
- * No word list or pattern decides any of this: the AI does, from the conversation. A failed call (no key, busy) returns null
+ * No word list or pattern decides any of this: the AI does, from the conversation (Claude Sonnet 5.5, AI_MAP_TURN_MODEL). A failed call (no key, busy) returns null
  * and the planner works as before. The prompt holds the officer's questions and the answers' headlines (counts and place
  * names, never a complaint's text or a person's details).
  */
@@ -32,6 +32,7 @@ const SYSTEM = [
   "  a time (last month, this week, today, yesterday), a status or severity (only severe, include closed, still open, overdue ones), a grouping (by zone, ward wise, by department, for its population, per person),",
   "  a place in place of the old one (and zone 5, what about Adyar, same in Teynampet), a kind of place in place of the old one (what about hospitals, schools too, near markets instead),",
   "  a kind of problem said as an edit (only garbage, now flooding, and thefts, what about dengue), or a step on the same cases (vs last week, where are they piling up, which is slowest, compare both, why so many, which dept is holding them).",
+  "  After an overview of a place (every kind of problem in it), a follow_up keeps that place and asks about every kind unless it names one: \"only severe ones\" is the severe cases of every kind there; a kind from before the overview does not come back.",
   "  A message that drops the old kind of problem on purpose (all complaints there, every kind, total incidents, overall, everything in that ward) is a follow_up that keeps the place but asks about every kind.",
   "- new_question: it is complete on its own and asks about its own subject, even when the topic is close to the last one. A full question that names its own kind of problem or says complaints in general, its own place or kind of place, and its own shape is new: nothing of the old question carries over unless it points back.",
   "  After \"which ward has the most garbage\": \"which school has the most complaints near it\" is new (all complaints near schools, not garbage); \"show me accidents in Velachery\" is new; \"what about schools\" is a follow_up (garbage near schools).",
@@ -66,7 +67,9 @@ export async function readTurn(text: string, history: TurnHistory[], top: { name
   const conv = history.slice(-3).map((h, i) => `Q${i + 1}: ${h.q.slice(0, 300)}\nA${i + 1}: ${h.a.slice(0, 300)}`).join("\n");
   const ranked = top.length ? `\nTHE LAST ANSWER RANKED FIRST: ${top.slice(0, 3).map((t, i) => `${i + 1}. ${t.name}`).join("; ")}` : "";
   try {
-    const r = await generateJson({ role: "fast", name: "map-turn", schema: TurnRead, system: SYSTEM, prompt: `${conv}${ranked}\nNEW MESSAGE: ${text.slice(0, 400)}`,
+    // v3 (owner, 22 Nov 2026: "a very high powerful model"): the reader, a short prompt, runs on Claude Sonnet 5.5 (about
+    // US$0.0015 a follow-up); the planner, with its long cached prompt, stays on the owner's Haiku. AI_MAP_TURN_MODEL changes it.
+    const r = await generateJson({ role: "fast", name: "map-turn", claudeModel: process.env.AI_MAP_TURN_MODEL?.trim() || "claude-sonnet-5-5", schema: TurnRead, system: SYSTEM, prompt: `${conv}${ranked}\nNEW MESSAGE: ${text.slice(0, 400)}`,
       temperature: 0, maxOutputTokens: 300, user: ctx.user, abortSignal: ctx.signal, chat: true, feature: "map", timeoutMs: 8_000 });
     lastInfo = r.info;
     if (process.env.MAP_AI_DEBUG === "1") console.log("MAPTURN", JSON.stringify(r.object));

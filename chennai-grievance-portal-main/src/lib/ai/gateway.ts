@@ -126,7 +126,7 @@ function anthropic(): Provider | null {
       // Ask the Map final: a feature's own Claude model and settings (featureClaude), whatever AI_CLAUDE_MODEL says for the other steps
       const fc = !jarvis && c.feature ? featureClaude(c.feature) : null;
       const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}),
-        ...(fc ? { model: fc.model, effort: fc.effort, think: fc.think, sentinels: true } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
+        ...(fc ? { model: c.claudeModel || fc.model, effort: fc.effort, think: fc.think, sentinels: true } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
         timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
         // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
         const b = billedOf(e);
@@ -280,6 +280,8 @@ export interface JsonCall<T> {
   first?: string[];
   /** short name of the step, for logs ("router", "planner", "composer") */
   name: string;
+  /** v3: a feature step's own Claude model in place of the feature's (Ask the Map's turn reader on a stronger model) */
+  claudeModel?: string;
   /** sent to the provider as a strict JSON schema */
   schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   /** checks a draft the provider rejected (optional fields tolerant); never sent */

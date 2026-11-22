@@ -122,7 +122,8 @@ export function answerGist(r: AskResponse, lang: "en" | "ta"): string {
 /** v3: the conversation for the turn reader: the last three answered questions with their answers in a few words (counts and place names) */
 export function historyOf(turns: Turn[]): { q: string; a: string }[] {
   return turns.filter((t) => !t.pending && !t.error && (t.resp || t.gist)).slice(-3)
-    .map((t) => ({ q: t.q.slice(0, 400), a: (t.resp ? answerGist(t.resp, t.resp.lang === "ta" ? "ta" : "en") : t.gist ?? "").slice(0, 400) }));
+    .map((t) => ({ q: t.q.slice(0, 400), a: (t.resp?.kind === "brief" && t.resp.brief ? `An overview of every kind of problem in ${t.resp.brief.label.en}: ${t.resp.brief.open.n} open`
+      : t.resp ? answerGist(t.resp, t.resp.lang === "ta" ? "ta" : "en") : t.gist ?? "").slice(0, 400) }));
 }
 
 const UI_NOTE: Record<string, [string, string]> = {
