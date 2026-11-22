@@ -164,8 +164,12 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     const kinds = t0?.where?.kinds?.length === 1 ? KIND_WORD[t0.where.kinds[0]] : undefined;
     const lw = kinds ? { ...LAYER_WORD[show.layer], en: kinds.en, one: kinds.one, ta: kinds.ta, ta_one: kinds.ta } : LAYER_WORD[show.layer];
     count = fact("count", show.items.length, lw.en);
-    const area = last.op === "inside" ? areaLabel(last.area, w, ctx) : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
-    const inWord = last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
+    // v3: places along a road or waterway ("petrol bunks along OMR")
+    const line = last.op === "along" ? [...w.lines.roads, ...w.lines.waterways].find((x) => x.id === last.line) : null;
+    const area = last.op === "inside" ? areaLabel(last.area, w, ctx)
+      : last.op === "along" ? { en: `within ${fmtDistance(last.meters)} of ${line?.name ?? last.line}`, ta: `${line?.name_ta ?? line?.name ?? last.line} இலிருந்து ${fmtDistance(last.meters, "ta")} க்குள்` }
+      : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
+    const inWord = last.op === "along" ? "" : last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
     const word = count === 1 ? lw.one : lw.en;
     headline = !count ? (ta ? `${area.ta} ${lw.ta} எதுவும் இல்லை.` : tg ? `${area.en}-la ${lw.en} edhuvum illa.` : `No ${lw.en} ${inWord}${area.en} on the map.`)
       : ta ? `${area.ta} ${n(count)} ${count === 1 ? lw.ta_one : lw.ta}.` : tg ? `${area.en}-la ${n(count)} ${word} irukku.` : `${n(count)} ${word} ${inWord}${area.en}.`;

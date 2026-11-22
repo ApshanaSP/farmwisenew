@@ -843,7 +843,7 @@ export default function SatMap(props: Props) {
         <div className="mapload" role="status" aria-label="Loading the map">
           <div className="mapload-grid" />
           <div className="mapload-radar"><i /><b /></div>
-          <p><span>Drawing Chennai's 200 wards</span><em>satellite tiles, wards and today's cases</em></p>
+          <p><span>Drawing Chennai&rsquo;s 200 wards</span><em>satellite tiles, wards and today&rsquo;s cases</em></p>
         </div>
       )}
       {canGoBack && focus && (

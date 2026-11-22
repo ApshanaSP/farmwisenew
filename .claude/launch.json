@@ -367,7 +367,7 @@
       "env": {
         "DATA_BACKEND": "aws",
         "AWS_STORE_DRY_RUN": "1",
-        "NEXT_DIST_DIR": ".next-prod-v3c",
+        "NEXT_DIST_DIR": ".next-prod-v3d",
         "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
         "AWS_STORE_RELOAD_MINUTES": "100000"
       }

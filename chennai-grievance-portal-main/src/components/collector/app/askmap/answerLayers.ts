@@ -203,7 +203,7 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
 }
 
 /** One place in a ranked answer: its rank, name, the figure it is ranked by, and its cases (a click shows them). */
-export interface RankRow { key: string; label: string; n: number; fig: string; sub: string; lat: number; lon: number; ids: string[]; tone: "hi" | "lo" | "" }
+export interface RankRow { key: string; label: string; n: number; fig: string; sub: string; lat: number; lon: number; ids: string[]; tone: "hi" | "lo" | "rain" | "" }
 export interface Ranked { by: string; what: string; rows: RankRow[]; near: boolean; areas: boolean; layer: LayerId | null; radius: number | null; /** v3: a rain forecast (blue shades) */ rain?: boolean }
 
 const TOP = 10;
@@ -221,7 +221,7 @@ export function rankedOf(r: AskResponse): Ranked | null {
   if (fc && fc.rows.length > 1) {
     const rows = fc.rows.map((x): RankRow => ({ key: x.key, label: ta ? x.label_ta : x.label, n: x.mm, fig: `${x.mm.toLocaleString("en-IN", { maximumFractionDigits: 1 })} mm`,
       sub: ta ? `அதிகபட்சம் மணிக்கு ${x.maxHr} மிமீ · ${x.open} திறந்த வெள்ள/வடிகால் புகார்கள்` : `up to ${x.maxHr} mm an hour · ${x.open} open flooding or drain ${x.open === 1 ? "case" : "cases"}`,
-      lat: x.lat, lon: x.lon, ids: x.ids, tone: "" }));
+      lat: x.lat, lon: x.lon, ids: x.ids, tone: "rain" }));
     return { by: "zone", what: ta ? "மிமீ மழை" : "mm of rain", rows, near: false, areas: true, layer: null, radius: null, rain: true };
   }
   const by = r.extra.groupsBy;

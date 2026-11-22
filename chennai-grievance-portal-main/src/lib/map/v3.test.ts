@@ -110,3 +110,17 @@ describe("Ask the Map v3: fewest first", () => {
     expect(ns).toEqual([...ns].sort((a, b) => a - b));
   });
 });
+
+describe("Ask the Map v3: places along a road", () => {
+  it("keeps the facilities within the distance of the line, as a brute-force check says", async () => {
+    const { distToLineM } = await import("./geom");
+    const { ROAD } = await import("./fixture");
+    const w = fixtureWorld();
+    for (const m of [100, 600, 2000]) {
+      const r = runMapPlan(plan([{ op: "take", as: "f", layer: "schools", filter: null, where: null }, { op: "along", as: "al", of: "f", line: ROAD.id, meters: m }]), w, ctx);
+      if (r.show.type !== "points") throw new Error("not points");
+      const want = w.points.schools.filter((p) => distToLineM(p, ROAD.lines).m <= m).map((p) => p.id).sort();
+      expect(r.show.items.map((p) => p.id).sort()).toEqual(want);
+    }
+  });
+});
