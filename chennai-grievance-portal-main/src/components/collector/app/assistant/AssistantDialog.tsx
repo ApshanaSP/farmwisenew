@@ -152,6 +152,18 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
   }, [open]);
   // the mic button only where the browser can listen; nothing keeps talking once the dialog closes
   useEffect(() => { setMicOk(canListen()); }, []);
+  // 23 Nov 2026: the department officer's Jarvis (components/officer/Jarvis.tsx) asks by voice through this dialog: "diq:voice" starts the
+  // mic (the question is sent when the officer stops speaking, and the answer is spoken), "diq:voice-ask" sends what was already heard
+  const micRef = useRef<() => void>(() => undefined);
+  const askRef = useRef<(q: string) => void>(() => undefined);
+  useEffect(() => {
+    const ack = () => window.dispatchEvent(new CustomEvent("diq:voice-ack"));
+    const start = () => { ack(); if (!listening) micRef.current(); };
+    const send = (e: Event) => { const q = (e as CustomEvent<string>).detail; ack(); if (q) askRef.current(q); };
+    window.addEventListener("diq:voice", start);
+    window.addEventListener("diq:voice-ask", send);
+    return () => { window.removeEventListener("diq:voice", start); window.removeEventListener("diq:voice-ask", send); };
+  }, [listening]);
   useEffect(() => { if (!open) { stopListening.current?.(); stopSpeaking(); } }, [open]);
 
   // keep Tab inside the dialog
@@ -294,6 +306,8 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
       if (err === "not-allowed" || err === "service-not-allowed") setItems((x) => [...x, { id: uid(), role: "error", text: T[lang].micOff }]);
     });
   };
+  micRef.current = mic;
+  askRef.current = (q: string) => { stopSpeaking(); ask(q, "voice"); };
   // stable handlers, so answers already on screen are not redrawn when a new one arrives
   const onAsk = useCallback((q: string) => { ask(q); }, [ask]);
   const onAct = useCallback((a: ConsoleAction) => runAction(a), [runAction]);
@@ -418,7 +432,8 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
                     <AnswerCard card={it.card} geo={c.geo} onAsk={onAsk} onAction={onAct} expanded={wide} onExpand={onExpand} onPin={pin}
                       reveal={live.current.has(it.card.id)} onRetry={q && !busy && k === items.length - 1 ? () => ask(q) : undefined} />
                     {/* Jarvis builds the same question as a full screen over the console, with its charts, and says it */}
-                    {q && <button className="aq-stage" onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); }}
+                    {/* (the Collector's only: an officer's console has no Jarvis screens, 23 Nov) */}
+                    {q && !c.officer && <button className="aq-stage" onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); }}
                       title={lang === "en" ? "Jarvis shows this answer as a full screen with charts, and reads it out" : "ஜார்விஸ் இதை முழுத் திரையில் காட்டும்"}>
                       <I n="tv" />{lang === "en" ? "Show on screen with Jarvis" : "ஜார்விஸ் திரையில் காட்டு"}</button>}
                   </div>

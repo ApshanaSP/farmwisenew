@@ -32,7 +32,7 @@ import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsre
 import { cleanTitle } from "@/lib/collector/threads";
 import { NON_INCIDENT_KINDS, reportKind, type ReportKind } from "@/lib/collector/reporttype";
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
-import { MASS_DEATHS, animalDeathsOnly, casualties, casualtyMerges, isArchival, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
+import { MASS_DEATHS, animalDeathsOnly, casualties, casualtyMerges, isArchival, labelNumbers, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 import { websiteCases } from "@/lib/manu/cases";
 
 type Row = Record<string, any>;
@@ -237,6 +237,24 @@ async function places(db: DB) {
     const ev = !done && !CITYWIDE.test(title) ? fromEvent.get(i.id) : undefined;
     if (ev) placed.push({ id: i.id, p: ev.p, how: `${ev.n} other report${ev.n === 1 ? "" : "s"} of the same event name ${ev.named}` });
   }
+  // 23 Nov 2026: the same report under another incident (the same headline) that has a place gives it that place, so the map, the lists
+  // and "Locations needing review" agree (the owner saw a case under review whose twin was already placed on the map)
+  const done = new Set(placed.map((x) => x.id));
+  const left = rows.filter((i) => !done.has(i.id) && i.title && !CITYWIDE.test(String(i.title)) && !outsidePlace(String(i.title)));
+  const twin = new Map<string, Row>();
+  const titles = [...new Set(left.map((i) => String(i.title)))];
+  for (let k = 0; k < titles.length; k += 400) {
+    const part = titles.slice(k, k + 400);
+    for (const t of db.prepare(`SELECT incident_id AS id, title, zone_no, ward_no, taluk_code, lat, lon, place_text FROM incidents
+      WHERE zone_no IS NOT NULL AND lat IS NOT NULL AND title IN (${part.map(() => "?").join(", ")}) ORDER BY COALESCE(loc_precision_m, 99999) ASC`).all(...part) as Row[])
+      if (!twin.has(String(t.title))) twin.set(String(t.title), t);
+  }
+  for (const i of left) {
+    const t = twin.get(String(i.title));
+    if (!t || t.id === i.id) continue;
+    placed.push({ id: i.id, p: { place: String(t.place_text ?? zoneName.get(Number(t.zone_no)) ?? ""), ward: t.ward_no != null ? Number(t.ward_no) : null, zone: Number(t.zone_no),
+      taluk: t.taluk_code ?? null, conf: 0.7, lat: Number(t.lat), lon: Number(t.lon) }, how: `the same report under ${t.id} is placed at ${t.place_text ?? `zone ${t.zone_no}`}` });
+  }
   db.exec(`CREATE TABLE IF NOT EXISTS _placed (incident_id TEXT PRIMARY KEY, place TEXT, how TEXT)`);
   tx(db, () => {
     const up = db.prepare(`UPDATE incidents SET zone_no = ?, zone_name = ?, ward_no = COALESCE(?, ward_no), taluk_code = COALESCE(?, taluk_code),
@@ -402,7 +420,8 @@ function recountDeaths(db: DB): number {
   for (const r of rows) {
     const text = [r.title, r.en, r.summary, String(r.body ?? "").slice(0, 4000)].filter(Boolean).join(". ");
     const now = Number(r.dead), ai = r.ai == null ? null : Number(r.ai);
-    const labels = new Set([...text.matchAll(LABEL)].map((m) => Number(m[1] ?? m[2])));
+    // (23 Nov: every label form, "12th standard", "Class XII", "Plus Two", "12-ஆம் வகுப்பு": newssanity.labelNumbers)
+    const labels = new Set([...[...text.matchAll(LABEL)].map((m) => Number(m[1] ?? m[2])), ...labelNumbers(text)]);
     const said = casualties(text)[0];
     const want = ai != null && Number.isFinite(ai) && !(ai > 1 && labels.has(ai) && ai !== said) ? ai : Math.min(now, said);
     if (want < now) fixed.set(String(r.id), want);

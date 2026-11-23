@@ -5,7 +5,7 @@
  * spoken line in English and Tamil from templates. No figure here comes from a model.
  */
 import type { ToolResult } from "@/lib/assistant/types";
-import type { CityFocusPart, CityRainOf } from "@/lib/city/now";
+import type { CityFocusPart, CityRainOf, CityRanked } from "@/lib/city/now";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
 /** A Tamil count and its word: one takes the singular ("1 கடுமையானது"), any other number the plural ("2 கடுமையானவை"). A line said "1 கடுமையானவை"
  * whatever the count (pass4-open-13, the PB-224 class). */
@@ -82,6 +82,10 @@ export interface Slots {
   focus?: "worst-jam" | "repeat" | null;
   /** v12 (21 Nov), city: a past heavy rain, "latest" or "rain-YYYY-MM-DD" (the streets that flooded in it) */
   rain?: string | null;
+  /** 23 Nov, city: a ranked list of live traffic ("top three most congested roads", "areas with the least traffic") */
+  rank?: { n: number; order: "most" | "least"; by: "road" | "area" } | null;
+  /** 23 Nov, cases: the count asked for ("open the top three cases"): exactly that many, by priority, with why each ranks there */
+  top?: number | null;
   /** v16 (22 Nov), focus: what the reader understood was asked (attention, improving, worsening, repeat), in order */
   lens?: ("attention" | "improving" | "worsening" | "repeat")[];
   /** v16 (22 Nov), focus: about the zones, the streets and spots, or the kinds of problem */
@@ -679,27 +683,31 @@ async function cases(c: Ctx): Promise<Part> {
   let lateAll: number | null = null;
   let groupsTotal: number | null = null;
   const sortKey = slots.sort === "complaints" ? "c" : slots.sort === "time" ? "t" : "sev";
+  // 23 Nov: "open the top three cases": exactly that many, in priority order, each with the reasons its priority was given
+  const top = slots.top != null && slots.top >= 1 ? Math.min(slots.top, 20) : null;
+  const pri = new Map<string, { score: number | null; why: Bilingual | null }>();
+  const keep = <T extends Row>(xs: T[]): T[] => { for (const x of xs) pri.set(String(x.id), { score: num(x.priority), why: priorityWhy(x) }); return xs; };
   // "the severe cases": exactly the console's severity panel for this scope
   if (sev && !slots.q && !slots.status) {
     c.runs.push("console_severe");
     const r = await c.h.severe(s);
     c.sources.add("console severity panel");
     c.asOf ??= r.asOf;
-    rows = r.rows.filter((x) => x.sev === sev).map((x) => caseRow(x, w));
+    rows = keep(r.rows.filter((x) => x.sev === sev)).map((x) => caseRow(x, w));
     total = Number(r.counts[sev] ?? rows.length);
     source = "console-severity";
     lateAll = await lateTotal(c, sev, null);
   } else if (slots.status === "overdue" && c.h.list) {
     // the console's own past-deadline filter: its rows and its whole count (BUG-007, BUG-021)
     const r = await incidentList(c, { sev, status: "overdue", q: slots.q, sort: sortKey });
-    rows = r.rows.map((x) => caseRow(x, w));
+    rows = keep(r.rows).map((x) => caseRow(x, w));
     // rows are groups of one problem, the count is of incidents, as the console's past-deadline tile counts them
     total = lateAll = r.incidents;
     groupsTotal = r.total;
     source = "list";
   } else {
     const r = await incidentList(c, { sev, status: slots.status, q: slots.q, sort: sortKey });
-    rows = r.rows.map((x) => caseRow(x, w));
+    rows = keep(r.rows).map((x) => caseRow(x, w));
     if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
     // the headline counts incidents, as the past-deadline figure does; a list row is a group of them, so the part is never larger than the whole
     total = r.incidents;
@@ -732,7 +740,9 @@ async function cases(c: Ctx): Promise<Part> {
     source = "list";
   }
   // the console's own list is shown whole ("the 6 severe cases" are the ones it shows, however many it shows now)
-  rows = sortRows(rows, slots.sort).slice(0, source === "console-severity" ? 30 : n);
+  // (23 Nov: unless a count was asked: "open top three cases" showed every severe case)
+  rows = sortRows(rows, slots.sort).slice(0, top ?? (source === "console-severity" ? 30 : n));
+  if (top && rows.length) return topCases(c, rows, total, sev, top, pri, source);
   // the list is complete when the rows shown are all of it: only then is a count over its rows (who holds most) a count of the list
   const complete = rows.length >= (groupsTotal ?? total);
   const sevWord = sev ? sev.toLowerCase() : "";
@@ -778,6 +788,57 @@ async function cases(c: Ctx): Promise<Part> {
   blocks.push({ kind: "CaseList", id: "cases", title, source, sev, total, rows });
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L(c, "Where they are", "எங்கே உள்ளன"), rule: L(c, "Numbered as in the list; cases without an exact place are not drawn.", "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."), shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
   return { title: titles, takeaway, say, blocks };
+}
+
+/**
+ * 23 Nov: a case's priority reasons in plain words (the pipeline's priority_reasons, "Severe road accident (90); reported by 3 sources; 14
+ * citizen complaints; resolution past the 48 h target"), without the severity score in brackets; the console's flags when there are none.
+ */
+export function priorityWhy(x: Row): Bilingual | null {
+  const raw = String(x.priority_reasons ?? "").trim();
+  const parts = raw ? raw.split(";").map((p) => p.replace(/\s*\(\d+(?:\.\d+)?\)\s*/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean)
+    : String(x.attention_reason ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const en = clip(parts.slice(0, 5).join("; "), 260);
+  const TA: [RegExp, string][] = [[/reported by (\d+) sources/i, "$1 ஆதாரங்கள் தெரிவித்தவை"], [/(\d+) citizen complaints/i, "$1 குடிமக்கள் புகார்கள்"],
+    [/(?:response|resolution) over twice the (\d+) h target/i, "$1 மணி நேர இலக்கைவிட இரு மடங்கு தாமதம்"], [/(?:response|resolution) past the (\d+) h target/i, "$1 மணி நேர இலக்கு தாண்டியது"],
+    [/not yet verified by an officer/i, "அதிகாரி இன்னும் சரிபார்க்கவில்லை"], [/(\d+) new reports in 24 h/i, "24 மணி நேரத்தில் $1 புதிய பதிவுகள்"], [/covered by (\d+) news outlets/i, "$1 செய்தி ஊடகங்களில் வந்தது"],
+    [/linked to a rain event/i, "மழையுடன் தொடர்புடையது"], [/in the news but not in any department's records/i, "செய்தியில் உள்ளது, துறைப் பதிவுகளில் இல்லை"]];
+  const ta = parts.slice(1, 5).map((p) => { for (const [re, t] of TA) if (re.test(p)) return p.replace(re, t); return null; }).filter((p): p is string => !!p);
+  return bi(en, ta.length ? ta.join("; ") : "");
+}
+
+/** what goes into a case's priority, said with a top-N list ("why these three") */
+export const PRIORITY_HOW = bi("Why this order: each case's priority score adds up its severity, how far past its deadline it is, how many sources and citizen complaints report it, whether new reports are coming in, vulnerable people affected, news coverage and rain; the highest score comes first.",
+  "வரிசை: ஒவ்வொரு சம்பவத்தின் முன்னுரிமை மதிப்பெண் அதன் தீவிரம், காலக்கெடு தாண்டிய அளவு, ஆதாரங்கள் மற்றும் புகார்களின் எண்ணிக்கை, புதிய பதிவுகள், பாதிக்கப்படும் மக்கள், செய்தி, மழை ஆகியவற்றைக் கூட்டுகிறது; அதிக மதிப்பெண் முதலில்.");
+
+/**
+ * 23 Nov: "open the top three cases", "the top 3 severe cases in Adyar": exactly that many, by priority, each named with why its priority is
+ * high, then how the order was made. The list, its map and the reasons are on the screen; every figure said is in the reasons shown.
+ */
+function topCases(c: Ctx, rows: CaseRowT[], total: number, sev: Sev | null, top: number, pri: Map<string, { score: number | null; why: Bilingual | null }>, source: "console-severity" | "list"): Part {
+  const { w, s } = c;
+  const scope = scopeWords(w, { ...s, sev: null });
+  const kind = sev ? `${sev.toLowerCase()} ` : "";
+  const name = (r: CaseRowT) => { const l = spokenLabel(r); const at = r.zoneName && !l.includes(r.zoneName) ? ` in ${r.zoneName}` : ""; return `${l}${at}`; };
+  const nameTa = (r: CaseRowT) => [plainWhat(r.cat, r.title)?.ta ?? "ஒரு பிரச்சினை", r.zone ? ZONE_TA[r.zone] ?? r.zoneName : r.zoneName].filter(Boolean).join(", ");
+  const whyOf = (r: CaseRowT): Bilingual | null => pri.get(r.id)?.why ?? (r.why ? bi(r.why, "") : null);
+  const head = rows.length < top
+    ? `There ${rows.length === 1 ? "is" : "are"} only ${plural(rows.length, `${kind}case`, `${kind}cases`)} ${inPeriod(s.period)}`
+    : `The top ${spoken(top)} of ${plural(Math.max(total, rows.length), `${kind}case`, `${kind}cases`)} ${inPeriod(s.period)}, by priority`;
+  const en = `${head}: ${rows.map((r, k) => { const y = whyOf(r); return `${k + 1}. ${name(r)}${y?.en ? ` (${y.en})` : ""}${r.overdue ? ", past its deadline" : ""}`; }).join("; ")}.`;
+  const ta = `முன்னுரிமைப்படி முதல் ${spoken(rows.length)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்: ${rows.map((r, k) => { const y = whyOf(r); return `${k + 1}. ${nameTa(r)}${y?.ta ? ` (${y.ta})` : ""}`; }).join("; ")}.`;
+  const title = bi(`Top ${spoken(rows.length)} ${kind}cases · ${scope.en}`, `முதல் ${spoken(rows.length)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள் · ${scope.ta}`);
+  const blocks: BlockT[] = [];
+  // the whole answer in words, so every figure said (sources, complaints, hours past the target) is on the screen
+  blocks.push({ kind: "Answer", id: "say", title: L(c, title.en, title.ta), text: clip(`${en} ${PRIORITY_HOW.en}`, 900), facts: [] });
+  blocks.push({ kind: "CaseList", id: "cases", title: L(c, title.en, title.ta), source, sev, total, rows });
+  blocks.push({ kind: "Ranking", id: "why", title: L(c, "Why each is here", "ஒவ்வொன்றும் ஏன் இங்கே"), unit: L(c, "priority", "முன்னுரிமை"), method: clip(L(c, PRIORITY_HOW.en, PRIORITY_HOW.ta), 240), order: "top",
+    items: rows.map((r, k) => ({ key: `p${k}`, label: clip(c.ta ? nameTa(r) : name(r), 120), value: Math.round(pri.get(r.id)?.score ?? 0), rank: k + 1,
+      sub: clip((c.ta ? whyOf(r)?.ta || whyOf(r)?.en : whyOf(r)?.en) ?? "", 160) || null, zone: r.zone, lat: r.lat, lon: r.lon, action: "none" as const })) });
+  const pts = points(rows, rows.length);
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L(c, "Where they are", "எங்கே உள்ளன"), rule: null, shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
+  return { title, takeaway: PRIORITY_HOW, say: bi(`${en} ${PRIORITY_HOW.en}`, `${ta} ${PRIORITY_HOW.ta}`), blocks };
 }
 
 /**
@@ -1248,9 +1309,12 @@ async function city(c: Ctx): Promise<Part> {
   // speculative ones by the tool cache)
   const focus = topic === "traffic" && (c.slots.focus === "worst-jam" || c.slots.focus === "repeat") ? c.slots.focus : null;
   const rain = topic === "flood" && typeof c.slots.rain === "string" && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(c.slots.rain) ? c.slots.rain : null;
-  const r = await call(c, "city_now", { topic, zone, ...(focus ? { focus } : {}), ...(rain ? { rain } : {}) });
+  const rk = c.slots.rank;
+  const rank = topic === "traffic" && rk && Number.isInteger(rk.n) && rk.n >= 1 ? { n: Math.min(rk.n, 10), order: rk.order === "least" ? "least" : "most", by: rk.by === "area" ? "area" : "road" } : null;
+  const r = await call(c, "city_now", { topic, zone: rank?.by === "area" ? null : zone, ...(focus && !rank ? { focus } : {}), ...(rain ? { rain } : {}), ...(rank ? { rank } : {}) });
   const d = r.data as { headline: { en: string; ta: string }; say: { en: string; ta: string }; rows: { part: string; place: string; detail: string; value: number | null; unit: string | null; lat: number | null; lon: number | null }[];
-    focus?: CityFocusPart | null; rainOf?: CityRainOf | null };
+    focus?: CityFocusPart | null; rainOf?: CityRainOf | null; ranked?: CityRanked | null };
+  if (rank) return cityRanked(c, r, d);
   if (focus) return cityFocus(c, r, d, focus);
   if (rain) return cityRain(c, r, d);
   const fact = (id: string) => r.facts.find((f) => f.id === `city.${id}`);
@@ -1305,6 +1369,33 @@ function cityFocus(c: Ctx, r: ToolResult, d: { say: { en: string; ta: string }; 
   blocks.push({ kind: "MapView", id: "spot", title: "Where", rule: null, shade: null, outline: [],
     points: [{ n: 1, id: clip(f.id, 120), lat: f.lat, lon: f.lon, label: clip(f.name, 160), sev: null, value: f.delayMin ?? null, hot: true }] });
   return { title, takeaway: null, say: bi(f.line.en, f.line.ta), blocks, next: [] };
+}
+
+/**
+ * 23 Nov: "the top three most congested roads", "which areas have the least traffic", "the three congested ones in Anna Nagar": the ranked
+ * list (lib/city/now.ts rankPart), each with why it stands there, and how the order was made, said and shown. The map shows every one.
+ */
+function cityRanked(c: Ctx, r: ToolResult, d: { say: { en: string; ta: string }; ranked?: CityRanked | null }): Part {
+  const rk = d.ranked ?? null;
+  const head = !rk ? bi("Live traffic", "நேரடி போக்குவரத்து")
+    : rk.by === "area" ? (rk.order === "most" ? bi("Zones with the most congestion now", "அதிக நெரிசல் உள்ள மண்டலங்கள்") : bi("Zones with the least congestion now", "குறைந்த நெரிசல் உள்ள மண்டலங்கள்"))
+      : rk.order === "most" ? bi(rk.asked > 1 ? `Top ${rk.asked} most congested roads now` : "Most congested road now", `அதிக நெரிசலான ${rk.asked} சாலைகள்`) : bi("Least congested roads now", "குறைந்த நெரிசலான சாலைகள்");
+  if (!rk || !rk.items.length) {
+    const one = bi(d.say.en.split(/(?<=[.!?])\s+/)[0] ?? d.say.en, d.say.ta.split(/(?<=[.!?])\s+/)[0] ?? d.say.ta);
+    return { title: head, takeaway: null, say: one, blocks: [{ kind: "Answer", id: "say", title: head.en, text: clip(d.say.en, 900), facts: [] }], next: [] };
+  }
+  const area = rk.by === "area";
+  const blocks: BlockT[] = [];
+  blocks.push({ kind: "Answer", id: "say", title: L(c, head.en, head.ta), text: clip(`${rk.line.en} ${rk.method.en}`, 900), facts: [] });
+  blocks.push({ kind: "Ranking", id: "ranked", title: L(c, head.en, head.ta), unit: area ? "jams" : "min delay", method: clip(L(c, rk.method.en, rk.method.ta), 240), order: rk.order === "most" ? "top" : "bottom",
+    items: rk.items.map((x) => ({ key: `r${x.rank}`, label: clip(x.name, 120), value: Number(area ? x.jams ?? 0 : x.delayMin ?? 0), rank: x.rank,
+      sub: clip(`${L(c, x.why, x.whyTa)}${!area && x.zoneName ? ` · ${x.zoneName}` : ""}`, 160), zone: x.zone, lat: x.lat, lon: x.lon, action: "none" as const })) });
+  const pts = rk.items.filter((x) => x.lat != null && x.lon != null)
+    .map((x) => ({ n: x.rank, id: clip(x.spot ?? `zone-${x.zone}`, 120), lat: Number(x.lat), lon: Number(x.lon), label: clip(`${x.rank}. ${x.name}`, 160), sev: null, value: area ? x.jams : x.delayMin, hot: x.rank <= 3 }));
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L(c, "Where", "எங்கே"), rule: null, shade: null, outline: [], points: pts });
+  void r;
+  // said aloud: the list itself, then why it is in this order
+  return { title: head, takeaway: bi(rk.method.en, rk.method.ta), say: bi(`${rk.line.en} ${rk.method.en}`, `${rk.line.ta} ${rk.method.ta}`), blocks: blocks.slice(0, 6), next: [] };
 }
 
 /**

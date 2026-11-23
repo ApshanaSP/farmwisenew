@@ -1152,7 +1152,8 @@ export function mapCommand10(text: string, c: MapCtx10): MapCmd | null {
   const dz = deicticCity(t, c);
   if (dz) return dz;
   const ca = cityAsk(t, { last: c.lastCity ?? null });
-  if (ca && (ca.map || ca.rain) && cityOnMap(t, ca.topic, ca.rain)) {
+  // (23 Nov: a ranked list, "the top three jams on the map", is the server's city screen, which lists and maps every one; the view opens one spot)
+  if (ca && !ca.rank && (ca.map || ca.rain) && cityOnMap(t, ca.topic, ca.rain)) {
     // v13 (21 Nov review, finding 1 7): "show me in the map" after a city answer is that answer's spot, so the view opens (or stays) on it
     const refers = refersToMap(t);
     const last = refers ? cityLastOf(c.lastCity) : null;

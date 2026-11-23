@@ -64,7 +64,8 @@ import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, w
 import { mapCard } from "@/lib/map/assistant";
 import { syncEpoch } from "@/lib/collector/epoch";
 import { zoneNoIn } from "@/lib/zone-no";
-import { cityTopic, type CityRow } from "@/lib/city/now";
+import { cityTopic, type CityRow, type CityRanked } from "@/lib/city/now";
+import { cityAsk } from "@/lib/city/intent";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1351,7 +1352,12 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (topic) {
       i.stage("fetching");
       const t0 = Date.now();
-      const args = { topic, zone: topic === "traffic" && placeData?.zone != null && !placeData?.taluk_named ? Number(placeData.zone) : null };
+      // 23 Nov: the shared reading's spot and ranked list too ("the top three most congested roads", "which areas have the least traffic",
+      // "the most congested road"): the chatbot answered every traffic question with the overview
+      const ca = topic === "traffic" ? cityAsk(message) : null;
+      const rank = ca?.topic === "traffic" ? ca.rank ?? null : null;
+      const zone = topic === "traffic" && rank?.by !== "area" && placeData?.zone != null && !placeData?.taluk_named ? Number(placeData.zone) : null;
+      const args = { topic, zone, ...(rank ? { rank } : ca?.topic === "traffic" && ca.focus ? { focus: ca.focus } : {}), ...(i.lockDept ? { lockDept: i.lockDept } : {}) };
       const r = await runTool("city_now", args).catch((e) => { console.warn("[assistant] city_now failed:", (e as Error).message); return null; });
       if (r) return finish(cityCard(card0(null), r, args, lang, message, Date.now() - t0), { intent: "city_now", tools: [{ name: "city_now", args }] });
     }
@@ -2466,6 +2472,21 @@ function cityCard(card: AnswerCard, r: ToolResult, args: { topic: string; zone: 
   card.kpis = p.kpis;
   card.table = p.table;
   card.display = p.table ? "table" : p.kpis.length ? "kpi" : "text";
+  // 23 Nov: a ranked list ("the top three most congested roads") is its own table, in its order, with why each stands there
+  const rk = (r.data as { ranked?: CityRanked | null }).ranked ?? null;
+  if (rk?.items.length) {
+    const area = rk.by === "area";
+    const ds = { id: "ranked", title: ta ? d.headline.ta : rk.by === "area" ? (rk.order === "most" ? "Zones with the most congestion" : "Zones with the least congestion") : rk.order === "most" ? "Most congested roads" : "Least congested roads", tab: "Ranked",
+      fields: [{ key: "rank", label: "#", kind: "value" as const, format: "integer" as const, additive: false }, { key: "place", label: area ? "Zone" : "Road", kind: "category" as const },
+        ...(area ? [{ key: "jams", label: "Jams now", kind: "value" as const, format: "integer" as const }] : [{ key: "delay", label: "Delay", kind: "value" as const, unit: "min", format: "integer" as const, additive: false }]),
+        { key: "why", label: ta ? "ஏன்" : "Why", kind: "text" as const }],
+      rows: rk.items.map((x) => ({ rank: x.rank, place: x.name, ...(area ? { jams: x.jams ?? 0 } : { delay: x.delayMin ?? null }), why: ta ? x.whyTa : x.why })), total: rk.total };
+    card.datasets = [ds, ...p.datasets.filter((x) => x.id !== "ranked")];
+    card.table = "ranked";
+    card.display = "table";
+    card.kpis = [];
+    card.voiceSummary = ta ? rk.line.ta : rk.line.en;
+  }
   card.caveats = [...r.caveats];
   card.followUps = CITY_NEXT[args.topic] ?? CITY_NEXT.all;
   const view: "traffic" | "flood" | "power" | "metro" = d.view.kind === "traffic" ? "traffic" : d.view.lens === "power" || d.view.lens === "metro" ? d.view.lens : "flood";

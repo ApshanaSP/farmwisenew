@@ -47,13 +47,17 @@ type Tool = "gap" | "rule" | "pack" | "lists" | null;
 
 export function ToolsBar({ ask, lang }: { ask: MapAsk; lang: Lang }) {
   const [tool, setTool] = useState<Tool>(null);
+  // 23 Nov 2026 (owner: "I can see many side features; keep only wanted features"): the four tools wait behind one "Tools" button, so the
+  // panel is the question, the answer and its actions; nothing was taken away
+  const [open, setOpen] = useState(false);
   const btn = (id: Exclude<Tool, null>, ic: IconName, en: string, ta: string) => (
     <button className={tool === id ? "on" : ""} aria-expanded={tool === id} aria-controls={`amtool-${id}`} onClick={() => setTool(tool === id ? null : id)}><I n={ic} />{t(lang, en, ta)}</button>
   );
   return (
     <div className="amt">
       <div className="amt-row" role="toolbar" aria-label={t(lang, "Collector's tools", "ஆட்சியர் கருவிகள்")}>
-        {btn("gap", "ruler", "Gaps", "இடைவெளிகள்")}{btn("rule", "shield", "Rule check", "விதி சோதனை")}{btn("pack", "doc", "Meeting pack", "கூட்டத் தொகுப்பு")}{btn("lists", "table", "Your lists", "உங்கள் பட்டியல்கள்")}
+        <button className={open ? "on" : ""} aria-expanded={open} onClick={() => { setOpen((v) => !v); setTool(null); }}><I n="sliders" />{t(lang, "Tools", "கருவிகள்")}<I n={open ? "chevd" : "chevr"} /></button>
+        {open && <>{btn("gap", "ruler", "Gaps", "இடைவெளிகள்")}{btn("rule", "shield", "Rule check", "விதி சோதனை")}{btn("pack", "doc", "Meeting pack", "கூட்டத் தொகுப்பு")}{btn("lists", "table", "Your lists", "உங்கள் பட்டியல்கள்")}</>}
       </div>
       {tool === "gap" && <GapForm ask={ask} lang={lang} onDone={() => setTool(null)} />}
       {tool === "rule" && <RuleForm ask={ask} lang={lang} onDone={() => setTool(null)} />}

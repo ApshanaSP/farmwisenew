@@ -508,8 +508,9 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [conflictState, setConflicts] = useState<{ key: string; d: PeriodConflicts } | null>(null);
   useEffect(() => {
     let live = true;
+    // (23 Nov: a failed reload keeps the list it had; it emptied it, and a Differ item seen a minute before was gone)
     api(`/api/collector/conflicts?period=${period}`).then((j) => live && setConflicts({ key: period, d: j }))
-      .catch(() => live && setConflicts({ key: period, d: { stories: [], checked: 0, ai: false } }));
+      .catch(() => live && setConflicts((had) => (had?.key === period ? had : { key: period, d: { stories: [], checked: 0, ai: false } })));
     return () => { live = false; };
   }, [period, reloadKey]);
   // the neighbouring districts' news (Latest news, "Next door"): read once the console is up, again on reload

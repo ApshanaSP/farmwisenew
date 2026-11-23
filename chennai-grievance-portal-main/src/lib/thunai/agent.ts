@@ -272,7 +272,12 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     out.q = (CITY_TOPICS_V11 as readonly string[]).includes(q) ? q : (cityAsk(q)?.topic ?? "all");
     if (s.focus === "worst-jam" || s.focus === "repeat") out.focus = s.focus;
     if (typeof s.rain === "string" && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(s.rain.trim())) out.rain = s.rain.trim();
+    // 23 Nov: a ranked list of live traffic
+    const rk = s.rank as { n?: unknown; order?: unknown; by?: unknown } | null | undefined;
+    if (rk && typeof rk.n === "number" && rk.n >= 1 && rk.n <= 10) out.rank = { n: Math.round(rk.n), order: rk.order === "least" ? "least" : "most", by: rk.by === "area" ? "area" : "road" };
   }
+  // 23 Nov: exactly the count asked for ("open the top three cases")
+  if ((recipe === "cases" || recipe === "advise") && typeof s.top === "number" && s.top >= 1 && s.top <= 20) out.top = Math.round(s.top);
   // v16 (22 Nov): the focus screen's lenses and subject, as the reader understood them (v16/reader.ts)
   if (recipe === "focus") {
     const lens = (Array.isArray(s.lens) ? s.lens : []).filter((x): x is NonNullable<Slots["lens"]>[number] => x === "attention" || x === "improving" || x === "worsening" || x === "repeat");
@@ -702,12 +707,12 @@ export async function finish(plan0: AgentPlan, input: AgentInput, d: AgentDeps, 
         d.log?.(`v12: a city sentence planned as ${screen ? `screen ${screen.recipe}` : "filters"}: the city screen instead`);
         // (a zone the model put on as a filter stays with live traffic, the one part of the city read by zone)
         const zone = ca.topic === "traffic" ? modelSteps.map((s) => (s.a === "view" ? s.view.zone : undefined)).find((z): z is number => typeof z === "number") ?? (screen?.slots.zones.length === 1 ? screen.slots.zones[0] : null) : null;
-        screen = { recipe: "city", slots: { ...emptySlots(), q: ca.topic, focus: ca.focus, rain: ca.rain, zones: zone != null ? [zone] : [] } };
+        screen = { recipe: "city", slots: { ...emptySlots(), q: ca.topic, focus: ca.focus, rain: ca.rain, zones: zone != null ? [zone] : [], ...(ca.rank ? { rank: ca.rank } : {}) } };
         modelSteps = modelSteps.filter((s) => s.a === "page");
         reply = null;
       } else if (screen?.recipe === "city" && screen.slots.q === ca.topic) {
-        // the model chose the city screen but left out the spot or the rain the sentence named
-        screen = { ...screen, slots: { ...screen.slots, focus: screen.slots.focus ?? ca.focus, rain: screen.slots.rain ?? ca.rain } };
+        // the model chose the city screen but left out the spot, the rain or the ranked list the sentence named
+        screen = { ...screen, slots: { ...screen.slots, focus: ca.rank ? null : screen.slots.focus ?? ca.focus, rain: screen.slots.rain ?? ca.rain, ...(ca.rank && !screen.slots.rank ? { rank: ca.rank } : {}) } };
       }
     }
   }

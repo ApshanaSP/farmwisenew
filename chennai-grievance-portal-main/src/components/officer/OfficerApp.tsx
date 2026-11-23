@@ -36,6 +36,7 @@ import { ModuleFull } from "./Insights";
 import { WorkPage } from "./InsightsPage";
 import { ListBody, Modal } from "./Overlays";
 import { SendReport } from "./Report";
+import OfficerJarvis from "./Jarvis";
 import { PERIOD_KEYS, type Period } from "./format";
 import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/collector.css";
@@ -661,6 +662,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           <BrandMark size={30} className="ask-mark" /><span>Ask District IQ</span>
         </button>
         {askMounted && <AssistantDialog c={host} open={ask} onClose={() => setAsk(false)} />}
+        {/* 23 Nov: Jarvis for the officer, by voice, over Ask District IQ locked to this department */}
+        <OfficerJarvis deptShort={dept.short} open={() => setAsk(true)} />
       </div>
     </div>
     </MotionConfig>

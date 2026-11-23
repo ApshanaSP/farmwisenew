@@ -26,11 +26,19 @@ export const LEVEL_WORD: Record<TrafficLevel, { en: string; ta: string }> = {
 const JAM_RANK: Partial<Record<TrafficLevel, number>> = { very: 2, congested: 1, slow: 0 };
 const rankOf = (s: Pick<TrafficSpot, "level">): number => JAM_RANK[s.level] ?? -1;
 
+/** worst first: very > congested > slow, then the longer delay, then the longer stretch (the same order everywhere: worstJam, jamsRanked) */
+export const jamCompare = (a: TrafficSpot, b: TrafficSpot): number =>
+  rankOf(b) - rankOf(a) || (b.delayMin ?? 0) - (a.delayMin ?? 0) || (b.lengthM ?? 0) - (a.lengthM ?? 0) || a.name.localeCompare(b.name);
+
 /** The most congested stretch now: very > congested > slow, then the delay, then the length; null when no road is jammed (or TomTom is off). */
 export function worstJam(t: Pick<TrafficNow, "spots"> | null | undefined): TrafficSpot | null {
-  const jams = (t?.spots ?? []).filter((s) => rankOf(s) >= 0);
-  jams.sort((a, b) => rankOf(b) - rankOf(a) || (b.delayMin ?? 0) - (a.delayMin ?? 0) || (b.lengthM ?? 0) - (a.lengthM ?? 0) || a.name.localeCompare(b.name));
-  return jams[0] ?? null;
+  return jamsRanked(t)[0] ?? null;
+}
+
+/** 23 Nov: every jam now, worst first (or calmest first), so "the top three" and "the least congested" read the same order as worstJam */
+export function jamsRanked(t: Pick<TrafficNow, "spots"> | null | undefined, order: "most" | "least" = "most"): TrafficSpot[] {
+  const jams = (t?.spots ?? []).filter((s) => rankOf(s) >= 0).sort(jamCompare);
+  return order === "least" ? jams.reverse() : jams;
 }
 
 /** The trouble spot that keeps coming back most: trafficNow's clusters are already sorted that way (a live jam first, then the most reports). */

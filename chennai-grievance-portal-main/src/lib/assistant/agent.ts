@@ -77,7 +77,8 @@ Return one AgentStep JSON per turn. action:
 - tools: call 1 to 3 tools ("calls"). done = true when these results will certainly answer the question (a count, a ranking, one place's
   snapshot, a price); done = false when you must see them before deciding (why, how, what changed, a comparison you may need to drill into).
 - answer: the results so far answer the question. brief = 1 to 3 sentences, WITHOUT numbers, on what the answer must say and in what order
-  (the main finding first, then the reasons with the evidence that supports them, then what to do).
+  (the main finding first, then the reasons with the evidence that supports them, then what to do). For a ranking, a top N or a
+  comparison the brief always says what it was ranked by and why the first ones lead (the measure, and what drives the leaders).
 - show: the Collector wants records as they are: a list of incidents (incident_list), the most serious ones (priority_list), a plain count
   (incident_count), which kinds lead (category_ranking), one incident (incident_explain: incidentId from the message or the previous
   answer, else find = its description), similar ones (incident_related), how it unfolded (incident_timeline), news (news_list), one story

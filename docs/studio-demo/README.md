@@ -26,6 +26,25 @@ Tips for the demo:
 - The link and file reads take 15 to 40 seconds each, with the AI on.
 - **News links** still go to the news tile on the Overview, as before. **Incidents** are linked automatically: the dataset's "Link with district incidents" card and the Linker agent.
 
+## Sign-in links and feeds (checked 23 Nov 2026)
+
+Data Studio can read links that need a sign-in, and RSS/Atom feeds. Paste the link, or open **Connect with sign-in or schedule** and pick how
+the site signs in. The key or password stays in the server's vault; the page only ever shows the sign-in type and the user name.
+
+| Sign-in type | Use it for | Demo link (checked 23 Nov) | What to enter |
+|---|---|---|---|
+| **API key** | Government and data APIs | `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?format=json&limit=100&filters[city]=Chennai` (real-time air quality, every CPCB station in Chennai) | Your own free key from data.gov.in (sign up, then "My Account"). Key name `api-key`, put in the **query**. Without a key the site answers "Authorization field missing". |
+| **API key** | Weather | `https://api.openweathermap.org/data/2.5/forecast?q=Chennai,IN&units=metric` (5-day forecast, 40 rows of 3 hours) | Your own free key from openweathermap.org. Key name `appid`, put in the **query**. Without a key it answers 401. |
+| **User name & password (pop-up)** | A department portal that asks in a browser pop-up (HTTP Basic) | A department MIS you have an account for | Its user name and password. |
+| **User name & password** | A portal with its own sign-in page | The portal's link; add the sign-in page if it is different | The Studio's browser types them into the page. |
+| **I'll sign in myself** | A site with an OTP, CAPTCHA or single sign-on | Any such site | A browser window opens; you sign in once and the session is kept. |
+| **Public (RSS feed)** | News feeds | `https://timesofindia.indiatimes.com/rssfeeds/2950623.cms` (Times of India, Chennai: 20 stories) or `https://news.google.com/rss/search?q=Chennai%20flooding&hl=en-IN&gl=IN&ceid=IN:en` (58 stories) | Nothing. The Studio sees a news feed and offers to **follow it in Latest news** (one click), because news is followed there, not charted. |
+
+Notes:
+- After a sign-in link is read, choose **Keep it up to date** to make it a **Live connector**: it is read again on its schedule and its dashboard refreshes.
+- The two API-key links were checked to answer (they ask for the key). Their data has not been read through the Studio here, because that needs your own keys.
+- Do not use `thehindu.com` feeds in a live demo: they did not answer within 20 seconds on 23 Nov.
+
 ## Work, but weaker
 
 - `data/chennai-metro-daily-ridership-2026.csv`: city-wide totals per day. Its charts are fine, but it shows "No insights available" (nothing stands out). Use #1 instead.

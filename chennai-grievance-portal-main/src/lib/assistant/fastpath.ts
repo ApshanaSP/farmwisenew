@@ -298,12 +298,18 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
             + r.items.map((x, k) => `${k + 1}. **${x.title}** (${[x.location, x.zone].filter(Boolean).join(", ")})`).join("\n");
       }
       // a short list is named in the answer itself, with what makes each one stand out, not only shown below it
-      if (r.items.length && r.items.length <= 5 && i.lang === "en")
+      // (23 Nov: up to three reasons each, and for a ranked list how the order was made: the owner asked to be told why these are the top ones)
+      if (r.items.length && r.items.length <= 5 && i.lang === "en") {
         card.answerMarkdown += "\n\n" + r.items.map((x, k) => {
           const where = [x.location, x.zone].filter(Boolean).filter((v, j, a) => a.indexOf(v) === j).join(", ");
-          const why = x.dead ? `${x.dead} ${x.dead === 1 ? "death" : "deaths"}` : x.priorityReasons[0] ?? "";
-          return `${k + 1}. **${x.title}**${where ? ` (${where})` : ""}: ${x.severity.toLowerCase()}, ${x.status.toLowerCase()}${why ? `; ${why.replace(/\.$/, "")}` : ""}.`;
+          // (a reason that says the deaths again, "1 death reported", is left out when the count leads)
+          const why = [...(x.dead ? [`${x.dead} ${x.dead === 1 ? "death" : "deaths"}`] : []), ...x.priorityReasons.filter((s) => !(x.dead && /\bdeaths?\b/i.test(s)))]
+            .map((s) => s.replace(/\.$/, "")).filter((s, j, a) => s && a.indexOf(s) === j).slice(0, 3).join("; ");
+          return `${k + 1}. **${x.title}**${where ? ` (${where})` : ""}: ${x.severity.toLowerCase()}, ${x.status.toLowerCase()}${why ? `; ${why}` : ""}.`;
         }).join("\n");
+        if (d.intent === "PRIORITY_INCIDENT_LIST" && r.items.length > 1)
+          card.answerMarkdown += "\n\n_Why this order: each incident's priority score adds up its severity, how far past its deadline it is, how many sources and citizen complaints report it, new reports in the last 24 hours, vulnerable people affected, news coverage and rain; the highest score comes first._";
+      }
       if (r.widened) card.caveats.push(`Fewer than ${n} ${inP(inc.period)}, so this covers the ${pl(r.period)}.`);
       listData(card, r.items);
       // "show me the map of severe incidents this week": the same list, drawn where they are

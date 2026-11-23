@@ -20,6 +20,7 @@ import { zoneNosIn } from "@/lib/zone-no";
 import { asciiDigits } from "./digits";
 import { cityAsk, type CityLastIn } from "@/lib/city/intent";
 import { metricNamedIn } from "./metrics";
+import { countAsked } from "@/lib/askcount";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -452,7 +453,8 @@ export function cityQuick(text: string, w: World, o: { noBail?: boolean; lastCit
     if (left >= 4 && left / all.length > 0.5) return null;
   }
   const zones = ca.topic === "traffic" ? zonesIn(t, w).slice(0, 1) : [];
-  return { recipe: "city", slots: { q: ca.topic, zones, focus: ca.focus, rain: ca.rain } };
+  // (23 Nov: a ranked list asked for, "top three", "least congested", "which areas", goes with it)
+  return { recipe: "city", slots: { q: ca.topic, zones, focus: ca.focus, rain: ca.rain, ...(ca.rank ? { rank: ca.rank } : {}) } };
 }
 
 /** Is it asked as a count ("how many", "evlo", எத்தனை)? A count is answered for the period asked, never widened to another (P6-022). */
@@ -580,16 +582,19 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
   if (has(t, RANK) && cat && has(t, ZONE_WORDS)) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: topN(t), period: period ?? "weekly" } };
-  if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
+  // 23 Nov: a count asked of the cases ("open top three cases", "top 3 severe cases"): exactly that many, by priority, with why
+  const top = countAsked(text);
+  const topSlot = top && top >= 2 ? { top } : {};
+  if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true, ...topSlot } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
-  if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {
+  if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat || (top != null && top >= 2)))) {
     // "past the deadline", "overdue": only those (BUG-024)
     const status = statusIn(t);
     // a department named with no topic would be dropped here: the lane says nothing it cannot apply, the agent asks (RC-05)
     if (!cat && deptWordIn(t)) return null;
     return { recipe: "cases", slots: { sev, cat, status, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,
       // a new question starts clean: a filter an earlier answer put on the console (Fire, say) must not narrow it
-      fresh: true } };
+      fresh: true, ...topSlot } };
   }
   if (has(t, ATTENTION) && !zones.length) return { recipe: "brief", slots: { period: period ?? "daily" } };
   return null;

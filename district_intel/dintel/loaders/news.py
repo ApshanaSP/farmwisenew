@@ -431,7 +431,8 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     # the LLM's counts (read in context) where it gave them, else the pattern counts. An LLM death count that is only a
     # label in the text ("Class 12", "Route 21", "aged 19") and that the pattern count does not confirm is not used.
     ai_dead = pd.to_numeric(d["ai_dead"], errors="coerce")
-    label_n = [{int(a or b) for a, b in tp.LABEL_NUMBERS.findall(t)} for t in text]
+    # (23 Nov: every label form, "12th standard", "Class XII", "Plus Two", "12-ஆம் வகுப்பு", textproc.label_numbers)
+    label_n = [tp.label_numbers(t) for t in text]
     bad = [pd.notna(a) and a > 1 and int(a) in ln and int(a) != c[0] for a, ln, c in zip(ai_dead, label_n, cas)]
     if any(bad):
         log.info("news: %d LLM death counts were a class, route or age number and are not used", sum(bad))

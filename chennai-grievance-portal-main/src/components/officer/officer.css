@@ -378,3 +378,15 @@
 .dic.ofc:not(.fit) .band:not(.hero) h1.roll{max-width:100%;width:100%}
 .dic.ofc:not(.fit) .band .seg.sm{min-width:0;max-width:100%}
 .dic.ofc:not(.fit) .band .seg.sm button{padding:4px 3px;min-width:0;white-space:nowrap}
+
+/* 23 Nov 2026: Jarvis for the department officer (Jarvis.tsx), above the Ask District IQ button */
+.dic .ojv{position:fixed;right:18px;bottom:80px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:70}
+.dic .ojv-fab{height:44px;padding:0 16px 0 12px;border-radius:22px;border:0;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line-3),0 6px 18px rgba(0,0,0,.12);font:700 13px var(--font-ui);display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.dic .ojv-fab svg{width:18px;height:18px;color:var(--accent)}
+.dic .ojv-fab:hover,.dic .ojv-fab:focus-visible{box-shadow:0 0 0 2px var(--accent),0 6px 18px rgba(0,0,0,.14);outline:none}
+.dic .ojv-wake{height:24px;padding:0 9px;border-radius:12px;border:1px solid var(--line-3);background:var(--surface);color:var(--text-3);font:600 11px var(--font-ui);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.dic .ojv-wake svg{width:12px;height:12px}
+.dic .ojv-wake.on{color:var(--accent);border-color:var(--accent)}
+.dic .ojv-heard{max-width:260px;padding:7px 11px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line-3);font:500 12.5px var(--font-ui);color:var(--text);display:flex;gap:6px;align-items:center}
+.dic .ojv-heard svg{width:14px;height:14px;color:var(--accent);flex:none}
+.dic:not(.fit) .ojv{bottom:138px}

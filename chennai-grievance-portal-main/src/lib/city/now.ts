@@ -16,8 +16,8 @@ import { pastRains, rehearsalState } from "@/lib/rehearsal/engine";
 import { impacts, type ImpactData } from "@/lib/rehearsal/impacts";
 import type { RehearsalState } from "@/lib/rehearsal/types";
 import { LEVEL_WORD, trafficNow, trafficSay, type TrafficNow } from "./traffic";
-import { clusterLine, inZone, lengthTile, NO_JAM, NO_REPEAT, noJamIn, noRepeatIn, spotLine, topRepeat, worstJam } from "./pick";
-import type { CityFocus } from "./intent";
+import { clusterLine, inZone, jamsRanked, lengthTile, lengthWords, NO_JAM, NO_REPEAT, noJamIn, noRepeatIn, spotLine, topRepeat, worstJam } from "./pick";
+import type { CityFocus, CityRank } from "./intent";
 import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 
 import type { CityTopic } from "./topic";
@@ -40,8 +40,26 @@ export interface CityRainOf {
   streets: { key: string; label: string; label_ta: string; ward: number; lat: number; lon: number; n: number }[];
   line: { en: string; ta: string };
 }
+/** 23 Nov: one place in a ranked answer ("top three most congested roads", "the areas with the least traffic") */
+export interface CityRankItem {
+  rank: number; name: string; zone: number | null; zoneName: string | null; level: string | null;
+  delayMin: number | null; lengthM: number | null; jams: number | null; very: number | null;
+  /** why it stands where it does, from its own figures */
+  why: string; whyTa: string; lat: number | null; lon: number | null; spot: string | null;
+}
+export interface CityRanked {
+  by: "road" | "area"; order: "most" | "least"; asked: number;
+  /** how many there were to rank (jams, or zones) */
+  total: number;
+  items: CityRankItem[];
+  /** how they were ranked, said with the answer: the "why" of the order */
+  method: { en: string; ta: string };
+  line: { en: string; ta: string };
+}
 export interface CityNow {
   topic: CityTopic;
+  /** 23 Nov: the ranked list asked for (null when none was asked) */
+  ranked: CityRanked | null;
   asOf: string;
   /** what to say, both languages: every figure is in `facts` */
   say: { en: string; ta: string };
@@ -113,6 +131,8 @@ export interface CityOpts {
   focus?: CityFocus | null;
   /** v12: a past rain, flood only: "latest" (the last heavy rain with reports, as Rain & flooding opens it) or "rain-YYYY-MM-DD" */
   rain?: string | null;
+  /** 23 Nov: a ranked list, traffic only (lib/city/intent.ts cityRank) */
+  rank?: CityRank | null;
 }
 
 /**
@@ -121,9 +141,10 @@ export interface CityOpts {
  * on a cold read inline (06:37:44 "Show me live traffic.").
  */
 export async function cityNow(topic: CityTopic, o: CityOpts = {}): Promise<CityNow> {
-  const focus = topic === "traffic" ? o.focus ?? null : null;
+  const rank = topic === "traffic" && o.rank && o.rank.n >= 1 ? { n: Math.min(Math.round(o.rank.n), 10), order: o.rank.order === "least" ? "least" as const : "most" as const, by: o.rank.by === "area" ? "area" as const : "road" as const } : null;
+  const focus = topic === "traffic" && !rank ? o.focus ?? null : null;
   const rain = topic === "flood" && o.rain && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(o.rain) ? o.rain : null;
-  const key = `${topic}|${o.lockDept ?? ""}|${o.zone ?? ""}|${focus ?? ""}|${rain ?? ""}`;
+  const key = `${topic}|${o.lockDept ?? ""}|${o.zone ?? ""}|${focus ?? ""}|${rain ?? ""}|${rank ? `${rank.n}${rank.order}${rank.by}` : ""}`;
   const cache = (global.__diqCityNow ??= new Map());
   const runs = (global.__diqCityRun ??= new Map());
   const hit = cache.get(key);
@@ -132,7 +153,7 @@ export async function cityNow(topic: CityTopic, o: CityOpts = {}): Promise<CityN
   const run = (): Promise<CityNow> => {
     let p = runs.get(key);
     if (!p) {
-      p = buildCity(topic, { ...o, focus, rain }).then((v) => {
+      p = buildCity(topic, { ...o, focus, rain, rank }).then((v) => {
         cache.set(key, { at: Date.now(), v });
         if (cache.size > 40) cache.delete(cache.keys().next().value!);
         return v;
@@ -234,6 +255,26 @@ async function buildCity(topic: CityTopic, o: CityOpts): Promise<CityNow> {
     const line = focus?.line ?? (o.focus === "repeat" ? (zn ? noRepeatIn(zn) : NO_REPEAT) : (zn ? noJamIn(zn) : NO_JAM));
     en.splice(0, en.length, line.en); ta.splice(0, ta.length, line.ta);
   }
+  // ---- 23 Nov: a ranked list ("top three most congested roads", "the areas with the least traffic"), said first and alone, with why
+  let ranked: CityRanked | null = null;
+  if (o.rank && traffic?.enabled) {
+    const zn = o.zone != null ? traffic.zones.find((z) => z.zone === o.zone)?.name ?? ZONE_NAMES[o.zone - 1] ?? null : null;
+    ranked = rankPart(o.rank, o.rank.by === "area" ? traffic : inZone(traffic, o.zone ?? null), o.rank.by === "area" ? null : zn, traffic.at);
+    ranked.items.forEach((x, k) => {
+      if (x.delayMin != null) f(`traffic.rank.${k}.delay`, o.rank!.by === "area" ? `Minutes of delay in ${x.name}, all jams` : `Delay at ${x.name}`, x.delayMin, "min");
+      if (x.jams != null) f(`traffic.rank.${k}.jams`, `Jams now in ${x.name}`, x.jams);
+      if (x.very != null && o.rank!.by === "area") f(`traffic.rank.${k}.very`, `Very congested stretches in ${x.name}`, x.very);
+      const lt = lengthTile(x.lengthM);
+      if (lt) f(`traffic.rank.${k}.length`, `Length of the jam at ${x.name}`, lt.value, lt.unit);
+    });
+    f("traffic.rank.total", o.rank.by === "area" ? "Zones ranked" : "Slowed stretches ranked", ranked.total);
+    const rr: CityRow[] = ranked.items.map((x) => ({ part: o.rank!.by === "area" ? `#${x.rank} zone` : `#${x.rank} ${x.level ? LEVEL_WORD[x.level as keyof typeof LEVEL_WORD]?.en ?? "" : ""}`.trim(), place: x.name,
+      detail: x.why, value: o.rank!.by === "area" ? x.jams : x.delayMin, unit: o.rank!.by === "area" ? "jams" : x.delayMin != null ? "min delay" : null, lat: x.lat, lon: x.lon, spot: x.spot }));
+    rows.splice(0, rows.length, ...rr);
+    // (the order is explained only when there is a list: "No road in Anna Nagar is congested" needs no "why this order")
+    const why = ranked.items.length ? 1 : 0;
+    en.splice(0, en.length, ranked.line.en, ...(why ? [ranked.method.en] : [])); ta.splice(0, ta.length, ranked.line.ta, ...(why ? [ranked.method.ta] : []));
+  }
   // ---- v12 (21 Nov): one past heavy rain ("the flooded streets in the last rain"): the streets its flooding reports stood on, said first
   let rainOf: CityRainOf | null = null;
   if (o.rain && state && want("flood")) {
@@ -252,8 +293,9 @@ async function buildCity(topic: CityTopic, o: CityOpts): Promise<CityNow> {
   }
 
   if (missing.length) { en.push(`(${missing.join(" and ")} could not be read just now.)`); ta.push("(சில தகவல்கள் இப்போது கிடைக்கவில்லை.)"); }
+  const firstSpot = ranked?.items.find((x) => x.spot)?.spot ?? null;
   const view: CityNow["view"] = topic === "traffic" || topic === "all"
-    ? { kind: "traffic", ...(focus?.kind === "spot" ? { spot: focus.id } : focus?.kind === "cluster" ? { cluster: focus.id, tab: "repeat" as const } : o.focus === "repeat" ? { tab: "repeat" as const } : {}) }
+    ? { kind: "traffic", ...(ranked && firstSpot && ranked.by === "road" ? { spot: firstSpot } : focus?.kind === "spot" ? { spot: focus.id } : focus?.kind === "cluster" ? { cluster: focus.id, tab: "repeat" as const } : o.focus === "repeat" ? { tab: "repeat" as const } : {}) }
     : topic === "rain" ? { kind: "rain", lens: "flood" } : { kind: "rain", lens: topic as "flood" | "power" | "metro", ...(topic === "flood" && o.rain ? { replay: rainOf?.id ?? o.rain } : {}) };
   const HEAD: Record<CityTopic, { en: string; ta: string }> = {
     traffic: { en: "Live traffic now", ta: "நேரடி போக்குவரத்து" }, flood: { en: "Streets that flood", ta: "வெள்ளம் தேங்கும் தெருக்கள்" },
@@ -261,7 +303,80 @@ async function buildCity(topic: CityTopic, o: CityOpts): Promise<CityNow> {
     metro: { en: "Trains in heavy rain", ta: "கனமழையில் ரயில்கள்" }, all: { en: "The city now: traffic, rain, flooding, power, trains", ta: "நகர நிலவரம்" }
   };
   // (v12: kept by cityNow, stale-while-revalidate)
-  return { topic, asOf: traffic?.at ?? state?.asOf ?? new Date().toISOString(), say: { en: spoken(en.join(" ")), ta: spoken(ta.join(" ")) }, headline: HEAD[topic], facts, rows, view, traffic, focus, rainOf, missing, sources };
+  return { topic, ranked, asOf: traffic?.at ?? state?.asOf ?? new Date().toISOString(), say: { en: spoken(en.join(" ")), ta: spoken(ta.join(" ")) }, headline: HEAD[topic], facts, rows, view, traffic, focus, rainOf, missing, sources };
+}
+
+/**
+ * 23 Nov: live traffic ranked as asked, by road or by zone, most or least congested, with why each stands where it does and how the order
+ * was made. Every figure is TomTom's (the level, the delay, the length) or a count of its stretches; nothing is estimated.
+ *   roads, most:  very congested > congested > slow, then the longer delay, then the longer jam (pick.ts jamCompare, as worstJam)
+ *   roads, least: TomTom lists only stretches slower than usual, so every road it does not list is at its normal speed; of the listed, the mildest
+ *   zones:        very congested stretches, then all jams, then the minutes of delay added up (fewest first for "least")
+ */
+export function rankPart(r: CityRank, t: TrafficNow, zoneName: string | null, at: string | null): CityRanked {
+  const time = at ? new Date(at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) : null;
+  const where = zoneName ? ` in ${zoneName}` : "";
+  const whereTa = zoneName ? `${zoneName} பகுதியில் ` : "";
+  if (r.by === "road") {
+    const all = jamsRanked(t, r.order);
+    const items: CityRankItem[] = all.slice(0, r.n).map((s, k) => {
+      const len = lengthWords(s.lengthM, "en"), lenTa = lengthWords(s.lengthM, "ta");
+      const rep = s.repeat?.n >= 2 ? `; ${s.repeat.n} reports near it in 30 days` : "";
+      return { rank: k + 1, name: s.name, zone: s.zone, zoneName: s.zoneName, level: s.level, delayMin: s.delayMin, lengthM: s.lengthM, jams: null, very: null,
+        why: `${LEVEL_WORD[s.level].en.toLowerCase()}${s.delayMin ? `, about ${s.delayMin} min delay` : ""}${len ? ` over ${len}` : ""}${rep}`,
+        whyTa: `${LEVEL_WORD[s.level].ta}${s.delayMin ? `, சுமார் ${s.delayMin} நிமிட தாமதம்` : ""}${lenTa ? `, ${lenTa}` : ""}`,
+        lat: s.lat, lon: s.lon, spot: s.id };
+    });
+    const list = (ta: boolean) => items.map((x) => `${x.rank}. ${x.name}${x.zoneName && !zoneName ? ` (${x.zoneName})` : ""}: ${ta ? x.whyTa : x.why}`).join("; ");
+    const method = r.order === "most"
+      ? { en: `Why this order: ranked by how bad the jam is (very congested, then congested, then slow traffic), then the minutes of delay, then the length of the jam${time ? `, from TomTom's live data at ${time}` : ""}.`,
+        ta: `வரிசை: நெரிசலின் அளவு (கடும் நெரிசல், நெரிசல், மெதுவான போக்குவரத்து), பிறகு தாமத நிமிடங்கள், பிறகு நெரிசலின் நீளம்${time ? ` (TomTom நேரடித் தகவல், ${time})` : ""}.` }
+      : { en: `Why this order: TomTom lists only the stretches moving slower than usual, so every road it does not list${where} is at its normal speed; of the slowed ones, the mildest come first (slow before congested, then the shorter delay)${time ? `, as of ${time}` : ""}.`,
+        ta: `வரிசை: வழக்கத்தைவிட மெதுவான சாலைகளை மட்டுமே TomTom பட்டியலிடுகிறது; பட்டியலில் இல்லாத ${whereTa}சாலைகள் இயல்பான வேகத்தில் உள்ளன. மெதுவானவற்றில் லேசானவை முதலில்.` };
+    let line: { en: string; ta: string };
+    if (!all.length) line = r.order === "least"
+      ? { en: `No road${where} is slowed right now: traffic is moving at its usual speed everywhere TomTom sees.`, ta: `இப்போது ${whereTa}எந்தச் சாலையிலும் நெரிசல் இல்லை; போக்குவரத்து இயல்பாக உள்ளது.` }
+      : zoneName ? noJamIn(zoneName) : NO_JAM;
+    else if (r.order === "most") {
+      const head = all.length < r.n ? `Only ${plural(all.length, "road")}${where} ${all.length === 1 ? "is" : "are"} congested now` : r.n === 1 ? `The most congested road${where} now` : `The ${n0(r.n)} most congested roads${where} now`;
+      line = { en: `${head}: ${list(false)}.`, ta: `${whereTa}இப்போது அதிக நெரிசலான ${all.length < r.n ? all.length : r.n} சாலைகள்: ${list(true)}.` };
+    } else {
+      line = { en: `Every road TomTom does not list${where} is moving at its normal speed. Of the ${plural(all.length, "slowed stretch", "slowed stretches")}, the lightest now: ${list(false)}.`,
+        ta: `பட்டியலில் இல்லாத ${whereTa}சாலைகள் இயல்பான வேகத்தில் உள்ளன. மெதுவான ${all.length} இடங்களில் லேசானவை: ${list(true)}.` };
+    }
+    return { by: "road", order: r.order, asked: r.n, total: all.length, items, method, line };
+  }
+  // ---- by zone: every one of the 15 zones, with or without a jam
+  const JAMS = new Set(["very", "congested", "slow"]);
+  const zs = ZONE_NAMES.map((name, i) => {
+    const sp = t.spots.filter((s) => s.zone === i + 1 && JAMS.has(s.level));
+    const lat = sp.length ? sp.reduce((a, s) => a + s.lat, 0) / sp.length : null, lon = sp.length ? sp.reduce((a, s) => a + s.lon, 0) / sp.length : null;
+    return { zone: i + 1, name: t.zones.find((z) => z.zone === i + 1)?.name ?? name, jams: sp.length, very: sp.filter((s) => s.level === "very").length,
+      delay: sp.reduce((a, s) => a + (s.delayMin ?? 0), 0), lat, lon };
+  });
+  const most = (a: typeof zs[number], b: typeof zs[number]) => b.very - a.very || b.jams - a.jams || b.delay - a.delay || a.zone - b.zone;
+  zs.sort(r.order === "most" ? most : (a, b) => a.jams - b.jams || a.very - b.very || a.delay - b.delay || a.zone - b.zone);
+  const clear = zs.filter((z) => z.jams === 0);
+  const items: CityRankItem[] = (r.order === "most" ? zs.filter((z) => z.jams > 0) : zs).slice(0, r.n).map((z, k) => ({
+    rank: k + 1, name: z.name, zone: z.zone, zoneName: z.name, level: null, delayMin: z.delay || null, lengthM: null, jams: z.jams, very: z.very,
+    why: z.jams ? `${plural(z.jams, "jam")} now${z.very ? `, ${n0(z.very)} very congested` : ""}${z.delay ? `, ${n0(z.delay)} min of delay in all` : ""}` : "no jam now",
+    whyTa: z.jams ? `${z.jams} நெரிசல்கள்${z.very ? `, ${z.very} கடும் நெரிசல்` : ""}${z.delay ? `, மொத்தம் ${z.delay} நிமிட தாமதம்` : ""}` : "இப்போது நெரிசல் இல்லை",
+    lat: z.lat, lon: z.lon, spot: null }));
+  const list = (ta: boolean) => items.map((x) => `${x.rank}. ${x.name}: ${ta ? x.whyTa : x.why}`).join("; ");
+  const method = r.order === "most"
+    ? { en: `Why this order: zones ranked by very congested stretches, then the number of jams, then the minutes of delay added up${time ? ` (TomTom live, ${time})` : ""}.`,
+      ta: `வரிசை: கடும் நெரிசல் இடங்கள், பிறகு நெரிசல்களின் எண்ணிக்கை, பிறகு மொத்தத் தாமத நிமிடங்கள்.` }
+    : { en: `Why this order: zones with no jam first, then the fewest jams, the fewest very congested and the least delay${time ? ` (TomTom live, ${time})` : ""}.`,
+      ta: `வரிசை: நெரிசல் இல்லாத மண்டலங்கள் முதலில், பிறகு குறைந்த நெரிசல்கள், குறைந்த தாமதம்.` };
+  let line: { en: string; ta: string };
+  if (r.order === "most") line = items.length
+    ? { en: `${items.length === 1 ? "The zone with the most congestion now" : `The ${n0(items.length)} zones with the most congestion now`}: ${list(false)}.`, ta: `இப்போது அதிக நெரிசல் உள்ள மண்டலங்கள்: ${list(true)}.` }
+    : NO_JAM;
+  else line = clear.length >= r.n
+    ? { en: `${plural(clear.length, "zone has", "zones have")} no jam at all now${clear.length > r.n ? `, among them` : ""}: ${clear.slice(0, Math.max(r.n, Math.min(clear.length, 6))).map((z) => z.name).join(", ")}.`,
+      ta: `${clear.length} மண்டலங்களில் இப்போது நெரிசல் இல்லை: ${clear.slice(0, 6).map((z) => z.name).join(", ")}.` }
+    : { en: `The least congested zones now: ${list(false)}.`, ta: `இப்போது குறைந்த நெரிசல் உள்ள மண்டலங்கள்: ${list(true)}.` };
+  return { by: "area", order: r.order, asked: r.n, total: zs.length, items, method, line };
 }
 
 /** v12: the most congested stretch (lib/city/pick.ts worstJam) or the trouble spot that keeps coming back, with its line; null when none */

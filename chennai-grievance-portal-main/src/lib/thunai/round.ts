@@ -38,6 +38,7 @@ import { lineProblem, turnRecords } from "./exitgate";
 import { echoesRecords, recordText, stepsAskedFor } from "./injection";
 import { asksCount, catIn, intentMarker, periodIn, placesIn, quickScreen, reservoirIn, sevIn, zonesIn, type IntentMarker } from "./quick";
 import { riskOf } from "./risk";
+import { countAsked } from "@/lib/askcount";
 import { spanScreen } from "./spanned";
 import { GENERAL_FALLBACK, GENERAL_LABEL, GENERAL_SYSTEM, GeneralSchema, ROUTER_SYSTEM, RouterSchema, routeByRules, type Bundle } from "./router";
 import { checkStage, RECIPES, STAGE_DIGEST_MAX, type Recipe, type StageContext, type StageDocT } from "./stage";
@@ -1097,6 +1098,14 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
       if (rd.ask === "focus") {
         const r = await screenFrom("focus", focusSlots(rd), lang === "ta" ? "கடந்த வாரங்களை ஆய்வு செய்கிறேன்" : "Analysing the past weeks");
         if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:focus:${rd.lenses.join("+") || "attention"}:${rd.zones.length}` }, "reader"));
+      }
+      // 23 Nov: a count asked of the cases ("open the top three cases", "top 3 severe cases in Adyar", "the first five overdue ones"): exactly
+      // that many, by priority, with why each is there (screens.ts topCases). The whole severe list was shown for "open top three cases"
+      const topAsked = countAsked(b.text);
+      if (topAsked && topAsked >= 2 && (rd.ask === "cases" || rd.ask === "first_case" || rd.ask === "tasks" || rd.ask === "case")) {
+        const r = await screenFrom("cases", { zones: rd.zones.slice(0, 1), ...(rd.cat ? { cat: rd.cat } : {}), sev: rd.sev ?? (/\bsevere|serious|கடுமையான|தீவிர/i.test(b.text) ? "Severe" : null),
+          ...(rd.status ? { status: rd.status } : {}), ...(rd.period ? { period: rd.period } : {}), sort: "priority", n: Math.max(12, topAsked), top: topAsked, fresh: true }, reading);
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:top:${topAsked}` }, "reader"));
       }
       // which incident first ("which of today's severe cases first?", "that incident alone"), and the day's tasks: what needs the Collector
       // first, in code (screens.ts advise), with what was carried; one: that first case in full

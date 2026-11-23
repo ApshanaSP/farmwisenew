@@ -99,11 +99,33 @@ const CASUALTY_EN = new RegExp(String.raw`\b${NUM}\b(?![-\s]*(?:year|yr|month|da
   String.raw`(?:were\s+|was\s+|are\s+|have\s+been\s+|has\s+been\s+|got\s+)?(killed|dead|died|dies|die|injured|hurt|wounded|electrocuted|drowned|drown)\b`, "gi");
 const CASUALTY_TA = /(\d+)\s*(?:பேர்|நபர்கள்|பேருக்கு)?\s*(பலி|உயிரிழ|காயம்|படுகாய)/g;
 /** a number that labels something ("Class 12", "Route 21", "Rs 87", "aged 19", வகுப்பு 12), not a count of people */
-const NOT_A_COUNT = /(?:\b(?:class|std|standard|grade|form|route|bus|ward|no|number|platform|gate|sector|block|phase|plot|door|flat|aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street)\.?|₹|#|வகுப்பு|வார்டு)\s*$/i;
+const NOT_A_COUNT = /(?:\b(?:class|std|standard|grade|form|route|bus|ward|no|number|platform|gate|sector|block|phase|plot|door|flat|aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street|plus)\.?|₹|#|\+|வகுப்பு|வார்டு|பிளஸ்)\s*$/i;
 const SINGULAR = /^(?:student|boy|girl|man|woman|child|youth|worker|person|labourer|driver|rider|pedestrian|resident|teen|teenager|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|employee|guard|constable|officer|fisherman|farmer|patient)\b/i;
-const COUNT_BEFORE_LABEL = new RegExp(String.raw`\b${NUM}\s+(?:class|std|standard|grade)\s+\d+\w*\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?(killed|dead|died|dies|drowned|drown|electrocuted)\b`, "gi");
+const COUNT_BEFORE_LABEL = new RegExp(String.raw`\b${NUM}\s+(?:(?:class|std|standard|grade)\s+\d+\w*|plus[-\s]*(?:one|two|1|2))\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?(killed|dead|died|dies|drowned|drown|electrocuted)\b`, "gi");
 const ONE_DEATH_EN = /\b(?:man|woman|boy|girl|youth|worker|person|labourer|student|driver|rider|pedestrian|resident|teen|teenager|child|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|employee|guard|constable|fisherman|patient|elderly|techie|\d{1,3}[-\s]year[-\s]old)\s+(?:was\s+|is\s+)?(?:found\s+)?(?:killed|dies|died|dead|electrocuted|drowns|drowned)\b/i;
 const ONE_DEATH_TA = /(?:மாணவர்|மாணவி|மாணவன்|இளைஞர்|பெண்|சிறுவன்|சிறுமி|தொழிலாளி|முதியவர்|ஓட்டுநர்|குழந்தை)\s*(?:பலி|உயிரிழ)/;
+
+/**
+ * 23 Nov 2026 (owner: "if 12 itself, it may be the class 12th student dead"): every number a text uses as a label (a class, a route, a
+ * ward, an age), in every way it is written: "Class 12", "12th standard", "12th-grade", "Class XII", "XII std", "Plus Two" / "+2" (class
+ * 12 in Tamil Nadu, and 2), "12-ஆம் வகுப்பு", "பிளஸ் 2", "aged 19", "17-year-old", "17 yrs". A model's death count equal to one of these
+ * that the text does not count is not used. Same rules as the pipeline's textproc.label_numbers.
+ */
+const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12 };
+export function labelNumbers(text: string | null | undefined): Set<number> {
+  const s = String(text ?? "");
+  const out = new Set<number>();
+  for (const m of s.matchAll(/\b(?:class|std|standard|grade|route|bus|ward|no|platform|aged|age)\.?\s*(\d{1,3})\b|\b(\d{1,3})[-\s]years?[-\s]old\b/gi)) out.add(Number(m[1] ?? m[2]));
+  for (const m of s.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)[-\s]*(?:std|standard|class|grade|form)\b/gi)) out.add(Number(m[1]));
+  for (const m of s.matchAll(/(\d{1,2})\s*-?\s*(?:ஆம்|ம்|வது)?\s*வகுப்பு/g)) out.add(Number(m[1]));
+  for (const m of s.matchAll(/\b(\d{1,3})[-\s]?(?:yrs?|y\/o|yo)\b/gi)) out.add(Number(m[1]));
+  for (const m of s.matchAll(/\b(?:class|std|standard|grade)\.?\s*([ivx]{1,4})\b|\b([ivx]{1,4})\s*(?:std|standard)\b/gi)) { const v = ROMAN[(m[1] ?? m[2]).toLowerCase()]; if (v) out.add(v); }
+  for (const m of s.matchAll(/\bplus[-\s]*(one|two|1|2)\b|\+\s*([12])\s+(?:student|exam|result|class)|பிளஸ்\s*(1|2|ஒன்|டூ|டு)/gi)) {
+    const w = String(m[1] ?? m[2] ?? m[3]).toLowerCase();
+    for (const n of ["two", "2", "டூ", "டு"].includes(w) ? [12, 2] : [11, 1]) out.add(n);
+  }
+  return out;
+}
 
 /** [dead, injured] said in a news text; a number counts only next to the casualty word and when it is not a label. */
 export function casualties(text: string | null | undefined): [number, number] {

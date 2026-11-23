@@ -14,6 +14,8 @@ import { readTurn, type TurnHistory, type TurnReading } from "./turn";
 import type { Insight } from "./insights";
 import { conditionsNear, familiesOf, spreadOf, trafficCondition, trafficMatters, type Condition, type LiveTraffic } from "./conditions";
 import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
+import { cityAsk } from "@/lib/city/intent";
+import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 import { peakWords, rainForecast } from "./forecast";
 import { trafficNow } from "@/lib/city/traffic";
 import { compose, topicOf, type Answer } from "./answer";
@@ -357,6 +359,22 @@ async function withForecast(res: AskResponse, r: RunResult, w: World, lang: "en"
   res.followups = ta ? ["எந்த தெருக்கள் கனமழையில் வெள்ளம்?", "மழை இப்போது"] : ["Which streets flood in heavy rain?", "Is it raining now?", "Open flooding cases near hospitals"];
 }
 
+
+/**
+ * 23 Nov: what a live-traffic question asks of the shared city answer, as Jarvis and the chatbot read it (lib/city/intent.ts): a ranked list
+ * ("the top three most congested roads", "which areas have the least traffic"), the one worst jam, and the zone it names ("in Anna Nagar"),
+ * else the zone the map is on. Every other part of the city is the district's.
+ */
+function cityOpts(text: string | null | undefined, topic: CityTopic, zone: number | null): { zone: number | null; rank?: NonNullable<ReturnType<typeof cityAsk>>["rank"]; focus?: "worst-jam" | "repeat" | null } {
+  if (topic !== "traffic") return { zone: null };
+  const ca = text ? cityAsk(text) : null;
+  const low = ` ${String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ")} `;
+  const said = ZONE_NAMES.findIndex((n) => low.includes(` ${n.toLowerCase().replace(/[^a-z0-9]+/g, " ")} `));
+  const z = said >= 0 ? said + 1 : zone;
+  if (ca?.rank) return { zone: ca.rank.by === "area" ? null : z, rank: ca.rank };
+  return { zone: z, ...(ca?.focus ? { focus: ca.focus } : {}) };
+}
+
 export async function askMap(asked: AskInput): Promise<AskResponse> {
   try { return await askMapInner(asked); }
   catch (e) {
@@ -515,7 +533,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       forecastAsk = true; aiUsed = true;
     }
     else if (a && "city" in a && a.city !== "forecast") {
-      const c = await cityNow(a.city, { lockDept: lock, zone: a.city === "traffic" ? input.context.zone ?? null : null }).catch(() => null);
+      const c = await cityNow(a.city, { lockDept: lock, ...cityOpts(input.text, a.city, input.context.zone ?? null) }).catch(() => null);
       if (c) {
         out.kind = "say";
         out.ai_used = true;
@@ -586,7 +604,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     }
     if (topic) {
       const zone = input.context.zone ?? null;
-      const c = await cityNow(topic, { lockDept: lock, zone: topic === "traffic" ? zone : null }).catch(() => null);
+      const c = await cityNow(topic, { lockDept: lock, ...cityOpts(input.text, topic, zone) }).catch(() => null);
       if (c) {
         out.kind = "say";
         out.city = { topic, view: c.view, headline: c.headline, rows: c.rows.slice(0, 12) };

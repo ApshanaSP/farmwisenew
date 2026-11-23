@@ -423,7 +423,12 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
     FROM _placed p JOIN incidents i ON i.incident_id = p.incident_id WHERE ${rw.sql} AND ${OPEN} = 1
     ORDER BY i.first_reported_at DESC LIMIT 120`, rw.params).catch(orEmpty("insights:349")) : [];
   const wards: Ward[] = wardRows.map((r) => ({ ward_no: Number(r.ward_no), zone_no: Number(r.zone_no), lat: Number(r.lat), lon: Number(r.lon) }));
-  const places = T ? reviewLocations(unplaced, wards, await placeResolver().catch(() => () => null)) : null;
+  // 23 Nov: an incident whose twin (the same headline) is already placed is not "place unknown": the map shows that place (derive.ts gives
+  // it the twin's place at the next build); the list and the map must agree
+  const twinTitles = T && unplaced.length ? [...new Set(unplaced.map((r) => String(r.title ?? "")).filter(Boolean))].slice(0, 600) : [];
+  const placedTwins = twinTitles.length ? new Set((await q(`SELECT DISTINCT title FROM incidents WHERE zone_no IS NOT NULL AND lat IS NOT NULL AND title IN (?)`, [twinTitles])
+    .catch(orEmpty("insights:twins"))).map((r) => String(r.title))) : new Set<string>();
+  const places = T ? reviewLocations(unplaced.filter((r) => !placedTwins.has(String(r.title ?? ""))), wards, await placeResolver().catch(() => () => null)) : null;
   // Items from sources the Collector added: civic issues first, then the newest.
   const added = B ? await addedItems({ now, days: Math.max(1, Math.round(PERIODS[period].hours / 24)), since: periodSince(period, now), zone, dept, cat: s.cat, taluk: s.taluk }, 60)
     : { items: [] as Row[], pins: [] as Row[], count: 0, civic: 0, placed: 0, days: 0 };

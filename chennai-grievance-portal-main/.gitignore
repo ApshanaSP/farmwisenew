@@ -54,3 +54,6 @@ data/map-lists/
 
 # downloaded source files (Kontur population): rebuilt by scripts/build-population.py
 data/sources/
+
+# news "Reports differ" verdicts kept per set of reports (lib/collector/conflicts.ts)
+data/news-verdicts.json

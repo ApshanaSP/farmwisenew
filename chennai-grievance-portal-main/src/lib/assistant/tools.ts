@@ -1178,17 +1178,21 @@ export const TOOLS = [
 
   tool({
     name: "city_now",
-    description: "The city on the ground now, from lib/city: live traffic (TomTom: very congested and congested stretches, closed and flooded roads, accidents, delays in minutes, the zones with most jams, trouble spots where the district's own traffic reports keep coming back, and which body answers for each), the rain warning and live rain gauges, the streets that flood in heavy rain, the wards that lose power in heavy rain and for how long, and the metro and suburban lines that run late in heavy rain. topic: traffic | flood | rain | power | metro | all. focus (traffic): worst-jam (the most congested stretch now) | repeat (the trouble spot that keeps coming back). rain (flood): latest (the last heavy rain) | rain-YYYY-MM-DD: the streets that flooded in that rain. Not for counting complaints or incidents.",
+    description: "The city on the ground now, from lib/city: live traffic (TomTom: very congested and congested stretches, closed and flooded roads, accidents, delays in minutes, the zones with most jams, trouble spots where the district's own traffic reports keep coming back, and which body answers for each), the rain warning and live rain gauges, the streets that flood in heavy rain, the wards that lose power in heavy rain and for how long, and the metro and suburban lines that run late in heavy rain. topic: traffic | flood | rain | power | metro | all. focus (traffic): worst-jam (the most congested stretch now) | repeat (the trouble spot that keeps coming back). rank (traffic): {n, order most|least, by road|area} for 'top three most congested roads', 'which areas have the least traffic' (each item with why, and how the order was made). rain (flood): latest (the last heavy rain) | rain-YYYY-MM-DD: the streets that flooded in that rain. Not for counting complaints or incidents.",
     // v12 (21 Nov): focus and rain, so "the most congested road", "the repeating traffic" and "the flooded streets in the last rain" are
     // answered about that spot or that rain, never the city overview (06:39-06:42)
     args: z.object({ topic: z.enum(["traffic", "flood", "rain", "power", "metro", "all"]).default("all"), zone: z.number().int().min(1).max(15).nullable().default(null),
-      focus: z.enum(["worst-jam", "repeat"]).nullable().default(null), rain: z.string().regex(/^(?:latest|rain-\d{4}-\d{2}-\d{2})$/).nullable().default(null) }),
-    async run({ topic, zone, focus, rain }) {
+      focus: z.enum(["worst-jam", "repeat"]).nullable().default(null), rain: z.string().regex(/^(?:latest|rain-\d{4}-\d{2}-\d{2})$/).nullable().default(null),
+      // 23 Nov: a ranked list, as many as asked ("top three most congested roads", "the areas with the least traffic"), each with why
+      rank: z.object({ n: z.number().int().min(1).max(10), order: z.enum(["most", "least"]), by: z.enum(["road", "area"]) }).nullable().default(null),
+      // 23 Nov: an officer's answer counts only their own department's records at the trouble spots (lib/city/traffic.ts lockDept)
+      lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null) }),
+    async run({ topic, zone, focus, rain, rank, lockDept }) {
       const { cityNow } = await import("@/lib/city/now");
-      const c = await cityNow(topic, { zone, focus, rain });
+      const c = await cityNow(topic, { zone, focus, rain, rank, lockDept });
       const now = await asOf().catch(() => asOfNow());
       return {
-        scope: null, asOf: now, data: { topic, headline: c.headline, say: c.say, rows: c.rows, view: c.view, missing: c.missing, focus: c.focus, rainOf: c.rainOf },
+        scope: null, asOf: now, data: { topic, headline: c.headline, say: c.say, rows: c.rows, view: c.view, missing: c.missing, focus: c.focus, rainOf: c.rainOf, ranked: c.ranked },
         facts: c.facts.map((x) => fact(`city.${x.id}`, x.label, x.value, x.unit)),
         sources: c.sources.map((s) => fn("city.now", s)), incidentIds: (c.traffic?.clusters ?? []).flatMap((x) => x.reports.map((r) => r.id)).slice(0, 40), testData: false,
         caveats: [...(c.missing.length ? [`${c.missing.join(" and ")} could not be read just now.`] : []),

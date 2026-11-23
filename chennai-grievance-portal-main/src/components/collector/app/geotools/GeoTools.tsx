@@ -49,6 +49,8 @@ const shotLine = (s: Shot | undefined) => {
 
 export default function GeoTools(p: Props) {
   const [tool, setTool] = useState<"swipe" | "plot" | null>(null);
+  // 23 Nov 2026 (owner: fewer side features on the map): Then and now and Measure and plot wait behind one "Map tools" button
+  const [more, setMore] = useState(false);
   const [then, setThen] = useState(2016);
   const [shots, setShots] = useState<Record<number, Shot>>({});
   const [x, setX] = useState(0.5);
@@ -288,12 +290,17 @@ export default function GeoTools(p: Props) {
       </div>, portal)
     : null;
 
+  const open = more || tool != null;
   return (
     <>
-      <button onClick={() => setTool((t) => (t === "swipe" ? null : "swipe"))} className={tool === "swipe" ? "on" : ""} aria-pressed={tool === "swipe"}
-        title="Then and now: swipe between a past year's satellite photo and today's" aria-label="Then and now satellite compare"><I n="history" /></button>
-      <button onClick={startPlot} disabled={p.blocked} className={tool === "plot" ? "on" : ""} aria-pressed={tool === "plot"}
-        title="Measure and plot: distance, area (acres, cents, hectares), the wards and incidents inside" aria-label="Measure and plot an area"><I n="ruler" /></button>
+      <button onClick={() => { if (open) { setMore(false); setTool(null); } else setMore(true); }} className={open ? "on" : ""} aria-expanded={open}
+        title={open ? "Hide the map tools" : "Map tools: then and now, measure and plot"} aria-label="Map tools"><I n="sliders" /></button>
+      {open && <>
+        <button onClick={() => setTool((t) => (t === "swipe" ? null : "swipe"))} className={tool === "swipe" ? "on" : ""} aria-pressed={tool === "swipe"}
+          title="Then and now: swipe between a past year's satellite photo and today's" aria-label="Then and now satellite compare"><I n="history" /></button>
+        <button onClick={startPlot} disabled={p.blocked} className={tool === "plot" ? "on" : ""} aria-pressed={tool === "plot"}
+          title="Measure and plot: distance, area (acres, cents, hectares), the wards and incidents inside" aria-label="Measure and plot an area"><I n="ruler" /></button>
+      </>}
       {overlay}
     </>
   );

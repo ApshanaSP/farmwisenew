@@ -27,6 +27,8 @@ import { aiJson } from "@/lib/collector/aibrief";
 import { when } from "@/lib/collector/analysis";
 import { newsStories, type Period } from "@/lib/collector/intel";
 import { isNewsMedia } from "@/lib/collector/newsrel";
+import { promises as fsp, readFileSync } from "node:fs";
+import path from "node:path";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -349,13 +351,70 @@ const comparable = (reps: Report[]) => reps.some((a, i) => reps.some((b, j) => j
 /** The model's reading when it read the story (it saw which reports are the same incident), else the rules'. */
 const combine = (rules: Difference[], ai: Difference[] | undefined) => ai ?? rules;
 
+// ------------------------------------------------------------ verdicts --
+// 23 Nov 2026: the owner saw a "Reports differ" item, opened it, came back, and it was gone. Every load decided again: a new article anywhere
+// changed the period memo's key, the pop-up asked the model on its own, a model that was busy left the rules' answer for a while and a model
+// that answered later replaced it, and a failed load emptied the list. Now one verdict per set of reports is kept (and saved, so a restart
+// keeps it): the same reports always give the same answer, in the list, in the pop-up, in Jarvis and the chatbot. A story is decided again
+// only when an outlet joins or leaves it.
+interface Verdict { at: number; by: "ai" | "rules"; items: Difference[] }
+declare global {
+  // eslint-disable-next-line no-var
+  var __conflictVerdicts: Map<string, Verdict> | undefined;
+  // eslint-disable-next-line no-var
+  var __conflictVerdictsSave: ReturnType<typeof setTimeout> | null | undefined;
+}
+const VERDICT_FILE = () => path.join(process.env.DIQ_DATA_DIR ?? path.join(process.cwd(), "data"), "news-verdicts.json");
+const VERDICT_DAYS = 14;
+function verdicts(): Map<string, Verdict> {
+  if (global.__conflictVerdicts) return global.__conflictVerdicts;
+  const m = new Map<string, Verdict>();
+  try {
+    const j = JSON.parse(readFileSync(VERDICT_FILE(), "utf8")) as { v?: number; rows?: [string, Verdict][] };
+    const since = Date.now() - VERDICT_DAYS * 864e5;
+    if (j?.v === V) for (const [k, x] of j.rows ?? []) if (x && x.at >= since && Array.isArray(x.items)) m.set(k, x);
+  } catch { /* none yet */ }
+  global.__conflictVerdicts = m;
+  return m;
+}
+function saveVerdicts(): void {
+  if (process.env.VITEST || global.__conflictVerdictsSave) return;
+  global.__conflictVerdictsSave = setTimeout(() => {
+    global.__conflictVerdictsSave = null;
+    const m = verdicts();
+    const since = Date.now() - VERDICT_DAYS * 864e5;
+    const rows = [...m.entries()].filter(([, x]) => x.at >= since).slice(-3000);
+    void fsp.writeFile(VERDICT_FILE(), JSON.stringify({ v: V, rows })).catch((e) => console.warn("[conflicts] verdicts not saved:", (e as Error).message));
+  }, 2000);
+}
+/** the reports compared, by id: the exact set */
+const sigOf = (reps: Report[]) => `r|${reps.map((r) => r.id).sort().join(",")}`;
+/** the story and its outlets: a newer article from an outlet already in it keeps the story's verdict */
+const outletSig = (key: string, reps: Report[]) => `o|${key}|${[...new Set(reps.map((r) => r.publisher))].sort().join("|")}`;
+function verdictOf(key: string, reps: Report[]): Verdict | null {
+  const m = verdicts();
+  return m.get(sigOf(reps)) ?? m.get(outletSig(key, reps)) ?? null;
+}
+function keepVerdict(key: string, reps: Report[], v: Omit<Verdict, "at">): void {
+  const m = verdicts();
+  const x = { ...v, at: Date.now() };
+  m.set(sigOf(reps), x); m.set(outletSig(key, reps), x);
+  saveVerdicts();
+}
+
 /** The differences between the reports of one story (the news preview and the incident pop-up). */
 export async function storyConflicts(ids: string[], title: string, user: string, id?: string): Promise<StoryConflicts | null> {
   const reps = pick([...(await reportsOf(ids.slice(0, 60))).values()]);
   if (new Set(reps.map((r) => r.publisher)).size < 2 || !comparable(reps)) return null;
   const key = id ?? reps[0].id;
+  const outlets = new Set(reps.map((r) => r.publisher)).size;
+  // (23 Nov: the verdict the list gave these reports, never a second opinion)
+  const had = verdictOf(key, reps);
+  if (had) return { id: key, title, incident: null, docIds: ids, outlets, items: had.items };
   const ai = await aiDifferences([{ key, title, reports: reps }], user);
-  return { id: key, title, incident: null, docIds: ids, outlets: new Set(reps.map((r) => r.publisher)).size, items: combine(ruleDifferences(reps), ai?.get(key)) };
+  const items = combine(ruleDifferences(reps), ai?.get(key));
+  keepVerdict(key, reps, { by: ai?.has(key) ? "ai" : "rules", items });
+  return { id: key, title, incident: null, docIds: ids, outlets, items };
 }
 
 const V = 5;
@@ -379,14 +438,17 @@ export async function periodConflicts(period: Period, now: string, user: string)
     .map((x) => ({ ...x, rules: ruleDifferences(x.reports) }))
     // the model reads first the stories where the figures already differ, then those with the most outlets
     .sort((a, b) => Number(b.rules.length > 0) - Number(a.rules.length > 0) || b.reports.length - a.reports.length || b.s.t.localeCompare(a.s.t));
-  const ai = inputs.length ? await aiDifferences(inputs.slice(0, AI_STORIES), user) : null;
-  const stories = inputs.map(({ s, key, title, reports, rules }) => ({
+  // (23 Nov: a story already decided keeps its verdict; only the undecided go to the model, the rest of them keep the rules' answer, kept too)
+  const undecided = inputs.filter((x) => !verdictOf(x.key, x.reports));
+  const ai = undecided.length ? await aiDifferences(undecided.slice(0, AI_STORIES), user) : null;
+  for (const x of undecided) keepVerdict(x.key, x.reports, { by: ai?.has(x.key) ? "ai" : "rules", items: combine(x.rules, ai?.get(x.key)) });
+  const stories = inputs.map(({ s, key, title, reports }) => ({
     id: key, title, incident: s.incident, docIds: s.docIds, outlets: new Set(reports.map((r) => r.publisher)).size,
-    items: combine(rules, ai?.get(key))
-  })).filter((x) => x.items.length).sort((a, b) => b.items.length - a.items.length || b.outlets - a.outlets);
-  const v: PeriodConflicts = { stories, checked: inputs.length, ai: !!ai };
-  // without a model, try again in 5 minutes rather than 30
-  global.__conflicts.set(memoKey, { at: ai ? Date.now() : Date.now() - 25 * 60_000, v });
+    items: verdictOf(key, reports)?.items ?? []
+  })).filter((x) => x.items.length).sort((a, b) => b.items.length - a.items.length || b.outlets - a.outlets || a.id.localeCompare(b.id));
+  const v: PeriodConflicts = { stories, checked: inputs.length, ai: !!ai || inputs.some((x) => verdictOf(x.key, x.reports)?.by === "ai") };
+  // (every story is decided and kept now, so the memo only saves reading the reports again)
+  global.__conflicts.set(memoKey, { at: Date.now(), v });
   while (global.__conflicts.size > 12) global.__conflicts.delete(global.__conflicts.keys().next().value!);
   return v;
 }

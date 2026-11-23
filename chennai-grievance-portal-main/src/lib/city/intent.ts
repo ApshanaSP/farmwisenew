@@ -19,12 +19,22 @@ import { cityTopic, type CityTopic } from "./topic";
 import { dayIn } from "@/lib/rehearsal/intent";
 // v14 (routing 3): the one period reader (pure), for "last week", "yesterday", "this month" on live traffic, power and trains
 import { readPeriod } from "@/lib/period/read";
+// 23 Nov: how many were asked for ("top three"), shared with the cases and the chatbot
+import { countAsked } from "@/lib/askcount";
 
 export type CityFocus = "worst-jam" | "repeat";
+/**
+ * 23 Nov 2026: a ranked list of live traffic, by road or by area, most or least congested, as many as asked ("top three most congested
+ * roads", "which areas have the least traffic", "the three congested ones in Anna Nagar"). Every such question got one road or the
+ * overview (the owner's morning session, 10:36-10:45).
+ */
+export interface CityRank { n: number; order: "most" | "least"; by: "road" | "area" }
 export interface CityAsk {
   topic: CityTopic;
   /** "the most congested", "the worst jam", "zoom to the jam": worst-jam; "keeps coming back", "repeating", "trouble spots": repeat */
   focus: CityFocus | null;
+  /** 23 Nov: a ranked list asked for (live traffic only); when set, focus is null */
+  rank?: CityRank | null;
   /** the map was asked for: "in map", "on the map", "map la", வரைபடத்தில், a zoom or "take me to" */
   map: boolean;
   /** a past rain: "latest" (the last heavy rain with reports, as Rain & flooding opens it) or "rain-YYYY-MM-DD" */
@@ -155,8 +165,34 @@ export function cityAsk(text: string, o: { last?: CityLastIn } = {}): CityAsk | 
   const day = topic === "flood" && !FORECAST.test(t) ? dayIn(t) : null;
   const rain = topic === "flood" && !FORECAST.test(t) ? (day ? `rain-${day}` : PAST_RAIN.test(t) ? "latest" : null) : null;
   // (v14, routing 2: the Tamil and Tanglish "most" too, MOST_TA_TG)
-  const focus: CityFocus | null = topic !== "traffic" ? null : REPEAT.test(t) ? "repeat" : MOST.test(t) || MOST_TA_TG.test(t) || MOVE_FOCUS.test(t) ? "worst-jam" : null;
-  return { topic, focus, map, rain };
+  const rank = topic === "traffic" && !REPEAT.test(t) ? cityRank(t) : null;
+  const focus: CityFocus | null = topic !== "traffic" || rank ? null : REPEAT.test(t) ? "repeat" : MOST.test(t) || MOST_TA_TG.test(t) || MOVE_FOCUS.test(t) ? "worst-jam" : null;
+  return { topic, focus, map, rain, ...(rank ? { rank } : {}) };
+}
+
+/** "least", "lowest", "smoothest", "free", "clear", குறைந்த, கம்மி: the calmest first */
+const LEAST = /\b(?:least|lowest|minimum|fewest|less|lesser|smoothest|lightest|clearest|freest|calmest|best|no traffic|not congested|without traffic|free[- ]?flowing|moving freely|free of traffic|traffic[- ]?free|clear roads?)\b|குறைந்த|குறைவான|குறைவா|குறைவு|கம்மி|\b(?:kammi|kuraiv\w*|korachu|kuranja)\b/i;
+/** areas, zones, localities: the zones ranked, not the roads */
+const AREA = /\b(?:areas?|zones?|localit(?:y|ies)|regions?|neighbou?rhoods?|parts? of (?:the )?(?:city|chennai|district)|wards?)\b|பகுதி|ஏரியா|மண்டல|\b(?:area|mandalam)\b/i;
+/** roads, streets, stretches: the roads ranked */
+const ROAD = /\b(?:roads?|streets?|stretch(?:es)?|junctions?|signals?|highways?|salai|flyovers?|bridges?|routes?|lanes?)\b|சாலை|ரோடு|தெரு/i;
+/** a "which/where" question with a ranking word: "which areas have the highest congestion", "where is traffic heaviest" */
+const WHICH = /\b(?:which|where|what are the|list|name the|tell me the|show me the|show the)\b|எந்த|எங்கே|எங்க|\b(?:endha|enga|yedhu)\b/i;
+const MOST_WORD = /\b(?:most|worst|heaviest|highest|maximum|max|biggest|busiest|more|top)\b|அதிக|மோசம|ரொம்ப|\b(?:romba|adhigam|athigam|jaasthi)\b/i;
+
+/**
+ * 23 Nov: the ranked list a live-traffic sentence asks for, or null when it asks about one road or the whole picture. A count of two or more
+ * ("top three", "the 3 worst", "three congested ones"), the least congested (any count), or the areas with the most congestion each make one;
+ * "the most congested road" alone stays the one-spot screen (focus worst-jam). Pure.
+ */
+export function cityRank(text: string): CityRank | null {
+  const t = clean(text);
+  const n = countAsked(t);
+  const order: CityRank["order"] = LEAST.test(t) && !/\bat least\b/i.test(t) ? "least" : "most";
+  const by: CityRank["by"] = AREA.test(t) && !ROAD.test(t) ? "area" : "road";
+  if ((n != null && n >= 2) || order === "least") return { n: Math.min(n ?? 3, 10), order, by };
+  if (by === "area" && (MOST_WORD.test(t) || MOST.test(t) || MOST_TA_TG.test(t)) && WHICH.test(t)) return { n: Math.min(n ?? 3, 10), order, by };
+  return null;
 }
 
 const TOPICS: readonly string[] = ["traffic", "flood", "rain", "power", "metro", "all"];

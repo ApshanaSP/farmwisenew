@@ -288,7 +288,9 @@ Details, only as the article states them (never guess; empty or 0 when it does n
 - people: names of people central to the event (accused, officials, rescuers), at most 5. Never name a victim of
   sexual violence or a child.
 - organisations: departments, companies, police stations, hospitals or groups named, at most 5.
-- dead, injured: how many people died / were injured in this event (0 when none or not stated).
+- dead, injured: how many people died / were injured in this event (0 when none or not stated). Count people only: a
+  number that names something is never a count ("Class 12 student killed", "12th standard girl dies", "Plus Two student
+  drowned", "Route 12 bus", "Ward 12", "aged 12" are 1 death or none, never 12 or 2).
 - status: where the event stands: ongoing (still happening or unresolved), under_investigation (case registered,
   probe on), action_taken (arrests, repairs started, relief given), resolved (fixed, over), not_stated.
 - place: the most exact place phrase for where it happened, copied from the article (street, locality, landmark),

@@ -132,11 +132,38 @@ DEATH_WORDS = {"killed", "dead", "died", "dies", "die", "electrocuted", "drowned
 # "Rs 87", "aged 19", "Platform 2", "Gate 3", "NH 48"; Tamil வகுப்பு (class), வார்டு (ward)
 NOT_A_COUNT = re.compile(
     r"(?:\b(?:class|std|standard|grade|form|route|bus|ward|no|number|platform|gate|sector|block|phase|plot|door|flat|"
-    r"aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street)\.?"
-    r"|₹|#|வகுப்பு|வார்டு)\s*$", re.I)
+    r"aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street|plus)\.?"
+    r"|₹|#|\+|வகுப்பு|வார்டு|பிளஸ்)\s*$", re.I)
 # numbers used as labels in a text ("Class 12", "Route 21", "aged 19", "17-year-old"), to check an LLM's death count
 LABEL_NUMBERS = re.compile(
     r"(?:\b(?:class|std|standard|grade|route|bus|ward|no|platform|aged|age)\.?\s*(\d{1,3})\b)|(?:\b(\d{1,3})[-\s]years?[-\s]old\b)", re.I)
+# 23 Nov 2026 (owner: "if 12 itself, it may be the class 12th student dead"): every way a class or a position is written, so an LLM death
+# count equal to it is not used: "12th standard", "12th-grade", "Class XII", "XII std", "Plus Two" / "+2" (class 12 in Tamil Nadu, also 2),
+# "12-ஆம் வகுப்பு", "12ம் வகுப்பு", "பிளஸ் 2" / "பிளஸ் டூ", "17 yrs"
+_ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10, "xi": 11, "xii": 12}
+_LBL_ORD = re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)[-\s]*(?:std|standard|class|grade|form)\b", re.I)
+_LBL_ROMAN = re.compile(r"\b(?:class|std|standard|grade)\.?\s*([ivx]{1,4})\b|\b([ivx]{1,4})\s*(?:std|standard)\b", re.I)
+_LBL_PLUS = re.compile(r"\bplus[-\s]*(one|two|1|2)\b|\+\s*([12])\s+(?:student|exam|result|class)|பிளஸ்\s*(1|2|ஒன்|டூ|டு)", re.I)
+_LBL_TA = re.compile(r"(\d{1,2})\s*-?\s*(?:ஆம்|ம்|வது)?\s*வகுப்பு")
+_LBL_YRS = re.compile(r"\b(\d{1,3})[-\s]?(?:yrs?|y/o|yo)\b", re.I)
+
+
+def label_numbers(text: str) -> set[int]:
+    """Every number the text uses as a label (a class, route, ward, age), never as a count of people."""
+    s = text or ""
+    out = {int(a or b) for a, b in LABEL_NUMBERS.findall(s)}
+    out |= {int(m) for m in _LBL_ORD.findall(s)}
+    out |= {int(m) for m in _LBL_TA.findall(s)}
+    out |= {int(m) for m in _LBL_YRS.findall(s)}
+    for a, b in _LBL_ROMAN.findall(s):
+        v = _ROMAN.get((a or b).lower())
+        if v:
+            out.add(v)
+    for a, b, c in _LBL_PLUS.findall(s):
+        w = (a or b or c).lower()
+        two = w in ("two", "2", "டூ", "டு")
+        out |= {12, 2} if two else {11, 1}
+    return out
 # a singular person after a count above one: "12 student killed" is "Class 12 student", not twelve students
 SINGULAR = re.compile(r"^(?:student|boy|girl|man|woman|child|youth|worker|person|labourer|driver|rider|pedestrian|"
                       r"resident|teen|teenager|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|"
@@ -177,7 +204,7 @@ def casualties(text: str) -> tuple[int, int]:
 
 
 COUNT_BEFORE_LABEL = re.compile(
-    r"\b" + _NUM + r"\s+(?:class|std|standard|grade)\s+\d+\w*\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?"
+    r"\b" + _NUM + r"\s+(?:(?:class|std|standard|grade)\s+\d+\w*|plus[-\s]*(?:one|two|1|2))\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?"
     r"(killed|dead|died|dies|drowned|drown|electrocuted)\b", re.I)
 # one person died, said without a count: "student killed", "17-year-old killed", "driver dies", "girl found dead"
 ONE_DEATH_EN = re.compile(

@@ -240,10 +240,12 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     <Answer r={r} w={w} lang={lang} ask={ask} />
                     <TopBars r={r} ask={ask} lang={lang} />
                     <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
-                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
-                    <PlayPeriod r={r} ask={ask} lang={lang} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /></div>
+                    {/* 23 Nov: play, share and print wait under More detail (owner: fewer side features) */}
                     <details className="amp-more">
                       <summary><I n="sliders" />{ta ? "மேலும் விவரம்: வடிகட்டிகள், அட்டவணை, ஒவ்வொரு வழக்கும்" : `More detail: filters, the full table, every case (${r.total.toLocaleString("en-IN")})`}</summary>
+                      <PlayPeriod r={r} ask={ask} lang={lang} />
+                      <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
                       <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
                       {filtersOpen && chipsView(r)}
                       <Conditions r={r} lang={lang} max={4} />
@@ -265,15 +267,17 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     <LeagueTable r={r} ask={ask} lang={lang} />
                     <SpeedTable r={r} ask={ask} lang={lang} />
                     <GroupList r={r} ask={ask} lang={lang} />
-                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
                     <GapList r={r} lang={lang} />
                     <RulePairs r={r} lang={lang} />
-                    <PlayPeriod r={r} ask={ask} lang={lang} />
-                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /><ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} /></div>
                     <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
                     <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
+                    <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
+                    <div className="amp-actrow"><Acts r={r} w={w} actions={actions} /></div>
+                    {/* 23 Nov: the answer, its places, what to ask next and the actions up front; play, share, print and how it was worked out below */}
                     <details className="amp-more">
-                      <summary><I n="info" />{ta ? "இது எப்படிக் கணக்கிடப்பட்டது" : "How this was worked out, and the places named"}</summary>
+                      <summary><I n="info" />{ta ? "மேலும்: இயக்கு, பகிர், அச்சிடு, எப்படிக் கணக்கிடப்பட்டது" : "More: play the period, share or print, how this was worked out"}</summary>
+                      <PlayPeriod r={r} ask={ask} lang={lang} />
+                      <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
                       <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
                       <Places r={r} lang={lang} />
                     </details>
